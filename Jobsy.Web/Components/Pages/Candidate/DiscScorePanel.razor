@@ -1,0 +1,85 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Scores is { IsComplete: true } complete)
+{
+    <div class="competency-score-panel">
+        <svg class="competency-radar" viewBox="0 0 220 220" role="img" aria-label="@Culture["Disc.RadarLabel"]">
+            <g transform="translate(110,110)">
+                @for (var ring = 1; ring <= 4; ring++)
+                {
+                    <polygon class="competency-radar__grid" points="@RadarRing(ring * 25)" />
+                }
+                @for (var i = 0; i < AxisCount; i++)
+                {
+                    var end = RadarPoint(100, i);
+                    <line class="competency-radar__axis" x1="0" y1="0" x2="@end.X.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)" y2="@end.Y.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)" />
+                }
+                <polygon class="competency-radar__fill" points="@RadarShape(complete)" />
+            </g>
+        </svg>
+        <ul class="competency-skill-list" aria-label="@Culture["Kompas.TabDisc"]">
+            @foreach (var category in DiscTestCatalog.CategoryCodes)
+            {
+                var value = Value(complete, category) ?? 0;
+                <li class="competency-skill">
+                    <details class="competency-skill__details">
+                        <summary>
+                            <span class="competency-skill__name">@Culture[$"Disc.Cat.{category}"]</span>
+                            <span class="competency-skill__value">@value%</span>
+                        </summary>
+                        <div class="competency-skill__body">
+                            <p class="competency-skill__meaning">@Culture[DiscTrainingCatalog.MeaningKey(category, value)]</p>
+                            <p class="competency-skill__meaning">@Culture[DiscTrainingCatalog.DevelopKey(category)]</p>
+                            <TrainingOffersBlock JobTitle="@DiscTrainingCatalog.SearchBlob(category)"
+                                                 Campaign="@TrainingTracking.CampaignDisc"
+                                                 Compact="true"
+                                                 TitleKey="Disc.TrainingTitle" />
+                        </div>
+                    </details>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter] public DiscScoreSet? Scores { get; set; }
+
+    private const int AxisCount = 4;
+
+    private static int? Value(DiscScoreSet scores, string category) => category switch
+    {
+        DiscTestCatalog.Dominant => scores.Dominant,
+        DiscTestCatalog.Invloed => scores.Invloed,
+        DiscTestCatalog.Stabiel => scores.Stabiel,
+        DiscTestCatalog.Nauwkeurig => scores.Nauwkeurig,
+        _ => null
+    };
+
+    private static string RadarRing(double percent)
+        => string.Join(" ", Enumerable.Range(0, AxisCount).Select(i => FormatPoint(RadarPoint(percent, i))));
+
+    private static string RadarShape(DiscScoreSet scores)
+    {
+        var values = new[]
+        {
+            scores.Dominant ?? 0,
+            scores.Invloed ?? 0,
+            scores.Stabiel ?? 0,
+            scores.Nauwkeurig ?? 0
+        };
+        return string.Join(" ", values.Select((v, i) => FormatPoint(RadarPoint(v, i))));
+    }
+
+    private static (double X, double Y) RadarPoint(double percent, int index)
+    {
+        var radius = 88 * Math.Clamp(percent, 0, 100) / 100.0;
+        var angle = -Math.PI / 2 + index * (2 * Math.PI / AxisCount);
+        return (radius * Math.Cos(angle), radius * Math.Sin(angle));
+    }
+
+    private static string FormatPoint((double X, double Y) p)
+        => $"{p.X.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)},{p.Y.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)}";
+}

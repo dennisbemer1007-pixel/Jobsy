@@ -64,6 +64,15 @@ window.jobMap = (function () {
         Lopend: "lopen"
     };
 
+    function canonicalTransport(t) {
+        const raw = String(t || "").trim();
+        const compact = raw.toLowerCase().replace(/[\s-]/g, "");
+        if (compact === "ebike" || compact === "ebikes") {
+            return "Fiets";
+        }
+        return raw || "Fiets";
+    }
+
     function workTypeGlyph(workType) {
         const t = String(workType || "").toLowerCase();
         if (t.indexOf("horeca") >= 0) return "☕";
@@ -78,7 +87,7 @@ window.jobMap = (function () {
         return "●";
     }
 
-    function markerClassName(featured, selected) {
+    function markerClassName(featured, selected, matchBand) {
         const classes = ["job-marker"];
         if (featured) {
             classes.push("job-marker--featured");
@@ -86,10 +95,13 @@ window.jobMap = (function () {
         if (selected) {
             classes.push("job-marker--active");
         }
+        if (matchBand) {
+            classes.push("job-marker--match-" + matchBand);
+        }
         return classes.join(" ");
     }
 
-    function markerInnerHtml(featured, workType, categoryColor) {
+    function markerInnerHtml(featured, workType, categoryColor, matchPercent, matchBand) {
         const glyph = workTypeGlyph(workType);
         const pulse = featured
             ? "<span class=\"job-marker__pulse\" aria-hidden=\"true\"></span>"
@@ -100,12 +112,16 @@ window.jobMap = (function () {
         const style = color
             ? " style=\"--map-pin:" + color + ";--map-pin-deep:" + color + ";--map-pin-glow:" + color + "66\""
             : "";
-        return pulse + "<span class=\"job-marker__glyph\"" + style + " aria-hidden=\"true\">" + glyph + "</span>";
+        const match = matchPercent != null && matchPercent !== ""
+            ? "<span class=\"job-marker__match job-marker__match--" + escapeHtml(String(matchBand || "orange")) +
+              "\">" + escapeHtml(String(matchPercent)) + "%</span>"
+            : "";
+        return pulse + match + "<span class=\"job-marker__glyph\"" + style + " aria-hidden=\"true\">" + glyph + "</span>";
     }
 
-    function fillMarkerElement(el, featured, selected, workType, categoryColor) {
-        el.className = markerClassName(featured, selected);
-        el.innerHTML = markerInnerHtml(featured, workType, categoryColor);
+    function fillMarkerElement(el, featured, selected, workType, categoryColor, matchPercent, matchBand) {
+        el.className = markerClassName(featured, selected, matchBand);
+        el.innerHTML = markerInnerHtml(featured, workType, categoryColor, matchPercent, matchBand);
         return el;
     }
 
@@ -256,7 +272,7 @@ window.jobMap = (function () {
         if (v.travelMinutes == null) {
             return "<p class=\"map-popup__travel map-popup__travel--empty\" aria-hidden=\"true\"></p>";
         }
-        const transport = String(v.transportLabel || TRANSPORT_LABEL[v.transport] || "reistijd");
+        const transport = String(v.transportLabel || TRANSPORT_LABEL[canonicalTransport(v.transport)] || "reistijd");
         return (
             "<p class=\"map-popup__travel\">" +
                 specIcon("travel") +
@@ -468,6 +484,8 @@ window.jobMap = (function () {
                                 ? "<p class=\"map-popup__address\">" + escapeHtml(v.address) + "</p>"
                                 : "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>") +
                             travelLineHtml(v) +
+                            matchLineHtml(v) +
+                            cultureFitHtml(v) +
                             pushBomStatusHtml(v) +
                         "</div>" +
                         (wage || "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>") +
@@ -487,6 +505,38 @@ window.jobMap = (function () {
                     "</div>" +
                 "</div>" +
             "</div>"
+        );
+    }
+
+    function matchLineHtml(v) {
+        if (v.matchPercent == null || v.matchPercent === "") {
+            return "";
+        }
+        const band = String(v.matchColorBand || "orange");
+        const why = v.matchWhySummary
+            ? "<span class=\"map-popup__match-why\">" + escapeHtml(String(v.matchWhySummary)) + "</span>"
+            : "";
+        return (
+            "<p class=\"map-popup__match match-score--" + escapeHtml(band) + "\">" +
+                escapeHtml(String(v.matchPercent)) + "% Match" +
+                why +
+            "</p>"
+        );
+    }
+
+    function cultureFitHtml(v) {
+        if (!v.cultureFitLabel) {
+            return "";
+        }
+        const band = String(v.cultureFitBand || "mid");
+        const why = v.cultureFitWhy
+            ? "<span class=\"map-popup__match-why\">" + escapeHtml(String(v.cultureFitWhy)) + "</span>"
+            : "";
+        return (
+            "<p class=\"map-popup__culture culture-fit culture-fit--" + escapeHtml(band) + "\">" +
+                escapeHtml(String(v.cultureFitLabel)) +
+                why +
+            "</p>"
         );
     }
 
@@ -840,8 +890,9 @@ window.jobMap = (function () {
     }
 
     function metersPerMinute(transport) {
-        const cruise = CRUISE_KM_H[transport] || CRUISE_KM_H.Fiets;
-        const circuity = ROAD_CIRCUITY[transport] || ROAD_CIRCUITY.Fiets;
+        const mode = canonicalTransport(transport);
+        const cruise = CRUISE_KM_H[mode] || CRUISE_KM_H.Fiets;
+        const circuity = ROAD_CIRCUITY[mode] || ROAD_CIRCUITY.Fiets;
         return (cruise * 1000 / 60) / circuity;
     }
 
@@ -979,7 +1030,7 @@ window.jobMap = (function () {
 
     function placeTravelRingLabels(lat, lng) {
         clearTravelRingLabels();
-        const transport = travelOptions.transport || "Fiets";
+        const transport = canonicalTransport(travelOptions.transport || "Fiets");
         const labelVerb = TRANSPORT_LABEL[transport] || "reistijd";
         eachTravelRing(lat, lng, function (mins, index, radius) {
             // East-southeast keeps labels off the featured carousel and zoom stack.
@@ -1530,7 +1581,9 @@ window.jobMap = (function () {
                 !!v.highlighted,
                 selectedId != null && String(record.id) === String(selectedId),
                 workTypeOf(v),
-                v.categoryColor
+                v.categoryColor,
+                v.matchPercent,
+                v.matchColorBand
             );
             el.addEventListener("click", function (ev) {
                 stopEvent(ev);

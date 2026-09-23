@@ -1,0 +1,171 @@
+@page "/admin/training"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+@implements IDisposable
+
+<PageTitle>@Culture["Admin.Training"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Admin.Training"]" Lead="@Culture["Admin.TrainingLead"]" ShowSettingsNav="true">
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <section class="training-admin-export">
+            <h3>Maandexport lokale deals</h3>
+            <p class="login-lead">Landelijke affiliates (Awin/Daisycon) lopen via hun eigen dashboard. Dit CSV matcht anonieme hashes voor Den Haag / Westland.</p>
+            <div class="masterdata-row__fields" style="grid-template-columns: 8rem 8rem auto;">
+                <label>
+                    Jaar
+                    <input type="number" @bind="_year" />
+                </label>
+                <label>
+                    Maand
+                    <input type="number" min="1" max="12" @bind="_month" />
+                </label>
+                <button class="login-submit" type="button" disabled="@_busy" @onclick="ExportAsync">Download CSV</button>
+            </div>
+            <form class="training-admin-match" @onsubmit="MatchAsync" @onsubmit:preventDefault="true">
+                <h3>Conversie matchen</h3>
+                <label>
+                    Click-id
+                    <input @bind="_clickId" />
+                </label>
+                <label>
+                    Candidate hash
+                    <input @bind="_candidateHash" />
+                </label>
+                <label>
+                    E-mail bij inschrijving (wordt gehasht)
+                    <input type="email" @bind="_email" autocomplete="off" />
+                </label>
+                <label>
+                    Soort
+                    <select @bind="_kind">
+                        <option value="0">Lead (brochure / intake)</option>
+                        <option value="1">Gestarte cursist</option>
+                    </select>
+                </label>
+                <button class="provider-btn" type="submit" disabled="@_busy">Registreer</button>
+            </form>
+        </section>
+
+        @foreach (var provider in _providers)
+        {
+            <article class="table-row masterdata-row">
+                <h3>@provider.Name <small>@provider.Kind · @provider.Network · @provider.Region</small></h3>
+                <p>@provider.BaseUrl</p>
+                <p>Velden: @provider.FieldsCsv</p>
+                <p>
+                    CPL € @(provider.CplEuro?.ToString("0.##") ?? "—")
+                    · CPA € @(provider.CpaEuro?.ToString("0.##") ?? "—")
+                    · Intake € @(provider.IntakeFeeEuro?.ToString("0.##") ?? "—")
+                    · Start € @(provider.StartFeeEuro?.ToString("0.##") ?? "—")
+                </p>
+                <ul>
+                    @foreach (var offer in provider.Offers)
+                    {
+                        <li>@offer.Title (@offer.FieldsCsv)</li>
+                    }
+                </ul>
+            </article>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private string? _message;
+    private List<TrainingProviderAdmin> _providers = [];
+    private int _year = DateTime.UtcNow.Year;
+    private int _month = DateTime.UtcNow.Month;
+    private string _clickId = "";
+    private string _candidateHash = "";
+    private string _email = "";
+    private string _kind = "0";
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    protected override Task OnInitializedAsync()
+        => LoadAsync();
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _providers = await Api.GetTrainingProvidersAdminAsync();
+        }
+        catch
+        {
+            _message = Culture["Common.Error"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ExportAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var csv = await Api.ExportTrainingCsvAsync(_year, _month, null);
+            await Js.InvokeVoidAsync("jobsyDownload.text", $"lobsy-opleidingen-{_year:D4}-{_month:D2}.csv", csv, "text/csv");
+        }
+        catch (Exception ex)
+        {
+            _message = string.IsNullOrWhiteSpace(ex.Message) ? Culture["Common.Error"] : ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task MatchAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            Guid? clickId = Guid.TryParse(_clickId, out var id) ? id : null;
+            await Api.RecordTrainingConversionAsync(new
+            {
+                clickId,
+                candidateHash = string.IsNullOrWhiteSpace(_candidateHash) ? null : _candidateHash.Trim(),
+                email = string.IsNullOrWhiteSpace(_email) ? null : _email.Trim(),
+                kind = _kind == "1" ? "Started" : "Lead"
+            });
+            _message = "Conversie vastgelegd.";
+        }
+        catch (Exception ex)
+        {
+            _message = string.IsNullOrWhiteSpace(ex.Message) ? Culture["Common.Error"] : ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

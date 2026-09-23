@@ -96,7 +96,7 @@ public class CompaniesController : ControllerBase
             e.KvkEstablishmentId.Equals(request.KvkEstablishmentId.Trim(), StringComparison.OrdinalIgnoreCase));
         if (match is null)
         {
-            return NotFound(new { message = "Vestiging niet gevonden in KVK-stub." });
+            return NotFound(new { message = "Vestiging niet gevonden in KVK." });
         }
 
         if (match.IsInUse || await _db.Companies.AnyAsync(
@@ -186,7 +186,7 @@ public class CompaniesController : ControllerBase
             e.KvkEstablishmentId.Equals(kvkEstablishmentId, StringComparison.OrdinalIgnoreCase));
         if (match is null)
         {
-            return NotFound(new { message = "Vestiging niet gevonden in KVK-stub." });
+            return NotFound(new { message = "Vestiging niet gevonden in KVK." });
         }
 
         var existing = await _db.Companies

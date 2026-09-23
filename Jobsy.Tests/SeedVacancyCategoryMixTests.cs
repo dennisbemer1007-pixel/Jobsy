@@ -9,9 +9,9 @@ namespace Jobsy.Tests;
 public class SeedVacancyCategoryMixTests
 {
     [Fact]
-    public void Resolve_cycles_all_seven_built_in_categories()
+    public void Resolve_cycles_all_built_in_categories()
     {
-        var ids = Enumerable.Range(1, 7).Select(i => SeedVacancyCategoryMix.Resolve(i).CategoryId).ToHashSet();
+        var ids = Enumerable.Range(1, VacancyCategoryDefaults.All.Count).Select(i => SeedVacancyCategoryMix.Resolve(i).CategoryId).ToHashSet();
         Assert.Equal(VacancyCategoryDefaults.All.Count, ids.Count);
         Assert.Contains(VacancyCategoryDefaults.RegulierId, ids);
         Assert.Contains(VacancyCategoryDefaults.UitzendbureauId, ids);
@@ -20,12 +20,13 @@ public class SeedVacancyCategoryMixTests
         Assert.Contains(VacancyCategoryDefaults.VolunteerId, ids);
         Assert.Contains(VacancyCategoryDefaults.InternshipId, ids);
         Assert.Contains(VacancyCategoryDefaults.SeniorLightId, ids);
+        Assert.Contains(VacancyCategoryDefaults.FlexId, ids);
 
         Assert.Equal(VacancyKind.Volunteer, SeedVacancyCategoryMix.Resolve(5).Kind);
         Assert.Equal(VacancyKind.Internship, SeedVacancyCategoryMix.Resolve(6).Kind);
         Assert.False(SeedVacancyCategoryMix.Resolve(2).PreferHighlight);
         Assert.True(SeedVacancyCategoryMix.Resolve(3).PreferHighlight);
-        Assert.True(SeedVacancyCategoryMix.Resolve(8).SuitableFor65Plus); // second Regulier cycle
+        Assert.True(SeedVacancyCategoryMix.Resolve(9).SuitableFor65Plus); // second Regulier cycle
     }
 
     [Fact]

@@ -10,7 +10,7 @@ Jobsy lost het knelpunt op van traditionele vacaturesites door hyper-lokaal te m
   - Realistische mockdata (geen lege schermen tijdens de demo).
   - Strakke Funda-achtige gebruikersinterface.
 - **Tijdelijke 'Rookgordijnen' (Fake-it-till-you-make-it):**
-  - KVK-ophaling en betalingen (Mollie) worden via administratieve schermen en mock-services gesimuleerd voor de verkoopgesprekken.
+  - Betalingen (Mollie) worden via administratieve schermen gesimuleerd tot er een live key is; KVK gebruikt de live Handelsregister-API zodra een API-key is gezet.
 
 ## 3. Doelgroep
 - **Werkzoekenden:** Willen snel zien wat er in de buurt is zonder lange reistijden.

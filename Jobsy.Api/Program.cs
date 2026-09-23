@@ -250,7 +250,13 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
+app.MapGet("/health", () => Results.Ok(new
+    {
+        status = "ok",
+        commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
+            ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
+            ?? "local"
+    }))
     .AllowAnonymous();
 
 app.MapControllers();

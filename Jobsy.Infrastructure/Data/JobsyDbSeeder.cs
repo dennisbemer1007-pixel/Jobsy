@@ -1,5 +1,6 @@
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -40,6 +41,50 @@ public static class JobsyDbSeeder
         {
             logger.LogWarning(ex, "Vacancy category ensure/backfill after migrate failed; continuing.");
         }
+
+        try
+        {
+            await scope.ServiceProvider.GetRequiredService<Jobsy.Core.Interfaces.ITrainingUpskillService>()
+                .EnsureDefaultsAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Training catalog seed after migrate failed; continuing.");
+        }
+
+        try
+        {
+            await CompetencyTagBackfillSeeder.BackfillAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Competency tag backfill after migrate failed; continuing.");
+        }
+    }
+
+    public static bool PreferWipeOverSeed(IConfiguration configuration)
+        => DemoDataPurge.IsLiveProductionRuntime(configuration);
+
+    public static async Task PurgeDemoDataAsync(IServiceProvider services, IConfiguration configuration)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
+        var marked = await db.PlatformLogs.AnyAsync(l =>
+            l.Category == "Seed" && l.Message == DemoDataPurge.Marker);
+        if (!DemoDataPurge.ShouldRun(configuration, marked))
+        {
+            logger.LogInformation(
+                "Skipping operational wipe (already marked, Seed:Enabled on non-prod, or not jobsy-api/lobsy.nl). Service={Service} PublicWeb={PublicWeb} SeedEnabled={SeedEnabled} PurgeFlag={PurgeFlag} Marked={Marked}",
+                configuration["RENDER_SERVICE_NAME"],
+                configuration["PublicWebBaseUrl"],
+                configuration.GetValue("Seed:Enabled", false),
+                configuration.GetValue("Seed:PurgeDemoData", false),
+                marked);
+            return;
+        }
+
+        await DemoDataPurge.PurgeAsync(db, logger);
     }
 
     public static async Task SeedDataAsync(IServiceProvider services)

@@ -304,6 +304,140 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 .OrderBy(r => r.SortOrder)
                 .Select(r => new { r.EmployerName, r.ContactName, r.Email, r.Phone, r.CreatedAtUtc })
                 .ToListAsync(cancellationToken),
+            Competencies = await _db.CandidateCompetencies.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .Select(c => new
+                {
+                    c.Status,
+                    c.AnswersJson,
+                    c.SamenwerkenPercent,
+                    c.ResultaatgerichtheidPercent,
+                    c.StressbestendigheidPercent,
+                    c.InnovatiePercent,
+                    c.ExtraversiePercent,
+                    c.RiasecTagsJson,
+                    c.MatchTagsJson,
+                    c.CompletedAtUtc,
+                    c.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
+            DiscProfiles = await _db.CandidateDiscProfiles.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .Select(c => new
+                {
+                    c.Status,
+                    c.AnswersJson,
+                    c.DominantPercent,
+                    c.InvloedPercent,
+                    c.StabielPercent,
+                    c.NauwkeurigPercent,
+                    c.MatchTagsJson,
+                    c.CompletedAtUtc,
+                    c.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
+            WhoAmI = await _db.CandidateWhoAmIProfiles.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .Select(c => new
+                {
+                    c.IncludeOnCv,
+                    c.StoryText,
+                    c.KeywordsJson,
+                    c.FromOpenAi,
+                    c.StoryGeneratedAtUtc,
+                    c.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
+            CareerInterests = await _db.CandidateCareerInterests.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .Select(c => new
+                {
+                    c.Status,
+                    c.AnswersJson,
+                    c.RealisticPercent,
+                    c.InvestigativePercent,
+                    c.ArtisticPercent,
+                    c.SocialPercent,
+                    c.EnterprisingPercent,
+                    c.ConventionalPercent,
+                    c.HollandCode,
+                    c.RiasecTagsJson,
+                    c.MatchTagsJson,
+                    c.CompassJson,
+                    c.CompletedAtUtc,
+                    c.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
+            RoleFitChecks = await _db.CandidateRoleFitChecks.AsNoTracking()
+                .Where(r => r.UserId == user.Id)
+                .Select(r => new
+                {
+                    r.JobTitle,
+                    r.MatchPercent,
+                    r.ResultJson,
+                    r.FromDeepAnalysis,
+                    r.FromOpenAi,
+                    r.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
+            TrainingClicks = await _db.TrainingClicks.AsNoTracking()
+                .Include(c => c.Offer).ThenInclude(o => o.Provider)
+                .Where(c => c.UserId == user.Id)
+                .OrderByDescending(c => c.ClickedAtUtc)
+                .Select(c => new
+                {
+                    c.CandidateHash,
+                    c.Campaign,
+                    c.ClickedAtUtc,
+                    OfferTitle = c.Offer.Title,
+                    ProviderName = c.Offer.Provider.Name
+                })
+                .ToListAsync(cancellationToken),
+            DeepAnalysis = await _db.CandidateDeepAnalyses.AsNoTracking()
+                .Where(d => d.UserId == user.Id)
+                .Select(d => new
+                {
+                    Kind = d.Kind.ToString(),
+                    d.Status,
+                    d.AnswersJson,
+                    d.TagsJson,
+                    d.UnlockedAtUtc,
+                    d.CompletedAtUtc,
+                    d.ReportGeneratedAtUtc,
+                    d.UpdatedAtUtc
+                })
+                .ToListAsync(cancellationToken),
+            DeepAnalysisCheckouts = await _db.DeepAnalysisCheckouts.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .OrderByDescending(c => c.CreatedAtUtc)
+                .Select(c => new
+                {
+                    c.Id,
+                    Kind = c.Kind.ToString(),
+                    c.PaymentId,
+                    c.AmountEuro,
+                    Status = c.Status.ToString(),
+                    c.CreatedAtUtc,
+                    c.PaidAtUtc
+                })
+                .ToListAsync(cancellationToken),
+            TalentContactRequests = await _db.TalentContactRequests.AsNoTracking()
+                .Where(r => r.CandidateUserId == user.Id || r.EmployerUserId == user.Id)
+                .OrderByDescending(r => r.CreatedAtUtc)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.CompanyId,
+                    r.CandidateUserId,
+                    r.EmployerUserId,
+                    Status = r.Status.ToString(),
+                    r.Message,
+                    r.CreatedAtUtc,
+                    r.RespondByUtc,
+                    r.RespondedAtUtc,
+                    r.ContactSharedAtUtc
+                })
+                .ToListAsync(cancellationToken),
             CompanyMemberships = memberships,
             Applications = applications,
             Likes = likes,
@@ -797,6 +931,78 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (references.Count > 0)
         {
             _db.CandidateReferences.RemoveRange(references);
+        }
+
+        var competencies = await _db.CandidateCompetencies
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (competencies.Count > 0)
+        {
+            _db.CandidateCompetencies.RemoveRange(competencies);
+        }
+
+        var discs = await _db.CandidateDiscProfiles
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (discs.Count > 0)
+        {
+            _db.CandidateDiscProfiles.RemoveRange(discs);
+        }
+
+        var whoAmI = await _db.CandidateWhoAmIProfiles
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (whoAmI.Count > 0)
+        {
+            _db.CandidateWhoAmIProfiles.RemoveRange(whoAmI);
+        }
+
+        var careers = await _db.CandidateCareerInterests
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (careers.Count > 0)
+        {
+            _db.CandidateCareerInterests.RemoveRange(careers);
+        }
+
+        var roleFits = await _db.CandidateRoleFitChecks
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (roleFits.Count > 0)
+        {
+            _db.CandidateRoleFitChecks.RemoveRange(roleFits);
+        }
+
+        var trainingClicks = await _db.TrainingClicks
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var click in trainingClicks)
+        {
+            click.UserId = null;
+        }
+
+        var deepAnalyses = await _db.CandidateDeepAnalyses
+            .Where(d => d.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (deepAnalyses.Count > 0)
+        {
+            _db.CandidateDeepAnalyses.RemoveRange(deepAnalyses);
+        }
+
+        var deepCheckouts = await _db.DeepAnalysisCheckouts
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (deepCheckouts.Count > 0)
+        {
+            _db.DeepAnalysisCheckouts.RemoveRange(deepCheckouts);
+        }
+
+        var talentAsCandidate = await _db.TalentContactRequests
+            .Where(r => r.CandidateUserId == user.Id || r.EmployerUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (talentAsCandidate.Count > 0)
+        {
+            _db.TalentContactRequests.RemoveRange(talentAsCandidate);
         }
 
         var applicationIds = applications.Select(a => a.Id).ToList();

@@ -22,6 +22,15 @@ public class IntegrationHelpDocsTests
     }
 
     [Fact]
+    public void Kvk_help_docs_explain_base_url()
+    {
+        var doc = IntegrationHelpDocs.TryGet("kvk");
+        Assert.NotNull(doc);
+        Assert.Contains("https://api.kvk.nl/api/", doc!.Tip, StringComparison.Ordinal);
+        Assert.Contains("https://api.kvk.nl/test/api/", doc.Tip, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Unknown_key_returns_null()
     {
         Assert.Null(IntegrationHelpDocs.TryGet("PostcodeCheck"));

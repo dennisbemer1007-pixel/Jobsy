@@ -13,5 +13,11 @@ public enum VacancyKind
     Internship = 1,
 
     /// <summary>Local volunteer / maatschappelijke initiatieven.</summary>
-    Volunteer = 2
+    Volunteer = 2,
+
+    /// <summary>
+    /// Flex placement via NEN 4400-1 backoffice partner; 0 tokens to publish;
+    /// Lobsy margin € 2,00/hour above backoffice buy price.
+    /// </summary>
+    Flex = 3
 }

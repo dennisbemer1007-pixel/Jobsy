@@ -27,8 +27,8 @@ public static class DependencyInjection
             {
                 throw new InvalidOperationException(
                     "ConnectionStrings:JobsyDb (or DATABASE_URL) is required outside Development. " +
-                    "On Render: jobsy-api → Environment → set ConnectionStrings__JobsyDb to the " +
-                    "Internal Database URL from jobsy-db → Info.");
+                    "On Render: open the API service → Environment → set ConnectionStrings__JobsyDb to the " +
+                    "Internal Database URL from that environment's Postgres → Info.");
             }
 
             connectionString =
@@ -43,7 +43,7 @@ public static class DependencyInjection
         {
             throw new InvalidOperationException(
                 "ConnectionStrings:JobsyDb is not a valid Postgres connection string. " +
-                "Paste the Internal Database URL from Render (jobsy-db → Info).", ex);
+                "Paste the Internal Database URL from Render (Postgres → Info).", ex);
         }
 
         if (!isDev
@@ -82,6 +82,20 @@ public static class DependencyInjection
                     if (!string.IsNullOrWhiteSpace(publicApi))
                     {
                         options.WebhookUrl = publicApi.TrimEnd('/') + "/api/feedback/cursor-webhook";
+                    }
+                }
+            });
+
+        services.AddOptions<KvkOptions>()
+            .Bind(configuration.GetSection(KvkOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                if (string.IsNullOrWhiteSpace(options.ApiKey))
+                {
+                    var alt = configuration["KVK_API_KEY"];
+                    if (!string.IsNullOrWhiteSpace(alt))
+                    {
+                        options.ApiKey = alt.Trim();
                     }
                 }
             });
@@ -190,11 +204,22 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         });
 
+        services.AddHttpClient(KvkHandelsregisterService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(20);
+            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+
         // Real Mollie when API key is configured; Development falls back to stub without a key.
         services.AddScoped<MolliePaymentStub>();
         services.AddScoped<IPaymentService, MolliePaymentService>();
 
-        services.AddScoped<IKvkService, KvkServiceStub>();
+        // Live KVK when API key is configured (Admin Integraties or Kvk__ApiKey); otherwise demo stub.
+        services.AddScoped<KvkServiceStub>();
+        services.AddScoped<IKvkService, KvkHandelsregisterService>();
         services.AddScoped<IKvkVerificationRetryService, KvkVerificationRetryService>();
         services.AddScoped<EmailServiceStub>();
         services.AddScoped<IEmailService, SmtpEmailService>();
@@ -224,8 +249,50 @@ public static class DependencyInjection
             sp.GetRequiredService<IDashboardLiveOverlay>()));
         services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
+        services.AddHttpClient(WhoAmIGenerationService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(25);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddScoped<IWhoAmIGenerationService, WhoAmIGenerationService>();
+        services.AddScoped<IWhoAmIService, WhoAmIService>();
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
         services.AddScoped<ICvExtractionService, CvExtractionService>();
+        services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
+        services.AddHttpClient(CultureFitAiService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(12);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddScoped<ICultureFitAiService, CultureFitAiService>();
+        services.AddScoped<ICandidateCompetencyService, CandidateCompetencyService>();
+        services.AddScoped<ICandidateDiscService, CandidateDiscService>();
+        services.AddScoped<ICandidateCareerInterestService, CandidateCareerInterestService>();
+        services.AddHttpClient(CareerCompassGenerationService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(45);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddScoped<ICareerCompassGenerationService, CareerCompassGenerationService>();
+        services.AddHttpClient(RoleFitCheckService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddScoped<IRoleFitCheckService, RoleFitCheckService>();
+        services.AddScoped<ITrainingUpskillService, TrainingUpskillService>();
+        services.AddScoped<IDeepAnalysisService, DeepAnalysisService>();
+        services.AddScoped<IAssessmentReportPdfService, AssessmentReportPdfService>();
+        services.AddScoped<ITalentPoolService, TalentPoolService>();
+        services.AddScoped<IFlexCommercialService, FlexCommercialService>();
         services.AddScoped<ICandidateMapImageService, OsmTileMapImageService>();
         services.AddHttpClient("OsmTiles", OsmTileMapImageService.ConfigureHttpClient);
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
@@ -258,6 +325,7 @@ public static class DependencyInjection
         services.AddScoped<IFeedbackService, FeedbackService>();
         services.AddHostedService<FeedbackAutomationPollHostedService>();
         services.AddHostedService<DataRetentionHostedService>();
+        services.AddHostedService<TalentContactRefundHostedService>();
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();

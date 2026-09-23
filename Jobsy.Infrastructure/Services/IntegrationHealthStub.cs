@@ -15,19 +15,22 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
     private readonly IEmailService _email;
     private readonly OpenAiOptions _openAiOptions;
     private readonly ILogger<IntegrationHealthStub> _logger;
+    private readonly KvkHandelsregisterService? _kvk;
 
     public IntegrationHealthStub(
         IIntegrationCredentialService credentials,
         IHttpClientFactory httpClientFactory,
         IEmailService email,
         IOptions<OpenAiOptions> openAiOptions,
-        ILogger<IntegrationHealthStub> logger)
+        ILogger<IntegrationHealthStub> logger,
+        KvkHandelsregisterService? kvk = null)
     {
         _credentials = credentials;
         _httpClientFactory = httpClientFactory;
         _email = email;
         _openAiOptions = openAiOptions.Value;
         _logger = logger;
+        _kvk = kvk;
     }
 
     public async Task<IReadOnlyList<IntegrationHealthResult>> GetAllAsync(
@@ -172,7 +175,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
             {
                 IntegrationKey.OpenAI => await TestOpenAiAsync(cancellationToken),
                 IntegrationKey.Mollie => await TestMollieAsync(cancellationToken),
-                IntegrationKey.Kvk => await TestConfiguredAsync(key, "KvK API-key", cancellationToken),
+                IntegrationKey.Kvk => await TestKvkAsync(cancellationToken),
                 IntegrationKey.Mail => await TestMailAsync(cancellationToken),
                 IntegrationKey.MicrosoftEntra => await TestOAuthAsync(key, requireTenant: true, cancellationToken),
                 IntegrationKey.GoogleEntra => await TestOAuthAsync(key, requireTenant: false, cancellationToken),
@@ -268,6 +271,45 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         return (false, $"Mollie gaf {(int)response.StatusCode} — controleer de API-key. {detail}".Trim());
     }
 
+    private Task<(bool Ok, string Message)> TestKvkAsync(CancellationToken cancellationToken)
+        => _kvk is not null
+            ? _kvk.TestConnectionAsync(cancellationToken)
+            : TestKvkDirectAsync(cancellationToken);
+
+    private async Task<(bool Ok, string Message)> TestKvkDirectAsync(CancellationToken cancellationToken)
+    {
+        var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Kvk, cancellationToken);
+        if (string.IsNullOrWhiteSpace(secrets?.ApiKey))
+        {
+            return (false, "Geen KVK API-key geconfigureerd. Zonder key blijft de demo-stub actief.");
+        }
+
+        var baseUrl = KvkApiBaseUrl.Resolve(secrets.BaseUrl);
+        var client = _httpClientFactory.CreateClient("IntegrationProbe");
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            new Uri(new Uri(baseUrl), "v2/zoeken?kvkNummer=68750110&resultatenPerPagina=1"));
+        request.Headers.TryAddWithoutValidation("apikey", secrets.ApiKey.Trim());
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        using var response = await client.SendAsync(request, cancellationToken);
+        if (response.StatusCode is System.Net.HttpStatusCode.OK or System.Net.HttpStatusCode.NotFound)
+        {
+            return (true,
+                $"Verbinding met KVK Handelsregister OK ({KvkApiBaseUrl.EnvironmentLabel(baseUrl)}). Live lookup is actief.");
+        }
+
+        if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+        {
+            return (false,
+                "KVK weigerde de API-key (401/403). Controleer de key én de Base URL: "
+                + "productie https://api.kvk.nl/api/ of test https://api.kvk.nl/test/api/.");
+        }
+
+        var kvkBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        var kvkDetail = kvkBody.Length > 160 ? kvkBody[..160] : kvkBody;
+        return (false, $"KVK gaf {(int)response.StatusCode}. {kvkDetail}".Trim());
+    }
+
     private async Task<(bool Ok, string Message)> TestMailAsync(CancellationToken cancellationToken)
     {
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
@@ -307,20 +349,6 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
         var label = IntegrationCredentialService.DisplayName(key);
         return (true, $"{label}-credentials aanwezig. Login-knoppen gebruiken deze Integraties-gegevens.");
-    }
-
-    private async Task<(bool Ok, string Message)> TestConfiguredAsync(
-        IntegrationKey key,
-        string label,
-        CancellationToken cancellationToken)
-    {
-        var secrets = await _credentials.GetSecretsAsync(key, cancellationToken);
-        if (string.IsNullOrWhiteSpace(secrets?.ApiKey))
-        {
-            return (false, $"Geen {label} geconfigureerd.");
-        }
-
-        return (true, $"{label} opgeslagen (stub — live ping volgt bij echte API-koppeling).");
     }
 
     private static IntegrationHealthResult ToHealth(IntegrationCredentialView view, DateTime now)

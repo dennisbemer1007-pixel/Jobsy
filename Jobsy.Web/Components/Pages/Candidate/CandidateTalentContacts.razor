@@ -1,0 +1,106 @@
+@page "/candidate/talent-contacts"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<PageTitle>@Culture["Talent.CandidateTitle"] · Lobsy</PageTitle>
+
+<div class="panel-page profile-page profile-page--candidate">
+    <header class="saved-gate__header profile-page__header">
+        <h1>@Culture["Talent.CandidateTitle"]</h1>
+        <p class="login-lead">@Culture["Talent.CandidateLead"]</p>
+        <p><a href="/candidate/profile">@Culture["Competency.BackToProfile"]</a></p>
+    </header>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_rows.Count == 0)
+    {
+        <p class="state-message">@Culture["Talent.CandidateEmpty"]</p>
+    }
+
+    @foreach (var row in _rows)
+    {
+        <article class="detail-card">
+            <p>
+                <strong>@(string.IsNullOrWhiteSpace(row.CompanyName) ? Culture["Talent.CompanyUnknown"] : row.CompanyName)</strong>
+            </p>
+            <p>@Culture["Talent.Status"]: <strong>@row.Status</strong></p>
+            <p>@Culture.Format("Talent.RespondBy", row.RespondByUtc.ToLocalTime().ToString("g"))</p>
+            <p>@row.Message</p>
+            @if (CanCandidateRespond(row))
+            {
+                <div class="profile-save-bar">
+                    <button class="login-submit" type="button" disabled="@_saving" @onclick="() => RespondAsync(row.Id, accept: true, alreadyPlaced: false)">
+                        @Culture["Talent.Accept"]
+                    </button>
+                    <button class="engagement-btn" type="button" disabled="@_saving" @onclick="() => RespondAsync(row.Id, accept: false, alreadyPlaced: true)">
+                        @Culture["Talent.AlreadyPlaced"]
+                    </button>
+                    <button class="engagement-btn" type="button" disabled="@_saving" @onclick="() => RespondAsync(row.Id, accept: false, alreadyPlaced: false)">
+                        @Culture["Talent.Decline"]
+                    </button>
+                </div>
+            }
+        </article>
+    }
+</div>
+
+@code {
+    private List<TalentContactRequestModel> _rows = [];
+    private string? _message;
+    private bool _loading = true;
+    private bool _saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _rows = await Api.ListCandidateTalentContactsAsync() ?? [];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static bool CanCandidateRespond(TalentContactRequestModel row)
+        => Enum.TryParse<TalentContactStatus>(row.Status, ignoreCase: true, out var status)
+           && TalentContactRules.CanCandidateRespond(status);
+
+    private async Task RespondAsync(Guid id, bool accept, bool alreadyPlaced)
+    {
+        _saving = true;
+        _message = null;
+        try
+        {
+            await Api.RespondToTalentContactAsync(id, accept, alreadyPlaced);
+            _rows = await Api.ListCandidateTalentContactsAsync() ?? [];
+            _message = accept && !alreadyPlaced
+                ? Culture["Talent.Accepted"]
+                : Culture["Talent.Declined"];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

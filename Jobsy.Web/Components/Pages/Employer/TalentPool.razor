@@ -1,0 +1,144 @@
+@page "/employer/talent"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@using Jobsy.Core.Rules
+
+<PageTitle>@Culture["Talent.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="saved-gate__header">
+        <h1>@Culture["Talent.Title"]</h1>
+        <p class="login-lead">@Culture["Talent.Lead"]</p>
+        <p class="profile-address__hint">@Culture["Talent.NoAge"]</p>
+        <p><a href="/employer/talent-contacts">@Culture["Talent.EmployerContactsTitle"]</a></p>
+    </header>
+
+    <article class="detail-card">
+        <form class="login-form" @onsubmit="SearchAsync" @onsubmit:preventDefault>
+            <label>
+                Tags (competenties / RIASEC)
+                <input @bind="_tags" placeholder="Samenwerken, Social" />
+            </label>
+            <label>
+                Max. reistijd (min)
+                <input type="number" min="1" max="180" @bind="_maxTravel" />
+            </label>
+            <label>
+                Vervoer
+                <select @bind="_transport">
+                    <option value="@TransportLabels.Bike">@Culture["Transport.Bike"]</option>
+                    <option value="@TransportLabels.EBike">@Culture["Transport.EBike"]</option>
+                    <option value="@TransportLabels.Car">@Culture["Transport.Car"]</option>
+                    <option value="@TransportLabels.PublicTransport">@Culture["Transport.Transit"]</option>
+                    <option value="@TransportLabels.Walking">@Culture["Transport.Walk"]</option>
+                </select>
+            </label>
+            <label>
+                Beschikbaarheid
+                <select @bind="_availability">
+                    <option value="">Alle</option>
+                    <option value="direct">Per direct</option>
+                    <option value="parttime">Parttime</option>
+                    <option value="fulltime">Fulltime</option>
+                    <option value="seizoen">Seizoenswerk</option>
+                </select>
+            </label>
+            <label>
+                Rijbewijs
+                <input @bind="_license" placeholder="B" />
+            </label>
+            <button class="login-submit" type="submit" disabled="@_loading">Zoeken</button>
+        </form>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+
+        @if (_results.Count == 0 && !_loading)
+        {
+            <p class="state-message">Geen anonieme kandidaten gevonden met deze filters.</p>
+        }
+
+        <div class="drilldown-grid">
+            @foreach (var card in _results)
+            {
+                <div class="detail-card">
+                    <p><strong>@card.RegionLabel</strong> · @(card.TravelMinutes is int m ? $"{m} min" : "reistijd onbekend")</p>
+                    <p>Tags: @string.Join(", ", card.MatchTags.Concat(card.RiasecTags).Distinct())</p>
+                    @if (!string.IsNullOrWhiteSpace(card.HollandCode))
+                    {
+                        <p>Holland-code: @card.HollandCode</p>
+                    }
+                    @if (card.CompetencyScores is not null)
+                    {
+                        <p>Scores: S @card.CompetencyScores.Samenwerken% · R @card.CompetencyScores.Resultaatgerichtheid% · St @card.CompetencyScores.Stressbestendigheid% · I @card.CompetencyScores.Innovatie%</p>
+                    }
+                    <p>@(card.AvailabilitySummary ?? "Beschikbaarheid onbekend")</p>
+                    <p>Rijbewijs: @(card.DrivingLicenses.Count == 0 ? "—" : string.Join(", ", card.DrivingLicenses))</p>
+                    @if (card.CompetenceDeepCompleted || card.CareerDeepCompleted)
+                    {
+                        <p class="profile-address__hint">
+                            @(card.CompetenceDeepCompleted ? "Competentie-diepte-analyse voltooid" : "")
+                            @(card.CareerDeepCompleted ? " Beroepen-diepte-analyse voltooid" : "")
+                        </p>
+                    }
+                    <button class="login-submit" type="button" @onclick="() => UnlockAsync(card.CandidateUserId)">
+                        @Culture["Talent.Unlock"]
+                    </button>
+                </div>
+            }
+        </div>
+    </article>
+</div>
+
+@code {
+    private bool _loading;
+    private string? _message;
+    private string _tags = "";
+    private int? _maxTravel = 45;
+    private string _license = "";
+    private string _availability = "";
+    private string _transport = TransportLabels.Bike;
+    private List<AnonymousTalentCard> _results = [];
+
+    protected override async Task OnInitializedAsync() => await SearchAsync();
+
+    private async Task SearchAsync()
+    {
+        _loading = true;
+        _message = null;
+        try
+        {
+            _results = await Api.SearchTalentPoolAsync(_tags, _maxTravel, _license, _availability, _transport) ?? [];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _results = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task UnlockAsync(Guid candidateUserId)
+    {
+        _message = null;
+        try
+        {
+            var msg = "Hallo! We hebben interesse in een gesprek via Lobsy.";
+            await Api.UnlockTalentContactAsync(candidateUserId, msg);
+            _message = "Contactverzoek verstuurd (1 token).";
+            Navigation.NavigateTo("/employer/talent-contacts");
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+}

@@ -421,6 +421,7 @@ public sealed class SalesCommercialService : ISalesCommercialService
     [
         (VacancyKind.Regular, 1m),
         (VacancyKind.Internship, 0m),
-        (VacancyKind.Volunteer, 0m)
+        (VacancyKind.Volunteer, 0m),
+        (VacancyKind.Flex, 0m)
     ];
 }

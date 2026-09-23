@@ -7,11 +7,13 @@ public static class VacancyKindLabels
     public const string Regular = "Regulier";
     public const string Internship = "Stageplek";
     public const string Volunteer = "Vrijwilligerswerk";
+    public const string Flex = "Flex-inzet";
 
     public static string ToDutch(VacancyKind kind) => kind switch
     {
         VacancyKind.Internship => Internship,
         VacancyKind.Volunteer => Volunteer,
+        VacancyKind.Flex => Flex,
         _ => Regular
     };
 
@@ -37,6 +39,7 @@ public static class VacancyKindLabels
             "regulier" or "regular" or "vaste baan" => VacancyKind.Regular,
             "stage" or "stageplek" or "internship" => VacancyKind.Internship,
             "vrijwillig" or "vrijwilligerswerk" or "volunteer" => VacancyKind.Volunteer,
+            "flex" or "flex-inzet" or "flexwerk" => VacancyKind.Flex,
             _ => VacancyKind.Regular
         };
     }

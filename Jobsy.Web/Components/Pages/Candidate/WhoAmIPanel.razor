@@ -1,0 +1,203 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<div class="whoami">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrWhiteSpace(_message) && _state is null)
+    {
+        <p class="state-message">@_message</p>
+    }
+    else if (_state is { IsUnlocked: true } open)
+    {
+        <p class="login-lead">@Culture["WhoAmI.LeadOpen"]</p>
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <p class="kompas-status kompas-status--ok">@_message</p>
+        }
+        <h3 class="whoami__title">@Culture["WhoAmI.StoryTitle"]</h3>
+        <div class="whoami-story">
+            @foreach (var para in Paragraphs(open.Story))
+            {
+                <p>@para</p>
+            }
+        </div>
+        @if (open.Keywords.Count > 0)
+        {
+            <h3 class="whoami__title">@Culture["WhoAmI.Keywords"]</h3>
+            <ul class="whoami-chips">
+                @foreach (var keyword in open.Keywords)
+                {
+                    <li>@keyword</li>
+                }
+            </ul>
+        }
+        <div class="whoami-visuals">
+            <CompetencyScorePanel Scores="open.CompetencyScores" />
+            <div>
+                <h3 class="whoami__title">@Culture["WhoAmI.DiscTitle"]</h3>
+                <WhoAmIDiscQuadrant Scores="open.DiscScores" />
+            </div>
+        </div>
+        <label class="whoami-attach">
+            <input type="checkbox" checked="@open.IncludeOnCv" disabled="@_busy" @onchange="OnAttachChanged" />
+            <span>
+                <strong>@Culture["WhoAmI.AttachCv"]</strong>
+                <span class="whoami-attach__hint">@Culture["WhoAmI.AttachHint"]</span>
+            </span>
+        </label>
+    }
+    else if (_state is { } locked)
+    {
+        <p class="login-lead">@Culture["WhoAmI.LeadLocked"]</p>
+        <p class="kompas-status">@Culture.Format("WhoAmI.Progress", locked.CompletedCount)</p>
+        <ol class="whoami-checklist">
+            <li class="@(locked.ProfileFilled ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(locked.ProfileFilled ? "✓" : "")</span>
+                <div>
+                    <strong>@Culture["WhoAmI.StepProfile"]</strong>
+                    @if (!locked.ProfileFilled)
+                    {
+                        <p>@Culture["WhoAmI.StepProfileHint"]</p>
+                        <button type="button" class="engagement-btn" @onclick="() => GoTab(CandidateKompasTabs.Profile)">@Culture["WhoAmI.OpenProfile"]</button>
+                    }
+                </div>
+            </li>
+            <li class="@(locked.CompetencyCompleted ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(locked.CompetencyCompleted ? "✓" : "")</span>
+                <div>
+                    <strong>@Culture["WhoAmI.StepCompetency"]</strong>
+                    @if (!locked.CompetencyCompleted)
+                    {
+                        <a class="engagement-btn" href="/candidate/competencies">@Culture["WhoAmI.OpenCompetency"]</a>
+                    }
+                </div>
+            </li>
+            <li class="@(locked.CareerCompleted ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(locked.CareerCompleted ? "✓" : "")</span>
+                <div>
+                    <strong>@Culture["WhoAmI.StepCareer"]</strong>
+                    @if (!locked.CareerCompleted)
+                    {
+                        <a class="engagement-btn" href="/candidate/career">@Culture["WhoAmI.OpenCareer"]</a>
+                    }
+                </div>
+            </li>
+            <li class="@(locked.DiscCompleted ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(locked.DiscCompleted ? "✓" : "")</span>
+                <div>
+                    <strong>@Culture["WhoAmI.StepDisc"]</strong>
+                    @if (!locked.DiscCompleted)
+                    {
+                        <a class="engagement-btn" href="/candidate/disc">@Culture["WhoAmI.OpenDisc"]</a>
+                    }
+                </div>
+            </li>
+        </ol>
+        @if (!string.IsNullOrWhiteSpace(locked.Encouragement))
+        {
+            <p class="login-lead">@locked.Encouragement</p>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public bool Active { get; set; }
+    [Parameter] public EventCallback<string> OnOpenTab { get; set; }
+
+    private bool _loading = true;
+    private bool _busy;
+    private bool _wasActive;
+    private string? _message;
+    private WhoAmIState? _state;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Active == _wasActive)
+        {
+            return;
+        }
+
+        var opening = Active && !_wasActive;
+        _wasActive = Active;
+        if (opening)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        var firstLoad = _state is null;
+        if (firstLoad)
+        {
+            _loading = true;
+        }
+
+        try
+        {
+            var next = await Api.GetMyWhoAmIAsync();
+            if (next is not null)
+            {
+                _state = next;
+                _message = null;
+            }
+            else if (_state is null)
+            {
+                _message = Culture["Common.Error"];
+            }
+        }
+        catch
+        {
+            if (_state is null)
+            {
+                _message = Culture["Common.Error"];
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task GoTab(string tab)
+    {
+        if (OnOpenTab.HasDelegate)
+        {
+            await OnOpenTab.InvokeAsync(tab);
+            return;
+        }
+
+        Navigation.NavigateTo($"/home?tab={tab}");
+    }
+
+    private async Task OnAttachChanged(ChangeEventArgs e)
+    {
+        var include = e.Value is true or "true" or "on";
+        _busy = true;
+        _message = null;
+        try
+        {
+            _state = await Api.SaveMyWhoAmIAsync(include);
+            _message = Culture["WhoAmI.Saved"];
+        }
+        catch
+        {
+            _message = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static IEnumerable<string> Paragraphs(string? story)
+        => string.IsNullOrWhiteSpace(story)
+            ? []
+            : story.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+}

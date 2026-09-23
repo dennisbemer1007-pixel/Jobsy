@@ -338,6 +338,162 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Candidate_can_draft_and_complete_competency_test_then_see_top_matches()
+    {
+        var client = CandidateClient();
+        var start = await client.GetFromJsonAsync<JsonElement>("api/me/competencies", JsonOpts);
+        Assert.Equal(25, start.GetProperty("questionCount").GetInt32());
+        Assert.Equal("Draft", start.GetProperty("status").GetString());
+
+        var draftAnswers = new Dictionary<string, int> { ["1"] = 4, ["2"] = 5, ["6"] = 3 };
+        var draft = await client.PutAsJsonAsync("api/me/competencies", new { answers = draftAnswers, complete = false });
+        Assert.Equal(HttpStatusCode.OK, draft.StatusCode);
+        var draftBody = await draft.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal("Draft", draftBody.GetProperty("status").GetString());
+        Assert.Equal(3, draftBody.GetProperty("answeredCount").GetInt32());
+        Assert.True(!draftBody.TryGetProperty("scores", out var draftScores)
+                    || draftScores.ValueKind is JsonValueKind.Null);
+
+        var tooSoon = await client.PutAsJsonAsync("api/me/competencies", new { answers = draftAnswers, complete = true });
+        Assert.Equal(HttpStatusCode.BadRequest, tooSoon.StatusCode);
+
+        var full = Enumerable.Range(1, 25).ToDictionary(i => i.ToString(), _ => 4);
+        var complete = await client.PutAsJsonAsync("api/me/competencies", new { answers = full, complete = true });
+        Assert.Equal(HttpStatusCode.OK, complete.StatusCode);
+        var done = await complete.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal("Completed", done.GetProperty("status").GetString());
+        Assert.Equal(25, done.GetProperty("answeredCount").GetInt32());
+        var scores = done.GetProperty("scores");
+        Assert.InRange(scores.GetProperty("samenwerken").GetInt32(), 0, 100);
+        Assert.InRange(scores.GetProperty("innovatie").GetInt32(), 0, 100);
+
+        var matches = await client.GetFromJsonAsync<JsonElement>("api/me/matched-vacancies", JsonOpts);
+        Assert.Equal(JsonValueKind.Array, matches.ValueKind);
+        Assert.True(matches.GetArrayLength() <= 10);
+        var percents = new List<int>();
+        foreach (var item in matches.EnumerateArray())
+        {
+            var pct = item.GetProperty("matchPercent").GetInt32();
+            Assert.True(pct >= 60);
+            percents.Add(pct);
+            Assert.True(item.GetProperty("why").GetArrayLength() > 0);
+            Assert.True(item.GetProperty("gaps").GetArrayLength() > 0);
+        }
+
+        for (var i = 1; i < percents.Count; i++)
+        {
+            Assert.True(percents[i - 1] >= percents[i]);
+        }
+
+        var emptyWipe = await client.PutAsJsonAsync(
+            "api/me/competencies",
+            new { answers = new Dictionary<string, int>(), complete = false });
+        Assert.Equal(HttpStatusCode.BadRequest, emptyWipe.StatusCode);
+        var still = await client.GetFromJsonAsync<JsonElement>("api/me/competencies", JsonOpts);
+        Assert.Equal("Completed", still.GetProperty("status").GetString());
+        Assert.Equal(25, still.GetProperty("answeredCount").GetInt32());
+        var stillScores = still.GetProperty("scores");
+        Assert.InRange(stillScores.GetProperty("samenwerken").GetInt32(), 0, 100);
+    }
+
+    [Fact]
+    public async Task Candidate_can_complete_career_interest_test()
+    {
+        var client = CandidateClient();
+        var start = await client.GetFromJsonAsync<JsonElement>("api/me/career-interests", JsonOpts);
+        Assert.Equal(25, start.GetProperty("questionCount").GetInt32());
+
+        var full = Enumerable.Range(1, 25).ToDictionary(i => i.ToString(), _ => 5);
+        var complete = await client.PutAsJsonAsync("api/me/career-interests", new { answers = full, complete = true });
+        Assert.Equal(HttpStatusCode.OK, complete.StatusCode);
+        var done = await complete.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal("Completed", done.GetProperty("status").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(done.GetProperty("hollandCode").GetString()));
+        Assert.True(done.GetProperty("riasecTags").GetArrayLength() > 0);
+        Assert.Equal(JsonValueKind.Array, done.GetProperty("topVacancies").ValueKind);
+    }
+
+    [Fact]
+    public async Task Candidate_role_fit_is_locked_until_both_quick_scans_then_returns_plain_language_fit()
+    {
+        var client = Authed(await _factory.SeedIsolatedCandidateAsync());
+        var locked = await client.GetFromJsonAsync<JsonElement>("api/me/role-fit", JsonOpts);
+        Assert.False(locked.GetProperty("isUnlocked").GetBoolean());
+        Assert.Contains("Functie-Fit Checker", locked.GetProperty("lockMessage").GetString(), StringComparison.Ordinal);
+
+        var blocked = await client.PostAsJsonAsync("api/me/role-fit", new { jobTitle = "Verpleegkundige" });
+        Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
+
+        var competence = Enumerable.Range(1, 25).ToDictionary(i => i.ToString(), _ => 4);
+        Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync("api/me/competencies", new { answers = competence, complete = true })).StatusCode);
+        var career = Enumerable.Range(1, 25).ToDictionary(i => i.ToString(), _ => 5);
+        Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync("api/me/career-interests", new { answers = career, complete = true })).StatusCode);
+
+        var empty = await client.PostAsJsonAsync("api/me/role-fit", new { jobTitle = "a" });
+        Assert.Equal(HttpStatusCode.BadRequest, empty.StatusCode);
+
+        var pii = await client.PostAsJsonAsync("api/me/role-fit", new { jobTitle = "ada@jobsy.local" });
+        Assert.Equal(HttpStatusCode.BadRequest, pii.StatusCode);
+
+        var ok = await client.PostAsJsonAsync("api/me/role-fit", new { jobTitle = "Verpleegkundige" });
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var body = await ok.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.True(body.GetProperty("isUnlocked").GetBoolean());
+        var result = body.GetProperty("lastResult");
+        Assert.InRange(result.GetProperty("matchPercent").GetInt32(), 0, 100);
+        Assert.True(result.GetProperty("strengths").GetArrayLength() > 0);
+        Assert.True(result.GetProperty("gaps").GetArrayLength() > 0);
+        Assert.True(result.GetProperty("actionSteps").GetArrayLength() > 0);
+        Assert.Contains("q=", result.GetProperty("mapHref").GetString(), StringComparison.Ordinal);
+        Assert.True(result.GetProperty("showDeepUpsell").GetBoolean());
+        Assert.DoesNotContain("RIASEC", result.ToString(), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("OCEAN", result.ToString(), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("@", result.ToString(), StringComparison.Ordinal);
+        Assert.True(result.TryGetProperty("trainingOffers", out var offers));
+        Assert.True(offers.GetArrayLength() > 0);
+        Assert.Contains("Zorgcollege", offers.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Candidate_deep_analysis_is_locked_per_kind_until_paid()
+    {
+        var client = CandidateClient();
+        var career = await client.GetFromJsonAsync<JsonElement>("api/me/deep-analysis?kind=career", JsonOpts);
+        Assert.Equal(150, career.GetProperty("questionCount").GetInt32());
+        Assert.False(career.GetProperty("isUnlocked").GetBoolean());
+        Assert.Contains("beroepentest", career.GetProperty("upsellCopy").GetString(), StringComparison.OrdinalIgnoreCase);
+
+        var competence = await client.GetFromJsonAsync<JsonElement>("api/me/deep-analysis?kind=competence", JsonOpts);
+        Assert.False(competence.GetProperty("isUnlocked").GetBoolean());
+        Assert.Contains("competentie", competence.GetProperty("upsellCopy").GetString(), StringComparison.OrdinalIgnoreCase);
+
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("api/me/talent-contacts")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("api/employer/talent/search")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Employer_talent_search_rejects_age_filters_and_hides_pii()
+    {
+        var employer = EmployerClient();
+        var age = await employer.GetAsync("api/employer/talent/search?minAge=18&maxAge=30");
+        Assert.Equal(HttpStatusCode.BadRequest, age.StatusCode);
+        var ageBody = await age.Content.ReadAsStringAsync();
+        Assert.Contains("Leeftijd", ageBody, StringComparison.OrdinalIgnoreCase);
+
+        var ok = await employer.GetAsync("api/employer/talent/search");
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var cards = await ok.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal(JsonValueKind.Array, cards.ValueKind);
+        foreach (var card in cards.EnumerateArray())
+        {
+            Assert.False(card.TryGetProperty("email", out var email) && email.ValueKind is JsonValueKind.String && email.GetString()?.Contains('@') == true);
+            Assert.False(card.TryGetProperty("fullName", out _));
+            Assert.False(card.TryGetProperty("phoneNumber", out _));
+            Assert.False(card.TryGetProperty("dateOfBirth", out _));
+        }
+    }
+
+    [Fact]
     public async Task Candidate_apply_gulden_middenweg_then_safety_net_then_otp()
     {
         var client = CandidateClient();
@@ -979,6 +1135,9 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         // Candidate home + saved/applications
         var candidate = CandidateClient();
         Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/competencies")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/career-interests")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/matched-vacancies")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/metrics/summary?period=week")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/likes")).StatusCode);
@@ -1068,6 +1227,113 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var branch = await db.Users.AsNoTracking().SingleAsync(u => u.Email == _factory.EmployerEmail);
         Assert.Equal(UserRole.BranchManager, branch.Role);
+    }
+
+    [Fact]
+    public async Task Enterprise_cannot_re_role_ambassadeur_via_invite()
+    {
+        var response = await Authed(_factory.EnterpriseEmail).PostAsJsonAsync("api/company-users/invite", new
+        {
+            email = _factory.AmbassadeurEmail,
+            fullName = "Hijack",
+            role = "BranchManager",
+            primaryCompanyId = _factory.CompanyId
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var amb = await db.Users.AsNoTracking().SingleAsync(u => u.Email == _factory.AmbassadeurEmail);
+        Assert.Equal(UserRole.Ambassadeur, amb.Role);
+    }
+
+    [Fact]
+    public async Task Enterprise_cannot_promote_candidate_without_verified_application()
+    {
+        _ = Authed(_factory.EnterpriseEmail);
+        const string email = "vreemd.kandidaat@jobsy.local";
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            if (!await db.Users.AnyAsync(u => u.Email == email))
+            {
+                db.Users.Add(new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = email,
+                    FullName = "Vreemde Kandidaat",
+                    Role = UserRole.Candidate,
+                    IsActive = true
+                });
+                await db.SaveChangesAsync();
+            }
+        }
+
+        var response = await Authed(_factory.EnterpriseEmail).PostAsJsonAsync("api/company-users/invite", new
+        {
+            email,
+            fullName = "Hijack",
+            role = "BranchManager",
+            primaryCompanyId = _factory.CompanyId
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        using var verify = _factory.Services.CreateScope();
+        var verifyDb = verify.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var candidate = await verifyDb.Users.AsNoTracking().SingleAsync(u => u.Email == email);
+        Assert.Equal(UserRole.Candidate, candidate.Role);
+    }
+
+    [Fact]
+    public async Task Enterprise_can_promote_candidate_with_verified_application()
+    {
+        _ = Authed(_factory.EnterpriseEmail);
+        const string email = "bekende.kandidaat@jobsy.local";
+        var candidateId = Guid.Parse("c1000000-0000-0000-0000-0000000000aa");
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            if (!await db.Users.AnyAsync(u => u.Email == email))
+            {
+                db.Users.Add(new User
+                {
+                    Id = candidateId,
+                    Email = email,
+                    FullName = "Bekende Kandidaat",
+                    Role = UserRole.Candidate,
+                    IsActive = true
+                });
+                db.Applications.Add(new Application
+                {
+                    Id = Guid.Parse("c1000000-0000-0000-0000-0000000000ab"),
+                    VacancyId = _factory.VacancyId,
+                    CandidateUserId = candidateId,
+                    CandidateName = "Bekende Kandidaat",
+                    CandidateEmail = email,
+                    PreferredTransport = "Fiets",
+                    EstimatedTravelMinutes = 10,
+                    Status = ApplicationStatus.Pending,
+                    EmailVerifiedAt = DateTime.UtcNow.AddHours(-1),
+                    CreatedAt = DateTime.UtcNow.AddHours(-2)
+                });
+                await db.SaveChangesAsync();
+            }
+        }
+
+        var response = await Authed(_factory.EnterpriseEmail).PostAsJsonAsync("api/company-users/invite", new
+        {
+            email,
+            fullName = "Nieuwe Vestigingsmanager",
+            role = "BranchManager",
+            primaryCompanyId = _factory.CompanyId
+        });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var verify = _factory.Services.CreateScope();
+        var verifyDb = verify.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var promoted = await verifyDb.Users.AsNoTracking().SingleAsync(u => u.Email == email);
+        Assert.Equal(UserRole.BranchManager, promoted.Role);
+        Assert.Equal(_factory.CompanyId, promoted.CompanyId);
     }
 
     [Fact]
@@ -1820,6 +2086,27 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
         });
         await db.SaveChangesAsync();
         return applicationId;
+    }
+
+    public async Task<string> SeedIsolatedCandidateAsync()
+    {
+        EnsureSeeded();
+        var n = Interlocked.Increment(ref _extraSeedCounter);
+        var email = $"fit-kandidaat-{n}@jobsy.local";
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            Email = email,
+            FullName = "Fit Kandidaat",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            DateOfBirth = new DateOnly(1998, 6, 15),
+            OpenForWork = true
+        });
+        await db.SaveChangesAsync();
+        return email;
     }
 
     private sealed class AllowAllModeration : IVacancyContentModerationService

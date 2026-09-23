@@ -141,6 +141,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         bool? suitableFor65Plus = null,
         IEnumerable<Guid>? companyIds = null,
         int? take = null,
+        int? minMatchPercent = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -218,6 +219,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
         {
             cap = Math.Clamp(cap, 1, 200);
             qs += $"&take={cap}";
+        }
+
+        if (minMatchPercent is int floor)
+        {
+            qs += $"&minMatchPercent={Math.Clamp(floor, 0, 100)}";
         }
 
         return await _http.GetFromJsonAsync<List<VacancyListItem>>($"api/vacancies/discover?{qs}", ct) ?? [];
@@ -600,6 +606,22 @@ public sealed class JobsyApiClient : IAsyncDisposable
         await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }
 
+    public async Task DownloadDeepAnalysisReportAsync(IJSRuntime js, string kind, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/me/deep-analysis/report?kind={Uri.EscapeDataString(kind)}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Rapport downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                       ?? $"Lobsy-{kind}-rapport.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
+    }
+
     public async Task DownloadApplicationLobsyCvPdfAsync(
         Guid applicationId,
         IJSRuntime js,
@@ -737,6 +759,427 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }, ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
+    public async Task<CandidateCompetencyState?> GetMyCompetenciesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CandidateCompetencyState>("api/me/competencies", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<WhoAmIState?> GetMyWhoAmIAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<WhoAmIState>("api/me/who-am-i", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<WhoAmIState> SaveMyWhoAmIAsync(bool includeOnCv, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/me/who-am-i", new { includeOnCv }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Persoonsprofiel opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<WhoAmIState>(cancellationToken: ct)
+               ?? new WhoAmIState();
+    }
+
+    public async Task<List<AnonymousTalentCard>?> SearchTalentPoolAsync(
+        string? tags,
+        int? maxTravelMinutes,
+        string? drivingLicense,
+        string? availability = null,
+        string? transport = null,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(tags))
+        {
+            qs.Add($"tags={Uri.EscapeDataString(tags)}");
+        }
+
+        if (maxTravelMinutes is int m)
+        {
+            qs.Add($"maxTravelMinutes={m}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(drivingLicense))
+        {
+            qs.Add($"drivingLicense={Uri.EscapeDataString(drivingLicense)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(availability))
+        {
+            qs.Add($"availability={Uri.EscapeDataString(availability)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(transport))
+        {
+            qs.Add($"transport={Uri.EscapeDataString(transport)}");
+        }
+
+        var url = "api/employer/talent/search" + (qs.Count == 0 ? "" : "?" + string.Join('&', qs));
+        try
+        {
+            return await _http.GetFromJsonAsync<List<AnonymousTalentCard>>(url, ct);
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
+    public async Task UnlockTalentContactAsync(Guid candidateUserId, string message, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/employer/talent/unlock",
+            new { candidateUserId, message },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Contact ontgrendelen mislukt.");
+        }
+    }
+
+    public async Task<List<TalentContactRequestModel>?> ListEmployerTalentContactsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<TalentContactRequestModel>>("api/employer/talent/requests", ct);
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
+    public async Task WithdrawTalentContactAsync(Guid requestId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/employer/talent/{requestId}/withdraw", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Intrekken mislukt.");
+        }
+    }
+
+    public async Task<List<TalentContactRequestModel>?> ListCandidateTalentContactsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<TalentContactRequestModel>>("api/me/talent-contacts", ct);
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
+    public async Task RespondToTalentContactAsync(Guid requestId, bool accept, bool alreadyPlaced = false, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/me/talent-contacts/{requestId}/respond",
+            new { accept, alreadyPlaced },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Reageren op contactverzoek mislukt.");
+        }
+    }
+
+    public async Task<CandidateCompetencyState> SaveMyCompetenciesAsync(
+        IReadOnlyDictionary<int, int> answers,
+        bool complete,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            answers = answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            complete
+        };
+        var response = await _http.PutAsJsonAsync("api/me/competencies", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Competentietest opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CandidateCompetencyState>(cancellationToken: ct)
+               ?? new CandidateCompetencyState();
+    }
+
+    public async Task<CandidateDiscState?> GetMyDiscAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CandidateDiscState>("api/me/disc", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CandidateDiscState> SaveMyDiscAsync(
+        IReadOnlyDictionary<int, int> answers,
+        bool complete,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            answers = answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            complete
+        };
+        var response = await _http.PutAsJsonAsync("api/me/disc", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Gedragsanalyse opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CandidateDiscState>(cancellationToken: ct)
+               ?? new CandidateDiscState();
+    }
+
+    public async Task<CandidateCareerInterestState?> GetMyCareerInterestsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CandidateCareerInterestState>("api/me/career-interests", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CandidateCareerInterestState> SaveMyCareerInterestsAsync(
+        IReadOnlyDictionary<int, int> answers,
+        bool complete,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            answers = answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            complete
+        };
+        var response = await _http.PutAsJsonAsync("api/me/career-interests", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Beroepentest opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CandidateCareerInterestState>(cancellationToken: ct)
+               ?? new CandidateCareerInterestState();
+    }
+
+    public async Task<RoleFitCheckState?> GetMyRoleFitAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<RoleFitCheckState>("api/me/role-fit", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<RoleFitCheckState> EvaluateRoleFitAsync(
+        string jobTitle,
+        Guid? vacancyId = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/me/role-fit", new { jobTitle, vacancyId }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Functie-fit toetsen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<RoleFitCheckState>(cancellationToken: ct)
+               ?? new RoleFitCheckState();
+    }
+
+    public async Task<List<TrainingOfferCard>> GetTrainingOffersAsync(
+        string? jobTitle,
+        string campaign,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var qs = $"api/me/training-offers?campaign={Uri.EscapeDataString(campaign)}";
+            if (!string.IsNullOrWhiteSpace(jobTitle))
+            {
+                qs += "&jobTitle=" + Uri.EscapeDataString(jobTitle);
+            }
+
+            return await _http.GetFromJsonAsync<List<TrainingOfferCard>>(qs, ct) ?? [];
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
+    public async Task<TrainingTrackedLink> TrackTrainingOfferAsync(
+        Guid offerId,
+        string campaign,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/me/training-offers/{offerId:D}/track",
+            new { campaign },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Opleiding openen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<TrainingTrackedLink>(cancellationToken: ct)
+               ?? new TrainingTrackedLink();
+    }
+
+    public async Task<List<TrainingProviderAdmin>> GetTrainingProvidersAdminAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<TrainingProviderAdmin>>("api/admin/training/providers", ct) ?? [];
+
+    public async Task<TrainingProviderAdmin> UpsertTrainingProviderAsync(object payload, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/admin/training/providers", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Opleider opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<TrainingProviderAdmin>(cancellationToken: ct)
+               ?? new TrainingProviderAdmin();
+    }
+
+    public Task DeleteTrainingProviderAsync(Guid id, CancellationToken ct = default)
+        => _http.DeleteAsync($"api/admin/training/providers/{id:D}", ct);
+
+    public async Task RecordTrainingConversionAsync(object payload, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/admin/training/conversions", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Conversie matchen mislukt.");
+        }
+    }
+
+    public async Task<string> ExportTrainingCsvAsync(int year, int month, Guid? providerId, CancellationToken ct = default)
+    {
+        var url = $"api/admin/training/export?year={year}&month={month}";
+        if (providerId is Guid id)
+        {
+            url += $"&providerId={id:D}";
+        }
+
+        return await _http.GetStringAsync(url, ct);
+    }
+
+    public async Task<DeepAnalysisState?> GetDeepAnalysisAsync(string kind, CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<DeepAnalysisState>(
+                $"api/me/deep-analysis?kind={Uri.EscapeDataString(kind)}",
+                ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<DeepAnalysisCheckout> StartDeepAnalysisCheckoutAsync(string kind, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/me/deep-analysis/checkout?kind={Uri.EscapeDataString(kind)}",
+            null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Checkout starten mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<DeepAnalysisCheckout>(cancellationToken: ct)
+               ?? new DeepAnalysisCheckout();
+    }
+
+    public async Task<DeepAnalysisState> CompleteDeepAnalysisCheckoutAsync(string paymentId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/me/deep-analysis/checkout/{Uri.EscapeDataString(paymentId)}/complete",
+            null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Betaling afronden mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<DeepAnalysisState>(cancellationToken: ct)
+               ?? new DeepAnalysisState();
+    }
+
+    public async Task<DeepAnalysisState> SaveDeepAnalysisAsync(
+        string kind,
+        IReadOnlyDictionary<int, int> answers,
+        bool complete,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            answers = answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            complete
+        };
+        var response = await _http.PutAsJsonAsync(
+            $"api/me/deep-analysis?kind={Uri.EscapeDataString(kind)}",
+            payload,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Diepte-analyse opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<DeepAnalysisState>(cancellationToken: ct)
+               ?? new DeepAnalysisState();
+    }
+
+    public async Task<IReadOnlyList<CandidateMatchedVacancy>> GetMyMatchedVacanciesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<CandidateMatchedVacancy>>("api/me/matched-vacancies", ct)
+                   ?? [];
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return [];
+        }
     }
 
     public async Task<IReadOnlyList<MetricCount>> GetMyMetricsSummaryAsync(string period = "week", CancellationToken ct = default)
@@ -2649,6 +3092,30 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<PushBomSettingsItem>(cancellationToken: ct);
     }
 
+    public async Task<LobsyCommercialSettingsItem?> UpdateLobsyCommercialAsync(
+        LobsyCommercialSettingsItem settings,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            "api/settings/lobsy-commercial",
+            new
+            {
+                settings.MarginPerHourEuro,
+                settings.BackofficePartnerName,
+                settings.DeepAnalysisPriceEuro,
+                settings.AgencyAnnualPriceEuro,
+                settings.ContactUnlockCostTokens
+            },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Opslaan van Lobsy-bedragen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<LobsyCommercialSettingsItem>(cancellationToken: ct);
+    }
+
     public async Task<PushBomPricingTierItem?> UpsertPushBomPricingTierAsync(
         PushBomPricingTierItem tier,
         CancellationToken ct = default)
@@ -3347,7 +3814,14 @@ public record CreateVacancyForm(
     Dictionary<string, string>? CategoryFields = null,
     bool SuitableFor65Plus = false,
     bool? RequireEmailVerification = null,
-    int? MinimumReferences = null);
+    int? MinimumReferences = null,
+    string[]? CulturePillars = null,
+    string? BarrierKind = null,
+    string[]? BarrierDiplomas = null,
+    string[]? BarrierCertifications = null,
+    int? BarrierMinExperienceYears = null,
+    int? BarrierMinExperienceHours = null,
+    string[]? BarrierHardChecks = null);
 
 public sealed class CsvImportRowForm
 {

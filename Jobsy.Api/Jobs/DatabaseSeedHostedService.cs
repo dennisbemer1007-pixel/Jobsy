@@ -42,24 +42,39 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             throw;
         }
 
-        var allowSeed = _environment.IsDevelopment()
-                        || _configuration.GetValue("Seed:Enabled", false)
-                        || _configuration.GetValue("JobsyAuth:AllowDevelopmentAuth", false);
-        if (!allowSeed)
+        var wipeInsteadOfSeed = JobsyDbSeeder.PreferWipeOverSeed(_configuration);
+        var allowSeed = !wipeInsteadOfSeed
+                        && (_environment.IsDevelopment()
+                            || _configuration.GetValue("Seed:Enabled", false));
+        _logger.LogInformation(
+            "Startup data path: wipe={Wipe} seed={Seed} service={Service} publicWeb={PublicWeb} seedEnabled={SeedEnabled}",
+            wipeInsteadOfSeed,
+            allowSeed,
+            _configuration["RENDER_SERVICE_NAME"],
+            _configuration["PublicWebBaseUrl"],
+            _configuration.GetValue("Seed:Enabled", false));
+        if (allowSeed)
         {
-            _logger.LogInformation(
-                "Skipping database seed (requires Development, Seed:Enabled, or JobsyAuth:AllowDevelopmentAuth).");
-            return;
+            try
+            {
+                await JobsyDbSeeder.SeedDataAsync(_services);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Keep API available (salesmanager endpoints, auth, etc.) even if demo seed flakes.
+                _logger.LogError(ex, "Database seed failed during startup; API continues without full seed.");
+            }
         }
-
-        try
+        else
         {
-            await JobsyDbSeeder.SeedDataAsync(_services);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            // Keep API available (salesmanager endpoints, auth, etc.) even if demo seed flakes.
-            _logger.LogError(ex, "Database seed failed during startup; API continues without full seed.");
+            try
+            {
+                await JobsyDbSeeder.PurgeDemoDataAsync(_services, _configuration);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "Operational wipe failed during startup; API continues.");
+            }
         }
 
         try

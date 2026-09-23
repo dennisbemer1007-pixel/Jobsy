@@ -63,4 +63,5 @@ public sealed record VacancyDiscoveryRecord(
     string? Vestigingsnummer,
     bool ContentModerationPassed,
     bool RequireEmailVerification,
-    int? MinimumReferences = null);
+    int? MinimumReferences = null,
+    IReadOnlyList<string>? CulturePillars = null);

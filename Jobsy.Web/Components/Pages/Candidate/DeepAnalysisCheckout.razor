@@ -1,0 +1,44 @@
+@page "/candidate/deep-analysis/checkout"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Enums
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+<PageTitle>@Culture["Deep.Checkout"] · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <article class="detail-card">
+        <h1>@Culture["Deep.Checkout"]</h1>
+        <p class="login-lead">@_message</p>
+    </article>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public string? PaymentId { get; set; }
+    [SupplyParameterFromQuery] public string? Kind { get; set; }
+
+    private string _message = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _message = Culture["Common.Loading"];
+        if (string.IsNullOrWhiteSpace(PaymentId))
+        {
+            _message = Culture["Deep.CheckoutMissing"];
+            return;
+        }
+
+        try
+        {
+            await Api.CompleteDeepAnalysisCheckoutAsync(PaymentId);
+            var slug = AssessmentKindLabels.ToSlug(AssessmentKindLabels.ParseOrDefault(Kind));
+            Navigation.NavigateTo($"/candidate/deep-analysis/{slug}");
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+}

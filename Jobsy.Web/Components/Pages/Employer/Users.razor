@@ -1,6 +1,7 @@
 @page "/employer/users"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
@@ -41,9 +42,9 @@
                 </select>
                 <select @bind="_branchFilter" aria-label="Filter op vestiging">
                     <option value="">Alle vestigingen</option>
-                    @foreach (var c in _companies)
+                    @foreach (var c in CompanyOptions)
                     {
-                        <option value="@c.Id">@c.Name</option>
+                        <option value="@c.Id">@EmployerInviteCompanyOptions.Label(c, CompanyOptions)</option>
                     }
                 </select>
             </div>
@@ -152,7 +153,7 @@
                     </label>
                     <label>
                         Rol
-                        <select @bind="_editRole">
+                        <select @bind="_editRole" @bind:after="OnEditContextChanged">
                             @foreach (var option in RoleOptions)
                             {
                                 <option value="@option.Value">@option.Label</option>
@@ -161,26 +162,29 @@
                     </label>
                     <label>
                         Primaire vestiging
-                        <select @bind="_editPrimaryCompanyId">
+                        <select @bind="_editPrimaryCompanyId" @bind:after="OnEditContextChanged">
                             <option value="">— Geen —</option>
-                            @foreach (var c in _companies)
+                            @foreach (var c in EditPrimaryCompanies)
                             {
-                                <option value="@c.Id">@c.Name</option>
+                                <option value="@c.Id">@EmployerInviteCompanyOptions.Label(c, CompanyOptions)</option>
                             }
                         </select>
                     </label>
-                    <fieldset class="profile-roles profile-roles--wide membership-grid grid grid-cols-2 gap-2">
-                        <legend>Extra lidmaatschappen</legend>
-                        @foreach (var c in _companies)
-                        {
-                            <label>
-                                <input type="checkbox"
-                                       checked="@_editMemberships.Contains(c.Id)"
-                                       @onchange="e => ToggleEditMembership(c.Id, (bool)(e.Value ?? false))" />
-                                @c.Name
-                            </label>
-                        }
-                    </fieldset>
+                    @if (EditExtraCompanies.Count > 0)
+                    {
+                        <fieldset class="profile-roles profile-roles--wide membership-grid grid grid-cols-2 gap-2">
+                            <legend>Extra lidmaatschappen</legend>
+                            @foreach (var c in EditExtraCompanies)
+                            {
+                                <label>
+                                    <input type="checkbox"
+                                           checked="@_editMemberships.Contains(c.Id)"
+                                           @onchange="e => ToggleEditMembership(c.Id, (bool)(e.Value ?? false))" />
+                                    @EmployerInviteCompanyOptions.Label(c, CompanyOptions)
+                                </label>
+                            }
+                        </fieldset>
+                    }
                     <label class="publish-option">
                         <input type="checkbox" @bind="_editIsActive" />
                         <span>Actief</span>
@@ -207,7 +211,7 @@
                 <div class="invite-form__row">
                     <label>
                         Rol
-                        <select @bind="_role">
+                        <select @bind="_role" @bind:after="OnInviteContextChanged">
                             @foreach (var option in RoleOptions)
                             {
                                 <option value="@option.Value">@option.Label</option>
@@ -216,27 +220,30 @@
                     </label>
                     <label>
                         Primaire vestiging
-                        <select @bind="_primaryCompanyId">
+                        <select @bind="_primaryCompanyId" @bind:after="OnInviteContextChanged">
                             <option value="">— Geen —</option>
-                            @foreach (var c in _companies)
+                            @foreach (var c in InvitePrimaryCompanies)
                             {
-                                <option value="@c.Id">@c.Name</option>
+                                <option value="@c.Id">@EmployerInviteCompanyOptions.Label(c, CompanyOptions)</option>
                             }
                         </select>
                     </label>
                 </div>
-                <fieldset class="profile-roles profile-roles--wide membership-grid grid grid-cols-2 gap-2">
-                    <legend>Extra lidmaatschappen</legend>
-                    @foreach (var c in _companies)
-                    {
-                        <label>
-                            <input type="checkbox"
-                                   checked="@_memberships.Contains(c.Id)"
-                                   @onchange="e => ToggleMembership(c.Id, (bool)(e.Value ?? false))" />
-                            @c.Name
-                        </label>
-                    }
-                </fieldset>
+                @if (InviteExtraCompanies.Count > 0)
+                {
+                    <fieldset class="profile-roles profile-roles--wide membership-grid grid grid-cols-2 gap-2">
+                        <legend>Extra lidmaatschappen</legend>
+                        @foreach (var c in InviteExtraCompanies)
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@_memberships.Contains(c.Id)"
+                                       @onchange="e => ToggleMembership(c.Id, (bool)(e.Value ?? false))" />
+                                @EmployerInviteCompanyOptions.Label(c, CompanyOptions)
+                            </label>
+                        }
+                    </fieldset>
+                }
                 <div class="invite-form__actions">
                     <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
                 </div>
@@ -294,6 +301,21 @@
     private IReadOnlyList<(string Value, string Label)> RoleOptions =>
         _isAdmin ? AdminRoleOptions : EnterpriseRoleOptions;
 
+    private IReadOnlyList<InviteCompanyOption> CompanyOptions =>
+        _companies.Select(ToOption).ToList();
+
+    private IReadOnlyList<InviteCompanyOption> InvitePrimaryCompanies =>
+        EmployerInviteCompanyOptions.PrimaryChoices(CompanyOptions, _role);
+
+    private IReadOnlyList<InviteCompanyOption> InviteExtraCompanies =>
+        EmployerInviteCompanyOptions.ExtraMembershipChoices(CompanyOptions, ParseGuid(_primaryCompanyId));
+
+    private IReadOnlyList<InviteCompanyOption> EditPrimaryCompanies =>
+        EmployerInviteCompanyOptions.PrimaryChoices(CompanyOptions, _editRole);
+
+    private IReadOnlyList<InviteCompanyOption> EditExtraCompanies =>
+        EmployerInviteCompanyOptions.ExtraMembershipChoices(CompanyOptions, ParseGuid(_editPrimaryCompanyId));
+
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
 
@@ -312,10 +334,7 @@
             _companies = (await Api.GetMyCompaniesAsync()).ToList();
             _users = (await Api.GetCompanyUsersAsync()).ToList();
             EnsureInviteRoleAllowed();
-            if (_companies.Count > 0)
-            {
-                _primaryCompanyId = _companies[0].Id.ToString();
-            }
+            OnInviteContextChanged();
         }
         catch (Exception ex)
         {
@@ -360,6 +379,7 @@
         _editIsActive = user.IsActive;
         _editMemberships = user.MembershipCompanyIds.ToHashSet();
         _message = null;
+        OnEditContextChanged();
     }
 
     private void CancelEdit()
@@ -379,8 +399,46 @@
         }
     }
 
+    private void OnInviteContextChanged()
+    {
+        EnsureInviteRoleAllowed();
+        var primary = EmployerInviteCompanyOptions.CoercePrimary(
+            InvitePrimaryCompanies,
+            ParseGuid(_primaryCompanyId));
+        _primaryCompanyId = primary?.ToString() ?? "";
+        DropCoveredMemberships(_memberships, primary);
+    }
+
+    private void OnEditContextChanged()
+    {
+        if (!IsRoleAllowed(_editRole) && RoleOptions.Count > 0)
+        {
+            _editRole = RoleOptions[0].Value;
+        }
+
+        var primary = EmployerInviteCompanyOptions.CoercePrimary(
+            EditPrimaryCompanies,
+            ParseGuid(_editPrimaryCompanyId));
+        _editPrimaryCompanyId = primary?.ToString() ?? "";
+        DropCoveredMemberships(_editMemberships, primary);
+    }
+
+    private void DropCoveredMemberships(HashSet<Guid> memberships, Guid? primary)
+    {
+        var allowed = EmployerInviteCompanyOptions
+            .ExtraMembershipChoices(CompanyOptions, primary)
+            .Select(c => c.Id)
+            .ToHashSet();
+        memberships.RemoveWhere(id => id == primary || !allowed.Contains(id));
+    }
+
     private void ToggleMembership(Guid id, bool selected)
     {
+        if (ParseGuid(_primaryCompanyId) == id)
+        {
+            return;
+        }
+
         if (selected)
         {
             _memberships.Add(id);
@@ -393,6 +451,11 @@
 
     private void ToggleEditMembership(Guid id, bool selected)
     {
+        if (ParseGuid(_editPrimaryCompanyId) == id)
+        {
+            return;
+        }
+
         if (selected)
         {
             _editMemberships.Add(id);
@@ -553,4 +616,10 @@
         "Intermediary" => "Intermediair",
         _ => role
     };
+
+    private static InviteCompanyOption ToOption(CompanySummary c) =>
+        new(c.Id, c.Name, c.Address ?? "", c.ParentCompanyId, c.KvkEstablishmentId);
+
+    private static Guid? ParseGuid(string? value) =>
+        Guid.TryParse(value, out var id) ? id : null;
 }

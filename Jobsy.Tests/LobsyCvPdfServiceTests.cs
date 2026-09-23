@@ -108,6 +108,36 @@ public class LobsyCvPdfServiceTests
     }
 
     [Fact]
+    public async Task Render_includes_whoami_bijlage_when_opted_in()
+    {
+        var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
+        var prefs = new CandidatePreferencesDto(
+            Roles: [],
+            MaxTravelMinutes: 20,
+            PreferredTransport: "Fiets",
+            AboutMe: "Ik werk graag met mensen.");
+        var who = new LobsyCvWhoAmI(
+            "Ik werk graag samen en houd ritme in de ploeg.",
+            ["samenwerken", "rust en ritme"],
+            [new LobsyCvScoreBar("samenwerken", 88)],
+            [new LobsyCvScoreBar("mensen meenemen", 80)]);
+        var model = LobsyCvModelFactory.FromLiveProfile(
+            "Ada Candidate",
+            "ada@test.local",
+            null,
+            false,
+            prefs,
+            null,
+            null,
+            DateTime.UtcNow,
+            whoAmI: who);
+        Assert.NotNull(model.WhoAmI);
+        var pdf = await service.RenderAsync(model);
+        Assert.True(pdf.Length > 800);
+        Assert.Equal((byte)'%', pdf[0]);
+    }
+
+    [Fact]
     public async Task Live_profile_never_includes_candidate_home_on_cv()
     {
         var prefs = new CandidatePreferencesDto(

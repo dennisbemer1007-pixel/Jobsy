@@ -371,6 +371,7 @@
                     @Culture["Discovery.Transport"]
                     <select value="@_selectedTransport" @onchange="OnTransportChanged">
                         <option value="Fiets">@Culture["Transport.Bike"]</option>
+                        <option value="E-bike">@Culture["Transport.EBike"]</option>
                         <option value="Auto">@Culture["Transport.Car"]</option>
                         <option value="OV">@Culture["Transport.Transit"]</option>
                         <option value="Lopend">@Culture["Transport.Walk"]</option>
@@ -381,6 +382,17 @@
                     <input type="number" min="1" max="50" value="@_radiusKm"
                            @onchange="OnRadiusChanged" />
                 </label>
+                @if (_isCandidate)
+                {
+                    <label>
+                        @Culture["Discovery.MinMatch"]
+                        <select value="@_minMatchPercent.ToString()" @onchange="OnMinMatchChanged">
+                            <option value="0">@Culture["Discovery.MinMatchAny"]</option>
+                            <option value="60">@Culture["Discovery.MinMatch60"]</option>
+                            <option value="80">@Culture["Discovery.MinMatch80"]</option>
+                        </select>
+                    </label>
+                }
                 <div class="filter-bar__actions">
                     @if (_canShowMyVacancies)
                     {
@@ -442,6 +454,10 @@
                     <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.List)</span>
                     <span class="visually-hidden">@Culture["Discovery.Sort"]</span>
                     <select class="results-meta__sort-select" value="@EffectiveSortMode" @onchange="OnSortChanged">
+                        @if (_isCandidate)
+                        {
+                            <option value="match">@Culture["Discovery.SortMatch"]</option>
+                        }
                         @if (_origin is not null)
                         {
                             <option value="distance">@Culture["Discovery.SortDistance"]</option>
@@ -501,6 +517,30 @@
                                 }
                                 <div class="job-card__overlay">
                                     <h2>@vacancy.Title</h2>
+                                    @if (vacancy.MatchPercent is int matchPct)
+                                    {
+                                        <p class="job-card__match">
+                                            <span class="match-score match-score--@(vacancy.MatchColorBand ?? "orange")">@Culture.Format("Discovery.MatchPercent", matchPct)</span>
+                                            <button type="button"
+                                                    class="competency-help"
+                                                    title="@Culture["Discovery.MatchWhy"]"
+                                                    aria-label="@Culture["Discovery.MatchWhy"]"
+                                                    @onclick="() => OpenMatchExplain(vacancy)"
+                                                    @onclick:stopPropagation="true">?</button>
+                                        </p>
+                                        @if (!string.IsNullOrWhiteSpace(vacancy.CultureFitLabel))
+                                        {
+                                            <span class="culture-fit culture-fit--@(vacancy.CultureFitBand ?? "mid")">@vacancy.CultureFitLabel</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(vacancy.MatchWhySummary))
+                                        {
+                                            <p class="job-card__match-why">@vacancy.MatchWhySummary</p>
+                                        }
+                                        else if (vacancy.IsBroadMatch && !string.IsNullOrWhiteSpace(vacancy.MatchRationale))
+                                        {
+                                            <p class="job-card__match-why">@vacancy.MatchRationale</p>
+                                        }
+                                    }
                                     <p class="job-card__travel">
                                         <LobsyMark Compact="true" />
                                         <span>@travelText · @UiLabels.TransportVerb(Culture, _selectedTransport)</span>
@@ -694,12 +734,27 @@
                         @Culture["Discovery.Transport"]
                         <select value="@_selectedTransport" @onchange="OnTransportChanged">
                             <option value="Fiets">@Culture["Transport.Bike"]</option>
+                            <option value="E-bike">@Culture["Transport.EBike"]</option>
                             <option value="Auto">@Culture["Transport.Car"]</option>
                             <option value="OV">@Culture["Transport.Transit"]</option>
                             <option value="Lopend">@Culture["Transport.Walk"]</option>
                         </select>
                     </label>
                 </section>
+
+                @if (_isCandidate)
+                {
+                    <section class="filter-section">
+                        <h3>@Culture["Discovery.MinMatch"]</h3>
+                        <label>
+                            <select value="@_minMatchPercent.ToString()" @onchange="OnMinMatchChanged">
+                                <option value="0">@Culture["Discovery.MinMatchAny"]</option>
+                                <option value="60">@Culture["Discovery.MinMatch60"]</option>
+                                <option value="80">@Culture["Discovery.MinMatch80"]</option>
+                            </select>
+                        </label>
+                    </section>
+                }
 
                 <section class="filter-section filter-section--hero">
                     <h3>@Culture["Discovery.HoursSlider"]</h3>
@@ -841,6 +896,46 @@
     }
 </div>
 
+<LobsyFriendlyDialog IsOpen="@(_matchExplain is not null)"
+                     Title="@(_matchExplain is null ? "" : Culture.Format("Competency.Matches.ExplainTitle", _matchExplain.MatchPercent ?? 0))"
+                     TitleId="discovery-match-explain-title"
+                     OnClose="CloseMatchExplain">
+    @if (_matchExplain is not null)
+    {
+        <p class="competency-explain__vacancy">@_matchExplain.Title · @_matchExplain.CompanyName</p>
+        @if (!string.IsNullOrWhiteSpace(_matchExplain.MatchWhySummary))
+        {
+            <p class="login-lead">@_matchExplain.MatchWhySummary</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(_matchExplain.CultureFitLabel))
+        {
+            <p class="culture-fit culture-fit--@(_matchExplain.CultureFitBand ?? "mid")">@_matchExplain.CultureFitLabel</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(_matchExplain.CultureFitWhy))
+        {
+            <p class="login-lead">@_matchExplain.CultureFitWhy</p>
+        }
+        <h3 class="competency-explain__h">@Culture["Competency.Matches.Why"]</h3>
+        <ul class="competency-explain__list">
+            @foreach (var line in _matchExplain.MatchWhy)
+            {
+                <li>@line</li>
+            }
+        </ul>
+        <h3 class="competency-explain__h">@Culture["Competency.Matches.Gap"]</h3>
+        <ul class="competency-explain__list competency-explain__list--gap">
+            @foreach (var line in _matchExplain.MatchGaps)
+            {
+                <li>@line</li>
+            }
+        </ul>
+        <a class="login-submit competency-explain__cta" href="@($"/vacancies/{_matchExplain.Id}")">
+            @Culture["Competency.Matches.OpenVacancy"]
+        </a>
+        <a class="engagement-btn" href="/candidate/profile">@Culture["Competency.BackToProfile"]</a>
+    }
+</LobsyFriendlyDialog>
+
 @code {
     private List<VacancyListItem> _vacancies = [];
     private string? JobListJsonLd =>
@@ -908,6 +1003,9 @@
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private string _sortMode = "title";
     private bool _sortChosenByUser;
+    private int _minMatchPercent;
+    private int _snapMinMatchPercent;
+    private VacancyListItem? _matchExplain;
     private int? _ageYears;
     /// <summary>Age from candidate profile (DOB), used as default / restore target.</summary>
     private int? _profileAgeYears;
@@ -999,6 +1097,10 @@
         get
         {
             IEnumerable<VacancyListItem> query = _vacancies.Where(v => v.IsHighlighted);
+            if (_isCandidate && _minMatchPercent > 0)
+            {
+                query = query.Where(v => v.MatchPercent is int pct && pct >= _minMatchPercent);
+            }
 
             // With an address/origin: only featured jobs inside the active travel/radius filter.
             // Without an address: show all featured vacancies in the current result set.
@@ -1025,23 +1127,33 @@
     {
         get
         {
+            IEnumerable<VacancyListItem> query = _vacancies;
+            if (_isCandidate && _minMatchPercent > 0)
+            {
+                query = query.Where(v => v.MatchPercent is int pct && pct >= _minMatchPercent);
+            }
+
             var mode = EffectiveSortMode;
             var titleComparer = StringComparer.CurrentCultureIgnoreCase;
             IEnumerable<VacancyListItem> sorted = mode switch
             {
-                "distance" => _vacancies
+                "match" => query
+                    .OrderByDescending(v => v.MatchPercent ?? -1)
+                    .ThenBy(v => v.TravelMinutes ?? int.MaxValue)
+                    .ThenBy(v => v.Title, titleComparer),
+                "distance" => query
                     .OrderBy(v => v.TravelMinutes ?? int.MaxValue)
                     .ThenBy(v => v.DistanceKm ?? double.MaxValue)
                     .ThenBy(v => v.Title, titleComparer),
-                "type" => _vacancies
+                "type" => query
                     .OrderBy(v => v.WorkTypes.FirstOrDefault() ?? "\uFFFF", titleComparer)
                     .ThenBy(v => v.Title, titleComparer),
-                "recent" => _vacancies
+                "recent" => query
                     .OrderByDescending(v => v.StartDate)
                     .ThenBy(v => v.Title, titleComparer),
-                "title-desc" => _vacancies
+                "title-desc" => query
                     .OrderByDescending(v => v.Title, titleComparer),
-                _ => _vacancies
+                _ => query
                     .OrderBy(v => v.Title, titleComparer)
             };
             return sorted.ToList();
@@ -1094,7 +1206,9 @@
     }
 
     private string EffectiveSortMode =>
-        _sortMode == "distance" && _origin is null ? "title" : _sortMode;
+        _sortMode == "distance" && _origin is null
+            ? (_isCandidate && _vacancies.Any(v => v.MatchPercent is not null) ? "match" : "title")
+            : _sortMode;
 
     private string MyVacanciesToggleLabel => _myVacanciesLoading
         ? "Laden…"
@@ -1118,6 +1232,7 @@
             if (_origin is not null && _maxTravelMinutes != 30) n++;
             if (_origin is not null && _selectedTransport != "Fiets") n++;
             if (_origin is not null && _radiusKm != 15) n++;
+            if (_isCandidate && _minMatchPercent > 0) n++;
             return n;
         }
     }
@@ -1215,7 +1330,7 @@
 
                     if (!string.IsNullOrWhiteSpace(profile.Preferences.PreferredTransport))
                     {
-                        _selectedTransport = profile.Preferences.PreferredTransport;
+                        _selectedTransport = TransportLabels.Canonical(profile.Preferences.PreferredTransport);
                     }
 
                     ApplyHoursFromProfile(profile.Preferences);
@@ -1252,6 +1367,10 @@
 
         await catalogTask;
         await viewTaskInteractive;
+        if (_isCandidate && !_sortChosenByUser && _vacancies.Any(v => v.MatchPercent is not null))
+        {
+            _sortMode = "match";
+        }
         if (profileChangedFilters)
         {
             await LoadVacanciesAsync();
@@ -1432,9 +1551,10 @@
         {
             var t when t.Equals("Lopend", StringComparison.OrdinalIgnoreCase) => "Lopend",
             var t when t.Equals("Fiets", StringComparison.OrdinalIgnoreCase) => "Fiets",
+            var t when t.Equals("E-bike", StringComparison.OrdinalIgnoreCase) => "E-bike",
             var t when t.Equals("Auto", StringComparison.OrdinalIgnoreCase) => "Auto",
             var t when t.Equals("OV", StringComparison.OrdinalIgnoreCase) => "OV",
-            _ => _selectedTransport
+            _ => TransportLabels.IsEBike(raw) ? "E-bike" : _selectedTransport
         };
     }
 
@@ -1622,7 +1742,7 @@
                     if (stored is not null && IsFinite(stored.Lat) && IsFinite(stored.Lng))
                     {
                         _origin = new OriginPoint { Latitude = stored.Lat, Longitude = stored.Lng };
-                        if (!_sortChosenByUser && _sortMode is not "type" and not "recent")
+                        if (!_sortChosenByUser && _sortMode is not "type" and not "recent" and not "match")
                         {
                             _sortMode = "distance";
                         }
@@ -1833,6 +1953,7 @@
                 companyFocus || _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
                 suitableFor65Plus: null,
                 companyIds: _companyFocusIds,
+                minMatchPercent: _isCandidate && _minMatchPercent > 0 ? _minMatchPercent : null,
                 ct: ct);
 
             if (generation != _loadGeneration)
@@ -1859,6 +1980,7 @@
                     _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
                     suitableFor65Plus: null,
                     companyIds: _companyFocusIds,
+                    minMatchPercent: _isCandidate && _minMatchPercent > 0 ? _minMatchPercent : null,
                     ct: ct);
 
                 if (generation != _loadGeneration)
@@ -1868,6 +1990,10 @@
             }
 
             _vacancies = items.ToList();
+            if (_isCandidate && !_sortChosenByUser && _vacancies.Any(v => v.MatchPercent is not null))
+            {
+                _sortMode = "match";
+            }
             _visibleCardCount = VacancyCardPageSize;
             if (_myVacanciesOnly)
             {
@@ -2093,7 +2219,7 @@
     }
 
     private List<Dictionary<string, object?>> BuildMarkers() =>
-        _vacancies.Select(v =>
+        SortedVacancies.Select(v =>
         {
             var primaryType = v.WorkTypes.FirstOrDefault() ?? "";
             var typeBadge = ResolveTypeBadge(v);
@@ -2136,7 +2262,14 @@
                     ? v.ExclusivityName
                     : null,
                 ["travelMinutes"] = v.TravelMinutes,
-                ["transportLabel"] = UiLabels.TransportVerb(Culture, _selectedTransport)
+                ["transportLabel"] = UiLabels.TransportVerb(Culture, _selectedTransport),
+                ["matchPercent"] = v.MatchPercent,
+                ["matchColorBand"] = v.MatchColorBand,
+                ["matchWhySummary"] = v.MatchWhySummary,
+                ["cultureFitPercent"] = v.CultureFitPercent,
+                ["cultureFitBand"] = v.CultureFitBand,
+                ["cultureFitLabel"] = v.CultureFitLabel,
+                ["cultureFitWhy"] = v.CultureFitWhy
             };
             if (v.WageVisible)
             {
@@ -2334,7 +2467,7 @@
     private async Task ApplyOriginAsync(double lat, double lng, string? label)
     {
         _origin = new OriginPoint { Latitude = lat, Longitude = lng };
-        if (!_sortChosenByUser && _sortMode is not "type" and not "recent")
+        if (!_sortChosenByUser && _sortMode is not "type" and not "recent" and not "match")
         {
             _sortMode = "distance";
         }
@@ -2503,6 +2636,20 @@
             _myVacanciesLoading = false;
         }
     }
+
+    private async Task OnMinMatchChanged(ChangeEventArgs e)
+    {
+        _minMatchPercent = int.TryParse(e.Value?.ToString(), out var parsed)
+            ? Math.Clamp(parsed, 0, 100)
+            : 0;
+        await ReloadFiltersIfAppliedAsync();
+    }
+
+    private void OpenMatchExplain(VacancyListItem vacancy)
+        => _matchExplain = vacancy;
+
+    private void CloseMatchExplain()
+        => _matchExplain = null;
 
     private static bool IsActiveOpenManagedVacancy(VacancyListItem vacancy) =>
         ManagedVacancyMapFilter.IsPublishedOpen(vacancy.Status, vacancy.FulfilledByApplicationId);
@@ -2873,6 +3020,7 @@
         _sortChosenByUser = true;
         _sortMode = value switch
         {
+            "match" when _isCandidate => "match",
             "distance" when _origin is not null => "distance",
             "type" or "recent" or "title" or "title-desc" => value!,
             "distance" => "title",
@@ -2928,6 +3076,7 @@
         _snapMyVacanciesOnly = _myVacanciesOnly;
         _snapMyVacancyCompanyIds = _myVacancyCompanyIds?.ToHashSet();
         _snapMyVacancyIds = _myVacancyIds?.ToHashSet();
+        _snapMinMatchPercent = _minMatchPercent;
     }
 
     private void RestoreFilterSnapshot()
@@ -2935,6 +3084,7 @@
         _maxTravelMinutes = _snapMaxTravelMinutes;
         _radiusKm = _snapRadiusKm;
         _selectedTransport = _snapSelectedTransport;
+        _minMatchPercent = _snapMinMatchPercent;
         _minHoursPerWeek = _snapMinHoursPerWeek;
         _maxHoursPerWeek = _snapMaxHoursPerWeek;
         _ageYears = _snapAgeYears;
@@ -3043,6 +3193,7 @@
         _maxHourlyWage = null;
         _maxTravelMinutes = 30;
         _selectedTransport = "Fiets";
+        _minMatchPercent = 0;
         _radiusKm = 15;
         _minHoursPerWeek = DefaultMinHoursPerWeek;
         _maxHoursPerWeek = DefaultMaxHoursPerWeek;

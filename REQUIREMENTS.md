@@ -27,10 +27,16 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 
 ### Kernentiteiten (niet exhaustief)
 - **User** — Email, FullName, Role, HomeLocation, OpenForWork, prefs, early-adapter
-- **Company** — KVK + `KvkEstablishmentId`, hierarchy (`ParentCompanyId`), `CompanyType` (Employer/Intermediary)
-- **Vacancy** — Status (`Draft` / `Active` / `Archived` / `PendingApproval`), media, highlight, extensions, requested publish-opties, salary table, **VacancyCategory** (kleur, tokenprijs, highlight/PushBom-beschikbaarheid, extra aanmaakvelden)
+- **CandidateWhoAmIProfile** — “Wie ben ik?”-rapport (AI-verhaal, CV-bijlage-opt-in)
+- **CandidateCompetency** — Competentie Quick-Scan (25 Big Five) antwoorden + scores + match-tags (Draft/Completed)
+- **CandidateCareerInterest** — Beroepen Quick-Scan (25 RIASEC) + Holland-code + tags
+- **CandidateDeepAnalysis** / **DeepAnalysisCheckout** — 150-vragen analyse per `AssessmentKind` (Competence | Career) na € 2,99 Mollie-betaling + PDF-rapport
+- **TalentContactRequest** — anonieme ontgrendeling (1 token), 48-uurs reactievenster, refund-pad
+- **Company** — KVK + `KvkEstablishmentId`, hierarchy (`ParentCompanyId`), `CompanyType` (Employer/Intermediary); optioneel `AgencyAnnualSubscription`
+- **Vacancy** — Status (`Draft` / `Active` / `Archived` / `PendingApproval`), media, highlight, extensions, requested publish-opties, salary table, **VacancyCategory**, **VacancyKind** incl. `Flex`
 - **VacancyCategory** — Admin-beheerbare categorieën; sturen kaartfilter, legenda, create-dropdown en tokenlogica
-- **TokenTransaction** — typed ledger (`Purchase` / `Spend` / `Grant` / `Allocation`) + `TokenSpendReason` (Publish/Highlight/PushBom/Extend)
+- **FlexCommercialSettings** — marge € 2,00/uur boven backoffice-inkoop
+- **TokenTransaction** — typed ledger (`Purchase` / `Spend` / `Grant` / `Allocation` / `Goodwill`) + `TokenSpendReason` (Publish/Highlight/PushBom/Extend/**ContactUnlock**)
 - **Application** — progressive PII tot Accept; Lobsy-CV PDF én geüpload kandidaat-CV pas na Accept (zie §4d)
 - **Engagement** — VacancyClick / Like / Share
 - **Region** / **CompanySalaryTable** / **TokenPurchaseCheckout**
@@ -45,7 +51,7 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 - **PushBom:** OpenForWork-kandidaten binnen radius/reistijd; pricing tiers uit settings
 - **Tokens:** live Mollie iDEAL + creditcard (Dev-stub zonder API-key); EM koopt in organisatiopot; geen automatische incasso; webhook → instant saldo/pending actie; bedrijfsprofiel: betaalvoorkeur + factuurhistorie; admin grant; uitgifte aan vestigingen
 - **Employer suite:** vacature-editor, regio’s, vestigingen (KVK), gebruikers-invite, salaristabellen, sollicitanten
-- **Registratie:** KVK-stub (+ SBI) → vestiging → scope → wachtwoord → e-mailverificatie; na activatie dual auth (wachtwoord of Entra, zelfde e-mail); SBI `78*` → Intermediair; anders altijd Bedrijfsmanager — Organization = org-boom, BranchOnly = vestiging-als-bedrijf (kan vestigingsmanagers uitnodigen); conflict → takeover/org-merge
+- **Registratie:** KVK (live API bij key, anders stub + SBI) → vestiging → scope → wachtwoord → e-mailverificatie; na activatie dual auth (wachtwoord of Entra, zelfde e-mail); SBI `78*` → Intermediair; anders altijd Bedrijfsmanager — Organization = org-boom, BranchOnly = vestiging-als-bedrijf (kan vestigingsmanagers uitnodigen); conflict → takeover/org-merge
 - **Admin suite:** bedrijven, users, vacatures, finance/tokenlog, logging, settings, integratie-pings, WML (incl. halfjaarlijkse update-stub)
 - **Mockdata:** rijke seed (engagement, spends, logs, statusmix) zodat dashboards gevuld zijn
 
@@ -97,10 +103,27 @@ Kernpunten:
 - **Verplichte uren** min/max per week + automatische urencategorie (bijbaan/parttime/fulltime)
 - **Geen UI-minimumleeftijd;** achtergrondfiltering via verplichte wettelijke taak-vinkjes + `[ i ]`-tooltips (Arbeidstijdenwet)
 - **Matchingspercentage** op banenkaart met breakdown-modal en actie-adviezen
+- **Competentietest (Quick-Scan / 25 vragen)** op het kandidaatprofiel: Big Five / OCEAN; draft tussentijds opslaan; scores + tags voeden matching en talentpool. Tab **Mijn competenties**: radar + accordeon per vaardigheid (uitleg + regionale workshops/cursussen); geen werkgeverscontact of profielformulieren op dat tabblad.
+- **DISC-Analyse (Quick-Scan / 25 vragen, optioneel 150-vragen diepte-analyse € 2,99):** gedragsstijlen (voortouw, mensen meenemen, ritme, nauwkeurigheid) met radar + accordeon en workshops. Scores wegen mee in Functie-Fit (stap 2/3 in gewone taal) en cultuur-/teamfit; matching alleen als de Quick-Scan is afgerond.
+- **Beroepentest (Quick-Scan / 25 vragen):** richting in gewone taal; **Mijn Beroepen-kompas**; dynamische **Top 10 actieve vacatures** (≥ 60%, aflopend)
+- **Diepte-analyses (150 unieke vragen, € 2,99 per test):** 30 per Big Five-trek (competentie) en 25 per beroepsrichting; UX met sticky voortgangsbalk + %-indicatie, onderwerpen-tracker, info-knop met praktijkvoorbeeld per vraag en motiverende boosters elke 25 vragen; Mollie iDEAL; OpenAI vult de loopbaan-PDF (logo, Super-match 95–100 als kernfit / Sterke keus / Handige verbreding, *Wat betekent dit voor jou?*) en schrijft top-beroepen naar **Mijn Beroepen-kompas**
+- **Functie-Fit Checker** (**Functiefit checker**): gated tot beide 25-vragen quick-scans klaar zijn; vrije functietitel **of een concrete vacature** → **4 stappen** (overall match-% uit reistijd/uren + cultuur/OCEAN + formele eisen; waar je matcht; wat je mist; actie/upskilling) + vergelijkbare functies (klik herberekent live) + rustige lijst vacatures in Den Haag/Westland waar je direct kunt starten; **multidimensionale matching** (opleiding, competenties/drijfveren uit Wie ben ik?/DISC/OCEAN, overdraagbare skills — niet alleen exacte functietitel) met korte AI-onderbouwing bij bredere matches; opleidingssuggesties **subtiel in-context** met **directe cursus-deeplinks** (nooit partner-homepage); upsell 150-vragen analyse
+- **Cultuur & teamfit:** werkgever kiest 3–5 cultuurpijlers op de vacature; na harde criteria (reistijd/uren/dagdelen, wettelijke taken, rijbewijs/opleiding) berekent de backend een **Cultuur Fit**-score uit competentiescores + pijlers (OpenAI met lokale fallback); banenkaart/popup toont *Cultuur Fit: Hoog/Midden/Laag* in Jip-en-Janneke. Sollicitatie-match-% naar werkgevers blijft reistijd/uren/dagdelen.
 - **Gulden Middenweg** bij solliciteren (&lt; 50%): OTP tegenhouden, profiel aanpassen of vangnet
 - **Optioneel motivatieveld** op sollicitatieformulier
 - **Werkgeversdashboard:** match-% met kleurcodering, breakdown, wettelijke bevestiging, motivatie, sort hoog→laag
 - **CSV/API:** uren + legal flags verplicht; dagdelen optioneel → “Tijden in overleg”
+
+## 4g. Anonieme talentpool, ContactUnlock & Lobsy Flex
+
+→ **[`docs/FUNCTIONELE_SPECIFICATIES_LOBSY_PLATFORM.md`](docs/FUNCTIONELE_SPECIFICATIES_LOBSY_PLATFORM.md)**
+
+Kernpunten:
+- **Omgekeerd werven:** werkgevers zoeken OpenForWork-kandidaten anoniem (competenties/RIASEC, reistijd, beschikbaarheid, rijbewijs) — **geen leeftijdsfilter**
+- **ContactUnlock:** 1 token om contact te starten; 48-uurs timer; refund bij intrekken na geen reactie / reeds voorzien; geen refund na geslaagde contactuitwisseling
+- **Flex (`VacancyKind.Flex`):** 0 tokens publiceren; marge admin-configureerbaar (default **€ 2,00/uur**) boven backoffice-inkoop (NEN 4400-1 partner)
+- **Uitzend-jaarabonnement:** admin-configureerbaar (default **€ 4.000/jaar**) carte blanche vacatureplaatsing op vestigingspins
+- **Admin → Settings → Lobsy Flex & talent:** diepte-analyseprijs, flex-marge, uitzend-jaartarief, ContactUnlock-tokens, backoffice-partner
 
 ## 5. Navigatie & entry points
 - **Anoniem** → banenkaart `/` (BottomNav: Banenkaart, Registreren, Inloggen)
@@ -109,9 +132,9 @@ Kernpunten:
 - **Logout** → `/`
 - Gedeelde UI: `BottomNav`, `TokenWalletChip`, `MetricTile`, `DrilldownGrid`, `ShareModal`, `PublishOptionsDialog`
 
-## 6. Externe Koppelingen (stubs voor demo)
-- **KVK API** — vestigingen/registratie
+## 6. Externe Koppelingen
+- **KVK API** — vestigingen/registratie (live Handelsregister bij API-key; anders demo-stub)
 - **Mollie** — prepaid token-aankoop (live API; Development stub op `/tokens/checkout-stub`)
 - **Mail** — activatie/invite/notificaties
-- **OpenAI** — vacature-contentmoderatie / mock interview / kandidaat-profielcoach / CV-extractie bij eigen upload (feature-flagged; zonder key geen extractie)
+- **OpenAI** — vacature-contentmoderatie / mock interview / kandidaat-profielcoach / CV-extractie bij eigen upload / algemene beroepen na de 150-vragen beroepentest (feature-flagged; zonder key lokale catalogus, geen extractie)
 - Feature flags o.a. `JobsyFeatures:*` (activation-link exposure, Authenticator, stubs)

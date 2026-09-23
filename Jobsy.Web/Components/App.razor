@@ -10,6 +10,7 @@
     <meta name="application-name" content="Lobsy" />
     <meta name="apple-mobile-web-app-title" content="Lobsy" />
     <meta name="format-detection" content="telephone=no" />
+    <meta name="lobsy-commit" content="@GitCommit" />
     <base href="/" />
     <link rel="icon" href="favicon.ico?v=20260828-pin" sizes="any" />
     <link rel="icon" type="image/png" href="favicon.png?v=20260828-pin" />
@@ -76,9 +77,9 @@
     </style>
     @if (LoadBlazorRuntime)
     {
-        <link rel="stylesheet" href="css/app.min.css?v=20260904-ui" media="print" data-app-css />
+        <link rel="stylesheet" href="css/app.min.css?v=20260923-fitpath" media="print" data-app-css />
     }
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260904-ui" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260923-fitpath" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
@@ -250,6 +251,11 @@
 </html>
 
 @code {
+    private static readonly string GitCommit =
+        Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
+        ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
+        ?? "local";
+
     private string Nonce => CspNonce.Get(HttpContextAccessor.HttpContext);
 
     private bool LoadBlazorRuntime =>

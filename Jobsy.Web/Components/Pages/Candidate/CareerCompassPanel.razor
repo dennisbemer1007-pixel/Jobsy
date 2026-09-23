@@ -1,0 +1,120 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Compass is null)
+{
+    return;
+}
+
+@if (Compass.Strengths.Count > 0)
+{
+    <p class="login-lead">@Culture["Kompas.CareerStrengths"]: @string.Join(" · ", Compass.Strengths)</p>
+}
+
+@if (Compass.HasOccupations)
+{
+    <div class="kompas-occupations" aria-label="@Culture["Kompas.Career"]">
+        @if (Compass.SuperMatches.Count > 0)
+        {
+            <section class="kompas-band kompas-band--super">
+                <h4>@Culture["Kompas.BandSuper"]</h4>
+                <ul class="kompas-occupation-list">
+                    @foreach (var item in Compass.SuperMatches)
+                    {
+                        @OccupationAccordion(item)
+                    }
+                </ul>
+            </section>
+        }
+        @if (Compass.StrongChoices.Count > 0)
+        {
+            <section class="kompas-band kompas-band--strong">
+                <h4>@Culture["Kompas.BandStrong"]</h4>
+                <ul class="kompas-occupation-list">
+                    @foreach (var item in Compass.StrongChoices)
+                    {
+                        @OccupationAccordion(item)
+                    }
+                </ul>
+            </section>
+        }
+        @if (Compass.Broadening.Count > 0)
+        {
+            <section class="kompas-band kompas-band--broaden">
+                <h4>@Culture["Kompas.BandBroaden"]</h4>
+                <ul class="kompas-occupation-list">
+                    @foreach (var item in Compass.Broadening)
+                    {
+                        @OccupationAccordion(item)
+                    }
+                </ul>
+            </section>
+        }
+    </div>
+}
+
+@if (Compass.PracticalNotes.Count > 0)
+{
+    <div class="kompas-practical">
+        <h4>@Culture["Kompas.PracticalTitle"]</h4>
+        @foreach (var note in Compass.PracticalNotes)
+        {
+            <p>@note</p>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public CareerCompassModel? Compass { get; set; }
+    [Parameter] public CompetencyScoreSet? Competencies { get; set; }
+
+    private RenderFragment OccupationAccordion(CareerOccupationMatchModel item) => __builder =>
+    {
+        <li class="kompas-occupation">
+            <details class="kompas-occupation__details">
+                <summary>
+                    <span class="kompas-occupation__title">@item.Title</span>
+                    <span class="kompas-occupation__pct">@item.Percent%</span>
+                </summary>
+                @OccupationBody(item)
+            </details>
+        </li>
+    };
+
+    private RenderFragment OccupationBody(CareerOccupationMatchModel item) => __builder =>
+    {
+        var insight = BuildInsight(item.Title);
+        <div class="kompas-occupation__body">
+            @if (!string.IsNullOrWhiteSpace(item.Why))
+            {
+                <p class="kompas-occupation__why">@item.Why</p>
+            }
+            @if (insight is not null)
+            {
+                <h5>@Culture["Fit.Step2"]</h5>
+                <ul>
+                    @foreach (var line in insight.Strengths.Take(3))
+                    {
+                        <li>@line</li>
+                    }
+                </ul>
+                <h5>@Culture["Fit.Step3"]</h5>
+                <ul>
+                    @foreach (var line in insight.Gaps.Take(3))
+                    {
+                        <li>@line</li>
+                    }
+                </ul>
+            }
+            <h5>@Culture["Fit.FormalBlock"]</h5>
+            <ul>
+                @foreach (var line in CareerOccupationDetail.Requirements(item.Title))
+                {
+                    <li>@line</li>
+                }
+            </ul>
+            <TrainingOffersBlock JobTitle="@item.Title" Campaign="career_compass" Compact="true" />
+        </div>
+    };
+}

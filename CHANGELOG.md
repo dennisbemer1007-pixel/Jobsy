@@ -14,6 +14,60 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
+- **Vakgebied-matching:** vergelijkbare functies en directe vacatures blijven in dezelfde sector (een piloot krijgt geen lab of café). Vacatures tonen harde eisen (keuring, ogentest, fitheid, certificaten, rijbewijs) en een ontbrekende eis is een dealbreaker. Het loopbaanadvies noemt hoe lang het opleidingspad duurt, in stappen.
+- **Diepte-analyse UX (150 vragen):** sticky voortgangsbalk met live %-indicatie, onderwerpen-tracker (afgerond / nu / komt nog), info-knop met praktijkvoorbeeld per vraag, en motiverende boosters elke 25 vragen.
+
+### Changed
+- **Multidimensionale vacature-matching:** ranking weegt opleiding (niveau/richting), competenties & drijfveren (Wie ben ik? / DISC/OCEAN) en overdraagbare werkervaring — niet alleen een exacte functietitel. Bij bredere matches toont banenkaart/Top 10 een korte AI-onderbouwing.
+- **Opleidingen subtiel & deeplinks:** in-context tekstlinks i.p.v. schreeuwende CTA’s; outbound-URL’s moeten altijd op een specifieke cursuspagina landen (geen opleider-homepage).
+
+### Added
+- **Wie ben ik?** in Mijn Lobsy Kompas: checklist (profiel, competentie, beroepen, gedragsanalyse); daarna AI-persoonsverhaal, radar, DISC-kwadranten en optionele PDF-bijlage bij het Lobsy-CV.
+- **DISC-Analyse** in Mijn Lobsy Kompas: gratis Quick-Scan (25) + optionele diepte-analyse (150, € 2,99); radar + accordeon per gedragsstijl met ontwikkelpunten en regionale workshops; scores wegen mee in Functie-Fit en cultuurfit (gewone taal, geen vaktermen in stap 2/3).
+
+### Changed
+- **Mijn competenties:** radar bovenaan; per vaardigheid een accordeon met korte uitleg (naar score) en workshops/cursussen van regionale opleiders (campagne `competence`); geen contactverzoeken of profielformulieren op dit tabblad.
+- **Kompas UI-opschoning:** tab **Mijn beste match** (was Mijn beroepen) en **Functiefit checker**; profielsecties (Persoonlijk / Voorkeuren & reistijd / Beschikbaarheid / CV & ervaring) bovenaan; contactverzoeken alleen op tab Mijn profiel; OCEAN-grafiek altijd zichtbaar; beroepen als accordeon met opleidingen per functie; rustigere directe vacatures; vergelijkbare functies herberekent live.
+
+### Added
+- **Functie-Fit conversietrechter:** 4 vaste stappen (overall match-% uit reistijd/uren, cultuurfit en formele eisen; waar je matcht; wat je mist; actie/upskilling). Plus AI/lokale **vergelijkbare functies** (opstaprollen) en een live scan van **direct startbare vacatures** in Den Haag/Westland.
+
+### Added
+- **Dynamische Functie-Fit op vacature:** optionele `BarrierRequirementsJson` (lage drempel vs zware eisen: diploma’s, VCA/BIG/vliegbrevet, ervaringsjaren/uren). Functie-Fit Checker toetst cultuurfit (OCEAN-pijlers) en een formele checklist; bij cultuur+beschikbaarheid OK maar een papieren gat volgt de opleidingen-CTA. Werkgever stelt de drempel in bij vacature-aanmaken.
+
+### Added
+- **Opleidings- & upskill-vliegwiel:** bij een gat in de Functie-Fit Checker (en het Beroepen-kompas) volgt het advies “Volg een korte cursus of omscholing om dit gat te dichten” plus CTA *Bekijk erkende opleidingen voor dit vakgebied*. Landelijke affiliates (LOI/Daisycon, NTI/Awin) met UTM/`ref=lobsy`/`candidate_id` (HMAC, geen e-mail/GUID). Regionale praktijkpartners Den Haag/Westland (zorg, techniek, logistiek) met intake-/start-fee. Admin `/admin/training`: catalogus, conversiematch (click-id / hash / e-mailhash) en maand-CSV. RTBF wist `UserId` op kliks, hashes blijven voor facturatie.
+
+### Added
+- **Cultuur & teamfit:** werkgevers kiezen 3–5 cultuurpijlers bij vacaturecreatie/bewerken (`CulturePillarsJson`). Na harde criteria berekent de backend een Cultuur Fit-% uit competentiescores (OpenAI + lokale fallback, geen NAW). Banenkaart, popup en vacaturedetail tonen *Cultuur Fit: Hoog/Midden/Laag* plus Jip-en-Janneke-onderbouwing.
+
+### Added
+- **Functie-Fit Checker** (“Past dit bij mij?”) in Mijn Lobsy Kompas: pas te gebruiken na beide gratis 25-vragen quick-scans; OpenAI-toets van een vrije functietitel tegen het kandidaatprofiel (zonder NAW); lokale fallback; upsell naar de 150-vragen diepte-analyse (€ 2,99); knop naar vergelijkbare vacatures op de banenkaart (Den Haag / Westland). Resultaat in privacy-export en RTBF.
+- Kandidaatprofiel en `/home`-kompas in **vier tabbladen**: Mijn profiel, Mijn competenties, Mijn beroepen, Past dit bij mij? (Functie-Fit Checker). Inactieve tab-panels blijven in de DOM (`hidden`) zodat flex-layout ze niet stapelt.
+
+### Added
+- Loopbaan-PDF na de uitgebreide beroepentest (150): OpenAI-prompt dwingt een hiërarchie af (Super-match 95–100 als kernfit, nooit te laag), Jip-en-Janneke zonder extraversie/neuroticisme, gekleurd Lobsy-logo, *Wat betekent dit voor jou?* (werkplek, taken, banenkaart). Resultaat vult PDF én **Mijn Beroepen-kompas**.
+- **Mijn Beroepen-kompas** slaat die algemene beroepen (inclusief zoeksleutels) op in het kandidaatprofiel; de banenkaart vertaalt ze naar actuele advertenties (bijv. verpleegkundige → vacatures in Den Haag/Westland).
+- Privacyverklaring en consentversie **2026-09-21**: OpenAI-doorgifte van anonieme beroepentest-antwoorden voor het kompas; export bevat `CompassJson`.
+- **Mijn Lobsy Kompas** op `/home` en `/candidate/profile` (kandidaat): drie tabbladen **Mijn profiel** (beschikbaarheid, reistijd, vervoer, rijbewijs), **Mijn competenties** (Quick-Scan 25 vs diepte-analyse 150 + werkstijl) en **Mijn beroepen** (Beroepen-kompas, *Wat betekent dit voor jou?*, loopbaan-PDF).
+- Diepte-analyses: **150 unieke, niet-herhalende** Likert-items (competentie: 30 per OCEAN-trek; beroep: 25 per RIASEC-type) met reverse-items; PDF toont domainscores + carrière-advies; matchingtags na afronden.
+- Banenkaart (ingelogde kandidaat): live match-% op pin, popup en lijst; filter “alleen >80%”; sorteren op beste match; uitleg waarom. Discover-API: `minMatchPercent` + matchvelden alleen voor kandidaat (private cache).
+- **Gescheiden test-architectuur:** competentietest (25 Big Five) en beroepentest (25 RIASEC) elk met eigen 150-vragen diepte-analyse (€ 2,99) en PDF; routes `/candidate/career` en `/candidate/deep-analysis/{kind}`.
+- API: `api/employer/talent/*`, `api/me/talent-contacts`, `api/me/deep-analysis`; UI: `/employer/talent`, `/employer/talent-contacts`, `/candidate/talent-contacts`.
+
+### Changed
+- Alle Lobsy-platformbedragen (diepte-analyse, flex-marge, uitzend-jaarabonnement, ContactUnlock) zijn admin-configureerbaar via **Settings → Lobsy Flex & talent**.
+- Kandidaat **competentietest** uitgebreid van 20 → 25 (RIASEC-tags + match-tags op `CandidateCompetencies`).
+- Live **KVK Handelsregister**-koppeling: bij API-key (Admin → Integraties of `Kvk__ApiKey` / `KVK_API_KEY`) zoekt Lobsy echte vestigingen; zonder key blijft de demo-stub. Base URL leeg = `https://api.kvk.nl/api/` (test: `https://api.kvk.nl/test/api/`).
+- Register-wizard: kruimelpad, KVK-adres met i-toelichting (vestigingsnummer + SBI achter het i-tje), stil logo, knoptekst ‘Bevestigen’ niet meer afgeknipt, geen ‘Open verificatielink’.
+- `/health` en HTML-meta `lobsy-commit` tonen de Render git-SHA zodat productie verifieerbaar is.
+
+### Changed
+- Privacyverklaring en consentversie **2026-09-20**: anonieme talentpool-transparantie (tags/scores zonder NAW); ruwe antwoorden blijven kandidaat-only. Diepte-analyse-checkout stub-gated + user-bound; lege deep-save overschrijft niet; privacy-export inclusief deep analysis/checkouts/talent-contacts; Quick-Scan tag-backfill bij migrate.
+- Privacyverklaring en consentversie **2026-09-18**: optionele competentietest (antwoorden/scores, alleen kandidaat, export/RTBF, geen werkgever-inzage). Lege `PUT api/me/competencies` overschrijft een bestaande test niet.
+- CSS-cachebust `app.min.css?v=20260918-comp` zodat competentie-profiel en Top 10-matches in bestaande browsers aankomen.
+- Register: KVK-nummer is leeg buiten Development (geen vooringevulde stub `12345678` op lobsy.nl).
+- Render: Production (`jobsy-api` / `lobsy.nl`) wist **alle** bedrijven, vacatures en niet-admin gebruikers bij API-start, ook als `Seed:Enabled` nog aanstaat; houdt `admin@jobsy.local`. Acceptatie (`lobsy-acc-api`) blijft seeden.
 - ZAP (Checkmarx): geen exception-/status-tekst meer in publieke HTML; ontbrekende vestiging `/12345678/0001` geeft 404 i.p.v. 500; foutpagina toont alleen een request-referentie. CSP `img-src`/`connect-src` zonder scheme-wildcards (picsum + OpenFreeMap). `X-Content-Type-Options: nosniff` ook op statische files (favicon). Publieke bedrijfs-API op `public-read`. `'unsafe-eval'` blijft nodig voor Blazor Server; OIDC-nonce blijft `SameSite=None` voor Entra.
 - Production audit 111: dode CSS/modellen opgeruimd; intermediair kan geen werkgevers overnemen of client-bedrijfsinstellingen/facturen wijzigen of lezen; demo-login alleen bij `AllowDevelopmentAuth`; rate limits op publieke vacature-GETs en `/travel`; analytics-POSTs vereisen cookietoestemming (HMAC in Production); RTBF/intrekken wissen leeftijd/werkvergunning/match; platform BTW-IBAN alleen gemaskeerd in de API.
 - CSP: per-request nonce op scripts en het critical-`<style>`-blok; `script-src` zonder `'unsafe-inline'` (inline `onerror`/`onload` weg; logo-fallback via capturing listener). Style-attributen blijven `'unsafe-inline'` voor Razor/MapLibre CSS-variabelen.
@@ -27,6 +81,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - Banenkaart laadt MapLibre (CSS, JS, helper-chunks) via `preload`/`fetchpriority=high` zodat pinnen eerder zichtbaar zijn. Worker-preload gebruikt `as="fetch"` (geen extra main-thread script). Leaflet is verwijderd.
 
 ### Added
+- Render Blueprint: project **Lobsy** met omgevingen **Production** (`jobsy-api` / `jobsy-web` / `jobsy-db`) en **Acceptatie** (`lobsy-acc-*`). Zie `docs/deploy-render.md`.
 - PageSpeed/Lighthouse: auditors en crawlers krijgen dezelfde prerender-HTML zonder Blazor-circuit (`blazor.web.js`); echte browsers mappen `unload` naar `pagehide`; `UseWebSockets` + source map voor MapLibre CSP.
 - Kandidaat kan een eigen CV (PDF/DOCX) uploaden; OpenAI vult alleen lege profielvelden als ze duidelijk in het CV staan. Lobsy-CV toont bovenaan dat er een eigen CV is. Recensies (werkgever, contactpersoon, e-mail, telefoon) in het profiel; vacature kan een hard minimum aantal recensies eisen. Na Accept ziet de werkgever Lobsy-CV én het geüploade CV.
 - Quality gate 456: geüploade CV-bytes wissen bij intrekken; OpenAI-CV-extractie in privacyverklaring/consent; geen OpenAI-response bodies in logs; werkgeverslijst toont recensietelling pas na Accept.

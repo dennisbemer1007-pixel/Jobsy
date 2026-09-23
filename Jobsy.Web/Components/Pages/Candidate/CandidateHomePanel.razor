@@ -7,8 +7,8 @@
 <div class="panel-page panel-page--dashboard">
     <header class="panel-header panel-header--dashboard">
         <div>
-            <h1>@Culture["Metrics.Welcome"]</h1>
-            <p class="login-lead">@Culture["Metrics.Lead"]</p>
+            <h1>@Culture["Kompas.Title"]</h1>
+            <p class="login-lead">@Culture["Kompas.Lead"]</p>
         </div>
         <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Metrics.Period"]">
             @foreach (var p in PeriodKeys)
@@ -24,6 +24,8 @@
             }
         </div>
     </header>
+
+    <CandidateKompas />
 
     @if (_error is not null && _metrics.Count == 0 && !_loading)
     {

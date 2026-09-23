@@ -164,6 +164,15 @@ public class Vacancy
     /// <summary>When goodwill +7 days EndDate was applied after an edit following the reminder.</summary>
     public DateTime? EngagementGoodwillExtendedAtUtc { get; set; }
 
+    /// <summary>JSON array of 3–5 culture pillar ids (see <c>CulturePillarCatalog</c>).</summary>
+    public string? CulturePillarsJson { get; set; }
+
+    /// <summary>
+    /// Optional formal randvoorwaarden JSON (high/low barrier, diplomas, certifications, experience).
+    /// Empty / null = low barrier (batch-hiring).
+    /// </summary>
+    public string? BarrierRequirementsJson { get; set; }
+
     public ICollection<VacancyClick> Clicks { get; set; } = new List<VacancyClick>();
     public ICollection<VacancyLike> Likes { get; set; } = new List<VacancyLike>();
     public ICollection<VacancyShare> Shares { get; set; } = new List<VacancyShare>();

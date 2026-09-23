@@ -32,7 +32,13 @@ internal static class PlatformSettingsSeeder
                     CostTokens = VacancyProductRules.DefaultHighlightCostTokens
                 },
                 new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.PushBom, CostTokens = 3m },
-                new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.Extend, CostTokens = 1m });
+                new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.Extend, CostTokens = 1m },
+                new TokenSpendCost
+                {
+                    Id = Guid.NewGuid(),
+                    Reason = TokenSpendReason.ContactUnlock,
+                    CostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens
+                });
         }
         else
         {
@@ -42,6 +48,16 @@ internal static class PlatformSettingsSeeder
             if (highlightCost is not null && highlightCost.CostTokens < VacancyProductRules.DefaultHighlightCostTokens)
             {
                 highlightCost.CostTokens = VacancyProductRules.DefaultHighlightCostTokens;
+            }
+
+            if (!await db.TokenSpendCosts.AnyAsync(c => c.Reason == TokenSpendReason.ContactUnlock))
+            {
+                db.TokenSpendCosts.Add(new TokenSpendCost
+                {
+                    Id = Guid.NewGuid(),
+                    Reason = TokenSpendReason.ContactUnlock,
+                    CostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens
+                });
             }
         }
 
@@ -233,7 +249,31 @@ internal static class PlatformSettingsSeeder
             db.VacancyTypeTokenCosts.AddRange(
                 new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Regular, CostTokens = 1m },
                 new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Internship, CostTokens = 0m },
-                new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Volunteer, CostTokens = 0m });
+                new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Volunteer, CostTokens = 0m },
+                new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Flex, CostTokens = 0m });
+        }
+        else if (!await db.VacancyTypeTokenCosts.AnyAsync(c => c.Kind == VacancyKind.Flex))
+        {
+            db.VacancyTypeTokenCosts.Add(new VacancyTypeTokenCost
+            {
+                Id = Guid.NewGuid(),
+                Kind = VacancyKind.Flex,
+                CostTokens = 0m
+            });
+        }
+
+        if (!await db.FlexCommercialSettings.AnyAsync())
+        {
+            db.FlexCommercialSettings.Add(new FlexCommercialSettings
+            {
+                Id = FlexCommercialService.SettingsSingletonId,
+                MarginPerHourEuro = FlexCommercialSettings.DefaultMarginPerHourEuro,
+                BackofficePartnerName = FlexCommercialSettings.DefaultBackofficePartnerName,
+                DeepAnalysisPriceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                AgencyAnnualPriceEuro = FlexCommercialSettings.DefaultAgencyAnnualPriceEuro,
+                ContactUnlockCostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
         }
 
         if (!await db.SalesPackages.AnyAsync())

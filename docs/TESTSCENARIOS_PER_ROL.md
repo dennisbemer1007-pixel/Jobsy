@@ -1,6 +1,6 @@
 # Testscenario’s per rol (UAT-catalogus)
 
-Aantal rijen: **778**. Handmatige testdekking van **elke rol**, **elke primaire knop/link/nav-item**, plus **unhappy paths** (validatie, 401/403, lege staten, tokens tekort, AVG, IDOR, timeouts). Kolommen: **Rol** · **Testscenario** · **Verwacht resultaat**.
+Aantal rijen: **808**. Handmatige testdekking van **elke rol**, **elke primaire knop/link/nav-item**, plus **unhappy paths** (validatie, 401/403, lege staten, tokens tekort, AVG, IDOR, timeouts). Kolommen: **Rol** · **Testscenario** · **Verwacht resultaat**.
 
 Bronnen: `ROLES_AND_VIEWS.md`, `REQUIREMENTS.md`, `SECURITY.md`, Blazor-pagina’s onder `Jobsy.Web/Components`, `RoleNavCatalog`, functionele specs in `docs/`.
 
@@ -10,8 +10,8 @@ Bronnen: `ROLES_AND_VIEWS.md`, `REQUIREMENTS.md`, `SECURITY.md`, Blazor-pagina�
 
 - [1. Gast (niet ingelogd)](#1-gast-niet-ingelogd) — 147 scenario’s
 - [2. Alle ingelogde rollen (cross-cutting chrome)](#2-alle-ingelogde-rollen-cross-cutting-chrome) — 33 scenario’s
-- [3. Kandidaat](#3-kandidaat) — 103 scenario’s
-- [4. Filiaalmanager (BranchManager)](#4-filiaalmanager-branchmanager) — 97 scenario’s
+- [3. Kandidaat](#3-kandidaat) — 112 scenario’s
+- [4. Filiaalmanager (BranchManager)](#4-filiaalmanager-branchmanager) — 101 scenario’s
 - [5. Regiomanager (RegionalManager)](#5-regiomanager-regionalmanager) — 22 scenario’s
 - [6. Bedrijfsmanager (EnterpriseManager)](#6-bedrijfsmanager-enterprisemanager) — 55 scenario’s
 - [7. Intermediair](#7-intermediair) — 31 scenario’s
@@ -261,7 +261,17 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
-| Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard (KPI’s sollicitaties/likes/shares/reacties). |
+| Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard **Mijn Lobsy Kompas** (tabbladen **Wie ben ik?** / **Mijn profiel** / **Mijn competenties** / **DISC-Analyse** / **Mijn beste match** / **Functiefit checker**) plus KPI’s sollicitaties/likes/shares/reacties. |
+| Kandidaat | Home: Kompas-tabbladen Wie ben ik? / Mijn profiel / Mijn competenties / DISC-Analyse / Mijn beste match / Functiefit checker. | Zes tabs; Wie ben ik?=checklist tot 4 vinkjes groen daarna verhaal+radar+DISC-kwadranten+CV-bijlage; profiel=sectienav Persoonlijk/Voorkeuren/Beschikbaarheid/CV; competenties=grafiek + accordeon per vaardigheid met uitleg en workshops; DISC-Analyse=grafiek + accordeon per gedragsstijl met ontwikkelpunten en workshops; beste match=Super-match/Handige verbreding als accordeon + Wat betekent dit voor jou? + opleidingen per beroep; fit=4 stappen Functiefit checker + vergelijkbare functies. |
+| Kandidaat | Wie ben ik?: rapport locked tot profiel+competentie+beroepen+gedragsanalyse klaar. | Vier vinkjes; aanmoediging naar openstaande stap; geen AI-verhaal tot unlock. |
+| Kandidaat | Wie ben ik?: vink Lobsy-CV-bijlage aan na unlock. | Sollicitatie en batch-hiring nemen persoonsprofiel-PDF mee in Lobsy-CV na Accept. |
+| Kandidaat | Home: Kompas toont Quick-Scan 25 vs diepte-analyse 150 + PDF als klaar. | Status zichtbaar; PDF-knop alleen na afgeronde diepte-analyse; geen extra nav-tab. |
+| Kandidaat | Home: **Mijn Beroepen-kompas** toont Super-match / Sterke keus / Handige verbreding. | Groepen >95% / >85% / >75%; sectie **Wat betekent dit voor jou?**; geen RIASEC/OCEAN in kandidaattekst. |
+| Kandidaat | Download loopbaan-PDF na uitgebreide beroepentest (150). | Gekleurd Lobsy-logo; Super-match/Sterke keus/Handige verbreding; **Wat betekent dit voor jou?**; geen RIASEC/OCEAN. |
+| Kandidaat | Banenkaart na uitgebreide beroepentest. | Match-% weegt **Mijn Beroepen-kompas** zwaarder; Super-match vacatures stijgen; filter scherper. |
+| Kandidaat | Uitgebreide beroepentest (150) levert algemene beroepen via OpenAI. | Beroepen uit de Nederlandse arbeidsmarkt (niet beperkt tot Lobsy-vacatures); Jip-en-Janneke; Super-match/Sterke keus/Handige verbreding; opgeslagen in **Mijn Beroepen-kompas**; zonder key lokale catalogus. |
+| Kandidaat | Banenkaart koppelt algemene beroepstags aan actuele vacatures. | Algemeen beroep (bijv. verpleegkundige) matcht vacatures in Den Haag/Westland via zoeksleutels. |
+| Kandidaat | Home: harde criteria reistijd/vervoer (incl. e-bike)/rijbewijs/beschikbaarheid (per direct/parttime/seizoen) opslaan. | Voorkeuren opgeslagen; banenkaart herberekent match-%. |
 | Kandidaat | Bottom-nav **Zoeken**. | `/` banenkaart. |
 | Kandidaat | Bottom-nav **Bewaard**. | `/candidate/liked`. |
 | Kandidaat | Bottom-nav **Vacatures**. | `/candidate/vacancies` met **Onlangs bekeken** + overzicht op reistijd/vervoer. |
@@ -277,6 +287,10 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Home: API-fout metrics. | Foutmelding; geen lege stille pagina. |
 | Kandidaat | Home: periode zonder data. | Tegels 0; drilldown empty. |
 | Kandidaat | Banenkaart als ingelogde kandidaat (alle gast-filters herhalen). | Zelfde filters; likes/apply beschikbaar; origin mag uit profiel-thuislocatie komen. |
+| Kandidaat | Banenkaart: match-% op lijstkaart en pin (live). | Percentage + kleur; geen PII-lek; gast ziet geen match-%. |
+| Kandidaat | Banenkaart: **Cultuur Fit** op kaart/popup als harde criteria kloppen. | Label Hoog/Midden/Laag + Jip-en-Janneke-onderbouwing; geen OCEAN-jargon; gast ziet geen cultuurfit. |
+| Kandidaat | Banenkaart: filter **Alleen >80% match** + sorteren **Beste match**. | Lijst en kaart tonen alleen hoge scores; volgorde hoog→laag. |
+| Kandidaat | Banenkaart: **?** / uitleg waarom deze match. | Breakdown reistijd/beschikbaarheid/beroepsrichting/competenties; link naar profiel. |
 | Kandidaat | Banenkaart: **Zoekopdracht bewaren**. | Gaat naar liked (ingelogd, geen gate). |
 | Kandidaat | Vacaturedetail: **Like** (uit → aan). | Liked; toast; hart-state aan. |
 | Kandidaat | Vacaturedetail: **Like** nogmaals (aan → uit). | Like verwijderd; toast removed. |
@@ -352,6 +366,15 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Profiel **Opslaan** success. | Bevestiging; data persistent na reload. |
 | Kandidaat | Profiel opslaan API-fout / not found. | Foutmelding. |
 | Kandidaat | **Download Lobsy-CV** vanaf profiel. | Voorbeeld-PDF (QuestPDF) met profiel + optionele motivatie. |
+| Kandidaat | Profiel-kop **Competentietest** met progress bars/radar. | Toont 4+ extraversie-scores ná afronden; anders CTA om te starten. |
+| Kandidaat | Knop **Test opnieuw invullen / aanpassen**. | Opent `/candidate/competencies` met bestaande antwoorden. |
+| Kandidaat | Competentietest 25 Likert-vragen (Big Five/OCEAN). | Vijf categorieën; omgekeerde items; tussentijds **Draft** opslaan mag incompleet. |
+| Kandidaat | Competentietest **Afronden** met 25 antwoorden. | Status Completed; percentages 0–100 opgeslagen; matches herberekend. |
+| Kandidaat | Beroepentest 25 Likert-vragen (RIASEC). | Mijn Beroepen-kompas + tags; top 10 actieve vacatures; route `/candidate/career`. |
+| Kandidaat | Diepte-analyse upsell (€ 2,99) per test. | Checkout `/candidate/deep-analysis/checkout` → 150 vragen `/candidate/deep-analysis/competence` of `/candidate/deep-analysis/career` → PDF-rapport. |
+| Kandidaat | Contactverzoeken van werkgevers `/candidate/talent-contacts`. | Inbox; binnen 48 uur reageren (akkoord / al voorzien / geen interesse); geen extra menu-tab. |
+| Kandidaat | Profiel rechts: **Top 10 vacatures**. | Strikt aflopend matchingpercentage; alleen ≥ 60%; max 10. |
+| Kandidaat | Vraagteken bij matchpercentage (hover/klik). | Jip-en-Janneke: waarom de match hoog is (ervaring + competenties) én waar het gat zit. |
 | Kandidaat | Profiel **Afmelden** → UnsubscribeDialog. | Zelfde OTP-forget als `/privacy/data`. |
 | Kandidaat | Deep-link `/candidate/actions/withdraw-others` geldige token: **Ja, trek andere sollicitaties in**. | Andere open sollicitaties ingetrokken; naar applications. |
 | Kandidaat | Withdraw-others: **Liever niet**. | Geen wijziging; terug applications/home. |
@@ -372,7 +395,7 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 
 ## 4. Filiaalmanager (BranchManager)
 
-Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures · Sollicitaties · Mijn tokens · Bedrijfsgegevens · Overnames (alleen bij inbox). Hoe werkt Lobsy staat in het account-menu (userknop). Tokenchip → `/branch/tokens`.
+Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures · Sollicitaties · Talentpool · Mijn tokens · Bedrijfsgegevens · Overnames (alleen bij inbox). Hoe werkt Lobsy staat in het account-menu (userknop). Tokenchip → `/branch/tokens`.
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
@@ -423,6 +446,7 @@ Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures �
 | Filiaalmanager | Lifecycle-actie API-fout. | Melding; status ongewijzigd. |
 | Filiaalmanager | Nieuwe vacature: verplichten leeg opslaan. | Validatie; niet opgeslagen. |
 | Filiaalmanager | Nieuwe vacature: titel, categorie, beschrijving (toolbar H2/B/I/lijst/link), media-URL’s. | Concept opslaan lukt; moderatie-dialog kan ‘Tekst aanpassen’ eisen. |
+| Filiaalmanager | Nieuwe vacature: 3 tot 5 **cultuurpijlers** (Cultuur & teamfit). | Opslaan vereist 3–5 keuzes; opgeslagen op de vacature; <3 of >5 geeft validatie. |
 | Filiaalmanager | Moderatie-dialog: tekst aanpassen vs negeren/sluiten. | Aanpassen houdt draft; publiceren pas na acceptabele tekst. |
 | Filiaalmanager | Create: extra categorevelden, exclusivity stage, salaristabel, rijbewijs, opleiding, min werkgevers/recensies, uren, dagdelen / in overleg, wettelijke vinkjes + `[i]` tooltips. | Velden opgeslagen; legal flags verplicht voor matching. |
 | Filiaalmanager | Create: direct contact + kanalen. | Na apply ziet kandidaat contactmodal. |
@@ -447,6 +471,10 @@ Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures �
 | Filiaalmanager | Download geüpload CV na Accept (als aanwezig). | Bestand; ontbreekt: knop weg. |
 | Filiaalmanager | Match-% kleur + breakdown klikken. | Breakdown-modal; vangnet-indicatie indien ViaSafetyNet. |
 | Filiaalmanager | Applicants van vacature andere vestiging (ID in URL/API). | Leeg of 403; tenant-scope. |
+| Filiaalmanager | Talentpool `/employer/talent`: filters tags/reistijd/vervoer/beschikbaarheid/rijbewijs. | Anonieme kaarten zonder naam/e-mail/06; **geen leeftijdsfilter**. |
+| Filiaalmanager | Talentpool: leeftijd-query `minAge`/`maxAge`. | API 400; UI toont geen leeftijdsveld. |
+| Filiaalmanager | Talentpool: **Start contact (1 token)**. | Token afgeboekt; kandidaat krijgt notificatie naar `/candidate/talent-contacts`. |
+| Filiaalmanager | Contactverzoeken `/employer/talent-contacts`: 48 uur zonder reactie **Intrekken & token terug**. | Token teruggestort; na gedeeld contact geen refund. |
 | Filiaalmanager | Tokens `/branch/tokens` zonder enterprise-beheer: pakket kiezen + iDEAL/creditcard. | Mollie checkout; webhook bijschrijving; log Purchase. |
 | Filiaalmanager | Tokens: checkout annuleren bij Mollie. | Geen tokens; terug wallet; pending actie niet uitgevoerd. |
 | Filiaalmanager | Tokens: `/tokens/checkout-return` success. | Poll tot bijschrijving; redirect/actie uitgevoerd; chip-saldo omhoog. |
@@ -539,7 +567,7 @@ Account: `enterprise@jobsy.local`. Mobiel: Home · Kaart · Vacatures · Sollici
 | Bedrijfsmanager | User **bewerken**: naam, rol EM/RM/BM, primary + memberships, actief. | Opgeslagen; verkeerde rol (Admin/Candidate) niet kiesbaar. |
 | Bedrijfsmanager | User inactief zetten. | Kan niet meer inloggen / 403 op org-API. |
 | Bedrijfsmanager | User membership andere org geven. | Niet mogelijk / 403. |
-| Bedrijfsmanager | **Uitnodigen** e-mail+naam+rol+vestigingen. | Invite-mail stub; user verschijnt/pending. |
+| Bedrijfsmanager | **Uitnodigen** e-mail+naam+rol+vestigingen. | Invite-mail stub; user verschijnt/pending. Extra lidmaatschappen toont geen dubbele org/vestiging met dezelfde naam. |
 | Bedrijfsmanager | Invite: ongeldig e-mail / bestaande user / lege naam. | Validatie. |
 | Bedrijfsmanager | Organization hub: klik elke modulekaart (Bedrijf, Vestigingen, Regio’s, Salaristabellen, CSV indien enabled, Overnames). | Juiste pagina + EnterpriseOrgSubnav. |
 | Bedrijfsmanager | Organization op **mobiel** openen via URL. | DesktopPreferredNotice; pagina’s blijven beperkt bruikbaar. |
@@ -548,7 +576,7 @@ Account: `enterprise@jobsy.local`. Mobiel: Home · Kaart · Vacatures · Sollici
 | Bedrijfsmanager | API-key copy modal sluiten zonder copy. | Key niet later terugleesbaar in full. |
 | Bedrijfsmanager | Vestigingen: **EnterpriseManager uitnodigen** (org+email+naam). | Invite. |
 | Bedrijfsmanager | Per vestiging **BranchManager uitnodigen**. | Invite gekoppeld aan vestiging. |
-| Bedrijfsmanager | KVK-stub lookup + **Registreer vestiging**. | Nieuwe establishment in org. |
+| Bedrijfsmanager | KVK lookup + **Registreer vestiging**. | Nieuwe establishment in org. |
 | Bedrijfsmanager | KVK lookup leeg/fout / vestiging al in gebruik. | Melding; claim/takeover i.p.v. duplicaat. |
 | Bedrijfsmanager | Vestigingen: link takeovers. | `/employer/takeovers`. |
 | Bedrijfsmanager | Regio’s: **aanmaken** naam+org+vestiging-checkboxes. | Regio bestaat; RM-scope. |
@@ -703,7 +731,7 @@ Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financie
 | Admin | PageShell **← Beheer** op een admin-pagina. | `/home`. |
 | Admin | Home: elke metric-tegel + drilldown + overview-links (logging, companies, API keys, users, tokenlog, vacancies). | DrilldownGrid; overview landt op module. |
 | Admin | Home Top/Flop vacatureklik + load-fout + lege drilldown. | Detail of error/empty; KPI’s blijven. |
-| Admin | Settings-subnav: klik **elk** item (Settings, CNAMEs, Company, About, Marketing flyer, Masterdata, Vacaturecategorieën, Exclusivity, Integraties, Mail test, API keys, Notifications, Users, Logging, Feedback, Wages). | Elke module laadt; active state. |
+| Admin | Settings-subnav: klik **elk** item (Settings, CNAMEs, Company, About, Marketing flyer, Masterdata, Vacaturecategorieën, Opleidingen, Exclusivity, Integraties, Mail test, API keys, Notifications, Users, Logging, Feedback, Wages). | Elke module laadt; active state. Pills wrappen zodat rechter items klikbaar blijven. |
 | Admin | Bedrijven: zoek + filter Employer/Intermediary. | Client filter. |
 | Admin | Bedrijven: links users / vacancies / tokenlog / sales-managers. | Query-prefill op doelpagina. |
 | Admin | Bedrijven: **+ Tokens** GrantTokensDialog: amount 0 / leeg note / 0.4 / 1001. | Validatie 0.5–1000 + verplichte note. |

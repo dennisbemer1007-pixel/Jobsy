@@ -12,6 +12,7 @@ public static class VacancyCategoryDefaults
     public static readonly Guid VolunteerId = Guid.Parse("c1000001-0000-4000-8000-000000000005");
     public static readonly Guid InternshipId = Guid.Parse("c1000001-0000-4000-8000-000000000006");
     public static readonly Guid SeniorLightId = Guid.Parse("c1000001-0000-4000-8000-000000000007");
+    public static readonly Guid FlexId = Guid.Parse("c1000001-0000-4000-8000-000000000008");
 
     /// <summary>Dark purple used for the 65+ category and the “Geschikt voor 65+” label.</summary>
     public const string SeniorPlusColorHex = "#5B21B6";
@@ -71,7 +72,12 @@ public static class VacancyCategoryDefaults
         new(SeniorLightId, "65plus", SuitableFor65PlusLabel, SeniorPlusColorHex,
             0.5m, true, 1m, true, 2m, false, VacancyKind.Regular, 70,
             [VacancyCategoryExtraFields.PhysicalLoad, VacancyCategoryExtraFields.HoursPerWeek,
-                VacancyCategoryExtraFields.ContractType])
+                VacancyCategoryExtraFields.ContractType]),
+
+        new(FlexId, "flex", "Flex-inzet", "#0D9488",
+            0m, false, 0m, false, 0m, true, VacancyKind.Flex, 80,
+            [VacancyCategoryExtraFields.ContractType, VacancyCategoryExtraFields.HoursPerWeek,
+                VacancyCategoryExtraFields.ExperienceLevel])
     ];
 
     /// <summary>True when the vacancy belongs to the dedicated 65+ category.</summary>
@@ -154,6 +160,7 @@ public static class VacancyCategoryDefaults
     {
         VacancyKind.Internship => InternshipId,
         VacancyKind.Volunteer => VolunteerId,
+        VacancyKind.Flex => FlexId,
         _ => RegulierId
     };
 }

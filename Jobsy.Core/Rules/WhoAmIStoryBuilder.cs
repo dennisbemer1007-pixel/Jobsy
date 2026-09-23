@@ -1,0 +1,106 @@
+using System.Text;
+
+namespace Jobsy.Core.Rules;
+
+/// <summary>Local first-person "Wie ben ik?" narrative when OpenAI is unavailable.</summary>
+public static class WhoAmIStoryBuilder
+{
+    public const int MaxStoryChars = 2500;
+
+    public static string Build(
+        CompetencyScores competency,
+        RiasecScores career,
+        DiscScores disc)
+    {
+        var careerTop = TopLabels(
+            CareerTestCatalog.RiasecCodes.Select(c => (CareerCompassBuilder.TypeLabel(c), career.Get(c))),
+            2);
+        var discTop = TopLabels(
+            DiscTestCatalog.CategoryCodes.Select(c => (DiscTestCatalog.EverydayLabel(c), disc.Get(c))),
+            2);
+        var compTop = TopLabels(
+            CompetencyTestCatalog.CategoryCodes.Select(c => (WhoAmIKeywords.EverydayCompetency(c), competency.Get(c))),
+            2);
+        var keywords = WhoAmIKeywords.FromScores(competency, career, disc);
+
+        var sb = new StringBuilder();
+        sb.Append("Ik ben iemand die tot zijn recht komt bij ");
+        sb.Append(JoinDutch(careerTop));
+        sb.Append(". In een team zie je dat vooral als ik ");
+        sb.Append(JoinDutch(discTop));
+        sb.AppendLine(".");
+        sb.AppendLine();
+        sb.Append("Op de werkvloer is mijn kracht ");
+        sb.Append(JoinDutch(compTop));
+        sb.Append(". Ik zoek geen droge lijst van tests, maar werk waarin ik dat elke dag kan laten zien — dichtbij huis, in Den Haag of het Westland, bij een ploeg die op elkaar kan bouwen.");
+        sb.AppendLine();
+        sb.AppendLine();
+        if (keywords.Count > 0)
+        {
+            sb.Append("Wat mij typeert: ");
+            sb.Append(JoinDutch(keywords.Take(4).ToList()));
+            sb.Append(". Ik vertel dit verhaal liever in gewone woorden, zodat een werkgever meteen voelt of we bij elkaar passen.");
+        }
+        else
+        {
+            sb.Append("Ik vertel dit verhaal liever in gewone woorden, zodat een werkgever meteen voelt of we bij elkaar passen.");
+        }
+
+        return Sanitize(sb.ToString()) ?? Fallback;
+    }
+
+    public static string? Sanitize(string? story)
+    {
+        if (string.IsNullOrWhiteSpace(story))
+        {
+            return null;
+        }
+
+        var trimmed = story.Trim();
+        if (trimmed.Length > MaxStoryChars)
+        {
+            trimmed = trimmed[..MaxStoryChars].Trim();
+        }
+
+        if (CareerCompassBuilder.ContainsForbiddenJargon(trimmed))
+        {
+            return null;
+        }
+
+        if (trimmed.Contains('@', StringComparison.Ordinal)
+            || System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"\+?\d[\d\s\-]{7,}\d"))
+        {
+            return null;
+        }
+
+        return trimmed;
+    }
+
+    private const string Fallback =
+        "Ik ben klaar voor werk dichterbij dan je denkt. Ik zoek een ploeg waar ik mijn inzet, ritme en aandacht voor mensen kwijt kan — in gewone taal, zonder poespas.";
+
+    private static List<string> TopLabels(IEnumerable<(string Label, int Percent)> items, int take)
+        => items
+            .OrderByDescending(x => x.Percent)
+            .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+            .Select(x => x.Label)
+            .Where(l => !CareerCompassBuilder.ContainsForbiddenJargon(l))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(take)
+            .ToList();
+
+    private static string JoinDutch(IReadOnlyList<string> items)
+    {
+        if (items.Count == 0)
+        {
+            return "betrouwbaar werk";
+        }
+
+        if (items.Count == 1)
+        {
+            return items[0];
+        }
+
+        return string.Join(", ", items.Take(items.Count - 1)) + " en " + items[^1];
+    }
+}

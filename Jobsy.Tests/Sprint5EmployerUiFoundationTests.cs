@@ -128,6 +128,17 @@ public class Sprint5EmployerUiFoundationTests
             [Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")],
             accessible,
             callerIsAdmin: false));
+        Assert.False(EmployerInviteRules.IsWithinCallerScope(
+            primaryCompanyId: null,
+            membershipCompanyIds: [],
+            accessible,
+            callerIsAdmin: false));
+        Assert.True(EmployerInviteRules.BlocksInviteOverwrite(UserRole.Ambassadeur));
+        Assert.True(EmployerInviteRules.BlocksInviteOverwrite(UserRole.SalesManager));
+        Assert.False(EmployerInviteRules.BlocksInviteOverwrite(UserRole.BranchManager));
+        Assert.False(EmployerInviteRules.MayPromoteCandidate(callerIsAdmin: false, hasVerifiedApplicationInCallerScope: false));
+        Assert.True(EmployerInviteRules.MayPromoteCandidate(callerIsAdmin: false, hasVerifiedApplicationInCallerScope: true));
+        Assert.True(EmployerInviteRules.MayPromoteCandidate(callerIsAdmin: true, hasVerifiedApplicationInCallerScope: false));
     }
 
     [Fact]

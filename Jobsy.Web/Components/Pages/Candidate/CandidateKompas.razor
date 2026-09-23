@@ -1,0 +1,692 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<section class="kompas" aria-labelledby="kompas-title">
+    <p class="visually-hidden" id="kompas-title">@Culture["Kompas.Title"]</p>
+    <div class="kompas__toolbar">
+        <a class="engagement-btn" href="/">@Culture["Kompas.OpenMap"]</a>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    <div class="kompas-tabs admin-sublinks pill-scroller"
+         role="tablist"
+         aria-label="@Culture["Kompas.TabsLabel"]"
+         @onkeydown="OnTabListKeyDown">
+        <button type="button"
+                id="kompas-tab-whoami"
+                class="admin-sublink @(_tab == CandidateKompasTabs.WhoAmI ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == CandidateKompasTabs.WhoAmI)"
+                aria-controls="kompas-panel-whoami"
+                tabindex="@(_tab == CandidateKompasTabs.WhoAmI ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.WhoAmI)'>
+            @Culture["Kompas.TabWhoAmI"]
+        </button>
+        <button type="button"
+                id="kompas-tab-profile"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Profile ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == CandidateKompasTabs.Profile)"
+                aria-controls="kompas-panel-profile"
+                tabindex="@(_tab == CandidateKompasTabs.Profile ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.Profile)'>
+            @Culture["Kompas.TabProfile"]
+        </button>
+        <button type="button"
+                id="kompas-tab-competencies"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Competencies ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == CandidateKompasTabs.Competencies)"
+                aria-controls="kompas-panel-competencies"
+                tabindex="@(_tab == CandidateKompasTabs.Competencies ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.Competencies)'>
+            @Culture["Kompas.TabCompetencies"]
+        </button>
+        <button type="button"
+                id="kompas-tab-disc"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Disc ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == CandidateKompasTabs.Disc)"
+                aria-controls="kompas-panel-disc"
+                tabindex="@(_tab == CandidateKompasTabs.Disc ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.Disc)'>
+            @Culture["Kompas.TabDisc"]
+        </button>
+        <button type="button"
+                id="kompas-tab-career"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Career ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == CandidateKompasTabs.Career)"
+                aria-controls="kompas-panel-career"
+                tabindex="@(_tab == CandidateKompasTabs.Career ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.Career)'>
+            @Culture["Kompas.TabCareers"]
+        </button>
+        <button type="button"
+                id="kompas-tab-fit"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Fit ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == CandidateKompasTabs.Fit)"
+                aria-controls="kompas-panel-fit"
+                tabindex="@(_tab == CandidateKompasTabs.Fit ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.Fit)'>
+            @Culture["Kompas.TabFit"]
+        </button>
+    </div>
+
+    <article id="kompas-panel-whoami"
+             class="kompas-card kompas-card--tab"
+             role="tabpanel"
+             aria-labelledby="kompas-tab-whoami"
+             hidden="@(_tab != CandidateKompasTabs.WhoAmI)">
+        <h3 id="kompas-whoami-title" class="visually-hidden">@Culture["Kompas.TabWhoAmI"]</h3>
+        <WhoAmIPanel Active="@(_tab == CandidateKompasTabs.WhoAmI)" OnOpenTab="SetTab" />
+    </article>
+
+    <article id="kompas-panel-profile"
+             class="kompas-card kompas-card--tab"
+             role="tabpanel"
+             aria-labelledby="kompas-tab-profile"
+             hidden="@(_tab != CandidateKompasTabs.Profile)">
+        <h3 id="kompas-criteria-title" class="visually-hidden">@Culture["Kompas.TabProfile"]</h3>
+        @if (ProfileTab is not null)
+        {
+            @ProfileTab
+        }
+        else
+        {
+        <p class="login-lead">@Culture["Kompas.ProfileLead"]</p>
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else
+        {
+            <form class="kompas-criteria" @onsubmit="SaveCriteriaAsync" @onsubmit:preventDefault="true">
+                <label>
+                    @Culture["Profile.MaxTravel"]
+                    <input type="number" min="5" max="180" @bind="_maxTravel" />
+                </label>
+                <label>
+                    @Culture["Profile.PreferredTransport"]
+                    <select @bind="_transport">
+                        <option value="@TransportLabels.Bike">@Culture["Transport.Bike"]</option>
+                        <option value="@TransportLabels.EBike">@Culture["Transport.EBike"]</option>
+                        <option value="@TransportLabels.Car">@Culture["Transport.Car"]</option>
+                        <option value="@TransportLabels.PublicTransport">@Culture["Transport.Transit"]</option>
+                        <option value="@TransportLabels.Walking">@Culture["Transport.Walk"]</option>
+                    </select>
+                </label>
+                <fieldset class="profile-check-grid">
+                    <legend>@Culture["Profile.Licenses"]</legend>
+                    <label>
+                        <input type="checkbox"
+                               checked="@(_licenses.Count == 0)"
+                               @onchange="e => ClearLicenses((bool)(e.Value ?? false))" />
+                        @Culture["Kompas.LicenseNone"]
+                    </label>
+                    @foreach (var license in DrivingLicenseLabels.All)
+                    {
+                        <label>
+                            <input type="checkbox"
+                                   checked="@_licenses.Contains(license)"
+                                   @onchange="e => ToggleLicense(license, (bool)(e.Value ?? false))" />
+                            @UiLabels.License(Culture, license)
+                        </label>
+                    }
+                </fieldset>
+                <fieldset>
+                    <legend>@Culture["Profile.Availability"]</legend>
+                    <div class="availability-presets" role="group">
+                        <button type="button"
+                                class="availability-presets__btn @(_availabilityKind == CandidateAvailabilityPresets.Immediate ? "is-active" : null)"
+                                @onclick='() => ApplyAvailability(CandidateAvailabilityPresets.Immediate)'>
+                            @Culture["Profile.PresetImmediate"]
+                        </button>
+                        <button type="button"
+                                class="availability-presets__btn @(_availabilityKind == CandidateAvailabilityPresets.PartTime ? "is-active" : null)"
+                                @onclick='() => ApplyAvailability(CandidateAvailabilityPresets.PartTime)'>
+                            @Culture["Profile.PresetPartTime"]
+                        </button>
+                        <button type="button"
+                                class="availability-presets__btn @(_availabilityKind == CandidateAvailabilityPresets.Seasonal ? "is-active" : null)"
+                                @onclick='() => ApplyAvailability(CandidateAvailabilityPresets.Seasonal)'>
+                            @Culture["Profile.PresetSeasonal"]
+                        </button>
+                    </div>
+                </fieldset>
+                <fieldset class="profile-check-grid">
+                    <legend>@Culture["Kompas.PreferredBranches"]</legend>
+                    @foreach (var role in WorkTypeLabels.All)
+                    {
+                        <label>
+                            <input type="checkbox"
+                                   checked="@_roles.Contains(role)"
+                                   @onchange="e => ToggleRole(role, (bool)(e.Value ?? false))" />
+                            @UiLabels.WorkType(Culture, role)
+                        </label>
+                    }
+                </fieldset>
+                <button class="login-submit" type="submit" disabled="@_busy">@Culture["Common.Save"]</button>
+            </form>
+        }
+        }
+    </article>
+
+    <article id="kompas-panel-competencies"
+             class="kompas-card kompas-card--tab"
+             role="tabpanel"
+             aria-labelledby="kompas-tab-competencies"
+             hidden="@(_tab != CandidateKompasTabs.Competencies)">
+        <h3 id="kompas-competence-title" class="visually-hidden">@Culture["Kompas.TabCompetencies"]</h3>
+        <p class="login-lead">@Culture["Kompas.CompetenceLead"]</p>
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_competencyCompleted && _competencyScores is { IsComplete: true })
+        {
+            <p class="kompas-status kompas-status--ok">@Culture["Kompas.QuickScanDone"]</p>
+            <CompetencyScorePanel Scores="_competencyScores" />
+            @if (_competenceDeep is { IsCompleted: true })
+            {
+                <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
+                <button class="login-submit" type="button" disabled="@_busy" @onclick='() => DownloadPdfAsync("competence")'>
+                    @Culture["Deep.DownloadPdf"]
+                </button>
+            }
+            else if (_competenceDeep is { IsUnlocked: true })
+            {
+                <p class="kompas-status">@Culture["Kompas.DeepReady"]</p>
+                <a class="login-submit" href="/candidate/deep-analysis/competence">@Culture["Competency.DeepUnlock"]</a>
+            }
+            else
+            {
+                <p class="login-lead">@_competencyUpsell</p>
+                <a class="login-submit" href="/candidate/deep-analysis/competence">@Culture["Competency.DeepUnlock"]</a>
+            }
+            <a class="engagement-btn" href="/candidate/competencies">@Culture["Competency.Retake"]</a>
+        }
+        else if (_competencyAnswered > 0)
+        {
+            <div class="kompas-status-stack">
+                <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
+                <p class="kompas-status">@Culture["Kompas.DeepLocked"]</p>
+            </div>
+            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _competencyAnswered, 25)</p>
+            <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Continue"]</a>
+        }
+        else
+        {
+            <div class="kompas-status-stack">
+                <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
+                <p class="kompas-status">@Culture["Kompas.DeepLocked"]</p>
+            </div>
+            <p class="login-lead">@Culture["Competency.Empty"]</p>
+            <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Start"]</a>
+        }
+    </article>
+
+    <article id="kompas-panel-disc"
+             class="kompas-card kompas-card--tab"
+             role="tabpanel"
+             aria-labelledby="kompas-tab-disc"
+             hidden="@(_tab != CandidateKompasTabs.Disc)">
+        <h3 id="kompas-disc-title" class="visually-hidden">@Culture["Kompas.TabDisc"]</h3>
+        <p class="login-lead">@Culture["Kompas.DiscLead"]</p>
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_discCompleted && _discScores is { IsComplete: true })
+        {
+            <p class="kompas-status kompas-status--ok">@Culture["Kompas.QuickScanDone"]</p>
+            <DiscScorePanel Scores="_discScores" />
+            @if (_discDeep is { IsCompleted: true })
+            {
+                <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
+                <button class="login-submit" type="button" disabled="@_busy" @onclick='() => DownloadPdfAsync("disc")'>
+                    @Culture["Deep.DownloadPdf"]
+                </button>
+            }
+            else if (_discDeep is { IsUnlocked: true })
+            {
+                <p class="kompas-status">@Culture["Kompas.DeepReady"]</p>
+                <a class="login-submit" href="/candidate/deep-analysis/disc">@Culture["Disc.DeepUnlock"]</a>
+            }
+            else
+            {
+                <p class="login-lead">@_discUpsell</p>
+                <a class="login-submit" href="/candidate/deep-analysis/disc">@Culture["Disc.DeepUnlock"]</a>
+            }
+            <a class="engagement-btn" href="/candidate/disc">@Culture["Disc.Retake"]</a>
+        }
+        else if (_discAnswered > 0)
+        {
+            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
+            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _discAnswered, 25)</p>
+            <a class="login-submit" href="/candidate/disc">@Culture["Disc.Continue"]</a>
+        }
+        else
+        {
+            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
+            <p class="login-lead">@Culture["Disc.Empty"]</p>
+            <a class="login-submit" href="/candidate/disc">@Culture["Disc.Start"]</a>
+        }
+    </article>
+
+    <article id="kompas-panel-career"
+             class="kompas-card kompas-card--tab"
+             role="tabpanel"
+             aria-labelledby="kompas-tab-career"
+             hidden="@(_tab != CandidateKompasTabs.Career)">
+        <h3 id="kompas-career-title" class="visually-hidden">@Culture["Kompas.TabCareers"]</h3>
+        <p class="login-lead">@Culture["Kompas.CareerTabLead"]</p>
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_careerCompleted && _riasecScores is { IsComplete: true })
+        {
+            <CareerCompassPanel Compass="_careerCompass" Competencies="_competencyScores" CareerDirection="_riasecScores" />
+            @if (_careerDeep is { IsCompleted: true })
+            {
+                <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
+                <button class="login-submit" type="button" disabled="@_busy" @onclick='() => DownloadPdfAsync("career")'>
+                    @Culture["Deep.DownloadPdf"]
+                </button>
+            }
+            else if (_careerDeep is { IsUnlocked: true })
+            {
+                <p class="kompas-status">@Culture["Kompas.DeepReady"]</p>
+                <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
+            }
+            else
+            {
+                <p class="kompas-status">@Culture["Kompas.DeepLocked"]</p>
+                <p class="login-lead">@_careerUpsell</p>
+                <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
+            }
+            <button class="engagement-btn" type="button" @onclick="ToggleCareerDetails">
+                @(_showCareerDetails ? Culture["Kompas.HideWorkStyle"] : Culture["Kompas.ShowWorkStyle"])
+            </button>
+            @if (_showCareerDetails)
+            {
+                <RiasecScorePanel Scores="_riasecScores" />
+            }
+            <a class="engagement-btn" href="/candidate/career">@Culture["Career.Retake"]</a>
+        }
+        else if (_careerAnswered > 0)
+        {
+            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
+            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _careerAnswered, 25)</p>
+            <a class="login-submit" href="/candidate/career">@Culture["Career.Continue"]</a>
+        }
+        else
+        {
+            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
+            <p class="login-lead">@Culture["Career.Empty"]</p>
+            <a class="login-submit" href="/candidate/career">@Culture["Career.Start"]</a>
+        }
+    </article>
+
+    <article id="kompas-panel-fit"
+             class="kompas-card kompas-card--tab"
+             role="tabpanel"
+             aria-labelledby="kompas-tab-fit"
+             hidden="@(_tab != CandidateKompasTabs.Fit)">
+        <RoleFitCheckPanel VacancyId="@_vacancyId" />
+    </article>
+</section>
+
+@code {
+    private bool _loadStarted;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _message;
+    private MeProfile? _profile;
+    private bool _competencyCompleted;
+    private int _competencyAnswered;
+    private CompetencyScoreSet? _competencyScores;
+    private string _competencyUpsell = "";
+    private DeepAnalysisState? _competenceDeep;
+    private bool _discCompleted;
+    private int _discAnswered;
+    private DiscScoreSet? _discScores;
+    private string _discUpsell = "";
+    private DeepAnalysisState? _discDeep;
+    private bool _careerCompleted;
+    private int _careerAnswered;
+    private CareerCompassModel _careerCompass = new();
+    private RiasecScoreSet? _riasecScores;
+    private string _careerUpsell = "";
+    private DeepAnalysisState? _careerDeep;
+    private int _maxTravel = 30;
+    private string _transport = TransportLabels.Bike;
+    private readonly HashSet<string> _licenses = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _roles = new(StringComparer.OrdinalIgnoreCase);
+    private string? _availabilityKind;
+    private decimal? _minHours = 8;
+    private decimal? _maxHours = 24;
+    private bool _flexibleTimes;
+    private Dictionary<string, List<string>> _availability = new(StringComparer.OrdinalIgnoreCase);
+    private string _tab = CandidateKompasTabs.WhoAmI;
+    private Guid? _vacancyId;
+    private bool _showCareerDetails;
+    private bool _listeningToLocation;
+
+    [Parameter] public string? InitialTab { get; set; }
+    [Parameter] public RenderFragment? ProfileTab { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Culture.Changed += OnCultureChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        _listeningToLocation = true;
+        ApplyTabFromUri();
+    }
+
+    protected override void OnParametersSet()
+        => ApplyTabFromUri();
+
+    protected override Task OnInitializedAsync()
+        => TryLoadAsync();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+        if (_listeningToLocation)
+        {
+            Navigation.LocationChanged -= OnLocationChanged;
+        }
+    }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => InvokeAsync(() =>
+        {
+            ApplyTabFromUri();
+            StateHasChanged();
+        });
+
+    private async Task TryLoadAsync()
+    {
+        if (!HomeDashboardLoad.TryBegin(ref _loadStarted, RendererInfo.IsInteractive))
+        {
+            return;
+        }
+
+        await LoadAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void ApplyTabFromUri()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("vacancyId", out var vacancyValues)
+            && Guid.TryParse(vacancyValues.FirstOrDefault(), out var vacancyId))
+        {
+            _vacancyId = vacancyId;
+            _tab = CandidateKompasTabs.Fit;
+        }
+
+        if (query.TryGetValue("tab", out var values))
+        {
+            var fromQuery = values.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(fromQuery))
+            {
+                _tab = CandidateKompasTabs.Normalize(fromQuery);
+                return;
+            }
+        }
+
+        var fragment = uri.Fragment.TrimStart('#');
+        if (!string.IsNullOrWhiteSpace(fragment))
+        {
+            _tab = CandidateKompasTabs.Normalize(fragment);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(InitialTab))
+        {
+            _tab = CandidateKompasTabs.Normalize(InitialTab);
+        }
+    }
+
+    private void SetTab(string tab)
+    {
+        var next = CandidateKompasTabs.Normalize(tab);
+        if (string.Equals(_tab, next, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _tab = next;
+        var uri = Navigation.GetUriWithQueryParameter("tab", next);
+        Navigation.NavigateTo(uri, replace: true);
+    }
+
+    private void OnTabListKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "ArrowRight":
+            case "ArrowDown":
+                SetTab(CandidateKompasTabs.Neighbor(_tab, 1));
+                break;
+            case "ArrowLeft":
+            case "ArrowUp":
+                SetTab(CandidateKompasTabs.Neighbor(_tab, -1));
+                break;
+            case "Home":
+                SetTab(CandidateKompasTabs.WhoAmI);
+                break;
+            case "End":
+                SetTab(CandidateKompasTabs.Fit);
+                break;
+        }
+    }
+
+    private void ToggleCareerDetails()
+        => _showCareerDetails = !_showCareerDetails;
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _message = null;
+        try
+        {
+            _profile = await Api.GetMyProfileAsync();
+            if (_profile?.Preferences is { } prefs)
+            {
+                _maxTravel = prefs.MaxTravelMinutes ?? 30;
+                _transport = string.IsNullOrWhiteSpace(prefs.PreferredTransport)
+                    ? TransportLabels.Bike
+                    : TransportLabels.Canonical(prefs.PreferredTransport);
+                _minHours = prefs.MinHoursPerWeek;
+                _maxHours = prefs.MaxHoursPerWeek;
+                _flexibleTimes = prefs.FlexibleTimes == true;
+                _licenses.Clear();
+                foreach (var license in prefs.DrivingLicenses ?? [])
+                {
+                    foreach (var code in DrivingLicenseLabels.Split(license))
+                    {
+                        _licenses.Add(code);
+                    }
+                }
+
+                _roles.Clear();
+                foreach (var role in prefs.Roles ?? [])
+                {
+                    _roles.Add(role);
+                }
+
+                _availability = prefs.Availability is null
+                    ? new(StringComparer.OrdinalIgnoreCase)
+                    : prefs.Availability.ToDictionary(
+                        kv => kv.Key,
+                        kv => kv.Value.ToList(),
+                        StringComparer.OrdinalIgnoreCase);
+                _availabilityKind = CandidateAvailabilityPresets.Detect(_minHours, _maxHours, _flexibleTimes);
+            }
+
+            var competency = await Api.GetMyCompetenciesAsync();
+            if (competency is not null)
+            {
+                _competencyAnswered = competency.AnsweredCount;
+                _competencyCompleted = string.Equals(competency.Status, "Completed", StringComparison.OrdinalIgnoreCase);
+                _competencyScores = competency.Scores;
+                _competencyUpsell = competency.DeepAnalysisUpsellCopy;
+            }
+
+            var career = await Api.GetMyCareerInterestsAsync();
+            if (career is not null)
+            {
+                _careerAnswered = career.AnsweredCount;
+                _careerCompleted = string.Equals(career.Status, "Completed", StringComparison.OrdinalIgnoreCase);
+                _careerCompass = career.Compass ?? new CareerCompassModel();
+                _riasecScores = career.Scores;
+                _careerUpsell = career.DeepAnalysisUpsellCopy;
+            }
+
+            _competenceDeep = await Api.GetDeepAnalysisAsync("competence");
+            _discDeep = await Api.GetDeepAnalysisAsync("disc");
+            _careerDeep = await Api.GetDeepAnalysisAsync("career");
+
+            var disc = await Api.GetMyDiscAsync();
+            if (disc is not null)
+            {
+                _discAnswered = disc.AnsweredCount;
+                _discCompleted = string.Equals(disc.Status, "Completed", StringComparison.OrdinalIgnoreCase);
+                _discScores = disc.Scores;
+                _discUpsell = disc.DeepAnalysisUpsellCopy;
+            }
+        }
+        catch
+        {
+            _message = Culture["Common.Error"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ApplyAvailability(string kind)
+    {
+        var patch = CandidateAvailabilityPresets.Apply(kind);
+        _availabilityKind = patch.Kind;
+        _minHours = patch.MinHoursPerWeek;
+        _maxHours = patch.MaxHoursPerWeek;
+        _flexibleTimes = patch.FlexibleTimes;
+        _availability = patch.Availability.ToDictionary(
+            kv => kv.Key,
+            kv => kv.Value.ToList(),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void ToggleRole(string role, bool selected)
+    {
+        if (selected)
+        {
+            _roles.Add(role);
+        }
+        else
+        {
+            _roles.Remove(role);
+        }
+    }
+
+    private void ToggleLicense(string license, bool selected)
+    {
+        if (selected)
+        {
+            _licenses.Add(license);
+        }
+        else
+        {
+            _licenses.Remove(license);
+        }
+    }
+
+    private void ClearLicenses(bool none)
+    {
+        if (none)
+        {
+            _licenses.Clear();
+        }
+    }
+
+    private async Task SaveCriteriaAsync()
+    {
+        if (_profile is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            var prefs = _profile.Preferences;
+            prefs.MaxTravelMinutes = _maxTravel;
+            prefs.PreferredTransport = _transport;
+            prefs.DrivingLicenses = _licenses.OrderBy(x => x).ToList();
+            prefs.Roles = _roles.OrderBy(x => x).ToList();
+            prefs.MinHoursPerWeek = _minHours;
+            prefs.MaxHoursPerWeek = _maxHours;
+            prefs.FlexibleTimes = _flexibleTimes;
+            prefs.Availability = _availability;
+            var updated = await Api.UpdateMyProfileAsync(preferences: prefs);
+            if (updated is not null)
+            {
+                _profile = updated;
+            }
+
+            _message = Culture["Kompas.Saved"];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadPdfAsync(string kind)
+    {
+        _busy = true;
+        try
+        {
+            await Api.DownloadDeepAnalysisReportAsync(Js, kind);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

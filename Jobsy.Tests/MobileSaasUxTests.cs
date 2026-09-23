@@ -50,6 +50,11 @@ public class MobileSaasUxTests
         Assert.Contains("min-height: 40px", css);
         Assert.Contains(".pill-scroller", css);
         Assert.Contains("scrollbar-width: none", css);
+        Assert.Contains(".admin-sublinks.admin-sublinks--wrap {\n    flex-wrap: wrap;\n    overflow: visible;", css);
+
+        var settingsNav = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Admin/AdminSettingsSubnav.razor"));
+        Assert.Contains("admin-sublinks--wrap", settingsNav);
+        Assert.DoesNotContain("pill-scroller", settingsNav);
     }
 
     [Fact]
@@ -176,6 +181,10 @@ public class MobileSaasUxTests
         Assert.Contains("ToggleSection(\"preferences\")", razor);
         Assert.Contains("ToggleSection(\"availability\")", razor);
         Assert.Contains("ToggleSection(\"experience\")", razor);
+        Assert.Contains("competency-profile-card", razor);
+        Assert.Contains("CandidateKompas", razor);
+        Assert.Contains("profile-layout__matches", razor);
+        Assert.DoesNotContain("competency.Scores ?? competency.PreviewScores", razor);
         Assert.Contains("profile-check-grid", razor);
         Assert.Contains("availability-matrix", razor);
         Assert.Contains("availability-presets", razor);
@@ -193,6 +202,25 @@ public class MobileSaasUxTests
         Assert.Contains(".profile-save-bar .login-submit {\n    width: 100%;", css);
         Assert.Contains(".profile-page--candidate .profile-contact__names {\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
         Assert.Contains(".profile-page--candidate .profile-page__header {\n        display: none;", css);
+    }
+
+    [Fact]
+    public void Competency_test_discloses_privacy_and_blocks_save_after_load_failure()
+    {
+        var test = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/CompetencyTest.razor"));
+        Assert.Contains("Competency.PrivacyNote", test);
+        Assert.Contains("href=\"/privacy\"", test);
+        Assert.Contains("_loadFailed", test);
+        Assert.Contains("disabled=\"@(_saving || _loadFailed)\"", test);
+
+        var privacy = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Legal/Privacy.razor"));
+        Assert.Contains("5b. Competentietest, beroepentest, diepte-analyse en talentpool", privacy);
+        Assert.Contains("niet</strong> aan werkgevers getoond", privacy);
+        Assert.Contains("anonieme talentpool", privacy);
+        Assert.Contains("Mijn Beroepen-kompas", privacy);
+        Assert.Contains("Likert-antwoorden", privacy);
+        Assert.Contains("21 september 2026", privacy);
+        Assert.Equal("2026-09-21", Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion);
     }
 
     [Fact]

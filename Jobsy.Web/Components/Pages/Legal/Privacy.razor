@@ -8,7 +8,7 @@
     <header class="panel-header">
         <div>
             <h1>@Culture["Legal.Privacy"]</h1>
-            <p class="login-lead">Laatst bijgewerkt: 19 augustus 2026</p>
+            <p class="login-lead">Laatst bijgewerkt: 21 september 2026</p>
         </div>
     </header>
 
@@ -35,7 +35,7 @@
             <p>Afhankelijk van je rol verwerken we onder meer:</p>
             <ul>
                 <li><strong>Accountgegevens:</strong> naam, e-mailadres, inloggegevens en (indien van toepassing) telefoonnummer.</li>
-                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon en wettelijke taakchecks), voorkeursvervoer, locatiegegevens voor reistijdschattingen, gewenste uren per week, beschikbaarheid/dagdelen (of “tijden in overleg”), likes, sollicitaties (inclusief snapshot van voorkeuren/opleiding/rijbewijs, matchscore en optionele motivatie), optioneel geüpload eigen CV (PDF/DOCX), recensies (werkgever, contactpersoon, e-mail en telefoon van derden), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
+                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon en wettelijke taakchecks), voorkeursvervoer, locatiegegevens voor reistijdschattingen, gewenste uren per week, beschikbaarheid/dagdelen (of “tijden in overleg”), likes, sollicitaties (inclusief snapshot van voorkeuren/opleiding/rijbewijs, matchscore en optionele motivatie), optioneel geüpload eigen CV (PDF/DOCX), recensies (werkgever, contactpersoon, e-mail en telefoon van derden), antwoorden en afgeleide scores/tags van de optionele competentietest (25 Likert, Big Five) en beroepentest (25 Likert, RIASEC) plus optionele betaalde diepte-analyses (150 vragen per test) en het daaruit afgeleide <strong>Mijn Beroepen-kompas</strong> (algemene beroepen uit de Nederlandse arbeidsmarkt), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
                 <li><strong>Ondernemers:</strong> KVK-gegevens, vestigingsgegevens, contactpersonen, contactvoorkeuren (e-mail/telefoon/WhatsApp voor contact ná sollicitatie), vacaturegegevens (uren, roosters/dagdelen, wettelijke taakvinkjes voor jeugdige arbeid), gebruikersrollen, API-koppelingen (alleen gehashte keys) en token-/betalingsgerelateerde transactiegegevens.</li>
                 <li><strong>Salesmanagers:</strong> KvK/BTW/NAW, gemaskeerde IBAN voor uitbetaling, trackingcode, commissieboekingen en self-billingfacturen (fiscale bewaarplicht).</li>
                 <li><strong>Technische gegevens:</strong> sessie-cookie <code>Jobsy.Auth</code>; idle-timeout cookie <code>Jobsy.LastActivity</code> (versleuteld via Data Protection); taalvoorkeur-cookie <code>Jobsy.Culture</code>; cookie-/analyticsvoorkeur in <code>localStorage</code> en first-party cookie <code>Jobsy.CookieConsent</code>; optionele anonieme engagement-sleutel in <code>localStorage</code>/<code>sessionStorage</code> (alleen na analytics-toestemming); optionele klik-/impressie-/deel- en sitebezoekstatistieken (alleen na “Accepteer cookies”, ook voor ingelogde gebruikers — de API weigert deze writes zonder toestemming); likes als functionele voorkeur in je account; beveiligingslogs en noodzakelijke cookies voor inloggen en werking van de dienst.</li>
@@ -51,7 +51,7 @@
         <section>
             <h2>3. Doeleinden en grondslagen</h2>
             <ul>
-                <li><strong>Uitvoering van de overeenkomst:</strong> account, matching op reistijd/uren/dagdelen, wettelijke geschiktheidschecks bij solliciteren, sollicitaties, vacaturepublicatie, tokengebruik en (optioneel) direct contact na een succesvolle sollicitatie.</li>
+                <li><strong>Uitvoering van de overeenkomst:</strong> account, matching op reistijd/uren/dagdelen en (optioneel) competenties, wettelijke geschiktheidschecks bij solliciteren, sollicitaties, vacaturepublicatie, tokengebruik en (optioneel) direct contact na een succesvolle sollicitatie.</li>
                 <li><strong>Gerechtvaardigd belang:</strong> beveiliging, fraudepreventie, platformverbetering, moderatie van vacatureteksten, en incidentele re-engagementberichten aan inactieve organisaties (maximaal één keer).</li>
                 <li><strong>Toestemming:</strong> waar we daarom vragen (bijvoorbeeld bij akkoord met voorwaarden of optionele functies).</li>
                 <li><strong>Wettelijke verplichting:</strong> bijvoorbeeld bewaarplichten rondom betalingen of verzoeken van bevoegde autoriteiten.</li>
@@ -62,14 +62,14 @@
             <h2>4. Verwerkers en derden</h2>
             <p>We kunnen gegevens delen met of laten verwerken door:</p>
             <ul>
-                <li><strong>Werkgevers / vestigingen</strong> wanneer je solliciteert — NAW/contactgegevens worden pas gedeeld na acceptatie van de sollicitatie (progressive disclosure). Reis-/voorkeursinformatie kan eerder zichtbaar zijn voor matching.</li>
+                <li><strong>Werkgevers / vestigingen</strong> wanneer je solliciteert — NAW/contactgegevens worden pas gedeeld na acceptatie van de sollicitatie (progressive disclosure). Reis-/voorkeursinformatie kan eerder zichtbaar zijn voor matching. <strong>Ruwe antwoorden</strong> van competentie- en beroepentest en diepte-analyses worden <strong>niet</strong> aan werkgevers getoond. Als je OpenForWork staat en minstens één test hebt afgerond, kunnen werkgevers in de <strong>anonieme talentpool</strong> wel afgeleide tags, competentiepercentages, RIASEC, beschikbaarheidssamenvatting, rijbewijzen en geschatte reistijd zien — zonder naam, e-mail, telefoon of geboortedatum. Contactgegevens volgen pas na een ContactUnlock én jouw acceptatie.</li>
                 <li><strong>Hosting:</strong> Render (hosting van de applicatie en database).</li>
                 <li><strong>E-mail:</strong> Resend voor transactionele e-mail (verificatiecodes, bevestigingen, credentials).</li>
                 <li><strong>Kaarten / OSM-tegels</strong> voor de weergave van de vacaturekaart.</li>
                 <li><strong>Geocoding:</strong> Nominatim / OpenStreetMap voor adres- of locatieomzetting.</li>
                 <li><strong>Identiteitsproviders:</strong> Google of Microsoft (Entra) als je daarmee inlogt (alleen geverifieerde e-mailadressen).</li>
                 <li><strong>Betaaldienstverleners:</strong> optioneel Mollie voor tokenaankopen en (toekomstig) salesmanager-uitbetalingen (minimale metadata: checkout/company/pack).</li>
-                <li><strong>AI (optioneel):</strong> OpenAI voor oefengesprek, vacaturemoderatie, vertaling, assistent-chat en het uitlezen van een geüpload CV (alleen lege profielvelden die duidelijk in het bestand staan). Bij gebruik kan doorgifte naar de Verenigde Staten plaatsvinden.</li>
+                <li><strong>AI (optioneel):</strong> OpenAI voor oefengesprek, vacaturemoderatie, vertaling, assistent-chat, het uitlezen van een geüpload CV (alleen lege profielvelden die duidelijk in het bestand staan), — na de uitgebreide beroepentest — het voorstellen van algemene beroepen voor <strong>Mijn Beroepen-kompas</strong>, de Functie-Fit Checker (functietitel + scores, zonder naam of e-mail), en cultuur-/teamfit (cultuurpijlers van de vacature + scores, zonder NAW). Bij gebruik kan doorgifte naar de Verenigde Staten plaatsvinden.</li>
                 <li><strong>WhatsApp / telefoon:</strong> alleen wanneer jij of de werkgever daarvoor kiest ná een geverifieerde sollicitatie; het gesprek verloopt buiten Lobsy.</li>
             </ul>
             <p>We verkopen je persoonsgegevens niet.</p>
@@ -85,7 +85,17 @@
             </p>
             <p>
                 Voor matchingspercentages combineren we reistijd met uren- en dagdelenoverlap (en waar relevant
-                wettelijke taakgeschiktheid op basis van geboortedatum). Scores zijn informatieve schattingen
+                wettelijke taakgeschiktheid op basis van geboortedatum). Op jouw profiel gebruiken we daarnaast
+                ervaring en, ná afronden van de competentie- en/of beroepentest, scores, interesses en algemene
+                beroepstags uit <strong>Mijn Beroepen-kompas</strong> om een Top 10 vacatures (≥ 60%) te rangschikken
+                en actuele advertenties op de banenkaart te herkennen (ook als de functienaam nét anders is).
+                Als de werkgever cultuurpijlers op de vacature zette én jouw harde criteria (reistijd, uren, wettelijke
+                taken, rijbewijs/opleiding) kloppen, berekenen we ook een <strong>Cultuur Fit</strong> (percentage +
+                korte uitleg). Daarvoor gaan alleen pijlers en scores naar OpenAI — geen naam of e-mail.
+                Die suggesties en de Jip-en-Janneke-uitleg zijn alleen voor jou.
+                Scores bij solliciteren naar een werkgever blijven gebaseerd op reistijd, uren en dagdelen —
+                zonder Big Five-antwoorden. In de anonieme talentpool kunnen werkgevers wel de afgeleide
+                tags en competentiepercentages zien (zie §5b). Scores zijn informatieve schattingen
                 om jou en werkgevers te helpen; zij vormen geen besluit tot aanname of afwijzing.
             </p>
         </section>
@@ -103,6 +113,34 @@
         </section>
 
         <section>
+            <h2>5b. Competentietest, beroepentest, diepte-analyse en talentpool</h2>
+            <p>
+                De competentietest (25 vragen, Big Five) en de beroepentest (25 vragen, RIASEC) zijn optioneel
+                en zitten in je profiel/dashboard. Je kunt tussentijds opslaan, later wijzigen of een test overslaan.
+                We bewaren je antwoorden (Likert 1–5 per vraag) en, na afronden, percentages, Holland-code en
+                match-tags zodat jij ze kunt inzien, vacaturesuggesties verbeteren, en — als OpenForWork aan staat —
+                anoniem vindbaar bent in de werkgever-talentpool. Grondslag: uitvoering van de overeenkomst.
+                <strong>Ruwe antwoorden</strong> zien werkgevers, intermediairs en andere kandidaten niet.
+                Contact (naam/e-mail/telefoon) volgt alleen na een betaald ContactUnlock én jouw acceptatie.
+            </p>
+            <p>
+                Optionele diepte-analyses (150 vragen per test, € 2,99) voegen verrijkte tags en een PDF-rapport toe.
+                Na de uitgebreide beroepentest slaan we algemene beroepen op in <strong>Mijn Beroepen-kompas</strong>
+                (OpenAI wanneer geconfigureerd; anders een lokale catalogus van de Nederlandse arbeidsmarkt —
+                niet beperkt tot vacatures die nu op Lobsy staan). Checkout en ontgrendeling lopen via de betaalflow;
+                lege opslag overschrijft bestaande antwoorden niet.
+                Bij export (“Mijn gegevens”) gaan beide tests, het beroepen-kompas, de Functie-Fit Checker, diepte-analyses, checkouts en talent-contactverzoeken
+                mee; bij uitschrijven of wissen van het account worden ze verwijderd.
+            </p>
+            <p>
+                De <strong>Functie-Fit Checker</strong> (“Past dit bij mij?”) is pas beschikbaar nadat beide gratis quick-scans (25 vragen)
+                zijn afgerond. We sturen de ingevoerde functietitel plus je scores en praktische voorkeuren (reistijd, vervoer, rijbewijs, branches)
+                naar OpenAI — zonder naam, e-mail of adres. Het laatste resultaat (titel, matchpercentage, sterktes, gaten, groeistappen)
+                bewaren we in je account tot je het wist. Zonder OpenAI-sleutel volgt een lokale indicatie.
+            </p>
+        </section>
+
+        <section>
             <h2>6. Bewaartermijnen</h2>
             <ul>
                 <li><strong>Platformlogs:</strong> 90 dagen.</li>
@@ -111,7 +149,7 @@
                 <li><strong>Onbevestigde sollicitatiedrafts</strong> (e-mailverificatie niet afgerond): 48 uur, daarna automatisch verwijderd.</li>
                 <li><strong>Ingetrokken sollicitaties:</strong> snapshots en geüploade CV-bytes worden bij intrekken gewist; de sollicitatie blijft bestaan zonder die persoonsgegevens.</li>
                 <li><strong>Self-billing / commissies:</strong> langer bewaard waar fiscale bewaarplicht dat vereist; bij accountverwijdering worden persoonsgegevens geanonimiseerd.</li>
-                <li><strong>Accountgegevens:</strong> tot anonimisering of verwijdering op jouw verzoek, of zolang het account actief nodig is voor de dienst.</li>
+                <li><strong>Accountgegevens:</strong> tot anonimisering of verwijdering op jouw verzoek, of zolang het account actief nodig is voor de dienst (inclusief testantwoorden, scores, tags en diepte-analyse-rapporten).</li>
             </ul>
             <p>
                 Langere bewaartermijnen kunnen gelden waar dat wettelijk verplicht is
@@ -122,11 +160,16 @@
         <section>
             <h2>7. AI-functies</h2>
             <p>
-                Bij optionele AI-functies (oefengesprek, vacaturemoderatie, vertaling, assistent, CV-extractie)
-                kunnen berichten, vacaturetekst of CV-tekst naar OpenAI worden gestuurd. Chatgeschiedenis van het oefengesprek
+                Bij optionele AI-functies (oefengesprek, vacaturemoderatie, vertaling, assistent, CV-extractie,
+                beroepen-kompas na de uitgebreide beroepentest, Functie-Fit Checker)
+                kunnen berichten, vacaturetekst, CV-tekst of (anonieme) testdata naar OpenAI worden gestuurd.
+                Voor het beroepen-kompas sturen we Likert-antwoorden en richtingscores, geen naam of e-mail.
+                Voor de Functie-Fit Checker sturen we de functietitel plus scores en voorkeuren, geen naam of e-mail.
+                Chatgeschiedenis van het oefengesprek
                 wordt niet permanent server-side als gespreksarchief bewaard. Bij gebruik van OpenAI kan
                 doorgifte naar de Verenigde Staten plaatsvinden. Een eigen CV uploaden is vrijwillig; zonder upload
-                wordt geen CV-tekst naar OpenAI gestuurd.
+                wordt geen CV-tekst naar OpenAI gestuurd. Zonder OpenAI-sleutel blijft het kompas op de lokale
+                beroepencatalogus werken.
             </p>
         </section>
 

@@ -28,27 +28,34 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 
 | Route | Inhoud |
 |-------|--------|
-| `/` | Banenkaart (filters, lijst, kaart) |
-| `/home` | Eigen metrics: sollicitaties, shares, likes, reacties (periode + drilldown) |
-| `/vacancies/{id}` | Detail, solliciteren, like/share, optioneel mock interview |
+| `/` | Banenkaart (filters, lijst, kaart). Ingelogde kandidaat: live match-% per vacature, **Cultuur Fit**-label na harde criteria, sort/filter op match, uitleg waarom |
+| `/home` | **Mijn Lobsy Kompas** in tabbladen: **Wie ben ik?**, **Mijn profiel**, **Mijn competenties**, **DISC-Analyse**, **Mijn beste match**, **Functiefit checker** + eigen metrics |
+| `/vacancies/{id}` | Detail, solliciteren, like/share, optioneel mock interview, kandidaat **Past deze vacature bij mij?** |
 | `/candidate/applications` | Sollicitatiehistorie |
 | `/candidate/vacancies` | Overzicht + **Onlangs bekeken** (localStorage, alleen vacancy-GUIDs) + in-de-buurt op reistijd/vervoer |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
-| `/candidate/profile` | OpenForWork, prefs, DOB, HomeLocation, eigen CV-upload, recensies |
+| `/candidate/profile` | OpenForWork, NAW/CV, recensies, **Mijn Lobsy Kompas**-tabbladen (Wie ben ik? / profiel / competenties: grafiek + accordeon met workshops / DISC-Analyse / beste match / Functiefit checker in 4 stappen) — werkgeverscontact alleen op tab Mijn profiel; Top 10 vacatures (≥60%); PDF als diepte-analyse klaar is |
+| `/candidate/competencies` | Competentietest (25); draft tussentijds opslaan; scores herberekend bij afronden |
+| `/candidate/disc` | Gedragsanalyse / DISC Quick-Scan (25); accordeon met workshops; optionele diepte-analyse 150 |
+| `/candidate/career` | Beroepentest (25); Mijn Beroepen-kompas + top 10 actieve vacatures |
+| `/candidate/deep-analysis/{kind}` | Betaalde 150-vragen analyse (competence \| career) + loopbaan-PDF (gekleurd logo, match-banden, *Wat betekent dit voor jou?*) |
+| `/candidate/talent-contacts` | Inbox contactverzoeken (48u); geen extra bottom-nav tab |
 
 ---
 
 ## 2. BranchManager
 *Doel: lokaal werven voor één vestiging.*
 
-**BottomNav:** Home · Banenkaart · Vacatures · Sollicitaties · Mijn tokens · Bedrijfsgegevens · Overnames
+**BottomNav:** Home · Banenkaart · Vacatures · Sollicitaties · Talentpool · Mijn tokens · Bedrijfsgegevens · Overnames
 
 | Route | Inhoud |
 |-------|--------|
 | `/home` | Vestiging-KPI’s (Bento) + Top/Flop vacatures + drilldown |
 | `/employer/vacancies` | Beheer + publiceren (basis/highlight/PushBom/verlengen) |
-| `/branch/vacancies/new` | Nieuwe vacature |
+| `/branch/vacancies/new` | Nieuwe vacature, inclusief 3–5 cultuurpijlers en optionele hoge/lage functie-drempel (diploma/certificaat/ervaring) |
 | `/branch/applicants` | Sollicitaties; pre-accept: motivatie/afstand/beschikbaarheid/leeftijd; PII + Lobsy-CV + geüpload CV na Accept; daarna uitnodigen / matchen / weigeren |
+| `/employer/talent` | Anonieme talentpool (filters zonder leeftijd); ContactUnlock 1 token |
+| `/employer/talent-contacts` | Contactverzoeken + 48u refund-intrekken |
 | `/branch/tokens` | Saldo / logs |
 | `/employer/takeovers` | Inbox overnames |
 | `/branch` | Redirect → `/home` |
@@ -156,7 +163,7 @@ Admin: `/admin/ambassadeurs` — uitnodigen, drempels (50 / +1% / max), commissi
 | `/admin/logging` · `/admin/settings` · `/admin/integrations` | Logs, pricing/PushBom/early-adapter, integratie-pings |
 | `/admin/launch` | Lancerings-KPI’s: teaser-kliks/UTM, gratis vacatures, Westland-groei, tokens/jaardeals (spec) |
 | `/admin/cnames` | CNAME / regio-hosts (hostname, branding, adres-autocomplete) + checklist-hulp (?) |
-| `/admin/masterdata` · `/admin/vacancy-categories` · `/admin/exclusivity` | Keuzelijsten, vacaturecategorieën (kleur/tokens/extra velden), stage-exclusiviteit |
+| `/admin/masterdata` · `/admin/vacancy-categories` · `/admin/exclusivity` · `/admin/training` | Keuzelijsten, vacaturecategorieën (kleur/tokens/extra velden), stage-exclusiviteit, opleiders (affiliate + regionale deals, maand-CSV) |
 | `/admin/wages` | WML + semi-annual update-stub |
 | `/admin` · `/admin/cockpit` | Redirect → `/home` |
 | `/admin/moderation` · `/masterdata` · `/notifications` | Placeholders (“later”) |

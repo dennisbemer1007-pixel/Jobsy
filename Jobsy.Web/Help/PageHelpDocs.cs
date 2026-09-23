@@ -96,7 +96,7 @@ public static class PageHelpDocs
         ["/home"] = new(
             "Home / dashboard",
             "Startscherm na inloggen, afgestemd op jouw rol.",
-            "Je ziet kerncijfers bovenaan en KPI’s gegroepeerd in categorieën (groei, engagement, marketing, systeem). Kies een periode, open een categorie en klik een tegel voor drilldown.",
+            "Als kandidaat open je Mijn Lobsy Kompas: Wie ben ik?, profiel, competenties, gedragsanalyse, beste match en Functiefit. Andere rollen zien kerncijfers en KPI-categorieën.",
             "Overzicht houden en snel naar vacatures, tokens, sollicitaties of beheer gaan."),
 
         ["/hoe-werkt-lobsy"] = new(
@@ -132,8 +132,44 @@ public static class PageHelpDocs
         ["/candidate/profile"] = new(
             "Mijn profiel",
             "Jouw kandidaatgegevens voor matching en solliciteren.",
-            "Vul interesses, opleiding, rijbewijzen, voorkeuren, locatie, uren per week en beschikbaarheid/dagdelen in (of tijden in overleg). Geboortedatum is nodig voor leeftijdsloon en wettelijke taakchecks. Wijzigingen verbeteren matchscores en filters.",
+            "Vul interesses, opleiding, rijbewijzen, voorkeuren, locatie, uren per week, beschikbaarheid/dagdelen in op het tabblad Mijn profiel. Competentietest en beroepentest staan op eigen tabbladen; uitkomsten landen in Mijn Beroepen-kompas. Na beide quick-scans kun je op Past dit bij mij? een functietitel toetsen. Geboortedatum is nodig voor leeftijdsloon en wettelijke taakchecks. Rechts zie je de Top 10 vacatures vanaf 60% match.",
             "Betere matches en sneller solliciteren met volledige gegevens."),
+
+        ["/candidate/competencies"] = new(
+            "Competentietest",
+            "Vijfentwintig stellingen op basis van het Big Five-model, vertaald naar werkcompetenties.",
+            "Beantwoord in je eigen tempo. Tussentijds opslaan mag; later kun je antwoorden wijzigen. Afronden herberekent je scores en de vacature-matches op je profiel. Optioneel: uitgebreide analyse (150 vragen, € 2,99) met PDF.",
+            "Inzicht in samenwerken, resultaatgerichtheid, stressbestendigheid, innovatie en extraversie."),
+
+        ["/candidate/disc"] = new(
+            "Gedragsanalyse",
+            "Vijfentwintig stellingen over hoe jij in een team werkt: voortouw, mensen meenemen, ritme en nauwkeurigheid.",
+            "Rond af voor de grafiek en workshops per stijl. Optioneel: uitgebreide analyse (150 vragen, € 2,99) met PDF over gedrag onder druk en teamrol.",
+            "Gedragsstijl mee laten wegen in Functie-Fit en cultuurfit."),
+
+        ["/candidate/career"] = new(
+            "Beroepentest",
+            "Vijfentwintig stellingen over wat je wilt in werk: aanpakken, uitzoeken, maken, helpen, aanjagen of organiseren.",
+            "Rond af voor Mijn Beroepen-kompas en een top 10 actieve vacatures in de regio. Optioneel: uitgebreide beroepentest (150 vragen, € 2,99) met een loopbaan-PDF in gewone taal (super-match, sterke keus, handige verbreding).",
+            "Interesses koppelen aan actieve vacatures op de kaart."),
+
+        ["/candidate/talent-contacts"] = new(
+            "Contactverzoeken",
+            "Berichten van werkgevers uit de anonieme talentpool.",
+            "Reageer binnen 48 uur. Bij akkoord worden contactgegevens gedeeld. Als je al voorzien bent, kan de werkgever het token terugkrijgen.",
+            "Contact leggen zonder dat je 06 of e-mail publiek staat."),
+
+        ["/employer/talent"] = new(
+            "Anonieme talentpool",
+            "Zoek kandidaten op competenties, RIASEC, reistijd, beschikbaarheid en rijbewijs — zonder leeftijdsfilter.",
+            "Profielen blijven anoniem tot je 1 token inzet. Reageert de kandidaat niet binnen 48 uur, dan kun je intrekken en het token terugkrijgen.",
+            "Omgekeerd werven: gericht zoeken in de talentenpool."),
+
+        ["/employer/talent-contacts"] = new(
+            "Talentpool-contactverzoeken",
+            "Openstaande ontgrendelingen en 48-uurs refund.",
+            "Na 48 uur zonder reactie, of als de kandidaat al voorzien is, trek je in en wordt het token teruggestort. Na gedeeld contact geen refund.",
+            "No-risk ContactUnlock bewaken."),
 
         ["/employer/vacancies"] = new(
             "Vacatures (werkgever)",
@@ -162,7 +198,7 @@ public static class PageHelpDocs
         ["/employer/branches"] = new(
             "Vestigingen",
             "Vestigingen onder jouw organisatie beheren.",
-            "Bekijk vestigingen, zoek via KVK-stub nieuwe vestigingen en registreer ze. Overnames lopen via een apart scherm.",
+            "Bekijk vestigingen, zoek via KVK nieuwe vestigingen en registreer ze. Overnames lopen via een apart scherm.",
             "Organisatiestructuur opbouwen zodat managers per vestiging kunnen werken."),
 
         ["/regional/branches"] = new(
@@ -306,7 +342,7 @@ public static class PageHelpDocs
         ["/admin/companies"] = new(
             "Beheer · Bedrijven",
             "Alle werkgevers en intermediairs op het platform.",
-            "Zoek/filter bedrijven, ken tokens toe, of voeg toe via KVK-stub.",
+            "Zoek/filter bedrijven, ken tokens toe, of voeg toe via KVK.",
             "Platformbeheer van organisatiestructuur en wallets."),
 
         ["/admin/users"] = new(

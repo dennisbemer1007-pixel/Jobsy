@@ -32,11 +32,11 @@ public static class IntegrationHelpDocs
 
     private static readonly Doc Kvk = new(
         Summary: "Koppeling met het KvK Handelsregister (bedrijfs- en vestigingsgegevens).",
-        UsedFor: "Opzoeken van KVK-nummers en vestigingen bij bedrijfsregistratie, admin ‘Bedrijven toevoegen’ en vestigingen toevoegen. Zonder live key gebruikt Lobsy een demo-stub met vaste testnummers.",
-        WhereToGetKey: "KVK Developer Portal → API-abonnement aanvragen (KVK-nummer + tekenbevoegd). Daarna: Mijn API-keys.",
-        Tip: "In de testfase kun je de stub laten staan — een live abonnement kost maandelijks + per bevraging. Stub-demo’s o.a.: 11223344, 55667788, 33445566.",
-        DocsUrl: "https://developers.kvk.nl/nl/apply-for-apis",
-        DocsUrlLabel: "KVK Developer Portal");
+        UsedFor: "Opzoeken van KVK-nummers en vestigingen bij bedrijfsregistratie, admin ‘Bedrijven toevoegen’ en vestigingen toevoegen. Met API-key gaat Lobsy live naar KVK; zonder key blijft de demo-stub met vaste testnummers actief.",
+        WhereToGetKey: "KVK Developer Portal → API-abonnement aanvragen (KVK-nummer + tekenbevoegd). Daarna: Mijn API-keys. Plak de key hier of zet Kvk__ApiKey / KVK_API_KEY op de API-service.",
+        Tip: "Base URL leeg laten voor productie (https://api.kvk.nl/api/). Test-key: https://api.kvk.nl/test/api/. Niet de Zoeken-URL of developers.kvk.nl plakken. Na Opslaan: Test verbinding. Stub-demo’s (alleen zonder live key): 11223344, 55667788, 33445566.",
+        DocsUrl: "https://developers.kvk.nl/nl/documentation/quickstart",
+        DocsUrlLabel: "KVK API snelstart");
 
     private static readonly Doc MicrosoftEntra = new(
         Summary: "Microsoft-login via Entra ID (Azure AD) / OpenID Connect.",

@@ -1,0 +1,78 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<div class="register-choice__identity">
+    <strong>@Item.Name</strong>
+    <span class="register-choice__address-row">
+        <span class="muted">@Item.Address</span>
+        @if (HasKvkDetails)
+        {
+            <button type="button"
+                    class="integration-tile__info @(_open ? "is-open" : null)"
+                    title="@Culture["Register.KvkDetailsHint"]"
+                    aria-label="@Culture["Register.KvkDetailsHint"]"
+                    aria-expanded="@_open"
+                    @onclick="Toggle"
+                    @onclick:stopPropagation="true">i</button>
+        }
+    </span>
+    @if (_open)
+    {
+        <div class="register-choice__kvk-details" @onclick:stopPropagation="true">
+            @if (!string.IsNullOrWhiteSpace(Vestigingsnummer))
+            {
+                <p>
+                    <span class="muted">@Culture["Register.EstablishmentNumber"]</span>
+                    @Vestigingsnummer
+                </p>
+            }
+            @if (!string.IsNullOrWhiteSpace(SbiLabel))
+            {
+                <p>
+                    <span class="muted">@Culture["Register.SbiCodes"]</span>
+                    @SbiLabel
+                </p>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public KvkEstablishmentItem Item { get; set; } = new();
+
+    private bool _open;
+
+    private bool HasKvkDetails =>
+        !string.IsNullOrWhiteSpace(Vestigingsnummer) || !string.IsNullOrWhiteSpace(SbiLabel);
+
+    private string? Vestigingsnummer
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(Item.EstablishmentNumber))
+            {
+                return Item.EstablishmentNumber.Trim();
+            }
+
+            return CompanyPublicPaths.TryParseVestigingsnummer(Item.KvkEstablishmentId, Item.KvkNumber);
+        }
+    }
+
+    private string? SbiLabel
+    {
+        get
+        {
+            if (Item.SbiCodes is not { Count: > 0 })
+            {
+                return null;
+            }
+
+            return string.Join(", ", Item.SbiCodes.Where(s => !string.IsNullOrWhiteSpace(s)));
+        }
+    }
+
+    private void Toggle()
+        => _open = !_open;
+}

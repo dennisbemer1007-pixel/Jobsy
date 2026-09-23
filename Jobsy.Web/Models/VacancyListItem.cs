@@ -80,6 +80,24 @@ public class VacancyListItem
     public bool RequireEmailVerification { get; set; }
     public string? EngagementReminderTip { get; set; }
     public DateTime? EngagementReminderSentAtUtc { get; set; }
+    public int? MatchPercent { get; set; }
+    public string? MatchColorBand { get; set; }
+    public string? MatchWhySummary { get; set; }
+    public List<string> MatchWhy { get; set; } = [];
+    public List<string> MatchGaps { get; set; } = [];
+    public bool IsBroadMatch { get; set; }
+    public string? MatchRationale { get; set; }
+    public List<string> CulturePillars { get; set; } = [];
+    public int? CultureFitPercent { get; set; }
+    public string? CultureFitBand { get; set; }
+    public string? CultureFitLabel { get; set; }
+    public string? CultureFitWhy { get; set; }
+    public string? BarrierKind { get; set; }
+    public List<string> BarrierDiplomas { get; set; } = [];
+    public List<string> BarrierCertifications { get; set; } = [];
+    public int? BarrierMinExperienceYears { get; set; }
+    public int? BarrierMinExperienceHours { get; set; }
+    public List<string> BarrierHardChecks { get; set; } = [];
 }
 
 public sealed class WageByAgeItem

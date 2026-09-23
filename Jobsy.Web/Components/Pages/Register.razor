@@ -1,5 +1,6 @@
 @page "/register"
 @using Jobsy.Web.Auth
+@using Jobsy.Core.Rules
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject JobsyApiClient Api
@@ -12,8 +13,14 @@
 
 <div class="login-page">
     <div class="login-card register-card">
+        <nav class="register-crumbs" aria-label="@Culture["Register.Breadcrumb"]">
+            <a class="auth-link" href="@AuthRedirects.BanenkaartPath">@Culture["Nav.JobMap"]</a>
+            <span class="register-crumbs__sep" aria-hidden="true">›</span>
+            <span aria-current="page">@Culture["Register.CrumbPage"]</span>
+        </nav>
+
         <div class="login-brand register-brand">
-            <LobsyLogo Class="login-brand__logo" Alt="Lobsy" />
+            <LobsyLogo Class="login-brand__logo" Alt="Lobsy" Animate="false" />
             <span class="login-brand__name">Lobsy</span>
         </div>
 
@@ -22,12 +29,12 @@
             <h1>@Culture["Register.CompanyTitle"]</h1>
             <p class="login-lead">@Culture["Register.Lead"]</p>
 
-            <div class="wizard-steps" aria-label="@Culture["Register.Steps"]">
-                <span class="@StepClass(1)">@Culture["Register.StepKvk"]</span>
-                <span class="@StepClass(2)">@Culture["Register.StepBranch"]</span>
-                <span class="@StepClass(3)">@Culture["Register.StepScope"]</span>
-                <span class="@StepClass(4)">@Culture["Register.StepContact"]</span>
-            </div>
+            <ol class="wizard-steps wizard-steps--crumbs" aria-label="@Culture["Register.Steps"]">
+                <li class="@StepClass(1)">@Culture["Register.StepKvk"]</li>
+                <li class="@StepClass(2)">@Culture["Register.StepBranch"]</li>
+                <li class="@StepClass(3)">@Culture["Register.StepScope"]</li>
+                <li class="@StepClass(4)">@Culture["Register.StepContact"]</li>
+            </ol>
         }
 
         @if (!string.IsNullOrEmpty(_error))
@@ -57,9 +64,21 @@
                     Vestigingsnaam
                     <input @bind="_manualName" required maxlength="256" />
                 </label>
-                <label>
-                    Adres
+                <label class="register-label-with-info">
+                    <span class="register-label-with-info__text">
+                        @Culture["Register.AddressLabel"]
+                        <button type="button"
+                                class="integration-tile__info @(_addressHintOpen ? "is-open" : null)"
+                                title="@Culture["Register.AddressHint"]"
+                                aria-label="@Culture["Register.AddressHint"]"
+                                aria-expanded="@_addressHintOpen"
+                                @onclick="ToggleAddressHint">i</button>
+                    </span>
                     <input @bind="_manualAddress" required maxlength="512" />
+                    @if (_addressHintOpen)
+                    {
+                        <span class="muted register-address__hint">@Culture["Register.AddressHint"]</span>
+                    }
                 </label>
                 <label>
                     Vestigingsnummer
@@ -81,14 +100,7 @@
                     {
                         <div class="table-row register-choice register-choice--unavailable">
                             <div class="register-choice__main">
-                                <div>
-                                    <strong>@e.Name</strong>
-                                    <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
-                                    @if (e.SbiCodes is { Count: > 0 })
-                                    {
-                                        <span class="muted"> · SBI @string.Join(", ", e.SbiCodes)</span>
-                                    }
-                                </div>
+                                <RegisterEstablishmentIdentity Item="e" />
                                 <span class="badge-warn">@Culture["Register.InUse"]</span>
                             </div>
                             @if (string.Equals(_claimExpandedId, e.KvkEstablishmentId, StringComparison.Ordinal))
@@ -117,21 +129,16 @@
                     }
                     else
                     {
-                        <button type="button"
-                                class="table-row register-choice @(_selected?.KvkEstablishmentId == e.KvkEstablishmentId && !_claimMode ? "is-selected" : null)"
-                                @onclick="() => SelectEstablishment(e)">
+                        <div role="button"
+                             tabindex="0"
+                             class="table-row register-choice @(_selected?.KvkEstablishmentId == e.KvkEstablishmentId && !_claimMode ? "is-selected" : null)"
+                             @onclick="() => SelectEstablishment(e)"
+                             @onkeydown="ev => OnEstablishmentKey(ev, e)">
                             <div class="register-choice__main">
-                                <div>
-                                    <strong>@e.Name</strong>
-                                    <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
-                                    @if (e.SbiCodes is { Count: > 0 })
-                                    {
-                                        <span class="muted"> · SBI @string.Join(", ", e.SbiCodes)</span>
-                                    }
-                                </div>
+                                <RegisterEstablishmentIdentity Item="e" />
                                 <span class="badge-ok">@Culture["Register.Available"]</span>
                             </div>
-                        </button>
+                        </div>
                     }
                 }
             </div>
@@ -216,6 +223,43 @@
                 }
             }
             <form class="login-form" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
+                @if (!string.IsNullOrWhiteSpace(_selected?.Address))
+                {
+                    <div class="register-address">
+                        <div class="register-address__label">
+                            <span>@Culture["Register.AddressLabel"]</span>
+                        </div>
+                        <p class="register-address__value">
+                            <span>@_selected.Address</span>
+                            <button type="button"
+                                    class="integration-tile__info @(_addressHintOpen ? "is-open" : null)"
+                                    title="@Culture["Register.KvkDetailsHint"]"
+                                    aria-label="@Culture["Register.KvkDetailsHint"]"
+                                    aria-expanded="@_addressHintOpen"
+                                    @onclick="ToggleAddressHint">i</button>
+                        </p>
+                        @if (_addressHintOpen)
+                        {
+                            <div class="register-choice__kvk-details">
+                                <p class="muted register-address__hint">@Culture["Register.AddressHint"]</p>
+                                @if (!string.IsNullOrWhiteSpace(SelectedVestigingsnummer))
+                                {
+                                    <p>
+                                        <span class="muted">@Culture["Register.EstablishmentNumber"]</span>
+                                        @SelectedVestigingsnummer
+                                    </p>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(SelectedSbiLabel))
+                                {
+                                    <p>
+                                        <span class="muted">@Culture["Register.SbiCodes"]</span>
+                                        @SelectedSbiLabel
+                                    </p>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
                 <label>
                     @Culture["Common.Name"]
                     <input @bind="_contactName" required maxlength="256" />
@@ -341,15 +385,6 @@
                             </button>
                         </div>
                     </form>
-                    @if (!string.IsNullOrEmpty(_activationUrl))
-                    {
-                        <p class="muted">@Culture["Register.ActivationLinkHint"]</p>
-                        <a class="login-submit login-submit--compact"
-                           href="@_activationUrl"
-                           style="display:inline-flex;text-decoration:none;margin-top:0.35rem">
-                            @Culture["Register.OpenActivationLink"]
-                        </a>
-                    }
                 }
             </div>
         }
@@ -370,7 +405,7 @@
     private bool _busy;
     private string? _error;
     private string? _message;
-    private string? _activationUrl;
+    private bool _addressHintOpen;
     private bool _requiresTakeover;
     private bool _claimMode;
     private string? _claimExpandedId;
@@ -381,7 +416,7 @@
     private bool _expired;
     private RegistrationActivationResult? _activationResult;
     private System.Threading.Timer? _countdownTimer;
-    private string _kvkNumber = "12345678";
+    private string _kvkNumber = "";
     private string _scope = "Organization";
     private string _contactName = "";
     private string _contactEmail = "";
@@ -401,11 +436,39 @@
     protected override void OnInitialized()
     {
         Culture.Changed += OnCultureChanged;
+        if (HostEnvironment.IsDevelopment())
+        {
+            _kvkNumber = "12345678";
+        }
+
         if (!string.IsNullOrWhiteSpace(RefCode))
         {
             _salesManagerCode = RefCode.Trim().ToUpperInvariant();
         }
     }
+
+    private void ToggleAddressHint()
+        => _addressHintOpen = !_addressHintOpen;
+
+    private void OnEstablishmentKey(KeyboardEventArgs ev, KvkEstablishmentItem e)
+    {
+        if (ev.Key is "Enter" or " ")
+        {
+            SelectEstablishment(e);
+        }
+    }
+
+    private string? SelectedVestigingsnummer =>
+        _selected is null
+            ? null
+            : !string.IsNullOrWhiteSpace(_selected.EstablishmentNumber)
+                ? _selected.EstablishmentNumber.Trim()
+                : CompanyPublicPaths.TryParseVestigingsnummer(_selected.KvkEstablishmentId, _selected.KvkNumber);
+
+    private string? SelectedSbiLabel =>
+        _selected?.SbiCodes is { Count: > 0 } codes
+            ? string.Join(", ", codes.Where(static s => !string.IsNullOrWhiteSpace(s)))
+            : null;
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
@@ -692,7 +755,6 @@
                 manualIsIntermediarySbi: null);
 
             _message = result.Message;
-            _activationUrl = result.ActivationUrl;
             _requiresTakeover = result.RequiresTakeover;
             _registrationId = result.RegistrationId;
             _password = "";

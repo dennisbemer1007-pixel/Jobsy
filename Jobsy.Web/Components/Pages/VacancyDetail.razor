@@ -127,6 +127,7 @@
                             @Culture["Vacancy.YourTransport"]
                             <select value="@_transport" @onchange="OnTransportChanged">
                                 <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                <option value="E-bike">@Culture["Transport.EBike"]</option>
                                 <option value="Auto">@Culture["Transport.Car"]</option>
                                 <option value="OV">@Culture["Transport.Transit"]</option>
                                 <option value="Lopend">@Culture["Transport.Walk"]</option>
@@ -171,6 +172,20 @@
             <div class="detail-card__top">
                 <div>
                     <h1>@_vacancy.Title</h1>
+                    @if (_vacancy.MatchPercent is int matchPct)
+                    {
+                        <p class="job-card__match">
+                            <span class="match-score match-score--@(_vacancy.MatchColorBand ?? "orange")">@Culture.Format("Discovery.MatchPercent", matchPct)</span>
+                            @if (!string.IsNullOrWhiteSpace(_vacancy.CultureFitLabel))
+                            {
+                                <span class="culture-fit culture-fit--@(_vacancy.CultureFitBand ?? "mid")">@_vacancy.CultureFitLabel</span>
+                            }
+                        </p>
+                        @if (!string.IsNullOrWhiteSpace(_vacancy.CultureFitWhy))
+                        {
+                            <p class="job-card__match-why">@_vacancy.CultureFitWhy</p>
+                        }
+                    }
                     @if (!string.IsNullOrWhiteSpace(_vacancy.CategoryName)
                          && !VacancyCategoryDefaults.IsSeniorLightCategory(_vacancy.CategoryId))
                     {
@@ -317,10 +332,7 @@
                 </aside>
             }
 
-            @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense)
-                || !string.IsNullOrWhiteSpace(_vacancy.RequiredEducation)
-                || _vacancy.MinimumEmployers is > 0
-                || _vacancy.MinimumReferences is > 0)
+            @if (HasHardRequirementTags)
             {
                 <aside class="lobsy-proximity" aria-label="@Culture["Vacancy.HardRequirements"]">
                     <span class="lobsy-proximity__icon"><LobsyMark /></span>
@@ -335,6 +347,22 @@
                             {
                                 <span class="lobsy-proximity__chip">@Culture["Vacancy.EducationLevel"]: @LocalizeEducationList(_vacancy.RequiredEducation)</span>
                             }
+                            @foreach (var kind in _vacancy.BarrierHardChecks ?? [])
+                            {
+                                <span class="lobsy-proximity__chip">@VacancyHardCheckCatalog.Label(kind)</span>
+                            }
+                            @foreach (var diploma in _vacancy.BarrierDiplomas ?? [])
+                            {
+                                <span class="lobsy-proximity__chip">@diploma</span>
+                            }
+                            @foreach (var cert in _vacancy.BarrierCertifications ?? [])
+                            {
+                                <span class="lobsy-proximity__chip">@cert</span>
+                            }
+                            @if (_vacancy.BarrierMinExperienceYears is int years and > 0)
+                            {
+                                <span class="lobsy-proximity__chip">@Culture.Format("Vacancy.MinExperienceYears", years)</span>
+                            }
                             @if (_vacancy.MinimumEmployers is > 0)
                             {
                                 <span class="lobsy-proximity__chip">@Culture.Format("Vacancy.MinEmployers", _vacancy.MinimumEmployers)</span>
@@ -344,6 +372,27 @@
                                 <span class="lobsy-proximity__chip">@Culture.Format("Vacancy.MinReferences", _vacancy.MinimumReferences)</span>
                             }
                         </p>
+                    </div>
+                </aside>
+            }
+
+            @if (VacancyCareerPath is { } careerPath)
+            {
+                <aside class="lobsy-proximity role-fit-path" aria-label="@Culture["Vacancy.PathTitle"]">
+                    <span class="lobsy-proximity__icon"><LobsyMark /></span>
+                    <div class="lobsy-proximity__body">
+                        <p class="lobsy-proximity__title">@Culture["Vacancy.PathTitle"]</p>
+                        <p>@careerPath.Summary</p>
+                        <ol class="role-fit-path__steps">
+                            @foreach (var step in careerPath.Steps)
+                            {
+                                <li>
+                                    <strong>@step.Title</strong>
+                                    <span class="role-fit-path__time">@Culture.Format("Fit.PathWithin", step.DurationLabel)</span>
+                                    <span class="muted">@step.Detail</span>
+                                </li>
+                            }
+                        </ol>
                     </div>
                 </aside>
             }
@@ -381,6 +430,14 @@
                             <span class="lobsy-coach-cta__bubble">@Culture["MockInterview.CtaBubble"]</span>
                         </button>
                     </div>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView Roles="Candidate">
+                <Authorized>
+                    <p class="login-lead">
+                        <a class="engagement-btn" href="@($"/candidate/profile?tab=fit&vacancyId={Id}")">@Culture["Fit.CheckVacancy"]</a>
+                    </p>
                 </Authorized>
             </AuthorizeView>
 
@@ -506,6 +563,7 @@
                                         <span>@Culture["Apply.Transport"]</span>
                                         <select value="@_transport" @onchange="OnTransportChanged">
                                             <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                            <option value="E-bike">@Culture["Transport.EBike"]</option>
                                             <option value="Auto">@Culture["Transport.Car"]</option>
                                             <option value="OV">@Culture["Transport.Transit"]</option>
                                             <option value="Lopend">@Culture["Transport.Walk"]</option>
@@ -858,6 +916,20 @@
             || (!string.IsNullOrWhiteSpace(_vacancy.ScheduleJson) && ScheduleChips.Count > 0));
 
     private bool HasLegalInfo => LegalFactItems.Count > 0;
+
+    private bool HasHardRequirementTags =>
+        _vacancy is not null
+        && (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense)
+            || !string.IsNullOrWhiteSpace(_vacancy.RequiredEducation)
+            || _vacancy.MinimumEmployers is > 0
+            || _vacancy.MinimumReferences is > 0
+            || (_vacancy.BarrierHardChecks?.Count ?? 0) > 0
+            || (_vacancy.BarrierDiplomas?.Count ?? 0) > 0
+            || (_vacancy.BarrierCertifications?.Count ?? 0) > 0
+            || _vacancy.BarrierMinExperienceYears is > 0);
+
+    private CareerPathPlan? VacancyCareerPath =>
+        _vacancy is null ? null : CareerPathPlanner.ForTitle(_vacancy.Title);
 
     private string? HoursCategoryLabel
     {
@@ -1430,7 +1502,7 @@
     }
 
     private static bool IsKnownTransport(string? value)
-        => value?.Trim() is "Fiets" or "Auto" or "OV" or "Lopend";
+        => value?.Trim() is "Fiets" or "E-bike" or "Auto" or "OV" or "Lopend";
 
     private static string NormalizeTransport(string? value)
         => value?.Trim() switch
@@ -1438,6 +1510,7 @@
             "Auto" => "Auto",
             "OV" => "OV",
             "Lopend" => "Lopend",
+            "E-bike" => "E-bike",
             _ => "Fiets"
         };
 

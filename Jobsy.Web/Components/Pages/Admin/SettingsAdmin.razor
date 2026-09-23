@@ -148,6 +148,39 @@
         </section>
 
         <section class="panel-section">
+            <h2>Lobsy Flex &amp; talent — bedragen</h2>
+            <p class="muted">Alle commerciele bedragen uit de platform-specificatie. ContactUnlock-tokens worden ook gesynchroniseerd naar de spend-costs hierboven.</p>
+            @if (_lobsyCommercial is not null)
+            {
+                <article class="company-card platform-features-card" style="margin-bottom:1rem">
+                    <div class="inline-actions" style="flex-wrap:wrap;gap:0.75rem;align-items:end">
+                        <label>
+                            Diepte-analyse (€)
+                            <input type="number" min="0" max="500" step="0.01" @bind="_lobsyCommercial.DeepAnalysisPriceEuro" style="width:6rem" />
+                        </label>
+                        <label>
+                            Flex-marge (€/uur)
+                            <input type="number" min="0" max="100" step="0.01" @bind="_lobsyCommercial.MarginPerHourEuro" style="width:6rem" />
+                        </label>
+                        <label>
+                            Uitzend-jaarabonnement (€)
+                            <input type="number" min="0" max="1000000" step="1" @bind="_lobsyCommercial.AgencyAnnualPriceEuro" style="width:7rem" />
+                        </label>
+                        <label>
+                            ContactUnlock (tokens)
+                            <input type="number" min="0.1" max="100" step="0.1" @bind="_lobsyCommercial.ContactUnlockCostTokens" style="width:5.5rem" />
+                        </label>
+                        <label style="min-width:12rem;flex:1">
+                            Backoffice-partner
+                            <input @bind="_lobsyCommercial.BackofficePartnerName" style="width:100%" />
+                        </label>
+                        <button class="btn-compact btn-compact--primary" type="button" disabled="@_lobsyCommercialBusy" @onclick="SaveLobsyCommercialAsync">@Culture["Common.Save"]</button>
+                    </div>
+                </article>
+            }
+        </section>
+
+        <section class="panel-section">
             <h2>Financieel — spend costs</h2>
             <p class="muted">PushBom-prijs volgt uit bereik-tiers hieronder; de flat PushBom-kost geldt alleen als fallback zonder matching tier.</p>
             <div class="table-list">
@@ -252,6 +285,7 @@
 @code {
     private TokenPricingSettings? _settings;
     private PushBomSettingsItem? _pushBomSettings;
+    private LobsyCommercialSettingsItem? _lobsyCommercial;
     private List<PushBomPricingTierItem> _pushBomTiers = [];
     private List<IntegrationHealthItem> _health = [];
     private List<IntegrationCredentialItem> _credentials = [];
@@ -261,6 +295,7 @@
     private bool _pingBusy;
     private bool _featureBusy;
     private bool _pushBomBusy;
+    private bool _lobsyCommercialBusy;
     private string? _error;
     private string? _message;
 
@@ -281,6 +316,7 @@
             _settings = await Api.GetTokenPricingSettingsAsync();
             _pushBomSettings = _settings?.PushBomSettings ?? new PushBomSettingsItem();
             _pushBomTiers = _settings?.PushBomPricingTiers?.ToList() ?? [];
+            _lobsyCommercial = _settings?.LobsyCommercial ?? new LobsyCommercialSettingsItem();
             _features = await Api.GetPlatformFeaturesAsync() ?? new PlatformFeatureItem();
             SyncFreePublishInputFromFeatures();
             await ReloadIntegrationsAsync();
@@ -339,6 +375,31 @@
         finally
         {
             _featureBusy = false;
+        }
+    }
+
+    private async Task SaveLobsyCommercialAsync()
+    {
+        if (_lobsyCommercial is null)
+        {
+            return;
+        }
+
+        _lobsyCommercialBusy = true;
+        _message = null;
+        try
+        {
+            _lobsyCommercial = await Api.UpdateLobsyCommercialAsync(_lobsyCommercial) ?? _lobsyCommercial;
+            _settings = await Api.GetTokenPricingSettingsAsync();
+            _message = "Lobsy Flex & talent-bedragen opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _lobsyCommercialBusy = false;
         }
     }
 

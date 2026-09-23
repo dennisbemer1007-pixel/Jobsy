@@ -21,8 +21,11 @@
             <p class="login-lead">@Culture["Profile.ReturnHint"]</p>
         }
     </header>
-    <article class="detail-card">
-        <h1 class="profile-page__title">@Culture["Profile.MyProfile"]</h1>
+    <div class="profile-layout">
+    <div class="profile-layout__main">
+    <section class="detail-card competency-profile-card" aria-labelledby="kompas-title">
+        <CandidateKompas>
+            <ProfileTab>
         <p class="login-lead">@Culture["Profile.Lead"]</p>
         @if (!string.IsNullOrWhiteSpace(_returnUrl))
         {
@@ -36,18 +39,27 @@
         else
         {
             <div class="profile-form">
+                <nav class="profile-section-nav pill-scroller" aria-label="@Culture["Profile.Lead"]">
+                    <button type="button"
+                            class="admin-sublink @(IsSectionOpen("personal") ? "admin-sublink--active" : null)"
+                            aria-expanded="@(IsSectionOpen("personal") ? "true" : "false")"
+                            aria-controls="profile-section-personal"
+                            @onclick='() => ToggleSection("personal")'>@Culture["Profile.Section.Personal"]</button>
+                    <button type="button"
+                            class="admin-sublink @(IsSectionOpen("preferences") ? "admin-sublink--active" : null)"
+                            aria-expanded="@(IsSectionOpen("preferences") ? "true" : "false")"
+                            @onclick='() => ToggleSection("preferences")'>@Culture["Profile.Section.Preferences"]</button>
+                    <button type="button"
+                            class="admin-sublink @(IsSectionOpen("availability") ? "admin-sublink--active" : null)"
+                            aria-expanded="@(IsSectionOpen("availability") ? "true" : "false")"
+                            @onclick='() => ToggleSection("availability")'>@Culture["Profile.Section.Availability"]</button>
+                    <button type="button"
+                            class="admin-sublink @(IsSectionOpen("experience") ? "admin-sublink--active" : null)"
+                            aria-expanded="@(IsSectionOpen("experience") ? "true" : "false")"
+                            @onclick='() => ToggleSection("experience")'>@Culture["Profile.Section.Experience"]</button>
+                </nav>
                 <div class="profile-accordion">
-                    <h2 class="profile-accordion__item">
-                        <button type="button"
-                                class="profile-accordion__toggle @(IsSectionOpen("personal") ? "is-open" : null)"
-                                aria-expanded="@(IsSectionOpen("personal") ? "true" : "false")"
-                                aria-controls="profile-section-personal"
-                                id="profile-section-personal-btn"
-                                @onclick='() => ToggleSection("personal")'>
-                            <span>@Culture["Profile.Section.Personal"]</span>
-                            <span class="profile-accordion__chevron" aria-hidden="true">@(IsSectionOpen("personal") ? "▾" : "▸")</span>
-                        </button>
-                    </h2>
+                    <h2 class="visually-hidden" id="profile-section-personal-btn">@Culture["Profile.Section.Personal"]</h2>
                     @if (IsSectionOpen("personal"))
                     {
                         <div class="profile-accordion__body" id="profile-section-personal" role="region" aria-labelledby="profile-section-personal-btn">
@@ -142,17 +154,7 @@
                         </div>
                     }
 
-                    <h2 class="profile-accordion__item">
-                        <button type="button"
-                                class="profile-accordion__toggle @(IsSectionOpen("preferences") ? "is-open" : null)"
-                                aria-expanded="@(IsSectionOpen("preferences") ? "true" : "false")"
-                                aria-controls="profile-section-preferences"
-                                id="profile-section-preferences-btn"
-                                @onclick='() => ToggleSection("preferences")'>
-                            <span>@Culture["Profile.Section.Preferences"]</span>
-                            <span class="profile-accordion__chevron" aria-hidden="true">@(IsSectionOpen("preferences") ? "▾" : "▸")</span>
-                        </button>
-                    </h2>
+                    <h2 class="visually-hidden" id="profile-section-preferences-btn">@Culture["Profile.Section.Preferences"]</h2>
                     @if (IsSectionOpen("preferences"))
                     {
                         <div class="profile-accordion__body" id="profile-section-preferences" role="region" aria-labelledby="profile-section-preferences-btn">
@@ -166,6 +168,7 @@
                                 <select @bind="_preferredTransport">
                                     <option value="">—</option>
                                     <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                    <option value="E-bike">@Culture["Transport.EBike"]</option>
                                     <option value="Auto">@Culture["Transport.Car"]</option>
                                     <option value="OV">@Culture["Transport.Transit"]</option>
                                     <option value="Lopend">@Culture["Transport.Walk"]</option>
@@ -200,17 +203,7 @@
                         </div>
                     }
 
-                    <h2 class="profile-accordion__item">
-                        <button type="button"
-                                class="profile-accordion__toggle @(IsSectionOpen("availability") ? "is-open" : null)"
-                                aria-expanded="@(IsSectionOpen("availability") ? "true" : "false")"
-                                aria-controls="profile-section-availability"
-                                id="profile-section-availability-btn"
-                                @onclick='() => ToggleSection("availability")'>
-                            <span>@Culture["Profile.Section.Availability"]</span>
-                            <span class="profile-accordion__chevron" aria-hidden="true">@(IsSectionOpen("availability") ? "▾" : "▸")</span>
-                        </button>
-                    </h2>
+                    <h2 class="visually-hidden" id="profile-section-availability-btn">@Culture["Profile.Section.Availability"]</h2>
                     @if (IsSectionOpen("availability"))
                     {
                         <div class="profile-accordion__body" id="profile-section-availability" role="region" aria-labelledby="profile-section-availability-btn">
@@ -238,9 +231,24 @@
                                 <legend>@Culture["Profile.Availability"]</legend>
                                 <div class="availability-presets" role="group" aria-label="@Culture["Profile.Availability"]">
                                     <button type="button"
-                                            class="availability-presets__btn @(_flexibleTimes ? "is-active" : null)"
+                                            class="availability-presets__btn @(_flexibleTimes && AvailabilityKind is null ? "is-active" : null)"
                                             @onclick='() => ApplyAvailabilityPreset("flexible")'>
                                         @Culture["Profile.PresetFlexible"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(AvailabilityKind == CandidateAvailabilityPresets.Immediate ? "is-active" : null)"
+                                            @onclick='() => ApplyAvailabilityPreset("immediate")'>
+                                        @Culture["Profile.PresetImmediate"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(AvailabilityKind == CandidateAvailabilityPresets.PartTime ? "is-active" : null)"
+                                            @onclick='() => ApplyAvailabilityPreset("parttime")'>
+                                        @Culture["Profile.PresetPartTime"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(AvailabilityKind == CandidateAvailabilityPresets.Seasonal ? "is-active" : null)"
+                                            @onclick='() => ApplyAvailabilityPreset("seasonal")'>
+                                        @Culture["Profile.PresetSeasonal"]
                                     </button>
                                     <button type="button"
                                             class="availability-presets__btn @(!_flexibleTimes && IsOfficeHoursPreset() ? "is-active" : null)"
@@ -284,17 +292,7 @@
                         </div>
                     }
 
-                    <h2 class="profile-accordion__item">
-                        <button type="button"
-                                class="profile-accordion__toggle @(IsSectionOpen("experience") ? "is-open" : null)"
-                                aria-expanded="@(IsSectionOpen("experience") ? "true" : "false")"
-                                aria-controls="profile-section-experience"
-                                id="profile-section-experience-btn"
-                                @onclick='() => ToggleSection("experience")'>
-                            <span>@Culture["Profile.Section.Experience"]</span>
-                            <span class="profile-accordion__chevron" aria-hidden="true">@(IsSectionOpen("experience") ? "▾" : "▸")</span>
-                        </button>
-                    </h2>
+                    <h2 class="visually-hidden" id="profile-section-experience-btn">@Culture["Profile.Section.Experience"]</h2>
                     @if (IsSectionOpen("experience"))
                     {
                         <div class="profile-accordion__body" id="profile-section-experience" role="region" aria-labelledby="profile-section-experience-btn">
@@ -518,22 +516,33 @@
                 </div>
             </div>
         }
-    </article>
 
-    @if (!_loading)
-    {
-        <section class="detail-card profile-unsubscribe" aria-labelledby="profile-unsubscribe-title">
-            <h2 id="profile-unsubscribe-title" class="profile-page__title">@Culture["Profile.UnsubscribeTitle"]</h2>
-            <p class="login-lead">
-                @Culture["Profile.UnsubscribeLead"]
-            </p>
-            <button class="provider-btn provider-btn--danger"
-                    type="button"
-                    @onclick="OpenUnsubscribe">
-                @Culture["Profile.Unsubscribe"]
-            </button>
+        <section class="profile-contacts-mini" aria-labelledby="talent-contacts-title">
+            <h2 id="talent-contacts-title" class="profile-page__title">@Culture["Talent.CandidateTitle"]</h2>
+            <p class="login-lead">@Culture["Talent.CandidateLead"]</p>
+            <a class="engagement-btn" href="/candidate/talent-contacts">@Culture["Talent.CandidateOpen"]</a>
         </section>
-    }
+
+        @if (!_loading)
+        {
+            <section class="profile-unsubscribe" aria-labelledby="profile-unsubscribe-title">
+                <h2 id="profile-unsubscribe-title" class="profile-page__title">@Culture["Profile.UnsubscribeTitle"]</h2>
+                <p class="login-lead">@Culture["Profile.UnsubscribeLead"]</p>
+                <button class="provider-btn provider-btn--danger" type="button" @onclick="OpenUnsubscribe">
+                    @Culture["Profile.Unsubscribe"]
+                </button>
+            </section>
+        }
+            </ProfileTab>
+        </CandidateKompas>
+    </section>
+    </div>
+    <aside class="profile-layout__matches">
+        <div class="detail-card">
+            <CompetencyMatchPanel Items="_matchedVacancies" Loading="_matchesLoading" />
+        </div>
+    </aside>
+    </div>
 </div>
 
 <UnsubscribeDialog IsOpen="_unsubscribeOpen"
@@ -588,6 +597,11 @@
     private int _suggestGeneration;
     private string _openSection = "personal";
     private static readonly string[] WeekdayCodes = ["Ma", "Di", "Wo", "Do", "Vr"];
+    private bool _matchesLoading = true;
+    private IReadOnlyList<CandidateMatchedVacancy> _matchedVacancies = [];
+
+    private string? AvailabilityKind =>
+        CandidateAvailabilityPresets.Detect(_minHours, _maxHours, _flexibleTimes);
 
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
@@ -619,7 +633,9 @@
             _homeLat = profile.HomeLatitude;
             _homeLng = profile.HomeLongitude;
             _maxTravel = prefs.MaxTravelMinutes ?? 30;
-            _preferredTransport = prefs.PreferredTransport ?? "";
+            _preferredTransport = string.IsNullOrWhiteSpace(prefs.PreferredTransport)
+                ? ""
+                : TransportLabels.Canonical(prefs.PreferredTransport);
             _selectedRoles.Clear();
             foreach (var role in prefs.Roles ?? [])
             {
@@ -658,6 +674,7 @@
             _certificates.Clear();
             _certificates.AddRange(prefs.Certificates ?? []);
             ApplyCvAndReferences(profile);
+            await LoadMatchedVacanciesAsync();
             _selectedEducations.Clear();
             foreach (var education in prefs.Educations ?? [])
             {
@@ -710,6 +727,23 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task LoadMatchedVacanciesAsync()
+    {
+        _matchesLoading = true;
+        try
+        {
+            _matchedVacancies = await Api.GetMyMatchedVacanciesAsync();
+        }
+        catch
+        {
+            _matchedVacancies = [];
+        }
+        finally
+        {
+            _matchesLoading = false;
         }
     }
 
@@ -792,6 +826,26 @@
 
     private void ApplyAvailabilityPreset(string preset)
     {
+        if (preset is CandidateAvailabilityPresets.Immediate
+            or CandidateAvailabilityPresets.PartTime
+            or CandidateAvailabilityPresets.Seasonal)
+        {
+            var patch = CandidateAvailabilityPresets.Apply(preset);
+            _flexibleTimes = patch.FlexibleTimes;
+            _minHours = patch.MinHoursPerWeek;
+            _maxHours = patch.MaxHoursPerWeek;
+            _availability.Clear();
+            foreach (var (day, slots) in patch.Availability)
+            {
+                foreach (var slot in slots)
+                {
+                    _availability.Add($"{day}:{slot}");
+                }
+            }
+
+            return;
+        }
+
         if (preset == "flexible")
         {
             _flexibleTimes = true;
@@ -801,10 +855,10 @@
 
         _flexibleTimes = false;
         _availability.Clear();
-        var slots = preset == "evenings" ? new[] { "Avond" } : new[] { "Ochtend", "Middag" };
+        var officeSlots = preset == "evenings" ? new[] { "Avond" } : new[] { "Ochtend", "Middag" };
         foreach (var day in WeekdayCodes)
         {
-            foreach (var slot in slots)
+            foreach (var slot in officeSlots)
             {
                 _availability.Add($"{day}:{slot}");
             }
@@ -1132,6 +1186,7 @@
                     .ToList());
             _homeLocationDirty = false;
             _message = Culture["Profile.Saved"];
+            await LoadMatchedVacanciesAsync();
             if (!string.IsNullOrWhiteSpace(_returnUrl))
             {
                 Navigation.NavigateTo(_returnUrl);

@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
@@ -211,10 +213,19 @@ public static class UatScriptRunner
         if (string.Equals(jobsyRole, JobsyRoles.Admin, StringComparison.Ordinal)
             && Contains(blob, "Settings-subnav", "settings-subnav", "16 modules"))
         {
+            Assert.Equal(17, AdminNavItems.SettingsModules.Length);
             foreach (var module in AdminNavItems.SettingsModules)
             {
                 AssertRouteExistsOrAuthEndpoint(module.Href, $"{scenario.Id}: admin settings {module.Href}");
             }
+
+            var root = RepoRoot.Find();
+            var settingsNav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Admin/AdminSettingsSubnav.razor"));
+            Assert.Contains("admin-sublinks--wrap", settingsNav, StringComparison.Ordinal);
+            Assert.DoesNotContain("pill-scroller", settingsNav, StringComparison.Ordinal);
+            var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
+            Assert.Contains(".admin-sublinks.admin-sublinks--wrap", css, StringComparison.Ordinal);
+            Assert.Contains("flex-wrap: wrap", css, StringComparison.Ordinal);
         }
     }
 
@@ -382,6 +393,161 @@ public static class UatScriptRunner
             Assert.Equal(50, MatchScoreWeights.GuldenMiddenwegThreshold);
         }
 
+        if (Contains(blob, "competentietest", "Competenties", "Top 10 vacatures", "60%"))
+        {
+            Assert.Equal(25, CompetencyTestCatalog.QuestionCount);
+            Assert.Equal(60, ProfileVacancyMatchCalculator.DisplayThreshold);
+            Assert.Equal(10, ProfileVacancyMatchCalculator.MaxResults);
+            Assert.Equal(4, CompetencyTestCatalog.CategoryCodes.Length);
+        }
+
+        if (Contains(blob, "Beroepentest", "RIASEC", "Holland-code", "Beroepen-kompas"))
+        {
+            Assert.Equal(25, CareerTestCatalog.QuestionCount);
+            Assert.Equal(6, CareerTestCatalog.RiasecCodes.Length);
+        }
+
+        if (Contains(blob, "Mijn Beroepen-kompas", "Super-match", "Wat betekent dit voor jou?"))
+        {
+            Assert.Equal(95, CareerCompassBuilder.SuperMatchMin);
+            Assert.Equal(85, CareerCompassBuilder.StrongMatchMin);
+            Assert.Equal(75, CareerCompassBuilder.BroadenMin);
+            Assert.Equal(0.32, ProfileVacancyMatchCalculator.InterestWeightDeepAnalysis);
+            Assert.True(ProfileVacancyMatchCalculator.InterestWeightDeepAnalysis
+                        > ProfileVacancyMatchCalculator.InterestWeightQuickScan);
+            Assert.True(ProfileVacancyMatchCalculator.InterestWeightDeepAnalysisOnly
+                        > ProfileVacancyMatchCalculator.InterestWeightQuickScanOnly);
+
+            var root = RepoRoot.Find();
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor"));
+            Assert.Contains("Kompas.BandSuper", panel, StringComparison.Ordinal);
+            Assert.Contains("Kompas.BandStrong", panel, StringComparison.Ordinal);
+            Assert.Contains("Kompas.BandBroaden", panel, StringComparison.Ordinal);
+            Assert.Contains("Kompas.PracticalTitle", panel, StringComparison.Ordinal);
+            Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
+
+            var pdf = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/AssessmentReportPdfService.cs"));
+            Assert.Contains("GetBrandLogoPng", pdf, StringComparison.Ordinal);
+            Assert.Contains("Wat betekent dit voor jou?", pdf, StringComparison.Ordinal);
+            Assert.Contains("Jouw loopbaanrapport", pdf, StringComparison.Ordinal);
+
+            Assert.Equal("Mijn Beroepen-kompas", Jobsy.Web.Localization.UiStrings.Get("Kompas.Career", "nl"));
+        }
+
+        if (Contains(blob, "OpenAI", "algemene beroepen", "Nederlandse arbeidsmarkt", "zoeksleutels"))
+        {
+            Assert.Equal(0.65, ProfileVacancyMatchCalculator.OccupationFitWeight);
+            Assert.Equal(0.35, ProfileVacancyMatchCalculator.RiasecFitWeight);
+            var gen = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Infrastructure/Services/CareerCompassGenerationService.cs"));
+            Assert.Contains("CareerCompassPrompt.System", gen, StringComparison.Ordinal);
+            Assert.Contains("response body not logged", gen, StringComparison.Ordinal);
+            Assert.Contains("json_object", gen, StringComparison.Ordinal);
+            var prompt = CareerCompassPrompt.System;
+            Assert.Contains("Nederlandse arbeidsmarkt", prompt, StringComparison.Ordinal);
+            Assert.Contains("extraversie", prompt, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("95-100", prompt, StringComparison.Ordinal);
+            Assert.DoesNotContain("Lobsy-vacature", prompt, StringComparison.OrdinalIgnoreCase);
+            var merge = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Infrastructure/Services/DeepAnalysisService.cs"));
+            Assert.Contains("CompassJson", merge, StringComparison.Ordinal);
+            Assert.Contains("GenerateFromCareerDeepAsync", merge, StringComparison.Ordinal);
+            var match = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Infrastructure/Services/ProfileVacancyMatchService.cs"));
+            Assert.Contains("CareerOccupations", match, StringComparison.Ordinal);
+        }
+
+        if (Contains(blob, "Diepte-analyse", "150 vragen"))
+        {
+            Assert.Equal(150, DeepAnalysisCatalog.QuestionCount);
+            Assert.Equal(2.99m, FlexCommercialSettings.DefaultDeepAnalysisPriceEuro);
+            Assert.Equal(150, DeepAnalysisCatalog.Questions.Select(q => q.PromptNl).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+            Assert.DoesNotContain(DeepAnalysisCatalog.Questions, q => q.PromptNl.Contains("variant", StringComparison.OrdinalIgnoreCase));
+            Assert.Equal(30, DeepAnalysisCatalog.CompetenceItemsPerDomain);
+        }
+
+        if (Contains(blob, "Mijn Lobsy Kompas", "match-%", "Beste match", ">80% match"))
+        {
+            var root = RepoRoot.Find();
+            var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateHomePanel.razor"));
+            Assert.Contains("CandidateKompas", home, StringComparison.Ordinal);
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            Assert.Contains("Kompas.TabWhoAmI", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabProfile", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabCompetencies", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabDisc", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabCareers", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabFit", kompas, StringComparison.Ordinal);
+            Assert.Contains("role=\"tablist\"", kompas, StringComparison.Ordinal);
+            Assert.Contains("RoleFitCheckPanel", kompas, StringComparison.Ordinal);
+            Assert.Contains("<CandidateKompas", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor")), StringComparison.Ordinal);
+            Assert.Equal(RoleFitCheckCopy.Locked, Jobsy.Web.Localization.UiStrings.Get("Fit.Locked", "nl"));
+            var dto = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Models/VacancyListItemDto.cs"));
+            Assert.Contains("MatchPercent", dto, StringComparison.Ordinal);
+            Assert.Contains("minMatchPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/VacanciesController.cs")), StringComparison.Ordinal);
+            Assert.True(TransportLabels.Parse("E-bike") == Jobsy.Core.Enums.TransportMode.Bike);
+        }
+
+        if (Contains(blob, "Wie ben ik?", "persoonsprofiel", "Lobsy-CV-bijlage"))
+        {
+            var root = RepoRoot.Find();
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/WhoAmIPanel.razor"));
+            Assert.Contains("WhoAmI.AttachCv", panel, StringComparison.Ordinal);
+            Assert.Contains("WhoAmIDiscQuadrant", panel, StringComparison.Ordinal);
+            Assert.False(WhoAmICompleteness.IsUnlocked(false, true, true, true));
+            Assert.True(WhoAmICompleteness.IsUnlocked(true, true, true, true));
+            Assert.DoesNotContain("@", WhoAmIPrompt.User(
+                new CompetencyScores(80, 70, 60, 50),
+                new RiasecScores(80, 40, 30, 50, 20, 10),
+                new DiscScores(70, 60, 80, 40)), StringComparison.Ordinal);
+        }
+
+        if (Contains(blob, "accordeon per vaardigheid", "workshops"))
+        {
+            var root = RepoRoot.Find();
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor"));
+            Assert.Contains("competency-skill__details", panel, StringComparison.Ordinal);
+            Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
+            Assert.Contains("CampaignCompetence", panel, StringComparison.Ordinal);
+            Assert.Contains("CompetencyTrainingCatalog.MeaningKey", panel, StringComparison.Ordinal);
+            Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            Assert.Contains("CompetencyScorePanel", kompas, StringComparison.Ordinal);
+            Assert.DoesNotContain("Talent.CandidateTitle", kompas, StringComparison.Ordinal);
+            Assert.Equal("competence", TrainingTracking.CampaignCompetence);
+            Assert.Contains(TrainingFieldCatalog.Vaardigheden, TrainingFieldCatalog.Detect([CompetencyTrainingCatalog.SearchBlob(CompetencyTestCatalog.Samenwerken)]));
+        }
+
+        if (Contains(blob, "DISC-Analyse", "gedragsstijl", "workshops"))
+        {
+            var root = RepoRoot.Find();
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DiscScorePanel.razor"));
+            Assert.Contains("competency-skill__details", panel, StringComparison.Ordinal);
+            Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
+            Assert.Equal(25, DiscTestCatalog.QuestionCount);
+            Assert.Equal(150, DeepAnalysisCatalog.QuestionsFor(AssessmentKind.Disc).Count);
+            Assert.Equal("disc", TrainingTracking.CampaignDisc);
+        }
+
+        if (Contains(blob, "Cultuur Fit", "cultuurpijlers"))
+        {
+            var root = RepoRoot.Find();
+            Assert.Equal(3, CulturePillarCatalog.MinSelected);
+            Assert.Equal(5, CulturePillarCatalog.MaxSelected);
+            Assert.Contains("CultureFitPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Models/VacancyListItemDto.cs")), StringComparison.Ordinal);
+            Assert.Contains("CulturePillarsJson", File.ReadAllText(Path.Combine(root, "Jobsy.Core/Entities/Vacancy.cs")), StringComparison.Ordinal);
+            var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Branch/CreateVacancy.razor"));
+            Assert.Contains("CulturePillarCatalog", create, StringComparison.Ordinal);
+            var map = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/jobMap.js"));
+            Assert.Contains("cultureFitHtml", map, StringComparison.Ordinal);
+            Assert.DoesNotContain("OCEAN", File.ReadAllText(Path.Combine(root, "Jobsy.Core/Rules/CultureFitBuilder.cs")), StringComparison.Ordinal);
+        }
+
+        if (Contains(blob, "leeftijdsfilter", "talentpool", "ContactUnlock", "48 uur"))
+        {
+            Assert.Equal(48, TalentContactRules.TalentContactRequestHours);
+            Assert.Equal(1m, TalentContactRules.DefaultUnlockCostTokens);
+        }
+
         if (Contains(blob, "VacancyLifecycle", "Publiceren") && jobsyRole == JobsyRoles.RegionalManager)
         {
             Assert.False(JobsyRoles.CanManageVacancyLifecycle(Jobsy.Core.Enums.UserRole.RegionalManager));
@@ -392,6 +558,25 @@ public static class UatScriptRunner
         {
             Assert.Equal("/home", AuthRedirects.PostLoginUrl("/"));
             Assert.Equal("/home", AuthRedirects.PostLoginUrl("/banen"));
+        }
+
+        if (string.Equals(jobsyRole, JobsyRoles.EnterpriseManager, StringComparison.Ordinal)
+            && Contains(blob, "e-mail+naam+rol+vestigingen"))
+        {
+            var root = RepoRoot.Find();
+            var users = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Employer/Users.razor"));
+            Assert.Contains("InviteExtraCompanies", users, StringComparison.Ordinal);
+            Assert.Contains("EmployerInviteCompanyOptions", users, StringComparison.Ordinal);
+
+            var orgId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+            var branchId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+            InviteCompanyOption[] companies =
+            [
+                new(orgId, "Bemer IT Solutions", "Laan 1", ParentCompanyId: null),
+                new(branchId, "Bemer IT Solutions", "Laan 1", orgId, "000012345678")
+            ];
+            Assert.Empty(EmployerInviteCompanyOptions.ExtraMembershipChoices(companies, branchId));
+            Assert.Single(EmployerInviteCompanyOptions.ExtraMembershipChoices(companies, orgId));
         }
     }
 

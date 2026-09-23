@@ -31,6 +31,16 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/kvk/12345678/establishments")).StatusCode);
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/who-am-i")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/competencies")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/disc")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/career-interests")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/matched-vacancies")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/talent-contacts")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/deep-analysis")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/role-fit")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/training-offers")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/admin/training/providers")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/privacy/export")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/vacancies/manage")).StatusCode);
@@ -47,6 +57,16 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     {
         var c = Authed(_factory.CandidateEmail);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/who-am-i")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/competencies")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/disc")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/career-interests")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/matched-vacancies")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/talent-contacts")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/deep-analysis?kind=career")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/role-fit")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/training-offers?jobTitle=Verpleegkundige")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/admin/training/providers")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/privacy/export")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.PostAsJsonAsync($"api/vacancies/{_factory.VacancyId}/like", new { })).StatusCode);
@@ -75,7 +95,16 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.True(accepted.GetProperty("piiRevealed").GetBoolean());
         Assert.False(HasEmail(accepted));
 
+        var age = await c.GetAsync("api/employer/talent/search?minAge=21");
+        Assert.Equal(HttpStatusCode.BadRequest, age.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/employer/talent/search")).StatusCode);
+
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/integrations/health")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/who-am-i")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/competencies")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/disc")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/career-interests")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/role-fit")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.PostAsJsonAsync("api/tokens/allocate", new
         {
             fromCompanyId = _factory.CompanyId,
@@ -167,6 +196,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/integrations/health")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/metrics/summary?period=day")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/vacancies/manage")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/admin/training/providers")).StatusCode);
     }
 
     [Fact]

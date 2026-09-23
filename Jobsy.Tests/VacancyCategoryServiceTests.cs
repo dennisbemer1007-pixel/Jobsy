@@ -9,7 +9,7 @@ namespace Jobsy.Tests;
 public class VacancyCategoryServiceTests
 {
     [Fact]
-    public async Task EnsureDefaults_seeds_seven_categories_and_volunteer_is_free()
+    public async Task EnsureDefaults_seeds_categories_and_volunteer_is_free()
     {
         await using var db = CreateDb();
         var sut = new VacancyCategoryService(db);
@@ -17,10 +17,11 @@ public class VacancyCategoryServiceTests
         var active = await sut.GetActiveAsync();
         var all = await sut.GetAllAdminAsync();
 
-        Assert.Equal(6, active.Count);
-        Assert.Equal(7, all.Count);
+        Assert.Equal(VacancyCategoryDefaults.All.Count - 1, active.Count); // highlight inactive
+        Assert.Equal(VacancyCategoryDefaults.All.Count, all.Count);
         Assert.DoesNotContain(active, c => c.Slug == "highlight");
         Assert.Contains(all, c => c.Slug == "highlight" && !c.IsActive && !c.ShowInMapFilter);
+        Assert.Contains(active, c => c.Slug == "flex");
         var volunteer = Assert.Single(active, c => c.Slug == "vrijwilligerswerk");
         Assert.True(volunteer.IsAlwaysFree);
         Assert.Equal(0m, volunteer.PublishCostTokens);

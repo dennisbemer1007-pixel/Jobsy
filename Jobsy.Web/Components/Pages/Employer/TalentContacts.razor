@@ -1,0 +1,82 @@
+@page "/employer/talent-contacts"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<PageTitle>@Culture["Talent.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="saved-gate__header">
+        <h1>@Culture["Talent.EmployerContactsTitle"]</h1>
+        <p class="login-lead">@Culture["Talent.EmployerContactsLead"]</p>
+        <p><a href="/employer/talent">← @Culture["Talent.Title"]</a></p>
+    </header>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_rows.Count == 0)
+    {
+        <p class="state-message">@Culture["Talent.EmployerContactsEmpty"]</p>
+    }
+
+    @foreach (var row in _rows)
+    {
+        <article class="detail-card">
+            <p>@Culture["Talent.Status"]: <strong>@row.Status</strong></p>
+            <p>@Culture.Format("Talent.RespondBy", row.RespondByUtc.ToLocalTime().ToString("g"))</p>
+            <p>@row.Message</p>
+            @if (row.PiiRevealed)
+            {
+                <p>@row.CandidateFullName · @row.CandidateEmail · @row.CandidatePhone</p>
+            }
+            else
+            {
+                <p class="profile-address__hint">@Culture["Talent.StillAnonymous"]</p>
+                @if (CanWithdraw(row))
+                {
+                    <button class="engagement-btn" type="button" @onclick="() => WithdrawAsync(row.Id)">
+                        @Culture["Talent.Withdraw"]
+                    </button>
+                }
+                else
+                {
+                    <p class="profile-address__hint">@Culture["Talent.WithdrawWait"]</p>
+                }
+            }
+        </article>
+    }
+</div>
+
+@code {
+    private List<TalentContactRequestModel> _rows = [];
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _rows = await Api.ListEmployerTalentContactsAsync() ?? [];
+    }
+
+    private static bool CanWithdraw(TalentContactRequestModel row)
+        => Enum.TryParse<TalentContactStatus>(row.Status, ignoreCase: true, out var status)
+           && TalentContactRules.CanEmployerWithdraw(status, DateTime.UtcNow, row.RespondByUtc);
+
+    private async Task WithdrawAsync(Guid id)
+    {
+        try
+        {
+            await Api.WithdrawTalentContactAsync(id);
+            _rows = await Api.ListEmployerTalentContactsAsync() ?? [];
+            _message = "Verzoek ingetrokken; token teruggestort indien van toepassing.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+}

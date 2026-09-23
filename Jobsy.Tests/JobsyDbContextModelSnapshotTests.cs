@@ -12,5 +12,6 @@ public class JobsyDbContextModelSnapshotTests
         Assert.NotNull(snapshot.Model.FindEntityType(typeof(Jobsy.Core.Entities.TokenPurchaseCheckout)));
         Assert.NotNull(snapshot.Model.FindEntityType(typeof(Jobsy.Core.Entities.TokenPurchaseInvoice)));
         Assert.NotNull(snapshot.Model.FindEntityType(typeof(Jobsy.Core.Entities.PlatformFeedback)));
+        Assert.NotNull(snapshot.Model.FindEntityType(typeof(Jobsy.Core.Entities.CandidateCompetency)));
     }
 }
