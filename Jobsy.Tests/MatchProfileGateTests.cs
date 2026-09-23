@@ -17,10 +17,12 @@ public class MatchProfileGateTests
     }
 
     [Fact]
-    public void HasEducationLevel_ignores_geen_and_blank()
+    public void HasEducationLevel_accepts_geen_as_answered()
     {
-        Assert.False(MatchProfileCompleteness.HasEducationLevel(["Geen"]));
+        Assert.True(MatchProfileCompleteness.HasEducationLevel(["Geen"]));
+        Assert.True(MatchProfileCompleteness.HasEducationLevel(["Geen specifiek vereist"]));
         Assert.False(MatchProfileCompleteness.HasEducationLevel([" ", ""]));
+        Assert.False(MatchProfileCompleteness.HasEducationLevel(Array.Empty<string>()));
         Assert.True(MatchProfileCompleteness.HasEducationLevel(["MBO"]));
     }
 

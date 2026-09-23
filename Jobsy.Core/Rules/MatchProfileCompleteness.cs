@@ -4,10 +4,15 @@ namespace Jobsy.Core.Rules;
 
 /// <summary>
 /// Unlock gate for the candidate Match &amp; Swipe tab.
-/// Basics + education + competency (IPIP) + career + DISC — Wie ben ik–style checklist.
+/// Basics + education answer (including "Geen") + competency (IPIP) + career + DISC.
 /// </summary>
 public static class MatchProfileCompleteness
 {
+    /// <summary>
+    /// Education step is complete when the candidate made an explicit choice,
+    /// including <see cref="EducationLevelLabels.None"/> ("Geen" / geen specifiek niveau).
+    /// Empty / unset is incomplete.
+    /// </summary>
     public static bool HasEducationLevel(IEnumerable<string>? educations)
     {
         if (educations is null)
@@ -17,17 +22,10 @@ public static class MatchProfileCompleteness
 
         foreach (var item in educations)
         {
-            if (string.IsNullOrWhiteSpace(item))
+            if (!string.IsNullOrWhiteSpace(item))
             {
-                continue;
+                return true;
             }
-
-            if (string.Equals(item.Trim(), EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            return true;
         }
 
         return false;

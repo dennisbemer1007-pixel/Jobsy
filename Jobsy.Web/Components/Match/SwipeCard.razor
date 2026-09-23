@@ -17,10 +17,10 @@
                  @onpointerleave="OnMouseLeave">
             @if (Model.ShowMatchPercentage && Model.MatchPercentage is int pct)
             {
-                <span class="swipe-card__match-badge" title="Match">
-                    <span class="swipe-card__match-badge-glow" aria-hidden="true"></span>
-                    <span class="swipe-card__match-badge-value">@pct%</span>
-                </span>
+                <div class="swipe-card__match-hero" title="Matchpercentage">
+                    <span class="swipe-card__match-hero-label">Match</span>
+                    <span class="swipe-card__match-hero-value">@pct%</span>
+                </div>
             }
 
             <div class="swipe-card__logo-row">
