@@ -270,6 +270,22 @@ public class AtsPipelineTests
         Assert.Equal(VacancyStatus.Archived, vacancy.Status);
     }
 
+    [Fact]
+    public void Ats_detail_drawer_is_above_backdrop_and_scrollable()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var razor = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Admin/AtsVacanciesAdmin.razor"));
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains("ats-detail-backdrop", razor);
+        Assert.Contains("ats-detail-drawer__scroll", razor);
+        Assert.Contains("ats-detail-drawer__actions", razor);
+        Assert.Contains("Open bronpagina", razor);
+        Assert.Contains(".ats-detail-backdrop", css);
+        Assert.Contains("z-index: 95", css);
+        Assert.Contains(".ats-detail-drawer__scroll", css);
+        Assert.Contains("overflow-y: auto", css);
+    }
+
     private static JobsyDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()
