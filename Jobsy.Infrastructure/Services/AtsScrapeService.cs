@@ -21,8 +21,38 @@ public sealed class AtsScrapeService : IAtsScrapeService
     public const string HttpClientName = "AtsScraper";
 
     private static readonly Regex VacancyPathHint = new(
-        @"vacature|vacatures|job|jobs|werkenbij|carri[eè]re|career|sollicit",
+        @"vacancy|vacancies|vacature|vacatures|job|jobs|werken[\-_]?bij|werkenbij|carri[eèé]re|career|careers|sollicit|openstaande[\-_]?funct|functie|recruiting|opportunities|stellenangebote",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>Noise paths that are almost never vacancy detail pages.</summary>
+    private static readonly Regex NonVacancyPathNoise = new(
+        @"/(contact|privacy|cookie|login|account|cart|winkelwagen|checkout|nieuws|blog|over[\-_]?ons|about|faq|home)/?$|" +
+        @"\.(pdf|jpg|jpeg|png|gif|svg|webp|css|js|zip|docx?|xlsx?)(\?|$)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>CSS-ish structural hooks used first; empty → keyword fallback.</summary>
+    private static readonly string[] StructuralVacancySelectors =
+    [
+        ".job-item a[href]",
+        ".job-listing a[href]",
+        ".job-card a[href]",
+        ".vacancy a[href]",
+        ".vacature a[href]",
+        ".vacatures a[href]",
+        "[class*='job-item'] a[href]",
+        "[class*='job-listing'] a[href]",
+        "[class*='vacancy'] a[href]",
+        "[class*='vacature'] a[href]",
+        "[data-job] a[href]",
+        "a[href*='vacature']",
+        "a[href*='vacancy']",
+        "a[href*='/jobs/']",
+        "a[href*='/job/']",
+        "a[href*='werken-bij']",
+        "a[href*='werkenbij']",
+        "a[href*='carriere']",
+        "a[href*='career']"
+    ];
 
     private static readonly Regex PostalCodeHint = new(
         @"\b([1-9]\d{3})\s?[A-Za-z]{2}\b",
@@ -152,22 +182,25 @@ public sealed class AtsScrapeService : IAtsScrapeService
             return report;
         }
 
-        var (detailUrls, rawAnchors) = ExtractDetailUrlsWithStats(listHtml, source.ListUrl, source.Domain);
+        var (detailUrls, rawAnchors, strategy) = ExtractDetailUrlsWithStats(listHtml, source.ListUrl, source.Domain);
         srcReport.RawAnchorCount = rawAnchors;
         srcReport.VacancyLinkCount = detailUrls.Count;
         Line(report, srcReport,
-            $"SELECTORS: raw <a href>={rawAnchors}, vacancy-like links={detailUrls.Count} (CSS/path hints: vacature|job|werkenbij|career|sollicit)");
+            $"HARVEST links: rawAnchors={rawAnchors} vacancyLinks={detailUrls.Count} strategy={strategy}");
         _logger.LogInformation(
-            "ATS selectors domain={Domain} rawAnchors={Raw} vacancyLinks={Vacancy}",
-            source.Domain, rawAnchors, detailUrls.Count);
+            "ATS harvest domain={Domain} rawAnchors={Raw} vacancyLinks={Vacancy} strategy={Strategy}",
+            source.Domain, rawAnchors, detailUrls.Count, strategy);
 
-        var urls = detailUrls.Take(40).ToList();
+        // Maximal harvest: allow more detail pages per domain; still capped for safety.
+        var urls = detailUrls.Take(80).ToList();
         if (urls.Count == 0)
         {
             urls.Add(source.ListUrl);
             Line(report, srcReport, "FALLBACK: no vacancy links — treating list URL as single detail page.");
             _logger.LogInformation("ATS fallback to list URL as detail for {Domain}", source.Domain);
         }
+
+        Line(report, srcReport, $"DETAIL queue size={urls.Count} (capped from {detailUrls.Count} candidates)");
 
         foreach (var detailUrl in urls)
         {
@@ -223,12 +256,18 @@ public sealed class AtsScrapeService : IAtsScrapeService
         await _db.SaveChangesAsync(cancellationToken);
 
         Line(report, srcReport,
-            $"END {source.Name} status={srcReport.Status}: upserted={srcReport.Upserted} inserted={srcReport.Inserted} updated={srcReport.Updated} " +
-            $"dupHash={srcReport.SkippedDuplicateHash} parseSkip={srcReport.SkippedParse} invalid={srcReport.SkippedInvalid} httpErr={srcReport.HttpErrors}");
+            $"END {source.Name} status={srcReport.Status}: " +
+            $"rawLinks={srcReport.RawAnchorCount} vacancyLinks={srcReport.VacancyLinkCount} " +
+            $"validAdded={srcReport.Inserted} refreshed={srcReport.Updated} upserted={srcReport.Upserted} " +
+            $"dupHash={srcReport.SkippedDuplicateHash} blacklist={srcReport.SkippedBlacklist} " +
+            $"parseSkip={srcReport.SkippedParse} invalid={srcReport.SkippedInvalid} httpErr={srcReport.HttpErrors}");
         _logger.LogInformation(
-            "ATS scrape END name={Name} status={Status} upserted={Upserted} inserted={Inserted} updated={Updated} dupHash={Dup} parseSkip={Parse} invalid={Invalid} httpErr={Http}",
-            source.Name, srcReport.Status, srcReport.Upserted, srcReport.Inserted, srcReport.Updated,
-            srcReport.SkippedDuplicateHash, srcReport.SkippedParse, srcReport.SkippedInvalid, srcReport.HttpErrors);
+            "ATS scrape END name={Name} domain={Domain} status={Status} rawLinks={Raw} vacancyLinks={Links} " +
+            "validAdded={Inserted} refreshed={Updated} upserted={Upserted} blacklist={Blacklist} " +
+            "parseSkip={Parse} invalid={Invalid} httpErr={Http}",
+            source.Name, source.Domain, srcReport.Status, srcReport.RawAnchorCount, srcReport.VacancyLinkCount,
+            srcReport.Inserted, srcReport.Updated, srcReport.Upserted, srcReport.SkippedBlacklist,
+            srcReport.SkippedParse, srcReport.SkippedInvalid, srcReport.HttpErrors);
 
         report.FinishedAtUtc = DateTime.UtcNow;
         return report;
@@ -396,8 +435,9 @@ public sealed class AtsScrapeService : IAtsScrapeService
         var locationLabel = FirstNonEmpty(
             ExtractLocation(document, description),
             source.DefaultLocationLabel);
+        // Salary / hours are optional — leave empty when absent; do not reject the listing.
         var postal = ExtractPostal(description) ?? ExtractPostal(locationLabel);
-        var locationKey = FirstNonEmpty(postal, locationLabel);
+        var locationKey = FirstNonEmpty(postal, locationLabel, companyName);
 
         if (!AtsListingValidation.TryValidateForReview(
                 title, companyName, locationLabel, description, out var rejectReason))
@@ -545,7 +585,7 @@ public sealed class AtsScrapeService : IAtsScrapeService
     internal static IReadOnlyList<string> ExtractDetailUrls(string html, string listUrl, string allowedDomain)
         => ExtractDetailUrlsWithStats(html, listUrl, allowedDomain).Urls;
 
-    internal static (IReadOnlyList<string> Urls, int RawAnchorCount) ExtractDetailUrlsWithStats(
+    internal static (IReadOnlyList<string> Urls, int RawAnchorCount, string Strategy) ExtractDetailUrlsWithStats(
         string html,
         string listUrl,
         string allowedDomain)
@@ -554,51 +594,93 @@ public sealed class AtsScrapeService : IAtsScrapeService
         using var document = parser.ParseDocument(html);
         if (!Uri.TryCreate(listUrl, UriKind.Absolute, out var baseUri))
         {
-            return ([], 0);
+            return ([], 0, "none");
         }
 
-        var anchors = document.QuerySelectorAll("a[href]");
-        var raw = anchors.Length;
+        var allAnchors = document.QuerySelectorAll("a[href]");
+        var raw = allAnchors.Length;
+
+        // Tier 1: structural CSS hooks (.job-item, vacancy cards, href*=vacature, …).
+        var structural = CollectUrls(
+            document.QuerySelectorAll(string.Join(", ", StructuralVacancySelectors)),
+            baseUri,
+            listUrl,
+            allowedDomain,
+            requireVacancyHint: false);
+
+        if (structural.Count > 0)
+        {
+            return (structural.OrderBy(u => u, StringComparer.OrdinalIgnoreCase).ToList(), raw, "structural");
+        }
+
+        // Tier 2: all same-domain anchors whose path/text/url match vacancy keywords.
+        var keyword = CollectUrls(allAnchors, baseUri, listUrl, allowedDomain, requireVacancyHint: true);
+        if (keyword.Count > 0)
+        {
+            return (keyword.OrderBy(u => u, StringComparer.OrdinalIgnoreCase).ToList(), raw, "keyword-fallback");
+        }
+
+        // Tier 3: broad same-domain harvest — any non-noise link under a career-ish parent path,
+        // or leaf paths that look like content pages (depth >= 2) when the list URL itself
+        // already sits on a jobs/vacatures section.
+        var listLooksCareer = VacancyPathHint.IsMatch(listUrl);
+        var broad = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var anchor in allAnchors)
+        {
+            if (!TryResolveVacancyHref(anchor, baseUri, listUrl, allowedDomain, out var normalized, out var absolute))
+            {
+                continue;
+            }
+
+            if (NonVacancyPathNoise.IsMatch(absolute.AbsolutePath))
+            {
+                continue;
+            }
+
+            var pathDepth = absolute.AbsolutePath.Count(c => c == '/');
+            if (listLooksCareer || pathDepth >= 2)
+            {
+                broad.Add(normalized);
+            }
+        }
+
+        if (broad.Count > 0)
+        {
+            return (broad.OrderBy(u => u, StringComparer.OrdinalIgnoreCase).ToList(), raw, "broad-fallback");
+        }
+
+        return ([], raw, "empty");
+    }
+
+    private static HashSet<string> CollectUrls(
+        IHtmlCollection<IElement> anchors,
+        Uri baseUri,
+        string listUrl,
+        string allowedDomain,
+        bool requireVacancyHint)
+    {
         var found = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var anchor in anchors)
         {
-            var href = anchor.GetAttribute("href");
-            if (string.IsNullOrWhiteSpace(href)
-                || href.StartsWith('#')
-                || href.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase)
-                || href.StartsWith("tel:", StringComparison.OrdinalIgnoreCase)
-                || href.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase))
+            if (!TryResolveVacancyHref(anchor, baseUri, listUrl, allowedDomain, out var normalized, out var absolute))
             {
                 continue;
             }
 
-            if (!Uri.TryCreate(baseUri, href, out var absolute))
+            if (requireVacancyHint)
             {
-                continue;
+                var text = anchor.TextContent ?? string.Empty;
+                var looksLikeVacancy = VacancyPathHint.IsMatch(absolute.AbsolutePath)
+                                       || VacancyPathHint.IsMatch(text)
+                                       || VacancyPathHint.IsMatch(absolute.AbsoluteUri);
+                if (!looksLikeVacancy)
+                {
+                    continue;
+                }
             }
 
-            if (absolute.Scheme is not ("http" or "https"))
-            {
-                continue;
-            }
-
-            if (!AtsBlacklistFilter.IsDomainAllowed(absolute.AbsoluteUri, allowedDomain))
-            {
-                continue;
-            }
-
-            var path = absolute.AbsolutePath;
-            var text = anchor.TextContent ?? string.Empty;
-            var looksLikeVacancy = VacancyPathHint.IsMatch(path)
-                                   || VacancyPathHint.IsMatch(text)
-                                   || VacancyPathHint.IsMatch(absolute.AbsoluteUri);
-            if (!looksLikeVacancy)
-            {
-                continue;
-            }
-
-            var normalized = absolute.GetLeftPart(UriPartial.Query);
-            if (string.Equals(normalized.TrimEnd('/'), listUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
+            if (NonVacancyPathNoise.IsMatch(absolute.AbsolutePath)
+                && !VacancyPathHint.IsMatch(absolute.AbsolutePath))
             {
                 continue;
             }
@@ -606,7 +688,53 @@ public sealed class AtsScrapeService : IAtsScrapeService
             found.Add(normalized);
         }
 
-        return (found.OrderBy(u => u, StringComparer.OrdinalIgnoreCase).ToList(), raw);
+        return found;
+    }
+
+    private static bool TryResolveVacancyHref(
+        IElement anchor,
+        Uri baseUri,
+        string listUrl,
+        string allowedDomain,
+        out string normalized,
+        out Uri absolute)
+    {
+        normalized = string.Empty;
+        absolute = baseUri;
+        var href = anchor.GetAttribute("href");
+        if (string.IsNullOrWhiteSpace(href)
+            || href.StartsWith('#')
+            || href.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase)
+            || href.StartsWith("tel:", StringComparison.OrdinalIgnoreCase)
+            || href.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!Uri.TryCreate(baseUri, href, out var resolved))
+        {
+            return false;
+        }
+
+        absolute = resolved;
+        if (absolute.Scheme is not ("http" or "https"))
+        {
+            return false;
+        }
+
+        if (!AtsBlacklistFilter.IsDomainAllowed(absolute.AbsoluteUri, allowedDomain)
+            || AtsBlacklistFilter.IsBlockedHost(absolute.AbsoluteUri))
+        {
+            return false;
+        }
+
+        normalized = absolute.GetLeftPart(UriPartial.Query);
+        if (string.Equals(normalized.TrimEnd('/'), listUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private static async Task<(HttpStatusCode Status, string Html)> FetchHtmlAsync(
@@ -677,12 +805,15 @@ public sealed class AtsScrapeService : IAtsScrapeService
     {
         var meta = MetaContent(document, "og:description")
                    ?? MetaContent(document, "description");
-        var main = document.QuerySelector("main")
+        var main = document.QuerySelector("[itemprop=description]")
+                   ?? document.QuerySelector(".vacancy-description, .job-description, .vacature-tekst, .content-vacature")
+                   ?? document.QuerySelector("main")
                    ?? document.QuerySelector("article")
-                   ?? document.QuerySelector("[itemprop=description]")
+                   ?? document.QuerySelector(".content, .page-content, #content")
                    ?? document.Body;
         var bodyText = CleanText(main?.TextContent);
-        if (!string.IsNullOrWhiteSpace(bodyText) && bodyText.Length >= 80)
+        // Prefer substantial body text; otherwise accept shorter meta / body so incomplete pages still enter review.
+        if (!string.IsNullOrWhiteSpace(bodyText) && bodyText.Length >= 40)
         {
             return bodyText;
         }
@@ -692,9 +823,12 @@ public sealed class AtsScrapeService : IAtsScrapeService
 
     private static string? ExtractLocation(IDocument document, string description)
     {
-        var item = document.QuerySelector("[itemprop=jobLocation], [itemprop=addressLocality], .location, .vacancy-location");
+        var item = document.QuerySelector(
+            "[itemprop=jobLocation], [itemprop=addressLocality], [itemprop=address], " +
+            ".location, .vacancy-location, .job-location, .vacature-locatie, " +
+            ".werkplek, .standplaats, address");
         var fromDom = CleanText(item?.TextContent);
-        if (!string.IsNullOrWhiteSpace(fromDom))
+        if (!string.IsNullOrWhiteSpace(fromDom) && fromDom.Length <= 200)
         {
             return fromDom;
         }
