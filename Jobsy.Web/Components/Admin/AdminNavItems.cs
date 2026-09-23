@@ -29,6 +29,14 @@ public static class AdminNavItems
         new("Nav.Wages", "/admin/wages", NavIcons.Wages),
     ];
 
+    /// <summary>Subnav under Admin → Vacatures (platform + ATS scrape review).</summary>
+    public static readonly NavItem[] VacancyModules =
+    [
+        new("Admin.Vacancies", "/admin/vacancies", NavIcons.Vacancies),
+        new("Admin.AtsVacancies", "/admin/ats-vacancies", NavIcons.Vacancies),
+        new("Admin.Moderation", "/admin/moderation", NavIcons.Vacancies),
+    ];
+
     public static bool IsActive(NavItem item, string relativePath)
         => RoleNavCatalog.IsActive(item, relativePath);
 }

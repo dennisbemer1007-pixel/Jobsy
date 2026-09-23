@@ -183,10 +183,7 @@ projects:
                   name: lobsy-acc-db
                   property: connectionString
               - key: PublicWebBaseUrl
-                fromService:
-                  name: lobsy-acc-web
-                  type: web
-                  envVarKey: RENDER_EXTERNAL_URL
+                value: "https://acceptatie.lobsy.nl"
               - key: PublicApiBaseUrl
                 fromService:
                   name: lobsy-acc-api
@@ -197,7 +194,8 @@ projects:
                   name: lobsy-acc-web
                   type: web
                   envVarKey: RENDER_EXTERNAL_URL
-              # Optional: fill in Dashboard if Acceptatie must send mail.
+              - key: Cors__AllowedOrigins__1
+                value: "https://acceptatie.lobsy.nl"
               # Leave unset so acc does not email real users with the production From.
               - key: Mail__ResendApiKey
                 sync: false

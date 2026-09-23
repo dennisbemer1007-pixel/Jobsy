@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -39,6 +40,8 @@ internal static class AtsScrapeSourceSeeder
             logger.LogInformation("ATS scrape sources seeded: {Count} new whitelist entries.", added);
         }
 
+        await SeedDemoListingsAsync(db, logger);
+
         if (!await db.PlatformLogs.AnyAsync(l => l.Category == "Seed" && l.Message == SeedMarker))
         {
             db.PlatformLogs.Add(new PlatformLog
@@ -51,6 +54,96 @@ internal static class AtsScrapeSourceSeeder
             });
             await db.SaveChangesAsync();
         }
+    }
+
+    private const string DemoListingsMarker = "ATS demo pending listings v1";
+
+    private static async Task SeedDemoListingsAsync(JobsyDbContext db, ILogger logger)
+    {
+        if (await db.PlatformLogs.AnyAsync(l => l.Category == "Seed" && l.Message == DemoListingsMarker))
+        {
+            return;
+        }
+
+        if (await db.AtsScrapedListings.AnyAsync())
+        {
+            db.PlatformLogs.Add(new PlatformLog
+            {
+                Id = Guid.NewGuid(),
+                Level = PlatformLogLevel.Info,
+                Category = "Seed",
+                Message = DemoListingsMarker,
+                CreatedAt = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+            return;
+        }
+
+        var source = await db.AtsScrapeSources
+            .OrderBy(s => s.Name)
+            .FirstOrDefaultAsync(s => s.IsEnabled);
+        if (source is null)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        var demos = new[]
+        {
+            ("Kassamedewerker (demo)", "Supermarkt Westland", "Naaldwijk",
+                "Demo ATS-listing voor acceptatie. Lokale kassafunctie bij een directe werkgever in het Westland. " +
+                "Goedkeuren zet deze live in Match en op de banenkaart."),
+            ("Groenvoorziener (demo)", "Gemeente Den Haag", "Den Haag",
+                "Demo ATS-listing voor acceptatie. Onderhoud openbaar groen bij de gemeente. " +
+                "Gebruik Goedkeuren / Afkeuren om de moderatieflow te testen.")
+        };
+
+        foreach (var (title, company, location, description) in demos)
+        {
+            var hash = AtsDedupeHash.Compute(company, title, location);
+            if (await db.AtsScrapedListings.AnyAsync(l => l.DedupHash == hash))
+            {
+                continue;
+            }
+
+            db.AtsScrapedListings.Add(new AtsScrapedListing
+            {
+                Id = Guid.NewGuid(),
+                SourceId = source.Id,
+                DedupHash = hash,
+                SourceUrl = source.ListUrl.TrimEnd('/') + "/demo-" + hash[..8],
+                CompanyName = company,
+                Title = title,
+                LocationLabel = location,
+                Description = description,
+                SalaryText = "€14,50 per uur",
+                HourlyWage = 14.50m,
+                HoursText = "16-24 uur",
+                MinHoursPerWeek = 16,
+                MaxHoursPerWeek = 24,
+                TagsJson = "[\"demo\",\"lokaal\"]",
+                Latitude = source.DefaultLatitude,
+                Longitude = source.DefaultLongitude,
+                CompletenessScore = AtsCompletenessScore.Compute(
+                    title, company, location, description, "€14,50 per uur", 14.50m,
+                    "16-24 uur", 16, 24, "[\"demo\"]", source.ListUrl),
+                Status = AtsListingStatus.PendingReview,
+                ScrapedAtUtc = now,
+                LastCheckedAtUtc = now,
+                ExpiresAtUtc = AtsVacancyRules.DefaultExpiresAt(now)
+            });
+        }
+
+        db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "Seed",
+            Message = DemoListingsMarker,
+            CreatedAt = now
+        });
+        await db.SaveChangesAsync();
+        logger.LogInformation("ATS demo pending listings seeded for admin review.");
     }
 
     private static AtsScrapeSource[] BuildSources() =>
