@@ -14,7 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
-- **Kompas-navigatie en Top 10:** de tabbladen (Wie ben ik?, Mijn profiel, …) staan op volle breedte en wrappen met het volledige label. In elke Top 10-tegel blijft het matchpercentage in de kop staan; de toelichting loopt eronder door in plaats van naast het percentage af te knippen.
+- **Kompas-navigatie en Top 10:** de tabbladen (Wie ben ik?, Mijn profiel, …) staan op volle breedte en wrappen met het volledige label. In elke Top 10-tegel blijft het matchpercentage in de kop staan; de toelichting loopt eronder door in plaats van naast het percentage af te knippen. De Top 10 blijft naast de kompas-inhoud zichtbaar.
 - **Vakgebied-matching:** vergelijkbare functies en directe vacatures blijven in dezelfde sector (een piloot krijgt geen lab of café). Vacatures tonen harde eisen (keuring, ogentest, fitheid, certificaten, rijbewijs) en een ontbrekende eis is een dealbreaker. Het loopbaanadvies noemt hoe lang het opleidingspad duurt, in stappen.
 - **Diepte-analyse UX (150 vragen):** sticky voortgangsbalk met live %-indicatie, onderwerpen-tracker (afgerond / nu / komt nog), info-knop met praktijkvoorbeeld per vraag, en motiverende boosters elke 25 vragen.
 
