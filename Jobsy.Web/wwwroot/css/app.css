@@ -17501,12 +17501,15 @@ html.cookie-consent-known .cookie-consent {
 .match-page {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 100%;
     max-width: 480px;
     margin: 0 auto;
-    padding: 0.75rem 0.75rem calc(4.75rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.75rem 0.75rem 1.25rem;
     box-sizing: border-box;
+}
+
+.match-page--shell {
+    background: transparent;
 }
 
 .match-page__top {

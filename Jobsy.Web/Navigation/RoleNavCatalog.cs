@@ -20,6 +20,7 @@ public static class RoleNavCatalog
 
     public static readonly NavItem[] Candidate =
     [
+        new("Nav.Match", "/candidate/match", NavIcons.Match),
         new("Nav.Search", "/", NavIcons.Search),
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]),
         new("Nav.Vacancies", "/candidate/vacancies", NavIcons.Vacancies),

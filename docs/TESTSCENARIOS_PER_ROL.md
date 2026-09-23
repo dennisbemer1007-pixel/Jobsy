@@ -257,7 +257,7 @@ Voer deze set **eenmaal per rol** uit (Kandidaat, Filiaalmanager, Regiomanager, 
 
 ## 3. Kandidaat
 
-Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard · Vacatures · Sollicitaties · Profiel. Hoe werkt Lobsy staat in het account-menu (userknop). Geen TokenWalletChip. Extra accounts: `kandidaat.denhaag@jobsy.local`, `kandidaat.ver@jobsy.local` (reistijd/vangnet).
+Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Match · Zoeken · Bewaard · Vacatures · Sollicitaties · Profiel. Hoe werkt Lobsy staat in het account-menu (userknop). Geen TokenWalletChip. Extra accounts: `kandidaat.denhaag@jobsy.local`, `kandidaat.ver@jobsy.local` (reistijd/vangnet).
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
@@ -272,6 +272,7 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Uitgebreide beroepentest (150) levert algemene beroepen via OpenAI. | Beroepen uit de Nederlandse arbeidsmarkt (niet beperkt tot Lobsy-vacatures); Jip-en-Janneke; Super-match/Sterke keus/Handige verbreding; opgeslagen in **Mijn Beroepen-kompas**; zonder key lokale catalogus. |
 | Kandidaat | Banenkaart koppelt algemene beroepstags aan actuele vacatures. | Algemeen beroep (bijv. verpleegkundige) matcht vacatures in Den Haag/Westland via zoeksleutels. |
 | Kandidaat | Home: harde criteria reistijd/vervoer (incl. e-bike)/rijbewijs/beschikbaarheid (per direct/parttime/seizoen) opslaan. | Voorkeuren opgeslagen; banenkaart herberekent match-%. |
+| Kandidaat | Bottom-nav **Match**. | `/candidate/match` swipe-kaarten. |
 | Kandidaat | Bottom-nav **Zoeken**. | `/` banenkaart. |
 | Kandidaat | Bottom-nav **Bewaard**. | `/candidate/liked`. |
 | Kandidaat | Bottom-nav **Vacatures**. | `/candidate/vacancies` met **Onlangs bekeken** + overzicht op reistijd/vervoer. |

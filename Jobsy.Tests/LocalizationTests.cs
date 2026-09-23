@@ -23,6 +23,7 @@ public class LocalizationTests
     public void UiStrings_default_dutch_and_english_differ()
     {
         Assert.Equal("Zoeken", UiStrings.Get("Nav.Search", "nl"));
+        Assert.Equal("Match", UiStrings.Get("Nav.Match", "nl"));
         Assert.Equal("Banenkaart", UiStrings.Get("Nav.JobMap", "nl"));
         Assert.Equal("Job map", UiStrings.Get("Nav.JobMap", "en"));
         Assert.Equal("خريطة الوظائف", UiStrings.Get("Nav.JobMap", "ar"));

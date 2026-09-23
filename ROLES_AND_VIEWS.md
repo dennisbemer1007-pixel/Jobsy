@@ -24,10 +24,11 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 ## 1. Candidate
 *Doel: snel een baan vinden op reistijd/vervoer.*
 
-**BottomNav:** Zoeken · Bewaard · Vacatures · Sollicitaties · Profiel
+**BottomNav:** Match · Zoeken · Bewaard · Vacatures · Sollicitaties · Profiel
 
 | Route | Inhoud |
 |-------|--------|
+| `/candidate/match` | Match & Swipe: vacaturekaarten met Niet voor mij / Koffie doen |
 | `/` | Banenkaart (filters, lijst, kaart). Ingelogde kandidaat: live match-% per vacature, **Cultuur Fit**-label na harde criteria, sort/filter op match, uitleg waarom |
 | `/home` | **Mijn Lobsy Kompas** in tabbladen: **Wie ben ik?**, **Mijn profiel**, **Mijn competenties**, **DISC-Analyse**, **Mijn beste match**, **Functiefit checker** + eigen metrics |
 | `/vacancies/{id}` | Detail, solliciteren, like/share, optioneel mock interview, kandidaat **Past deze vacature bij mij?** |
