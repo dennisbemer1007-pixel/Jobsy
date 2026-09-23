@@ -204,7 +204,9 @@ public sealed class DashboardLiveOverlay : IDashboardLiveOverlay
 
         if (needed.Contains("active_vacancies")
             || needed.Contains("active_vacancies_employers")
-            || needed.Contains("active_vacancies_intermediaries"))
+            || needed.Contains("active_vacancies_intermediaries")
+            || needed.Contains("active_vacancies_ats")
+            || needed.Contains("active_vacancies_regular"))
         {
             values["active_vacancies"] = await vacancyQuery
                 .CountAsync(v => v.Status == VacancyStatus.Active, cancellationToken);
@@ -213,6 +215,12 @@ public sealed class DashboardLiveOverlay : IDashboardLiveOverlay
                 cancellationToken);
             values["active_vacancies_intermediaries"] = await vacancyQuery.CountAsync(
                 v => v.Status == VacancyStatus.Active && v.Company.Type == CompanyType.Intermediary,
+                cancellationToken);
+            values["active_vacancies_ats"] = await vacancyQuery.CountAsync(
+                v => v.Status == VacancyStatus.Active && v.CreatedVia == VacancySource.Ats,
+                cancellationToken);
+            values["active_vacancies_regular"] = await vacancyQuery.CountAsync(
+                v => v.Status == VacancyStatus.Active && v.CreatedVia != VacancySource.Ats,
                 cancellationToken);
         }
 

@@ -146,6 +146,16 @@ public class AtsPipelineTests
         var activeAts = await db.Vacancies.CountAsync(v =>
             v.Status == VacancyStatus.Active && v.CreatedVia == VacancySource.Ats);
         Assert.Equal(1, activeAts);
+
+        var metrics = await new MetricsQueryService(db)
+            .GetSummaryAsync(includePlatformOnly: true, companyIds: null, period: "week");
+        Assert.Equal(1, metrics.First(m => m.Key == "active_vacancies_ats").Value);
+        Assert.Equal(0, metrics.First(m => m.Key == "active_vacancies_regular").Value);
+
+        var atsDrill = await new MetricsQueryService(db)
+            .GetDrilldownAsync("active_vacancies_ats", includePlatformOnly: true, companyIds: null, period: "week");
+        Assert.Single(atsDrill);
+        Assert.Contains("ATS", atsDrill[0].Subtitle);
     }
 
     [Fact]

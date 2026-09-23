@@ -142,6 +142,8 @@ public static class DashboardLiveMetricKeys
         "active_vacancies",
         "active_vacancies_employers",
         "active_vacancies_intermediaries",
+        "active_vacancies_ats",
+        "active_vacancies_regular",
         "active_boosts",
         "users_open_for_work",
         "users_active",

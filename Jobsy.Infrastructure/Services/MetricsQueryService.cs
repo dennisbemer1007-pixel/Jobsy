@@ -42,6 +42,10 @@ public sealed class MetricsQueryService : IMetricsQueryService
             v => v.Status == VacancyStatus.Active && v.Company.Type == CompanyType.Employer, cancellationToken);
         var intermediaryVacancies = await vacancyQuery.CountAsync(
             v => v.Status == VacancyStatus.Active && v.Company.Type == CompanyType.Intermediary, cancellationToken);
+        var activeAtsVacancies = await vacancyQuery.CountAsync(
+            v => v.Status == VacancyStatus.Active && v.CreatedVia == VacancySource.Ats, cancellationToken);
+        var activeRegularVacancies = await vacancyQuery.CountAsync(
+            v => v.Status == VacancyStatus.Active && v.CreatedVia != VacancySource.Ats, cancellationToken);
 
         var applications = await _db.Applications.AsNoTracking()
             .Where(a => vacancyIds.Contains(a.VacancyId)
@@ -147,6 +151,8 @@ public sealed class MetricsQueryService : IMetricsQueryService
             new("active_vacancies", "Actieve vacatures", periodKey, activeVacancies),
             new("active_vacancies_employers", "Actieve vacatures (bedrijven)", periodKey, employerVacancies),
             new("active_vacancies_intermediaries", "Actieve vacatures (intermediairs)", periodKey, intermediaryVacancies),
+            new("active_vacancies_ats", "Actieve vacatures (ATS)", periodKey, activeAtsVacancies),
+            new("active_vacancies_regular", "Actieve vacatures (regulier)", periodKey, activeRegularVacancies),
             new("users_open_for_work", "Open for work", periodKey, openForWork),
             new("users_active", "Actieve gebruikers", periodKey, allUsers),
             new("applications_pending", "Openstaande sollicitaties", periodKey, applicationsPending),
@@ -548,9 +554,11 @@ public sealed class MetricsQueryService : IMetricsQueryService
             "active_boosts" => await ActiveBoostsDrilldownAsync(companyIds, cancellationToken),
             "avg_travel_minutes" or "top_transport_share" =>
                 await MatchTravelDrilldownAsync(vacancyIds, from, to, cancellationToken),
-            "active_vacancies" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, cancellationToken),
-            "active_vacancies_employers" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Employer, cancellationToken),
-            "active_vacancies_intermediaries" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Intermediary, cancellationToken),
+            "active_vacancies" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, atsFilter: null, cancellationToken),
+            "active_vacancies_employers" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Employer, atsFilter: null, cancellationToken),
+            "active_vacancies_intermediaries" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Intermediary, atsFilter: null, cancellationToken),
+            "active_vacancies_ats" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, atsFilter: true, cancellationToken),
+            "active_vacancies_regular" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, atsFilter: false, cancellationToken),
             "users_open_for_work" => await UsersOpenForWorkDrilldownAsync(cancellationToken),
             "users_active" => await _db.Users.AsNoTracking()
                 .Where(u => u.IsActive)
@@ -1077,6 +1085,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
     private async Task<List<MetricDrilldownItemDto>> ActiveVacanciesDrilldownAsync(
         IReadOnlyCollection<Guid>? companyIds,
         CompanyType? type,
+        bool? atsFilter,
         CancellationToken ct)
     {
         var query = _db.Vacancies.AsNoTracking().Where(v => v.Status == VacancyStatus.Active);
@@ -1090,10 +1099,23 @@ public sealed class MetricsQueryService : IMetricsQueryService
             query = query.Where(v => v.Company.Type == type);
         }
 
+        if (atsFilter == true)
+        {
+            query = query.Where(v => v.CreatedVia == VacancySource.Ats);
+        }
+        else if (atsFilter == false)
+        {
+            query = query.Where(v => v.CreatedVia != VacancySource.Ats);
+        }
+
         return await query
             .OrderBy(v => v.Title)
             .Select(v => new MetricDrilldownItemDto(
-                v.Id, v.Title, v.Company.Name, DateTime.UtcNow, null))
+                v.Id,
+                v.Title,
+                v.Company.Name + " · " + (v.CreatedVia == VacancySource.Ats ? "ATS" : "Regulier"),
+                DateTime.UtcNow,
+                null))
             .ToListAsync(ct);
     }
 

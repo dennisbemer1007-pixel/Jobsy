@@ -224,9 +224,15 @@
         "tokens_purchased" or "tokens_spent" or "tokens_balance" or "pushboms" or "extensions"
             => "/admin/finance?tab=tokenlog",
         "active_vacancies" or "active_vacancies_employers" or "active_vacancies_intermediaries"
+            or "active_vacancies_ats" or "active_vacancies_regular"
             or "active_boosts" or "applications" or "applications_pending" or "conversion_rate"
             or "impressions" or "clicks" or "shares" or "likes" or "unpublished_vacancies"
-            or "avg_travel_minutes" or "top_transport_share" or "avg_vacancy_lead_time_days" => "/admin/vacancies",
+            or "avg_travel_minutes" or "top_transport_share" or "avg_vacancy_lead_time_days" => key.ToLowerInvariant() switch
+            {
+                "active_vacancies_ats" => "/admin/vacancies?channel=ats&status=Active",
+                "active_vacancies_regular" => "/admin/vacancies?channel=regular&status=Active",
+                _ => "/admin/vacancies"
+            },
         "site_visits" or "site_visits_unique" => "/admin/vacancies",
         _ => "/admin/vacancies"
     };
