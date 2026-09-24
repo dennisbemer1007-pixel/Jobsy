@@ -44,7 +44,7 @@ public sealed class AtsScrapeService : IAtsScrapeService
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex PaginationPathHint = new(
-        @"([?&](page|p|pagina|pg|start|offset|paged)=\d+)|(/page/\d+(/|$))|(/p/\d+(/|$))",
+        @"([?&](page|p|pagina|pg|start|offset|paged)=\d+)|(/page/\d+(/|$))|(/p/\d+(/|$))|(/vacaturepagina/\d+(/|$))",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex PaginationTextHint = new(
@@ -116,15 +116,18 @@ public sealed class AtsScrapeService : IAtsScrapeService
 
     private readonly JobsyDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IAtsListingEnrichmentService _enrichment;
     private readonly ILogger<AtsScrapeService> _logger;
 
     public AtsScrapeService(
         JobsyDbContext db,
         IHttpClientFactory httpClientFactory,
+        IAtsListingEnrichmentService enrichment,
         ILogger<AtsScrapeService> logger)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
+        _enrichment = enrichment;
         _logger = logger;
     }
 
@@ -329,6 +332,26 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 "addedUnique={Added} uniqueTotal={Total} strategy={Strategy} enqueued={Enqueued}",
                 source.Domain, listUrl, rawAnchors, pageVacancyUrls.Count, addedUnique,
                 vacancyUrls.Count, strategy, enqueued);
+        }
+
+        // JS-rendered career boards (e.g. Werken voor Den Haag) expose a JSON vacancy index.
+        var apiUrls = await TryHarvestJsonVacancyIndexAsync(
+            client, source, report, srcReport, cancellationToken);
+        if (apiUrls.Count > 0)
+        {
+            strategies.Add("json-api");
+            foreach (var u in apiUrls)
+            {
+                if (vacancyUrls.Count >= MaxVacancyUrlsPerDomain)
+                {
+                    break;
+                }
+
+                vacancyUrls.Add(u);
+            }
+
+            Line(report, srcReport,
+                $"JSON index: +{apiUrls.Count} links → uniek totaal {vacancyUrls.Count}");
         }
 
         srcReport.RawAnchorCount = totalRawAnchors;
@@ -654,16 +677,16 @@ public sealed class AtsScrapeService : IAtsScrapeService
             return UpsertOutcome.SkippedBlacklist;
         }
 
-        var description = ExtractDescription(document);
+        var rawDescription = ExtractDescription(document);
         var locationLabel = FirstNonEmpty(
-            ExtractLocation(document, description),
+            ExtractLocation(document, rawDescription),
             source.DefaultLocationLabel);
         // Salary / hours are optional — leave empty when absent; do not reject the listing.
-        var postal = ExtractPostal(description) ?? ExtractPostal(locationLabel);
+        var postal = ExtractPostal(rawDescription) ?? ExtractPostal(locationLabel);
         var locationKey = FirstNonEmpty(postal, locationLabel, companyName);
 
         if (!AtsListingValidation.TryValidateForReview(
-                title, companyName, locationLabel, description, out var rejectReason))
+                title, companyName, locationLabel, rawDescription, out var rejectReason))
         {
             _logger.LogInformation(
                 "ATS invalid skip reason={Reason} title={Title} url={Url}",
@@ -671,9 +694,10 @@ public sealed class AtsScrapeService : IAtsScrapeService
             return UpsertOutcome.SkippedInvalid;
         }
 
-        var salaryText = ExtractSalaryText(description);
-        var hourly = ParseHourly(salaryText) ?? ParseHourly(description);
-        var (minH, maxH, hoursText) = ParseHours(description);
+        var salaryText = ExtractSalaryText(rawDescription)
+                         ?? AtsListingEnrichment.ExtractSalaryIndication(rawDescription);
+        var hourly = ParseHourly(salaryText) ?? ParseHourly(rawDescription);
+        var (minH, maxH, hoursText) = ParseHours(rawDescription);
         var imageUrl = MetaContent(document, "og:image");
         if (!string.IsNullOrWhiteSpace(imageUrl)
             && imageUrl.Length > HtmlSanitize.MaxImageUrlLength)
@@ -681,8 +705,32 @@ public sealed class AtsScrapeService : IAtsScrapeService
             imageUrl = null;
         }
 
-        var tags = ExtractTags(document, description);
+        var tags = ExtractTags(document, rawDescription);
         var tagsJson = tags.Count > 0 ? JsonSerializer.Serialize(tags) : null;
+
+        var enriched = await _enrichment.EnrichAsync(
+            title,
+            companyName,
+            locationLabel,
+            rawDescription,
+            salaryText,
+            hoursText,
+            minH,
+            maxH,
+            cancellationToken);
+
+        title = FirstNonEmpty(enriched.Title, title) ?? title;
+        companyName = Truncate(companyName, 256)!;
+        locationLabel = FirstNonEmpty(enriched.LocationLabel, locationLabel);
+        var description = FirstNonEmpty(enriched.Description, AtsListingEnrichment.CleanDescription(rawDescription))
+                          ?? rawDescription;
+        salaryText = FirstNonEmpty(enriched.SalaryText, salaryText);
+        hoursText = FirstNonEmpty(enriched.HoursText, hoursText);
+        minH = enriched.MinHoursPerWeek ?? minH;
+        maxH = enriched.MaxHoursPerWeek ?? maxH;
+        var startDateText = enriched.StartDateText;
+        var requirementsText = enriched.RequirementsText;
+        hourly ??= ParseHourly(salaryText);
 
         var hash = AtsDedupeHash.Compute(companyName, title, locationKey);
         var now = DateTime.UtcNow;
@@ -691,7 +739,8 @@ public sealed class AtsScrapeService : IAtsScrapeService
 
         var completeness = AtsCompletenessScore.Compute(
             title, companyName, locationLabel, description,
-            salaryText, hourly, hoursText, minH, maxH, tagsJson, sourceUrl);
+            salaryText, hourly, hoursText, minH, maxH, tagsJson, sourceUrl,
+            startDateText, requirementsText);
 
         if (existing is null)
         {
@@ -711,19 +760,23 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 HoursText = Truncate(hoursText, 256),
                 MinHoursPerWeek = minH,
                 MaxHoursPerWeek = maxH,
+                StartDateText = Truncate(startDateText, 256),
+                RequirementsText = Truncate(requirementsText, 4000),
                 TagsJson = Truncate(tagsJson, 2000),
                 ImageUrl = imageUrl,
                 Latitude = source.DefaultLatitude,
                 Longitude = source.DefaultLongitude,
                 CompletenessScore = completeness,
+                AiEnrichedAtUtc = now,
+                AiEnrichedFromOpenAi = enriched.FromOpenAi,
                 Status = AtsListingStatus.PendingReview,
                 ScrapedAtUtc = now,
                 LastCheckedAtUtc = now,
                 ExpiresAtUtc = AtsVacancyRules.DefaultExpiresAt(now)
             });
             _logger.LogInformation(
-                "ATS INSERT hash={Hash} title={Title} company={Company} url={Url} score={Score}",
-                hash[..12], title, companyName, sourceUrl, completeness);
+                "ATS INSERT hash={Hash} title={Title} company={Company} url={Url} score={Score} ai={Ai}",
+                hash[..12], title, companyName, sourceUrl, completeness, enriched.FromOpenAi);
             return UpsertOutcome.Inserted;
         }
 
@@ -743,9 +796,13 @@ public sealed class AtsScrapeService : IAtsScrapeService
         existing.HoursText = Truncate(hoursText, 256);
         existing.MinHoursPerWeek = minH;
         existing.MaxHoursPerWeek = maxH;
+        existing.StartDateText = Truncate(startDateText, 256);
+        existing.RequirementsText = Truncate(requirementsText, 4000);
         existing.TagsJson = Truncate(tagsJson, 2000);
         existing.ImageUrl = imageUrl;
         existing.CompletenessScore = completeness;
+        existing.AiEnrichedAtUtc = now;
+        existing.AiEnrichedFromOpenAi = enriched.FromOpenAi;
         existing.LastCheckedAtUtc = now;
         if (existing.Status is AtsListingStatus.Expired or AtsListingStatus.Inactive)
         {
@@ -803,6 +860,151 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 Line(report, src, $"SKIP invalid (missing required fields) {url}");
                 break;
         }
+    }
+
+    /// <summary>
+    /// Harvest vacancy detail URLs from known JSON indexes (WordPress theme APIs).
+    /// Used when the HTML list page is JS-rendered (Werken voor Den Haag).
+    /// </summary>
+    internal static IReadOnlyList<string> ExtractUrlsFromVacancyJson(string json, string allowedDomain)
+    {
+        var found = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            CollectJsonLinks(doc.RootElement, allowedDomain, found);
+        }
+        catch (JsonException)
+        {
+            // Fall through — caller may try alternate endpoints.
+        }
+
+        return found.OrderBy(u => u, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private static void CollectJsonLinks(JsonElement el, string allowedDomain, HashSet<string> found)
+    {
+        switch (el.ValueKind)
+        {
+            case JsonValueKind.Object:
+                foreach (var prop in el.EnumerateObject())
+                {
+                    if (prop.NameEquals("link")
+                        || prop.NameEquals("url")
+                        || prop.NameEquals("permalink")
+                        || prop.NameEquals("share"))
+                    {
+                        if (prop.Value.ValueKind == JsonValueKind.String)
+                        {
+                            TryAddJsonVacancyUrl(prop.Value.GetString(), allowedDomain, found);
+                        }
+                    }
+                    else
+                    {
+                        CollectJsonLinks(prop.Value, allowedDomain, found);
+                    }
+                }
+
+                break;
+            case JsonValueKind.Array:
+                foreach (var item in el.EnumerateArray())
+                {
+                    CollectJsonLinks(item, allowedDomain, found);
+                }
+
+                break;
+        }
+    }
+
+    private static void TryAddJsonVacancyUrl(string? url, string allowedDomain, HashSet<string> found)
+    {
+        if (string.IsNullOrWhiteSpace(url)
+            || !Uri.TryCreate(url, UriKind.Absolute, out var uri)
+            || !AtsBlacklistFilter.IsDomainAllowed(uri.AbsoluteUri, allowedDomain))
+        {
+            return;
+        }
+
+        var path = uri.AbsolutePath.TrimEnd('/');
+        var isDetail =
+            path.Contains("/vacature/", StringComparison.OrdinalIgnoreCase)
+            || System.Text.RegularExpressions.Regex.IsMatch(
+                path, @"/vacatures/[^/]+", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+            || path.Contains("/vacancy/", StringComparison.OrdinalIgnoreCase)
+            || System.Text.RegularExpressions.Regex.IsMatch(
+                path, @"/jobs?/[^/]+", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        if (!isDetail || ListHubPathHint.IsMatch(path))
+        {
+            return;
+        }
+
+        found.Add(NormalizeUrlKey(uri.GetLeftPart(UriPartial.Query)));
+    }
+
+    private async Task<IReadOnlyList<string>> TryHarvestJsonVacancyIndexAsync(
+        HttpClient client,
+        AtsScrapeSource source,
+        AtsScrapeRunReport report,
+        AtsScrapeSourceReport srcReport,
+        CancellationToken cancellationToken)
+    {
+        if (!Uri.TryCreate(source.ListUrl, UriKind.Absolute, out var listUri))
+        {
+            return [];
+        }
+
+        var host = listUri.Host.ToLowerInvariant();
+        var endpoints = new List<string>();
+        if (host.Contains("werkenvoor.denhaag.nl", StringComparison.Ordinal)
+            || host.Contains("denhaag.nl", StringComparison.Ordinal))
+        {
+            endpoints.Add("https://werkenvoor.denhaag.nl/wp-json/werken-voor-denhaag-theme/v1/vacancies");
+            endpoints.Add("https://werkenvoor.denhaag.nl/wp-json/wp/v2/vacancy?per_page=100");
+        }
+
+        if (endpoints.Count == 0)
+        {
+            return [];
+        }
+
+        var found = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var endpoint in endpoints)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                using var response = await client.GetAsync(endpoint, cancellationToken);
+                Line(report, srcReport,
+                    $"JSON GET HTTP {(int)response.StatusCode} {endpoint}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    srcReport.HttpErrors++;
+                    report.HttpErrors++;
+                    continue;
+                }
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                foreach (var url in ExtractUrlsFromVacancyJson(json, source.Domain))
+                {
+                    found.Add(url);
+                }
+            }
+            catch (Exception ex) when (IsSkippableFetchFailure(ex))
+            {
+                srcReport.HttpErrors++;
+                report.HttpErrors++;
+                Line(report, srcReport,
+                    $"JSON SKIP ({ClassifyFetchFailure(ex)}): {endpoint} — {ex.Message}");
+            }
+        }
+
+        return found.OrderBy(u => u, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     internal static IReadOnlyList<string> ExtractDetailUrls(string html, string listUrl, string allowedDomain)
@@ -911,10 +1113,35 @@ public sealed class AtsScrapeService : IAtsScrapeService
             return false;
         }
 
+        // Increment /vacaturepagina/N (TYPO3 Westland) before generic career-hub pagination.
+        var paginaMatch = Regex.Match(
+            current.AbsolutePath,
+            @"^(.*?/vacaturepagina/)(\d+)(/?)$",
+            RegexOptions.IgnoreCase);
+        if (paginaMatch.Success && int.TryParse(paginaMatch.Groups[2].Value, out var pagina)
+            && pagina is >= 1 and < 500)
+        {
+            var nextPath = $"{paginaMatch.Groups[1].Value}{pagina + 1}{paginaMatch.Groups[3].Value}";
+            var nextBuilder = new UriBuilder(current) { Path = nextPath };
+            nextUrl = NormalizeUrlKey(nextBuilder.Uri.GetLeftPart(UriPartial.Path));
+            return true;
+        }
+
         // Bare list URL → try ?page=2 when the path looks like a career/jobs hub.
         if (VacancyPathHint.IsMatch(current.AbsolutePath)
             || VacancyPathHint.IsMatch(current.AbsoluteUri))
         {
+            // TYPO3 Westland: /vacatures/vacaturepagina/N
+            if (current.Host.Contains("gemeentewestland.nl", StringComparison.OrdinalIgnoreCase)
+                && current.AbsolutePath.Contains("/vacatures", StringComparison.OrdinalIgnoreCase)
+                && !current.AbsolutePath.Contains("/vacaturepagina/", StringComparison.OrdinalIgnoreCase))
+            {
+                var pagePath = current.AbsolutePath.TrimEnd('/') + "/vacaturepagina/2";
+                var pageBuilder = new UriBuilder(current) { Path = pagePath, Query = string.Empty };
+                nextUrl = NormalizeUrlKey(pageBuilder.Uri.GetLeftPart(UriPartial.Path));
+                return true;
+            }
+
             var builder = new UriBuilder(current) { Query = "page=2" };
             nextUrl = NormalizeUrlKey(builder.Uri.GetLeftPart(UriPartial.Query));
             return true;

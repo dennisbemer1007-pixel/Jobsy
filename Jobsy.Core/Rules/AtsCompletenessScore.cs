@@ -14,16 +14,21 @@ public static class AtsCompletenessScore
         decimal? minHours,
         decimal? maxHours,
         string? tagsJson,
-        string? sourceUrl)
+        string? sourceUrl,
+        string? startDateText = null,
+        string? requirementsText = null)
     {
         var score = 0;
-        if (!string.IsNullOrWhiteSpace(title)) score += 20;
-        if (!string.IsNullOrWhiteSpace(companyName)) score += 15;
-        if (!string.IsNullOrWhiteSpace(location)) score += 15;
+        if (!string.IsNullOrWhiteSpace(title)) score += 15;
+        if (!string.IsNullOrWhiteSpace(companyName)) score += 10;
+        if (!string.IsNullOrWhiteSpace(location)) score += 10;
         if (!string.IsNullOrWhiteSpace(description) && description.Trim().Length >= 80) score += 20;
         else if (!string.IsNullOrWhiteSpace(description)) score += 10;
         if (!string.IsNullOrWhiteSpace(salaryText) || hourlyWage is > 0) score += 10;
         if (!string.IsNullOrWhiteSpace(hoursText) || minHours is > 0 || maxHours is > 0) score += 10;
+        if (!string.IsNullOrWhiteSpace(startDateText)) score += 5;
+        if (!string.IsNullOrWhiteSpace(requirementsText) && requirementsText.Trim().Length >= 20) score += 10;
+        else if (!string.IsNullOrWhiteSpace(requirementsText)) score += 5;
         if (!string.IsNullOrWhiteSpace(tagsJson) && tagsJson.Contains('[')) score += 5;
         if (!string.IsNullOrWhiteSpace(sourceUrl) && Uri.TryCreate(sourceUrl, UriKind.Absolute, out _)) score += 5;
         return Math.Clamp(score, 0, 100);

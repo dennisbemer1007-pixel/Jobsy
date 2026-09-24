@@ -11596,6 +11596,19 @@ button.linkish:hover {
     overflow-wrap: anywhere;
 }
 
+.ats-detail-drawer__enrich {
+    margin: -0.35rem 0 1rem;
+    font-size: 0.8rem;
+}
+
+.ats-detail-drawer__body {
+    margin-bottom: 1rem;
+}
+
+.ats-detail-drawer__body--requirements {
+    margin-top: 0.25rem;
+}
+
 .ats-detail-drawer__body-head {
     display: flex;
     flex-wrap: wrap;
@@ -11628,6 +11641,11 @@ button.linkish:hover {
     border-radius: 0.65rem;
     border: 1px solid color-mix(in srgb, var(--border, #d8dde3) 85%, transparent);
     background: color-mix(in srgb, var(--bg, #f6f8fa) 88%, transparent);
+}
+
+.ats-detail-drawer__prose--list {
+    font-size: 0.92rem;
+    line-height: 1.5;
 }
 
 .ats-detail-drawer__source-url {

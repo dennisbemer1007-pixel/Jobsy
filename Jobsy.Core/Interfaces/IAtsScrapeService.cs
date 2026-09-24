@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Interfaces;
 
@@ -7,6 +8,20 @@ public interface IAtsScrapeService
 {
     Task<AtsScrapeRunReport> ScrapeSourceAsync(Guid sourceId, CancellationToken cancellationToken = default);
     Task<AtsScrapeRunReport> ScrapeAllEnabledAsync(CancellationToken cancellationToken = default);
+}
+
+public interface IAtsListingEnrichmentService
+{
+    Task<AtsListingEnrichmentResult> EnrichAsync(
+        string? title,
+        string? companyName,
+        string? locationLabel,
+        string? description,
+        string? salaryText,
+        string? hoursText,
+        decimal? minHours,
+        decimal? maxHours,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IAtsVacancyModerationService
@@ -27,6 +42,8 @@ public interface IAtsVacancyModerationService
         string? salaryText,
         decimal? hourlyWage,
         string? hoursText,
+        string? startDateText = null,
+        string? requirementsText = null,
         CancellationToken cancellationToken = default);
 
     Task<Vacancy?> ApproveAsync(Guid id, CancellationToken cancellationToken = default);

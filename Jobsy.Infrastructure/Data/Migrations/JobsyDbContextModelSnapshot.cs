@@ -555,6 +555,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(600000)
                         .HasColumnType("character varying(600000)");
 
+                    b.Property<DateTime?>("AiEnrichedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("AiEnrichedFromOpenAi")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime?>("LastCheckedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -587,6 +593,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("RequirementsText")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
                     b.Property<DateTime?>("ReviewedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -606,6 +616,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(2048)
                         .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("StartDateText")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");

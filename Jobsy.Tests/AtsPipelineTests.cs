@@ -106,9 +106,84 @@ public class AtsPipelineTests
             "16-24 uur",
             16, 24,
             "[\"retail\"]",
-            "https://example.nl/vacature/1");
+            "https://example.nl/vacature/1",
+            "per direct",
+            "- MBO diploma\n- Klantvriendelijk");
         Assert.True(high > low);
         Assert.InRange(high, 80, 100);
+    }
+
+    [Fact]
+    public void Enrichment_heuristics_extract_salary_start_and_requirements()
+    {
+        const string text = """
+            Cookie banner accepteer alle cookies
+            Standplaats: Naaldwijk
+            Salaris: € 3.200 - € 4.500 bruto per maand
+            Uren: 32-36 uur
+            Startdatum: per direct
+
+            Wat wij van jou vragen
+            - Afgeronde MBO-opleiding administratie
+            - Ervaring met klantcontact
+            - Goede beheersing van de Nederlandse taal
+
+            Wat wij bieden
+            - Fijne collega's
+            """;
+        var result = AtsListingEnrichment.FromHeuristics(
+            "Administratief medewerker",
+            null,
+            text,
+            null,
+            null,
+            null,
+            null);
+        Assert.False(result.FromOpenAi);
+        Assert.Contains("Naaldwijk", result.LocationLabel ?? "", StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("3200", (result.SalaryText ?? "").Replace(".", "").Replace(",", ""), StringComparison.Ordinal);
+        Assert.Equal("per direct", result.StartDateText);
+        Assert.Contains("MBO", result.RequirementsText ?? "", StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Cookie", result.Description ?? "", StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ExtractUrlsFromVacancyJson_reads_den_haag_theme_links()
+    {
+        const string json = """
+            [
+              {"title":"Teammanager","link":"https://werkenvoor.denhaag.nl/vacature/teammanager-jeugd/","salary":"4.520 - 6.422"},
+              {"title":"Noise","link":"https://werkenvoor.denhaag.nl/vacatures/"},
+              {"title":"Evil","link":"https://evil.example/vacature/x"}
+            ]
+            """;
+        var urls = AtsScrapeService.ExtractUrlsFromVacancyJson(json, "werkenvoor.denhaag.nl");
+        Assert.Contains(urls, u => u.Contains("/vacature/teammanager-jeugd", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(urls, u => u.Contains("evil.example", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(urls, u => u.TrimEnd('/').EndsWith("/vacatures", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void TryBuildNextPageUrl_supports_westland_vacaturepagina()
+    {
+        Assert.True(AtsScrapeService.TryBuildNextPageUrl(
+            "https://www.gemeentewestland.nl/bestuur-en-organisatie/over-de-organisatie/werken-voor-westland/vacatures",
+            out var page2));
+        Assert.Contains("/vacaturepagina/2", page2, StringComparison.OrdinalIgnoreCase);
+        Assert.True(AtsScrapeService.TryBuildNextPageUrl(
+            "https://www.gemeentewestland.nl/bestuur-en-organisatie/over-de-organisatie/werken-voor-westland/vacatures/vacaturepagina/2",
+            out var page3));
+        Assert.Contains("/vacaturepagina/3", page3, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Domain_whitelist_allows_werkenvoor_denhaag()
+    {
+        Assert.True(AtsBlacklistFilter.IsDomainAllowed(
+            "https://werkenvoor.denhaag.nl/vacature/1", "werkenvoor.denhaag.nl"));
+        Assert.True(AtsBlacklistFilter.IsDomainAllowed(
+            "https://werkenvoor.denhaag.nl/vacature/1", "werkenbij.denhaag.nl"));
+        Assert.Equal("denhaag.nl", AtsBlacklistFilter.RegistrableBase("werkenvoor.denhaag.nl"));
     }
 
     [Fact]

@@ -335,6 +335,11 @@ public static class DependencyInjection
             AllowAutoRedirect = true,
             MaxAutomaticRedirections = 5
         });
+        services.AddHttpClient(AtsListingEnrichmentService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(60);
+        });
+        services.AddScoped<IAtsListingEnrichmentService, AtsListingEnrichmentService>();
         services.AddScoped<IAtsScrapeService, AtsScrapeService>();
         services.AddScoped<IAtsVacancyModerationService, AtsVacancyModerationService>();
         services.AddScoped<IAtsVacancyHealthService, AtsVacancyHealthService>();
