@@ -1927,6 +1927,31 @@ public sealed class JobsyApiClient : IAsyncDisposable
         await _http.PostAsync("api/notifications/read-all", null, ct);
     }
 
+    public async Task<string?> GetWebPushVapidPublicKeyAsync(CancellationToken ct = default)
+    {
+        var dto = await _http.GetFromJsonAsync<WebPushVapidPublicKeyWire>("api/push/vapid-public-key", ct);
+        return dto?.PublicKey;
+    }
+
+    public async Task<bool> SubscribeWebPushAsync(string endpoint, string p256dh, string auth, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/push/subscribe",
+            new { endpoint, keys = new { p256dh, auth } },
+            ct);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task UnsubscribeWebPushAsync(string? endpoint, CancellationToken ct = default)
+    {
+        await _http.PostAsJsonAsync("api/push/unsubscribe", new { endpoint }, ct);
+    }
+
+    private sealed class WebPushVapidPublicKeyWire
+    {
+        public string PublicKey { get; set; } = "";
+    }
+
     public async Task<CandidateActionResultItem?> SetUnavailableViaTokenAsync(
         string token,
         CancellationToken ct = default)

@@ -62,19 +62,29 @@ public class BandwidthGuardTests
     }
 
     [Fact]
-    public void Image_service_worker_caches_only_same_origin_images()
+    public void Pwa_service_worker_caches_shell_and_images_but_skips_api()
     {
-        var sw = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/image-cache-sw.js"));
-        Assert.Contains("pathname.startsWith(\"/images/\")", sw);
+        var sw = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/service-worker.js"));
+        Assert.Contains("pathname.indexOf(\"/images/\") === 0", sw);
         Assert.Contains("cache.put", sw);
-        Assert.DoesNotContain("/api/", sw);
+        Assert.Contains("addEventListener(\"push\"", sw);
+        Assert.Contains("url.pathname.indexOf(\"/api/\") === 0", sw);
         Assert.Contains("request.mode === \"navigate\"", sw);
+        Assert.Contains("showNotification", sw);
+
+        var published = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/service-worker.published.js"));
+        Assert.Contains("lobsy-shell-published", published);
+        Assert.Contains("showNotification", published);
 
         var core = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/app-core.js"));
         Assert.Contains("window.jobsyPageVisible", core);
-        Assert.Contains("image-cache-sw.js", core);
+        Assert.Contains("service-worker", core);
         Assert.Contains("serviceWorker.register", core);
         Assert.DoesNotContain("window.lobsySessionIdle =", core);
+
+        var manifest = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/manifest.webmanifest"));
+        Assert.Contains("\"display\": \"standalone\"", manifest);
+        Assert.Contains("icon-512.png", manifest);
     }
 
     [Fact]

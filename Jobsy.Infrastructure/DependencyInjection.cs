@@ -224,7 +224,11 @@ public static class DependencyInjection
         services.AddScoped<EmailServiceStub>();
         services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<IEmailCatalogService, EmailCatalogService>();
-        services.AddScoped<IPushNotificationService, PushNotificationServiceStub>();
+        services.AddSingleton<WebPushVapidKeyProvider>();
+        services.Configure<Jobsy.Core.Options.WebPushOptions>(configuration.GetSection(Jobsy.Core.Options.WebPushOptions.SectionName));
+        services.AddScoped<IWebPushSubscriptionService, WebPushSubscriptionService>();
+        services.AddScoped<IPushNotificationService, WebPushNotificationService>();
+        services.AddScoped<PushNotificationServiceStub>();
         services.AddScoped<IIntegrationHealthService, IntegrationHealthStub>();
         services.AddScoped<IIntegrationCredentialService, IntegrationCredentialService>();
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();

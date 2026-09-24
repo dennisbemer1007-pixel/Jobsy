@@ -634,11 +634,15 @@ window.jobsyPageVisible = function () {
     return typeof document === "undefined" || document.visibilityState !== "hidden";
 };
 
-(function registerImageCacheWorker() {
+(function registerLobsyServiceWorker() {
     if (!("serviceWorker" in navigator)) {
         return;
     }
     window.addEventListener("load", function () {
-        navigator.serviceWorker.register("/image-cache-sw.js?v=20260902-bw1").catch(function () { });
+        var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
+        var swUrl = isPublished
+            ? "/service-worker.published.js?v=20260924-pwa"
+            : "/service-worker.js?v=20260924-pwa";
+        navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();

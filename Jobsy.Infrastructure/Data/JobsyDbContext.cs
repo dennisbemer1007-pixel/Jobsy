@@ -46,6 +46,7 @@ public class JobsyDbContext : DbContext
     public DbSet<AgencyAnnualSubscription> AgencyAnnualSubscriptions => Set<AgencyAnnualSubscription>();
     public DbSet<ApplicationUploadedCv> ApplicationUploadedCvs => Set<ApplicationUploadedCv>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+    public DbSet<WebPushSubscription> WebPushSubscriptions => Set<WebPushSubscription>();
     public DbSet<CandidateActionToken> CandidateActionTokens => Set<CandidateActionToken>();
     public DbSet<MinimumWageRate> MinimumWageRates => Set<MinimumWageRate>();
     public DbSet<VacancyClick> VacancyClicks => Set<VacancyClick>();
@@ -715,6 +716,22 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.RelatedEntityType).HasMaxLength(64);
             entity.HasIndex(e => new { e.UserId, e.IsRead, e.CreatedAtUtc });
             entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WebPushSubscription>(entity =>
+        {
+            entity.ToTable("WebPushSubscriptions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Endpoint).HasMaxLength(2048).IsRequired();
+            entity.Property(e => e.P256dh).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Auth).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.UserAgent).HasMaxLength(512);
+            entity.HasIndex(e => e.Endpoint).IsUnique();
+            entity.HasIndex(e => e.UserId);
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

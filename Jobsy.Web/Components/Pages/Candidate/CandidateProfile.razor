@@ -5,6 +5,8 @@
 @using Jobsy.Web.Models
 @inject CandidateProfileService Profiles
 @inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IJSRuntime Js
 
 <PageTitle>@Culture["ProfileHub.Title"] · Lobsy</PageTitle>
 
@@ -186,9 +188,13 @@
                                 </li>
                                 <li>
                                     <label class="profile-hub-switch">
-                                        <input type="checkbox" checked="@_model.Settings.PushNotifications" @onchange="e => SetSetting(nameof(CandidateProfileSettings.PushNotifications), e)" />
+                                        <input type="checkbox" checked="@_model.Settings.PushNotifications" @onchange="OnPushSettingChanged" />
                                         <span>@Culture["ProfileHub.SettingPush"]</span>
                                     </label>
+                                    @if (!string.IsNullOrWhiteSpace(_pushHint))
+                                    {
+                                        <p class="muted profile-hub-push-hint">@_pushHint</p>
+                                    }
                                 </li>
                                 <li>
                                     <label class="profile-hub-switch">
@@ -226,6 +232,7 @@
     private bool _openTests = true;
     private bool _openSettings = true;
     private string? _settingsSaved;
+    private string? _pushHint;
 
     protected override void OnInitialized()
         => _model = Profiles.GetProfile();
@@ -235,6 +242,60 @@
         var on = e.Value is bool b ? b : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
         _model = Profiles.SetOpenForWork(on);
         _settingsSaved = null;
+    }
+
+    private async Task OnPushSettingChanged(ChangeEventArgs e)
+    {
+        var on = e.Value is bool b ? b : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        _pushHint = null;
+        if (_model is null)
+        {
+            return;
+        }
+
+        if (on)
+        {
+            try
+            {
+                var key = await Api.GetWebPushVapidPublicKeyAsync();
+                var result = await Js.InvokeAsync<PushCreateResult>("lobsyPush.createSubscription", key);
+                if (result is not { Ok: true }
+                    || string.IsNullOrWhiteSpace(result.Endpoint)
+                    || string.IsNullOrWhiteSpace(result.P256dh)
+                    || string.IsNullOrWhiteSpace(result.Auth)
+                    || !await Api.SubscribeWebPushAsync(result.Endpoint, result.P256dh, result.Auth))
+                {
+                    _pushHint = Culture["Push.Denied"];
+                    on = false;
+                }
+                else
+                {
+                    _pushHint = Culture["Push.Enabled"];
+                }
+            }
+            catch
+            {
+                _pushHint = Culture["Push.Unavailable"];
+                on = false;
+            }
+        }
+        else
+        {
+            try
+            {
+                var dropped = await Js.InvokeAsync<PushDropResult>("lobsyPush.dropSubscription");
+                await Api.UnsubscribeWebPushAsync(dropped?.Endpoint);
+            }
+            catch
+            {
+                // Best-effort unsubscribe.
+            }
+        }
+
+        var settings = _model.Settings;
+        settings.PushNotifications = on;
+        _model = Profiles.UpdateSettings(settings);
+        _settingsSaved = Culture["ProfileHub.SettingsSaved"];
     }
 
     private void SetSetting(string name, ChangeEventArgs e)
@@ -251,9 +312,6 @@
             case nameof(CandidateProfileSettings.EmailNotifications):
                 settings.EmailNotifications = on;
                 break;
-            case nameof(CandidateProfileSettings.PushNotifications):
-                settings.PushNotifications = on;
-                break;
             case nameof(CandidateProfileSettings.ShareTalentPool):
                 settings.ShareTalentPool = on;
                 break;
@@ -264,5 +322,20 @@
 
         _model = Profiles.UpdateSettings(settings);
         _settingsSaved = Culture["ProfileHub.SettingsSaved"];
+    }
+
+    private sealed class PushCreateResult
+    {
+        public bool Ok { get; set; }
+        public string? Reason { get; set; }
+        public string? Endpoint { get; set; }
+        public string? P256dh { get; set; }
+        public string? Auth { get; set; }
+    }
+
+    private sealed class PushDropResult
+    {
+        public bool Ok { get; set; }
+        public string? Endpoint { get; set; }
     }
 }

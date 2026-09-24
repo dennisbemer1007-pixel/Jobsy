@@ -318,7 +318,14 @@ internal static class UiStringsCompetencies
         ["ProfileHub.SettingPush"] = "Pushmeldingen op dit apparaat",
         ["ProfileHub.SettingTalent"] = "Zichtbaar in anonieme talentpool",
         ["ProfileHub.SettingPrivacy"] = "Contactgegevens pas delen na match / akkoord",
-        ["ProfileHub.SettingsSaved"] = "Voorkeuren bijgewerkt."
+        ["ProfileHub.SettingsSaved"] = "Voorkeuren bijgewerkt.",
+        ["Push.PromptTitle"] = "Blijf op de hoogte",
+        ["Push.PromptBody"] = "Wil je echte meldingen op je telefoon bij een nieuwe match, sollicitatiestatus of carrièrestap? Je kunt dit later uitzetten in Profiel.",
+        ["Push.Enable"] = "Meldingen aanzetten",
+        ["Push.Later"] = "Nu niet",
+        ["Push.Enabled"] = "Systeemmeldingen staan aan op dit apparaat.",
+        ["Push.Denied"] = "Meldingen zijn niet toegestaan. Pas dit aan in je browser- of telefooninstellingen.",
+        ["Push.Unavailable"] = "Pushmeldingen zijn nu niet beschikbaar. Probeer het later opnieuw."
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -613,6 +620,13 @@ internal static class UiStringsCompetencies
         ["ProfileHub.SettingPush"] = "Push notifications on this device",
         ["ProfileHub.SettingTalent"] = "Visible in the anonymous talent pool",
         ["ProfileHub.SettingPrivacy"] = "Share contact details only after a match / consent",
-        ["ProfileHub.SettingsSaved"] = "Preferences updated."
+        ["ProfileHub.SettingsSaved"] = "Preferences updated.",
+        ["Push.PromptTitle"] = "Stay in the loop",
+        ["Push.PromptBody"] = "Get real phone notifications for a new match, application update or career step? You can turn this off later in Profile.",
+        ["Push.Enable"] = "Enable notifications",
+        ["Push.Later"] = "Not now",
+        ["Push.Enabled"] = "System notifications are on for this device.",
+        ["Push.Denied"] = "Notifications are not allowed. Change this in your browser or phone settings.",
+        ["Push.Unavailable"] = "Push notifications are unavailable right now. Try again later."
     };
 }

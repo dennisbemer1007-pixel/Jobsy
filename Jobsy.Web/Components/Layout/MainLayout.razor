@@ -45,6 +45,7 @@
     <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     @if (RendererInfo.IsInteractive && !_isMatchPage)
     {
+        <PushPermissionBanner />
         <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HasBottomNav="_hasBottomNav" />
         <ConsentReacceptDialog />

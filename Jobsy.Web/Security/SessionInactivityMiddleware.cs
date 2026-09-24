@@ -74,9 +74,13 @@ public sealed class SessionInactivityMiddleware
         if (path.StartsWith("/css", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/js", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/images", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/icons", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/_framework", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/_blazor", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/favicon", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/service-worker", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "/manifest.webmanifest", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "/image-cache-sw.js", StringComparison.OrdinalIgnoreCase)
             || string.Equals(path, "/account/logout", StringComparison.OrdinalIgnoreCase)
             || string.Equals(path, "/account/session-security", StringComparison.OrdinalIgnoreCase)
             // Login must always be reachable even when a stale auth cookie is still present.

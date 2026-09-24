@@ -1,0 +1,136 @@
+@using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthState
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+@if (_visible)
+{
+    <div class="push-prompt" role="dialog" aria-labelledby="push-prompt-title" aria-describedby="push-prompt-body">
+        <div class="push-prompt__card">
+            <h2 id="push-prompt-title" class="push-prompt__title">@Culture["Push.PromptTitle"]</h2>
+            <p id="push-prompt-body" class="push-prompt__body">@Culture["Push.PromptBody"]</p>
+            <div class="push-prompt__actions">
+                <button type="button" class="login-submit" disabled="@_busy" @onclick="EnableAsync">@Culture["Push.Enable"]</button>
+                <button type="button" class="engagement-btn" disabled="@_busy" @onclick="DismissAsync">@Culture["Push.Later"]</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="state-message">@_error</p>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool _visible;
+    private bool _busy;
+    private string? _error;
+    private bool _checked;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_checked || !firstRender)
+        {
+            return;
+        }
+
+        _checked = true;
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            if (state.User.Identity?.IsAuthenticated != true
+                || !state.User.IsInRole("Candidate"))
+            {
+                return;
+            }
+
+            var show = await Js.InvokeAsync<bool>("lobsyPush.shouldShowPrompt");
+            if (show)
+            {
+                _visible = true;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch
+        {
+            // JS not ready yet.
+            _checked = false;
+        }
+    }
+
+    private async Task EnableAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var key = await Api.GetWebPushVapidPublicKeyAsync();
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                _error = Culture["Push.Unavailable"];
+                return;
+            }
+
+            var result = await Js.InvokeAsync<PushCreateResult>("lobsyPush.createSubscription", key);
+            if (result is not { Ok: true }
+                || string.IsNullOrWhiteSpace(result.Endpoint)
+                || string.IsNullOrWhiteSpace(result.P256dh)
+                || string.IsNullOrWhiteSpace(result.Auth))
+            {
+                _error = Culture["Push.Denied"];
+                if (string.Equals(result?.Reason, "denied", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(result?.Reason, "default", StringComparison.OrdinalIgnoreCase))
+                {
+                    _visible = false;
+                }
+
+                return;
+            }
+
+            var saved = await Api.SubscribeWebPushAsync(result.Endpoint, result.P256dh, result.Auth);
+            if (!saved)
+            {
+                _error = Culture["Push.Unavailable"];
+                return;
+            }
+
+            _visible = false;
+        }
+        catch
+        {
+            _error = Culture["Push.Unavailable"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DismissAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyPush.dismissPrompt");
+        }
+        catch
+        {
+            // ignore
+        }
+
+        _visible = false;
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private sealed class PushCreateResult
+    {
+        public bool Ok { get; set; }
+        public string? Reason { get; set; }
+        public string? Endpoint { get; set; }
+        public string? P256dh { get; set; }
+        public string? Auth { get; set; }
+    }
+}

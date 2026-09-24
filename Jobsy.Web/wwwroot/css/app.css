@@ -19886,3 +19886,187 @@ html.cookie-consent-known .cookie-consent {
         width: 100%;
     }
 }
+
+/* —— PWA native-feel: calm motion, touch feedback, scroll containment —— */
+html {
+    overscroll-behavior-y: none;
+}
+
+body {
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.app-shell {
+    overscroll-behavior: none;
+}
+
+.app-main {
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.panel-page,
+.profile-hub,
+.career-dash,
+.vacancy-list,
+.career-timeline {
+    overscroll-behavior-y: contain;
+}
+
+@supports (view-transition-name: none) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation-duration: 180ms;
+        animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+}
+
+.panel-page,
+.profile-hub,
+.career-dash {
+    animation: lobsy-page-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes lobsy-page-in {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 8px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .panel-page,
+    .profile-hub,
+    .career-dash {
+        animation: none;
+    }
+}
+
+.bottom-nav__item,
+.login-submit,
+.engagement-btn,
+.provider-btn,
+.admin-sublink,
+.profile-hub-card__toggle,
+.career-timeline__toggle {
+    transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 120ms ease,
+        background-color 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease;
+    will-change: transform;
+}
+
+.bottom-nav__item:active,
+.login-submit:active,
+.engagement-btn:active,
+.provider-btn:active,
+.admin-sublink:active,
+.profile-hub-card__toggle:active,
+.career-timeline__toggle:active {
+    transform: scale(0.97);
+    opacity: 0.88;
+}
+
+.bottom-nav__item.is-active {
+    transition: color 160ms ease, transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.bottom-nav__icon {
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.bottom-nav__item.is-active .bottom-nav__icon {
+    transform: translate3d(0, -1px, 0) scale(1.06);
+}
+
+.bottom-nav__item::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 0.2rem;
+    width: 1.1rem;
+    height: 0.18rem;
+    border-radius: 999px;
+    background: var(--brand);
+    opacity: 0;
+    transform: translate3d(-50%, 4px, 0) scaleX(0.4);
+    transition: opacity 160ms ease, transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+}
+
+.bottom-nav__item {
+    position: relative;
+}
+
+.bottom-nav__item.is-active::after {
+    opacity: 1;
+    transform: translate3d(-50%, 0, 0) scaleX(1);
+}
+
+.push-prompt {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
+    z-index: 60;
+    padding: 0.75rem 0.85rem;
+    pointer-events: none;
+}
+
+.push-prompt__card {
+    pointer-events: auto;
+    max-width: 28rem;
+    margin: 0 auto;
+    padding: 1rem 1.1rem 1.1rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+    animation: lobsy-page-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.push-prompt__title {
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
+    color: var(--brand);
+}
+
+.push-prompt__body {
+    margin: 0 0 0.9rem;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.push-prompt__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.push-prompt__actions .login-submit,
+.push-prompt__actions .engagement-btn {
+    min-height: 2.6rem;
+}
+
+.profile-hub-push-hint {
+    margin: 0.15rem 0 0 1.8rem;
+    font-size: 0.85rem;
+}
+
+@media (display-mode: standalone) {
+    .app-header {
+        padding-top: max(0.35rem, env(safe-area-inset-top));
+    }
+
+    .bottom-nav {
+        padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+    }
+}
