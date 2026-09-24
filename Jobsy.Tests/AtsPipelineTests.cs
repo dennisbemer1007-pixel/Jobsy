@@ -136,6 +136,7 @@ public class AtsPipelineTests
         const string html = """
             <html><body>
             <a href="/open/role-verkoper">Vacature: Verkoper Naaldwijk</a>
+            <a href="/open/role-kassa">Openstaande functie Kassamedewerker</a>
             <a href="/contact">Contact</a>
             <a href="/nieuws/opening">Nieuws</a>
             </body></html>
@@ -146,7 +147,35 @@ public class AtsPipelineTests
             "tuincentrum.example.nl");
         Assert.True(raw >= 3);
         Assert.Contains(urls, u => u.Contains("/open/role-verkoper", StringComparison.OrdinalIgnoreCase));
-        Assert.Equal("keyword-fallback", strategy);
+        Assert.Contains(urls, u => u.Contains("/open/role-kassa", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(strategy, "keyword-fallback", StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ExtractDetailUrls_merges_structural_with_keyword_fallback()
+    {
+        // Structural finds one job-item; keyword finds extra text-only vacancy links.
+        // Old bug: early return on structural left the scrape stuck at 1–2 URLs.
+        const string html = """
+            <html><body>
+            <nav><a href="/careers">Careers</a></nav>
+            <div class="job-item"><a href="/careers/post-1">Magazijnmedewerker</a></div>
+            <a href="/open/role-2">Vacature: Verkoper</a>
+            <a href="/open/role-3">Functie: Teamleider</a>
+            <a href="/contact">Contact</a>
+            </body></html>
+            """;
+        var (urls, _, strategy) = AtsScrapeService.ExtractDetailUrlsWithStats(
+            html,
+            "https://mkb.example.nl/careers",
+            "mkb.example.nl");
+        Assert.Contains(urls, u => u.Contains("/careers/post-1", StringComparison.Ordinal));
+        Assert.Contains(urls, u => u.Contains("/open/role-2", StringComparison.Ordinal));
+        Assert.Contains(urls, u => u.Contains("/open/role-3", StringComparison.Ordinal));
+        Assert.DoesNotContain(urls, u => u.EndsWith("/careers", StringComparison.OrdinalIgnoreCase)
+                                         || u.EndsWith("/careers/", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains("structural", strategy, StringComparison.Ordinal);
+        Assert.Contains("keyword", strategy, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -162,9 +191,26 @@ public class AtsPipelineTests
             html,
             "https://mkb.example.nl/careers",
             "mkb.example.nl");
-        Assert.Equal("structural", strategy);
+        Assert.Contains("structural", strategy, StringComparison.Ordinal);
         Assert.Contains(urls, u => u.Contains("/careers/post-1", StringComparison.Ordinal));
         Assert.DoesNotContain(urls, u => u.Contains("/random/page", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ExtractPagination_tolerates_volgende_with_extra_label_text()
+    {
+        const string html = """
+            <html><body>
+            <a href="/vacatures?page=2" aria-label="Volgende pagina">Volgende »</a>
+            <a href="/vacatures?p=3">Meer vacatures</a>
+            </body></html>
+            """;
+        var pages = AtsScrapeService.ExtractPaginationAndHubUrls(
+            html,
+            "https://tuin.example.nl/vacatures",
+            "tuin.example.nl");
+        Assert.Contains(pages, u => u.Contains("page=2", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(pages, u => u.Contains("p=3", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

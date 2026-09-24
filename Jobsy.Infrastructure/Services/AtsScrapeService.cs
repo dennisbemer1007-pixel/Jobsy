@@ -30,7 +30,17 @@ public sealed class AtsScrapeService : IAtsScrapeService
     public const int DetailFetchBatchSize = 5;
 
     private static readonly Regex VacancyPathHint = new(
-        @"vacancy|vacancies|vacature|vacatures|job|jobs|werken[\-_]?bij|werkenbij|carri[eèé]re|career|careers|sollicit|openstaande[\-_]?funct|functie|recruiting|opportunities|stellenangebote",
+        @"vacancy|vacancies|vacature|vacatures|job|jobs|werken[\-_]?bij|werkenbij|carri[eèé]re|career|careers|sollicit|openstaande|functie|functies|recruiting|opportunities|stellenangebote|position|opening",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>Positive vacancy cues in visible link text / aria / title.</summary>
+    private static readonly Regex VacancyTextHint = new(
+        @"(^|\b)(vacature|vacatures|vacancy|vacancies|job|jobs|functie|functies|openstaande|werken[\s\-]?bij|solliciteer)\b",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>Negative copy that mentions vacatures without being a detail link.</summary>
+    private static readonly Regex VacancyTextNoise = new(
+        @"niet\s+een\s+vacature|geen\s+vacatures?|alle\s+vacatures|bekijk\s+(alle\s+)?vacatures|naar\s+(de\s+)?vacatures|meer\s+over\s+werken",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex PaginationPathHint = new(
@@ -38,7 +48,7 @@ public sealed class AtsScrapeService : IAtsScrapeService
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex PaginationTextHint = new(
-        @"^\s*(volgende|next|meer|meer vacatures|volgende pagina|older|→|>|»|›)\s*$",
+        @"\b(volgende(\s+pagina)?|next(\s+page)?|meer(\s+vacatures)?|meer\s+resultaten|older|weiter|suivant)\b|[→»›>]{1,3}",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex ListHubPathHint = new(
@@ -51,28 +61,45 @@ public sealed class AtsScrapeService : IAtsScrapeService
         @"\.(pdf|jpg|jpeg|png|gif|svg|webp|css|js|zip|docx?|xlsx?)(\?|$)",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    /// <summary>CSS-ish structural hooks used first; empty → keyword fallback.</summary>
+    /// <summary>
+    /// Structural CSS hooks used first. Prefer card/list containers; avoid bare hub href*=career
+    /// which only matched nav links and caused early return with 1–2 URLs.
+    /// </summary>
     private static readonly string[] StructuralVacancySelectors =
     [
         ".job-item a[href]",
         ".job-listing a[href]",
         ".job-card a[href]",
+        ".job-result a[href]",
         ".vacancy a[href]",
         ".vacature a[href]",
         ".vacatures a[href]",
+        ".vacatures-list a[href]",
+        ".jobs-list a[href]",
+        ".careers-list a[href]",
         "[class*='job-item'] a[href]",
         "[class*='job-listing'] a[href]",
+        "[class*='job-card'] a[href]",
         "[class*='vacancy'] a[href]",
         "[class*='vacature'] a[href]",
         "[data-job] a[href]",
-        "a[href*='vacature']",
-        "a[href*='vacancy']",
+        "[data-vacancy] a[href]",
+        "article a[href*='vacature']",
+        "article a[href*='vacancy']",
+        "article a[href*='/job']",
+        "li a[href*='vacature']",
+        "li a[href*='vacancy']",
+        "li a[href*='/jobs/']",
+        "li a[href*='/job/']",
+        "a[href*='/vacature/']",
+        "a[href*='/vacatures/']",
+        "a[href*='/vacancy/']",
+        "a[href*='/vacancies/']",
         "a[href*='/jobs/']",
         "a[href*='/job/']",
-        "a[href*='werken-bij']",
-        "a[href*='werkenbij']",
-        "a[href*='carriere']",
-        "a[href*='career']"
+        "a[href*='/functie/']",
+        "a[href*='/functies/']",
+        "a[href*='openstaande']"
     ];
 
     private static readonly Regex PostalCodeHint = new(
@@ -253,6 +280,7 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 ExtractDetailUrlsWithStats(listHtml, listUrl, source.Domain);
             totalRawAnchors += rawAnchors;
             strategies.Add(strategy);
+            var beforeUnique = vacancyUrls.Count;
             foreach (var u in pageVacancyUrls)
             {
                 if (vacancyUrls.Count >= MaxVacancyUrlsPerDomain)
@@ -263,9 +291,13 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 vacancyUrls.Add(u);
             }
 
+            var addedUnique = vacancyUrls.Count - beforeUnique;
             var nextPages = ExtractPaginationAndHubUrls(listHtml, listUrl, source.Domain).ToList();
-            // Continue ?page=N only when this page actually yielded vacancy links.
-            if (pageVacancyUrls.Count > 0
+            // Always try ?page=N / p=N when the list URL looks like a career hub or already paginated,
+            // even if this HTML page yielded few vacancy links (common on JS-light index pages).
+            if ((pageVacancyUrls.Count > 0
+                 || VacancyPathHint.IsMatch(listUrl)
+                 || PaginationPathHint.IsMatch(listUrl))
                 && TryBuildNextPageUrl(listUrl, out var syntheticNext)
                 && AtsBlacklistFilter.IsDomainAllowed(syntheticNext, source.Domain))
             {
@@ -289,16 +321,21 @@ public sealed class AtsScrapeService : IAtsScrapeService
             }
 
             Line(report, srcReport,
-                $"HARVEST page: strategy={strategy} rawAnchors={rawAnchors} " +
-                $"vacancyLinks=+{pageVacancyUrls.Count} (unique total={vacancyUrls.Count}) " +
-                $"pagination/hub enqueue={enqueued} queue={listQueue.Count}");
+                $"Domein {source.Domain}: {rawAnchors} links gevonden, {pageVacancyUrls.Count} vacature-kandidaten " +
+                $"(+{addedUnique} uniek → totaal {vacancyUrls.Count}), strategy={strategy}, " +
+                $"pagination/hub enqueue={enqueued}, queue={listQueue.Count}");
+            _logger.LogInformation(
+                "ATS harvest domain={Domain} url={Url} rawAnchors={Raw} pageVacancyLinks={PageLinks} " +
+                "addedUnique={Added} uniqueTotal={Total} strategy={Strategy} enqueued={Enqueued}",
+                source.Domain, listUrl, rawAnchors, pageVacancyUrls.Count, addedUnique,
+                vacancyUrls.Count, strategy, enqueued);
         }
 
         srcReport.RawAnchorCount = totalRawAnchors;
         srcReport.VacancyLinkCount = vacancyUrls.Count;
         Line(report, srcReport,
-            $"CRAWL summary domain={source.Domain}: pagesScanned={srcReport.PagesScanned} " +
-            $"paginationFollowed={srcReport.PaginationFollowed} uniqueVacancyUrls={vacancyUrls.Count} " +
+            $"Domein {source.Domain}: crawl klaar — pages={srcReport.PagesScanned}, " +
+            $"paginationFollowed={srcReport.PaginationFollowed}, unieke vacature-URL's={vacancyUrls.Count}, " +
             $"strategies={string.Join('|', strategies)}");
         _logger.LogInformation(
             "ATS crawl summary domain={Domain} pages={Pages} pagination={Pagination} uniqueUrls={Urls}",
@@ -330,6 +367,12 @@ public sealed class AtsScrapeService : IAtsScrapeService
 
         srcReport.AtsListingsSaved = srcReport.Inserted;
         Line(report, srcReport,
+            $"Domein {source.Domain}: {srcReport.VacancyLinkCount} unieke vacature-URL's, " +
+            $"{srcReport.DetailPagesFetched} details geparsed, " +
+            $"{srcReport.Inserted} nieuw / {srcReport.Updated} bijgewerkt / " +
+            $"{srcReport.SkippedParse + srcReport.SkippedInvalid} overgeslagen " +
+            $"(status={srcReport.Status})");
+        Line(report, srcReport,
             $"END {source.Name} status={srcReport.Status}: " +
             $"pagesScanned={srcReport.PagesScanned} uniqueVacancyUrls={srcReport.VacancyLinkCount} " +
             $"atsSaved={srcReport.AtsListingsSaved} refreshed={srcReport.Updated} upserted={srcReport.Upserted} " +
@@ -337,11 +380,11 @@ public sealed class AtsScrapeService : IAtsScrapeService
             $"parseSkip={srcReport.SkippedParse} invalid={srcReport.SkippedInvalid} httpErr={srcReport.HttpErrors}");
         _logger.LogInformation(
             "ATS scrape END name={Name} domain={Domain} status={Status} pages={Pages} uniqueUrls={Urls} " +
-            "atsSaved={Inserted} refreshed={Updated} upserted={Upserted} blacklist={Blacklist} " +
-            "parseSkip={Parse} invalid={Invalid} httpErr={Http}",
+            "detailsParsed={Details} atsSaved={Inserted} refreshed={Updated} upserted={Upserted} " +
+            "blacklist={Blacklist} parseSkip={Parse} invalid={Invalid} httpErr={Http}",
             source.Name, source.Domain, srcReport.Status, srcReport.PagesScanned, srcReport.VacancyLinkCount,
-            srcReport.Inserted, srcReport.Updated, srcReport.Upserted, srcReport.SkippedBlacklist,
-            srcReport.SkippedParse, srcReport.SkippedInvalid, srcReport.HttpErrors);
+            srcReport.DetailPagesFetched, srcReport.Inserted, srcReport.Updated, srcReport.Upserted,
+            srcReport.SkippedBlacklist, srcReport.SkippedParse, srcReport.SkippedInvalid, srcReport.HttpErrors);
 
         report.FinishedAtUtc = DateTime.UtcNow;
         return report;
@@ -426,7 +469,22 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 }
 
                 Line(report, srcReport, $"DETAIL parse {item.detailUrl}");
-                var outcome = await UpsertFromHtmlAsync(source, item.detailUrl, item.Html, cancellationToken);
+                UpsertOutcome outcome;
+                try
+                {
+                    outcome = await UpsertFromHtmlAsync(source, item.detailUrl, item.Html, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    // One broken detail page must not abort the rest of the domain crawl.
+                    srcReport.SkippedParse++;
+                    report.SkippedParse++;
+                    Line(report, srcReport,
+                        $"SKIP parse exception {item.detailUrl}: {ex.GetType().Name} — {ex.Message}");
+                    _logger.LogWarning(ex, "ATS detail parse failed url={Url}", item.detailUrl);
+                    continue;
+                }
+
                 ApplyOutcome(report, srcReport, outcome, item.detailUrl);
             }
 
@@ -766,32 +824,51 @@ public sealed class AtsScrapeService : IAtsScrapeService
         }
 
         var found = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var anchor in document.QuerySelectorAll(
-                     "a[href], a[rel='next'], nav.pagination a[href], .pagination a[href], .pager a[href]"))
+        IHtmlCollection<IElement> anchors;
+        try
         {
-            if (!TryResolveVacancyHref(anchor, baseUri, listUrl, allowedDomain, out var normalized, out var absolute))
+            anchors = document.QuerySelectorAll(
+                "a[href], a[rel='next'], nav.pagination a[href], .pagination a[href], .pager a[href], " +
+                "button[data-href], [class*='pagination'] a[href], [class*='pager'] a[href]");
+        }
+        catch
+        {
+            anchors = document.QuerySelectorAll("a[href]");
+        }
+
+        foreach (var anchor in anchors)
+        {
+            try
             {
-                continue;
+                if (!TryResolveVacancyHref(anchor, baseUri, listUrl, allowedDomain, out var normalized, out var absolute))
+                {
+                    continue;
+                }
+
+                var text = (anchor.TextContent ?? string.Empty).Trim();
+                var aria = anchor.GetAttribute("aria-label") ?? string.Empty;
+                var rel = anchor.GetAttribute("rel") ?? string.Empty;
+                var isNextRel = rel.Contains("next", StringComparison.OrdinalIgnoreCase);
+                var isPagination = isNextRel
+                                   || PaginationPathHint.IsMatch(absolute.AbsoluteUri)
+                                   || PaginationTextHint.IsMatch(text)
+                                   || PaginationTextHint.IsMatch(aria);
+                var isHub = IsListHubPath(absolute.AbsolutePath);
+                // Sibling career subdomain landing pages (werkenbij.*, careers.*).
+                var host = absolute.Host.ToLowerInvariant();
+                var isCareerSubdomain = host.StartsWith("werkenbij.", StringComparison.Ordinal)
+                                        || host.StartsWith("werken-bij.", StringComparison.Ordinal)
+                                        || host.StartsWith("careers.", StringComparison.Ordinal)
+                                        || host.StartsWith("jobs.", StringComparison.Ordinal);
+
+                if (isPagination || isHub || (isCareerSubdomain && VacancyPathHint.IsMatch(absolute.AbsoluteUri)))
+                {
+                    found.Add(normalized);
+                }
             }
-
-            var text = (anchor.TextContent ?? string.Empty).Trim();
-            var rel = anchor.GetAttribute("rel") ?? string.Empty;
-            var isNextRel = rel.Contains("next", StringComparison.OrdinalIgnoreCase);
-            var isPagination = isNextRel
-                               || PaginationPathHint.IsMatch(absolute.AbsoluteUri)
-                               || PaginationTextHint.IsMatch(text);
-            var isHub = ListHubPathHint.IsMatch(absolute.AbsolutePath.TrimEnd('/') + "/")
-                        || ListHubPathHint.IsMatch(absolute.AbsolutePath);
-            // Sibling career subdomain landing pages (werkenbij.*, careers.*).
-            var host = absolute.Host.ToLowerInvariant();
-            var isCareerSubdomain = host.StartsWith("werkenbij.", StringComparison.Ordinal)
-                                    || host.StartsWith("werken-bij.", StringComparison.Ordinal)
-                                    || host.StartsWith("careers.", StringComparison.Ordinal)
-                                    || host.StartsWith("jobs.", StringComparison.Ordinal);
-
-            if (isPagination || isHub || (isCareerSubdomain && VacancyPathHint.IsMatch(absolute.AbsoluteUri)))
+            catch
             {
-                found.Add(normalized);
+                // Keep scanning pagination anchors.
             }
         }
 
@@ -834,8 +911,9 @@ public sealed class AtsScrapeService : IAtsScrapeService
             return false;
         }
 
-        // Bare list URL → try ?page=2 once when the caller saw vacancy links.
-        if (VacancyPathHint.IsMatch(current.AbsolutePath))
+        // Bare list URL → try ?page=2 when the path looks like a career/jobs hub.
+        if (VacancyPathHint.IsMatch(current.AbsolutePath)
+            || VacancyPathHint.IsMatch(current.AbsoluteUri))
         {
             var builder = new UriBuilder(current) { Query = "page=2" };
             nextUrl = NormalizeUrlKey(builder.Uri.GetLeftPart(UriPartial.Query));
@@ -867,50 +945,96 @@ public sealed class AtsScrapeService : IAtsScrapeService
             return ([], 0, "none");
         }
 
-        var allAnchors = document.QuerySelectorAll("a[href]");
-        var raw = allAnchors.Length;
+        IHtmlCollection<IElement> allAnchors;
+        try
+        {
+            allAnchors = document.QuerySelectorAll("a[href]");
+        }
+        catch
+        {
+            return ([], 0, "selector-error");
+        }
 
-        // Tier 1: structural CSS hooks (.job-item, vacancy cards, href*=vacature, …).
-        var structural = CollectUrls(
-            document.QuerySelectorAll(string.Join(", ", StructuralVacancySelectors)),
+        var raw = allAnchors.Length;
+        var merged = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var tiers = new List<string>(3);
+
+        // Tier 1: structural CSS hooks (job cards / vacancy lists). Never stop here alone —
+        // hub-ish selectors used to return 1–2 nav links and skip the rest of the page.
+        var structural = SafeQueryAll(document, StructuralVacancySelectors);
+        var structuralUrls = CollectUrls(
+            structural,
             baseUri,
             listUrl,
             allowedDomain,
-            requireVacancyHint: false);
-
-        if (structural.Count > 0)
+            requireVacancyHint: false,
+            excludeHubPaths: true);
+        if (structuralUrls.Count > 0)
         {
-            return (structural.OrderBy(u => u, StringComparer.OrdinalIgnoreCase).ToList(), raw, "structural");
+            foreach (var u in structuralUrls)
+            {
+                merged.Add(u);
+            }
+
+            tiers.Add("structural");
         }
 
-        // Tier 2: all same-domain anchors whose path/text/url match vacancy keywords.
-        var keyword = CollectUrls(allAnchors, baseUri, listUrl, allowedDomain, requireVacancyHint: true);
+        // Tier 2: ALL same-domain <a> tags whose URL or link text matches vacancy keywords
+        // (vacature, werken-bij, job, functie, openstaande, …).
+        var keyword = CollectUrls(
+            allAnchors,
+            baseUri,
+            listUrl,
+            allowedDomain,
+            requireVacancyHint: true,
+            excludeHubPaths: true);
         if (keyword.Count > 0)
         {
-            return (keyword.OrderBy(u => u, StringComparer.OrdinalIgnoreCase).ToList(), raw, "keyword-fallback");
+            var before = merged.Count;
+            foreach (var u in keyword)
+            {
+                merged.Add(u);
+            }
+
+            if (merged.Count > before || structuralUrls.Count == 0)
+            {
+                tiers.Add("keyword-fallback");
+            }
         }
 
-        // Tier 3: broad same-domain harvest — any non-noise link under a career-ish parent path,
-        // or leaf paths that look like content pages (depth >= 2) when the list URL itself
-        // already sits on a jobs/vacatures section.
+        if (merged.Count > 0)
+        {
+            var strategy = tiers.Count == 0 ? "merged" : string.Join("+", tiers);
+            return (merged.OrderBy(u => u, StringComparer.OrdinalIgnoreCase).ToList(), raw, strategy);
+        }
+
+        // Tier 3: broad same-domain harvest under a career-ish list URL.
         var listLooksCareer = VacancyPathHint.IsMatch(listUrl);
         var broad = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var anchor in allAnchors)
         {
-            if (!TryResolveVacancyHref(anchor, baseUri, listUrl, allowedDomain, out var normalized, out var absolute))
+            try
             {
-                continue;
-            }
+                if (!TryResolveVacancyHref(anchor, baseUri, listUrl, allowedDomain, out var normalized, out var absolute))
+                {
+                    continue;
+                }
 
-            if (NonVacancyPathNoise.IsMatch(absolute.AbsolutePath))
-            {
-                continue;
-            }
+                if (IsListHubPath(absolute.AbsolutePath)
+                    || NonVacancyPathNoise.IsMatch(absolute.AbsolutePath))
+                {
+                    continue;
+                }
 
-            var pathDepth = absolute.AbsolutePath.Count(c => c == '/');
-            if (listLooksCareer || pathDepth >= 2)
+                var pathDepth = absolute.AbsolutePath.Count(c => c == '/');
+                if (listLooksCareer || pathDepth >= 2)
+                {
+                    broad.Add(normalized);
+                }
+            }
+            catch
             {
-                broad.Add(normalized);
+                // Skip broken anchors; keep scanning the page.
             }
         }
 
@@ -922,43 +1046,92 @@ public sealed class AtsScrapeService : IAtsScrapeService
         return ([], raw, "empty");
     }
 
+    private static List<IElement> SafeQueryAll(IDocument document, string[] selectors)
+    {
+        // Query selectors one-by-one so a single bad CSS fragment cannot abort the harvest.
+        var combined = new List<IElement>();
+        var seen = new HashSet<IElement>();
+        foreach (var selector in selectors)
+        {
+            try
+            {
+                foreach (var el in document.QuerySelectorAll(selector))
+                {
+                    if (seen.Add(el))
+                    {
+                        combined.Add(el);
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore invalid/unsupported selectors for this document.
+            }
+        }
+
+        return combined;
+    }
+
     private static HashSet<string> CollectUrls(
-        IHtmlCollection<IElement> anchors,
+        IEnumerable<IElement> anchors,
         Uri baseUri,
         string listUrl,
         string allowedDomain,
-        bool requireVacancyHint)
+        bool requireVacancyHint,
+        bool excludeHubPaths)
     {
         var found = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var anchor in anchors)
         {
-            if (!TryResolveVacancyHref(anchor, baseUri, listUrl, allowedDomain, out var normalized, out var absolute))
+            try
             {
-                continue;
-            }
-
-            if (requireVacancyHint)
-            {
-                var text = anchor.TextContent ?? string.Empty;
-                var looksLikeVacancy = VacancyPathHint.IsMatch(absolute.AbsolutePath)
-                                       || VacancyPathHint.IsMatch(text)
-                                       || VacancyPathHint.IsMatch(absolute.AbsoluteUri);
-                if (!looksLikeVacancy)
+                if (!TryResolveVacancyHref(anchor, baseUri, listUrl, allowedDomain, out var normalized, out var absolute))
                 {
                     continue;
                 }
-            }
 
-            if (NonVacancyPathNoise.IsMatch(absolute.AbsolutePath)
-                && !VacancyPathHint.IsMatch(absolute.AbsolutePath))
+                if (excludeHubPaths && IsListHubPath(absolute.AbsolutePath))
+                {
+                    continue;
+                }
+
+                if (requireVacancyHint)
+                {
+                    var text = anchor.TextContent ?? string.Empty;
+                    var title = anchor.GetAttribute("title") ?? string.Empty;
+                    var aria = anchor.GetAttribute("aria-label") ?? string.Empty;
+                    var blob = $"{text} {title} {aria}";
+                    var pathOrUrlHit = VacancyPathHint.IsMatch(absolute.AbsolutePath)
+                                       || VacancyPathHint.IsMatch(absolute.AbsoluteUri);
+                    var textHit = VacancyTextHint.IsMatch(blob) && !VacancyTextNoise.IsMatch(blob);
+                    if (!pathOrUrlHit && !textHit)
+                    {
+                        continue;
+                    }
+                }
+
+                if (NonVacancyPathNoise.IsMatch(absolute.AbsolutePath)
+                    && !VacancyPathHint.IsMatch(absolute.AbsolutePath))
+                {
+                    continue;
+                }
+
+                found.Add(normalized);
+            }
+            catch
             {
-                continue;
+                // Missing attributes / odd DOM nodes must not stop the page scan.
             }
-
-            found.Add(normalized);
         }
 
         return found;
+    }
+
+    private static bool IsListHubPath(string absolutePath)
+    {
+        var trimmed = absolutePath.TrimEnd('/');
+        return ListHubPathHint.IsMatch(trimmed + "/")
+               || ListHubPathHint.IsMatch(trimmed);
     }
 
     private static bool TryResolveVacancyHref(
