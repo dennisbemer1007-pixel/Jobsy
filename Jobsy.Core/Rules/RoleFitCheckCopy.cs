@@ -7,7 +7,7 @@ public static class RoleFitCheckCopy
         "Ontgrendel de Functie-Fit Checker door eerst je korte competentie- en beroepentest in te vullen (ca. 3 minuten).";
 
     public const string DeepUpsell =
-        "Wil je een nóg preciezere analyse op maat met een haarscherp groeistappenplan? Ontgrendel dan de uitgebreide 150-vragen diepte-analyse (€ 2,99) voor een waterdichte vergelijking.";
+        "Wil je een nóg preciezere analyse op maat met een haarscherp groeistappenplan? Ontgrendel dan de uitgebreide diepte-analyse (€ 2,99) voor een waterdichte vergelijking.";
 
     public const string TitleEmpty = "Vul een functietitel in, bijvoorbeeld verpleegkundige of magazijnmedewerker.";
 }

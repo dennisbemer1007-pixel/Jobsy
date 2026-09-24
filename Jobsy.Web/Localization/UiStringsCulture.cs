@@ -34,7 +34,7 @@ internal static class UiStringsCulture
         ["Kompas.DiscLead"] = "Hoe jij graag werkt: zelfstandig of met kaders, informeel of formeler, samen of alleen — plus hoe jij in een team past.",
         ["CultureScan.Title"] = "Cultuur & persoonlijkheid",
         ["CultureScan.Lead"] = "Achttien korte stellingen (ca. 3 minuten) over hoe jij graag werkt en hoe jij in een team past. Geen moeilijke termen — wel een helder beeld voor matching.",
-        ["CultureScan.ScienceNote"] = "De vragen gaan over werksfeer en hoe jij je gedraagt: zelfstandigheid, tempo, samenwerken en hoe jij met druk omgaat. Geen diagnose, wel een startpunt voor betere matches.",
+        ["CultureScan.ScienceNote"] = "Wetenschappelijk model: cultuurdimensies plus IPIP-stijl persoonlijkheidsfacetten (o.a. Openheid, Consciëntieusheid). Geen diagnose — wel een duidelijk startpunt voor cultuurfit in matching.",
         ["CultureScan.PrivacyNote"] = "Je antwoorden blijven in jouw account. Werkgevers zien geen ruwe antwoorden. Export en wissen via Mijn gegevens. Meer in de",
         ["CultureScan.Empty"] = "Je hebt de cultuurscan nog niet ingevuld. In ongeveer drie minuten zie je hoe jij graag werkt.",
         ["CultureScan.Start"] = "Start de cultuurscan",

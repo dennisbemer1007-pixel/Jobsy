@@ -56,7 +56,7 @@ public class CareerCompassGenerationServiceTests
         Assert.Contains("chat/completions", handler.LastRequestUri, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("@", handler.LastBody, StringComparison.Ordinal);
         Assert.DoesNotContain("Ada", handler.LastBody, StringComparison.Ordinal);
-        Assert.Contains("150 unieke vragen", handler.LastBody, StringComparison.Ordinal);
+        Assert.Contains("200 unieke vragen", handler.LastBody, StringComparison.Ordinal);
     }
 
     [Fact]

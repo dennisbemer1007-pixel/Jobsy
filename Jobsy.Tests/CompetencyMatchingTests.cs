@@ -99,8 +99,9 @@ public class CompetencyMatchingTests
     public void Deep_analysis_catalogs_are_separated_150()
     {
         Assert.Equal(150, DeepAnalysisCatalog.QuestionCount);
+        Assert.Equal(200, DeepAnalysisCatalog.CareerQuestionCount);
         Assert.Equal(150, DeepAnalysisCatalog.Questions.Count);
-        Assert.Equal(150, DeepAnalysisCatalog.CareerQuestions.Count);
+        Assert.Equal(200, DeepAnalysisCatalog.CareerQuestions.Count);
         Assert.Contains(DeepAnalysisCatalog.Questions, q => q.Family == "BigFive");
         Assert.DoesNotContain(DeepAnalysisCatalog.Questions, q => q.Family == "RIASEC");
         Assert.Contains(DeepAnalysisCatalog.CareerQuestions, q => q.Family == "RIASEC");
@@ -108,7 +109,7 @@ public class CompetencyMatchingTests
         Assert.All(DeepAnalysisCatalog.Questions, q => Assert.False(q.PromptNl.Contains("variant", StringComparison.OrdinalIgnoreCase)));
         Assert.All(DeepAnalysisCatalog.CareerQuestions, q => Assert.False(q.PromptNl.Contains("variant", StringComparison.OrdinalIgnoreCase)));
         Assert.Equal(150, DeepAnalysisCatalog.Questions.Select(q => q.PromptNl).Distinct(StringComparer.OrdinalIgnoreCase).Count());
-        Assert.Equal(150, DeepAnalysisCatalog.CareerQuestions.Select(q => q.PromptNl).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(200, DeepAnalysisCatalog.CareerQuestions.Select(q => q.PromptNl).Distinct(StringComparer.OrdinalIgnoreCase).Count());
         Assert.Equal(5, DeepAnalysisCatalog.BigFiveDomains.Length);
         foreach (var domain in DeepAnalysisCatalog.BigFiveDomains)
         {
@@ -117,7 +118,8 @@ public class CompetencyMatchingTests
 
         foreach (var code in CareerTestCatalog.RiasecCodes)
         {
-            Assert.Equal(25, DeepAnalysisCatalog.CareerQuestions.Count(q => q.Domain == code));
+            var count = DeepAnalysisCatalog.CareerQuestions.Count(q => q.Domain == code);
+            Assert.InRange(count, DeepAnalysisCatalog.CareerItemsPerDomainMin, DeepAnalysisCatalog.CareerItemsPerDomainMax);
         }
 
         Assert.True(DeepAnalysisCatalog.Questions.Count(q => q.Reverse) >= 40);

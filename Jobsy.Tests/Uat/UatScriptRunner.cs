@@ -455,12 +455,15 @@ public static class UatScriptRunner
             Assert.Contains("CareerOccupations", match, StringComparison.Ordinal);
         }
 
-        if (Contains(blob, "Diepte-analyse", "150 vragen"))
+        if (Contains(blob, "Diepte-analyse", "150 vragen", "200 vragen"))
         {
             Assert.Equal(150, DeepAnalysisCatalog.QuestionCount);
+            Assert.Equal(200, DeepAnalysisCatalog.CareerQuestionCount);
             Assert.Equal(2.99m, FlexCommercialSettings.DefaultDeepAnalysisPriceEuro);
             Assert.Equal(150, DeepAnalysisCatalog.Questions.Select(q => q.PromptNl).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+            Assert.Equal(200, DeepAnalysisCatalog.CareerQuestions.Select(q => q.PromptNl).Distinct(StringComparer.OrdinalIgnoreCase).Count());
             Assert.DoesNotContain(DeepAnalysisCatalog.Questions, q => q.PromptNl.Contains("variant", StringComparison.OrdinalIgnoreCase));
+            Assert.DoesNotContain(DeepAnalysisCatalog.CareerQuestions, q => q.PromptNl.Contains("variant", StringComparison.OrdinalIgnoreCase));
             Assert.Equal(30, DeepAnalysisCatalog.CompetenceItemsPerDomain);
         }
 

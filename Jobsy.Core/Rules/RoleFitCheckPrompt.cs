@@ -43,7 +43,7 @@ public static class RoleFitCheckPrompt
         sb.AppendLine("Functietitel om te toetsen (geen persoonsgegevens):");
         sb.AppendLine(jobTitle);
         sb.AppendLine(fromDeepAnalysis
-            ? "Bron: uitgebreide 150-vragen analyse + quick-scans. Wees preciezer in het groeistappenplan."
+            ? "Bron: uitgebreide diepte-analyse + quick-scans. Wees preciezer in het groeistappenplan."
             : "Bron: gratis quick-scans. Geef een betrouwbare indicatie, geen overclaim.");
         sb.AppendLine("Werkstijl 0-100:");
         sb.Append("- Samenwerken: ").Append(competencies.Samenwerken ?? 0).AppendLine("%");

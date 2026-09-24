@@ -12,15 +12,15 @@ public class RoleFitCheckTests
             "Ontgrendel de Functie-Fit Checker door eerst je korte competentie- en beroepentest in te vullen (ca. 3 minuten).",
             RoleFitCheckCopy.Locked);
         Assert.Contains("€ 2,99", RoleFitCheckCopy.DeepUpsell, StringComparison.Ordinal);
-        Assert.Contains("150-vragen", RoleFitCheckCopy.DeepUpsell, StringComparison.Ordinal);
+        Assert.Contains("diepte-analyse", RoleFitCheckCopy.DeepUpsell, StringComparison.Ordinal);
         Assert.Equal(RoleFitCheckCopy.Locked, UiStringsNl("Fit.Locked"));
         Assert.Equal(RoleFitCheckCopy.DeepUpsell, UiStringsNl("Fit.DeepUpsell"));
         Assert.Equal("Wie ben ik?", UiStringsNl("Kompas.TabWhoAmI"));
-        Assert.Equal("Mijn profiel", UiStringsNl("Kompas.TabProfile"));
-        Assert.Equal("Mijn competenties", UiStringsNl("Kompas.TabCompetencies"));
+        Assert.Equal("Profiel", UiStringsNl("Kompas.TabProfile"));
+        Assert.Equal("Competenties", UiStringsNl("Kompas.TabCompetencies"));
         Assert.Equal("Cultuurscan", UiStringsNl("Kompas.TabDisc"));
-        Assert.Equal("Mijn beste match", UiStringsNl("Kompas.TabCareers"));
-        Assert.Equal("Functiefit checker", UiStringsNl("Kompas.TabFit"));
+        Assert.Equal("Beroepentest", UiStringsNl("Kompas.TabCareers"));
+        Assert.Equal("Functiefit", UiStringsNl("Kompas.TabFit"));
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class RoleFitCheckTests
         AssertNoJargon(snapshot);
         Assert.Contains(snapshot.ActionSteps, s => s.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(snapshot.ActionSteps, s => s == TrainingCopy.GapAdvice);
-        Assert.Contains(snapshot.ActionSteps, s => s.Contains("150-vragen", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(snapshot.ActionSteps, s => s.Contains("diepte-analyse", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class RoleFitCheckTests
             new RiasecScores(20, 30, 25, 95, 40, 35),
             fromDeepAnalysis: true);
         Assert.False(snapshot.ShowDeepUpsell);
-        Assert.DoesNotContain(snapshot.ActionSteps, s => s.Contains("150-vragen", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(snapshot.ActionSteps, s => s.Contains("diepte-analyse", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(snapshot.ActionSteps, s => s.Contains("loopbaanrapport", StringComparison.OrdinalIgnoreCase));
     }
 

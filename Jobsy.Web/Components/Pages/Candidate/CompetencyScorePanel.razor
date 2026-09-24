@@ -5,20 +5,9 @@
 @if (Scores is { IsComplete: true } complete)
 {
     <div class="competency-score-panel">
-        <svg class="competency-radar" viewBox="0 0 220 220" role="img" aria-label="@Culture["Competency.RadarLabel"]">
-            <g transform="translate(110,110)">
-                @for (var ring = 1; ring <= 4; ring++)
-                {
-                    <polygon class="competency-radar__grid" points="@RadarRing(ring * 25)" />
-                }
-                @for (var i = 0; i < 5; i++)
-                {
-                    var end = RadarPoint(100, i);
-                    <line class="competency-radar__axis" x1="0" y1="0" x2="@end.X.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)" y2="@end.Y.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)" />
-                }
-                <polygon class="competency-radar__fill" points="@RadarShape(complete)" />
-            </g>
-        </svg>
+        <ScoreRadarChart AriaLabel="@Culture["Competency.RadarLabel"]"
+                         Labels="@_labels"
+                         Values="@ValuesOf(complete)" />
         <ul class="competency-skill-list" aria-label="@Culture["Kompas.TabCompetencies"]">
             @foreach (var category in CompetencyTestCatalog.QuickScanCategories)
             {
@@ -46,6 +35,24 @@
 @code {
     [Parameter] public CompetencyScoreSet? Scores { get; set; }
 
+    private string[] _labels = [];
+
+    protected override void OnParametersSet()
+    {
+        _labels = CompetencyTestCatalog.QuickScanCategories
+            .Select(c => Culture[$"Competency.Cat.{c}"])
+            .ToArray();
+    }
+
+    private static int[] ValuesOf(CompetencyScoreSet scores) =>
+    [
+        scores.Samenwerken ?? 0,
+        scores.Resultaatgerichtheid ?? 0,
+        scores.Stressbestendigheid ?? 0,
+        scores.Innovatie ?? 0,
+        scores.Extraversie ?? 0
+    ];
+
     private static int? Value(CompetencyScoreSet scores, string category) => category switch
     {
         CompetencyTestCatalog.Samenwerken => scores.Samenwerken,
@@ -55,32 +62,4 @@
         CompetencyTestCatalog.Extraversie => scores.Extraversie,
         _ => null
     };
-
-    private static string RadarRing(double percent)
-        => string.Join(" ", Enumerable.Range(0, AxisCount).Select(i => FormatPoint(RadarPoint(percent, i))));
-
-    private const int AxisCount = 5;
-
-    private static string RadarShape(CompetencyScoreSet scores)
-    {
-        var values = new[]
-        {
-            scores.Samenwerken ?? 0,
-            scores.Resultaatgerichtheid ?? 0,
-            scores.Stressbestendigheid ?? 0,
-            scores.Innovatie ?? 0,
-            scores.Extraversie ?? 0
-        };
-        return string.Join(" ", values.Select((v, i) => FormatPoint(RadarPoint(v, i))));
-    }
-
-    private static (double X, double Y) RadarPoint(double percent, int index)
-    {
-        var radius = 88 * Math.Clamp(percent, 0, 100) / 100.0;
-        var angle = -Math.PI / 2 + index * (2 * Math.PI / AxisCount);
-        return (radius * Math.Cos(angle), radius * Math.Sin(angle));
-    }
-
-    private static string FormatPoint((double X, double Y) p)
-        => $"{p.X.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)},{p.Y.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)}";
 }

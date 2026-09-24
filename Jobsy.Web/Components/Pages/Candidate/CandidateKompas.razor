@@ -288,19 +288,19 @@
             <CareerCompassPanel Compass="_careerCompass" Competencies="_competencyScores" CareerDirection="_riasecScores" />
             @if (_careerDeep is { IsCompleted: true })
             {
-                <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
+                <p class="kompas-status kompas-status--ok">@Culture["Kompas.CareerDeepDone"]</p>
                 <button class="login-submit" type="button" disabled="@_busy" @onclick='() => DownloadPdfAsync("career")'>
                     @Culture["Deep.DownloadPdf"]
                 </button>
             }
             else if (_careerDeep is { IsUnlocked: true })
             {
-                <p class="kompas-status">@Culture["Kompas.DeepReady"]</p>
+                <p class="kompas-status">@Culture["Kompas.CareerDeepReady"]</p>
                 <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
             }
             else
             {
-                <p class="kompas-status">@Culture["Kompas.DeepLocked"]</p>
+                <p class="kompas-status">@Culture["Kompas.CareerDeepLocked"]</p>
                 <p class="login-lead">@_careerUpsell</p>
                 <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
             }

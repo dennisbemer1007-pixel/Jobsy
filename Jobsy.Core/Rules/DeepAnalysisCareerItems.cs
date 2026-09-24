@@ -1,7 +1,7 @@
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// 150 unique RIASEC Likert items: 25 per Holland type, reverse-keyed items mixed in.
+/// 200 unique RIASEC Likert items: ~33–34 per Holland type, reverse-keyed items mixed in.
 /// Occupational interest wording for Den Haag / Westland matching.
 /// </summary>
 internal static class DeepAnalysisCareerItems
@@ -168,6 +168,68 @@ internal static class DeepAnalysisCareerItems
         (CareerTestCatalog.Conventional, false, "Ik plan terug van deadline naar nu, in plaats van ad hoc te beginnen."),
         (CareerTestCatalog.Conventional, false, "Ik werk liever met vaste kwaliteitsnormen dan met ‘kijk maar’."),
         (CareerTestCatalog.Conventional, true, "Ik vermijd taken waarin ik nauwkeurig moet registreren."),
-        (CareerTestCatalog.Conventional, false, "Ik krijg rust van een opgeruimd proces dat elke dienst hetzelfde loopt.")
+        (CareerTestCatalog.Conventional, false, "Ik krijg rust van een opgeruimd proces dat elke dienst hetzelfde loopt."),
+
+        // Realistic — extended (+8)
+        (CareerTestCatalog.Realistic, false, "Ik werk graag met teelt, logistiek of productie waar ik iets tastbaars maak."),
+        (CareerTestCatalog.Realistic, true, "Ik vermijd taken waarbij ik zware of natte materialen moet hanteren."),
+        (CareerTestCatalog.Realistic, false, "Ik houd van een duidelijke taak die ik fysiek kan afronden."),
+        (CareerTestCatalog.Realistic, false, "Ik leer snel een nieuwe machine of gereedschap te bedienen."),
+        (CareerTestCatalog.Realistic, true, "Ik prefereer overlegkamers boven werkplaats, kas of keuken."),
+        (CareerTestCatalog.Realistic, false, "Ik check of paden, rekken en materialen veilig staan voordat ik doorwerk."),
+        (CareerTestCatalog.Realistic, false, "Ik werk prettig in ploegen of seizoenspieken als het ritme helder is."),
+        (CareerTestCatalog.Realistic, true, "Ik raak gefrustreerd van herhalend productiewerk, hoe nuttig ook."),
+
+        // Investigative — extended (+9)
+        (CareerTestCatalog.Investigative, false, "Ik zoek systematisch naar de oorzaak van een kwaliteitsafwijking."),
+        (CareerTestCatalog.Investigative, true, "Ik vind meten en controleren overbodig als het ‘er goed uitziet’."),
+        (CareerTestCatalog.Investigative, false, "Ik houd van werk waarin ik processen mag verbeteren met feiten."),
+        (CareerTestCatalog.Investigative, false, "Ik lees keuringsrapporten of teeltlogs om beslissingen te sturen."),
+        (CareerTestCatalog.Investigative, true, "Ik word ongeduldig van analyses die niet meteen tot actie leiden."),
+        (CareerTestCatalog.Investigative, false, "Ik test een kleine wijziging voordat we die breed uitrollen."),
+        (CareerTestCatalog.Investigative, false, "Ik wil snappen hoe wetgeving of voedselveiligheid in de praktijk werkt."),
+        (CareerTestCatalog.Investigative, true, "Ik laat onderzoek liever helemaal aan specialisten zonder mee te denken."),
+        (CareerTestCatalog.Investigative, false, "Ik leg verbanden tussen cijfers, seizoen en wat er op de vloer gebeurt."),
+
+        // Artistic — extended (+8)
+        (CareerTestCatalog.Artistic, false, "Ik geef een product of dienst graag een herkenbare, eigen uitstraling."),
+        (CareerTestCatalog.Artistic, true, "Ik vind styling en presentatie bijzaak zolang het functioneert."),
+        (CareerTestCatalog.Artistic, false, "Ik bedenk frisse manieren om seizoensproducten onder de aandacht te brengen."),
+        (CareerTestCatalog.Artistic, false, "Ik let op sfeer: licht, geur, indeling en hoe gasten dat beleven."),
+        (CareerTestCatalog.Artistic, true, "Ik vermijd taken waarin ik iets visueel of creatief moet maken."),
+        (CareerTestCatalog.Artistic, false, "Ik combineer smaken, kleuren of materialen tot iets dat opvalt."),
+        (CareerTestCatalog.Artistic, false, "Ik vertaal een vaag idee van een klant naar een concreet resultaat."),
+        (CareerTestCatalog.Artistic, true, "Creatieve vrijheid maakt me onzeker; ik wil precies voorgeschreven stappen."),
+
+        // Social — extended (+8)
+        (CareerTestCatalog.Social, false, "Ik help nieuwe collega’s op weg tot ze zich zeker voelen."),
+        (CareerTestCatalog.Social, true, "Ik vermijd werk waarin ik gasten of cliënten moet opvangen."),
+        (CareerTestCatalog.Social, false, "Ik merk spanning in een team en help die constructief op te lossen."),
+        (CareerTestCatalog.Social, false, "Ik vind het belangrijk dat iedereen zich gezien en welkom voelt."),
+        (CareerTestCatalog.Social, true, "Ik houd afstand: andermans welzijn is niet mijn verantwoordelijkheid op het werk."),
+        (CareerTestCatalog.Social, false, "Ik leg procedures geduldig uit aan mensen die ze voor het eerst doen."),
+        (CareerTestCatalog.Social, false, "Ik krijg energie van een tevreden gast, leerling of collega."),
+        (CareerTestCatalog.Social, true, "Ik kies werk waarin ik zo min mogelijk met mensen hoef te schakelen."),
+
+        // Enterprising — extended (+9)
+        (CareerTestCatalog.Enterprising, false, "Ik zie kansen om iets extra’s te verkopen of te organiseren."),
+        (CareerTestCatalog.Enterprising, true, "Ik vermijd zichtbare rollen naar klanten, leveranciers of gasten."),
+        (CareerTestCatalog.Enterprising, false, "Ik neem het voortouw als er snel een beslissing nodig is."),
+        (CareerTestCatalog.Enterprising, false, "Ik bouw graag relaties die later tot samenwerking of omzet leiden."),
+        (CareerTestCatalog.Enterprising, true, "Targets en bezettingscijfers demotiveren me."),
+        (CareerTestCatalog.Enterprising, false, "Ik kan een kort voorstel pitchen zodat anderen meegaan."),
+        (CareerTestCatalog.Enterprising, false, "Ik organiseer mensen en middelen om een doel binnen de dienst te halen."),
+        (CareerTestCatalog.Enterprising, true, "Ik laat initiatief liever aan anderen en volg afwachtend."),
+        (CareerTestCatalog.Enterprising, false, "Ik zet een tegenslag om in een volgende poging of betere aanpak."),
+
+        // Conventional — extended (+8)
+        (CareerTestCatalog.Conventional, false, "Ik houd roosters, orders en voorraden strak bij zodat niemand zoekt."),
+        (CareerTestCatalog.Conventional, true, "Ik vind vaste formats en checklists vooral belemmerend."),
+        (CareerTestCatalog.Conventional, false, "Ik controleer labels, codes en aantallen tot ze kloppen."),
+        (CareerTestCatalog.Conventional, false, "Ik richt mappen, bakken of systemen zo in dat iedereen het snapt."),
+        (CareerTestCatalog.Conventional, true, "Ik sla registratie over als ik denk dat ik het toch wel onthoud."),
+        (CareerTestCatalog.Conventional, false, "Ik werk prettig met vaste kwaliteitsnormen en afvinklijsten."),
+        (CareerTestCatalog.Conventional, false, "Ik sluit de dienst af met een kloppende overdracht of telling."),
+        (CareerTestCatalog.Conventional, true, "Ik raak onrustig van voorspelbare routines, ook als ze efficiënt zijn."),
     ];
 }

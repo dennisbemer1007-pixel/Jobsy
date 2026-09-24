@@ -14,7 +14,7 @@ public class DeepAnalysisUxTests
     public void Every_deep_question_has_a_concrete_practice_example(AssessmentKind kind)
     {
         var questions = DeepAnalysisCatalog.QuestionsFor(kind);
-        Assert.Equal(150, questions.Count);
+        Assert.Equal(DeepAnalysisCatalog.QuestionCountFor(kind), questions.Count);
         Assert.All(questions, q =>
         {
             var example = DeepAnalysisQuestionHelp.ExampleFor(q);
@@ -39,16 +39,19 @@ public class DeepAnalysisUxTests
     public void Boosters_fire_every_25_questions_with_friendly_copy()
     {
         Assert.Equal(25, DeepAnalysisBoosters.Interval);
-        Assert.Equal([25, 50, 75, 100, 125], DeepAnalysisBoosters.Milestones);
+        Assert.Equal([25, 50, 75, 100, 125, 150, 175], DeepAnalysisBoosters.Milestones);
         Assert.Null(DeepAnalysisBoosters.TryMessage(24));
         Assert.Null(DeepAnalysisBoosters.TryMessage(26));
         foreach (var milestone in DeepAnalysisBoosters.Milestones)
         {
-            var message = DeepAnalysisBoosters.TryMessage(milestone);
+            var message = DeepAnalysisBoosters.TryMessage(milestone, DeepAnalysisCatalog.CareerQuestionCount);
             Assert.False(string.IsNullOrWhiteSpace(message));
             Assert.False(CareerCompassBuilder.ContainsForbiddenJargon(message!));
             Assert.False(string.IsNullOrWhiteSpace(DeepAnalysisBoosters.TitleFor(milestone)));
         }
+        Assert.Null(DeepAnalysisBoosters.TryMessage(175, DeepAnalysisCatalog.QuestionCount));
+        Assert.False(string.IsNullOrWhiteSpace(
+            DeepAnalysisBoosters.TryMessage(125, DeepAnalysisCatalog.QuestionCount)));
     }
 
     [Fact]

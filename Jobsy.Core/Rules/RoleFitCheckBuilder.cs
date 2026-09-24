@@ -362,7 +362,7 @@ public static class RoleFitCheckBuilder
             : "Bewaar twee vacatures die voelen als ‘dit is het’ en solliciteer op de beste fit.");
         if (!fromDeepAnalysis)
         {
-            steps.Add("Wil je een scherper groeistappenplan? Vul de uitgebreide 150-vragen analyse in.");
+            steps.Add("Wil je een scherper groeistappenplan? Vul de uitgebreide diepte-analyse in.");
         }
         else
         {

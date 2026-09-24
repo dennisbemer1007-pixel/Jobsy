@@ -1,0 +1,98 @@
+@* Shared labeled radar chart for competency / culture scores. *@
+@using Microsoft.AspNetCore.Components
+
+<div class="score-radar" role="img" aria-label="@AriaLabel">
+    <svg class="score-radar__svg" viewBox="0 0 320 320" focusable="false">
+        <g transform="translate(160,160)">
+            @for (var ring = 1; ring <= 4; ring++)
+            {
+                var pct = ring * 25;
+                <polygon class="score-radar__grid" points="@RingPoints(pct)" />
+                @((MarkupString)ScoreRadarSvg.Text("score-radar__ring-label", 0, -Radius * pct / 100.0 - 4, "middle", $"{pct}%"))
+            }
+            @for (var i = 0; i < AxisCount; i++)
+            {
+                var end = Point(100, i);
+                var label = Point(LabelRadiusPercent, i);
+                var valuePt = Point(Values[i], i);
+                <line class="score-radar__axis"
+                      x1="0" y1="0"
+                      x2="@ScoreRadarSvg.Fmt(end.X)" y2="@ScoreRadarSvg.Fmt(end.Y)" />
+                <circle class="score-radar__dot"
+                        cx="@ScoreRadarSvg.Fmt(valuePt.X)"
+                        cy="@ScoreRadarSvg.Fmt(valuePt.Y)"
+                        r="3.5">
+                    <title>@Labels[i]: @Values[i]%</title>
+                </circle>
+                @((MarkupString)ScoreRadarSvg.Text(
+                    "score-radar__label",
+                    label.X,
+                    label.Y,
+                    LabelAnchor(i),
+                    ShortLabel(Labels[i]),
+                    $"{Labels[i]}: {Values[i]}%"))
+                @((MarkupString)ScoreRadarSvg.Text(
+                    "score-radar__value",
+                    label.X,
+                    label.Y + 12,
+                    LabelAnchor(i),
+                    $"{Values[i]}%"))
+            }
+            <polygon class="score-radar__fill" points="@ShapePoints()">
+                <title>@AriaLabel</title>
+            </polygon>
+        </g>
+    </svg>
+    <ul class="score-radar__legend" aria-hidden="true">
+        @for (var i = 0; i < AxisCount; i++)
+        {
+            <li>
+                <span class="score-radar__legend-swatch"></span>
+                <span class="score-radar__legend-name">@Labels[i]</span>
+                <span class="score-radar__legend-value">@Values[i]%</span>
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    private const double Radius = 96;
+    private const double LabelRadiusPercent = 128;
+
+    [Parameter, EditorRequired] public IReadOnlyList<string> Labels { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<int> Values { get; set; } = [];
+    [Parameter] public string AriaLabel { get; set; } = "Scores";
+
+    private int AxisCount => Math.Min(Labels.Count, Values.Count);
+
+    private string RingPoints(double percent)
+        => string.Join(" ", Enumerable.Range(0, AxisCount).Select(i => FormatPoint(Point(percent, i))));
+
+    private string ShapePoints()
+        => string.Join(" ", Enumerable.Range(0, AxisCount).Select(i => FormatPoint(Point(Values[i], i))));
+
+    private (double X, double Y) Point(double percent, int index)
+    {
+        var radius = Radius * Math.Clamp(percent, 0, 140) / 100.0;
+        var angle = -Math.PI / 2 + index * (2 * Math.PI / AxisCount);
+        return (radius * Math.Cos(angle), radius * Math.Sin(angle));
+    }
+
+    private string LabelAnchor(int index)
+    {
+        var angle = -Math.PI / 2 + index * (2 * Math.PI / AxisCount);
+        var cos = Math.Cos(angle);
+        if (cos > 0.35) return "start";
+        if (cos < -0.35) return "end";
+        return "middle";
+    }
+
+    private static string ShortLabel(string label)
+    {
+        if (string.IsNullOrWhiteSpace(label)) return label;
+        return label.Length <= 16 ? label : label[..14].TrimEnd() + "…";
+    }
+
+    private static string FormatPoint((double X, double Y) p)
+        => $"{ScoreRadarSvg.Fmt(p.X)},{ScoreRadarSvg.Fmt(p.Y)}";
+}

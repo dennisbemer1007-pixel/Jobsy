@@ -72,7 +72,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             .ToLocalTime()
             .ToString("d MMMM yyyy", culture);
 
-        var answers = DeepAnalysisCatalog.ParseAnswersJson(deep.AnswersJson);
+        var answers = DeepAnalysisCatalog.ParseAnswersJson(deep.AnswersJson, kind);
         var domainScores = DeepAnalysisCatalog.ScoreDomains(answers, kind);
 
         byte[] bytes;
@@ -138,7 +138,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 {
                     col.Spacing(10);
                     col.Item().Text(
-                            "Dit rapport is persoonlijk en positief: bovenaan staan de beroepen die het best bij jouw 150 antwoorden passen. Daarna volgen sterke alternatieven en ruimer werk om verder te kijken. Geen ingewikkelde testtaal.")
+                            "Dit rapport is persoonlijk en positief: bovenaan staan de beroepen die het best bij jouw 200 antwoorden passen. Daarna volgen sterke alternatieven en ruimer werk om verder te kijken. Geen ingewikkelde testtaal.")
                         .FontColor(Muted).Italic();
 
                     if (compass.Strengths.Count > 0)
