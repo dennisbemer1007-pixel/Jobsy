@@ -20,7 +20,9 @@ public record CandidatePreferencesDto(
     bool? FlexibleTimes = null,
     IReadOnlyList<CandidateCertificateDto>? Certificates = null,
     /// <summary>Legacy flag; candidate home is never shown on Lobsy-CV regardless.</summary>
-    bool? ShowAddressOnCv = null);
+    bool? ShowAddressOnCv = null,
+    /// <summary>Structured opleidingen (period, level, type, institute, diploma).</summary>
+    IReadOnlyList<CandidateEducationEntryDto>? EducationEntries = null);
 
 public record CandidateEmployerHistoryDto(
     string EmployerName,
@@ -34,6 +36,15 @@ public record CandidateEmployerHistoryDto(
 public record CandidateCertificateDto(
     string Name,
     int? Year = null);
+
+/// <summary>One opleiding row on the candidate profile.</summary>
+public record CandidateEducationEntryDto(
+    string? StartMonth = null,
+    string? EndMonth = null,
+    string? Level = null,
+    string? EducationType = null,
+    string? Institute = null,
+    bool? DiplomaObtained = null);
 
 public record CandidateVacancyEngagementDto(
     Guid Id,

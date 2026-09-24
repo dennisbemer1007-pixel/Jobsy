@@ -1,4 +1,5 @@
 using Jobsy.Api.Controllers;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -29,6 +30,36 @@ public class Sprint3CandidateTests
         var prefs = MeController.ParsePreferences(null);
         Assert.Empty(prefs.Roles);
         Assert.Null(prefs.MaxTravelMinutes);
+    }
+
+    [Fact]
+    public void SerializePreferences_preserves_education_entries()
+    {
+        var json = MeController.SerializePreferences(
+            ["horeca"],
+            30,
+            "Fiets",
+            "nl",
+            educationEntries:
+            [
+                new CandidateEducationEntryDto(
+                    StartMonth: "2018-09",
+                    EndMonth: "2022-06",
+                    Level: "MBO",
+                    EducationType: "MBO",
+                    Institute: "ROC Mondriaan",
+                    DiplomaObtained: true)
+            ]);
+        var prefs = MeController.ParsePreferences(json);
+        Assert.NotNull(prefs.EducationEntries);
+        Assert.Single(prefs.EducationEntries!);
+        var entry = prefs.EducationEntries![0];
+        Assert.Equal("2018-09", entry.StartMonth);
+        Assert.Equal("2022-06", entry.EndMonth);
+        Assert.Equal("MBO", entry.Level);
+        Assert.Equal("MBO", entry.EducationType);
+        Assert.Equal("ROC Mondriaan", entry.Institute);
+        Assert.True(entry.DiplomaObtained);
     }
 
     [Fact]

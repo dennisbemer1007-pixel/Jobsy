@@ -470,6 +470,21 @@ public class CompetencyMatchingTests
         Assert.Contains("MatchPercent = match.TotalPercent", src, StringComparison.Ordinal);
         Assert.Contains("minMatchPercent", src, StringComparison.Ordinal);
         Assert.Contains("LegalAgeKnown && !match.Core.LegalEligible", src, StringComparison.Ordinal);
+        Assert.Contains("ScoreFromHome", src, StringComparison.Ordinal);
+        Assert.Contains("not from the optional map/browser origin", src, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Top_matches_and_detail_share_authoritative_home_travel_scoring()
+    {
+        var root = RepoRoot.Find();
+        var top = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/CandidateCompetencyService.cs"));
+        var detail = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/VacanciesController.cs"));
+        var service = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/ProfileVacancyMatchService.cs"));
+        Assert.Contains("ScoreFromHome", top, StringComparison.Ordinal);
+        Assert.Contains("ScoreFromHome", detail, StringComparison.Ordinal);
+        Assert.Contains("TravelMinutesFromHome", service, StringComparison.Ordinal);
+        Assert.Contains("Authoritative match travel", service, StringComparison.Ordinal);
     }
 
     [Fact]

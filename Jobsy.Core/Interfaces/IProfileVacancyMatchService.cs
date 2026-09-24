@@ -16,4 +16,11 @@ public interface IProfileVacancyMatchService
     IReadOnlyDictionary<Guid, ProfileVacancyMatch> Score(
         ProfileVacancyMatchContext context,
         IEnumerable<(VacancyDiscoveryRecord Record, int? TravelMinutes)> vacancies);
+
+    /// <summary>
+    /// Authoritative MatchPercent: score with travel from the candidate's saved home location.
+    /// </summary>
+    IReadOnlyDictionary<Guid, ProfileVacancyMatch> ScoreFromHome(
+        ProfileVacancyMatchContext context,
+        IEnumerable<VacancyDiscoveryRecord> vacancies);
 }

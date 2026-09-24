@@ -26,12 +26,36 @@ public sealed record WhoAmIProfileHighlights(
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(4)
             .ToList();
-        var educations = (prefs.Educations ?? [])
+        var educations = (prefs.EducationEntries ?? [])
+            .Select(e =>
+            {
+                var parts = new List<string>();
+                if (!string.IsNullOrWhiteSpace(e.EducationType))
+                {
+                    parts.Add(e.EducationType.Trim());
+                }
+
+                if (!string.IsNullOrWhiteSpace(e.Level))
+                {
+                    parts.Add(e.Level.Trim());
+                }
+
+                return parts.Count == 0 ? null : string.Join(" · ", parts);
+            })
             .Where(e => !string.IsNullOrWhiteSpace(e))
-            .Select(e => e.Trim())
+            .Cast<string>()
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(4)
             .ToList();
+        if (educations.Count == 0)
+        {
+            educations = (prefs.Educations ?? [])
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .Select(e => e.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(4)
+                .ToList();
+        }
         var certificates = (prefs.Certificates ?? [])
             .Where(c => !string.IsNullOrWhiteSpace(c.Name))
             .Select(c => c.Name.Trim())

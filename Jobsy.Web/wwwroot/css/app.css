@@ -12348,6 +12348,29 @@ button.linkish:hover {
     width: 100%;
 }
 
+.profile-employer-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+}
+
+.profile-employer-card__actions .engagement-btn {
+    font-size: 0.86rem;
+    padding: 0.45rem 0.85rem;
+}
+
+.profile-education-card select {
+    width: 100%;
+    min-height: 2.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.55rem;
+    padding: 0.45rem 0.65rem;
+    background: #fff;
+    color: var(--text);
+    font: inherit;
+}
+
 .profile-employer-card__top .icon-btn {
     align-self: end;
     margin-bottom: 0.05rem;
