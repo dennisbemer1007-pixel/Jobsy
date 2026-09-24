@@ -66,6 +66,7 @@ builder.Services.AddScoped<Jobsy.Web.Navigation.AssistantChatHost>();
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateMatchProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Services.MatchVacancyService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CareerPathService>();
+builder.Services.AddScoped<Jobsy.Web.Services.CandidateProfileService>();
 builder.Services.AddHttpClient("JobsySeo", client =>
 {
     var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(

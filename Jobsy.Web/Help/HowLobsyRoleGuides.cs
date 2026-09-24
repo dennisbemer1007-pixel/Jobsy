@@ -38,7 +38,7 @@ public static class HowLobsyRoleGuides
         "HowLobsy.Lead",
         [
             new("HowLobsy.Step1Title", "HowLobsy.Step1Body", [new("/", "Nav.JobMap")]),
-            new("HowLobsy.Step2Title", "HowLobsy.Step2Body", [new("/candidate/profile", "Nav.Profile")]),
+            new("HowLobsy.Step2Title", "HowLobsy.Step2Body", [new("/profiel", "Nav.Profile")]),
             new("HowLobsy.Step3Title", "HowLobsy.Step3Body",
             [
                 new("/candidate/liked", "Nav.Saved"),
@@ -49,7 +49,7 @@ public static class HowLobsyRoleGuides
             new("HowLobsy.Step6Title", "HowLobsy.Step6Body", [])
         ],
         new("/", "HowLobsy.ToMap"),
-        new("/candidate/profile", "HowLobsy.ToProfile"));
+        new("/profiel", "HowLobsy.ToProfile"));
 
     public static readonly Guide Branch = new(
         "HowLobsy.Branch.Title",

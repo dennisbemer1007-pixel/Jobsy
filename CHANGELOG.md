@@ -14,6 +14,8 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Kandidaat-profielhub (`/profiel`):** rustige, responsive hub met persoonlijke baseline, DNA/testscores en account/privacy (mock via `CandidateProfileService`). Desktop twee kolommen; mobiel inklapbare kaarten met bottom-nav clearance.
+- **Bottom-nav kandidaat (5):** Zoeken · Bewaard · Sollicitaties · Carrière · Profiel.
 - **Carrière-dashboard (`/carriere`):** rustige Blazor-pagina met header (huidige rol → stip op de horizon), match-% voortgangsbalk en uitklapbaar stappenplan (skills gap, competenties, actie). Mock-data via `CareerPathService` voor directe UI-tests.
 
 ### Changed

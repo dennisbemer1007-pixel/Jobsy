@@ -24,7 +24,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 ## 1. Candidate
 *Doel: snel een baan vinden op reistijd/vervoer.*
 
-**BottomNav:** Match · Zoeken · Bewaard · Vacatures · Sollicitaties · Profiel
+**BottomNav:** Zoeken · Bewaard · Sollicitaties · Carrière · Profiel
 
 | Route | Inhoud |
 |-------|--------|
@@ -35,6 +35,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | `/candidate/applications` | Sollicitatiehistorie |
 | `/candidate/vacancies` | Overzicht + **Onlangs bekeken** (localStorage, alleen vacancy-GUIDs) + in-de-buurt op reistijd/vervoer |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
+| `/profiel` | Kandidaat-profielhub: persoonlijke baseline, DNA/testscores, account/privacy (mock via `CandidateProfileService`); link naar diepere bewerking |
 | `/candidate/profile` | OpenForWork, NAW/CV, recensies, **Mijn Lobsy Kompas**-tabbladen (Wie ben ik? / profiel / competenties: grafiek + accordeon met workshops / DISC-Analyse / beste match / Functiefit checker in 4 stappen) — werkgeverscontact alleen op tab Mijn profiel; Top 10 vacatures (≥60%); PDF als diepte-analyse klaar is |
 | `/candidate/competencies` | Competentietest (25); draft tussentijds opslaan; scores herberekend bij afronden |
 | `/candidate/disc` | Gedragsanalyse / DISC Quick-Scan (25); accordeon met workshops; optionele diepte-analyse 150 |

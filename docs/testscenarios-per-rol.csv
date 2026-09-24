@@ -190,13 +190,12 @@ Kandidaat,Banenkaart na uitgebreide beroepentest.,Match-% weegt **Mijn Beroepen-
 Kandidaat,Uitgebreide beroepentest (150) levert algemene beroepen via OpenAI.,Beroepen uit de Nederlandse arbeidsmarkt (niet beperkt tot Lobsy-vacatures); Jip-en-Janneke; Super-match/Sterke keus/Handige verbreding; opgeslagen in **Mijn Beroepen-kompas**; zonder key lokale catalogus.
 Kandidaat,Banenkaart koppelt algemene beroepstags aan actuele vacatures.,Algemeen beroep (bijv. verpleegkundige) matcht vacatures in Den Haag/Westland via zoeksleutels.
 Kandidaat,Home: harde criteria reistijd/vervoer (incl. e-bike)/rijbewijs/beschikbaarheid (per direct/parttime/seizoen) opslaan.,Voorkeuren opgeslagen; banenkaart herberekent match-%.
-Kandidaat,Bottom-nav **Match**.,`/candidate/match` swipe-kaarten.
 Kandidaat,Bottom-nav **Zoeken**.,`/` banenkaart.
 Kandidaat,Bottom-nav **Bewaard**.,`/candidate/liked`.
-Kandidaat,Bottom-nav **Vacatures**.,`/candidate/vacancies` met **Onlangs bekeken** + overzicht op reistijd/vervoer.
 Kandidaat,Vacatures: open een vacature en terug naar Vacatures.,Onlangs bekeken toont die vacature (localStorage, alleen IDs).
 Kandidaat,Bottom-nav **Sollicitaties**.,`/candidate/applications`.
-Kandidaat,Bottom-nav **Profiel**.,`/candidate/profile` (active ook op `/home`).
+Kandidaat,Bottom-nav **Carrière**.,`/carriere`.
+Kandidaat,Bottom-nav **Profiel**.,`/profiel` (active ook op `/candidate/profile` en `/home`).
 Kandidaat,Account-menu (userknop) **Hoe werkt Lobsy**.,`/candidate/hoe-werkt-lobsy`.
 Kandidaat,TokenWalletChip.,Niet zichtbaar.
 Kandidaat,Home: periode **Dag / Week / Maand / Kwartaal / Jaar**.,KPI’s herladen; actieve tab gemarkeerd; loading-skeletons.
@@ -255,12 +254,12 @@ Kandidaat,Liked empty → Discover `/`.,Kaart.
 Kandidaat,Shared: lijst + kanaal; empty → kaart.,Toont share-kanaal; empty CTA.
 Kandidaat,Hoe werkt Lobsy: alle stappen lezen.,6 stappen + deep links.
 Kandidaat,How-to: link **Banenkaart** `/`.,Kaart.
-Kandidaat,How-to: link **Profiel**.,`/candidate/profile`.
+Kandidaat,How-to: link **Profiel**.,`/profiel`.
 Kandidaat,How-to: links **Bewaard** en **Gedeeld**.,Liked/shared.
 Kandidaat,How-to: link solliciteren `#`.,Geen navigatie of no-op (anchor).
 Kandidaat,How-to: link **Mijn sollicitaties**.,Applications.
 Kandidaat,How-to: primary CTA **Naar de kaart** (voltooit how-to).,API `CompleteCandidateHowTo`; nav `/`; fout API: melding maar nav mag doorgaan.
-Kandidaat,How-to: secondary **Naar profiel**.,`/candidate/profile`.
+Kandidaat,How-to: secondary **Naar profiel**.,`/profiel`.
 Kandidaat,Profiel: **Open voor werk** aan/uit + opslaan.,OpenForWork gezet; PushBom-doelgroep wijzigt.
 Kandidaat,"Profiel: naam, telefoon, WhatsApp wijzigen + **Opslaan**.",Opgeslagen; validatie te lange/lege verplichte velden.
 Kandidaat,Profiel: thuisadres suggestie kiezen.,HomeLocation gezet (PushBom/reistijd).

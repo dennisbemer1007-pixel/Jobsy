@@ -171,6 +171,12 @@ public static class PageHelpDocs
             "Selecteer een droombaan. De voortgangsbalk toont je totale match. Klap stappen open voor skills gap, competenties en een concrete actie (cursussen of vacatures).",
             "Loopbaandoel scherp houden en gericht doorgroeien."),
 
+        ["/profiel"] = new(
+            "Profiel",
+            "Centrale hub: wie je bent, je test-baseline en accountvoorkeuren.",
+            "Bekijk of bewerk persoonlijke gegevens, DNA/testscores en meldingen/privacy. Diepere bewerking via Gegevens bewerken of Mijn Lobsy Kompas.",
+            "Je kandidaatbaseline rustig bijhouden."),
+
         ["/candidate/talent-contacts"] = new(
             "Contactverzoeken",
             "Berichten van werkgevers uit de anonieme talentpool.",

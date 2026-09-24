@@ -1,0 +1,60 @@
+using Jobsy.Web.Models;
+using Jobsy.Web.Services;
+
+namespace Jobsy.Tests;
+
+public class CandidateProfileServiceTests
+{
+    [Fact]
+    public void GetProfile_returns_basics_tests_scores_and_settings()
+    {
+        var svc = new CandidateProfileService();
+        var profile = svc.GetProfile();
+
+        Assert.False(string.IsNullOrWhiteSpace(profile.Basics.DisplayName));
+        Assert.InRange(profile.ProfileCompletenessPercent, 1, 100);
+        Assert.NotEmpty(profile.Tests);
+        Assert.NotEmpty(profile.ScoreBars);
+        Assert.Contains(profile.Tests, t => t.Completed);
+        Assert.Contains(profile.ScoreBars, s => s.Percent is > 0 and <= 100);
+        Assert.True(profile.Settings.HideContactUntilMatch);
+    }
+
+    [Fact]
+    public void UpdateSettings_and_open_for_work_are_persisted_in_service()
+    {
+        var svc = new CandidateProfileService();
+        var before = svc.GetProfile();
+        Assert.True(before.Basics.OpenForWork);
+
+        var afterOpen = svc.SetOpenForWork(false);
+        Assert.False(afterOpen.Basics.OpenForWork);
+        Assert.False(svc.GetProfile().Basics.OpenForWork);
+
+        var settings = afterOpen.Settings;
+        settings.EmailNotifications = false;
+        settings.PushNotifications = true;
+        var afterSettings = svc.UpdateSettings(settings);
+        Assert.False(afterSettings.Settings.EmailNotifications);
+        Assert.True(afterSettings.Settings.PushNotifications);
+    }
+
+    [Fact]
+    public void Profiel_page_and_nav_are_wired()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateProfile.razor"));
+        Assert.Contains("@page \"/profiel\"", page);
+        Assert.Contains("CandidateProfileService", page);
+        Assert.Contains("profile-hub__grid", page);
+
+        var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/RoleNavCatalog.cs"));
+        Assert.Contains("\"/profiel\"", nav);
+        Assert.Contains("\"/carriere\"", nav);
+        Assert.Contains("NavIcons.Career", nav);
+
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".profile-hub", css);
+        Assert.Contains(".profile-hub__grid", css);
+    }
+}

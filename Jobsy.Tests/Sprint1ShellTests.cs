@@ -110,30 +110,33 @@ public class RoleNavCatalogTests
     }
 
     [Fact]
-    public void ForUser_candidate_gets_match_search_saved_vacancies_applications_profile()
+    public void ForUser_candidate_gets_search_saved_applications_career_profile()
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test");
         var user = new ClaimsPrincipal(identity);
         var items = RoleNavCatalog.ForUser(user);
-        Assert.Equal(6, items.Count);
+        Assert.Equal(5, items.Count);
         Assert.Equal(
             new[]
             {
-                "/candidate/match",
                 "/",
                 "/candidate/liked",
-                "/candidate/vacancies",
                 "/candidate/applications",
-                "/candidate/profile"
+                "/carriere",
+                "/profiel"
             },
             items.Select(i => i.Href));
-        Assert.Equal("Nav.Match", items[0].TitleKey);
-        Assert.Equal("Nav.Vacancies", items[3].TitleKey);
+        Assert.Equal("Nav.Search", items[0].TitleKey);
+        Assert.Equal("Nav.CareerPath", items[3].TitleKey);
+        Assert.Equal("Nav.Profile", items[4].TitleKey);
         Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
         Assert.DoesNotContain(items, i => i.Href == "/home");
         var saved = items.First(i => i.Href == "/candidate/liked");
         Assert.Contains("/candidate/shared", saved.ExtraActivePaths ?? []);
         Assert.DoesNotContain("/candidate/applications", saved.ExtraActivePaths ?? []);
+        var profile = items.First(i => i.Href == "/profiel");
+        Assert.Contains("/candidate/profile", profile.ExtraActivePaths ?? []);
+        Assert.Contains("/home", profile.ExtraActivePaths ?? []);
         Assert.Equal("/candidate/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(user));
     }
 

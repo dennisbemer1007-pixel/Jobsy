@@ -1,0 +1,268 @@
+@page "/profiel"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CandidateProfileService Profiles
+@inject CultureState Culture
+
+<PageTitle>@Culture["ProfileHub.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page profile-hub pb-28">
+    <header class="profile-hub__header">
+        <div class="profile-hub__intro">
+            <h1>@Culture["ProfileHub.Title"]</h1>
+            <p class="login-lead">@Culture["ProfileHub.Lead"]</p>
+        </div>
+        @if (_model is not null)
+        {
+            <div class="profile-hub__completeness" aria-label="@Culture.Format("ProfileHub.CompletenessAria", _model.ProfileCompletenessPercent)">
+                <span class="profile-hub__completeness-label">@Culture["ProfileHub.Completeness"]</span>
+                <strong>@_model.ProfileCompletenessPercent%</strong>
+                <div class="profile-hub__completeness-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@_model.ProfileCompletenessPercent">
+                    <span style="width: @_model.ProfileCompletenessPercent%"></span>
+                </div>
+            </div>
+        }
+    </header>
+
+    @if (_model is null)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <div class="profile-hub__grid">
+            <div class="profile-hub__col profile-hub__col--primary">
+                <section class="profile-hub-card" aria-labelledby="profile-hub-basics">
+                    <button type="button"
+                            class="profile-hub-card__toggle @(_openBasics ? "is-open" : null)"
+                            id="profile-hub-basics"
+                            aria-expanded="@_openBasics"
+                            aria-controls="profile-hub-basics-body"
+                            @onclick="() => _openBasics = !_openBasics">
+                        <span>
+                            <span class="profile-hub-card__eyebrow">@Culture["ProfileHub.Basics"]</span>
+                            <span class="profile-hub-card__title">@_model.Basics.DisplayName</span>
+                        </span>
+                        <span class="profile-hub-card__chevron" aria-hidden="true"></span>
+                    </button>
+
+                    @if (_openBasics)
+                    {
+                        <div class="profile-hub-card__body" id="profile-hub-basics-body" role="region" aria-labelledby="profile-hub-basics">
+                            <dl class="profile-hub-meta">
+                                <div>
+                                    <dt>@Culture["ProfileHub.Role"]</dt>
+                                    <dd>@_model.Basics.CurrentRoleTitle</dd>
+                                </div>
+                                <div>
+                                    <dt>@Culture["Profile.ContactDetails"]</dt>
+                                    <dd>
+                                        <a href="mailto:@_model.Basics.Email">@_model.Basics.Email</a><br />
+                                        <span>@_model.Basics.Phone</span>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>@Culture["ProfileHub.Location"]</dt>
+                                    <dd>
+                                        @_model.Basics.HomeArea<br />
+                                        <span class="muted">@Culture.Format("ProfileHub.Travel", _model.Basics.MaxTravelMinutes, _model.Basics.TransportLabel)</span>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>@Culture["ProfileHub.CvStatus"]</dt>
+                                    <dd>
+                                        <span class="profile-hub-badge @(_model.Basics.CvReady ? "is-ok" : "is-warn")">
+                                            @_model.Basics.CvStatusLabel
+                                        </span>
+                                    </dd>
+                                </div>
+                            </dl>
+
+                            <div class="profile-hub-card__actions">
+                                <label class="profile-hub-switch">
+                                    <input type="checkbox" checked="@_model.Basics.OpenForWork" @onchange="OnOpenForWorkChanged" />
+                                    <span>@Culture["Profile.OpenForWork"]</span>
+                                </label>
+                                <a class="engagement-btn" href="/candidate/profile">@Culture["ProfileHub.EditBasics"]</a>
+                            </div>
+                        </div>
+                    }
+                </section>
+
+                <section class="profile-hub-card" aria-labelledby="profile-hub-tests">
+                    <button type="button"
+                            class="profile-hub-card__toggle @(_openTests ? "is-open" : null)"
+                            id="profile-hub-tests"
+                            aria-expanded="@_openTests"
+                            aria-controls="profile-hub-tests-body"
+                            @onclick="() => _openTests = !_openTests">
+                        <span>
+                            <span class="profile-hub-card__eyebrow">@Culture["ProfileHub.Dna"]</span>
+                            <span class="profile-hub-card__title">@Culture["ProfileHub.TestsTitle"]</span>
+                        </span>
+                        <span class="profile-hub-card__chevron" aria-hidden="true"></span>
+                    </button>
+
+                    @if (_openTests)
+                    {
+                        <div class="profile-hub-card__body" id="profile-hub-tests-body" role="region" aria-labelledby="profile-hub-tests">
+                            <p class="login-lead profile-hub-card__lead">@Culture["ProfileHub.TestsLead"]</p>
+                            <ul class="profile-hub-tests">
+                                @foreach (var test in _model.Tests)
+                                {
+                                    <li class="profile-hub-tests__item @(test.Completed ? "is-done" : "is-open")">
+                                        <div class="profile-hub-tests__main">
+                                            <div>
+                                                <strong>@test.Title</strong>
+                                                <p>@test.Summary</p>
+                                            </div>
+                                            <span class="profile-hub-badge @(test.Completed ? "is-ok" : "is-open")">@test.StatusBadge</span>
+                                        </div>
+                                        <a class="engagement-btn" href="@test.ActionHref">@test.ActionLabel</a>
+                                    </li>
+                                }
+                            </ul>
+                            <a class="login-submit profile-hub-card__cta" href="/candidate/profile?tab=whoami">@Culture["ProfileHub.AddTests"]</a>
+                        </div>
+                    }
+                </section>
+            </div>
+
+            <div class="profile-hub__col profile-hub__col--secondary">
+                <section class="profile-hub-card profile-hub-card--scores" aria-labelledby="profile-hub-scores">
+                    <div class="profile-hub-card__head">
+                        <span class="profile-hub-card__eyebrow">@Culture["ProfileHub.Dna"]</span>
+                        <h2 id="profile-hub-scores" class="profile-hub-card__title">@Culture["ProfileHub.ScoresTitle"]</h2>
+                        <p class="login-lead profile-hub-card__lead">@Culture["ProfileHub.ScoresLead"]</p>
+                    </div>
+                    <ul class="profile-hub-scores">
+                        @foreach (var bar in _model.ScoreBars)
+                        {
+                            <li>
+                                <div class="profile-hub-scores__top">
+                                    <span>@bar.Label</span>
+                                    <strong>@bar.Percent%</strong>
+                                </div>
+                                <div class="profile-hub-scores__bar"
+                                     role="progressbar"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"
+                                     aria-valuenow="@bar.Percent"
+                                     aria-label="@bar.Label">
+                                    <span style="width: @bar.Percent%"></span>
+                                </div>
+                                <p class="muted">@bar.Hint</p>
+                            </li>
+                        }
+                    </ul>
+                </section>
+
+                <section class="profile-hub-card" aria-labelledby="profile-hub-settings">
+                    <button type="button"
+                            class="profile-hub-card__toggle @(_openSettings ? "is-open" : null)"
+                            id="profile-hub-settings"
+                            aria-expanded="@_openSettings"
+                            aria-controls="profile-hub-settings-body"
+                            @onclick="() => _openSettings = !_openSettings">
+                        <span>
+                            <span class="profile-hub-card__eyebrow">@Culture["ProfileHub.Account"]</span>
+                            <span class="profile-hub-card__title">@Culture["ProfileHub.SettingsTitle"]</span>
+                        </span>
+                        <span class="profile-hub-card__chevron" aria-hidden="true"></span>
+                    </button>
+
+                    @if (_openSettings)
+                    {
+                        <div class="profile-hub-card__body" id="profile-hub-settings-body" role="region" aria-labelledby="profile-hub-settings">
+                            <p class="login-lead profile-hub-card__lead">@Culture["ProfileHub.SettingsLead"]</p>
+                            <ul class="profile-hub-settings">
+                                <li>
+                                    <label class="profile-hub-switch">
+                                        <input type="checkbox" checked="@_model.Settings.EmailNotifications" @onchange="e => SetSetting(nameof(CandidateProfileSettings.EmailNotifications), e)" />
+                                        <span>@Culture["ProfileHub.SettingEmail"]</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="profile-hub-switch">
+                                        <input type="checkbox" checked="@_model.Settings.PushNotifications" @onchange="e => SetSetting(nameof(CandidateProfileSettings.PushNotifications), e)" />
+                                        <span>@Culture["ProfileHub.SettingPush"]</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="profile-hub-switch">
+                                        <input type="checkbox" checked="@_model.Settings.ShareTalentPool" @onchange="e => SetSetting(nameof(CandidateProfileSettings.ShareTalentPool), e)" />
+                                        <span>@Culture["ProfileHub.SettingTalent"]</span>
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="profile-hub-switch">
+                                        <input type="checkbox" checked="@_model.Settings.HideContactUntilMatch" @onchange="e => SetSetting(nameof(CandidateProfileSettings.HideContactUntilMatch), e)" />
+                                        <span>@Culture["ProfileHub.SettingPrivacy"]</span>
+                                    </label>
+                                </li>
+                            </ul>
+                            <div class="profile-hub-card__actions profile-hub-card__actions--stack">
+                                <a class="engagement-btn" href="/privacy">@Culture["Legal.Privacy"]</a>
+                                <a class="engagement-btn" href="/candidate/talent-contacts">@Culture["Talent.CandidateTitle"]</a>
+                                <a class="engagement-btn" href="/carriere">@Culture["CareerDash.OpenLink"]</a>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(_settingsSaved))
+                            {
+                                <p class="state-message profile-hub-saved" role="status">@_settingsSaved</p>
+                            }
+                        </div>
+                    }
+                </section>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private CandidateProfileHubModel? _model;
+    private bool _openBasics = true;
+    private bool _openTests = true;
+    private bool _openSettings = true;
+    private string? _settingsSaved;
+
+    protected override void OnInitialized()
+        => _model = Profiles.GetProfile();
+
+    private void OnOpenForWorkChanged(ChangeEventArgs e)
+    {
+        var on = e.Value is bool b ? b : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        _model = Profiles.SetOpenForWork(on);
+        _settingsSaved = null;
+    }
+
+    private void SetSetting(string name, ChangeEventArgs e)
+    {
+        if (_model is null)
+        {
+            return;
+        }
+
+        var on = e.Value is bool b ? b : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        var settings = _model.Settings;
+        switch (name)
+        {
+            case nameof(CandidateProfileSettings.EmailNotifications):
+                settings.EmailNotifications = on;
+                break;
+            case nameof(CandidateProfileSettings.PushNotifications):
+                settings.PushNotifications = on;
+                break;
+            case nameof(CandidateProfileSettings.ShareTalentPool):
+                settings.ShareTalentPool = on;
+                break;
+            case nameof(CandidateProfileSettings.HideContactUntilMatch):
+                settings.HideContactUntilMatch = on;
+                break;
+        }
+
+        _model = Profiles.UpdateSettings(settings);
+        _settingsSaved = Culture["ProfileHub.SettingsSaved"];
+    }
+}
