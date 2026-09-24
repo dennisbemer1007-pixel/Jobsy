@@ -67,6 +67,8 @@ public sealed class AdminAtsController : ControllerBase
                 body.SalaryText,
                 body.HourlyWage,
                 body.HoursText,
+                body.StartDateText,
+                body.RequirementsText,
                 cancellationToken);
             return updated is null ? NotFound() : Ok(ToDto(updated));
         }
@@ -191,6 +193,8 @@ public sealed class AdminAtsController : ControllerBase
         l.HoursText,
         l.MinHoursPerWeek,
         l.MaxHoursPerWeek,
+        l.StartDateText,
+        l.RequirementsText,
         l.TagsJson,
         l.CompletenessScore,
         l.Status.ToString(),
@@ -199,7 +203,9 @@ public sealed class AdminAtsController : ControllerBase
         l.LastCheckedAtUtc,
         l.ExpiresAtUtc,
         l.ReviewedAtUtc,
-        l.LinkedVacancyId);
+        l.LinkedVacancyId,
+        l.AiEnrichedAtUtc,
+        l.AiEnrichedFromOpenAi);
 }
 
 public record AtsListingDto(
@@ -218,6 +224,8 @@ public record AtsListingDto(
     string? HoursText,
     decimal? MinHoursPerWeek,
     decimal? MaxHoursPerWeek,
+    string? StartDateText,
+    string? RequirementsText,
     string? TagsJson,
     int CompletenessScore,
     string Status,
@@ -226,7 +234,9 @@ public record AtsListingDto(
     DateTime? LastCheckedAtUtc,
     DateTime? ExpiresAtUtc,
     DateTime? ReviewedAtUtc,
-    Guid? LinkedVacancyId);
+    Guid? LinkedVacancyId,
+    DateTime? AiEnrichedAtUtc = null,
+    bool AiEnrichedFromOpenAi = false);
 
 public record AtsListingUpdateRequest(
     string Title,
@@ -235,7 +245,9 @@ public record AtsListingUpdateRequest(
     string Description,
     string? SalaryText,
     decimal? HourlyWage,
-    string? HoursText);
+    string? HoursText,
+    string? StartDateText = null,
+    string? RequirementsText = null);
 
 public record AtsRejectRequest(string? Reason);
 

@@ -560,6 +560,8 @@ public class AtsListingItem
     public string? HoursText { get; set; }
     public decimal? MinHoursPerWeek { get; set; }
     public decimal? MaxHoursPerWeek { get; set; }
+    public string? StartDateText { get; set; }
+    public string? RequirementsText { get; set; }
     public string? TagsJson { get; set; }
     public int CompletenessScore { get; set; }
     public string Status { get; set; } = string.Empty;
@@ -569,6 +571,8 @@ public class AtsListingItem
     public DateTime? ExpiresAtUtc { get; set; }
     public DateTime? ReviewedAtUtc { get; set; }
     public Guid? LinkedVacancyId { get; set; }
+    public DateTime? AiEnrichedAtUtc { get; set; }
+    public bool AiEnrichedFromOpenAi { get; set; }
 }
 
 public record AtsListingUpdateForm(
@@ -578,7 +582,9 @@ public record AtsListingUpdateForm(
     string Description,
     string? SalaryText,
     decimal? HourlyWage,
-    string? HoursText);
+    string? HoursText,
+    string? StartDateText = null,
+    string? RequirementsText = null);
 
 public record AtsApproveResult(Guid ListingId, Guid VacancyId, string VacancyStatus);
 

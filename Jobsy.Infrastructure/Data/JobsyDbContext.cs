@@ -320,6 +320,8 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.HoursText).HasMaxLength(256);
             entity.Property(e => e.MinHoursPerWeek).HasPrecision(5, 1);
             entity.Property(e => e.MaxHoursPerWeek).HasPrecision(5, 1);
+            entity.Property(e => e.StartDateText).HasMaxLength(256);
+            entity.Property(e => e.RequirementsText).HasMaxLength(4000);
             entity.Property(e => e.TagsJson).HasMaxLength(2000);
             entity.Property(e => e.ImageUrl).HasMaxLength(HtmlSanitize.MaxImageUrlLength);
             entity.Property(e => e.RejectReason).HasMaxLength(1000);

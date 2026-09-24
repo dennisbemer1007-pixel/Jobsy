@@ -70,6 +70,8 @@ public sealed class AtsVacancyModerationService : IAtsVacancyModerationService
         string? salaryText,
         decimal? hourlyWage,
         string? hoursText,
+        string? startDateText = null,
+        string? requirementsText = null,
         CancellationToken cancellationToken = default)
     {
         var listing = await _db.AtsScrapedListings
@@ -98,6 +100,8 @@ public sealed class AtsVacancyModerationService : IAtsVacancyModerationService
         listing.SalaryText = Truncate(salaryText, 512);
         listing.HourlyWage = hourlyWage;
         listing.HoursText = Truncate(hoursText, 256);
+        listing.StartDateText = Truncate(startDateText, 256);
+        listing.RequirementsText = Truncate(requirementsText, 4000);
         listing.DedupHash = AtsDedupeHash.Compute(
             listing.CompanyName,
             listing.Title,
@@ -113,7 +117,9 @@ public sealed class AtsVacancyModerationService : IAtsVacancyModerationService
             listing.MinHoursPerWeek,
             listing.MaxHoursPerWeek,
             listing.TagsJson,
-            listing.SourceUrl);
+            listing.SourceUrl,
+            listing.StartDateText,
+            listing.RequirementsText);
 
         try
         {
@@ -286,14 +292,31 @@ public sealed class AtsVacancyModerationService : IAtsVacancyModerationService
         }
 
         var description = listing.Description;
+        if (!string.IsNullOrWhiteSpace(listing.RequirementsText))
+        {
+            description = $"{description.Trim()}\n\nVereisten:\n{listing.RequirementsText.Trim()}".Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(listing.StartDateText))
+        {
+            description = $"{description.Trim()}\n\nStarten vanaf: {listing.StartDateText.Trim()}".Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(listing.SalaryText)
+            && !description.Contains(listing.SalaryText, StringComparison.OrdinalIgnoreCase))
+        {
+            description = $"{description.Trim()}\n\nSalarisindicatie: {listing.SalaryText.Trim()}".Trim();
+        }
+
         if (!string.IsNullOrWhiteSpace(listing.SourceUrl)
             && !description.Contains(listing.SourceUrl, StringComparison.OrdinalIgnoreCase))
         {
             description = $"{description.Trim()}\n\nBron: {listing.SourceUrl}".Trim();
-            if (description.Length > 20_000)
-            {
-                description = description[..20_000];
-            }
+        }
+
+        if (description.Length > 20_000)
+        {
+            description = description[..20_000];
         }
 
         vacancy.Title = listing.Title;

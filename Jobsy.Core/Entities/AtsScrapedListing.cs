@@ -25,6 +25,13 @@ public class AtsScrapedListing
     public string? HoursText { get; set; }
     public decimal? MinHoursPerWeek { get; set; }
     public decimal? MaxHoursPerWeek { get; set; }
+
+    /// <summary>Human-readable start indication, e.g. "per direct" or "1 mei 2026".</summary>
+    public string? StartDateText { get; set; }
+
+    /// <summary>Clean bullet-style requirements extracted / AI-normalized from the source page.</summary>
+    public string? RequirementsText { get; set; }
+
     public string? TagsJson { get; set; }
     public string? ImageUrl { get; set; }
 
@@ -33,6 +40,12 @@ public class AtsScrapedListing
 
     /// <summary>0–100 field completeness for admin review.</summary>
     public int CompletenessScore { get; set; }
+
+    /// <summary>When AI (or local heuristic) last normalized readable fields.</summary>
+    public DateTime? AiEnrichedAtUtc { get; set; }
+
+    /// <summary>True when OpenAI produced the last enrichment (false = local heuristics only).</summary>
+    public bool AiEnrichedFromOpenAi { get; set; }
 
     public AtsListingStatus Status { get; set; } = AtsListingStatus.PendingReview;
     public string? RejectReason { get; set; }
