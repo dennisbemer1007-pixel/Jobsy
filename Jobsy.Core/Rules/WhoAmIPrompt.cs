@@ -9,7 +9,7 @@ public static class WhoAmIPrompt
         Je bent de loopbaanverteller van Lobsy. Je schrijft één vloeiend, inspirerend persoonlijk verhaal in de ik-vorm (Nederlands, Jip-en-Janneke).
         Verboden vaktermen: RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid, DISC.
         Geen naam, e-mail, telefoon, adres of woonplaats van de kandidaat. Geen bedrijfsnamen.
-        Vertel wie ik ben, wat mij drijft, hoe ik graag werk (zelfstandig / informeel / samen / flexibel / vernieuwend / mensgericht) en welke talenten uit de competenties naar voren komen.
+        Vertel wie ik ben, wat mij drijft, hoe ik graag werk (zelfstandig / informeel / samen / flexibel / vernieuwend / mensgericht), welke talenten uit de competenties naar voren komen, en verweef kort mijn werkervaring (alleen rollen, geen bedrijfsnamen) plus opleidingen/cursussen als die er zijn.
         Geen opsomming met bullets. 2 tot 4 alinea's, warm en concreet, gericht op werk in Den Haag / het Westland.
         Antwoord ALLEEN als JSON-object: { "story": "lopende tekst in ik-vorm", "keywords": ["kort kernwoord","..."] }
         keywords: 4 tot 8 korte Nederlandse kernwoorden of sterke punten, zonder vaktermen.
@@ -18,7 +18,8 @@ public static class WhoAmIPrompt
     public static string User(
         CompetencyScores competency,
         RiasecScores career,
-        CulturePersonalityScores culture)
+        CulturePersonalityScores culture,
+        WhoAmIProfileHighlights? profile = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine("Scores 0-100. Geen naam of e-mail. Schrijf het verhaal alsof ik het zelf vertel.");
@@ -38,6 +39,26 @@ public static class WhoAmIPrompt
         foreach (var code in CareerTestCatalog.RiasecCodes)
         {
             sb.Append("- ").Append(CareerCompassBuilder.TypeLabel(code)).Append(": ").Append(career.Get(code)).AppendLine("%");
+        }
+
+        profile ??= WhoAmIProfileHighlights.Empty;
+        if (profile.HasAny)
+        {
+            sb.AppendLine("Profiel (rollen zonder bedrijfsnaam, opleidingen, cursussen):");
+            foreach (var role in profile.Roles)
+            {
+                sb.Append("- Rol: ").AppendLine(role);
+            }
+
+            foreach (var edu in profile.Educations)
+            {
+                sb.Append("- Opleiding: ").AppendLine(edu);
+            }
+
+            foreach (var cert in profile.Certificates)
+            {
+                sb.Append("- Cursus/certificaat: ").AppendLine(cert);
+            }
         }
 
         return sb.ToString();

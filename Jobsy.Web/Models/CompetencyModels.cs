@@ -13,14 +13,24 @@ public sealed class WhoAmIState
     public List<string> Keywords { get; set; } = [];
     public CompetencyScoreSet? CompetencyScores { get; set; }
     public CulturePersonalityScoreSet? CultureScores { get; set; }
+    public RiasecScoreSet? CareerScores { get; set; }
     public bool IncludeOnCv { get; set; }
     public DateTime? StoryGeneratedAtUtc { get; set; }
+    public List<WhoAmIEmployerItem> Employers { get; set; } = [];
+    public List<string> Educations { get; set; } = [];
+    public List<string> Certificates { get; set; } = [];
 
     public int CompletedCount =>
         (ProfileFilled ? 1 : 0)
         + (CompetencyCompleted ? 1 : 0)
         + (CareerCompleted ? 1 : 0)
         + (CultureCompleted ? 1 : 0);
+}
+
+public sealed class WhoAmIEmployerItem
+{
+    public string EmployerName { get; set; } = "";
+    public string? Role { get; set; }
 }
 
 public sealed class CandidateCompetencyState

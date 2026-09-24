@@ -9,6 +9,7 @@ public interface IWhoAmIGenerationService
         CompetencyScores competency,
         RiasecScores career,
         CulturePersonalityScores culture,
+        WhoAmIProfileHighlights? profile = null,
         CancellationToken cancellationToken = default);
 }
 

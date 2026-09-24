@@ -361,13 +361,17 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         var status = row?.Status ?? CandidateDeepAnalysisStatuses.Locked;
         var answers = DeepAnalysisCatalog.ParseAnswersJson(row?.AnswersJson, kind);
         var unlocked = CandidateDeepAnalysisStatuses.IsUnlocked(status);
+        var expected = DeepAnalysisCatalog.QuestionCountFor(kind);
+        // Status alone is not enough: older/stub rows could be marked Completed without a full answer set.
+        var completed = CandidateDeepAnalysisStatuses.IsCompleted(status)
+                        && answers.Count >= expected;
         return new DeepAnalysisStateDto(
             kind,
             status,
             unlocked,
-            CandidateDeepAnalysisStatuses.IsCompleted(status),
+            completed,
             answers.Count,
-            DeepAnalysisCatalog.QuestionCountFor(kind),
+            expected,
             priceEuro,
             CompetencyTestCatalog.ParseTagsJson(row?.TagsJson),
             row?.UnlockedAtUtc,

@@ -81,6 +81,28 @@ public sealed class WhoAmIService : IWhoAmIService
             hasUploadedCv,
             hasReferences);
 
+        var prefs = TryReadPreferences(user?.PreferencesJson);
+        var employers = (prefs?.Employers ?? [])
+            .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role))
+            .Select(e => new WhoAmIEmployerDto(
+                string.IsNullOrWhiteSpace(e.EmployerName) ? (e.Role ?? "Werkervaring") : e.EmployerName.Trim(),
+                string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim()))
+            .Take(6)
+            .ToList();
+        var educations = (prefs?.Educations ?? [])
+            .Where(e => !string.IsNullOrWhiteSpace(e))
+            .Select(e => e.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(8)
+            .ToList();
+        var certificates = (prefs?.Certificates ?? [])
+            .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+            .Select(c => c.Year is int y ? $"{c.Name.Trim()} ({y})" : c.Name.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(8)
+            .ToList();
+        var profileHighlights = WhoAmIProfileHighlights.FromPreferences(prefs);
+
         var competencyRow = await _db.CandidateCompetencies.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         var careerRow = await _db.CandidateCareerInterests.AsNoTracking()
@@ -146,7 +168,7 @@ public sealed class WhoAmIService : IWhoAmIService
             && career is { IsComplete: true } rScores
             && culture is { IsComplete: true } cultureScores)
         {
-            var fingerprint = WhoAmICompleteness.Fingerprint(cScores, rScores, cultureScores);
+            var fingerprint = WhoAmICompleteness.Fingerprint(cScores, rScores, cultureScores, profileHighlights);
             if (stored is not null
                 && string.Equals(stored.InputFingerprint, fingerprint, StringComparison.Ordinal)
                 && WhoAmIStoryBuilder.Sanitize(stored.StoryText) is { } cachedStory)
@@ -158,7 +180,8 @@ public sealed class WhoAmIService : IWhoAmIService
             }
             else
             {
-                var generated = await _generate.GenerateAsync(cScores, rScores, cultureScores, cancellationToken);
+                var generated = await _generate.GenerateAsync(
+                    cScores, rScores, cultureScores, profileHighlights, cancellationToken);
                 story = generated.Story;
                 keywords = generated.Keywords;
                 fromOpenAi = generated.FromOpenAi;
@@ -196,8 +219,12 @@ public sealed class WhoAmIService : IWhoAmIService
             keywords,
             competency,
             culture,
+            career,
             includeOnCv,
-            generatedAt);
+            generatedAt,
+            employers,
+            educations,
+            certificates);
     }
 
     internal static LobsyCvWhoAmI ToAttachment(
@@ -223,6 +250,23 @@ public sealed class WhoAmIService : IWhoAmIService
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
+
+    private static CandidatePreferencesDto? TryReadPreferences(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<CandidatePreferencesDto>(json, Json);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 
     private static string Encouragement(
         bool profile,

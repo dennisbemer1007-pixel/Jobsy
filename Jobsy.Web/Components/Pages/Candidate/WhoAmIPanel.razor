@@ -20,30 +20,100 @@
         {
             <p class="kompas-status kompas-status--ok">@_message</p>
         }
-        <h3 class="whoami__title">@Culture["WhoAmI.StoryTitle"]</h3>
-        <div class="whoami-story">
-            @foreach (var para in Paragraphs(open.Story))
-            {
-                <p>@para</p>
-            }
-        </div>
+
+        <section class="whoami-section" aria-labelledby="whoami-story-title">
+            <h3 id="whoami-story-title" class="whoami__title">@Culture["WhoAmI.StoryTitle"]</h3>
+            <div class="whoami-story">
+                @foreach (var para in Paragraphs(open.Story))
+                {
+                    <p>@para</p>
+                }
+            </div>
+        </section>
+
+        @if (HasProfileBits(open))
+        {
+            <section class="whoami-section" aria-labelledby="whoami-profile-title">
+                <h3 id="whoami-profile-title" class="whoami__title">@Culture["WhoAmI.ProfileTitle"]</h3>
+                <div class="whoami-profile-grid">
+                    @if (open.Employers.Count > 0)
+                    {
+                        <div class="whoami-profile-card">
+                            <h4>@Culture["WhoAmI.WorkExperience"]</h4>
+                            <ul>
+                                @foreach (var job in open.Employers.Take(4))
+                                {
+                                    <li>
+                                        <strong>@(string.IsNullOrWhiteSpace(job.Role) ? job.EmployerName : job.Role)</strong>
+                                        @if (!string.IsNullOrWhiteSpace(job.Role) && !string.IsNullOrWhiteSpace(job.EmployerName))
+                                        {
+                                            <span class="muted"> · @job.EmployerName</span>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (open.Educations.Count > 0 || open.Certificates.Count > 0)
+                    {
+                        <div class="whoami-profile-card">
+                            <h4>@Culture["WhoAmI.Courses"]</h4>
+                            <ul>
+                                @foreach (var edu in open.Educations.Take(4))
+                                {
+                                    <li>@edu</li>
+                                }
+                                @foreach (var cert in open.Certificates.Take(4))
+                                {
+                                    <li>@cert</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
         @if (open.Keywords.Count > 0)
         {
-            <h3 class="whoami__title">@Culture["WhoAmI.Keywords"]</h3>
-            <ul class="whoami-chips">
-                @foreach (var keyword in open.Keywords)
-                {
-                    <li>@keyword</li>
-                }
-            </ul>
+            <section class="whoami-section" aria-labelledby="whoami-keywords-title">
+                <h3 id="whoami-keywords-title" class="whoami__title">@Culture["WhoAmI.Keywords"]</h3>
+                <ul class="whoami-chips">
+                    @foreach (var keyword in open.Keywords)
+                    {
+                        <li>@keyword</li>
+                    }
+                </ul>
+            </section>
         }
-        <div class="whoami-visuals">
-            <CompetencyScorePanel Scores="open.CompetencyScores" />
-            <div>
-                <h3 class="whoami__title">@Culture["WhoAmI.CultureTitle"]</h3>
-                <CultureScorePanel Scores="open.CultureScores" />
+
+        <section class="whoami-section" aria-labelledby="whoami-comp-title">
+            <div class="whoami-section__head">
+                <h3 id="whoami-comp-title" class="whoami__title">@Culture["Kompas.TabCompetencies"]</h3>
+                <p class="whoami-model muted">@Culture["Competency.ScienceNote"]</p>
             </div>
-        </div>
+            <CompetencyScorePanel Scores="open.CompetencyScores" />
+        </section>
+
+        <section class="whoami-section" aria-labelledby="whoami-culture-title">
+            <div class="whoami-section__head">
+                <h3 id="whoami-culture-title" class="whoami__title">@Culture["WhoAmI.CultureTitle"]</h3>
+                <p class="whoami-model muted">@Culture["CultureScan.ScienceNote"]</p>
+            </div>
+            <CultureScorePanel Scores="open.CultureScores" />
+        </section>
+
+        <section class="whoami-section whoami-section--career" aria-labelledby="whoami-career-title">
+            <div class="whoami-section__head">
+                <h3 id="whoami-career-title" class="whoami__title">@Culture["Kompas.TabCareers"]</h3>
+                <p class="whoami-model muted">@Culture["Career.ScienceNote"]</p>
+            </div>
+            <RiasecScorePanel Scores="open.CareerScores" />
+            <button type="button" class="engagement-btn" @onclick="() => GoTab(CandidateKompasTabs.Career)">
+                @Culture["WhoAmI.OpenCareerResults"]
+            </button>
+        </section>
+
         <label class="whoami-attach">
             <input type="checkbox" checked="@open.IncludeOnCv" disabled="@_busy" @onchange="OnAttachChanged" />
             <span>
@@ -195,6 +265,9 @@
             _busy = false;
         }
     }
+
+    private static bool HasProfileBits(WhoAmIState open)
+        => open.Employers.Count > 0 || open.Educations.Count > 0 || open.Certificates.Count > 0;
 
     private static IEnumerable<string> Paragraphs(string? story)
         => string.IsNullOrWhiteSpace(story)

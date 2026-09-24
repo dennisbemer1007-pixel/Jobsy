@@ -208,7 +208,8 @@ public static class WhoAmICompleteness
     public static string Fingerprint(
         CompetencyScores competency,
         RiasecScores career,
-        CulturePersonalityScores culture)
+        CulturePersonalityScores culture,
+        WhoAmIProfileHighlights? profile = null)
         => string.Join('|',
             competency.Samenwerken,
             competency.Resultaatgerichtheid,
@@ -231,5 +232,6 @@ public static class WhoAmICompleteness
             culture.Conscientiousness,
             culture.Extraversion,
             culture.Agreeableness,
-            culture.EmotionalStability);
+            culture.EmotionalStability,
+            profile?.FingerprintSuffix() ?? "");
 }

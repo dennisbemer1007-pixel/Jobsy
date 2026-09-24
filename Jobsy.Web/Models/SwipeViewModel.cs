@@ -14,6 +14,8 @@ public sealed class SwipeViewModel
 
     public string JobTitle { get; set; } = string.Empty;
     public string? ShortDescription { get; set; }
+    /// <summary>Short inviting line explaining why this candidate fits the role.</summary>
+    public string? WhyYouFit { get; set; }
 
     public string? Location { get; set; }
     public double? DistanceKm { get; set; }
@@ -123,7 +125,8 @@ public sealed class SwipeViewModel
             CompanyLogoUrl = item.CompanyLogoUrl,
             ImageUrl = item.ImageUrl,
             JobTitle = string.IsNullOrWhiteSpace(item.Title) ? "Vacature" : item.Title,
-            ShortDescription = Truncate(item.Description, 160),
+            ShortDescription = Truncate(item.Description, 140),
+            WhyYouFit = BuildWhyYouFit(item),
             Location = FirstNonEmpty(item.CompanyAddress, item.OfferedByLabel),
             DistanceKm = item.DistanceKm,
             TravelTimeMinutes = item.TravelMinutes,
@@ -148,6 +151,7 @@ public sealed class SwipeViewModel
         ImageUrl = "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80",
         JobTitle = "Hovenier | werken in het groen | afwisselende projecten in de regio",
         ShortDescription = "Afwisselend groenwerk in de regio: onderhoud, aanleg en seizoensklussen.",
+        WhyYouFit = "Sterke match (86%): jouw praktische inzet en groene werkrichting sluiten goed aan.",
         Location = "Brouwershaven",
         DistanceKm = 36,
         TravelTimeMinutes = 32,
@@ -178,6 +182,8 @@ public sealed class SwipeViewModel
             CompanyName = "Westland Groen Service",
             ImageUrl = "https://images.unsplash.com/photo-1466692476866-aef1dfb1e735?w=800&q=80",
             JobTitle = "Medewerker groenvoorziening | fulltime | dichtbij huis",
+            ShortDescription = "Groenonderhoud dichtbij huis: planten, seizoenswerk en nette buitenruimtes.",
+            WhyYouFit = "Goede kans (74%): jouw voorkeur voor praktisch buitenwerk past hier goed.",
             Location = "Naaldwijk",
             DistanceKm = 8,
             TravelTimeMinutes = 12,
@@ -197,6 +203,8 @@ public sealed class SwipeViewModel
             CompanyName = "De Tuinkamer",
             ImageUrl = "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&q=80",
             JobTitle = "Allround hovenier | projecten & particulieren",
+            ShortDescription = "Aanleg en onderhoud bij particulieren: snoeien, terrassen en afwisselende klussen.",
+            WhyYouFit = "Match 68% — check of de mix van projecten en particulieren jou uitnodigt.",
             Location = "Goes",
             DistanceKm = 22,
             TravelTimeMinutes = 28,
@@ -237,6 +245,31 @@ public sealed class SwipeViewModel
         var flat = System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", " ");
         flat = System.Text.RegularExpressions.Regex.Replace(flat, @"\s+", " ").Trim();
         return flat.Length <= max ? flat : flat[..(max - 1)].TrimEnd() + "…";
+    }
+
+    private static string BuildWhyYouFit(VacancyListItem item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.MatchRationale))
+        {
+            return Truncate(item.MatchRationale, 150) ?? item.MatchRationale!;
+        }
+
+        if (item.MatchPercent is int pct and >= 85)
+        {
+            return $"Sterke match ({pct}%): jouw profiel en deze rol liggen dicht bij elkaar.";
+        }
+
+        if (item.MatchPercent is int mid and >= 60)
+        {
+            return $"Goede kans ({mid}%): jouw skills en voorkeuren sluiten aan op wat hier gevraagd wordt.";
+        }
+
+        if (item.MatchPercent is int low)
+        {
+            return $"Match {low}% — bekijk of de sfeer en taken jou aanspreken.";
+        }
+
+        return "Deze vacature past bij wat jij zoekt — check of de sfeer en taken jou uitnodigen.";
     }
 
     private static string? FirstNonEmpty(params string?[] values)

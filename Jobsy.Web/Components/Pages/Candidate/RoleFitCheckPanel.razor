@@ -5,7 +5,6 @@
 
 <div class="kompas-card--fit">
     <h3 class="visually-hidden">@Culture["Kompas.TabFit"]</h3>
-    <p class="login-lead">@Culture["Fit.Lead"]</p>
 
     @if (!string.IsNullOrWhiteSpace(_message))
     {
@@ -18,6 +17,7 @@
     }
     else if (_state is not { IsUnlocked: true })
     {
+        <p class="login-lead">@Culture["Fit.Lead"]</p>
         <p class="kompas-status">@Culture["Fit.Locked"]</p>
         <div class="kompas-fit-actions">
             <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Start"]</a>
@@ -26,17 +26,22 @@
     }
     else
     {
-        <form class="kompas-fit-search" @onsubmit="EvaluateAsync" @onsubmit:preventDefault="true">
-            <label>
-                @Culture["Fit.JobTitle"]
-                <input type="search"
+        <section class="fit-hero" aria-labelledby="fit-hero-title">
+            <p class="fit-hero__eyebrow">@Culture["Kompas.TabFit"]</p>
+            <h3 id="fit-hero-title" class="fit-hero__title">@Culture["Fit.HeroTitle"]</h3>
+            <p class="fit-hero__lead">@Culture["Fit.Lead"]</p>
+            <form class="kompas-fit-search kompas-fit-search--hero" @onsubmit="EvaluateAsync" @onsubmit:preventDefault="true">
+                <label class="fit-hero__label" for="fit-job-title">@Culture["Fit.JobTitle"]</label>
+                <input id="fit-job-title"
+                       class="fit-hero__input"
+                       type="search"
                        maxlength="80"
                        autocomplete="off"
                        placeholder="@Culture["Fit.Placeholder"]"
                        @bind="_jobTitle" />
-            </label>
-            <button class="login-submit" type="submit" disabled="@_busy">@Culture["Fit.Check"]</button>
-        </form>
+                <button class="login-submit fit-hero__submit" type="submit" disabled="@_busy">@Culture["Fit.Check"]</button>
+            </form>
+        </section>
 
         @if (_state.LastResult is { } result)
         {

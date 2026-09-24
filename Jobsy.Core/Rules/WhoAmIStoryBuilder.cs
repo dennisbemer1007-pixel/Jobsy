@@ -10,7 +10,8 @@ public static class WhoAmIStoryBuilder
     public static string Build(
         CompetencyScores competency,
         RiasecScores career,
-        CulturePersonalityScores culture)
+        CulturePersonalityScores culture,
+        WhoAmIProfileHighlights? profile = null)
     {
         var careerTop = TopLabels(
             CareerTestCatalog.RiasecCodes.Select(c => (CareerCompassBuilder.TypeLabel(c), career.Get(c))),
@@ -22,6 +23,7 @@ public static class WhoAmIStoryBuilder
             CompetencyTestCatalog.CategoryCodes.Select(c => (WhoAmIKeywords.EverydayCompetency(c), competency.Get(c))),
             2);
         var keywords = WhoAmIKeywords.FromScores(competency, career, culture);
+        profile ??= WhoAmIProfileHighlights.Empty;
 
         var sb = new StringBuilder();
         sb.Append("Ik ben iemand die tot zijn recht komt bij ");
@@ -30,6 +32,30 @@ public static class WhoAmIStoryBuilder
         sb.Append(JoinDutch(cultureTop));
         sb.AppendLine(".");
         sb.AppendLine();
+        if (profile.Roles.Count > 0 || profile.Educations.Count > 0 || profile.Certificates.Count > 0)
+        {
+            sb.Append("In mijn pad zie je ");
+            var bits = new List<string>();
+            if (profile.Roles.Count > 0)
+            {
+                bits.Add("ervaring als " + JoinDutch(profile.Roles.Take(2).ToList()));
+            }
+
+            if (profile.Educations.Count > 0)
+            {
+                bits.Add("opleiding in " + JoinDutch(profile.Educations.Take(2).ToList()));
+            }
+
+            if (profile.Certificates.Count > 0)
+            {
+                bits.Add("cursussen zoals " + JoinDutch(profile.Certificates.Take(2).ToList()));
+            }
+
+            sb.Append(JoinDutch(bits));
+            sb.AppendLine(".");
+            sb.AppendLine();
+        }
+
         sb.Append("Op de werkvloer is mijn kracht ");
         sb.Append(JoinDutch(compTop));
         sb.Append(". Ik zoek geen droge lijst van tests, maar werk waarin ik dat elke dag kan laten zien — dichtbij huis, in Den Haag of het Westland, bij een ploeg die op elkaar kan bouwen.");

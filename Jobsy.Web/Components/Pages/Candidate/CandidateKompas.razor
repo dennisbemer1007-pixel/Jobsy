@@ -194,6 +194,7 @@
              hidden="@(_tab != CandidateKompasTabs.Competencies)">
         <h3 id="kompas-competence-title" class="visually-hidden">@Culture["Kompas.TabCompetencies"]</h3>
         <p class="login-lead">@Culture["Kompas.CompetenceLead"]</p>
+        <p class="whoami-model muted">@Culture["Competency.ScienceNote"]</p>
         @if (_loading)
         {
             <p class="state-message">@Culture["Common.Loading"]</p>
@@ -248,6 +249,7 @@
              hidden="@(_tab != CandidateKompasTabs.Culture)">
         <h3 id="kompas-culture-title" class="visually-hidden">@Culture["Kompas.TabCulture"]</h3>
         <p class="login-lead">@Culture["Kompas.CultureLead"]</p>
+        <p class="whoami-model muted">@Culture["CultureScan.ScienceNote"]</p>
         @if (_loading)
         {
             <p class="state-message">@Culture["Common.Loading"]</p>
@@ -279,6 +281,7 @@
              hidden="@(_tab != CandidateKompasTabs.Career)">
         <h3 id="kompas-career-title" class="visually-hidden">@Culture["Kompas.TabCareers"]</h3>
         <p class="login-lead">@Culture["Kompas.CareerTabLead"]</p>
+        <p class="whoami-model muted">@Culture["Career.ScienceNote"]</p>
         @if (_loading)
         {
             <p class="state-message">@Culture["Common.Loading"]</p>
@@ -286,6 +289,10 @@
         else if (_careerCompleted && _riasecScores is { IsComplete: true })
         {
             <CareerCompassPanel Compass="_careerCompass" Competencies="_competencyScores" CareerDirection="_riasecScores" />
+            <div class="kompas-workstyle">
+                <h4 class="whoami__title">@Culture["Kompas.WorkStyleTitle"]</h4>
+                <RiasecScorePanel Scores="_riasecScores" />
+            </div>
             @if (_careerDeep is { IsCompleted: true })
             {
                 <p class="kompas-status kompas-status--ok">@Culture["Kompas.CareerDeepDone"]</p>
@@ -296,20 +303,14 @@
             else if (_careerDeep is { IsUnlocked: true })
             {
                 <p class="kompas-status">@Culture["Kompas.CareerDeepReady"]</p>
-                <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
+                <p class="login-lead">@Culture.Format("Kompas.CareerDeepProgress", _careerDeep.AnsweredCount, _careerDeep.QuestionCount)</p>
+                <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.ContinueDeep"]</a>
             }
             else
             {
                 <p class="kompas-status">@Culture["Kompas.CareerDeepLocked"]</p>
                 <p class="login-lead">@_careerUpsell</p>
                 <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
-            }
-            <button class="engagement-btn" type="button" @onclick="ToggleCareerDetails">
-                @(_showCareerDetails ? Culture["Kompas.HideWorkStyle"] : Culture["Kompas.ShowWorkStyle"])
-            </button>
-            @if (_showCareerDetails)
-            {
-                <RiasecScorePanel Scores="_riasecScores" />
             }
             <a class="engagement-btn" href="/candidate/career">@Culture["Career.Retake"]</a>
         }
@@ -318,12 +319,16 @@
             <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
             <p class="login-lead">@Culture.Format("Competency.DraftProgress", _careerAnswered, 25)</p>
             <a class="login-submit" href="/candidate/career">@Culture["Career.Continue"]</a>
+            <p class="kompas-status">@Culture["Kompas.CareerDeepLocked"]</p>
+            <a class="engagement-btn" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
         }
         else
         {
             <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
             <p class="login-lead">@Culture["Career.Empty"]</p>
             <a class="login-submit" href="/candidate/career">@Culture["Career.Start"]</a>
+            <p class="kompas-status">@Culture["Kompas.CareerDeepLocked"]</p>
+            <a class="engagement-btn" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
         }
     </article>
 
@@ -375,7 +380,6 @@
     private Dictionary<string, List<string>> _availability = new(StringComparer.OrdinalIgnoreCase);
     private string _tab = CandidateKompasTabs.WhoAmI;
     private Guid? _vacancyId;
-    private bool _showCareerDetails;
     private bool _listeningToLocation;
 
     [Parameter] public string? InitialTab { get; set; }
@@ -496,9 +500,6 @@
                 break;
         }
     }
-
-    private void ToggleCareerDetails()
-        => _showCareerDetails = !_showCareerDetails;
 
     private async Task LoadAsync()
     {

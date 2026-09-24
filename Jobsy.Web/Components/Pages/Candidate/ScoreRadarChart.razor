@@ -31,12 +31,6 @@
                     LabelAnchor(i),
                     ShortLabel(Labels[i]),
                     $"{Labels[i]}: {Values[i]}%"))
-                @((MarkupString)ScoreRadarSvg.Text(
-                    "score-radar__value",
-                    label.X,
-                    label.Y + 12,
-                    LabelAnchor(i),
-                    $"{Values[i]}%"))
             }
             <polygon class="score-radar__fill" points="@ShapePoints()">
                 <title>@AriaLabel</title>
@@ -56,8 +50,8 @@
 </div>
 
 @code {
-    private const double Radius = 96;
-    private const double LabelRadiusPercent = 128;
+    private const double Radius = 88;
+    private const double LabelRadiusPercent = 138;
 
     [Parameter, EditorRequired] public IReadOnlyList<string> Labels { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlyList<int> Values { get; set; } = [];

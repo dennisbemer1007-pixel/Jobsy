@@ -27,5 +27,11 @@ public sealed record WhoAmIStateDto(
     IReadOnlyList<string> Keywords,
     CompetencyScores? CompetencyScores,
     CulturePersonalityScores? CultureScores,
+    RiasecScores? CareerScores,
     bool IncludeOnCv,
-    DateTime? StoryGeneratedAtUtc);
+    DateTime? StoryGeneratedAtUtc,
+    IReadOnlyList<WhoAmIEmployerDto> Employers,
+    IReadOnlyList<string> Educations,
+    IReadOnlyList<string> Certificates);
+
+public sealed record WhoAmIEmployerDto(string EmployerName, string? Role);

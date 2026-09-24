@@ -41,9 +41,11 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         CompetencyScores competency,
         RiasecScores career,
         CulturePersonalityScores culture,
+        WhoAmIProfileHighlights? profile = null,
         CancellationToken cancellationToken = default)
     {
-        var local = Local(competency, career, culture);
+        profile ??= WhoAmIProfileHighlights.Empty;
+        var local = Local(competency, career, culture, profile);
         var apiKey = await ResolveApiKeyAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(apiKey))
         {
@@ -56,6 +58,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
                 competency,
                 career,
                 culture,
+                profile,
                 apiKey,
                 await ResolveModelAsync(cancellationToken),
                 await ResolveBaseUrlAsync(cancellationToken),
@@ -76,9 +79,10 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
     private static WhoAmIGeneratedStory Local(
         CompetencyScores competency,
         RiasecScores career,
-        CulturePersonalityScores culture)
+        CulturePersonalityScores culture,
+        WhoAmIProfileHighlights profile)
         => new(
-            WhoAmIStoryBuilder.Build(competency, career, culture),
+            WhoAmIStoryBuilder.Build(competency, career, culture, profile),
             WhoAmIKeywords.FromScores(competency, career, culture),
             FromOpenAi: false);
 
@@ -86,6 +90,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         CompetencyScores competency,
         RiasecScores career,
         CulturePersonalityScores culture,
+        WhoAmIProfileHighlights profile,
         string apiKey,
         string model,
         string baseUrl,
@@ -104,7 +109,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
             messages = new object[]
             {
                 new { role = "system", content = WhoAmIPrompt.System },
-                new { role = "user", content = WhoAmIPrompt.User(competency, career, culture) }
+                new { role = "user", content = WhoAmIPrompt.User(competency, career, culture, profile) }
             }
         });
 

@@ -81,6 +81,12 @@ public class WhoAmITests
         var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/WhoAmIPanel.razor"));
         Assert.Contains("WhoAmI.AttachCv", panel, StringComparison.Ordinal);
         Assert.Contains("CompetencyScorePanel", panel, StringComparison.Ordinal);
+        Assert.Contains("CultureScorePanel", panel, StringComparison.Ordinal);
+        Assert.Contains("RiasecScorePanel", panel, StringComparison.Ordinal);
+        Assert.Contains("Career.ScienceNote", panel, StringComparison.Ordinal);
+        Assert.Contains("Competency.ScienceNote", panel, StringComparison.Ordinal);
+        Assert.Contains("CultureScan.ScienceNote", panel, StringComparison.Ordinal);
+        Assert.Contains("WhoAmI.WorkExperience", panel, StringComparison.Ordinal);
         Assert.Contains("OnParametersSetAsync", panel, StringComparison.Ordinal);
         Assert.Contains("Active=", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor")), StringComparison.Ordinal);
     }

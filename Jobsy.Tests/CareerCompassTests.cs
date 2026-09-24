@@ -258,7 +258,12 @@ public class CareerCompassTests
         Assert.Contains("kompas-panel-competencies", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-career", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-fit", home, StringComparison.Ordinal);
-        Assert.Contains("Kompas.ShowWorkStyle", home, StringComparison.Ordinal);
+        Assert.Contains("Kompas.WorkStyleTitle", home, StringComparison.Ordinal);
+        Assert.Contains("RiasecScorePanel", home, StringComparison.Ordinal);
+        Assert.Contains("Career.ScienceNote", home, StringComparison.Ordinal);
+        Assert.Contains("Competency.ScienceNote", home, StringComparison.Ordinal);
+        Assert.Contains("CultureScan.ScienceNote", home, StringComparison.Ordinal);
+        Assert.DoesNotContain("Kompas.ShowWorkStyle", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.PracticalTitle", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor")), StringComparison.Ordinal);
         Assert.DoesNotContain("kompas-grid", home, StringComparison.Ordinal);
 

@@ -23,28 +23,24 @@
                 </div>
             }
 
-            <div class="swipe-card__logo-row">
+            <div class="swipe-card__photo">
                 @if (!string.IsNullOrWhiteSpace(Model.CompanyLogoUrl))
                 {
-                    <img class="swipe-card__logo"
+                    <img class="swipe-card__logo swipe-card__logo--on-photo"
                          src="@Model.CompanyLogoUrl"
                          alt="@Model.CompanyName"
                          loading="@(IsBackdrop ? "eager" : "lazy")" />
                 }
                 else
                 {
-                    <div class="swipe-card__logo-fallback" aria-hidden="true">
-                        <svg viewBox="0 0 48 48" width="32" height="32" fill="none">
+                    <div class="swipe-card__logo-fallback swipe-card__logo-fallback--on-photo" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" width="22" height="22" fill="none">
                             <circle cx="24" cy="24" r="22" fill="#2f6b4f"/>
                             <path d="M16 28c4-10 12-14 18-16-2 8-6 14-12 18-2-4-4-6-6-2z" fill="#8fbf45"/>
                             <path d="M18 30c2-6 6-10 12-12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
                         </svg>
-                        <span class="swipe-card__logo-text">@LogoLabel</span>
                     </div>
                 }
-            </div>
-
-            <div class="swipe-card__photo">
                 @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
                 {
                     <img src="@Model.ImageUrl"
@@ -105,6 +101,20 @@
                     }
                 </ul>
             }
+
+            <div class="swipe-card__copy">
+                @if (!string.IsNullOrWhiteSpace(Model.ShortDescription))
+                {
+                    <p class="swipe-card__blurb">@Model.ShortDescription</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.WhyYouFit))
+                {
+                    <p class="swipe-card__why">
+                        <span class="swipe-card__why-label">Waarom jij past</span>
+                        @Model.WhyYouFit
+                    </p>
+                }
+            </div>
 
             @if (!IsBackdrop)
             {
