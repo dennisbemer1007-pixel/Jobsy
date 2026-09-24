@@ -89,12 +89,21 @@ public sealed class WhoAmIService : IWhoAmIService
                 string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim()))
             .Take(6)
             .ToList();
-        var educations = (prefs?.Educations ?? [])
+        var educationEntries = (prefs?.EducationEntries ?? [])
+            .Select(FormatEducationEntry)
             .Where(e => !string.IsNullOrWhiteSpace(e))
-            .Select(e => e.Trim())
+            .Cast<string>()
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(8)
             .ToList();
+        var educations = educationEntries.Count > 0
+            ? educationEntries
+            : (prefs?.Educations ?? [])
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .Select(e => e.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(8)
+                .ToList();
         var certificates = (prefs?.Certificates ?? [])
             .Where(c => !string.IsNullOrWhiteSpace(c.Name))
             .Select(c => c.Year is int y ? $"{c.Name.Trim()} ({y})" : c.Name.Trim())
@@ -250,6 +259,36 @@ public sealed class WhoAmIService : IWhoAmIService
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
+
+    private static string? FormatEducationEntry(CandidateEducationEntryDto e)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(e.EducationType))
+        {
+            parts.Add(e.EducationType.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(e.Level))
+        {
+            parts.Add(e.Level.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(e.Institute))
+        {
+            parts.Add(e.Institute.Trim());
+        }
+
+        if (e.DiplomaObtained == true)
+        {
+            parts.Add("diploma behaald");
+        }
+        else if (e.DiplomaObtained == false)
+        {
+            parts.Add("nog geen diploma");
+        }
+
+        return parts.Count == 0 ? null : string.Join(" · ", parts);
+    }
 
     private static CandidatePreferencesDto? TryReadPreferences(string? json)
     {

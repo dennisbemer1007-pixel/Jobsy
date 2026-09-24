@@ -54,6 +54,11 @@
                             class="admin-sublink @(IsSectionOpen("experience") ? "admin-sublink--active" : null)"
                             aria-expanded="@(IsSectionOpen("experience") ? "true" : "false")"
                             @onclick='() => ToggleSection("experience")'>@Culture["Profile.Section.Experience"]</button>
+                    <button type="button"
+                            class="admin-sublink @(IsSectionOpen("education") ? "admin-sublink--active" : null)"
+                            aria-expanded="@(IsSectionOpen("education") ? "true" : "false")"
+                            aria-controls="profile-section-education"
+                            @onclick='() => ToggleSection("education")'>@Culture["Profile.Section.Education"]</button>
                 </nav>
                 <div class="profile-accordion">
                     <h2 class="visually-hidden" id="profile-section-personal-btn">@Culture["Profile.Section.Personal"]</h2>
@@ -378,6 +383,14 @@
                                                       placeholder="@Culture["Profile.DutiesPlaceholder"]"
                                                       @bind="_employers[idx].Description"></textarea>
                                         </label>
+                                        <div class="profile-employer-card__actions">
+                                            <button type="button"
+                                                    class="engagement-btn"
+                                                    disabled="@(_references.Count >= CandidateReferenceRules.MaxPerCandidate)"
+                                                    @onclick="() => AddReferenceForEmployer(idx)">
+                                                @Culture["Profile.AddReference"]
+                                            </button>
+                                        </div>
                                     </div>
                                 }
                                 <button type="button" class="icon-btn icon-btn--add" title="@Culture["Profile.AddEmployer"]" aria-label="@Culture["Profile.AddEmployer"]" @onclick="AddEmployer">
@@ -387,8 +400,67 @@
                                 </button>
                             </fieldset>
 
+                            <fieldset class="profile-employers" id="profile-references">
+                                <legend>@Culture["Profile.References"]</legend>
+                                <p class="profile-employers__hint">@Culture["Profile.ReferencesLead"]</p>
+                                @for (var i = 0; i < _references.Count; i++)
+                                {
+                                    var idx = i;
+                                    <div class="profile-employer-card">
+                                        <div class="profile-employer-card__top">
+                                            <label class="profile-employer-card__field profile-employer-card__field--employer">
+                                                <span>@Culture["Profile.ReferenceEmployer"]</span>
+                                                <input @bind="_references[idx].EmployerName" />
+                                            </label>
+                                            <label class="profile-employer-card__field profile-employer-card__field--role">
+                                                <span>@Culture["Profile.ReferenceContact"]</span>
+                                                <input @bind="_references[idx].ContactName" />
+                                            </label>
+                                            <button type="button"
+                                                    class="icon-btn icon-btn--danger"
+                                                    title="@Culture["Profile.RemoveReference"]"
+                                                    aria-label="@Culture["Profile.RemoveReference"]"
+                                                    @onclick="() => RemoveReference(idx)">
+                                                @((MarkupString)ActionIcons.Trash)
+                                            </button>
+                                        </div>
+                                        <div class="profile-employer-card__dates">
+                                            <label class="profile-employer-card__field">
+                                                <span>@Culture["Profile.ReferenceEmail"]</span>
+                                                <input type="email" @bind="_references[idx].Email" />
+                                            </label>
+                                            <label class="profile-employer-card__field">
+                                                <span>@Culture["Profile.ReferencePhone"]</span>
+                                                <input type="tel" @bind="_references[idx].Phone" />
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                                @if (_references.Count == 0)
+                                {
+                                    <p class="profile-employers__hint">@Culture["Profile.ReferencesEmpty"]</p>
+                                }
+                            </fieldset>
+
+                            @if (_authenticatorEnabled)
+                            {
+                                <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
+                            }
+
+                            <button class="engagement-btn" type="button" disabled="@(_saving || _pdfBusy)" @onclick="DownloadLobsyCvAsync">
+                                @(_pdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
+                            </button>
+                            <p class="profile-address__hint">@Culture["Profile.LobsyCvHint"]</p>
+                        </div>
+                    }
+
+                    <h2 class="visually-hidden" id="profile-section-education-btn">@Culture["Profile.Section.Education"]</h2>
+                    @if (IsSectionOpen("education"))
+                    {
+                        <div class="profile-accordion__body" id="profile-section-education" role="region" aria-labelledby="profile-section-education-btn">
                             <fieldset class="profile-roles profile-check-grid">
                                 <legend>@Culture["Profile.Education"]</legend>
+                                <p class="profile-employers__hint">@Culture["Profile.EducationLevelHint"]</p>
                                 @foreach (var level in _educationOptions)
                                 {
                                     <label>
@@ -398,6 +470,90 @@
                                         @UiLabels.Education(Culture, level)
                                     </label>
                                 }
+                            </fieldset>
+
+                            <fieldset class="profile-employers">
+                                <legend>@Culture["Profile.EducationEntries"]</legend>
+                                <p class="profile-employers__hint">@Culture["Profile.EducationEntriesHint"]</p>
+                                @for (var i = 0; i < _educationEntries.Count; i++)
+                                {
+                                    var idx = i;
+                                    <div class="profile-employer-card profile-education-card">
+                                        <div class="profile-employer-card__dates">
+                                            <label class="profile-employer-card__field profile-employer-card__field--start">
+                                                <span>@Culture["Profile.EducationFrom"]</span>
+                                                <input type="month"
+                                                       min="1950-01"
+                                                       max="2100-12"
+                                                       value="@(_educationEntries[idx].StartMonth ?? "")"
+                                                       @onchange="e => SetEducationStartMonth(idx, e.Value?.ToString())" />
+                                            </label>
+                                            <label class="profile-employer-card__field profile-employer-card__field--end">
+                                                <span>@Culture["Profile.EducationTo"]</span>
+                                                <input type="month"
+                                                       min="1950-01"
+                                                       max="2100-12"
+                                                       value="@(_educationEntries[idx].EndMonth ?? "")"
+                                                       @onchange="e => SetEducationEndMonth(idx, e.Value?.ToString())" />
+                                            </label>
+                                        </div>
+                                        <div class="profile-employer-card__top">
+                                            <label class="profile-employer-card__field">
+                                                <span>@Culture["Profile.EducationLevel"]</span>
+                                                <select @bind="_educationEntries[idx].Level">
+                                                    <option value="">@Culture["Profile.EducationLevelPick"]</option>
+                                                    @foreach (var level in EducationLevelLabels.VacancyAll)
+                                                    {
+                                                        <option value="@level">@UiLabels.Education(Culture, level)</option>
+                                                    }
+                                                </select>
+                                            </label>
+                                            <label class="profile-employer-card__field">
+                                                <span>@Culture["Profile.EducationType"]</span>
+                                                <select @bind="_educationEntries[idx].EducationType">
+                                                    <option value="">@Culture["Profile.EducationTypePick"]</option>
+                                                    @foreach (var type in EducationTypeLabels.All)
+                                                    {
+                                                        <option value="@type">@UiLabels.EducationType(Culture, type)</option>
+                                                    }
+                                                </select>
+                                            </label>
+                                            <button type="button"
+                                                    class="icon-btn icon-btn--danger"
+                                                    title="@Culture["Profile.RemoveEducationEntry"]"
+                                                    aria-label="@Culture["Profile.RemoveEducationEntry"]"
+                                                    @onclick="() => RemoveEducationEntry(idx)">
+                                                @((MarkupString)ActionIcons.Trash)
+                                            </button>
+                                        </div>
+                                        <div class="profile-employer-card__top">
+                                            <label class="profile-employer-card__field profile-employer-card__field--employer">
+                                                <span>@Culture["Profile.EducationInstitute"]</span>
+                                                <input maxlength="200"
+                                                       placeholder="@Culture["Profile.EducationInstitutePlaceholder"]"
+                                                       @bind="_educationEntries[idx].Institute" />
+                                            </label>
+                                            <label class="profile-employer-card__field">
+                                                <span>@Culture["Profile.EducationDiploma"]</span>
+                                                <select value="@DiplomaSelectValue(_educationEntries[idx].DiplomaObtained)"
+                                                        @onchange="e => SetEducationDiploma(idx, e.Value?.ToString())">
+                                                    <option value="">@Culture["Profile.EducationDiplomaPick"]</option>
+                                                    <option value="yes">@Culture["Common.Yes"]</option>
+                                                    <option value="no">@Culture["Common.No"]</option>
+                                                </select>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                                <button type="button"
+                                        class="icon-btn icon-btn--add"
+                                        title="@Culture["Profile.AddEducationEntry"]"
+                                        aria-label="@Culture["Profile.AddEducationEntry"]"
+                                        @onclick="AddEducationEntry">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                                        <path d="M12 5v14" /><path d="M5 12h14" />
+                                    </svg>
+                                </button>
                             </fieldset>
 
                             <fieldset class="profile-certificates">
@@ -440,64 +596,6 @@
                                     </svg>
                                 </button>
                             </fieldset>
-
-                            <fieldset class="profile-employers">
-                                <legend>@Culture["Profile.References"]</legend>
-                                <p class="profile-employers__hint">@Culture["Profile.ReferencesLead"]</p>
-                                @for (var i = 0; i < _references.Count; i++)
-                                {
-                                    var idx = i;
-                                    <div class="profile-employer-card">
-                                        <div class="profile-employer-card__top">
-                                            <label class="profile-employer-card__field profile-employer-card__field--employer">
-                                                <span>@Culture["Profile.ReferenceEmployer"]</span>
-                                                <input @bind="_references[idx].EmployerName" />
-                                            </label>
-                                            <label class="profile-employer-card__field profile-employer-card__field--role">
-                                                <span>@Culture["Profile.ReferenceContact"]</span>
-                                                <input @bind="_references[idx].ContactName" />
-                                            </label>
-                                            <button type="button"
-                                                    class="icon-btn icon-btn--danger"
-                                                    title="@Culture["Profile.RemoveReference"]"
-                                                    aria-label="@Culture["Profile.RemoveReference"]"
-                                                    @onclick="() => RemoveReference(idx)">
-                                                @((MarkupString)ActionIcons.Trash)
-                                            </button>
-                                        </div>
-                                        <div class="profile-employer-card__dates">
-                                            <label class="profile-employer-card__field">
-                                                <span>@Culture["Profile.ReferenceEmail"]</span>
-                                                <input type="email" @bind="_references[idx].Email" />
-                                            </label>
-                                            <label class="profile-employer-card__field">
-                                                <span>@Culture["Profile.ReferencePhone"]</span>
-                                                <input type="tel" @bind="_references[idx].Phone" />
-                                            </label>
-                                        </div>
-                                    </div>
-                                }
-                                <button type="button"
-                                        class="icon-btn icon-btn--add"
-                                        title="@Culture["Profile.AddReference"]"
-                                        aria-label="@Culture["Profile.AddReference"]"
-                                        @onclick="AddReference"
-                                        disabled="@(_references.Count >= CandidateReferenceRules.MaxPerCandidate)">
-                                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                                        <path d="M12 5v14" /><path d="M5 12h14" />
-                                    </svg>
-                                </button>
-                            </fieldset>
-
-                            @if (_authenticatorEnabled)
-                            {
-                                <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
-                            }
-
-                            <button class="engagement-btn" type="button" disabled="@(_saving || _pdfBusy)" @onclick="DownloadLobsyCvAsync">
-                                @(_pdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
-                            </button>
-                            <p class="profile-address__hint">@Culture["Profile.LobsyCvHint"]</p>
                         </div>
                     }
                 </div>
@@ -575,6 +673,7 @@
     private readonly HashSet<string> _availability = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<CandidateEmployerHistory> _employers = [];
     private readonly List<CandidateCertificate> _certificates = [];
+    private readonly List<CandidateEducationEntry> _educationEntries = [];
     private readonly List<CandidateReferenceItem> _references = [];
     private CandidateUploadedCvInfo? _uploadedCv;
     private bool _cvBusy;
@@ -669,6 +768,8 @@
             _employers.AddRange(prefs.Employers ?? []);
             _certificates.Clear();
             _certificates.AddRange(prefs.Certificates ?? []);
+            _educationEntries.Clear();
+            _educationEntries.AddRange(prefs.EducationEntries ?? []);
             ApplyCvAndReferences(profile);
             await LoadMatchedVacanciesAsync();
             _selectedEducations.Clear();
@@ -940,6 +1041,66 @@
     private void AddCertificate() => _certificates.Add(new CandidateCertificate());
     private void RemoveCertificate(int index) => _certificates.RemoveAt(index);
 
+    private void AddEducationEntry() => _educationEntries.Add(new CandidateEducationEntry());
+    private void RemoveEducationEntry(int index) => _educationEntries.RemoveAt(index);
+
+    private void SetEducationStartMonth(int index, string? value)
+    {
+        if (index < 0 || index >= _educationEntries.Count)
+        {
+            return;
+        }
+
+        var normalized = NormalizeMonthInput(value);
+        _educationEntries[index].StartMonth = normalized;
+        if (normalized is not null
+            && !string.IsNullOrWhiteSpace(_educationEntries[index].EndMonth)
+            && string.CompareOrdinal(_educationEntries[index].EndMonth, normalized) < 0)
+        {
+            _educationEntries[index].EndMonth = null;
+        }
+    }
+
+    private void SetEducationEndMonth(int index, string? value)
+    {
+        if (index < 0 || index >= _educationEntries.Count)
+        {
+            return;
+        }
+
+        var normalized = NormalizeMonthInput(value);
+        if (normalized is not null
+            && !string.IsNullOrWhiteSpace(_educationEntries[index].StartMonth)
+            && string.CompareOrdinal(normalized, _educationEntries[index].StartMonth) < 0)
+        {
+            normalized = null;
+        }
+
+        _educationEntries[index].EndMonth = normalized;
+    }
+
+    private static string DiplomaSelectValue(bool? value) => value switch
+    {
+        true => "yes",
+        false => "no",
+        _ => ""
+    };
+
+    private void SetEducationDiploma(int index, string? value)
+    {
+        if (index < 0 || index >= _educationEntries.Count)
+        {
+            return;
+        }
+
+        _educationEntries[index].DiplomaObtained = value switch
+        {
+            "yes" => true,
+            "no" => false,
+            _ => null
+        };
+    }
+
     private void AddReference()
     {
         if (_references.Count >= CandidateReferenceRules.MaxPerCandidate)
@@ -948,6 +1109,23 @@
         }
 
         _references.Add(new CandidateReferenceItem());
+    }
+
+    private void AddReferenceForEmployer(int employerIndex)
+    {
+        if (_references.Count >= CandidateReferenceRules.MaxPerCandidate
+            || employerIndex < 0
+            || employerIndex >= _employers.Count)
+        {
+            return;
+        }
+
+        var employerName = _employers[employerIndex].EmployerName?.Trim() ?? "";
+        _references.Add(new CandidateReferenceItem
+        {
+            EmployerName = employerName
+        });
+        _openSection = "experience";
     }
 
     private void RemoveReference(int index) => _references.RemoveAt(index);
@@ -1158,6 +1336,24 @@
                         })
                         .Take(30)
                         .ToList(),
+                    EducationEntries = _educationEntries
+                        .Select(e => new CandidateEducationEntry
+                        {
+                            StartMonth = string.IsNullOrWhiteSpace(e.StartMonth) ? null : e.StartMonth.Trim(),
+                            EndMonth = string.IsNullOrWhiteSpace(e.EndMonth) ? null : e.EndMonth.Trim(),
+                            Level = string.IsNullOrWhiteSpace(e.Level) ? null : e.Level.Trim(),
+                            EducationType = string.IsNullOrWhiteSpace(e.EducationType) ? null : e.EducationType.Trim(),
+                            Institute = string.IsNullOrWhiteSpace(e.Institute) ? null : e.Institute.Trim(),
+                            DiplomaObtained = e.DiplomaObtained
+                        })
+                        .Where(e => e.StartMonth is not null
+                                    || e.EndMonth is not null
+                                    || e.Level is not null
+                                    || e.EducationType is not null
+                                    || e.Institute is not null
+                                    || e.DiplomaObtained is not null)
+                        .Take(30)
+                        .ToList(),
                     ShowAddressOnCv = false
                 },
                 homeLatitude: clearHome || !_homeLocationDirty ? null : _homeLat,
@@ -1265,6 +1461,8 @@
         _employers.AddRange(prefs.Employers ?? []);
         _certificates.Clear();
         _certificates.AddRange(prefs.Certificates ?? []);
+        _educationEntries.Clear();
+        _educationEntries.AddRange(prefs.EducationEntries ?? []);
         _selectedLicenses.Clear();
         foreach (var license in prefs.DrivingLicenses ?? [])
         {

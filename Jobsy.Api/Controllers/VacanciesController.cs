@@ -195,9 +195,9 @@ public class VacanciesController : ControllerBase
             var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is not null)
             {
-                matches = _profileMatch.Score(
+                matches = _profileMatch.ScoreFromHome(
                     matchContext,
-                    candidates.Select(c => (c.Record, c.TravelMinutes)));
+                    candidates.Select(c => c.Record));
                 candidates = candidates
                     .Where(c =>
                     {
@@ -2058,7 +2058,9 @@ public class VacanciesController : ControllerBase
         }
 
         var record = VacancyDiscoveryIndex.ToRecord(vacancy);
-        var matches = _profileMatch.Score(matchContext, [(record, travelMinutes)]);
+        // MatchPercent must match Top 10 / discovery: always score from profile home travel,
+        // not from the optional map/browser origin used only for route display.
+        var matches = _profileMatch.ScoreFromHome(matchContext, [record]);
         if (!matches.TryGetValue(vacancy.Id, out var match))
         {
             return dto;

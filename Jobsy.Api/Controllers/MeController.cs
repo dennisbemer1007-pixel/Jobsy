@@ -140,7 +140,8 @@ public class MeController : ControllerBase
             existing.MaxHoursPerWeek,
             existing.FlexibleTimes,
             existing.Certificates,
-            existing.ShowAddressOnCv);
+            existing.ShowAddressOnCv,
+            existing.EducationEntries);
 
         await _db.SaveChangesAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
@@ -296,7 +297,8 @@ public class MeController : ControllerBase
                 request.Preferences.MaxHoursPerWeek,
                 request.Preferences.FlexibleTimes,
                 request.Preferences.Certificates,
-                request.Preferences.ShowAddressOnCv);
+                request.Preferences.ShowAddressOnCv,
+                request.Preferences.EducationEntries);
         }
 
         if (request.References is not null)
@@ -674,7 +676,8 @@ public class MeController : ControllerBase
                 merged.Preferences.MaxHoursPerWeek,
                 merged.Preferences.FlexibleTimes,
                 merged.Preferences.Certificates,
-                merged.Preferences.ShowAddressOnCv);
+                merged.Preferences.ShowAddressOnCv,
+                merged.Preferences.EducationEntries);
             existing.ExtractedAtUtc = DateTime.UtcNow;
             existing.FilledFieldsJson = JsonSerializer.Serialize(merged.FilledFields, JsonOptions);
         }
@@ -1166,6 +1169,73 @@ public class MeController : ControllerBase
                 showAddressOnCv = showAddrEl.GetBoolean();
             }
 
+            var educationEntries = new List<CandidateEducationEntryDto>();
+            if (root.TryGetProperty("educationEntries", out var educationEntriesEl)
+                && educationEntriesEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in educationEntriesEl.EnumerateArray())
+                {
+                    if (item.ValueKind != JsonValueKind.Object)
+                    {
+                        continue;
+                    }
+
+                    var startMonth = ReadEmployerMonth(item, "startMonth", "start");
+                    var endMonth = NormalizeEmployerEndMonth(startMonth, ReadEmployerMonth(item, "endMonth", "end"));
+                    string? level = null;
+                    if (item.TryGetProperty("level", out var levelEl) && levelEl.ValueKind == JsonValueKind.String)
+                    {
+                        var rawLevel = levelEl.GetString()?.Trim();
+                        if (!string.IsNullOrWhiteSpace(rawLevel)
+                            && EducationLevelLabels.VacancyAll.Contains(rawLevel, StringComparer.OrdinalIgnoreCase))
+                        {
+                            level = EducationLevelLabels.VacancyAll
+                                .First(a => string.Equals(a, rawLevel, StringComparison.OrdinalIgnoreCase));
+                        }
+                    }
+
+                    var educationType = item.TryGetProperty("educationType", out var typeEl)
+                                        && typeEl.ValueKind == JsonValueKind.String
+                        ? EducationTypeLabels.Normalize(typeEl.GetString())
+                        : null;
+
+                    string? institute = null;
+                    if (item.TryGetProperty("institute", out var instituteEl) && instituteEl.ValueKind == JsonValueKind.String)
+                    {
+                        institute = instituteEl.GetString()?.Trim();
+                        if (institute is { Length: > 200 })
+                        {
+                            institute = institute[..200];
+                        }
+                    }
+
+                    bool? diplomaObtained = null;
+                    if (item.TryGetProperty("diplomaObtained", out var diplomaEl)
+                        && (diplomaEl.ValueKind is JsonValueKind.True or JsonValueKind.False))
+                    {
+                        diplomaObtained = diplomaEl.GetBoolean();
+                    }
+
+                    if (startMonth is null
+                        && endMonth is null
+                        && level is null
+                        && educationType is null
+                        && string.IsNullOrWhiteSpace(institute)
+                        && diplomaObtained is null)
+                    {
+                        continue;
+                    }
+
+                    educationEntries.Add(new CandidateEducationEntryDto(
+                        startMonth,
+                        endMonth,
+                        level,
+                        educationType,
+                        institute,
+                        diplomaObtained));
+                }
+            }
+
             return new CandidatePreferencesDto(
                 roles,
                 maxTravel,
@@ -1183,7 +1253,8 @@ public class MeController : ControllerBase
                 maxHours,
                 flexibleTimes,
                 certificates,
-                showAddressOnCv);
+                showAddressOnCv,
+                educationEntries.Take(30).ToList());
         }
         catch (Exception)
         {
@@ -1263,7 +1334,8 @@ public class MeController : ControllerBase
         decimal? maxHoursPerWeek = null,
         bool? flexibleTimes = null,
         IEnumerable<CandidateCertificateDto>? certificates = null,
-        bool? showAddressOnCv = null)
+        bool? showAddressOnCv = null,
+        IEnumerable<CandidateEducationEntryDto>? educationEntries = null)
     {
         var trimmedHome = string.IsNullOrWhiteSpace(homeAddress) ? null : homeAddress.Trim();
         if (trimmedHome is { Length: > 256 })
@@ -1342,7 +1414,46 @@ public class MeController : ControllerBase
                 })
                 .Take(30)
                 .ToArray(),
-            showAddressOnCv
+            showAddressOnCv,
+            educationEntries = educationEntries?
+                .Select(e =>
+                {
+                    var institute = string.IsNullOrWhiteSpace(e.Institute) ? null : e.Institute.Trim();
+                    if (institute is { Length: > 200 })
+                    {
+                        institute = institute[..200];
+                    }
+
+                    var level = string.IsNullOrWhiteSpace(e.Level) ? null : e.Level.Trim();
+                    if (level is not null
+                        && !EducationLevelLabels.VacancyAll.Contains(level, StringComparer.OrdinalIgnoreCase))
+                    {
+                        level = null;
+                    }
+                    else if (level is not null)
+                    {
+                        level = EducationLevelLabels.VacancyAll
+                            .First(a => string.Equals(a, level, StringComparison.OrdinalIgnoreCase));
+                    }
+
+                    return new
+                    {
+                        startMonth = LobsyCvModelFactory.NormalizeMonth(e.StartMonth),
+                        endMonth = NormalizeEmployerEndMonth(e.StartMonth, e.EndMonth),
+                        level,
+                        educationType = EducationTypeLabels.Normalize(e.EducationType),
+                        institute,
+                        diplomaObtained = e.DiplomaObtained
+                    };
+                })
+                .Where(e => e.startMonth is not null
+                            || e.endMonth is not null
+                            || e.level is not null
+                            || e.educationType is not null
+                            || e.institute is not null
+                            || e.diplomaObtained is not null)
+                .Take(30)
+                .ToArray()
         }, JsonOptions);
     }
 }

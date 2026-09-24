@@ -237,6 +237,10 @@ public class CareerCompassTests
         var profilePage = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         Assert.Contains("ProfileTab", profilePage, StringComparison.Ordinal);
         Assert.Contains("profile-section-nav", profilePage, StringComparison.Ordinal);
+        Assert.Contains("Profile.Section.Education", profilePage, StringComparison.Ordinal);
+        Assert.Contains("Profile.EducationEntries", profilePage, StringComparison.Ordinal);
+        Assert.Contains("AddReferenceForEmployer", profilePage, StringComparison.Ordinal);
+        Assert.Contains("profile-section-education", profilePage, StringComparison.Ordinal);
         Assert.Contains("Talent.CandidateTitle", profilePage, StringComparison.Ordinal);
         Assert.Contains("CareerCompassPanel", home, StringComparison.Ordinal);
         Assert.Contains("role=\"tablist\"", home, StringComparison.Ordinal);

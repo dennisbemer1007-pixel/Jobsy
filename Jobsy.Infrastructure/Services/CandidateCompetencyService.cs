@@ -144,25 +144,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         }
 
         var vacancies = await _discovery.GetActiveAsync(cancellationToken);
-        var transport = TransportLabels.Parse(context.Prefs.PreferredTransport);
-        var scored = _matches.Score(
-            context,
-            vacancies.Select(vacancy =>
-            {
-                int? travelMinutes = null;
-                if (context.HomeLatitude is double lat && context.HomeLongitude is double lng)
-                {
-                    var estimate = TravelReach.Estimate(
-                        lat,
-                        lng,
-                        vacancy.Latitude,
-                        vacancy.Longitude,
-                        transport);
-                    travelMinutes = estimate.TravelMinutes;
-                }
-
-                return (vacancy, travelMinutes);
-            }));
+        var scored = _matches.ScoreFromHome(context, vacancies);
 
         var ranked = ProfileVacancyMatchCalculator.RankScored(scored.Values);
         var byId = vacancies.ToDictionary(v => v.Id);

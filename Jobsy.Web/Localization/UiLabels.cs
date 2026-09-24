@@ -103,6 +103,22 @@ public static class UiLabels
             ? culture["Education.None"]
             : level;
 
+    public static string EducationType(CultureState culture, string type)
+    {
+        var key = type switch
+        {
+            EducationTypeLabels.Secondary => "EducationType.Secondary",
+            EducationTypeLabels.Mbo => "EducationType.Mbo",
+            EducationTypeLabels.Hbo => "EducationType.Hbo",
+            EducationTypeLabels.Wo => "EducationType.Wo",
+            EducationTypeLabels.Course => "EducationType.Course",
+            EducationTypeLabels.Training => "EducationType.Training",
+            EducationTypeLabels.Other => "EducationType.Other",
+            _ => null
+        };
+        return key is null ? type : culture[key];
+    }
+
     public static string License(CultureState culture, string license) =>
         string.Equals(license, "Heftruck", StringComparison.OrdinalIgnoreCase)
             ? culture["License.Heftruck"]

@@ -82,6 +82,36 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
         return result;
     }
 
+    /// <summary>
+    /// Authoritative match travel: always from the candidate's saved home + preferred transport.
+    /// Keeps Top 10, vacaturedetails and banenkaart MatchPercent aligned.
+    /// </summary>
+    public static int? TravelMinutesFromHome(
+        ProfileVacancyMatchContext context,
+        VacancyDiscoveryRecord record)
+    {
+        if (context.HomeLatitude is not double lat || context.HomeLongitude is not double lng)
+        {
+            return null;
+        }
+
+        var transport = TransportLabels.Parse(context.Prefs.PreferredTransport);
+        return TravelReach.Estimate(
+            lat,
+            lng,
+            record.Latitude,
+            record.Longitude,
+            transport).TravelMinutes;
+    }
+
+    /// <summary>Score vacancies using profile-home travel (authoritative MatchPercent).</summary>
+    public IReadOnlyDictionary<Guid, ProfileVacancyMatch> ScoreFromHome(
+        ProfileVacancyMatchContext context,
+        IEnumerable<VacancyDiscoveryRecord> vacancies)
+        => Score(
+            context,
+            vacancies.Select(record => (record, TravelMinutesFromHome(context, record))));
+
     private async Task<ProfileVacancyMatchContext?> LoadForUserAsync(
         Guid userId,
         CancellationToken cancellationToken)

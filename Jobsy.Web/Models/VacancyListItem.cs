@@ -170,6 +170,7 @@ public sealed class CandidatePreferences
     public List<CandidateCertificate> Certificates { get; set; } = [];
     /// <summary>When false, Lobsy-CV omits address text and map (AVG).</summary>
     public bool? ShowAddressOnCv { get; set; }
+    public List<CandidateEducationEntry> EducationEntries { get; set; } = [];
 }
 
 public sealed class CandidateEmployerHistory
@@ -187,6 +188,17 @@ public sealed class CandidateCertificate
 {
     public string Name { get; set; } = string.Empty;
     public int? Year { get; set; }
+}
+
+public sealed class CandidateEducationEntry
+{
+    /// <summary>yyyy-MM for &lt;input type="month"&gt;.</summary>
+    public string? StartMonth { get; set; }
+    public string? EndMonth { get; set; }
+    public string? Level { get; set; }
+    public string? EducationType { get; set; }
+    public string? Institute { get; set; }
+    public bool? DiplomaObtained { get; set; }
 }
 
 public sealed class VacancyProductActionResult
