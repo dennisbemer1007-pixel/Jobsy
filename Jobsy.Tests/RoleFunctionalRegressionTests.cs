@@ -459,7 +459,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     {
         var client = CandidateClient();
         var career = await client.GetFromJsonAsync<JsonElement>("api/me/deep-analysis?kind=career", JsonOpts);
-        Assert.Equal(150, career.GetProperty("questionCount").GetInt32());
+        Assert.Equal(200, career.GetProperty("questionCount").GetInt32());
         Assert.False(career.GetProperty("isUnlocked").GetBoolean());
         Assert.Contains("beroepentest", career.GetProperty("upsellCopy").GetString(), StringComparison.OrdinalIgnoreCase);
 

@@ -162,7 +162,7 @@ public static class PageHelpDocs
         ["/candidate/career"] = new(
             "Beroepentest",
             "Vijfentwintig stellingen over wat je wilt in werk: aanpakken, uitzoeken, maken, helpen, aanjagen of organiseren.",
-            "Rond af voor Mijn Beroepen-kompas en een top 10 actieve vacatures in de regio. Optioneel: uitgebreide beroepentest (150 vragen, € 2,99) met een loopbaan-PDF in gewone taal (super-match, sterke keus, handige verbreding).",
+            "Rond af voor Mijn Beroepen-kompas en een top 10 actieve vacatures in de regio. Optioneel: uitgebreide beroepentest (200 vragen, € 2,99) met een loopbaan-PDF in gewone taal (super-match, sterke keus, handige verbreding).",
             "Interesses koppelen aan actieve vacatures op de kaart."),
 
         ["/candidate/talent-contacts"] = new(

@@ -8,7 +8,7 @@ public static class CareerCompassPrompt
     public const string System = """
         Je bent de loopbaanadviseur van Lobsy. Je schrijft een inspirerend, treffend loopbaanrapport in warme, positieve Jip-en-Janneke-taal (Nederlands). Alsof je het aan een vriend uitlegt.
         Verboden vaktermen (niet in titels, toelichting of notities): RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid.
-        Doel: analyseer de 150 unieke antwoorden en de scores per richting. Stel ALGEMENE beroepen en functiegroepen voor van de Nederlandse arbeidsmarkt die naadloos bij dit profiel passen.
+        Doel: analyseer de 200 unieke antwoorden en de scores per richting. Stel ALGEMENE beroepen en functiegroepen voor van de Nederlandse arbeidsmarkt die naadloos bij dit profiel passen.
         Niet beperken tot vacatures die nu op Lobsy staan. Geen bedrijfsnamen, geen woonplaats vragen, geen naam of e-mail.
         Hiërarchie is verplicht en moet logisch zijn: de top-matches zijn de best denkbare fit voor DEZE kandidaat. Percentages zijn de aansluiting van dat beroep bij de testuitslag, niet een willekeurig cijfer.
         - superMatches (kernfit): percent 95-100. De ideale banen die direct resoneren met de hoogste richtingen. Nooit geforceerd te laag (geen 80% voor de beste fit). 3 tot 6 beroepen, aflopend in percent.
@@ -32,7 +32,7 @@ public static class CareerCompassPrompt
         IReadOnlyDictionary<int, int> answers)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("Resultaten van de uitgebreide beroepentest (150 unieke vragen). Geen naam of e-mail.");
+        sb.AppendLine("Resultaten van de uitgebreide beroepentest (200 unieke vragen). Geen naam of e-mail.");
         var ordered = scores
             .OrderByDescending(s => s.Percent)
             .ThenBy(s => s.Domain, StringComparer.Ordinal)

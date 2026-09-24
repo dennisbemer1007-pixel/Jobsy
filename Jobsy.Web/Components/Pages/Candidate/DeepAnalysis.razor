@@ -31,7 +31,7 @@
         {
             <p class="login-lead">@_upsell</p>
             <button class="login-submit" type="button" disabled="@_saving" @onclick="StartCheckoutAsync">
-                @Culture["Competency.DeepUnlock"]
+                @Culture[_slug == "career" ? "Career.DeepUnlock" : "Competency.DeepUnlock"]
             </button>
             <a class="engagement-btn" href="/candidate/profile">@Culture["Competency.BackToProfile"]</a>
         }
@@ -186,7 +186,9 @@
     private int? _boosterMilestone;
 
     private int AnsweredCount => _answers.Count;
-    private int QuestionCount => _state?.QuestionCount ?? DeepAnalysisCatalog.QuestionCount;
+    private int QuestionCount => _state?.QuestionCount
+        ?? DeepAnalysisCatalog.QuestionCountFor(
+            AssessmentKindLabels.ParseOrDefault(_slug, AssessmentKind.Competence));
     private int ProgressPercent => QuestionCount <= 0
         ? 0
         : (int)Math.Clamp(Math.Round(100.0 * AnsweredCount / QuestionCount), 0, 100);

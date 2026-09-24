@@ -3,14 +3,18 @@ using Jobsy.Core.Enums;
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Paid 150-item deep analyses. Competence is 30 unique Likert items per Big Five trait;
-/// career is 25 unique items per RIASEC type. No repeated stems / “variant N”.
+/// Paid deep analyses. Competence: 150 Big Five items (30 per trait).
+/// Career: 200 RIASEC items (~33–34 per Holland type). No repeated stems.
 /// </summary>
 public static class DeepAnalysisCatalog
 {
-    public const int QuestionCount = 150;
+    public const int CompetenceQuestionCount = 150;
+    public const int CareerQuestionCount = 200;
+
+    /// <summary>Backward-compatible alias for competence question count.</summary>
+    public const int QuestionCount = CompetenceQuestionCount;
+
     public const int CompetenceItemsPerDomain = 30;
-    public const int CareerItemsPerDomain = 25;
     public const int LikertMin = LikertAnswerJson.LikertMin;
     public const int LikertMax = LikertAnswerJson.LikertMax;
 
@@ -24,12 +28,20 @@ public static class DeepAnalysisCatalog
 
     public static IReadOnlyList<DeepAnalysisQuestion> CareerQuestions => LazyCareer.Value;
 
+    public static int QuestionCountFor(AssessmentKind kind)
+        => kind switch
+        {
+            AssessmentKind.Career => CareerQuestionCount,
+            AssessmentKind.Culture => 0,
+            _ => CompetenceQuestionCount
+        };
+
     public static IReadOnlyList<DeepAnalysisQuestion> QuestionsFor(AssessmentKind kind)
         => kind switch
         {
             AssessmentKind.Career => CareerQuestions,
             AssessmentKind.Culture => throw new InvalidOperationException(
-                "De cultuurscan heeft geen 150-vragen deep analysis. Gebruik de gratis Quick-Scan (18 vragen)."),
+                "De cultuurscan heeft geen deep analysis. Gebruik de gratis Quick-Scan (18 vragen)."),
             _ => Questions
         };
 
@@ -37,43 +49,55 @@ public static class DeepAnalysisCatalog
         => kind is AssessmentKind.Competence or AssessmentKind.Career;
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildCompetenceQuestions()
-        => Materialize("BigFive", DeepAnalysisCompetenceItems.All, AssessmentKind.Competence, CompetenceItemsPerDomain);
+        => Materialize(
+            "BigFive",
+            DeepAnalysisCompetenceItems.All,
+            AssessmentKind.Competence,
+            CompetenceQuestionCount,
+            expectedPerDomain: CompetenceItemsPerDomain);
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildCareerQuestions()
-        => Materialize("RIASEC", DeepAnalysisCareerItems.All, AssessmentKind.Career, CareerItemsPerDomain);
+        => Materialize(
+            "RIASEC",
+            DeepAnalysisCareerItems.All,
+            AssessmentKind.Career,
+            CareerQuestionCount,
+            expectedPerDomain: null);
 
     private static IReadOnlyList<DeepAnalysisQuestion> Materialize(
         string family,
         IReadOnlyList<(string Domain, bool Reverse, string Prompt)> items,
         AssessmentKind kind,
-        int expectedPerDomain)
+        int expectedTotal,
+        int? expectedPerDomain)
     {
-        if (items.Count != QuestionCount)
+        if (items.Count != expectedTotal)
         {
             throw new InvalidOperationException(
-                $"DeepAnalysisCatalog ({kind}) source must contain {QuestionCount} items, got {items.Count}.");
+                $"DeepAnalysisCatalog ({kind}) source must contain {expectedTotal} items, got {items.Count}.");
         }
 
-        var list = new List<DeepAnalysisQuestion>(QuestionCount);
+        var list = new List<DeepAnalysisQuestion>(expectedTotal);
         for (var i = 0; i < items.Count; i++)
         {
             var item = items[i];
             list.Add(new DeepAnalysisQuestion(i + 1, family, item.Domain, item.Reverse, item.Prompt.Trim()));
         }
 
-        EnsureQuality(list, kind, expectedPerDomain);
+        EnsureQuality(list, kind, expectedTotal, expectedPerDomain);
         return list;
     }
 
     private static void EnsureQuality(
         List<DeepAnalysisQuestion> list,
         AssessmentKind kind,
-        int expectedPerDomain)
+        int expectedTotal,
+        int? expectedPerDomain)
     {
-        if (list.Count != QuestionCount)
+        if (list.Count != expectedTotal)
         {
             throw new InvalidOperationException(
-                $"DeepAnalysisCatalog ({kind}) must contain {QuestionCount} questions, got {list.Count}.");
+                $"DeepAnalysisCatalog ({kind}) must contain {expectedTotal} questions, got {list.Count}.");
         }
 
         var prompts = list.Select(q => q.PromptNl).ToList();
@@ -83,22 +107,30 @@ public static class DeepAnalysisCatalog
         }
 
         var distinct = prompts.Distinct(StringComparer.OrdinalIgnoreCase).Count();
-        if (distinct != QuestionCount)
+        if (distinct != expectedTotal)
         {
             throw new InvalidOperationException(
-                $"DeepAnalysisCatalog ({kind}) prompts must be unique, got {distinct} distinct of {QuestionCount}.");
+                $"DeepAnalysisCatalog ({kind}) prompts must be unique, got {distinct} distinct of {expectedTotal}.");
         }
 
         foreach (var group in list.GroupBy(q => q.Domain, StringComparer.OrdinalIgnoreCase))
         {
-            var expected = expectedPerDomain;
-            if (group.Count() != expected)
+            if (expectedPerDomain is int expected)
+            {
+                if (group.Count() != expected)
+                {
+                    throw new InvalidOperationException(
+                        $"DeepAnalysisCatalog ({kind}) domain {group.Key} has {group.Count()} items, expected {expected}.");
+                }
+            }
+            else if (group.Count() is < 32 or > 35)
             {
                 throw new InvalidOperationException(
-                    $"DeepAnalysisCatalog ({kind}) domain {group.Key} has {group.Count()} items, expected {expectedPerDomain}.");
+                    $"DeepAnalysisCatalog ({kind}) domain {group.Key} has {group.Count()} items, expected 32–35.");
             }
 
-            if (group.Count(q => q.Reverse) < expectedPerDomain / 5)
+            var minReverse = Math.Max(2, group.Count() / 5);
+            if (group.Count(q => q.Reverse) < minReverse)
             {
                 throw new InvalidOperationException(
                     $"DeepAnalysisCatalog ({kind}) domain {group.Key} needs more reverse-keyed items.");
@@ -108,11 +140,15 @@ public static class DeepAnalysisCatalog
 
     public static bool IsValidAnswer(int value) => LikertAnswerJson.IsValidAnswer(value);
 
-    public static string? ValidateAnswers(IReadOnlyDictionary<int, int> answers, bool requireComplete)
+    public static string? ValidateAnswers(
+        IReadOnlyDictionary<int, int> answers,
+        bool requireComplete,
+        AssessmentKind kind = AssessmentKind.Competence)
     {
+        var max = QuestionCountFor(kind);
         foreach (var (qid, value) in answers)
         {
-            if (qid is < 1 or > QuestionCount)
+            if (qid < 1 || qid > max)
             {
                 return "Onbekend vraagnummer in de diepte-analyse.";
             }
@@ -123,22 +159,25 @@ public static class DeepAnalysisCatalog
             }
         }
 
-        if (requireComplete && !IsComplete(answers))
+        if (requireComplete && !IsComplete(answers, kind))
         {
-            return "Beantwoord alle 150 vragen om de diepte-analyse af te ronden.";
+            return $"Beantwoord alle {max} vragen om de diepte-analyse af te ronden.";
         }
 
         return null;
     }
 
-    public static bool IsComplete(IReadOnlyDictionary<int, int> answers)
+    public static bool IsComplete(
+        IReadOnlyDictionary<int, int> answers,
+        AssessmentKind kind = AssessmentKind.Competence)
     {
-        if (answers.Count < QuestionCount)
+        var max = QuestionCountFor(kind);
+        if (answers.Count < max)
         {
             return false;
         }
 
-        for (var i = 1; i <= QuestionCount; i++)
+        for (var i = 1; i <= max; i++)
         {
             if (!answers.TryGetValue(i, out var value) || !IsValidAnswer(value))
             {
@@ -149,11 +188,15 @@ public static class DeepAnalysisCatalog
         return true;
     }
 
-    public static Dictionary<int, int> ParseAnswersJson(string? json)
-        => LikertAnswerJson.Parse(json, QuestionCount);
+    public static Dictionary<int, int> ParseAnswersJson(
+        string? json,
+        AssessmentKind kind = AssessmentKind.Competence)
+        => LikertAnswerJson.Parse(json, QuestionCountFor(kind));
 
-    public static string SerializeAnswers(IReadOnlyDictionary<int, int> answers)
-        => LikertAnswerJson.Serialize(answers, QuestionCount);
+    public static string SerializeAnswers(
+        IReadOnlyDictionary<int, int> answers,
+        AssessmentKind kind = AssessmentKind.Competence)
+        => LikertAnswerJson.Serialize(answers, QuestionCountFor(kind));
 
     public static IReadOnlyList<string> DeriveEnrichedTags(
         IReadOnlyDictionary<int, int> answers,
@@ -256,7 +299,7 @@ public static class DeepAnalysisCatalog
         {
             return
             [
-            "Rond de 150 vragen af. Dan maken we een helder beeld van welk werk bij je past, plus advies voor Den Haag en het Westland."
+            "Rond de 200 vragen af. Dan maken we een helder beeld van welk werk bij je past, plus advies voor Den Haag en het Westland."
             ];
         }
 

@@ -455,7 +455,7 @@ public static class UatScriptRunner
             Assert.Contains("CareerOccupations", match, StringComparison.Ordinal);
         }
 
-        if (Contains(blob, "Diepte-analyse", "150 vragen"))
+        if (Contains(blob, "Diepte-analyse", "150 vragen", "200 vragen"))
         {
             Assert.Equal(150, DeepAnalysisCatalog.QuestionCount);
             Assert.Equal(2.99m, FlexCommercialSettings.DefaultDeepAnalysisPriceEuro);

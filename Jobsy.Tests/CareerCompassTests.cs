@@ -133,7 +133,7 @@ public class CareerCompassTests
         Assert.Contains("75%", UiStrings.Get("Kompas.BandBroaden", "nl"));
         Assert.Equal("Mijn profiel", UiStrings.Get("Kompas.TabProfile", "nl"));
         Assert.Equal("Mijn competenties", UiStrings.Get("Kompas.TabCompetencies", "nl"));
-        Assert.Equal("Mijn beste match", UiStrings.Get("Kompas.TabCareers", "nl"));
+        Assert.Equal("Beroepentest", UiStrings.Get("Kompas.TabCareers", "nl"));
     }
 
     [Fact]
@@ -246,7 +246,7 @@ public class CareerCompassTests
         Assert.Contains("Kompas.TabCulture", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabCareers", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabFit", home, StringComparison.Ordinal);
-        Assert.Contains("AxisCount = 5", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor")), StringComparison.Ordinal);
+        Assert.Contains("RadarChart", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor")), StringComparison.Ordinal);
         var competencyPanel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor"));
         Assert.Contains("competency-skill__details", competencyPanel, StringComparison.Ordinal);
         Assert.Contains("TrainingOffersBlock", competencyPanel, StringComparison.Ordinal);
@@ -262,7 +262,8 @@ public class CareerCompassTests
         Assert.DoesNotContain("kompas-grid", home, StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".kompas-tabs.admin-sublinks {\n    position: sticky;\n    top: 0;\n    z-index: 6;\n    display: flex;\n    flex-direction: row;\n    flex-wrap: wrap;", css, StringComparison.Ordinal);
+        Assert.Contains("flex-wrap: nowrap;", css, StringComparison.Ordinal);
+        Assert.Contains(".kompas-tabs.admin-sublinks", css, StringComparison.Ordinal);
         Assert.Contains(".kompas-workspace--with-side", css, StringComparison.Ordinal);
         Assert.Contains(".competency-match-card__head", css, StringComparison.Ordinal);
         Assert.Contains(".kompas-status-stack", css, StringComparison.Ordinal);
@@ -314,7 +315,7 @@ public class CareerCompassTests
         var answers = DeepAnalysisCatalog.CareerQuestions.ToDictionary(q => q.Id, _ => 4);
         var scores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career);
         var user = CareerCompassPrompt.User(scores, answers);
-        Assert.Contains("150 unieke vragen", user, StringComparison.Ordinal);
+        Assert.Contains("200 unieke vragen", user, StringComparison.Ordinal);
         Assert.Contains("Kernfit", user, StringComparison.Ordinal);
         Assert.Contains("→ 4", user, StringComparison.Ordinal);
         Assert.DoesNotContain("@", user, StringComparison.Ordinal);

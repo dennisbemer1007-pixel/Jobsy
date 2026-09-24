@@ -42,11 +42,11 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         return kind switch
         {
             AssessmentKind.Culture =>
-                "De cultuurscan is een gratis Quick-Scan van 18 stellingen — er is geen aparte 150-vragen deep analysis.",
+                "De cultuurscan is een gratis Quick-Scan van 18 stellingen — er is geen aparte betaalde deep analysis.",
             AssessmentKind.Career =>
-                $"Wil je een diepgaand carrière-advies en een uitgebreid overzicht van al je opties inclusief PDF-rapport? Ontgrendel de uitgebreide beroepentest voor € {price}.",
+                $"Wil je een diepgaand carrière-advies (200 wetenschappelijk onderbouwde RIASEC-vragen) inclusief PDF-rapport? Ontgrendel de uitgebreide beroepentest voor € {price}.",
             _ =>
-                $"Ontgrendel je uitgebreide competentie-analyse inclusief officiële PDF-rapportage voor € {price}."
+                $"Ontgrendel je uitgebreide competentie-analyse (150 vragen, Big Five) inclusief officiële PDF-rapportage voor € {price}."
         };
     }
 
@@ -69,7 +69,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         if (!DeepAnalysisCatalog.SupportsDeepAnalysis(kind))
         {
             throw new InvalidOperationException(
-                "De cultuurscan heeft geen 150-vragen deep analysis. Gebruik de gratis Quick-Scan van 18 stellingen.");
+                "De cultuurscan heeft geen deep analysis. Gebruik de gratis Quick-Scan van 18 stellingen.");
         }
 
         _ = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
@@ -228,7 +228,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
 
         if (answers.Count == 0)
         {
-            var existingAnswers = DeepAnalysisCatalog.ParseAnswersJson(row.AnswersJson);
+            var existingAnswers = DeepAnalysisCatalog.ParseAnswersJson(row.AnswersJson, kind);
             if (existingAnswers.Count > 0)
             {
                 throw new InvalidOperationException(
@@ -239,14 +239,14 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             return ToDto(kind, row, commercialEmpty.DeepAnalysisPriceEuro);
         }
 
-        var error = DeepAnalysisCatalog.ValidateAnswers(answers, complete);
+        var error = DeepAnalysisCatalog.ValidateAnswers(answers, complete, kind);
         if (error is not null)
         {
             throw new InvalidOperationException(error);
         }
 
         var now = DateTime.UtcNow;
-        row.AnswersJson = DeepAnalysisCatalog.SerializeAnswers(answers);
+        row.AnswersJson = DeepAnalysisCatalog.SerializeAnswers(answers, kind);
         row.UpdatedAtUtc = now;
 
         if (complete)
@@ -359,7 +359,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     private static DeepAnalysisStateDto ToDto(AssessmentKind kind, CandidateDeepAnalysis? row, decimal priceEuro)
     {
         var status = row?.Status ?? CandidateDeepAnalysisStatuses.Locked;
-        var answers = DeepAnalysisCatalog.ParseAnswersJson(row?.AnswersJson);
+        var answers = DeepAnalysisCatalog.ParseAnswersJson(row?.AnswersJson, kind);
         var unlocked = CandidateDeepAnalysisStatuses.IsUnlocked(status);
         return new DeepAnalysisStateDto(
             kind,
@@ -367,7 +367,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             unlocked,
             CandidateDeepAnalysisStatuses.IsCompleted(status),
             answers.Count,
-            DeepAnalysisCatalog.QuestionCount,
+            DeepAnalysisCatalog.QuestionCountFor(kind),
             priceEuro,
             CompetencyTestCatalog.ParseTagsJson(row?.TagsJson),
             row?.UnlockedAtUtc,

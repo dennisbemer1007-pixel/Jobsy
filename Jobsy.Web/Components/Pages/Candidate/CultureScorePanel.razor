@@ -4,21 +4,13 @@
 
 @if (Scores is { IsComplete: true } complete)
 {
-    <div class="competency-score-panel">
-        <svg class="competency-radar" viewBox="0 0 220 220" role="img" aria-label="@Culture["CultureScan.RadarLabel"]">
-            <g transform="translate(110,110)">
-                @for (var ring = 1; ring <= 4; ring++)
-                {
-                    <polygon class="competency-radar__grid" points="@RadarRing(ring * 25)" />
-                }
-                @for (var i = 0; i < AxisCount; i++)
-                {
-                    var end = RadarPoint(100, i);
-                    <line class="competency-radar__axis" x1="0" y1="0" x2="@end.X.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)" y2="@end.Y.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)" />
-                }
-                <polygon class="competency-radar__fill" points="@RadarShape(complete)" />
-            </g>
-        </svg>
+    <div class="competency-score-panel competency-score-panel--culture">
+        <RadarChart AriaLabel="@Culture["CultureScan.RadarCulture"]"
+                    LegendTitle="@Culture["CultureScan.RadarCultureLegend"]"
+                    Axes="@CultureAxes(complete)" />
+        <RadarChart AriaLabel="@Culture["CultureScan.RadarPersonality"]"
+                    LegendTitle="@Culture["CultureScan.RadarPersonalityLegend"]"
+                    Axes="@PersonalityAxes(complete)" />
         <ul class="competency-skill-list" aria-label="@Culture["Kompas.TabCulture"]">
             @foreach (var category in CulturePersonalityCatalog.CategoryCodes)
             {
@@ -47,8 +39,24 @@
 @code {
     [Parameter] public CulturePersonalityScoreSet? Scores { get; set; }
 
-    private static readonly string[] RadarAxes = CulturePersonalityCatalog.CultureDimensionCodes;
-    private static int AxisCount => RadarAxes.Length;
+    private IReadOnlyList<RadarChart.RadarAxis> CultureAxes(CulturePersonalityScoreSet s) =>
+    [
+        new(Culture["CultureScan.Cat.Autonomy"], s.Autonomy ?? 0),
+        new(Culture["CultureScan.Cat.Informal"], s.Informal ?? 0),
+        new(Culture["CultureScan.Cat.Collaboration"], s.Collaboration ?? 0),
+        new(Culture["CultureScan.Cat.Flexibility"], s.Flexibility ?? 0),
+        new(Culture["CultureScan.Cat.Innovation"], s.Innovation ?? 0),
+        new(Culture["CultureScan.Cat.PeopleFirst"], s.PeopleFirst ?? 0)
+    ];
+
+    private IReadOnlyList<RadarChart.RadarAxis> PersonalityAxes(CulturePersonalityScoreSet s) =>
+    [
+        new(Culture["CultureScan.Cat.Openness"], s.Openness ?? 0),
+        new(Culture["CultureScan.Cat.Conscientiousness"], s.Conscientiousness ?? 0),
+        new(Culture["CultureScan.Cat.Extraversion"], s.Extraversion ?? 0),
+        new(Culture["CultureScan.Cat.Agreeableness"], s.Agreeableness ?? 0),
+        new(Culture["CultureScan.Cat.EmotionalStability"], s.EmotionalStability ?? 0)
+    ];
 
     private static int? Value(CulturePersonalityScoreSet scores, string category) => category switch
     {
@@ -65,23 +73,4 @@
         CulturePersonalityCatalog.EmotionalStability => scores.EmotionalStability,
         _ => null
     };
-
-    private static string RadarRing(double percent)
-        => string.Join(" ", Enumerable.Range(0, AxisCount).Select(i => FormatPoint(RadarPoint(percent, i))));
-
-    private static string RadarShape(CulturePersonalityScoreSet scores)
-    {
-        var values = RadarAxes.Select(code => Value(scores, code) ?? 0).ToArray();
-        return string.Join(" ", values.Select((v, i) => FormatPoint(RadarPoint(v, i))));
-    }
-
-    private static (double X, double Y) RadarPoint(double percent, int index)
-    {
-        var radius = 88 * Math.Clamp(percent, 0, 100) / 100.0;
-        var angle = -Math.PI / 2 + index * (2 * Math.PI / AxisCount);
-        return (radius * Math.Cos(angle), radius * Math.Sin(angle));
-    }
-
-    private static string FormatPoint((double X, double Y) p)
-        => $"{p.X.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)},{p.Y.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)}";
 }

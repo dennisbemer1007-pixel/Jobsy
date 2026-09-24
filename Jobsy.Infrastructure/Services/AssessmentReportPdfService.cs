@@ -72,7 +72,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             .ToLocalTime()
             .ToString("d MMMM yyyy", culture);
 
-        var answers = DeepAnalysisCatalog.ParseAnswersJson(deep.AnswersJson);
+        var answers = DeepAnalysisCatalog.ParseAnswersJson(deep.AnswersJson, kind);
         var domainScores = DeepAnalysisCatalog.ScoreDomains(answers, kind);
 
         byte[] bytes;

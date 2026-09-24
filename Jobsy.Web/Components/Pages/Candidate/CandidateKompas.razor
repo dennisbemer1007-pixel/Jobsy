@@ -12,7 +12,8 @@
 <section class="kompas" aria-labelledby="kompas-title">
     <p class="visually-hidden" id="kompas-title">@Culture["Kompas.Title"]</p>
     <div class="kompas__toolbar">
-        <a class="engagement-btn" href="/">@Culture["Kompas.OpenMap"]</a>
+        <a class="engagement-btn engagement-btn--compact" href="/">@Culture["Kompas.OpenMap"]</a>
+        <span class="kompas__toolbar-hint">@Culture["Kompas.TabHint"]</span>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(_message))
@@ -20,7 +21,7 @@
         <p class="state-message">@_message</p>
     }
 
-    <div class="kompas-tabs admin-sublinks"
+        <div class="kompas-tabs admin-sublinks kompas-tabs--scroll"
          role="tablist"
          aria-label="@Culture["Kompas.TabsLabel"]"
          @onkeydown="OnTabListKeyDown">

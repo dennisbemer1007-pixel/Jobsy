@@ -1,0 +1,121 @@
+@* Shared labeled radar for competency / culture score panels.
+   Labels are HTML overlays (Blazor reserves the SVG <text> tag). *@
+@using System.Globalization
+
+@if (Axes.Count >= 3)
+{
+    <div class="radar-chart" role="img" aria-label="@AriaLabel">
+        <div class="radar-chart__stage">
+            <svg class="radar-chart__svg" viewBox="0 0 @ViewBox @ViewBox" focusable="false" aria-hidden="true">
+                <defs>
+                    <linearGradient id="@_fillId" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="var(--coral)" stop-opacity="0.45" />
+                        <stop offset="100%" stop-color="var(--brand)" stop-opacity="0.28" />
+                    </linearGradient>
+                </defs>
+                <g transform="translate(@Center.ToString(Inv),@Center.ToString(Inv))">
+                    @for (var ring = 1; ring <= 4; ring++)
+                    {
+                        <polygon class="radar-chart__grid" points="@RingPoints(ring * 25)" />
+                    }
+                    @for (var i = 0; i < Axes.Count; i++)
+                    {
+                        var end = RadarPoint(100, i);
+                        <line class="radar-chart__axis"
+                              x1="0" y1="0"
+                              x2="@end.X.ToString("0.###", Inv)"
+                              y2="@end.Y.ToString("0.###", Inv)" />
+                    }
+                    <polygon class="radar-chart__fill" points="@ShapePoints()" fill="@($"url(#{_fillId})")" />
+                    @for (var i = 0; i < Axes.Count; i++)
+                    {
+                        var axis = Axes[i];
+                        var valueTip = RadarPoint(Math.Clamp(axis.Percent, 0, 100), i);
+                        <circle class="radar-chart__dot"
+                                cx="@valueTip.X.ToString("0.###", Inv)"
+                                cy="@valueTip.Y.ToString("0.###", Inv)"
+                                r="3.2">
+                            <title>@axis.Label: @axis.Percent%</title>
+                        </circle>
+                    }
+                </g>
+            </svg>
+            @for (var i = 0; i < Axes.Count; i++)
+            {
+                var axis = Axes[i];
+                var pos = LabelPosition(i);
+                <span class="radar-chart__label"
+                      style="@($"left:{pos.Left.ToString("0.##", Inv)}%;top:{pos.Top.ToString("0.##", Inv)}%;transform:translate(-50%,-50%);")"
+                      title="@($"{axis.Label}: {axis.Percent}%")">
+                    <span class="radar-chart__label-name">@ShortLabel(axis.Label)</span>
+                    <span class="radar-chart__label-pct">@axis.Percent%</span>
+                </span>
+            }
+        </div>
+        @if (!string.IsNullOrWhiteSpace(LegendTitle))
+        {
+            <p class="radar-chart__legend">@LegendTitle</p>
+        }
+        @if (ShowRingPercents)
+        {
+            <p class="radar-chart__scale" aria-hidden="true">0% · 25% · 50% · 75% · 100%</p>
+        }
+    </div>
+}
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    private readonly string _fillId = "radar-fill-" + Guid.NewGuid().ToString("N")[..8];
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<RadarAxis> Axes { get; set; } = [];
+
+    [Parameter]
+    public string AriaLabel { get; set; } = "Scores";
+
+    [Parameter]
+    public string? LegendTitle { get; set; }
+
+    [Parameter]
+    public bool ShowRingPercents { get; set; } = true;
+
+    [Parameter]
+    public double ViewBox { get; set; } = 320;
+
+    private double Center => ViewBox / 2.0;
+    private double Radius => ViewBox * 0.30;
+
+    private string RingPoints(double percent)
+        => string.Join(" ", Enumerable.Range(0, Axes.Count).Select(i => Format(RadarPoint(percent, i))));
+
+    private string ShapePoints()
+        => string.Join(" ", Axes.Select((a, i) => Format(RadarPoint(a.Percent, i))));
+
+    private (double X, double Y) RadarPoint(double percent, int index)
+    {
+        var radius = Radius * Math.Clamp(percent, 0, 100) / 100.0;
+        var angle = -Math.PI / 2 + index * (2 * Math.PI / Axes.Count);
+        return (radius * Math.Cos(angle), radius * Math.Sin(angle));
+    }
+
+    private (double Left, double Top) LabelPosition(int index)
+    {
+        // Place labels slightly outside the plot, in % of the stage box.
+        var angle = -Math.PI / 2 + index * (2 * Math.PI / Axes.Count);
+        var r = 0.46; // fraction from center toward edge
+        var x = 0.5 + r * Math.Cos(angle);
+        var y = 0.5 + r * Math.Sin(angle);
+        return (x * 100.0, y * 100.0);
+    }
+
+    private static string Format((double X, double Y) p)
+        => $"{p.X.ToString("0.###", Inv)},{p.Y.ToString("0.###", Inv)}";
+
+    private static string ShortLabel(string label)
+    {
+        if (string.IsNullOrWhiteSpace(label)) return label;
+        return label.Length <= 18 ? label : label[..16].TrimEnd() + "…";
+    }
+
+    public sealed record RadarAxis(string Label, int Percent);
+}

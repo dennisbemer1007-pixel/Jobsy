@@ -14,7 +14,7 @@ public class DeepAnalysisUxTests
     public void Every_deep_question_has_a_concrete_practice_example(AssessmentKind kind)
     {
         var questions = DeepAnalysisCatalog.QuestionsFor(kind);
-        Assert.Equal(150, questions.Count);
+        Assert.Equal(DeepAnalysisCatalog.QuestionCountFor(kind), questions.Count);
         Assert.All(questions, q =>
         {
             var example = DeepAnalysisQuestionHelp.ExampleFor(q);
