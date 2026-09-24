@@ -1,0 +1,189 @@
+@page "/carriere"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CareerPathService CareerPaths
+@inject CultureState Culture
+
+<PageTitle>@Culture["CareerDash.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page career-dash">
+    <header class="panel-header career-dash__page-header">
+        <div>
+            <h1>@Culture["CareerDash.Title"]</h1>
+            <p class="login-lead">@Culture["CareerDash.Lead"]</p>
+        </div>
+    </header>
+
+    @if (_model is null)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <section class="career-dash__header" aria-labelledby="career-dash-horizon">
+            <div class="career-dash__roles">
+                <div class="career-dash__role">
+                    <span class="career-dash__label">@Culture["CareerDash.CurrentRole"]</span>
+                    <strong class="career-dash__role-title">@_model.CurrentRoleTitle</strong>
+                </div>
+                <span class="career-dash__arrow" aria-hidden="true">→</span>
+                <div class="career-dash__role career-dash__role--dream">
+                    <label class="career-dash__label" for="career-dream-select">@Culture["CareerDash.DreamRole"]</label>
+                    <select id="career-dream-select"
+                            class="career-dash__select"
+                            value="@_model.DreamRoleId"
+                            @onchange="OnDreamChanged">
+                        @foreach (var option in _model.DreamOptions)
+                        {
+                            <option value="@option.Id">@option.Title</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="career-dash__progress" aria-labelledby="career-dash-horizon">
+                <div class="career-dash__progress-top">
+                    <h2 id="career-dash-horizon" class="career-dash__progress-title">@Culture["CareerDash.Horizon"]</h2>
+                    <p class="career-dash__pct" aria-label="@Culture.Format("CareerDash.MatchAria", _model.MatchPercent)">
+                        <strong>@_model.MatchPercent%</strong>
+                        <span>@Culture["CareerDash.Match"]</span>
+                    </p>
+                </div>
+                <div class="career-dash__bar"
+                     role="progressbar"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     aria-valuenow="@_model.MatchPercent"
+                     aria-label="@Culture["CareerDash.ProgressLabel"]">
+                    <span class="career-dash__bar-fill" style="width: @_model.MatchPercent%"></span>
+                </div>
+                <p class="career-dash__summary">@_model.MatchSummary</p>
+            </div>
+        </section>
+
+        <section class="career-dash__plan" aria-labelledby="career-dash-plan-title">
+            <h2 id="career-dash-plan-title" class="career-dash__section-title">@Culture["CareerDash.PlanTitle"]</h2>
+            <p class="login-lead career-dash__section-lead">@Culture["CareerDash.PlanLead"]</p>
+
+            <ol class="career-timeline">
+                @foreach (var step in _model.Steps)
+                {
+                    var isOpen = _expandedStepId == step.Id;
+                    var statusKey = StatusKey(step.Status);
+                    var statusClass = StatusClass(step.Status);
+                    <li class="career-timeline__item @statusClass @(isOpen ? "is-open" : null)">
+                        <div class="career-timeline__rail" aria-hidden="true">
+                            <span class="career-timeline__dot"></span>
+                        </div>
+                        <div class="career-timeline__card">
+                            <button type="button"
+                                    class="career-timeline__toggle"
+                                    id="@($"career-step-{step.Id}-btn")"
+                                    aria-expanded="@isOpen"
+                                    aria-controls="@($"career-step-{step.Id}")"
+                                    @onclick="() => ToggleStep(step.Id)">
+                                <span class="career-timeline__toggle-main">
+                                    <span class="career-timeline__order">@Culture.Format("CareerDash.StepN", step.Order)</span>
+                                    <span class="career-timeline__title">@step.Title</span>
+                                    <span class="career-timeline__badge @statusClass">@Culture[statusKey]</span>
+                                </span>
+                                <span class="career-timeline__summary">@step.Summary</span>
+                                <span class="career-timeline__chevron" aria-hidden="true"></span>
+                            </button>
+
+                            @if (isOpen)
+                            {
+                                <div class="career-timeline__details"
+                                     id="@($"career-step-{step.Id}")"
+                                     role="region"
+                                     aria-labelledby="@($"career-step-{step.Id}-btn")">
+                                    @if (step.SkillsGap.Count > 0)
+                                    {
+                                        <div class="career-timeline__block">
+                                            <h3>@Culture["CareerDash.SkillsGap"]</h3>
+                                            <ul>
+                                                @foreach (var gap in step.SkillsGap)
+                                                {
+                                                    <li>@gap</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="career-timeline__block">
+                                            <h3>@Culture["CareerDash.SkillsGap"]</h3>
+                                            <p class="muted">@Culture["CareerDash.SkillsGapNone"]</p>
+                                        </div>
+                                    }
+
+                                    @if (step.Competencies.Count > 0)
+                                    {
+                                        <div class="career-timeline__block">
+                                            <h3>@Culture["CareerDash.Competencies"]</h3>
+                                            <ul class="career-timeline__chips">
+                                                @foreach (var skill in step.Competencies)
+                                                {
+                                                    <li>@skill</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+
+                                    <div class="career-timeline__action">
+                                        <a class="login-submit" href="@step.ActionHref">@step.ActionLabel</a>
+                                        @if (step.StepMatchPercent > 0 && step.StepMatchPercent < 100)
+                                        {
+                                            <p class="muted">@Culture.Format("CareerDash.StepMatch", step.StepMatchPercent)</p>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </li>
+                }
+            </ol>
+        </section>
+    }
+</div>
+
+@code {
+    private CareerDashboardModel? _model;
+    private string? _expandedStepId;
+
+    protected override void OnInitialized()
+    {
+        _model = CareerPaths.GetDashboard();
+        _expandedStepId = _model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)?.Id
+            ?? _model.Steps.FirstOrDefault()?.Id;
+    }
+
+    private void OnDreamChanged(ChangeEventArgs e)
+    {
+        var id = e.Value?.ToString();
+        _model = CareerPaths.GetDashboard(id);
+        _expandedStepId = _model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)?.Id
+            ?? _model.Steps.FirstOrDefault()?.Id;
+    }
+
+    private void ToggleStep(string stepId)
+        => _expandedStepId = string.Equals(_expandedStepId, stepId, StringComparison.Ordinal)
+            ? null
+            : stepId;
+
+    private static string StatusKey(CareerStepStatus status) => status switch
+    {
+        CareerStepStatus.Completed => "CareerDash.StatusCompleted",
+        CareerStepStatus.Active => "CareerDash.StatusActive",
+        _ => "CareerDash.StatusOpen"
+    };
+
+    private static string StatusClass(CareerStepStatus status) => status switch
+    {
+        CareerStepStatus.Completed => "is-completed",
+        CareerStepStatus.Active => "is-active",
+        _ => "is-open-step"
+    };
+}

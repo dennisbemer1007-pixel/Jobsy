@@ -121,6 +121,7 @@ public static partial class PageSeoCatalog
             ["/candidate/culture"] = Private("CultureScan.Title", "Seo.PrivateDescription"),
             ["/candidate/disc"] = Private("CultureScan.Title", "Seo.PrivateDescription"),
             ["/candidate/career"] = Private("Career.Title", "Seo.PrivateDescription"),
+            ["/carriere"] = Private("CareerDash.Title", "Seo.PrivateDescription"),
             ["/candidate/deep-analysis/competence"] = Private("Deep.CompetenceTitle", "Seo.PrivateDescription"),
             ["/candidate/deep-analysis/career"] = Private("Deep.CareerTitle", "Seo.PrivateDescription"),
             ["/employer/culture"] = Private("CultureScan.EmployerTitle", "Seo.PrivateDescription"),

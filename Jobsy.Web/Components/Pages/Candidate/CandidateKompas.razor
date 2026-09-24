@@ -289,6 +289,9 @@
         else if (_careerCompleted && _riasecScores is { IsComplete: true })
         {
             <CareerCompassPanel Compass="_careerCompass" Competencies="_competencyScores" CareerDirection="_riasecScores" />
+            <p class="career-dash-link-row">
+                <a class="engagement-btn" href="/carriere">@Culture["CareerDash.OpenLink"]</a>
+            </p>
             <div class="kompas-workstyle">
                 <h4 class="whoami__title">@Culture["Kompas.WorkStyleTitle"]</h4>
                 <RiasecScorePanel Scores="_riasecScores" />

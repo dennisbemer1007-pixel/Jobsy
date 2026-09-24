@@ -39,6 +39,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | `/candidate/competencies` | Competentietest (25); draft tussentijds opslaan; scores herberekend bij afronden |
 | `/candidate/disc` | Gedragsanalyse / DISC Quick-Scan (25); accordeon met workshops; optionele diepte-analyse 150 |
 | `/candidate/career` | Beroepentest (25); Mijn Beroepen-kompas + top 10 actieve vacatures |
+| `/carriere` | Carrière-dashboard: stip op de horizon kiezen, match-% voortgangsbalk, uitklapbaar stappenplan (skills gap / competenties / actie) |
 | `/candidate/deep-analysis/{kind}` | Betaalde 150-vragen analyse (competence \| career) + loopbaan-PDF (gekleurd logo, match-banden, *Wat betekent dit voor jou?*) |
 | `/candidate/talent-contacts` | Inbox contactverzoeken (48u); geen extra bottom-nav tab |
 

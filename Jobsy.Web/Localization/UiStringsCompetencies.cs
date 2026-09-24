@@ -274,7 +274,27 @@ internal static class UiStringsCompetencies
         ["Fit.CheckSimilar"] = "Toets deze functie",
         ["Fit.DirectTitle"] = "Direct passende vacatures op Lobsy",
         ["Fit.DirectLead"] = "Openstaande banen in hetzelfde vakgebied in Den Haag en het Westland waar je met je huidige profiel kunt starten.",
-        ["Fit.DirectEmpty"] = "We vinden nu geen vacature waar je zonder extra papierwerk op kunt starten. Kijk op de banenkaart of kies een vergelijkbare functie."
+        ["Fit.DirectEmpty"] = "We vinden nu geen vacature waar je zonder extra papierwerk op kunt starten. Kijk op de banenkaart of kies een vergelijkbare functie.",
+        ["CareerDash.Title"] = "Mijn carrière",
+        ["CareerDash.Lead"] = "Kies je stip op de horizon en zie in rustige stappen hoe ver je al bent — en wat nog volgt.",
+        ["CareerDash.CurrentRole"] = "Huidige rol",
+        ["CareerDash.DreamRole"] = "Stip op de horizon",
+        ["CareerDash.Horizon"] = "Voortgang naar je doel",
+        ["CareerDash.Match"] = "match",
+        ["CareerDash.MatchAria"] = "{0} procent match met je talentprofiel",
+        ["CareerDash.ProgressLabel"] = "Totale match met je droombaan",
+        ["CareerDash.PlanTitle"] = "Stappenplan",
+        ["CareerDash.PlanLead"] = "Klap een stap open voor de skills gap, competenties en een concrete volgende actie.",
+        ["CareerDash.StepN"] = "Stap {0}",
+        ["CareerDash.StatusCompleted"] = "Voltooid",
+        ["CareerDash.StatusActive"] = "Actief",
+        ["CareerDash.StatusOpen"] = "Open",
+        ["CareerDash.SkillsGap"] = "Skills gap",
+        ["CareerDash.SkillsGapNone"] = "Geen openstaande skills gap — deze stap is rond.",
+        ["CareerDash.Competencies"] = "Benodigde competenties",
+        ["CareerDash.StepMatch"] = "Match op deze stap: {0}%",
+        ["CareerDash.OpenLink"] = "Open mijn carrièrepad",
+        ["Nav.CareerPath"] = "Carrière"
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -525,6 +545,26 @@ internal static class UiStringsCompetencies
         ["Fit.CheckSimilar"] = "Check this role",
         ["Fit.DirectTitle"] = "Vacancies on Lobsy you can start now",
         ["Fit.DirectLead"] = "Open jobs in the same field in The Hague and Westland that you can start with your current profile.",
-        ["Fit.DirectEmpty"] = "We cannot find a vacancy you can start without extra papers. Open the job map or try a similar role."
+        ["Fit.DirectEmpty"] = "We cannot find a vacancy you can start without extra papers. Open the job map or try a similar role.",
+        ["CareerDash.Title"] = "My career",
+        ["CareerDash.Lead"] = "Choose your horizon goal and see, in calm steps, how far you are — and what comes next.",
+        ["CareerDash.CurrentRole"] = "Current role",
+        ["CareerDash.DreamRole"] = "Horizon goal",
+        ["CareerDash.Horizon"] = "Progress toward your goal",
+        ["CareerDash.Match"] = "match",
+        ["CareerDash.MatchAria"] = "{0} percent match with your talent profile",
+        ["CareerDash.ProgressLabel"] = "Overall match with your dream role",
+        ["CareerDash.PlanTitle"] = "Step plan",
+        ["CareerDash.PlanLead"] = "Expand a step for the skills gap, competencies and a concrete next action.",
+        ["CareerDash.StepN"] = "Step {0}",
+        ["CareerDash.StatusCompleted"] = "Completed",
+        ["CareerDash.StatusActive"] = "Active",
+        ["CareerDash.StatusOpen"] = "Open",
+        ["CareerDash.SkillsGap"] = "Skills gap",
+        ["CareerDash.SkillsGapNone"] = "No open skills gap — this step is done.",
+        ["CareerDash.Competencies"] = "Required competencies",
+        ["CareerDash.StepMatch"] = "Match on this step: {0}%",
+        ["CareerDash.OpenLink"] = "Open my career path",
+        ["Nav.CareerPath"] = "Career"
     };
 }

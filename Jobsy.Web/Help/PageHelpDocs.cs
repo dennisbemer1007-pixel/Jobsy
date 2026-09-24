@@ -165,6 +165,12 @@ public static class PageHelpDocs
             "Rond af voor Mijn Beroepen-kompas en een top 10 actieve vacatures in de regio. Optioneel: uitgebreide beroepentest (200 vragen, € 2,99) met een loopbaan-PDF in gewone taal (super-match, sterke keus, handige verbreding).",
             "Interesses koppelen aan actieve vacatures op de kaart."),
 
+        ["/carriere"] = new(
+            "Mijn carrière",
+            "Kies je stip op de horizon en zie je voortgang via een uitklapbaar stappenplan.",
+            "Selecteer een droombaan. De voortgangsbalk toont je totale match. Klap stappen open voor skills gap, competenties en een concrete actie (cursussen of vacatures).",
+            "Loopbaandoel scherp houden en gericht doorgroeien."),
+
         ["/candidate/talent-contacts"] = new(
             "Contactverzoeken",
             "Berichten van werkgevers uit de anonieme talentpool.",
