@@ -259,13 +259,20 @@ public static class AuthServiceCollectionExtensions
             IConfiguration configuration,
             IAntiforgery antiforgery) =>
         {
-            await antiforgery.ValidateRequestAsync(http);
-
             var form = await http.Request.ReadFormAsync();
-            var email = form["email"].ToString().Trim();
-            var password = form["password"].ToString();
             var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
                 form["returnUrl"], form["returnTo"], form["redirect"]);
+            var safeReturn = AuthRedirects.SafeLocalUrl(returnUrl);
+
+            // Stale tabs / redeployed DP keys must not land on the generic /Error page.
+            if (!await antiforgery.IsRequestValidAsync(http))
+            {
+                return Results.Redirect(
+                    $"/login?error=retry&returnUrl={Uri.EscapeDataString(safeReturn)}");
+            }
+
+            var email = form["email"].ToString().Trim();
+            var password = form["password"].ToString();
 
             ClaimsPrincipal? principal = null;
             var allowDemoLogin = IsDemoLoginEnabled(http, configuration);
@@ -281,7 +288,7 @@ public static class AuthServiceCollectionExtensions
 
             if (principal is null)
             {
-                return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(AuthRedirects.SafeLocalUrl(returnUrl))}");
+                return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(safeReturn)}");
             }
 
             var showHowTo = principal.HasClaim(c =>
@@ -309,18 +316,24 @@ public static class AuthServiceCollectionExtensions
             IConfiguration configuration,
             IAntiforgery antiforgery) =>
         {
-            await antiforgery.ValidateRequestAsync(http);
-
             var form = await http.Request.ReadFormAsync();
-            var email = form["email"].ToString().Trim();
             var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
                 form["returnUrl"], form["returnTo"], form["redirect"]);
+            var safeReturn = AuthRedirects.SafeLocalUrl(returnUrl);
+
+            if (!await antiforgery.IsRequestValidAsync(http))
+            {
+                return Results.Redirect(
+                    $"/login?error=retry&returnUrl={Uri.EscapeDataString(safeReturn)}");
+            }
+
+            var email = form["email"].ToString().Trim();
 
             if (!IsDemoLoginEnabled(http, configuration)
                 || !users.TryFindByEmail(email, out var user)
                 || user is null)
             {
-                return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(AuthRedirects.SafeLocalUrl(returnUrl))}");
+                return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(safeReturn)}");
             }
 
             var principal = CreateLocalPrincipal(user);
@@ -401,10 +414,16 @@ public static class AuthServiceCollectionExtensions
         app.MapMethods("/account/logout", ["GET", "POST"], async (HttpContext http) =>
         {
             // POST from the header form uses antiforgery; GET covers refresh / Cookie LogoutPath / bookmarks.
+            // Stale antiforgery must not block logout (GET already signs out) or show /Error.
             if (HttpMethods.IsPost(http.Request.Method))
             {
                 var antiforgery = http.RequestServices.GetRequiredService<IAntiforgery>();
-                await antiforgery.ValidateRequestAsync(http);
+                if (!await antiforgery.IsRequestValidAsync(http))
+                {
+                    var logger = http.RequestServices.GetRequiredService<ILoggerFactory>()
+                        .CreateLogger("Jobsy.Web.Auth.Logout");
+                    logger.LogInformation("Logout POST without valid antiforgery; signing out anyway.");
+                }
             }
 
             var reason = http.Request.Query["reason"].ToString();

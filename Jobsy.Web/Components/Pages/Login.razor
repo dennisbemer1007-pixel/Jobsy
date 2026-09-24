@@ -92,7 +92,7 @@
 
         <div class="login-divider"><span>@Culture["Login.OrEmail"]</span></div>
 
-        <form method="post" action="/account/login" class="login-form">
+        <form method="post" action="/account/login" class="login-form" data-enhance="false">
             <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
             <input type="hidden" name="returnUrl" value="@_returnUrl" />
             <label>
@@ -103,7 +103,11 @@
                 @Culture["Login.Password"]
                 <input type="password" name="password" class="w-full px-4 py-3" required autocomplete="current-password" placeholder="••••••••" />
             </label>
-            <button type="submit" class="login-submit">@Culture["Login.Submit"]</button>
+            <button type="submit" class="login-submit" disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">@Culture["Login.Submit"]</button>
+            @if (string.IsNullOrEmpty(_antiforgeryToken))
+            {
+                <p class="login-error">@Culture["Login.ErrorRetry"]</p>
+            }
         </form>
 
         <div class="login-register">
@@ -167,6 +171,7 @@
             _errorMessage = code switch
             {
                 "invalid" => Culture["Login.ErrorInvalid"],
+                "retry" => Culture["Login.ErrorRetry"],
                 "session-expired" => Culture["Login.ErrorSessionExpired"],
                 "entra-not-configured" => Culture["Login.ErrorEntra"],
                 "entra-failed" => Culture["Login.ErrorEntraFailed"],
