@@ -15170,13 +15170,13 @@ html.cookie-consent-known .cookie-consent {
 }
 
 .apps-tabs.admin-sublinks {
-    position: sticky;
-    top: 0;
-    z-index: 6;
-    background: var(--bg);
+    position: static;
+    top: auto;
+    z-index: auto;
+    background: transparent;
     margin: 0 0 0.85rem;
-    padding: 0.4rem 0 0.55rem;
-    box-shadow: 0 10px 12px -10px rgba(15, 23, 42, 0.18);
+    padding: 0.15rem 0 0.35rem;
+    box-shadow: none;
 }
 
 .application-card-list {

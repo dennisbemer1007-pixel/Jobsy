@@ -165,7 +165,8 @@ public class MobileSaasUxTests
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".application-card-list {\n    display: flex;\n    flex-direction: column;\n    gap: 1rem;", css);
-        Assert.Contains(".apps-tabs.admin-sublinks {\n    position: sticky;\n    top: 0;", css);
+        Assert.Contains(".apps-tabs.admin-sublinks {\n    position: static;\n    top: auto;", css);
+        Assert.DoesNotContain(".apps-tabs.admin-sublinks {\n    position: sticky;\n    top: 0;", css);
         Assert.Contains(".application-card__actions {\n    display: flex;\n    flex-wrap: wrap;", css);
         Assert.Contains(".application-card__actions .application-card__btn {\n    flex: 1 1 8.5rem;\n    min-height: 2.6rem;\n    border-radius: 10px;", css);
         Assert.Contains(".application-stepper__step.is-done .application-stepper__bar,\n.application-stepper__step.is-current .application-stepper__bar {\n    background: var(--brand);", css);
