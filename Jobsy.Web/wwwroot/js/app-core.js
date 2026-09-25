@@ -641,8 +641,8 @@ window.jobsyPageVisible = function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20260924-pwa"
-            : "/service-worker.js?v=20260924-pwa";
+            ? "/service-worker.published.js?v=20260925-coral"
+            : "/service-worker.js?v=20260925-coral";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();

@@ -1,17 +1,17 @@
 /* Lobsy PWA service worker — development / always-on shell.
  * Caches static assets for instant loads and handles Web Push. */
-var CACHE_VERSION = "lobsy-shell-published-v20260925-icon";
+var CACHE_VERSION = "lobsy-shell-published-v20260925-coral2";
 var SHELL_CACHE = CACHE_VERSION + "-shell";
 var IMAGE_CACHE = "lobsy-images-v2";
 
 var PRECACHE = [
     "/",
-    "/manifest.webmanifest",
+    "/manifest.webmanifest?v=20260925-coral",
     "/css/app.min.css?v=20260925-horizonai",
-    "/js/app-core.js",
-    "/icons/icon-192.png",
-    "/icons/icon-512.png",
-    "/favicon.png",
+    "/js/app-core.js?v=20260925-coralicon",
+    "/icons/icon-192.png?v=20260925-coral",
+    "/icons/icon-512.png?v=20260925-coral",
+    "/favicon.png?v=20260925-coral",
     "/images/brand/lobsy-128.webp"
 ];
 
@@ -154,8 +154,8 @@ self.addEventListener("push", function (event) {
     event.waitUntil(
         self.registration.showNotification(payload.title, {
             body: payload.body,
-            icon: "/icons/icon-192.png",
-            badge: "/icons/icon-192.png",
+            icon: "/icons/icon-192.png?v=20260925-coral",
+            badge: "/icons/icon-192.png?v=20260925-coral",
             tag: payload.tag || "lobsy",
             renotify: true,
             data: { url: payload.url },
