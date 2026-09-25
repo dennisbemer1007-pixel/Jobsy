@@ -23,11 +23,11 @@ public class CareerPathServiceTests
     }
 
     [Fact]
-    public void Switching_dream_role_changes_path_and_match()
+    public void Switching_known_dream_role_changes_path_and_match()
     {
         var svc = new CareerPathService();
         var logistics = svc.GetDashboard("teamleider-logistiek");
-        var retail = svc.GetDashboard("filiaalmanager");
+        var retail = svc.GetDashboard("Filiaalmanager");
         var hr = svc.GetDashboard("hr-adviseur");
 
         Assert.NotEqual(logistics.DreamRoleTitle, retail.DreamRoleTitle);
@@ -42,11 +42,26 @@ public class CareerPathServiceTests
     }
 
     [Fact]
-    public void Unknown_dream_id_falls_back_to_default()
+    public void Free_text_horizon_builds_custom_path()
     {
         var svc = new CareerPathService();
-        var dash = svc.GetDashboard("onbekend-doel");
+        var dash = svc.GetDashboard("Chef-kok Westland");
+
+        Assert.Equal("custom", dash.DreamRoleId);
+        Assert.Equal("Chef-kok Westland", dash.DreamRoleTitle);
+        Assert.InRange(dash.MatchPercent, 18, 34);
+        Assert.Equal(4, dash.Steps.Count);
+        Assert.Contains(dash.DreamRoleTitle, dash.Steps[^1].Title, StringComparison.Ordinal);
+        Assert.All(dash.Steps, s => Assert.False(string.IsNullOrWhiteSpace(s.ActionHref)));
+    }
+
+    [Fact]
+    public void Empty_horizon_falls_back_to_default_title()
+    {
+        var svc = new CareerPathService();
+        var dash = svc.GetDashboard("   ");
         Assert.Equal(CareerPathService.DefaultDreamId, dash.DreamRoleId);
+        Assert.Equal(CareerPathService.DefaultDreamTitle, dash.DreamRoleTitle);
     }
 
     [Fact]
@@ -56,11 +71,17 @@ public class CareerPathServiceTests
         var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerDashboard.razor"));
         Assert.Contains("@page \"/carriere\"", page);
         Assert.Contains("CareerPathService", page);
-        Assert.Contains("career-timeline", page);
-        Assert.Contains("career-dash__bar", page);
+        Assert.Contains("career-gauge", page);
+        Assert.Contains("career-steps", page);
+        Assert.Contains("career-dream-input", page);
+        Assert.DoesNotContain("career-dash__bar", page);
+        Assert.DoesNotContain("career-dream-select", page);
+        Assert.DoesNotContain("<select", page);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".career-dash", css);
-        Assert.Contains(".career-timeline__toggle", css);
+        Assert.Contains(".career-gauge", css);
+        Assert.Contains(".career-steps", css);
+        Assert.DoesNotContain(".career-dash__bar {", css);
     }
 }

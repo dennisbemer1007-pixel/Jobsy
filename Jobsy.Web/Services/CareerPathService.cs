@@ -3,18 +3,22 @@ using Jobsy.Web.Models;
 namespace Jobsy.Web.Services;
 
 /// <summary>
-/// Provides career-path dashboard data (current role → dream role) with mock steps
+/// Provides career-path dashboard data (current role → free-text horizon) with mock steps
 /// so the /carriere UI can be exercised without live talent-profile APIs.
 /// </summary>
 public sealed class CareerPathService
 {
     public const string DefaultDreamId = "teamleider-logistiek";
+    public const string DefaultDreamTitle = "Teamleider logistiek";
 
-    private static readonly CareerDreamOption[] DreamCatalog =
+    private static readonly CareerDreamOption[] DreamSuggestions =
     [
         new() { Id = "teamleider-logistiek", Title = "Teamleider logistiek" },
         new() { Id = "filiaalmanager", Title = "Filiaalmanager" },
-        new() { Id = "hr-adviseur", Title = "HR-adviseur" }
+        new() { Id = "hr-adviseur", Title = "HR-adviseur" },
+        new() { Id = "assistent-manager", Title = "Assistent-manager" },
+        new() { Id = "planner", Title = "Planner" },
+        new() { Id = "coach", Title = "Teamcoach" }
     ];
 
     private static readonly Dictionary<string, (string DreamTitle, int MatchPercent, string Summary, CareerPathDashboardStep[] Steps)> Paths =
@@ -23,202 +27,204 @@ public sealed class CareerPathService
             ["teamleider-logistiek"] = (
                 "Teamleider logistiek",
                 32,
-                "Op basis van je talentprofiel heb je al een stevige basis in de operatie. Leidinggeven en plannen vormen de grootste stap.",
-                [
-                    new CareerPathDashboardStep
-                    {
-                        Id = "tl-1",
-                        Order = 1,
-                        Title = "Stevige basis in het magazijn",
-                        Status = CareerStepStatus.Completed,
-                        Summary = "Je kent de processen, veiligheid en samenwerking op de werkvloer.",
-                        SkillsGap = [],
-                        Competencies = ["Samenwerken", "Resultaatgerichtheid", "Nauwkeurigheid"],
-                        ActionLabel = "Bekijk passende vacatures",
-                        ActionHref = "/?q=magazijn",
-                        StepMatchPercent = 100
-                    },
-                    new CareerPathDashboardStep
-                    {
-                        Id = "tl-2",
-                        Order = 2,
-                        Title = "Leidinggeven op de vloer",
-                        Status = CareerStepStatus.Active,
-                        Summary = "Leren coachen, briefen en bijsturen van een klein team tijdens de shift.",
-                        SkillsGap = ["Feedback geven", "Werkverdeling", "Conflictvaardigheden"],
-                        Competencies = ["Leiderschap", "Communicatie", "Stressbestendigheid"],
-                        ActionLabel = "Bekijk passende cursussen",
-                        ActionHref = "/candidate/profile?tab=fit",
-                        StepMatchPercent = 48
-                    },
-                    new CareerPathDashboardStep
-                    {
-                        Id = "tl-3",
-                        Order = 3,
-                        Title = "Planning & voorraad",
-                        Status = CareerStepStatus.Open,
-                        Summary = "Shiftplanning, voorraadinzicht en prioriteiten stellen onder tijdsdruk.",
-                        SkillsGap = ["Shiftplanning", "Voorraadanalyse", "KPI-rapportage"],
-                        Competencies = ["Analytisch denken", "Organiseren", "Prioriteren"],
-                        ActionLabel = "Zoek vacatures voor deze stap",
-                        ActionHref = "/?q=planner+logistiek",
-                        StepMatchPercent = 12
-                    },
-                    new CareerPathDashboardStep
-                    {
-                        Id = "tl-4",
-                        Order = 4,
-                        Title = "Doorgroeien naar teamleider",
-                        Status = CareerStepStatus.Open,
-                        Summary = "Eindverantwoordelijkheid voor teamresultaat, kwaliteit en veiligheid.",
-                        SkillsGap = ["Verantwoordelijkheid dragen", "Functioneringsgesprekken", "Verbetertrajecten"],
-                        Competencies = ["Leiderschap", "Besluitvaardigheid", "Eigenaarschap"],
-                        ActionLabel = "Zoek vacatures voor deze stap",
-                        ActionHref = "/?q=teamleider+logistiek",
-                        StepMatchPercent = 0
-                    }
-                ]),
+                "Je hebt al een stevige basis in de operatie. Leidinggeven en plannen vormen de grootste stap.",
+                BuildPresetSteps(
+                    ("tl-1", "Stevige basis", CareerStepStatus.Completed, "Je kent de processen en samenwerking op de werkvloer.", [], ["Samenwerken", "Resultaatgerichtheid"], "Bekijk vacatures", "/?q=magazijn", 100),
+                    ("tl-2", "Leidinggeven", CareerStepStatus.Active, "Coachen, briefen en bijsturen van een klein team.", ["Feedback geven", "Werkverdeling"], ["Leiderschap", "Communicatie"], "Bekijk cursussen", "/candidate/profile?tab=fit", 48),
+                    ("tl-3", "Planning", CareerStepStatus.Open, "Shiftplanning en prioriteiten onder tijdsdruk.", ["Shiftplanning", "KPI-rapportage"], ["Organiseren", "Prioriteren"], "Zoek stap-vacatures", "/?q=planner+logistiek", 12),
+                    ("tl-4", "Teamleider", CareerStepStatus.Open, "Eindverantwoordelijkheid voor teamresultaat.", ["Functioneringsgesprekken"], ["Besluitvaardigheid", "Eigenaarschap"], "Zoek droomvacatures", "/?q=teamleider+logistiek", 0))),
             ["filiaalmanager"] = (
                 "Filiaalmanager",
                 24,
-                "Je kunt klanten helpen en processen volgen. Om filiaalmanager te worden groeit vooral commercieel inzicht en teamsturing.",
-                [
-                    new CareerPathDashboardStep
-                    {
-                        Id = "fm-1",
-                        Order = 1,
-                        Title = "Klantgericht werken",
-                        Status = CareerStepStatus.Completed,
-                        Summary = "Je bent sterk in service, presentatie en omgaan met klantvragen.",
-                        SkillsGap = [],
-                        Competencies = ["Klantgerichtheid", "Communicatie", "Flexibiliteit"],
-                        ActionLabel = "Bekijk passende vacatures",
-                        ActionHref = "/?q=verkoop",
-                        StepMatchPercent = 100
-                    },
-                    new CareerPathDashboardStep
-                    {
-                        Id = "fm-2",
-                        Order = 2,
-                        Title = "Commercieel denken",
-                        Status = CareerStepStatus.Active,
-                        Summary = "Omzetdoelen begrijpen, upsell en winkelprestaties volgen.",
-                        SkillsGap = ["Omzetsturing", "Assortimentskennis", "Promotieplannen"],
-                        Competencies = ["Resultaatgerichtheid", "Initiatief", "Analytisch denken"],
-                        ActionLabel = "Bekijk passende cursussen",
-                        ActionHref = "/candidate/profile?tab=fit",
-                        StepMatchPercent = 40
-                    },
-                    new CareerPathDashboardStep
-                    {
-                        Id = "fm-3",
-                        Order = 3,
-                        Title = "Team & roosters",
-                        Status = CareerStepStatus.Open,
-                        Summary = "Collega’s inzetten, roosteren en een fijne werksfeer bewaken.",
-                        SkillsGap = ["Roosteren", "Coachen", "Verzuim signaleren"],
-                        Competencies = ["Leiderschap", "Organiseren", "Empathie"],
-                        ActionLabel = "Zoek vacatures voor deze stap",
-                        ActionHref = "/?q=assistent+filiaalmanager",
-                        StepMatchPercent = 8
-                    },
-                    new CareerPathDashboardStep
-                    {
-                        Id = "fm-4",
-                        Order = 4,
-                        Title = "Filiaal volledige verantwoordelijkheid",
-                        Status = CareerStepStatus.Open,
-                        Summary = "Resultaatdenken, personeelszaken en locatie-KPI’s.",
-                        SkillsGap = ["Budgetbewaking", "Recruitment", "Locatie-KPI’s"],
-                        Competencies = ["Besluitvaardigheid", "Eigenaarschap", "Strategisch denken"],
-                        ActionLabel = "Zoek vacatures voor deze stap",
-                        ActionHref = "/?q=filiaalmanager",
-                        StepMatchPercent = 0
-                    }
-                ]),
+                "Service zit al goed. Commercieel inzicht en teamsturing groeien nog.",
+                BuildPresetSteps(
+                    ("fm-1", "Klantgericht", CareerStepStatus.Completed, "Sterk in service en omgaan met klantvragen.", [], ["Klantgerichtheid", "Communicatie"], "Bekijk vacatures", "/?q=verkoop", 100),
+                    ("fm-2", "Commercie", CareerStepStatus.Active, "Omzetdoelen en winkelprestaties volgen.", ["Omzetsturing", "Promotieplannen"], ["Resultaatgerichtheid", "Initiatief"], "Bekijk cursussen", "/candidate/profile?tab=fit", 40),
+                    ("fm-3", "Team & roosters", CareerStepStatus.Open, "Collega’s inzetten en werksfeer bewaken.", ["Roosteren", "Coachen"], ["Leiderschap", "Empathie"], "Zoek stap-vacatures", "/?q=assistent+filiaalmanager", 8),
+                    ("fm-4", "Filiaal leiden", CareerStepStatus.Open, "Resultaat, personeel en locatie-KPI’s.", ["Budgetbewaking"], ["Eigenaarschap", "Strategisch denken"], "Zoek droomvacatures", "/?q=filiaalmanager", 0))),
             ["hr-adviseur"] = (
                 "HR-adviseur",
                 18,
-                "Je hebt mensenkennis uit de praktijk. De overstap naar HR vraagt vooral beleidskennis, gesprekstechniek en administratieve precisie.",
-                [
-                    new CareerPathDashboardStep
-                    {
-                        Id = "hr-1",
-                        Order = 1,
-                        Title = "Mensen & gesprekken",
-                        Status = CareerStepStatus.Completed,
-                        Summary = "Je bent gewend om collega’s te helpen en duidelijk te communiceren.",
-                        SkillsGap = [],
-                        Competencies = ["Empathie", "Communicatie", "Betrouwbaarheid"],
-                        ActionLabel = "Bekijk passende vacatures",
-                        ActionHref = "/?q=hr",
-                        StepMatchPercent = 100
-                    },
-                    new CareerPathDashboardStep
-                    {
-                        Id = "hr-2",
-                        Order = 2,
-                        Title = "HR-basis & wetgeving",
-                        Status = CareerStepStatus.Active,
-                        Summary = "Kennismaken met arbeidsrecht, contracten en HR-processen.",
-                        SkillsGap = ["Arbeidsrecht basis", "CAO-inzicht", "HR-systemen"],
-                        Competencies = ["Analytisch denken", "Nauwkeurigheid", "Integriteit"],
-                        ActionLabel = "Bekijk passende cursussen",
-                        ActionHref = "/candidate/profile?tab=fit",
-                        StepMatchPercent = 35
-                    },
-                    new CareerPathDashboardStep
-                    {
-                        Id = "hr-3",
-                        Order = 3,
-                        Title = "Werving & onboarding",
-                        Status = CareerStepStatus.Open,
-                        Summary = "Vacatures uitzetten, gesprekken voeren en nieuwe collega’s inwerken.",
-                        SkillsGap = ["Sollicitatiegesprekken", "Onboarding", "Employer branding"],
-                        Competencies = ["Organiseren", "Oordeelsvorming", "Samenwerken"],
-                        ActionLabel = "Zoek vacatures voor deze stap",
-                        ActionHref = "/?q=hr+assistent",
-                        StepMatchPercent = 5
-                    },
-                    new CareerPathDashboardStep
-                    {
-                        Id = "hr-4",
-                        Order = 4,
-                        Title = "Doorstroom naar HR-adviseur",
-                        Status = CareerStepStatus.Open,
-                        Summary = "Managers adviseren over ontwikkeling, conflict en verzuim.",
-                        SkillsGap = ["Adviesvaardigheid", "Verzuimbeleid", "Talentontwikkeling"],
-                        Competencies = ["Oordeelsvorming", "Vertrouwen wekken", "Invloed"],
-                        ActionLabel = "Zoek vacatures voor deze stap",
-                        ActionHref = "/?q=hr+adviseur",
-                        StepMatchPercent = 0
-                    }
-                ])
+                "Mensenkennis uit de praktijk is er. HR vraagt beleidskennis en gesprekstechniek.",
+                BuildPresetSteps(
+                    ("hr-1", "Mensen & gesprekken", CareerStepStatus.Completed, "Je helpt collega’s en communiceert helder.", [], ["Empathie", "Communicatie"], "Bekijk vacatures", "/?q=hr", 100),
+                    ("hr-2", "HR-basis", CareerStepStatus.Active, "Arbeidsrecht, contracten en HR-processen.", ["Arbeidsrecht basis", "CAO-inzicht"], ["Analytisch denken", "Integriteit"], "Bekijk cursussen", "/candidate/profile?tab=fit", 35),
+                    ("hr-3", "Werving", CareerStepStatus.Open, "Vacatures, gesprekken en onboarding.", ["Sollicitatiegesprekken", "Onboarding"], ["Organiseren", "Oordeelsvorming"], "Zoek stap-vacatures", "/?q=hr+assistent", 5),
+                    ("hr-4", "HR-adviseur", CareerStepStatus.Open, "Managers adviseren over ontwikkeling en verzuim.", ["Adviesvaardigheid"], ["Vertrouwen wekken", "Invloed"], "Zoek droomvacatures", "/?q=hr+adviseur", 0))),
+            ["assistent-manager"] = (
+                "Assistent-manager",
+                28,
+                "Je combineert vakkennis met groeiende regie op de werkvloer.",
+                BuildPresetSteps(
+                    ("am-1", "Vakbasis", CareerStepStatus.Completed, "Je beheerst de dagelijkse uitvoering.", [], ["Betrouwbaarheid", "Samenwerken"], "Bekijk vacatures", "/?q=assistent", 100),
+                    ("am-2", "Aansturen", CareerStepStatus.Active, "Collega’s meekrijgen en taken verdelen.", ["Delegeren", "Briefen"], ["Leiderschap", "Communicatie"], "Bekijk cursussen", "/candidate/profile?tab=fit", 42),
+                    ("am-3", "Overzicht", CareerStepStatus.Open, "Prioriteiten en kwaliteit bewaken.", ["Prioriteren"], ["Organiseren", "Resultaatgerichtheid"], "Zoek stap-vacatures", "/?q=assistent+manager", 10),
+                    ("am-4", "Assistent-manager", CareerStepStatus.Open, "Manager ondersteunen en zelfstandig bijsturen.", ["Eigenaarschap"], ["Besluitvaardigheid"], "Zoek droomvacatures", "/?q=assistent+manager", 0))),
+            ["planner"] = (
+                "Planner",
+                26,
+                "Structuur en overzicht passen bij jou. Diepte in planningssystemen groeit nog.",
+                BuildPresetSteps(
+                    ("pl-1", "Overzicht", CareerStepStatus.Completed, "Je ziet snel wat er speelt op de werkvloer.", [], ["Nauwkeurigheid", "Prioriteren"], "Bekijk vacatures", "/?q=planner", 100),
+                    ("pl-2", "Planningstools", CareerStepStatus.Active, "Leren plannen met data en systemen.", ["Excel/planningstool", "Capaciteitsinzicht"], ["Analytisch denken"], "Bekijk cursussen", "/candidate/profile?tab=fit", 44),
+                    ("pl-3", "Afstemmen", CareerStepStatus.Open, "Met teams en stakeholders afstemmen.", ["Stakeholdercommunicatie"], ["Samenwerken", "Communicatie"], "Zoek stap-vacatures", "/?q=planner", 14),
+                    ("pl-4", "Planner", CareerStepStatus.Open, "Zelfstandig planningen optimaliseren.", ["Optimaliseren"], ["Resultaatgerichtheid"], "Zoek droomvacatures", "/?q=planner", 0))),
+            ["coach"] = (
+                "Teamcoach",
+                22,
+                "Je trekt mensen mee. Formele coachvaardigheden maken het verschil.",
+                BuildPresetSteps(
+                    ("co-1", "Verbinding", CareerStepStatus.Completed, "Je bouwt makkelijk contact met collega’s.", [], ["Empathie", "Communicatie"], "Bekijk vacatures", "/?q=coach", 100),
+                    ("co-2", "Coachtechniek", CareerStepStatus.Active, "Luisteren, vragen stellen en feedback geven.", ["Coachende vragen", "Feedback"], ["Luisteren", "Vertrouwen wekken"], "Bekijk cursussen", "/candidate/profile?tab=fit", 38),
+                    ("co-3", "Teamdynamiek", CareerStepStatus.Open, "Conflicten en samenwerking begeleiden.", ["Conflictvaardigheden"], ["Oordeelsvorming"], "Zoek stap-vacatures", "/?q=teamcoach", 9),
+                    ("co-4", "Teamcoach", CareerStepStatus.Open, "Teams structureel ontwikkelen.", ["Ontwikkeltrajecten"], ["Invloed", "Eigenaarschap"], "Zoek droomvacatures", "/?q=teamcoach", 0)))
         };
 
     /// <summary>Current role shown in the header (mock talent profile).</summary>
     public string CurrentRoleTitle { get; } = "Magazijnmedewerker";
 
-    public IReadOnlyList<CareerDreamOption> GetDreamOptions() => DreamCatalog;
+    public IReadOnlyList<CareerDreamOption> GetDreamSuggestions() => DreamSuggestions;
 
-    public CareerDashboardModel GetDashboard(string? dreamRoleId = null)
+    /// <summary>
+    /// Resolves a dashboard for a free-text horizon (or known suggestion id/title).
+    /// </summary>
+    public CareerDashboardModel GetDashboard(string? dreamRoleIdOrTitle = null)
     {
-        var id = string.IsNullOrWhiteSpace(dreamRoleId) ? DefaultDreamId : dreamRoleId.Trim();
-        if (!Paths.TryGetValue(id, out var path))
+        var raw = string.IsNullOrWhiteSpace(dreamRoleIdOrTitle)
+            ? DefaultDreamTitle
+            : dreamRoleIdOrTitle.Trim();
+
+        if (TryResolvePreset(raw, out var id, out var path))
         {
-            id = DefaultDreamId;
-            path = Paths[id];
+            return new CareerDashboardModel
+            {
+                CurrentRoleTitle = CurrentRoleTitle,
+                DreamRoleId = id,
+                DreamRoleTitle = path.DreamTitle,
+                MatchPercent = path.MatchPercent,
+                MatchSummary = path.Summary,
+                DreamOptions = DreamSuggestions,
+                Steps = path.Steps
+            };
         }
 
+        var custom = BuildCustomPath(raw);
         return new CareerDashboardModel
         {
             CurrentRoleTitle = CurrentRoleTitle,
-            DreamRoleId = id,
-            DreamRoleTitle = path.DreamTitle,
-            MatchPercent = path.MatchPercent,
-            MatchSummary = path.Summary,
-            DreamOptions = DreamCatalog,
-            Steps = path.Steps
+            DreamRoleId = "custom",
+            DreamRoleTitle = custom.DreamTitle,
+            MatchPercent = custom.MatchPercent,
+            MatchSummary = custom.Summary,
+            DreamOptions = DreamSuggestions,
+            Steps = custom.Steps
         };
+    }
+
+    private static bool TryResolvePreset(
+        string raw,
+        out string id,
+        out (string DreamTitle, int MatchPercent, string Summary, CareerPathDashboardStep[] Steps) path)
+    {
+        if (Paths.TryGetValue(raw, out path))
+        {
+            id = raw;
+            return true;
+        }
+
+        foreach (var option in DreamSuggestions)
+        {
+            if (string.Equals(option.Title, raw, StringComparison.OrdinalIgnoreCase)
+                && Paths.TryGetValue(option.Id, out path))
+            {
+                id = option.Id;
+                return true;
+            }
+        }
+
+        id = "";
+        path = default;
+        return false;
+    }
+
+    private static (string DreamTitle, int MatchPercent, string Summary, CareerPathDashboardStep[] Steps) BuildCustomPath(string title)
+    {
+        var safe = ClampTitle(title);
+        var match = 18 + (StableHash(safe) % 17); // 18–34
+        var query = Uri.EscapeDataString(safe);
+        var steps = BuildPresetSteps(
+            ("cu-1", "Huidige basis", CareerStepStatus.Completed,
+                $"Je huidige rol als {CurrentRoleTitleStatic} sluit al aan op onderdelen van “{safe}”.",
+                [], ["Samenwerken", "Betrouwbaarheid"], "Bekijk vacatures", "/?q=" + query, 100),
+            ("cu-2", "Skills aanscherpen", CareerStepStatus.Active,
+                "Werk gericht aan de vaardigheden die jouw stip dichterbij brengen.",
+                ["Relevante vakkennis", "Zichtbaarheid van je ambities"], ["Initiatief", "Leervermogen"],
+                "Bekijk cursussen", "/candidate/profile?tab=fit", Math.Clamp(match + 10, 30, 55)),
+            ("cu-3", "Ervaring opbouwen", CareerStepStatus.Open,
+                "Zoek tussentijdse rollen of projecten die richting je droombaan wijzen.",
+                ["Praktijkervaring in de doelrichting"], ["Resultaatgerichtheid", "Netwerken"],
+                "Zoek stap-vacatures", "/?q=" + query, Math.Max(5, match / 3)),
+            ("cu-4", safe, CareerStepStatus.Open,
+                $"Land bij je stip op de horizon: {safe}.",
+                ["Eindcompetenties van de rol"], ["Eigenaarschap", "Besluitvaardigheid"],
+                "Zoek droomvacatures", "/?q=" + query, 0));
+
+        return (
+            safe,
+            match,
+            $"Jouw pad naar “{safe}” is persoonlijk. We schetsen rustige stappen op basis van je huidige rol.",
+            steps);
+    }
+
+    private const string CurrentRoleTitleStatic = "Magazijnmedewerker";
+
+    private static string ClampTitle(string title)
+    {
+        var t = title.Trim();
+        if (t.Length > 80)
+        {
+            t = t[..80].Trim();
+        }
+
+        return string.IsNullOrWhiteSpace(t) ? DefaultDreamTitle : t;
+    }
+
+    private static int StableHash(string value)
+    {
+        unchecked
+        {
+            var hash = 23;
+            foreach (var ch in value.ToLowerInvariant())
+            {
+                hash = (hash * 31) + ch;
+            }
+
+            return Math.Abs(hash);
+        }
+    }
+
+    private static CareerPathDashboardStep[] BuildPresetSteps(
+        params (string Id, string Title, CareerStepStatus Status, string Summary, string[] Gaps, string[] Competencies, string ActionLabel, string ActionHref, int StepMatch)[] rows)
+    {
+        var steps = new CareerPathDashboardStep[rows.Length];
+        for (var i = 0; i < rows.Length; i++)
+        {
+            var row = rows[i];
+            steps[i] = new CareerPathDashboardStep
+            {
+                Id = row.Id,
+                Order = i + 1,
+                Title = row.Title,
+                Status = row.Status,
+                Summary = row.Summary,
+                SkillsGap = row.Gaps,
+                Competencies = row.Competencies,
+                ActionLabel = row.ActionLabel,
+                ActionHref = row.ActionHref,
+                StepMatchPercent = row.StepMatch
+            };
+        }
+
+        return steps;
     }
 }
