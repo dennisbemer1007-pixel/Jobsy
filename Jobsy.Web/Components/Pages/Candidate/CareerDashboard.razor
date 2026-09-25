@@ -19,30 +19,76 @@
 
     @if (_model is null)
     {
-        <p class="state-message">@Culture["Common.Loading"]</p>
+        <div class="horizon-skeleton" aria-busy="true" aria-live="polite">
+            <p class="visually-hidden">@Culture["Common.Loading"]</p>
+            <div class="horizon-skeleton__hero"></div>
+            <div class="horizon-skeleton__stepper"></div>
+            <div class="horizon-skeleton__card"></div>
+        </div>
     }
     else
     {
-        <section class="career-dash__hero" aria-labelledby="career-dash-horizon">
-            <div class="career-dash__progress">
-                <p class="career-dash__pct" id="career-dash-horizon">
-                    <strong>@_model.MatchPercent%</strong>
-                    <span>@Culture["CareerDash.Match"]</span>
-                </p>
-                <div class="career-dash__bar"
-                     role="progressbar"
-                     aria-valuemin="0"
-                     aria-valuemax="100"
-                     aria-valuenow="@_model.MatchPercent"
-                     aria-label="@Culture["CareerDash.ProgressLabel"]">
-                    <span class="career-dash__bar-fill" style="width: @_model.MatchPercent%"></span>
-                </div>
-                <p class="career-dash__summary">@_model.MatchSummary</p>
+        var selected = SelectedStep;
+        var active = _model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active);
+        var stepCount = _model.Steps.Count;
+
+        <section class="horizon-hero" aria-labelledby="horizon-dream-title">
+            <div class="horizon-hero__art" aria-hidden="true">
+                <svg class="horizon-hero__svg" viewBox="0 0 390 190" preserveAspectRatio="xMidYMid slice" focusable="false">
+                    <defs>
+                        <linearGradient id="horizon-sky" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#0f2d5c"/>
+                            <stop offset="48%" stop-color="#5b3a7a"/>
+                            <stop offset="78%" stop-color="#c44a3a"/>
+                            <stop offset="100%" stop-color="#f54a1b"/>
+                        </linearGradient>
+                        <radialGradient id="horizon-sun-glow" cx="78%" cy="78%" r="42%">
+                            <stop offset="0%" stop-color="#ffd27a" stop-opacity="0.9"/>
+                            <stop offset="55%" stop-color="#f54a1b" stop-opacity="0.35"/>
+                            <stop offset="100%" stop-color="#f54a1b" stop-opacity="0"/>
+                        </radialGradient>
+                    </defs>
+                    <rect width="390" height="190" fill="url(#horizon-sky)"/>
+                    <circle cx="48" cy="36" r="1.4" fill="#fff" opacity="0.55"/>
+                    <circle cx="112" cy="22" r="1.1" fill="#fff" opacity="0.4"/>
+                    <circle cx="168" cy="48" r="1.3" fill="#fff" opacity="0.5"/>
+                    <circle cx="230" cy="28" r="1" fill="#fff" opacity="0.35"/>
+                    <circle cx="290" cy="42" r="1.2" fill="#fff" opacity="0.45"/>
+                    <circle cx="330" cy="18" r="1" fill="#fff" opacity="0.3"/>
+                    <rect width="390" height="190" fill="url(#horizon-sun-glow)"/>
+                    <path d="M0 148 C70 128 120 156 180 142 C240 128 280 150 390 136 L390 190 L0 190 Z" fill="#2a1a4a" opacity="0.92"/>
+                    <path d="M0 162 C90 148 150 168 220 156 C290 144 340 160 390 152 L390 190 L0 190 Z" fill="#1a1238" opacity="0.95"/>
+                    <circle cx="318" cy="148" r="28" fill="#ffb347"/>
+                    <circle cx="318" cy="148" r="22" fill="#ffd27a"/>
+                </svg>
             </div>
 
-            <div class="career-dash__horizon career-dash__horizon--solo">
-                <div class="career-dash__role career-dash__role--dream">
-                    <label class="career-dash__label" for="career-dream-input">@Culture["CareerDash.DreamRole"]</label>
+            <div class="horizon-hero__content">
+                <p class="horizon-hero__eyebrow">@Culture["CareerDash.HorizonEyebrow"]</p>
+                <div class="horizon-hero__title-row">
+                    <h2 id="horizon-dream-title" class="horizon-hero__title">@_model.DreamRoleTitle</h2>
+                    <button type="button"
+                            class="horizon-hero__edit"
+                            aria-expanded="@_editingDream"
+                            aria-controls="career-dream-sheet"
+                            title="@Culture["CareerDash.EditDream"]"
+                            @onclick="ToggleDreamEdit">
+                        <span class="visually-hidden">@Culture["CareerDash.EditDream"]</span>
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 20h9"/>
+                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                        </svg>
+                    </button>
+                </div>
+                <p class="horizon-hero__match">
+                    @Culture.Format("CareerDash.MatchWithProfile", _model.MatchPercent)
+                </p>
+            </div>
+
+            @if (_editingDream)
+            {
+                <div id="career-dream-sheet" class="horizon-dream-sheet" role="region" aria-label="@Culture["CareerDash.DreamRole"]">
+                    <label class="horizon-dream-sheet__label" for="career-dream-input">@Culture["CareerDash.DreamRole"]</label>
                     <input id="career-dream-input"
                            class="career-dash__input"
                            type="text"
@@ -62,132 +108,193 @@
                         }
                     </datalist>
                 </div>
-            </div>
-            @if (_busy)
-            {
-                <p class="state-message" aria-live="polite">@Culture["CareerDash.Generating"]</p>
-            }
-            else if (!string.IsNullOrWhiteSpace(_message))
-            {
-                <p class="state-message">@_message</p>
             }
         </section>
 
-        <section class="career-dash__plan" aria-labelledby="career-dash-plan-title">
-            <div class="career-dash__plan-head">
-                <h2 id="career-dash-plan-title" class="career-dash__section-title">@Culture["CareerDash.PlanTitle"]</h2>
-                <p class="login-lead career-dash__section-lead">@Culture["CareerDash.PlanLead"]</p>
-            </div>
+        @if (_busy)
+        {
+            <p class="state-message" aria-live="polite">@Culture["CareerDash.Generating"]</p>
+        }
+        else if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <p class="state-message error">@_message</p>
+        }
 
-            <div class="career-accordion" role="list">
+        <nav class="horizon-stepper" aria-label="@Culture["CareerDash.PlanTitle"]">
+            <ol class="horizon-stepper__list">
                 @foreach (var step in _model.Steps)
                 {
-                    var open = string.Equals(_expandedStepId, step.Id, StringComparison.Ordinal);
-                    <article class="career-accordion__item @StatusClass(step.Status) @(open ? "is-open" : null)" role="listitem">
-                        <h3 class="career-accordion__heading">
-                            <button type="button"
-                                    class="career-accordion__toggle"
-                                    id="@($"career-step-{step.Id}-btn")"
-                                    aria-expanded="@open"
-                                    aria-controls="@($"career-step-{step.Id}-panel")"
-                                    @onclick="() => ToggleStep(step.Id)">
-                                <span class="career-accordion__num" aria-hidden="true">@step.Order</span>
-                                <span class="career-accordion__title-wrap">
-                                    <span class="career-accordion__title">@step.Title</span>
-                                    <span class="career-timeline__badge @StatusClass(step.Status)">@Culture[StatusKey(step.Status)]</span>
-                                </span>
-                                <span class="career-accordion__chevron" aria-hidden="true"></span>
-                            </button>
-                        </h3>
-
-                        @if (open)
+                    var isSelected = string.Equals(_selectedStepId, step.Id, StringComparison.Ordinal);
+                    var isActiveStatus = step.Status == CareerStepStatus.Active;
+                    var isCompleted = step.Status == CareerStepStatus.Completed;
+                    var label = StepperLabel(step, active);
+                    <li class="horizon-stepper__item @StatusClass(step.Status) @(isSelected ? "is-selected" : null)">
+                        @if (step.Order > 1)
                         {
-                            <div class="career-accordion__panel"
-                                 id="@($"career-step-{step.Id}-panel")"
-                                 role="region"
-                                 aria-labelledby="@($"career-step-{step.Id}-btn")">
-                                <p class="career-step-panel__summary">@step.Summary</p>
-
-                                <div class="career-step-panel__grid">
-                                    <div class="career-timeline__block">
-                                        <h4>@Culture["CareerDash.SkillsGap"]</h4>
-                                        @if (step.SkillsGap.Count > 0)
-                                        {
-                                            <ul>
-                                                @foreach (var gap in step.SkillsGap)
-                                                {
-                                                    <li>@gap</li>
-                                                }
-                                            </ul>
-                                        }
-                                        else
-                                        {
-                                            <p class="muted">@Culture["CareerDash.SkillsGapNone"]</p>
-                                        }
-                                    </div>
-
-                                    <div class="career-timeline__block">
-                                        <h4>@Culture["CareerDash.Courses"]</h4>
-                                        @if (step.Courses.Count > 0)
-                                        {
-                                            <ul>
-                                                @foreach (var course in step.Courses)
-                                                {
-                                                    <li>@course</li>
-                                                }
-                                            </ul>
-                                        }
-                                        else
-                                        {
-                                            <p class="muted">@Culture["CareerDash.CoursesNone"]</p>
-                                        }
-                                    </div>
-
-                                    <div class="career-timeline__block">
-                                        <h4>@Culture["CareerDash.MinRequirements"]</h4>
-                                        @if (step.MinRequirements.Count > 0)
-                                        {
-                                            <ul>
-                                                @foreach (var req in step.MinRequirements)
-                                                {
-                                                    <li>@req</li>
-                                                }
-                                            </ul>
-                                        }
-                                        else
-                                        {
-                                            <p class="muted">@Culture["CareerDash.MinRequirementsNone"]</p>
-                                        }
-                                    </div>
-
-                                    <div class="career-timeline__block">
-                                        <h4>@Culture["CareerDash.YearsExperience"]</h4>
-                                        <p>@Culture.Format("CareerDash.YearsExperienceValue", step.YearsExperienceNeeded)</p>
-                                    </div>
-                                </div>
-
-                                <div class="career-timeline__action">
-                                    <a class="login-submit" href="@step.ActionHref">@step.ActionLabel</a>
-                                    @if (step.StepMatchPercent > 0 && step.StepMatchPercent < 100)
-                                    {
-                                        <p class="muted">@Culture.Format("CareerDash.StepMatch", step.StepMatchPercent)</p>
-                                    }
-                                </div>
-                            </div>
+                            <span class="horizon-stepper__line @(IsLineFilled(step) ? "is-filled" : null)" aria-hidden="true"></span>
                         }
-                    </article>
+                        <button type="button"
+                                class="horizon-stepper__node"
+                                id="@($"horizon-step-{step.Id}")"
+                                aria-current="@(isSelected ? "step" : null)"
+                                aria-label="@Culture.Format("CareerDash.StepN", step.Order): @step.Title"
+                                @onclick="() => SelectStep(step.Id)">
+                            @if (isCompleted)
+                            {
+                                <span class="horizon-stepper__check" aria-hidden="true">
+                                    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3.5 8.2 6.4 11l6.1-6.5"/>
+                                    </svg>
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="horizon-stepper__num" aria-hidden="true">@step.Order</span>
+                            }
+                        </button>
+                        @if (!string.IsNullOrEmpty(label))
+                        {
+                            <span class="horizon-stepper__caption">@label</span>
+                        }
+                    </li>
                 }
-            </div>
-        </section>
+                <li class="horizon-stepper__item horizon-stepper__item--goal">
+                    <span class="horizon-stepper__line" aria-hidden="true"></span>
+                    <span class="horizon-stepper__node horizon-stepper__node--goal" aria-hidden="true" title="@Culture["CareerDash.StepperGoal"]">
+                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+                            <path d="M3 1.5v13"/>
+                            <path d="M3.5 2.2h7.2l-1.4 2.4 1.4 2.4H3.5z"/>
+                        </svg>
+                    </span>
+                    <span class="horizon-stepper__caption">@Culture["CareerDash.StepperGoal"]</span>
+                </li>
+            </ol>
+        </nav>
+
+        @if (selected is not null)
+        {
+            <article class="horizon-card @( _cardExpanded ? "is-expanded" : "is-collapsed" )"
+                     aria-label="@selected.Title">
+                @if (_cardExpanded)
+                {
+                    <button type="button"
+                            class="horizon-card__collapse"
+                            aria-label="@Culture["CareerDash.CollapseStep"]"
+                            @onclick="CollapseCard">
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 14 6-6 6 6"/>
+                        </svg>
+                    </button>
+
+                    <h2 id="horizon-card-title" class="visually-hidden">@selected.Title</h2>
+                    <p class="horizon-card__lead">@selected.Summary</p>
+
+                    @if (selected.SkillsGap.Count > 0)
+                    {
+                        <section class="horizon-card__block" aria-labelledby="horizon-gaps-title">
+                            <h3 id="horizon-gaps-title" class="horizon-card__block-title">@Culture["CareerDash.SkillsGap"]</h3>
+                            <ul class="horizon-chips">
+                                @foreach (var gap in selected.SkillsGap)
+                                {
+                                    <li>@gap</li>
+                                }
+                            </ul>
+                        </section>
+                    }
+
+                    @if (selected.Courses.Count > 0)
+                    {
+                        <section class="horizon-card__block" aria-labelledby="horizon-courses-title">
+                            <h3 id="horizon-courses-title" class="horizon-card__block-title">@Culture["CareerDash.Courses"]</h3>
+                            <ul class="horizon-courses">
+                                @foreach (var course in selected.Courses)
+                                {
+                                    <li>
+                                        <a class="horizon-course" href="@selected.ActionHref">
+                                            <span class="horizon-course__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M22 10 12 5 2 10l10 5 10-5Z"/>
+                                                    <path d="M6 12.5v4.2c0 .8 2.7 2.3 6 2.3s6-1.5 6-2.3v-4.2"/>
+                                                    <path d="M22 10v6"/>
+                                                </svg>
+                                            </span>
+                                            <span class="horizon-course__label">@course</span>
+                                            <span class="horizon-course__chevron" aria-hidden="true"></span>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </section>
+                    }
+
+                    <div class="horizon-card__meta-grid">
+                        <section class="horizon-card__meta" aria-labelledby="horizon-req-title">
+                            <h3 id="horizon-req-title" class="horizon-card__block-title">@Culture["CareerDash.MinRequirements"]</h3>
+                            @if (selected.MinRequirements.Count > 0)
+                            {
+                                <ul class="horizon-card__meta-list">
+                                    @foreach (var req in selected.MinRequirements)
+                                    {
+                                        <li>@req</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p>@Culture["CareerDash.MinRequirementsNone"]</p>
+                            }
+                        </section>
+                        <section class="horizon-card__meta" aria-labelledby="horizon-exp-title">
+                            <h3 id="horizon-exp-title" class="horizon-card__block-title">@Culture["CareerDash.YearsExperience"]</h3>
+                            <p>@Culture.Format("CareerDash.YearsExperienceValue", selected.YearsExperienceNeeded)</p>
+                        </section>
+                    </div>
+
+                    <section class="horizon-card__match" aria-labelledby="horizon-step-match-title">
+                        <div class="horizon-card__match-row">
+                            <h3 id="horizon-step-match-title" class="horizon-card__block-title">@Culture["CareerDash.StepMatchLabel"]</h3>
+                            <strong>@selected.StepMatchPercent%</strong>
+                        </div>
+                        <div class="horizon-card__match-bar"
+                             role="progressbar"
+                             aria-valuemin="0"
+                             aria-valuemax="100"
+                             aria-valuenow="@selected.StepMatchPercent"
+                             aria-label="@Culture.Format("CareerDash.StepMatch", selected.StepMatchPercent)">
+                            <span style="width: @Math.Clamp(selected.StepMatchPercent, 0, 100)%"></span>
+                        </div>
+                    </section>
+
+                    <a class="login-submit horizon-card__cta" href="@selected.ActionHref">@selected.ActionLabel</a>
+                }
+                else
+                {
+                    <p class="horizon-card__eyebrow">@CollapsedEyebrow(selected, stepCount)</p>
+                    <h2 id="horizon-card-title" class="horizon-card__title">@selected.Title</h2>
+                    <p class="horizon-card__meta-line">
+                        @Culture.Format("CareerDash.CollapsedMeta", selected.SkillsGap.Count, selected.Courses.Count)
+                    </p>
+                    <button type="button" class="login-submit horizon-card__cta" @onclick="ExpandCard">
+                        @Culture["CareerDash.ViewStep"]
+                    </button>
+                }
+            </article>
+        }
     }
 </div>
 
 @code {
     private CareerDashboardModel? _model;
-    private string? _expandedStepId;
+    private string? _selectedStepId;
+    private bool _cardExpanded;
+    private bool _editingDream;
     private string _dreamDraft = CareerPathService.DefaultDreamTitle;
     private bool _busy;
     private string? _message;
+
+    private CareerPathDashboardStep? SelectedStep
+        => _model?.Steps.FirstOrDefault(s => string.Equals(s.Id, _selectedStepId, StringComparison.Ordinal))
+           ?? _model?.Steps.FirstOrDefault();
 
     protected override async Task OnInitializedAsync()
     {
@@ -206,6 +313,15 @@
         }
     }
 
+    private void ToggleDreamEdit()
+    {
+        _editingDream = !_editingDream;
+        if (_editingDream)
+        {
+            _dreamDraft = _model?.DreamRoleTitle ?? CareerPathService.DefaultDreamTitle;
+        }
+    }
+
     private async Task CommitDreamAsync()
     {
         var next = (_dreamDraft ?? "").Trim();
@@ -219,11 +335,13 @@
             && string.Equals(next, _model.DreamRoleTitle, StringComparison.OrdinalIgnoreCase)
             && !_busy)
         {
+            _editingDream = false;
             return;
         }
 
         ApplyDashboard(CareerPaths.GetDashboard(next));
         await RefreshFromApiAsync(next);
+        _editingDream = false;
     }
 
     private async Task RefreshFromApiAsync(string dream)
@@ -252,24 +370,65 @@
     {
         _model = model;
         _dreamDraft = model.DreamRoleTitle;
-        _expandedStepId = model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)?.Id
+        _selectedStepId = model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)?.Id
                           ?? model.Steps.FirstOrDefault()?.Id;
+        _cardExpanded = false;
     }
 
-    private void ToggleStep(string id)
-        => _expandedStepId = string.Equals(_expandedStepId, id, StringComparison.Ordinal) ? null : id;
+    private void SelectStep(string id)
+    {
+        _selectedStepId = id;
+        _cardExpanded = false;
+    }
+
+    private void ExpandCard() => _cardExpanded = true;
+
+    private void CollapseCard() => _cardExpanded = false;
+
+    private bool IsLineFilled(CareerPathDashboardStep step)
+    {
+        if (_model is null)
+        {
+            return false;
+        }
+
+        var activeOrder = _model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)?.Order
+                          ?? _model.Steps.Count(s => s.Status == CareerStepStatus.Completed) + 1;
+        // Line before this step is green when the previous step is completed / reached.
+        return step.Order <= activeOrder;
+    }
+
+    private string StepperLabel(CareerPathDashboardStep step, CareerPathDashboardStep? active)
+    {
+        if (step.Order == 1)
+        {
+            return Culture["CareerDash.StepperBasis"];
+        }
+
+        if (active is not null && string.Equals(step.Id, active.Id, StringComparison.Ordinal))
+        {
+            return Culture["CareerDash.StepperNow"];
+        }
+
+        return "";
+    }
+
+    private string CollapsedEyebrow(CareerPathDashboardStep step, int stepCount)
+    {
+        if (step.Status == CareerStepStatus.Active)
+        {
+            return Culture.Format("CareerDash.NextStepEyebrow", step.Order, stepCount);
+        }
+
+        return step.Status == CareerStepStatus.Completed
+            ? Culture.Format("CareerDash.StepEyebrowCompleted", step.Order, stepCount)
+            : Culture.Format("CareerDash.StepEyebrowOpen", step.Order, stepCount);
+    }
 
     private static string StatusClass(CareerStepStatus status) => status switch
     {
         CareerStepStatus.Completed => "is-completed",
         CareerStepStatus.Active => "is-active",
         _ => "is-open-step"
-    };
-
-    private static string StatusKey(CareerStepStatus status) => status switch
-    {
-        CareerStepStatus.Completed => "CareerDash.StatusCompleted",
-        CareerStepStatus.Active => "CareerDash.StatusActive",
-        _ => "CareerDash.StatusOpen"
     };
 }
