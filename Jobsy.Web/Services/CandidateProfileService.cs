@@ -48,45 +48,41 @@ public sealed class CandidateProfileService
             },
             Tests =
             [
+                // Scenario C — diepteanalyse gedaan
                 new CandidateProfileTestCard
                 {
                     Id = "competence",
                     Title = "Competentieanalyse",
-                    Summary = "Big Five / OCEAN Quick-Scan (25) afgerond.",
-                    Completed = true,
-                    StatusBadge = "Afgerond",
-                    ActionLabel = "Bekijk of herhaal",
-                    ActionHref = "/candidate/competencies"
+                    Summary = "Diepteanalyse afgerond; scores en tags zijn bijgewerkt.",
+                    Stage = CandidateDnaTestStage.DeepCompleted,
+                    SupportsDeepAnalysis = true,
+                    StatusBadge = "Diepteanalyse",
+                    FreeTestHref = "/candidate/competencies",
+                    DeepAnalysisHref = "/candidate/deep-analysis/competence"
                 },
+                // Scenario A — nog niets
                 new CandidateProfileTestCard
                 {
                     Id = "career",
                     Title = "Beroepentest",
-                    Summary = "RIASEC-interesses en Beroepen-kompas beschikbaar.",
-                    Completed = true,
-                    StatusBadge = "Afgerond",
-                    ActionLabel = "Open kompas",
-                    ActionHref = "/candidate/profile?tab=career"
+                    Summary = "Nog niet ingevuld. Start gratis of ga direct voor de diepteanalyse.",
+                    Stage = CandidateDnaTestStage.NotStarted,
+                    SupportsDeepAnalysis = true,
+                    StatusBadge = "Nog te doen",
+                    FreeTestHref = "/candidate/profile?tab=career",
+                    DeepAnalysisHref = "/candidate/deep-analysis/career"
                 },
+                // Scenario B — alleen gratis test
                 new CandidateProfileTestCard
                 {
                     Id = "culture",
-                    Title = "Cultuurfit / DISC",
-                    Summary = "Gedragsstijl ingevuld; weegt mee in Functiefit.",
-                    Completed = true,
-                    StatusBadge = "Afgerond",
-                    ActionLabel = "Bekijk of herhaal",
-                    ActionHref = "/candidate/culture"
-                },
-                new CandidateProfileTestCard
-                {
-                    Id = "fit",
-                    Title = "Functiefit checker",
-                    Summary = "Nog geen recente functie getoetst dit week.",
-                    Completed = false,
-                    StatusBadge = "Open",
-                    ActionLabel = "Start Functiefit",
-                    ActionHref = "/candidate/profile?tab=fit"
+                    Title = "Cultuurfit",
+                    Summary = "Gratis cultuurscan afgerond; weegt mee in Functiefit.",
+                    Stage = CandidateDnaTestStage.FreeCompleted,
+                    SupportsDeepAnalysis = true,
+                    StatusBadge = "Gratis test",
+                    FreeTestHref = "/candidate/culture",
+                    DeepAnalysisHref = "/candidate/deep-analysis/culture"
                 }
             ],
             ScoreBars =
@@ -158,10 +154,11 @@ public sealed class CandidateProfileService
                 Id = t.Id,
                 Title = t.Title,
                 Summary = t.Summary,
-                Completed = t.Completed,
+                Stage = t.Stage,
+                SupportsDeepAnalysis = t.SupportsDeepAnalysis,
                 StatusBadge = t.StatusBadge,
-                ActionLabel = t.ActionLabel,
-                ActionHref = t.ActionHref
+                FreeTestHref = t.FreeTestHref,
+                DeepAnalysisHref = t.DeepAnalysisHref
             }).ToList(),
             ScoreBars = source.ScoreBars.Select(s => new CandidateProfileScoreBar
             {

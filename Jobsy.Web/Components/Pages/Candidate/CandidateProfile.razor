@@ -114,53 +114,57 @@
                             <ul class="profile-hub-tests">
                                 @foreach (var test in _model.Tests)
                                 {
-                                    <li class="profile-hub-tests__item @(test.Completed ? "is-done" : "is-open")">
+                                    <li class="profile-hub-tests__item @StageClass(test.Stage)">
                                         <div class="profile-hub-tests__main">
                                             <div>
                                                 <strong>@test.Title</strong>
                                                 <p>@test.Summary</p>
                                             </div>
-                                            <span class="profile-hub-badge @(test.Completed ? "is-ok" : "is-open")">@test.StatusBadge</span>
+                                            <span class="profile-hub-badge @BadgeClass(test.Stage)">@StatusLabel(test)</span>
                                         </div>
-                                        <a class="engagement-btn" href="@test.ActionHref">@test.ActionLabel</a>
+                                        <div class="profile-hub-tests__actions">
+                                            @foreach (var action in ActionsFor(test))
+                                            {
+                                                <a class="@action.CssClass" href="@action.Href">@action.Label</a>
+                                            }
+                                        </div>
                                     </li>
                                 }
                             </ul>
-                            <a class="login-submit profile-hub-card__cta" href="/candidate/profile?tab=whoami">@Culture["ProfileHub.AddTests"]</a>
+
+                            @if (_model.ScoreBars.Count > 0)
+                            {
+                                <div class="profile-hub-dna-scores">
+                                    <h3 class="profile-hub-dna-scores__title">@Culture["ProfileHub.ScoresTitle"]</h3>
+                                    <p class="login-lead profile-hub-card__lead">@Culture["ProfileHub.ScoresLead"]</p>
+                                    <ul class="profile-hub-scores">
+                                        @foreach (var bar in _model.ScoreBars)
+                                        {
+                                            <li>
+                                                <div class="profile-hub-scores__top">
+                                                    <span>@bar.Label</span>
+                                                    <strong>@bar.Percent%</strong>
+                                                </div>
+                                                <div class="profile-hub-scores__bar"
+                                                     role="progressbar"
+                                                     aria-valuemin="0"
+                                                     aria-valuemax="100"
+                                                     aria-valuenow="@bar.Percent"
+                                                     aria-label="@bar.Label">
+                                                    <span style="width: @bar.Percent%"></span>
+                                                </div>
+                                                <p class="muted">@bar.Hint</p>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
                         </div>
                     }
                 </section>
             </div>
 
             <div class="profile-hub__col profile-hub__col--secondary">
-                <section class="profile-hub-card profile-hub-card--scores" aria-labelledby="profile-hub-scores">
-                    <div class="profile-hub-card__head">
-                        <span class="profile-hub-card__eyebrow">@Culture["ProfileHub.Dna"]</span>
-                        <h2 id="profile-hub-scores" class="profile-hub-card__title">@Culture["ProfileHub.ScoresTitle"]</h2>
-                        <p class="login-lead profile-hub-card__lead">@Culture["ProfileHub.ScoresLead"]</p>
-                    </div>
-                    <ul class="profile-hub-scores">
-                        @foreach (var bar in _model.ScoreBars)
-                        {
-                            <li>
-                                <div class="profile-hub-scores__top">
-                                    <span>@bar.Label</span>
-                                    <strong>@bar.Percent%</strong>
-                                </div>
-                                <div class="profile-hub-scores__bar"
-                                     role="progressbar"
-                                     aria-valuemin="0"
-                                     aria-valuemax="100"
-                                     aria-valuenow="@bar.Percent"
-                                     aria-label="@bar.Label">
-                                    <span style="width: @bar.Percent%"></span>
-                                </div>
-                                <p class="muted">@bar.Hint</p>
-                            </li>
-                        }
-                    </ul>
-                </section>
-
                 <section class="profile-hub-card" aria-labelledby="profile-hub-settings">
                     <button type="button"
                             class="profile-hub-card__toggle @(_openSettings ? "is-open" : null)"
@@ -323,6 +327,78 @@
         _model = Profiles.UpdateSettings(settings);
         _settingsSaved = Culture["ProfileHub.SettingsSaved"];
     }
+
+    private string StatusLabel(CandidateProfileTestCard test) => test.Stage switch
+    {
+        CandidateDnaTestStage.DeepCompleted => Culture["ProfileHub.StatusDeep"],
+        CandidateDnaTestStage.FreeCompleted => Culture["ProfileHub.StatusFree"],
+        _ => Culture["ProfileHub.StatusOpen"]
+    };
+
+    private static string BadgeClass(CandidateDnaTestStage stage) => stage switch
+    {
+        CandidateDnaTestStage.DeepCompleted => "is-ok",
+        CandidateDnaTestStage.FreeCompleted => "is-warn",
+        _ => "is-open"
+    };
+
+    private static string StageClass(CandidateDnaTestStage stage) => stage switch
+    {
+        CandidateDnaTestStage.DeepCompleted => "is-deep",
+        CandidateDnaTestStage.FreeCompleted => "is-free",
+        _ => "is-open"
+    };
+
+    private IReadOnlyList<DnaAction> ActionsFor(CandidateProfileTestCard test)
+    {
+        var actions = new List<DnaAction>(2);
+        var hasDeep = test.SupportsDeepAnalysis && !string.IsNullOrWhiteSpace(test.DeepAnalysisHref);
+
+        switch (test.Stage)
+        {
+            case CandidateDnaTestStage.DeepCompleted when hasDeep:
+                // Scenario C: alleen diepteanalyse herhalen/bewerken
+                actions.Add(new DnaAction(
+                    Culture["ProfileHub.ActionDeepEdit"],
+                    test.DeepAnalysisHref,
+                    "login-submit"));
+                break;
+
+            case CandidateDnaTestStage.FreeCompleted:
+                // Scenario B: herhaal gratis + optioneel diepteanalyse
+                actions.Add(new DnaAction(
+                    Culture["ProfileHub.ActionFreeRetake"],
+                    test.FreeTestHref,
+                    "engagement-btn"));
+                if (hasDeep)
+                {
+                    actions.Add(new DnaAction(
+                        Culture["ProfileHub.ActionDeepStart"],
+                        test.DeepAnalysisHref,
+                        "login-submit"));
+                }
+                break;
+
+            default:
+                // Scenario A: start gratis + optioneel diepteanalyse
+                actions.Add(new DnaAction(
+                    Culture["ProfileHub.ActionFreeStart"],
+                    test.FreeTestHref,
+                    "login-submit"));
+                if (hasDeep)
+                {
+                    actions.Add(new DnaAction(
+                        Culture["ProfileHub.ActionDeepStart"],
+                        test.DeepAnalysisHref,
+                        "engagement-btn"));
+                }
+                break;
+        }
+
+        return actions;
+    }
+
+    private sealed record DnaAction(string Label, string Href, string CssClass);
 
     private sealed class PushCreateResult
     {

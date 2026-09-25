@@ -19834,6 +19834,36 @@ html.cookie-consent-known .cookie-consent {
     min-height: 2.5rem;
 }
 
+.profile-hub-tests__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.profile-hub-tests__actions .engagement-btn,
+.profile-hub-tests__actions .login-submit {
+    width: auto;
+    min-height: 2.45rem;
+    text-decoration: none;
+}
+
+.profile-hub-dna-scores {
+    margin-top: 1.25rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--border);
+}
+
+.profile-hub-dna-scores__title {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--brand);
+}
+
+.profile-hub-dna-scores .profile-hub-scores {
+    padding: 0;
+}
+
 .profile-hub-scores {
     list-style: none;
     margin: 0;
@@ -19903,7 +19933,8 @@ html.cookie-consent-known .cookie-consent {
         padding-right: 1rem;
     }
 
-    .profile-hub-tests__item .engagement-btn,
+    .profile-hub-tests__actions .engagement-btn,
+    .profile-hub-tests__actions .login-submit,
     .profile-hub-card__actions .engagement-btn,
     .profile-hub-switch {
         width: 100%;
