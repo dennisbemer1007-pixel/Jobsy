@@ -783,6 +783,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
         {
             return null;
         }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            // Circuit budget exceeded (e.g. slow OpenAI path) — treat as soft miss for retry UI.
+            return null;
+        }
     }
 
     public async Task<WhoAmIState> SaveMyWhoAmIAsync(bool includeOnCv, CancellationToken ct = default)
@@ -1263,7 +1268,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
             return await _http.GetFromJsonAsync<List<CandidateMatchedVacancy>>("api/me/matched-vacancies", ct)
                    ?? [];
         }
-        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
             return [];
         }

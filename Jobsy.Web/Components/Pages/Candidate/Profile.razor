@@ -615,6 +615,7 @@
             if (profile is null)
             {
                 _message = Culture["Profile.NotFound"];
+                _matchesLoading = false;
                 return;
             }
 
@@ -670,7 +671,11 @@
             _certificates.Clear();
             _certificates.AddRange(prefs.Certificates ?? []);
             ApplyCvAndReferences(profile);
+
+            // Paint Top 10 as soon as matches resolve — do not wait for reverse-geocode.
             await LoadMatchedVacanciesAsync();
+            await InvokeAsync(StateHasChanged);
+
             _selectedEducations.Clear();
             foreach (var education in prefs.Educations ?? [])
             {
@@ -704,7 +709,8 @@
                 {
                     try
                     {
-                        var label = await Geocoder.ReverseAsync(_homeLat.Value, _homeLng.Value);
+                        using var geoCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                        var label = await Geocoder.ReverseAsync(_homeLat.Value, _homeLng.Value, geoCts.Token);
                         _homeAddress = string.IsNullOrWhiteSpace(label)
                             ? FormatCoordinateFallback(_homeLat.Value, _homeLng.Value)
                             : label;
@@ -719,10 +725,12 @@
         catch (Exception ex)
         {
             _message = Culture.Format("Profile.LoadFailed", ex.Message);
+            _matchedVacancies = [];
         }
         finally
         {
             _loading = false;
+            _matchesLoading = false;
         }
     }
 

@@ -22,7 +22,7 @@ public sealed class CandidateWhoAmIController : ControllerBase
     }
 
     [HttpGet]
-    [EnableRateLimiting("ai")]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<WhoAmIStateDto>> Get(CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);

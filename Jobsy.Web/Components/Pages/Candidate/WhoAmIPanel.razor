@@ -1,5 +1,6 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
@@ -12,6 +13,9 @@
     else if (!string.IsNullOrWhiteSpace(_message) && _state is null)
     {
         <p class="state-message">@_message</p>
+        <button type="button" class="engagement-btn" disabled="@_loading" @onclick="RetryAsync">
+            @Culture["Common.Retry"]
+        </button>
     }
     else if (_state is { IsUnlocked: true } open)
     {
@@ -183,6 +187,7 @@
     private bool _loading = true;
     private bool _busy;
     private bool _wasActive;
+    private bool _loadStarted;
     private string? _message;
     private WhoAmIState? _state;
 
@@ -197,34 +202,63 @@
         _wasActive = Active;
         if (opening)
         {
-            await LoadAsync();
+            await LoadAsync(force: false);
         }
     }
 
-    private async Task LoadAsync()
+    private Task RetryAsync() => LoadAsync(force: true);
+
+    private async Task LoadAsync(bool force)
     {
+        if (_loadStarted && !force && _state is not null)
+        {
+            return;
+        }
+
+        _loadStarted = true;
         var firstLoad = _state is null;
-        if (firstLoad)
+        if (firstLoad || force)
         {
             _loading = true;
+            _message = null;
         }
 
         try
         {
-            var next = await Api.GetMyWhoAmIAsync();
+            WhoAmIState? next = null;
+            for (var attempt = 1; attempt <= 2; attempt++)
+            {
+                try
+                {
+                    next = await Api.GetMyWhoAmIAsync();
+                    if (next is not null)
+                    {
+                        break;
+                    }
+                }
+                catch (Exception ex) when (attempt < 2 && HomeDashboardLoad.IsTransient(ex))
+                {
+                    await Task.Delay(400);
+                    continue;
+                }
+                catch
+                {
+                    next = null;
+                    break;
+                }
+
+                if (next is null && attempt < 2)
+                {
+                    await Task.Delay(400);
+                }
+            }
+
             if (next is not null)
             {
                 _state = next;
                 _message = null;
             }
             else if (_state is null)
-            {
-                _message = Culture["Common.Error"];
-            }
-        }
-        catch
-        {
-            if (_state is null)
             {
                 _message = Culture["Common.Error"];
             }

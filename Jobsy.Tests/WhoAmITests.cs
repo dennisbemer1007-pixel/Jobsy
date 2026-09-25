@@ -88,6 +88,54 @@ public class WhoAmITests
         Assert.Contains("CultureScan.ScienceNote", panel, StringComparison.Ordinal);
         Assert.Contains("WhoAmI.WorkExperience", panel, StringComparison.Ordinal);
         Assert.Contains("OnParametersSetAsync", panel, StringComparison.Ordinal);
+        Assert.Contains("Common.Retry", panel, StringComparison.Ordinal);
+        Assert.Contains("HomeDashboardLoad.IsTransient", panel, StringComparison.Ordinal);
         Assert.Contains("Active=", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor")), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WhoAmI_get_uses_read_rate_limit_not_ai()
+    {
+        var root = RepoRoot.Find();
+        var controller = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/CandidateWhoAmIController.cs"));
+        Assert.Contains("[EnableRateLimiting(\"public-read\")]", controller, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            """
+            [HttpGet]
+                [EnableRateLimiting("ai")]
+            """,
+            controller.Replace("\r\n", "\n"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WhoAmI_openai_client_stays_under_api_client_budget()
+    {
+        var root = RepoRoot.Find();
+        var di = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/DependencyInjection.cs"));
+        Assert.Contains("WhoAmIGenerationService.HttpClientName", di, StringComparison.Ordinal);
+        Assert.Contains("TimeSpan.FromSeconds(8)", di, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "WhoAmIGenerationService.HttpClientName, client =>\n        {\n            client.Timeout = TimeSpan.FromSeconds(25);",
+            di.Replace("\r\n", "\n"),
+            StringComparison.Ordinal);
+
+        var generation = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/WhoAmIGenerationService.cs"));
+        Assert.Contains("CancelAfter(TimeSpan.FromSeconds(7))", generation, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Profile_paints_matches_before_reverse_geocode_finishes()
+    {
+        var root = RepoRoot.Find();
+        var profile = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
+        Assert.Contains("LoadMatchedVacanciesAsync()", profile, StringComparison.Ordinal);
+        Assert.Contains("await InvokeAsync(StateHasChanged)", profile, StringComparison.Ordinal);
+        var matchesIdx = profile.IndexOf("await LoadMatchedVacanciesAsync();", StringComparison.Ordinal);
+        var paintIdx = profile.IndexOf("await InvokeAsync(StateHasChanged);", matchesIdx, StringComparison.Ordinal);
+        var geoIdx = profile.IndexOf("Geocoder.ReverseAsync", matchesIdx, StringComparison.Ordinal);
+        Assert.True(matchesIdx >= 0 && paintIdx > matchesIdx);
+        Assert.True(geoIdx < 0 || geoIdx > paintIdx);
+        Assert.Contains("_matchesLoading = false", profile, StringComparison.Ordinal);
     }
 }

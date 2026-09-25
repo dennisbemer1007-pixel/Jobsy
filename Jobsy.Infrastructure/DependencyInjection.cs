@@ -255,7 +255,9 @@ public static class DependencyInjection
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
         services.AddHttpClient(WhoAmIGenerationService.HttpClientName, client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(25);
+            // Keep well under JobsyApiClient's 20s budget so GET /who-am-i can
+            // fall back to the local story before the Blazor circuit times out.
+            client.Timeout = TimeSpan.FromSeconds(8);
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false

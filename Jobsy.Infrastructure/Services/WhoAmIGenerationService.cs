@@ -55,6 +55,8 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
 
         try
         {
+            using var openAiCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            openAiCts.CancelAfter(TimeSpan.FromSeconds(7));
             var generated = await GenerateWithOpenAiAsync(
                 competency,
                 career,
@@ -64,11 +66,15 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
                 apiKey,
                 await ResolveModelAsync(cancellationToken),
                 await ResolveBaseUrlAsync(cancellationToken),
-                cancellationToken);
+                openAiCts.Token);
             if (generated is not null)
             {
                 return generated;
             }
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("OpenAI Wie-ben-ik timed out; lokale tekst wordt gebruikt.");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
