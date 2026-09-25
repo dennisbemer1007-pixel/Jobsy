@@ -23,6 +23,13 @@
     --danger-soft: #fef2f2;
     --success: #15803d;
     --success-soft: #ecfdf3;
+    --gold: #c9a227;
+    --gold-light: #e4c65a;
+    --gold-deep: #a6851c;
+    --gold-ink: #5c4a0f;
+    --gold-soft: #faf6e8;
+    /* Gold gradient: allowed only for gold buttons and gold tile accents (see design-system.mdc). */
+    --gold-gradient: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 48%, var(--gold-deep) 100%);
     --warn: #a65b00;
     --warn-soft: #fff8e7;
     --hover: #f0ebe6;
@@ -20197,5 +20204,393 @@ body {
 
     .bottom-nav {
         padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+    }
+}
+
+/* —— Candidate tests / DNA (profile kompas) —— */
+.kompas__intro {
+    margin-bottom: 0.75rem;
+}
+
+.kompas__heading {
+    margin: 0 0 0.25rem;
+    font-size: 1.45rem;
+    color: var(--brand);
+}
+
+.btn-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--gold-gradient);
+    color: var(--gold-ink);
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+}
+
+.btn-gold:hover:not(:disabled) {
+    filter: brightness(1.03);
+}
+
+.btn-gold:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.btn-gold--split,
+.btn-outline-brand--split {
+    justify-content: space-between;
+}
+
+.btn-gold__meta,
+.btn-outline-brand__meta {
+    font-weight: 600;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.btn-outline-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--brand);
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+}
+
+.btn-outline-brand:hover {
+    background: var(--hover);
+}
+
+.dna-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.85rem;
+    padding: 1.5rem 0.75rem 1rem;
+}
+
+.dna-empty__icon {
+    color: var(--brand);
+    opacity: 0.85;
+}
+
+.dna-incomplete {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.85rem;
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+.dna-incomplete__badge {
+    display: inline-flex;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: var(--warn-soft);
+    color: var(--warn);
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.dna-summary {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    display: grid;
+    gap: 0.65rem;
+}
+
+.dna-summary__item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    padding: 0.75rem 0.85rem;
+}
+
+.dna-summary__item--missing {
+    opacity: 0.72;
+}
+
+.dna-summary__link {
+    display: grid;
+    gap: 0.25rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.dna-summary__title {
+    font-weight: 700;
+    color: var(--brand);
+}
+
+.dna-summary__outcome {
+    font-size: 0.92rem;
+}
+
+.dna-summary__status {
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.dna-summary__status--success { color: var(--success); }
+.dna-summary__status--gold { color: var(--gold-deep); }
+.dna-summary__status--pending { color: var(--muted); }
+
+.tests-overview__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.tests-overview__title {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--brand);
+}
+
+.tests-overview__progress {
+    margin: 0;
+    font-size: 0.88rem;
+}
+
+.test-tile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.test-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-height: 7.5rem;
+    padding: 0.85rem 0.75rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    color: inherit;
+    text-decoration: none;
+    overflow: hidden;
+}
+
+.test-tile__accent {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: var(--muted);
+}
+
+.test-tile--success .test-tile__accent { background: var(--success); }
+.test-tile--gold .test-tile__accent { background: var(--gold-gradient); }
+.test-tile--pending .test-tile__accent { background: color-mix(in srgb, var(--border) 70%, var(--muted)); }
+
+.test-tile__title {
+    margin-top: 0.25rem;
+    font-weight: 700;
+    color: var(--brand);
+    font-size: 0.95rem;
+    line-height: 1.25;
+}
+
+.test-tile__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    align-self: flex-start;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 650;
+}
+
+.test-tile--success .test-tile__status {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.test-tile--gold .test-tile__status {
+    background: var(--gold-soft);
+    color: var(--gold-ink);
+}
+
+.test-tile--pending .test-tile__status {
+    background: var(--hover);
+    color: var(--muted);
+}
+
+.test-tile__outcome,
+.test-tile__meta {
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.test-detail__back {
+    margin: 0 0 0.75rem;
+}
+
+.test-detail__back-link {
+    color: var(--brand);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.test-detail__header h1 {
+    margin: 0 0 0.4rem;
+    color: var(--brand);
+    font-size: 1.55rem;
+}
+
+.test-detail__status-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0 0 1rem;
+}
+
+.test-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 650;
+}
+
+.test-status-badge--success {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.test-status-badge--gold {
+    background: var(--gold-soft);
+    color: var(--gold-ink);
+}
+
+.test-status-badge--pending {
+    background: var(--hover);
+    color: var(--muted);
+}
+
+.test-detail__price {
+    margin: 0.4rem 0 1rem;
+    font-size: 0.88rem;
+    text-align: center;
+}
+
+.test-detail__section {
+    margin-bottom: 1rem;
+}
+
+.test-detail__section h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    color: var(--brand);
+}
+
+.test-detail__choices {
+    display: grid;
+    gap: 0.65rem;
+    margin: 1.25rem 0 0.75rem;
+}
+
+.test-detail__secure {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    font-size: 0.82rem;
+}
+
+.test-result-card {
+    margin: 0 0 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
+}
+
+.test-result-card__title {
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
+    color: var(--brand);
+}
+
+.test-score-bars {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    display: grid;
+    gap: 0.65rem;
+}
+
+.test-score-bars__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.92rem;
+    margin-bottom: 0.25rem;
+}
+
+.test-score-bars__track {
+    height: 0.45rem;
+    border-radius: 999px;
+    background: var(--hover);
+    overflow: hidden;
+}
+
+.test-score-bars__track > span {
+    display: block;
+    height: 100%;
+    background: var(--brand);
+    border-radius: inherit;
+}
+
+.test-detail__accordion {
+    margin: 0 0 1rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+}
+
+.test-detail__accordion summary {
+    cursor: pointer;
+    font-weight: 650;
+    color: var(--brand);
+}
+
+@media (min-width: 720px) {
+    .test-tile-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        max-width: 36rem;
+    }
+
+    .btn-gold,
+    .btn-outline-brand {
+        max-width: 28rem;
     }
 }

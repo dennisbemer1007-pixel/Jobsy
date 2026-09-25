@@ -33,12 +33,12 @@ public class CandidateProfileServiceTests
         Assert.Contains(profile.Tests, t => t.Stage == CandidateDnaTestStage.FreeCompleted);
         Assert.Contains(profile.Tests, t => t.Stage == CandidateDnaTestStage.DeepCompleted);
         Assert.All(profile.Tests, t => Assert.False(string.IsNullOrWhiteSpace(t.FreeTestHref)));
-        Assert.Contains(profile.Tests, t => t.Id == "culture" && t.Title == "Cultuurfit" && !t.SupportsDeepAnalysis);
+        Assert.Contains(profile.Tests, t => t.Id == "culture" && t.Title == "Cultuurfit" && t.SupportsDeepAnalysis);
         Assert.Contains(profile.Tests, t => t.Id == "values" && t.SupportsDeepAnalysis && t.Title == "Waarden & Drijfveren");
         Assert.DoesNotContain(profile.Tests, t => t.Title.Contains("DISC", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(profile.Tests, t => t.SupportsDeepAnalysis && t.Stage == CandidateDnaTestStage.DeepCompleted);
         Assert.Contains(profile.Tests, t => t.SupportsDeepAnalysis && t.Stage == CandidateDnaTestStage.NotStarted);
-        Assert.Contains(profile.Tests, t => !t.SupportsDeepAnalysis && t.Stage == CandidateDnaTestStage.FreeCompleted);
+        Assert.Contains(profile.Tests, t => t.SupportsDeepAnalysis && t.Stage == CandidateDnaTestStage.FreeCompleted);
     }
 
     [Fact]
@@ -86,9 +86,15 @@ public class CandidateProfileServiceTests
         Assert.DoesNotContain("DISC", service);
 
         var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
-        Assert.Contains("Kompas.TabValues", kompas);
-        Assert.Contains("/candidate/values", kompas);
-        Assert.Contains("/candidate/deep-analysis/values", kompas);
+        Assert.Contains("Kompas.TabTests", kompas);
+        Assert.Contains("TestsOverviewPanel", kompas);
+        Assert.Contains("DnaPanel", kompas);
+
+        var detail = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/TestDetail.razor"));
+        Assert.Contains("/profiel/tests/{TestKey}", detail);
+        Assert.Contains("FreeStartHref", detail);
+        Assert.Contains("StartDeepAnalysisCheckoutAsync", detail);
+        Assert.Contains("/candidate/values", File.ReadAllText(Path.Combine(root, "Jobsy.Core/Rules/AssessmentTestCatalog.cs")));
 
         var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/RoleNavCatalog.cs"));
         Assert.Contains("\"/profiel\"", nav);

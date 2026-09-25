@@ -42,7 +42,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         return kind switch
         {
             AssessmentKind.Culture =>
-                "De cultuurscan is een gratis Quick-Scan van 18 stellingen — er is geen aparte deep analysis.",
+                $"Wil je een grondige diepteanalyse van cultuurfit en werksfeer (150 vragen) inclusief PDF-rapport? Ontgrendel voor € {price}.",
             AssessmentKind.Career =>
                 $"Wil je een diepgaand carrière-advies en een uitgebreid overzicht van al je opties inclusief PDF-rapport? Ontgrendel de uitgebreide beroepentest van 200 vragen voor € {price}.",
             AssessmentKind.Values =>
@@ -70,8 +70,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     {
         if (!DeepAnalysisCatalog.SupportsDeepAnalysis(kind))
         {
-            throw new InvalidOperationException(
-                "De cultuurscan heeft geen deep analysis. Gebruik de gratis Quick-Scan van 18 stellingen.");
+            throw new InvalidOperationException("Deze test ondersteunt geen diepte-analyse.");
         }
 
         _ = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
@@ -330,7 +329,49 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
 
         if (kind == AssessmentKind.Culture)
         {
-            // Culture uses Quick-Scan only; deep analysis does not write culture scores.
+            var culture = await _db.CandidateCulturePersonalityProfiles
+                .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+            var scores = DeepAnalysisCatalog.ToCulturePersonalityScores(
+                DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Culture));
+            var cultureTags = CulturePersonalityCatalog.DeriveMatchTags(scores);
+
+            if (culture is null)
+            {
+                culture = new CandidateCulturePersonalityProfile
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Status = CandidateCompetencyStatuses.Completed,
+                    AnswersJson = "{}",
+                    CreatedAtUtc = now
+                };
+                _db.CandidateCulturePersonalityProfiles.Add(culture);
+            }
+
+            culture.Status = CandidateCompetencyStatuses.Completed;
+            culture.AutonomyPercent = scores.Autonomy;
+            culture.InformalPercent = scores.Informal;
+            culture.CollaborationPercent = scores.Collaboration;
+            culture.FlexibilityPercent = scores.Flexibility;
+            culture.InnovationPercent = scores.Innovation;
+            culture.PeopleFirstPercent = scores.PeopleFirst;
+            culture.OpennessPercent = scores.Openness;
+            culture.ConscientiousnessPercent = scores.Conscientiousness;
+            culture.ExtraversionPercent = scores.Extraversion;
+            culture.AgreeablenessPercent = scores.Agreeableness;
+            culture.EmotionalStabilityPercent = scores.EmotionalStability;
+            var existing = CulturePersonalityCatalog.ParseTags(culture.MatchTagsJson).ToList();
+            foreach (var tag in tags.Concat(cultureTags))
+            {
+                if (!existing.Contains(tag, StringComparer.OrdinalIgnoreCase))
+                {
+                    existing.Add(tag);
+                }
+            }
+
+            culture.MatchTagsJson = CulturePersonalityCatalog.SerializeTags(existing);
+            culture.CompletedAtUtc ??= now;
+            culture.UpdatedAtUtc = now;
             return;
         }
 

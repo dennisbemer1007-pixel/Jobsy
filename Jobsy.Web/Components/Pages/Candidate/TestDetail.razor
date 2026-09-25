@@ -1,0 +1,432 @@
+@page "/profiel/tests/{TestKey}"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using System.Globalization
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+
+<PageTitle>@(_def is null ? Culture["Kompas.TabTests"] : Culture[_def.TitleKey]) · Lobsy</PageTitle>
+
+<div class="panel-page profile-page profile-page--candidate test-detail-page pb-28">
+    <p class="test-detail__back">
+        <a href="/candidate/profile?tab=tests" class="test-detail__back-link">← @Culture["Tests.BackToOverview"]</a>
+    </p>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_def is null)
+    {
+        <p class="state-message">@Culture["Tests.Unknown"]</p>
+        <a class="engagement-btn" href="/candidate/profile?tab=tests">@Culture["Tests.BackToOverview"]</a>
+    }
+    else if (!string.IsNullOrWhiteSpace(_payError))
+    {
+        <p class="state-message error">@_payError</p>
+        <button type="button" class="engagement-btn" @onclick="ClearPayError">@Culture["Common.Retry"]</button>
+    }
+    else if (_freeDone || _deepCompleted)
+    {
+        @if (!_deepCompleted)
+        {
+            <button type="button"
+                    class="btn-gold"
+                    disabled="@_busy"
+                    @onclick="StartExtendedAsync">
+                @Culture["Tests.StartExtended"]
+            </button>
+            <p class="test-detail__price muted">
+                @Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))
+                @if (_def.Kind == AssessmentKind.Career)
+                {
+                    <span> · @Culture["Tests.WithPdf"]</span>
+                }
+            </p>
+        }
+
+        <header class="test-detail__header">
+            <h1>@Culture[_def.TitleKey]</h1>
+            <p class="test-detail__status-row">
+                <span class="test-status-badge test-status-badge--@(_deepCompleted ? "gold" : "success")">
+                    <span aria-hidden="true">@(_deepCompleted ? "★" : "✓")</span>
+                    @Culture[_deepCompleted ? "Test.Status.Extended" : "Test.Status.FreeDone"]
+                </span>
+                @if (!string.IsNullOrWhiteSpace(_completedMeta))
+                {
+                    <span class="muted">@_completedMeta</span>
+                }
+            </p>
+        </header>
+
+        @if (!string.IsNullOrWhiteSpace(_headline))
+        {
+            <article class="test-result-card">
+                <h2 class="test-result-card__title">@_headline</h2>
+                @if (!string.IsNullOrWhiteSpace(_headlineLead))
+                {
+                    <p>@_headlineLead</p>
+                }
+            </article>
+        }
+
+        @if (_scoreBars.Count > 0)
+        {
+            <ul class="test-score-bars" aria-label="@Culture["Tests.ScoresLabel"]">
+                @foreach (var bar in _scoreBars)
+                {
+                    <li>
+                        <div class="test-score-bars__row">
+                            <span>@bar.Label</span>
+                            <strong>@bar.Percent%</strong>
+                        </div>
+                        <div class="test-score-bars__track" role="presentation">
+                            <span style="width: @(bar.Percent.ToString(CultureInfo.InvariantCulture))%"></span>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+
+        <details class="test-detail__accordion">
+            <summary>@Culture["Tests.WhatItMeans"]</summary>
+            <p class="login-lead">@Culture[_def.ScienceNoteKey]</p>
+            <p class="whoami-model muted">
+                @Culture["Tests.ModelLabel"]: @_def.ModelName.
+                <a href="@_def.ModelUrl" target="_blank" rel="noopener noreferrer">@Culture["Tests.MoreAboutModel"]</a>
+            </p>
+        </details>
+
+        @if (_deepUnlocked && !_deepCompleted)
+        {
+            <a class="login-submit" href="@_def.DeepStartHref">@Culture["Tests.ContinueExtended"]</a>
+        }
+        else if (_deepCompleted)
+        {
+            <button type="button" class="engagement-btn" disabled="@_busy" @onclick="DownloadPdfAsync">
+                @Culture["Deep.DownloadPdf"]
+            </button>
+        }
+    }
+    else
+    {
+        <header class="test-detail__header">
+            <h1>@Culture[_def.TitleKey]</h1>
+            <p class="test-detail__status-row">
+                <span class="test-status-badge test-status-badge--pending">
+                    <span aria-hidden="true">○</span>
+                    @Culture["Test.Status.NotDone"]
+                </span>
+                <span class="muted">@Culture.Format("Tests.MetaFree", _def.FreeQuestionCount, _def.FreeMinutesApprox)</span>
+            </p>
+        </header>
+
+        <section class="test-detail__section">
+            <h2>@Culture["Tests.WhatIsIt"]</h2>
+            <p>@Culture[_def.LeadKey]</p>
+        </section>
+        <section class="test-detail__section">
+            <h2>@Culture["Tests.WhyThis"]</h2>
+            <p>@Culture[_def.ScienceNoteKey]</p>
+        </section>
+        <section class="test-detail__section">
+            <h2>@Culture["Tests.ScienceModel"]</h2>
+            <p>@_def.ModelName. @_def.ModelSource</p>
+            <p>
+                <a href="@_def.ModelUrl" target="_blank" rel="noopener noreferrer">
+                    @Culture["Tests.MoreAboutModel"]
+                    <span class="visually-hidden"> (@Culture["Common.OpensNewTab"])</span>
+                </a>
+            </p>
+        </section>
+
+        <div class="test-detail__choices">
+            <button type="button"
+                    class="btn-gold btn-gold--split"
+                    disabled="@_busy"
+                    @onclick="StartExtendedAsync">
+                <span>@Culture["Tests.ExtendedLabel"]</span>
+                <span class="btn-gold__meta">@Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))</span>
+            </button>
+            <a class="btn-outline-brand btn-outline-brand--split" href="@_def.FreeStartHref">
+                <span>@Culture["Tests.StartFree"]</span>
+                <span class="btn-outline-brand__meta">@Culture.Format("Tests.FreeMeta", _def.FreeQuestionCount)</span>
+            </a>
+        </div>
+        <p class="test-detail__secure muted">
+            <span aria-hidden="true">🔒</span>
+            @Culture["Tests.SecureMollie"]
+        </p>
+    }
+</div>
+
+@code {
+    [Parameter] public string? TestKey { get; set; }
+    [SupplyParameterFromQuery] public string? PaymentError { get; set; }
+
+    private bool _loading = true;
+    private bool _busy;
+    private AssessmentTestDefinition? _def;
+    private bool _freeDone;
+    private bool _deepUnlocked;
+    private bool _deepCompleted;
+    private decimal _priceEuro = 2.99m;
+    private string? _payError;
+    private string? _headline;
+    private string? _headlineLead;
+    private string? _completedMeta;
+    private readonly List<ScoreBar> _scoreBars = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(PaymentError))
+        {
+            _payError = Culture["Tests.PaymentFailed"];
+        }
+
+        _def = AssessmentTestCatalog.TryGetByKey(TestKey);
+        if (_def is null)
+        {
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            var deep = await Api.GetDeepAnalysisAsync(_def.Key);
+            _deepUnlocked = deep?.IsUnlocked == true;
+            _deepCompleted = deep?.IsCompleted == true;
+            _priceEuro = deep?.PriceEuro > 0 ? deep.PriceEuro : 2.99m;
+
+            switch (_def.Kind)
+            {
+                case AssessmentKind.Competence:
+                    await LoadCompetenceAsync();
+                    break;
+                case AssessmentKind.Career:
+                    await LoadCareerAsync();
+                    break;
+                case AssessmentKind.Culture:
+                    await LoadCultureAsync();
+                    break;
+                case AssessmentKind.Values:
+                    await LoadValuesAsync();
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _payError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadCompetenceAsync()
+    {
+        var state = await Api.GetMyCompetenciesAsync();
+        _freeDone = IsCompleted(state?.Status);
+        var scores = state?.Scores;
+        if (scores is null)
+        {
+            return;
+        }
+
+        _headline = AssessmentOutcomeLines.Competence(
+            scores.Samenwerken, scores.Resultaatgerichtheid, scores.Stressbestendigheid,
+            scores.Innovatie, scores.Extraversie);
+        AddBar("Samenwerken", scores.Samenwerken);
+        AddBar("Resultaatgerichtheid", scores.Resultaatgerichtheid);
+        AddBar("Stressbestendigheid", scores.Stressbestendigheid);
+        AddBar("Innovatie", scores.Innovatie);
+        AddBar("Extraversie", scores.Extraversie);
+        _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
+    }
+
+    private async Task LoadCareerAsync()
+    {
+        var state = await Api.GetMyCareerInterestsAsync();
+        _freeDone = IsCompleted(state?.Status);
+        var scores = state?.Scores;
+        if (scores is null)
+        {
+            return;
+        }
+
+        var top = AssessmentOutcomeLines.Career(
+            scores.Realistic, scores.Investigative, scores.Artistic,
+            scores.Social, scores.Enterprising, scores.Conventional);
+        _headline = string.IsNullOrWhiteSpace(top)
+            ? null
+            : $"{CareerCompassBuilder.TypeLabel(TopRiasec(scores))} past het best";
+        _headlineLead = Culture["Tests.CareerResultLead"];
+        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social), scores.Social);
+        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional), scores.Conventional);
+        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Enterprising), scores.Enterprising);
+        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Realistic), scores.Realistic);
+        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Investigative), scores.Investigative);
+        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Artistic), scores.Artistic);
+        _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
+        _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
+    }
+
+    private async Task LoadCultureAsync()
+    {
+        var state = await Api.GetMyCultureAsync();
+        _freeDone = IsCompleted(state?.Status);
+        var scores = state?.Scores;
+        if (scores is null)
+        {
+            return;
+        }
+
+        _headline = AssessmentOutcomeLines.Culture(
+            scores.Autonomy, scores.Informal, scores.Collaboration,
+            scores.Flexibility, scores.Innovation, scores.PeopleFirst);
+        foreach (var code in CulturePersonalityCatalog.CultureDimensionCodes)
+        {
+            AddBar(CulturePersonalityCatalog.EverydayLabel(code), ScoreForCulture(scores, code));
+        }
+
+        _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
+        _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
+    }
+
+    private async Task LoadValuesAsync()
+    {
+        var state = await Api.GetMyValuesAsync();
+        _freeDone = IsCompleted(state?.Status);
+        var scores = state?.Scores;
+        if (scores is null)
+        {
+            return;
+        }
+
+        _headline = AssessmentOutcomeLines.Values(
+            scores.Autonomy, scores.Connection, scores.Achievement,
+            scores.Stability, scores.Impact);
+        AddBar(SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Autonomy), scores.Autonomy);
+        AddBar(SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Connection), scores.Connection);
+        AddBar(SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Achievement), scores.Achievement);
+        AddBar(SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Stability), scores.Stability);
+        AddBar(SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Impact), scores.Impact);
+        _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
+        _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
+    }
+
+    private void AddBar(string label, int? percent)
+    {
+        if (percent is int p)
+        {
+            _scoreBars.Add(new ScoreBar(char.ToUpperInvariant(label[0]) + label[1..], p));
+        }
+    }
+
+    private static int? ScoreForCulture(CulturePersonalityScoreSet scores, string code) => code switch
+    {
+        CulturePersonalityCatalog.Autonomy => scores.Autonomy,
+        CulturePersonalityCatalog.Informal => scores.Informal,
+        CulturePersonalityCatalog.Collaboration => scores.Collaboration,
+        CulturePersonalityCatalog.Flexibility => scores.Flexibility,
+        CulturePersonalityCatalog.Innovation => scores.Innovation,
+        CulturePersonalityCatalog.PeopleFirst => scores.PeopleFirst,
+        _ => null
+    };
+
+    private static string TopRiasec(RiasecScoreSet scores)
+    {
+        var ranked = new (string Code, int? Value)[]
+        {
+            (CareerTestCatalog.Realistic, scores.Realistic),
+            (CareerTestCatalog.Investigative, scores.Investigative),
+            (CareerTestCatalog.Artistic, scores.Artistic),
+            (CareerTestCatalog.Social, scores.Social),
+            (CareerTestCatalog.Enterprising, scores.Enterprising),
+            (CareerTestCatalog.Conventional, scores.Conventional)
+        }
+            .Where(x => x.Value is not null)
+            .OrderByDescending(x => x.Value)
+            .ToList();
+        return ranked.Count == 0 ? CareerTestCatalog.Social : ranked[0].Code;
+    }
+
+    private string FormatCompleted(DateTime? completedAtUtc, bool deep)
+    {
+        var date = completedAtUtc is DateTime dt
+            ? dt.ToLocalTime().ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL"))
+            : null;
+        var scan = deep ? Culture["Tests.ScanExtended"] : Culture["Tests.ScanQuick"];
+        return string.IsNullOrWhiteSpace(date) ? scan : $"{date} · {scan}";
+    }
+
+    private static bool IsCompleted(string? status)
+        => string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase);
+
+    private static string FormatPrice(decimal euro)
+        => euro.ToString("0.00", CultureInfo.GetCultureInfo("nl-NL"));
+
+    private void ClearPayError() => _payError = null;
+
+    private async Task StartExtendedAsync()
+    {
+        if (_def is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _payError = null;
+        try
+        {
+            if (_deepUnlocked && !_deepCompleted)
+            {
+                Navigation.NavigateTo(_def.DeepStartHref);
+                return;
+            }
+
+            var checkout = await Api.StartDeepAnalysisCheckoutAsync(_def.Key);
+            Navigation.NavigateTo(checkout.CheckoutUrl);
+        }
+        catch (Exception ex)
+        {
+            _payError = string.IsNullOrWhiteSpace(ex.Message)
+                ? Culture["Tests.PaymentFailed"]
+                : ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadPdfAsync()
+    {
+        if (_def is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Api.DownloadDeepAnalysisReportAsync(Js, _def.Key);
+        }
+        catch (Exception ex)
+        {
+            _payError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private sealed record ScoreBar(string Label, int Percent);
+}

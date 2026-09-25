@@ -5,15 +5,14 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject CultureState Culture
-@inject IJSRuntime Js
 @inject NavigationManager Navigation
 @implements IDisposable
 
 <section class="kompas" aria-labelledby="kompas-title">
-    <p class="visually-hidden" id="kompas-title">@Culture["Kompas.Title"]</p>
-    <div class="kompas__toolbar">
-        <a class="engagement-btn" href="/">@Culture["Kompas.OpenMap"]</a>
-    </div>
+    <header class="kompas__intro">
+        <h2 id="kompas-title" class="kompas__heading">@Culture["Kompas.Title"]</h2>
+        <p class="login-lead">@Culture["Kompas.Lead"]</p>
+    </header>
 
     @if (!string.IsNullOrWhiteSpace(_message))
     {
@@ -25,14 +24,14 @@
          aria-label="@Culture["Kompas.TabsLabel"]"
          @onkeydown="OnTabListKeyDown">
         <button type="button"
-                id="kompas-tab-whoami"
-                class="admin-sublink @(_tab == CandidateKompasTabs.WhoAmI ? "admin-sublink--active" : null)"
+                id="kompas-tab-dna"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Dna ? "admin-sublink--active" : null)"
                 role="tab"
-                aria-selected="@(_tab == CandidateKompasTabs.WhoAmI)"
-                aria-controls="kompas-panel-whoami"
-                tabindex="@(_tab == CandidateKompasTabs.WhoAmI ? 0 : -1)"
-                @onclick='() => SetTab(CandidateKompasTabs.WhoAmI)'>
-            @Culture["Kompas.TabWhoAmI"]
+                aria-selected="@(_tab == CandidateKompasTabs.Dna)"
+                aria-controls="kompas-panel-dna"
+                tabindex="@(_tab == CandidateKompasTabs.Dna ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.Dna)'>
+            @Culture["Kompas.TabDna"]
         </button>
         <button type="button"
                 id="kompas-tab-profile"
@@ -45,44 +44,14 @@
             @Culture["Kompas.TabProfile"]
         </button>
         <button type="button"
-                id="kompas-tab-competencies"
-                class="admin-sublink @(_tab == CandidateKompasTabs.Competencies ? "admin-sublink--active" : null)"
+                id="kompas-tab-tests"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Tests ? "admin-sublink--active" : null)"
                 role="tab"
-                aria-selected="@(_tab == CandidateKompasTabs.Competencies)"
-                aria-controls="kompas-panel-competencies"
-                tabindex="@(_tab == CandidateKompasTabs.Competencies ? 0 : -1)"
-                @onclick='() => SetTab(CandidateKompasTabs.Competencies)'>
-            @Culture["Kompas.TabCompetencies"]
-        </button>
-        <button type="button"
-                id="kompas-tab-culture"
-                class="admin-sublink @(_tab == CandidateKompasTabs.Culture ? "admin-sublink--active" : null)"
-                role="tab"
-                aria-selected="@(_tab == CandidateKompasTabs.Culture)"
-                aria-controls="kompas-panel-culture"
-                tabindex="@(_tab == CandidateKompasTabs.Culture ? 0 : -1)"
-                @onclick='() => SetTab(CandidateKompasTabs.Culture)'>
-            @Culture["Kompas.TabCulture"]
-        </button>
-        <button type="button"
-                id="kompas-tab-values"
-                class="admin-sublink @(_tab == CandidateKompasTabs.Values ? "admin-sublink--active" : null)"
-                role="tab"
-                aria-selected="@(_tab == CandidateKompasTabs.Values)"
-                aria-controls="kompas-panel-values"
-                tabindex="@(_tab == CandidateKompasTabs.Values ? 0 : -1)"
-                @onclick='() => SetTab(CandidateKompasTabs.Values)'>
-            @Culture["Kompas.TabValues"]
-        </button>
-        <button type="button"
-                id="kompas-tab-career"
-                class="admin-sublink @(_tab == CandidateKompasTabs.Career ? "admin-sublink--active" : null)"
-                role="tab"
-                aria-selected="@(_tab == CandidateKompasTabs.Career)"
-                aria-controls="kompas-panel-career"
-                tabindex="@(_tab == CandidateKompasTabs.Career ? 0 : -1)"
-                @onclick='() => SetTab(CandidateKompasTabs.Career)'>
-            @Culture["Kompas.TabCareers"]
+                aria-selected="@(_tab == CandidateKompasTabs.Tests)"
+                aria-controls="kompas-panel-tests"
+                tabindex="@(_tab == CandidateKompasTabs.Tests ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.Tests)'>
+            @Culture["Kompas.TabTests"]
         </button>
         <button type="button"
                 id="kompas-tab-fit"
@@ -98,13 +67,13 @@
 
     <div class="kompas-workspace @(Side is not null ? "kompas-workspace--with-side" : null)">
     <div class="kompas-workspace__main">
-    <article id="kompas-panel-whoami"
+    <article id="kompas-panel-dna"
              class="kompas-card kompas-card--tab"
              role="tabpanel"
-             aria-labelledby="kompas-tab-whoami"
-             hidden="@(_tab != CandidateKompasTabs.WhoAmI)">
-        <h3 id="kompas-whoami-title" class="visually-hidden">@Culture["Kompas.TabWhoAmI"]</h3>
-        <WhoAmIPanel Active="@(_tab == CandidateKompasTabs.WhoAmI)" OnOpenTab="SetTab" />
+             aria-labelledby="kompas-tab-dna"
+             hidden="@(_tab != CandidateKompasTabs.Dna)">
+        <h3 id="kompas-dna-title" class="visually-hidden">@Culture["Kompas.TabDna"]</h3>
+        <DnaPanel Active="@(_tab == CandidateKompasTabs.Dna)" OnOpenTab="SetTab" />
     </article>
 
     <article id="kompas-panel-profile"
@@ -197,203 +166,13 @@
         }
     </article>
 
-    <article id="kompas-panel-competencies"
+    <article id="kompas-panel-tests"
              class="kompas-card kompas-card--tab"
              role="tabpanel"
-             aria-labelledby="kompas-tab-competencies"
-             hidden="@(_tab != CandidateKompasTabs.Competencies)">
-        <h3 id="kompas-competence-title" class="visually-hidden">@Culture["Kompas.TabCompetencies"]</h3>
-        <p class="login-lead">@Culture["Kompas.CompetenceLead"]</p>
-        <p class="whoami-model muted">@Culture["Competency.ScienceNote"]</p>
-        @if (_loading)
-        {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (_competencyCompleted && _competencyScores is { IsComplete: true })
-        {
-            <p class="kompas-status kompas-status--ok">@Culture["Kompas.QuickScanDone"]</p>
-            <CompetencyScorePanel Scores="_competencyScores" />
-            @if (_competenceDeep is { IsCompleted: true })
-            {
-                <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
-                <button class="login-submit" type="button" disabled="@_busy" @onclick='() => DownloadPdfAsync("competence")'>
-                    @Culture["Deep.DownloadPdf"]
-                </button>
-            }
-            else if (_competenceDeep is { IsUnlocked: true })
-            {
-                <p class="kompas-status">@Culture["Kompas.DeepReady"]</p>
-                <a class="login-submit" href="/candidate/deep-analysis/competence">@Culture["Competency.DeepUnlock"]</a>
-            }
-            else
-            {
-                <p class="login-lead">@_competencyUpsell</p>
-                <a class="login-submit" href="/candidate/deep-analysis/competence">@Culture["Competency.DeepUnlock"]</a>
-            }
-            <a class="engagement-btn" href="/candidate/competencies">@Culture["Competency.Retake"]</a>
-        }
-        else if (_competencyAnswered > 0)
-        {
-            <div class="kompas-status-stack">
-                <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
-                <p class="kompas-status">@Culture["Kompas.DeepLocked"]</p>
-            </div>
-            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _competencyAnswered, 25)</p>
-            <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Continue"]</a>
-        }
-        else
-        {
-            <div class="kompas-status-stack">
-                <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
-                <p class="kompas-status">@Culture["Kompas.DeepLocked"]</p>
-            </div>
-            <p class="login-lead">@Culture["Competency.Empty"]</p>
-            <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Start"]</a>
-        }
-    </article>
-
-    <article id="kompas-panel-culture"
-             class="kompas-card kompas-card--tab"
-             role="tabpanel"
-             aria-labelledby="kompas-tab-culture"
-             hidden="@(_tab != CandidateKompasTabs.Culture)">
-        <h3 id="kompas-culture-title" class="visually-hidden">@Culture["Kompas.TabCulture"]</h3>
-        <p class="login-lead">@Culture["Kompas.CultureLead"]</p>
-        <p class="whoami-model muted">@Culture["CultureScan.ScienceNote"]</p>
-        @if (_loading)
-        {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (_cultureCompleted && _cultureScores is { IsComplete: true })
-        {
-            <p class="kompas-status kompas-status--ok">@Culture["Kompas.QuickScanDone"]</p>
-            <CultureScorePanel Scores="_cultureScores" />
-            <a class="engagement-btn" href="/candidate/culture">@Culture["CultureScan.Retake"]</a>
-        }
-        else if (_cultureAnswered > 0)
-        {
-            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
-            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _cultureAnswered, 18)</p>
-            <a class="login-submit" href="/candidate/culture">@Culture["CultureScan.Continue"]</a>
-        }
-        else
-        {
-            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
-            <p class="login-lead">@Culture["CultureScan.Empty"]</p>
-            <a class="login-submit" href="/candidate/culture">@Culture["CultureScan.Start"]</a>
-        }
-    </article>
-
-    <article id="kompas-panel-values"
-             class="kompas-card kompas-card--tab"
-             role="tabpanel"
-             aria-labelledby="kompas-tab-values"
-             hidden="@(_tab != CandidateKompasTabs.Values)">
-        <h3 id="kompas-values-title" class="visually-hidden">@Culture["Kompas.TabValues"]</h3>
-        <p class="login-lead">@Culture["Kompas.ValuesLead"]</p>
-        <p class="whoami-model muted">@Culture["ValuesScan.ScienceNote"]</p>
-        @if (_loading)
-        {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (_valuesCompleted && _valuesScores is { IsComplete: true })
-        {
-            <p class="kompas-status kompas-status--ok">@Culture["Kompas.QuickScanDone"]</p>
-            <ValuesScorePanel Scores="_valuesScores" />
-            @if (_valuesDeep is { IsCompleted: true })
-            {
-                <p class="kompas-status kompas-status--ok">@Culture["Kompas.ValuesDeepDone"]</p>
-                <a class="login-submit" href="/candidate/deep-analysis/values">@Culture["ProfileHub.ActionDeepEdit"]</a>
-            }
-            else if (_valuesDeep is { IsUnlocked: true })
-            {
-                <p class="kompas-status">@Culture["Kompas.ValuesDeepReady"]</p>
-                <p class="login-lead">@Culture.Format("Competency.Progress", _valuesDeep.AnsweredCount, _valuesDeep.QuestionCount)</p>
-                <a class="login-submit" href="/candidate/deep-analysis/values">@Culture["Competency.Continue"]</a>
-            }
-            else
-            {
-                <p class="kompas-status">@Culture["Kompas.ValuesDeepLocked"]</p>
-                <p class="login-lead">@_valuesUpsell</p>
-                <a class="login-submit" href="/candidate/deep-analysis/values">@Culture["ProfileHub.ActionDeepStart"]</a>
-            }
-            <a class="engagement-btn" href="/candidate/values">@Culture["ValuesScan.Retake"]</a>
-        }
-        else if (_valuesAnswered > 0)
-        {
-            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
-            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _valuesAnswered, 25)</p>
-            <a class="login-submit" href="/candidate/values">@Culture["Competency.Continue"]</a>
-            <a class="engagement-btn" href="/candidate/deep-analysis/values">@Culture["ProfileHub.ActionDeepStart"]</a>
-        }
-        else
-        {
-            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
-            <p class="login-lead">@Culture["ValuesScan.Lead"]</p>
-            <a class="login-submit" href="/candidate/values">@Culture["ProfileHub.ActionFreeStart"]</a>
-            <a class="engagement-btn" href="/candidate/deep-analysis/values">@Culture["ProfileHub.ActionDeepStart"]</a>
-        }
-    </article>
-
-    <article id="kompas-panel-career"
-             class="kompas-card kompas-card--tab"
-             role="tabpanel"
-             aria-labelledby="kompas-tab-career"
-             hidden="@(_tab != CandidateKompasTabs.Career)">
-        <h3 id="kompas-career-title" class="visually-hidden">@Culture["Kompas.TabCareers"]</h3>
-        <p class="login-lead">@Culture["Kompas.CareerTabLead"]</p>
-        <p class="whoami-model muted">@Culture["Career.ScienceNote"]</p>
-        @if (_loading)
-        {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (_careerCompleted && _riasecScores is { IsComplete: true })
-        {
-            <CareerCompassPanel Compass="_careerCompass" Competencies="_competencyScores" CareerDirection="_riasecScores" />
-            <p class="career-dash-link-row">
-                <a class="engagement-btn" href="/carriere">@Culture["CareerDash.OpenLink"]</a>
-            </p>
-            <div class="kompas-workstyle">
-                <h4 class="whoami__title">@Culture["Kompas.WorkStyleTitle"]</h4>
-                <RiasecScorePanel Scores="_riasecScores" />
-            </div>
-            @if (_careerDeep is { IsCompleted: true })
-            {
-                <p class="kompas-status kompas-status--ok">@Culture["Kompas.CareerDeepDone"]</p>
-                <button class="login-submit" type="button" disabled="@_busy" @onclick='() => DownloadPdfAsync("career")'>
-                    @Culture["Deep.DownloadPdf"]
-                </button>
-            }
-            else if (_careerDeep is { IsUnlocked: true })
-            {
-                <p class="kompas-status">@Culture["Kompas.CareerDeepReady"]</p>
-                <p class="login-lead">@Culture.Format("Kompas.CareerDeepProgress", _careerDeep.AnsweredCount, _careerDeep.QuestionCount)</p>
-                <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.ContinueDeep"]</a>
-            }
-            else
-            {
-                <p class="kompas-status">@Culture["Kompas.CareerDeepLocked"]</p>
-                <p class="login-lead">@_careerUpsell</p>
-                <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
-            }
-            <a class="engagement-btn" href="/candidate/career">@Culture["Career.Retake"]</a>
-        }
-        else if (_careerAnswered > 0)
-        {
-            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
-            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _careerAnswered, 25)</p>
-            <a class="login-submit" href="/candidate/career">@Culture["Career.Continue"]</a>
-            <p class="kompas-status">@Culture["Kompas.CareerDeepLocked"]</p>
-            <a class="engagement-btn" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
-        }
-        else
-        {
-            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
-            <p class="login-lead">@Culture["Career.Empty"]</p>
-            <a class="login-submit" href="/candidate/career">@Culture["Career.Start"]</a>
-            <p class="kompas-status">@Culture["Kompas.CareerDeepLocked"]</p>
-            <a class="engagement-btn" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
-        }
+             aria-labelledby="kompas-tab-tests"
+             hidden="@(_tab != CandidateKompasTabs.Tests)">
+        <h3 id="kompas-tests-title" class="visually-hidden">@Culture["Kompas.TabTests"]</h3>
+        <TestsOverviewPanel Active="@(_tab == CandidateKompasTabs.Tests)" />
     </article>
 
     <article id="kompas-panel-fit"
@@ -419,25 +198,6 @@
     private bool _busy;
     private string? _message;
     private MeProfile? _profile;
-    private bool _competencyCompleted;
-    private int _competencyAnswered;
-    private CompetencyScoreSet? _competencyScores;
-    private string _competencyUpsell = "";
-    private DeepAnalysisState? _competenceDeep;
-    private bool _cultureCompleted;
-    private int _cultureAnswered;
-    private CulturePersonalityScoreSet? _cultureScores;
-    private bool _valuesCompleted;
-    private int _valuesAnswered;
-    private SchwartzValuesScoreSet? _valuesScores;
-    private string _valuesUpsell = "";
-    private DeepAnalysisState? _valuesDeep;
-    private bool _careerCompleted;
-    private int _careerAnswered;
-    private CareerCompassModel _careerCompass = new();
-    private RiasecScoreSet? _riasecScores;
-    private string _careerUpsell = "";
-    private DeepAnalysisState? _careerDeep;
     private int _maxTravel = 30;
     private string _transport = TransportLabels.Bike;
     private readonly HashSet<string> _licenses = new(StringComparer.OrdinalIgnoreCase);
@@ -447,7 +207,7 @@
     private decimal? _maxHours = 24;
     private bool _flexibleTimes;
     private Dictionary<string, List<string>> _availability = new(StringComparer.OrdinalIgnoreCase);
-    private string _tab = CandidateKompasTabs.WhoAmI;
+    private string _tab = CandidateKompasTabs.Dna;
     private Guid? _vacancyId;
     private bool _listeningToLocation;
 
@@ -562,7 +322,7 @@
                 SetTab(CandidateKompasTabs.Neighbor(_tab, -1));
                 break;
             case "Home":
-                SetTab(CandidateKompasTabs.WhoAmI);
+                SetTab(CandidateKompasTabs.Dna);
                 break;
             case "End":
                 SetTab(CandidateKompasTabs.Fit);
@@ -609,47 +369,6 @@
                         StringComparer.OrdinalIgnoreCase);
                 _availabilityKind = CandidateAvailabilityPresets.Detect(_minHours, _maxHours, _flexibleTimes);
             }
-
-            var competency = await Api.GetMyCompetenciesAsync();
-            if (competency is not null)
-            {
-                _competencyAnswered = competency.AnsweredCount;
-                _competencyCompleted = string.Equals(competency.Status, "Completed", StringComparison.OrdinalIgnoreCase);
-                _competencyScores = competency.Scores;
-                _competencyUpsell = competency.DeepAnalysisUpsellCopy;
-            }
-
-            var career = await Api.GetMyCareerInterestsAsync();
-            if (career is not null)
-            {
-                _careerAnswered = career.AnsweredCount;
-                _careerCompleted = string.Equals(career.Status, "Completed", StringComparison.OrdinalIgnoreCase);
-                _careerCompass = career.Compass ?? new CareerCompassModel();
-                _riasecScores = career.Scores;
-                _careerUpsell = career.DeepAnalysisUpsellCopy;
-            }
-
-            _competenceDeep = await Api.GetDeepAnalysisAsync("competence");
-            _careerDeep = await Api.GetDeepAnalysisAsync("career");
-            _valuesDeep = await Api.GetDeepAnalysisAsync("values");
-
-            var culture = await Api.GetMyCultureAsync();
-            if (culture is not null)
-            {
-                _cultureAnswered = culture.AnsweredCount;
-                _cultureCompleted = string.Equals(culture.Status, "Completed", StringComparison.OrdinalIgnoreCase);
-                _cultureScores = culture.Scores;
-            }
-
-            var values = await Api.GetMyValuesAsync();
-            if (values is not null)
-            {
-                _valuesAnswered = values.AnsweredCount;
-                _valuesCompleted = string.Equals(values.Status, "Completed", StringComparison.OrdinalIgnoreCase);
-                _valuesScores = values.Scores;
-            }
-
-            _valuesUpsell = _valuesDeep?.UpsellCopy ?? "";
         }
         catch
         {
@@ -733,23 +452,6 @@
             }
 
             _message = Culture["Kompas.Saved"];
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
-    }
-
-    private async Task DownloadPdfAsync(string kind)
-    {
-        _busy = true;
-        try
-        {
-            await Api.DownloadDeepAnalysisReportAsync(Js, kind);
         }
         catch (Exception ex)
         {

@@ -1,0 +1,39 @@
+# Lobsy design system (calm UI)
+
+Mobile-first, calm UI for candidate and employer surfaces. Prefer clarity over decoration.
+
+## Principles
+
+- **One primary action per screen** — one clear CTA; secondary actions stay quiet (text link or outline).
+- **Calm surfaces** — pearl / soft neutrals (`--bg`, `--surface`, `--pearl-*`); navy brand (`--brand`, `--accent`).
+- **Status is never color-only** — always pair color with a label and/or icon.
+- **Dutch UI copy** on candidate-facing screens unless the active language is overridden.
+- **Mobile first** — two-column grids collapse cleanly; bottom nav clearance via `--bottom-nav-clearance`.
+
+## Tokens
+
+Defined in `Jobsy.Web/wwwroot/css/app.css` `:root`:
+
+- Brand / accent: `--brand`, `--accent`, `--accent-soft`, `--accent-deep`
+- Feedback: `--success` / `--success-soft`, `--warn`, `--danger`
+- Neutrals: `--bg`, `--surface`, `--text`, `--muted`, `--border`
+- **Gold (paid / extended):** `--gold` (#c9a227), `--gold-light`, `--gold-deep`, `--gold-ink`, `--gold-soft`, `--gold-gradient`
+
+## Gold exception
+
+Gradients are otherwise avoided for chrome and tiles. **Exception:** a subtle gold gradient (`--gold-gradient`) is allowed **only** for:
+
+1. Gold primary buttons (extended / paid upsell CTAs)
+2. Gold accent bars on test tiles when the extended version is completed
+
+Do not use gold gradients for backgrounds, heroes, or decorative fills.
+
+## Test status colors
+
+| Status | Token | Label (NL) |
+|--------|--------|------------|
+| Free completed | `--success` | Gratis gedaan |
+| Extended / paid completed | `--gold` | Uitgebreid |
+| Not taken | gray / muted | Nog niet gedaan |
+
+If both free and extended are done, **gold wins**.

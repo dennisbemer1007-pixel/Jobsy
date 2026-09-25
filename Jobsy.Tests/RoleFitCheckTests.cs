@@ -15,11 +15,9 @@ public class RoleFitCheckTests
         Assert.Contains("diepte-analyse", RoleFitCheckCopy.DeepUpsell, StringComparison.Ordinal);
         Assert.Equal(RoleFitCheckCopy.Locked, UiStringsNl("Fit.Locked"));
         Assert.Equal(RoleFitCheckCopy.DeepUpsell, UiStringsNl("Fit.DeepUpsell"));
-        Assert.Equal("Wie ben ik?", UiStringsNl("Kompas.TabWhoAmI"));
+        Assert.Equal("Mijn DNA", UiStringsNl("Kompas.TabDna"));
         Assert.Equal("Profiel", UiStringsNl("Kompas.TabProfile"));
-        Assert.Equal("Competenties", UiStringsNl("Kompas.TabCompetencies"));
-        Assert.Equal("Cultuurscan", UiStringsNl("Kompas.TabDisc"));
-        Assert.Equal("Beroepentest", UiStringsNl("Kompas.TabCareers"));
+        Assert.Equal("Tests", UiStringsNl("Kompas.TabTests"));
         Assert.Equal("Functiefit", UiStringsNl("Kompas.TabFit"));
     }
 
@@ -102,7 +100,8 @@ public class RoleFitCheckTests
         Assert.Contains("CandidateKompasTabs.Fit", kompas, StringComparison.Ordinal);
         Assert.Contains("RoleFitCheckPanel", kompas, StringComparison.Ordinal);
         Assert.Contains("kompas-tab-fit", kompas, StringComparison.Ordinal);
-        Assert.Contains("CareerCompassPanel", kompas, StringComparison.Ordinal);
+        Assert.Contains("TestsOverviewPanel", kompas, StringComparison.Ordinal);
+        Assert.Contains("DnaPanel", kompas, StringComparison.Ordinal);
 
         var profile = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         Assert.Contains("<CandidateKompas", profile, StringComparison.Ordinal);

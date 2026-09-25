@@ -72,17 +72,17 @@ public sealed class CandidateProfileService
                     FreeTestHref = "/candidate/profile?tab=career",
                     DeepAnalysisHref = "/candidate/deep-analysis/career"
                 },
-                // Culture — gratis Quick-Scan only (geen deep analysis)
+                // Culture — free Quick-Scan + deep analysis
                 new CandidateProfileTestCard
                 {
                     Id = "culture",
                     Title = "Cultuurfit",
                     Summary = "Gratis cultuurscan afgerond; weegt mee in Functiefit.",
                     Stage = CandidateDnaTestStage.FreeCompleted,
-                    SupportsDeepAnalysis = false,
+                    SupportsDeepAnalysis = true,
                     StatusBadge = "Gratis test",
                     FreeTestHref = "/candidate/culture",
-                    DeepAnalysisHref = ""
+                    DeepAnalysisHref = "/candidate/deep-analysis/culture"
                 },
                 // Values — Schwartz; free + deep (€2,99)
                 new CandidateProfileTestCard

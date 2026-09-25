@@ -5,6 +5,7 @@ namespace Jobsy.Core.Rules;
 /// <summary>
 /// Paid deep analyses. Competence is 150 items (30 per Big Five trait);
 /// career is 200 unique RIASEC items (~33–34 per Holland type);
+/// culture is 150 items (6 culture dims × 15 + 5 personality facets × 12);
 /// values is 150 Schwartz workplace drivers (30 per driver). No repeated stems.
 /// </summary>
 public static class DeepAnalysisCatalog
@@ -13,8 +14,11 @@ public static class DeepAnalysisCatalog
     public const int QuestionCount = 150;
     public const int CareerQuestionCount = 200;
     public const int ValuesQuestionCount = 150;
+    public const int CultureQuestionCount = 150;
     public const int CompetenceItemsPerDomain = 30;
     public const int ValuesItemsPerDomain = 30;
+    public const int CultureItemsPerDomainMin = 12;
+    public const int CultureItemsPerDomainMax = 15;
     public const int CareerItemsPerDomainMin = 33;
     public const int CareerItemsPerDomainMax = 34;
     public const int LikertMin = LikertAnswerJson.LikertMin;
@@ -25,6 +29,7 @@ public static class DeepAnalysisCatalog
     private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyCompetence = new(BuildCompetenceQuestions);
     private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyCareer = new(BuildCareerQuestions);
     private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyValues = new(BuildValuesQuestions);
+    private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyCulture = new(BuildCultureQuestions);
 
     /// <summary>Competence deep analysis (backward-compatible default).</summary>
     public static IReadOnlyList<DeepAnalysisQuestion> Questions => LazyCompetence.Value;
@@ -33,12 +38,13 @@ public static class DeepAnalysisCatalog
 
     public static IReadOnlyList<DeepAnalysisQuestion> ValuesQuestions => LazyValues.Value;
 
+    public static IReadOnlyList<DeepAnalysisQuestion> CultureQuestions => LazyCulture.Value;
+
     public static int QuestionCountFor(AssessmentKind kind) => kind switch
     {
         AssessmentKind.Career => CareerQuestionCount,
         AssessmentKind.Values => ValuesQuestionCount,
-        AssessmentKind.Culture => throw new InvalidOperationException(
-            "De cultuurscan heeft geen deep analysis. Gebruik de gratis Quick-Scan (18 vragen)."),
+        AssessmentKind.Culture => CultureQuestionCount,
         _ => QuestionCount
     };
 
@@ -47,13 +53,12 @@ public static class DeepAnalysisCatalog
         {
             AssessmentKind.Career => CareerQuestions,
             AssessmentKind.Values => ValuesQuestions,
-            AssessmentKind.Culture => throw new InvalidOperationException(
-                "De cultuurscan heeft geen deep analysis. Gebruik de gratis Quick-Scan (18 vragen)."),
+            AssessmentKind.Culture => CultureQuestions,
             _ => Questions
         };
 
     public static bool SupportsDeepAnalysis(AssessmentKind kind)
-        => kind is AssessmentKind.Competence or AssessmentKind.Career or AssessmentKind.Values;
+        => kind is AssessmentKind.Competence or AssessmentKind.Career or AssessmentKind.Values or AssessmentKind.Culture;
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildCompetenceQuestions()
         => Materialize("BigFive", DeepAnalysisCompetenceItems.All, AssessmentKind.Competence, CompetenceItemsPerDomain, CompetenceItemsPerDomain);
@@ -63,6 +68,9 @@ public static class DeepAnalysisCatalog
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildValuesQuestions()
         => Materialize("Schwartz", DeepAnalysisValuesItems.All, AssessmentKind.Values, ValuesItemsPerDomain, ValuesItemsPerDomain);
+
+    private static IReadOnlyList<DeepAnalysisQuestion> BuildCultureQuestions()
+        => Materialize("Culture", DeepAnalysisCultureItems.All, AssessmentKind.Culture, CultureItemsPerDomainMin, CultureItemsPerDomainMax);
 
     private static IReadOnlyList<DeepAnalysisQuestion> Materialize(
         string family,
@@ -345,6 +353,26 @@ public static class DeepAnalysisCatalog
             "Zekerheid: vaste afspraken, veilige procedures en voorspelbare roosters sluiten aan op jouw waarden.",
         SchwartzValuesCatalog.Impact =>
             "Impact: organisaties die eerlijk, duurzaam of maatschappelijk nuttig werken versterken jouw fit.",
+        CulturePersonalityCatalog.Informal =>
+            "Informele sfeer ligt je: korte lijnen, directe toon en weinig hiërarchie voelen prettig.",
+        CulturePersonalityCatalog.Collaboration =>
+            "Samenwerken geeft je energie. Ploegenwerk en gedeelde doelen benutten dat.",
+        CulturePersonalityCatalog.Flexibility =>
+            "Flexibel meebewegen past: wisselende taken en snelle bijsturing liggen je.",
+        CulturePersonalityCatalog.Innovation =>
+            "Nieuwe dingen proberen past: verbeterideeën en frisse werkwijzen geven je energie.",
+        CulturePersonalityCatalog.PeopleFirst =>
+            "Mensen voorop zetten past: zorg, begeleiding en een warme teamcultuur sluiten aan.",
+        CulturePersonalityCatalog.Openness =>
+            "Openstaan voor nieuw: wisselende taken en leren op de vloer benutten jouw kracht.",
+        CulturePersonalityCatalog.Conscientiousness =>
+            "Netjes en betrouwbaar werken is een voorsprong bij kwaliteit en afronden.",
+        CulturePersonalityCatalog.Extraversion =>
+            "Energie van mensen: balie, teamvloer en klantcontact passen sterk.",
+        CulturePersonalityCatalog.Agreeableness =>
+            "Prettig samen optrekken: behulpzaamheid en sfeer wegen zwaar in jouw fit.",
+        CulturePersonalityCatalog.EmotionalStability =>
+            "Kalm onder druk: piekdagen en snelle wisselingen zijn haalbaarder voor jou.",
         _ => $"Op {Label(domain)} scoor je hoog; weeg dat mee bij branchevorkeur en matching."
     };
 
@@ -363,6 +391,16 @@ public static class DeepAnalysisCatalog
         SchwartzValuesCatalog.Achievement => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Achievement),
         SchwartzValuesCatalog.Stability => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Stability),
         SchwartzValuesCatalog.Impact => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Impact),
+        CulturePersonalityCatalog.Informal => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Informal),
+        CulturePersonalityCatalog.Collaboration => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Collaboration),
+        CulturePersonalityCatalog.Flexibility => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Flexibility),
+        CulturePersonalityCatalog.Innovation => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Innovation),
+        CulturePersonalityCatalog.PeopleFirst => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.PeopleFirst),
+        CulturePersonalityCatalog.Openness => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Openness),
+        CulturePersonalityCatalog.Conscientiousness => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Conscientiousness),
+        CulturePersonalityCatalog.Extraversion => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Extraversion),
+        CulturePersonalityCatalog.Agreeableness => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Agreeableness),
+        CulturePersonalityCatalog.EmotionalStability => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.EmotionalStability),
         _ => domain.ToLowerInvariant()
     };
 
@@ -377,6 +415,25 @@ public static class DeepAnalysisCatalog
             Get(SchwartzValuesCatalog.Achievement),
             Get(SchwartzValuesCatalog.Stability),
             Get(SchwartzValuesCatalog.Impact));
+    }
+
+    public static CulturePersonalityScores ToCulturePersonalityScores(IReadOnlyList<DeepAnalysisDomainScore> scores)
+    {
+        int Get(string code) =>
+            scores.FirstOrDefault(s => s.Domain.Equals(code, StringComparison.OrdinalIgnoreCase))?.Percent ?? 0;
+
+        return new CulturePersonalityScores(
+            Get(CulturePersonalityCatalog.Autonomy),
+            Get(CulturePersonalityCatalog.Informal),
+            Get(CulturePersonalityCatalog.Collaboration),
+            Get(CulturePersonalityCatalog.Flexibility),
+            Get(CulturePersonalityCatalog.Innovation),
+            Get(CulturePersonalityCatalog.PeopleFirst),
+            Get(CulturePersonalityCatalog.Openness),
+            Get(CulturePersonalityCatalog.Conscientiousness),
+            Get(CulturePersonalityCatalog.Extraversion),
+            Get(CulturePersonalityCatalog.Agreeableness),
+            Get(CulturePersonalityCatalog.EmotionalStability));
     }
 
     private static string JoinNl(IReadOnlyList<string> items) => items.Count switch

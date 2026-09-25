@@ -1,0 +1,200 @@
+namespace Jobsy.Core.Rules;
+
+/// <summary>
+/// 150 unique culture &amp; personality Likert items for deep analysis:
+/// 6 culture dimensions × 15 + 5 personality facets × 12.
+/// Workplace wording for Den Haag / Westland matching — no DISC/Big Five/OCEAN jargon in prompts.
+/// </summary>
+internal static class DeepAnalysisCultureItems
+{
+    public static readonly string[] Domains =
+    [
+        CulturePersonalityCatalog.Autonomy,
+        CulturePersonalityCatalog.Informal,
+        CulturePersonalityCatalog.Collaboration,
+        CulturePersonalityCatalog.Flexibility,
+        CulturePersonalityCatalog.Innovation,
+        CulturePersonalityCatalog.PeopleFirst,
+        CulturePersonalityCatalog.Openness,
+        CulturePersonalityCatalog.Conscientiousness,
+        CulturePersonalityCatalog.Extraversion,
+        CulturePersonalityCatalog.Agreeableness,
+        CulturePersonalityCatalog.EmotionalStability,
+    ];
+
+    public static IReadOnlyList<(string Domain, bool Reverse, string Prompt)> All { get; } =
+    [
+        // Autonomy — 15 unique
+        (CulturePersonalityCatalog.Autonomy, false, "Ik werk het liefst zelfstandig, zonder dat iemand steeds meekijkt."),
+        (CulturePersonalityCatalog.Autonomy, false, "Ik plan graag zelf de volgorde van mijn taken."),
+        (CulturePersonalityCatalog.Autonomy, false, "Ik voel me sterker als ik zelf mag kiezen hoe ik een klus aanpak."),
+        (CulturePersonalityCatalog.Autonomy, true, "Ik wacht liever op instructie voordat ik ergens aan begin."),
+        (CulturePersonalityCatalog.Autonomy, false, "Ik bedenk zelf een oplossing als er geen leidinggevende in de buurt is."),
+        (CulturePersonalityCatalog.Autonomy, false, "Ik vind het prettig als ik mijn werkdag zelf mag indelen."),
+        (CulturePersonalityCatalog.Autonomy, false, "Ik neem graag verantwoordelijkheid voor een heel stuk werk."),
+        (CulturePersonalityCatalog.Autonomy, true, "Ik raak onzeker als ik zonder strakke stappenlijst moet werken."),
+        (CulturePersonalityCatalog.Autonomy, false, "Ik stel zelf vragen als iets onduidelijk is, in plaats van stil te blijven."),
+        (CulturePersonalityCatalog.Autonomy, false, "Ik verbeter een werkwijze liever zelf dan dat ik alles laat zoals het is."),
+        (CulturePersonalityCatalog.Autonomy, true, "Ik geef taken het liefst terug als niemand precies heeft gezegd hoe."),
+        (CulturePersonalityCatalog.Autonomy, false, "Ik kan goed verder als de doelen helder zijn, ook zonder constant toezicht."),
+        (CulturePersonalityCatalog.Autonomy, false, "Ik kies zelf welke hulpmiddelen ik gebruik om sneller klaar te zijn."),
+        (CulturePersonalityCatalog.Autonomy, true, "Ik wil bij elke kleine beslissing eerst toestemming vragen."),
+        (CulturePersonalityCatalog.Autonomy, false, "Ik voel me trots als ik een probleem alleen heb opgelost."),
+
+        // Informal — 15 unique
+        (CulturePersonalityCatalog.Informal, false, "Ik voel me thuis in een team waar we elkaar bij de voornaam noemen."),
+        (CulturePersonalityCatalog.Informal, false, "Ik vind een luchtige grap op de werkvloer meestal prettig."),
+        (CulturePersonalityCatalog.Informal, false, "Ik praat makkelijk over gewone dingen met collega’s, niet alleen over werk."),
+        (CulturePersonalityCatalog.Informal, true, "Ik houd van een formele toon, ook bij kleine vragen."),
+        (CulturePersonalityCatalog.Informal, false, "Ik stuur liever een kort berichtje dan een lange officiële mail."),
+        (CulturePersonalityCatalog.Informal, false, "Ik vind het fijn als de leidinggevende gewoon meeloopt op de vloer."),
+        (CulturePersonalityCatalog.Informal, false, "Ik werk graag in een sfeer waar je fouten hardop mag benoemen."),
+        (CulturePersonalityCatalog.Informal, true, "Ik raak gespannen van te veel informeel geklets tijdens de dienst."),
+        (CulturePersonalityCatalog.Informal, false, "Ik vind hiërarchie minder belangrijk dan dat we elkaar snel helpen."),
+        (CulturePersonalityCatalog.Informal, false, "Ik spreek een collega makkelijk aan, ook als die hoger in rang staat."),
+        (CulturePersonalityCatalog.Informal, true, "Ik wacht tot iemand anders een gesprek begint; zelf doe ik dat zelden."),
+        (CulturePersonalityCatalog.Informal, false, "Ik vind een open deur en korte lijnen prettiger dan vaste procedures voor alles."),
+        (CulturePersonalityCatalog.Informal, false, "Ik deel graag een tip met een collega zonder formeel overleg."),
+        (CulturePersonalityCatalog.Informal, true, "Ik wil eerst een officiële afspraak voordat ik iets met een collega regel."),
+        (CulturePersonalityCatalog.Informal, false, "Ik voel me op mijn gemak als het team informeel en direct communiceert."),
+
+        // Collaboration — 15 unique
+        (CulturePersonalityCatalog.Collaboration, false, "Ik krijg energie van samen een klus afronden."),
+        (CulturePersonalityCatalog.Collaboration, false, "Ik vraag snel of iemand mee kan denken als ik vastzit."),
+        (CulturePersonalityCatalog.Collaboration, false, "Ik deel informatie graag zodat het team verder kan."),
+        (CulturePersonalityCatalog.Collaboration, true, "Ik werk liever alleen en lever pas in als alles klaar is."),
+        (CulturePersonalityCatalog.Collaboration, false, "Ik stem graag even af met collega’s voordat we een piek ingaan."),
+        (CulturePersonalityCatalog.Collaboration, false, "Ik help een nieuwe collega graag op weg."),
+        (CulturePersonalityCatalog.Collaboration, false, "Ik vind overleg over de taakverdeling de moeite waard."),
+        (CulturePersonalityCatalog.Collaboration, true, "Ik vermijd teamoverleg; het kost me te veel tijd."),
+        (CulturePersonalityCatalog.Collaboration, false, "Ik vier graag een klein succes samen met het team."),
+        (CulturePersonalityCatalog.Collaboration, false, "Ik luister naar wat anderen nodig hebben voordat ik doorpak."),
+        (CulturePersonalityCatalog.Collaboration, true, "Ik vind het lastig om werk met anderen te delen."),
+        (CulturePersonalityCatalog.Collaboration, false, "Ik pas mijn tempo aan zodat we samen op schema blijven."),
+        (CulturePersonalityCatalog.Collaboration, false, "Ik bied aan een stuk over te nemen als een collega het zwaar heeft."),
+        (CulturePersonalityCatalog.Collaboration, true, "Ik houd mijn aanpak liever voor mezelf tot het eindresultaat er is."),
+        (CulturePersonalityCatalog.Collaboration, false, "Ik zie samenwerken als een sterkte, niet als oponthoud."),
+
+        // Flexibility — 15 unique
+        (CulturePersonalityCatalog.Flexibility, false, "Ik schakel makkelijk als de planning plotseling verandert."),
+        (CulturePersonalityCatalog.Flexibility, false, "Ik vind wisselende taken meestal juist leuk."),
+        (CulturePersonalityCatalog.Flexibility, false, "Ik kan snel van de ene klus naar de andere overstappen."),
+        (CulturePersonalityCatalog.Flexibility, true, "Ik raak van slag als mijn vaste ronde wordt doorbroken."),
+        (CulturePersonalityCatalog.Flexibility, false, "Ik help graag bij een spoedklus die niet op mijn lijst stond."),
+        (CulturePersonalityCatalog.Flexibility, false, "Ik pas mijn werk aan als de klant of het seizoen iets anders vraagt."),
+        (CulturePersonalityCatalog.Flexibility, false, "Ik blijf rustig als er om half elf een nieuwe prioriteit bij komt."),
+        (CulturePersonalityCatalog.Flexibility, true, "Ik wil graag elke dag dezelfde taken in dezelfde volgorde."),
+        (CulturePersonalityCatalog.Flexibility, false, "Ik improvisier liever een beetje dan dat alles vastligt."),
+        (CulturePersonalityCatalog.Flexibility, false, "Ik vind het oké om vandaag iets anders te doen dan gisteren."),
+        (CulturePersonalityCatalog.Flexibility, true, "Ik verzet me tegen last-minute wijzigingen, ook als ze nodig zijn."),
+        (CulturePersonalityCatalog.Flexibility, false, "Ik kan me snel inwerken op een tijdelijke extra taak."),
+        (CulturePersonalityCatalog.Flexibility, false, "Ik zie verandering op de vloer als iets waar ik mee om kan gaan."),
+        (CulturePersonalityCatalog.Flexibility, true, "Ik word onrustig als er geen vaste planning voor de hele week is."),
+        (CulturePersonalityCatalog.Flexibility, false, "Ik blijf bruikbaar als het team moet meebuigen met drukte."),
+
+        // Innovation — 15 unique
+        (CulturePersonalityCatalog.Innovation, false, "Ik bedenk graag een slimmere manier om hetzelfde werk te doen."),
+        (CulturePersonalityCatalog.Innovation, false, "Ik probeer een nieuw hulpmiddel uit als het tijd kan besparen."),
+        (CulturePersonalityCatalog.Innovation, false, "Ik stel verbeterideeën voor, ook als ze nog klein zijn."),
+        (CulturePersonalityCatalog.Innovation, true, "Ik blijf bij de oude methode, ook als die traag is."),
+        (CulturePersonalityCatalog.Innovation, false, "Ik word nieuwsgierig als er een nieuwe werkwijze wordt geïntroduceerd."),
+        (CulturePersonalityCatalog.Innovation, false, "Ik kijk bij andere teams hoe zij een probleem oplossen."),
+        (CulturePersonalityCatalog.Innovation, false, "Ik durf een voorstel te doen dat nog niet in het handboek staat."),
+        (CulturePersonalityCatalog.Innovation, true, "Ik wantrouw nieuwe ideeën totdat iedereen ze al lang gebruikt."),
+        (CulturePersonalityCatalog.Innovation, false, "Ik experimenteer liever klein dan dat ik wacht op een perfect plan."),
+        (CulturePersonalityCatalog.Innovation, false, "Ik merk snel als een proces onnodig omslachtig is geworden."),
+        (CulturePersonalityCatalog.Innovation, true, "Ik houd niet van brainstormen; zeg me gewoon wat ik moet doen."),
+        (CulturePersonalityCatalog.Innovation, false, "Ik leer graag van een fout door te kijken wat we anders kunnen doen."),
+        (CulturePersonalityCatalog.Innovation, false, "Ik zie kansen in nieuwe producten of diensten van de vestiging."),
+        (CulturePersonalityCatalog.Innovation, true, "Ik voel me ongemakkelijk bij taken zonder duidelijk voorbeeld."),
+        (CulturePersonalityCatalog.Innovation, false, "Ik blijf nadenken over hoe kwaliteit en tempo beter kunnen samengaan."),
+
+        // PeopleFirst — 15 unique
+        (CulturePersonalityCatalog.PeopleFirst, false, "Ik kies eerder voor de mens dan voor alleen het cijfer als het schuurt."),
+        (CulturePersonalityCatalog.PeopleFirst, false, "Ik merk het als een collega een zware dag heeft."),
+        (CulturePersonalityCatalog.PeopleFirst, false, "Ik neem de tijd om een klant of collega écht te helpen."),
+        (CulturePersonalityCatalog.PeopleFirst, true, "Ik zet resultaat altijd vóór hoe iemand zich voelt."),
+        (CulturePersonalityCatalog.PeopleFirst, false, "Ik vraag hoe het gaat, niet alleen of de taak af is."),
+        (CulturePersonalityCatalog.PeopleFirst, false, "Ik vind een goede sfeer minstens zo belangrijk als snelle output."),
+        (CulturePersonalityCatalog.PeopleFirst, false, "Ik bescherm een collega tegen onnodige druk als dat kan."),
+        (CulturePersonalityCatalog.PeopleFirst, true, "Ik vind persoonlijke problemen van collega’s geen werkzaak."),
+        (CulturePersonalityCatalog.PeopleFirst, false, "Ik geef iemand de ruimte om even op adem te komen."),
+        (CulturePersonalityCatalog.PeopleFirst, false, "Ik leg iets geduldig uit als iemand het nog niet snapt."),
+        (CulturePersonalityCatalog.PeopleFirst, true, "Ik push door, ook als iemand duidelijk overvraagd is."),
+        (CulturePersonalityCatalog.PeopleFirst, false, "Ik denk na over hoe een beslissing collega’s raakt."),
+        (CulturePersonalityCatalog.PeopleFirst, false, "Ik vier liever dat iemand groeit dan alleen dat de target gehaald is."),
+        (CulturePersonalityCatalog.PeopleFirst, true, "Ik meet succes vooral in cijfers, niet in hoe het team erbij zit."),
+        (CulturePersonalityCatalog.PeopleFirst, false, "Ik zorg dat niemand er alleen voor staat bij een lastige klus."),
+
+        // Openness — 12 unique
+        (CulturePersonalityCatalog.Openness, false, "Ik leer graag iets nieuws over hoe ons vak werkt."),
+        (CulturePersonalityCatalog.Openness, false, "Ik probeer een onbekende werkwijze eerst klein uit."),
+        (CulturePersonalityCatalog.Openness, false, "Ik zie snel verbanden tussen losse details op de vloer."),
+        (CulturePersonalityCatalog.Openness, true, "Ik blijf het liefst bij wat ik al ken."),
+        (CulturePersonalityCatalog.Openness, false, "Ik stel vragen als ik de achtergrond van een taak nog niet snap."),
+        (CulturePersonalityCatalog.Openness, false, "Ik haal inspiratie uit hoe andere teams hetzelfde aanpakken."),
+        (CulturePersonalityCatalog.Openness, true, "Nieuwe ideeën van collega’s wijs ik meestal meteen af."),
+        (CulturePersonalityCatalog.Openness, false, "Ik vind afwisseling in taken prettig zodat ik alert blijf."),
+        (CulturePersonalityCatalog.Openness, false, "Ik raak nieuwsgierig als iets anders werkt dan verwacht."),
+        (CulturePersonalityCatalog.Openness, true, "Ik vermijd taken waarbij ik iets moet leren dat ik nog nooit deed."),
+        (CulturePersonalityCatalog.Openness, false, "Ik combineer kennis uit verschillende klussen tot een betere aanpak."),
+        (CulturePersonalityCatalog.Openness, false, "Ik pas mijn aanpak aan als de seizoensdruk anders is dan vorig jaar."),
+
+        // Conscientiousness — 12 unique
+        (CulturePersonalityCatalog.Conscientiousness, false, "Ik maak af wat ik beloof, ook als de dag tegenzit."),
+        (CulturePersonalityCatalog.Conscientiousness, false, "Ik controleer details voordat ik iets als klaar doorgeef."),
+        (CulturePersonalityCatalog.Conscientiousness, false, "Ik plan mijn werk zodat deadlines haalbaar blijven."),
+        (CulturePersonalityCatalog.Conscientiousness, true, "Ik laat half afgemaakt werk makkelijk liggen."),
+        (CulturePersonalityCatalog.Conscientiousness, false, "Ik kom op tijd en geef het door als ik te laat dreig te zijn."),
+        (CulturePersonalityCatalog.Conscientiousness, false, "Ik houd bij wat er nog openstaat, zonder dat iemand erom vraagt."),
+        (CulturePersonalityCatalog.Conscientiousness, true, "Ik stel lastige klussen uit tot het niet anders meer kan."),
+        (CulturePersonalityCatalog.Conscientiousness, false, "Ik werk netjes volgens afgesproken veiligheid of kwaliteit."),
+        (CulturePersonalityCatalog.Conscientiousness, false, "Ik ruim mijn werkplek op zodat de volgende ploeg verder kan."),
+        (CulturePersonalityCatalog.Conscientiousness, true, "Als niemand kijkt, sla ik controles of stappen over."),
+        (CulturePersonalityCatalog.Conscientiousness, false, "Ik geef het eerlijk aan als ik een fout heb gemaakt."),
+        (CulturePersonalityCatalog.Conscientiousness, false, "Ik verdeel grote taken in stukken die ik écht afkrijg."),
+
+        // Extraversion — 12 unique
+        (CulturePersonalityCatalog.Extraversion, false, "Ik praat makkelijk met nieuwe collega’s of klanten."),
+        (CulturePersonalityCatalog.Extraversion, false, "Ik neem graag het woord in een kort teamoverleg."),
+        (CulturePersonalityCatalog.Extraversion, false, "Ik krijg energie van een drukke balie of vloer."),
+        (CulturePersonalityCatalog.Extraversion, true, "Ik vermijd contact en werk het liefst stil door."),
+        (CulturePersonalityCatalog.Extraversion, false, "Ik stel mezelf voor als er iemand nieuws bij het team komt."),
+        (CulturePersonalityCatalog.Extraversion, false, "Ik vind het leuk om een groep mee te nemen in een plan."),
+        (CulturePersonalityCatalog.Extraversion, true, "Na veel mensencontact heb ik vooral behoefte om alleen te zijn."),
+        (CulturePersonalityCatalog.Extraversion, false, "Ik begin makkelijk een praatje tijdens de pauze."),
+        (CulturePersonalityCatalog.Extraversion, false, "Ik voel me op mijn gemak als er veel beweging en geluid is."),
+        (CulturePersonalityCatalog.Extraversion, true, "Ik laat anderen het woord doen, ook als ik iets te zeggen heb."),
+        (CulturePersonalityCatalog.Extraversion, false, "Ik geniet van werk waarbij ik veel mensen zie."),
+        (CulturePersonalityCatalog.Extraversion, false, "Ik straal rust en warmte uit als iemand mij aanspreekt."),
+
+        // Agreeableness — 12 unique
+        (CulturePersonalityCatalog.Agreeableness, false, "Ik bied aan een taak over te nemen als een collega het zwaar heeft."),
+        (CulturePersonalityCatalog.Agreeableness, false, "Ik zoek een oplossing waar iedereen mee verder kan."),
+        (CulturePersonalityCatalog.Agreeableness, false, "Ik blijf beleefd, ook als een klant ontevreden is."),
+        (CulturePersonalityCatalog.Agreeableness, true, "Ik zet mijn zin door, ook als dat de sfeer schaadt."),
+        (CulturePersonalityCatalog.Agreeableness, false, "Ik geef eerlijk complimenten als iemand iets goed doet."),
+        (CulturePersonalityCatalog.Agreeableness, false, "Ik luister eerst goed voordat ik antwoord."),
+        (CulturePersonalityCatalog.Agreeableness, true, "Ik vind meedenken met anderen meestal tijdverspilling."),
+        (CulturePersonalityCatalog.Agreeableness, false, "Ik houd rekening met de gevoelens van collega’s bij feedback."),
+        (CulturePersonalityCatalog.Agreeableness, false, "Ik help graag, ook als het niet letterlijk mijn taak is."),
+        (CulturePersonalityCatalog.Agreeableness, true, "Ik zeg bot wat ik denk, zonder op de toon te letten."),
+        (CulturePersonalityCatalog.Agreeableness, false, "Ik maak vrede als er spanning in het team zit."),
+        (CulturePersonalityCatalog.Agreeableness, false, "Ik doe mijn best om prettig samen te werken."),
+
+        // EmotionalStability — 12 unique
+        (CulturePersonalityCatalog.EmotionalStability, false, "Ik blijf kalm als de planning ineens omvalt."),
+        (CulturePersonalityCatalog.EmotionalStability, false, "Ik adem even en kijk wat wél kan als het hectisch wordt."),
+        (CulturePersonalityCatalog.EmotionalStability, false, "Ik reageer later rustig als iemand kortaf is."),
+        (CulturePersonalityCatalog.EmotionalStability, true, "Ik raak snel van streek bij onverwachte druk."),
+        (CulturePersonalityCatalog.EmotionalStability, false, "Ik houd mijn hoofd erbij tijdens piekdruk in de winkel of kas."),
+        (CulturePersonalityCatalog.EmotionalStability, false, "Ik laat een fout me niet de hele dienst dwarszitten."),
+        (CulturePersonalityCatalog.EmotionalStability, true, "Ik panikeer makkelijk als er meerdere dingen tegelijk misgaan."),
+        (CulturePersonalityCatalog.EmotionalStability, false, "Ik blijf beleefd onder tijdsdruk."),
+        (CulturePersonalityCatalog.EmotionalStability, false, "Ik herstel snel na een stevige kritiek."),
+        (CulturePersonalityCatalog.EmotionalStability, true, "Ik neem stress van het werk mee tot ver na mijn dienst."),
+        (CulturePersonalityCatalog.EmotionalStability, false, "Ik blijf overzicht houden als collega’s gestrest raken."),
+        (CulturePersonalityCatalog.EmotionalStability, false, "Ik kan een tegenslag laten voor wat hij is en verder werken."),
+
+    ];
+}

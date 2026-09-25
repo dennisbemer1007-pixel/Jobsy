@@ -69,15 +69,17 @@ public class WhoAmITests
     }
 
     [Fact]
-    public void Kompas_surfaces_whoami_tab_and_cv_checkbox()
+    public void Kompas_surfaces_dna_and_tests_tabs()
     {
         var root = RepoRoot.Find();
         var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
-        Assert.Contains("Kompas.TabWhoAmI", kompas, StringComparison.Ordinal);
-        Assert.Contains("WhoAmIPanel", kompas, StringComparison.Ordinal);
-        Assert.Equal("Wie ben ik?", Jobsy.Web.Localization.UiStrings.Get("Kompas.TabWhoAmI", "nl"));
-        Assert.Equal(CandidateKompasTabs.WhoAmI, CandidateKompasTabs.All[0]);
-        Assert.Equal(CandidateKompasTabs.WhoAmI, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Fit, 1));
+        Assert.Contains("Kompas.TabDna", kompas, StringComparison.Ordinal);
+        Assert.Contains("DnaPanel", kompas, StringComparison.Ordinal);
+        Assert.Contains("TestsOverviewPanel", kompas, StringComparison.Ordinal);
+        Assert.Equal("Mijn DNA", Jobsy.Web.Localization.UiStrings.Get("Kompas.TabDna", "nl"));
+        Assert.Equal(CandidateKompasTabs.Dna, CandidateKompasTabs.All[0]);
+        Assert.Equal(CandidateKompasTabs.Dna, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Fit, 1));
+        Assert.Equal(4, CandidateKompasTabs.All.Length);
         var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/WhoAmIPanel.razor"));
         Assert.Contains("WhoAmI.AttachCv", panel, StringComparison.Ordinal);
         Assert.Contains("CompetencyScorePanel", panel, StringComparison.Ordinal);

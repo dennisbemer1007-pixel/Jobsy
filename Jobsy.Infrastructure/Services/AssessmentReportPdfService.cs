@@ -94,6 +94,18 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
 
             bytes = RenderCareer(brand, logo, user.FullName, generated, compass);
         }
+        else if (kind == AssessmentKind.Culture)
+        {
+            var scoreLines = domainScores
+                .Select(s => $"{LabelCulture(s.Domain)}: {s.Percent}%")
+                .ToList();
+            var tags = CulturePersonalityCatalog.ParseTags(deep.TagsJson)
+                .Select(FriendlyTag)
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .ToList();
+            var advice = DeepAnalysisCatalog.CareerAdviceParagraphs(domainScores);
+            bytes = RenderCulture(brand, logo, user.FullName, generated, scoreLines, tags, advice);
+        }
         else
         {
             var scoreLines = domainScores
@@ -182,6 +194,49 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         IReadOnlyList<string> scoreLines,
         IReadOnlyList<string> tags,
         IReadOnlyList<string> advice)
+        => RenderScoreReport(
+            brand,
+            logo,
+            fullName,
+            generated,
+            "Jouw competentie-rapport",
+            "Dit rapport vat je 150 antwoorden samen: hoe jij samenwerkt, afrondt, onder druk blijft en nieuwe dingen oppakt.",
+            scoreLines,
+            tags,
+            advice,
+            AccentCoral);
+
+    private static byte[] RenderCulture(
+        string brand,
+        byte[] logo,
+        string fullName,
+        string generated,
+        IReadOnlyList<string> scoreLines,
+        IReadOnlyList<string> tags,
+        IReadOnlyList<string> advice)
+        => RenderScoreReport(
+            brand,
+            logo,
+            fullName,
+            generated,
+            "Jouw cultuur- & persoonlijkheidsrapport",
+            "Dit rapport vat je 150 antwoorden samen: hoe jij graag werkt (cultuurfit) en hoe jij in een team past — zonder moeilijke testtaal.",
+            scoreLines,
+            tags,
+            advice,
+            AccentTeal);
+
+    private static byte[] RenderScoreReport(
+        string brand,
+        byte[] logo,
+        string fullName,
+        string generated,
+        string title,
+        string intro,
+        IReadOnlyList<string> scoreLines,
+        IReadOnlyList<string> tags,
+        IReadOnlyList<string> advice,
+        Color accent)
     {
         return Document.Create(container =>
         {
@@ -191,14 +246,12 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 page.MarginHorizontal(28);
                 page.MarginVertical(24);
                 page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
-                BrandHeader(page, brand, logo, "Jouw competentie-rapport", fullName, generated, AccentCoral);
+                BrandHeader(page, brand, logo, title, fullName, generated, accent);
 
                 page.Content().PaddingTop(14).Column(col =>
                 {
                     col.Spacing(10);
-                    col.Item().Text(
-                            "Dit rapport vat je 150 antwoorden samen: hoe jij samenwerkt, afrondt, onder druk blijft en nieuwe dingen oppakt.")
-                        .FontColor(Muted).Italic();
+                    col.Item().Text(intro).FontColor(Muted).Italic();
 
                     if (scoreLines.Count > 0)
                     {
@@ -344,6 +397,14 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         "Nauwkeurig" => "Nauwkeurig werken",
         _ => domain
     };
+
+    private static string LabelCulture(string domain)
+        => CulturePersonalityCatalog.EverydayLabel(domain) switch
+        {
+            var label when !string.IsNullOrWhiteSpace(label) && label != "hoe jij graag werkt"
+                => char.ToUpperInvariant(label[0]) + label[1..],
+            _ => domain
+        };
 
     private static string FriendlyTag(string tag)
     {

@@ -34,11 +34,16 @@
         {
             await Api.CompleteDeepAnalysisCheckoutAsync(PaymentId);
             var slug = AssessmentKindLabels.ToSlug(AssessmentKindLabels.ParseOrDefault(Kind));
-            Navigation.NavigateTo($"/candidate/deep-analysis/{slug}");
+            Navigation.NavigateTo($"/profiel/tests/{slug}");
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            var slug = AssessmentKindLabels.ToSlug(AssessmentKindLabels.ParseOrDefault(Kind));
+            var msg = string.IsNullOrWhiteSpace(ex.Message)
+                ? Culture["Tests.PaymentFailed"]
+                : ex.Message;
+            _message = msg;
+            Navigation.NavigateTo($"/profiel/tests/{slug}?paymentError=1");
         }
     }
 }

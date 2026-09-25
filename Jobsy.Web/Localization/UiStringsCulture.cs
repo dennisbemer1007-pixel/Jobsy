@@ -34,7 +34,9 @@ internal static class UiStringsCulture
         ["Kompas.DiscLead"] = "Hoe jij graag werkt: zelfstandig of met kaders, informeel of formeler, samen of alleen — plus hoe jij in een team past.",
         ["CultureScan.Title"] = "Cultuur & persoonlijkheid",
         ["CultureScan.Lead"] = "Achttien korte stellingen (ca. 3 minuten) over hoe jij graag werkt en hoe jij in een team past. Geen moeilijke termen — wel een helder beeld voor matching.",
-        ["CultureScan.ScienceNote"] = "Wetenschappelijk model: cultuurdimensies plus IPIP-stijl persoonlijkheidsfacetten (o.a. Openheid, Consciëntieusheid). Geen diagnose — wel een duidelijk startpunt voor cultuurfit in matching.",
+        ["CultureScan.ScienceNote"] = "Wetenschappelijk model: gebaseerd op het Organizational Culture Profile (person-organisation fit) plus IPIP-persoonlijkheidsfacetten. Geen diagnose — wel een duidelijk startpunt voor cultuurfit in matching.",
+        ["CultureScan.Upsell"] = "Wil je een grondige diepteanalyse van cultuurfit en werksfeer (150 vragen) inclusief PDF-rapport?",
+        ["CultureScan.DeepUnlock"] = "Ontgrendel uitgebreide cultuurtest",
         ["CultureScan.PrivacyNote"] = "Je antwoorden blijven in jouw account. Werkgevers zien geen ruwe antwoorden. Export en wissen via Mijn gegevens. Meer in de",
         ["CultureScan.Empty"] = "Je hebt de cultuurscan nog niet ingevuld. In ongeveer drie minuten zie je hoe jij graag werkt.",
         ["CultureScan.Start"] = "Start de cultuurscan",
@@ -158,6 +160,9 @@ internal static class UiStringsCulture
         map["Kompas.DiscLead"] = map["Kompas.CultureLead"];
         map["CultureScan.Title"] = "Culture & personality";
         map["CultureScan.Lead"] = "Eighteen short statements (about 3 minutes) on how you like to work and how you fit a team. Everyday language — for better matches.";
+        map["CultureScan.ScienceNote"] = "Scientific model: based on the Organizational Culture Profile (person-organisation fit) plus IPIP personality facets. Not a diagnosis — a clear starting point for culture fit in matching.";
+        map["CultureScan.Upsell"] = "Want a thorough deep analysis of culture fit and work atmosphere (150 questions) including a PDF report?";
+        map["CultureScan.DeepUnlock"] = "Unlock extended culture test";
         map["CultureScan.Empty"] = "You have not completed the culture scan yet.";
         map["CultureScan.Start"] = "Start the culture scan";
         map["CultureScan.Continue"] = "Continue culture scan";

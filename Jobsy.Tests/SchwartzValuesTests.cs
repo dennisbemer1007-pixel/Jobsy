@@ -85,7 +85,8 @@ public class SchwartzValuesTests
         Assert.Equal("/candidate/deep-analysis/values", values.DeepAnalysisHref);
 
         var culture = Assert.Single(profile.Tests, t => t.Id == "culture");
-        Assert.False(culture.SupportsDeepAnalysis);
+        Assert.True(culture.SupportsDeepAnalysis);
+        Assert.Equal("/candidate/deep-analysis/culture", culture.DeepAnalysisHref);
     }
 
     [Fact]

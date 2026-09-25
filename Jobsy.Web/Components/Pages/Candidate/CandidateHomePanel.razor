@@ -10,19 +10,6 @@
             <h1>@Culture["Kompas.Title"]</h1>
             <p class="login-lead">@Culture["Kompas.Lead"]</p>
         </div>
-        <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Metrics.Period"]">
-            @foreach (var p in PeriodKeys)
-            {
-                <button type="button"
-                        class="period-tab @(_period == p ? "period-tab--active" : null)"
-                        role="tab"
-                        aria-selected="@(_period == p)"
-                        disabled="@_loading"
-                        @onclick="() => SetPeriodAsync(p)">
-                    @PeriodLabel(p)
-                </button>
-            }
-        </div>
     </header>
 
     <CandidateKompas />
@@ -79,9 +66,8 @@
 </div>
 
 @code {
-    private static readonly string[] PeriodKeys = ["day", "week", "month", "quarter", "year"];
+    private const string Period = "week";
 
-    private string _period = "week";
     private string? _selectedKey;
     private bool _loading = true;
     private bool _drillLoading;
@@ -91,16 +77,6 @@
 
     private string SelectedLabel =>
         _selectedKey is null ? "" : UiLabels.MetricKey(Culture, _selectedKey);
-
-    private string PeriodLabel(string key) => key switch
-    {
-        "day" => Culture["Metrics.Day"],
-        "week" => Culture["Metrics.Week"],
-        "month" => Culture["Metrics.Month"],
-        "quarter" => Culture["Metrics.Quarter"],
-        "year" => Culture["Metrics.Year"],
-        _ => key
-    };
 
     private bool _loadStarted;
 
@@ -130,21 +106,6 @@
     public void Dispose()
         => Culture.Changed -= OnCultureChanged;
 
-    private async Task SetPeriodAsync(string period)
-    {
-        if (_period == period)
-        {
-            return;
-        }
-
-        _period = period;
-        await LoadSummaryAsync();
-        if (_selectedKey is not null)
-        {
-            await LoadDrilldownAsync(_selectedKey);
-        }
-    }
-
     private async Task SelectMetricAsync(string key)
     {
         if (_selectedKey == key)
@@ -163,7 +124,7 @@
         _loading = true;
         _error = null;
         var (metrics, error) = await HomeDashboardLoad.FetchAsync(async () =>
-            (await Api.GetMyMetricsSummaryAsync(_period)).ToList());
+            (await Api.GetMyMetricsSummaryAsync(Period)).ToList());
         if (error is not null)
         {
             _error = error;
@@ -182,7 +143,7 @@
         _drillLoading = true;
         try
         {
-            _drilldown = (await Api.GetMyMetricsDrilldownAsync(key, _period)).ToList();
+            _drilldown = (await Api.GetMyMetricsDrilldownAsync(key, Period)).ToList();
         }
         catch
         {

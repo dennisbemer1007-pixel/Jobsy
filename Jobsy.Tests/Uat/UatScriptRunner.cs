@@ -473,12 +473,13 @@ public static class UatScriptRunner
             var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateHomePanel.razor"));
             Assert.Contains("CandidateKompas", home, StringComparison.Ordinal);
             var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
-            Assert.Contains("Kompas.TabWhoAmI", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabDna", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabProfile", kompas, StringComparison.Ordinal);
-            Assert.Contains("Kompas.TabCompetencies", kompas, StringComparison.Ordinal);
-            Assert.Contains("Kompas.TabCulture", kompas, StringComparison.Ordinal);
-            Assert.Contains("Kompas.TabCareers", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabTests", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabFit", kompas, StringComparison.Ordinal);
+            Assert.DoesNotContain("Kompas.TabCompetencies", kompas, StringComparison.Ordinal);
+            Assert.DoesNotContain("period-tabs", home, StringComparison.Ordinal);
+            Assert.DoesNotContain("Kompas.OpenMap", kompas, StringComparison.Ordinal);
             Assert.Contains("role=\"tablist\"", kompas, StringComparison.Ordinal);
             Assert.Contains("RoleFitCheckPanel", kompas, StringComparison.Ordinal);
             Assert.Contains("<CandidateKompas", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor")), StringComparison.Ordinal);
@@ -516,7 +517,7 @@ public static class UatScriptRunner
             Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
             var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
-            Assert.Contains("CompetencyScorePanel", kompas, StringComparison.Ordinal);
+            Assert.Contains("TestsOverviewPanel", kompas, StringComparison.Ordinal);
             Assert.DoesNotContain("Talent.CandidateTitle", kompas, StringComparison.Ordinal);
             Assert.Equal("competence", TrainingTracking.CampaignCompetence);
             Assert.Contains(TrainingFieldCatalog.Vaardigheden, TrainingFieldCatalog.Detect([CompetencyTrainingCatalog.SearchBlob(CompetencyTestCatalog.Samenwerken)]));
@@ -529,7 +530,8 @@ public static class UatScriptRunner
             Assert.Contains("competency-skill__details", panel, StringComparison.Ordinal);
             Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
             Assert.Equal(18, CulturePersonalityCatalog.QuestionCount);
-            Assert.False(DeepAnalysisCatalog.SupportsDeepAnalysis(AssessmentKind.Culture));
+            Assert.True(DeepAnalysisCatalog.SupportsDeepAnalysis(AssessmentKind.Culture));
+            Assert.Equal(150, DeepAnalysisCatalog.CultureQuestionCount);
             Assert.Equal("culture", TrainingTracking.CampaignCulture);
             Assert.Equal("culture", TrainingTracking.CampaignDisc);
         }

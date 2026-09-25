@@ -1,0 +1,185 @@
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<div class="dna-panel">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_completedCount == 0)
+    {
+        <div class="dna-empty">
+            <div class="dna-empty__icon" aria-hidden="true">
+                <svg viewBox="0 0 64 64" width="64" height="64" fill="none">
+                    <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="2" opacity="0.35"/>
+                    <path d="M24 14c6 6 6 30 0 36M40 14c-6 6-6 30 0 36" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M22 24h20M22 32h20M22 40h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+                </svg>
+            </div>
+            <p class="login-lead">@Culture["Dna.EmptyLead"]</p>
+            <button type="button" class="login-submit" @onclick="GoTests">@Culture["Dna.ViewTests"]</button>
+        </div>
+    }
+    else
+    {
+        <p class="login-lead">@Culture["Dna.Lead"]</p>
+        @if (_completedCount < 4)
+        {
+            <p class="dna-incomplete">
+                <span class="dna-incomplete__badge">@Culture["Dna.IncompleteBadge"]</span>
+                @Culture.Format("Dna.IncompleteHint", _completedCount, 4)
+            </p>
+        }
+
+        <ul class="dna-summary">
+            @foreach (var item in _items.Where(i => i.Completed))
+            {
+                <li class="dna-summary__item">
+                    <a class="dna-summary__link" href="@item.DetailHref">
+                        <span class="dna-summary__title">@Culture[item.TitleKey]</span>
+                        @if (!string.IsNullOrWhiteSpace(item.Outcome))
+                        {
+                            <span class="dna-summary__outcome">@item.Outcome</span>
+                        }
+                        <span class="dna-summary__status dna-summary__status--@item.StatusCss">@Culture[item.StatusKey]</span>
+                    </a>
+                </li>
+            }
+            @foreach (var item in _items.Where(i => !i.Completed))
+            {
+                <li class="dna-summary__item dna-summary__item--missing">
+                    <span class="dna-summary__title">@Culture[item.TitleKey]</span>
+                    <span class="dna-summary__status dna-summary__status--pending">@Culture["Test.Status.NotDone"]</span>
+                </li>
+            }
+        </ul>
+
+        <button type="button" class="engagement-btn" @onclick="GoTests">@Culture["Dna.ViewTests"]</button>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Active { get; set; }
+    [Parameter] public EventCallback<string> OnOpenTab { get; set; }
+
+    private bool _loading = true;
+    private bool _loaded;
+    private int _completedCount;
+    private readonly List<DnaItem> _items = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Active && !_loaded)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var competence = await Api.GetMyCompetenciesAsync();
+            var career = await Api.GetMyCareerInterestsAsync();
+            var culture = await Api.GetMyCultureAsync();
+            var values = await Api.GetMyValuesAsync();
+            var competenceDeep = await Api.GetDeepAnalysisAsync("competence");
+            var careerDeep = await Api.GetDeepAnalysisAsync("career");
+            var cultureDeep = await Api.GetDeepAnalysisAsync("culture");
+            var valuesDeep = await Api.GetDeepAnalysisAsync("values");
+
+            _items.Clear();
+            _items.Add(Build(
+                AssessmentKind.Competence,
+                "Test.Competence.Title",
+                IsCompleted(competence?.Status),
+                competenceDeep,
+                AssessmentOutcomeLines.Competence(
+                    competence?.Scores?.Samenwerken,
+                    competence?.Scores?.Resultaatgerichtheid,
+                    competence?.Scores?.Stressbestendigheid,
+                    competence?.Scores?.Innovatie,
+                    competence?.Scores?.Extraversie)));
+            _items.Add(Build(
+                AssessmentKind.Career,
+                "Test.Career.Title",
+                IsCompleted(career?.Status),
+                careerDeep,
+                AssessmentOutcomeLines.Career(
+                    career?.Scores?.Realistic,
+                    career?.Scores?.Investigative,
+                    career?.Scores?.Artistic,
+                    career?.Scores?.Social,
+                    career?.Scores?.Enterprising,
+                    career?.Scores?.Conventional)));
+            _items.Add(Build(
+                AssessmentKind.Culture,
+                "Test.Culture.Title",
+                IsCompleted(culture?.Status),
+                cultureDeep,
+                AssessmentOutcomeLines.Culture(
+                    culture?.Scores?.Autonomy,
+                    culture?.Scores?.Informal,
+                    culture?.Scores?.Collaboration,
+                    culture?.Scores?.Flexibility,
+                    culture?.Scores?.Innovation,
+                    culture?.Scores?.PeopleFirst)));
+            _items.Add(Build(
+                AssessmentKind.Values,
+                "Test.Values.Title",
+                IsCompleted(values?.Status),
+                valuesDeep,
+                AssessmentOutcomeLines.Values(
+                    values?.Scores?.Autonomy,
+                    values?.Scores?.Connection,
+                    values?.Scores?.Achievement,
+                    values?.Scores?.Stability,
+                    values?.Scores?.Impact)));
+
+            _completedCount = _items.Count(i => i.Completed);
+            _loaded = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static bool IsCompleted(string? status)
+        => string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase);
+
+    private static DnaItem Build(
+        AssessmentKind kind,
+        string titleKey,
+        bool freeDone,
+        DeepAnalysisState? deep,
+        string? outcome)
+    {
+        var deepDone = deep is { IsCompleted: true };
+        var completed = freeDone || deepDone;
+        var extended = deepDone;
+        return new DnaItem(
+            titleKey,
+            AssessmentTestCatalog.DetailHref(kind),
+            completed,
+            outcome,
+            extended ? "Test.Status.Extended" : "Test.Status.FreeDone",
+            extended ? "gold" : "success");
+    }
+
+    private Task GoTests() => OnOpenTab.InvokeAsync(CandidateKompasTabs.Tests);
+
+    private sealed record DnaItem(
+        string TitleKey,
+        string DetailHref,
+        bool Completed,
+        string? Outcome,
+        string StatusKey,
+        string StatusCss);
+}

@@ -38,6 +38,16 @@ public static class DeepAnalysisQuestionHelp
         SchwartzValuesCatalog.Achievement => "Prestatie & groei",
         SchwartzValuesCatalog.Stability => "Zekerheid & traditie",
         SchwartzValuesCatalog.Impact => "Impact & rechtvaardigheid",
+        CulturePersonalityCatalog.Informal => "Informele sfeer",
+        CulturePersonalityCatalog.Collaboration => "Samenwerken",
+        CulturePersonalityCatalog.Flexibility => "Flexibel meebewegen",
+        CulturePersonalityCatalog.Innovation => "Nieuwe dingen proberen",
+        CulturePersonalityCatalog.PeopleFirst => "Mensen voorop",
+        CulturePersonalityCatalog.Openness => "Openstaan voor nieuw",
+        CulturePersonalityCatalog.Conscientiousness => "Netjes en betrouwbaar",
+        CulturePersonalityCatalog.Extraversion => "Energie van mensen",
+        CulturePersonalityCatalog.Agreeableness => "Prettig samen optrekken",
+        CulturePersonalityCatalog.EmotionalStability => "Kalm onder druk",
         _ => string.IsNullOrWhiteSpace(domain) ? "Onderwerp" : domain
     };
 
@@ -133,6 +143,56 @@ public static class DeepAnalysisQuestionHelp
         [
             "Voorbeeld: je denkt na over verspilling of eerlijke behandeling van collega’s en klanten.",
             "Voorbeeld: je kiest liever werk dat iets goeds doet voor mens of milieu."
+        ],
+        CulturePersonalityCatalog.Informal =>
+        [
+            "Voorbeeld: collega’s noemen elkaar bij de voornaam en maken een luchtige grap. Past dat bij jou?",
+            "Voorbeeld: je stuurt liever een kort berichtje dan een formele mail."
+        ],
+        CulturePersonalityCatalog.Collaboration =>
+        [
+            "Voorbeeld: je rondt een drukke shift samen met het team af. Hoe voelt dat?",
+            "Voorbeeld: een collega vraagt of je even wilt meedenken. Wat doe jij?"
+        ],
+        CulturePersonalityCatalog.Flexibility =>
+        [
+            "Voorbeeld: om half elf komt er een spoedklus bij. Jij schakelt zonder veel gedoe.",
+            "Voorbeeld: de planning verandert. Hoe reageer jij meestal?"
+        ],
+        CulturePersonalityCatalog.Innovation =>
+        [
+            "Voorbeeld: iemand stelt een slimmere werkwijze voor. Jij wilt die graag uitproberen.",
+            "Voorbeeld: je ziet een omslachtig proces en bedenkt een kleinere verbetering."
+        ],
+        CulturePersonalityCatalog.PeopleFirst =>
+        [
+            "Voorbeeld: een collega heeft een zware dag. Jij merkt het en biedt hulp.",
+            "Voorbeeld: resultaat en mens botsen. Wat weegt voor jou het zwaarst?"
+        ],
+        CulturePersonalityCatalog.Openness =>
+        [
+            "Voorbeeld: er komt een nieuwe tool op de vloer. Jij wilt weten hoe die werkt.",
+            "Voorbeeld: je leert graag iets nieuws over hoe het vak verandert."
+        ],
+        CulturePersonalityCatalog.Conscientiousness =>
+        [
+            "Voorbeeld: je checkt aantallen nog even voordat je een bestelling doorgeeft.",
+            "Voorbeeld: je ruimt je werkplek op zodat de volgende ploeg meteen verder kan."
+        ],
+        CulturePersonalityCatalog.Extraversion =>
+        [
+            "Voorbeeld: op een drukke balie praat je makkelijk met nieuwe collega’s.",
+            "Voorbeeld: na veel mensencontact voel jij je juist opgeladen of juist leeg."
+        ],
+        CulturePersonalityCatalog.Agreeableness =>
+        [
+            "Voorbeeld: er is discussie in het team. Jij zoekt een oplossing waar iedereen mee verder kan.",
+            "Voorbeeld: je geeft een concreet compliment als iemand iets goed doet."
+        ],
+        CulturePersonalityCatalog.EmotionalStability =>
+        [
+            "Voorbeeld: de planning valt om. Jij ademt even en kijkt wat wél kan.",
+            "Voorbeeld: piekdruk in de winkel of kas — jij houdt je hoofd erbij."
         ],
         _ => []
     };

@@ -1,0 +1,181 @@
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<div class="tests-overview">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <div class="tests-overview__head">
+            <h3 class="tests-overview__title">@Culture["Tests.OverviewTitle"]</h3>
+            <p class="tests-overview__progress muted">@Culture.Format("Tests.Progress", _doneCount, 4)</p>
+        </div>
+
+        <div class="test-tile-grid" role="list">
+            @foreach (var tile in _tiles)
+            {
+                <a class="test-tile test-tile--@tile.Accent"
+                   role="listitem"
+                   href="@tile.Href"
+                   aria-label="@($"{Culture[tile.TitleKey]} — {Culture[tile.StatusKey]}")">
+                    <span class="test-tile__accent" aria-hidden="true"></span>
+                    <span class="test-tile__title">@Culture[tile.TitleKey]</span>
+                    <span class="test-tile__status">
+                        <span class="test-tile__icon" aria-hidden="true">@tile.Icon</span>
+                        <span>@Culture[tile.StatusKey]</span>
+                    </span>
+                    @if (!string.IsNullOrWhiteSpace(tile.Outcome))
+                    {
+                        <span class="test-tile__outcome">@tile.Outcome</span>
+                    }
+                    else if (tile.Accent == "pending")
+                    {
+                        <span class="test-tile__meta muted">@Culture.Format("Tests.MetaFree", tile.FreeCount, tile.FreeMinutes)</span>
+                    }
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Active { get; set; }
+
+    private bool _loading = true;
+    private bool _loaded;
+    private int _doneCount;
+    private readonly List<TileVm> _tiles = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Active && !_loaded)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var competence = await Api.GetMyCompetenciesAsync();
+            var career = await Api.GetMyCareerInterestsAsync();
+            var culture = await Api.GetMyCultureAsync();
+            var values = await Api.GetMyValuesAsync();
+            var competenceDeep = await Api.GetDeepAnalysisAsync("competence");
+            var careerDeep = await Api.GetDeepAnalysisAsync("career");
+            var cultureDeep = await Api.GetDeepAnalysisAsync("culture");
+            var valuesDeep = await Api.GetDeepAnalysisAsync("values");
+
+            _tiles.Clear();
+            foreach (var def in AssessmentTestCatalog.All)
+            {
+                var (freeDone, outcome) = def.Kind switch
+                {
+                    AssessmentKind.Competence => (
+                        IsCompleted(competence?.Status),
+                        AssessmentOutcomeLines.Competence(
+                            competence?.Scores?.Samenwerken,
+                            competence?.Scores?.Resultaatgerichtheid,
+                            competence?.Scores?.Stressbestendigheid,
+                            competence?.Scores?.Innovatie,
+                            competence?.Scores?.Extraversie)),
+                    AssessmentKind.Career => (
+                        IsCompleted(career?.Status),
+                        AssessmentOutcomeLines.Career(
+                            career?.Scores?.Realistic,
+                            career?.Scores?.Investigative,
+                            career?.Scores?.Artistic,
+                            career?.Scores?.Social,
+                            career?.Scores?.Enterprising,
+                            career?.Scores?.Conventional)),
+                    AssessmentKind.Culture => (
+                        IsCompleted(culture?.Status),
+                        AssessmentOutcomeLines.Culture(
+                            culture?.Scores?.Autonomy,
+                            culture?.Scores?.Informal,
+                            culture?.Scores?.Collaboration,
+                            culture?.Scores?.Flexibility,
+                            culture?.Scores?.Innovation,
+                            culture?.Scores?.PeopleFirst)),
+                    _ => (
+                        IsCompleted(values?.Status),
+                        AssessmentOutcomeLines.Values(
+                            values?.Scores?.Autonomy,
+                            values?.Scores?.Connection,
+                            values?.Scores?.Achievement,
+                            values?.Scores?.Stability,
+                            values?.Scores?.Impact))
+                };
+
+                var deep = def.Kind switch
+                {
+                    AssessmentKind.Competence => competenceDeep,
+                    AssessmentKind.Career => careerDeep,
+                    AssessmentKind.Culture => cultureDeep,
+                    _ => valuesDeep
+                };
+
+                var extended = deep is { IsCompleted: true };
+                var done = freeDone || extended;
+                string accent;
+                string statusKey;
+                string icon;
+                if (extended)
+                {
+                    accent = "gold";
+                    statusKey = "Test.Status.Extended";
+                    icon = "★";
+                }
+                else if (freeDone)
+                {
+                    accent = "success";
+                    statusKey = "Test.Status.FreeDone";
+                    icon = "✓";
+                }
+                else
+                {
+                    accent = "pending";
+                    statusKey = "Test.Status.NotDone";
+                    icon = "○";
+                }
+
+                _tiles.Add(new TileVm(
+                    def.TitleKey,
+                    def.DetailHref,
+                    accent,
+                    statusKey,
+                    icon,
+                    done ? outcome : null,
+                    def.FreeQuestionCount,
+                    def.FreeMinutesApprox));
+            }
+
+            _doneCount = _tiles.Count(t => t.Accent is "success" or "gold");
+            _loaded = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static bool IsCompleted(string? status)
+        => string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase);
+
+    private sealed record TileVm(
+        string TitleKey,
+        string Href,
+        string Accent,
+        string StatusKey,
+        string Icon,
+        string? Outcome,
+        int FreeCount,
+        int FreeMinutes);
+}
