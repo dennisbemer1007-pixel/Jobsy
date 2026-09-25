@@ -2,13 +2,15 @@ namespace Jobsy.Core.Enums;
 
 /// <summary>
 /// Separated assessment engines: competence (Big Five/IPIP), career (RIASEC),
-/// culture &amp; personality (culture dims + IPIP-style work facets).
+/// culture &amp; personality (culture dims + IPIP-style work facets),
+/// values &amp; drivers (Schwartz workplace value model).
 /// </summary>
 public enum AssessmentKind
 {
     Competence = 0,
     Career = 1,
-    Culture = 2
+    Culture = 2,
+    Values = 3
 }
 
 public static class AssessmentKindLabels
@@ -16,6 +18,7 @@ public static class AssessmentKindLabels
     public const string Competence = "competence";
     public const string Career = "career";
     public const string Culture = "culture";
+    public const string Values = "values";
 
     public static bool TryParse(string? value, out AssessmentKind kind)
     {
@@ -48,6 +51,15 @@ public static class AssessmentKindLabels
             return true;
         }
 
+        if (string.Equals(value, Values, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, "waarden", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, "drijfveren", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, "schwartz", StringComparison.OrdinalIgnoreCase))
+        {
+            kind = AssessmentKind.Values;
+            return true;
+        }
+
         kind = default;
         return false;
     }
@@ -59,6 +71,7 @@ public static class AssessmentKindLabels
     {
         AssessmentKind.Career => Career,
         AssessmentKind.Culture => Culture,
+        AssessmentKind.Values => Values,
         _ => Competence
     };
 
@@ -66,6 +79,7 @@ public static class AssessmentKindLabels
     {
         AssessmentKind.Career => "Beroepentest",
         AssessmentKind.Culture => "Cultuurscan",
+        AssessmentKind.Values => "Waarden & drijfveren",
         _ => "Competentietest"
     };
 }

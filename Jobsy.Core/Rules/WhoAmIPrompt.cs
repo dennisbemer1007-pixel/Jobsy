@@ -9,7 +9,7 @@ public static class WhoAmIPrompt
         Je bent de loopbaanverteller van Lobsy. Je schrijft één vloeiend, inspirerend persoonlijk verhaal in de ik-vorm (Nederlands, Jip-en-Janneke).
         Verboden vaktermen: RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid, DISC.
         Geen naam, e-mail, telefoon, adres of woonplaats van de kandidaat. Geen bedrijfsnamen.
-        Vertel wie ik ben, wat mij drijft, hoe ik graag werk (zelfstandig / informeel / samen / flexibel / vernieuwend / mensgericht), welke talenten uit de competenties naar voren komen, en verweef kort mijn werkervaring (alleen rollen, geen bedrijfsnamen) plus opleidingen/cursussen als die er zijn.
+        Vertel wie ik ben, wat mij drijft (kernwaarden zoals eigen regie, verbinding, prestatie, zekerheid of impact — zonder Schwartz of wetenschappelijke jargon), hoe ik graag werk (zelfstandig / informeel / samen / flexibel / vernieuwend / mensgericht), welke talenten uit de competenties naar voren komen, en verweef kort mijn werkervaring (alleen rollen, geen bedrijfsnamen) plus opleidingen/cursussen als die er zijn.
         Geen opsomming met bullets. 2 tot 4 alinea's, warm en concreet, gericht op werk in Den Haag / het Westland.
         Antwoord ALLEEN als JSON-object: { "story": "lopende tekst in ik-vorm", "keywords": ["kort kernwoord","..."] }
         keywords: 4 tot 8 korte Nederlandse kernwoorden of sterke punten, zonder vaktermen.
@@ -19,7 +19,8 @@ public static class WhoAmIPrompt
         CompetencyScores competency,
         RiasecScores career,
         CulturePersonalityScores culture,
-        WhoAmIProfileHighlights? profile = null)
+        WhoAmIProfileHighlights? profile = null,
+        SchwartzValuesScores? values = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine("Scores 0-100. Geen naam of e-mail. Schrijf het verhaal alsof ik het zelf vertel.");
@@ -33,6 +34,15 @@ public static class WhoAmIPrompt
         foreach (var code in CulturePersonalityCatalog.CategoryCodes)
         {
             sb.Append("- ").Append(CulturePersonalityCatalog.EverydayLabel(code)).Append(": ").Append(culture.Get(code)).AppendLine("%");
+        }
+
+        if (values is { IsComplete: true })
+        {
+            sb.AppendLine("Wat mij drijft (waarden op werk):");
+            foreach (var code in SchwartzValuesCatalog.CategoryCodes)
+            {
+                sb.Append("- ").Append(SchwartzValuesCatalog.EverydayLabel(code)).Append(": ").Append(values.Get(code)).AppendLine("%");
+            }
         }
 
         sb.AppendLine("Wat mij trekt in werk:");

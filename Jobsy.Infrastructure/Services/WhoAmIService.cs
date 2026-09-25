@@ -109,6 +109,8 @@ public sealed class WhoAmIService : IWhoAmIService
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         var cultureRow = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        var valuesRow = await _db.CandidateValuesProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
 
         var competency = CompetencyTestCatalog.CompletedScoresOrNull(
             competencyRow?.Status,
@@ -145,6 +147,21 @@ public sealed class WhoAmIService : IWhoAmIService
             culture = null;
         }
 
+        SchwartzValuesScores? values = null;
+        if (valuesRow is not null && CandidateCompetencyStatuses.IsCompleted(valuesRow.Status))
+        {
+            values = new SchwartzValuesScores(
+                valuesRow.AutonomyPercent,
+                valuesRow.ConnectionPercent,
+                valuesRow.AchievementPercent,
+                valuesRow.StabilityPercent,
+                valuesRow.ImpactPercent);
+            if (values is not { IsComplete: true })
+            {
+                values = null;
+            }
+        }
+
         var competencyDone = competency is { IsComplete: true };
         var careerDone = career is { IsComplete: true };
         var cultureDone = culture is { IsComplete: true };
@@ -168,7 +185,7 @@ public sealed class WhoAmIService : IWhoAmIService
             && career is { IsComplete: true } rScores
             && culture is { IsComplete: true } cultureScores)
         {
-            var fingerprint = WhoAmICompleteness.Fingerprint(cScores, rScores, cultureScores, profileHighlights);
+            var fingerprint = WhoAmICompleteness.Fingerprint(cScores, rScores, cultureScores, profileHighlights, values);
             if (stored is not null
                 && string.Equals(stored.InputFingerprint, fingerprint, StringComparison.Ordinal)
                 && WhoAmIStoryBuilder.Sanitize(stored.StoryText) is { } cachedStory)
@@ -181,7 +198,7 @@ public sealed class WhoAmIService : IWhoAmIService
             else
             {
                 var generated = await _generate.GenerateAsync(
-                    cScores, rScores, cultureScores, profileHighlights, cancellationToken);
+                    cScores, rScores, cultureScores, profileHighlights, values, cancellationToken);
                 story = generated.Story;
                 keywords = generated.Keywords;
                 fromOpenAi = generated.FromOpenAi;

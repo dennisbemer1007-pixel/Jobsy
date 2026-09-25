@@ -10,6 +10,7 @@ public interface IWhoAmIGenerationService
         RiasecScores career,
         CulturePersonalityScores culture,
         WhoAmIProfileHighlights? profile = null,
+        SchwartzValuesScores? values = null,
         CancellationToken cancellationToken = default);
 }
 

@@ -47,6 +47,15 @@ public static class ProfileVacancyMatchCalculator
 
             competency01 = 0.75 * competency01.Value + 0.25 * blend;
         }
+
+        if (input.CandidateValuesScores is { IsComplete: true } valuesScores)
+        {
+            var values01 = SchwartzValuesFitRules.Fit01(
+                valuesScores, input.VacancyTitle, input.VacancyDescription);
+            competency01 = competency01 is not null
+                ? 0.78 * competency01.Value + 0.22 * values01
+                : values01;
+        }
         var interest01 = input.CandidateRiasecScores is { IsComplete: true } scored
             ? VacancyRiasecProfile.Fit01(
                 scored,
@@ -687,6 +696,7 @@ public sealed class ProfileVacancyMatchInput
     public IReadOnlyList<string>? CulturePillars { get; init; }
     public CulturePersonalityScores? CandidateCultureScores { get; init; }
     public CulturePersonalityScores? CompanyCultureScores { get; init; }
+    public SchwartzValuesScores? CandidateValuesScores { get; init; }
 }
 
 public sealed class ProfileVacancyMatch

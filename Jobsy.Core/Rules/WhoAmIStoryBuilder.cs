@@ -11,7 +11,8 @@ public static class WhoAmIStoryBuilder
         CompetencyScores competency,
         RiasecScores career,
         CulturePersonalityScores culture,
-        WhoAmIProfileHighlights? profile = null)
+        WhoAmIProfileHighlights? profile = null,
+        SchwartzValuesScores? values = null)
     {
         var careerTop = TopLabels(
             CareerTestCatalog.RiasecCodes.Select(c => (CareerCompassBuilder.TypeLabel(c), career.Get(c))),
@@ -22,7 +23,12 @@ public static class WhoAmIStoryBuilder
         var compTop = TopLabels(
             CompetencyTestCatalog.CategoryCodes.Select(c => (WhoAmIKeywords.EverydayCompetency(c), competency.Get(c))),
             2);
-        var keywords = WhoAmIKeywords.FromScores(competency, career, culture);
+        var valuesTop = values is { IsComplete: true }
+            ? TopLabels(
+                SchwartzValuesCatalog.CategoryCodes.Select(c => (SchwartzValuesCatalog.EverydayLabel(c), values.Get(c))),
+                2)
+            : [];
+        var keywords = WhoAmIKeywords.FromScores(competency, career, culture, values);
         profile ??= WhoAmIProfileHighlights.Empty;
 
         var sb = new StringBuilder();
@@ -32,6 +38,14 @@ public static class WhoAmIStoryBuilder
         sb.Append(JoinDutch(cultureTop));
         sb.AppendLine(".");
         sb.AppendLine();
+        if (valuesTop.Count > 0)
+        {
+            sb.Append("Wat mij drijft is ");
+            sb.Append(JoinDutch(valuesTop));
+            sb.AppendLine(" — dat zoek ik terug in cultuur en beloftes van een werkgever.");
+            sb.AppendLine();
+        }
+
         if (profile.Roles.Count > 0 || profile.Educations.Count > 0 || profile.Certificates.Count > 0)
         {
             sb.Append("In mijn pad zie je ");

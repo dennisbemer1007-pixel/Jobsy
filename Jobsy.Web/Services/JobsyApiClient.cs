@@ -957,6 +957,39 @@ public sealed class JobsyApiClient : IAsyncDisposable
                ?? new CandidateCultureState();
     }
 
+    public async Task<CandidateValuesState?> GetMyValuesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CandidateValuesState>("api/me/values", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CandidateValuesState> SaveMyValuesAsync(
+        IReadOnlyDictionary<int, int> answers,
+        bool complete,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            answers = answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            complete
+        };
+        var response = await _http.PutAsJsonAsync("api/me/values", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Waardenscan opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CandidateValuesState>(cancellationToken: ct)
+               ?? new CandidateValuesState();
+    }
+
     public async Task<CompanyCultureState?> GetCompanyCultureAsync(Guid? companyId = null, CancellationToken ct = default)
     {
         try

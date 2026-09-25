@@ -209,7 +209,8 @@ public static class WhoAmICompleteness
         CompetencyScores competency,
         RiasecScores career,
         CulturePersonalityScores culture,
-        WhoAmIProfileHighlights? profile = null)
+        WhoAmIProfileHighlights? profile = null,
+        SchwartzValuesScores? values = null)
         => string.Join('|',
             competency.Samenwerken,
             competency.Resultaatgerichtheid,
@@ -233,5 +234,10 @@ public static class WhoAmICompleteness
             culture.Extraversion,
             culture.Agreeableness,
             culture.EmotionalStability,
+            values?.Autonomy,
+            values?.Connection,
+            values?.Achievement,
+            values?.Stability,
+            values?.Impact,
             profile?.FingerprintSuffix() ?? "");
 }

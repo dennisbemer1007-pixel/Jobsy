@@ -9,6 +9,7 @@ public class DeepAnalysisUxTests
     [Theory]
     [InlineData(AssessmentKind.Competence)]
     [InlineData(AssessmentKind.Career)]
+    [InlineData(AssessmentKind.Values)]
     // Culture has no deep analysis bank
     // [InlineData(AssessmentKind.Culture)]
     public void Every_deep_question_has_a_concrete_practice_example(AssessmentKind kind)

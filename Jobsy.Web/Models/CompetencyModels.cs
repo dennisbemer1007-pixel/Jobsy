@@ -123,6 +123,35 @@ public sealed class CandidateCultureState
     public int QuestionCount => 18;
 }
 
+public sealed class CandidateValuesState
+{
+    public string Status { get; set; } = "Draft";
+    public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public SchwartzValuesScoreSet? Scores { get; set; }
+    public DateTime? CompletedAtUtc { get; set; }
+    public List<string> MatchTags { get; set; } = [];
+    public decimal DeepAnalysisPriceEuro { get; set; }
+
+    public int AnsweredCount => Answers.Count;
+    public int QuestionCount => 25;
+}
+
+public sealed class SchwartzValuesScoreSet
+{
+    public int? Autonomy { get; set; }
+    public int? Connection { get; set; }
+    public int? Achievement { get; set; }
+    public int? Stability { get; set; }
+    public int? Impact { get; set; }
+
+    public bool IsComplete =>
+        Autonomy is not null
+        && Connection is not null
+        && Achievement is not null
+        && Stability is not null
+        && Impact is not null;
+}
+
 public sealed class CompanyCultureState
 {
     public string Status { get; set; } = "Draft";

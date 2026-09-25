@@ -100,6 +100,13 @@ public static class BroadMatchRationaleBuilder
             return "Hoe jij graag werkt en in een team past, sluit aan bij deze functie.";
         }
 
+        if (input.CandidateValuesScores is { IsComplete: true }
+            && SchwartzValuesFitRules.Fit01(
+                input.CandidateValuesScores, input.VacancyTitle, input.VacancyDescription) >= 0.6)
+        {
+            return "Jouw waarden en drijfveren sluiten aan bij wat deze vacature belooft.";
+        }
+
         return null;
     }
 

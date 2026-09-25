@@ -241,7 +241,8 @@
         _titleKey = _slug switch
         {
             "career" => "Deep.CareerTitle",
-            "disc" => "Deep.DiscTitle",
+            "values" => "Deep.ValuesTitle",
+            "disc" or "culture" => "Deep.DiscTitle",
             _ => "Deep.CompetenceTitle"
         };
         try

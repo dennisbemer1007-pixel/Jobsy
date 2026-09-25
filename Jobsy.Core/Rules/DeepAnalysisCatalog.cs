@@ -4,14 +4,17 @@ namespace Jobsy.Core.Rules;
 
 /// <summary>
 /// Paid deep analyses. Competence is 150 items (30 per Big Five trait);
-/// career is 200 unique RIASEC items (~33–34 per Holland type). No repeated stems.
+/// career is 200 unique RIASEC items (~33–34 per Holland type);
+/// values is 150 Schwartz workplace drivers (30 per driver). No repeated stems.
 /// </summary>
 public static class DeepAnalysisCatalog
 {
     /// <summary>Competence deep-analysis length (backward-compatible default).</summary>
     public const int QuestionCount = 150;
     public const int CareerQuestionCount = 200;
+    public const int ValuesQuestionCount = 150;
     public const int CompetenceItemsPerDomain = 30;
+    public const int ValuesItemsPerDomain = 30;
     public const int CareerItemsPerDomainMin = 33;
     public const int CareerItemsPerDomainMax = 34;
     public const int LikertMin = LikertAnswerJson.LikertMin;
@@ -21,15 +24,19 @@ public static class DeepAnalysisCatalog
 
     private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyCompetence = new(BuildCompetenceQuestions);
     private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyCareer = new(BuildCareerQuestions);
+    private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyValues = new(BuildValuesQuestions);
 
     /// <summary>Competence deep analysis (backward-compatible default).</summary>
     public static IReadOnlyList<DeepAnalysisQuestion> Questions => LazyCompetence.Value;
 
     public static IReadOnlyList<DeepAnalysisQuestion> CareerQuestions => LazyCareer.Value;
 
+    public static IReadOnlyList<DeepAnalysisQuestion> ValuesQuestions => LazyValues.Value;
+
     public static int QuestionCountFor(AssessmentKind kind) => kind switch
     {
         AssessmentKind.Career => CareerQuestionCount,
+        AssessmentKind.Values => ValuesQuestionCount,
         AssessmentKind.Culture => throw new InvalidOperationException(
             "De cultuurscan heeft geen deep analysis. Gebruik de gratis Quick-Scan (18 vragen)."),
         _ => QuestionCount
@@ -39,19 +46,23 @@ public static class DeepAnalysisCatalog
         => kind switch
         {
             AssessmentKind.Career => CareerQuestions,
+            AssessmentKind.Values => ValuesQuestions,
             AssessmentKind.Culture => throw new InvalidOperationException(
                 "De cultuurscan heeft geen deep analysis. Gebruik de gratis Quick-Scan (18 vragen)."),
             _ => Questions
         };
 
     public static bool SupportsDeepAnalysis(AssessmentKind kind)
-        => kind is AssessmentKind.Competence or AssessmentKind.Career;
+        => kind is AssessmentKind.Competence or AssessmentKind.Career or AssessmentKind.Values;
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildCompetenceQuestions()
         => Materialize("BigFive", DeepAnalysisCompetenceItems.All, AssessmentKind.Competence, CompetenceItemsPerDomain, CompetenceItemsPerDomain);
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildCareerQuestions()
         => Materialize("RIASEC", DeepAnalysisCareerItems.All, AssessmentKind.Career, CareerItemsPerDomainMin, CareerItemsPerDomainMax);
+
+    private static IReadOnlyList<DeepAnalysisQuestion> BuildValuesQuestions()
+        => Materialize("Schwartz", DeepAnalysisValuesItems.All, AssessmentKind.Values, ValuesItemsPerDomain, ValuesItemsPerDomain);
 
     private static IReadOnlyList<DeepAnalysisQuestion> Materialize(
         string family,
@@ -324,6 +335,16 @@ public static class DeepAnalysisCatalog
             "Vriendelijkheid: samenwerking en gastvrijheid zijn een sterke match-tag in de talentpool.",
         DeepAnalysisCompetenceItems.EmotioneleStabiliteit =>
             "Emotionele stabiliteit: piekdruk (seizoen, horeca, logistiek) is haalbaarder als de rest van het profiel klopt.",
+        SchwartzValuesCatalog.Autonomy =>
+            "Eigen regie: rollen met ruimte om zelf te plannen en nieuwe aanpakken te proberen passen bij jouw drijfveren.",
+        SchwartzValuesCatalog.Connection =>
+            "Verbinding: teams met warme sfeer, klantcontact en collegiale hulp benutten wat jij belangrijk vindt.",
+        SchwartzValuesCatalog.Achievement =>
+            "Prestatie: meetbare doelen, targets en zichtbare groei geven je energie op de werkvloer.",
+        SchwartzValuesCatalog.Stability =>
+            "Zekerheid: vaste afspraken, veilige procedures en voorspelbare roosters sluiten aan op jouw waarden.",
+        SchwartzValuesCatalog.Impact =>
+            "Impact: organisaties die eerlijk, duurzaam of maatschappelijk nuttig werken versterken jouw fit.",
         _ => $"Op {Label(domain)} scoor je hoog; weeg dat mee bij branchevorkeur en matching."
     };
 
@@ -337,8 +358,26 @@ public static class DeepAnalysisCatalog
         CareerTestCatalog.Conventional => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional),
         DeepAnalysisCompetenceItems.EmotioneleStabiliteit => "emotionele stabiliteit",
         DeepAnalysisCompetenceItems.Vriendelijkheid => "vriendelijkheid",
+        SchwartzValuesCatalog.Autonomy => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Autonomy),
+        SchwartzValuesCatalog.Connection => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Connection),
+        SchwartzValuesCatalog.Achievement => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Achievement),
+        SchwartzValuesCatalog.Stability => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Stability),
+        SchwartzValuesCatalog.Impact => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Impact),
         _ => domain.ToLowerInvariant()
     };
+
+    public static SchwartzValuesScores ToSchwartzScores(IReadOnlyList<DeepAnalysisDomainScore> scores)
+    {
+        int Get(string code) =>
+            scores.FirstOrDefault(s => s.Domain.Equals(code, StringComparison.OrdinalIgnoreCase))?.Percent ?? 0;
+
+        return new SchwartzValuesScores(
+            Get(SchwartzValuesCatalog.Autonomy),
+            Get(SchwartzValuesCatalog.Connection),
+            Get(SchwartzValuesCatalog.Achievement),
+            Get(SchwartzValuesCatalog.Stability),
+            Get(SchwartzValuesCatalog.Impact));
+    }
 
     private static string JoinNl(IReadOnlyList<string> items) => items.Count switch
     {

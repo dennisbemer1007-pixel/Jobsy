@@ -42,10 +42,11 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         RiasecScores career,
         CulturePersonalityScores culture,
         WhoAmIProfileHighlights? profile = null,
+        SchwartzValuesScores? values = null,
         CancellationToken cancellationToken = default)
     {
         profile ??= WhoAmIProfileHighlights.Empty;
-        var local = Local(competency, career, culture, profile);
+        var local = Local(competency, career, culture, profile, values);
         var apiKey = await ResolveApiKeyAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(apiKey))
         {
@@ -59,6 +60,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
                 career,
                 culture,
                 profile,
+                values,
                 apiKey,
                 await ResolveModelAsync(cancellationToken),
                 await ResolveBaseUrlAsync(cancellationToken),
@@ -80,10 +82,11 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         CompetencyScores competency,
         RiasecScores career,
         CulturePersonalityScores culture,
-        WhoAmIProfileHighlights profile)
+        WhoAmIProfileHighlights profile,
+        SchwartzValuesScores? values)
         => new(
-            WhoAmIStoryBuilder.Build(competency, career, culture, profile),
-            WhoAmIKeywords.FromScores(competency, career, culture),
+            WhoAmIStoryBuilder.Build(competency, career, culture, profile, values),
+            WhoAmIKeywords.FromScores(competency, career, culture, values),
             FromOpenAi: false);
 
     private async Task<WhoAmIGeneratedStory?> GenerateWithOpenAiAsync(
@@ -91,6 +94,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         RiasecScores career,
         CulturePersonalityScores culture,
         WhoAmIProfileHighlights profile,
+        SchwartzValuesScores? values,
         string apiKey,
         string model,
         string baseUrl,
@@ -109,7 +113,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
             messages = new object[]
             {
                 new { role = "system", content = WhoAmIPrompt.System },
-                new { role = "user", content = WhoAmIPrompt.User(competency, career, culture, profile) }
+                new { role = "user", content = WhoAmIPrompt.User(competency, career, culture, profile, values) }
             }
         });
 
@@ -153,7 +157,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
             .ToList();
         if (keywords.Count == 0)
         {
-            keywords = WhoAmIKeywords.FromScores(competency, career, culture).ToList();
+            keywords = WhoAmIKeywords.FromScores(competency, career, culture, values).ToList();
         }
 
         return new WhoAmIGeneratedStory(story, keywords, FromOpenAi: true);

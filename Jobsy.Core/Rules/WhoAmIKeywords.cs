@@ -7,7 +7,8 @@ public static class WhoAmIKeywords
     public static IReadOnlyList<string> FromScores(
         CompetencyScores competency,
         RiasecScores career,
-        CulturePersonalityScores culture)
+        CulturePersonalityScores culture,
+        SchwartzValuesScores? values = null)
     {
         var items = new List<(string Label, int Percent)>();
         foreach (var code in CompetencyTestCatalog.CategoryCodes)
@@ -23,6 +24,14 @@ public static class WhoAmIKeywords
         foreach (var code in CareerTestCatalog.RiasecCodes)
         {
             items.Add((CareerCompassBuilder.TypeLabel(code), career.Get(code)));
+        }
+
+        if (values is { IsComplete: true })
+        {
+            foreach (var code in SchwartzValuesCatalog.CategoryCodes)
+            {
+                items.Add((SchwartzValuesCatalog.EverydayLabel(code), values.Get(code)));
+            }
         }
 
         return items

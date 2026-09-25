@@ -147,6 +147,12 @@ public static class PageHelpDocs
             "Rond af voor je cultuur- en persoonlijkheidsprofiel. Geen deep analysis — de Quick-Scan is genoeg voor matching.",
             "Cultuurvoorkeur mee laten wegen in Functie-Fit en cultuurfit."),
 
+        ["/candidate/values"] = new(
+            "Waarden & drijfveren",
+            "Vijfentwintig stellingen gebaseerd op het Schwartz Value Model: autonomie, verbinding, prestatie, stabiliteit en impact.",
+            "Rond de gratis scan af of ontgrendel de diepteanalyse (150 vragen, € 2,99). Pauzeren mag; je hervat later. Uitkomsten wegen mee in Wie ben ik? en matching.",
+            "Kernwaarden en drijfveren zichtbaar in je verhaal en vacature-fit."),
+
         ["/candidate/disc"] = new(
             "Cultuurscan",
             "Achttien stellingen over hoe jij graag werkt: sfeer, zelfstandigheid, samenwerken en hoe jij in een team past.",

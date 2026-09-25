@@ -33,6 +33,11 @@ public static class DeepAnalysisQuestionHelp
         CareerTestCatalog.Social => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social),
         CareerTestCatalog.Enterprising => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Enterprising),
         CareerTestCatalog.Conventional => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional),
+        SchwartzValuesCatalog.Autonomy => "Eigen regie & uitdaging",
+        SchwartzValuesCatalog.Connection => "Verbinding & zorg",
+        SchwartzValuesCatalog.Achievement => "Prestatie & groei",
+        SchwartzValuesCatalog.Stability => "Zekerheid & traditie",
+        SchwartzValuesCatalog.Impact => "Impact & rechtvaardigheid",
         _ => string.IsNullOrWhiteSpace(domain) ? "Onderwerp" : domain
     };
 
@@ -103,6 +108,31 @@ public static class DeepAnalysisQuestionHelp
         [
             "Voorbeeld: je houdt van duidelijke lijsten, labels en systemen zodat niets zoekraakt.",
             "Voorbeeld: administratie of planning op orde geven je rust — chaos juist niet."
+        ],
+        SchwartzValuesCatalog.Autonomy =>
+        [
+            "Voorbeeld: je mag zelf de volgorde van je taken kiezen. Hoe belangrijk is die ruimte voor jou?",
+            "Voorbeeld: er is een nieuwe werkwijze. Jij wilt die graag zelf uitproberen."
+        ],
+        SchwartzValuesCatalog.Connection =>
+        [
+            "Voorbeeld: een collega heeft het zwaar. Jij merkt het en biedt hulp aan.",
+            "Voorbeeld: een warme sfeer in het team weegt voor jou zwaarder dan alleen targets."
+        ],
+        SchwartzValuesCatalog.Achievement =>
+        [
+            "Voorbeeld: je ziet een duidelijke target op het bord. Jij wilt die graag overtreffen.",
+            "Voorbeeld: na een drukke week wil je weten of je resultaat echt verschil maakte."
+        ],
+        SchwartzValuesCatalog.Stability =>
+        [
+            "Voorbeeld: vaste roosters en duidelijke afspraken geven je rust.",
+            "Voorbeeld: je werkt liever volgens bewezen procedures dan elke week iets nieuws."
+        ],
+        SchwartzValuesCatalog.Impact =>
+        [
+            "Voorbeeld: je denkt na over verspilling of eerlijke behandeling van collega’s en klanten.",
+            "Voorbeeld: je kiest liever werk dat iets goeds doet voor mens of milieu."
         ],
         _ => []
     };

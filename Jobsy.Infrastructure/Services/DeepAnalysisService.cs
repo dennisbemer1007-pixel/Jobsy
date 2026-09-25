@@ -45,6 +45,8 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
                 "De cultuurscan is een gratis Quick-Scan van 18 stellingen — er is geen aparte deep analysis.",
             AssessmentKind.Career =>
                 $"Wil je een diepgaand carrière-advies en een uitgebreid overzicht van al je opties inclusief PDF-rapport? Ontgrendel de uitgebreide beroepentest van 200 vragen voor € {price}.",
+            AssessmentKind.Values =>
+                $"Wil je een grondige diepteanalyse van je waarden en drijfveren (150 vragen) inclusief PDF-rapport? Ontgrendel voor € {price}.",
             _ =>
                 $"Ontgrendel je uitgebreide competentie-analyse (150 vragen) inclusief officiële PDF-rapportage voor € {price}."
         };
@@ -329,6 +331,48 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         if (kind == AssessmentKind.Culture)
         {
             // Culture uses Quick-Scan only; deep analysis does not write culture scores.
+            return;
+        }
+
+        if (kind == AssessmentKind.Values)
+        {
+            var values = await _db.CandidateValuesProfiles
+                .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+            var schwartz = DeepAnalysisCatalog.ToSchwartzScores(
+                DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Values));
+            var valueTags = SchwartzValuesCatalog.DeriveMatchTags(schwartz);
+
+            if (values is null)
+            {
+                values = new CandidateValuesProfile
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Status = CandidateCompetencyStatuses.Completed,
+                    AnswersJson = "{}",
+                    CreatedAtUtc = now
+                };
+                _db.CandidateValuesProfiles.Add(values);
+            }
+
+            values.Status = CandidateCompetencyStatuses.Completed;
+            values.AutonomyPercent = schwartz.Autonomy;
+            values.ConnectionPercent = schwartz.Connection;
+            values.AchievementPercent = schwartz.Achievement;
+            values.StabilityPercent = schwartz.Stability;
+            values.ImpactPercent = schwartz.Impact;
+            var existing = SchwartzValuesCatalog.ParseTags(values.MatchTagsJson).ToList();
+            foreach (var tag in tags.Concat(valueTags))
+            {
+                if (!existing.Contains(tag, StringComparer.OrdinalIgnoreCase))
+                {
+                    existing.Add(tag);
+                }
+            }
+
+            values.MatchTagsJson = SchwartzValuesCatalog.SerializeTags(existing);
+            values.CompletedAtUtc ??= now;
+            values.UpdatedAtUtc = now;
             return;
         }
 

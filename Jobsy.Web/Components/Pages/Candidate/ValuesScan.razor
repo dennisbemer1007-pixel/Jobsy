@@ -1,0 +1,182 @@
+@page "/candidate/values"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["ValuesScan.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page profile-page profile-page--candidate competency-test-page">
+    <header class="saved-gate__header profile-page__header">
+        <h1>@Culture["ValuesScan.Title"]</h1>
+        <p class="login-lead">@Culture["ValuesScan.Lead"]</p>
+    </header>
+
+    <article class="detail-card">
+        <p class="login-lead">@Culture["ValuesScan.ScienceNote"]</p>
+        <p class="login-lead competency-privacy-note">
+            @Culture["ValuesScan.PrivacyNote"]
+            <a href="/privacy">@Culture["Legal.Privacy"]</a>
+        </p>
+        <p class="competency-test__progress" aria-live="polite">
+            @Culture.Format("Competency.Progress", AnsweredCount, SchwartzValuesCatalog.QuestionCount)
+        </p>
+        <div class="competency-test__meter" role="progressbar" aria-valuemin="0" aria-valuemax="@SchwartzValuesCatalog.QuestionCount" aria-valuenow="@AnsweredCount">
+            <span style="width: @((AnsweredCount * 100 / SchwartzValuesCatalog.QuestionCount).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
+        </div>
+
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_loadFailed)
+        {
+            <p class="state-message">@_message</p>
+            <a class="login-submit" href="/candidate/values">@Culture["Competency.Reload"]</a>
+        }
+        else
+        {
+            @foreach (var category in SchwartzValuesCatalog.CategoryCodes)
+            {
+                var questions = QuestionsFor(category);
+                if (questions.Count == 0)
+                {
+                    continue;
+                }
+                var done = questions.Count(q => _answers.ContainsKey(q.Id));
+                <fieldset class="competency-test__cat">
+                    <legend>@Culture[$"ValuesScan.Cat.{category}"]</legend>
+                    <p class="profile-address__hint">@Culture[$"ValuesScan.Cat.{category}.Hint"]</p>
+                    <p class="profile-address__hint">@Culture.Format("Competency.CategoryProgress", Culture[$"ValuesScan.Cat.{category}"], done, questions.Count)</p>
+                    @foreach (var question in questions)
+                    {
+                        <div class="competency-question">
+                            <p class="competency-question__text">@question.Id. @Culture[question.TextKey]</p>
+                            <div class="competency-likert" role="radiogroup" aria-label="@Culture[question.TextKey]">
+                                @for (var value = 1; value <= 5; value++)
+                                {
+                                    var current = value;
+                                    var id = $"vq{question.Id}-{current}";
+                                    <label class="competency-likert__opt @(_answers.TryGetValue(question.Id, out var selected) && selected == current ? "is-on" : null)">
+                                        <input type="radio"
+                                               name="@($"vq{question.Id}")"
+                                               id="@id"
+                                               value="@current"
+                                               checked="@(_answers.TryGetValue(question.Id, out var v) && v == current)"
+                                               @onchange="() => SetAnswer(question.Id, current)" />
+                                        <span>@Culture[$"Competency.Likert.{current}"]</span>
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                    }
+                </fieldset>
+            }
+
+            <div class="profile-save-bar">
+                <button class="engagement-btn" type="button" disabled="@(_saving || _loadFailed)" @onclick="SaveDraftAsync">
+                    @Culture["Competency.SaveDraft"]
+                </button>
+                <button class="login-submit" type="button" disabled="@(_saving || _loadFailed || AnsweredCount < SchwartzValuesCatalog.QuestionCount)" @onclick="CompleteAsync">
+                    @Culture["Competency.Complete"]
+                </button>
+                <a class="engagement-btn" href="/profiel">@Culture["Competency.BackToProfile"]</a>
+                @if (!string.IsNullOrEmpty(_message))
+                {
+                    <p class="state-message profile-save-bar__message">@_message</p>
+                }
+            </div>
+        }
+    </article>
+</div>
+
+@code {
+    private bool _loading = true;
+    private bool _saving;
+    private bool _loadFailed;
+    private string? _message;
+    private readonly Dictionary<int, int> _answers = [];
+
+    private int AnsweredCount => _answers.Count;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var state = await Api.GetMyValuesAsync();
+            if (state is not null)
+            {
+                _answers.Clear();
+                foreach (var (key, value) in state.Answers)
+                {
+                    if (int.TryParse(key, out var id))
+                    {
+                        _answers[id] = value;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _loadFailed = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static IReadOnlyList<CompetencyQuestion> QuestionsFor(string category)
+        => SchwartzValuesCatalog.QuestionsFor(category);
+
+    private void SetAnswer(int id, int value)
+    {
+        _answers[id] = value;
+        _message = null;
+    }
+
+    private Task SaveDraftAsync() => PersistAsync(complete: false);
+
+    private Task CompleteAsync() => PersistAsync(complete: true);
+
+    private async Task PersistAsync(bool complete)
+    {
+        if (_loadFailed)
+        {
+            return;
+        }
+
+        _saving = true;
+        _message = null;
+        try
+        {
+            var saved = await Api.SaveMyValuesAsync(_answers, complete);
+            _answers.Clear();
+            foreach (var (key, value) in saved.Answers)
+            {
+                if (int.TryParse(key, out var id))
+                {
+                    _answers[id] = value;
+                }
+            }
+
+            _message = complete ? Culture["ValuesScan.SavedComplete"] : Culture["Competency.SavedDraft"];
+            if (complete)
+            {
+                Navigation.NavigateTo("/profiel");
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

@@ -72,17 +72,29 @@ public sealed class CandidateProfileService
                     FreeTestHref = "/candidate/profile?tab=career",
                     DeepAnalysisHref = "/candidate/deep-analysis/career"
                 },
-                // Scenario B — alleen gratis test
+                // Culture — gratis Quick-Scan only (geen deep analysis)
                 new CandidateProfileTestCard
                 {
                     Id = "culture",
                     Title = "Cultuurfit",
                     Summary = "Gratis cultuurscan afgerond; weegt mee in Functiefit.",
                     Stage = CandidateDnaTestStage.FreeCompleted,
-                    SupportsDeepAnalysis = true,
+                    SupportsDeepAnalysis = false,
                     StatusBadge = "Gratis test",
                     FreeTestHref = "/candidate/culture",
-                    DeepAnalysisHref = "/candidate/deep-analysis/culture"
+                    DeepAnalysisHref = ""
+                },
+                // Values — Schwartz; free + deep (€2,99)
+                new CandidateProfileTestCard
+                {
+                    Id = "values",
+                    Title = "Waarden & Drijfveren",
+                    Summary = "Gebaseerd op het Schwartz Value Model. Meet autonomie, verbinding, prestatie, stabiliteit en impact.",
+                    Stage = CandidateDnaTestStage.NotStarted,
+                    SupportsDeepAnalysis = true,
+                    StatusBadge = "Nog te doen",
+                    FreeTestHref = "/candidate/values",
+                    DeepAnalysisHref = "/candidate/deep-analysis/values"
                 }
             ],
             ScoreBars =
@@ -121,6 +133,13 @@ public sealed class CandidateProfileService
                     Label = "Cultuurfit (gemiddeld)",
                     Percent = 71,
                     Hint = "Past bij rustige teams"
+                },
+                new CandidateProfileScoreBar
+                {
+                    Id = "waarden",
+                    Label = "Waardenfit (gemiddeld)",
+                    Percent = 68,
+                    Hint = "Drijfveren op werk"
                 }
             ],
             Settings = new CandidateProfileSettings

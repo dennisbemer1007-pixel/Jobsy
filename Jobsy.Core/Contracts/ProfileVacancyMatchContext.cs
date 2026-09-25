@@ -17,4 +17,5 @@ public sealed class ProfileVacancyMatchContext
     public IReadOnlyList<CareerOccupationMatch> CareerOccupations { get; init; } = [];
     public CulturePersonalityScores? CultureScores { get; init; }
     public CulturePersonalityScores? CompanyCultureScores { get; init; }
+    public SchwartzValuesScores? ValuesScores { get; init; }
 }

@@ -74,7 +74,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 CareerOccupations = context.CareerOccupations,
                 CulturePillars = record.CulturePillars,
                 CandidateCultureScores = context.CultureScores,
-                CompanyCultureScores = context.CompanyCultureScores
+                CompanyCultureScores = context.CompanyCultureScores,
+                CandidateValuesScores = context.ValuesScores
             });
             result[record.Id] = match;
         }
@@ -154,6 +155,23 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             }
         }
 
+        var valuesRow = await _db.CandidateValuesProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        SchwartzValuesScores? values = null;
+        if (valuesRow is not null && CandidateCompetencyStatuses.IsCompleted(valuesRow.Status))
+        {
+            values = new SchwartzValuesScores(
+                valuesRow.AutonomyPercent,
+                valuesRow.ConnectionPercent,
+                valuesRow.AchievementPercent,
+                valuesRow.StabilityPercent,
+                valuesRow.ImpactPercent);
+            if (values is not { IsComplete: true })
+            {
+                values = null;
+            }
+        }
+
         return new ProfileVacancyMatchContext
         {
             UserId = user.Id,
@@ -166,7 +184,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             RiasecScores = riasecScores,
             CareerDeepCompleted = careerDeep,
             CareerOccupations = occupations,
-            CultureScores = culture
+            CultureScores = culture,
+            ValuesScores = values
         };
     }
 

@@ -15,10 +15,11 @@ public class CandidateProfileServiceTests
         Assert.InRange(profile.ProfileCompletenessPercent, 1, 100);
         Assert.NotEmpty(profile.Tests);
         Assert.NotEmpty(profile.ScoreBars);
-        Assert.Equal(3, profile.Tests.Count);
+        Assert.Equal(4, profile.Tests.Count);
         Assert.Contains(profile.Tests, t => t.Id == "competence");
         Assert.Contains(profile.Tests, t => t.Id == "career");
         Assert.Contains(profile.Tests, t => t.Id == "culture");
+        Assert.Contains(profile.Tests, t => t.Id == "values");
         Assert.DoesNotContain(profile.Tests, t => t.Id == "fit");
         Assert.Contains(profile.ScoreBars, s => s.Percent is > 0 and <= 100);
         Assert.True(profile.Settings.HideContactUntilMatch);
@@ -32,13 +33,12 @@ public class CandidateProfileServiceTests
         Assert.Contains(profile.Tests, t => t.Stage == CandidateDnaTestStage.FreeCompleted);
         Assert.Contains(profile.Tests, t => t.Stage == CandidateDnaTestStage.DeepCompleted);
         Assert.All(profile.Tests, t => Assert.False(string.IsNullOrWhiteSpace(t.FreeTestHref)));
-        Assert.All(profile.Tests, t => Assert.True(t.SupportsDeepAnalysis));
-        Assert.All(profile.Tests, t => Assert.False(string.IsNullOrWhiteSpace(t.DeepAnalysisHref)));
-        Assert.Contains(profile.Tests, t => t.Id == "culture" && t.Title == "Cultuurfit");
+        Assert.Contains(profile.Tests, t => t.Id == "culture" && t.Title == "Cultuurfit" && !t.SupportsDeepAnalysis);
+        Assert.Contains(profile.Tests, t => t.Id == "values" && t.SupportsDeepAnalysis && t.Title == "Waarden & Drijfveren");
         Assert.DoesNotContain(profile.Tests, t => t.Title.Contains("DISC", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(profile.Tests, t => t.SupportsDeepAnalysis && t.Stage == CandidateDnaTestStage.DeepCompleted);
         Assert.Contains(profile.Tests, t => t.SupportsDeepAnalysis && t.Stage == CandidateDnaTestStage.NotStarted);
-        Assert.Contains(profile.Tests, t => t.SupportsDeepAnalysis && t.Stage == CandidateDnaTestStage.FreeCompleted);
+        Assert.Contains(profile.Tests, t => !t.SupportsDeepAnalysis && t.Stage == CandidateDnaTestStage.FreeCompleted);
     }
 
     [Fact]
@@ -81,6 +81,8 @@ public class CandidateProfileServiceTests
 
         var service = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Services/CandidateProfileService.cs"));
         Assert.Contains("Title = \"Cultuurfit\"", service);
+        Assert.Contains("Title = \"Waarden & Drijfveren\"", service);
+        Assert.Contains("Schwartz", service);
         Assert.DoesNotContain("DISC", service);
 
         var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/RoleNavCatalog.cs"));
