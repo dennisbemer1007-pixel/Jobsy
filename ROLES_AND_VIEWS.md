@@ -31,18 +31,19 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 |-------|--------|
 | `/candidate/match` | Match & Swipe: ontgrendel-checklist (basis + opleiding incl. **Geen** + tests) tot `IsProfileComplete`; daarna relevante vacatures (opleiding/reistijd). Banenkaart blijft breder zoeken. |
 | `/` | Banenkaart (filters, lijst, kaart). Ingelogde kandidaat: live match-% per vacature, **Cultuur Fit**-label na harde criteria, sort/filter op match, uitleg waarom |
-| `/home` | **Mijn Lobsy Kompas** in tabbladen: **Wie ben ik?**, **Mijn profiel**, **Mijn competenties**, **DISC-Analyse**, **Mijn beste match**, **Functiefit checker** + eigen metrics |
+| `/home` | **Mijn Lobsy Kompas** in tabbladen: **Mijn DNA**, **Profiel**, **Tests**, **Functiefit** + eigen metrics |
 | `/vacancies/{id}` | Detail, solliciteren, like/share, optioneel mock interview, kandidaat **Past deze vacature bij mij?** |
 | `/candidate/applications` | Sollicitatiehistorie |
 | `/candidate/vacancies` | Overzicht + **Onlangs bekeken** (localStorage, alleen vacancy-GUIDs) + in-de-buurt op reistijd/vervoer |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
-| `/profiel` | Kandidaat-profielhub: persoonlijke baseline, DNA/testscores, account/privacy (mock via `CandidateProfileService`); link naar diepere bewerking |
-| `/candidate/profile` | OpenForWork, NAW/CV, recensies, **Mijn Lobsy Kompas**-tabbladen (Wie ben ik? / profiel / competenties: grafiek + accordeon met workshops / DISC-Analyse / beste match / Functiefit checker in 4 stappen) — werkgeverscontact alleen op tab Mijn profiel; Top 10 vacatures (≥60%); PDF als diepte-analyse klaar is |
+| `/profiel` | Kandidaat-profielhub (gateway naar Kompas) |
+| `/candidate/profile` | OpenForWork, NAW/CV, recensies, **Mijn Lobsy Kompas**-tabbladen (Mijn DNA / Profiel / Tests met tegels + detail `/profiel/tests/{key}` / Functiefit) — werkgeverscontact alleen op tab Profiel |
+| `/profiel/tests/{key}` | Testdetail: gratis of uitgebreid (DeepAnalysis-checkout); wetenschappelijk model-link |
 | `/candidate/competencies` | Competentietest (25); draft tussentijds opslaan; scores herberekend bij afronden |
-| `/candidate/disc` | Gedragsanalyse / DISC Quick-Scan (25); accordeon met workshops; optionele diepte-analyse 150 |
+| `/candidate/culture` · `/candidate/disc` | Cultuur & persoonlijkheid Quick-Scan (18); diepte-analyse 150 via Tests-detail |
 | `/candidate/career` | Beroepentest (25); Mijn Beroepen-kompas + top 10 actieve vacatures |
 | `/carriere` | Carrière-dashboard: stip op de horizon kiezen, match-% voortgangsbalk, uitklapbaar stappenplan (skills gap / competenties / actie) |
-| `/candidate/deep-analysis/{kind}` | Betaalde 150-vragen analyse (competence \| career) + loopbaan-PDF (gekleurd logo, match-banden, *Wat betekent dit voor jou?*) |
+| `/candidate/deep-analysis/{kind}` | Betaalde diepte-analyse (competence \| career \| culture \| values) + PDF |
 | `/candidate/talent-contacts` | Inbox contactverzoeken (48u); geen extra bottom-nav tab |
 
 ---

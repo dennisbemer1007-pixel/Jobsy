@@ -96,7 +96,7 @@ public static class PageHelpDocs
         ["/home"] = new(
             "Home / dashboard",
             "Startscherm na inloggen, afgestemd op jouw rol.",
-            "Als kandidaat open je Mijn Lobsy Kompas: Wie ben ik?, profiel, competenties, gedragsanalyse, beste match en Functiefit. Andere rollen zien kerncijfers en KPI-categorieën.",
+            "Als kandidaat open je Mijn Lobsy Kompas: Mijn DNA, Profiel, Tests en Functiefit. Andere rollen zien kerncijfers en KPI-categorieën.",
             "Overzicht houden en snel naar vacatures, tokens, sollicitaties of beheer gaan."),
 
         ["/hoe-werkt-lobsy"] = new(
@@ -150,7 +150,7 @@ public static class PageHelpDocs
         ["/candidate/values"] = new(
             "Waarden & drijfveren",
             "Vijfentwintig stellingen gebaseerd op het Schwartz Value Model: autonomie, verbinding, prestatie, stabiliteit en impact.",
-            "Rond de gratis scan af of ontgrendel de diepteanalyse (150 vragen, € 2,99). Pauzeren mag; je hervat later. Uitkomsten wegen mee in Wie ben ik? en matching.",
+            "Rond de gratis scan af of ontgrendel de diepteanalyse (150/200 vragen, € 2,99). Pauzeren mag; je hervat later. Uitkomsten wegen mee in Mijn DNA en matching.",
             "Kernwaarden en drijfveren zichtbaar in je verhaal en vacature-fit."),
 
         ["/candidate/disc"] = new(

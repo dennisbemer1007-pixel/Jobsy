@@ -261,10 +261,10 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
-| Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard **Mijn Lobsy Kompas** (tabbladen **Wie ben ik?** / **Mijn profiel** / **Mijn competenties** / **DISC-Analyse** / **Mijn beste match** / **Functiefit checker**) plus KPI’s sollicitaties/likes/shares/reacties. |
-| Kandidaat | Home: Kompas-tabbladen Wie ben ik? / Mijn profiel / Mijn competenties / DISC-Analyse / Mijn beste match / Functiefit checker. | Zes tabs; Wie ben ik?=checklist tot 4 vinkjes groen daarna verhaal+radar+DISC-kwadranten+CV-bijlage; profiel=sectienav Persoonlijk/Voorkeuren/Beschikbaarheid/CV; competenties=grafiek + accordeon per vaardigheid met uitleg en workshops; DISC-Analyse=grafiek + accordeon per gedragsstijl met ontwikkelpunten en workshops; beste match=Super-match/Handige verbreding als accordeon + Wat betekent dit voor jou? + opleidingen per beroep; fit=4 stappen Functiefit checker + vergelijkbare functies. |
-| Kandidaat | Wie ben ik?: rapport locked tot profiel+competentie+beroepen+gedragsanalyse klaar. | Vier vinkjes; aanmoediging naar openstaande stap; geen AI-verhaal tot unlock. |
-| Kandidaat | Wie ben ik?: vink Lobsy-CV-bijlage aan na unlock. | Sollicitatie en batch-hiring nemen persoonsprofiel-PDF mee in Lobsy-CV na Accept. |
+| Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard **Mijn Lobsy Kompas** (tabbladen **Mijn DNA** / **Profiel** / **Tests** / **Functiefit**) plus KPI’s sollicitaties/likes/shares/reacties. |
+| Kandidaat | Home: Kompas-tabbladen Mijn DNA / Profiel / Tests / Functiefit. | Vier tabs; DNA=aggregatie van afgeronde tests (leeg→knop naar Tests); Profiel=sectienav Persoonlijk/Voorkeuren/Beschikbaarheid/CV; Tests=tegeloverzicht + detail `/profiel/tests/{key}`; Fit=4 stappen Functiefit checker. |
+| Kandidaat | Mijn DNA: leeg tot eerste test afgerond. | Uitleg + knop **Bekijk de tests**; geen uitkomsten. |
+| Kandidaat | Mijn DNA: deels afgerond toont bekende uitkomsten + incompleet. | Bekende testuitkomsten zichtbaar; badge profiel nog niet compleet; ontbrekende tests gemarkeerd. |
 | Kandidaat | Home: Kompas toont Quick-Scan 25 vs diepte-analyse 150 + PDF als klaar. | Status zichtbaar; PDF-knop alleen na afgeronde diepte-analyse; geen extra nav-tab. |
 | Kandidaat | Home: **Mijn Beroepen-kompas** toont Super-match / Sterke keus / Handige verbreding. | Groepen >95% / >85% / >75%; sectie **Wat betekent dit voor jou?**; geen RIASEC/OCEAN in kandidaattekst. |
 | Kandidaat | Download loopbaan-PDF na uitgebreide beroepentest (150). | Gekleurd Lobsy-logo; Super-match/Sterke keus/Handige verbreding; **Wat betekent dit voor jou?**; geen RIASEC/OCEAN. |
@@ -280,7 +280,7 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Bottom-nav **Profiel**. | `/profiel` (active ook op `/candidate/profile` en `/home`). |
 | Kandidaat | Account-menu (userknop) **Hoe werkt Lobsy**. | `/candidate/hoe-werkt-lobsy`. |
 | Kandidaat | TokenWalletChip. | Niet zichtbaar. |
-| Kandidaat | Home: periode **Dag / Week / Maand / Kwartaal / Jaar**. | KPI’s herladen; actieve tab gemarkeerd; loading-skeletons. |
+| Kandidaat | Home: KPI’s sollicitaties/likes/shares/reacties. | KPI-tegels zichtbaar (weekdefault); loading-skeletons bij laden. |
 | Kandidaat | Home: klik elke KPI-tegel (sollicitaties, likes, shares, reacties). | Tegel selected; drilldown-lijst; overview-link naar bijbehorende lijstpagina. |
 | Kandidaat | Home: drilldown-item klikken. | Navigeert naar vacature of lijstitem. |
 | Kandidaat | Home: drilldown overview-link. | Naar `/candidate/applications`, liked of shared afhankelijk van metric. |

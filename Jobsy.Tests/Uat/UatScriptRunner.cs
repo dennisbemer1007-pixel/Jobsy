@@ -490,6 +490,29 @@ public static class UatScriptRunner
             Assert.True(TransportLabels.Parse("E-bike") == Jobsy.Core.Enums.TransportMode.Bike);
         }
 
+        if (Contains(blob, "Mijn DNA", "aggregatie", "tegeloverzicht")
+            || Contains(blob, "Mijn DNA", "Profiel", "Tests", "Functiefit"))
+        {
+            var root = RepoRoot.Find();
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            Assert.Contains("Kompas.TabDna", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabTests", kompas, StringComparison.Ordinal);
+            Assert.Contains("DnaPanel", kompas, StringComparison.Ordinal);
+            Assert.Contains("TestsOverviewPanel", kompas, StringComparison.Ordinal);
+            Assert.Equal(4, CandidateKompasTabs.All.Length);
+            Assert.Contains("/profiel/tests/{TestKey}",
+                File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/TestDetail.razor")),
+                StringComparison.Ordinal);
+        }
+
+        if (Contains(blob, "Mijn DNA", "leeg", "Bekijk de tests"))
+        {
+            var root = RepoRoot.Find();
+            var dna = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor"));
+            Assert.Contains("Dna.EmptyLead", dna, StringComparison.Ordinal);
+            Assert.Contains("Dna.ViewTests", dna, StringComparison.Ordinal);
+        }
+
         if (Contains(blob, "Wie ben ik?", "persoonsprofiel", "Lobsy-CV-bijlage"))
         {
             var root = RepoRoot.Find();
