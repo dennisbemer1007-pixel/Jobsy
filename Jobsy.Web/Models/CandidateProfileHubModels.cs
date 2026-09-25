@@ -24,15 +24,24 @@ public sealed class CandidateProfileBasics
     public string CurrentRoleTitle { get; set; } = "";
 }
 
+/// <summary>Progress of a DNA test card: free quick-scan and optional paid deep analysis.</summary>
+public enum CandidateDnaTestStage
+{
+    NotStarted = 0,
+    FreeCompleted = 1,
+    DeepCompleted = 2
+}
+
 public sealed class CandidateProfileTestCard
 {
     public string Id { get; set; } = "";
     public string Title { get; set; } = "";
     public string Summary { get; set; } = "";
-    public bool Completed { get; set; }
+    public CandidateDnaTestStage Stage { get; set; }
+    public bool SupportsDeepAnalysis { get; set; } = true;
     public string StatusBadge { get; set; } = "";
-    public string ActionLabel { get; set; } = "";
-    public string ActionHref { get; set; } = "";
+    public string FreeTestHref { get; set; } = "";
+    public string DeepAnalysisHref { get; set; } = "";
 }
 
 public sealed class CandidateProfileScoreBar
