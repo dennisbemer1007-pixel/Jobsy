@@ -286,6 +286,14 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         });
         services.AddScoped<ICareerCompassGenerationService, CareerCompassGenerationService>();
+        services.AddScoped<ICareerPathPlanGenerationService, CareerPathPlanGenerationService>();
+        services.AddHttpClient(CareerPathPlanGenerationService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(60);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
         services.AddHttpClient(RoleFitCheckService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);

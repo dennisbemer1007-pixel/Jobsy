@@ -4,6 +4,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @inject CareerPathService CareerPaths
+@inject JobsyApiClient Api
 @inject CultureState Culture
 
 <PageTitle>@Culture["CareerDash.Title"] · Lobsy</PageTitle>
@@ -39,12 +40,7 @@
                 <p class="career-dash__summary">@_model.MatchSummary</p>
             </div>
 
-            <div class="career-dash__horizon">
-                <div class="career-dash__role">
-                    <span class="career-dash__label">@Culture["CareerDash.CurrentRole"]</span>
-                    <strong class="career-dash__role-title">@_model.CurrentRoleTitle</strong>
-                </div>
-                <span class="career-dash__arrow" aria-hidden="true">→</span>
+            <div class="career-dash__horizon career-dash__horizon--solo">
                 <div class="career-dash__role career-dash__role--dream">
                     <label class="career-dash__label" for="career-dream-input">@Culture["CareerDash.DreamRole"]</label>
                     <input id="career-dream-input"
@@ -55,6 +51,7 @@
                            list="career-dream-suggestions"
                            placeholder="@Culture["CareerDash.DreamPlaceholder"]"
                            value="@_dreamDraft"
+                           disabled="@_busy"
                            @oninput="OnDreamInput"
                            @onkeydown="OnDreamKeyDown"
                            @onblur="CommitDreamAsync" />
@@ -66,6 +63,10 @@
                     </datalist>
                 </div>
             </div>
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
         </section>
 
         <section class="career-dash__plan" aria-labelledby="career-dash-plan-title">
@@ -126,18 +127,44 @@
                             }
                         </div>
 
-                        @if (activeStep.Competencies.Count > 0)
-                        {
-                            <div class="career-timeline__block">
-                                <h4>@Culture["CareerDash.Competencies"]</h4>
-                                <ul class="career-timeline__chips">
-                                    @foreach (var skill in activeStep.Competencies)
+                        <div class="career-timeline__block">
+                            <h4>@Culture["CareerDash.Courses"]</h4>
+                            @if (activeStep.Courses.Count > 0)
+                            {
+                                <ul>
+                                    @foreach (var course in activeStep.Courses)
                                     {
-                                        <li>@skill</li>
+                                        <li>@course</li>
                                     }
                                 </ul>
-                            </div>
-                        }
+                            }
+                            else
+                            {
+                                <p class="muted">@Culture["CareerDash.CoursesNone"]</p>
+                            }
+                        </div>
+
+                        <div class="career-timeline__block">
+                            <h4>@Culture["CareerDash.MinRequirements"]</h4>
+                            @if (activeStep.MinRequirements.Count > 0)
+                            {
+                                <ul>
+                                    @foreach (var req in activeStep.MinRequirements)
+                                    {
+                                        <li>@req</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p class="muted">@Culture["CareerDash.MinRequirementsNone"]</p>
+                            }
+                        </div>
+
+                        <div class="career-timeline__block">
+                            <h4>@Culture["CareerDash.YearsExperience"]</h4>
+                            <p>@Culture.Format("CareerDash.YearsExperienceValue", activeStep.YearsExperienceNeeded)</p>
+                        </div>
                     </div>
 
                     <div class="career-timeline__action">
@@ -157,13 +184,16 @@
     private CareerDashboardModel? _model;
     private string? _expandedStepId;
     private string _dreamDraft = CareerPathService.DefaultDreamTitle;
+    private bool _busy;
+    private string? _message;
 
     private CareerPathDashboardStep? _selectedStep
         => _model?.Steps.FirstOrDefault(s => string.Equals(s.Id, _expandedStepId, StringComparison.Ordinal));
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         ApplyDashboard(CareerPaths.GetDashboard());
+        await RefreshFromApiAsync(_dreamDraft);
     }
 
     private void OnDreamInput(ChangeEventArgs e)
@@ -173,18 +203,11 @@
     {
         if (e.Key is "Enter")
         {
-            CommitDream();
-            await Task.CompletedTask;
+            await CommitDreamAsync();
         }
     }
 
-    private Task CommitDreamAsync()
-    {
-        CommitDream();
-        return Task.CompletedTask;
-    }
-
-    private void CommitDream()
+    private async Task CommitDreamAsync()
     {
         var next = (_dreamDraft ?? "").Trim();
         if (string.IsNullOrWhiteSpace(next))
@@ -194,12 +217,36 @@
         }
 
         if (_model is not null
-            && string.Equals(next, _model.DreamRoleTitle, StringComparison.OrdinalIgnoreCase))
+            && string.Equals(next, _model.DreamRoleTitle, StringComparison.OrdinalIgnoreCase)
+            && !_busy)
         {
             return;
         }
 
         ApplyDashboard(CareerPaths.GetDashboard(next));
+        await RefreshFromApiAsync(next);
+    }
+
+    private async Task RefreshFromApiAsync(string dream)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var plan = await Api.GenerateCareerPathAsync(dream);
+            if (plan is not null)
+            {
+                ApplyDashboard(CareerPaths.FromApi(plan));
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private void ApplyDashboard(CareerDashboardModel model)
@@ -207,23 +254,22 @@
         _model = model;
         _dreamDraft = model.DreamRoleTitle;
         _expandedStepId = model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)?.Id
-            ?? model.Steps.FirstOrDefault()?.Id;
+                          ?? model.Steps.FirstOrDefault()?.Id;
     }
 
-    private void SelectStep(string stepId)
-        => _expandedStepId = stepId;
+    private void SelectStep(string id) => _expandedStepId = id;
+
+    private static string StatusClass(CareerStepStatus status) => status switch
+    {
+        CareerStepStatus.Completed => "is-done",
+        CareerStepStatus.Active => "is-active",
+        _ => "is-open"
+    };
 
     private static string StatusKey(CareerStepStatus status) => status switch
     {
         CareerStepStatus.Completed => "CareerDash.StatusCompleted",
         CareerStepStatus.Active => "CareerDash.StatusActive",
         _ => "CareerDash.StatusOpen"
-    };
-
-    private static string StatusClass(CareerStepStatus status) => status switch
-    {
-        CareerStepStatus.Completed => "is-completed",
-        CareerStepStatus.Active => "is-active",
-        _ => "is-open-step"
     };
 }

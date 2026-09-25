@@ -990,6 +990,24 @@ public sealed class JobsyApiClient : IAsyncDisposable
                ?? new CandidateValuesState();
     }
 
+    public async Task<CareerPathPlanApiModel?> GenerateCareerPathAsync(string dreamTitle, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("api/me/career-path", new { dreamTitle }, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
     public async Task<CompanyCultureState?> GetCompanyCultureAsync(Guid? companyId = null, CancellationToken ct = default)
     {
         try

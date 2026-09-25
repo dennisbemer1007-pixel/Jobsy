@@ -12,10 +12,11 @@ public static class CandidateKompasTabs
     public const string Culture = "culture";
     /// <summary>Legacy alias; normalizes to <see cref="Culture"/>.</summary>
     public const string Disc = "culture";
+    public const string Values = "values";
     public const string Fit = "fit";
     public const string Career = "career";
 
-    public static readonly string[] All = [WhoAmI, Profile, Competencies, Culture, Career, Fit];
+    public static readonly string[] All = [WhoAmI, Profile, Competencies, Culture, Values, Career, Fit];
 
     public static string Normalize(string? raw)
     {
@@ -44,6 +45,9 @@ public static class CandidateKompasTabs
                 or "kompas-panel-disc" or "kompas-tab-disc"
                 or "kompas-panel-culture" or "kompas-tab-culture"
                 => Culture,
+            Values or "waarden" or "drijfveren" or "schwartz" or "waarden-drijfveren"
+                or "kompas-panel-values" or "kompas-tab-values"
+                => Values,
             Career or "careers" or "beroepen" or "beroep" or "mijn-beroepen" or "mijn beroepen"
                 or "occupations" or "career-profile-title" or "kompas-career-title"
                 or "kompas-panel-career" or "kompas-tab-career"

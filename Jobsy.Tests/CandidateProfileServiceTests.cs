@@ -61,29 +61,31 @@ public class CandidateProfileServiceTests
     }
 
     [Fact]
-    public void Profiel_page_and_nav_are_wired()
+    public void Profiel_page_is_gateway_to_kompas()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateProfile.razor"));
         Assert.Contains("@page \"/profiel\"", page);
         Assert.Contains("CandidateProfileService", page);
-        Assert.Contains("profile-hub__grid", page);
-        Assert.Contains("ProfileHub.ActionFreeStart", page);
-        Assert.Contains("ProfileHub.ActionFreeRetake", page);
-        Assert.Contains("ProfileHub.ActionDeepStart", page);
-        Assert.Contains("ProfileHub.ActionDeepEdit", page);
-        Assert.Contains("profile-hub-dna-scores", page);
-        Assert.DoesNotContain("Bekijk of herhaal", page);
-        Assert.DoesNotContain("Open kompas", page);
+        Assert.Contains("profile-hub-kompas", page);
+        Assert.Contains("/candidate/profile", page);
+        Assert.Contains("ProfileHub.OpenKompas", page);
+        Assert.Contains("ProfileHub.GatewayLead", page);
+        Assert.DoesNotContain("profile-hub__grid", page);
+        Assert.DoesNotContain("ProfileHub.ActionFreeStart", page);
+        Assert.DoesNotContain("profile-hub-dna-scores", page);
         Assert.DoesNotContain("DISC", page);
-        Assert.DoesNotContain("ProfileHub.AddTests", page);
-        Assert.DoesNotContain("profile-hub-card--scores", page);
 
         var service = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Services/CandidateProfileService.cs"));
         Assert.Contains("Title = \"Cultuurfit\"", service);
         Assert.Contains("Title = \"Waarden & Drijfveren\"", service);
         Assert.Contains("Schwartz", service);
         Assert.DoesNotContain("DISC", service);
+
+        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+        Assert.Contains("Kompas.TabValues", kompas);
+        Assert.Contains("/candidate/values", kompas);
+        Assert.Contains("/candidate/deep-analysis/values", kompas);
 
         var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/RoleNavCatalog.cs"));
         Assert.Contains("\"/profiel\"", nav);
@@ -92,7 +94,6 @@ public class CandidateProfileServiceTests
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".profile-hub", css);
-        Assert.Contains(".profile-hub__grid", css);
-        Assert.Contains(".profile-hub-tests__actions", css);
+        Assert.Contains(".profile-hub-kompas", css);
     }
 }

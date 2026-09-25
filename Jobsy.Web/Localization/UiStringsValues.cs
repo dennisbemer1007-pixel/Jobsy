@@ -74,6 +74,12 @@ internal static class UiStringsValues
 
         ["Deep.ValuesTitle"] = "Waarden & drijfveren (diepteanalyse)",
         ["Deep.ValuesLead"] = "Honderdvijftig stellingen over competenties, interesses, cultuurfit en drijfveren. Pauzeren mag — je hervat later waar je was.",
+
+        ["Kompas.TabValues"] = "Waarden",
+        ["Kompas.ValuesLead"] = "Wat jij belangrijk vindt op werk: eigen regie, verbinding, prestatie, zekerheid en impact.",
+        ["Kompas.ValuesDeepDone"] = "Diepteanalyse waarden afgerond",
+        ["Kompas.ValuesDeepReady"] = "Diepteanalyse waarden ontgrendeld — ga verder waar je was",
+        ["Kompas.ValuesDeepLocked"] = "Diepteanalyse (150 vragen) nog niet ontgrendeld",
     };
 
     private static Dictionary<string, string> En()
@@ -98,6 +104,11 @@ internal static class UiStringsValues
         map["ProfileHub.ValuesScience"] = "Based on the Schwartz Value Model";
         map["Deep.ValuesTitle"] = "Values & drivers (deep analysis)";
         map["Deep.ValuesLead"] = "One hundred fifty statements on competencies, interests, culture fit and drivers. Pause anytime — resume later where you left off.";
+        map["Kompas.TabValues"] = "Values";
+        map["Kompas.ValuesLead"] = "What matters to you at work: autonomy, connection, achievement, stability and impact.";
+        map["Kompas.ValuesDeepDone"] = "Values deep analysis completed";
+        map["Kompas.ValuesDeepReady"] = "Values deep analysis unlocked — continue where you left off";
+        map["Kompas.ValuesDeepLocked"] = "Deep analysis (150 questions) not unlocked yet";
         return map;
     }
 }

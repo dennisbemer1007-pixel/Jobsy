@@ -19217,6 +19217,15 @@ html.cookie-consent-known .cookie-consent {
     text-align: start;
 }
 
+.career-dash__horizon--solo {
+    justify-content: flex-start;
+}
+
+.career-dash__horizon--solo .career-dash__role--dream {
+    flex: 1 1 100%;
+    max-width: 28rem;
+}
+
 .career-dash__role {
     display: flex;
     flex-direction: column;
@@ -19584,6 +19593,76 @@ html.cookie-consent-known .cookie-consent {
     height: 100%;
     border-radius: inherit;
     background: linear-gradient(90deg, var(--brand), var(--accent-hover));
+}
+
+.profile-hub--gateway .profile-hub__header {
+    margin-bottom: 1.5rem;
+}
+
+.profile-hub-gateway {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 36rem;
+}
+
+.profile-hub-kompas {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 1.35rem 1.4rem 1.25rem;
+    border-radius: 1rem;
+    text-decoration: none;
+    color: inherit;
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--brand) 8%, var(--surface)), var(--surface)),
+        var(--surface);
+    border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--border));
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--ink) 6%, transparent);
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.profile-hub-kompas:hover,
+.profile-hub-kompas:focus-visible {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--brand) 40%, var(--border));
+    box-shadow: 0 14px 32px color-mix(in srgb, var(--ink) 8%, transparent);
+    outline: none;
+}
+
+.profile-hub-kompas__eyebrow {
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.profile-hub-kompas__title {
+    font-size: 1.35rem;
+    font-weight: 650;
+    color: var(--brand);
+}
+
+.profile-hub-kompas__lead {
+    font-size: 0.98rem;
+    line-height: 1.45;
+    color: color-mix(in srgb, var(--ink) 72%, transparent);
+}
+
+.profile-hub-kompas__cta {
+    margin-top: 0.55rem;
+    font-weight: 600;
+    color: var(--brand);
+}
+
+.profile-hub-gateway__meta {
+    font-size: 0.92rem;
+}
+
+.profile-hub-gateway__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
 }
 
 .profile-hub__grid {

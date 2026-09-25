@@ -65,6 +65,16 @@
             @Culture["Kompas.TabCulture"]
         </button>
         <button type="button"
+                id="kompas-tab-values"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Values ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == CandidateKompasTabs.Values)"
+                aria-controls="kompas-panel-values"
+                tabindex="@(_tab == CandidateKompasTabs.Values ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.Values)'>
+            @Culture["Kompas.TabValues"]
+        </button>
+        <button type="button"
                 id="kompas-tab-career"
                 class="admin-sublink @(_tab == CandidateKompasTabs.Career ? "admin-sublink--active" : null)"
                 role="tab"
@@ -274,6 +284,57 @@
         }
     </article>
 
+    <article id="kompas-panel-values"
+             class="kompas-card kompas-card--tab"
+             role="tabpanel"
+             aria-labelledby="kompas-tab-values"
+             hidden="@(_tab != CandidateKompasTabs.Values)">
+        <h3 id="kompas-values-title" class="visually-hidden">@Culture["Kompas.TabValues"]</h3>
+        <p class="login-lead">@Culture["Kompas.ValuesLead"]</p>
+        <p class="whoami-model muted">@Culture["ValuesScan.ScienceNote"]</p>
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_valuesCompleted && _valuesScores is { IsComplete: true })
+        {
+            <p class="kompas-status kompas-status--ok">@Culture["Kompas.QuickScanDone"]</p>
+            <ValuesScorePanel Scores="_valuesScores" />
+            @if (_valuesDeep is { IsCompleted: true })
+            {
+                <p class="kompas-status kompas-status--ok">@Culture["Kompas.ValuesDeepDone"]</p>
+                <a class="login-submit" href="/candidate/deep-analysis/values">@Culture["ProfileHub.ActionDeepEdit"]</a>
+            }
+            else if (_valuesDeep is { IsUnlocked: true })
+            {
+                <p class="kompas-status">@Culture["Kompas.ValuesDeepReady"]</p>
+                <p class="login-lead">@Culture.Format("Competency.Progress", _valuesDeep.AnsweredCount, _valuesDeep.QuestionCount)</p>
+                <a class="login-submit" href="/candidate/deep-analysis/values">@Culture["Competency.Continue"]</a>
+            }
+            else
+            {
+                <p class="kompas-status">@Culture["Kompas.ValuesDeepLocked"]</p>
+                <p class="login-lead">@_valuesUpsell</p>
+                <a class="login-submit" href="/candidate/deep-analysis/values">@Culture["ProfileHub.ActionDeepStart"]</a>
+            }
+            <a class="engagement-btn" href="/candidate/values">@Culture["ValuesScan.Retake"]</a>
+        }
+        else if (_valuesAnswered > 0)
+        {
+            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
+            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _valuesAnswered, 25)</p>
+            <a class="login-submit" href="/candidate/values">@Culture["Competency.Continue"]</a>
+            <a class="engagement-btn" href="/candidate/deep-analysis/values">@Culture["ProfileHub.ActionDeepStart"]</a>
+        }
+        else
+        {
+            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
+            <p class="login-lead">@Culture["ValuesScan.Lead"]</p>
+            <a class="login-submit" href="/candidate/values">@Culture["ProfileHub.ActionFreeStart"]</a>
+            <a class="engagement-btn" href="/candidate/deep-analysis/values">@Culture["ProfileHub.ActionDeepStart"]</a>
+        }
+    </article>
+
     <article id="kompas-panel-career"
              class="kompas-card kompas-card--tab"
              role="tabpanel"
@@ -366,6 +427,11 @@
     private bool _cultureCompleted;
     private int _cultureAnswered;
     private CulturePersonalityScoreSet? _cultureScores;
+    private bool _valuesCompleted;
+    private int _valuesAnswered;
+    private SchwartzValuesScoreSet? _valuesScores;
+    private string _valuesUpsell = "";
+    private DeepAnalysisState? _valuesDeep;
     private bool _careerCompleted;
     private int _careerAnswered;
     private CareerCompassModel _careerCompass = new();
@@ -565,6 +631,7 @@
 
             _competenceDeep = await Api.GetDeepAnalysisAsync("competence");
             _careerDeep = await Api.GetDeepAnalysisAsync("career");
+            _valuesDeep = await Api.GetDeepAnalysisAsync("values");
 
             var culture = await Api.GetMyCultureAsync();
             if (culture is not null)
@@ -573,6 +640,16 @@
                 _cultureCompleted = string.Equals(culture.Status, "Completed", StringComparison.OrdinalIgnoreCase);
                 _cultureScores = culture.Scores;
             }
+
+            var values = await Api.GetMyValuesAsync();
+            if (values is not null)
+            {
+                _valuesAnswered = values.AnsweredCount;
+                _valuesCompleted = string.Equals(values.Status, "Completed", StringComparison.OrdinalIgnoreCase);
+                _valuesScores = values.Scores;
+            }
+
+            _valuesUpsell = _valuesDeep?.UpsellCopy ?? "";
         }
         catch
         {

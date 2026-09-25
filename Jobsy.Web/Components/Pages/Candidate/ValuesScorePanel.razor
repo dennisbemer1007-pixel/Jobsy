@@ -1,0 +1,47 @@
+@using Jobsy.Web.Models
+
+@if (Scores is { IsComplete: true })
+{
+    <ul class="profile-hub-scores culture-score-panel">
+        @foreach (var row in Rows)
+        {
+            <li>
+                <div class="profile-hub-scores__top">
+                    <span>@row.Label</span>
+                    <strong>@row.Percent%</strong>
+                </div>
+                <div class="profile-hub-scores__bar"
+                     role="progressbar"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     aria-valuenow="@row.Percent"
+                     aria-label="@row.Label">
+                    <span style="width: @row.Percent%"></span>
+                </div>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter] public SchwartzValuesScoreSet? Scores { get; set; }
+
+    private IEnumerable<(string Label, int Percent)> Rows
+    {
+        get
+        {
+            if (Scores is null)
+            {
+                yield break;
+            }
+
+            yield return (Culture["ValuesScan.Cat.Autonomy"], Scores.Autonomy ?? 0);
+            yield return (Culture["ValuesScan.Cat.Connection"], Scores.Connection ?? 0);
+            yield return (Culture["ValuesScan.Cat.Achievement"], Scores.Achievement ?? 0);
+            yield return (Culture["ValuesScan.Cat.Stability"], Scores.Stability ?? 0);
+            yield return (Culture["ValuesScan.Cat.Impact"], Scores.Impact ?? 0);
+        }
+    }
+
+    [Inject] private Jobsy.Web.Localization.CultureState Culture { get; set; } = default!;
+}
