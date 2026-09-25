@@ -810,52 +810,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateCompetencies", (string)null);
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.CandidateDeepAnalysis", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AnswersJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("CompletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Kind")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ReportGeneratedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
-
-                    b.Property<string>("TagsJson")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<DateTime?>("UnlockedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "Kind")
-                        .IsUnique();
-
-                    b.ToTable("CandidateDeepAnalyses", (string)null);
-                });
-
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateCulturePersonalityProfile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -930,47 +884,37 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateCulturePersonalityProfiles", (string)null);
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.CandidateValuesProfile", b =>
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateDeepAnalysis", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("AchievementPercent")
-                        .HasColumnType("integer");
-
                     b.Property<string>("AnswersJson")
                         .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
-
-                    b.Property<int?>("AutonomyPercent")
-                        .HasColumnType("integer");
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("ConnectionPercent")
+                    b.Property<int>("Kind")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("CreatedAtUtc")
+                    b.Property<DateTime?>("ReportGeneratedAtUtc")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("ImpactPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("MatchTagsJson")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<int?>("StabilityPercent")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
+
+                    b.Property<string>("TagsJson")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("UnlockedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -980,79 +924,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
+                    b.HasIndex("UserId", "Kind")
                         .IsUnique();
 
-                    b.ToTable("CandidateValuesProfiles", (string)null);
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.CompanyCultureProfile", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int?>("AgreeablenessPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("AnswersJson")
-                        .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
-
-                    b.Property<int?>("AutonomyPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("CollaborationPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("CompanyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("CompletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("ConscientiousnessPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("EmotionalStabilityPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ExtraversionPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("FlexibilityPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("InformalPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("InnovationPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("OpennessPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("PeopleFirstPercent")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId")
-                        .IsUnique();
-
-                    b.ToTable("CompanyCultureProfiles", (string)null);
+                    b.ToTable("CandidateDeepAnalyses", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateReference", b =>
@@ -1180,6 +1055,62 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("CandidateUploadedCvs", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateValuesProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("AchievementPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AnswersJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int?>("AutonomyPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ConnectionPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ImpactPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MatchTagsJson")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("StabilityPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("CandidateValuesProfiles", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateWhoAmIProfile", b =>
@@ -1469,6 +1400,75 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("ReferredBySalesManagerUserId");
 
                     b.ToTable("Companies");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CompanyCultureProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("AgreeablenessPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AnswersJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int?>("AutonomyPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CollaborationPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ConscientiousnessPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("EmotionalStabilityPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ExtraversionPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("FlexibilityPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("InformalPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("InnovationPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OpennessPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PeopleFirstPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId")
+                        .IsUnique();
+
+                    b.ToTable("CompanyCultureProfiles", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CompanyRegistration", b =>
@@ -4555,6 +4555,53 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("VatDeclarations");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.WebPushSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Auth")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<DateTime?>("LastUsedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("P256dh")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Endpoint")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("WebPushSubscriptions", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.AgencyAnnualSubscription", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.Company", "Company")
@@ -4678,17 +4725,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.CandidateDeepAnalysis", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateCulturePersonalityProfile", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
@@ -4700,7 +4736,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.CandidateValuesProfile", b =>
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateDeepAnalysis", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
                         .WithMany()
@@ -4709,17 +4745,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.CompanyCultureProfile", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.Company", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateReference", b =>
@@ -4745,6 +4770,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateUploadedCv", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateValuesProfile", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
                         .WithMany()
@@ -4827,6 +4863,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("ReferredByPartnerUser");
 
                     b.Navigation("ReferredBySalesManagerUser");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CompanyCultureProfile", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CompanyRegistration", b =>
@@ -5529,6 +5576,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("GeneratedByUser");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WebPushSubscription", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.Application", b =>

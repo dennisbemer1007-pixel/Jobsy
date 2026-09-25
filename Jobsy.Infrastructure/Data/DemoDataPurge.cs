@@ -54,10 +54,12 @@ internal static class DemoDataPurge
         typeof(CandidateReference),
         typeof(CandidateCompetency),
         typeof(CandidateCulturePersonalityProfile),
+        typeof(CandidateValuesProfile),
         typeof(CompanyCultureProfile),
         typeof(CandidateWhoAmIProfile),
         typeof(CandidateCareerInterest),
         typeof(CandidateRoleFitCheck),
+        typeof(WebPushSubscription),
         typeof(TrainingConversion),
         typeof(TrainingClick),
         typeof(CandidateDeepAnalysis),
@@ -276,6 +278,8 @@ internal static class DemoDataPurge
         await RemoveAllAsync(db, db.TrainingClicks);
         await RemoveWhereAsync(db, db.CandidateReferences, x => removeUserIds.Contains(x.UserId));
         await RemoveWhereAsync(db, db.CandidateActionTokens, x => removeUserIds.Contains(x.UserId));
+        await RemoveWhereAsync(db, db.WebPushSubscriptions, x => removeUserIds.Contains(x.UserId));
+        await RemoveWhereAsync(db, db.CandidateValuesProfiles, x => removeUserIds.Contains(x.UserId));
         await RemoveWhereAsync(db, db.UserNotifications, x => removeUserIds.Contains(x.UserId));
         await RemoveWhereAsync(db, db.UserExternalLogins, x => removeUserIds.Contains(x.UserId));
         await RemoveWhereAsync(db, db.LocalAuthCredentials, x => removeUserIds.Contains(x.UserId));

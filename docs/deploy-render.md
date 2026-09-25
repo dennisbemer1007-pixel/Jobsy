@@ -125,6 +125,14 @@ Na een redeploy kan Render kort dit loggen als je browser nog oude cookies heeft
 
 **Structureel:** web bewaart Data Protection-keys in Postgres (`ConnectionStrings__JobsyDb`). Zorg dat die env-var gezet is (Blueprint zet dit via de DB van dezelfde environment). Zonder DB-keys blijven cookies na elke deploy ongeldig.
 
+## API deploy Failed: `PendingModelChangesWarning`
+
+EF Core 9 faalt `MigrateAsync` als `JobsyDbContext` afwijkt van `JobsyDbContextModelSnapshot` (hand-geschreven migratie zonder snapshot-update). De API-host stopt dan (`BackgroundServiceExceptionBehavior=StopHost`) en Render markeert de deploy als Failed — vaak met korte duur (~25–90s) terwijl `jobsy-web` wél live blijft.
+
+**Check in logs:** `The model for context 'JobsyDbContext' has pending changes`.
+
+**Fix:** snapshot bijwerken (`dotnet ef migrations add …` of entity in snapshot zetten) en `dotnet ef migrations has-pending-model-changes` groen houden. Regressietest: `EfModelSnapshotTests`.
+
 ## API deploy “Timed Out” terwijl logs “Now listening” tonen
 
 Render markeert de deploy pas live als `healthCheckPath` (`/health`) herhaaldelijk **2xx/3xx** teruggeeft (max. ~15 min). Als de API wél start maar de check faalt (vaak door `AllowedHosts` 400, of `UseHttpsRedirection` die interne probes naar `https://lobsy.nl/health` stuurt), zie je:
