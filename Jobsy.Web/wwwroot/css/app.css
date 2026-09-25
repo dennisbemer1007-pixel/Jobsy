@@ -19564,6 +19564,10 @@ html.cookie-consent-known .cookie-consent {
     text-decoration: none;
 }
 
+.horizon-course--matched {
+    color: var(--muted);
+}
+
 .horizon-course:hover,
 .horizon-course:focus-visible {
     border-color: color-mix(in srgb, var(--brand) 30%, var(--border));
@@ -19575,10 +19579,43 @@ html.cookie-consent-known .cookie-consent {
     color: var(--brand);
 }
 
+.horizon-course__icon--ok {
+    color: var(--success);
+}
+
 .horizon-course__label {
     font-size: 0.9rem;
     font-weight: 600;
     line-height: 1.35;
+}
+
+.horizon-course--matched .horizon-course__label {
+    font-weight: 550;
+}
+
+.horizon-course__badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--success);
+    white-space: nowrap;
+}
+
+.horizon-course__action {
+    border: 0;
+    background: transparent;
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 650;
+    cursor: pointer;
+    padding: 0.15rem 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.horizon-course__action:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .horizon-course__chevron {
@@ -19587,6 +19624,122 @@ html.cookie-consent-known .cookie-consent {
     border-right: 2px solid var(--muted);
     border-bottom: 2px solid var(--muted);
     transform: rotate(-45deg);
+}
+
+.horizon-card__block-meta {
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--muted);
+}
+
+.horizon-card__ghost {
+    width: 100%;
+    margin-top: 0.15rem;
+    padding: 0.55rem 0.75rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+
+.horizon-card__ghost:hover,
+.horizon-card__ghost:focus-visible {
+    color: var(--brand);
+    background: color-mix(in srgb, var(--pearl) 70%, transparent);
+}
+
+.horizon-card--goal {
+    text-align: left;
+}
+
+.horizon-stepper__item--goal.is-goal-reached .horizon-stepper__node--goal {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--gold) 22%, transparent);
+}
+
+.horizon-empty {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.1rem 1.05rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+}
+
+.horizon-empty__title {
+    margin: 0;
+    font-size: 1.15rem;
+    color: var(--brand);
+}
+
+.horizon-empty__cta {
+    width: 100%;
+    margin-top: 0.25rem;
+}
+
+.horizon-rebuild {
+    margin: 1rem 0 0;
+    text-align: center;
+}
+
+.horizon-rebuild__btn {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.horizon-dream-sheet__hint {
+    margin: 0.55rem 0 0;
+    font-size: 0.82rem;
+}
+
+.lobsy-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--bottom-nav-clearance) + 0.75rem);
+    transform: translateX(-50%);
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: min(26rem, calc(100vw - 1.5rem));
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    background: var(--brand);
+    color: #fff;
+    box-shadow: var(--shadow-lg);
+}
+
+.lobsy-toast__text {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.lobsy-toast__undo {
+    flex: 0 0 auto;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
 }
 
 .horizon-card__meta-grid {
