@@ -513,13 +513,14 @@ window.jobMap = (function () {
             return "";
         }
         const band = String(v.matchColorBand || "orange");
-        const why = v.matchWhySummary
-            ? "<span class=\"map-popup__match-why\">" + escapeHtml(String(v.matchWhySummary)) + "</span>"
-            : "";
         return (
             "<p class=\"map-popup__match match-score--" + escapeHtml(band) + "\">" +
-                escapeHtml(String(v.matchPercent)) + "% Match" +
-                why +
+                "<span class=\"match-score match-score--" + escapeHtml(band) + "\">" +
+                    escapeHtml(String(v.matchPercent)) + "% Match" +
+                "</span>" +
+                "<button type=\"button\" class=\"map-popup__match-help competency-help\" " +
+                    "data-job-id=\"" + escapeAttr(v.id) + "\" " +
+                    "title=\"Waarom deze match?\" aria-label=\"Waarom deze match?\">?</button>" +
             "</p>"
         );
     }
@@ -529,13 +530,9 @@ window.jobMap = (function () {
             return "";
         }
         const band = String(v.cultureFitBand || "mid");
-        const why = v.cultureFitWhy
-            ? "<span class=\"map-popup__match-why\">" + escapeHtml(String(v.cultureFitWhy)) + "</span>"
-            : "";
         return (
             "<p class=\"map-popup__culture culture-fit culture-fit--" + escapeHtml(band) + "\">" +
                 escapeHtml(String(v.cultureFitLabel)) +
-                why +
             "</p>"
         );
     }
@@ -740,16 +737,62 @@ window.jobMap = (function () {
         }
     }
 
+    function notifyMatchExplain(id) {
+        if (openCallback) {
+            try {
+                openCallback.invokeMethodAsync("OnMapMatchExplainRequested", id);
+            } catch {
+                // ignore disposed circuit
+            }
+        }
+    }
+
+    function bindMatchHelpClicks(root) {
+        if (!root || typeof root.querySelectorAll !== "function") {
+            return;
+        }
+        var buttons = root.querySelectorAll(".map-popup__match-help");
+        for (var i = 0; i < buttons.length; i++) {
+            (function (btn) {
+                if (btn.dataset.matchHelpBound === "1") {
+                    return;
+                }
+                btn.dataset.matchHelpBound = "1";
+                btn.addEventListener("click", function (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    var id = btn.getAttribute("data-job-id");
+                    if (id) {
+                        notifyMatchExplain(id);
+                    }
+                });
+            })(buttons[i]);
+        }
+    }
+
     function popupFromOpts(opts, lngLat, html) {
         const popup = new maplibregl.Popup(opts)
             .setLngLat(lngLat)
             .setHTML(html)
             .addTo(map);
+        popup.on("open", function () {
+            try {
+                bindMatchHelpClicks(popup.getElement());
+            } catch {
+                // ignore
+            }
+        });
         popup.on("close", function () {
             if (activeClusterPopup === popup) {
                 activeClusterPopup = null;
             }
         });
+        // MapLibre may already be open before the listener is attached.
+        try {
+            bindMatchHelpClicks(popup.getElement());
+        } catch {
+            // ignore
+        }
         return popup;
     }
 

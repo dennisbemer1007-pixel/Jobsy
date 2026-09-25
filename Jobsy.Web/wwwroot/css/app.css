@@ -214,12 +214,18 @@ html[dir="rtl"] .account-menu__panel {
 
 .account-menu__link {
     display: block;
+    width: 100%;
     padding: 0.55rem 0.7rem;
+    border: 0;
     border-radius: 7px;
+    background: transparent;
+    font: inherit;
     font-size: 0.82rem;
     font-weight: 600;
     color: var(--text);
+    text-align: start;
     text-decoration: none;
+    cursor: pointer;
 }
 
 .account-menu__link:hover {
@@ -5290,11 +5296,11 @@ a.map-popup__apply.map-popup__cta:visited {
     }
 
     .bottom-nav {
-        justify-content: flex-start;
+        justify-content: stretch;
         gap: 0;
-        padding: 0.35rem 0.5rem;
+        padding: 0.35rem 0;
         padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
-        overflow-x: auto;
+        overflow-x: hidden;
         scrollbar-width: none;
     }
 
@@ -5306,7 +5312,7 @@ a.map-popup__apply.map-popup__cta:visited {
         flex: 1 1 0;
         min-width: 0;
         max-width: none;
-        padding: 0.45rem 0.25rem;
+        padding: 0.45rem 0.15rem;
         border-radius: 0;
         color: var(--muted);
         background: transparent;
@@ -7538,11 +7544,16 @@ a.engagement-btn {
     bottom: 0;
     left: 0;
     right: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     z-index: 50;
     display: flex;
     flex-wrap: nowrap;
-    gap: 0.25rem;
-    padding: 0.45rem 0.85rem;
+    align-items: stretch;
+    justify-content: stretch;
+    gap: 0;
+    padding: 0.45rem 0;
     padding-bottom: max(0.45rem, env(safe-area-inset-bottom));
     background: var(--surface);
     border-top: 1px solid var(--border);
@@ -7562,10 +7573,10 @@ a.engagement-btn {
     align-items: center;
     justify-content: center;
     gap: 0.28rem;
-    flex: 0 0 auto;
-    min-width: 4.75rem;
-    max-width: 6.5rem;
-    padding: 0.45rem 0.4rem;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+    padding: 0.45rem 0.2rem;
     border-radius: 8px;
     color: var(--muted);
     text-align: center;
@@ -7616,9 +7627,10 @@ button.bottom-nav__item {
 
 @media (max-width: 1024px) {
     .bottom-nav:not(.bottom-nav--compact) .bottom-nav__item {
-        min-width: 2.75rem;
+        flex: 1 1 0;
+        min-width: 0;
         max-width: none;
-        padding: 0.4rem 0.5rem;
+        padding: 0.4rem 0.15rem;
     }
 
     .app-shell.has-bottom-nav .app-main,
@@ -14908,6 +14920,11 @@ html.cookie-consent-known .cookie-consent {
     .lobsy-assistant-tab.has-bottom-nav {
         top: 20%;
     }
+
+    .lobsy-assistant-tab--edge,
+    .feedback-widget__tab--edge {
+        display: none !important;
+    }
 }
 
 .lobsy-assistant-tab__btn {
@@ -14971,6 +14988,10 @@ html.cookie-consent-known .cookie-consent {
 @media (max-width: 720px) {
     .feedback-widget.has-bottom-nav {
         top: 40%;
+    }
+
+    .feedback-widget__tab--edge {
+        display: none !important;
     }
 }
 
@@ -17932,13 +17953,17 @@ html.cookie-consent-known .cookie-consent {
     font-weight: 800;
     font-size: 0.92rem;
     display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.3rem;
 }
 
-.map-popup__match-why {
-    font-weight: 500;
-    font-size: 0.78rem;
+.map-popup__match-help,
+.job-card__match-help {
+    flex: 0 0 auto;
+    margin: 0;
+    vertical-align: middle;
 }
 
 .competency-bar__fill--riasec {

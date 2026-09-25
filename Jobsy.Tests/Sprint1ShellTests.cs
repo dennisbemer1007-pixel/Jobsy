@@ -127,6 +127,7 @@ public class RoleNavCatalogTests
             },
             items.Select(i => i.Href));
         Assert.Equal("Nav.Search", items[0].TitleKey);
+        Assert.Equal("Nav.Applications", items[2].TitleKey);
         Assert.Equal("Nav.CareerPath", items[3].TitleKey);
         Assert.Equal("Nav.Profile", items[4].TitleKey);
         Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");

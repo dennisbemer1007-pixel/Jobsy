@@ -123,9 +123,9 @@
             }
             <AuthorizeView>
                 <Authorized>
-                    <a class="jobsy-action jobsy-action--save" href="/candidate/liked">
-                        <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Liked)</span>
-                        <span>@Culture["Discovery.SaveSearch"]</span>
+                    <a class="jobsy-action jobsy-action--match" href="/candidate/match">
+                        <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
+                        <span>@Culture["Nav.Match"]</span>
                     </a>
                 </Authorized>
             </AuthorizeView>
@@ -522,23 +522,16 @@
                                         <p class="job-card__match">
                                             <span class="match-score match-score--@(vacancy.MatchColorBand ?? "orange")">@Culture.Format("Discovery.MatchPercent", matchPct)</span>
                                             <button type="button"
-                                                    class="competency-help"
+                                                    class="competency-help job-card__match-help"
                                                     title="@Culture["Discovery.MatchWhy"]"
                                                     aria-label="@Culture["Discovery.MatchWhy"]"
                                                     @onclick="() => OpenMatchExplain(vacancy)"
-                                                    @onclick:stopPropagation="true">?</button>
+                                                    @onclick:stopPropagation="true"
+                                                    @onclick:preventDefault="true">?</button>
                                         </p>
                                         @if (!string.IsNullOrWhiteSpace(vacancy.CultureFitLabel))
                                         {
                                             <span class="culture-fit culture-fit--@(vacancy.CultureFitBand ?? "mid")">@vacancy.CultureFitLabel</span>
-                                        }
-                                        @if (!string.IsNullOrWhiteSpace(vacancy.MatchWhySummary))
-                                        {
-                                            <p class="job-card__match-why">@vacancy.MatchWhySummary</p>
-                                        }
-                                        else if (vacancy.IsBroadMatch && !string.IsNullOrWhiteSpace(vacancy.MatchRationale))
-                                        {
-                                            <p class="job-card__match-why">@vacancy.MatchRationale</p>
                                         }
                                     }
                                     <p class="job-card__travel">
@@ -2996,6 +2989,24 @@
         {
             // tracking must not break UX
         }
+    }
+
+    [JSInvokable]
+    public Task OnMapMatchExplainRequested(string id)
+    {
+        if (!Guid.TryParse(id, out var vacancyId))
+        {
+            return Task.CompletedTask;
+        }
+
+        var vacancy = _vacancies.FirstOrDefault(v => v.Id == vacancyId);
+        if (vacancy is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        OpenMatchExplain(vacancy);
+        return InvokeAsync(StateHasChanged);
     }
 
     [JSInvokable]

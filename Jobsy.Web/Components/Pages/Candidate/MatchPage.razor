@@ -8,8 +8,9 @@
 @inject CandidateMatchProfileService MatchProfile
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject CultureState Culture
 
-<PageTitle>Match · Lobsy</PageTitle>
+<PageTitle>@Culture["Nav.Match"] · Lobsy</PageTitle>
 
 <div class="match-page match-page--shell @(_gate.IsProfileComplete ? null : "match-page--locked")">
     <header class="match-page__top">
@@ -21,13 +22,10 @@
                     <path d="M12 7v5l3 2"/>
                 </svg>
             </button>
-            <a class="match-page__icon-btn" href="/" title="Banenkaart" aria-label="Banenkaart">
+            <a class="match-page__icon-btn" href="/" title="@Culture["Discovery.BackToSearch"]" aria-label="@Culture["Discovery.BackToSearch"]">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <line x1="4" y1="6" x2="20" y2="6"/>
-                    <line x1="8" y1="12" x2="20" y2="12"/>
-                    <line x1="4" y1="18" x2="16" y2="18"/>
-                    <circle cx="6" cy="12" r="2"/>
-                    <circle cx="18" cy="18" r="2"/>
+                    <circle cx="11" cy="11" r="7"/>
+                    <path d="m20 20-3.5-3.5"/>
                 </svg>
             </a>
         </div>
@@ -52,7 +50,7 @@
                     Wil je breder zoeken of andere typen vacatures vinden? Ga dan naar de banenkaart.
                 </p>
                 <div class="match-page__empty-actions">
-                    <a class="match-page__cta" href="/">Naar de banenkaart</a>
+                    <a class="match-page__cta" href="/">@Culture["Discovery.BackToSearch"]</a>
                     <button type="button" class="match-page__cta match-page__cta--ghost" @onclick="ReloadDeckAsync">Opnieuw laden</button>
                 </div>
             </div>

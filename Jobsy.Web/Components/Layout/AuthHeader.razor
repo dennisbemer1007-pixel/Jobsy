@@ -7,6 +7,7 @@
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager Navigation
+@inject FeedbackHost FeedbackHost
 @implements IDisposable
 
 <div class="auth-header">
@@ -33,6 +34,12 @@
                         {
                             <a class="account-menu__link" href="@howHref" role="menuitem">@Culture["Nav.HowLobsyWorks"]</a>
                         }
+                        <button type="button"
+                                class="account-menu__link"
+                                role="menuitem"
+                                @onclick="OpenFeedbackAsync">
+                            @Culture["Feedback.Button"]
+                        </button>
                         <a class="account-menu__link" href="/privacy" role="menuitem">@Culture["Footer.Privacy"]</a>
                         <a class="account-menu__link" href="/algemene-voorwaarden" role="menuitem">@Culture["Footer.Terms"]</a>
                         <a class="account-menu__link" href="/gebruiksvoorwaarden" role="menuitem">@Culture["Footer.Usage"]</a>
@@ -103,6 +110,13 @@
 
     private void Toggle()
         => _open = !_open;
+
+    private Task OpenFeedbackAsync()
+    {
+        _open = false;
+        FeedbackHost.RequestOpen();
+        return Task.CompletedTask;
+    }
 
     private async Task OnFocusOut(FocusEventArgs _)
     {

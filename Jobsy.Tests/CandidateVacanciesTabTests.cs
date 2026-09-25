@@ -44,7 +44,7 @@ public class CandidateVacanciesTabTests
         Assert.Contains(".lobsy-assistant-tab {\n    position: fixed;\n    top: 26%;\n    right: 0;", css);
         Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: 46%;\n    right: 0;", css);
         Assert.Contains(".pb-28 { padding-bottom: 7rem; }", css);
-        Assert.Contains(".bottom-nav {\n    position: fixed;\n    bottom: 0;\n    left: 0;\n    right: 0;\n    z-index: 50;", css);
+        Assert.Contains(".bottom-nav {\n    position: fixed;\n    bottom: 0;\n    left: 0;\n    right: 0;\n    width: 100%;\n    max-width: 100%;\n    box-sizing: border-box;\n    z-index: 50;", css);
         Assert.Contains(".candidate-vacancies-page .candidate-vacancies__section", css);
     }
 

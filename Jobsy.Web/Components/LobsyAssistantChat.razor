@@ -12,7 +12,7 @@
     <Authorized>
         @if (_visible)
         {
-            <div class="lobsy-assistant-tab @(_hasBottomNav ? "has-bottom-nav" : null) @(_open ? "is-open" : null)">
+            <div class="lobsy-assistant-tab lobsy-assistant-tab--edge @(_hasBottomNav ? "has-bottom-nav" : null) @(_open ? "is-open" : null)">
                 <button type="button"
                         class="lobsy-assistant-tab__btn"
                         @onclick="Toggle"

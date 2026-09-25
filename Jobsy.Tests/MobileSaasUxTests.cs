@@ -6,7 +6,7 @@ public class MobileSaasUxTests
     public void Bottom_nav_is_fixed_and_pages_clear_it_with_pb28()
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".bottom-nav {\n    position: fixed;\n    bottom: 0;\n    left: 0;\n    right: 0;\n    z-index: 50;", css);
+        Assert.Contains(".bottom-nav {\n    position: fixed;\n    bottom: 0;\n    left: 0;\n    right: 0;\n    width: 100%;\n    max-width: 100%;\n    box-sizing: border-box;\n    z-index: 50;", css);
         Assert.Contains("--bottom-nav-clearance: 7rem;", css);
         Assert.Contains("padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));", css);
 
@@ -224,21 +224,22 @@ public class MobileSaasUxTests
     }
 
     [Fact]
-    public void Guest_discovery_omits_save_search_button()
+    public void Guest_discovery_omits_match_action_for_anonymous_users()
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/VacancyDiscovery.razor"));
         Assert.Contains("AuthorizeView", discovery);
-        Assert.Contains("jobsy-action--save", discovery);
-        Assert.Contains("href=\"/candidate/liked\"", discovery);
-        Assert.Contains("Discovery.SaveSearch", discovery);
+        Assert.Contains("jobsy-action--match", discovery);
+        Assert.Contains("href=\"/candidate/match\"", discovery);
+        Assert.Contains("Nav.Match", discovery);
+        Assert.DoesNotContain("jobsy-action--save", discovery);
         Assert.DoesNotContain("LikedLoginUrl", discovery);
         Assert.DoesNotContain("<NotAuthorized>", discovery);
 
         var authStart = discovery.IndexOf("<Authorized>", StringComparison.Ordinal);
         Assert.True(authStart > 0);
         var authBlock = discovery[authStart..Math.Min(discovery.Length, authStart + 450)];
-        Assert.Contains("href=\"/candidate/liked\"", authBlock);
-        Assert.Contains("Discovery.SaveSearch", authBlock);
+        Assert.Contains("href=\"/candidate/match\"", authBlock);
+        Assert.Contains("Nav.Match", authBlock);
     }
 
     [Fact]
@@ -421,10 +422,15 @@ public class MobileSaasUxTests
         var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
         Assert.Contains("HowLobsyHrefFor", header);
         Assert.Contains("Nav.HowLobsyWorks", header);
+        Assert.Contains("FeedbackHost", header);
+        Assert.Contains("Feedback.Button", header);
+        Assert.Contains("OpenFeedbackAsync", header);
 
         var feedback = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Feedback/FeedbackWidget.razor"));
         Assert.Contains("feedback-widget--tab", feedback);
         Assert.Contains("feedback-widget__tab", feedback);
+        Assert.Contains("feedback-widget__tab--edge", feedback);
+        Assert.Contains("FeedbackHost", feedback);
         Assert.DoesNotContain("Feedback.CaptureFailed", feedback);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
@@ -433,13 +439,17 @@ public class MobileSaasUxTests
         Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: 46%;\n    right: 0;", css);
         Assert.Contains(".feedback-widget__tab {\n    writing-mode: vertical-rl;", css);
         Assert.Contains(".lobsy-assistant__fab {\n    display: none !important;", css);
+        Assert.Contains(".lobsy-assistant-tab--edge,\n    .feedback-widget__tab--edge {\n        display: none !important;", css);
         Assert.Contains("button.bottom-nav__item {", css);
         Assert.DoesNotContain(".bottom-nav__item--assistant {", css);
         Assert.Contains(".pb-28 { padding-bottom: 7rem; }", css);
         Assert.Contains(".overflow-x-hidden { overflow-x: hidden; }", css);
+        Assert.Contains("flex: 1 1 0;", css);
+        Assert.Contains(".bottom-nav {\n    position: fixed;\n    bottom: 0;\n    left: 0;\n    right: 0;\n    width: 100%;", css);
 
         var program = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Program.cs"));
         Assert.Contains("AddScoped<Jobsy.Web.Navigation.AssistantChatHost>()", program);
+        Assert.Contains("AddScoped<Jobsy.Web.Navigation.FeedbackHost>()", program);
     }
 
     private static string FindRepoRoot()

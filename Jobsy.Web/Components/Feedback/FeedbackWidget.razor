@@ -1,16 +1,18 @@
 @namespace Jobsy.Web.Components.Feedback
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+@using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @inject AuthenticationStateProvider AuthState
+@inject FeedbackHost FeedbackHost
 @implements IDisposable
 
 <div class="feedback-widget feedback-widget--tab @(_hasBottomNav ? "has-bottom-nav" : null) @(_capturing ? "is-capturing" : null) @(_open ? "is-open" : null)">
     <button type="button"
-            class="feedback-widget__btn feedback-widget__tab"
+            class="feedback-widget__btn feedback-widget__tab feedback-widget__tab--edge"
             @onclick="OpenAsync"
             disabled="@_capturing"
             aria-haspopup="dialog"
@@ -95,13 +97,19 @@
         => _hasBottomNav = HasBottomNav;
 
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        FeedbackHost.OpenRequested += OpenAsync;
+    }
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
 
     public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    {
+        Culture.Changed -= OnCultureChanged;
+        FeedbackHost.OpenRequested -= OpenAsync;
+    }
 
     private string PageUrlForSubmit
     {
