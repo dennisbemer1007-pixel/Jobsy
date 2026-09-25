@@ -7,7 +7,7 @@ var IMAGE_CACHE = "lobsy-images-v2";
 var PRECACHE = [
     "/",
     "/manifest.webmanifest",
-    "/css/app.min.css?v=20260925-carriere",
+    "/css/app.min.css?v=20260925-careercalm",
     "/js/app-core.js",
     "/icons/icon-192.png",
     "/icons/icon-512.png",

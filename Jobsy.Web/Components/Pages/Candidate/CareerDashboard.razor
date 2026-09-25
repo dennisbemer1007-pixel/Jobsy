@@ -23,31 +23,21 @@
     else
     {
         <section class="career-dash__hero" aria-labelledby="career-dash-horizon">
-            <div class="career-gauge"
-                 role="progressbar"
-                 aria-valuemin="0"
-                 aria-valuemax="100"
-                 aria-valuenow="@_model.MatchPercent"
-                 aria-label="@Culture["CareerDash.ProgressLabel"]">
-                <svg class="career-gauge__svg" viewBox="0 0 200 120" aria-hidden="true" focusable="false">
-                    <path class="career-gauge__track"
-                          d="M 22 108 A 78 78 0 0 1 178 108"
-                          fill="none"
-                          stroke-linecap="round" />
-                    <path class="career-gauge__fill"
-                          d="M 22 108 A 78 78 0 0 1 178 108"
-                          fill="none"
-                          stroke-linecap="round"
-                          pathLength="100"
-                          stroke-dasharray="@($"{_model.MatchPercent.ToString(System.Globalization.CultureInfo.InvariantCulture)} 100")" />
-                </svg>
-                <div class="career-gauge__readout" id="career-dash-horizon">
+            <div class="career-dash__progress">
+                <p class="career-dash__pct" id="career-dash-horizon">
                     <strong>@_model.MatchPercent%</strong>
                     <span>@Culture["CareerDash.Match"]</span>
+                </p>
+                <div class="career-dash__bar"
+                     role="progressbar"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     aria-valuenow="@_model.MatchPercent"
+                     aria-label="@Culture["CareerDash.ProgressLabel"]">
+                    <span class="career-dash__bar-fill" style="width: @_model.MatchPercent%"></span>
                 </div>
+                <p class="career-dash__summary">@_model.MatchSummary</p>
             </div>
-
-            <p class="career-dash__summary">@_model.MatchSummary</p>
 
             <div class="career-dash__horizon">
                 <div class="career-dash__role">

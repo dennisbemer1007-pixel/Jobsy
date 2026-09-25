@@ -71,17 +71,17 @@ public class CareerPathServiceTests
         var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerDashboard.razor"));
         Assert.Contains("@page \"/carriere\"", page);
         Assert.Contains("CareerPathService", page);
-        Assert.Contains("career-gauge", page);
+        Assert.Contains("career-dash__bar", page);
         Assert.Contains("career-steps", page);
         Assert.Contains("career-dream-input", page);
-        Assert.DoesNotContain("career-dash__bar", page);
+        Assert.DoesNotContain("career-gauge", page);
         Assert.DoesNotContain("career-dream-select", page);
         Assert.DoesNotContain("<select", page);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".career-dash", css);
-        Assert.Contains(".career-gauge", css);
+        Assert.Contains(".career-dash__bar", css);
         Assert.Contains(".career-steps", css);
-        Assert.DoesNotContain(".career-dash__bar {", css);
+        Assert.DoesNotContain(".career-gauge", css);
     }
 }

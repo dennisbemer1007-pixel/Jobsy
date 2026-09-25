@@ -19152,70 +19152,58 @@ html.cookie-consent-known .cookie-consent {
 .career-dash__hero {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 1rem;
+    align-items: stretch;
+    gap: 1.25rem;
     margin-bottom: 1.75rem;
-    padding: 0.35rem 0 0.25rem;
-    text-align: center;
+    padding: 0.15rem 0 0.1rem;
 }
 
-.career-gauge {
-    position: relative;
-    width: min(100%, 17.5rem);
+.career-dash__progress {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+    max-width: 28rem;
+    width: 100%;
     margin: 0 auto;
 }
 
-.career-gauge__svg {
-    display: block;
-    width: 100%;
-    height: auto;
-    overflow: visible;
-}
-
-.career-gauge__track {
-    stroke: color-mix(in srgb, var(--pearl-mid) 55%, var(--border));
-    stroke-width: 12;
-}
-
-.career-gauge__fill {
-    stroke: var(--brand);
-    stroke-width: 12;
-    transition: stroke-dasharray 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.career-gauge__readout {
-    position: absolute;
-    left: 50%;
-    bottom: 0.15rem;
-    transform: translateX(-50%);
+.career-dash__pct {
+    margin: 0;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.05rem;
-    pointer-events: none;
-}
-
-.career-gauge__readout strong {
-    font-size: 2.15rem;
-    font-weight: 780;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    color: var(--brand);
-}
-
-.career-gauge__readout span {
-    font-size: 0.82rem;
-    font-weight: 650;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-size: 0.88rem;
     color: var(--muted);
 }
 
+.career-dash__pct strong {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--brand);
+}
+
+.career-dash__bar {
+    height: 0.22rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--pearl-mid) 65%, var(--border));
+    overflow: hidden;
+}
+
+.career-dash__bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--brand);
+    transition: width 0.35s ease;
+}
+
 .career-dash__summary {
-    margin: 0;
-    max-width: 28rem;
-    font-size: 0.95rem;
-    line-height: 1.45;
+    margin: 0.15rem 0 0;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    font-weight: 400;
     color: var(--muted);
 }
 
