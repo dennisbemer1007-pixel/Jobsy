@@ -20583,6 +20583,28 @@ body {
     color: var(--brand);
 }
 
+.test-detail__pay-error {
+    margin: 0 0 1rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--danger, #b42318) 10%, white);
+    border: 1px solid color-mix(in srgb, var(--danger, #b42318) 28%, white);
+}
+
+.test-detail__pay-error .state-message {
+    margin: 0 0 0.55rem;
+}
+
+.test-detail__section-title {
+    margin: 1.1rem 0 0.55rem;
+    color: var(--brand);
+    font-size: 1.05rem;
+}
+
+.test-detail__compass {
+    margin: 1.1rem 0 1rem;
+}
+
 @media (min-width: 720px) {
     .test-tile-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));

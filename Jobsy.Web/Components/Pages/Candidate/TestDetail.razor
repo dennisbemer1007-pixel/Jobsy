@@ -5,6 +5,7 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Models
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
@@ -26,13 +27,16 @@
         <p class="state-message">@Culture["Tests.Unknown"]</p>
         <a class="engagement-btn" href="/candidate/profile?tab=tests">@Culture["Tests.BackToOverview"]</a>
     }
-    else if (!string.IsNullOrWhiteSpace(_payError))
-    {
-        <p class="state-message error">@_payError</p>
-        <button type="button" class="engagement-btn" @onclick="ClearPayError">@Culture["Common.Retry"]</button>
-    }
     else if (_freeDone || _deepCompleted)
     {
+        @if (!string.IsNullOrWhiteSpace(_payError))
+        {
+            <div class="test-detail__pay-error" role="alert">
+                <p class="state-message error">@_payError</p>
+                <button type="button" class="engagement-btn" @onclick="ClearPayError">@Culture["Common.Retry"]</button>
+            </div>
+        }
+
         @if (!_deepCompleted)
         {
             <button type="button"
@@ -93,6 +97,37 @@
             </ul>
         }
 
+        @if (_personalityBars.Count > 0)
+        {
+            <h2 class="test-detail__section-title">@Culture["Tests.PersonalityScores"]</h2>
+            <ul class="test-score-bars" aria-label="@Culture["Tests.PersonalityScores"]">
+                @foreach (var bar in _personalityBars)
+                {
+                    <li>
+                        <div class="test-score-bars__row">
+                            <span>@bar.Label</span>
+                            <strong>@bar.Percent%</strong>
+                        </div>
+                        <div class="test-score-bars__track" role="presentation">
+                            <span style="width: @(bar.Percent.ToString(CultureInfo.InvariantCulture))%"></span>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+
+        @if (_careerCompass is not null && (_careerCompass.HasOccupations || _careerCompass.Strengths.Count > 0 || _careerCompass.PracticalNotes.Count > 0))
+        {
+            <section class="test-detail__compass" aria-label="@Culture["Kompas.Career"]">
+                <CareerCompassPanel Compass="_careerCompass"
+                                    Competencies="_competencyScores"
+                                    CareerDirection="_riasecScores" />
+                <p class="career-dash-link-row">
+                    <a class="engagement-btn" href="/carriere">@Culture["CareerDash.OpenLink"]</a>
+                </p>
+            </section>
+        }
+
         <details class="test-detail__accordion">
             <summary>@Culture["Tests.WhatItMeans"]</summary>
             <p class="login-lead">@Culture[_def.ScienceNoteKey]</p>
@@ -115,6 +150,14 @@
     }
     else
     {
+        @if (!string.IsNullOrWhiteSpace(_payError))
+        {
+            <div class="test-detail__pay-error" role="alert">
+                <p class="state-message error">@_payError</p>
+                <button type="button" class="engagement-btn" @onclick="ClearPayError">@Culture["Common.Retry"]</button>
+            </div>
+        }
+
         <header class="test-detail__header">
             <h1>@Culture[_def.TitleKey]</h1>
             <p class="test-detail__status-row">
@@ -181,6 +224,10 @@
     private string? _headlineLead;
     private string? _completedMeta;
     private readonly List<ScoreBar> _scoreBars = [];
+    private readonly List<ScoreBar> _personalityBars = [];
+    private CareerCompassModel? _careerCompass;
+    private RiasecScoreSet? _riasecScores;
+    private CompetencyScoreSet? _competencyScores;
 
     protected override async Task OnInitializedAsync()
     {
@@ -221,7 +268,8 @@
         }
         catch (Exception ex)
         {
-            _payError = ex.Message;
+            // Keep any payment query error; surface load failures without wiping completed results.
+            _payError ??= ex.Message;
         }
         finally
         {
@@ -254,6 +302,19 @@
     {
         var state = await Api.GetMyCareerInterestsAsync();
         _freeDone = IsCompleted(state?.Status);
+        _careerCompass = state?.Compass;
+        _riasecScores = state?.Scores;
+
+        try
+        {
+            var competencies = await Api.GetMyCompetenciesAsync();
+            _competencyScores = competencies?.Scores;
+        }
+        catch
+        {
+            // Optional for RoleFit insight inside CareerCompassPanel.
+        }
+
         var scores = state?.Scores;
         if (scores is null)
         {
@@ -295,7 +356,13 @@
             AddBar(CulturePersonalityCatalog.EverydayLabel(code), ScoreForCulture(scores, code));
         }
 
+        foreach (var code in CulturePersonalityCatalog.PersonalityFacetCodes)
+        {
+            AddPersonalityBar(CulturePersonalityCatalog.EverydayLabel(code), ScoreForCulture(scores, code));
+        }
+
         _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
+        _personalityBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
         _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
     }
 
@@ -325,9 +392,22 @@
     {
         if (percent is int p)
         {
-            _scoreBars.Add(new ScoreBar(char.ToUpperInvariant(label[0]) + label[1..], p));
+            _scoreBars.Add(new ScoreBar(FormatBarLabel(label), p));
         }
     }
+
+    private void AddPersonalityBar(string label, int? percent)
+    {
+        if (percent is int p)
+        {
+            _personalityBars.Add(new ScoreBar(FormatBarLabel(label), p));
+        }
+    }
+
+    private static string FormatBarLabel(string label)
+        => string.IsNullOrWhiteSpace(label)
+            ? label
+            : char.ToUpperInvariant(label[0]) + label[1..];
 
     private static int? ScoreForCulture(CulturePersonalityScoreSet scores, string code) => code switch
     {
@@ -337,6 +417,11 @@
         CulturePersonalityCatalog.Flexibility => scores.Flexibility,
         CulturePersonalityCatalog.Innovation => scores.Innovation,
         CulturePersonalityCatalog.PeopleFirst => scores.PeopleFirst,
+        CulturePersonalityCatalog.Openness => scores.Openness,
+        CulturePersonalityCatalog.Conscientiousness => scores.Conscientiousness,
+        CulturePersonalityCatalog.Extraversion => scores.Extraversion,
+        CulturePersonalityCatalog.Agreeableness => scores.Agreeableness,
+        CulturePersonalityCatalog.EmotionalStability => scores.EmotionalStability,
         _ => null
     };
 
