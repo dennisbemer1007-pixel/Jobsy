@@ -71,9 +71,12 @@ public class CandidateProfileServiceTests
         Assert.Contains("/candidate/profile", page);
         Assert.Contains("ProfileHub.OpenKompas", page);
         Assert.Contains("ProfileHub.GatewayLead", page);
+        Assert.Contains("profile-hub--gateway", page);
         Assert.DoesNotContain("profile-hub__grid", page);
+        Assert.DoesNotContain("profile-hub-gateway__links", page);
         Assert.DoesNotContain("ProfileHub.ActionFreeStart", page);
         Assert.DoesNotContain("profile-hub-dna-scores", page);
+        Assert.DoesNotContain("ProfileHub.EditBasics", page);
         Assert.DoesNotContain("DISC", page);
 
         var service = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Services/CandidateProfileService.cs"));

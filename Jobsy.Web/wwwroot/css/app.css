@@ -19599,6 +19599,10 @@ html.cookie-consent-known .cookie-consent {
     margin-bottom: 1.5rem;
 }
 
+.profile-hub__header--gateway {
+    max-width: 36rem;
+}
+
 .profile-hub-gateway {
     display: flex;
     flex-direction: column;
@@ -19610,7 +19614,7 @@ html.cookie-consent-known .cookie-consent {
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
-    padding: 1.35rem 1.4rem 1.25rem;
+    padding: 1.5rem 1.45rem 1.35rem;
     border-radius: 1rem;
     text-decoration: none;
     color: inherit;
@@ -19638,8 +19642,9 @@ html.cookie-consent-known .cookie-consent {
 }
 
 .profile-hub-kompas__title {
-    font-size: 1.35rem;
+    font-size: 1.45rem;
     font-weight: 650;
+    line-height: 1.2;
     color: var(--brand);
 }
 
@@ -19650,7 +19655,7 @@ html.cookie-consent-known .cookie-consent {
 }
 
 .profile-hub-kompas__cta {
-    margin-top: 0.55rem;
+    margin-top: 0.7rem;
     font-weight: 600;
     color: var(--brand);
 }

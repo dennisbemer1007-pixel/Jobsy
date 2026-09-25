@@ -9,7 +9,7 @@
 <PageTitle>@Culture["ProfileHub.Title"] · Lobsy</PageTitle>
 
 <div class="panel-page profile-hub profile-hub--gateway pb-28">
-    <header class="profile-hub__header">
+    <header class="profile-hub__header profile-hub__header--gateway">
         <div class="profile-hub__intro">
             <h1>@Culture["ProfileHub.Title"]</h1>
             <p class="login-lead">@Culture["ProfileHub.GatewayLead"]</p>
@@ -32,27 +32,13 @@
     }
     else
     {
-        <section class="profile-hub-gateway" aria-labelledby="profile-hub-kompas">
-            <a class="profile-hub-kompas" href="/candidate/profile" id="profile-hub-kompas">
+        <section class="profile-hub-gateway" aria-labelledby="profile-hub-kompas-title">
+            <a class="profile-hub-kompas" href="/candidate/profile">
                 <span class="profile-hub-kompas__eyebrow">@Culture["ProfileHub.KompasEyebrow"]</span>
-                <span class="profile-hub-kompas__title">@Culture["Kompas.Title"]</span>
+                <span class="profile-hub-kompas__title" id="profile-hub-kompas-title">@Culture["Kompas.Title"]</span>
                 <span class="profile-hub-kompas__lead">@Culture["ProfileHub.KompasLead"]</span>
                 <span class="profile-hub-kompas__cta">@Culture["ProfileHub.OpenKompas"]</span>
             </a>
-
-            <p class="profile-hub-gateway__meta muted">
-                @_model.Basics.DisplayName
-                @if (!string.IsNullOrWhiteSpace(_model.Basics.HomeArea))
-                {
-                    <span>· @_model.Basics.HomeArea</span>
-                }
-            </p>
-
-            <div class="profile-hub-gateway__links">
-                <a class="engagement-btn" href="/candidate/profile?tab=profile">@Culture["ProfileHub.EditBasics"]</a>
-                <a class="engagement-btn" href="/carriere">@Culture["CareerDash.OpenLink"]</a>
-                <a class="engagement-btn" href="/privacy">@Culture["Legal.Privacy"]</a>
-            </div>
         </section>
     }
 </div>
