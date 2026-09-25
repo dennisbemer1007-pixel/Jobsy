@@ -14,15 +14,24 @@ public sealed class CandidateCareerPathController : ControllerBase
 {
     private readonly ICareerPathPlanGenerationService _plans;
     private readonly ICandidateCompetencyService _competencies;
+    private readonly ICandidateCareerInterestService _career;
+    private readonly ICandidateCulturePersonalityService _culture;
+    private readonly ICandidateValuesService _values;
     private readonly IUserLookupService _users;
 
     public CandidateCareerPathController(
         ICareerPathPlanGenerationService plans,
         ICandidateCompetencyService competencies,
+        ICandidateCareerInterestService career,
+        ICandidateCulturePersonalityService culture,
+        ICandidateValuesService values,
         IUserLookupService users)
     {
         _plans = plans;
         _competencies = competencies;
+        _career = career;
+        _culture = culture;
+        _values = values;
         _users = users;
     }
 
@@ -44,20 +53,75 @@ public sealed class CandidateCareerPathController : ControllerBase
             return BadRequest(new { message = "Vul een stip op de horizon in." });
         }
 
-        var scores = await _competencies.GetCompletedScoresAsync(user.Id, cancellationToken);
-        var hints = new List<string>();
-        if (scores is { IsComplete: true })
+        var strengths = new List<string>();
+        var gaps = new List<string>();
+
+        var competency = await _competencies.GetCompletedScoresAsync(user.Id, cancellationToken);
+        if (competency is { IsComplete: true })
         {
             foreach (var code in CompetencyTestCatalog.CategoryCodes)
             {
-                if (scores.Get(code) >= 60)
+                var label = WhoAmIKeywords.EverydayCompetency(code);
+                var score = competency.Get(code);
+                if (score >= 60)
                 {
-                    hints.Add(WhoAmIKeywords.EverydayCompetency(code));
+                    strengths.Add(label);
+                }
+                else if (score is > 0 and < 50)
+                {
+                    gaps.Add(label);
                 }
             }
         }
 
-        var snapshot = new HorizonCareerProfileSnapshot(hints, hints.Count > 0);
+        var career = await _career.GetCompletedScoresAsync(user.Id, cancellationToken);
+        if (career is { IsComplete: true })
+        {
+            foreach (var code in CareerTestCatalog.RiasecCodes
+                         .OrderByDescending(career.Get)
+                         .Take(2))
+            {
+                strengths.Add(CareerCompassBuilder.TypeLabel(code));
+            }
+        }
+
+        var culture = await _culture.GetCompletedScoresAsync(user.Id, cancellationToken);
+        if (culture is { IsComplete: true })
+        {
+            foreach (var code in CulturePersonalityCatalog.CategoryCodes
+                         .OrderByDescending(culture.Get)
+                         .Take(2))
+            {
+                strengths.Add(CulturePersonalityCatalog.EverydayLabel(code));
+            }
+        }
+
+        var values = await _values.GetCompletedScoresAsync(user.Id, cancellationToken);
+        if (values is { IsComplete: true })
+        {
+            foreach (var code in SchwartzValuesCatalog.CategoryCodes
+                         .OrderByDescending(values.Get)
+                         .Take(2))
+            {
+                strengths.Add(SchwartzValuesCatalog.EverydayLabel(code));
+            }
+        }
+
+        strengths = strengths
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(8)
+            .ToList();
+        gaps = gaps
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(6)
+            .ToList();
+
+        var snapshot = new HorizonCareerProfileSnapshot(
+            strengths,
+            gaps,
+            HasDnaSignal: strengths.Count > 0 || gaps.Count > 0);
         var plan = await _plans.GenerateAsync(dream, snapshot, cancellationToken);
         return Ok(HorizonCareerPathPlanDto.From(plan));
     }

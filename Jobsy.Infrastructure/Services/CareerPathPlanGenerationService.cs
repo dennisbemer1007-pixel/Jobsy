@@ -84,9 +84,15 @@ public sealed class CareerPathPlanGenerationService : ICareerPathPlanGenerationS
         sb.AppendLine("Geen vaste huidige functietitel — ga uit van het kandidaatprofiel/DNA.");
         if (profile?.StrengthHints is { Count: > 0 })
         {
-            sb.AppendLine("Sterke punten uit DNA/profiel: " + string.Join(", ", profile.StrengthHints.Take(6)));
+            sb.AppendLine("Sterke punten uit DNA/profiel: " + string.Join(", ", profile.StrengthHints.Take(8)));
         }
 
+        if (profile?.GapHints is { Count: > 0 })
+        {
+            sb.AppendLine("Mogelijke gaps (lager op DNA): " + string.Join(", ", profile.GapHints.Take(6)));
+        }
+
+        sb.AppendLine("Maak een diepe gap-analyse. Per stap exact: skills/competenties die nog missen, concrete opleidingen/cursussen, minimale eisen, jaren ervaring.");
         sb.AppendLine("Geef precies 4 stappen. Per stap: title, summary, skillsGap[], courses[], minRequirements[], yearsExperienceNeeded (int), actionLabel.");
         sb.AppendLine("Antwoord ALLEEN als JSON: {\"matchPercent\":number,\"matchSummary\":\"...\",\"steps\":[{\"title\":\"...\",\"summary\":\"...\",\"skillsGap\":[],\"courses\":[],\"minRequirements\":[],\"yearsExperienceNeeded\":0,\"actionLabel\":\"...\"}]}");
 

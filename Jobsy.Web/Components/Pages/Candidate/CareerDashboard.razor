@@ -63,7 +63,11 @@
                     </datalist>
                 </div>
             </div>
-            @if (!string.IsNullOrWhiteSpace(_message))
+            @if (_busy)
+            {
+                <p class="state-message" aria-live="polite">@Culture["CareerDash.Generating"]</p>
+            }
+            else if (!string.IsNullOrWhiteSpace(_message))
             {
                 <p class="state-message">@_message</p>
             }
@@ -75,107 +79,105 @@
                 <p class="login-lead career-dash__section-lead">@Culture["CareerDash.PlanLead"]</p>
             </div>
 
-            <ol class="career-steps" role="tablist" aria-label="@Culture["CareerDash.PlanTitle"]">
+            <div class="career-accordion" role="list">
                 @foreach (var step in _model.Steps)
                 {
-                    var selected = string.Equals(_expandedStepId, step.Id, StringComparison.Ordinal);
-                    var statusClass = StatusClass(step.Status);
-                    <li class="career-steps__item @statusClass @(selected ? "is-selected" : null)">
-                        <button type="button"
-                                class="career-steps__btn"
-                                role="tab"
-                                id="@($"career-step-{step.Id}-btn")"
-                                aria-selected="@selected"
-                                aria-controls="career-step-panel"
-                                @onclick="() => SelectStep(step.Id)">
-                            <span class="career-steps__num" aria-hidden="true">@step.Order</span>
-                            <span class="career-steps__label">@step.Title</span>
-                            <span class="visually-hidden">@Culture[StatusKey(step.Status)]</span>
-                        </button>
-                    </li>
-                }
-            </ol>
+                    var open = string.Equals(_expandedStepId, step.Id, StringComparison.Ordinal);
+                    <article class="career-accordion__item @StatusClass(step.Status) @(open ? "is-open" : null)" role="listitem">
+                        <h3 class="career-accordion__heading">
+                            <button type="button"
+                                    class="career-accordion__toggle"
+                                    id="@($"career-step-{step.Id}-btn")"
+                                    aria-expanded="@open"
+                                    aria-controls="@($"career-step-{step.Id}-panel")"
+                                    @onclick="() => ToggleStep(step.Id)">
+                                <span class="career-accordion__num" aria-hidden="true">@step.Order</span>
+                                <span class="career-accordion__title-wrap">
+                                    <span class="career-accordion__title">@step.Title</span>
+                                    <span class="career-timeline__badge @StatusClass(step.Status)">@Culture[StatusKey(step.Status)]</span>
+                                </span>
+                                <span class="career-accordion__chevron" aria-hidden="true"></span>
+                            </button>
+                        </h3>
 
-            @if (_selectedStep is { } activeStep)
-            {
-                <div class="career-step-panel"
-                     id="career-step-panel"
-                     role="tabpanel"
-                     aria-labelledby="@($"career-step-{activeStep.Id}-btn")">
-                    <div class="career-step-panel__head">
-                        <p class="career-step-panel__kicker">@Culture.Format("CareerDash.StepN", activeStep.Order)</p>
-                        <h3 class="career-step-panel__title">@activeStep.Title</h3>
-                        <span class="career-timeline__badge @StatusClass(activeStep.Status)">@Culture[StatusKey(activeStep.Status)]</span>
-                    </div>
-                    <p class="career-step-panel__summary">@activeStep.Summary</p>
-
-                    <div class="career-step-panel__grid">
-                        <div class="career-timeline__block">
-                            <h4>@Culture["CareerDash.SkillsGap"]</h4>
-                            @if (activeStep.SkillsGap.Count > 0)
-                            {
-                                <ul>
-                                    @foreach (var gap in activeStep.SkillsGap)
-                                    {
-                                        <li>@gap</li>
-                                    }
-                                </ul>
-                            }
-                            else
-                            {
-                                <p class="muted">@Culture["CareerDash.SkillsGapNone"]</p>
-                            }
-                        </div>
-
-                        <div class="career-timeline__block">
-                            <h4>@Culture["CareerDash.Courses"]</h4>
-                            @if (activeStep.Courses.Count > 0)
-                            {
-                                <ul>
-                                    @foreach (var course in activeStep.Courses)
-                                    {
-                                        <li>@course</li>
-                                    }
-                                </ul>
-                            }
-                            else
-                            {
-                                <p class="muted">@Culture["CareerDash.CoursesNone"]</p>
-                            }
-                        </div>
-
-                        <div class="career-timeline__block">
-                            <h4>@Culture["CareerDash.MinRequirements"]</h4>
-                            @if (activeStep.MinRequirements.Count > 0)
-                            {
-                                <ul>
-                                    @foreach (var req in activeStep.MinRequirements)
-                                    {
-                                        <li>@req</li>
-                                    }
-                                </ul>
-                            }
-                            else
-                            {
-                                <p class="muted">@Culture["CareerDash.MinRequirementsNone"]</p>
-                            }
-                        </div>
-
-                        <div class="career-timeline__block">
-                            <h4>@Culture["CareerDash.YearsExperience"]</h4>
-                            <p>@Culture.Format("CareerDash.YearsExperienceValue", activeStep.YearsExperienceNeeded)</p>
-                        </div>
-                    </div>
-
-                    <div class="career-timeline__action">
-                        <a class="login-submit" href="@activeStep.ActionHref">@activeStep.ActionLabel</a>
-                        @if (activeStep.StepMatchPercent > 0 && activeStep.StepMatchPercent < 100)
+                        @if (open)
                         {
-                            <p class="muted">@Culture.Format("CareerDash.StepMatch", activeStep.StepMatchPercent)</p>
+                            <div class="career-accordion__panel"
+                                 id="@($"career-step-{step.Id}-panel")"
+                                 role="region"
+                                 aria-labelledby="@($"career-step-{step.Id}-btn")">
+                                <p class="career-step-panel__summary">@step.Summary</p>
+
+                                <div class="career-step-panel__grid">
+                                    <div class="career-timeline__block">
+                                        <h4>@Culture["CareerDash.SkillsGap"]</h4>
+                                        @if (step.SkillsGap.Count > 0)
+                                        {
+                                            <ul>
+                                                @foreach (var gap in step.SkillsGap)
+                                                {
+                                                    <li>@gap</li>
+                                                }
+                                            </ul>
+                                        }
+                                        else
+                                        {
+                                            <p class="muted">@Culture["CareerDash.SkillsGapNone"]</p>
+                                        }
+                                    </div>
+
+                                    <div class="career-timeline__block">
+                                        <h4>@Culture["CareerDash.Courses"]</h4>
+                                        @if (step.Courses.Count > 0)
+                                        {
+                                            <ul>
+                                                @foreach (var course in step.Courses)
+                                                {
+                                                    <li>@course</li>
+                                                }
+                                            </ul>
+                                        }
+                                        else
+                                        {
+                                            <p class="muted">@Culture["CareerDash.CoursesNone"]</p>
+                                        }
+                                    </div>
+
+                                    <div class="career-timeline__block">
+                                        <h4>@Culture["CareerDash.MinRequirements"]</h4>
+                                        @if (step.MinRequirements.Count > 0)
+                                        {
+                                            <ul>
+                                                @foreach (var req in step.MinRequirements)
+                                                {
+                                                    <li>@req</li>
+                                                }
+                                            </ul>
+                                        }
+                                        else
+                                        {
+                                            <p class="muted">@Culture["CareerDash.MinRequirementsNone"]</p>
+                                        }
+                                    </div>
+
+                                    <div class="career-timeline__block">
+                                        <h4>@Culture["CareerDash.YearsExperience"]</h4>
+                                        <p>@Culture.Format("CareerDash.YearsExperienceValue", step.YearsExperienceNeeded)</p>
+                                    </div>
+                                </div>
+
+                                <div class="career-timeline__action">
+                                    <a class="login-submit" href="@step.ActionHref">@step.ActionLabel</a>
+                                    @if (step.StepMatchPercent > 0 && step.StepMatchPercent < 100)
+                                    {
+                                        <p class="muted">@Culture.Format("CareerDash.StepMatch", step.StepMatchPercent)</p>
+                                    }
+                                </div>
+                            </div>
                         }
-                    </div>
-                </div>
-            }
+                    </article>
+                }
+            </div>
         </section>
     }
 </div>
@@ -186,9 +188,6 @@
     private string _dreamDraft = CareerPathService.DefaultDreamTitle;
     private bool _busy;
     private string? _message;
-
-    private CareerPathDashboardStep? _selectedStep
-        => _model?.Steps.FirstOrDefault(s => string.Equals(s.Id, _expandedStepId, StringComparison.Ordinal));
 
     protected override async Task OnInitializedAsync()
     {
@@ -257,13 +256,14 @@
                           ?? model.Steps.FirstOrDefault()?.Id;
     }
 
-    private void SelectStep(string id) => _expandedStepId = id;
+    private void ToggleStep(string id)
+        => _expandedStepId = string.Equals(_expandedStepId, id, StringComparison.Ordinal) ? null : id;
 
     private static string StatusClass(CareerStepStatus status) => status switch
     {
-        CareerStepStatus.Completed => "is-done",
+        CareerStepStatus.Completed => "is-completed",
         CareerStepStatus.Active => "is-active",
-        _ => "is-open"
+        _ => "is-open-step"
     };
 
     private static string StatusKey(CareerStepStatus status) => status switch

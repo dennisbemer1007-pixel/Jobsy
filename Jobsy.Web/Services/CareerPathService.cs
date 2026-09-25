@@ -63,7 +63,6 @@ public sealed class CareerPathService
     private static CareerDashboardModel Map(HorizonCareerPathPlan plan, string dreamRoleId)
         => new()
         {
-            CurrentRoleTitle = "",
             DreamRoleId = dreamRoleId,
             DreamRoleTitle = plan.DreamTitle,
             MatchPercent = plan.MatchPercent,

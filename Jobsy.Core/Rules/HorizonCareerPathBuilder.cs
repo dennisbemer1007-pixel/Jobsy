@@ -8,13 +8,20 @@ public static class HorizonCareerPathBuilder
     public static HorizonCareerPathPlan BuildLocal(string dreamTitle, HorizonCareerProfileSnapshot? profile = null)
     {
         var dream = Clamp(dreamTitle);
-        var match = 20 + (StableHash(dream) % 21); // 20–40 until live DNA blend
+        var match = 20 + (StableHash(dream) % 21);
         if (profile?.HasDnaSignal == true)
         {
-            match = Math.Clamp(match + 8, 24, 48);
+            match = Math.Clamp(match + 8 + Math.Min(12, profile.StrengthHints.Count * 2), 24, 58);
         }
 
+        var strength = profile?.StrengthHints is { Count: > 0 }
+            ? profile.StrengthHints.Take(4).ToList()
+            : ["Samenwerken", "Betrouwbaarheid", "Leervermogen"];
+        var gaps = profile?.GapHints is { Count: > 0 }
+            ? profile.GapHints.Take(4).ToList()
+            : [$"Vakkennis voor {dream}", "Zichtbaar maken van resultaten", "Communicatie in de doelrol"];
         var query = Uri.EscapeDataString(dream);
+
         var steps = new List<HorizonCareerPathStep>
         {
             new(
@@ -22,12 +29,10 @@ public static class HorizonCareerPathBuilder
                 1,
                 "Profiel & DNA als basis",
                 HorizonCareerStepKind.Completed,
-                "Je Lobsy-profiel en DNA-tests vormen het startpunt. We kijken wat je al meeneemt richting je stip.",
-                profile?.StrengthHints.Count > 0
-                    ? profile.StrengthHints.Take(3).ToList()
-                    : ["Samenwerken", "Betrouwbaarheid", "Leervermogen"],
+                "Je Lobsy-profiel en DNA-tests vormen het startpunt. We wegen wat je al meeneemt richting je stip — zonder vaste huidige functietitel.",
+                strength,
                 [],
-                ["Vul Mijn DNA / Kompas bij zodat matching scherper wordt"],
+                ["DNA/Kompas bijgewerkt zodat matching scherper wordt"],
                 YearsExperienceNeeded: 0,
                 "Open Mijn Kompas",
                 "/candidate/profile",
@@ -37,9 +42,9 @@ public static class HorizonCareerPathBuilder
                 2,
                 "Skills & competenties dichten",
                 HorizonCareerStepKind.Active,
-                $"Gap-analyse naar “{dream}”: welke vaardigheden en competenties nog ontbreken.",
-                [$"Vakkennis voor {dream}", "Zichtbaar maken van resultaten", "Communicatie in de doelrol"],
-                ["Praktijkgericht vakcertificaat of module", "Korte workshop leiderschap of vaktechniek"],
+                $"Gap-analyse naar “{dream}”: wat je nog mist op skills en competenties, plus gerichte opleidingen.",
+                gaps,
+                DreamCourses(dream),
                 ["Aantoonbare basisvaardigheden uit je DNA/competentiescan"],
                 YearsExperienceNeeded: 0,
                 "Bekijk opleidingen & fit",
@@ -50,7 +55,7 @@ public static class HorizonCareerPathBuilder
                 3,
                 "Ervaring opbouwen",
                 HorizonCareerStepKind.Open,
-                "Concrete praktijk: tussentijdse rollen, projecten of verantwoordelijkheden die richting je horizon wijzen.",
+                "Concrete praktijk: tussentijdse rollen of projecten die richting je horizon wijzen.",
                 ["Verantwoordelijkheid in team of proces", "Meetbare resultaten in een verwante rol"],
                 ["On-the-job learning / interne stage", "Branchegerichte cursus met praktijkopdracht"],
                 ["Minimaal aantoonbare inzet in een verwante functie of project"],
@@ -73,11 +78,35 @@ public static class HorizonCareerPathBuilder
                 0)
         };
 
+        var dnaNote = profile?.HasDnaSignal == true
+            ? "op basis van je profiel en DNA"
+            : "op basis van je stip; vul DNA in voor een scherpere gap-analyse";
         return new HorizonCareerPathPlan(
             dream,
             match,
-            $"Pad naar “{dream}” op basis van je profiel en DNA — rustige stappen, geen vaste huidige functietitel.",
+            $"Pad naar “{dream}” {dnaNote} — rustige, diepe stappen zonder vaste huidige rol.",
             steps);
+    }
+
+    private static IReadOnlyList<string> DreamCourses(string dream)
+    {
+        var blob = dream.ToLowerInvariant();
+        if (blob.Contains("hr") || blob.Contains("personeel"))
+        {
+            return ["Basis arbeidsrecht / HR-processen", "Gesprekstechniek & feedback"];
+        }
+
+        if (blob.Contains("manager") || blob.Contains("leider") || blob.Contains("coach"))
+        {
+            return ["Praktijkgericht leiderschap / coachmodule", "Korte workshop roosteren of teamsturing"];
+        }
+
+        if (blob.Contains("planner") || blob.Contains("logistiek"))
+        {
+            return ["Planningstools / Excel voor planning", "Capaciteit & prioriteiten op de werkvloer"];
+        }
+
+        return ["Praktijkgericht vakcertificaat of module", "Korte workshop leiderschap of vaktechniek"];
     }
 
     private static int EstimateYears(string dream, bool mid)
@@ -130,6 +159,7 @@ public enum HorizonCareerStepKind
 
 public sealed record HorizonCareerProfileSnapshot(
     IReadOnlyList<string> StrengthHints,
+    IReadOnlyList<string> GapHints,
     bool HasDnaSignal);
 
 public sealed record HorizonCareerPathStep(

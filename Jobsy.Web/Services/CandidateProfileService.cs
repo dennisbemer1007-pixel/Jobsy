@@ -44,7 +44,7 @@ public sealed class CandidateProfileService
                 OpenForWork = true,
                 CvStatusLabel = "Lobsy-profiel klaar · eigen CV geüpload",
                 CvReady = true,
-                CurrentRoleTitle = "Magazijnmedewerker"
+                CurrentRoleTitle = ""
             },
             Tests =
             [

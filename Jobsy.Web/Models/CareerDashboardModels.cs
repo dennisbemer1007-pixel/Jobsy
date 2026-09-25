@@ -8,11 +8,9 @@ public enum CareerStepStatus
     Open = 2
 }
 
-/// <summary>Full career dashboard snapshot for the current → dream role path.</summary>
+/// <summary>Full career dashboard snapshot for the horizon path (no fixed current job title).</summary>
 public sealed class CareerDashboardModel
 {
-    /// <summary>Deprecated — left empty; path is horizon-first without a fixed current job title.</summary>
-    public string CurrentRoleTitle { get; set; } = "";
     public string DreamRoleTitle { get; set; } = "";
     public string DreamRoleId { get; set; } = "";
     public int MatchPercent { get; set; }
