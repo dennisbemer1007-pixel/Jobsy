@@ -1,0 +1,67 @@
+@namespace Jobsy.Web.Components.Shared
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (!string.IsNullOrWhiteSpace(_message))
+{
+    <div class="lobsy-toast" role="status" aria-live="polite">
+        <p class="lobsy-toast__text">@_message</p>
+        @if (_undo is not null)
+        {
+            <button type="button" class="lobsy-toast__undo" @onclick="OnUndoAsync">@_undoLabel</button>
+        }
+    </div>
+}
+
+@code {
+    private string? _message;
+    private string? _undoLabel;
+    private Func<Task>? _undo;
+    private CancellationTokenSource? _hideCts;
+
+    public async Task ShowAsync(string message, string? undoLabel = null, Func<Task>? onUndo = null, int autoHideMs = 6000)
+    {
+        _hideCts?.Cancel();
+        _hideCts?.Dispose();
+        _message = message;
+        _undoLabel = undoLabel;
+        _undo = onUndo;
+        StateHasChanged();
+
+        _hideCts = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(autoHideMs, _hideCts.Token);
+            Dismiss();
+        }
+        catch (TaskCanceledException)
+        {
+            // replaced or disposed
+        }
+    }
+
+    private async Task OnUndoAsync()
+    {
+        var undo = _undo;
+        Dismiss();
+        if (undo is not null)
+        {
+            await undo();
+        }
+    }
+
+    public void Dismiss()
+    {
+        _hideCts?.Cancel();
+        _message = null;
+        _undo = null;
+        _undoLabel = null;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        _hideCts?.Cancel();
+        _hideCts?.Dispose();
+    }
+}

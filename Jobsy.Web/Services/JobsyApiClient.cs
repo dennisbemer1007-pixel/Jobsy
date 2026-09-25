@@ -995,11 +995,97 @@ public sealed class JobsyApiClient : IAsyncDisposable
                ?? new CandidateValuesState();
     }
 
+    public async Task<CareerPathPlanApiModel?> GetCareerPathAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _http.GetAsync("api/me/career-path", ct);
+            if (response.StatusCode == HttpStatusCode.NoContent)
+            {
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
     public async Task<CareerPathPlanApiModel?> GenerateCareerPathAsync(string dreamTitle, CancellationToken ct = default)
     {
         try
         {
             var response = await _http.PostAsJsonAsync("api/me/career-path", new { dreamTitle }, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CareerPathPlanApiModel?> CompleteCareerStepAsync(string stepKey, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _http.PostAsync(
+                $"api/me/career-path/steps/{Uri.EscapeDataString(stepKey)}/complete",
+                null,
+                ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CareerPathPlanApiModel?> UncompleteCareerStepAsync(string stepKey, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _http.PostAsync(
+                $"api/me/career-path/steps/{Uri.EscapeDataString(stepKey)}/uncomplete",
+                null,
+                ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CareerPathPlanApiModel?> MarkCareerCourseOwnedAsync(string courseName, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync(
+                "api/me/career-path/courses/owned",
+                new { courseName },
+                ct);
             if (!response.IsSuccessStatusCode)
             {
                 return null;

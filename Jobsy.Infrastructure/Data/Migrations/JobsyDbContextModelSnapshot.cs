@@ -749,6 +749,92 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateCareerInterests", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateCareerPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DreamKey")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<string>("DreamTitle")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<int>("MatchPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MatchSummary")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("PlanJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("CandidateCareerPlans", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateCareerStepProgress", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("StepKey")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("StepOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("PlanId", "StepKey")
+                        .IsUnique();
+
+                    b.ToTable("CandidateCareerStepProgress", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateCompetency", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4714,6 +4800,36 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateCareerPlan", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateCareerStepProgress", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.CandidateCareerPlan", "Plan")
+                        .WithMany("StepProgress")
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Plan");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateCompetency", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
@@ -5644,6 +5760,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
             modelBuilder.Entity("Jobsy.Core.Entities.Region", b =>
                 {
                     b.Navigation("Companies");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateCareerPlan", b =>
+                {
+                    b.Navigation("StepProgress");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.SelfBillingInvoice", b =>

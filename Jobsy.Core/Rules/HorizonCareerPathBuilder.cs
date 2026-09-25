@@ -1,6 +1,6 @@
 namespace Jobsy.Core.Rules;
 
-/// <summary>Local + OpenAI career path steps toward a free-text horizon (no hardcoded current job title).</summary>
+/// <summary>Local career path steps toward a free-text horizon (no hardcoded current job title).</summary>
 public static class HorizonCareerPathBuilder
 {
     public const int MaxSteps = 4;
@@ -22,61 +22,65 @@ public static class HorizonCareerPathBuilder
             : [$"Vakkennis voor {dream}", "Zichtbaar maken van resultaten", "Communicatie in de doelrol"];
         var query = Uri.EscapeDataString(dream);
 
-        var steps = new List<HorizonCareerPathStep>
+        var raw = new List<(string Title, string Summary, IReadOnlyList<string> Skills, IReadOnlyList<string> Courses, IReadOnlyList<string> Reqs, int Years, string Action, string Href)>
         {
-            new(
-                "base",
-                1,
+            (
                 "Profiel & DNA als basis",
-                HorizonCareerStepKind.Completed,
                 "Je Lobsy-profiel en DNA-tests vormen het startpunt. We wegen wat je al meeneemt richting je stip — zonder vaste huidige functietitel.",
                 strength,
                 [],
                 ["DNA/Kompas bijgewerkt zodat matching scherper wordt"],
-                YearsExperienceNeeded: 0,
+                0,
                 "Open Mijn Kompas",
-                "/candidate/profile",
-                100),
-            new(
-                "skills",
-                2,
+                "/candidate/profile"),
+            (
                 "Skills & competenties dichten",
-                HorizonCareerStepKind.Active,
                 $"Gap-analyse naar “{dream}”: wat je nog mist op skills en competenties, plus gerichte opleidingen.",
                 gaps,
                 DreamCourses(dream),
                 ["Aantoonbare basisvaardigheden uit je DNA/competentiescan"],
-                YearsExperienceNeeded: 0,
+                0,
                 "Bekijk opleidingen & fit",
-                "/candidate/profile?tab=fit",
-                Math.Clamp(match + 8, 32, 58)),
-            new(
-                "experience",
-                3,
+                "/candidate/profile?tab=fit"),
+            (
                 "Ervaring opbouwen",
-                HorizonCareerStepKind.Open,
                 "Concrete praktijk: tussentijdse rollen of projecten die richting je horizon wijzen.",
                 ["Verantwoordelijkheid in team of proces", "Meetbare resultaten in een verwante rol"],
                 ["On-the-job learning / interne stage", "Branchegerichte cursus met praktijkopdracht"],
                 ["Minimaal aantoonbare inzet in een verwante functie of project"],
-                YearsExperienceNeeded: EstimateYears(dream, mid: true),
+                EstimateYears(dream, mid: true),
                 "Zoek stap-vacatures",
-                "/?q=" + query,
-                Math.Max(8, match / 2)),
-            new(
-                "land",
-                4,
+                "/?q=" + query),
+            (
                 dream,
-                HorizonCareerStepKind.Open,
                 $"Land bij je stip op de horizon: {dream}. Minimale eisen en ervaring hieronder zijn richtinggevend.",
                 ["Eindcompetenties van de droomrol", "Eigenaarschap en besluitvaardigheid"],
                 ["Optioneel: vervolgopleiding of branchecertificaat"],
                 [$"Passende opleiding of gelijkwaardige ervaring voor {dream}", "Betrouwbare referenties of aantoonbare inzet"],
-                YearsExperienceNeeded: EstimateYears(dream, mid: false),
+                EstimateYears(dream, mid: false),
                 "Zoek droomvacatures",
-                "/?q=" + query,
-                0)
+                "/?q=" + query)
         };
+
+        var steps = new List<HorizonCareerPathStep>();
+        for (var i = 0; i < raw.Count; i++)
+        {
+            var row = raw[i];
+            var order = i + 1;
+            steps.Add(new HorizonCareerPathStep(
+                CareerStepKey.ForStep(row.Title, order),
+                order,
+                row.Title,
+                HorizonCareerStepKind.Open,
+                row.Summary,
+                row.Skills,
+                row.Courses,
+                row.Reqs,
+                row.Years,
+                row.Action,
+                row.Href,
+                StepMatchPercent: 0));
+        }
 
         var dnaNote = profile?.HasDnaSignal == true
             ? "op basis van je profiel en DNA"
