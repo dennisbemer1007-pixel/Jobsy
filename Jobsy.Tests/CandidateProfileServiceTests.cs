@@ -75,8 +75,13 @@ public class CandidateProfileServiceTests
         Assert.Contains("profile-hub-dna-scores", page);
         Assert.DoesNotContain("Bekijk of herhaal", page);
         Assert.DoesNotContain("Open kompas", page);
+        Assert.DoesNotContain("DISC", page);
         Assert.DoesNotContain("ProfileHub.AddTests", page);
         Assert.DoesNotContain("profile-hub-card--scores", page);
+
+        var service = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Services/CandidateProfileService.cs"));
+        Assert.Contains("Title = \"Cultuurfit\"", service);
+        Assert.DoesNotContain("DISC", service);
 
         var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/RoleNavCatalog.cs"));
         Assert.Contains("\"/profiel\"", nav);
