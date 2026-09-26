@@ -2267,6 +2267,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<int>("FailedLoginCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LockoutUntil")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(512)
@@ -2279,6 +2285,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasIndex("Email")
                         .IsUnique();
+
+                    b.HasIndex("LockoutUntil");
 
                     b.HasIndex("UserId");
 
@@ -3994,6 +4002,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("CandidateHowToCompletedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("AuthenticatorEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("AuthenticatorEnrolledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AuthenticatorSecret")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
                     b.Property<Guid?>("CompanyId")
                         .HasColumnType("uuid");
 
@@ -4048,6 +4066,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("ReferredByAmbassadeurTrackingCode")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<string>("RecoveryCodesHash")
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
 
                     b.Property<Guid?>("ReferredByAmbassadeurUserId")
                         .HasColumnType("uuid");
@@ -4137,6 +4159,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("LastUsedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("MfaVerifiedUntilUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PreviousRefreshTokenHash")

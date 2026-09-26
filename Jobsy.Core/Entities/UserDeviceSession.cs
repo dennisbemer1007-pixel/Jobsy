@@ -30,6 +30,9 @@ public class UserDeviceSession
     public DateTime? RevokedAtUtc { get; set; }
     public string? RevokedReason { get; set; }
 
+    /// <summary>MFA on this remembered device is accepted until this moment (maximum 30 days).</summary>
+    public DateTime? MfaVerifiedUntilUtc { get; set; }
+
     public string? UserAgent { get; set; }
 
     /// <summary>Human-readable label derived from the user-agent (e.g. "iPhone – Safari").</summary>

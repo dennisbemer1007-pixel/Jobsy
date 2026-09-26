@@ -25,7 +25,8 @@ public record DeviceSessionRefreshResponse(
     bool HasSalesReferral,
     int SessionVersion,
     string? SessionToken,
-    Guid? UserId = null);
+    Guid? UserId = null,
+    bool MfaVerified = false);
 
 public record DeviceSessionListItemDto(
     Guid Id,

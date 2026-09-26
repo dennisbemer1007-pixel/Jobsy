@@ -28,4 +28,7 @@ public static class JobsyClaimTypes
 
     /// <summary>Set to "1" when a long-lived device cookie backs this interactive session.</summary>
     public const string HasDeviceSession = "has_device_session";
+
+    /// <summary>Set only after the current interactive session completes a TOTP or recovery-code check.</summary>
+    public const string MfaVerified = "mfa_verified";
 }

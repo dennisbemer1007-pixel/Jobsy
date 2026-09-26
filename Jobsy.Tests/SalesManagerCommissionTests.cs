@@ -243,7 +243,7 @@ public class SalesManagerCommissionTests
             null,
             AcceptedTerms: true,
             SalesManagerTrackingCode: "SM-TEST01",
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         var token = await db.CompanyRegistrations
             .Where(r => r.Id == submit.RegistrationId)
@@ -272,7 +272,7 @@ public class SalesManagerCommissionTests
             null,
             AcceptedTerms: true,
             SalesManagerTrackingCode: null,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
         Assert.Equal(CompanyRegistrationStatus.PendingActivation, emptyOk.Status);
 
         var ex = await Assert.ThrowsAsync<ArgumentException>(() => registration.SubmitAsync(
@@ -285,7 +285,7 @@ public class SalesManagerCommissionTests
                 null,
                 AcceptedTerms: true,
                 SalesManagerTrackingCode: "SM-NOPE01",
-                Password: "TestPass1!")));
+                Password: "TestPassphrase!")));
         Assert.Contains("trackingcode", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(0, await db.CompanyRegistrations.CountAsync(r => r.ContactEmail == "nova.badcode@jobsy.local"));
     }
@@ -335,7 +335,7 @@ public class SalesManagerCommissionTests
             null,
             AcceptedTerms: true,
             PartnerTrackingCode: "BM-TEST23",
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         var token = await db.CompanyRegistrations
             .Where(r => r.Id == submit.RegistrationId)

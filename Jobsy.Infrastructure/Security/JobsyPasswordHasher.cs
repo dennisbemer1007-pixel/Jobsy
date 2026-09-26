@@ -4,13 +4,13 @@ using System.Text;
 namespace Jobsy.Infrastructure.Security;
 
 /// <summary>
-/// PBKDF2-SHA256 password hashing (100k iterations). Stored format:
+/// PBKDF2-SHA256 password hashing (600k iterations). Stored format:
 /// <c>PBKDF2$&lt;iter&gt;$&lt;saltB64&gt;$&lt;hashB64&gt;</c>
 /// </summary>
 public static class JobsyPasswordHasher
 {
     private const string Prefix = "PBKDF2";
-    private const int DefaultIterations = 100_000;
+    public const int DefaultIterations = 600_000;
     private const int SaltSize = 16;
     private const int HashSize = 32;
 
@@ -34,10 +34,9 @@ public static class JobsyPasswordHasher
             return false;
         }
 
-        // Legacy plaintext (pre-migration): constant-time compare, then caller should rehash.
         if (!storedHash.StartsWith(Prefix + "$", StringComparison.Ordinal))
         {
-            return FixedTimeEquals(storedHash, password);
+            return false;
         }
 
         var parts = storedHash.Split('$', 4);
@@ -71,18 +70,16 @@ public static class JobsyPasswordHasher
     }
 
     public static bool NeedsRehash(string storedHash)
-        => string.IsNullOrWhiteSpace(storedHash)
-           || !storedHash.StartsWith(Prefix + "$", StringComparison.Ordinal);
-
-    private static bool FixedTimeEquals(string expected, string actual)
     {
-        var a = Encoding.UTF8.GetBytes(expected);
-        var b = Encoding.UTF8.GetBytes(actual);
-        if (a.Length != b.Length)
+        if (string.IsNullOrWhiteSpace(storedHash))
         {
-            return false;
+            return true;
         }
 
-        return CryptographicOperations.FixedTimeEquals(a, b);
+        var parts = storedHash.Split('$', 4);
+        return parts.Length != 4
+               || !string.Equals(parts[0], Prefix, StringComparison.Ordinal)
+               || !int.TryParse(parts[1], out var iterations)
+               || iterations < DefaultIterations;
     }
 }

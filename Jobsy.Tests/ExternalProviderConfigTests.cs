@@ -79,7 +79,10 @@ public class ExternalProviderConfigTests
                 db,
                 config,
                 new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()),
-                Microsoft.Extensions.Logging.Abstractions.NullLogger<DeviceSessionService>.Instance));
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<DeviceSessionService>.Instance),
+            new Jobsy.Infrastructure.Services.EmailServiceStub(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<Jobsy.Infrastructure.Services.EmailServiceStub>.Instance),
+            new Jobsy.Api.Security.MfaChallengeService(
+                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())));
     }
 
     private static JobsyDbContext CreateDb()

@@ -8,9 +8,9 @@ public sealed class JobsyFeatureOptions
     public const string SectionName = "JobsyFeatures";
 
     /// <summary>
-    /// When true, the apply flow accepts an optional Authenticator stub flag (no real MFA).
+    /// When true, users can enrol a TOTP authenticator.
     /// </summary>
-    public bool AuthenticatorEnabled { get; set; }
+    public bool AuthenticatorEnabled { get; set; } = true;
 
     /// <summary>
     /// When true, registration API may return the activation URL in the submit response (local demo only).

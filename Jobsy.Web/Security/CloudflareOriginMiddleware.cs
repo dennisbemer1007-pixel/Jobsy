@@ -55,6 +55,26 @@ public sealed class CloudflareOriginMiddleware
             return;
         }
 
+        // Only a request which passed the origin-secret check may supply the Cloudflare
+        // client address. This keeps rate limits and audit data tied to the browser IP.
+        if (_enforce)
+        {
+            if (System.Net.IPAddress.TryParse(
+                    context.Request.Headers["CF-Connecting-IP"].ToString(),
+                    out var clientIp))
+            {
+                context.Connection.RemoteIpAddress = clientIp;
+            }
+
+            if (string.Equals(
+                    context.Request.Headers["X-Forwarded-Proto"].ToString(),
+                    "https",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                context.Request.Scheme = Uri.UriSchemeHttps;
+            }
+        }
+
         await _next(context);
     }
 

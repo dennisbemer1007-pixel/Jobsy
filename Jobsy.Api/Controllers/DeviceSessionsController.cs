@@ -89,7 +89,8 @@ public sealed class DeviceSessionsController : ControllerBase
             rotated.HasSalesReferral,
             rotated.SessionVersion,
             rotated.SessionToken,
-            rotated.UserId));
+            rotated.UserId,
+            rotated.MfaVerified));
     }
 
     [HttpGet]

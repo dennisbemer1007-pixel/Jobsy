@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Jobsy.Api.Models;
+using Jobsy.Api.Security;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -25,6 +26,8 @@ public class AuthController : ControllerBase
     private readonly IAmbassadeurAttributionService _ambassadeurAttribution;
     private readonly IHostEnvironment _environment;
     private readonly IDeviceSessionService _deviceSessions;
+    private readonly IEmailService _email;
+    private readonly MfaChallengeService _mfaChallenges;
 
     public AuthController(
         JobsyDbContext db,
@@ -32,7 +35,9 @@ public class AuthController : ControllerBase
         IIntegrationCredentialService credentials,
         IAmbassadeurAttributionService ambassadeurAttribution,
         IHostEnvironment environment,
-        IDeviceSessionService deviceSessions)
+        IDeviceSessionService deviceSessions,
+        IEmailService email,
+        MfaChallengeService mfaChallenges)
     {
         _db = db;
         _configuration = configuration;
@@ -40,6 +45,8 @@ public class AuthController : ControllerBase
         _ambassadeurAttribution = ambassadeurAttribution;
         _environment = environment;
         _deviceSessions = deviceSessions;
+        _email = email;
+        _mfaChallenges = mfaChallenges;
     }
 
     /// <summary>
@@ -62,17 +69,57 @@ public class AuthController : ControllerBase
         var credential = await _db.LocalAuthCredentials
             .FirstOrDefaultAsync(c => c.Email == email, cancellationToken);
 
-        if (credential is null
-            || !JobsyPasswordHasher.Verify(request.Password, credential.PasswordHash))
+        var genericError = new { message = "Ongeldige e-mail of wachtwoord." };
+        var now = DateTime.UtcNow;
+        if (credential is null)
         {
-            return Unauthorized(new { message = "Ongeldige e-mail of wachtwoord." });
+            return Unauthorized(genericError);
         }
 
+        if (credential.LockoutUntil is DateTime lockedUntil && lockedUntil > now)
+        {
+            return Unauthorized(genericError);
+        }
+
+        if (!JobsyPasswordHasher.Verify(request.Password, credential.PasswordHash))
+        {
+            credential.FailedLoginCount++;
+            var lockoutStarted = false;
+            var duration = LoginLockoutRules.LockoutDuration(credential.FailedLoginCount);
+            if (duration > TimeSpan.Zero)
+            {
+                credential.LockoutUntil = now.Add(duration);
+                lockoutStarted = true;
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+            if (lockoutStarted)
+            {
+                try
+                {
+                    await _email.SendAsync(new EmailMessage(
+                        credential.Email,
+                        "Je Lobsy-account is tijdelijk geblokkeerd",
+                        "<p>Er zijn meerdere mislukte inlogpogingen gedaan. Je account is tijdelijk geblokkeerd. Was je dit niet zelf? Kies dan na de blokkade een nieuw wachtwoord.</p>",
+                        "AccountLockout"),
+                        cancellationToken);
+                }
+                catch
+                {
+                    // The lockout must never depend on e-mail delivery.
+                }
+            }
+
+            return Unauthorized(genericError);
+        }
+
+        credential.FailedLoginCount = 0;
+        credential.LockoutUntil = null;
         if (JobsyPasswordHasher.NeedsRehash(credential.PasswordHash))
         {
             credential.PasswordHash = JobsyPasswordHasher.Hash(request.Password);
-            await _db.SaveChangesAsync(cancellationToken);
         }
+        await _db.SaveChangesAsync(cancellationToken);
 
         var user = await _db.Users
             .Include(u => u.CompanyMemberships)
@@ -80,7 +127,21 @@ public class AuthController : ControllerBase
 
         if (user is null || !user.IsActive)
         {
-            return Unauthorized(new { message = "Account is niet actief." });
+            return Unauthorized(genericError);
+        }
+
+        if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
+        {
+            return Ok(new LocalLoginResponse(
+                user.Email,
+                user.FullName,
+                user.Role.ToString(),
+                user.CompanyId,
+                [],
+                RequiresMfa: true,
+                MfaEnrolled: user.AuthenticatorEnabled,
+                MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice),
+                UserId: user.Id));
         }
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
@@ -232,6 +293,24 @@ public class AuthController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
+        {
+            return Ok(new EnsureExternalUserResponse(
+                user.Email,
+                user.FullName,
+                user.Role.ToString(),
+                user.CompanyId,
+                [],
+                isNew,
+                false,
+                false,
+                false,
+                UserId: user.Id,
+                RequiresMfa: true,
+                MfaEnrolled: user.AuthenticatorEnabled,
+                MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice)));
+        }
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
         var sessionToken = CreateLocalSessionToken(user.Email, user.Id);

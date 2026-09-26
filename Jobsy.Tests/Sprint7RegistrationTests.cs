@@ -26,7 +26,7 @@ public class Sprint7RegistrationTests
             "nova.branch@jobsy.local",
             null,
             AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         Assert.False(submit.RequiresTakeover);
         Assert.Equal(CompanyRegistrationStatus.PendingActivation, submit.Status);
@@ -51,7 +51,7 @@ public class Sprint7RegistrationTests
         Assert.Equal(activated.BranchCompanyId, activated.CompanyId);
 
         var credential = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "nova.branch@jobsy.local");
-        Assert.True(Jobsy.Infrastructure.Security.JobsyPasswordHasher.Verify("TestPass1!", credential.PasswordHash));
+        Assert.True(Jobsy.Infrastructure.Security.JobsyPasswordHasher.Verify("TestPassphrase!", credential.PasswordHash));
         Assert.Null(await db.CompanyRegistrations
             .Where(r => r.Id == submit.RegistrationId)
             .Select(r => r.PasswordHash)
@@ -84,7 +84,7 @@ public class Sprint7RegistrationTests
             "welcome.org@jobsy.local",
             null,
             AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         var token = await db.CompanyRegistrations
             .Where(r => r.Id == submit.RegistrationId)
@@ -119,7 +119,7 @@ public class Sprint7RegistrationTests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990001", "99990001_0001", RegistrationScope.Organization,
             "A", "hidden.url@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         // AVG: anonymous submit must not leak the activation token when the flag is off.
         Assert.Null(submit.ActivationUrl);
@@ -174,7 +174,7 @@ public class Sprint7RegistrationTests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990001", "99990001_0001", RegistrationScope.BranchOnly,
             "A", "expired.pass@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         var registration = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
         Assert.False(string.IsNullOrWhiteSpace(registration.PasswordHash));
@@ -198,7 +198,7 @@ public class Sprint7RegistrationTests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990001", "99990001_0001", RegistrationScope.BranchOnly,
             "Code User", "code.user@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         Assert.NotNull(submit.VerificationExpiresAt);
         Assert.Contains("bevestigingscode", submit.Message, StringComparison.OrdinalIgnoreCase);
@@ -233,7 +233,7 @@ public class Sprint7RegistrationTests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990001", "99990001_0001", RegistrationScope.BranchOnly,
             "X", "taken@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         Assert.Equal(CompanyRegistrationStatus.PendingActivation, submit.Status);
         Assert.Contains("bevestigingscode", submit.Message, StringComparison.OrdinalIgnoreCase);
@@ -249,7 +249,7 @@ public class Sprint7RegistrationTests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990001", "99990001_0001", RegistrationScope.BranchOnly,
             "A", "purge.me@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         var reg = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
         reg.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(-1);
@@ -339,7 +339,7 @@ public class Sprint7RegistrationTests
             "nova.org@jobsy.local",
             null,
             AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         var token = await db.CompanyRegistrations
             .Where(r => r.Id == submit.RegistrationId)
@@ -363,12 +363,12 @@ public class Sprint7RegistrationTests
         await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990002", "99990002_0002", RegistrationScope.BranchOnly,
             "Sibling Pending", "sibling.pending@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         var orgSubmit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990002", "99990002_0001", RegistrationScope.Organization,
             "Org Manager", "org.skip@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         var token = await db.CompanyRegistrations.Where(r => r.Id == orgSubmit.RegistrationId)
             .Select(r => r.ActivationToken).SingleAsync();
@@ -388,13 +388,13 @@ public class Sprint7RegistrationTests
         await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990004", "99990004_0001", RegistrationScope.BranchOnly,
             "A", "a@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => sut.SubmitAsync(
             new RegistrationSubmitRequest(
                 "99990004", "99990004_0001", RegistrationScope.BranchOnly,
                 "B", "b2@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!")));
+            Password: "TestPassphrase!")));
     }
 
     [Fact]
@@ -444,7 +444,7 @@ public class Sprint7RegistrationTests
             "requester@jobsy.local",
             null,
             AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         Assert.True(submit.RequiresTakeover);
         Assert.Equal(CompanyRegistrationStatus.TakeoverPending, submit.Status);
@@ -517,7 +517,7 @@ public class Sprint7RegistrationTests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990005", "99990005_0001", RegistrationScope.Organization,
             "Req", "req.org@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
         await VerifyTakeoverEmailAsync(db, sut, submit.RegistrationId);
         var takeoverId = await db.EstablishmentTakeoverRequests
             .Where(t => t.RegistrationId == submit.RegistrationId).Select(t => t.Id).SingleAsync();
@@ -535,7 +535,7 @@ public class Sprint7RegistrationTests
         var first = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990004", "99990004_0001", RegistrationScope.BranchOnly,
             "A", "a@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
         var token = await db.CompanyRegistrations.Where(r => r.Id == first.RegistrationId)
             .Select(r => r.ActivationToken).SingleAsync();
         await sut.ActivateAsync(token);
@@ -543,7 +543,7 @@ public class Sprint7RegistrationTests
         var second = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990004", "99990004_0001", RegistrationScope.BranchOnly,
             "B", "b@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
         Assert.True(second.RequiresTakeover);
     }
 
@@ -593,7 +593,7 @@ public class Sprint7RegistrationTests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990006", "99990006_0001", RegistrationScope.Organization,
             "New EM", "new.em@jobsy.local", null, AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
         await VerifyTakeoverEmailAsync(db, sut, submit.RegistrationId);
         var takeoverId = await db.EstablishmentTakeoverRequests
             .Where(t => t.RegistrationId == submit.RegistrationId).Select(t => t.Id).SingleAsync();

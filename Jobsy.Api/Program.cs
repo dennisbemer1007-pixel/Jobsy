@@ -40,13 +40,14 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.ForwardLimit = 1;
-    // Render / reverse proxies; trust edge headers for HTTPS cookies and redirects.
-    options.KnownNetworks.Clear();
-    options.KnownProxies.Clear();
+    // Keep ASP.NET's loopback trusted proxies. Cloudflare client IP is applied only after
+    // CloudflareOriginMiddleware validates the injected origin-secret header.
 });
 
 builder.Services.AddJobsyApiPerformance();
 builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<MfaChallengeService>();
+builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -87,7 +88,9 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddPolicy("auth", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            httpContext.User.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value
+            ?? httpContext.Connection.RemoteIpAddress?.ToString()
+            ?? "unknown",
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 20,
@@ -130,7 +133,9 @@ builder.Services.AddRateLimiter(options =>
               ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
               ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
             : null;
-        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var ip = httpContext.User.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value
+                 ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                 ?? "unknown";
         var partition = string.IsNullOrWhiteSpace(userKey) ? $"ip:{ip}" : $"user:{userKey}|ip:{ip}";
         return RateLimitPartition.GetFixedWindowLimiter(
             partition,
@@ -249,9 +254,9 @@ else
 }
 
 app.UseCors("JobsyWeb");
-app.UseRateLimiter();
-
 app.UseAuthentication();
+app.UseRateLimiter();
+app.UseLoginProtection();
 app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new

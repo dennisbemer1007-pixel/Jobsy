@@ -33,7 +33,8 @@ public sealed class DeviceSessionService : IDeviceSessionService
     public async Task<DeviceSessionCreateResult> CreateAsync(
         Guid userId,
         string? userAgent,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool mfaVerified = false)
     {
         var raw = DeviceRefreshToken.Generate();
         var now = DateTime.UtcNow;
@@ -46,6 +47,7 @@ public sealed class DeviceSessionService : IDeviceSessionService
             CreatedAtUtc = now,
             LastUsedAtUtc = now,
             ExpiresAtUtc = now.Add(DeviceSessionRules.Lifetime),
+            MfaVerifiedUntilUtc = mfaVerified ? now.AddDays(30) : null,
             UserAgent = Truncate(userAgent, 512),
             DeviceName = DeviceNameFormatter.FromUserAgent(userAgent)
         };
@@ -57,7 +59,8 @@ public sealed class DeviceSessionService : IDeviceSessionService
             session.FamilyId,
             raw,
             session.ExpiresAtUtc,
-            session.DeviceName);
+            session.DeviceName,
+            session.MfaVerifiedUntilUtc > now);
     }
 
     public async Task<DeviceSessionRotateResult?> RotateAsync(
@@ -252,7 +255,8 @@ public sealed class DeviceSessionService : IDeviceSessionService
             hasApps,
             hasSales,
             user.SessionVersion,
-            CreateLocalSessionToken(user.Email, user.Id));
+            CreateLocalSessionToken(user.Email, user.Id),
+            session.MfaVerifiedUntilUtc > now);
         }
         finally
         {

@@ -29,8 +29,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.ForwardLimit = 1;
-    options.KnownNetworks.Clear();
-    options.KnownProxies.Clear();
+    // Do not trust all reverse proxies. Cloudflare's client IP is used only after its
+    // injected origin secret has been validated by CloudflareOriginMiddleware.
 });
 
 builder.Services.AddJobsyDataProtection(builder.Configuration, builder.Environment);
@@ -56,6 +56,7 @@ builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.Circu
 builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddSingleton<JobsyAccessTokenIssuer>();
 builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddHttpClient("JobsySessionSecurity");
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddScoped<CultureState>();
@@ -162,15 +163,16 @@ app.UseMiddleware<VersionedAssetCacheMiddleware>();
 // Scripts use a per-request nonce (no script-src 'unsafe-inline').
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
-app.UseRateLimiter();
-
 // Apply Integraties ClientId/Secret before OIDC/Google redeem the auth code on callback.
 app.UseExternalAuthCallbackCredentials();
 
 app.UseAuthentication();
+app.UseRateLimiter();
+app.UseLoginProtection();
 app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();
 app.UseAuthorization();
+app.UseMfaEnforcement();
 app.UseAntiforgery();
 
 app.MapJobsyAuthEndpoints();

@@ -7,13 +7,13 @@ public class RegistrationPasswordRulesTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    [InlineData("short1")]
-    [InlineData("allletters")]
-    [InlineData("12345678")]
+    [InlineData("kort")]
+    [InlineData("password123!")]
+    [InlineData("123456789012")]
     public void Rejects_weak_passwords(string? password)
         => Assert.Throws<ArgumentException>(() => RegistrationPasswordRules.Validate(password));
 
     [Fact]
-    public void Accepts_letter_and_digit_password()
-        => RegistrationPasswordRules.Validate("TestPass1!");
+    public void Accepts_long_passphrase_without_forced_complexity()
+        => RegistrationPasswordRules.Validate("zeeuws landschap");
 }

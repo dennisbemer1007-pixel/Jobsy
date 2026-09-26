@@ -59,6 +59,26 @@ public sealed class CloudflareOriginMiddleware
             return;
         }
 
+        // CF-Connecting-IP is meaningful only after the origin secret was checked.  Do not
+        // accept X-Forwarded-For from arbitrary clients or trust every reverse proxy.
+        if (_enforce)
+        {
+            if (System.Net.IPAddress.TryParse(
+                    context.Request.Headers["CF-Connecting-IP"].ToString(),
+                    out var clientIp))
+            {
+                context.Connection.RemoteIpAddress = clientIp;
+            }
+
+            if (string.Equals(
+                    context.Request.Headers["X-Forwarded-Proto"].ToString(),
+                    "https",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                context.Request.Scheme = Uri.UriSchemeHttps;
+            }
+        }
+
         await _next(context);
     }
 

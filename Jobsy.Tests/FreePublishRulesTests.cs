@@ -101,7 +101,7 @@ public class FreePublishProductTests
             "promo.free@jobsy.local",
             null,
             AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         var token = await db.CompanyRegistrations
             .Where(r => r.Id == submit.RegistrationId)
@@ -132,7 +132,7 @@ public class FreePublishProductTests
             "promo.paid@jobsy.local",
             null,
             AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         var token = await db.CompanyRegistrations
             .Where(r => r.Id == submit.RegistrationId)
@@ -164,7 +164,7 @@ public class FreePublishProductTests
             "flow.full@jobsy.local",
             null,
             AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
         Assert.False(submit.RequiresTakeover);
         Assert.Equal(CompanyRegistrationStatus.PendingActivation, submit.Status);
 
@@ -280,7 +280,7 @@ public class FreePublishProductTests
             "flow.org@jobsy.local",
             null,
             AcceptedTerms: true,
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
         var token = await db.CompanyRegistrations
             .Where(r => r.Id == submit.RegistrationId)
             .Select(r => r.ActivationToken)

@@ -90,7 +90,21 @@ public record LocalLoginResponse(
     Guid? DeviceSessionId = null,
     string? DeviceRefreshToken = null,
     DateTime? DeviceExpiresAtUtc = null,
-    Guid? UserId = null);
+    Guid? UserId = null,
+    bool RequiresMfa = false,
+    bool MfaEnrolled = false,
+    string? MfaChallengeToken = null,
+    bool MfaVerified = false,
+    IReadOnlyList<string>? RecoveryCodes = null);
+
+public record MfaEnrollmentRequest(string ChallengeToken);
+
+public record MfaEnrollmentResponse(string Secret, string ProvisioningUri);
+
+public record MfaVerifyRequest(
+    string ChallengeToken,
+    string? Code = null,
+    string? RecoveryCode = null);
 
 public record EnsureExternalUserRequest(
     string Email,
@@ -119,7 +133,10 @@ public record EnsureExternalUserResponse(
     int SessionVersion = 0,
     /// <summary>One-time code for in-scope PWA cookie exchange (external login).</summary>
     string? HandoffCode = null,
-    Guid? UserId = null);
+    Guid? UserId = null,
+    bool RequiresMfa = false,
+    bool MfaEnrolled = false,
+    string? MfaChallengeToken = null);
 
 public record ExternalProvidersStatusResponse(bool Entra, bool Google);
 

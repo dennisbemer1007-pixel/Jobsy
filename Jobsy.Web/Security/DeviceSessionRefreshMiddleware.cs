@@ -141,6 +141,7 @@ public sealed class DeviceSessionRefreshMiddleware
         public int SessionVersion { get; set; }
         public string? SessionToken { get; set; }
         public Guid? UserId { get; set; }
+        public bool MfaVerified { get; set; }
     }
 }
 
@@ -199,6 +200,11 @@ public static class AuthPrincipalFactory
         if (profile.ShowCandidateHowTo)
         {
             identity.AddClaim(new Claim("show_candidate_how_to", "1"));
+        }
+
+        if (profile.MfaVerified)
+        {
+            identity.AddClaim(new Claim(JobsyClaimTypes.MfaVerified, "1"));
         }
 
         return new ClaimsPrincipal(identity);

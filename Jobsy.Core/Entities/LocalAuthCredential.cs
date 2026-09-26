@@ -12,4 +12,10 @@ public class LocalAuthCredential
     public string Email { get; set; } = string.Empty;
     /// <summary>PBKDF2 password hash (see JobsyPasswordHasher).</summary>
     public string PasswordHash { get; set; } = string.Empty;
+
+    /// <summary>Failed password attempts since the last successful sign-in.</summary>
+    public int FailedLoginCount { get; set; }
+
+    /// <summary>Until when password sign-in is temporarily blocked.</summary>
+    public DateTime? LockoutUntil { get; set; }
 }

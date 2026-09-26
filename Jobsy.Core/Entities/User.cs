@@ -60,6 +60,17 @@ public class User
     /// <summary>Last successful login (local or external). Null = never logged in before.</summary>
     public DateTime? LastLoginAtUtc { get; set; }
 
+    /// <summary>Data-protection encrypted TOTP seed. Never expose this value through an API.</summary>
+    public string? AuthenticatorSecret { get; set; }
+
+    /// <summary>Whether the encrypted authenticator seed has been verified with a valid TOTP.</summary>
+    public bool AuthenticatorEnabled { get; set; }
+
+    /// <summary>JSON array of SHA-256 hashes of single-use recovery codes.</summary>
+    public string? RecoveryCodesHash { get; set; }
+
+    public DateTime? AuthenticatorEnrolledAtUtc { get; set; }
+
     /// <summary>
     /// Incremented to invalidate all cookie principals (password change, logout-all, admin block).
     /// Mirrored as a claim and checked in CookieAuthenticationEvents.OnValidatePrincipal.

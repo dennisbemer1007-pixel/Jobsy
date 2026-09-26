@@ -68,7 +68,7 @@ public class CoreFunctionalFlowE2ETests
             null,
             AcceptedTerms: true,
             SalesManagerTrackingCode: "SM-DIRECT1",
-            Password: "TestPass1!"));
+            Password: "TestPassphrase!"));
 
         Assert.Equal(CompanyRegistrationStatus.PendingActivation, submit.Status);
         var activationToken = await db.CompanyRegistrations
