@@ -62,6 +62,29 @@ public class JwtPemBootstrapTests
         Assert.NotNull(web);
     }
 
+    [Fact]
+    public async Task Cloudflare_middleware_sets_https_Scheme_without_origin_secret()
+    {
+        var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
+        var env = new FakeHostEnvironment { EnvironmentName = Environments.Production };
+        var scheme = "http";
+        RequestDelegate next = ctx =>
+        {
+            scheme = ctx.Request.Scheme;
+            return Task.CompletedTask;
+        };
+
+        var web = new Jobsy.Web.Security.CloudflareOriginMiddleware(next, config, env);
+        var http = new DefaultHttpContext();
+        http.Request.Scheme = "http";
+        http.Request.Headers["X-Forwarded-Proto"] = "https, https";
+
+        await web.InvokeAsync(http);
+
+        Assert.Equal(Uri.UriSchemeHttps, scheme);
+        Assert.Equal(Uri.UriSchemeHttps, http.Request.Scheme);
+    }
+
     private static System.Security.Claims.ClaimsPrincipal CreatePrincipal(Guid userId)
     {
         var identity = new System.Security.Claims.ClaimsIdentity(

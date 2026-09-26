@@ -57,27 +57,35 @@ public sealed class CloudflareOriginMiddleware
             return;
         }
 
-        // CF-Connecting-IP is meaningful only after the origin secret was checked.  Do not
-        // accept X-Forwarded-For from arbitrary clients or trust every reverse proxy.
-        if (_enforce)
-        {
-            if (System.Net.IPAddress.TryParse(
-                    context.Request.Headers["CF-Connecting-IP"].ToString(),
-                    out var clientIp))
-            {
-                context.Connection.RemoteIpAddress = clientIp;
-            }
+        // Keep Scheme=https behind Render/CF even when origin enforcement is off so
+        // cookie Secure policies and absolute redirects stay correct.
+        ApplyForwardedHttps(context);
 
-            if (string.Equals(
-                    context.Request.Headers["X-Forwarded-Proto"].ToString(),
-                    "https",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                context.Request.Scheme = Uri.UriSchemeHttps;
-            }
+        // CF-Connecting-IP is meaningful only after the origin secret was checked.
+        if (_enforce
+            && System.Net.IPAddress.TryParse(
+                context.Request.Headers["CF-Connecting-IP"].ToString(),
+                out var clientIp))
+        {
+            context.Connection.RemoteIpAddress = clientIp;
         }
 
         await _next(context);
+    }
+
+    internal static void ApplyForwardedHttps(HttpContext context)
+    {
+        var raw = context.Request.Headers["X-Forwarded-Proto"].ToString();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return;
+        }
+
+        var proto = raw.Split(',', 2)[0].Trim();
+        if (string.Equals(proto, "https", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Request.Scheme = Uri.UriSchemeHttps;
+        }
     }
 
     private bool IsValidOrigin(HttpContext context)

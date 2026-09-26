@@ -53,27 +53,39 @@ public sealed class CloudflareOriginMiddleware
             return;
         }
 
+        // Render terminates TLS; Kestrel sees HTTP. Without https Scheme, Secure auth
+        // cookies (CookieSecurePolicy.Always) fail to clear/round-trip and /home↔/login
+        // loops (ERR_TOO_MANY_REDIRECTS). Apply Forwarded-Proto even when origin
+        // enforcement is off (bootstrap / unset CLOUDFLARE_ORIGIN_SECRET).
+        ApplyForwardedHttps(context);
+
         // Only a request which passed the origin-secret check may supply the Cloudflare
         // client address. This keeps rate limits and audit data tied to the browser IP.
-        if (_enforce)
+        if (_enforce
+            && System.Net.IPAddress.TryParse(
+                context.Request.Headers["CF-Connecting-IP"].ToString(),
+                out var clientIp))
         {
-            if (System.Net.IPAddress.TryParse(
-                    context.Request.Headers["CF-Connecting-IP"].ToString(),
-                    out var clientIp))
-            {
-                context.Connection.RemoteIpAddress = clientIp;
-            }
-
-            if (string.Equals(
-                    context.Request.Headers["X-Forwarded-Proto"].ToString(),
-                    "https",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                context.Request.Scheme = Uri.UriSchemeHttps;
-            }
+            context.Connection.RemoteIpAddress = clientIp;
         }
 
         await _next(context);
+    }
+
+    internal static void ApplyForwardedHttps(HttpContext context)
+    {
+        var raw = context.Request.Headers["X-Forwarded-Proto"].ToString();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return;
+        }
+
+        // CF + Render may send "https, https" — use the leftmost (original client) hop.
+        var proto = raw.Split(',', 2)[0].Trim();
+        if (string.Equals(proto, "https", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Request.Scheme = Uri.UriSchemeHttps;
+        }
     }
 
     private bool IsValidOrigin(HttpContext context)

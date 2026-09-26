@@ -162,17 +162,21 @@
         // Closing the dialog always returns to the banenkaart (not a protected returnUrl).
         _dismissUrl = AuthRedirects.BanenkaartPath;
 
-        if (http?.User.Identity?.IsAuthenticated == true)
+        var errorCode = query.TryGetValue("error", out var error) ? error.ToString() : null;
+        var sessionExpired = string.Equals(errorCode, "session-expired", StringComparison.OrdinalIgnoreCase);
+
+        // Do not bounce authenticated users away when session-expired is set — a sticky
+        // Jobsy.Auth cookie with a cleared LastActivity used to cause /home↔/login loops.
+        if (http?.User.Identity?.IsAuthenticated == true && !sessionExpired)
         {
             Navigation.NavigateTo(_returnUrl, forceLoad: true);
             return;
         }
 
-        if (query.TryGetValue("error", out var error))
+        if (!string.IsNullOrEmpty(errorCode))
         {
-            var code = error.ToString();
-            _sessionExpiredNotice = string.Equals(code, "session-expired", StringComparison.OrdinalIgnoreCase);
-            _errorMessage = code switch
+            _sessionExpiredNotice = sessionExpired;
+            _errorMessage = errorCode switch
             {
                 "invalid" => Culture["Login.ErrorInvalid"],
                 "retry" => Culture["Login.ErrorRetry"],

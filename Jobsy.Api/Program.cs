@@ -39,9 +39,12 @@ Jobsy.Core.Security.VerificationCodes.ConfigurePepper(otpPepper);
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.ForwardLimit = 1;
-    // Keep ASP.NET's loopback trusted proxies. Cloudflare client IP is applied only after
-    // CloudflareOriginMiddleware validates the injected origin-secret header.
+    // Cloudflare → Render: two hops. Loopback-only KnownProxies would leave Scheme=http
+    // and break Secure cookies. Client IP is still overridden from CF-Connecting-IP only
+    // after CloudflareOriginMiddleware validates the origin secret.
+    options.ForwardLimit = 2;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 
 builder.Services.AddJobsyApiPerformance();

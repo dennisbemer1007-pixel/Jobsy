@@ -28,9 +28,13 @@ if (!string.IsNullOrWhiteSpace(sentryDsn))
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.ForwardLimit = 1;
-    // Do not trust all reverse proxies. Cloudflare's client IP is used only after its
-    // injected origin secret has been validated by CloudflareOriginMiddleware.
+    // Cloudflare → Render is two hops; default KnownProxies (loopback-only) ignores both.
+    // Clear so X-Forwarded-Proto reaches Kestrel (Secure cookies / no redirect loops).
+    // Client IP still comes from CF-Connecting-IP only after CloudflareOriginMiddleware
+    // validates the origin secret — do not treat X-Forwarded-For as authoritative alone.
+    options.ForwardLimit = 2;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 
 builder.Services.AddJobsyDataProtection(builder.Configuration, builder.Environment);
