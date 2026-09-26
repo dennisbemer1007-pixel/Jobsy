@@ -52,15 +52,17 @@ public sealed class CandidateKompasService : ICandidateKompasService
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
             ?? throw new InvalidOperationException("Gebruiker niet gevonden.");
 
-        var featuresTask = _features.GetAsync(cancellationToken);
-        var cvTask = LoadCvAsync(userId, cancellationToken);
-        var refsTask = _db.CandidateReferences.AsNoTracking()
+        var features = await _features.GetAsync(cancellationToken);
+
+        // Direct _db queries and scoped services share one DbContext — keep sequential.
+        var uploadedCv = await LoadCvAsync(userId, cancellationToken);
+        var references = await _db.CandidateReferences.AsNoTracking()
             .Where(r => r.UserId == userId)
             .OrderBy(r => r.SortOrder)
             .ThenBy(r => r.CreatedAtUtc)
             .Select(r => new CandidateReferenceSummaryDto(r.Id, r.EmployerName, r.ContactName, r.Email, r.Phone))
             .ToListAsync(cancellationToken);
-        var whoAmIRowTask = _db.CandidateWhoAmIProfiles.AsNoTracking()
+        var whoAmIRow = await _db.CandidateWhoAmIProfiles.AsNoTracking()
             .Where(w => w.UserId == userId)
             .Select(w => new
             {
@@ -72,34 +74,19 @@ public sealed class CandidateKompasService : ICandidateKompasService
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        var competenciesTask = _competencies.GetAsync(userId, cancellationToken);
-        var careerTask = _career.GetAsync(userId, cancellationToken, includeMatches: false);
-        var cultureTask = _culture.GetAsync(userId, cancellationToken);
-        var valuesTask = _values.GetAsync(userId, cancellationToken);
-        var matchesTask = _matches.GetAsync(userId, cancellationToken);
-        var competenceDeepTask = _deep.GetStateAsync(userId, AssessmentKind.Competence, cancellationToken);
-        var careerDeepTask = _deep.GetStateAsync(userId, AssessmentKind.Career, cancellationToken);
-        var cultureDeepTask = _deep.GetStateAsync(userId, AssessmentKind.Culture, cancellationToken);
-        var valuesDeepTask = _deep.GetStateAsync(userId, AssessmentKind.Values, cancellationToken);
-
-        await Task.WhenAll(
-            featuresTask,
-            cvTask,
-            refsTask,
-            whoAmIRowTask,
-            competenciesTask,
-            careerTask,
-            cultureTask,
-            valuesTask,
-            matchesTask,
-            competenceDeepTask,
-            careerDeepTask,
-            cultureDeepTask,
-            valuesDeepTask);
+        var competencies = await _competencies.GetAsync(userId, cancellationToken);
+        var careerState = await _career.GetAsync(userId, cancellationToken, includeMatches: false);
+        var culture = await _culture.GetAsync(userId, cancellationToken);
+        var values = await _values.GetAsync(userId, cancellationToken);
+        var (matches, matchStatus) = await _matches.GetAsync(userId, cancellationToken);
+        var competenceDeep = await _deep.GetStateAsync(userId, AssessmentKind.Competence, cancellationToken);
+        var careerDeep = await _deep.GetStateAsync(userId, AssessmentKind.Career, cancellationToken);
+        var cultureDeep = await _deep.GetStateAsync(userId, AssessmentKind.Culture, cancellationToken);
+        var valuesDeep = await _deep.GetStateAsync(userId, AssessmentKind.Values, cancellationToken);
 
         var prefs = TryPrefs(user.PreferencesJson);
-        var hasUploadedCv = cvTask.Result is not null;
-        var hasReferences = refsTask.Result.Count > 0;
+        var hasUploadedCv = uploadedCv is not null;
+        var hasReferences = references.Count > 0;
         var profile = new MeProfileSummaryDto(
             user.Id,
             user.Email,
@@ -112,24 +99,23 @@ public sealed class CandidateKompasService : ICandidateKompasService
             user.DateOfBirth.HasValue,
             user.OpenForWork,
             user.WhatsAppContactAllowed,
-            featuresTask.Result.AuthenticatorEnabled,
+            features.AuthenticatorEnabled,
             user.HomeLocation?.Latitude,
             user.HomeLocation?.Longitude,
             prefs,
-            cvTask.Result,
-            refsTask.Result);
+            uploadedCv,
+            references);
 
-        var (matches, matchStatus) = matchesTask.Result;
-        var career = careerTask.Result with { TopVacancies = matches };
+        var career = careerState with { TopVacancies = matches };
         var insights = InsightsStatuses.IsUpdating(matchStatus)
                        || InsightsStatuses.IsUpdating(career.InsightsStatus)
             ? InsightsStatuses.Updating
             : InsightsStatuses.Ready;
 
-        var competencyDone = CandidateCompetencyStatuses.IsCompleted(competenciesTask.Result.Status);
+        var competencyDone = CandidateCompetencyStatuses.IsCompleted(competencies.Status);
         var careerDone = CandidateCompetencyStatuses.IsCompleted(career.Status);
-        var cultureDone = CandidateCompetencyStatuses.IsCompleted(cultureTask.Result.Status);
-        var valuesDone = CandidateCompetencyStatuses.IsCompleted(valuesTask.Result.Status);
+        var cultureDone = CandidateCompetencyStatuses.IsCompleted(culture.Status);
+        var valuesDone = CandidateCompetencyStatuses.IsCompleted(values.Status);
         var profileFilled = WhoAmICompleteness.IsProfileFilled(
             user.FullName,
             user.FirstName,
@@ -155,30 +141,30 @@ public sealed class CandidateKompasService : ICandidateKompasService
             hasBackground);
 
         var whoAmI = BuildWhoAmIStory(
-            whoAmIRowTask.Result?.StoryText,
-            whoAmIRowTask.Result?.KeywordsJson,
-            whoAmIRowTask.Result?.StoryGeneratedAtUtc,
-            whoAmIRowTask.Result?.InputFingerprint,
-            whoAmIRowTask.Result?.FromOpenAi ?? false,
+            whoAmIRow?.StoryText,
+            whoAmIRow?.KeywordsJson,
+            whoAmIRow?.StoryGeneratedAtUtc,
+            whoAmIRow?.InputFingerprint,
+            whoAmIRow?.FromOpenAi ?? false,
             profileFilled,
             competencyDone,
             careerDone,
             cultureDone,
-            competenciesTask.Result.Scores,
+            competencies.Scores,
             career.Scores,
-            cultureTask.Result.Scores,
-            valuesTask.Result.Scores);
+            culture.Scores,
+            values.Scores);
 
         return new CandidateKompasDto(
             profile,
-            competenciesTask.Result,
+            competencies,
             career,
-            cultureTask.Result,
-            valuesTask.Result,
-            competenceDeepTask.Result,
-            careerDeepTask.Result,
-            cultureDeepTask.Result,
-            valuesDeepTask.Result,
+            culture,
+            values,
+            competenceDeep,
+            careerDeep,
+            cultureDeep,
+            valuesDeep,
             matches,
             insights,
             whoAmI,
