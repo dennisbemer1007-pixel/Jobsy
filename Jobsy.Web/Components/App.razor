@@ -52,11 +52,12 @@
             .app-shell:has(.jobsy-discovery) .app-header,
             .app-shell:has(.jobsy-discovery) .app-footer { display: none; }
             .jobsy-discovery { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-            .jobsy-discovery .jobsy-chrome { display: block; min-height: 10rem; }
+            .jobsy-discovery .jobsy-chrome { display: block; min-height: 2.75rem; }
             .map-pane, .map-stage, #job-map, .job-map { min-width: 0; }
-            .jobsy-chrome__header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 3.5rem; padding: 0.55rem 0.85rem 0.35rem; }
-            .jobsy-logo, .jobsy-chrome .lobsy-logo, .jobsy-logo__img { width: 48px; height: 48px; }
-            .jobsy-chrome__search { padding: 0.55rem 0.75rem 0.35rem; }
+            .jobsy-chrome__header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 2.75rem; padding: 0.4rem 0.75rem; background: #0f2d5c; }
+            .jobsy-logo, .jobsy-chrome .lobsy-logo, .jobsy-logo__img { width: 34px; height: 34px; }
+            .jobsy-chrome__float { display: flex; gap: 0.4rem; padding: 0.55rem 0.65rem 0; }
+            .jobsy-chrome__search { padding: 0; flex: 1; min-width: 0; }
             .jobsy-search { display: grid; grid-template-columns: 1fr auto; gap: 0.45rem; }
             .jobsy-search input { width: 100%; min-height: 2.75rem; box-sizing: border-box; }
         .login-modal .login-form, .login-modal .login-form label { width: 100%; max-width: 100%; }
@@ -83,9 +84,9 @@
     @if (LoadBlazorRuntime)
     {
         @* Render-blocking versioned CSS — critical shell is already inlined above; full stylesheet is cacheable. *@
-        <link rel="stylesheet" href="css/app.min.css?v=20260926-mapfix3" data-app-css />
+        <link rel="stylesheet" href="css/app.min.css?v=20260926-funda1" data-app-css />
     }
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260926-mapfix3" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260926-funda1" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
@@ -241,7 +242,7 @@
             }
         });
     </script>
-        <script src="js/app-core.js?v=20260926-mapfix3" nonce="@Nonce" defer></script>
+        <script src="js/app-core.js?v=20260926-funda1" nonce="@Nonce" defer></script>
         <script src="js/lobsyPush.js?v=20260925-coral" nonce="@Nonce" defer></script>
     @if (LoadBlazorRuntime)
     {

@@ -22907,3 +22907,614 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     text-decoration: underline;
     text-underline-offset: 2px;
 }
+
+/* ========== Funda mobile banenkaart (k01–k04) ========== */
+.vac-compact {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 0.7rem;
+    align-items: stretch;
+    min-height: 112px;
+    padding: 0.65rem 0.75rem;
+    background: var(--surface);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    border: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.vac-compact:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+}
+
+.vac-compact__media {
+    display: block;
+    width: 72px;
+    height: 96px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
+    text-decoration: none;
+    color: inherit;
+}
+
+.vac-compact__thumb {
+    width: 72px;
+    height: 96px;
+    object-fit: cover;
+    display: block;
+    background: color-mix(in srgb, var(--pearl-mid) 70%, var(--accent-soft));
+    border-radius: var(--radius-sm);
+}
+
+.vac-compact__thumb--empty {
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: repeating-linear-gradient(
+        -45deg,
+        color-mix(in srgb, var(--pearl-mid) 80%, #c5d4a8),
+        color-mix(in srgb, var(--pearl-mid) 80%, #c5d4a8) 8px,
+        color-mix(in srgb, var(--pearl-mid) 60%, #b7c996) 8px,
+        color-mix(in srgb, var(--pearl-mid) 60%, #b7c996) 16px
+    );
+}
+
+.vac-compact__body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.vac-compact__top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+
+.vac-compact__title {
+    margin: 0;
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--text);
+}
+
+.vac-compact__sub {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vac-compact__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.2rem;
+}
+
+.vac-compact__chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.5rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.vac-compact__chip--travel {
+    background: color-mix(in srgb, var(--accent-soft) 80%, #fff);
+    color: var(--brand);
+}
+
+.vac-compact__chip--match {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.vac-compact__wage {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.vac-compact__save {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    margin: -0.35rem -0.35rem 0 0;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.vac-compact__save svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.vac-compact__save.is-saved {
+    color: var(--coral);
+}
+
+.vac-compact--skeleton .vac-compact__thumb {
+    background: var(--pearl-mid);
+}
+
+.vac-compact__skel {
+    display: block;
+    height: 0.7rem;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--pearl-mid), var(--pearl-shine), var(--pearl-mid));
+    background-size: 200% 100%;
+    animation: vac-skel 1.1s ease-in-out infinite;
+}
+
+.vac-compact__skel--title { width: 72%; height: 0.9rem; }
+.vac-compact__skel--sub { width: 88%; margin-top: 0.35rem; }
+.vac-compact__skel-row { display: flex; gap: 0.35rem; margin-top: 0.55rem; }
+.vac-compact__skel--chip { width: 4.5rem; height: 1.35rem; border-radius: 999px; }
+
+@keyframes vac-skel {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vac-compact__skel { animation: none; }
+}
+
+.map-sheet {
+    position: absolute;
+    inset: 0;
+    z-index: 12;
+    pointer-events: none;
+    --map-sheet-y: 100%;
+}
+
+.map-sheet__scrim {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    pointer-events: auto;
+    border: none;
+}
+
+.map-sheet__panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 100%;
+    background: var(--surface);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 28px rgba(15, 45, 92, 0.14);
+    pointer-events: auto;
+    transform: translate3d(0, var(--map-sheet-y), 0);
+    will-change: transform;
+    display: flex;
+    flex-direction: column;
+    overscroll-behavior: contain;
+}
+
+.map-sheet__handle {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    padding: 0.45rem 0 0.2rem;
+    touch-action: none;
+    cursor: grab;
+}
+
+.map-sheet__grab {
+    width: 2.5rem;
+    height: 0.28rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border) 70%, var(--muted));
+}
+
+.map-sheet__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.map-sheet__collapsed {
+    padding: 0 1rem 0.65rem;
+}
+
+.map-sheet__collapsed-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--brand);
+}
+
+.map-sheet__collapsed-hint {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.map-sheet__status-pill {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.55rem);
+    transform: translateX(-50%);
+    z-index: 2;
+    max-width: calc(100% - 2rem);
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    background: var(--brand);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: var(--shadow-lg);
+}
+
+.map-sheet__card-host,
+.map-sheet__cluster-host,
+.map-sheet__list-host {
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.map-sheet__list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0 1rem 0.45rem;
+    flex-shrink: 0;
+}
+
+.map-sheet__list-header h2 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.map-sheet__sort {
+    border: none;
+    background: transparent;
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    min-height: 44px;
+    padding: 0 0.15rem;
+    cursor: pointer;
+}
+
+.map-sheet__cluster-row {
+    display: flex;
+    gap: 0.65rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 0 1rem 0.75rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.map-sheet__cluster-row::-webkit-scrollbar { display: none; }
+
+.map-sheet__cluster-row .vac-compact {
+    flex: 0 0 86%;
+    scroll-snap-align: start;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.map-sheet__dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0 0 0.55rem;
+}
+
+.map-sheet__dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: var(--border);
+}
+
+.map-sheet__dot.is-on {
+    background: var(--brand);
+}
+
+.map-sheet__list-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.map-sheet__list-scroll .vac-compact {
+    border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+    .jobsy-discovery.show-map {
+        grid-template-rows: auto 1fr;
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome {
+        position: relative;
+        z-index: 20;
+        background: transparent;
+        border-bottom: none;
+        pointer-events: none;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__header {
+        pointer-events: auto;
+        background: var(--brand);
+        border-bottom: none;
+        padding: 0.4rem 0.75rem;
+        min-height: 2.75rem;
+        color: #fff;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__header .jobsy-logo__mark {
+        color: #fff;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__header .jobsy-logo__img {
+        width: 34px;
+        height: 34px;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__header-actions .page-help,
+    .jobsy-discovery.show-map .jobsy-chrome__header-actions .notification-bell,
+    .jobsy-discovery.show-map .jobsy-chrome__header-actions .language-selector {
+        display: none;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__header-actions .auth-link--login {
+        border-color: rgba(255, 255, 255, 0.55);
+        background: transparent;
+        color: #fff;
+        border-radius: 999px;
+        min-height: 2.25rem;
+        padding: 0.3rem 0.75rem;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__header-actions .auth-link--login .auth-link__icon {
+        color: #fff;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__header-actions .account-menu__toggle {
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.45);
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__float {
+        pointer-events: none;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 100%;
+        z-index: 18;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 0.65rem 0;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__float > * {
+        pointer-events: auto;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__search {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 0;
+        background: transparent;
+    }
+
+    .jobsy-discovery.show-map .jobsy-search {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        background: var(--surface);
+        border-radius: 999px;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+        padding: 0 0.35rem 0 0.75rem;
+        min-height: 2.75rem;
+    }
+
+    .jobsy-discovery.show-map .jobsy-search input {
+        border: none;
+        background: transparent;
+        padding: 0.55rem 0.25rem;
+        min-height: 2.5rem;
+        border-radius: 0;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .jobsy-discovery.show-map .jobsy-search__btn,
+    .jobsy-discovery.show-map .jobsy-search__clear {
+        display: none;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__search::before {
+        content: "";
+        position: absolute;
+        left: 0.85rem;
+        top: 50%;
+        width: 1rem;
+        height: 1rem;
+        transform: translateY(-50%);
+        background: currentColor;
+        color: var(--muted);
+        opacity: 0.55;
+        mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'><circle cx='11' cy='11' r='7'/><path d='m20 20-3.5-3.5'/></svg>") center / contain no-repeat;
+        pointer-events: none;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__search {
+        position: relative;
+    }
+
+    .jobsy-discovery.show-map .jobsy-search input {
+        padding-left: 1.55rem;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__actions {
+        display: flex;
+        flex: 0 0 auto;
+        gap: 0.4rem;
+        border: none;
+        background: transparent;
+        grid-template-columns: none;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__actions .jobsy-action--match,
+    .jobsy-discovery.show-map .jobsy-chrome__actions .jobsy-action--clear {
+        display: none;
+    }
+
+    .jobsy-discovery.show-map .jobsy-action {
+        border: none;
+        border-radius: 999px;
+        background: var(--surface);
+        box-shadow: var(--shadow-lg);
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+        padding: 0 0.7rem;
+        font-size: 0.78rem;
+    }
+
+    .jobsy-discovery.show-map .jobsy-action__badge {
+        position: absolute;
+        top: -0.2rem;
+        right: -0.15rem;
+        min-width: 1.15rem;
+        height: 1.15rem;
+        padding: 0 0.3rem;
+        border-radius: 999px;
+        background: var(--brand);
+        color: #fff;
+        font-size: 0.65rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .jobsy-discovery.show-map .map-pane {
+        position: relative;
+        grid-row: 2;
+        height: 100%;
+        min-height: 0;
+    }
+
+    .jobsy-discovery.show-map .map-stage,
+    .jobsy-discovery.show-map .job-map,
+    .jobsy-discovery.show-map #job-map,
+    .jobsy-discovery.show-map .job-map-placeholder {
+        min-height: 100%;
+        height: 100%;
+    }
+
+    .jobsy-discovery.show-map .highlight-carousel--map {
+        display: none !important;
+    }
+
+    .jobsy-discovery.show-map .job-map .maplibregl-ctrl-bottom-right {
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+        right: 8px;
+    }
+
+    .jobsy-discovery.show-map .job-map-locate {
+        right: 10px;
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .jobsy-discovery.show-map[data-sheet="card"] .job-map .maplibregl-ctrl-bottom-right,
+    .jobsy-discovery.show-map[data-sheet="card"] .job-map-locate {
+        bottom: calc(168px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .jobsy-discovery.show-map[data-sheet="half"] .job-map .maplibregl-ctrl-bottom-right,
+    .jobsy-discovery.show-map[data-sheet="half"] .job-map-locate,
+    .jobsy-discovery.show-map[data-sheet="full"] .job-map .maplibregl-ctrl-bottom-right,
+    .jobsy-discovery.show-map[data-sheet="full"] .job-map-locate {
+        bottom: calc(52% + env(safe-area-inset-bottom, 0px));
+    }
+
+    .jobsy-discovery.show-map .job-map.maplibregl-map .maplibregl-canvas {
+        filter: saturate(0.82) contrast(0.98) brightness(1.03);
+    }
+
+    .jobsy-discovery.show-map .job-map-popup {
+        display: none !important;
+    }
+
+    .jobsy-chrome__float-search-icon {
+        display: none;
+    }
+
+    .app-shell:has(.jobsy-discovery.show-map) .app-main {
+        padding-bottom: 0;
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    .app-shell:has(.jobsy-discovery.show-map) .bottom-nav {
+        display: none;
+    }
+}
+
+@media (min-width: 769px) {
+    .map-sheet {
+        display: none !important;
+    }
+
+    .jobsy-chrome__float {
+        display: contents;
+    }
+}
+
+.map-sheet__cluster-slide {
+    flex: 0 0 86%;
+    scroll-snap-align: start;
+    min-width: 0;
+}
+
+.map-sheet__cluster-slide .vac-compact {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    width: 100%;
+}
