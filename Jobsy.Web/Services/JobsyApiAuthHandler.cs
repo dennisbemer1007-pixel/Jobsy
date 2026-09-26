@@ -49,6 +49,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         var user = await ResolveUserAsync();
 
         ApplyAccessToken(request, user, httpContext);
+        ApplyTrustedClientIp(request, httpContext);
 
         try
         {
@@ -104,6 +105,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         var retry = await CloneRequestAsync(request, bodyBytes, cancellationToken);
         retry.Options.Set(new HttpRequestOptionsKey<bool>("jobsy-retried"), true);
         ApplyAccessToken(retry, user, httpContext);
+        ApplyTrustedClientIp(retry, httpContext);
         retry.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         return await base.SendAsync(retry, cancellationToken);
     }
@@ -131,6 +133,31 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
         }
+    }
+
+    /// <summary>
+    /// Forwards the browser client IP to the API behind a shared internal secret so
+    /// anonymous public-* rate limits can partition by real user, not the Web hop.
+    /// </summary>
+    private void ApplyTrustedClientIp(HttpRequestMessage request, HttpContext? httpContext)
+    {
+        request.Headers.Remove("X-Jobsy-Client-Ip");
+        request.Headers.Remove("X-Jobsy-Internal-Secret");
+
+        var secret = _configuration["JobsyAuth:InternalClientIpSecret"];
+        if (string.IsNullOrWhiteSpace(secret))
+        {
+            return;
+        }
+
+        var clientIp = httpContext?.Connection.RemoteIpAddress?.ToString();
+        if (string.IsNullOrWhiteSpace(clientIp))
+        {
+            return;
+        }
+
+        request.Headers.TryAddWithoutValidation("X-Jobsy-Client-Ip", clientIp);
+        request.Headers.TryAddWithoutValidation("X-Jobsy-Internal-Secret", secret.Trim());
     }
 
     private async Task<bool> TrySilentDeviceRefreshAsync(HttpContext? httpContext, CancellationToken cancellationToken)

@@ -57,6 +57,9 @@ projects:
                 generateValue: true
               - key: JobsyAuth__ExternalProvisionSecret
                 generateValue: true
+              # Shared Web→API secret for X-Jobsy-Client-Ip rate-limit partitioning.
+              - key: JobsyAuth__InternalClientIpSecret
+                generateValue: true
               # ES256 public key (PEM). Must match Web private key. Set in Dashboard.
               - key: JobsyAuth__Jwt__PublicKeyPem
                 sync: false
@@ -140,6 +143,11 @@ projects:
                   name: jobsy-api
                   type: web
                   envVarKey: JobsyAuth__ExternalProvisionSecret
+              - key: JobsyAuth__InternalClientIpSecret
+                fromService:
+                  name: jobsy-api
+                  type: web
+                  envVarKey: JobsyAuth__InternalClientIpSecret
               # ES256 private key (PEM). Pair with API public key. Set in Dashboard.
               - key: JobsyAuth__Jwt__PrivateKeyPem
                 sync: false
@@ -203,6 +211,8 @@ projects:
               - key: JobsyAuth__LocalSessionSigningKey
                 generateValue: true
               - key: JobsyAuth__ExternalProvisionSecret
+                generateValue: true
+              - key: JobsyAuth__InternalClientIpSecret
                 generateValue: true
               - key: JobsyAuth__Jwt__PublicKeyPem
                 sync: false
@@ -282,6 +292,11 @@ projects:
                   name: lobsy-acc-api
                   type: web
                   envVarKey: JobsyAuth__ExternalProvisionSecret
+              - key: JobsyAuth__InternalClientIpSecret
+                fromService:
+                  name: lobsy-acc-api
+                  type: web
+                  envVarKey: JobsyAuth__InternalClientIpSecret
               - key: JobsyAuth__Jwt__PrivateKeyPem
                 sync: false
               - key: JobsyAuth__Jwt__Issuer

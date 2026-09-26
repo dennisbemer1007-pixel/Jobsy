@@ -85,10 +85,17 @@ builder.Services.AddCors(options =>
 builder.Services.AddRateLimiter(options =>
 {
     var isProduction = builder.Environment.IsProduction();
-    var publicReadLimit = isProduction ? 120 : 10_000;
-    var publicTravelLimit = isProduction ? 30 : 10_000;
+    var publicReadLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicReadPermitLimit")
+        ?? (isProduction ? 120 : 10_000);
+    var publicTravelLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicTravelPermitLimit")
+        ?? (isProduction ? 30 : 10_000);
+    var publicWriteLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicWritePermitLimit")
+        ?? 60;
+    var internalClientIpSecret = builder.Configuration[RateLimitPartitioning.ConfigKey];
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = RateLimitPartitioning.OnRejectedAsync;
+
     options.AddPolicy("auth", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             httpContext.User.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value
@@ -102,16 +109,16 @@ builder.Services.AddRateLimiter(options =>
             }));
     options.AddPolicy("public-write", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 60,
+                PermitLimit = publicWriteLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
     options.AddPolicy("public-read", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = publicReadLimit,
@@ -120,7 +127,7 @@ builder.Services.AddRateLimiter(options =>
             }));
     options.AddPolicy("public-travel", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = publicTravelLimit,
@@ -151,7 +158,7 @@ builder.Services.AddRateLimiter(options =>
     });
     options.AddPolicy("ai", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 10,
@@ -160,7 +167,7 @@ builder.Services.AddRateLimiter(options =>
             }));
     options.AddPolicy("feedback-write", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 8,
@@ -170,7 +177,7 @@ builder.Services.AddRateLimiter(options =>
     // Partner PDF flyer generation (QuestPDF) — tighter than generic public-write.
     options.AddPolicy("public-pdf", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 12,
