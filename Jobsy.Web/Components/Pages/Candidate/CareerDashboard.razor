@@ -554,18 +554,7 @@
             {
                 var completedOrder = step.Order;
                 ApplyDashboard(CareerPaths.FromApi(plan), expandActive: false);
-                var next = _model?.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active);
-                if (next is not null)
-                {
-                    _toastCompletedOrder = completedOrder;
-                    _toastUndoStepKey = step.Id;
-                    _toastMessage = Culture.Format("CareerDash.ToastCompleted", completedOrder, next.Order);
-                }
-                else if (_model?.GoalReached == true)
-                {
-                    _toastUndoStepKey = step.Id;
-                    _toastMessage = Culture.Format("CareerDash.ToastGoal", completedOrder);
-                }
+                ShowCompletionToast(completedOrder, step.Id);
             }
         }
         catch (Exception ex)
@@ -622,13 +611,9 @@
                 var after = _model?.Steps.FirstOrDefault(s => string.Equals(s.Id, beforeKey, StringComparison.Ordinal));
                 if (after is not null && !beforeCompleted && after.Status == CareerStepStatus.Completed)
                 {
+                    ShowCompletionToast(after.Order, after.Id);
                     var next = _model!.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active);
-                    _toastUndoStepKey = after.Id;
-                    _toastCompletedOrder = after.Order;
-                    _toastMessage = next is null
-                        ? Culture.Format("CareerDash.ToastGoal", after.Order)
-                        : Culture.Format("CareerDash.ToastCompleted", after.Order, next.Order);
-                    if (next is not null)
+                    if (next is not null && next.Order > after.Order)
                     {
                         _selectedStepId = next.Id;
                         _cardExpanded = false;
@@ -682,6 +667,26 @@
         _toastMessage = null;
         _toastUndoStepKey = null;
         _toastCompletedOrder = null;
+    }
+
+    private void ShowCompletionToast(int completedOrder, string stepKey)
+    {
+        _toastCompletedOrder = completedOrder;
+        _toastUndoStepKey = stepKey;
+        if (_model?.GoalReached == true)
+        {
+            _toastMessage = Culture.Format("CareerDash.ToastGoal", completedOrder);
+            return;
+        }
+
+        var next = _model?.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active);
+        if (next is not null && next.Order > completedOrder)
+        {
+            _toastMessage = Culture.Format("CareerDash.ToastCompleted", completedOrder, next.Order);
+            return;
+        }
+
+        _toastMessage = Culture.Format("CareerDash.ToastCompletedSimple", completedOrder);
     }
 
     private void ApplyDashboard(CareerDashboardModel model, bool expandActive)
