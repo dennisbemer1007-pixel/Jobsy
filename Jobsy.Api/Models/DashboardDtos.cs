@@ -184,7 +184,13 @@ public record MeProfileDto(
     CandidateUploadedCvInfoDto? UploadedCv = null,
     IReadOnlyList<CandidateReferenceDto>? References = null,
     /// <summary>Null = available immediately (Direct).</summary>
-    DateOnly? AvailableFromDate = null);
+    DateOnly? AvailableFromDate = null,
+    DateTime? TalentPoolConsentAt = null,
+    string? TalentPoolConsentVersion = null,
+    DateTime? TestAiConsentAt = null,
+    string? TestAiConsentVersion = null,
+    DateTime? ParentalConsentAt = null,
+    string? ParentalConsentEmail = null);
 
 public record CandidateUploadedCvInfoDto(
     string FileName,
@@ -202,6 +208,7 @@ public record CandidateReferenceDto(
     string Phone);
 
 public record UpdateDateOfBirthRequest(DateOnly DateOfBirth);
+public record RequestParentalConsentRequest(string? ParentEmail);
 
 public record UpdateCandidateProfileRequest(
     bool? OpenForWork,

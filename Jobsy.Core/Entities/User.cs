@@ -33,6 +33,20 @@ public class User
     public DateOnly? DateOfBirth { get; set; }
     public bool OpenForWork { get; set; }
 
+    /// <summary>Explicit opt-in for anonymous employer talent-pool visibility.</summary>
+    public DateTime? TalentPoolConsentAt { get; set; }
+    public string? TalentPoolConsentVersion { get; set; }
+
+    /// <summary>Explicit consent for optional profile tests and related AI analysis.</summary>
+    public DateTime? TestAiConsentAt { get; set; }
+    public string? TestAiConsentVersion { get; set; }
+
+    /// <summary>Parent/guardian consent required before under-16s can use protected functions.</summary>
+    public DateTime? ParentalConsentAt { get; set; }
+    public string? ParentalConsentEmail { get; set; }
+    public string? ParentalConsentTokenHash { get; set; }
+    public DateTime? ParentalConsentTokenExpiresAt { get; set; }
+
     /// <summary>
     /// Candidate home location for PushBom radius matching (PostGIS). Null until set.
     /// </summary>

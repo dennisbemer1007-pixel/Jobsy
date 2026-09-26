@@ -5,6 +5,7 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
@@ -228,6 +229,8 @@ public sealed class CandidateInsightsOnWriteFactory : WebApplicationFactory<Prog
             IsActive = true,
             DateOfBirth = new DateOnly(1995, 4, 12),
             OpenForWork = true,
+            TestAiConsentAt = DateTime.UtcNow,
+            TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion,
             HomeLocation = new GeoPoint(52.09, 4.31),
             PreferencesJson = JsonSerializer.Serialize(new
             {

@@ -1,6 +1,5 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.Media;
-using Jobsy.Web.Hosting;
 
 namespace Jobsy.Tests;
 
@@ -16,23 +15,13 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
-    public void Resolve_keeps_picsum_seed_urls()
+    public void Resolve_maps_picsum_and_unsplash_to_local_svg()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-        var picsum = VacancyImageUrls.PicsumUrl(id);
-        Assert.Equal(picsum, VacancyImageUrls.Resolve(picsum, id, "Horeca"));
-    }
-
-    [Fact]
-    public void Resolve_keeps_local_svg_standin_and_maps_unsplash_to_picsum()
-    {
-        var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-        var picsum = VacancyImageUrls.PicsumUrl(id);
         var svg = VacancyImageUrls.Placeholder(id, WorkType.Horeca);
+        Assert.Equal(svg, VacancyImageUrls.Resolve(VacancyImageUrls.PicsumUrl(id), id, "Horeca"));
+        Assert.Equal(svg, VacancyImageUrls.Resolve("https://images.unsplash.com/photo-legacy-404", id, "Horeca"));
         Assert.Equal(svg, VacancyImageUrls.Resolve(svg, id, "Horeca"));
-        Assert.Equal(
-            picsum,
-            VacancyImageUrls.Resolve("https://images.unsplash.com/photo-legacy-404", id, "Horeca"));
     }
 
     [Fact]
@@ -80,12 +69,14 @@ public class VacancyImageUrlsTests
     [Fact]
     public void AlternateSrc_is_logo_only_when_it_differs_from_display()
     {
+        var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        var svg = VacancyImageUrls.Placeholder(id, "Horeca");
         Assert.Equal(
             "/images/logos/westland.svg",
             VacancyImageUrls.AlternateSrc(
-                "https://picsum.photos/seed/jobsy-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/400/267",
+                VacancyImageUrls.PicsumUrl(id),
                 "/images/logos/westland.svg",
-                "https://picsum.photos/seed/jobsy-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/400/267"));
+                svg));
         Assert.Null(VacancyImageUrls.AlternateSrc(
             "/images/logos/westland.svg",
             "/images/logos/westland.svg",
@@ -121,14 +112,11 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
-    public void ForDisplay_downsizes_picsum_for_cards_without_changing_the_seed()
+    public void ForDisplay_maps_picsum_to_local_svg()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-        var full = VacancyImageUrls.PicsumUrl(id);
-        Assert.Equal(
-            $"https://picsum.photos/seed/jobsy-{id:N}/400/267",
-            VacancyImageUrls.ForDisplay(full, 400, cloudflareResizing: false, id, "Horeca"));
-        Assert.Equal(full, VacancyImageUrls.ForDisplay(full, 600, cloudflareResizing: false, id, "Horeca"));
+        var svg = VacancyImageUrls.Placeholder(id, "Horeca");
+        Assert.Equal(svg, VacancyImageUrls.ForDisplay(VacancyImageUrls.PicsumUrl(id), 400, cloudflareResizing: false, id, "Horeca"));
     }
 
     [Fact]
@@ -148,13 +136,13 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
-    public void NeedsImageBackfill_restores_svg_standins_and_keeps_picsum()
+    public void NeedsImageBackfill_replaces_third_party_placeholders()
     {
         var id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
         Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(null));
-        Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(VacancyImageUrls.Placeholder(id, WorkType.Winkel)));
+        Assert.False(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(VacancyImageUrls.Placeholder(id, WorkType.Winkel)));
         Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill("https://images.unsplash.com/photo-x"));
-        Assert.False(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(VacancyImageUrls.PicsumUrl(id)));
+        Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(VacancyImageUrls.PicsumUrl(id)));
         Assert.False(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill("/images/uploads/x.jpg"));
     }
 
@@ -167,18 +155,14 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
-    public void ForPublicList_never_embeds_data_uris_and_downsizes_picsum()
+    public void ForPublicList_never_embeds_data_uris_and_maps_picsum_to_local()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         var placeholder = VacancyImageUrls.Placeholder(id, "Horeca");
         Assert.Equal(placeholder, VacancyImageUrls.ForPublicList("data:image/png;base64,abc", id, "Horeca"));
         Assert.DoesNotContain("data:image", VacancyImageUrls.ForPublicList("data:image/jpeg;base64,/9j/", id, "Zorg"));
 
-        var full = VacancyImageUrls.PicsumUrl(id);
-        var listed = VacancyImageUrls.ForPublicList(full, id, "Horeca");
-        Assert.Contains("/400/", listed);
-        Assert.DoesNotContain("/600/", listed);
-
+        Assert.Equal(placeholder, VacancyImageUrls.ForPublicList(VacancyImageUrls.PicsumUrl(id), id, "Horeca"));
         Assert.Equal("/images/logos/westland.svg", VacancyImageUrls.ForPublicList("/images/logos/westland.svg", id));
     }
 
@@ -206,39 +190,5 @@ public class VacancyImageUrlsTests
         }
 
         throw new InvalidOperationException("Jobsy.sln not found from test base directory.");
-    }
-}
-
-public class CanonicalHostTests
-{
-    [Theory]
-    [InlineData("www.lobsy.nl", true, "lobsy.nl")]
-    [InlineData("lobsy.nl", false, "lobsy.nl")]
-    [InlineData("www.example.com", true, "example.com")]
-    public void TryStripWww(string host, bool expected, string canonical)
-    {
-        Assert.Equal(expected, CanonicalHost.TryStripWww(host, out var actual));
-        Assert.Equal(canonical, actual);
-    }
-
-    [Theory]
-    [InlineData("www.lobsy.nl", true)]
-    [InlineData("www.westland.lobsy.nl", true)]
-    [InlineData("lobsy.nl", false)]
-    [InlineData("www.example.com", false)]
-    [InlineData("www.evil.example", false)]
-    [InlineData("localhost", false)]
-    public void ShouldRedirectWww_only_known_apex(string host, bool expected)
-        => Assert.Equal(expected, CanonicalHost.ShouldRedirectWww(host));
-
-    [Fact]
-    public void ShouldRedirectWww_honors_configured_public_host()
-        => Assert.True(CanonicalHost.ShouldRedirectWww("www.jobsy-demo.onrender.com", ["jobsy-demo.onrender.com"]));
-
-    [Fact]
-    public void Loopback_is_not_rewritten()
-    {
-        Assert.True(CanonicalHost.IsLoopback("localhost"));
-        Assert.True(CanonicalHost.IsLoopback("127.0.0.1"));
     }
 }

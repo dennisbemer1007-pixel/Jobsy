@@ -6351,6 +6351,17 @@ a.engagement-btn {
     object-fit: cover;
 }
 
+.detail-card__video-poster-label {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: linear-gradient(160deg, #1a1a1a 0%, #2c3a4a 100%);
+}
+
 .detail-card__video-play {
     position: absolute;
     left: 50%;

@@ -143,6 +143,10 @@
                                 <span>@Culture["Profile.Phone"]</span>
                                 <input type="tel" maxlength="32" autocomplete="tel" placeholder="@Culture["Profile.PhonePlaceholder"]" @bind="_phone" @bind:event="oninput" @bind:after="ScheduleProfileSave" />
                             </label>
+                            <label class="ob-field">
+                                <span>Geboortedatum</span>
+                                <input type="date" @bind="_dateOfBirth" @bind:after="ScheduleProfileSave" />
+                            </label>
                             @if (_profileSaveStatus == SaveQuietStatus.Saving)
                             {
                                 <p class="ob-wizard__saved" aria-live="polite">@Culture["Onboarding.Saving"]</p>
@@ -309,19 +313,27 @@
                     case 8:
                     case 9:
                         <div class="ob-step ob-step--questions">
-                            @foreach (var q in _visibleMiniQuestions)
+                            @if (!_hasTestConsent)
                             {
-                                var answered = _miniAnswers.ContainsKey(q.Id);
-                                <LikertScaleQuestion QuestionId="q.Id"
-                                                     Text="@MiniQuestionText(q)"
-                                                     Value="@(answered ? _miniAnswers[q.Id] : null)"
-                                                     IsAnswered="answered"
-                                                     InputPrefix="@MiniInputPrefix"
-                                                     ValueChanged="value => OnMiniAnswerAsync(q.Id, value)" />
+                                <p class="login-lead">Voor deze test vragen we eerst apart toestemming voor de analyse en eventuele AI-analyse.</p>
+                                <button type="button" class="login-submit" disabled="@_busy" @onclick="AcceptTestConsentAsync">Toestemming geven en verder</button>
                             }
-                            @if (_visibleMiniQuestions.Count == 0)
+                            else
                             {
-                                <p class="login-lead">@Culture["Onboarding.MiniAllDone"]</p>
+                                @foreach (var q in _visibleMiniQuestions)
+                                {
+                                    var answered = _miniAnswers.ContainsKey(q.Id);
+                                    <LikertScaleQuestion QuestionId="q.Id"
+                                                         Text="@MiniQuestionText(q)"
+                                                         Value="@(answered ? _miniAnswers[q.Id] : null)"
+                                                         IsAnswered="answered"
+                                                         InputPrefix="@MiniInputPrefix"
+                                                         ValueChanged="value => OnMiniAnswerAsync(q.Id, value)" />
+                                }
+                                @if (_visibleMiniQuestions.Count == 0)
+                                {
+                                    <p class="login-lead">@Culture["Onboarding.MiniAllDone"]</p>
+                                }
                             }
                         </div>
                         break;
@@ -442,6 +454,7 @@
     private string _firstName = "";
     private string _lastName = "";
     private string _phone = "";
+    private DateOnly? _dateOfBirth;
     private string _postcode = "";
     private string _city = "";
     private double? _homeLat;
@@ -460,6 +473,7 @@
     private string? _educationLevel;
     private string? _educationDirection;
     private string? _dreamJob;
+    private bool _hasTestConsent;
 
     private readonly Dictionary<int, int> _miniAnswers = new();
     private readonly Dictionary<int, int> _miniServerAnswers = new();
@@ -515,14 +529,16 @@
             {
                 1 => !string.IsNullOrWhiteSpace(_firstName)
                      && !string.IsNullOrWhiteSpace(_lastName)
+                     && _dateOfBirth is not null
                      && (!AddressFilled || (_homeLat is not null && _homeLng is not null)),
                 2 => _minHours is > 0m
                      && _maxHours is > 0m
                      && _maxHours >= _minHours
                      && _maxTravel is > 0,
                 4 => !string.IsNullOrWhiteSpace(_educationLevel),
-                6 or 7 or 8 or 9 => _visibleMiniQuestions.Count == 0
-                                     || _visibleMiniQuestions.All(q => _miniAnswers.ContainsKey(q.Id)),
+                6 or 7 or 8 or 9 => _hasTestConsent
+                                     && (_visibleMiniQuestions.Count == 0
+                                         || _visibleMiniQuestions.All(q => _miniAnswers.ContainsKey(q.Id))),
                 _ => true
             };
         }
@@ -600,6 +616,8 @@
         _firstName = profile.FirstName ?? "";
         _lastName = profile.LastName ?? "";
         _phone = profile.PhoneNumber ?? "";
+        _dateOfBirth = profile.DateOfBirth;
+        _hasTestConsent = profile.TestAiConsentAt is not null;
         _homeLat = profile.HomeLatitude;
         _homeLng = profile.HomeLongitude;
         var prefs = profile.Preferences ?? new CandidatePreferences();
@@ -866,6 +884,10 @@
         {
             return;
         }
+        if (!_hasTestConsent)
+        {
+            return;
+        }
 
         switch (_step)
         {
@@ -906,6 +928,32 @@
             onChanged: () => InvokeAsync(StateHasChanged),
             debounceMs: 500);
         _miniAutosave.ReplaceAll(_miniAnswers);
+    }
+
+    private async Task AcceptTestConsentAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var profile = await Api.AcceptTestAiConsentAsync();
+            _hasTestConsent = profile?.TestAiConsentAt is not null;
+            if (!_hasTestConsent)
+            {
+                _error = "Toestemming opslaan lukt niet. Probeer het opnieuw.";
+                return;
+            }
+
+            await PrepareMiniStepAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private Dictionary<int, int> MergeMiniAnswers(IReadOnlyDictionary<int, int> draft)
@@ -1257,6 +1305,7 @@
         await Api.UpdateMyProfileAsync(
             firstName: _firstName.Trim(),
             lastName: _lastName.Trim(),
+            dateOfBirth: _dateOfBirth,
             phoneNumber: string.IsNullOrWhiteSpace(_phone) ? null : _phone.Trim(),
             homeLatitude: clearHome ? null : _homeLat,
             homeLongitude: clearHome ? null : _homeLng,

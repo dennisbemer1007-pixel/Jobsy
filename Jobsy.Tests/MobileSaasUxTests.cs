@@ -222,8 +222,10 @@ public class MobileSaasUxTests
         Assert.Contains("anonieme talentpool", privacy);
         Assert.Contains("Mijn Beroepen-kompas", privacy);
         Assert.Contains("Likert-antwoorden", privacy);
-        Assert.Contains("21 september 2026", privacy);
-        Assert.Equal("2026-09-21", Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion);
+        Assert.Contains("26 september 2026", privacy);
+        Assert.Contains("volledige CV-tekst", privacy);
+        Assert.Contains("Cursor", privacy);
+        Assert.Equal("2026-09-26", Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion);
     }
 
     [Fact]

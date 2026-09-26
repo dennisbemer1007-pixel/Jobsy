@@ -1,6 +1,7 @@
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -43,6 +44,10 @@ public sealed class RoleFitCheckController : ControllerBase
         if (user is null)
         {
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+        if (!CandidateConsentRules.CanUseCandidateFeatures(user))
+        {
+            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
         }
 
         try

@@ -2,6 +2,7 @@ using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -108,15 +109,20 @@ public sealed class MockInterviewController : ControllerBase
 
         MockInterviewCandidateContext? candidateContext = null;
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is not null)
+        if (user is null)
         {
-            var preferences = MeController.ParsePreferences(user.PreferencesJson);
-            var ageYears = AgeRules.AgeYearsFromDateOfBirth(user.DateOfBirth)
-                           ?? preferences.AgeYears;
-            var match = MatchScoreCalculator.Calculate(
-                MatchingProfileMapper.BuildInput(vacancy, preferences, estimatedTravelMinutes: null, ageYears));
-            candidateContext = MockInterviewGapAnalyzer.BuildCandidateContext(preferences, vacancy, match);
+            return Unauthorized();
         }
+        if (!CandidateConsentRules.CanUseCandidateFeatures(user))
+        {
+            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+        }
+        var preferences = MeController.ParsePreferences(user.PreferencesJson);
+        var ageYears = AgeRules.AgeYearsFromDateOfBirth(user.DateOfBirth)
+                       ?? preferences.AgeYears;
+        var match = MatchScoreCalculator.Calculate(
+            MatchingProfileMapper.BuildInput(vacancy, preferences, estimatedTravelMinutes: null, ageYears));
+        candidateContext = MockInterviewGapAnalyzer.BuildCandidateContext(preferences, vacancy, match);
 
         var history = request.Messages
             .Select(m => new MockInterviewMessage(m.Role, m.Content))

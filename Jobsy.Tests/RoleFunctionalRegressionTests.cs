@@ -285,9 +285,18 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
-    public async Task Candidate_profile_does_not_require_account_consent_reaccept()
+    public async Task Candidate_with_current_consent_does_not_require_account_consent_reaccept()
     {
-        var client = CandidateClient();
+        var client = CandidateClient(); // ensure seed
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var candidate = await db.Users.FirstAsync(u => u.Id == _factory.CandidateId);
+            candidate.ConsentVersion = PrivacyConstants.CurrentConsentVersion;
+            candidate.TermsAcceptedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+        }
+
         var me = await client.GetFromJsonAsync<JsonElement>("api/me/profile", JsonOpts);
         Assert.False(me.GetProperty("needsConsentReaccept").GetBoolean());
     }
@@ -335,6 +344,103 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         var likes = await client.GetAsync("api/me/likes");
         Assert.Equal(HttpStatusCode.OK, likes.StatusCode);
+    }
+
+    [Fact]
+    public async Task Talent_pool_excludes_under_18_candidate_even_after_opt_in()
+    {
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var candidate = await db.Users.FirstAsync(u => u.Id == _factory.CandidateId);
+            candidate.DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-17);
+            candidate.TalentPoolConsentAt = DateTime.UtcNow;
+            candidate.TalentPoolConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion;
+            db.CandidateCompetencies.Add(new CandidateCompetency
+            {
+                Id = Guid.NewGuid(),
+                UserId = candidate.Id,
+                Status = CandidateCompetencyStatuses.Completed,
+                SamenwerkenPercent = 70,
+                ResultaatgerichtheidPercent = 70,
+                StressbestendigheidPercent = 70,
+                InnovatiePercent = 70,
+                ExtraversiePercent = 70,
+                MatchTagsJson = "[\"Samenwerken\"]",
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+                CompletedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var response = await EmployerClient().GetAsync("api/employer/talent/search");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var rows = await response.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
+        Assert.Empty(rows!);
+        using var cleanupScope = _factory.Services.CreateScope();
+        var cleanupDb = cleanupScope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var cleanupCandidate = await cleanupDb.Users.FirstAsync(u => u.Id == _factory.CandidateId);
+        cleanupCandidate.DateOfBirth = new DateOnly(1998, 6, 15);
+        cleanupCandidate.TalentPoolConsentAt = null;
+        cleanupCandidate.TalentPoolConsentVersion = null;
+        await cleanupDb.SaveChangesAsync();
+        var noConsent = await EmployerClient().GetAsync("api/employer/talent/search");
+        var noConsentRows = await noConsent.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
+        Assert.Equal(HttpStatusCode.OK, noConsent.StatusCode);
+        Assert.Empty(noConsentRows!);
+        cleanupDb.CandidateCompetencies.RemoveRange(
+            cleanupDb.CandidateCompetencies.Where(c => c.UserId == _factory.CandidateId));
+        await cleanupDb.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task Under_16_candidate_without_parental_consent_cannot_start_test()
+    {
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var candidate = await db.Users.FirstAsync(u => u.Id == _factory.CandidateId);
+            candidate.DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-15);
+            candidate.ParentalConsentAt = null;
+            candidate.TestAiConsentAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+        }
+
+        var response = await CandidateClient().PutAsJsonAsync(
+            "api/me/competencies",
+            new { answers = new Dictionary<string, int> { ["1"] = 4 }, complete = false });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("ouder of voogd", await response.Content.ReadAsStringAsync(), StringComparison.OrdinalIgnoreCase);
+        using var cleanupScope = _factory.Services.CreateScope();
+        var cleanupDb = cleanupScope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var cleanupCandidate = await cleanupDb.Users.FirstAsync(u => u.Id == _factory.CandidateId);
+        cleanupCandidate.DateOfBirth = new DateOnly(1998, 6, 15);
+        await cleanupDb.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task Candidate_can_withdraw_test_and_talent_pool_consents()
+    {
+        var client = CandidateClient();
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsync("api/me/test-ai-consent", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsync("api/me/talent-pool-consent", null)).StatusCode);
+
+        var testWithdrawal = await client.DeleteAsync("api/me/test-ai-consent?deleteResults=true");
+        var poolWithdrawal = await client.DeleteAsync("api/me/talent-pool-consent");
+
+        Assert.Equal(HttpStatusCode.OK, testWithdrawal.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, poolWithdrawal.StatusCode);
+        var profile = await client.GetFromJsonAsync<JsonElement>("api/me/profile", JsonOpts);
+        // Null timestamps are omitted (WhenWritingNull).
+        Assert.False(
+            profile.TryGetProperty("testAiConsentAt", out var testAt)
+            && testAt.ValueKind is not JsonValueKind.Null);
+        Assert.False(
+            profile.TryGetProperty("talentPoolConsentAt", out var poolAt)
+            && poolAt.ValueKind is not JsonValueKind.Null);
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsync("api/me/test-ai-consent", null)).StatusCode);
     }
 
     [Fact]
@@ -567,7 +673,11 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         });
         Assert.Equal(HttpStatusCode.BadRequest, apply.StatusCode);
         var body = await apply.Content.ReadAsStringAsync();
-        Assert.Contains("wettelijke", body, StringComparison.OrdinalIgnoreCase);
+        // Under 16 hits parental-consent gate before youth-labour rules.
+        Assert.True(
+            body.Contains("wettelijke", StringComparison.OrdinalIgnoreCase)
+            || body.Contains("ouder of voogd", StringComparison.OrdinalIgnoreCase),
+            body);
 
         // Restore adult DOB for other tests sharing the factory user.
         var restore = await client.PutAsJsonAsync("api/me/date-of-birth", new { dateOfBirth = "1998-06-15" });
@@ -1656,6 +1766,8 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 IsActive = true,
                 DateOfBirth = new DateOnly(1998, 6, 15),
                 OpenForWork = true,
+                TestAiConsentAt = DateTime.UtcNow,
+                TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion,
                 HomeLocation = new GeoPoint(52.09, 4.31),
                 PreferencesJson = JsonSerializer.Serialize(new
                 {
@@ -2130,7 +2242,9 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             Role = UserRole.Candidate,
             IsActive = true,
             DateOfBirth = new DateOnly(1998, 6, 15),
-            OpenForWork = true
+            OpenForWork = true,
+            TestAiConsentAt = DateTime.UtcNow,
+            TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion
         });
         await db.SaveChangesAsync();
         return email;

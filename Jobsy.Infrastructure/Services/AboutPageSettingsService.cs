@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,7 @@ public sealed class AboutPageSettingsService : IAboutPageSettingsService
     public const string DefaultTitle = "Wie zijn wij";
     public const string DefaultLead = "Over Lobsy — en de mens achter de knop";
 
-    public static readonly string DefaultBodyHtml = """
+    public static readonly string DefaultBodyHtml = $$"""
         <section>
         <h2>Welkom bij Lobsy</h2>
         <p>Als je op deze pagina belandt, ben je waarschijnlijk benieuwd wie er achter dit platform zit en waar we voor staan. Geen dikke handleidingen of kille corporate taal — gewoon het eerlijke verhaal.</p>
@@ -48,7 +49,7 @@ public sealed class AboutPageSettingsService : IAboutPageSettingsService
         </section>
         <section>
         <h2>Vragen of sparren?</h2>
-        <p>Heb je een vraag, wil je sparren over de mogelijkheden voor jouw organisatie, of ben je benieuwd wat Lobsy voor jou kan betekenen? Neem gerust contact op via <a href="mailto:privacy@lobsy.nl">privacy@lobsy.nl</a> of het contactkanaal in het platform.</p>
+        <p>Heb je een vraag, wil je sparren over de mogelijkheden voor jouw organisatie, of ben je benieuwd wat Lobsy voor jou kan betekenen? Neem gerust contact op via <a href="mailto:{{PlatformLegalIdentity.PrivacyEmail}}">{{PlatformLegalIdentity.PrivacyEmail}}</a> of het contactkanaal in het platform.</p>
         </section>
         """;
 

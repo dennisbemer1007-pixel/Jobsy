@@ -3,6 +3,7 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -50,7 +51,10 @@ public sealed class TalentPoolService : ITalentPoolService
 
         var take = Math.Clamp(query.Take <= 0 ? 50 : query.Take, 1, 100);
         var users = await _db.Users.AsNoTracking()
-            .Where(u => u.Role == UserRole.Candidate && u.IsActive && u.OpenForWork)
+            .Where(u => u.Role == UserRole.Candidate
+                        && u.IsActive
+                        && u.OpenForWork
+                        && u.TalentPoolConsentAt != null)
             .Take(500)
             .ToListAsync(cancellationToken);
 
@@ -82,6 +86,11 @@ public sealed class TalentPoolService : ITalentPoolService
         var results = new List<AnonymousTalentCardDto>();
         foreach (var user in users)
         {
+            if (!CandidateConsentRules.CanAppearInTalentPool(user))
+            {
+                continue;
+            }
+
             competencies.TryGetValue(user.Id, out var competency);
             careers.TryGetValue(user.Id, out var career);
             if (competency is null && career is null)
@@ -211,9 +220,17 @@ public sealed class TalentPoolService : ITalentPoolService
 
         var candidate = await _db.Users
             .FirstOrDefaultAsync(
-                u => u.Id == candidateUserId && u.Role == UserRole.Candidate && u.IsActive && u.OpenForWork,
+                u => u.Id == candidateUserId
+                     && u.Role == UserRole.Candidate
+                     && u.IsActive
+                     && u.OpenForWork
+                     && u.TalentPoolConsentAt != null,
                 cancellationToken)
             ?? throw new InvalidOperationException("Kandidaat niet beschikbaar in de talentpool.");
+        if (!CandidateConsentRules.CanAppearInTalentPool(candidate))
+        {
+            throw new InvalidOperationException("Kandidaat niet beschikbaar in de talentpool.");
+        }
 
         var competencyDone = await _db.CandidateCompetencies.AnyAsync(
             c => c.UserId == candidateUserId && c.Status == CandidateCompetencyStatuses.Completed,

@@ -1,6 +1,7 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -51,6 +52,10 @@ public sealed class DeepAnalysisController : ControllerBase
         {
             return NotFound();
         }
+        if (!CanUseTests(user, out var message))
+        {
+            return BadRequest(new { message });
+        }
 
         try
         {
@@ -70,6 +75,10 @@ public sealed class DeepAnalysisController : ControllerBase
         if (user is null)
         {
             return NotFound();
+        }
+        if (!CanUseTests(user, out var message))
+        {
+            return BadRequest(new { message });
         }
 
         var ok = await _deep.TryFulfillPaidCheckoutAsync(
@@ -102,6 +111,10 @@ public sealed class DeepAnalysisController : ControllerBase
         if (user is null)
         {
             return NotFound();
+        }
+        if (!CanUseTests(user, out var message))
+        {
+            return BadRequest(new { message });
         }
 
         var answers = new Dictionary<int, int>();
@@ -151,6 +164,24 @@ public sealed class DeepAnalysisController : ControllerBase
 
     private static AssessmentKind ParseKind(string? kind)
         => AssessmentKindLabels.ParseOrDefault(kind);
+
+    private static bool CanUseTests(Core.Entities.User user, out string message)
+    {
+        if (!CandidateConsentRules.CanUseCandidateFeatures(user))
+        {
+            message = CandidateConsentRules.ParentalConsentRequiredMessage;
+            return false;
+        }
+
+        if (!CandidateConsentRules.HasCurrentTestAiConsent(user))
+        {
+            message = CandidateConsentRules.TestConsentRequiredMessage;
+            return false;
+        }
+
+        message = string.Empty;
+        return true;
+    }
 }
 
 public sealed record SaveDeepAnalysisRequest(

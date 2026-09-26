@@ -126,6 +126,10 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PhoneNumber).HasMaxLength(32);
             entity.Property(e => e.PreferencesJson).HasMaxLength(8000);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
+            entity.Property(e => e.TalentPoolConsentVersion).HasMaxLength(32);
+            entity.Property(e => e.TestAiConsentVersion).HasMaxLength(32);
+            entity.Property(e => e.ParentalConsentEmail).HasMaxLength(256);
+            entity.Property(e => e.ParentalConsentTokenHash).HasMaxLength(128);
             entity.Property(e => e.AuthenticatorSecret).HasMaxLength(1024);
             entity.Property(e => e.RecoveryCodesHash).HasMaxLength(4096);
             entity.Property(e => e.UnsubscribeVerificationCode).HasMaxLength(64);

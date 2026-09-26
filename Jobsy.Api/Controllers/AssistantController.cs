@@ -2,6 +2,7 @@ using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
+using Jobsy.Core.Privacy;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -56,6 +57,11 @@ public sealed class AssistantController : ControllerBase
         if (user is null)
         {
             return Unauthorized();
+        }
+        if (user.Role == Jobsy.Core.Enums.UserRole.Candidate
+            && !CandidateConsentRules.CanUseCandidateFeatures(user))
+        {
+            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
         }
 
         var role = user.Role.ToString();

@@ -20,8 +20,8 @@ public class ConsentVersionTests
     [InlineData(UserRole.Admin, "2026-07-29", true)]
     [InlineData(UserRole.SalesManager, "CURRENT", false)]
     [InlineData(UserRole.SalesManager, "2026-08-19", true)]
-    [InlineData(UserRole.Candidate, null, false)]
-    [InlineData(UserRole.Candidate, "2026-07-29", false)]
+    [InlineData(UserRole.Candidate, null, true)]
+    [InlineData(UserRole.Candidate, "2026-07-29", true)]
     public void RequiresAccountConsentReaccept_by_role_and_version(
         UserRole role,
         string? version,

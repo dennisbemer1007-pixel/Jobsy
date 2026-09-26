@@ -1,5 +1,6 @@
 @page "/privacy"
 @attribute [AllowAnonymous]
+@using Jobsy.Core.Privacy
 @inject CultureState Culture
 
 <PageTitle>@Culture["Legal.Privacy"] · Lobsy</PageTitle>
@@ -8,7 +9,7 @@
     <header class="panel-header">
         <div>
             <h1>@Culture["Legal.Privacy"]</h1>
-            <p class="login-lead">Laatst bijgewerkt: 21 september 2026</p>
+            <p class="login-lead">Laatst bijgewerkt: 26 september 2026</p>
         </div>
     </header>
 
@@ -25,8 +26,9 @@
                 verwerken, waarom we dat doen en welke rechten je hebt.
             </p>
             <p>
-                <strong>Verwerkingsverantwoordelijke:</strong> Lobsy (demo/platform).
-                Contact via <a href="mailto:privacy@lobsy.nl">privacy@lobsy.nl</a> of het contactkanaal in het platform.
+                <strong>Verwerkingsverantwoordelijke:</strong> @PlatformLegalIdentity.CompanyName,
+                KVK @PlatformLegalIdentity.KvkNumber, @PlatformLegalIdentity.Address.
+                Vragen over privacy: <a href="mailto:@PlatformLegalIdentity.PrivacyEmail">@PlatformLegalIdentity.PrivacyEmail</a>.
             </p>
         </section>
 
@@ -60,19 +62,25 @@
 
         <section>
             <h2>4. Verwerkers en derden</h2>
-            <p>We kunnen gegevens delen met of laten verwerken door:</p>
+            <p>Hieronder staat met wie gegevens kunnen worden gedeeld, welk type gegevens het betreft en waarom. We delen niet meer dan nodig.</p>
             <ul>
                 <li><strong>Werkgevers / vestigingen</strong> wanneer je solliciteert — NAW/contactgegevens worden pas gedeeld na acceptatie van de sollicitatie (progressive disclosure). Reis-/voorkeursinformatie kan eerder zichtbaar zijn voor matching. <strong>Ruwe antwoorden</strong> van competentie- en beroepentest en diepte-analyses worden <strong>niet</strong> aan werkgevers getoond. Als je OpenForWork staat en minstens één test hebt afgerond, kunnen werkgevers in de <strong>anonieme talentpool</strong> wel afgeleide tags, competentiepercentages, RIASEC, beschikbaarheidssamenvatting, rijbewijzen en geschatte reistijd zien — zonder naam, e-mail, telefoon of geboortedatum. Contactgegevens volgen pas na een ContactUnlock én jouw acceptatie.</li>
-                <li><strong>Hosting:</strong> Render (hosting van de applicatie en database).</li>
-                <li><strong>E-mail:</strong> Resend voor transactionele e-mail (verificatiecodes, bevestigingen, credentials).</li>
-                <li><strong>Kaarten / OSM-tegels</strong> voor de weergave van de vacaturekaart.</li>
-                <li><strong>Geocoding:</strong> Nominatim / OpenStreetMap voor adres- of locatieomzetting.</li>
-                <li><strong>Identiteitsproviders:</strong> Google of Microsoft (Entra) als je daarmee inlogt (alleen geverifieerde e-mailadressen).</li>
-                <li><strong>Betaaldienstverleners:</strong> optioneel Mollie voor tokenaankopen en (toekomstig) salesmanager-uitbetalingen (minimale metadata: checkout/company/pack).</li>
-                <li><strong>AI (optioneel):</strong> OpenAI voor oefengesprek, vacaturemoderatie, vertaling, assistent-chat, het uitlezen van een geüpload CV (alleen lege profielvelden die duidelijk in het bestand staan), — na de uitgebreide beroepentest — het voorstellen van algemene beroepen voor <strong>Mijn Beroepen-kompas</strong>, de Functie-Fit Checker (functietitel + scores, zonder naam of e-mail), en cultuur-/teamfit (cultuurpijlers van de vacature + scores, zonder NAW). Bij gebruik kan doorgifte naar de Verenigde Staten plaatsvinden.</li>
+                <li><strong>Cloudflare (EU/VS):</strong> IP-adres en technische verzoekgegevens voor beveiliging, DDoS-bescherming en snelle levering.</li>
+                <li><strong>Render (EU/VS):</strong> alle gegevens die nodig zijn om de app en database te hosten, zoals account-, vacature- en sollicitatiegegevens.</li>
+                <li><strong>Resend (VS):</strong> e-mailadres, naam en inhoud van transactionele e-mails voor codes, bevestigingen en meldingen.</li>
+                <li><strong>Sentry (EU/VS):</strong> technische foutgegevens, beperkte apparaatgegevens en foutmeldingen om storingen te herstellen; wij sturen geen opzettelijke inhoud van formulieren mee.</li>
+                <li><strong>Cursor (VS):</strong> feedbacktekst en, alleen als je die meestuurt, een screenshot, zodat we feedback kunnen onderzoeken.</li>
+                <li><strong>OpenAI (VS):</strong> gegevens die nodig zijn voor een door jou gekozen AI-functie. Bij CV-uitlezen gaat de <strong>volledige CV-tekst</strong> mee, dus mogelijk ook naam, e-mail, telefoon en adres. Bij de assistent-chat gaan je naam en berichten mee. Bij andere functies beperken we de invoer waar mogelijk tot tekst, scores of voorkeuren.</li>
+                <li><strong>Google en Microsoft (VS/EU):</strong> een geverifieerd e-mailadres en een unieke inlogcode wanneer je met Google of Microsoft inlogt.</li>
+                <li><strong>Mollie (Nederland/EU):</strong> betaal- en checkoutgegevens voor tokenaankopen. Wij ontvangen geen volledige betaalkaartgegevens.</li>
+                <li><strong>KVK (Nederland):</strong> bedrijfsnummer en vestigingsgegevens om organisaties te controleren.</li>
+                <li><strong>Routing: router.project-osrm.org en api.transitous.org (EU, locatie kan wisselen):</strong> vertrek- en aankomstcoördinaten en gekozen vervoermiddel voor reistijd.</li>
+                <li><strong>OpenFreeMap (EU, locatie kan wisselen):</strong> IP-adres en kaartverzoeken om kaarten te tonen.</li>
+                <li><strong>YouTube en Vimeo (VS/EU):</strong> pas na jouw klik laden we de video en kunnen zij IP-adres en apparaatgegevens ontvangen. Vimeo krijgt een <code>dnt=1</code>-instelling.</li>
+                <li><strong>Voorbeeldafbeeldingen:</strong> vacatureplaats­houders zijn lokale bestanden op ons platform. We laden geen picsum.photos meer voor placeholders.</li>
                 <li><strong>WhatsApp / telefoon:</strong> alleen wanneer jij of de werkgever daarvoor kiest ná een geverifieerde sollicitatie; het gesprek verloopt buiten Lobsy.</li>
             </ul>
-            <p>We verkopen je persoonsgegevens niet.</p>
+            <p>Voor doorgiften naar de Verenigde Staten gebruiken leveranciers waar beschikbaar het EU-VS Data Privacy Framework (DPF), en anders de standaardcontractbepalingen van de Europese Commissie (SCC). We verkopen je persoonsgegevens niet.</p>
         </section>
 
         <section>
@@ -97,6 +105,8 @@
                 zonder Big Five-antwoorden. In de anonieme talentpool kunnen werkgevers wel de afgeleide
                 tags en competentiepercentages zien (zie §5b). Scores zijn informatieve schattingen
                 om jou en werkgevers te helpen; zij vormen geen besluit tot aanname of afwijzing.
+                Je kunt een score betwisten of een menselijke beoordeling vragen via
+                <a href="mailto:@PlatformLegalIdentity.PrivacyEmail">@PlatformLegalIdentity.PrivacyEmail</a>.
             </p>
         </section>
 
@@ -117,9 +127,11 @@
             <p>
                 De competentietest (25 vragen, Big Five) en de beroepentest (25 vragen, RIASEC) zijn optioneel
                 en zitten in je profiel/dashboard. Je kunt tussentijds opslaan, later wijzigen of een test overslaan.
-                We bewaren je antwoorden (Likert 1–5 per vraag) en, na afronden, percentages, Holland-code en
-                match-tags zodat jij ze kunt inzien, vacaturesuggesties verbeteren, en — als OpenForWork aan staat —
-                anoniem vindbaar bent in de werkgever-talentpool. Grondslag: uitvoering van de overeenkomst.
+                Voordat je een test start, vragen we apart toestemming voor de test, profielanalyse en eventuele
+                AI-analyse. We bewaren je antwoorden (Likert 1–5 per vraag) en, na afronden, percentages, Holland-code en
+                match-tags zodat jij ze kunt inzien en vacaturesuggesties verbeteren. Alleen als je daarna
+                <strong>apart</strong> toestemming geeft voor de talentpool, OpenForWork aanstaat en je 18 jaar of ouder bent,
+                ben je anoniem vindbaar voor werkgevers. Deze optie staat standaard uit.
                 <strong>Ruwe antwoorden</strong> zien werkgevers, intermediairs en andere kandidaten niet.
                 Contact (naam/e-mail/telefoon) volgt alleen na een betaald ContactUnlock én jouw acceptatie.
             </p>
@@ -163,6 +175,8 @@
                 Bij optionele AI-functies (oefengesprek, vacaturemoderatie, vertaling, assistent, CV-extractie,
                 beroepen-kompas na de uitgebreide beroepentest, Functie-Fit Checker)
                 kunnen berichten, vacaturetekst, CV-tekst of (anonieme) testdata naar OpenAI worden gestuurd.
+                Bij CV-extractie sturen we de volledige tekst van je CV, inclusief eventuele naam- en contactgegevens.
+                Bij de assistent-chat sturen we je naam en je chatberichten.
                 Voor het beroepen-kompas sturen we Likert-antwoorden en richtingscores, geen naam of e-mail.
                 Voor de Functie-Fit Checker sturen we de functietitel plus scores en voorkeuren, geen naam of e-mail.
                 Chatgeschiedenis van het oefengesprek
@@ -197,15 +211,18 @@
                 Ingelogde gebruikers kunnen hun gegevens exporteren via
                 <a class="auth-link" href="/privacy/data">Mijn gegevens</a>
                 (JSON-export) of hun account laten anonimiseren. Je kunt ook een klacht indienen bij de
-                Autoriteit Persoonsgegevens. We stellen het op prijs als je eerst contact met ons opneemt.
+                Autoriteit Persoonsgegevens. In je profiel kun je toestemming voor tests/AI en de talentpool intrekken.
+                Bij intrekken van de talentpooltoestemming verdwijnt je profiel direct uit de pool. Bij intrekken van
+                testtoestemming kun je kiezen om je testresultaten te verwijderen. We stellen het op prijs als je eerst contact met ons opneemt.
             </p>
         </section>
 
         <section>
             <h2>10. Minderjarigen</h2>
             <p>
-                Lobsy is bedoeld voor werkzoekenden en werkgevers in een professionele context. Als je jonger bent
-                dan 16 jaar, gebruik het platform alleen met toestemming van een ouder of voogd waar dat wettelijk vereist is.
+                Lobsy is bedoeld voor werkzoekenden vanaf 13 jaar en werkgevers in een professionele context.
+                Jonger dan 16? Dan vragen we toestemming aan je ouder of voogd via e-mail voordat je tests,
+                AI-functies of sollicitaties kunt gebruiken. Kandidaten jonger dan 18 jaar komen nooit in de talentpool.
             </p>
         </section>
 

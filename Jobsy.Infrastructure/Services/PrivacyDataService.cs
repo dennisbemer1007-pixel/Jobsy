@@ -386,6 +386,12 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 user.PreferencesJson,
                 user.TermsAcceptedAt,
                 user.ConsentVersion,
+                user.TalentPoolConsentAt,
+                user.TalentPoolConsentVersion,
+                user.TestAiConsentAt,
+                user.TestAiConsentVersion,
+                user.ParentalConsentAt,
+                user.ParentalConsentEmail,
                 user.IsActive
             },
             UploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
@@ -1100,6 +1106,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
         user.IsActive = false;
         user.TermsAcceptedAt = null;
         user.ConsentVersion = null;
+        user.TalentPoolConsentAt = null;
+        user.TalentPoolConsentVersion = null;
+        user.TestAiConsentAt = null;
+        user.TestAiConsentVersion = null;
+        user.ParentalConsentAt = null;
+        user.ParentalConsentEmail = null;
+        user.ParentalConsentTokenHash = null;
+        user.ParentalConsentTokenExpiresAt = null;
         user.CandidateHowToCompletedAt = null;
         user.LastLoginAtUtc = null;
         user.UnsubscribeVerificationCode = null;

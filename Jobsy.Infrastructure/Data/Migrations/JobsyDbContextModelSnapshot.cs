@@ -4059,6 +4059,20 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<DateTime?>("ParentalConsentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ParentalConsentEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ParentalConsentTokenHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime?>("ParentalConsentTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PreferencesJson")
                         .HasMaxLength(8000)
                         .HasColumnType("character varying(8000)");
@@ -4079,6 +4093,20 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int>("SessionVersion")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("TalentPoolConsentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TalentPoolConsentVersion")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime?>("TestAiConsentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TestAiConsentVersion")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<DateTime?>("TermsAcceptedAt")
                         .HasColumnType("timestamp with time zone");

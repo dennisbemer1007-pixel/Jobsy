@@ -6,7 +6,7 @@ namespace Jobsy.Core.Media;
 /// Resolves vacancy photos for list/detail/map. Stored http(s), <c>/images/…</c> and
 /// data-URI values are kept after path cleanup. Empty or junk values fall through to
 /// a company logo, then a local work-type SVG — never to the Lobsy brand mark.
-/// Broken Unsplash URLs map to a stable picsum seed when a vacancy id is known.
+/// Broken Unsplash / picsum URLs map to a local work-type SVG when a vacancy id is known.
 /// </summary>
 public static class VacancyImageUrls
 {
@@ -56,30 +56,21 @@ public static class VacancyImageUrls
            && imageUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// List/map JSON: never ship Base64. Inline photos become a cacheable
-    /// <c>/api/vacancies/{id}/image</c> URL; picsum is downsized to card width.
+    /// List/map JSON: never ship Base64. Inline photos and third-party placeholders
+    /// become a local work-type SVG (or company logo via <see cref="Resolve"/>).
     /// </summary>
     public static string? ForPublicList(string? imageUrl, Guid? vacancyId = null, string? workType = null)
     {
         var normalized = Normalize(imageUrl);
         if (string.IsNullOrWhiteSpace(normalized)
-            || normalized.StartsWith("blob:", StringComparison.OrdinalIgnoreCase))
+            || normalized.StartsWith("blob:", StringComparison.OrdinalIgnoreCase)
+            || IsInlineDataUri(normalized)
+            || IsPicsum(normalized)
+            || IsBrokenUnsplash(normalized))
         {
             return vacancyId is Guid id && id != Guid.Empty
                 ? Placeholder(id, workType)
                 : null;
-        }
-
-        if (IsInlineDataUri(normalized))
-        {
-            return vacancyId is Guid id && id != Guid.Empty
-                ? Placeholder(id, workType)
-                : null;
-        }
-
-        if (IsPicsum(normalized))
-        {
-            return SizedPicsum(normalized, ListCardWidth, vacancyId);
         }
 
         return normalized;
@@ -258,11 +249,6 @@ public static class VacancyImageUrls
             return resolved;
         }
 
-        if (IsPicsum(resolved))
-        {
-            return SizedPicsum(resolved, width, vacancyId);
-        }
-
         if (!cloudflareResizing)
         {
             return resolved;
@@ -371,10 +357,10 @@ public static class VacancyImageUrls
             return null;
         }
 
-        if (IsBrokenUnsplash(normalized))
+        // Third-party placeholders are discarded so Resolve can pick a local SVG with work type.
+        if (IsBrokenUnsplash(normalized) || IsPicsum(normalized))
         {
-            var id = vacancyId ?? TryExtractSeed(imageUrl) ?? Guid.Empty;
-            return id == Guid.Empty ? null : PicsumUrl(id);
+            return null;
         }
 
         return normalized;
@@ -527,42 +513,6 @@ public static class VacancyImageUrls
         if (t.Contains("schoonmaak", StringComparison.Ordinal)) return "schoonmaak";
         if (t.Contains("productie", StringComparison.Ordinal)) return "productie";
         return "flex";
-    }
-
-    private static string SizedPicsum(string url, int width, Guid? vacancyId)
-    {
-        var id = vacancyId ?? TryExtractSeed(url);
-        if (id is null || id == Guid.Empty || width <= 0 || width >= IntrinsicWidth)
-        {
-            return url;
-        }
-
-        var height = Math.Max(54, (int)Math.Round(width * (IntrinsicHeight / (double)IntrinsicWidth)));
-        return PicsumUrl(id.Value, width, height);
-    }
-
-    private static Guid? TryExtractSeed(string? imageUrl)
-    {
-        if (string.IsNullOrWhiteSpace(imageUrl))
-        {
-            return null;
-        }
-
-        const string marker = "jobsy-";
-        var idx = imageUrl.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
-        if (idx < 0)
-        {
-            return null;
-        }
-
-        var start = idx + marker.Length;
-        if (start + 32 > imageUrl.Length)
-        {
-            return null;
-        }
-
-        var hex = imageUrl.Substring(start, 32);
-        return Guid.TryParseExact(hex, "N", out var id) ? id : null;
     }
 
     private static uint StableHash(Guid id)

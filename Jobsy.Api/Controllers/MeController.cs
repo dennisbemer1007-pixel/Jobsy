@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Security.Cryptography;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
@@ -8,6 +9,7 @@ using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -38,6 +40,7 @@ public class MeController : ControllerBase
     private readonly ICvExtractionService _cvExtraction;
     private readonly IWhoAmIService _whoAmI;
     private readonly ICandidateInsightsQueue _insightsQueue;
+    private readonly IEmailService _email;
     private const string VacancySourceLanguage = "nl";
 
     public MeController(
@@ -50,7 +53,8 @@ public class MeController : ControllerBase
         ICvTextExtractor cvText,
         ICvExtractionService cvExtraction,
         IWhoAmIService whoAmI,
-        ICandidateInsightsQueue insightsQueue)
+        ICandidateInsightsQueue insightsQueue,
+        IEmailService email)
     {
         _companyAuth = companyAuth;
         _users = users;
@@ -62,6 +66,7 @@ public class MeController : ControllerBase
         _cvExtraction = cvExtraction;
         _whoAmI = whoAmI;
         _insightsQueue = insightsQueue;
+        _email = email;
     }
 
     [HttpGet("access")]
@@ -173,12 +178,17 @@ public class MeController : ControllerBase
         if (request.DateOfBirth is not null)
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            if (request.DateOfBirth > today || request.DateOfBirth < today.AddYears(-100))
+            if (request.DateOfBirth > today.AddYears(-CandidateConsentRules.MinimumCandidateAge)
+                || request.DateOfBirth < today.AddYears(-100))
             {
-                return BadRequest(new { message = "Ongeldige geboortedatum." });
+                return BadRequest(new { message = "Je geboortedatum moet passen bij een leeftijd van 13 tot 100 jaar." });
             }
 
             user.DateOfBirth = request.DateOfBirth;
+        }
+        else if (user.DateOfBirth is null)
+        {
+            return BadRequest(new { message = "Vul eerst je geboortedatum in. Die hebben we nodig voor veilige leeftijdschecks." });
         }
 
         if (request.OpenForWork is not null)
@@ -640,6 +650,10 @@ public class MeController : ControllerBase
         {
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
+        if (!CandidateConsentRules.CanUseCandidateFeatures(user))
+        {
+            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+        }
 
         await using var buffer = new MemoryStream();
         await file.CopyToAsync(buffer, cancellationToken);
@@ -789,6 +803,139 @@ public class MeController : ControllerBase
         return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
     }
 
+    [HttpPost("test-ai-consent")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<MeProfileDto>> AcceptTestAiConsent(CancellationToken cancellationToken)
+    {
+        var user = await ResolveActiveCandidateAsync(cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        if (!CandidateConsentRules.CanUseCandidateFeatures(user))
+        {
+            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+        }
+
+        user.TestAiConsentAt = DateTime.UtcNow;
+        user.TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion;
+        await _db.SaveChangesAsync(cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
+    }
+
+    [HttpDelete("test-ai-consent")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<MeProfileDto>> WithdrawTestAiConsent(
+        [FromQuery] bool deleteResults,
+        CancellationToken cancellationToken)
+    {
+        var user = await ResolveActiveCandidateAsync(cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        user.TestAiConsentAt = null;
+        user.TestAiConsentVersion = null;
+        if (deleteResults)
+        {
+            await DeleteTestResultsAsync(user.Id, cancellationToken);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
+    }
+
+    [HttpPost("talent-pool-consent")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<MeProfileDto>> AcceptTalentPoolConsent(CancellationToken cancellationToken)
+    {
+        var user = await ResolveActiveCandidateAsync(cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        if (CandidateConsentRules.AgeYears(user.DateOfBirth) is not int age
+            || age < CandidateConsentRules.TalentPoolMinimumAge)
+        {
+            return BadRequest(new { message = CandidateConsentRules.TalentPoolAdultOnlyMessage });
+        }
+
+        user.TalentPoolConsentAt = DateTime.UtcNow;
+        user.TalentPoolConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion;
+        await _db.SaveChangesAsync(cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
+    }
+
+    [HttpDelete("talent-pool-consent")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<MeProfileDto>> WithdrawTalentPoolConsent(CancellationToken cancellationToken)
+    {
+        var user = await ResolveActiveCandidateAsync(cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        user.TalentPoolConsentAt = null;
+        user.TalentPoolConsentVersion = null;
+        await _db.SaveChangesAsync(cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
+    }
+
+    [HttpPost("parental-consent-request")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult> RequestParentalConsent(
+        [FromBody] RequestParentalConsentRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await ResolveActiveCandidateAsync(cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        if (!CandidateConsentRules.RequiresParentalConsent(user))
+        {
+            return BadRequest(new { message = "Toestemming van een ouder of voogd is voor jou niet nodig." });
+        }
+
+        var email = request.ParentEmail?.Trim();
+        if (string.IsNullOrWhiteSpace(email) || email.Length > 256 || !System.Net.Mail.MailAddress.TryCreate(email, out _))
+        {
+            return BadRequest(new { message = "Vul een geldig e-mailadres van je ouder of voogd in." });
+        }
+
+        var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
+        user.ParentalConsentEmail = email;
+        user.ParentalConsentTokenHash = VerificationCodes.Hash(token);
+        user.ParentalConsentTokenExpiresAt = DateTime.UtcNow.AddDays(7);
+        user.ParentalConsentAt = null;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var link = $"{Request.Scheme}://{Request.Host}/api/parental-consent/confirm?token={Uri.EscapeDataString(token)}";
+        await _email.SendAsync(
+            new EmailMessage(
+                email,
+                "Toestemming voor Lobsy",
+                $"<p>Een kind heeft gevraagd of je toestemming geeft voor het gebruik van Lobsy-tests en AI-analyse.</p><p>Bevestig alleen als je ouder of voogd bent: <a href=\"{link}\">toestemming bevestigen</a>.</p><p>De link verloopt na 7 dagen.</p>",
+                "ParentalConsent"),
+            cancellationToken);
+
+        return Ok(new { message = "We hebben je ouder of voogd een e-mail met een bevestigingslink gestuurd." });
+    }
+
     private async Task<MeProfileDto> BuildProfileDtoAsync(
         Core.Entities.User user,
         bool authenticatorEnabled,
@@ -860,7 +1007,52 @@ public class MeController : ControllerBase
             user.WhatsAppContactAllowed,
             cv,
             references,
-            user.AvailableFromDate);
+            user.AvailableFromDate,
+            user.TalentPoolConsentAt,
+            user.TalentPoolConsentVersion,
+            user.TestAiConsentAt,
+            user.TestAiConsentVersion,
+            user.ParentalConsentAt,
+            user.ParentalConsentEmail);
+    }
+
+    private async Task<Core.Entities.User?> ResolveActiveCandidateAsync(CancellationToken cancellationToken)
+    {
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return null;
+        }
+
+        return await _db.Users.FirstOrDefaultAsync(
+            u => u.Id == lookup.Id && u.IsActive && u.Role == Core.Enums.UserRole.Candidate,
+            cancellationToken);
+    }
+
+    private async Task DeleteTestResultsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        _db.CandidateCompetencies.RemoveRange(
+            await _db.CandidateCompetencies.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
+        _db.CandidateCareerInterests.RemoveRange(
+            await _db.CandidateCareerInterests.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
+        _db.CandidateCulturePersonalityProfiles.RemoveRange(
+            await _db.CandidateCulturePersonalityProfiles.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
+        _db.CandidateValuesProfiles.RemoveRange(
+            await _db.CandidateValuesProfiles.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
+        _db.CandidateDeepAnalyses.RemoveRange(
+            await _db.CandidateDeepAnalyses.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
+        _db.CandidateWhoAmIProfiles.RemoveRange(
+            await _db.CandidateWhoAmIProfiles.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
+        _db.CandidateRoleFitChecks.RemoveRange(
+            await _db.CandidateRoleFitChecks.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
+        _db.CandidateCareerPlans.RemoveRange(
+            await _db.CandidateCareerPlans.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
+        _db.CandidateCareerStepProgress.RemoveRange(
+            await _db.CandidateCareerStepProgress.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
+        _db.CandidateMatchSnapshots.RemoveRange(
+            await _db.CandidateMatchSnapshots.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
+        _db.CandidateVacancyCultureFits.RemoveRange(
+            await _db.CandidateVacancyCultureFits.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
     }
 
     private async Task<string?> ReplaceReferencesAsync(

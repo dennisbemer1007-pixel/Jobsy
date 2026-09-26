@@ -8,7 +8,7 @@ public class VideoEmbedTests
     [InlineData("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]
     [InlineData("https://youtu.be/dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]
     [InlineData("https://www.youtube.com/embed/dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]
-    [InlineData("https://vimeo.com/123456789", "https://player.vimeo.com/video/123456789")]
+    [InlineData("https://vimeo.com/123456789", "https://player.vimeo.com/video/123456789?dnt=1")]
     public void TryGetEmbedUrl_maps_known_hosts(string input, string expected)
         => Assert.Equal(expected, VideoEmbed.TryGetEmbedUrl(input));
 

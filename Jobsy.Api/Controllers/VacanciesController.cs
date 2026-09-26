@@ -8,6 +8,7 @@ using Jobsy.Core.Exceptions;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -529,6 +530,10 @@ public class VacanciesController : ControllerBase
 
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
+        {
+            return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
+        }
+        if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
             return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
         }

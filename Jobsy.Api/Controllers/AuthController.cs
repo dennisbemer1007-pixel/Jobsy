@@ -294,6 +294,7 @@ public class AuthController : ControllerBase
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        var flags = await BuildFlagsAsync(user, cancellationToken);
         if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
         {
             return Ok(new EnsureExternalUserResponse(
@@ -301,18 +302,17 @@ public class AuthController : ControllerBase
                 user.FullName,
                 user.Role.ToString(),
                 user.CompanyId,
-                [],
+                flags.CompanyIds,
                 isNew,
-                false,
-                false,
-                false,
+                flags.ShowCandidateHowTo,
+                flags.HasCandidateApplications,
+                flags.HasSalesReferral,
                 UserId: user.Id,
                 RequiresMfa: true,
                 MfaEnrolled: user.AuthenticatorEnabled,
                 MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice)));
         }
 
-        var flags = await BuildFlagsAsync(user, cancellationToken);
         var sessionToken = CreateLocalSessionToken(user.Email, user.Id);
         string? handoffCode = null;
         // Always issue a handoff for external login so iOS standalone can finish in-scope.

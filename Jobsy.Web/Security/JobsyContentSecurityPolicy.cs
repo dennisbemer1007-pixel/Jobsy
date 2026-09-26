@@ -10,9 +10,8 @@ namespace Jobsy.Web.Security;
 public static class JobsyContentSecurityPolicy
 {
     public const string OpenFreeMap = "https://tiles.openfreemap.org";
-    public const string Picsum = "https://picsum.photos";
-    public const string PicsumFastly = "https://fastly.picsum.photos";
-    public const string PicsumI = "https://i.picsum.photos";
+    /// <summary>YouTube hqdefault thumbnails for click-to-load video posters only.</summary>
+    public const string YouTubeThumbnail = "https://i.ytimg.com";
 
     public static string ForWeb(string nonce)
     {
@@ -24,7 +23,7 @@ public static class JobsyContentSecurityPolicy
             "frame-ancestors 'none';",
             "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://vimeo.com;",
             "object-src 'none';",
-            $"img-src 'self' data: blob: {Picsum} {PicsumFastly} {PicsumI} {OpenFreeMap};",
+            $"img-src 'self' data: blob: {OpenFreeMap} {YouTubeThumbnail};",
             $"font-src 'self' data: {OpenFreeMap};",
             $"style-src-elem 'self' {n};",
             "style-src-attr 'unsafe-inline';",

@@ -5,7 +5,10 @@ namespace Jobsy.Core.Privacy;
 public static class PrivacyConstants
 {
     /// <summary>Current privacy / terms consent version (bump when legal text changes).</summary>
-    public const string CurrentConsentVersion = "2026-09-21";
+    public const string CurrentConsentVersion = "2026-09-26";
+
+    /// <summary>Version of the separate optional test/AI and talent-pool consents.</summary>
+    public const string CandidateProfilingConsentVersion = "2026-09-26";
 
     public const int PlatformLogRetentionDays = 90;
     public const int CancelledRegistrationRetentionDays = 30;
@@ -35,9 +38,8 @@ public static class PrivacyConstants
         => string.Equals(consentVersion, CurrentConsentVersion, StringComparison.Ordinal);
 
     /// <summary>
-    /// Employer/sales/admin accounts must re-accept after a consent-version bump.
-    /// Candidates re-consent per application (server-stamped), so they are not blocked here.
+    /// Every account must re-accept after a privacy/terms version bump.
     /// </summary>
     public static bool RequiresAccountConsentReaccept(UserRole role, string? consentVersion)
-        => role != UserRole.Candidate && !IsCurrentConsent(consentVersion);
+        => !IsCurrentConsent(consentVersion);
 }

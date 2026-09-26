@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -227,7 +228,9 @@ public sealed class CompetenceDeepReportApiFactory : WebApplicationFactory<Progr
             Email = UnlockedCandidateEmail,
             FullName = "Deep Report Kandidaat",
             Role = UserRole.Candidate,
-            IsActive = true
+            IsActive = true,
+            TestAiConsentAt = DateTime.UtcNow,
+            TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion
         });
         db.Users.Add(new User
         {
@@ -235,7 +238,9 @@ public sealed class CompetenceDeepReportApiFactory : WebApplicationFactory<Progr
             Email = FreeCandidateEmail,
             FullName = "Gratis Kandidaat",
             Role = UserRole.Candidate,
-            IsActive = true
+            IsActive = true,
+            TestAiConsentAt = DateTime.UtcNow,
+            TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion
         });
 
         db.CandidateDeepAnalyses.Add(new CandidateDeepAnalysis

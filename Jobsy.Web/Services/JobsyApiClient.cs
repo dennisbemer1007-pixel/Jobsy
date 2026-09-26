@@ -729,6 +729,40 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
     }
 
+    public async Task<MeProfile?> AcceptTestAiConsentAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/me/test-ai-consent", null, ct);
+        await EnsureConsentResponseAsync(response);
+        return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
+    public async Task<MeProfile?> WithdrawTestAiConsentAsync(bool deleteResults, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/me/test-ai-consent?deleteResults={deleteResults.ToString().ToLowerInvariant()}", ct);
+        await EnsureConsentResponseAsync(response);
+        return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
+    public async Task<MeProfile?> AcceptTalentPoolConsentAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/me/talent-pool-consent", null, ct);
+        await EnsureConsentResponseAsync(response);
+        return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
+    public async Task<MeProfile?> WithdrawTalentPoolConsentAsync(CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync("api/me/talent-pool-consent", ct);
+        await EnsureConsentResponseAsync(response);
+        return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
+    public async Task RequestParentalConsentAsync(string parentEmail, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/me/parental-consent-request", new { parentEmail }, ct);
+        await EnsureConsentResponseAsync(response);
+    }
+
     public async Task<MeProfile?> UpdateDateOfBirthAsync(DateOnly dateOfBirth, CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync("api/me/date-of-birth", new { dateOfBirth }, ct);
@@ -1835,6 +1869,17 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
 
         return body.Length > 400 ? body[..400] : body;
+    }
+
+    private static async Task EnsureConsentResponseAsync(HttpResponseMessage response)
+    {
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        var body = await response.Content.ReadAsStringAsync();
+        throw new InvalidOperationException(ExtractMessage(body) ?? "Toestemming aanpassen mislukt.");
     }
 
     public async Task<IReadOnlyList<TokenBalance>> GetTokenBalancesAsync(CancellationToken ct = default)

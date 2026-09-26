@@ -132,6 +132,12 @@ public sealed class MeProfile
     public List<CandidateReferenceItem> References { get; set; } = [];
     /// <summary>Null = available immediately (Direct).</summary>
     public DateOnly? AvailableFromDate { get; set; }
+    public DateTime? TalentPoolConsentAt { get; set; }
+    public string? TalentPoolConsentVersion { get; set; }
+    public DateTime? TestAiConsentAt { get; set; }
+    public string? TestAiConsentVersion { get; set; }
+    public DateTime? ParentalConsentAt { get; set; }
+    public string? ParentalConsentEmail { get; set; }
 }
 
 public sealed class CandidateUploadedCvInfo

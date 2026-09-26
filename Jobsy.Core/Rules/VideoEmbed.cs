@@ -42,7 +42,7 @@ public static class VideoEmbed
         {
             var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
             var id = segments.LastOrDefault(s => s.All(char.IsDigit));
-            return !string.IsNullOrWhiteSpace(id) ? $"https://player.vimeo.com/video/{id}" : null;
+            return !string.IsNullOrWhiteSpace(id) ? $"https://player.vimeo.com/video/{id}?dnt=1" : null;
         }
 
         return null;

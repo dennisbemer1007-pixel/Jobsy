@@ -5,7 +5,7 @@ namespace Jobsy.Infrastructure.Data;
 
 /// <summary>
 /// Shared mock media + copy helpers for vacancy seeders and backfill.
-/// Uses picsum.photos seed URLs (stable unique photo per vacancy).
+/// Uses local vacancy illustrations so demo listings do not contact an image provider.
 /// </summary>
 internal static class MockVacancyMedia
 {
@@ -19,16 +19,15 @@ internal static class MockVacancyMedia
     ];
 
     public static string ImageUrl(Guid vacancyId) =>
-        VacancyImageUrls.PicsumUrl(vacancyId);
+        VacancyImageUrls.Placeholder(vacancyId);
 
     public static string ImageUrl(Guid vacancyId, WorkType workTypes)
     {
-        _ = workTypes;
-        return VacancyImageUrls.PicsumUrl(vacancyId);
+        return VacancyImageUrls.Placeholder(vacancyId, workTypes);
     }
 
     public static string ImageUrl(string seed) =>
-        $"https://picsum.photos/seed/{Uri.EscapeDataString(seed ?? "flex")}/600/400";
+        VacancyImageUrls.Placeholder(Guid.Empty, seed);
 
     public static string VideoUrl(int index) =>
         DemoVideos[Math.Abs(index) % DemoVideos.Length];
@@ -40,8 +39,8 @@ internal static class MockVacancyMedia
     }
 
     /// <summary>
-    /// True when the stored image is missing, a broken Unsplash URL, or a temporary
-    /// local SVG stand-in. Picsum seeds, uploads and data-URIs are kept.
+    /// True when the stored image is missing, a third-party placeholder (Unsplash/picsum),
+    /// or otherwise not a local/upload URL. Local illustrations, uploads and data-URIs are kept.
     /// </summary>
     public static bool NeedsImageBackfill(string? imageUrl)
     {
@@ -50,14 +49,12 @@ internal static class MockVacancyMedia
             return true;
         }
 
-        if (VacancyImageUrls.IsLocalVacancySvg(imageUrl)
-            || VacancyImageUrls.IsBrokenUnsplash(imageUrl))
+        if (VacancyImageUrls.IsBrokenUnsplash(imageUrl) || VacancyImageUrls.IsPicsum(imageUrl))
         {
             return true;
         }
 
-        if (VacancyImageUrls.IsPicsum(imageUrl)
-            || imageUrl.StartsWith("/images/", StringComparison.OrdinalIgnoreCase)
+        if (imageUrl.StartsWith("/images/", StringComparison.OrdinalIgnoreCase)
             || imageUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
         {
             return false;

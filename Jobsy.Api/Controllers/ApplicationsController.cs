@@ -398,6 +398,10 @@ public class ApplicationsController : ControllerBase
         {
             return Unauthorized(new { message = "Inloggegevens incompleet; solliciteren niet mogelijk." });
         }
+        if (!CandidateConsentRules.CanUseCandidateFeatures(candidate))
+        {
+            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+        }
 
         var existing = await _db.Applications.FirstOrDefaultAsync(
             a => a.VacancyId == vacancy.Id

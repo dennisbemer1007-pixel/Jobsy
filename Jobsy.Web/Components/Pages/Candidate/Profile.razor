@@ -569,6 +569,60 @@
             </div>
         }
 
+        @if (!_loading)
+        {
+            <section class="profile-unsubscribe" aria-labelledby="profile-privacy-title">
+                <h2 id="profile-privacy-title" class="profile-page__title">Privacy en toestemming</h2>
+                <p class="login-lead">Je kiest zelf of we je tests en AI-analyse gebruiken. De talentpool staat standaard uit.</p>
+
+                <h3>Tests en AI-analyse</h3>
+                <p class="profile-address__hint">
+                    @(_testAiConsentAt is null
+                        ? "Je hebt nog geen toestemming gegeven."
+                        : $"Toestemming gegeven op {_testAiConsentAt.Value.ToLocalTime():dd-MM-yyyy}.")
+                </p>
+                @if (_testAiConsentAt is null)
+                {
+                    <button class="engagement-btn" type="button" disabled="@_consentBusy" @onclick="AcceptTestConsentAsync">Toestemming geven</button>
+                }
+                else
+                {
+                    <button class="engagement-btn" type="button" disabled="@_consentBusy" @onclick="() => WithdrawTestConsentAsync(false)">Toestemming intrekken</button>
+                    <button class="provider-btn provider-btn--danger" type="button" disabled="@_consentBusy" @onclick="() => WithdrawTestConsentAsync(true)">Intrekken en testresultaten verwijderen</button>
+                }
+
+                <h3>Anonieme talentpool</h3>
+                <p class="profile-address__hint">
+                    @(_talentPoolConsentAt is null
+                        ? "Je profiel is niet zichtbaar in de talentpool."
+                        : "Je profiel is anoniem zichtbaar in de talentpool.")
+                </p>
+                @if (_talentPoolConsentAt is null)
+                {
+                    <button class="engagement-btn" type="button" disabled="@_consentBusy" @onclick="AcceptTalentPoolConsentAsync">Anoniem zichtbaar worden</button>
+                }
+                else
+                {
+                    <button class="provider-btn provider-btn--danger" type="button" disabled="@_consentBusy" @onclick="WithdrawTalentPoolConsentAsync">Talentpooltoestemming intrekken</button>
+                }
+
+                @if (IsUnder16 && _parentalConsentAt is null)
+                {
+                    <h3>Toestemming ouder of voogd</h3>
+                    <p class="profile-address__hint">Voor tests, AI en solliciteren hebben we eerst toestemming van je ouder of voogd nodig.</p>
+                    <label>
+                        E-mailadres van ouder of voogd
+                        <input type="email" @bind="_parentalConsentEmail" autocomplete="email" />
+                    </label>
+                    <button class="engagement-btn" type="button" disabled="@_consentBusy" @onclick="RequestParentalConsentAsync">Bevestigingslink sturen</button>
+                }
+                @if (!string.IsNullOrWhiteSpace(_consentMessage))
+                {
+                    <p class="state-message" aria-live="polite">@_consentMessage</p>
+                }
+            </section>
+        }
+
         <section class="profile-contacts-mini" aria-labelledby="talent-contacts-title">
             <h2 id="talent-contacts-title" class="profile-page__title">@Culture["Talent.CandidateTitle"]</h2>
             <p class="login-lead">@Culture["Talent.CandidateLead"]</p>
@@ -617,6 +671,12 @@
     private string _phoneNumber = "";
     private bool _whatsAppAllowed;
     private bool _authenticatorEnabled;
+    private bool _consentBusy;
+    private DateTime? _talentPoolConsentAt;
+    private DateTime? _testAiConsentAt;
+    private DateTime? _parentalConsentAt;
+    private string _parentalConsentEmail = "";
+    private string? _consentMessage;
     private bool _unsubscribeOpen;
     private DateOnly? _dobInput;
     private string _homeAddress = string.Empty;
@@ -644,6 +704,10 @@
     private string? _defaultMotivation;
     private string? _message;
     private string? _returnUrl;
+
+    private bool IsUnder16 => _dobInput is DateOnly dob
+                              && AgeRules.AgeYearsFromDateOfBirth(dob) is int age
+                              && age < 16;
 
     private List<AddressSuggestion> _suggestions = [];
     private bool _showSuggestions;
@@ -737,6 +801,10 @@
         _phoneNumber = profile.PhoneNumber ?? "";
         _whatsAppAllowed = profile.WhatsAppContactAllowed;
         _authenticatorEnabled = profile.AuthenticatorEnabled;
+        _talentPoolConsentAt = profile.TalentPoolConsentAt;
+        _testAiConsentAt = profile.TestAiConsentAt;
+        _parentalConsentAt = profile.ParentalConsentAt;
+        _parentalConsentEmail = profile.ParentalConsentEmail ?? "";
         _homeLat = profile.HomeLatitude;
         _homeLng = profile.HomeLongitude;
         _ = LoadDevicesAsync();
@@ -1388,6 +1456,73 @@
         finally
         {
             _pdfBusy = false;
+        }
+    }
+
+    private async Task AcceptTestConsentAsync()
+    {
+        await UpdateConsentAsync(() => Api.AcceptTestAiConsentAsync(), "Toestemming voor tests en AI-analyse is opgeslagen.");
+    }
+
+    private async Task WithdrawTestConsentAsync(bool deleteResults)
+    {
+        await UpdateConsentAsync(
+            () => Api.WithdrawTestAiConsentAsync(deleteResults),
+            deleteResults ? "Toestemming ingetrokken en testresultaten verwijderd." : "Toestemming voor tests en AI-analyse is ingetrokken.");
+    }
+
+    private async Task AcceptTalentPoolConsentAsync()
+    {
+        await UpdateConsentAsync(() => Api.AcceptTalentPoolConsentAsync(), "Je profiel is nu anoniem zichtbaar in de talentpool.");
+    }
+
+    private async Task WithdrawTalentPoolConsentAsync()
+    {
+        await UpdateConsentAsync(() => Api.WithdrawTalentPoolConsentAsync(), "Je profiel is direct uit de talentpool verwijderd.");
+    }
+
+    private async Task RequestParentalConsentAsync()
+    {
+        _consentBusy = true;
+        _consentMessage = null;
+        try
+        {
+            await Api.RequestParentalConsentAsync(_parentalConsentEmail);
+            _consentMessage = "De bevestigingslink is verstuurd.";
+        }
+        catch (Exception ex)
+        {
+            _consentMessage = ex.Message;
+        }
+        finally
+        {
+            _consentBusy = false;
+        }
+    }
+
+    private async Task UpdateConsentAsync(Func<Task<MeProfile?>> action, string successMessage)
+    {
+        _consentBusy = true;
+        _consentMessage = null;
+        try
+        {
+            var updated = await action();
+            if (updated is not null)
+            {
+                _talentPoolConsentAt = updated.TalentPoolConsentAt;
+                _testAiConsentAt = updated.TestAiConsentAt;
+                _parentalConsentAt = updated.ParentalConsentAt;
+            }
+
+            _consentMessage = successMessage;
+        }
+        catch (Exception ex)
+        {
+            _consentMessage = ex.Message;
+        }
+        finally
+        {
+            _consentBusy = false;
         }
     }
 

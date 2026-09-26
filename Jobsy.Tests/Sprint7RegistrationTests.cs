@@ -274,7 +274,7 @@ public class Sprint7RegistrationTests
             "flex.owner@jobsy.local",
             null,
             AcceptedTerms: true,
-            Password: "Intermed1!"));
+            Password: "IntermedPass1!"));
 
         Assert.Contains("intermediair", submit.Message, StringComparison.OrdinalIgnoreCase);
 
@@ -307,7 +307,7 @@ public class Sprint7RegistrationTests
             "org.boss@jobsy.local",
             null,
             AcceptedTerms: true,
-            Password: "Bedrijf1!"));
+            Password: "BedrijfPass1!"));
 
         Assert.Contains("gratis", submit.Message, StringComparison.OrdinalIgnoreCase);
 
@@ -650,7 +650,7 @@ public class Sprint7RegistrationTests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990078", "99990078_0001", RegistrationScope.Organization,
             "Flex Boss", "flex.takeover@jobsy.local", null, AcceptedTerms: true,
-            Password: "Intermed1!"));
+            Password: "IntermedPass1!"));
         Assert.True(submit.RequiresTakeover);
 
         await VerifyTakeoverEmailAsync(db, sut, submit.RegistrationId);
