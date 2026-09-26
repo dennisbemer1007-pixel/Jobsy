@@ -4393,6 +4393,25 @@ html[dir="rtl"] .account-menu__panel {
     overflow: hidden;
 }
 
+.map-popup--skeleton .map-popup__shimmer,
+.map-popup--skeleton .map-popup__shimmer-line {
+    background: linear-gradient(90deg, var(--pearl-mid) 0%, var(--pearl-shine) 45%, var(--pearl-mid) 100%);
+    background-size: 200% 100%;
+    animation: map-popup-shimmer 1.2s ease-in-out infinite;
+    color: transparent;
+    border-radius: 6px;
+}
+
+.map-popup--skeleton .map-popup__media {
+    min-width: 112px;
+    min-height: 252px;
+}
+
+@keyframes map-popup-shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
 /* Gold glow sits outside the card (no extra padding) so popup anchor/offset stay put. */
 .job-map-popup--featured .map-popup::before,
 .job-map-popup.featured-job .map-popup::before,

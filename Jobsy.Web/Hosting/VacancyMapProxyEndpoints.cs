@@ -1,0 +1,89 @@
+using System.Net.Http.Headers;
+using Jobsy.Web.Services;
+
+namespace Jobsy.Web.Hosting;
+
+/// <summary>
+/// Same-origin proxies so the banenkaart (jobMap.js) can call /api/vacancies/* on the web host.
+/// Those routes only exist on the API service; without this proxy the browser gets 404 on lobsy.nl.
+/// </summary>
+public static class VacancyMapProxyEndpoints
+{
+    public static void MapVacancyMapProxyEndpoints(this WebApplication app)
+    {
+        app.MapGet("/api/vacancies/pins", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
+            forwarder.ForwardAsync(http, "api/vacancies/pins", ct));
+
+        app.MapGet("/api/vacancies/cards", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
+            forwarder.ForwardAsync(http, "api/vacancies/cards", ct));
+
+        app.MapGet("/api/vacancies/{id:guid}/card", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
+            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/card", ct));
+
+        // Legacy detail path still used by older cached jobMap bundles.
+        app.MapGet("/api/vacancies/{id:guid}", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
+            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}", ct));
+    }
+}
+
+public interface IVacancyMapApiForwarder
+{
+    Task ForwardAsync(HttpContext http, string apiPath, CancellationToken ct);
+}
+
+/// <summary>Forwards map API GETs to the Jobsy API with the caller's identity when present.</summary>
+public sealed class VacancyMapApiForwarder : IVacancyMapApiForwarder
+{
+    private readonly IConfiguration _configuration;
+    private readonly IServiceProvider _services;
+
+    public VacancyMapApiForwarder(IConfiguration configuration, IServiceProvider services)
+    {
+        _configuration = configuration;
+        _services = services;
+    }
+
+    public async Task ForwardAsync(HttpContext http, string apiPath, CancellationToken ct)
+    {
+        using var client = JobsyApiClientFactory.Create(_services, _configuration);
+        var target = apiPath;
+        if (http.Request.QueryString.HasValue)
+        {
+            target += http.Request.QueryString.Value;
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, target);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        if (http.Request.Headers.TryGetValue("If-None-Match", out var etag))
+        {
+            request.Headers.TryAddWithoutValidation("If-None-Match", etag.ToString());
+        }
+
+        using var response = await client.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            ct);
+
+        http.Response.StatusCode = (int)response.StatusCode;
+        if (response.Headers.ETag is { } responseEtag)
+        {
+            http.Response.Headers.ETag = responseEtag.ToString();
+        }
+
+        if (response.Headers.CacheControl is { } cache)
+        {
+            http.Response.Headers.CacheControl = cache.ToString();
+        }
+        else if (response.Headers.TryGetValues("Cache-Control", out var cacheValues))
+        {
+            http.Response.Headers.CacheControl = string.Join(", ", cacheValues);
+        }
+
+        if (response.Content.Headers.ContentType is { } contentType)
+        {
+            http.Response.ContentType = contentType.ToString();
+        }
+
+        await response.Content.CopyToAsync(http.Response.Body, ct);
+    }
+}

@@ -2301,6 +2301,7 @@
             .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
             .Select(v =>
             {
+                var workType = v.WorkTypes is { Length: > 0 } ? v.WorkTypes[0] : null;
                 var dict = new Dictionary<string, object?>
                 {
                     ["id"] = v.Id.ToString("D"),
@@ -2313,8 +2314,11 @@
                         ? VacancyCategoryDefaults.SeniorPlusColorHex
                         : v.CategoryColorHex,
                     ["matchPercent"] = v.MatchPercent,
+                    ["matchColorBand"] = v.MatchColorBand,
                     ["highlighted"] = v.IsHighlighted,
-                    ["highlightRank"] = v.IsHighlighted ? HighlightShuffleRank(v.Id) : 0u
+                    ["highlightRank"] = v.IsHighlighted ? HighlightShuffleRank(v.Id) : 0u,
+                    ["workType"] = workType,
+                    ["workTypes"] = v.WorkTypes
                 };
                 return dict;
             })

@@ -208,23 +208,170 @@ public class VacanciesController : ControllerBase
         Response.Headers.ETag = etag;
         Response.Headers.CacheControl = isCandidate
             ? "private,max-age=15"
-            : "public,max-age=30,stale-while-revalidate=60";
+            : "public,max-age=60,stale-while-revalidate=300";
 
+        // Stable seed so featured pin order matches the web circuit shuffle for this response.
+        var highlightSeed = (uint)(stamp & 0xffffffff);
         var pins = candidates.Select(c =>
         {
             var colour = c.Record.SuitableFor65Plus
                 ? VacancyCategoryDefaults.SeniorPlusColorHex
                 : c.Record.CategoryColorHex;
             int? matchPercent = null;
+            string? matchBand = null;
             if (matches is not null && matches.TryGetValue(c.Record.Id, out var match))
             {
                 matchPercent = match.TotalPercent;
+                matchBand = match.ColorBand;
             }
 
-            return new VacancyPinDto(c.Record.Id, c.Record.Latitude, c.Record.Longitude, colour, matchPercent);
+            var highlighted = VacancyHighlightRules.IsActive(
+                c.Record.IsHighlighted, c.Record.HighlightedUntil, DateTime.UtcNow);
+            var workType = c.Record.WorkTypeLabelList.FirstOrDefault()
+                           ?? c.Record.WorkTypeLabels;
+
+            return new VacancyPinDto(
+                c.Record.Id,
+                c.Record.Latitude,
+                c.Record.Longitude,
+                colour,
+                matchPercent,
+                highlighted,
+                highlighted ? HighlightShuffleRules.Rank(highlightSeed, c.Record.Id) : 0u,
+                workType,
+                matchBand);
         });
 
         return Ok(pins);
+    }
+
+    /// <summary>
+    /// Lightweight popup card from the in-memory index (no DB). Used by jobMap single-pin popups.
+    /// </summary>
+    [HttpGet("{id:guid}/card")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<VacancyCardDto>> GetCard(
+        Guid id,
+        [FromQuery] double? originLat,
+        [FromQuery] double? originLng,
+        [FromQuery] string transport = TransportLabels.Bike,
+        CancellationToken cancellationToken = default)
+    {
+        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var record = records.FirstOrDefault(r => r.Id == id);
+        if (record is null)
+        {
+            return NotFound();
+        }
+
+        var showWage = await CanViewerSeeWageAsync(cancellationToken);
+        int? travelMinutes = null;
+        if (originLat is double lat && originLng is double lng && IsFiniteCoordinate(lat, lng))
+        {
+            var mode = TransportLabels.Parse(transport);
+            var (minutes, _) = TravelReach.Estimate(lat, lng, record.Latitude, record.Longitude, mode);
+            travelMinutes = (int?)minutes;
+        }
+
+        int? matchPercent = null;
+        string? matchBand = null;
+        if (_companyAuth.IsCandidate(User))
+        {
+            var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
+            if (matchContext is not null)
+            {
+                var scored = _profileMatch.Score(matchContext, [(record, travelMinutes)]);
+                if (scored.TryGetValue(id, out var match))
+                {
+                    matchPercent = match.TotalPercent;
+                    matchBand = match.ColorBand;
+                }
+            }
+        }
+
+        return Ok(MapCard(record, showWage, travelMinutes, matchPercent, matchBand));
+    }
+
+    /// <summary>
+    /// Batch popup cards (max 25) from the in-memory index. Used by cluster pager + prefetch.
+    /// </summary>
+    [HttpGet("cards")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<IEnumerable<VacancyCardDto>>> GetCards(
+        [FromQuery] string? ids,
+        [FromQuery] double? originLat,
+        [FromQuery] double? originLng,
+        [FromQuery] string transport = TransportLabels.Bike,
+        CancellationToken cancellationToken = default)
+    {
+        var parsed = ParseCardIds(ids);
+        if (parsed.Count == 0)
+        {
+            return Ok(Array.Empty<VacancyCardDto>());
+        }
+
+        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var byId = records.Where(r => parsed.Contains(r.Id)).ToDictionary(r => r.Id);
+        var showWage = await CanViewerSeeWageAsync(cancellationToken);
+        var mode = TransportLabels.Parse(transport);
+        var hasOrigin = originLat is double lat && originLng is double lng && IsFiniteCoordinate(lat, lng);
+
+        IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches = null;
+        if (_companyAuth.IsCandidate(User))
+        {
+            var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
+            if (matchContext is not null)
+            {
+                var scoreInput = parsed
+                    .Where(byId.ContainsKey)
+                    .Select(id =>
+                    {
+                        var r = byId[id];
+                        int? travel = null;
+                        if (hasOrigin)
+                        {
+                            var (minutes, _) = TravelReach.Estimate(
+                                originLat!.Value, originLng!.Value, r.Latitude, r.Longitude, mode);
+                            travel = (int?)minutes;
+                        }
+
+                        return (Record: r, TravelMinutes: travel);
+                    })
+                    .ToList();
+                matches = _profileMatch.Score(matchContext, scoreInput);
+            }
+        }
+
+        var cards = new List<VacancyCardDto>(parsed.Count);
+        foreach (var id in parsed)
+        {
+            if (!byId.TryGetValue(id, out var record))
+            {
+                continue;
+            }
+
+            int? travelMinutes = null;
+            if (hasOrigin)
+            {
+                var (minutes, _) = TravelReach.Estimate(
+                    originLat!.Value, originLng!.Value, record.Latitude, record.Longitude, mode);
+                travelMinutes = (int?)minutes;
+            }
+
+            int? matchPercent = null;
+            string? matchBand = null;
+            if (matches is not null && matches.TryGetValue(id, out var match))
+            {
+                matchPercent = match.TotalPercent;
+                matchBand = match.ColorBand;
+            }
+
+            cards.Add(MapCard(record, showWage, travelMinutes, matchPercent, matchBand));
+        }
+
+        return Ok(cards);
     }
 
     /// <summary>
@@ -1634,6 +1781,76 @@ public class VacanciesController : ControllerBase
            && Math.Abs(lat) <= 90
            && Math.Abs(lng) <= 180
            && !(lat == 0 && lng == 0);
+
+    private static List<Guid> ParseCardIds(string? ids)
+    {
+        if (string.IsNullOrWhiteSpace(ids))
+        {
+            return [];
+        }
+
+        var result = new List<Guid>(25);
+        foreach (var part in ids.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (result.Count >= 25)
+            {
+                break;
+            }
+
+            if (Guid.TryParse(part, out var id) && id != Guid.Empty && !result.Contains(id))
+            {
+                result.Add(id);
+            }
+        }
+
+        return result;
+    }
+
+    private static VacancyCardDto MapCard(
+        VacancyDiscoveryRecord record,
+        bool showWage,
+        int? travelMinutes,
+        int? matchPercent,
+        string? matchBand)
+    {
+        var workType = record.WorkTypeLabelList.FirstOrDefault() ?? record.WorkTypeLabels;
+        var thumbnail = VacancyImageUrls.ForPublicList(record.ImageUrl, record.Id, workType)
+                        ?? VacancyImageUrls.Placeholder(record.Id, workType);
+        var highlighted = VacancyHighlightRules.IsActive(
+            record.IsHighlighted, record.HighlightedUntil, DateTime.UtcNow);
+        return new VacancyCardDto(
+            record.Id,
+            record.Title,
+            record.CompanyName,
+            record.OfferedByLabel,
+            PlaceFromAddress(record.CompanyAddress),
+            thumbnail,
+            record.CompanyLogoUrl,
+            showWage ? record.HourlyWage : null,
+            showWage,
+            record.WorkTypeLabelList.Length > 0 ? record.WorkTypeLabelList : null,
+            highlighted,
+            travelMinutes,
+            matchPercent,
+            matchBand,
+            record.SuitableFor65Plus
+                ? VacancyCategoryDefaults.SeniorPlusColorHex
+                : record.CategoryColorHex,
+            record.CompanyAddress,
+            record.KvkNumber,
+            record.Vestigingsnummer);
+    }
+
+    private static string PlaceFromAddress(string? address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return "";
+        }
+
+        var parts = address.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 0 ? address.Trim() : parts[^1];
+    }
 
     private async Task<string> ResolveTargetLanguageAsync(CancellationToken cancellationToken)
     {

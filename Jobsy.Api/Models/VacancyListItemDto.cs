@@ -103,15 +103,44 @@ public record VacancyListItemDto(
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);
 
 /// <summary>
-/// Compact banenkaart pin for MapLibre. No titles/addresses — detail loads on pin open.
+/// Compact banenkaart pin for MapLibre. No titles/addresses — card loads on pin open.
 /// <paramref name="Colour"/> is the category (or 65+) hex; <paramref name="MatchPercent"/> only for candidates.
+/// Marker fields (<see cref="Highlighted"/>, <see cref="WorkType"/>, <see cref="MatchColorBand"/>) keep pins
+/// looking the same before the card fetch completes.
 /// </summary>
 public sealed record VacancyPinDto(
     Guid Id,
     double Lat,
     double Lng,
     string? Colour = null,
-    int? MatchPercent = null);
+    int? MatchPercent = null,
+    bool Highlighted = false,
+    uint HighlightRank = 0,
+    string? WorkType = null,
+    string? MatchColorBand = null);
+
+/// <summary>
+/// Lightweight popup/list card from the in-memory discovery index (no DB round-trip).
+/// </summary>
+public sealed record VacancyCardDto(
+    Guid Id,
+    string Title,
+    string CompanyName,
+    string? OfferedByLabel,
+    string Place,
+    string? ThumbnailUrl,
+    string? LogoUrl,
+    decimal? HourlyWage,
+    bool WageVisible,
+    string[]? WorkTypes,
+    bool IsHighlighted,
+    int? TravelMinutes = null,
+    int? MatchPercent = null,
+    string? MatchColorBand = null,
+    string? CategoryColorHex = null,
+    string? CompanyAddress = null,
+    string? KvkNumber = null,
+    string? Vestigingsnummer = null);
 
 /// <summary>Exact origin→vacancy travel for the selected transport. No PII.</summary>
 public sealed record VacancyTravelDto(int? TravelMinutes, double? DistanceKm);

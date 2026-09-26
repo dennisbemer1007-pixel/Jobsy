@@ -106,6 +106,7 @@ builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(clien
 // JobsyApiClient is IAsyncDisposable so the circuit scope disposes the HttpClient.
 builder.Services.AddScoped(sp =>
     new JobsyApiClient(JobsyApiClientFactory.Create(sp, builder.Configuration)));
+builder.Services.AddScoped<IVacancyMapApiForwarder, VacancyMapApiForwarder>();
 
 builder.Services.AddJobsyWebPerformance();
 
@@ -177,6 +178,8 @@ app.UseAntiforgery();
 
 app.MapJobsyAuthEndpoints();
 app.MapSeoEndpoints();
+// Banenkaart same-origin API proxies — must be before MapRazorComponents.
+app.MapVacancyMapProxyEndpoints();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode(o =>

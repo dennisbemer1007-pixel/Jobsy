@@ -455,11 +455,12 @@ window.jobMap = (function () {
                 ? " data-fallback-src=\"" + escapeAttr(logoSrc) + "\""
                 : "";
             mediaInner +=
-                "<img class=\"map-popup__photo\" src=\"" + escapeAttr(photoSrc) + "\" alt=\"\" loading=\"lazy\" data-logo-fallback=\"photo\"" + fb + " />";
+                "<img class=\"map-popup__photo\" src=\"" + escapeAttr(photoSrc) +
+                "\" alt=\"\" width=\"160\" height=\"252\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\"" + fb + " />";
         } else if (logoSrc) {
             mediaInner +=
                 "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(logoSrc) + "\" alt=\"" +
-                escapeAttr(v.company) + " logo\" loading=\"lazy\" data-logo-fallback=\"photo\" />";
+                escapeAttr(v.company) + " logo\" width=\"96\" height=\"96\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\" />";
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
@@ -602,17 +603,74 @@ window.jobMap = (function () {
         );
     }
 
-    function buildClusterSingleHtml(childMarkers, page) {
+    function buildClusterSingleHtml(childMarkers, page, jobOverride) {
         const jobs = clusterJobsFromMarkers(childMarkers);
         const total = jobs.length;
         const pageCount = Math.max(1, Math.ceil(total / CLUSTER_PAGE_SIZE));
         const current = Math.min(Math.max(1, page || 1), pageCount);
-        const job = jobs[current - 1];
+        const job = jobOverride || jobs[current - 1];
         if (!job) {
-            return "<div class=\"map-popup\"><p class=\"map-popup__company\">Geen vacatures</p></div>";
+            return "<div class=\"map-popup\"><div class=\"map-popup__main\"><div class=\"map-popup__body\">" +
+                "<p class=\"map-popup__company\">Geen vacatures</p></div></div></div>";
         }
 
-        return buildClusterPagerHtml(current, pageCount) + buildPopupHtml(job);
+        const body = job._detailLoaded ? buildPopupHtml(job) : skeletonPopupHtml(job);
+        return buildClusterPagerHtml(current, pageCount) + body;
+    }
+
+    let clusterPageGen = 0;
+
+    function renderClusterPage(popup, childMarkers, page) {
+        if (!popup || !childMarkers) {
+            return;
+        }
+        const jobs = clusterJobsFromMarkers(childMarkers);
+        const pageCount = Math.max(1, jobs.length);
+        const current = Math.min(Math.max(1, page || 1), pageCount);
+        const job = jobs[current - 1];
+        const gen = ++clusterPageGen;
+        applyPopupOptions(popup, job);
+        popup.setHTML(buildClusterSingleHtml(childMarkers, current, job));
+        if (typeof popup.update === "function") {
+            popup.update();
+        }
+        syncFeaturedPopupClass(popup, job);
+        bindClusterPopupInteractions(popup, childMarkers);
+
+        if (!job) {
+            return;
+        }
+
+        const pageIds = [job.id];
+        const next = jobs[current];
+        if (next && next.id) {
+            pageIds.push(next.id);
+        }
+        fetchVacancyCards(pageIds).then(function (cards) {
+            if (gen !== clusterPageGen || popup !== activeClusterPopup) {
+                return;
+            }
+            const card = cards[0];
+            if (!card) {
+                popup.setHTML(buildClusterPagerHtml(current, pageCount) + unavailablePopupHtml(job.id));
+                bindClusterPopupInteractions(popup, childMarkers);
+                return;
+            }
+            const full = mapCardToPopup(card, job);
+            // Keep pin data on the marker so paging back stays filled.
+            childMarkers.forEach(function (marker) {
+                if (marker.options && marker.options.jobData && String(marker.options.jobData.id) === String(job.id)) {
+                    marker.options.jobData = full;
+                }
+            });
+            applyPopupOptions(popup, full);
+            popup.setHTML(buildClusterSingleHtml(childMarkers, current, full));
+            if (typeof popup.update === "function") {
+                popup.update();
+            }
+            syncFeaturedPopupClass(popup, full);
+            bindClusterPopupInteractions(popup, childMarkers);
+        });
     }
 
     function bindClusterPopupInteractions(popup, childMarkers) {
@@ -636,6 +694,27 @@ window.jobMap = (function () {
             });
         });
 
+        popupEl.querySelectorAll("[data-retry-card]").forEach(function (btn) {
+            if (btn.dataset.boundRetry) {
+                return;
+            }
+            btn.dataset.boundRetry = "1";
+            btn.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                const jobs = clusterJobsFromMarkers(childMarkers);
+                const id = btn.getAttribute("data-retry-card");
+                let page = 1;
+                for (let i = 0; i < jobs.length; i++) {
+                    if (String(jobs[i].id) === String(id)) {
+                        page = i + 1;
+                        break;
+                    }
+                }
+                delete detailCache[String(id || "")];
+                renderClusterPage(popup, childMarkers, page);
+            });
+        });
+
         popupEl.querySelectorAll("[data-cluster-page]").forEach(function (btn) {
             btn.addEventListener("click", function (ev) {
                 stopEvent(ev);
@@ -648,13 +727,7 @@ window.jobMap = (function () {
                 if (!nextPage || nextPage < 1 || nextPage > pageCount) {
                     return;
                 }
-                applyPopupOptions(popup, jobs[nextPage - 1]);
-                popup.setHTML(buildClusterSingleHtml(childMarkers, nextPage));
-                if (typeof popup.update === "function") {
-                    popup.update();
-                }
-                syncFeaturedPopupClass(popup, jobs[nextPage - 1]);
-                bindClusterPopupInteractions(popup, childMarkers);
+                renderClusterPage(popup, childMarkers, nextPage);
             });
         });
     }
@@ -893,62 +966,96 @@ window.jobMap = (function () {
         const colour = raw.categoryColor || raw.colour || raw.Colour || null;
         const matchPercent = raw.matchPercent != null ? raw.matchPercent
             : (raw.MatchPercent != null ? raw.MatchPercent : null);
+        const workTypes = Array.isArray(raw.workTypes) ? raw.workTypes : null;
+        const workType = raw.workType || (workTypes && workTypes[0]) || "";
+        const highlighted = raw.highlighted === true || raw.isHighlighted === true || raw.Highlighted === true;
+        const highlightRank = raw.highlightRank != null ? raw.highlightRank
+            : (raw.HighlightRank != null ? raw.HighlightRank : undefined);
+        const matchColorBand = raw.matchColorBand || raw.MatchColorBand || null;
         return Object.assign({}, raw, {
             id: id,
             lat: lat,
             lng: lng,
             categoryColor: colour,
             colour: colour,
-            matchPercent: matchPercent
+            matchPercent: matchPercent,
+            workType: workType,
+            workTypes: workTypes || (workType ? [workType] : []),
+            highlighted: highlighted,
+            highlightRank: highlightRank,
+            matchColorBand: matchColorBand
         });
     }
 
     function skeletonPopupHtml(pin) {
         return (
-            "<div class=\"map-popup map-popup--loading\">" +
+            "<div class=\"map-popup map-popup--loading map-popup--skeleton\">" +
                 "<div class=\"map-popup__main\">" +
-                    "<div class=\"map-popup__media map-popup__media--logo-only\" aria-hidden=\"true\"></div>" +
+                    "<div class=\"map-popup__media map-popup__media--logo-only map-popup__shimmer\" aria-hidden=\"true\"></div>" +
                     "<div class=\"map-popup__body\">" +
-                        "<p class=\"map-popup__title\">Laden…</p>" +
+                        "<p class=\"map-popup__title map-popup__shimmer-line\">Laden…</p>" +
                         "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>" +
+                        "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>" +
                     "</div>" +
                 "</div>" +
             "</div>"
         );
     }
 
-    function mapDetailToPopup(detail, pin) {
-        if (!detail) {
+    function unavailablePopupHtml(id) {
+        return (
+            "<div class=\"map-popup\">" +
+                "<div class=\"map-popup__main\">" +
+                    "<div class=\"map-popup__body\">" +
+                        "<p class=\"map-popup__title\">Vacature niet beschikbaar</p>" +
+                        "<p class=\"map-popup__address\">Probeer het opnieuw of open de vacaturepagina.</p>" +
+                        "<div class=\"map-popup__footer\">" +
+                            "<button type=\"button\" class=\"map-popup__apply\" data-retry-card=\"" +
+                                escapeAttr(String(id || "")) + "\">Opnieuw proberen</button>" +
+                            "<a class=\"map-popup__company map-popup__cta\" href=\"/vacancies/" +
+                                encodeURIComponent(String(id || "")) + "\">Bekijk</a>" +
+                        "</div>" +
+                    "</div>" +
+                "</div>" +
+            "</div>"
+        );
+    }
+
+    function mapCardToPopup(card, pin) {
+        if (!card) {
             return pin;
         }
-        const workTypes = Array.isArray(detail.workTypes) ? detail.workTypes : [];
+        const workTypes = Array.isArray(card.workTypes) ? card.workTypes : [];
+        const thumb = card.thumbnailUrl || card.imageUrl || null;
         return Object.assign({}, pin, {
-            title: detail.title || pin.title || "Vacature",
-            company: detail.companyName || pin.company || "",
-            companyId: detail.companyId,
-            companyHref: detail.kvkNumber && detail.vestigingsnummer
-                ? "/" + detail.kvkNumber + "/" + detail.vestigingsnummer
+            title: card.title || pin.title || "Vacature",
+            company: card.companyName || pin.company || "",
+            companyHref: card.kvkNumber && card.vestigingsnummer
+                ? "/" + card.kvkNumber + "/" + card.vestigingsnummer
                 : null,
-            offeredBy: detail.offeredByLabel || null,
-            address: detail.companyAddress || "",
-            logoUrl: detail.companyLogoUrl || null,
-            imageUrl: detail.imageUrl || null,
-            transport: detail.requiredTransport || [],
+            offeredBy: card.offeredByLabel || null,
+            address: card.companyAddress || card.place || "",
+            place: card.place || "",
+            logoUrl: card.logoUrl || null,
+            imageUrl: thumb,
             workTypes: workTypes,
-            workType: workTypes[0] || "",
-            categoryColor: pin.categoryColor || detail.categoryColorHex || null,
-            highlighted: detail.isHighlighted === true || !!pin.highlighted,
-            travelMinutes: detail.travelMinutes != null ? detail.travelMinutes : pin.travelMinutes,
-            matchPercent: detail.matchPercent != null ? detail.matchPercent : pin.matchPercent,
-            matchColorBand: detail.matchColorBand || pin.matchColorBand,
-            cultureFitLabel: detail.cultureFitLabel || null,
-            cultureFitBand: detail.cultureFitBand || null,
-            wage: detail.hourlyWage != null && detail.wageVisible !== false ? detail.hourlyWage : null,
+            workType: workTypes[0] || pin.workType || "",
+            categoryColor: pin.categoryColor || card.categoryColorHex || null,
+            highlighted: card.isHighlighted === true || !!pin.highlighted,
+            travelMinutes: card.travelMinutes != null ? card.travelMinutes : pin.travelMinutes,
+            matchPercent: card.matchPercent != null ? card.matchPercent : pin.matchPercent,
+            matchColorBand: card.matchColorBand || pin.matchColorBand,
+            wage: card.hourlyWage != null && card.wageVisible !== false ? card.hourlyWage : null,
             _detailLoaded: true
         });
     }
 
+    /** @deprecated use fetchVacancyCard — kept as alias for tests/guards */
     function fetchVacancyDetail(id) {
+        return fetchVacancyCard(id);
+    }
+
+    function fetchVacancyCard(id) {
         const key = String(id || "");
         if (!key) {
             return Promise.resolve(null);
@@ -956,21 +1063,65 @@ window.jobMap = (function () {
         if (detailCache[key]) {
             return detailCache[key];
         }
-        detailCache[key] = fetch("/api/vacancies/" + encodeURIComponent(key), {
+        detailCache[key] = fetch("/api/vacancies/" + encodeURIComponent(key) + "/card", {
             credentials: "same-origin",
             headers: { Accept: "application/json" }
         })
             .then(function (res) {
                 if (!res.ok) {
-                    throw new Error("detail " + res.status);
+                    throw new Error("card " + res.status);
                 }
                 return res.json();
             })
+            .then(function (card) {
+                return card;
+            })
             .catch(function () {
-                detailCache[key] = null;
+                // Do not cache failures — retry must hit the network again.
+                delete detailCache[key];
                 return null;
             });
         return detailCache[key];
+    }
+
+    function fetchVacancyCards(ids) {
+        const list = (ids || []).map(function (id) { return String(id || ""); }).filter(Boolean);
+        if (list.length === 0) {
+            return Promise.resolve([]);
+        }
+        const missing = list.filter(function (id) { return !detailCache[id]; });
+        const batch = missing.length === 0
+            ? Promise.resolve([])
+            : fetch("/api/vacancies/cards?ids=" + missing.map(encodeURIComponent).join(","), {
+                credentials: "same-origin",
+                headers: { Accept: "application/json" }
+            })
+                .then(function (res) {
+                    if (!res.ok) {
+                        throw new Error("cards " + res.status);
+                    }
+                    return res.json();
+                })
+                .then(function (rows) {
+                    (Array.isArray(rows) ? rows : []).forEach(function (card) {
+                        if (card && card.id != null) {
+                            detailCache[String(card.id)] = Promise.resolve(card);
+                        }
+                    });
+                    missing.forEach(function (id) {
+                        if (!detailCache[id]) {
+                            detailCache[id] = Promise.resolve(null);
+                        }
+                    });
+                })
+                .catch(function () {
+                    missing.forEach(function (id) { delete detailCache[id]; });
+                });
+        return batch.then(function () {
+            return Promise.all(list.map(function (id) {
+                return Promise.resolve(detailCache[id] || null);
+            }));
+        });
     }
 
     function fetchPins(url) {
@@ -1004,11 +1155,45 @@ window.jobMap = (function () {
             .catch(function () { /* keep boot/circuit pins */ });
     }
 
+    function bindSinglePopupEl(popup, full) {
+        const el = popup && popup.getElement();
+        if (!el) {
+            return;
+        }
+        bindWageInfoInteractions(el);
+        el.querySelectorAll(".map-popup__cta, a.map-popup__media").forEach(function (cta) {
+            if (cta.dataset.bound) {
+                return;
+            }
+            cta.dataset.bound = "1";
+            cta.addEventListener("click", function () {
+                notifyOpen(full.id);
+            });
+        });
+        el.querySelectorAll("[data-retry-card]").forEach(function (btn) {
+            if (btn.dataset.boundRetry) {
+                return;
+            }
+            btn.dataset.boundRetry = "1";
+            btn.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                delete detailCache[String(full.id || "")];
+                if (recordForRetry) {
+                    openVacancyPopup(recordForRetry);
+                }
+            });
+        });
+        centerPopupInView(popup);
+    }
+
+    let recordForRetry = null;
+
     function openVacancyPopup(record) {
         if (!map || !record) {
             return;
         }
         closeActivePopup();
+        recordForRetry = record;
         let v = normalizePin(record.options.jobData) || record.options.jobData;
         record.options.jobData = v;
         const opts = Object.assign({}, jobPopupOptions(isFeaturedVacancy(v)));
@@ -1018,57 +1203,25 @@ window.jobMap = (function () {
             [record.lng, record.lat],
             needsDetail ? skeletonPopupHtml(v) : buildPopupHtml(v));
         syncFeaturedPopupClass(activeClusterPopup, v);
-        const bindPopupEl = function (full) {
-            const el = activeClusterPopup && activeClusterPopup.getElement();
-            if (!el) {
-                return;
-            }
-            bindWageInfoInteractions(el);
-            el.querySelectorAll(".map-popup__cta, a.map-popup__media").forEach(function (cta) {
-                if (cta.dataset.bound) {
-                    return;
-                }
-                cta.dataset.bound = "1";
-                cta.addEventListener("click", function () {
-                    notifyOpen(full.id);
-                });
-            });
-            centerPopupInView(activeClusterPopup);
-        };
         if (needsDetail) {
-            fetchVacancyDetail(v.id).then(function (detail) {
+            fetchVacancyCard(v.id).then(function (card) {
                 if (!activeClusterPopup || !record) {
                     return;
                 }
-                const full = mapDetailToPopup(detail, v);
-                record.options.jobData = full;
-                if (detail) {
+                if (card) {
+                    const full = mapCardToPopup(card, v);
+                    record.options.jobData = full;
                     activeClusterPopup.setHTML(buildPopupHtml(full));
                     syncFeaturedPopupClass(activeClusterPopup, full);
-                    bindPopupEl(full);
+                    bindSinglePopupEl(activeClusterPopup, full);
                 } else {
-                    activeClusterPopup.setHTML(
-                        "<div class=\"map-popup\"><p class=\"map-popup__title\">Vacature niet beschikbaar</p>" +
-                        "<p><a class=\"map-popup__apply\" href=\"/vacancies/" +
-                        encodeURIComponent(v.id) + "\">Bekijk</a></p></div>");
+                    activeClusterPopup.setHTML(unavailablePopupHtml(v.id));
+                    bindSinglePopupEl(activeClusterPopup, v);
                 }
             });
             return;
         }
-        const el = activeClusterPopup.getElement();
-        if (el) {
-            bindWageInfoInteractions(el);
-            el.querySelectorAll(".map-popup__cta, a.map-popup__media").forEach(function (cta) {
-                if (cta.dataset.bound) {
-                    return;
-                }
-                cta.dataset.bound = "1";
-                cta.addEventListener("click", function () {
-                    notifyOpen(v.id);
-                });
-            });
-        }
-        centerPopupInView(activeClusterPopup);
+        bindSinglePopupEl(activeClusterPopup, v);
         notifyOpen(v.id);
     }
 
@@ -1082,10 +1235,10 @@ window.jobMap = (function () {
         const firstJob = clusterJobsFromMarkers(childMarkers)[0];
         const opts = Object.assign({}, clusterPopupOptions(isFeaturedVacancy(firstJob)));
         const ll = lngLat || [childMarkers[0].lng, childMarkers[0].lat];
-        activeClusterPopup = popupFromOpts(opts, ll, buildClusterSingleHtml(childMarkers, 1));
+        activeClusterPopup = popupFromOpts(opts, ll, skeletonPopupHtml(firstJob || {}));
         syncFeaturedPopupClass(activeClusterPopup, firstJob);
-        bindClusterPopupInteractions(activeClusterPopup, childMarkers);
         centerPopupInView(activeClusterPopup);
+        renderClusterPage(activeClusterPopup, childMarkers, 1);
     }
 
     function ringMinutes(maxMinutes) {
