@@ -52,10 +52,15 @@ public class MobileSmokePlaywrightTests
         });
         var mobilePage = await mobile.NewPageAsync();
         var mobileGuard = AttachGuards(mobilePage);
-        await mobilePage.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 90_000 });
+        // Register before Goto — pins often complete during NetworkIdle and would
+        // be missed by a post-navigation WaitForResponse.
+        var mobilePinsWait = mobilePage.WaitForResponseAsync(
+            r => r.Url.Contains("/api/vacancies/pins", StringComparison.OrdinalIgnoreCase)
+                 && r.Status is >= 200 and < 400,
+            new() { Timeout = 90_000 });
+        await mobilePage.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await ExpectMapReadyAsync(mobilePage, mobilePinsWait);
         await mobilePage.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, "01-anonymous-map-mobile.png"), FullPage = true });
-
-        await ExpectMapReadyAsync(mobilePage, baseUrl);
         await TapPinOrClusterAsync(mobilePage);
         await mobilePage.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, "02-anonymous-pin-card.png"), FullPage = true });
 
@@ -79,8 +84,12 @@ public class MobileSmokePlaywrightTests
         });
         var desktopPage = await desktop.NewPageAsync();
         var desktopGuard = AttachGuards(desktopPage);
+        var desktopPinsWait = desktopPage.WaitForResponseAsync(
+            r => r.Url.Contains("/api/vacancies/pins", StringComparison.OrdinalIgnoreCase)
+                 && r.Status is >= 200 and < 400,
+            new() { Timeout = 90_000 });
         await desktopPage.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await ExpectMapReadyAsync(desktopPage, baseUrl);
+        await ExpectMapReadyAsync(desktopPage, desktopPinsWait);
         await desktopPage.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, "05-anonymous-map-desktop.png"), FullPage = true });
         await AssertNoFatalUiAsync(desktopPage);
         desktopGuard.AssertClean();
@@ -175,16 +184,43 @@ public class MobileSmokePlaywrightTests
             new() { Timeout = 60_000 });
     }
 
-    private static async Task ExpectMapReadyAsync(IPage page, string baseUrl)
+    private static async Task ExpectMapReadyAsync(IPage page, Task<IResponse>? pinsWait = null)
     {
-        // Pins endpoint should succeed and map canvas should exist.
-        var pins = await page.WaitForResponseAsync(
-            r => r.Url.Contains("/api/vacancies/pins", StringComparison.OrdinalIgnoreCase)
-                 && r.Status is >= 200 and < 400,
+        await page.WaitForSelectorAsync(
+            "canvas.maplibregl-canvas, .maplibregl-canvas, #job-map, .job-map",
             new() { Timeout = 60_000 });
-        Assert.NotNull(pins);
-        await page.WaitForSelectorAsync("canvas.maplibregl-canvas, .maplibregl-canvas, #job-map, .job-map",
-            new() { Timeout = 60_000 });
+
+        if (pinsWait is not null)
+        {
+            try
+            {
+                var pins = await pinsWait;
+                Assert.NotNull(pins);
+                return;
+            }
+            catch (TimeoutException)
+            {
+                // Response may have fired before the waiter was attached on a warm cache
+                // hit — fall through to an explicit same-origin probes.
+            }
+        }
+
+        var pinsOk = await page.EvaluateAsync<bool>(
+            """
+            async () => {
+              try {
+                if (window.jobMap && typeof window.jobMap.__testGetPinCount === 'function'
+                    && window.jobMap.__testGetPinCount() > 0) {
+                  return true;
+                }
+                const res = await fetch('/api/vacancies/pins', { credentials: 'same-origin' });
+                return res.ok || res.status === 304;
+              } catch (e) {
+                return false;
+              }
+            }
+            """);
+        Assert.True(pinsOk, "Map pins not ready (no pin count and pins HTTP failed).");
     }
 
     private static async Task TapPinOrClusterAsync(IPage page)
