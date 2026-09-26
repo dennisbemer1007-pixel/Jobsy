@@ -56,6 +56,15 @@
                                 @onclick="OpenFeedbackAsync">
                             @Culture["Feedback.Button"]
                         </button>
+                        @if (_showInstall)
+                        {
+                            <button type="button"
+                                    class="account-menu__link"
+                                    role="menuitem"
+                                    @onclick="InstallAppAsync">
+                                @Culture["Pwa.InstallMenu"]
+                            </button>
+                        }
                         <a class="account-menu__link" href="/privacy" role="menuitem">@Culture["Footer.Privacy"]</a>
                         <a class="account-menu__link" href="/algemene-voorwaarden" role="menuitem">@Culture["Footer.Terms"]</a>
                         <a class="account-menu__link" href="/gebruiksvoorwaarden" role="menuitem">@Culture["Footer.Usage"]</a>
@@ -95,6 +104,8 @@
     private string _antiforgeryFieldName = "";
     private string _antiforgeryToken = "";
     private bool _open;
+    private bool _showInstall;
+    private bool _installChecked;
 
     protected override void OnInitialized()
     {
@@ -129,11 +140,57 @@
     private void Toggle()
         => _open = !_open;
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_installChecked || !firstRender)
+        {
+            return;
+        }
+
+        _installChecked = true;
+        try
+        {
+            var standalone = await Js.InvokeAsync<bool>("lobsyPwaInstall.isStandalone");
+            var canPrompt = await Js.InvokeAsync<bool>("lobsyPwaInstall.canPrompt");
+            var ios = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");
+            _showInstall = !standalone && (canPrompt || ios);
+            if (_showInstall)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch
+        {
+            _installChecked = false;
+        }
+    }
+
     private Task OpenFeedbackAsync()
     {
         _open = false;
         FeedbackHost.RequestOpen();
         return Task.CompletedTask;
+    }
+
+    private async Task InstallAppAsync()
+    {
+        _open = false;
+        try
+        {
+            var ios = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");
+            if (ios)
+            {
+                await Js.InvokeVoidAsync("alert", Culture["Pwa.IosHint"]);
+                return;
+            }
+
+            await Js.InvokeAsync<object>("lobsyPwaInstall.prompt");
+            _showInstall = await Js.InvokeAsync<bool>("lobsyPwaInstall.canPrompt");
+        }
+        catch
+        {
+            // Best-effort.
+        }
     }
 
     private async Task PrepareLogoutAsync()

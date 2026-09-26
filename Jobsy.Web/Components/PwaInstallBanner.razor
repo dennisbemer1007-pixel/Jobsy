@@ -1,0 +1,94 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+@if (_visible)
+{
+    <div class="pwa-install-banner" role="status">
+        <p class="pwa-install-banner__text">
+            @if (_ios)
+            {
+                <text>@Culture["Pwa.IosHint"] </text>
+                <span class="pwa-install-banner__ios-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 3v12" />
+                        <path d="M8 7l4-4 4 4" />
+                        <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+                    </svg>
+                </span>
+            }
+            else
+            {
+                @Culture["Pwa.BannerText"]
+            }
+        </p>
+        <div class="pwa-install-banner__actions">
+            @if (!_ios)
+            {
+                <button type="button" class="btn-compact btn-compact--primary" @onclick="InstallAsync">@Culture["Pwa.Install"]</button>
+            }
+            <button type="button" class="btn-compact" @onclick="DismissAsync">@Culture["Pwa.Dismiss"]</button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _visible;
+    private bool _ios;
+    private bool _checked;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_checked || !firstRender)
+        {
+            return;
+        }
+
+        _checked = true;
+        try
+        {
+            await Js.InvokeAsync<int>("lobsyPwaInstall.bumpVisit");
+            _ios = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");
+            _visible = await Js.InvokeAsync<bool>("lobsyPwaInstall.shouldShowBanner");
+            if (_visible)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch
+        {
+            _checked = false;
+        }
+    }
+
+    private async Task InstallAsync()
+    {
+        try
+        {
+            await Js.InvokeAsync<object>("lobsyPwaInstall.prompt");
+        }
+        catch
+        {
+            // Best-effort.
+        }
+
+        _visible = false;
+    }
+
+    private async Task DismissAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyPwaInstall.dismiss");
+        }
+        catch
+        {
+            // Best-effort.
+        }
+
+        _visible = false;
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}

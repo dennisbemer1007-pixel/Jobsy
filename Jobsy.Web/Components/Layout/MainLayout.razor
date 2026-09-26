@@ -49,6 +49,7 @@
     @if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
     {
         <PushPermissionBanner />
+        <PwaInstallBanner />
         <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HasBottomNav="_hasBottomNav" />
         <ConsentReacceptDialog />

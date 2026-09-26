@@ -716,3 +716,73 @@ window.jobsyQuestionnaire = {
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
+
+/* === lobsyPwaInstall === */
+window.lobsyPwaInstall = (function () {
+  var KEY_VISITS = "Jobsy.PwaVisits";
+  var KEY_DISMISS = "Jobsy.PwaInstallDismissed";
+  var deferred = null;
+  var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent || "")
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var isStandalone = window.matchMedia("(display-mode: standalone)").matches
+    || window.navigator.standalone === true;
+
+  try {
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      deferred = e;
+      window.dispatchEvent(new CustomEvent("lobsy-pwa-prompt-ready"));
+    });
+  } catch (err) { }
+
+  function visits() {
+    try {
+      var n = parseInt(localStorage.getItem(KEY_VISITS) || "0", 10);
+      return isNaN(n) ? 0 : n;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function bumpVisit() {
+    if (isStandalone) return visits();
+    try {
+      var n = visits() + 1;
+      localStorage.setItem(KEY_VISITS, String(n));
+      return n;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  return {
+    bumpVisit: bumpVisit,
+    isIos: function () { return isIos; },
+    isStandalone: function () { return isStandalone; },
+    canPrompt: function () { return !!deferred && !isStandalone; },
+    wasDismissed: function () {
+      try { return localStorage.getItem(KEY_DISMISS) === "1"; } catch (e) { return false; }
+    },
+    dismiss: function () {
+      try { localStorage.setItem(KEY_DISMISS, "1"); } catch (e) { }
+      deferred = null;
+    },
+    shouldShowBanner: function () {
+      if (isStandalone || this.wasDismissed()) return false;
+      if (isIos) return visits() >= 2;
+      return visits() >= 2 && !!deferred;
+    },
+    prompt: async function () {
+      if (!deferred) return { ok: false, reason: "unavailable" };
+      try {
+        deferred.prompt();
+        var choice = await deferred.userChoice;
+        deferred = null;
+        try { localStorage.setItem(KEY_DISMISS, "1"); } catch (e) { }
+        return { ok: true, outcome: choice && choice.outcome };
+      } catch (e) {
+        return { ok: false, reason: "error" };
+      }
+    }
+  };
+})();

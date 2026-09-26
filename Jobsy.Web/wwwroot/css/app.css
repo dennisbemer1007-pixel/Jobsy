@@ -22430,3 +22430,41 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     font-size: 0.72rem;
     max-width: 28rem;
 }
+
+/* ==== pwa-install-banner ==== */
+.pwa-install-banner {
+    position: fixed;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(var(--bottom-nav-clearance, 4.5rem) + 0.5rem + env(safe-area-inset-bottom, 0px));
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--border));
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+}
+
+.pwa-install-banner__text {
+    flex: 1 1 auto;
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: var(--text);
+}
+
+.pwa-install-banner__actions {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.pwa-install-banner__ios-icon {
+    display: inline-block;
+    width: 1.1rem;
+    height: 1.1rem;
+    vertical-align: -0.15em;
+}
