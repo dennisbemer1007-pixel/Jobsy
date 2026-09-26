@@ -281,6 +281,42 @@ public class MobileSmokePlaywrightTests
         }
     }
 
+    /// <summary>
+    /// Escape only clears address suggestions — close the filter sheet via its controls.
+    /// </summary>
+    private static async Task CloseFiltersAsync(IPage page)
+    {
+        var sheet = page.Locator("#discovery-filters");
+        if (await sheet.CountAsync() == 0)
+        {
+            return;
+        }
+
+        var close = page.Locator(
+            "#discovery-filters button.share-modal__close, #discovery-filters .filter-sheet__cancel, #discovery-filters [aria-label*='sluit' i]").First;
+        if (await close.CountAsync() > 0)
+        {
+            await close.ClickAsync();
+        }
+        else
+        {
+            var backdrop = page.Locator(".filter-sheet-backdrop").First;
+            if (await backdrop.CountAsync() > 0)
+            {
+                await backdrop.ClickAsync(new() { Force = true });
+            }
+        }
+
+        try
+        {
+            await sheet.WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 10_000 });
+        }
+        catch (TimeoutException)
+        {
+            // Sheet may already be gone / not modal on desktop.
+        }
+    }
+
     private static async Task OpenListAsync(IPage page)
     {
         var list = page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("Lijst|List", RegexOptions.IgnoreCase) }).First;
