@@ -94,14 +94,14 @@ public class MobileSmokePlaywrightTests
         var candidate = await candidateCtx.NewPageAsync();
         var candGuard = AttachGuards(candidate);
         await LoginAsync(candidate, baseUrl, "kandidaat@jobsy.local");
+        await candidate.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        await candidate.WaitForTimeoutAsync(600);
         await candidate.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, "06-candidate-home.png"), FullPage = true });
 
         Assert.True(await candidate.Locator("nav.bottom-nav").CountAsync() > 0, "Bottom nav missing for candidate.");
         Assert.True(
-            await candidate.GetByRole(AriaRole.Link, new() { NameRegex = new Regex("Match", RegexOptions.IgnoreCase) }).CountAsync() > 0
-            || await candidate.Locator("a[href*='match'], a[href='/candidate/match']").CountAsync() > 0
-            || await candidate.GetByText("Match", new() { Exact = false }).CountAsync() > 0,
-            "Match entry not visible for candidate.");
+            await candidate.Locator("a.jobsy-action--match, a[href='/candidate/match']").CountAsync() > 0,
+            "Match button missing on Zoeken for candidate.");
 
         foreach (var (tab, idx) in CandidateTabs.Select((t, i) => (t, i)))
         {
