@@ -101,6 +101,10 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
             StringComparison.Ordinal);
         Assert.Contains("await source.getClusterExpansionZoom", js, StringComparison.Ordinal);
         Assert.Contains("await source.getClusterLeaves", js, StringComparison.Ordinal);
+        Assert.Contains("fetchJsonWithOneRetry", js);
+        Assert.Contains("retryAfterMs", js);
+        Assert.Contains("map-popup--skeleton", js);
+        Assert.Contains("touchstart", js);
     }
 
     [Fact]

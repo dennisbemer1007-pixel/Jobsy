@@ -995,14 +995,25 @@ window.jobMap = (function () {
     }
 
     function skeletonPopupHtml(pin) {
+        // Same structure/size as buildPopupHtml so the popup never jumps when filled.
         return (
-            "<div class=\"map-popup map-popup--loading map-popup--skeleton\">" +
+            "<div class=\"map-popup map-popup--loading map-popup--skeleton\" aria-busy=\"true\">" +
                 "<div class=\"map-popup__main\">" +
                     "<div class=\"map-popup__media map-popup__media--logo-only map-popup__shimmer\" aria-hidden=\"true\"></div>" +
                     "<div class=\"map-popup__body\">" +
-                        "<p class=\"map-popup__title map-popup__shimmer-line\">Laden…</p>" +
-                        "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>" +
-                        "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>" +
+                        "<div class=\"map-popup__header\">" +
+                            "<p class=\"map-popup__title map-popup__shimmer-line\">&nbsp;</p>" +
+                            "<p class=\"map-popup__address map-popup__shimmer-line\">&nbsp;</p>" +
+                            "<p class=\"map-popup__travel map-popup__shimmer-line\">&nbsp;</p>" +
+                        "</div>" +
+                        "<p class=\"map-popup__wage map-popup__shimmer-line\">&nbsp;</p>" +
+                        "<div class=\"map-popup__specs map-popup__specs--empty\" aria-hidden=\"true\"></div>" +
+                        "<div class=\"map-popup__footer\">" +
+                            "<div class=\"map-popup__footer-meta\">" +
+                                "<p class=\"map-popup__company map-popup__shimmer-line\">&nbsp;</p>" +
+                            "</div>" +
+                            "<span class=\"map-popup__apply map-popup__shimmer-line\" aria-hidden=\"true\">&nbsp;</span>" +
+                        "</div>" +
                     "</div>" +
                 "</div>" +
             "</div>"
@@ -1062,6 +1073,53 @@ window.jobMap = (function () {
         return fetchVacancyCard(id);
     }
 
+    function sleepMs(ms) {
+        return new Promise(function (resolve) { setTimeout(resolve, ms); });
+    }
+
+    /** Retry-After seconds → ms; default 700, cap 1500. */
+    function retryAfterMs(res) {
+        const raw = res && res.headers && res.headers.get
+            ? res.headers.get("Retry-After")
+            : null;
+        let ms = 700;
+        if (raw != null && String(raw).trim() !== "") {
+            const sec = Number(raw);
+            if (Number.isFinite(sec) && sec >= 0) {
+                ms = Math.round(sec * 1000);
+            }
+        }
+        return Math.max(0, Math.min(1500, ms || 700));
+    }
+
+    function isRetryableStatus(status) {
+        return status === 429 || status >= 500;
+    }
+
+    function fetchJsonWithOneRetry(url) {
+        const opts = {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        };
+        return fetch(url, opts).then(function (res) {
+            if (res.ok) {
+                return res.json();
+            }
+            if (!isRetryableStatus(res.status)) {
+                throw new Error("http " + res.status);
+            }
+            // Keep callers on skeleton while we wait Retry-After, then retry once.
+            return sleepMs(retryAfterMs(res)).then(function () {
+                return fetch(url, opts).then(function (retryRes) {
+                    if (!retryRes.ok) {
+                        throw new Error("http " + retryRes.status);
+                    }
+                    return retryRes.json();
+                });
+            });
+        });
+    }
+
     function fetchVacancyCard(id) {
         const key = String(id || "");
         if (!key) {
@@ -1070,16 +1128,9 @@ window.jobMap = (function () {
         if (detailCache[key]) {
             return detailCache[key];
         }
-        detailCache[key] = fetch("/api/vacancies/" + encodeURIComponent(key) + "/card", {
-            credentials: "same-origin",
-            headers: { Accept: "application/json" }
-        })
-            .then(function (res) {
-                if (!res.ok) {
-                    throw new Error("card " + res.status);
-                }
-                return res.json();
-            })
+        detailCache[key] = fetchJsonWithOneRetry(
+            "/api/vacancies/" + encodeURIComponent(key) + "/card"
+        )
             .then(function (card) {
                 return card;
             })
@@ -1099,16 +1150,9 @@ window.jobMap = (function () {
         const missing = list.filter(function (id) { return !detailCache[id]; });
         const batch = missing.length === 0
             ? Promise.resolve([])
-            : fetch("/api/vacancies/cards?ids=" + missing.map(encodeURIComponent).join(","), {
-                credentials: "same-origin",
-                headers: { Accept: "application/json" }
-            })
-                .then(function (res) {
-                    if (!res.ok) {
-                        throw new Error("cards " + res.status);
-                    }
-                    return res.json();
-                })
+            : fetchJsonWithOneRetry(
+                "/api/vacancies/cards?ids=" + missing.map(encodeURIComponent).join(",")
+            )
                 .then(function (rows) {
                     (Array.isArray(rows) ? rows : []).forEach(function (card) {
                         if (card && card.id != null) {
@@ -2217,18 +2261,22 @@ window.jobMap = (function () {
                 }
             };
         }
-        // Native MapLibre clusters update on zoom without rebuilding HTML markers.
+        // Prefetch card on touch/pointer before click so the popup fills faster.
         if (!zoomHandlerBound) {
             zoomHandlerBound = true;
-            map.on("pointerdown", function (ev) {
-                if (!ev || !ev.point) {
+            const prefetchAtPoint = function (ev) {
+                if (!ev || !ev.point || !map) {
                     return;
                 }
-                const feats = map.queryRenderedFeatures(ev.point, { layers: [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH] });
+                const feats = map.queryRenderedFeatures(ev.point, {
+                    layers: [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH]
+                });
                 if (feats && feats[0] && feats[0].properties && feats[0].properties.id) {
                     fetchVacancyCard(feats[0].properties.id);
                 }
-            });
+            };
+            map.on("pointerdown", prefetchAtPoint);
+            map.on("touchstart", prefetchAtPoint);
         }
         addLocateControl();
         bindOutsideClickCloser();
