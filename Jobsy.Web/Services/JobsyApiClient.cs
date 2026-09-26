@@ -301,6 +301,20 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<VacancyTravelResult>(cancellationToken: ct);
     }
 
+    public async Task<VacancyCultureFitPoll?> GetVacancyCultureFitAsync(
+        Guid id,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<VacancyCultureFitPoll>($"api/vacancies/{id:D}/culture-fit", ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<IReadOnlyList<VacancyListItem>> GetManagedVacanciesAsync(CancellationToken ct = default)
     {
         using var response = await _http.GetAsync("api/vacancies/manage", ct);

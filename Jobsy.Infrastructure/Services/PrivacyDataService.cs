@@ -980,6 +980,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateRoleFitChecks.RemoveRange(roleFits);
         }
 
+        var cultureFits = await _db.CandidateVacancyCultureFits
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (cultureFits.Count > 0)
+        {
+            _db.CandidateVacancyCultureFits.RemoveRange(cultureFits);
+        }
+
+        var matchSnapshots = await _db.CandidateMatchSnapshots
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (matchSnapshots.Count > 0)
+        {
+            _db.CandidateMatchSnapshots.RemoveRange(matchSnapshots);
+        }
+
         var trainingClicks = await _db.TrainingClicks
             .Where(c => c.UserId == user.Id)
             .ToListAsync(cancellationToken);

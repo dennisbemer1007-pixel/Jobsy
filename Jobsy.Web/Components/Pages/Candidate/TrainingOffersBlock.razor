@@ -53,16 +53,25 @@
     private List<TrainingOfferCard> _offers = [];
     private bool _busy;
     private string? _message;
+    private string? _lastFetchKey;
 
     protected override async Task OnParametersSetAsync()
     {
         if (Offers is { Count: > 0 })
         {
             _offers = Offers.ToList();
+            _lastFetchKey = null;
             return;
         }
 
-        _offers = await Api.GetTrainingOffersAsync(JobTitle, Campaign);
+        var key = $"{JobTitle ?? ""}|{Campaign ?? ""}";
+        if (string.Equals(key, _lastFetchKey, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastFetchKey = key;
+        _offers = await Api.GetTrainingOffersAsync(JobTitle, Campaign ?? "functie_fit");
     }
 
     private async Task OpenAsync(TrainingOfferCard offer)

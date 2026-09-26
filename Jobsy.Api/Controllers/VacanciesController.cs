@@ -38,7 +38,7 @@ public class VacanciesController : ControllerBase
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
     private readonly IExactRoutingService _exactRouting;
     private readonly IProfileVacancyMatchService _profileMatch;
-    private readonly ICultureFitAiService _cultureFitAi;
+    private readonly ICandidateVacancyCultureFitService _cultureFit;
 
     public VacanciesController(
         JobsyDbContext db,
@@ -54,7 +54,7 @@ public class VacanciesController : ControllerBase
         IUserNotificationService notifications,
         IVacancyDiscoveryIndex discoveryIndex,
         IProfileVacancyMatchService profileMatch,
-        ICultureFitAiService cultureFitAi)
+        ICandidateVacancyCultureFitService cultureFit)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -69,7 +69,7 @@ public class VacanciesController : ControllerBase
         _discoveryIndex = discoveryIndex;
         _exactRouting = exactRouting;
         _profileMatch = profileMatch;
-        _cultureFitAi = cultureFitAi;
+        _cultureFit = cultureFit;
     }
 
     /// <summary>
@@ -388,6 +388,64 @@ public class VacanciesController : ControllerBase
             transport,
             cancellationToken);
         return Ok(new VacancyTravelDto(minutes, km));
+    }
+
+    /// <summary>
+    /// Lightweight culture-fit poll for the vacancy detail page (no full vacancy remap / no AI wait).
+    /// </summary>
+    [HttpGet("{id:guid}/culture-fit")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<VacancyCultureFitDto>> GetCultureFit(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (!_companyAuth.IsCandidate(User))
+        {
+            return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
+        }
+
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
+        }
+
+        var vacancy = await _db.Vacancies.AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
+        if (matchContext is null)
+        {
+            return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
+        }
+
+        var record = VacancyDiscoveryIndex.ToRecord(vacancy);
+        var matches = _profileMatch.Score(matchContext, [(record, (int?)null)]);
+        if (!matches.TryGetValue(vacancy.Id, out var match) || match.CultureFit is null)
+        {
+            return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
+        }
+
+        var (result, status) = await _cultureFit.ResolveForGetAsync(
+            user.Id,
+            vacancy.Id,
+            record.CulturePillars ?? [],
+            matchContext.Competencies,
+            matchContext.CultureScores,
+            match.CultureFit,
+            cancellationToken);
+        return Ok(new VacancyCultureFitDto(
+            result?.Percent,
+            result?.Band,
+            result?.Label,
+            result?.Why,
+            status,
+            result?.FromOpenAi ?? false));
     }
 
     /// <summary>
@@ -801,6 +859,8 @@ public class VacanciesController : ControllerBase
 
         await _db.SaveChangesAsync(cancellationToken);
         _discoveryIndex.Invalidate();
+        await _cultureFit.InvalidateForVacancyAsync(vacancy.Id, cancellationToken);
+        await _translation.InvalidateVacancyAsync(vacancy.Id, cancellationToken);
 
         if (appliedGoodwill && actor is not null)
         {
@@ -1362,7 +1422,8 @@ public class VacanciesController : ControllerBase
             dto.Description ?? string.Empty,
             VacancySourceLanguage,
             targetLanguage,
-            cancellationToken);
+            cancellationToken,
+            dto.Id);
 
         return dto with
         {
@@ -2051,8 +2112,9 @@ public class VacanciesController : ControllerBase
             return dto;
         }
 
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
-        if (matchContext is null)
+        if (user is null || matchContext is null)
         {
             return dto;
         }
@@ -2064,19 +2126,26 @@ public class VacanciesController : ControllerBase
             return dto;
         }
 
-        if (match.CultureFit is { } local
-            && matchContext.Competencies is { IsComplete: true } scores)
+        var cultureStatus = InsightsStatuses.Ready;
+        if (match.CultureFit is { } local)
         {
-            var labels = CulturePillarCatalog.Labels(record.CulturePillars);
-            var refined = await _cultureFitAi.TryRefineAsync(
-                local, scores, labels, matchContext.CultureScores, cancellationToken);
-            if (refined is not null)
+            // Never wait on OpenAI — stored or local + enqueue refine.
+            var (resolved, status) = await _cultureFit.ResolveForGetAsync(
+                user.Id,
+                vacancy.Id,
+                record.CulturePillars ?? [],
+                matchContext.Competencies,
+                matchContext.CultureScores,
+                local,
+                cancellationToken);
+            cultureStatus = status;
+            if (resolved is not null)
             {
-                match = CloneMatchWithCulture(match, refined);
+                match = CloneMatchWithCulture(match, resolved);
             }
         }
 
-        return WithCandidateMatch(dto, match);
+        return WithCandidateMatch(dto, match, cultureStatus);
     }
 
     private static ProfileVacancyMatch CloneMatchWithCulture(ProfileVacancyMatch match, CultureFitResult culture)
@@ -2111,7 +2180,10 @@ public class VacanciesController : ControllerBase
         };
     }
 
-    private static VacancyListItemDto WithCandidateMatch(VacancyListItemDto dto, ProfileVacancyMatch match)
+    private static VacancyListItemDto WithCandidateMatch(
+        VacancyListItemDto dto,
+        ProfileVacancyMatch match,
+        string cultureFitStatus = InsightsStatuses.Ready)
         => dto with
         {
             MatchPercent = match.TotalPercent,
@@ -2124,7 +2196,8 @@ public class VacanciesController : ControllerBase
             CultureFitPercent = match.CultureFit?.Percent,
             CultureFitBand = match.CultureFit?.Band,
             CultureFitLabel = match.CultureFit?.Label,
-            CultureFitWhy = match.CultureFit?.Why
+            CultureFitWhy = match.CultureFit?.Why,
+            CultureFitStatus = cultureFitStatus
         };
 
     private static IReadOnlyList<string> PreferRationaleWhy(ProfileVacancyMatch match)

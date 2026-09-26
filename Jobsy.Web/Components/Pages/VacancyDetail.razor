@@ -185,6 +185,10 @@
                         {
                             <p class="job-card__match-why">@_vacancy.CultureFitWhy</p>
                         }
+                        @if (string.Equals(_vacancy.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <p class="state-message" aria-live="polite">@Culture["Insights.Updating"]</p>
+                        }
                     }
                     @if (!string.IsNullOrWhiteSpace(_vacancy.CategoryName)
                          && !VacancyCategoryDefaults.IsSeniorLightCategory(_vacancy.CategoryId))
@@ -1163,11 +1167,24 @@
                     // profile optional
                 }
 
-                await LoadAsync(origin);
-                _hasOrigin = origin is not null;
-                await LoadLikeAsync();
+                // Exactly one full vacancy load when missing; never re-fetch culture-fit/AI via LoadAsync.
+                if (_vacancy is null || _vacancy.Id != Id)
+                {
+                    await LoadAsync(origin: null);
+                }
+                else
+                {
+                    _loading = false;
+                }
 
-                // LoadLike may populate DOB when the early profile fetch missed — align wages once.
+                _hasOrigin = origin is not null;
+                if (origin is not null)
+                {
+                    await RefreshTravelAsync();
+                }
+
+                await LoadLikeAsync();
+                // Age discovered via likes only updates stored age — no second full vacancy GET.
                 if (_dobInput is DateOnly likedDob
                     && AgeRules.AgeYearsFromDateOfBirth(likedDob) is int likedAge)
                 {
@@ -1177,8 +1194,12 @@
                         _ageYears = clamped;
                         try { await Js.InvokeVoidAsync("jobsyGeo.setStoredAge", clamped); }
                         catch { /* ignore */ }
-                        await LoadAsync(origin);
                     }
+                }
+
+                if (string.Equals(_vacancy?.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+                {
+                    _ = RefreshCultureFitLaterAsync();
                 }
 
                 await InvokeAsync(StateHasChanged);
@@ -1279,16 +1300,57 @@
     {
         try
         {
+            // Full vacancy payload without travel — travel uses /travel separately.
             _vacancy = await Api.GetVacancyAsync(
                 Id,
-                origin?.Latitude,
-                origin?.Longitude,
+                originLat: null,
+                originLng: null,
                 _transport,
                 _ageYears);
+            if (string.Equals(_vacancy?.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+            {
+                _ = RefreshCultureFitLaterAsync();
+            }
         }
         finally
         {
             _loading = false;
+        }
+    }
+
+    private int _cultureFitRefreshAttempts;
+
+    private async Task RefreshCultureFitLaterAsync()
+    {
+        while (_cultureFitRefreshAttempts < 3
+               && _vacancy is not null
+               && string.Equals(_vacancy.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+        {
+            _cultureFitRefreshAttempts++;
+            try
+            {
+                await Task.Delay(3000);
+                var poll = await Api.GetVacancyCultureFitAsync(Id);
+                if (poll is null || _vacancy is null)
+                {
+                    continue;
+                }
+
+                _vacancy.CultureFitPercent = poll.Percent;
+                _vacancy.CultureFitBand = poll.Band;
+                _vacancy.CultureFitLabel = poll.Label;
+                _vacancy.CultureFitWhy = poll.Why;
+                _vacancy.CultureFitStatus = poll.Status ?? "Ready";
+                await InvokeAsync(StateHasChanged);
+                if (!string.Equals(_vacancy.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+            }
+            catch
+            {
+                break;
+            }
         }
     }
 
@@ -1608,7 +1670,13 @@
                     {
                         originLat = lat;
                         originLng = lng;
-                        await LoadAsync(new OriginPoint { Latitude = lat, Longitude = lng });
+                        _hasOrigin = true;
+                        if (_vacancy is not null)
+                        {
+                            var travel = await Api.GetVacancyTravelAsync(Id, lat, lng, _transport);
+                            _vacancy.TravelMinutes = travel?.TravelMinutes;
+                            _vacancy.DistanceKm = travel?.DistanceKm;
+                        }
                     }
                 }
                 catch

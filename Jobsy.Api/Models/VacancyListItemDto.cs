@@ -91,6 +91,7 @@ public record VacancyListItemDto(
     string? CultureFitBand = null,
     string? CultureFitLabel = null,
     string? CultureFitWhy = null,
+    string CultureFitStatus = "Ready",
     string? BarrierKind = null,
     IReadOnlyList<string>? BarrierDiplomas = null,
     IReadOnlyList<string>? BarrierCertifications = null,

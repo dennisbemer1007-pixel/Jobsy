@@ -390,17 +390,16 @@ public class MeController : ControllerBase
         }).ToList();
 
         var lang = await ResolveTargetLanguageAsync(user, cancellationToken);
-        if (!JobsyLanguages.AreSame(VacancySourceLanguage, lang))
+        if (!JobsyLanguages.AreSame(VacancySourceLanguage, lang) && items.Count > 0)
         {
+            var batch = await _translation.TranslateVacanciesBatchAsync(
+                items.Select(i => new VacancyTranslationRequest(i.VacancyId, i.VacancyTitle, string.Empty)).ToList(),
+                VacancySourceLanguage,
+                lang,
+                cancellationToken);
             for (var i = 0; i < items.Count; i++)
             {
-                var translated = await _translation.TranslateVacancyAsync(
-                    items[i].VacancyTitle,
-                    string.Empty,
-                    VacancySourceLanguage,
-                    lang,
-                    cancellationToken);
-                items[i] = items[i] with { VacancyTitle = translated.Title };
+                items[i] = items[i] with { VacancyTitle = batch[i].Title };
             }
         }
 
@@ -499,20 +498,19 @@ public class MeController : ControllerBase
         CancellationToken cancellationToken)
     {
         var lang = await ResolveTargetLanguageAsync(user, cancellationToken);
-        if (JobsyLanguages.AreSame(VacancySourceLanguage, lang))
+        if (JobsyLanguages.AreSame(VacancySourceLanguage, lang) || items.Count == 0)
         {
             return items;
         }
 
+        var batch = await _translation.TranslateVacanciesBatchAsync(
+            items.Select(i => new VacancyTranslationRequest(i.VacancyId, i.VacancyTitle, string.Empty)).ToList(),
+            VacancySourceLanguage,
+            lang,
+            cancellationToken);
         for (var i = 0; i < items.Count; i++)
         {
-            var translated = await _translation.TranslateVacancyAsync(
-                items[i].VacancyTitle,
-                string.Empty,
-                VacancySourceLanguage,
-                lang,
-                cancellationToken);
-            items[i] = items[i] with { VacancyTitle = translated.Title };
+            items[i] = items[i] with { VacancyTitle = batch[i].Title };
         }
 
         return items;

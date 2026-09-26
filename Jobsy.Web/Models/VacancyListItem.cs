@@ -92,6 +92,7 @@ public class VacancyListItem
     public string? CultureFitBand { get; set; }
     public string? CultureFitLabel { get; set; }
     public string? CultureFitWhy { get; set; }
+    public string CultureFitStatus { get; set; } = "Ready";
     public string? BarrierKind { get; set; }
     public List<string> BarrierDiplomas { get; set; } = [];
     public List<string> BarrierCertifications { get; set; } = [];
@@ -212,6 +213,16 @@ public sealed class VacancyTravelResult
 {
     public int? TravelMinutes { get; set; }
     public double? DistanceKm { get; set; }
+}
+
+public sealed class VacancyCultureFitPoll
+{
+    public int? Percent { get; set; }
+    public string? Band { get; set; }
+    public string? Label { get; set; }
+    public string? Why { get; set; }
+    public string Status { get; set; } = "Ready";
+    public bool FromOpenAi { get; set; }
 }
 
 public sealed record MockInterviewChatMessage(string Role, string Content);

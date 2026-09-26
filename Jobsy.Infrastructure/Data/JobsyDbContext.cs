@@ -39,6 +39,8 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
     public DbSet<CandidateRoleFitCheck> CandidateRoleFitChecks => Set<CandidateRoleFitCheck>();
     public DbSet<CandidateMatchSnapshot> CandidateMatchSnapshots => Set<CandidateMatchSnapshot>();
+    public DbSet<CandidateVacancyCultureFit> CandidateVacancyCultureFits => Set<CandidateVacancyCultureFit>();
+    public DbSet<VacancyTranslation> VacancyTranslations => Set<VacancyTranslation>();
     public DbSet<TrainingProvider> TrainingProviders => Set<TrainingProvider>();
     public DbSet<TrainingOffer> TrainingOffers => Set<TrainingOffer>();
     public DbSet<TrainingClick> TrainingClicks => Set<TrainingClick>();
@@ -675,6 +677,38 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateVacancyCultureFit>(entity =>
+        {
+            entity.ToTable("CandidateVacancyCultureFits");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ResultJson).HasColumnType("text").IsRequired();
+            entity.Property(e => e.InputFingerprint).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.VacancyId }).IsUnique();
+            entity.HasIndex(e => e.VacancyId);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Vacancy)
+                .WithMany()
+                .HasForeignKey(e => e.VacancyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<VacancyTranslation>(entity =>
+        {
+            entity.ToTable("VacancyTranslations");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Language).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.SourceHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.TranslatedJson).HasColumnType("text").IsRequired();
+            entity.HasIndex(e => new { e.VacancyId, e.Language }).IsUnique();
+            entity.HasOne(e => e.Vacancy)
+                .WithMany()
+                .HasForeignKey(e => e.VacancyId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

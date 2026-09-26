@@ -50,14 +50,15 @@ public sealed class TranslationServiceStub : ITranslationService
         string description,
         string sourceLanguage,
         string targetLanguage,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Guid? vacancyId = null)
     {
         var source = JobsyLanguages.Normalize(sourceLanguage);
         var target = JobsyLanguages.Normalize(targetLanguage);
 
         if (JobsyLanguages.AreSame(source, target))
         {
-            return new TranslatedVacancyContent(title, description, source, target, WasTranslated: false);
+            return new TranslatedVacancyContent(title, description, source, target, WasTranslated: false, vacancyId);
         }
 
         var translatedTitle = await TranslateAsync(title, source, target, cancellationToken);
@@ -68,6 +69,31 @@ public sealed class TranslationServiceStub : ITranslationService
             translatedDescription,
             source,
             target,
-            WasTranslated: true);
+            WasTranslated: true,
+            vacancyId);
     }
+
+    public async Task<IReadOnlyList<TranslatedVacancyContent>> TranslateVacanciesBatchAsync(
+        IReadOnlyList<VacancyTranslationRequest> items,
+        string sourceLanguage,
+        string targetLanguage,
+        CancellationToken cancellationToken = default)
+    {
+        var list = new List<TranslatedVacancyContent>(items.Count);
+        foreach (var item in items)
+        {
+            list.Add(await TranslateVacancyAsync(
+                item.Title,
+                item.Description,
+                sourceLanguage,
+                targetLanguage,
+                cancellationToken,
+                item.VacancyId));
+        }
+
+        return list;
+    }
+
+    public Task InvalidateVacancyAsync(Guid vacancyId, CancellationToken cancellationToken = default)
+        => Task.CompletedTask;
 }

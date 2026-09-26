@@ -59,10 +59,13 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddSingleton<ISecretProtector, SecretProtector>();
         services.AddSingleton<ICandidateInsightsQueue, CandidateInsightsQueue>();
+        services.AddSingleton<ICultureFitRefineQueue, CultureFitRefineQueue>();
         services.AddScoped<ICandidateMatchSnapshotService, CandidateMatchSnapshotService>();
         services.AddScoped<ICandidateInsightsComputer, CandidateInsightsComputer>();
         services.AddScoped<ICandidateKompasService, CandidateKompasService>();
+        services.AddScoped<ICandidateVacancyCultureFitService, CandidateVacancyCultureFitService>();
         services.AddHostedService<CandidateInsightsWorker>();
+        services.AddHostedService<CultureFitRefineWorker>();
 
         services.AddOptions<JobsyFeatureOptions>()
             .Bind(configuration.GetSection(JobsyFeatureOptions.SectionName));
