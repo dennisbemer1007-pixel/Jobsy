@@ -13,3 +13,5 @@ When the user writes **`123`** (alone or as the clear instruction), do this end-
 4. **Deploy** — pushing `main` triggers the Render production deploy (`render.yaml` / `docs/deploy-render.md`). After push, confirm `origin/main` is updated; if a deploy CLI or dashboard check is available, verify the deploy started.
 
 Do not create an extra PR for this shortcut unless the user asks. Prefer finishing on `main` so production picks up the change.
+
+Quality gates **`456`** (short) and **`111`** (full production audit) must not merge or deploy; only this shortcut ships to production.
