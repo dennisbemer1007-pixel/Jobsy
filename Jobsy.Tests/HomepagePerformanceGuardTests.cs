@@ -66,7 +66,8 @@ public class HomepagePerformanceGuardTests
         Assert.Contains(".cookie-consent a { color: #fff; text-decoration: underline", critical);
         Assert.Contains(".bottom-nav { position: fixed", critical);
         Assert.Contains(".lobsy-logo { display: block; width: 56px; height: 56px", critical);
-        Assert.Contains("min-height: 10rem", critical);
+        // Funda mobile: slim navy chrome (header only); search floats over the map.
+        Assert.Contains("min-height: 2.75rem", critical);
         Assert.Contains(".app-header { min-height: 4.25rem; }", critical);
         Assert.Contains("contain: layout", critical);
 
