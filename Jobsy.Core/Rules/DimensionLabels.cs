@@ -24,7 +24,7 @@ public static class DimensionLabels
             CompetencyTestCatalog.Resultaatgerichtheid => "Afmaken & netjes werken",
             CompetencyTestCatalog.Stressbestendigheid => "Kalm blijven",
             CompetencyTestCatalog.Innovatie => "Nieuwe dingen proberen",
-            CompetencyTestCatalog.Extraversie => "Energie van mensen",
+            // Extraversie shares the string with DeepAnalysisCompetenceItems.Extraversie above.
             CareerTestCatalog.Realistic => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Realistic),
             CareerTestCatalog.Investigative => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Investigative),
             CareerTestCatalog.Artistic => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Artistic),
