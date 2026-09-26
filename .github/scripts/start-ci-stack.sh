@@ -28,16 +28,34 @@ dotnet run --project Jobsy.Web/Jobsy.Web.csproj -c Release --no-build --urls htt
   >/tmp/jobsy-ci-logs/web.log 2>&1 &
 echo $! >/tmp/jobsy-ci-logs/web.pid
 
-for i in $(seq 1 90); do
-  if curl -sf http://127.0.0.1:5200/health >/dev/null \
-     && curl -sf -o /dev/null -w "%{http_code}" http://127.0.0.1:5201/ | grep -Eq '200|302|301'; then
-    echo "CI stack ready."
+# /health returns before EF migrate+seed finishes (BackgroundService). Wait until
+# pins succeed so Playwright does not race an empty schema.
+for i in $(seq 1 120); do
+  api_health=0
+  pins_ok=0
+  web_ok=0
+  if curl -sf http://127.0.0.1:5200/health >/dev/null; then
+    api_health=1
+  fi
+  pins_code="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5200/api/vacancies/pins || true)"
+  if echo "$pins_code" | grep -Eq '200|304'; then
+    pins_ok=1
+  fi
+  web_code="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5201/ || true)"
+  if echo "$web_code" | grep -Eq '200|302|301'; then
+    web_ok=1
+  fi
+  if [[ "$api_health" -eq 1 && "$pins_ok" -eq 1 && "$web_ok" -eq 1 ]]; then
+    echo "CI stack ready (health + pins + web)."
     exit 0
+  fi
+  if (( i % 15 == 0 )); then
+    echo "Waiting for stack… health=$api_health pins=$pins_code web=$web_code ($i/120)"
   fi
   sleep 2
 done
 
 echo "CI stack failed to become ready." >&2
-tail -n 80 /tmp/jobsy-ci-logs/api.log >&2 || true
+tail -n 120 /tmp/jobsy-ci-logs/api.log >&2 || true
 tail -n 80 /tmp/jobsy-ci-logs/web.log >&2 || true
 exit 1
