@@ -1,6 +1,12 @@
 # Lobsy op Render (always-on)
 
-Blueprint: [`render.yaml`](../render.yaml). Project **Lobsy**, twee omgevingen:
+Blueprint: [`render.yaml`](../render.yaml). Project **Lobsy**, twee omgevingen.
+**Release-pad (Acceptatie eerst):** zie [`release-flow.md`](release-flow.md).
+
+| Environment | Git-branch | Services |
+|-------------|------------|----------|
+| **Production** | `main` | `jobsy-api`, `jobsy-web` |
+| **Acceptatie** | `acceptatie` | `lobsy-acc-api`, `lobsy-acc-web` |
 
 | Environment | Resources | Publieke URL |
 |-------------|-----------|----------------|

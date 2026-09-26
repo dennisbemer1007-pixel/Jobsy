@@ -1,0 +1,89 @@
+name: Production health
+
+# Lightweight GET-only checks for lobsy.nl — no login.
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Homepage
+        id: home
+        run: |
+          code=$(curl -s -o /tmp/home.html -w "%{http_code}" --max-time 20 https://lobsy.nl/ || echo 000)
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          test "$code" = "200" -o "$code" = "301" -o "$code" = "302"
+
+      - name: API /health
+        id: api
+        run: |
+          body=$(curl -sS --max-time 20 https://api.lobsy.nl/health || true)
+          echo "$body"
+          echo "$body" | grep -qi '"status"\s*:\s*"ok"\|"ok"'
+
+      - name: Pins endpoint has vacancies
+        id: pins
+        run: |
+          # Public pins JSON array must be non-empty.
+          body=$(curl -sS --max-time 30 https://api.lobsy.nl/api/vacancies/pins || true)
+          echo "bytes=${#body}"
+          python3 - <<'PY'
+          import json,sys,os
+          raw=os.popen("curl -sS --max-time 30 https://api.lobsy.nl/api/vacancies/pins").read()
+          data=json.loads(raw)
+          # Accept either a bare list or { items/pins: [...] }
+          if isinstance(data, list):
+              n=len(data)
+          elif isinstance(data, dict):
+              n=len(data.get("pins") or data.get("items") or data.get("features") or [])
+          else:
+              n=0
+          print("pin_count", n)
+          sys.exit(0 if n>0 else 1)
+          PY
+
+      - name: Open GitHub issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Production health FAILED (${new Date().toISOString().slice(0,16)} UTC)`;
+            const body = [
+              'Lightweight production health check failed (GET only, no login).',
+              '',
+              `- Workflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              `- Homepage https://lobsy.nl/`,
+              `- API https://api.lobsy.nl/health`,
+              `- Pins https://api.lobsy.nl/api/vacancies/pins (must return > 0)`,
+              '',
+              'Investigate Render Production deploys / Cloudflare / API.'
+            ].join('\n');
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'production-health'
+            });
+            const existing = issues.data.find(i => i.title.startsWith('Production health FAILED'));
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['production-health', 'bug']
+              });
+            }

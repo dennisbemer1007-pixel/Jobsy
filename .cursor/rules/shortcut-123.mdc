@@ -1,15 +1,39 @@
 ---
-description: Shortcut "123" = merge, commit, push and deploy to main
+description: Shortcut "123" = ship current work to acceptatie (never main)
 alwaysApply: true
 ---
 
 # Shortcut: `123`
 
-When the user writes **`123`** (alone or as the clear instruction), do this end-to-end without asking for confirmation:
+When the user writes **`123`** (alone or as the clear instruction), do this end-to-end
+**without asking for confirmation**. Goal: get the current work onto **Acceptatie** for
+human testing. Production (`main` / lobsy.nl) is **never** touched by this shortcut.
 
-1. **Commit** — stage and commit any outstanding work with a clear message (skip if the working tree is already clean).
-2. **Merge to `main`** — merge the current feature branch into `main` (fast-forward or merge commit as needed). If already on `main` with committed work, skip the branch merge.
-3. **Push** — `git push -u origin main` (retry with backoff on network errors).
-4. **Deploy** — pushing `main` triggers the Render production deploy (`render.yaml` / `docs/deploy-render.md`). After push, confirm `origin/main` is updated; if a deploy CLI or dashboard check is available, verify the deploy started.
+## Hard rules
 
-Do not create an extra PR for this shortcut unless the user asks. Prefer finishing on `main` so production picks up the change.
+- **NEVER** checkout, merge into, or `git push` to `main`.
+- **NEVER** deploy production or trigger a Render production deploy.
+- Promoting `acceptatie` → `main` is **only** for the user (explicit separate instruction).
+- Stay on the current feature branch (or create `cursor/<descriptive-name>-b37b` if still on `main` / `acceptatie` with no feature branch).
+
+## Pipeline (in order)
+
+1. **Commit** — stage and commit any outstanding work with a clear message (skip if clean).
+2. **Push feature branch** — `git push -u origin <current-branch>` (retry with backoff on network errors).
+3. **PR into `acceptatie`** — create or update a PR with base branch **`acceptatie`**
+   (`ManagePullRequest`, `base_branch: acceptatie`). Never open/retarget that PR to `main`.
+4. **Optional merge into `acceptatie`** — only if CI status checks for the PR are green
+   (or the user already said checks may be skipped). Merge the feature branch into
+   `acceptatie` and `git push -u origin acceptatie`. That triggers the Acc Render deploy.
+   Do **not** merge further into `main`.
+5. **Confirm Acc** — note that Acceptatie should pick up `origin/acceptatie`
+   (`docs/release-flow.md`). Do not verify production.
+
+## If already on `acceptatie`
+
+Commit + push `acceptatie` only. Still do **not** touch `main`.
+
+## Final user reply
+
+Short status: feature branch, PR link to `acceptatie`, whether Acc merge/push happened,
+reminder that **live (main) still needs their approval**.
