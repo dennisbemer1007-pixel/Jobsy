@@ -1,5 +1,6 @@
 @* Mobile Match & Swipe card — CSS translate/rotate, pointer gestures, no UI library. *@
 @using Jobsy.Web.Models
+@inject CultureState Culture
 
 @if (_visible && Model is not null)
 {
@@ -54,8 +55,8 @@
                 <span class="swipe-card__photo-overlay">@Model.CompanyName</span>
                 @if (!IsBackdrop)
                 {
-                    <div class="swipe-card__stamp swipe-card__stamp--no @_stampNoClass" aria-hidden="true">NOPE</div>
-                    <div class="swipe-card__stamp swipe-card__stamp--yes @_stampYesClass" aria-hidden="true">LIKE</div>
+                    <div class="swipe-card__stamp swipe-card__stamp--no @_stampNoClass" aria-hidden="true">@Culture["Match.StampNope"]</div>
+                    <div class="swipe-card__stamp swipe-card__stamp--yes @_stampYesClass" aria-hidden="true">@Culture["Match.StampLike"]</div>
                 }
             </div>
 

@@ -19067,7 +19067,7 @@ html.cookie-consent-known .cookie-consent {
 }
 
 .swipe-stack {
-    --swipe-actions-h: 4.35rem;
+    --swipe-actions-h: 5.5rem;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -19076,11 +19076,12 @@ html.cookie-consent-known .cookie-consent {
     width: 100%;
     height: 100%;
     overflow: hidden;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .swipe-card-stage {
     display: grid;
-    grid-template-rows: minmax(0, 1fr) var(--swipe-actions-h);
+    grid-template-rows: minmax(0, 1fr) auto;
     gap: 0.45rem;
     width: 100%;
     flex: 1 1 auto;
@@ -19095,7 +19096,7 @@ html.cookie-consent-known .cookie-consent {
     left: 0;
     right: 0;
     top: 0;
-    height: calc(100% - var(--swipe-actions-h) - 0.45rem);
+    height: calc(100% - var(--swipe-actions-h) - 0.45rem - env(safe-area-inset-bottom, 0px));
     z-index: 0;
     pointer-events: none;
     display: block;
@@ -19286,10 +19287,10 @@ html.cookie-consent-known .cookie-consent {
     position: relative;
     border-radius: 1.15rem;
     overflow: hidden;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-height: 5.25rem;
-    max-height: min(26vh, 10.5rem);
-    aspect-ratio: auto;
+    max-height: min(22vh, 9rem);
+    aspect-ratio: 16 / 10;
     background: #e8eef5;
     margin-bottom: 0.3rem;
 }
@@ -19418,7 +19419,7 @@ html.cookie-consent-known .cookie-consent {
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-height: 0;
     margin: 0 0 0.35rem;
     padding-right: 0.15rem;
@@ -19507,11 +19508,11 @@ html.cookie-consent-known .cookie-consent {
     justify-content: space-around;
     align-items: flex-start;
     gap: 1rem;
-    padding: 0.15rem 0.25rem 0;
+    padding: 0.15rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
     flex-shrink: 0;
-    height: var(--swipe-actions-h, 4.75rem);
+    min-height: var(--swipe-actions-h, 5.5rem);
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .swipe-actions__btn {
@@ -19564,7 +19565,7 @@ html.cookie-consent-known .cookie-consent {
 
 @media (max-height: 700px) {
     .swipe-stack {
-        --swipe-actions-h: 4rem;
+        --swipe-actions-h: 5rem;
     }
 
     .swipe-card__match-hero {
