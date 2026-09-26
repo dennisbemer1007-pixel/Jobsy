@@ -23540,3 +23540,24 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     box-shadow: var(--shadow);
     width: 100%;
 }
+
+/* k03 cluster peek + k04 list header polish */
+.map-sheet__cluster-row {
+    scroll-padding-left: 1rem;
+}
+
+.map-sheet__cluster-host:not([hidden]) {
+    padding-top: 0.15rem;
+}
+
+.map-sheet__list-header h2 {
+    letter-spacing: -0.01em;
+}
+
+.map-sheet__sort {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%230f2d5c' d='M1 1l5 5 5-5'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.15rem center;
+    padding-right: 1.1rem;
+}
