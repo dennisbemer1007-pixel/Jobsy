@@ -989,6 +989,13 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("ReportGeneratedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ReportJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ReportVersion")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(16)

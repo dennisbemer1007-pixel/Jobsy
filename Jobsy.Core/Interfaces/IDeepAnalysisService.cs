@@ -1,4 +1,5 @@
 using Jobsy.Core.Enums;
+using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Interfaces;
@@ -52,7 +53,9 @@ public sealed record DeepAnalysisStateDto(
     DateTime? ReportGeneratedAtUtc,
     IReadOnlyDictionary<int, int> Answers,
     IReadOnlyList<DeepAnalysisQuestionDto> Questions,
-    string UpsellCopy);
+    string UpsellCopy,
+    /// <summary>Populated only for a completed <see cref="AssessmentKind.Competence"/> report; null otherwise.</summary>
+    CompetenceDeepReport? CompetenceReport = null);
 
 public sealed record DeepAnalysisQuestionDto(
     int Id,

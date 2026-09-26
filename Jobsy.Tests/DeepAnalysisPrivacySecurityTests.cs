@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -168,7 +169,19 @@ public class DeepAnalysisPrivacySecurityTests
             new FakeHostEnvironment(isDevelopment ? Environments.Development : Environments.Production),
             config,
             new StubCareerCompass(),
+            new StubCompetenceDeepReportService(),
             NullLogger<DeepAnalysisService>.Instance);
+    }
+
+    private sealed class StubCompetenceDeepReportService : ICompetenceDeepReportService
+    {
+        public Task<CompetenceDeepReport?> GetStoredAsync(Guid userId, CancellationToken ct)
+            => Task.FromResult<CompetenceDeepReport?>(null);
+
+        public Task<CompetenceDeepReport> BuildAndStoreAsync(Guid userId, bool tryAi, CancellationToken ct)
+            => Task.FromResult(new CompetenceDeepReport());
+
+        public Task RefineAiAsync(Guid userId, CancellationToken ct) => Task.CompletedTask;
     }
 
     private sealed class StubCareerCompass : ICareerCompassGenerationService

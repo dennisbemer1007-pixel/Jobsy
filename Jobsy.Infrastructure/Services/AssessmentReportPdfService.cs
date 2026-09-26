@@ -2,6 +2,7 @@ using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -108,20 +109,32 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         }
         else
         {
-            var scoreLines = domainScores
-                .Select(s => $"{LabelCompetence(s.Domain)}: {s.Percent}%")
-                .ToList();
-            if (scoreLines.Count == 0)
+            // TODO: 9-page rich PDF in follow-up commit — RenderCompetenceDeep below already
+            // renders a multi-page report from the stored CompetenceDeepReport (cover, overview,
+            // one page per trait, work fit, action plan); the fixed-score fallback stays for
+            // legacy rows without a stored report.
+            var report = CompetenceDeepReportJson.Deserialize(deep.ReportJson);
+            if (report is not null)
             {
-                scoreLines = await CompetenceLinesAsync(userId, cancellationToken);
+                bytes = RenderCompetenceDeep(brand, logo, user.FullName, generated, report);
             }
+            else
+            {
+                var scoreLines = domainScores
+                    .Select(s => $"{LabelCompetence(s.Domain)}: {s.Percent}%")
+                    .ToList();
+                if (scoreLines.Count == 0)
+                {
+                    scoreLines = await CompetenceLinesAsync(userId, cancellationToken);
+                }
 
-            var tags = CompetencyTestCatalog.ParseTagsJson(deep.TagsJson)
-                .Select(FriendlyTag)
-                .Where(t => !string.IsNullOrWhiteSpace(t))
-                .ToList();
-            var advice = DeepAnalysisCatalog.CareerAdviceParagraphs(domainScores);
-            bytes = RenderCompetence(brand, logo, user.FullName, generated, scoreLines, tags, advice);
+                var tags = CompetencyTestCatalog.ParseTagsJson(deep.TagsJson)
+                    .Select(FriendlyTag)
+                    .Where(t => !string.IsNullOrWhiteSpace(t))
+                    .ToList();
+                var advice = DeepAnalysisCatalog.CareerAdviceParagraphs(domainScores);
+                bytes = RenderCompetence(brand, logo, user.FullName, generated, scoreLines, tags, advice);
+            }
         }
 
         var slug = AssessmentKindLabels.ToSlug(kind);
@@ -205,6 +218,272 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             tags,
             advice,
             AccentCoral);
+
+    /// <summary>
+    /// Multi-page competence deep-analysis report built from a persisted <see cref="CompetenceDeepReport"/>:
+    /// cover, overview, one page per trait, work fit, and action plan.
+    /// TODO: 9-page rich PDF in follow-up commit — this is a first working multi-page skeleton
+    /// (cover + overview + 5 trait pages + work fit + action plan = 9 pages); later iterations
+    /// can add facet-level charts, norm-comparison bars, and richer occupation cards.
+    /// </summary>
+    internal static byte[] RenderCompetenceDeep(
+        string brand,
+        byte[] logo,
+        string fullName,
+        string generated,
+        CompetenceDeepReport report)
+    {
+        return Document.Create(container =>
+        {
+            AddCompetenceDeepCoverPage(container, brand, logo, fullName, generated, report);
+            AddCompetenceDeepOverviewPage(container, brand, logo, fullName, generated, report);
+            foreach (var trait in report.Traits)
+            {
+                AddCompetenceDeepTraitPage(container, brand, logo, fullName, generated, trait);
+            }
+
+            AddCompetenceDeepWorkFitPage(container, brand, logo, fullName, generated, report);
+            AddCompetenceDeepActionPlanPage(container, brand, logo, fullName, generated, report);
+        }).GeneratePdf();
+    }
+
+    private static void AddCompetenceDeepCoverPage(
+        IDocumentContainer container, string brand, byte[] logo, string fullName, string generated,
+        CompetenceDeepReport report)
+    {
+        container.Page(page =>
+        {
+            page.Size(PageSizes.A4);
+            page.MarginHorizontal(28);
+            page.MarginVertical(24);
+            page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
+            BrandHeader(page, brand, logo, "Jouw uitgebreide competentie-rapport", fullName, generated, AccentCoral);
+
+            page.Content().PaddingTop(24).Column(col =>
+            {
+                col.Spacing(14);
+                col.Item().Text("Wie ben jij in je werk?").FontSize(20).Bold().FontColor(BrandNavy);
+                col.Item().Text(report.Summary).FontSize(12);
+
+                if (!string.IsNullOrWhiteSpace(report.NormSourceLine))
+                {
+                    col.Item().PaddingTop(6).Background(SoftSky).Padding(10)
+                        .Text(report.NormSourceLine!).FontSize(9).FontColor(Muted).Italic();
+                }
+
+                col.Item().PaddingTop(10).Text(
+                        "Dit rapport is opgebouwd uit vijf persoonlijke eigenschappen, elk met facetten, " +
+                        "je eigen sterktes en aandachtspunten, en sluit af met beroepen die passen en een actieplan.")
+                    .FontColor(Muted);
+            });
+
+            BrandFooter(page, brand);
+        });
+    }
+
+    private static void AddCompetenceDeepOverviewPage(
+        IDocumentContainer container, string brand, byte[] logo, string fullName, string generated,
+        CompetenceDeepReport report)
+    {
+        container.Page(page =>
+        {
+            page.Size(PageSizes.A4);
+            page.MarginHorizontal(28);
+            page.MarginVertical(24);
+            page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
+            BrandHeader(page, brand, logo, "Overzicht van je vijf eigenschappen", fullName, generated, AccentCoral);
+
+            page.Content().PaddingTop(14).Column(col =>
+            {
+                col.Spacing(10);
+                foreach (var trait in report.Traits)
+                {
+                    col.Item().Background(SoftSky).Padding(10).Column(box =>
+                    {
+                        box.Spacing(3);
+                        box.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text(trait.LabelNl).FontSize(13).Bold().FontColor(BrandNavy);
+                            r.ConstantItem(90).AlignRight()
+                                .Text($"{trait.Score}/100 · {trait.Level}").FontColor(BrandDeep).SemiBold();
+                        });
+                        box.Item().Text(trait.Meaning).FontColor(Muted);
+                        if (!string.IsNullOrWhiteSpace(trait.NormBand))
+                        {
+                            box.Item().Text($"Vergeleken met anderen: {trait.NormBand}")
+                                .FontSize(9).FontColor(Muted).Italic();
+                        }
+                    });
+                }
+            });
+
+            BrandFooter(page, brand);
+        });
+    }
+
+    private static void AddCompetenceDeepTraitPage(
+        IDocumentContainer container, string brand, byte[] logo, string fullName, string generated,
+        CompetenceDeepTraitReport trait)
+    {
+        container.Page(page =>
+        {
+            page.Size(PageSizes.A4);
+            page.MarginHorizontal(28);
+            page.MarginVertical(24);
+            page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
+            BrandHeader(page, brand, logo, trait.LabelNl, fullName, generated, AccentCoral);
+
+            page.Content().PaddingTop(14).Column(col =>
+            {
+                col.Spacing(8);
+                col.Item().Row(r =>
+                {
+                    r.RelativeItem().Text($"Score: {trait.Score}/100 ({trait.Level})")
+                        .FontSize(13).Bold().FontColor(BrandNavy);
+                    if (!string.IsNullOrWhiteSpace(trait.NormBand))
+                    {
+                        r.ConstantItem(200).AlignRight().Text(trait.NormBand!).FontColor(Muted).Italic();
+                    }
+                });
+
+                col.Item().Text(trait.Meaning);
+                col.Item().Background(SoftMint).Padding(8).Text(t =>
+                {
+                    t.Span("In de praktijk: ").Bold();
+                    t.Span(trait.WorkQuote);
+                });
+
+                col.Item().Row(r =>
+                {
+                    r.RelativeItem().Background(WarmSand).Padding(8).Column(b =>
+                    {
+                        b.Item().Text("Let op").Bold().FontColor(AccentCoral);
+                        b.Item().Text(trait.Pitfall);
+                    });
+                    r.ConstantItem(8);
+                    r.RelativeItem().Background(SoftSky).Padding(8).Column(b =>
+                    {
+                        b.Item().Text("Tip").Bold().FontColor(AccentTeal);
+                        b.Item().Text(trait.Tip);
+                    });
+                });
+
+                col.Item().Text(t =>
+                {
+                    t.Span("Jouw kracht: ").Bold();
+                    t.Span(trait.Strength);
+                });
+                col.Item().Text(t =>
+                {
+                    t.Span("Je floreert bij: ").Bold();
+                    t.Span(trait.ThriveAtWork);
+                });
+                col.Item().Text(t =>
+                {
+                    t.Span("Fijne manager: ").Bold();
+                    t.Span(trait.FittingManager);
+                });
+                col.Item().Text(t =>
+                {
+                    t.Span("In een team: ").Bold();
+                    t.Span(trait.InTeam);
+                });
+
+                if (trait.Facets.Count > 0)
+                {
+                    col.Item().PaddingTop(6).Text("Facetten").FontSize(12).Bold().FontColor(BrandNavy);
+                    foreach (var facet in trait.Facets)
+                    {
+                        col.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text(facet.LabelNl);
+                            r.ConstantItem(50).AlignRight().Text($"{facet.Score}/100").FontColor(BrandDeep);
+                            r.ConstantItem(160).AlignRight().Text(facet.NormBand ?? "").FontSize(9).FontColor(Muted);
+                        });
+                    }
+                }
+            });
+
+            BrandFooter(page, brand);
+        });
+    }
+
+    private static void AddCompetenceDeepWorkFitPage(
+        IDocumentContainer container, string brand, byte[] logo, string fullName, string generated,
+        CompetenceDeepReport report)
+    {
+        container.Page(page =>
+        {
+            page.Size(PageSizes.A4);
+            page.MarginHorizontal(28);
+            page.MarginVertical(24);
+            page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
+            BrandHeader(page, brand, logo, "Werk dat bij je past", fullName, generated, AccentCoral);
+
+            page.Content().PaddingTop(14).Column(col =>
+            {
+                col.Spacing(8);
+                if (report.Occupations.Count == 0)
+                {
+                    col.Item().Text("Vul de vragenlijst volledig in voor persoonlijke beroepssuggesties.")
+                        .FontColor(Muted);
+                }
+
+                foreach (var occupation in report.Occupations)
+                {
+                    col.Item().Background(SoftSky).Padding(10).Column(box =>
+                    {
+                        box.Spacing(3);
+                        box.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text(occupation.Title).FontSize(13).Bold().FontColor(BrandNavy);
+                            r.ConstantItem(60).AlignRight()
+                                .Text($"{occupation.MatchPercent}%").FontColor(BrandDeep).Bold();
+                        });
+                        box.Item().Text(occupation.Reason).FontColor(Muted);
+                    });
+                }
+            });
+
+            BrandFooter(page, brand);
+        });
+    }
+
+    private static void AddCompetenceDeepActionPlanPage(
+        IDocumentContainer container, string brand, byte[] logo, string fullName, string generated,
+        CompetenceDeepReport report)
+    {
+        container.Page(page =>
+        {
+            page.Size(PageSizes.A4);
+            page.MarginHorizontal(28);
+            page.MarginVertical(24);
+            page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
+            BrandHeader(page, brand, logo, "Jouw actieplan", fullName, generated, AccentCoral);
+
+            page.Content().PaddingTop(14).Column(col =>
+            {
+                col.Spacing(10);
+                var step = 1;
+                foreach (var action in report.ActionPlan)
+                {
+                    col.Item().Background(SoftMint).Padding(10).Column(box =>
+                    {
+                        box.Spacing(3);
+                        box.Item().Text($"{step}. {action.Title}").FontSize(13).Bold().FontColor(BrandNavy);
+                        box.Item().Text(action.Body);
+                    });
+                    step++;
+                }
+
+                col.Item().PaddingTop(10).Text(
+                        "Dit rapport is geen medische of klinische diagnose. Je antwoorden blijven in jouw account. Werkgevers zien ze niet.")
+                    .FontColor(Muted).Italic().FontSize(9);
+            });
+
+            BrandFooter(page, brand);
+        });
+    }
 
     private static byte[] RenderCulture(
         string brand,

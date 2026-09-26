@@ -3,6 +3,7 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -20,17 +21,20 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
     private readonly JobsyDbContext _db;
     private readonly IWhoAmIGenerationService _whoAmIGenerate;
     private readonly ICandidateMatchSnapshotService _matches;
+    private readonly ICompetenceDeepReportService _competenceReport;
     private readonly ILogger<CandidateInsightsComputer> _logger;
 
     public CandidateInsightsComputer(
         JobsyDbContext db,
         IWhoAmIGenerationService whoAmIGenerate,
         ICandidateMatchSnapshotService matches,
+        ICompetenceDeepReportService competenceReport,
         ILogger<CandidateInsightsComputer> logger)
     {
         _db = db;
         _whoAmIGenerate = whoAmIGenerate;
         _matches = matches;
+        _competenceReport = competenceReport;
         _logger = logger;
     }
 
@@ -84,6 +88,7 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
 
         await RefreshCompassAsync(careerRow, career, deepDone, cancellationToken);
         await RefreshWhoAmIAsync(userId, competency, career, culture, values, highlights, cancellationToken);
+        await RefreshCompetenceDeepReportAsync(userId, cancellationToken);
 
         try
         {
@@ -181,6 +186,37 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "WhoAmI story recompute failed for {UserId}.", userId);
+        }
+    }
+
+    private async Task RefreshCompetenceDeepReportAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Retries a stale (>1h old, template-only) AI summary when a prior completion-time
+            // AI call failed or timed out.
+            await _competenceReport.RefineAiAsync(userId, cancellationToken);
+
+            var row = await _db.CandidateDeepAnalyses.AsNoTracking()
+                .FirstOrDefaultAsync(
+                    d => d.UserId == userId && d.Kind == AssessmentKind.Competence,
+                    cancellationToken);
+            if (row is null || !CandidateDeepAnalysisStatuses.IsCompleted(row.Status))
+            {
+                return;
+            }
+
+            var stale = row.ReportVersion < CompetenceDeepReportJson.CurrentReportVersion;
+            var missing = string.IsNullOrWhiteSpace(row.ReportJson)
+                          || CompetenceDeepReportJson.Deserialize(row.ReportJson) is null;
+            if (stale || missing)
+            {
+                await _competenceReport.BuildAndStoreAsync(userId, tryAi: true, cancellationToken);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Competence deep-report recompute failed for {UserId}.", userId);
         }
     }
 

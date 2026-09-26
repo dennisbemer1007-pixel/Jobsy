@@ -25,6 +25,13 @@ public class CandidateDeepAnalysis
     public DateTime? UnlockedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
     public DateTime? ReportGeneratedAtUtc { get; set; }
+
+    /// <summary>Serialized deep report (e.g. <c>CompetenceDeepReport</c> JSON), or empty when not built yet.</summary>
+    public string ReportJson { get; set; } = "";
+
+    /// <summary>Schema version of <see cref="ReportJson"/>; used to detect stale reports after a shape change.</summary>
+    public int ReportVersion { get; set; }
+
     public DateTime UpdatedAtUtc { get; set; }
 }
 

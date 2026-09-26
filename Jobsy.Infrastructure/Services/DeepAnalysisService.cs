@@ -2,6 +2,7 @@ using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     private readonly IHostEnvironment _environment;
     private readonly IConfiguration _configuration;
     private readonly ICareerCompassGenerationService _careerCompass;
+    private readonly ICompetenceDeepReportService _competenceReport;
     private readonly ICandidateInsightsQueue _queue;
     private readonly ILogger<DeepAnalysisService> _logger;
 
@@ -27,8 +29,9 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         IHostEnvironment environment,
         IConfiguration configuration,
         ICareerCompassGenerationService careerCompass,
+        ICompetenceDeepReportService competenceReport,
         ILogger<DeepAnalysisService> logger)
-        : this(db, commercial, environment, configuration, careerCompass, new CandidateInsightsQueue(), logger)
+        : this(db, commercial, environment, configuration, careerCompass, competenceReport, new CandidateInsightsQueue(), logger)
     {
     }
 
@@ -38,6 +41,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         IHostEnvironment environment,
         IConfiguration configuration,
         ICareerCompassGenerationService careerCompass,
+        ICompetenceDeepReportService competenceReport,
         ICandidateInsightsQueue queue,
         ILogger<DeepAnalysisService> logger)
     {
@@ -46,6 +50,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         _environment = environment;
         _configuration = configuration;
         _careerCompass = careerCompass;
+        _competenceReport = competenceReport;
         _queue = queue;
         _logger = logger;
     }
@@ -74,7 +79,42 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         var row = await _db.CandidateDeepAnalyses.AsNoTracking()
             .FirstOrDefaultAsync(d => d.UserId == userId && d.Kind == kind, cancellationToken);
         var commercial = await _commercial.GetAsync(cancellationToken);
-        return ToDto(kind, row, commercial.DeepAnalysisPriceEuro);
+        var competenceReport = await LoadOrBuildCompetenceReportAsync(userId, kind, row, cancellationToken);
+        return ToDto(kind, row, commercial.DeepAnalysisPriceEuro, competenceReport);
+    }
+
+    /// <summary>
+    /// Reads the stored competence report, or builds it template-only (no AI, so GET never
+    /// waits on OpenAI) when the deep analysis is completed but no report has been built yet.
+    /// </summary>
+    private async Task<CompetenceDeepReport?> LoadOrBuildCompetenceReportAsync(
+        Guid userId,
+        AssessmentKind kind,
+        CandidateDeepAnalysis? row,
+        CancellationToken cancellationToken)
+    {
+        if (kind != AssessmentKind.Competence
+            || row is null
+            || !CandidateDeepAnalysisStatuses.IsCompleted(row.Status))
+        {
+            return null;
+        }
+
+        var stored = await _competenceReport.GetStoredAsync(userId, cancellationToken);
+        if (stored is not null)
+        {
+            return stored;
+        }
+
+        try
+        {
+            return await _competenceReport.BuildAndStoreAsync(userId, tryAi: false, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Competence deep-report build-on-read failed for {UserId}.", userId);
+            return null;
+        }
     }
 
     public async Task<DeepAnalysisCheckoutResult> StartCheckoutAsync(
@@ -282,13 +322,26 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        CompetenceDeepReport? competenceReport = null;
         if (complete)
         {
             _queue.TryEnqueue(userId);
+
+            if (kind == AssessmentKind.Competence)
+            {
+                try
+                {
+                    competenceReport = await _competenceReport.BuildAndStoreAsync(userId, tryAi: true, cancellationToken);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _logger.LogWarning(ex, "Competence deep-report build-on-complete failed for {UserId}.", userId);
+                }
+            }
         }
 
         var commercial = await _commercial.GetAsync(cancellationToken);
-        return ToDto(kind, row, commercial.DeepAnalysisPriceEuro);
+        return ToDto(kind, row, commercial.DeepAnalysisPriceEuro, competenceReport);
     }
 
     private async Task MergeTagsIntoQuickScanAsync(
@@ -460,7 +513,8 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         _environment.IsDevelopment()
         || _configuration.GetValue("JobsyAuth:AllowStubPayments", false);
 
-    private static DeepAnalysisStateDto ToDto(AssessmentKind kind, CandidateDeepAnalysis? row, decimal priceEuro)
+    private static DeepAnalysisStateDto ToDto(
+        AssessmentKind kind, CandidateDeepAnalysis? row, decimal priceEuro, CompetenceDeepReport? competenceReport = null)
     {
         var status = row?.Status ?? CandidateDeepAnalysisStatuses.Locked;
         var answers = DeepAnalysisCatalog.ParseAnswersJson(row?.AnswersJson, kind);
@@ -494,6 +548,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
                         DeepAnalysisQuestionHelp.DomainLabel(q.Domain)))
                     .ToList()
                 : [],
-            FormatUpsellCopy(priceEuro, kind));
+            FormatUpsellCopy(priceEuro, kind),
+            completed && kind == AssessmentKind.Competence ? competenceReport : null);
     }
 }

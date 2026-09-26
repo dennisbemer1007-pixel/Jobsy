@@ -1,5 +1,6 @@
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
 using Jobsy.Infrastructure.Security;
@@ -322,6 +323,16 @@ public static class DependencyInjection
         services.AddScoped<IRoleFitCheckService, RoleFitCheckService>();
         services.AddScoped<ITrainingUpskillService, TrainingUpskillService>();
         services.AddScoped<IDeepAnalysisService, DeepAnalysisService>();
+        services.AddSingleton<INormProvider, Johnson2014NormProvider>();
+        services.AddHttpClient(OpenAiCompetenceDeepReportAiService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(20);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddScoped<ICompetenceDeepReportAiService, OpenAiCompetenceDeepReportAiService>();
+        services.AddScoped<ICompetenceDeepReportService, CompetenceDeepReportService>();
         services.AddScoped<IAssessmentReportPdfService, AssessmentReportPdfService>();
         services.AddScoped<ITalentPoolService, TalentPoolService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();
