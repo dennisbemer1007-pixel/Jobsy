@@ -8,10 +8,10 @@
 @inject NavigationManager Navigation
 @implements IDisposable
 
-<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isMatchPage ? "app-shell--match" : null)"
+<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null)"
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
-    @if (!_isMatchPage)
+    @if (!_isMatchPage && !_isQuestionnairePage)
     {
         <header class="app-header">
             <div class="app-header__brand">
@@ -36,14 +36,17 @@
 
     <main class="app-main">
         @Body
-        @if (!_isMatchPage)
+        @if (!_isMatchPage && !_isQuestionnairePage)
         {
             <AppFooter />
         }
     </main>
 
-    <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
-    @if (RendererInfo.IsInteractive && !_isMatchPage)
+    @if (!_isQuestionnairePage)
+    {
+        <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
+    }
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
     {
         <PushPermissionBanner />
         <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
@@ -62,6 +65,7 @@
     private bool _siteVisitRecorded;
     private bool _hasBottomNav;
     private bool _isMatchPage;
+    private bool _isQuestionnairePage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -69,7 +73,7 @@
         RegionHost.Changed += OnBrandingChanged;
         Branding.Changed += OnBrandingChanged;
         Navigation.LocationChanged += OnLocationChanged;
-        RefreshMatchPageFlag();
+        RefreshFocusedFlags();
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
         // Do not block first paint (or /home dashboards) on region/slogan HTTP.
@@ -121,6 +125,17 @@
 
     private Task OnBottomNavItemsChanged(bool hasItems)
     {
+        if (_isQuestionnairePage)
+        {
+            if (_hasBottomNav)
+            {
+                _hasBottomNav = false;
+                return InvokeAsync(StateHasChanged);
+            }
+
+            return Task.CompletedTask;
+        }
+
         if (_hasBottomNav == hasItems)
         {
             return Task.CompletedTask;
@@ -132,25 +147,55 @@
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        var changed = RefreshMatchPageFlag();
+        var changed = RefreshFocusedFlags();
         if (changed)
         {
             _ = InvokeAsync(StateHasChanged);
         }
     }
 
-    private bool RefreshMatchPageFlag()
+    private bool RefreshFocusedFlags()
     {
-        var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
-        var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase)
-                    || path.Equals("/candidate/match", StringComparison.OrdinalIgnoreCase);
-        if (_isMatchPage == match)
+        var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0]
+            .TrimStart('/');
+        var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase);
+        var questionnaire = IsQuestionnairePath(path);
+        var changed = false;
+        if (_isMatchPage != match)
+        {
+            _isMatchPage = match;
+            changed = true;
+        }
+
+        if (_isQuestionnairePage != questionnaire)
+        {
+            _isQuestionnairePage = questionnaire;
+            if (questionnaire)
+            {
+                _hasBottomNav = false;
+            }
+
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    public static bool IsQuestionnairePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
         {
             return false;
         }
 
-        _isMatchPage = match;
-        return true;
+        path = path.TrimStart('/');
+        return path.Equals("candidate/competencies", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/career", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/culture", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/disc", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/values", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("candidate/deep-analysis/", StringComparison.OrdinalIgnoreCase);
     }
 
     private string HeaderTagline => Branding.ResolveTagline(RegionHost.Current?.Slogan, Culture["Brand.Tagline"]);

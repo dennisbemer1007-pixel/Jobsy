@@ -210,9 +210,11 @@ public class MobileSaasUxTests
     {
         var test = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/CompetencyTest.razor"));
         Assert.Contains("Competency.PrivacyNote", test);
-        Assert.Contains("href=\"/privacy\"", test);
+        Assert.Contains("PrivacyHref=\"/privacy\"", test);
         Assert.Contains("_loadFailed", test);
-        Assert.Contains("disabled=\"@(_saving || _loadFailed)\"", test);
+        Assert.Contains("QuestionnaireAutosave", test);
+        Assert.Contains("LoadFailed=\"_loadFailed\"", test);
+        Assert.DoesNotContain("Competency.SaveDraft", test);
 
         var privacy = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Legal/Privacy.razor"));
         Assert.Contains("5b. Competentietest, beroepentest, diepte-analyse en talentpool", privacy);

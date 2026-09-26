@@ -1,0 +1,82 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<fieldset id="@DomId"
+          class="q-likert @CssClass @(IsCurrent ? "is-current" : null) @(IsAnswered ? "is-answered" : null)"
+          data-question-id="@QuestionId">
+    <legend class="q-likert__legend">
+        <span class="q-likert__text">@Text</span>
+        @if (Extra is not null)
+        {
+            <div class="q-likert__extra">@Extra</div>
+        }
+    </legend>
+
+    <div class="q-likert__scale" role="presentation">
+        @for (var value = 1; value <= 5; value++)
+        {
+            var current = value;
+            var sizeClass = current switch
+            {
+                1 or 5 => "q-likert__opt--lg",
+                2 or 4 => "q-likert__opt--md",
+                _ => "q-likert__opt--sm"
+            };
+            var tintClass = current switch
+            {
+                1 => "q-likert__opt--coral-strong",
+                2 => "q-likert__opt--coral",
+                3 => "q-likert__opt--neutral",
+                4 => "q-likert__opt--green",
+                _ => "q-likert__opt--green-strong"
+            };
+            var inputId = $"{InputName}-{current}";
+            var selected = Value == current;
+            <label class="q-likert__opt @sizeClass @tintClass @(selected ? "is-on" : null)"
+                   for="@inputId">
+                <input class="q-likert__input"
+                       type="radio"
+                       name="@InputName"
+                       id="@inputId"
+                       value="@current"
+                       checked="@selected"
+                       aria-label="@Culture[$"Competency.Likert.{current}"]"
+                       @onchange="() => OnSelectAsync(current)" />
+                <span class="q-likert__circle" aria-hidden="true"></span>
+                @if (current == 1)
+                {
+                    <span class="q-likert__end-label">@Culture["Questionnaire.Disagree"]</span>
+                }
+                else if (current == 5)
+                {
+                    <span class="q-likert__end-label">@Culture["Questionnaire.Agree"]</span>
+                }
+            </label>
+        }
+    </div>
+</fieldset>
+
+@code {
+    [Parameter] public int QuestionId { get; set; }
+    [Parameter] public string Text { get; set; } = "";
+    [Parameter] public int? Value { get; set; }
+    [Parameter] public bool IsCurrent { get; set; }
+    [Parameter] public bool IsAnswered { get; set; }
+    [Parameter] public string InputPrefix { get; set; } = "q";
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public RenderFragment? Extra { get; set; }
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+
+    private string DomId => $"questionnaire-q-{QuestionId}";
+    private string InputName => $"{InputPrefix}{QuestionId}";
+
+    private async Task OnSelectAsync(int value)
+    {
+        if (Value == value)
+        {
+            return;
+        }
+
+        await ValueChanged.InvokeAsync(value);
+    }
+}

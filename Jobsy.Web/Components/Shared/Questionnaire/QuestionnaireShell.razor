@@ -1,0 +1,214 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+<div class="questionnaire @CssClass"
+     data-questionnaire="true">
+    <header class="questionnaire__header">
+        <div class="questionnaire__top">
+            @if (OnBack.HasDelegate)
+            {
+                <button type="button"
+                        class="questionnaire__close"
+                        aria-label="@Culture["Questionnaire.BackAria"]"
+                        @onclick="OnBack">
+                    <span aria-hidden="true">×</span>
+                </button>
+            }
+            else
+            {
+                <a class="questionnaire__close"
+                   href="@BackHref"
+                   aria-label="@Culture["Questionnaire.BackAria"]">
+                    <span aria-hidden="true">×</span>
+                </a>
+            }
+            <div class="questionnaire__titles">
+                <h1 class="questionnaire__title">@Title</h1>
+                @if (!string.IsNullOrWhiteSpace(Subtitle))
+                {
+                    <p class="questionnaire__subtitle">@Subtitle</p>
+                }
+            </div>
+        </div>
+        <div class="questionnaire__meter"
+             role="progressbar"
+             aria-valuemin="0"
+             aria-valuemax="@TotalCount"
+             aria-valuenow="@AnsweredCount"
+             aria-label="@Culture.Format("Questionnaire.ProgressCount", AnsweredCount, TotalCount)">
+            <span style="width: @ProgressPercent%"></span>
+        </div>
+        @if (HeaderExtra is not null)
+        {
+            <div class="questionnaire__header-extra">@HeaderExtra</div>
+        }
+    </header>
+
+    <div class="questionnaire__body">
+        @if (Loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (LoadFailed)
+        {
+            <p class="state-message">@(ErrorMessage ?? Culture["Common.Error"])</p>
+            @if (!string.IsNullOrWhiteSpace(ReloadHref))
+            {
+                <a class="login-submit" href="@ReloadHref">@Culture["Competency.Reload"]</a>
+            }
+        }
+        else
+        {
+            @if (!string.IsNullOrWhiteSpace(PrivacyNote))
+            {
+                <p class="questionnaire__privacy">
+                    @PrivacyNote
+                    @if (!string.IsNullOrWhiteSpace(PrivacyHref))
+                    {
+                        <a href="@PrivacyHref">@Culture["Legal.Privacy"]</a>
+                    }
+                </p>
+            }
+
+            @ChildContent
+        }
+    </div>
+
+    @if (!Loading && !LoadFailed)
+    {
+        <footer class="questionnaire__footer" aria-live="polite">
+            @if (IsComplete)
+            {
+                <button class="login-submit questionnaire__finish"
+                        type="button"
+                        disabled="@(Completing || SaveStatus == QuestionnaireSaveStatus.Saving)"
+                        @onclick="OnFinishAsync">
+                    @Culture["Questionnaire.FinishCta"]
+                </button>
+            }
+            else
+            {
+                <div class="questionnaire__status-row">
+                    <span class="questionnaire__count">
+                        @Culture.Format("Questionnaire.ProgressCount", AnsweredCount, TotalCount)
+                    </span>
+                    <span class="questionnaire__save @SaveStatusClass">
+                        @if (SaveStatus == QuestionnaireSaveStatus.Saved)
+                        {
+                            <span class="questionnaire__save-icon" aria-hidden="true">✓</span>
+                            <span>@Culture["Questionnaire.Saved"]</span>
+                        }
+                        else if (SaveStatus == QuestionnaireSaveStatus.Saving)
+                        {
+                            <span>@Culture["Questionnaire.Saving"]</span>
+                        }
+                        else if (OnRetrySave.HasDelegate)
+                        {
+                            <button type="button"
+                                    class="questionnaire__retry"
+                                    @onclick="OnRetrySave">
+                                @Culture["Questionnaire.SaveFailed"]
+                            </button>
+                        }
+                        else
+                        {
+                            <span>@Culture["Questionnaire.SaveFailed"]</span>
+                        }
+                    </span>
+                    <span class="questionnaire__finish-hint">
+                        @Culture.Format("Questionnaire.FinishAfter", TotalCount)
+                    </span>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Message))
+            {
+                <p class="state-message questionnaire__message">@Message</p>
+            }
+        </footer>
+    }
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string BackHref { get; set; } = "/candidate/profile";
+    [Parameter] public string? PrivacyNote { get; set; }
+    [Parameter] public string? PrivacyHref { get; set; } = "/privacy";
+    [Parameter] public int AnsweredCount { get; set; }
+    [Parameter] public int TotalCount { get; set; }
+    [Parameter] public QuestionnaireSaveStatus SaveStatus { get; set; } = QuestionnaireSaveStatus.Saved;
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool LoadFailed { get; set; }
+    [Parameter] public string? ErrorMessage { get; set; }
+    [Parameter] public string? ReloadHref { get; set; }
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public bool Completing { get; set; }
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? HeaderExtra { get; set; }
+    [Parameter] public EventCallback OnComplete { get; set; }
+    [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public EventCallback OnRetrySave { get; set; }
+    [Parameter] public int? ScrollToQuestionId { get; set; }
+    [Parameter] public bool SmoothScroll { get; set; } = true;
+
+    private int? _lastScrolledId;
+
+    private bool IsComplete => TotalCount > 0 && AnsweredCount >= TotalCount;
+
+    private string ProgressPercent
+    {
+        get
+        {
+            if (TotalCount <= 0)
+            {
+                return "0";
+            }
+
+            var pct = Math.Clamp(100.0 * AnsweredCount / TotalCount, 0, 100);
+            return pct.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
+
+    private string SaveStatusClass => SaveStatus switch
+    {
+        QuestionnaireSaveStatus.Saving => "is-saving",
+        QuestionnaireSaveStatus.Failed => "is-failed",
+        _ => "is-saved"
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (ScrollToQuestionId is int id && id != _lastScrolledId)
+        {
+            _lastScrolledId = id;
+            try
+            {
+                await Js.InvokeVoidAsync(
+                    "jobsyQuestionnaire.scrollToQuestion",
+                    $"questionnaire-q-{id}",
+                    SmoothScroll && !firstRender);
+            }
+            catch (JSException)
+            {
+                // Interop may be unavailable during disconnect.
+            }
+            catch (InvalidOperationException)
+            {
+                // Circuit not ready yet.
+            }
+        }
+    }
+
+    private async Task OnFinishAsync()
+    {
+        if (OnComplete.HasDelegate)
+        {
+            await OnComplete.InvokeAsync();
+        }
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}

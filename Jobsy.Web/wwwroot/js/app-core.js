@@ -634,6 +634,28 @@ window.jobsyPageVisible = function () {
     return typeof document === "undefined" || document.visibilityState !== "hidden";
 };
 
+window.jobsyQuestionnaire = {
+    scrollToQuestion: function (id, smooth) {
+        if (!id) {
+            return;
+        }
+        var el = document.getElementById(id);
+        if (!el) {
+            return;
+        }
+        var reduce = false;
+        try {
+            reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        } catch (e) { }
+        var behavior = (smooth && !reduce) ? "smooth" : "auto";
+        try {
+            el.scrollIntoView({ behavior: behavior, block: "center" });
+        } catch (e2) {
+            el.scrollIntoView(true);
+        }
+    }
+};
+
 (function registerLobsyServiceWorker() {
     if (!("serviceWorker" in navigator)) {
         return;

@@ -9,34 +9,58 @@
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
+@implements IAsyncDisposable
 
 <PageTitle>@Culture[_titleKey] · Lobsy</PageTitle>
 
-<div class="panel-page profile-page profile-page--candidate competency-test-page deep-analysis-page">
-    <header class="saved-gate__header profile-page__header">
-        <h1>@Culture[_titleKey]</h1>
-        <p class="login-lead">@_upsell</p>
-    </header>
-
-    <article class="detail-card">
-        @if (_loading)
-        {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (_loadFailed)
-        {
-            <p class="state-message">@_message</p>
-        }
-        else if (_state is { IsUnlocked: false })
-        {
+@if (_loading)
+{
+    <div class="questionnaire">
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    </div>
+}
+else if (_loadFailed)
+{
+    <div class="questionnaire">
+        <p class="state-message">@_message</p>
+        <a class="questionnaire__close" href="/candidate/profile" aria-label="@Culture["Questionnaire.BackAria"]">×</a>
+    </div>
+}
+else if (_state is { IsUnlocked: false })
+{
+    <div class="questionnaire questionnaire--upsell">
+        <header class="questionnaire__header">
+            <div class="questionnaire__top">
+                <a class="questionnaire__close" href="/candidate/profile" aria-label="@Culture["Questionnaire.BackAria"]">
+                    <span aria-hidden="true">×</span>
+                </a>
+                <div class="questionnaire__titles">
+                    <h1 class="questionnaire__title">@Culture[_titleKey]</h1>
+                </div>
+            </div>
+        </header>
+        <div class="questionnaire__body">
             <p class="login-lead">@_upsell</p>
             <button class="login-submit" type="button" disabled="@_saving" @onclick="StartCheckoutAsync">
                 @Culture["Competency.DeepUnlock"]
             </button>
-            <a class="engagement-btn" href="/candidate/profile">@Culture["Competency.BackToProfile"]</a>
-        }
-        else if (_state is { IsCompleted: true } completedState)
-        {
+        </div>
+    </div>
+}
+else if (_state is { IsCompleted: true } completedState)
+{
+    <div class="questionnaire questionnaire--report">
+        <header class="questionnaire__header">
+            <div class="questionnaire__top">
+                <a class="questionnaire__close" href="/candidate/profile" aria-label="@Culture["Questionnaire.BackAria"]">
+                    <span aria-hidden="true">×</span>
+                </a>
+                <div class="questionnaire__titles">
+                    <h1 class="questionnaire__title">@Culture[_titleKey]</h1>
+                </div>
+            </div>
+        </header>
+        <div class="questionnaire__body">
             @if (_slug == "competence" && completedState.CompetenceReport is not null)
             {
                 <CompetenceDeepReportView Report="completedState.CompetenceReport"
@@ -52,25 +76,28 @@
                     @Culture["Deep.DownloadPdf"]
                 </button>
             }
-            <a class="engagement-btn" href="/candidate/profile">@Culture["Competency.BackToProfile"]</a>
-        }
-        else
-        {
-            <div class="deep-analysis-chrome" aria-label="@Culture["Deep.ChromeLabel"]">
-                <div class="deep-analysis-chrome__progress">
-                    <p class="competency-test__progress" aria-live="polite">
-                        @Culture.Format("Deep.ProgressPercent", ProgressPercent)
-                        <span class="muted">· @Culture.Format("Competency.Progress", AnsweredCount, QuestionCount)</span>
-                    </p>
-                    <div class="competency-test__meter"
-                         role="progressbar"
-                         aria-valuemin="0"
-                         aria-valuemax="100"
-                         aria-valuenow="@ProgressPercent"
-                         aria-label="@Culture.Format("Deep.ProgressPercent", ProgressPercent)">
-                        <span style="width: @(ProgressPercent.ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
-                    </div>
-                </div>
+        </div>
+    </div>
+}
+else
+{
+    <QuestionnaireShell Title="@Culture[_titleKey]"
+                        Subtitle="@Subtitle"
+                        BackHref="/candidate/profile"
+                        AnsweredCount="@AnsweredCount"
+                        TotalCount="@QuestionCount"
+                        SaveStatus="@(_autosave?.Status ?? QuestionnaireSaveStatus.Saved)"
+                        Loading="false"
+                        LoadFailed="false"
+                        Message="@_banner"
+                        Completing="_completing"
+                        ScrollToQuestionId="_scrollToId"
+                        SmoothScroll="_smoothScroll"
+                        CssClass="questionnaire--deep"
+                        OnComplete="CompleteAsync"
+                        OnRetrySave="RetrySaveAsync">
+        <HeaderExtra>
+            <div class="deep-analysis-chrome deep-analysis-chrome--compact" aria-label="@Culture["Deep.ChromeLabel"]">
                 <ol class="deep-analysis-topics" aria-label="@Culture["Deep.TopicsLabel"]">
                     @foreach (var topic in Topics)
                     {
@@ -96,65 +123,44 @@
                     }
                 </ol>
             </div>
+        </HeaderExtra>
 
-            @foreach (var group in QuestionGroups)
+        <ChildContent>
+        @foreach (var group in QuestionGroups)
+        {
+            var domainLabel = group.FirstOrDefault()?.DomainLabel;
+            if (string.IsNullOrWhiteSpace(domainLabel))
             {
-                var domainLabel = group.FirstOrDefault()?.DomainLabel;
-                if (string.IsNullOrWhiteSpace(domainLabel))
-                {
-                    domainLabel = DeepAnalysisQuestionHelp.DomainLabel(group.Key);
-                }
-                <fieldset class="competency-test__cat" id="@($"deep-topic-{Slug(group.Key)}")">
-                    <legend>@domainLabel</legend>
-                    @foreach (var question in group)
-                    {
-                        <div class="competency-question">
-                            <div class="competency-question__head">
-                                <p class="competency-question__text">@question.Id. @question.PromptNl</p>
-                                <button type="button"
-                                        class="competency-help deep-analysis-info"
-                                        title="@Culture["Deep.InfoTitle"]"
-                                        aria-label="@Culture.Format("Deep.InfoAria", question.Id)"
-                                        @onclick="() => OpenExample(question)">
-                                    ?
-                                </button>
-                            </div>
-                            <div class="competency-likert" role="radiogroup" aria-label="@question.PromptNl">
-                                @for (var value = 1; value <= 5; value++)
-                                {
-                                    var current = value;
-                                    var id = $"d{_slug}{question.Id}-{current}";
-                                    <label class="competency-likert__opt @(_answers.TryGetValue(question.Id, out var selected) && selected == current ? "is-on" : null)">
-                                        <input type="radio"
-                                               name="@($"d{question.Id}")"
-                                               id="@id"
-                                               value="@current"
-                                               checked="@(_answers.TryGetValue(question.Id, out var v) && v == current)"
-                                               @onchange="() => SetAnswer(question.Id, current)" />
-                                        <span>@Culture[$"Competency.Likert.{current}"]</span>
-                                    </label>
-                                }
-                            </div>
-                        </div>
-                    }
-                </fieldset>
+                domainLabel = DeepAnalysisQuestionHelp.DomainLabel(group.Key);
             }
-
-            <div class="profile-save-bar">
-                <button class="engagement-btn" type="button" disabled="@_saving" @onclick="() => PersistAsync(false)">
-                    @Culture["Competency.SaveDraft"]
-                </button>
-                <button class="login-submit" type="button" disabled="@(_saving || AnsweredCount < QuestionCount)" @onclick="() => PersistAsync(true)">
-                    @Culture["Competency.Complete"]
-                </button>
-                @if (!string.IsNullOrEmpty(_message))
+            <section class="questionnaire-section" id="@($"deep-topic-{Slug(group.Key)}")" aria-labelledby="@($"deep-legend-{Slug(group.Key)}")">
+                <h2 class="questionnaire-section__label" id="@($"deep-legend-{Slug(group.Key)}")">@domainLabel</h2>
+                @foreach (var question in group)
                 {
-                    <p class="state-message profile-save-bar__message">@_message</p>
+                    var answered = _answers.ContainsKey(question.Id);
+                    var q = question;
+                    <LikertScaleQuestion QuestionId="question.Id"
+                                         Text="@($"{question.Id}. {question.PromptNl}")"
+                                         Value="@(answered ? _answers[question.Id] : null)"
+                                         IsAnswered="answered"
+                                         IsCurrent="_currentId == question.Id"
+                                         InputPrefix="@($"d{_slug}")"
+                                         ValueChanged="value => OnAnswerAsync(q.Id, value)">
+                        <Extra>
+                            <button type="button"
+                                    class="q-likert__example"
+                                    aria-label="@Culture.Format("Deep.InfoAria", question.Id)"
+                                    @onclick="() => OpenExample(q)">
+                                @Culture["Questionnaire.ExampleLink"]
+                            </button>
+                        </Extra>
+                    </LikertScaleQuestion>
                 }
-            </div>
+            </section>
         }
-    </article>
-</div>
+        </ChildContent>
+    </QuestionnaireShell>
+}
 
 @if (_exampleQuestion is not null)
 {
@@ -185,8 +191,11 @@
 
     private bool _loading = true;
     private bool _saving;
+    private bool _completing;
     private bool _loadFailed;
+    private bool _smoothScroll;
     private string? _message;
+    private string? _banner;
     private string _upsell = "";
     private string _slug = "competence";
     private string _titleKey = "Deep.CompetenceTitle";
@@ -195,12 +204,39 @@
     private readonly HashSet<int> _seenBoosters = [];
     private DeepAnalysisQuestionItem? _exampleQuestion;
     private int? _boosterMilestone;
+    private int? _currentId;
+    private int? _scrollToId;
+    private QuestionnaireAutosave? _autosave;
 
     private int AnsweredCount => _answers.Count;
     private int QuestionCount => _state?.QuestionCount ?? DeepAnalysisCatalog.QuestionCount;
-    private int ProgressPercent => QuestionCount <= 0
-        ? 0
-        : (int)Math.Clamp(Math.Round(100.0 * AnsweredCount / QuestionCount), 0, 100);
+
+    private string? Subtitle
+    {
+        get
+        {
+            if (_currentId is null || _state?.Questions is null)
+            {
+                return null;
+            }
+
+            var current = _state.Questions.FirstOrDefault(q => q.Id == _currentId);
+            if (current is null)
+            {
+                return null;
+            }
+
+            var label = current.DomainLabel;
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                label = DeepAnalysisQuestionHelp.DomainLabel(current.Domain);
+            }
+
+            var inDomain = _state.Questions.Where(q => q.Domain == current.Domain).ToList();
+            var done = inDomain.Count(q => _answers.ContainsKey(q.Id));
+            return Culture.Format("Questionnaire.CategoryProgress", label, done, inDomain.Count);
+        }
+    }
 
     private IEnumerable<IGrouping<string, DeepAnalysisQuestionItem>> QuestionGroups =>
         (_state?.Questions ?? []).GroupBy(q => q.Domain);
@@ -256,6 +292,14 @@
             "disc" or "culture" => "Deep.CultureTitle",
             _ => "Deep.CompetenceTitle"
         };
+
+        _autosave = new QuestionnaireAutosave(
+            persist: async (answers, ct) =>
+            {
+                _state = await Api.SaveDeepAnalysisAsync(_slug, answers, complete: false, ct);
+            },
+            onChanged: () => InvokeAsync(StateHasChanged));
+
         try
         {
             _state = await Api.GetDeepAnalysisAsync(_slug);
@@ -265,12 +309,14 @@
             {
                 foreach (var (key, value) in _state.Answers)
                 {
-                    if (int.TryParse(key, out var id))
+                    if (int.TryParse(key, out var id) && value is >= 1 and <= 5)
                     {
                         _answers[id] = value;
                     }
                 }
             }
+
+            _autosave.ReplaceAll(_answers);
 
             foreach (var milestone in DeepAnalysisBoosters.Milestones)
             {
@@ -278,6 +324,13 @@
                 {
                     _seenBoosters.Add(milestone);
                 }
+            }
+
+            if (_state is { IsUnlocked: true, IsCompleted: false })
+            {
+                _currentId = FirstUnanswered() ?? (_state.Questions?.LastOrDefault()?.Id);
+                _scrollToId = _currentId;
+                _smoothScroll = false;
             }
         }
         catch (Exception ex)
@@ -291,24 +344,67 @@
         }
     }
 
-    private void SetAnswer(int id, int value)
+    private int? FirstUnanswered()
+    {
+        foreach (var q in _state?.Questions ?? [])
+        {
+            if (!_answers.ContainsKey(q.Id))
+            {
+                return q.Id;
+            }
+        }
+
+        return null;
+    }
+
+    private int? NextUnansweredAfter(int answeredId)
+    {
+        var list = (_state?.Questions ?? []).ToList();
+        var index = list.FindIndex(q => q.Id == answeredId);
+        for (var i = index + 1; i < list.Count; i++)
+        {
+            if (!_answers.ContainsKey(list[i].Id))
+            {
+                return list[i].Id;
+            }
+        }
+
+        return FirstUnanswered();
+    }
+
+    private async Task OnAnswerAsync(int id, int value)
     {
         var before = AnsweredCount;
         var wasNew = !_answers.ContainsKey(id);
         _answers[id] = value;
-        if (!wasNew)
+        _banner = null;
+        _currentId = NextUnansweredAfter(id) ?? id;
+        _scrollToId = _currentId;
+        _smoothScroll = true;
+
+        if (wasNew)
         {
-            return;
+            var after = AnsweredCount;
+            foreach (var milestone in DeepAnalysisBoosters.Milestones)
+            {
+                if (before < milestone && after >= milestone && _seenBoosters.Add(milestone))
+                {
+                    _boosterMilestone = milestone;
+                    break;
+                }
+            }
         }
 
-        var after = AnsweredCount;
-        foreach (var milestone in DeepAnalysisBoosters.Milestones)
+        try
         {
-            if (before < milestone && after >= milestone && _seenBoosters.Add(milestone))
+            if (_autosave is not null)
             {
-                _boosterMilestone = milestone;
-                break;
+                await _autosave.SetAnswerAsync(id, value);
             }
+        }
+        catch (Exception ex)
+        {
+            _banner = ex.Message;
         }
     }
 
@@ -342,14 +438,14 @@
     private async Task DownloadPdfAsync()
     {
         _saving = true;
-        _message = null;
+        _banner = null;
         try
         {
             await Api.DownloadDeepAnalysisReportAsync(Js, _slug);
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _banner = ex.Message;
         }
         finally
         {
@@ -357,22 +453,58 @@
         }
     }
 
-    private async Task PersistAsync(bool complete)
+    private async Task RetrySaveAsync()
     {
-        _saving = true;
-        _message = null;
+        if (_autosave is null)
+        {
+            return;
+        }
+
         try
         {
-            _state = await Api.SaveDeepAnalysisAsync(_slug, _answers, complete);
-            _message = complete ? Culture["Deep.SavedComplete"] : Culture["Competency.SavedDraft"];
+            await _autosave.RetryAsync();
+            _banner = null;
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _banner = ex.Message;
+        }
+    }
+
+    private async Task CompleteAsync()
+    {
+        if (AnsweredCount < QuestionCount)
+        {
+            return;
+        }
+
+        _completing = true;
+        _banner = null;
+        try
+        {
+            if (_autosave is not null)
+            {
+                await _autosave.FlushAsync();
+            }
+
+            _state = await Api.SaveDeepAnalysisAsync(_slug, _answers, complete: true);
+            _banner = Culture["Deep.SavedComplete"];
+        }
+        catch (Exception ex)
+        {
+            _banner = ex.Message;
         }
         finally
         {
-            _saving = false;
+            _completing = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_autosave is not null)
+        {
+            await _autosave.DisposeAsync();
         }
     }
 

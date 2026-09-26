@@ -6,109 +6,102 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@implements IAsyncDisposable
 
 <PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
 
-<div class="panel-page profile-page profile-page--candidate competency-test-page">
-    <header class="saved-gate__header profile-page__header">
-        <h1>@Culture["Career.Title"]</h1>
-        <p class="login-lead">@Culture["Career.Lead"]</p>
-    </header>
-
-    <article class="detail-card">
-        <p class="login-lead">@Culture["Career.ScienceNote"]</p>
-        <p class="login-lead competency-privacy-note">
-            @Culture["Competency.PrivacyNote"]
-            <a href="/privacy">@Culture["Legal.Privacy"]</a>
-        </p>
-        <p class="competency-test__progress" aria-live="polite">
-            @Culture.Format("Competency.Progress", AnsweredCount, CareerTestCatalog.QuestionCount)
-        </p>
-        <div class="competency-test__meter" role="progressbar" aria-valuemin="0" aria-valuemax="@CareerTestCatalog.QuestionCount" aria-valuenow="@AnsweredCount">
-            <span style="width: @((AnsweredCount * 100 / CareerTestCatalog.QuestionCount).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
-        </div>
-
-        @if (_loading)
-        {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (_loadFailed)
-        {
-            <p class="state-message">@_message</p>
-            <a class="login-submit" href="/candidate/career">@Culture["Competency.Reload"]</a>
-        }
-        else
-        {
-            @foreach (var category in CareerTestCatalog.RiasecCodes)
-            {
-                var questions = QuestionsFor(category);
-                var done = questions.Count(q => _answers.ContainsKey(q.Id));
-                <fieldset class="competency-test__cat">
-                    <legend>@Culture[$"Career.Cat.{category}"]</legend>
-                    <p class="profile-address__hint">@Culture[$"Career.Cat.{category}.Hint"]</p>
-                    <p class="profile-address__hint">@Culture.Format("Competency.CategoryProgress", Culture[$"Career.Cat.{category}"], done, questions.Count)</p>
-                    @foreach (var question in questions)
-                    {
-                        <div class="competency-question">
-                            <p class="competency-question__text">@question.Id. @Culture[question.TextKey]</p>
-                            <div class="competency-likert" role="radiogroup" aria-label="@Culture[question.TextKey]">
-                                @for (var value = 1; value <= 5; value++)
-                                {
-                                    var current = value;
-                                    var id = $"cq{question.Id}-{current}";
-                                    <label class="competency-likert__opt @(_answers.TryGetValue(question.Id, out var selected) && selected == current ? "is-on" : null)">
-                                        <input type="radio"
-                                               name="@($"cq{question.Id}")"
-                                               id="@id"
-                                               value="@current"
-                                               checked="@(_answers.TryGetValue(question.Id, out var v) && v == current)"
-                                               @onchange="() => SetAnswer(question.Id, current)" />
-                                        <span>@Culture[$"Competency.Likert.{current}"]</span>
-                                    </label>
-                                }
-                            </div>
-                        </div>
-                    }
-                </fieldset>
-            }
-
-            <div class="profile-save-bar">
-                <button class="engagement-btn" type="button" disabled="@(_saving || _loadFailed)" @onclick="SaveDraftAsync">
-                    @Culture["Competency.SaveDraft"]
-                </button>
-                <button class="login-submit" type="button" disabled="@(_saving || _loadFailed || AnsweredCount < CareerTestCatalog.QuestionCount)" @onclick="CompleteAsync">
-                    @Culture["Competency.Complete"]
-                </button>
-                <a class="engagement-btn" href="/candidate/profile">@Culture["Competency.BackToProfile"]</a>
-                @if (!string.IsNullOrEmpty(_message))
-                {
-                    <p class="state-message profile-save-bar__message">@_message</p>
-                }
-            </div>
-        }
-    </article>
-
-    @if (_matches.Count > 0)
+<QuestionnaireShell Title="@Culture["Career.Title"]"
+                    Subtitle="@Subtitle"
+                    BackHref="/candidate/profile"
+                    PrivacyNote="@Culture["Competency.PrivacyNote"]"
+                    PrivacyHref="/privacy"
+                    AnsweredCount="@AnsweredCount"
+                    TotalCount="@CareerTestCatalog.QuestionCount"
+                    SaveStatus="@(_autosave?.Status ?? QuestionnaireSaveStatus.Saved)"
+                    Loading="_loading"
+                    LoadFailed="_loadFailed"
+                    ErrorMessage="@_message"
+                    ReloadHref="/candidate/career"
+                    Message="@_banner"
+                    Completing="_completing"
+                    ScrollToQuestionId="_scrollToId"
+                    SmoothScroll="_smoothScroll"
+                    OnComplete="CompleteAsync"
+                    OnRetrySave="RetrySaveAsync">
+    @foreach (var category in CareerTestCatalog.RiasecCodes)
     {
-        <article class="detail-card">
-            <CompetencyMatchPanel Items="_matches" Loading="false" />
-        </article>
+        var questions = QuestionsFor(category);
+        <section class="questionnaire-section" aria-labelledby="@($"cat-{category}")">
+            <h2 class="questionnaire-section__label" id="@($"cat-{category}")">@Culture[$"Career.Cat.{category}"]</h2>
+            @foreach (var question in questions)
+            {
+                var answered = _answers.ContainsKey(question.Id);
+                <LikertScaleQuestion QuestionId="question.Id"
+                                     Text="@($"{question.Id}. {Culture[question.TextKey]}")"
+                                     Value="@(answered ? _answers[question.Id] : null)"
+                                     IsAnswered="answered"
+                                     IsCurrent="_currentId == question.Id"
+                                     InputPrefix="cq"
+                                     ValueChanged="value => OnAnswerAsync(question.Id, value)" />
+            }
+        </section>
     }
-</div>
+</QuestionnaireShell>
+
+@if (_matches.Count > 0 && !_loading && !_loadFailed && AnsweredCount >= CareerTestCatalog.QuestionCount)
+{
+    <article class="detail-card questionnaire-matches">
+        <CompetencyMatchPanel Items="_matches" Loading="false" />
+    </article>
+}
 
 @code {
     private bool _loading = true;
-    private bool _saving;
     private bool _loadFailed;
+    private bool _completing;
+    private bool _smoothScroll;
     private string? _message;
+    private string? _banner;
+    private int? _currentId;
+    private int? _scrollToId;
     private readonly Dictionary<int, int> _answers = [];
     private List<CompetencyQuestionItem> _questions = [];
     private List<CandidateMatchedVacancy> _matches = [];
+    private QuestionnaireAutosave? _autosave;
 
     private int AnsweredCount => _answers.Count;
 
+    private string? Subtitle
+    {
+        get
+        {
+            if (_currentId is null)
+            {
+                return null;
+            }
+
+            var cat = QuestionsFlat().FirstOrDefault(q => q.Id == _currentId)?.Category;
+            if (string.IsNullOrEmpty(cat))
+            {
+                return null;
+            }
+
+            var inCat = QuestionsFor(cat);
+            var done = inCat.Count(q => _answers.ContainsKey(q.Id));
+            return Culture.Format("Questionnaire.CategoryProgress", Culture[$"Career.Cat.{cat}"], done, inCat.Count);
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        _autosave = new QuestionnaireAutosave(
+            persist: async (answers, ct) =>
+            {
+                var saved = await Api.SaveMyCareerInterestsAsync(answers, complete: false, ct);
+                _matches = saved.TopVacancies ?? [];
+            },
+            onChanged: () => InvokeAsync(StateHasChanged));
+
         try
         {
             var state = await Api.GetMyCareerInterestsAsync();
@@ -119,12 +112,17 @@
                 _answers.Clear();
                 foreach (var (key, value) in state.Answers)
                 {
-                    if (int.TryParse(key, out var id))
+                    if (int.TryParse(key, out var id) && value is >= 1 and <= 5)
                     {
                         _answers[id] = value;
                     }
                 }
             }
+
+            _autosave.ReplaceAll(_answers);
+            _currentId = FirstUnanswered() ?? QuestionsFlat().LastOrDefault()?.Id;
+            _scrollToId = _currentId;
+            _smoothScroll = false;
         }
         catch (Exception ex)
         {
@@ -148,51 +146,110 @@
         return list;
     }
 
-    private void SetAnswer(int id, int value)
+    private IEnumerable<CompetencyQuestionItem> QuestionsFlat()
+        => CareerTestCatalog.RiasecCodes.SelectMany(QuestionsFor);
+
+    private int? FirstUnanswered()
     {
-        _answers[id] = value;
-        _message = null;
-    }
-
-    private Task SaveDraftAsync() => PersistAsync(complete: false);
-
-    private Task CompleteAsync() => PersistAsync(complete: true);
-
-    private async Task PersistAsync(bool complete)
-    {
-        if (_loadFailed)
+        foreach (var q in QuestionsFlat())
         {
-            return;
+            if (!_answers.ContainsKey(q.Id))
+            {
+                return q.Id;
+            }
         }
 
-        _saving = true;
-        _message = null;
+        return null;
+    }
+
+    private async Task OnAnswerAsync(int id, int value)
+    {
+        _answers[id] = value;
+        _banner = null;
+        _currentId = NextUnansweredAfter(id) ?? id;
+        _scrollToId = _currentId;
+        _smoothScroll = true;
         try
         {
-            var saved = await Api.SaveMyCareerInterestsAsync(_answers, complete);
-            _answers.Clear();
-            foreach (var (key, value) in saved.Answers)
+            if (_autosave is not null)
             {
-                if (int.TryParse(key, out var id))
-                {
-                    _answers[id] = value;
-                }
-            }
-
-            _matches = saved.TopVacancies ?? [];
-            _message = complete ? Culture["Career.SavedComplete"] : Culture["Competency.SavedDraft"];
-            if (complete)
-            {
-                Navigation.NavigateTo("/candidate/profile");
+                await _autosave.SetAnswerAsync(id, value);
             }
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _banner = ex.Message;
+        }
+    }
+
+    private int? NextUnansweredAfter(int answeredId)
+    {
+        var list = QuestionsFlat().ToList();
+        var index = list.FindIndex(q => q.Id == answeredId);
+        for (var i = index + 1; i < list.Count; i++)
+        {
+            if (!_answers.ContainsKey(list[i].Id))
+            {
+                return list[i].Id;
+            }
+        }
+
+        return FirstUnanswered();
+    }
+
+    private async Task RetrySaveAsync()
+    {
+        if (_autosave is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _autosave.RetryAsync();
+            _banner = null;
+        }
+        catch (Exception ex)
+        {
+            _banner = ex.Message;
+        }
+    }
+
+    private async Task CompleteAsync()
+    {
+        if (_loadFailed || AnsweredCount < CareerTestCatalog.QuestionCount)
+        {
+            return;
+        }
+
+        _completing = true;
+        _banner = null;
+        try
+        {
+            if (_autosave is not null)
+            {
+                await _autosave.FlushAsync();
+            }
+
+            var saved = await Api.SaveMyCareerInterestsAsync(_answers, complete: true);
+            _matches = saved.TopVacancies ?? [];
+            Navigation.NavigateTo("/candidate/profile");
+        }
+        catch (Exception ex)
+        {
+            _banner = ex.Message;
         }
         finally
         {
-            _saving = false;
+            _completing = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_autosave is not null)
+        {
+            await _autosave.DisposeAsync();
         }
     }
 }
