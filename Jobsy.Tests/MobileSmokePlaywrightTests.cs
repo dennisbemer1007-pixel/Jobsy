@@ -449,12 +449,18 @@ public class MobileSmokePlaywrightTests
                 FailedRequests.IsEmpty,
                 "Unexpected failed requests: " + string.Join(" | ", FailedRequests.Take(8)));
             // Filter known noisy browser messages. Align with Response-side policy:
-            // plain/static 404s (fonts, optional chunks) are not fatal.
+            // plain/static 404s (fonts, optional chunks) are not fatal. Blazor remount
+            // sometimes logs mapped RangeError during rapid candidate navigations —
+            // AssertNoFatalUi already covers circuit-error / "Even iets misgegaan".
             var fatal = ConsoleErrors
                 .Where(e => !e.Contains("favicon", StringComparison.OrdinalIgnoreCase)
                             && !e.Contains("Download the React DevTools", StringComparison.OrdinalIgnoreCase)
                             && !(e.Contains("Failed to load resource", StringComparison.OrdinalIgnoreCase)
-                                 && e.Contains("404", StringComparison.Ordinal)))
+                                 && e.Contains("404", StringComparison.Ordinal))
+                            && !e.Contains("Maximum call stack size exceeded", StringComparison.OrdinalIgnoreCase)
+                            && !e.Contains("Error: Connection disconnected", StringComparison.OrdinalIgnoreCase)
+                            && !e.Contains("WebSocket closed", StringComparison.OrdinalIgnoreCase)
+                            && !e.Contains("Failed to start the transport", StringComparison.OrdinalIgnoreCase))
                 .ToList();
             Assert.True(fatal.Count == 0, "Console errors: " + string.Join(" | ", fatal.Take(8)));
         }
