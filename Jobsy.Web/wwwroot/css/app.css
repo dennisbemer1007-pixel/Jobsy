@@ -17445,11 +17445,14 @@ html.cookie-consent-known .cookie-consent {
     border: 1px solid transparent;
     border-radius: 12px;
     background: color-mix(in srgb, var(--surface) 88%, transparent);
+    /* Reserve height so questions do not shift in (CLS). */
+    min-height: 7.5rem;
     transition: opacity 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
-.q-likert.is-answered:not(.is-current) {
-    opacity: 0.55;
+/* Only soften answered items during an active (incomplete) session. */
+.questionnaire--active .q-likert.is-answered:not(.is-current) {
+    opacity: 0.85;
 }
 
 .q-likert.is-current {
@@ -17474,10 +17477,6 @@ html.cookie-consent-known .cookie-consent {
     font-weight: 650;
     line-height: 1.35;
     color: var(--text);
-}
-
-.q-likert.is-answered:not(.is-current) .q-likert__text {
-    color: var(--muted);
 }
 
 .q-likert__extra {

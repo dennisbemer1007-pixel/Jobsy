@@ -112,7 +112,7 @@
             }
 
             _autosave.ReplaceAll(_answers);
-            _currentId = FirstUnanswered() ?? QuestionsFlat().LastOrDefault()?.Id;
+            _currentId = FirstUnanswered() ?? QuestionsFlat().FirstOrDefault()?.Id;
             _scrollToId = _currentId;
             _smoothScroll = false;
         }

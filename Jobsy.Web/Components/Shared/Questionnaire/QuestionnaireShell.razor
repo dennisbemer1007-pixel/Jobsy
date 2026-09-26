@@ -3,7 +3,7 @@
 @inject IJSRuntime Js
 @implements IAsyncDisposable
 
-<div class="questionnaire @CssClass"
+<div class="questionnaire @(IsComplete ? null : "questionnaire--active") @CssClass"
      data-questionnaire="true">
     <header class="questionnaire__header">
         <div class="questionnaire__top">
@@ -78,10 +78,9 @@
             @if (!string.IsNullOrWhiteSpace(PrivacyNote))
             {
                 <p class="questionnaire__privacy">
-                    @PrivacyNote
-                    @if (!string.IsNullOrWhiteSpace(PrivacyHref))
+                    @PrivacyNote@if (!string.IsNullOrWhiteSpace(PrivacyHref))
                     {
-                        <a href="@PrivacyHref">@Culture["Legal.Privacy"]</a>
+                        <text> </text><a href="@PrivacyHref">@Culture["Legal.Privacy"]</a>
                     }
                 </p>
             }

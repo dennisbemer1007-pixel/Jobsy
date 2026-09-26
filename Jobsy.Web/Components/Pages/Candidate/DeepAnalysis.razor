@@ -328,7 +328,7 @@ else
 
             if (_state is { IsUnlocked: true, IsCompleted: false })
             {
-                _currentId = FirstUnanswered() ?? (_state.Questions?.LastOrDefault()?.Id);
+                _currentId = FirstUnanswered() ?? (_state.Questions?.FirstOrDefault()?.Id);
                 _scrollToId = _currentId;
                 _smoothScroll = false;
             }
