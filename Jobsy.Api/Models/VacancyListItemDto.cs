@@ -102,5 +102,16 @@ public record VacancyListItemDto(
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);
 
+/// <summary>
+/// Compact banenkaart pin for MapLibre. No titles/addresses — detail loads on pin open.
+/// <paramref name="Colour"/> is the category (or 65+) hex; <paramref name="MatchPercent"/> only for candidates.
+/// </summary>
+public sealed record VacancyPinDto(
+    Guid Id,
+    double Lat,
+    double Lng,
+    string? Colour = null,
+    int? MatchPercent = null);
+
 /// <summary>Exact origin→vacancy travel for the selected transport. No PII.</summary>
 public sealed record VacancyTravelDto(int? TravelMinutes, double? DistanceKm);

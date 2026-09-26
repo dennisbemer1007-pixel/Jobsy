@@ -105,6 +105,128 @@ public class VacanciesController : ControllerBase
     }
 
     /// <summary>
+    /// Compact map pins (id, lat, lng, colour, optional match%). Cached with ETag;
+    /// invalidated when the discovery index refreshes. jobMap fetches this over HTTP
+    /// instead of receiving full vacancy payloads over the Blazor circuit.
+    /// </summary>
+    [HttpGet("pins")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<IEnumerable<VacancyPinDto>>> GetPins(
+        [FromQuery] double? originLat,
+        [FromQuery] double? originLng,
+        [FromQuery] string transport = TransportLabels.Bike,
+        [FromQuery] int maxMinutes = 30,
+        [FromQuery] double? radiusKm = null,
+        [FromQuery] string[]? workType = null,
+        [FromQuery] string? q = null,
+        [FromQuery] Guid[]? categoryId = null,
+        [FromQuery] bool? suitableFor65Plus = null,
+        [FromQuery] Guid[]? companyId = null,
+        [FromQuery] int? minMatchPercent = null,
+        CancellationToken cancellationToken = default)
+    {
+        maxMinutes = Math.Clamp(maxMinutes, 5, 90);
+        var mode = TransportLabels.Parse(transport);
+        var records = VacancyDiscoveryQuery.Filter(
+            await _discoveryIndex.GetActiveAsync(cancellationToken),
+            companyIds: companyId,
+            categoryIds: categoryId,
+            suitableFor65Plus,
+            workTypes: workType,
+            searchQuery: q,
+            minHoursPerWeek: 0,
+            maxHoursPerWeek: 40);
+
+        List<(VacancyDiscoveryRecord Record, int? TravelMinutes)> candidates;
+        if (originLat is null || originLng is null)
+        {
+            candidates = records
+                .Select(v => (Record: v, TravelMinutes: (int?)null))
+                .ToList();
+        }
+        else
+        {
+            var lat = originLat.Value;
+            var lng = originLng.Value;
+            var reachKm = TravelReach.MaxCrowFliesKm(mode, maxMinutes, radiusKm);
+            candidates = records
+                .Where(v => VacancyDiscoveryQuery.MatchesTransport(v, transport))
+                .Select(v =>
+                {
+                    var (travelMinutes, distanceKm) = TravelReach.Estimate(
+                        lat, lng, v.Latitude, v.Longitude, mode);
+                    return (Record: v, TravelMinutes: (int?)travelMinutes, DistanceKm: (double?)distanceKm);
+                })
+                .Where(r => r.TravelMinutes is int minutes && minutes <= maxMinutes)
+                .Where(r => r.DistanceKm is double km && km <= reachKm)
+                .Where(r => !(radiusKm is > 0 && r.DistanceKm > radiusKm.Value))
+                .Select(r => (r.Record, r.TravelMinutes))
+                .ToList();
+        }
+
+        IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches = null;
+        var matchFloor = minMatchPercent is int requestedFloor
+            ? Math.Clamp(requestedFloor, 0, 100)
+            : (int?)null;
+        var isCandidate = _companyAuth.IsCandidate(User);
+        if (isCandidate)
+        {
+            var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
+            if (matchContext is not null)
+            {
+                matches = _profileMatch.Score(matchContext, candidates);
+                candidates = candidates
+                    .Where(c =>
+                    {
+                        if (!matches.TryGetValue(c.Record.Id, out var match))
+                        {
+                            return true;
+                        }
+
+                        if (match.Core.LegalAgeKnown && !match.Core.LegalEligible)
+                        {
+                            return false;
+                        }
+
+                        return matchFloor is not int floor || match.TotalPercent >= floor;
+                    })
+                    .ToList();
+            }
+        }
+
+        var stamp = _discoveryIndex.LastRefreshedAtUtc is DateTime refreshed
+            ? new DateTimeOffset(DateTime.SpecifyKind(refreshed, DateTimeKind.Utc)).ToUnixTimeSeconds()
+            : 0L;
+        var etag = $"\"pins-{stamp}-{candidates.Count}-{(isCandidate ? "c" : "a")}\"";
+        if (Request.Headers.IfNoneMatch.ToString().Contains(etag, StringComparison.Ordinal))
+        {
+            return StatusCode(StatusCodes.Status304NotModified);
+        }
+
+        Response.Headers.ETag = etag;
+        Response.Headers.CacheControl = isCandidate
+            ? "private,max-age=15"
+            : "public,max-age=30,stale-while-revalidate=60";
+
+        var pins = candidates.Select(c =>
+        {
+            var colour = c.Record.SuitableFor65Plus
+                ? VacancyCategoryDefaults.SeniorPlusColorHex
+                : c.Record.CategoryColorHex;
+            int? matchPercent = null;
+            if (matches is not null && matches.TryGetValue(c.Record.Id, out var match))
+            {
+                matchPercent = match.TotalPercent;
+            }
+
+            return new VacancyPinDto(c.Record.Id, c.Record.Latitude, c.Record.Longitude, colour, matchPercent);
+        });
+
+        return Ok(pins);
+    }
+
+    /// <summary>
     /// Banenkaart discover: without origin returns all active vacancies (optional workType/wage).
     /// With origin, filters by transport, travel time and optional radius via IRoutingService.
     /// Optional ageYears resolves salary-table wages; min/max hourly filters apply when age is set.

@@ -407,6 +407,42 @@ window.jobsyCulture = {
         }
     };
 
+    // Infinite-scroll sentinel for vacancy card lists (Zoeken).
+    window.jobsyList = (function () {
+        var observer = null;
+        var currentEl = null;
+        return {
+            observeMore: function (el, dotNetRef, methodName) {
+                if (!el || !dotNetRef || !methodName || typeof IntersectionObserver !== "function") {
+                    return;
+                }
+                if (observer) {
+                    try { observer.disconnect(); } catch (e) { }
+                    observer = null;
+                }
+                currentEl = el;
+                observer = new IntersectionObserver(function (entries) {
+                    for (var i = 0; i < entries.length; i++) {
+                        if (entries[i].isIntersecting) {
+                            try {
+                                dotNetRef.invokeMethodAsync(methodName);
+                            } catch (e) { }
+                            break;
+                        }
+                    }
+                }, { root: null, rootMargin: "240px 0px", threshold: 0.01 });
+                observer.observe(el);
+            },
+            disconnect: function () {
+                if (observer) {
+                    try { observer.disconnect(); } catch (e) { }
+                    observer = null;
+                }
+                currentEl = null;
+            }
+        };
+    })();
+
     applyKnownClass();
 })();
 
@@ -426,7 +462,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20260822-r195"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260925-matchhelp"
+        "/js/jobMap.min.js?v=20260926-pins"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20260822-r195"
@@ -567,6 +603,15 @@ window.jobsyMaps = (function () {
     }
 
     function ensure(kind) {
+        // Never pull MapLibre / jobMap onto auth/login surfaces (keeps /login ~65 KB).
+        try {
+            var path = (window.location && window.location.pathname) || "";
+            if (path === "/login" || path.indexOf("/login?") === 0
+                || path.indexOf("/account/") === 0
+                || path.indexOf("/register") === 0) {
+                return Promise.resolve();
+            }
+        } catch (e) { }
         kind = normalizeKind(kind);
         if (isReady(kind)) {
             return Promise.resolve();

@@ -553,6 +553,9 @@
                 </div>
                 @if (HasMoreVacancyCards)
                 {
+                    <div class="vacancy-list__more-sentinel"
+                         @ref="_moreCardsSentinel"
+                         aria-hidden="true"></div>
                     <button type="button" class="vacancy-list__more" @onclick="ShowMoreVacancyCards">
                         @Culture.Format("Discovery.ShowResults", RemainingVacancyCardCount)
                     </button>
@@ -942,7 +945,7 @@
     private bool showMapOnMobile = true;
     /// <summary>Desktop split view (≥769px). Default false so mobile PSI does not mount 200+ cards.</summary>
     private bool _wideViewport;
-    private const int VacancyCardPageSize = 12;
+    private const int VacancyCardPageSize = 20;
     private const int HighlightCarouselCap = 8;
     private int _visibleCardCount = VacancyCardPageSize;
     private bool _filtersOpen;
@@ -956,6 +959,7 @@
     private VacancyMapView? _mapView;
 
     private ElementReference _mapElement;
+    private ElementReference _moreCardsSentinel;
     private const int DefaultMinHoursPerWeek = 0;
     private const int DefaultMaxHoursPerWeek = 40;
 
@@ -1184,6 +1188,18 @@
 
     private void ShowMoreVacancyCards()
         => _visibleCardCount = Math.Min(SortedVacancies.Count, _visibleCardCount + VacancyCardPageSize);
+
+    [JSInvokable]
+    public Task ShowMoreVacancyCardsFromJs()
+    {
+        if (!HasMoreVacancyCards)
+        {
+            return Task.CompletedTask;
+        }
+
+        ShowMoreVacancyCards();
+        return InvokeAsync(StateHasChanged);
+    }
 
     private string FormatCarouselTravel(VacancyListItem vacancy)
     {
@@ -1692,6 +1708,24 @@
             await TryInitJobMapAsync();
         }
 
+        if (HasMoreVacancyCards && _dotNetRef is not null)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync(
+                    "jobsyList.observeMore",
+                    _moreCardsSentinel,
+                    _dotNetRef,
+                    nameof(ShowMoreVacancyCardsFromJs));
+            }
+            catch (JSException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+
         if (!_launchHydrationDone)
         {
             var jsReady = true;
@@ -1869,6 +1903,7 @@
                 ["travel"] = TravelMapOptions(),
                 ["highlightSeed"] = _highlightShuffleSeed,
                 ["preferFilledLocation"] = preferFilledLocation,
+                ["pinsUrl"] = BuildPinsApiUrl(),
                 ["view"] = new Dictionary<string, object?>
                 {
                     ["lat"] = opening.CenterLat,
@@ -1886,7 +1921,13 @@
                 };
             }
 
-            await Js.InvokeVoidAsync("jobMap.init", "job-map", markers, options);
+            // Empty markers → jobMap fetches compact pins over HTTP (pinsUrl).
+            await Js.InvokeVoidAsync("jobMap.init", "job-map", Array.Empty<object>(), options);
+            if (markers.Count > 0)
+            {
+                // Filtered circuit pins stay tiny (id/lat/lng/colour/match%).
+                await Js.InvokeVoidAsync("jobMap.setVacancies", markers);
+            }
             _mapReady = true;
             _mapPainted = true;
             await InvokeAsync(StateHasChanged);
@@ -2174,29 +2215,7 @@
     private string MapBootPinsJson()
     {
         var opening = ResolveOpeningView();
-        var pins = _vacancies
-            .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
-            .Select(v =>
-            {
-                var typeBadge = ResolveTypeBadge(v);
-                return new Dictionary<string, object?>
-                {
-                    ["id"] = v.Id.ToString("D"),
-                    ["title"] = v.Title,
-                    ["company"] = v.CompanyName,
-                    ["address"] = v.CompanyAddress,
-                    ["lat"] = v.Latitude,
-                    ["lng"] = v.Longitude,
-                    ["highlighted"] = v.IsHighlighted,
-                    ["workType"] = v.WorkTypes.FirstOrDefault() ?? "",
-                    ["categoryColor"] = ShowsSuitableFor65Plus(v)
-                        ? VacancyCategoryDefaults.SeniorPlusColorHex
-                        : v.CategoryColorHex,
-                    ["typeBadgeLabel"] = typeBadge.Label,
-                    ["typeBadgeColor"] = typeBadge.ColorHex
-                };
-            })
-            .ToList();
+        var pins = BuildCompactPins(_vacancies);
         var payload = new Dictionary<string, object?>
         {
             ["preferFilledLocation"] = !HasCompanyMapFocus,
@@ -2206,109 +2225,92 @@
                 ["lng"] = opening.CenterLng,
                 ["zoom"] = opening.Zoom
             },
-            ["pins"] = pins
+            ["pins"] = pins,
+            ["pinsUrl"] = BuildPinsApiUrl()
         };
         return JsonSerializer.Serialize(payload).Replace("<", "\\u003c", StringComparison.Ordinal);
     }
 
-    private List<Dictionary<string, object?>> BuildMarkers() =>
-        SortedVacancies.Select(v =>
+    /// <summary>
+    /// Compact pin payload for the circuit / boot JSON — id, lat, lng, colour, match% only.
+    /// Full vacancy fields load over HTTP when a pin or card is opened.
+    /// </summary>
+    private List<Dictionary<string, object?>> BuildMarkers() => BuildCompactPins(SortedVacancies);
+
+    private List<Dictionary<string, object?>> BuildCompactPins(IEnumerable<VacancyListItem> source) =>
+        source
+            .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
+            .Select(v =>
+            {
+                var dict = new Dictionary<string, object?>
+                {
+                    ["id"] = v.Id.ToString("D"),
+                    ["lat"] = v.Latitude,
+                    ["lng"] = v.Longitude,
+                    ["colour"] = ShowsSuitableFor65Plus(v)
+                        ? VacancyCategoryDefaults.SeniorPlusColorHex
+                        : v.CategoryColorHex,
+                    ["categoryColor"] = ShowsSuitableFor65Plus(v)
+                        ? VacancyCategoryDefaults.SeniorPlusColorHex
+                        : v.CategoryColorHex,
+                    ["matchPercent"] = v.MatchPercent,
+                    ["highlighted"] = v.IsHighlighted,
+                    ["highlightRank"] = v.IsHighlighted ? HighlightShuffleRank(v.Id) : 0u
+                };
+                return dict;
+            })
+            .ToList();
+
+    private string BuildPinsApiUrl()
+    {
+        var qs = new List<string>
         {
-            var primaryType = v.WorkTypes.FirstOrDefault() ?? "";
-            var typeBadge = ResolveTypeBadge(v);
-            var dict = new Dictionary<string, object?>
-            {
-                ["id"] = v.Id.ToString(),
-                ["title"] = v.Title,
-                ["company"] = v.CompanyName,
-                ["companyId"] = v.CompanyId.ToString("D"),
-                ["companyHref"] = !string.IsNullOrWhiteSpace(v.KvkNumber) && !string.IsNullOrWhiteSpace(v.Vestigingsnummer)
-                    ? $"/{v.KvkNumber}/{v.Vestigingsnummer}"
-                    : null,
-                ["offeredBy"] = v.OfferedByLabel,
-                ["address"] = v.CompanyAddress,
-                ["logoUrl"] = VacancyImageUrls.Normalize(v.CompanyLogoUrl),
-                ["imageUrl"] = VacancyImageUrls.ForPublicList(v.ImageUrl, v.Id, v.WorkTypes.FirstOrDefault())
-                    ?? VacancyImageUrls.Resolve(v.ImageUrl, v.CompanyLogoUrl, v.Id, v.WorkTypes.FirstOrDefault()),
-                ["lat"] = v.Latitude,
-                ["lng"] = v.Longitude,
-                ["transport"] = v.RequiredTransport,
-                ["workTypes"] = v.WorkTypes,
-                ["workType"] = primaryType,
-                ["categoryId"] = v.CategoryId?.ToString("D"),
-                ["categoryName"] = v.CategoryName,
-                ["categoryColor"] = ShowsSuitableFor65Plus(v)
-                    ? VacancyCategoryDefaults.SeniorPlusColorHex
-                    : v.CategoryColorHex,
-                ["suitableFor65Plus"] = ShowsSuitableFor65Plus(v),
-                ["suitableFor65PlusLabel"] = VacancyCategoryDefaults.SuitableFor65PlusLabel,
-                ["suitableFor65PlusColor"] = VacancyCategoryDefaults.SeniorPlusColorHex,
-                ["typeBadgeLabel"] = typeBadge.Label,
-                ["typeBadgeColor"] = typeBadge.ColorHex,
-                ["pushBomActive"] = false,
-                ["highlighted"] = v.IsHighlighted,
-                ["highlightRank"] = v.IsHighlighted ? HighlightShuffleRank(v.Id) : 0u,
-                ["featuredLabel"] = Culture["Discovery.Featured"],
-                ["exclusivityBadge"] = !v.ExclusivityIsOpen
-                    && string.Equals(v.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
-                    && !string.IsNullOrWhiteSpace(v.ExclusivityName)
-                    ? v.ExclusivityName
-                    : null,
-                ["travelMinutes"] = v.TravelMinutes,
-                ["transportLabel"] = UiLabels.TransportVerb(Culture, _selectedTransport),
-                ["matchPercent"] = v.MatchPercent,
-                ["matchColorBand"] = v.MatchColorBand,
-                ["matchWhySummary"] = v.MatchWhySummary,
-                ["cultureFitPercent"] = v.CultureFitPercent,
-                ["cultureFitBand"] = v.CultureFitBand,
-                ["cultureFitLabel"] = v.CultureFitLabel,
-                ["cultureFitWhy"] = v.CultureFitWhy
-            };
-            if (v.WageVisible)
-            {
-                if (_ageYears is int age)
-                {
-                    // Show the resolved hourly rate inline when an age filter is active.
-                    if (v.HourlyWage is not null)
-                    {
-                        dict["wage"] = (double)v.HourlyWage.Value;
-                    }
-                    else if (v.WageByAge is { Count: > 0 })
-                    {
-                        var band = v.WageByAge
-                            .Where(b => b.AgeYears <= age)
-                            .OrderByDescending(b => b.AgeYears)
-                            .FirstOrDefault()
-                            ?? v.WageByAge.OrderBy(b => b.AgeYears).First();
-                        dict["wage"] = (double)band.HourlyRate;
-                    }
-                }
-                else if (v.HourlyWage is not null && (v.WageByAge is null || v.WageByAge.Count == 0))
-                {
-                    dict["wage"] = (double)v.HourlyWage.Value;
-                }
+            $"transport={Uri.EscapeDataString(_selectedTransport)}",
+            $"maxMinutes={_maxTravelMinutes}"
+        };
+        if (_origin is not null)
+        {
+            qs.Add($"originLat={_origin.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+            qs.Add($"originLng={_origin.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+            qs.Add($"radiusKm={_radiusKm.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+        }
 
-                // Full age table stays behind the popup "i" info control (not inline).
-                if (v.WageByAge is { Count: > 0 })
-                {
-                    dict["wageBands"] = v.WageByAge
-                        .OrderBy(b => b.AgeYears)
-                        .Select(b => new Dictionary<string, object?>
-                        {
-                            ["ageYears"] = b.AgeYears,
-                            ["hourlyRate"] = (double)b.HourlyRate,
-                            ["label"] = b.Label
-                        })
-                        .ToList();
-                }
-            }
-            else
+        if (_selectedWorkTypes.Count > 0)
+        {
+            foreach (var wt in _selectedWorkTypes)
             {
-                dict["wageLabel"] = WageVisibilityRules.MissingDateOfBirthMessage;
+                qs.Add($"workType={Uri.EscapeDataString(wt)}");
             }
+        }
 
-            return dict;
-        }).ToList();
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            qs.Add($"q={Uri.EscapeDataString(_searchQuery.Trim())}");
+        }
+
+        if (_selectedCategoryIds.Count > 0)
+        {
+            foreach (var id in _selectedCategoryIds)
+            {
+                qs.Add($"categoryId={id:D}");
+            }
+        }
+
+        if (_companyFocusIds is { Count: > 0 })
+        {
+            foreach (var id in _companyFocusIds)
+            {
+                qs.Add($"companyId={id:D}");
+            }
+        }
+
+        if (_isCandidate && _minMatchPercent > 0)
+        {
+            qs.Add($"minMatchPercent={_minMatchPercent}");
+        }
+
+        return "/api/vacancies/pins?" + string.Join("&", qs);
+    }
 
     private async Task OnAddressInputAsync(ChangeEventArgs e)
     {

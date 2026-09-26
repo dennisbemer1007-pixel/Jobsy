@@ -25,6 +25,9 @@ window.jobMap = (function () {
     let ringStyleHandlerBound = false;
     let ringRedrawTries = 0;
     let deferMapReveal = false;
+    let detailCache = {};
+    let pinsUrl = null;
+    let pinsFetchGen = 0;
 
     // Fallback only when the index has no pins. Prefer the precomputed view from #jobsy-map-boot.
     const NL_CENTER = [52.15, 5.2913];
@@ -877,15 +880,181 @@ window.jobMap = (function () {
         }
     }
 
+    function normalizePin(raw) {
+        if (!raw) {
+            return null;
+        }
+        const id = raw.id != null ? String(raw.id) : (raw.Id != null ? String(raw.Id) : "");
+        if (!id) {
+            return null;
+        }
+        const lat = Number(raw.lat != null ? raw.lat : raw.Lat);
+        const lng = Number(raw.lng != null ? raw.lng : raw.Lng);
+        const colour = raw.categoryColor || raw.colour || raw.Colour || null;
+        const matchPercent = raw.matchPercent != null ? raw.matchPercent
+            : (raw.MatchPercent != null ? raw.MatchPercent : null);
+        return Object.assign({}, raw, {
+            id: id,
+            lat: lat,
+            lng: lng,
+            categoryColor: colour,
+            colour: colour,
+            matchPercent: matchPercent
+        });
+    }
+
+    function skeletonPopupHtml(pin) {
+        return (
+            "<div class=\"map-popup map-popup--loading\">" +
+                "<div class=\"map-popup__main\">" +
+                    "<div class=\"map-popup__media map-popup__media--logo-only\" aria-hidden=\"true\"></div>" +
+                    "<div class=\"map-popup__body\">" +
+                        "<p class=\"map-popup__title\">Laden…</p>" +
+                        "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>" +
+                    "</div>" +
+                "</div>" +
+            "</div>"
+        );
+    }
+
+    function mapDetailToPopup(detail, pin) {
+        if (!detail) {
+            return pin;
+        }
+        const workTypes = Array.isArray(detail.workTypes) ? detail.workTypes : [];
+        return Object.assign({}, pin, {
+            title: detail.title || pin.title || "Vacature",
+            company: detail.companyName || pin.company || "",
+            companyId: detail.companyId,
+            companyHref: detail.kvkNumber && detail.vestigingsnummer
+                ? "/" + detail.kvkNumber + "/" + detail.vestigingsnummer
+                : null,
+            offeredBy: detail.offeredByLabel || null,
+            address: detail.companyAddress || "",
+            logoUrl: detail.companyLogoUrl || null,
+            imageUrl: detail.imageUrl || null,
+            transport: detail.requiredTransport || [],
+            workTypes: workTypes,
+            workType: workTypes[0] || "",
+            categoryColor: pin.categoryColor || detail.categoryColorHex || null,
+            highlighted: detail.isHighlighted === true || !!pin.highlighted,
+            travelMinutes: detail.travelMinutes != null ? detail.travelMinutes : pin.travelMinutes,
+            matchPercent: detail.matchPercent != null ? detail.matchPercent : pin.matchPercent,
+            matchColorBand: detail.matchColorBand || pin.matchColorBand,
+            cultureFitLabel: detail.cultureFitLabel || null,
+            cultureFitBand: detail.cultureFitBand || null,
+            wage: detail.hourlyWage != null && detail.wageVisible !== false ? detail.hourlyWage : null,
+            _detailLoaded: true
+        });
+    }
+
+    function fetchVacancyDetail(id) {
+        const key = String(id || "");
+        if (!key) {
+            return Promise.resolve(null);
+        }
+        if (detailCache[key]) {
+            return detailCache[key];
+        }
+        detailCache[key] = fetch("/api/vacancies/" + encodeURIComponent(key), {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        })
+            .then(function (res) {
+                if (!res.ok) {
+                    throw new Error("detail " + res.status);
+                }
+                return res.json();
+            })
+            .catch(function () {
+                detailCache[key] = null;
+                return null;
+            });
+        return detailCache[key];
+    }
+
+    function fetchPins(url) {
+        if (!url) {
+            return Promise.resolve([]);
+        }
+        const gen = ++pinsFetchGen;
+        return fetch(url, {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        })
+            .then(function (res) {
+                if (gen !== pinsFetchGen) {
+                    return null;
+                }
+                if (res.status === 304) {
+                    return null;
+                }
+                if (!res.ok) {
+                    throw new Error("pins " + res.status);
+                }
+                return res.json();
+            })
+            .then(function (data) {
+                if (gen !== pinsFetchGen || !data) {
+                    return;
+                }
+                const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
+                setVacancies(pins);
+            })
+            .catch(function () { /* keep boot/circuit pins */ });
+    }
+
     function openVacancyPopup(record) {
         if (!map || !record) {
             return;
         }
         closeActivePopup();
-        const v = record.options.jobData;
+        let v = normalizePin(record.options.jobData) || record.options.jobData;
+        record.options.jobData = v;
         const opts = Object.assign({}, jobPopupOptions(isFeaturedVacancy(v)));
-        activeClusterPopup = popupFromOpts(opts, [record.lng, record.lat], buildPopupHtml(v));
+        const needsDetail = !v._detailLoaded || !v.title;
+        activeClusterPopup = popupFromOpts(
+            opts,
+            [record.lng, record.lat],
+            needsDetail ? skeletonPopupHtml(v) : buildPopupHtml(v));
         syncFeaturedPopupClass(activeClusterPopup, v);
+        const bindPopupEl = function (full) {
+            const el = activeClusterPopup && activeClusterPopup.getElement();
+            if (!el) {
+                return;
+            }
+            bindWageInfoInteractions(el);
+            el.querySelectorAll(".map-popup__cta, a.map-popup__media").forEach(function (cta) {
+                if (cta.dataset.bound) {
+                    return;
+                }
+                cta.dataset.bound = "1";
+                cta.addEventListener("click", function () {
+                    notifyOpen(full.id);
+                });
+            });
+            centerPopupInView(activeClusterPopup);
+        };
+        if (needsDetail) {
+            fetchVacancyDetail(v.id).then(function (detail) {
+                if (!activeClusterPopup || !record) {
+                    return;
+                }
+                const full = mapDetailToPopup(detail, v);
+                record.options.jobData = full;
+                if (detail) {
+                    activeClusterPopup.setHTML(buildPopupHtml(full));
+                    syncFeaturedPopupClass(activeClusterPopup, full);
+                    bindPopupEl(full);
+                } else {
+                    activeClusterPopup.setHTML(
+                        "<div class=\"map-popup\"><p class=\"map-popup__title\">Vacature niet beschikbaar</p>" +
+                        "<p><a class=\"map-popup__apply\" href=\"/vacancies/" +
+                        encodeURIComponent(v.id) + "\">Bekijk</a></p></div>");
+                }
+            });
+            return;
+        }
         const el = activeClusterPopup.getElement();
         if (el) {
             bindWageInfoInteractions(el);
@@ -1796,10 +1965,32 @@ window.jobMap = (function () {
         highlightSeed = options && Number.isFinite(Number(options.highlightSeed))
             ? (Number(options.highlightSeed) >>> 0)
             : 0;
+        pinsUrl = options && options.pinsUrl ? String(options.pinsUrl) : null;
 
         bindMapRuntime();
 
-        setVacancies(vacancies || []);
+        const seedPins = (vacancies || []).map(normalizePin).filter(Boolean);
+        if (seedPins.length > 0) {
+            setVacancies(seedPins);
+        } else {
+            // Prefer #jobsy-map-boot compact pins until HTTP pins arrive.
+            try {
+                const boot = readBootPayload();
+                if (boot && Array.isArray(boot.pins) && boot.pins.length) {
+                    setVacancies(boot.pins.map(normalizePin).filter(Boolean));
+                    if (!pinsUrl && boot.pinsUrl) {
+                        pinsUrl = String(boot.pinsUrl);
+                    }
+                } else {
+                    setVacancies([]);
+                }
+            } catch (e) {
+                setVacancies([]);
+            }
+        }
+        if (pinsUrl) {
+            fetchPins(pinsUrl);
+        }
         var originApplied = false;
         if (options && options.origin) {
             try {
@@ -1894,7 +2085,11 @@ window.jobMap = (function () {
         markersById = {};
         const bounds = [];
 
-        (vacancies || []).forEach(function (v) {
+        (vacancies || []).forEach(function (raw) {
+            const v = normalizePin(raw);
+            if (!v) {
+                return;
+            }
             const pt = pointFromVacancy(v);
             if (!pt) {
                 return;
@@ -1918,6 +2113,11 @@ window.jobMap = (function () {
         refreshClusters();
         ensureVacancyTiles();
         revealMapStage();
+    }
+
+    function reloadPins(url) {
+        pinsUrl = url ? String(url) : pinsUrl;
+        return fetchPins(pinsUrl);
     }
 
     function ensureOriginMarker(la, ln) {
@@ -2173,6 +2373,7 @@ window.jobMap = (function () {
         boot,
         init,
         setVacancies,
+        reloadPins,
         setOrigin,
         panTo,
         jumpToLocation,

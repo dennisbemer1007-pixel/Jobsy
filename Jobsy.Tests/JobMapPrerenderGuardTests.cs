@@ -82,12 +82,23 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("jumpToLocation", initFn);
         Assert.DoesNotContain("fitMapToVacancies", initFn);
         Assert.Contains("setOrigin(filledOrigin.lat", initFn);
-        var setVacanciesInInit = js.IndexOf("setVacancies(vacancies || []);", initIdx, StringComparison.Ordinal);
+        Assert.Contains("pinsUrl", initFn);
+        Assert.Contains("fetchPins", initFn);
+        Assert.Contains("normalizePin", js);
+        var setVacanciesInInit = js.IndexOf("setVacancies(seedPins)", initIdx, StringComparison.Ordinal);
+        if (setVacanciesInInit < 0)
+        {
+            setVacanciesInInit = js.IndexOf("setVacancies(", initIdx, StringComparison.Ordinal);
+        }
         var tilesAfterVacancies = js.IndexOf("ensureVacancyTiles();", setVacanciesInInit, StringComparison.Ordinal);
         Assert.True(setVacanciesInInit > initIdx && tilesAfterVacancies > setVacanciesInInit);
 
         var setStart = js.IndexOf("function setVacancies(vacancies)", StringComparison.Ordinal);
-        var setEnd = js.IndexOf("function ensureOriginMarker", StringComparison.Ordinal);
+        var setEnd = js.IndexOf("function reloadPins", StringComparison.Ordinal);
+        if (setEnd < 0)
+        {
+            setEnd = js.IndexOf("function ensureOriginMarker", StringComparison.Ordinal);
+        }
         Assert.True(setStart > 0 && setEnd > setStart);
         Assert.DoesNotContain("fitMapToVacancies", js[setStart..setEnd]);
 
