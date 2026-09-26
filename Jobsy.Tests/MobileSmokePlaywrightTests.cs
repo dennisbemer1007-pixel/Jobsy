@@ -449,10 +449,13 @@ public class MobileSmokePlaywrightTests
             Assert.True(
                 FailedRequests.IsEmpty,
                 "Unexpected failed requests: " + string.Join(" | ", FailedRequests.Take(8)));
-            // Filter known noisy browser messages.
+            // Filter known noisy browser messages. Align with Response-side policy:
+            // plain/static 404s (fonts, optional chunks) are not fatal.
             var fatal = ConsoleErrors
                 .Where(e => !e.Contains("favicon", StringComparison.OrdinalIgnoreCase)
-                            && !e.Contains("Download the React DevTools", StringComparison.OrdinalIgnoreCase))
+                            && !e.Contains("Download the React DevTools", StringComparison.OrdinalIgnoreCase)
+                            && !(e.Contains("Failed to load resource", StringComparison.OrdinalIgnoreCase)
+                                 && e.Contains("404", StringComparison.Ordinal)))
                 .ToList();
             Assert.True(fatal.Count == 0, "Console errors: " + string.Join(" | ", fatal.Take(8)));
         }
