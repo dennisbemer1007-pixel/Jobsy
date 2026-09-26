@@ -71,9 +71,9 @@ public static class PageHelpDocs
     {
         ["/login"] = new(
             "Inloggen",
-            "Toegang tot Lobsy met Microsoft Entra, Google of een Lobsy-/demo-account.",
-            "Kies een inlogmethode. Externe login stuurt je naar de provider en terug naar Lobsy. Lokale/demo-accounts gebruiken e-mail en wachtwoord.",
-            "Sessie starten zodat je sollicitaties, vacatures, tokens of beheer kunt gebruiken."),
+            "Hier log je in op Lobsy met Google, Microsoft of je e-mailadres en wachtwoord.",
+            "Kies hoe je wilt inloggen. Bij Google of Microsoft ga je kort naar die dienst en kom je daarna terug. Met e-mail vul je je adres en wachtwoord in.",
+            "Na het inloggen kun je solliciteren, vacatures bekijken en je profiel bijhouden."),
 
         ["/register"] = new(
             "Bedrijf registreren",

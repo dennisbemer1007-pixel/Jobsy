@@ -22350,3 +22350,83 @@ h1:focus:not(:focus-visible) {
         font-size: 12px;
     }
 }
+
+/* ==== mobile-candidate-login-cookie ==== */
+@media (max-width: 720px) {
+    .login-modal {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .login-modal__dialog,
+    .login-modal__dialog.login-card {
+        padding-left: 1.15rem;
+        padding-right: 1.15rem;
+        padding-top: 0.85rem;
+    }
+
+    .login-modal__header {
+        margin-top: 0.15rem;
+        padding-top: 0.1rem;
+        border-top: none;
+    }
+
+    .login-modal__header h1 {
+        padding-top: 0.1rem;
+    }
+}
+
+.login-form label.login-remember {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.55rem;
+    width: auto;
+    max-width: 100%;
+    margin: 0.35rem 0 0.55rem;
+}
+
+.login-form label.login-remember span {
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+.provider-btn--google:not(.is-disabled) {
+    opacity: 1;
+    color: var(--text);
+    background: var(--surface);
+    border-color: var(--border);
+}
+
+.provider-btn--google.is-disabled {
+    opacity: 0.72;
+    color: var(--text);
+    filter: none;
+}
+
+html:not(.cookie-consent-known) .app-shell.has-bottom-nav .app-main,
+html:not(.cookie-consent-known) .app-shell:has(.bottom-nav) .app-main {
+    padding-bottom: calc(var(--bottom-nav-clearance) + 5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+html:not(.cookie-consent-known) .login-modal__dialog {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+
+.cookie-consent {
+    padding: 0.45rem 0.75rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
+}
+
+.cookie-consent__mascot {
+    width: 2.4rem;
+    height: 2.4rem;
+}
+
+.cookie-consent__title {
+    font-size: 0.85rem;
+}
+
+.cookie-consent__text {
+    font-size: 0.72rem;
+    max-width: 28rem;
+}
