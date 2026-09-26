@@ -46,7 +46,7 @@ public class MobileSmokePlaywrightTests
         await using var mobile = await browser.NewContextAsync(new()
         {
             ViewportSize = new() { Width = 390, Height = 844 },
-            Geolocation = new Geolocation { Latitude = 52.07, Longitude = 4.3 },
+            Geolocation = new Geolocation { Latitude = 52.07f, Longitude = 4.3f },
             Permissions = ["geolocation"],
             IgnoreHTTPSErrors = true
         });
@@ -202,10 +202,10 @@ public class MobileSmokePlaywrightTests
         }
 
         // Tap near centre; MapLibre hit-test may open card or zoom cluster.
-        await page.Mouse.ClickAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
+        await page.Mouse.ClickAsync(box.X + box.Width / 2f, box.Y + box.Height / 2f);
         await page.WaitForTimeoutAsync(800);
         // Second tap slightly offset for a pin near centre.
-        await page.Mouse.ClickAsync(box.X + box.Width * 0.55, box.Y + box.Height * 0.45);
+        await page.Mouse.ClickAsync(box.X + box.Width * 0.55f, box.Y + box.Height * 0.45f);
         await page.WaitForTimeoutAsync(800);
 
         var card = page.Locator(".vacancy-card, .discovery-card, .map-card, .sheet-card, [class*='vacancy']").First;
