@@ -1,11 +1,18 @@
 using System;
+using Jobsy.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Jobsy.Infrastructure.Data.Migrations
 {
-    /// <inheritdoc />
+    /// <summary>
+    /// Adds login lockout columns + MFA fields. Must carry <see cref="MigrationAttribute"/>
+    /// so EF discovers it (without a Designer, a bare partial was skipped → Acc local-login 500).
+    /// </summary>
+    [DbContext(typeof(JobsyDbContext))]
+    [Migration("20260926170000_LoginProtectionAndMfa")]
     public partial class LoginProtectionAndMfa : Migration
     {
         /// <inheritdoc />
