@@ -6,7 +6,9 @@ Valideer de kritieke user-flows: registratie & onboarding (Company Manager / Sal
 
 ## 2. Automatisering (xUnit)
 
-Playwright UI-flows uit eerdere MVP-notities zijn nog niet in-repo; de actuele regressie zit in `Jobsy.Tests` (EF InMemory + `WebApplicationFactory`, geen Postgres vereist).
+Actuele regressie zit in `Jobsy.Tests` (EF InMemory + `WebApplicationFactory`, geen Postgres vereist).
+Mobiele candidate-tab guardrail: `CandidateTabStabilityPlaywrightTests` (Playwright 390×844).
+Zet `JOBSY_E2E_BASE_URL` (Acceptatie) + optioneel `JOBSY_E2E_CANDIDATE_EMAIL` / `JOBSY_E2E_CANDIDATE_PASSWORD` om live te draaien; zonder URL soft-skipt de test. CI: `.github/workflows/pr-tests.yml`.
 
 ### A. End-to-end kernketen
 
