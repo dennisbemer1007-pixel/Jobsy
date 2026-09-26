@@ -1,0 +1,120 @@
+@* Compact vacancy card for Funda mobile sheet (pin / cluster / list). *@
+@using Jobsy.Web.Navigation
+
+@if (Skeleton)
+{
+    <article class="vac-compact vac-compact--skeleton" aria-busy="true" aria-label="Vacature laden">
+        <div class="vac-compact__thumb" aria-hidden="true"></div>
+        <div class="vac-compact__body">
+            <div class="vac-compact__skel vac-compact__skel--title"></div>
+            <div class="vac-compact__skel vac-compact__skel--sub"></div>
+            <div class="vac-compact__skel-row">
+                <span class="vac-compact__skel vac-compact__skel--chip"></span>
+                <span class="vac-compact__skel vac-compact__skel--chip"></span>
+            </div>
+        </div>
+    </article>
+}
+else
+{
+    <article class="vac-compact @(IsActive ? "is-active" : null)"
+             data-vacancy-id="@Id"
+             @onclick="OnSelect"
+             @onkeydown="OnKeyDown"
+             tabindex="0"
+             role="button"
+             aria-label="@(string.IsNullOrWhiteSpace(Title) ? "Vacature" : Title)">
+        <a class="vac-compact__media" href="@DetailHref" @onclick:stopPropagation="true" tabindex="-1">
+            @if (!string.IsNullOrWhiteSpace(ThumbnailUrl))
+            {
+                <img class="vac-compact__thumb"
+                     src="@ThumbnailUrl"
+                     alt=""
+                     width="72"
+                     height="96"
+                     loading="lazy"
+                     decoding="async" />
+            }
+            else
+            {
+                <div class="vac-compact__thumb vac-compact__thumb--empty" aria-hidden="true">
+                    <span>Foto</span>
+                </div>
+            }
+        </a>
+        <div class="vac-compact__body">
+            <div class="vac-compact__top">
+                <h3 class="vac-compact__title">@Title</h3>
+                @if (ShowSave)
+                {
+                    <button type="button"
+                            class="vac-compact__save @(Saved ? "is-saved" : null)"
+                            aria-label="@(Saved ? "Verwijder uit bewaard" : "Bewaar vacature")"
+                            aria-pressed="@(Saved ? "true" : "false")"
+                            @onclick="OnSaveClick"
+                            @onclick:stopPropagation="true">
+                        <span aria-hidden="true">@((MarkupString)NavIcons.Liked)</span>
+                    </button>
+                }
+            </div>
+            <p class="vac-compact__sub">@CompanyLine</p>
+            <div class="vac-compact__meta">
+                @if (!string.IsNullOrWhiteSpace(TravelLabel))
+                {
+                    <span class="vac-compact__chip vac-compact__chip--travel">@TravelLabel</span>
+                }
+                @if (MatchPercent is int mp)
+                {
+                    <span class="vac-compact__chip vac-compact__chip--match">@mp%</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(WageLabel))
+                {
+                    <span class="vac-compact__wage">@WageLabel</span>
+                }
+            </div>
+        </div>
+    </article>
+}
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? CompanyName { get; set; }
+    [Parameter] public string? Place { get; set; }
+    [Parameter] public string? ThumbnailUrl { get; set; }
+    [Parameter] public string? TravelLabel { get; set; }
+    [Parameter] public int? MatchPercent { get; set; }
+    [Parameter] public string? WageLabel { get; set; }
+    [Parameter] public bool Skeleton { get; set; }
+    [Parameter] public bool IsActive { get; set; }
+    [Parameter] public bool ShowSave { get; set; } = true;
+    [Parameter] public bool Saved { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public EventCallback OnSave { get; set; }
+
+    private string DetailHref => Id is Guid g ? $"/vacancies/{g}" : "#";
+
+    private string CompanyLine
+    {
+        get
+        {
+            var company = string.IsNullOrWhiteSpace(CompanyName) ? "" : CompanyName.Trim();
+            var place = string.IsNullOrWhiteSpace(Place) ? "" : Place.Trim();
+            if (company.Length == 0) return place;
+            if (place.Length == 0) return company;
+            return $"{company} · {place}";
+        }
+    }
+
+    private Task OnSelect() => OnClick.InvokeAsync();
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            await OnClick.InvokeAsync();
+        }
+    }
+
+    private Task OnSaveClick() => OnSave.InvokeAsync();
+}
