@@ -196,10 +196,9 @@ public class VacanciesController : ControllerBase
             }
         }
 
-        var stamp = _discoveryIndex.LastRefreshedAtUtc is DateTime refreshed
-            ? new DateTimeOffset(DateTime.SpecifyKind(refreshed, DateTimeKind.Utc)).ToUnixTimeSeconds()
-            : 0L;
-        var etag = $"\"pins-{stamp}-{candidates.Count}-{(isCandidate ? "c" : "a")}\"";
+        // Content hash (not a 60s clock) so Cloudflare can cache stable pin sets.
+        var contentHash = ComputePinsContentHash(candidates, matches);
+        var etag = $"\"pins-{contentHash}-{(isCandidate ? "c" : "a")}\"";
         if (Request.Headers.IfNoneMatch.ToString().Contains(etag, StringComparison.Ordinal))
         {
             return StatusCode(StatusCodes.Status304NotModified);
@@ -210,8 +209,8 @@ public class VacanciesController : ControllerBase
             ? "private,max-age=15"
             : "public,max-age=60,stale-while-revalidate=300";
 
-        // Stable seed so featured pin order matches the web circuit shuffle for this response.
-        var highlightSeed = (uint)(stamp & 0xffffffff);
+        // Stable seed so featured pin order is deterministic for this content hash.
+        var highlightSeed = contentHash;
         var pins = candidates.Select(c =>
         {
             var colour = c.Record.SuitableFor65Plus
@@ -1781,6 +1780,42 @@ public class VacanciesController : ControllerBase
            && Math.Abs(lat) <= 90
            && Math.Abs(lng) <= 180
            && !(lat == 0 && lng == 0);
+
+    private static uint ComputePinsContentHash(
+        List<(VacancyDiscoveryRecord Record, int? TravelMinutes)> candidates,
+        IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches)
+    {
+        unchecked
+        {
+            uint h = 2166136261;
+            foreach (var c in candidates.OrderBy(x => x.Record.Id))
+            {
+                foreach (var b in c.Record.Id.ToByteArray())
+                {
+                    h ^= b;
+                    h *= 16777619u;
+                }
+
+                h ^= (uint)BitConverter.SingleToInt32Bits((float)c.Record.Latitude);
+                h *= 16777619u;
+                h ^= (uint)BitConverter.SingleToInt32Bits((float)c.Record.Longitude);
+                h *= 16777619u;
+                if (matches is not null && matches.TryGetValue(c.Record.Id, out var match))
+                {
+                    h ^= (uint)match.TotalPercent;
+                    h *= 16777619u;
+                }
+
+                if (VacancyHighlightRules.IsActive(c.Record.IsHighlighted, c.Record.HighlightedUntil, DateTime.UtcNow))
+                {
+                    h ^= 1u;
+                    h *= 16777619u;
+                }
+            }
+
+            return h;
+        }
+    }
 
     private static List<Guid> ParseCardIds(string? ids)
     {

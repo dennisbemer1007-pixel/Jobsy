@@ -2129,10 +2129,11 @@
                 }
             }
 
-            // Paint map markers immediately; impressions are fire-and-forget analytics.
+            // Update map pins over HTTP (debounced AbortController inside jobMap.reloadPins)
+            // instead of shipping a full marker set through the Blazor circuit.
             if (_mapReady)
             {
-                await Js.InvokeVoidAsync("jobMap.setVacancies", BuildMarkers());
+                await Js.InvokeVoidAsync("jobMap.reloadPins", BuildPinsApiUrl());
                 if (_origin is not null && _companyFocusIds is null)
                 {
                     await Js.InvokeVoidAsync("jobMap.setOrigin", _origin.Latitude, _origin.Longitude, TravelMapOptions());
