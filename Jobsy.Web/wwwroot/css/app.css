@@ -22266,3 +22266,87 @@ body {
 .kompas__completeness--pending .skeleton-line {
     margin-top: 0.35rem;
 }
+
+/* ==== mobile-candidate-a11y-polish ==== */
+h1:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.page-help__btn,
+.notification-bell__toggle,
+.language-selector__toggle,
+.competency-help,
+.job-card__match-help,
+.engagement-icon-btn,
+.account-menu__link,
+.test-detail__back-link,
+.back-link,
+.detail-card__header-row .back-link {
+    position: relative;
+}
+
+.page-help__btn::before,
+.notification-bell__toggle::before,
+.language-selector__toggle::before,
+.competency-help::before,
+.job-card__match-help::before,
+.engagement-icon-btn::before,
+.account-menu__link::before,
+.test-detail__back-link::before,
+.back-link::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+}
+
+.page-help__btn,
+.competency-help,
+.job-card__match-help {
+    width: 2.2rem;
+    height: 2.2rem;
+    min-width: 2.2rem;
+    min-height: 2.2rem;
+}
+
+.notification-bell__toggle,
+.language-selector__toggle {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+}
+
+.bottom-nav__label {
+    font-size: 12px;
+}
+
+@media (max-width: 1024px) {
+    .bottom-nav__label {
+        font-size: 12px;
+    }
+}
+
+.application-stepper__label {
+    display: block;
+    margin-top: 0.28rem;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--muted);
+    text-align: center;
+    overflow: visible;
+    white-space: normal;
+    hyphens: auto;
+}
+
+.application-stepper__step.is-current .application-stepper__label {
+    color: var(--brand);
+}
+
+@media (max-width: 640px) {
+    .application-stepper__step {
+        font-size: 12px;
+    }
+}

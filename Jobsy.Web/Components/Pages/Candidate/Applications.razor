@@ -81,7 +81,7 @@
                             <li class="application-stepper__step @(done ? "is-done" : null) @(isCurrent ? "is-current" : null) @(rejected ? "is-rejected" : null)"
                                 aria-current="@(isCurrent ? "step" : null)">
                                 <span class="application-stepper__bar" aria-hidden="true"></span>
-                                <span class="visually-hidden">@WizardStepName(steps[i], a.Status)</span>
+                                <span class="application-stepper__label">@WizardStepName(steps[i], a.Status)</span>
                             </li>
                         }
                     </ol>
