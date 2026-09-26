@@ -84,12 +84,13 @@ public record LocalLoginResponse(
     bool ShowCandidateHowTo = false,
     bool HasCandidateApplications = false,
     bool HasSalesReferral = false,
-    /// <summary>HMAC session proof for Production DevelopmentAuth (non-demo emails).</summary>
+    /// <summary>Legacy HMAC (unused for API auth; kept for transitional clients).</summary>
     string? SessionToken = null,
     int SessionVersion = 0,
     Guid? DeviceSessionId = null,
     string? DeviceRefreshToken = null,
-    DateTime? DeviceExpiresAtUtc = null);
+    DateTime? DeviceExpiresAtUtc = null,
+    Guid? UserId = null);
 
 public record EnsureExternalUserRequest(
     string Email,
@@ -117,7 +118,8 @@ public record EnsureExternalUserResponse(
     string? SessionToken = null,
     int SessionVersion = 0,
     /// <summary>One-time code for in-scope PWA cookie exchange (external login).</summary>
-    string? HandoffCode = null);
+    string? HandoffCode = null,
+    Guid? UserId = null);
 
 public record ExternalProvidersStatusResponse(bool Entra, bool Google);
 

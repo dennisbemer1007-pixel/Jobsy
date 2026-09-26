@@ -139,9 +139,6 @@ public class CandidateCareerPlanApiTests : IClassFixture<RoleFunctionalWebAppFac
 
     private HttpClient Authed()
     {
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", _factory.CandidateEmail);
-        client.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", RoleFunctionalWebAppFactory.DevSecret);
-        return client;
+        return JobsyTestAuth.CreateAuthenticatedClient(_factory, _factory.CandidateId);
     }
 }

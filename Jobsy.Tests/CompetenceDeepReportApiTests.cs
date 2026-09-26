@@ -137,17 +137,15 @@ public class CompetenceDeepReportApiTests : IClassFixture<CompetenceDeepReportAp
 
     private HttpClient Authed(string email)
     {
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", email);
-        client.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", CompetenceDeepReportApiFactory.DevSecret);
-        return client;
+        var userId = email == _factory.UnlockedCandidateEmail
+            ? _factory.UnlockedCandidateId
+            : _factory.FreeCandidateId;
+        return JobsyTestAuth.CreateAuthenticatedClient(_factory, userId);
     }
 }
 
 public sealed class CompetenceDeepReportApiFactory : WebApplicationFactory<Program>
 {
-    public const string DevSecret = "competence-deep-report-secret";
-
     public Guid UnlockedCandidateId { get; } = Guid.Parse("e4000000-0000-0000-0000-000000000010");
     public Guid FreeCandidateId { get; } = Guid.Parse("e4000000-0000-0000-0000-000000000011");
     public string UnlockedCandidateEmail => "deep-competence-unlocked@jobsy.local";
@@ -160,8 +158,7 @@ public sealed class CompetenceDeepReportApiFactory : WebApplicationFactory<Progr
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        builder.UseSetting("JobsyAuth:AllowDevelopmentAuth", "true");
-        builder.UseSetting("JobsyAuth:DevelopmentAuthSecret", DevSecret);
+        JobsyTestAuth.ApplyStandardAuthSettings(builder);
         builder.UseSetting("Seed:Enabled", "false");
         builder.UseSetting("Swagger:Enabled", "false");
         builder.UseSetting(

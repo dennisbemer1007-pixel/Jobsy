@@ -24,7 +24,8 @@ public record DeviceSessionRefreshResponse(
     bool HasCandidateApplications,
     bool HasSalesReferral,
     int SessionVersion,
-    string? SessionToken);
+    string? SessionToken,
+    Guid? UserId = null);
 
 public record DeviceSessionListItemDto(
     Guid Id,
@@ -65,4 +66,5 @@ public record DeviceHandoffExchangeResponse(
     string? ReturnUrl,
     Guid? DeviceSessionId,
     string? RefreshToken,
-    DateTime? DeviceExpiresAtUtc);
+    DateTime? DeviceExpiresAtUtc,
+    Guid? UserId = null);

@@ -7,7 +7,6 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
-using Jobsy.Infrastructure.Security;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -20,8 +19,8 @@ using Microsoft.Extensions.Hosting;
 namespace Jobsy.Tests;
 
 /// <summary>
-/// Ensures Production DevelopmentAuth accepts real registrant emails when a local
-/// session token from local-login is present (regression for post-registration 401s).
+/// Ensures production rejects forged identity headers and accepts signed JobsyJwt tokens
+/// only when the request has passed the Cloudflare origin check.
 /// </summary>
 public class RegisteredUserProductionAuthTests : IClassFixture<RegisteredUserProductionAuthFactory>
 {
@@ -31,16 +30,15 @@ public class RegisteredUserProductionAuthTests : IClassFixture<RegisteredUserPro
         => _factory = factory;
 
     [Fact]
-    public async Task Local_login_session_token_authorizes_non_demo_email_in_Production()
+    public async Task Forged_identity_header_is_rejected_but_jwt_with_origin_header_authorizes_in_Production()
     {
         var email = "nieuwe.baas@example.com";
-        var password = "TestPass1!";
+        var userId = Guid.Parse("e1000000-0000-0000-0000-000000000002");
 
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
             var companyId = Guid.Parse("e1000000-0000-0000-0000-000000000001");
-            var userId = Guid.Parse("e1000000-0000-0000-0000-000000000002");
             if (!await db.Companies.AnyAsync(c => c.Id == companyId))
             {
                 db.Companies.Add(new Company
@@ -67,55 +65,36 @@ public class RegisteredUserProductionAuthTests : IClassFixture<RegisteredUserPro
                     IsActive = true
                 });
                 db.UserCompanies.Add(new UserCompany { UserId = userId, CompanyId = companyId });
-                db.LocalAuthCredentials.Add(new LocalAuthCredential
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = userId,
-                    Email = email,
-                    PasswordHash = JobsyPasswordHasher.Hash(password)
-                });
                 await db.SaveChangesAsync();
             }
         }
 
-        var anon = _factory.CreateClient();
-        using var loginResponse = await anon.PostAsJsonAsync(
-            "api/auth/local-login",
-            new { email, password });
-        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
-        using var loginDoc = JsonDocument.Parse(await loginResponse.Content.ReadAsStringAsync());
-        var sessionToken = loginDoc.RootElement.GetProperty("sessionToken").GetString();
-        Assert.False(string.IsNullOrWhiteSpace(sessionToken));
+        var forged = _factory.CreateClient();
+        forged.DefaultRequestHeaders.Add("X-Jobsy-Email", email);
+        forged.DefaultRequestHeaders.Add("X-Jobsy-Origin-Secret", JobsyTestAuth.OriginSecret);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await forged.GetAsync("api/me/profile")).StatusCode);
 
-        // Without session token → rejected outside Development for non-demo emails.
-        var blocked = _factory.CreateClient();
-        blocked.DefaultRequestHeaders.Add("X-Jobsy-Email", email);
-        blocked.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", RegisteredUserProductionAuthFactory.DevSecret);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await blocked.GetAsync("api/me/profile")).StatusCode);
+        var missingOrigin = JobsyTestAuth.CreateAuthenticatedClient(_factory, userId);
+        Assert.Equal(HttpStatusCode.Forbidden, (await missingOrigin.GetAsync("api/me/profile")).StatusCode);
 
-        // With session token → authorized.
-        var ok = _factory.CreateClient();
-        ok.DefaultRequestHeaders.Add("X-Jobsy-Email", email);
-        ok.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", RegisteredUserProductionAuthFactory.DevSecret);
-        ok.DefaultRequestHeaders.Add("X-Jobsy-Local-Session", sessionToken!);
-        var profile = await ok.GetAsync("api/me/profile");
-        Assert.Equal(HttpStatusCode.OK, profile.StatusCode);
+        var authorized = JobsyTestAuth.CreateAuthenticatedClient(
+            _factory,
+            userId,
+            includeOriginHeader: true);
+        Assert.Equal(HttpStatusCode.OK, (await authorized.GetAsync("api/me/profile")).StatusCode);
     }
 }
 
 public sealed class RegisteredUserProductionAuthFactory : WebApplicationFactory<Program>
 {
-    public const string DevSecret = "registered-user-prod-auth-secret";
-
     private readonly string _dbName = "RegisteredUserProdAuth-" + Guid.NewGuid();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Production: @jobsy.local gate + local session requirement kick in.
         builder.UseEnvironment("Production");
-        builder.UseSetting("JobsyAuth:AllowDevelopmentAuth", "true");
+        JobsyTestAuth.ApplyProductionJwtSettings(builder);
+        JobsyTestAuth.ApplyProductionOriginSettings(builder);
         builder.UseSetting("JobsyAuth:AllowEphemeralDataProtection", "true");
-        builder.UseSetting("JobsyAuth:DevelopmentAuthSecret", DevSecret);
         builder.UseSetting("VerificationCodes:Pepper", "test-pepper-registered-user-prod-auth-32chars");
         builder.UseSetting("Seed:Enabled", "false");
         builder.UseSetting("Swagger:Enabled", "false");

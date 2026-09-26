@@ -138,16 +138,12 @@ public class CandidateInsightsOnWriteApiTests : IClassFixture<CandidateInsightsO
 
     private HttpClient Authed()
     {
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", _factory.CandidateEmail);
-        client.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", CandidateInsightsOnWriteFactory.DevSecret);
-        return client;
+        return JobsyTestAuth.CreateAuthenticatedClient(_factory, _factory.CandidateId);
     }
 }
 
 public sealed class CandidateInsightsOnWriteFactory : WebApplicationFactory<Program>
 {
-    public const string DevSecret = "insights-on-write-secret";
     public Guid CandidateId { get; } = Guid.Parse("d1000000-0000-0000-0000-000000000020");
     public string CandidateEmail => "insights-kandidaat@jobsy.local";
     public SpyWhoAmIAi Ai { get; } = new();
@@ -158,8 +154,7 @@ public sealed class CandidateInsightsOnWriteFactory : WebApplicationFactory<Prog
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        builder.UseSetting("JobsyAuth:AllowDevelopmentAuth", "true");
-        builder.UseSetting("JobsyAuth:DevelopmentAuthSecret", DevSecret);
+        JobsyTestAuth.ApplyStandardAuthSettings(builder);
         builder.UseSetting("Seed:Enabled", "false");
         builder.UseSetting("Swagger:Enabled", "false");
         builder.UseSetting(

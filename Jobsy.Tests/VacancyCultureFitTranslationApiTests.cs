@@ -208,16 +208,12 @@ public class VacancyCultureFitTranslationApiTests : IClassFixture<VacancyCulture
 
     private HttpClient Authed()
     {
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", _factory.CandidateEmail);
-        client.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", VacancyCultureFitTranslationFactory.DevSecret);
-        return client;
+        return JobsyTestAuth.CreateAuthenticatedClient(_factory, _factory.CandidateId);
     }
 }
 
 public sealed class VacancyCultureFitTranslationFactory : WebApplicationFactory<Program>
 {
-    public const string DevSecret = "culture-fit-tr-secret";
     public Guid CandidateId { get; } = Guid.Parse("e2000000-0000-0000-0000-000000000020");
     public Guid CompanyId { get; } = Guid.Parse("e2000000-0000-0000-0000-000000000001");
     public Guid VacancyId { get; } = Guid.Parse("e2000000-0000-0000-0000-000000000010");
@@ -231,8 +227,7 @@ public sealed class VacancyCultureFitTranslationFactory : WebApplicationFactory<
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        builder.UseSetting("JobsyAuth:AllowDevelopmentAuth", "true");
-        builder.UseSetting("JobsyAuth:DevelopmentAuthSecret", DevSecret);
+        JobsyTestAuth.ApplyStandardAuthSettings(builder);
         builder.UseSetting("Seed:Enabled", "false");
         builder.UseSetting("Swagger:Enabled", "false");
         builder.UseSetting(

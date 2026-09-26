@@ -15,10 +15,8 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Jobsy.Web.Services;
 
 /// <summary>
-/// Forwards the Blazor cookie identity to the API via development auth headers
-/// (or later: bearer token from Entra).
-/// Mints/refreshes <c>X-Jobsy-Local-Session</c> when missing or near expiry,
-/// and on API 401 tries one silent device-session refresh + retry.
+/// Forwards the Blazor cookie identity to the API as a short-lived ES256 Bearer token.
+/// On API 401 tries one silent device-session refresh + retry.
 /// Must be resolved in the Blazor circuit/component DI scope — not via IHttpClientFactory's root scope.
 /// </summary>
 public sealed class JobsyApiAuthHandler : DelegatingHandler
@@ -27,17 +25,20 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     private readonly AuthenticationStateProvider _authStateProvider;
     private readonly IServiceProvider _services;
     private readonly IConfiguration _configuration;
+    private readonly JobsyAccessTokenIssuer _accessTokens;
 
     public JobsyApiAuthHandler(
         IHttpContextAccessor httpContextAccessor,
         AuthenticationStateProvider authStateProvider,
         IServiceProvider services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        JobsyAccessTokenIssuer accessTokens)
     {
         _httpContextAccessor = httpContextAccessor;
         _authStateProvider = authStateProvider;
         _services = services;
         _configuration = configuration;
+        _accessTokens = accessTokens;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
@@ -46,9 +47,8 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     {
         var httpContext = _httpContextAccessor.HttpContext;
         var user = await ResolveUserAsync();
-        user = await EnsureFreshLocalSessionAsync(httpContext, user, cancellationToken);
 
-        ApplyIdentityHeaders(request, user);
+        ApplyAccessToken(request, user, httpContext);
 
         try
         {
@@ -63,14 +63,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             // Outside of a Blazor circuit scope.
         }
 
-        if (httpContext is not null)
-        {
-            var accessToken = await httpContext.GetTokenAsync("access_token");
-            if (!string.IsNullOrEmpty(accessToken))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            }
-        }
+        // Identity is the Jobsy ES256 access token only — do not overwrite with IdP access_token.
 
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -110,14 +103,14 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         user = await ResolveUserAsync();
         var retry = await CloneRequestAsync(request, bodyBytes, cancellationToken);
         retry.Options.Set(new HttpRequestOptionsKey<bool>("jobsy-retried"), true);
-        ApplyIdentityHeaders(retry, user);
+        ApplyAccessToken(retry, user, httpContext);
         retry.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         return await base.SendAsync(retry, cancellationToken);
     }
 
-    private void ApplyIdentityHeaders(HttpRequestMessage request, ClaimsPrincipal user)
+    private void ApplyAccessToken(HttpRequestMessage request, ClaimsPrincipal user, HttpContext? httpContext)
     {
-        // Clear previous identity headers when cloning is not used.
+        // Never forward identity/role headers — API trusts only the signed JWT.
         request.Headers.Remove("X-Jobsy-Email");
         request.Headers.Remove("X-Jobsy-Dev-Secret");
         request.Headers.Remove("X-Jobsy-Role");
@@ -125,137 +118,19 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         request.Headers.Remove("X-Jobsy-CompanyId");
         request.Headers.Remove("X-Jobsy-CompanyIds");
         request.Headers.Remove("X-Jobsy-Local-Session");
+        request.Headers.Remove("Authorization");
 
         if (user.Identity?.IsAuthenticated != true)
         {
             return;
         }
 
-        var email = ResolveEmail(user);
-        var role = user.FindFirst(ClaimTypes.Role)?.Value;
-        var name = user.FindFirst(ClaimTypes.Name)?.Value ?? user.Identity.Name;
-        var companyId = user.FindFirst(JobsyClaimTypes.CompanyId)?.Value;
-        var companyIds = user.FindFirst(JobsyClaimTypes.CompanyIds)?.Value;
-
-        if (!string.IsNullOrWhiteSpace(email))
+        var clientIp = httpContext?.Connection.RemoteIpAddress?.ToString();
+        var jwt = _accessTokens.TryCreate(user, clientIp);
+        if (!string.IsNullOrWhiteSpace(jwt))
         {
-            request.Headers.TryAddWithoutValidation("X-Jobsy-Email", email);
-
-            var developmentAuthSecret = _configuration["JobsyAuth:DevelopmentAuthSecret"];
-            if (!string.IsNullOrEmpty(developmentAuthSecret))
-            {
-                request.Headers.TryAddWithoutValidation("X-Jobsy-Dev-Secret", developmentAuthSecret);
-            }
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
         }
-
-        if (!string.IsNullOrWhiteSpace(role))
-        {
-            request.Headers.TryAddWithoutValidation("X-Jobsy-Role", role);
-        }
-
-        if (!string.IsNullOrWhiteSpace(name))
-        {
-            request.Headers.TryAddWithoutValidation("X-Jobsy-Name", name);
-        }
-
-        if (!string.IsNullOrWhiteSpace(companyId))
-        {
-            request.Headers.TryAddWithoutValidation("X-Jobsy-CompanyId", companyId);
-        }
-
-        if (!string.IsNullOrWhiteSpace(companyIds))
-        {
-            request.Headers.TryAddWithoutValidation("X-Jobsy-CompanyIds", companyIds);
-        }
-
-        var localSession = user.FindFirst(JobsyClaimTypes.LocalSession)?.Value;
-        if (!string.IsNullOrWhiteSpace(localSession))
-        {
-            request.Headers.TryAddWithoutValidation("X-Jobsy-Local-Session", localSession);
-        }
-    }
-
-    private async Task<ClaimsPrincipal> EnsureFreshLocalSessionAsync(
-        HttpContext? httpContext,
-        ClaimsPrincipal user,
-        CancellationToken cancellationToken)
-    {
-        if (user.Identity is not ClaimsIdentity identity || !identity.IsAuthenticated || httpContext is null)
-        {
-            return user;
-        }
-
-        var key = JobsyLocalSessionToken.ResolveSigningKey(
-            _configuration["JobsyAuth:LocalSessionSigningKey"],
-            _configuration["JobsyAuth:DevelopmentAuthSecret"]);
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            return user;
-        }
-
-        var existing = identity.FindFirst(JobsyClaimTypes.LocalSession)?.Value;
-        var needsMint = string.IsNullOrWhiteSpace(existing);
-        if (!needsMint
-            && JobsyLocalSessionToken.TryReadSignedPayload(
-                existing,
-                key,
-                ignoreExpiry: true,
-                out _,
-                out _,
-                out var expUnix))
-        {
-            var exp = DateTimeOffset.FromUnixTimeSeconds(expUnix);
-            needsMint = exp - DateTimeOffset.UtcNow < DeviceSessionRules.LocalSessionRenewalSkew;
-        }
-        else if (!string.IsNullOrWhiteSpace(existing))
-        {
-            // Unreadable token — remint if we can recover email/userId from ignoreExpiry path failed.
-            needsMint = true;
-        }
-
-        if (!needsMint)
-        {
-            return user;
-        }
-
-        string email;
-        Guid userId;
-        if (!string.IsNullOrWhiteSpace(existing)
-            && JobsyLocalSessionToken.TryReadSignedPayload(
-                existing,
-                key,
-                ignoreExpiry: true,
-                out email,
-                out userId,
-                out _))
-        {
-            // ok
-        }
-        else
-        {
-            return user;
-        }
-
-        var fresh = JobsyLocalSessionToken.Create(email, userId, key);
-        foreach (var claim in identity.FindAll(JobsyClaimTypes.LocalSession).ToList())
-        {
-            identity.RemoveClaim(claim);
-        }
-
-        identity.AddClaim(new Claim(JobsyClaimTypes.LocalSession, fresh));
-        try
-        {
-            await httpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                user,
-                AuthServiceCollectionExtensions.CreateSessionAuthPropertiesPublic());
-        }
-        catch
-        {
-            // Headers still carry the fresh token for this request.
-        }
-
-        return user;
     }
 
     private async Task<bool> TrySilentDeviceRefreshAsync(HttpContext? httpContext, CancellationToken cancellationToken)

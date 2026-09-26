@@ -55,7 +55,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     [Fact]
     public async Task Candidate_can_profile_like_apply_otp_path_but_not_employer_admin()
     {
-        var c = Authed(_factory.CandidateEmail);
+        var c = await Authed(_factory.CandidateEmail);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/profile")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/who-am-i")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/competencies")).StatusCode);
@@ -82,7 +82,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     [Fact]
     public async Task Branch_manager_sees_pre_accept_screening_not_pii()
     {
-        var c = Authed(_factory.EmployerEmail);
+        var c = await Authed(_factory.EmployerEmail);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/vacancies/manage")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/applications")).StatusCode);
         var list = await c.GetFromJsonAsync<List<JsonElement>>("api/applications", Json);
@@ -119,7 +119,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     [Fact]
     public async Task Regional_manager_is_read_only_on_lifecycle_and_react()
     {
-        var c = Authed(_factory.RegionalEmail);
+        var c = await Authed(_factory.RegionalEmail);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/vacancies/manage")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/applications")).StatusCode);
 
@@ -143,7 +143,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     [Fact]
     public async Task Enterprise_manager_can_approve_and_allocate_not_admin_settings()
     {
-        var c = Authed(_factory.EnterpriseEmail);
+        var c = await Authed(_factory.EnterpriseEmail);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/vacancies/manage")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/metrics/summary?period=week")).StatusCode);
@@ -155,7 +155,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     [Fact]
     public async Task Intermediary_can_manage_vacancies_not_admin()
     {
-        var c = Authed(_factory.IntermediaryEmail);
+        var c = await Authed(_factory.IntermediaryEmail);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/vacancies/manage")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/integrations/health")).StatusCode);
         Assert.Equal(
@@ -166,12 +166,12 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     [Fact]
     public async Task Sales_and_ambassadeur_own_dashboards_forbidden_cross_role()
     {
-        var sm = Authed(_factory.SalesEmail);
+        var sm = await Authed(_factory.SalesEmail);
         Assert.Equal(HttpStatusCode.OK, (await sm.GetAsync("api/sales-managers/me/dashboard")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await sm.GetAsync("api/vacancies/manage")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await sm.GetAsync("api/ambassadeurs/me/dashboard")).StatusCode);
 
-        var am = Authed(_factory.AmbassadeurEmail);
+        var am = await Authed(_factory.AmbassadeurEmail);
         Assert.Equal(HttpStatusCode.OK, (await am.GetAsync("api/ambassadeurs/me/dashboard")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await am.GetAsync("api/sales-managers/me/dashboard")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await am.GetAsync("api/vacancies/manage")).StatusCode);
@@ -192,7 +192,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     [Fact]
     public async Task Admin_can_platform_apis_and_grant_tokens()
     {
-        var c = Authed(_factory.AdminEmail);
+        var c = await Authed(_factory.AdminEmail);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/integrations/health")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/metrics/summary?period=day")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/vacancies/manage")).StatusCode);
@@ -208,12 +208,21 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal("/vacancies/abc", Jobsy.Web.Auth.AuthRedirects.PostLoginUrl("/vacancies/abc"));
     }
 
-    private HttpClient Authed(string email)
+    private Task<HttpClient> Authed(string email)
     {
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", email);
-        client.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", RoleFunctionalWebAppFactory.DevSecret);
-        return client;
+        var id = email switch
+        {
+            var e when e == _factory.CandidateEmail => _factory.CandidateId,
+            var e when e == _factory.EmployerEmail => _factory.EmployerId,
+            var e when e == _factory.AdminEmail => _factory.AdminId,
+            var e when e == _factory.RegionalEmail => _factory.RegionalId,
+            var e when e == _factory.EnterpriseEmail => _factory.EnterpriseId,
+            var e when e == _factory.IntermediaryEmail => _factory.IntermediaryId,
+            var e when e == _factory.SalesEmail => _factory.SalesId,
+            var e when e == _factory.AmbassadeurEmail => _factory.AmbassadeurId,
+            _ => throw new InvalidOperationException("Unknown UAT email: " + email)
+        };
+        return Task.FromResult(JobsyTestAuth.CreateAuthenticatedClient(_factory, id));
     }
 
     private static bool HasEmail(JsonElement el)

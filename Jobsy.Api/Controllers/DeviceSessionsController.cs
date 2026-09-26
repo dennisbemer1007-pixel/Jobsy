@@ -88,7 +88,8 @@ public sealed class DeviceSessionsController : ControllerBase
             rotated.HasCandidateApplications,
             rotated.HasSalesReferral,
             rotated.SessionVersion,
-            rotated.SessionToken));
+            rotated.SessionToken,
+            rotated.UserId));
     }
 
     [HttpGet]
@@ -194,78 +195,25 @@ public sealed class DeviceSessionsController : ControllerBase
     }
 
     /// <summary>
-    /// Server-to-server handoff after external login (provision secret), so the Web
-    /// OIDC callback can mint a code before the PWA exchanges it in-scope.
-    /// </summary>
-    [HttpPost("handoff/provision")]
-    [AllowAnonymous]
-    [EnableRateLimiting("auth")]
-    public async Task<ActionResult<DeviceHandoffCreatedDto>> ProvisionHandoff(
-        [FromBody] ProvisionDeviceHandoffRequest request,
-        [FromServices] IConfiguration configuration,
-        CancellationToken cancellationToken)
-    {
-        var expected = configuration["JobsyAuth:ExternalProvisionSecret"];
-        var provided = Request.Headers["X-Jobsy-Provision-Secret"].ToString();
-        if (string.IsNullOrWhiteSpace(expected)
-            || !string.Equals(expected, provided, StringComparison.Ordinal))
-        {
-            return Unauthorized();
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Email))
-        {
-            return BadRequest();
-        }
-
-        var email = request.Email.Trim().ToLowerInvariant();
-        var user = await _db.Users.AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email.ToLower() == email && u.IsActive, cancellationToken);
-        if (user is null)
-        {
-            return NotFound();
-        }
-
-        var created = await _sessions.CreateHandoffAsync(
-            user.Id,
-            request.RememberDevice,
-            request.ReturnUrl,
-            request.UserAgent,
-            cancellationToken);
-        return Ok(new DeviceHandoffCreatedDto(created.Code, created.ExpiresAtUtc));
-    }
-
-    /// <summary>
-    /// Server-to-server: create a device session after Web demo/password login when the
-    /// API local-login path was not used (e.g. DemoUserStore).
+    /// Creates a device session for the user proven by the JobsyJwt bearer token
+    /// (no e-mail + shared-secret impersonation).
     /// </summary>
     [HttpPost("for-login")]
-    [AllowAnonymous]
+    [Authorize]
     [EnableRateLimiting("auth")]
     public async Task<ActionResult<DeviceSessionCreatedDto>> CreateForLogin(
-        [FromBody] ProvisionDeviceHandoffRequest request,
-        [FromServices] IConfiguration configuration,
+        [FromBody] ProvisionDeviceHandoffRequest? request,
         CancellationToken cancellationToken)
     {
-        var expected = configuration["JobsyAuth:ExternalProvisionSecret"];
-        var provided = Request.Headers["X-Jobsy-Provision-Secret"].ToString();
-        if (string.IsNullOrWhiteSpace(expected)
-            || !string.Equals(expected, provided, StringComparison.Ordinal))
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
         {
             return Unauthorized();
         }
 
-        if (string.IsNullOrWhiteSpace(request.Email) || !request.RememberDevice)
+        if (request?.RememberDevice != true)
         {
             return BadRequest();
-        }
-
-        var email = request.Email.Trim().ToLowerInvariant();
-        var user = await _db.Users.AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email.ToLower() == email && u.IsActive, cancellationToken);
-        if (user is null)
-        {
-            return NotFound();
         }
 
         var created = await _sessions.CreateAsync(
@@ -315,6 +263,7 @@ public sealed class DeviceSessionsController : ControllerBase
             result.ReturnUrl,
             result.DeviceSession?.DeviceSessionId,
             result.DeviceSession?.RefreshToken,
-            result.DeviceSession?.ExpiresAtUtc));
+            result.DeviceSession?.ExpiresAtUtc,
+            result.UserId));
     }
 }

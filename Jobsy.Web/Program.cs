@@ -54,6 +54,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Jobsy.Web.Hosting.CircuitExceptionLogger>();
 
 builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
+builder.Services.AddSingleton<JobsyAccessTokenIssuer>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("JobsySessionSecurity");
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
@@ -133,6 +134,7 @@ var app = builder.Build();
 // Rewrite HEAD→GET before routing so MapRazorComponents (GET-only) does not 405.
 app.UseMiddleware<HeadAsGetMiddleware>();
 app.UseForwardedHeaders();
+app.UseMiddleware<CloudflareOriginMiddleware>();
 app.UseWebSockets(new WebSocketOptions
 {
     // Keep the Blazor circuit alive through Cloudflare/Render idle proxies.

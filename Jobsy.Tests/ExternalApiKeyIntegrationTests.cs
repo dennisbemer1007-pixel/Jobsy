@@ -104,11 +104,9 @@ public class ExternalApiKeyIntegrationTests : IClassFixture<ExternalApiKeyWebApp
     }
 
     [Fact]
-    public async Task Development_auth_cannot_call_external_api_without_api_key()
+    public async Task Jwt_auth_cannot_call_external_api_without_api_key()
     {
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", "admin@jobsy.local");
-        client.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", "test-secret");
+        var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, _factory.AdminId);
 
         var response = await client.GetAsync($"api/external/vacancies/{_factory.OwnVacancyId}");
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -142,6 +140,7 @@ public sealed class ExternalApiKeyWebAppFactory : WebApplicationFactory<Program>
     public Guid ForeignCompanyId { get; } = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
     public Guid ForeignVacancyId { get; } = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
     public Guid OwnVacancyId { get; } = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+    public Guid AdminId { get; } = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff");
     public string PlaintextApiKey { get; private set; } = "";
     public string InactivePlaintextApiKey { get; private set; } = "";
 
@@ -151,8 +150,7 @@ public sealed class ExternalApiKeyWebAppFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        builder.UseSetting("JobsyAuth:AllowDevelopmentAuth", "true");
-        builder.UseSetting("JobsyAuth:DevelopmentAuthSecret", "test-secret");
+        JobsyTestAuth.ApplyStandardAuthSettings(builder);
         builder.UseSetting("Seed:Enabled", "false");
         builder.UseSetting(
             "ConnectionStrings:JobsyDb",
@@ -236,7 +234,7 @@ public sealed class ExternalApiKeyWebAppFactory : WebApplicationFactory<Program>
 
         db.Users.Add(new User
         {
-            Id = Guid.NewGuid(),
+            Id = AdminId,
             Email = "admin@jobsy.local",
             FullName = "Admin",
             Role = UserRole.Admin,

@@ -701,13 +701,17 @@ public static class AuthServiceCollectionExtensions
     private static ClaimsPrincipal CreateLocalPrincipal(DemoUserOptions user)
     {
         var role = NormalizeRole(user.Role);
+        var subject = user.UserId is Guid uid && uid != Guid.Empty
+            ? uid.ToString("D")
+            : user.Email.ToLowerInvariant();
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user.Email.ToLowerInvariant()),
+            new(ClaimTypes.NameIdentifier, subject),
             new(ClaimTypes.Name, user.FullName),
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Role, role),
-            new("auth_method", "password")
+            new("auth_method", "password"),
+            new(JobsyClaimTypes.SessionVersion, "0")
         };
 
         if (!string.IsNullOrWhiteSpace(user.CompanyId))
@@ -774,8 +778,9 @@ public static class AuthServiceCollectionExtensions
     {
         try
         {
-            var secret = configuration["JobsyAuth:ExternalProvisionSecret"];
-            if (string.IsNullOrWhiteSpace(secret))
+            var issuer = http.RequestServices.GetService<JobsyAccessTokenIssuer>();
+            var jwt = issuer?.TryCreate(new ClaimsPrincipal(identity), http.Connection.RemoteIpAddress?.ToString());
+            if (string.IsNullOrWhiteSpace(jwt))
             {
                 return;
             }
@@ -796,7 +801,7 @@ public static class AuthServiceCollectionExtensions
                     userAgent = http.Request.Headers.UserAgent.ToString()
                 })
             };
-            request.Headers.TryAddWithoutValidation("X-Jobsy-Provision-Secret", secret);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwt);
             using var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
@@ -830,30 +835,12 @@ public static class AuthServiceCollectionExtensions
         client.BaseAddress = new Uri(apiBase);
         client.Timeout = TimeSpan.FromSeconds(5);
 
-        // Forward local session so the API can authorize the revoke.
-        var localSession = http.User.FindFirst(JobsyClaimTypes.LocalSession)?.Value;
-        var email = http.User.FindFirst(ClaimTypes.Email)?.Value
-                    ?? http.User.FindFirst("email")?.Value;
-        if (!string.IsNullOrWhiteSpace(email))
+        var issuer = http.RequestServices.GetService<JobsyAccessTokenIssuer>();
+        var jwt = issuer?.TryCreate(http.User, http.Connection.RemoteIpAddress?.ToString());
+        if (!string.IsNullOrWhiteSpace(jwt))
         {
-            client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Email", email);
-        }
-
-        var role = http.User.FindFirst(ClaimTypes.Role)?.Value;
-        if (!string.IsNullOrWhiteSpace(role))
-        {
-            client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Role", role);
-        }
-
-        var devSecret = config["JobsyAuth:DevelopmentAuthSecret"];
-        if (!string.IsNullOrWhiteSpace(devSecret))
-        {
-            client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Dev-Secret", devSecret);
-        }
-
-        if (!string.IsNullOrWhiteSpace(localSession))
-        {
-            client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Local-Session", localSession);
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwt);
         }
 
         if (Guid.TryParse(deviceSessionId, out var id))
@@ -922,23 +909,12 @@ public static class AuthServiceCollectionExtensions
             var client = factory.CreateClient("JobsyAuthProvision");
             client.BaseAddress = new Uri(apiBase);
             client.Timeout = TimeSpan.FromSeconds(3);
-            client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Email", email);
-            var role = http.User.FindFirst(ClaimTypes.Role)?.Value;
-            if (!string.IsNullOrWhiteSpace(role))
+            var issuer = http.RequestServices.GetService<JobsyAccessTokenIssuer>();
+            var jwt = issuer?.TryCreate(http.User, http.Connection.RemoteIpAddress?.ToString());
+            if (!string.IsNullOrWhiteSpace(jwt))
             {
-                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Role", role);
-            }
-
-            var localSession = http.User.FindFirst(JobsyClaimTypes.LocalSession)?.Value;
-            if (!string.IsNullOrWhiteSpace(localSession))
-            {
-                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Local-Session", localSession);
-            }
-
-            var devSecret = config["JobsyAuth:DevelopmentAuthSecret"];
-            if (!string.IsNullOrWhiteSpace(devSecret))
-            {
-                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Dev-Secret", devSecret);
+                client.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwt);
             }
 
             using var response = await client.GetAsync("api/auth/device-sessions/validity");
@@ -1124,7 +1100,10 @@ public static class AuthServiceCollectionExtensions
     private static ClaimsPrincipal CreatePrincipalFromProfile(LocalApiLoginProfile profile, string authMethod)
     {
         var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
-        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, profile.Email.ToLowerInvariant()));
+        var subject = profile.UserId is Guid uid && uid != Guid.Empty
+            ? uid.ToString("D")
+            : profile.Email.ToLowerInvariant();
+        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, subject));
         identity.AddClaim(new Claim(ClaimTypes.Email, profile.Email));
         identity.AddClaim(new Claim(ClaimTypes.Name, profile.FullName));
         identity.AddClaim(new Claim("auth_method", authMethod));
@@ -1134,6 +1113,16 @@ public static class AuthServiceCollectionExtensions
 
     private static void ApplyProfileClaims(ClaimsIdentity identity, LocalApiLoginProfile profile, string authMethod)
     {
+        if (profile.UserId is Guid userId && userId != Guid.Empty)
+        {
+            foreach (var existing in identity.FindAll(ClaimTypes.NameIdentifier).ToList())
+            {
+                identity.RemoveClaim(existing);
+            }
+
+            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId.ToString("D")));
+        }
+
         ReplaceRoleClaim(identity, NormalizeRole(profile.Role));
 
         foreach (var existing in identity.FindAll(JobsyClaimTypes.CompanyId).ToList())
@@ -1251,6 +1240,7 @@ public static class AuthServiceCollectionExtensions
         public string? DeviceRefreshToken { get; set; }
         public DateTime? DeviceExpiresAtUtc { get; set; }
         public string? HandoffCode { get; set; }
+        public Guid? UserId { get; set; }
     }
 
     private static string NormalizeRole(string role) => role.Trim().ToLowerInvariant() switch

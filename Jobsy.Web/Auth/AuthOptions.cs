@@ -38,4 +38,6 @@ public class DemoUserOptions
     public string Role { get; set; } = "Candidate";
     public string? CompanyId { get; set; }
     public string? CompanyIds { get; set; }
+    /// <summary>DB user id (must match seed) so Web can mint JobsyJwt without e-mail identity.</summary>
+    public Guid? UserId { get; set; }
 }

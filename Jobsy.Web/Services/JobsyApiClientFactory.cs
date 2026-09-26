@@ -1,4 +1,5 @@
 using Jobsy.Core;
+using Jobsy.Web.Auth;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Jobsy.Web.Services;
@@ -15,7 +16,8 @@ public static class JobsyApiClientFactory
             sp.GetRequiredService<IHttpContextAccessor>(),
             sp.GetRequiredService<AuthenticationStateProvider>(),
             sp,
-            configuration)
+            configuration,
+            sp.GetRequiredService<JobsyAccessTokenIssuer>())
         {
             InnerHandler = new HttpClientHandler
             {

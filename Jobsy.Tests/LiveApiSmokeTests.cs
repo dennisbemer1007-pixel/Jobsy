@@ -6,12 +6,12 @@ namespace Jobsy.Tests;
 /// <summary>
 /// Live smoke checks against a running local API (http://localhost:5200).
 /// Skipped automatically when the API is not reachable.
-/// Uses the DevelopmentAuth secret from appsettings.Development.json.
+/// Uses the development JobsyJwt signing key and the seeded admin user.
 /// </summary>
 public class LiveApiSmokeTests
 {
     private const string BaseUrl = "http://localhost:5200/";
-    private const string DevSecret = "local-dev-jobsy-auth-secret";
+    private static readonly Guid AdminId = Guid.Parse("ffffffff-1111-1111-1111-111111111111");
 
     [Fact]
     public async Task Public_vacancies_endpoint_returns_ok()
@@ -82,10 +82,7 @@ public class LiveApiSmokeTests
 
     private static void AddAdminAuth(HttpClient client)
     {
-        client.DefaultRequestHeaders.Remove("X-Jobsy-Email");
-        client.DefaultRequestHeaders.Remove("X-Jobsy-Dev-Secret");
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", "admin@jobsy.local");
-        client.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", DevSecret);
+        JobsyTestAuth.Authorize(client, AdminId);
     }
 
     private static HttpClient CreateClient() => new() { BaseAddress = new Uri(BaseUrl), Timeout = TimeSpan.FromSeconds(3) };

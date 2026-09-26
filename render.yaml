@@ -57,6 +57,18 @@ projects:
                 generateValue: true
               - key: JobsyAuth__ExternalProvisionSecret
                 generateValue: true
+              # ES256 public key (PEM). Must match Web private key. Set in Dashboard.
+              - key: JobsyAuth__Jwt__PublicKeyPem
+                sync: false
+              - key: JobsyAuth__Jwt__Issuer
+                value: jobsy-web
+              - key: JobsyAuth__Jwt__Audience
+                value: jobsy-api
+              # Cloudflare Transform Rule secret (header X-Jobsy-Origin-Secret).
+              - key: CLOUDFLARE_ORIGIN_SECRET
+                sync: false
+              - key: Training__TrackingSecret
+                generateValue: true
               - key: JobsyFeatures__ExposeRegistrationActivationLinks
                 value: "false"
               - key: Swagger__Enabled
@@ -128,6 +140,15 @@ projects:
                   name: jobsy-api
                   type: web
                   envVarKey: JobsyAuth__ExternalProvisionSecret
+              # ES256 private key (PEM). Pair with API public key. Set in Dashboard.
+              - key: JobsyAuth__Jwt__PrivateKeyPem
+                sync: false
+              - key: JobsyAuth__Jwt__Issuer
+                value: jobsy-web
+              - key: JobsyAuth__Jwt__Audience
+                value: jobsy-api
+              - key: CLOUDFLARE_ORIGIN_SECRET
+                sync: false
               - key: ApiBaseUrl
                 fromService:
                   name: jobsy-api
@@ -182,6 +203,16 @@ projects:
               - key: JobsyAuth__LocalSessionSigningKey
                 generateValue: true
               - key: JobsyAuth__ExternalProvisionSecret
+                generateValue: true
+              - key: JobsyAuth__Jwt__PublicKeyPem
+                sync: false
+              - key: JobsyAuth__Jwt__Issuer
+                value: jobsy-web
+              - key: JobsyAuth__Jwt__Audience
+                value: jobsy-api
+              - key: CLOUDFLARE_ORIGIN_SECRET
+                sync: false
+              - key: Training__TrackingSecret
                 generateValue: true
               - key: JobsyFeatures__ExposeRegistrationActivationLinks
                 value: "false"
@@ -251,6 +282,14 @@ projects:
                   name: lobsy-acc-api
                   type: web
                   envVarKey: JobsyAuth__ExternalProvisionSecret
+              - key: JobsyAuth__Jwt__PrivateKeyPem
+                sync: false
+              - key: JobsyAuth__Jwt__Issuer
+                value: jobsy-web
+              - key: JobsyAuth__Jwt__Audience
+                value: jobsy-api
+              - key: CLOUDFLARE_ORIGIN_SECRET
+                sync: false
               - key: ApiBaseUrl
                 fromService:
                   name: lobsy-acc-api

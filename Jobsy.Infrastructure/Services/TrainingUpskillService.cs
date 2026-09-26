@@ -7,6 +7,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -16,11 +17,16 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
 
     private readonly JobsyDbContext _db;
     private readonly IConfiguration _configuration;
+    private readonly IHostEnvironment _environment;
 
-    public TrainingUpskillService(JobsyDbContext db, IConfiguration configuration)
+    public TrainingUpskillService(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         _db = db;
         _configuration = configuration;
+        _environment = environment;
     }
 
     public async Task EnsureDefaultsAsync(CancellationToken cancellationToken = default)
@@ -360,7 +366,19 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
     private string TrackingSecret()
     {
         var configured = _configuration["Training:TrackingSecret"];
-        return string.IsNullOrWhiteSpace(configured) ? DefaultTrackingSecret : configured.Trim();
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            return configured.Trim();
+        }
+
+        if (_environment.IsDevelopment())
+        {
+            return DefaultTrackingSecret;
+        }
+
+        throw new InvalidOperationException(
+            "Training:TrackingSecret is verplicht buiten Development. " +
+            "Zet Training__TrackingSecret op een lange willekeurige geheime waarde.");
     }
 
     private static string CombineUrl(string baseUrl, string? path)

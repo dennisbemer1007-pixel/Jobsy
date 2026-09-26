@@ -115,7 +115,8 @@ public class AuthController : ControllerBase
             user.SessionVersion,
             deviceSessionId,
             deviceRefresh,
-            deviceExpires));
+            deviceExpires,
+            user.Id));
     }
 
     /// <summary>
@@ -259,7 +260,8 @@ public class AuthController : ControllerBase
             flags.HasSalesReferral,
             sessionToken,
             user.SessionVersion,
-            handoffCode));
+            handoffCode,
+            user.Id));
     }
 
     private string? CreateLocalSessionToken(string email, Guid userId)

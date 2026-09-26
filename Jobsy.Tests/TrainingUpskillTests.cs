@@ -6,6 +6,8 @@ using Jobsy.Infrastructure.Services;
 using Jobsy.Tests.Uat;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Tests;
 
@@ -74,7 +76,7 @@ public class TrainingUpskillTests
         });
         await db.SaveChangesAsync();
 
-        var sut = new TrainingUpskillService(db, Config());
+        var sut = new TrainingUpskillService(db, Config(), new FakeHostEnvironment(Environments.Development));
         var cards = await sut.RecommendAsync(userId, "Verpleegkundige", ["zorg"], TrainingTracking.CampaignFit);
         Assert.NotEmpty(cards);
         Assert.Equal("Zorgcollege Haaglanden", cards[0].ProviderName);
@@ -162,4 +164,12 @@ public class TrainingUpskillTests
                 ["Training:TrackingSecret"] = "unit-test-secret"
             })
             .Build();
+
+    private sealed class FakeHostEnvironment(string environmentName) : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = environmentName;
+        public string ApplicationName { get; set; } = "Jobsy.Tests";
+        public string ContentRootPath { get; set; } = "/tmp";
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+    }
 }

@@ -1468,16 +1468,42 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
     // ─── helpers ────────────────────────────────────────────────────────────
 
-    private HttpClient CandidateClient() => Authed(_factory.CandidateEmail);
-    private HttpClient EmployerClient() => Authed(_factory.EmployerEmail);
-    private HttpClient AdminClient() => Authed(_factory.AdminEmail);
+    private HttpClient CandidateClient() => Authed(_factory.CandidateId);
+    private HttpClient EmployerClient() => Authed(_factory.EmployerId);
+    private HttpClient AdminClient() => Authed(_factory.AdminId);
+
+    private HttpClient Authed(Guid userId)
+    {
+        var client = _factory.CreateClient();
+        JobsyTestAuth.Authorize(client, userId);
+        return client;
+    }
 
     private HttpClient Authed(string email)
     {
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", email);
-        client.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", RoleFunctionalWebAppFactory.DevSecret);
-        return client;
+        var id = email switch
+        {
+            var e when e == _factory.CandidateEmail => _factory.CandidateId,
+            var e when e == _factory.EmployerEmail => _factory.EmployerId,
+            var e when e == _factory.AdminEmail => _factory.AdminId,
+            var e when e == _factory.RegionalEmail => _factory.RegionalId,
+            var e when e == _factory.EnterpriseEmail => _factory.EnterpriseId,
+            var e when e == _factory.IntermediaryEmail => _factory.IntermediaryId,
+            var e when e == _factory.SalesEmail => _factory.SalesId,
+            var e when e == _factory.AmbassadeurEmail => _factory.AmbassadeurId,
+            _ => LookupUserId(email)
+        };
+        return Authed(id);
+    }
+
+    private Guid LookupUserId(string email)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var user = db.Users.AsNoTracking()
+            .FirstOrDefault(u => u.Email.ToLower() == email.ToLower())
+            ?? throw new InvalidOperationException("Unknown test email: " + email);
+        return user.Id;
     }
 }
 
@@ -1518,8 +1544,7 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        builder.UseSetting("JobsyAuth:AllowDevelopmentAuth", "true");
-        builder.UseSetting("JobsyAuth:DevelopmentAuthSecret", DevSecret);
+        JobsyTestAuth.ApplyStandardAuthSettings(builder);
         builder.UseSetting("Seed:Enabled", "false");
         builder.UseSetting("Swagger:Enabled", "false");
         builder.UseSetting(

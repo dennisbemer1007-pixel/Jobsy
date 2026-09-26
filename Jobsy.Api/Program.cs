@@ -3,6 +3,7 @@ using Jobsy.Api;
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Hosting;
 using Jobsy.Api.Jobs;
+using Jobsy.Api.Security;
 using Jobsy.Api.Swagger;
 using Jobsy.Core;
 using Jobsy.Core.Security;
@@ -197,6 +198,9 @@ app.Use(async (context, next) =>
 
     await next();
 });
+
+// After /health short-circuit: Production traffic must come via Cloudflare Transform Rule.
+app.UseMiddleware<CloudflareOriginMiddleware>();
 
 app.Use(async (context, next) =>
 {

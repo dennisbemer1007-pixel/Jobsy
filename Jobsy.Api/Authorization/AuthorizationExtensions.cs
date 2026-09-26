@@ -1,23 +1,26 @@
+using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using Jobsy.Core.Authorization;
-using Jobsy.Core.Enums;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Jobsy.Api.Authorization;
 
 public static class AuthorizationExtensions
 {
-    public const string DevelopmentScheme = "JobsyDevelopment";
+    public const string JobsyJwtScheme = "JobsyJwt";
 
     public static IServiceCollection AddJobsyApiAuthorization(
         this IServiceCollection services,
@@ -26,36 +29,111 @@ public static class AuthorizationExtensions
     {
         var azureAdSection = configuration.GetSection("AzureAd");
         var hasEntra = !string.IsNullOrWhiteSpace(azureAdSection["ClientId"]);
-        var allowDevelopmentAuth = environment.IsDevelopment()
-            || configuration.GetValue("JobsyAuth:AllowDevelopmentAuth", false);
 
-        if (!allowDevelopmentAuth && !hasEntra)
+        var publicPem = JobsyAccessToken.NormalizePem(configuration["JobsyAuth:Jwt:PublicKeyPem"]);
+        var privatePem = JobsyAccessToken.NormalizePem(configuration["JobsyAuth:Jwt:PrivateKeyPem"]);
+        if (string.IsNullOrWhiteSpace(publicPem) || !publicPem.Contains("BEGIN", StringComparison.Ordinal))
         {
-            throw new InvalidOperationException(
-                "AzureAd:ClientId is required when JobsyAuth:AllowDevelopmentAuth is false. Header-based DevelopmentAuth is disabled.");
+            if (environment.IsProduction())
+            {
+                throw new InvalidOperationException(
+                    "JobsyAuth:Jwt:PublicKeyPem is required in Production. " +
+                    "Set JobsyAuth__Jwt__PublicKeyPem to the ES256 public key (PEM).");
+            }
+
+            publicPem = JobsyAccessToken.DevelopmentPublicKeyPem;
+            privatePem = JobsyAccessToken.DevelopmentPrivateKeyPem;
         }
+
+        JobsyDevJwtKeys.PrivatePem = string.IsNullOrWhiteSpace(privatePem)
+            ? JobsyAccessToken.DevelopmentPrivateKeyPem
+            : privatePem;
+        JobsyDevJwtKeys.PublicPem = publicPem;
+
+        var issuer = configuration["JobsyAuth:Jwt:Issuer"] ?? JobsyAccessToken.DefaultIssuer;
+        var audience = configuration["JobsyAuth:Jwt:Audience"] ?? JobsyAccessToken.DefaultAudience;
+        var validationParams = JobsyAccessToken.CreateValidationParameters(publicPem, issuer, audience);
+
+        services.AddSingleton(validationParams);
+        services.AddSingleton<ISessionVersionGate, SessionVersionGate>();
 
         var authBuilder = services.AddAuthentication(options =>
         {
-            options.DefaultAuthenticateScheme = hasEntra
-                ? JwtBearerDefaults.AuthenticationScheme
-                : DevelopmentScheme;
-            options.DefaultChallengeScheme = hasEntra
-                ? JwtBearerDefaults.AuthenticationScheme
-                : DevelopmentScheme;
+            options.DefaultAuthenticateScheme = JobsyJwtScheme;
+            options.DefaultChallengeScheme = JobsyJwtScheme;
+        });
+
+        authBuilder.AddJwtBearer(JobsyJwtScheme, options =>
+        {
+            options.TokenValidationParameters = validationParams;
+            options.MapInboundClaims = false;
+            options.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = async context =>
+                {
+                    var gate = context.HttpContext.RequestServices.GetRequiredService<ISessionVersionGate>();
+                    var sub = context.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                              ?? context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    var svRaw = context.Principal?.FindFirst(JobsyAccessToken.SessionVersionClaim)?.Value;
+                    if (!Guid.TryParse(sub, out var userId)
+                        || !int.TryParse(svRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var sv))
+                    {
+                        context.Fail("Ongeldig toegangstoken.");
+                        return;
+                    }
+
+                    var ok = await gate.IsValidAsync(userId, sv, context.HttpContext.RequestAborted);
+                    if (!ok)
+                    {
+                        context.Fail("Sessie is verlopen of ingetrokken.");
+                        return;
+                    }
+
+                    // Enrich principal from DB (roles/companies) — ignore any client identity headers.
+                    var db = context.HttpContext.RequestServices.GetRequiredService<JobsyDbContext>();
+                    var dbUser = await db.Users.AsNoTracking()
+                        .Include(u => u.CompanyMemberships)
+                        .FirstOrDefaultAsync(u => u.Id == userId && u.IsActive, context.HttpContext.RequestAborted);
+                    if (dbUser is null)
+                    {
+                        context.Fail("Onbekende of inactieve gebruiker.");
+                        return;
+                    }
+
+                    var claims = new List<Claim>
+                    {
+                        new(ClaimTypes.NameIdentifier, dbUser.Id.ToString("D")),
+                        new(ClaimTypes.Email, dbUser.Email),
+                        new(ClaimTypes.Name, dbUser.FullName),
+                        new(ClaimTypes.Role, dbUser.Role.ToString()),
+                        new(JobsyClaimTypes.SessionVersion, dbUser.SessionVersion.ToString(CultureInfo.InvariantCulture)),
+                        new(JobsyAccessToken.SessionVersionClaim, dbUser.SessionVersion.ToString(CultureInfo.InvariantCulture))
+                    };
+                    if (dbUser.CompanyId is Guid primaryCompany)
+                    {
+                        claims.Add(new Claim(JobsyClaimTypes.CompanyId, primaryCompany.ToString("D")));
+                    }
+
+                    var membershipIds = dbUser.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
+                    if (membershipIds.Count > 0)
+                    {
+                        claims.Add(new Claim(JobsyClaimTypes.CompanyIds, string.Join(',', membershipIds)));
+                    }
+
+                    var clientIp = context.Principal?.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value;
+                    if (!string.IsNullOrWhiteSpace(clientIp))
+                    {
+                        claims.Add(new Claim(JobsyAccessToken.ClientIpClaim, clientIp));
+                    }
+
+                    context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, JobsyJwtScheme));
+                }
+            };
         });
 
         if (hasEntra)
         {
             authBuilder.AddMicrosoftIdentityWebApi(azureAdSection);
-        }
-
-        // Header auth for local Development and temporary cloud demos (explicit flag only).
-        if (allowDevelopmentAuth)
-        {
-            authBuilder.AddScheme<AuthenticationSchemeOptions, DevelopmentAuthHandler>(
-                DevelopmentScheme,
-                _ => { });
         }
 
         authBuilder.AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
@@ -64,7 +142,6 @@ public static class AuthorizationExtensions
 
         services.AddAuthorization(options =>
         {
-            // Fail closed: new endpoints require auth unless explicitly [AllowAnonymous].
             options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
                 .Build();
@@ -123,153 +200,57 @@ public static class AuthorizationExtensions
     }
 }
 
-/// <summary>
-/// Local/demo authentication via headers — Development or explicit JobsyAuth:AllowDevelopmentAuth.
-/// Header <c>X-Jobsy-Email</c> must match an active DB user; role/company claims come from the database
-/// (client-supplied <c>X-Jobsy-Role</c> is ignored for privilege).
-/// Outside pure Development (or when <c>JobsyAuth:DevelopmentAuthSecret</c> is set), requires
-/// header <c>X-Jobsy-Dev-Secret</c> matching that secret (fixed-time compare).
-/// </summary>
-public sealed class DevelopmentAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+/// <summary>Process-local ephemeral ES256 keys for Development when PEM env vars are unset.</summary>
+public static class JobsyDevJwtKeys
 {
-    private readonly JobsyDbContext _db;
-    private readonly IHostEnvironment _environment;
-    private readonly IConfiguration _configuration;
+    public static string? PrivatePem { get; set; }
+    public static string? PublicPem { get; set; }
+}
 
-    public DevelopmentAuthHandler(
-        IOptionsMonitor<AuthenticationSchemeOptions> options,
-        ILoggerFactory logger,
-        UrlEncoder encoder,
-        JobsyDbContext db,
-        IHostEnvironment environment,
-        IConfiguration configuration)
-        : base(options, logger, encoder)
+public interface ISessionVersionGate
+{
+    Task<bool> IsValidAsync(Guid userId, int sessionVersion, CancellationToken cancellationToken);
+}
+
+public sealed class SessionVersionGate : ISessionVersionGate
+{
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IMemoryCache _cache;
+
+    public SessionVersionGate(IServiceScopeFactory scopeFactory, IMemoryCache cache)
     {
-        _db = db;
-        _environment = environment;
-        _configuration = configuration;
+        _scopeFactory = scopeFactory;
+        _cache = cache;
     }
 
-    protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+    public async Task<bool> IsValidAsync(Guid userId, int sessionVersion, CancellationToken cancellationToken)
     {
-        if (!Request.Headers.TryGetValue("X-Jobsy-Email", out var emailValues))
+        var cacheKey = "sv:" + userId.ToString("D");
+        if (_cache.TryGetValue(cacheKey, out (int Version, int Minimum) snap)
+            && sessionVersion == snap.Version
+            && sessionVersion >= snap.Minimum)
         {
-            return AuthenticateResult.NoResult();
+            return true;
         }
 
-        var email = emailValues.FirstOrDefault()?.Trim().ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(email))
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var user = await db.Users.AsNoTracking()
+            .Where(u => u.Id == userId && u.IsActive)
+            .Select(u => new { u.SessionVersion })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (user is null)
         {
-            return AuthenticateResult.NoResult();
+            _cache.Remove(cacheKey);
+            return false;
         }
 
-        var secretResult = ValidateDevelopmentAuthSecret();
-        if (secretResult is not null)
-        {
-            return secretResult;
-        }
-
-        var dbUser = await _db.Users
-            .AsNoTracking()
-            .Include(u => u.CompanyMemberships)
-            .FirstOrDefaultAsync(u => u.Email.ToLower() == email && u.IsActive);
-
-        if (dbUser is null)
-        {
-            Logger.LogWarning("Development auth rejected unknown/inactive email {Email}", EmailServiceStub.RedactEmail(email));
-            return AuthenticateResult.Fail("Unknown or inactive user for Development auth.");
-        }
-
-        // Outside Development, header-auth for non-demo emails requires a HMAC session
-        // proof issued at local-login / external ensure (X-Jobsy-Local-Session).
-        // Demo @jobsy.local accounts still work with the DevelopmentAuth secret alone.
-        if (!_environment.IsDevelopment()
-            && !email.EndsWith("@jobsy.local", StringComparison.OrdinalIgnoreCase))
-        {
-            var sessionKey = JobsyLocalSessionToken.ResolveSigningKey(
-                _configuration["JobsyAuth:LocalSessionSigningKey"],
-                _configuration["JobsyAuth:DevelopmentAuthSecret"]);
-            if (string.IsNullOrEmpty(sessionKey)
-                || !Request.Headers.TryGetValue("X-Jobsy-Local-Session", out var sessionValues)
-                || !JobsyLocalSessionToken.TryValidate(
-                    sessionValues.FirstOrDefault(),
-                    sessionKey,
-                    out var tokenEmail,
-                    out var tokenUserId)
-                || !string.Equals(tokenEmail, email, StringComparison.OrdinalIgnoreCase)
-                || tokenUserId != dbUser.Id)
-            {
-                Logger.LogWarning(
-                    "Development auth rejected non-demo email without valid local session {Email}",
-                    EmailServiceStub.RedactEmail(email));
-                return AuthenticateResult.Fail(
-                    "Local session token required for non-demo users outside Development.");
-            }
-        }
-
-        var name = Request.Headers["X-Jobsy-Name"].FirstOrDefault() ?? dbUser.FullName;
-        var role = dbUser.Role.ToString();
-
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, dbUser.Id.ToString()),
-            new(ClaimTypes.Email, dbUser.Email),
-            new(ClaimTypes.Name, name),
-            new(ClaimTypes.Role, role)
-        };
-
-        if (dbUser.CompanyId is Guid primaryCompany)
-        {
-            claims.Add(new Claim(JobsyClaimTypes.CompanyId, primaryCompany.ToString()));
-        }
-
-        var membershipIds = dbUser.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
-        if (membershipIds.Count > 0)
-        {
-            claims.Add(new Claim(JobsyClaimTypes.CompanyIds, string.Join(',', membershipIds)));
-        }
-
-        var identity = new ClaimsIdentity(claims, Scheme.Name);
-        var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), Scheme.Name);
-        return AuthenticateResult.Success(ticket);
-    }
-
-    /// <summary>
-    /// Returns a failed result when the secret check fails; null when the check passes or is skipped.
-    /// </summary>
-    private AuthenticateResult? ValidateDevelopmentAuthSecret()
-    {
-        var configuredSecret = _configuration["JobsyAuth:DevelopmentAuthSecret"];
-        var secretConfigured = !string.IsNullOrEmpty(configuredSecret);
-        var requireSecret = !_environment.IsDevelopment() || secretConfigured;
-
-        if (!requireSecret)
-        {
-            // Pure Development with empty secret: header-only auth for local DX.
-            return null;
-        }
-
-        if (!secretConfigured)
-        {
-            return AuthenticateResult.Fail(
-                "JobsyAuth:DevelopmentAuthSecret is required when AllowDevelopmentAuth is enabled outside Development (or when the secret is configured).");
-        }
-
-        if (!Request.Headers.TryGetValue("X-Jobsy-Dev-Secret", out var providedValues))
-        {
-            return AuthenticateResult.Fail("Missing X-Jobsy-Dev-Secret header.");
-        }
-
-        var provided = providedValues.FirstOrDefault() ?? string.Empty;
-        var expectedBytes = Encoding.UTF8.GetBytes(configuredSecret!);
-        var providedBytes = Encoding.UTF8.GetBytes(provided);
-
-        if (expectedBytes.Length != providedBytes.Length
-            || !CryptographicOperations.FixedTimeEquals(expectedBytes, providedBytes))
-        {
-            return AuthenticateResult.Fail("Invalid X-Jobsy-Dev-Secret.");
-        }
-
-        return null;
+        var features = await db.PlatformFeatureSettings.AsNoTracking()
+            .OrderBy(f => f.Id)
+            .Select(f => f.MinimumSessionVersion)
+            .FirstOrDefaultAsync(cancellationToken);
+        snap = (user.SessionVersion, features);
+        _cache.Set(cacheKey, snap, TimeSpan.FromSeconds(60));
+        return sessionVersion >= snap.Minimum && sessionVersion == snap.Version;
     }
 }

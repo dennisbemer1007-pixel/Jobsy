@@ -36,11 +36,11 @@ public class JobsyApiTransientRetryHandlerTests
     }
 
     [Fact]
-    public async Task Get_does_not_retry_unauthorized_when_auth_headers_were_sent()
+    public async Task Get_does_not_retry_unauthorized_when_bearer_auth_was_sent()
     {
         var inner = new InspectingHandler((request, _) =>
         {
-            request.Headers.TryAddWithoutValidation("X-Jobsy-Email", "admin@jobsy.local");
+            request.Headers.TryAddWithoutValidation("Authorization", "Bearer valid-token");
             return new HttpResponseMessage(HttpStatusCode.Unauthorized);
         });
         var sut = new JobsyApiTransientRetryHandler { InnerHandler = inner };
@@ -62,7 +62,6 @@ public class JobsyApiTransientRetryHandlerTests
             if (call == 1)
             {
                 first = request;
-                request.Headers.TryAddWithoutValidation("X-Jobsy-Email", "stale@jobsy.local");
                 request.Headers.TryAddWithoutValidation("Authorization", "Bearer stale");
                 return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
             }
@@ -80,7 +79,6 @@ public class JobsyApiTransientRetryHandlerTests
         Assert.NotNull(first);
         Assert.NotNull(second);
         Assert.NotSame(first, second);
-        Assert.False(second!.Headers.Contains("X-Jobsy-Email"));
         Assert.False(second.Headers.Contains("Authorization"));
     }
 
@@ -96,7 +94,7 @@ public class JobsyApiTransientRetryHandlerTests
         Assert.True(JobsyApiTransientRetryHandler.ShouldRetry(HttpStatusCode.Unauthorized, anonymous));
 
         using var authed = new HttpRequestMessage(HttpMethod.Get, "http://retry.test/api/me");
-        authed.Headers.TryAddWithoutValidation("X-Jobsy-Email", "admin@jobsy.local");
+        authed.Headers.TryAddWithoutValidation("Authorization", "Bearer valid-token");
         Assert.False(JobsyApiTransientRetryHandler.ShouldRetry(HttpStatusCode.Unauthorized, authed));
     }
 

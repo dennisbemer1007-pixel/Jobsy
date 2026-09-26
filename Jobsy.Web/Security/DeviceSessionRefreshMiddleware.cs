@@ -140,6 +140,7 @@ public sealed class DeviceSessionRefreshMiddleware
         public bool HasSalesReferral { get; set; }
         public int SessionVersion { get; set; }
         public string? SessionToken { get; set; }
+        public Guid? UserId { get; set; }
     }
 }
 
@@ -155,7 +156,10 @@ public static class AuthPrincipalFactory
     public static ClaimsPrincipal FromDeviceRefresh(DeviceSessionRefreshMiddleware.RefreshProfile profile)
     {
         var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
-        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, profile.Email.ToLowerInvariant()));
+        var subject = profile.UserId is Guid uid && uid != Guid.Empty
+            ? uid.ToString("D")
+            : profile.Email.ToLowerInvariant();
+        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, subject));
         identity.AddClaim(new Claim(ClaimTypes.Email, profile.Email));
         identity.AddClaim(new Claim(ClaimTypes.Name, profile.FullName));
         identity.AddClaim(new Claim("auth_method", "device-refresh"));

@@ -175,10 +175,7 @@ public class VacancyCsvImportIntegrationTests : IClassFixture<VacancyCsvImportWe
 
     private HttpClient AuthedClient()
     {
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", "admin@jobsy.local");
-        client.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", "test-secret");
-        return client;
+        return JobsyTestAuth.CreateAuthenticatedClient(_factory, _factory.AdminId);
     }
 
     private CsvImportRowRequest ValidRow(
@@ -204,6 +201,7 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Progra
     public Guid SalaryTableId { get; } = Guid.Parse("a3333333-3333-3333-3333-333333333333");
     public Guid DisabledOrgId { get; } = Guid.Parse("b1111111-1111-1111-1111-111111111111");
     public Guid DisabledSalaryTableId { get; } = Guid.Parse("b3333333-3333-3333-3333-333333333333");
+    public Guid AdminId { get; } = Guid.Parse("a4444444-4444-4444-4444-444444444444");
 
     private readonly string _dbName = "CsvImportTests-" + Guid.NewGuid();
     private bool _seeded;
@@ -211,8 +209,7 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Progra
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        builder.UseSetting("JobsyAuth:AllowDevelopmentAuth", "true");
-        builder.UseSetting("JobsyAuth:DevelopmentAuthSecret", "test-secret");
+        JobsyTestAuth.ApplyStandardAuthSettings(builder);
         builder.UseSetting("Seed:Enabled", "false");
         builder.UseSetting(
             "ConnectionStrings:JobsyDb",
@@ -305,7 +302,7 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Progra
 
         db.Users.Add(new User
         {
-            Id = Guid.NewGuid(),
+            Id = AdminId,
             Email = "admin@jobsy.local",
             FullName = "Admin",
             Role = UserRole.Admin,

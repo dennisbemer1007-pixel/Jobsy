@@ -205,17 +205,15 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
 
     private HttpClient Authed(string email)
     {
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", email);
-        client.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", CoreFunctionalFlowApiFactory.DevSecret);
-        return client;
+        var userId = email == _factory.EmployerEmail
+            ? _factory.EmployerId
+            : _factory.AdminId;
+        return JobsyTestAuth.CreateAuthenticatedClient(_factory, userId);
     }
 }
 
 public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program>
 {
-    public const string DevSecret = "core-functional-flow-secret";
-
     public Guid CompanyId { get; } = Guid.Parse("d2000000-0000-0000-0000-000000000001");
     public Guid DraftVacancyId { get; } = Guid.Parse("d2000000-0000-0000-0000-000000000010");
     public Guid EmployerId { get; } = Guid.Parse("d2000000-0000-0000-0000-000000000021");
@@ -230,8 +228,7 @@ public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        builder.UseSetting("JobsyAuth:AllowDevelopmentAuth", "true");
-        builder.UseSetting("JobsyAuth:DevelopmentAuthSecret", DevSecret);
+        JobsyTestAuth.ApplyStandardAuthSettings(builder);
         builder.UseSetting("Seed:Enabled", "false");
         builder.UseSetting("Swagger:Enabled", "false");
         builder.UseSetting(
