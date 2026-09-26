@@ -11,7 +11,8 @@ jobs:
     timeout-minutes: 60
     services:
       postgres:
-        image: postgres:16
+        # PostGIS required — API migrate runs CREATE EXTENSION postgis.
+        image: postgis/postgis:16-3.4
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
