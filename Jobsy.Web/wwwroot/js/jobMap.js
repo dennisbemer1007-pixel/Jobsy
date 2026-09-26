@@ -37,13 +37,20 @@ window.jobMap = (function () {
     const FILLED_LOCATION_ZOOM = 12;
 
     const CLUSTER_OPTS = {
-        showCoverageOnHover: false,
-        zoomToBoundsOnClick: false,
-        spiderfyOnMaxZoom: false,
-        disableClusteringAtZoom: 16,
-        maxClusterRadius: 60,
+        cluster: true,
+        clusterRadius: 50,
+        clusterMaxZoom: 14,
+        // Kept for focus/zoom helpers (expand until unclustered).
+        disableClusteringAtZoom: 15,
+        maxClusterRadius: 50,
         removeOutsideVisibleBounds: false
     };
+    const PIN_SOURCE = "jobsy-pins";
+    const PIN_LAYER_CLUSTERS = "jobsy-pins-clusters";
+    const PIN_LAYER_CLUSTER_COUNT = "jobsy-pins-cluster-count";
+    const PIN_LAYER_UNCLUSTERED = "jobsy-pins-unclustered";
+    const PIN_LAYER_UNCLUSTERED_GLYPH = "jobsy-pins-unclustered-glyph";
+    const PIN_LAYER_SELECTED = "jobsy-pins-selected";
 
     // On-road cruise km/h. Keep in sync with TravelReach.SpeedKmPerHour.
     const CRUISE_KM_H = {
@@ -1124,14 +1131,27 @@ window.jobMap = (function () {
         });
     }
 
+    let pinsAbort = null;
+    let pinsEtag = null;
+    let pinsReloadTimer = null;
+
     function fetchPins(url) {
         if (!url) {
             return Promise.resolve([]);
         }
         const gen = ++pinsFetchGen;
+        if (pinsAbort) {
+            try { pinsAbort.abort(); } catch (e) { }
+        }
+        pinsAbort = typeof AbortController !== "undefined" ? new AbortController() : null;
+        const headers = { Accept: "application/json" };
+        if (pinsEtag) {
+            headers["If-None-Match"] = pinsEtag;
+        }
         return fetch(url, {
             credentials: "same-origin",
-            headers: { Accept: "application/json" }
+            headers: headers,
+            signal: pinsAbort ? pinsAbort.signal : undefined
         })
             .then(function (res) {
                 if (gen !== pinsFetchGen) {
@@ -1143,6 +1163,10 @@ window.jobMap = (function () {
                 if (!res.ok) {
                     throw new Error("pins " + res.status);
                 }
+                const etag = res.headers && res.headers.get ? res.headers.get("ETag") : null;
+                if (etag) {
+                    pinsEtag = etag;
+                }
                 return res.json();
             })
             .then(function (data) {
@@ -1152,7 +1176,12 @@ window.jobMap = (function () {
                 const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
                 setVacancies(pins);
             })
-            .catch(function () { /* keep boot/circuit pins */ });
+            .catch(function (err) {
+                if (err && err.name === "AbortError") {
+                    return;
+                }
+                /* keep boot/circuit pins */
+            });
     }
 
     function bindSinglePopupEl(popup, full) {
@@ -1296,8 +1325,8 @@ window.jobMap = (function () {
             return;
         }
         ringStyleHandlerBound = true;
+        // Only restore rings when the style is replaced — not on every idle frame.
         map.on("styledata", onTravelRingStyleData);
-        map.on("idle", onTravelRingStyleData);
     }
 
     function onTravelRingStyleData() {
@@ -1395,25 +1424,62 @@ window.jobMap = (function () {
 
     function placeTravelRingLabels(lat, lng) {
         clearTravelRingLabels();
+        if (!map) {
+            return;
+        }
         const transport = canonicalTransport(travelOptions.transport || "Fiets");
         const labelVerb = TRANSPORT_LABEL[transport] || "reistijd";
+        const labelFeatures = [];
         eachTravelRing(lat, lng, function (mins, index, radius) {
             // East-southeast keeps labels off the featured carousel and zoom stack.
             const labelLngLat = destinationLngLat(lat, lng, radius, 125);
             const effectiveMins = Math.max(1, Math.round(radius / metersPerMinute(transport)));
-            const labelEl = document.createElement("div");
-            labelEl.className = "travel-ring-label";
-            labelEl.innerHTML = "<span>" + effectiveMins + " min " + escapeHtml(labelVerb) + "</span>";
-            const labelMarker = new maplibregl.Marker({
-                element: labelEl,
-                anchor: "center",
-                pitchAlignment: "viewport",
-                rotationAlignment: "viewport"
-            })
-                .setLngLat(labelLngLat)
-                .addTo(map);
-            travelRingLayers.push(labelMarker);
+            labelFeatures.push({
+                type: "Feature",
+                properties: { label: effectiveMins + " min " + labelVerb },
+                geometry: { type: "Point", coordinates: labelLngLat }
+            });
         });
+        const sourceId = "jobsy-travel-ring-labels";
+        const layerId = sourceId + "-text";
+        const data = { type: "FeatureCollection", features: labelFeatures };
+        try {
+            if (map.getSource(sourceId)) {
+                map.getSource(sourceId).setData(data);
+            } else {
+                map.addSource(sourceId, { type: "geojson", data: data });
+            }
+            if (!map.getLayer(layerId)) {
+                map.addLayer({
+                    id: layerId,
+                    type: "symbol",
+                    source: sourceId,
+                    layout: {
+                        "text-field": ["get", "label"],
+                        "text-size": 12,
+                        "text-allow-overlap": true,
+                        "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"]
+                    },
+                    paint: {
+                        "text-color": "#0f2d5c",
+                        "text-halo-color": "#ffffff",
+                        "text-halo-width": 1.5
+                    }
+                });
+            }
+            travelRingLayers.push({
+                remove: function () {
+                    try {
+                        if (map.getLayer(layerId)) {
+                            map.removeLayer(layerId);
+                        }
+                        if (map.getSource(sourceId)) {
+                            map.removeSource(sourceId);
+                        }
+                    } catch (e) { }
+                }
+            });
+        } catch (e) { }
     }
 
     function drawTravelRings(lat, lng) {
@@ -1826,147 +1892,238 @@ window.jobMap = (function () {
         }
     }
 
-    function clusterProject(lat, lng) {
-        const p = maplibregl.MercatorCoordinate.fromLngLat({ lon: lng, lat: lat });
-        const scale = 512 * Math.pow(2, map.getZoom());
-        return { x: p.x * scale, y: p.y * scale };
+    function pinsGeoJson() {
+        return {
+            type: "FeatureCollection",
+            features: Object.keys(markersById).map(function (id) {
+                const record = markersById[id];
+                const v = record.options.jobData || {};
+                return {
+                    type: "Feature",
+                    id: id,
+                    geometry: { type: "Point", coordinates: [record.lng, record.lat] },
+                    properties: {
+                        id: String(id),
+                        featured: isFeaturedVacancy(v) ? 1 : 0,
+                        workType: workTypeOf(v) || "",
+                        glyph: workTypeGlyph(workTypeOf(v)),
+                        colour: v.categoryColor || v.colour || "",
+                        matchPercent: v.matchPercent == null ? -1 : Number(v.matchPercent),
+                        matchBand: v.matchColorBand || "orange"
+                    }
+                };
+            })
+        };
     }
 
-    function computeClusters() {
-        const items = Object.keys(markersById).map(function (id) {
-            return markersById[id];
-        });
-        const zoom = map.getZoom();
-        if (zoom >= CLUSTER_OPTS.disableClusteringAtZoom) {
-            return items.map(function (item) {
-                return { type: "pin", items: [item], lat: item.lat, lng: item.lng };
+    function ensurePinImages() {
+        if (!map || map._jobsyPinImages) {
+            return;
+        }
+        map._jobsyPinImages = true;
+        // Soft glow for featured pins (drawn under the pin circle).
+        const size = 64;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        const g = ctx.createRadialGradient(size / 2, size / 2, 4, size / 2, size / 2, size / 2);
+        g.addColorStop(0, "rgba(201,162,39,0.55)");
+        g.addColorStop(1, "rgba(201,162,39,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, size, size);
+        if (!map.hasImage("jobsy-featured-glow")) {
+            map.addImage("jobsy-featured-glow", {
+                width: size,
+                height: size,
+                data: new Uint8Array(ctx.getImageData(0, 0, size, size).data.buffer)
             });
         }
+    }
 
-        const radius = CLUSTER_OPTS.maxClusterRadius;
-        const pts = items.map(function (item) {
-            const p = clusterProject(item.lat, item.lng);
-            return { item: item, x: p.x, y: p.y, used: false };
-        });
-        const clusters = [];
-        for (let i = 0; i < pts.length; i++) {
-            if (pts[i].used) {
-                continue;
-            }
-            const group = [pts[i]];
-            pts[i].used = true;
-            for (let j = i + 1; j < pts.length; j++) {
-                if (pts[j].used) {
-                    continue;
-                }
-                const dx = pts[i].x - pts[j].x;
-                const dy = pts[i].y - pts[j].y;
-                if (dx * dx + dy * dy <= radius * radius) {
-                    pts[j].used = true;
-                    group.push(pts[j]);
-                }
-            }
-            if (group.length === 1) {
-                clusters.push({
-                    type: "pin",
-                    items: [group[0].item],
-                    lat: group[0].item.lat,
-                    lng: group[0].item.lng
-                });
-            } else {
-                let lat = 0;
-                let lng = 0;
-                group.forEach(function (g) {
-                    lat += g.item.lat;
-                    lng += g.item.lng;
-                });
-                clusters.push({
-                    type: "cluster",
-                    items: group.map(function (g) { return g.item; }),
-                    lat: lat / group.length,
-                    lng: lng / group.length
-                });
-            }
+    function ensurePinLayers() {
+        if (!map) {
+            return;
         }
-        return clusters;
+        ensurePinImages();
+        if (!map.getSource(PIN_SOURCE)) {
+            map.addSource(PIN_SOURCE, {
+                type: "geojson",
+                data: pinsGeoJson(),
+                cluster: true,
+                clusterRadius: CLUSTER_OPTS.clusterRadius,
+                clusterMaxZoom: CLUSTER_OPTS.clusterMaxZoom,
+                promoteId: "id"
+            });
+        }
+        if (!map.getLayer(PIN_LAYER_CLUSTERS)) {
+            map.addLayer({
+                id: PIN_LAYER_CLUSTERS,
+                type: "circle",
+                source: PIN_SOURCE,
+                filter: ["has", "point_count"],
+                paint: {
+                    "circle-color": [
+                        "case",
+                        [">=", ["get", "point_count"], 10], "#16a34a",
+                        [">=", ["get", "point_count"], 4], "#22c55e",
+                        "#4ade80"
+                    ],
+                    "circle-radius": [
+                        "step", ["get", "point_count"],
+                        16, 4, 20, 10, 26
+                    ],
+                    "circle-stroke-width": 2,
+                    "circle-stroke-color": "#ffffff"
+                }
+            });
+            map.addLayer({
+                id: PIN_LAYER_CLUSTER_COUNT,
+                type: "symbol",
+                source: PIN_SOURCE,
+                filter: ["has", "point_count"],
+                layout: {
+                    "text-field": ["get", "point_count_abbreviated"],
+                    "text-size": 12,
+                    "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"]
+                },
+                paint: { "text-color": "#ffffff" }
+            });
+            map.addLayer({
+                id: PIN_LAYER_UNCLUSTERED,
+                type: "circle",
+                source: PIN_SOURCE,
+                filter: ["!", ["has", "point_count"]],
+                paint: {
+                    "circle-color": [
+                        "case",
+                        ["==", ["feature-state", "selected"], true], "#f54a1b",
+                        ["==", ["get", "featured"], 1], "#c9a227",
+                        [
+                            "case",
+                            ["all", ["!=", ["get", "colour"], ""], ["!=", ["get", "colour"], null]],
+                            ["get", "colour"],
+                            "#7c3aed"
+                        ]
+                    ],
+                    "circle-radius": [
+                        "case",
+                        ["==", ["feature-state", "selected"], true], 11,
+                        ["==", ["get", "featured"], 1], 10,
+                        8
+                    ],
+                    "circle-stroke-width": [
+                        "case",
+                        ["==", ["feature-state", "selected"], true], 3,
+                        2
+                    ],
+                    "circle-stroke-color": [
+                        "case",
+                        ["==", ["feature-state", "selected"], true], "#f54a1b",
+                        "#ffffff"
+                    ],
+                    "circle-opacity": 0.95
+                }
+            });
+            map.addLayer({
+                id: PIN_LAYER_UNCLUSTERED_GLYPH,
+                type: "symbol",
+                source: PIN_SOURCE,
+                filter: ["!", ["has", "point_count"]],
+                layout: {
+                    "text-field": ["get", "glyph"],
+                    "text-size": 11,
+                    "text-allow-overlap": true,
+                    "text-ignore-placement": true
+                }
+            });
+        }
+        if (!map._jobsyPinClicksBound) {
+            map._jobsyPinClicksBound = true;
+            map.on("click", PIN_LAYER_CLUSTERS, onClusterClick);
+            map.on("click", PIN_LAYER_UNCLUSTERED, onPinClick);
+            map.on("click", PIN_LAYER_UNCLUSTERED_GLYPH, onPinClick);
+            map.on("mouseenter", PIN_LAYER_CLUSTERS, function () { map.getCanvas().style.cursor = "pointer"; });
+            map.on("mouseleave", PIN_LAYER_CLUSTERS, function () { map.getCanvas().style.cursor = ""; });
+            map.on("mouseenter", PIN_LAYER_UNCLUSTERED, function () { map.getCanvas().style.cursor = "pointer"; });
+            map.on("mouseleave", PIN_LAYER_UNCLUSTERED, function () { map.getCanvas().style.cursor = ""; });
+        }
+    }
+
+    function onClusterClick(ev) {
+        if (!map || !ev.features || !ev.features.length) {
+            return;
+        }
+        const feature = ev.features[0];
+        const clusterId = feature.properties.cluster_id;
+        const source = map.getSource(PIN_SOURCE);
+        if (!source || typeof source.getClusterExpansionZoom !== "function") {
+            return;
+        }
+        source.getClusterExpansionZoom(clusterId, function (err, zoom) {
+            if (err) {
+                return;
+            }
+            const maxZoom = CLUSTER_OPTS.clusterMaxZoom;
+            if (zoom != null && zoom <= maxZoom && zoom > map.getZoom() + 0.15) {
+                map.easeTo({
+                    center: feature.geometry.coordinates,
+                    zoom: zoom,
+                    duration: prefersReducedMotion() ? 0 : 320
+                });
+                return;
+            }
+            source.getClusterLeaves(clusterId, 100, 0, function (leafErr, leaves) {
+                if (leafErr || !leaves) {
+                    return;
+                }
+                const childMarkers = leaves.map(function (leaf) {
+                    const id = leaf.properties && leaf.properties.id;
+                    return markersById[id];
+                }).filter(Boolean);
+                openClusterList(childMarkers, feature.geometry.coordinates);
+            });
+        });
+    }
+
+    function onPinClick(ev) {
+        if (!ev.features || !ev.features.length) {
+            return;
+        }
+        const id = ev.features[0].properties && ev.features[0].properties.id;
+        const record = markersById[id];
+        if (!record) {
+            return;
+        }
+        // Prefetch card on interaction (also bound via pointerdown on canvas).
+        if (typeof fetchVacancyCard === "function") {
+            fetchVacancyCard(id);
+        }
+        highlight(id);
+        openVacancyPopup(record);
     }
 
     function clearRenderedMarkers() {
-        renderedMarkers.forEach(function (m) {
-            if (m && typeof m.remove === "function") {
-                m.remove();
-            }
-        });
         renderedMarkers = [];
-        Object.keys(markersById).forEach(function (id) {
-            markersById[id].marker = null;
-            markersById[id].element = null;
-        });
+        // Native layers keep data in the GeoJSON source — nothing DOM to clear.
     }
 
     function refreshClusters() {
         if (!map) {
             return;
         }
-        clearRenderedMarkers();
-        const clusters = computeClusters();
-        clusters.forEach(function (cluster) {
-            if (cluster.type === "cluster") {
-                const count = cluster.items.length;
-                let sizeClass = "job-cluster--sm";
-                if (count >= 10) sizeClass = "job-cluster--lg";
-                else if (count >= 4) sizeClass = "job-cluster--md";
-                const hasFeatured = cluster.items.some(function (m) {
-                    return m && m.options && m.options.jobData && m.options.jobData.highlighted;
-                });
-                const el = document.createElement("div");
-                el.className = "job-cluster " + sizeClass + (hasFeatured ? " job-cluster--featured" : "");
-                el.innerHTML = "<div><span>" + count + "</span></div>";
-                el.addEventListener("click", function (ev) {
-                    stopEvent(ev);
-                    openClusterList(cluster.items, [cluster.lng, cluster.lat]);
-                });
-                const marker = new maplibregl.Marker({
-                    element: el,
-                    anchor: "center",
-                    pitchAlignment: "viewport",
-                    rotationAlignment: "viewport"
-                })
-                    .setLngLat([cluster.lng, cluster.lat])
-                    .addTo(map);
-                renderedMarkers.push(marker);
-                return;
-            }
-
-            const record = cluster.items[0];
-            const v = record.options.jobData;
-            const el = document.createElement("div");
-            fillMarkerElement(
-                el,
-                !!v.highlighted,
-                selectedId != null && String(record.id) === String(selectedId),
-                workTypeOf(v),
-                v.categoryColor,
-                v.matchPercent,
-                v.matchColorBand
-            );
-            el.addEventListener("click", function (ev) {
-                stopEvent(ev);
-                highlight(v.id);
-                openVacancyPopup(record);
-            });
-            const marker = new maplibregl.Marker({
-                element: el,
-                anchor: "center",
-                pitchAlignment: "viewport",
-                rotationAlignment: "viewport"
-            })
-                .setLngLat([record.lng, record.lat])
-                .addTo(map);
-            record.marker = marker;
-            record.element = el;
-            renderedMarkers.push(marker);
-        });
+        if (!map.isStyleLoaded || !map.isStyleLoaded()) {
+            map.once("load", refreshClusters);
+            return;
+        }
+        ensurePinLayers();
+        const source = map.getSource(PIN_SOURCE);
+        if (source && typeof source.setData === "function") {
+            source.setData(pinsGeoJson());
+        }
+        if (selectedId != null) {
+            highlight(selectedId);
+        }
     }
 
     function restoreOverlays() {
@@ -2040,9 +2197,18 @@ window.jobMap = (function () {
                 }
             };
         }
+        // Native MapLibre clusters update on zoom without rebuilding HTML markers.
         if (!zoomHandlerBound) {
             zoomHandlerBound = true;
-            map.on("zoomend", refreshClusters);
+            map.on("pointerdown", function (ev) {
+                if (!ev || !ev.point) {
+                    return;
+                }
+                const feats = map.queryRenderedFeatures(ev.point, { layers: [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH] });
+                if (feats && feats[0] && feats[0].properties && feats[0].properties.id) {
+                    fetchVacancyCard(feats[0].properties.id);
+                }
+            });
         }
         addLocateControl();
         bindOutsideClickCloser();
@@ -2287,7 +2453,16 @@ window.jobMap = (function () {
 
     function reloadPins(url) {
         pinsUrl = url ? String(url) : pinsUrl;
-        return fetchPins(pinsUrl);
+        if (pinsReloadTimer) {
+            clearTimeout(pinsReloadTimer);
+            pinsReloadTimer = null;
+        }
+        return new Promise(function (resolve) {
+            pinsReloadTimer = setTimeout(function () {
+                pinsReloadTimer = null;
+                resolve(fetchPins(pinsUrl));
+            }, 200);
+        });
     }
 
     function ensureOriginMarker(la, ln) {
@@ -2423,13 +2598,17 @@ window.jobMap = (function () {
         if (id == null && activeClusterPopup) {
             return;
         }
+        const prev = selectedId;
         selectedId = id;
-        Object.keys(markersById).forEach(function (key) {
-            const record = markersById[key];
-            if (record.element) {
-                applyMarkerSelected(record.element, id != null && key === String(id));
-            }
-        });
+        if (!map || !map.getSource(PIN_SOURCE)) {
+            return;
+        }
+        if (prev != null) {
+            try { map.setFeatureState({ source: PIN_SOURCE, id: String(prev) }, { selected: false }); } catch (e) { }
+        }
+        if (id != null) {
+            try { map.setFeatureState({ source: PIN_SOURCE, id: String(id) }, { selected: true }); } catch (e) { }
+        }
     }
 
     function focus(id) {

@@ -459,10 +459,10 @@ window.jobsyMaps = (function () {
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20260822-r195"
+        "/js/jobsyMapLibre.min.js?v=20260926-mapfix3"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260926-mapfix2"
+        "/js/jobMap.min.js?v=20260926-mapfix3"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20260822-r195"
