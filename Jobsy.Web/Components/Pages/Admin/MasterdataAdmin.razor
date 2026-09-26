@@ -148,6 +148,10 @@
         {
             await ReloadAsync();
         }
+        catch
+        {
+            // Soft-fail load; keep shell usable.
+        }
         finally
         {
             _loading = false;

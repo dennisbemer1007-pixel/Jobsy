@@ -1,5 +1,6 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -8,6 +9,13 @@
     @if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_loadFailed)
+    {
+        <div class="panel-inline-error" role="alert">
+            <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
+            <button type="button" class="btn-compact" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
+        </div>
     }
     else
     {
@@ -49,6 +57,7 @@
 
     private bool _loading = true;
     private bool _loaded;
+    private bool _loadFailed;
     private int _doneCount;
     private readonly List<TileVm> _tiles = [];
 
@@ -61,6 +70,7 @@
 
         if (Snapshot is not null)
         {
+            _loadFailed = false;
             ApplySnapshot(Snapshot);
             return;
         }
@@ -86,15 +96,28 @@
         _loading = false;
     }
 
+    private Task RetryLoadAsync()
+    {
+        _loaded = false;
+        return LoadAsync();
+    }
+
     private async Task LoadAsync()
     {
         _loading = true;
+        _loadFailed = false;
         try
         {
-            var kompas = await Api.GetMyKompasAsync();
-            if (kompas is not null)
+            var result = await Api.GetMyKompasResultAsync();
+            if (result.TemporarilyUnavailable)
             {
-                ApplySnapshot(kompas);
+                _loadFailed = true;
+                return;
+            }
+
+            if (result.Value is not null)
+            {
+                ApplySnapshot(result.Value);
                 return;
             }
 
@@ -109,9 +132,14 @@
             Paint(competence, career, culture, values, competenceDeep, careerDeep, cultureDeep, valuesDeep);
             _loaded = true;
         }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _loadFailed = true;
+        }
         finally
         {
             _loading = false;
+            _loaded = true;
         }
     }
 

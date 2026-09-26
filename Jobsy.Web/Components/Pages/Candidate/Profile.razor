@@ -767,15 +767,24 @@
             }
 
             var masterdataTask = LoadMasterdataAsync();
-            var kompasTask = Api.GetMyKompasAsync();
+            var kompasTask = Api.GetMyKompasResultAsync();
             await Task.WhenAll(masterdataTask, kompasTask);
-            var kompas = kompasTask.Result;
+            var kompasResult = await kompasTask;
+            if (kompasResult.TemporarilyUnavailable)
+            {
+                _message = Culture["Panel.ErrorInline"];
+                _matchedVacancies = [];
+                return;
+            }
+
+            var kompas = kompasResult.Value;
             _kompasState = kompas;
             await ApplyKompasAsync(kompas, allowGeocode: true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
         {
-            _message = Culture.Format("Profile.LoadFailed", ex.Message);
+            // Never show technical exception text to the candidate.
+            _message = Culture["Panel.ErrorInline"];
             _matchedVacancies = [];
         }
         finally

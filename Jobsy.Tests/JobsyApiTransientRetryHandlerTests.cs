@@ -83,10 +83,12 @@ public class JobsyApiTransientRetryHandlerTests
     }
 
     [Fact]
-    public void Transient_codes_include_auth_settle_and_gateway()
+    public void Transient_codes_include_auth_settle_gateway_429_and_5xx()
     {
         Assert.True(JobsyApiTransientRetryHandler.IsTransient(HttpStatusCode.Unauthorized));
         Assert.True(JobsyApiTransientRetryHandler.IsTransient(HttpStatusCode.ServiceUnavailable));
+        Assert.True(JobsyApiTransientRetryHandler.IsTransient(HttpStatusCode.TooManyRequests));
+        Assert.True(JobsyApiTransientRetryHandler.IsTransient(HttpStatusCode.InternalServerError));
         Assert.False(JobsyApiTransientRetryHandler.IsTransient(HttpStatusCode.Forbidden));
         Assert.False(JobsyApiTransientRetryHandler.IsTransient(HttpStatusCode.NotFound));
 
@@ -96,6 +98,36 @@ public class JobsyApiTransientRetryHandlerTests
         using var authed = new HttpRequestMessage(HttpMethod.Get, "http://retry.test/api/me");
         authed.Headers.TryAddWithoutValidation("Authorization", "Bearer valid-token");
         Assert.False(JobsyApiTransientRetryHandler.ShouldRetry(HttpStatusCode.Unauthorized, authed));
+    }
+
+    [Fact]
+    public async Task Get_retries_429_honouring_Retry_After_cap()
+    {
+        var inner = new SequenceHandler(
+            new HttpResponseMessage(HttpStatusCode.TooManyRequests)
+            {
+                Headers = { RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(30)) }
+            },
+            new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("ok") });
+        var sut = new JobsyApiTransientRetryHandler { InnerHandler = inner };
+
+        using var client = new HttpClient(sut);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var response = await client.GetAsync("http://retry.test/api/me/kompas");
+        sw.Stop();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(2, inner.Calls);
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(4), "Retry-After must be capped (~1.5s + jitter)");
+    }
+
+    [Fact]
+    public void RetryAfter_parse_caps_at_max()
+    {
+        using var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+        response.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(30));
+        var delay = JobsyApiTransientRetryHandler.ResolveDelay(response, 1);
+        Assert.True(delay <= JobsyApiTransientRetryHandler.MaxRetryAfter + TimeSpan.FromMilliseconds(250));
     }
 
     private sealed class SequenceHandler(params HttpResponseMessage[] responses) : HttpMessageHandler

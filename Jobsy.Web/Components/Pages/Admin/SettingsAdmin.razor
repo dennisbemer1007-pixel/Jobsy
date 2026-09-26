@@ -348,6 +348,10 @@
             _health = (await Api.GetIntegrationHealthAsync()).ToList();
             _credentials = (await Api.GetIntegrationCredentialsAsync()).ToList();
         }
+        catch
+        {
+            // Soft-fail load; keep shell usable.
+        }
         finally
         {
             _pingBusy = false;

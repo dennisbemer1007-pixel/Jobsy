@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 
 namespace Jobsy.Web.Services;
@@ -10,6 +11,7 @@ namespace Jobsy.Web.Services;
 public sealed class JobsyApiTransientRetryHandler : DelegatingHandler
 {
     public const int MaxAttempts = 3;
+    public static readonly TimeSpan MaxRetryAfter = TimeSpan.FromMilliseconds(1500);
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -36,8 +38,11 @@ public sealed class JobsyApiTransientRetryHandler : DelegatingHandler
                     return response;
                 }
 
+                var delay = ResolveDelay(response, attempt);
                 response.Dispose();
                 response = null;
+                await Task.Delay(delay, cancellationToken);
+                continue;
             }
             catch (HttpRequestException ex) when (retryable && attempt < attempts)
             {
@@ -51,7 +56,7 @@ public sealed class JobsyApiTransientRetryHandler : DelegatingHandler
                 last = ex;
             }
 
-            await Task.Delay(200 * attempt, cancellationToken);
+            await Task.Delay(ResolveDelay(null, attempt), cancellationToken);
         }
 
         if (last is not null)
@@ -65,13 +70,17 @@ public sealed class JobsyApiTransientRetryHandler : DelegatingHandler
     public static bool IsTransient(HttpStatusCode status)
         => status is HttpStatusCode.Unauthorized
             or HttpStatusCode.RequestTimeout
+            or HttpStatusCode.TooManyRequests
+            or HttpStatusCode.InternalServerError
             or HttpStatusCode.BadGateway
             or HttpStatusCode.ServiceUnavailable
-            or HttpStatusCode.GatewayTimeout;
+            or HttpStatusCode.GatewayTimeout
+            || ((int)status >= 500 && (int)status <= 599);
 
     /// <summary>
     /// 401 is only retried when the attempt went out without credentials
     /// (circuit still settling). An authenticated 401 is a real denial.
+    /// 429 / 5xx: one retry for GET (loop capped by <see cref="MaxAttempts"/>).
     /// </summary>
     public static bool ShouldRetry(HttpStatusCode status, HttpRequestMessage sent)
     {
@@ -81,6 +90,57 @@ public sealed class JobsyApiTransientRetryHandler : DelegatingHandler
         }
 
         return IsTransient(status);
+    }
+
+    public static TimeSpan ResolveDelay(HttpResponseMessage? response, int attempt)
+    {
+        if (response?.StatusCode == HttpStatusCode.TooManyRequests)
+        {
+            var retryAfter = ParseRetryAfter(response);
+            var capped = retryAfter > MaxRetryAfter ? MaxRetryAfter : retryAfter;
+            if (capped <= TimeSpan.Zero)
+            {
+                capped = TimeSpan.FromMilliseconds(400);
+            }
+
+            // Small jitter so concurrent tabs do not stampede.
+            var jitterMs = Random.Shared.Next(50, 200);
+            return capped + TimeSpan.FromMilliseconds(jitterMs);
+        }
+
+        return TimeSpan.FromMilliseconds(200 * attempt);
+    }
+
+    public static TimeSpan ParseRetryAfter(HttpResponseMessage response)
+    {
+        var header = response.Headers.RetryAfter;
+        if (header is null)
+        {
+            return TimeSpan.FromMilliseconds(400);
+        }
+
+        if (header.Delta is TimeSpan delta)
+        {
+            return delta < TimeSpan.Zero ? TimeSpan.Zero : delta;
+        }
+
+        if (header.Date is DateTimeOffset date)
+        {
+            var wait = date - DateTimeOffset.UtcNow;
+            return wait < TimeSpan.Zero ? TimeSpan.Zero : wait;
+        }
+
+        if (response.Headers.TryGetValues("Retry-After", out var values))
+        {
+            var raw = values.FirstOrDefault();
+            if (double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds)
+                && seconds >= 0)
+            {
+                return TimeSpan.FromSeconds(seconds);
+            }
+        }
+
+        return TimeSpan.FromMilliseconds(400);
     }
 
     private static bool HasAttachedAuth(HttpRequestMessage request)

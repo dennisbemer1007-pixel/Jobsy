@@ -84,6 +84,11 @@
             _items = (await Api.GetMySharesAsync()).ToList();
             _groups = GroupShares(_items);
         }
+        catch
+        {
+            _items = [];
+            _groups = [];
+        }
         finally
         {
             _loading = false;

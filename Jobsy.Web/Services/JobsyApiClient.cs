@@ -659,20 +659,12 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
     public async Task<MeProfile?> GetMyProfileAsync(CancellationToken ct = default)
     {
-        try
-        {
-            return await _http.GetFromJsonAsync<MeProfile>("api/me/profile", ct);
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized || ex.StatusCode == HttpStatusCode.NotFound)
-        {
-            return null;
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.InternalServerError)
-        {
-            throw new InvalidOperationException(
-                "Profiel-API gaf een serverfout (500). Herstart de API zodat de laatste fix actief is.", ex);
-        }
+        var result = await GetMyProfileResultAsync(ct);
+        return result.Value;
     }
+
+    public Task<MeGetResult<MeProfile>> GetMyProfileResultAsync(CancellationToken ct = default)
+        => GetMeJsonAsync<MeProfile>("api/me/profile", ct);
 
     public async Task DownloadMyLobsyCvPdfAsync(IJSRuntime js, CancellationToken ct = default)
     {
@@ -941,16 +933,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
     }
 
     public async Task<CandidateCompetencyState?> GetMyCompetenciesAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            return await _http.GetFromJsonAsync<CandidateCompetencyState>("api/me/competencies", ct);
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
-        {
-            return null;
-        }
-    }
+        => (await GetMeJsonAsync<CandidateCompetencyState>("api/me/competencies", ct)).Value;
 
     public async Task<WhoAmIState?> GetMyWhoAmIAsync(CancellationToken ct = default)
     {
@@ -1109,16 +1092,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
     }
 
     public async Task<CandidateCultureState?> GetMyCultureAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            return await _http.GetFromJsonAsync<CandidateCultureState>("api/me/culture", ct);
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
-        {
-            return null;
-        }
-    }
+        => (await GetMeJsonAsync<CandidateCultureState>("api/me/culture", ct)).Value;
 
     public async Task<CandidateCultureState> SaveMyCultureAsync(
         IReadOnlyDictionary<int, int> answers,
@@ -1142,16 +1116,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
     }
 
     public async Task<CandidateValuesState?> GetMyValuesAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            return await _http.GetFromJsonAsync<CandidateValuesState>("api/me/values", ct);
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
-        {
-            return null;
-        }
-    }
+        => (await GetMeJsonAsync<CandidateValuesState>("api/me/values", ct)).Value;
 
     public async Task<CandidateValuesState> SaveMyValuesAsync(
         IReadOnlyDictionary<int, int> answers,
@@ -1313,16 +1278,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
     }
 
     public async Task<CandidateCareerInterestState?> GetMyCareerInterestsAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            return await _http.GetFromJsonAsync<CandidateCareerInterestState>("api/me/career-interests", ct);
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
-        {
-            return null;
-        }
-    }
+        => (await GetMeJsonAsync<CandidateCareerInterestState>("api/me/career-interests", ct)).Value;
 
     public async Task<CandidateCareerInterestState> SaveMyCareerInterestsAsync(
         IReadOnlyDictionary<int, int> answers,
@@ -1359,15 +1315,12 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
     public async Task<CandidateKompasState?> GetMyKompasAsync(CancellationToken ct = default)
     {
-        try
-        {
-            return await _http.GetFromJsonAsync<CandidateKompasState>("api/me/kompas", ct);
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
-        {
-            return null;
-        }
+        var result = await GetMyKompasResultAsync(ct);
+        return result.Value;
     }
+
+    public Task<MeGetResult<CandidateKompasState>> GetMyKompasResultAsync(CancellationToken ct = default)
+        => GetMeJsonAsync<CandidateKompasState>("api/me/kompas", ct);
 
     public async Task<RoleFitCheckState> EvaluateRoleFitAsync(
         string jobTitle,
@@ -1940,6 +1893,47 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
         return body.Length > 400 ? body[..400] : body;
     }
+
+    /// <summary>
+    /// GET helper for me/* endpoints: 401/403/404 → empty; 429/5xx/timeout → Unavailable
+    /// (never throws into the Blazor circuit).
+    /// </summary>
+    private async Task<MeGetResult<T>> GetMeJsonAsync<T>(string url, CancellationToken ct)
+    {
+        try
+        {
+            var value = await _http.GetFromJsonAsync<T>(url, ct);
+            return MeGetResult<T>.Ok(value);
+        }
+        catch (HttpRequestException ex) when (
+            ex.StatusCode is HttpStatusCode.Unauthorized
+                or HttpStatusCode.NotFound
+                or HttpStatusCode.Forbidden)
+        {
+            return MeGetResult<T>.Ok(default);
+        }
+        catch (HttpRequestException ex) when (IsTemporarilyUnavailable(ex.StatusCode))
+        {
+            return MeGetResult<T>.Unavailable();
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return MeGetResult<T>.Unavailable();
+        }
+        catch (HttpRequestException)
+        {
+            return MeGetResult<T>.Unavailable();
+        }
+    }
+
+    private static bool IsTemporarilyUnavailable(HttpStatusCode? status)
+        => status is HttpStatusCode.TooManyRequests
+            or HttpStatusCode.RequestTimeout
+            or HttpStatusCode.InternalServerError
+            or HttpStatusCode.BadGateway
+            or HttpStatusCode.ServiceUnavailable
+            or HttpStatusCode.GatewayTimeout
+            || (status is not null && (int)status >= 500);
 
     private static async Task EnsureConsentResponseAsync(HttpResponseMessage response)
     {

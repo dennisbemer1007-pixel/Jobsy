@@ -453,6 +453,10 @@
                 || user.IsInRole("Admin");
             _items = (await Api.GetApplicationsAsync()).ToList();
         }
+        catch
+        {
+            // Soft-fail load; keep shell usable.
+        }
         finally
         {
             _loading = false;

@@ -139,6 +139,10 @@
             await ReloadBalancesAsync();
             _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
         }
+        catch
+        {
+            // Soft-fail load; keep shell usable.
+        }
         finally
         {
             _loading = false;
