@@ -70,6 +70,8 @@ projects:
               # Cloudflare Transform Rule secret (header X-Jobsy-Origin-Secret).
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
+              - key: Sentry__Dsn
+                sync: false
               - key: Training__TrackingSecret
                 generateValue: true
               - key: JobsyFeatures__ExposeRegistrationActivationLinks
@@ -157,6 +159,10 @@ projects:
                 value: jobsy-api
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
+              - key: Sentry__Dsn
+                sync: false
+              - key: Circuit__DetailedErrors
+                value: "false"
               - key: ApiBaseUrl
                 fromService:
                   name: jobsy-api
@@ -221,6 +227,8 @@ projects:
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
               - key: CLOUDFLARE_ORIGIN_SECRET
+                sync: false
+              - key: Sentry__Dsn
                 sync: false
               - key: Training__TrackingSecret
                 generateValue: true
@@ -305,6 +313,10 @@ projects:
                 value: jobsy-api
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
+              - key: Sentry__Dsn
+                sync: false
+              - key: Circuit__DetailedErrors
+                value: "true"
               - key: ApiBaseUrl
                 fromService:
                   name: lobsy-acc-api

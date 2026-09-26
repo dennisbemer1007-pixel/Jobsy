@@ -37,6 +37,23 @@ public class CandidateTabStabilityGuardTests
         Assert.Contains("[\"Panel.ErrorRetry\"]", src);
     }
 
+    [Fact]
+    public void CircuitExceptionLogger_logs_unhandled_inbound_exceptions()
+    {
+        var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/CircuitExceptionLogger.cs"));
+        Assert.Contains("CreateInboundActivityHandler", src);
+        Assert.Contains("SentrySdk.CaptureException", src);
+        Assert.Contains("Unhandled Blazor circuit exception", src);
+    }
+
+    [Fact]
+    public void Render_yaml_has_Sentry_Dsn_for_web_and_api()
+    {
+        var yaml = File.ReadAllText(Path.Combine(FindRepoRoot(), "render.yaml"));
+        Assert.Equal(4, Regex.Matches(yaml, @"key:\s*Sentry__Dsn").Count);
+        Assert.Contains("Circuit__DetailedErrors", yaml);
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

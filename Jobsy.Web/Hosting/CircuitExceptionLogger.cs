@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Components.Server.Circuits;
+using Sentry;
 
 namespace Jobsy.Web.Hosting;
 
 /// <summary>
-/// Logs Blazor circuit connect/disconnect and unhandled circuit exceptions so
-/// Lighthouse / mobile sessions that show “unhandled exception on the current circuit”
-/// leave a server-side trail.
+/// Logs Blazor circuit connect/disconnect and unhandled inbound circuit exceptions so
+/// mobile sessions that show “unhandled exception on the current circuit”
+/// leave a server-side trail (and Sentry when configured).
 /// </summary>
 public sealed class CircuitExceptionLogger(ILogger<CircuitExceptionLogger> logger) : CircuitHandler
 {
@@ -31,5 +32,26 @@ public sealed class CircuitExceptionLogger(ILogger<CircuitExceptionLogger> logge
     {
         logger.LogInformation("Blazor circuit connection up {CircuitId}", circuit.Id);
         return Task.CompletedTask;
+    }
+
+    public override Func<CircuitInboundActivityContext, Task> CreateInboundActivityHandler(
+        Func<CircuitInboundActivityContext, Task> next)
+    {
+        return async context =>
+        {
+            try
+            {
+                await next(context);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogError(
+                    ex,
+                    "Unhandled Blazor circuit exception on {CircuitId}",
+                    context.Circuit.Id);
+                SentrySdk.CaptureException(ex);
+                throw;
+            }
+        };
     }
 }

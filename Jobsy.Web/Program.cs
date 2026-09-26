@@ -50,8 +50,12 @@ builder.Services.AddRazorComponents()
         options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
     });
 
+var circuitDetailedErrors = builder.Environment.IsDevelopment()
+    || builder.Configuration.GetValue<bool>("Circuit:DetailedErrors");
 builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions>(options =>
 {
+    // DetailedErrors only in Development and Acceptatie (Circuit__DetailedErrors=true).
+    options.DetailedErrors = circuitDetailedErrors;
     options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(5);
     options.DisconnectedCircuitMaxRetained = 200;
 });
