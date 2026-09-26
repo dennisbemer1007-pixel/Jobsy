@@ -124,15 +124,14 @@ public class MobileSmokePlaywrightTests
             });
         }
 
-        for (var i = 0; i < 10; i++)
-        {
-            await candidate.GotoAsync(baseUrl + "/carriere", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
-            await candidate.WaitForTimeoutAsync(300);
-            await AssertNoFatalUiAsync(candidate);
-            await candidate.GotoAsync(baseUrl + "/candidate/profile", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
-            await candidate.WaitForTimeoutAsync(300);
-            await AssertNoFatalUiAsync(candidate);
-        }
+        // Heavy Profiel↔Carrière thrash lives in CandidateTabStabilityPlaywrightTests.
+        // One extra round-trip here is enough for smoke without stacking Blazor remounts.
+        await candidate.GotoAsync(baseUrl + "/carriere", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        await candidate.WaitForTimeoutAsync(400);
+        await AssertNoFatalUiAsync(candidate);
+        await candidate.GotoAsync(baseUrl + "/candidate/profile", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        await candidate.WaitForTimeoutAsync(400);
+        await AssertNoFatalUiAsync(candidate);
 
         candGuard.AssertClean();
 
