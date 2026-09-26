@@ -38,6 +38,7 @@
                     @foreach (var item in _items)
                     {
                         <article class="job-card">
+                            <a class="job-card__stretch-link" href="@($"/vacancies/{item.VacancyId}")" aria-label="@item.VacancyTitle"></a>
                             <a class="job-card__media" href="@($"/vacancies/{item.VacancyId}")">
                                 <VacancyPhoto Src="@item.ImageUrl"
                                               FallbackSrc="@item.CompanyLogoUrl"
@@ -46,12 +47,11 @@
                                               Sizes="(max-width: 700px) 50vw, 360px" />
                                 <div class="job-card__overlay">
                                     <h2>@item.VacancyTitle</h2>
-                                    <p class="job-card__travel">@item.CompanyName</p>
                                 </div>
                             </a>
                             <div class="job-card__footer">
                                 <p class="job-card__company">@item.CompanyName</p>
-                                <p class="job-card__location">@item.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")</p>
+                                <p class="job-card__location">@Culture.Format("Saved.LikedOn", item.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy"))</p>
                             </div>
                         </article>
                     }
