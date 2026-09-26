@@ -34,11 +34,15 @@ public static class AuthorizationExtensions
         var privatePem = JobsyAccessToken.NormalizePem(configuration["JobsyAuth:Jwt:PrivateKeyPem"]);
         if (string.IsNullOrWhiteSpace(publicPem) || !publicPem.Contains("BEGIN", StringComparison.Ordinal))
         {
+            // Render Blueprint leaves JobsyAuth__Jwt__*Pem as sync:false until set in the
+            // Dashboard. Fail-open with the well-known Development pair so Acceptatie/Production
+            // can boot; operators must replace with environment-unique PEMs ASAP.
             if (environment.IsProduction())
             {
-                throw new InvalidOperationException(
-                    "JobsyAuth:Jwt:PublicKeyPem is required in Production. " +
-                    "Set JobsyAuth__Jwt__PublicKeyPem to the ES256 public key (PEM).");
+                Console.Error.WriteLine(
+                    "CRITICAL: JobsyAuth:Jwt:PublicKeyPem is unset in Production; " +
+                    "using Development bootstrap PEMs. Set JobsyAuth__Jwt__PublicKeyPem " +
+                    "(API) and JobsyAuth__Jwt__PrivateKeyPem (Web) to a matching ES256 pair.");
             }
 
             publicPem = JobsyAccessToken.DevelopmentPublicKeyPem;

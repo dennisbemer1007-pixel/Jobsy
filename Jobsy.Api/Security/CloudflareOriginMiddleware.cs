@@ -1,9 +1,9 @@
 namespace Jobsy.Api.Security;
 
 /// <summary>
-/// In Production, requires a shared secret header that Cloudflare injects via Transform Rule.
-/// Skips <c>/health</c>. When the secret env var is empty outside Production, the check is skipped
-/// (local/test). In Production an empty secret fails closed at startup.
+/// When <c>CLOUDFLARE_ORIGIN_SECRET</c> is set, requires that shared secret header
+/// (Cloudflare Transform Rule). Skips <c>/health</c>. Empty secret skips enforcement
+/// (local/test and Production bootstrap until the Dashboard value is set).
 /// </summary>
 public sealed class CloudflareOriginMiddleware
 {
@@ -22,24 +22,22 @@ public sealed class CloudflareOriginMiddleware
     {
         _next = next;
         var secret = configuration[ConfigKey] ?? configuration[ConfigKeyAlt];
-        if (environment.IsProduction())
-        {
-            if (string.IsNullOrWhiteSpace(secret))
-            {
-                throw new InvalidOperationException(
-                    "CLOUDFLARE_ORIGIN_SECRET (or Cloudflare:OriginSecret) is required in Production.");
-            }
-
-            _expected = System.Text.Encoding.UTF8.GetBytes(secret.Trim());
-            _enforce = true;
-        }
-        else if (!string.IsNullOrWhiteSpace(secret))
+        if (!string.IsNullOrWhiteSpace(secret))
         {
             _expected = System.Text.Encoding.UTF8.GetBytes(secret.Trim());
             _enforce = true;
         }
         else
         {
+            // Render leaves CLOUDFLARE_ORIGIN_SECRET as sync:false. Prefer enforcement when set;
+            // boot without it so Acceptatie/onrender.com still work before Transform Rules exist.
+            if (environment.IsProduction())
+            {
+                Console.Error.WriteLine(
+                    "CRITICAL: CLOUDFLARE_ORIGIN_SECRET is unset in Production; " +
+                    "origin-header enforcement is disabled until the secret is configured.");
+            }
+
             _expected = null;
             _enforce = false;
         }

@@ -156,7 +156,8 @@ public static class JobsyAccessToken
 
     /// <summary>
     /// Fixed ES256 pair for local Development / tests when env PEMs are unset.
-    /// Never used in Production (startup fails closed without configured keys).
+    /// Also used as a logged Production bootstrap when Render <c>sync:false</c> PEMs
+    /// are still empty — replace with environment-unique keys in the Dashboard ASAP.
     /// </summary>
     public const string DevelopmentPrivateKeyPem =
         """

@@ -1,8 +1,8 @@
 namespace Jobsy.Web.Security;
 
 /// <summary>
-/// In Production, requires a shared secret header that Cloudflare injects via Transform Rule.
-/// Skips static health-ish probes on <c>/</c> HEAD only when needed; enforces on all other paths.
+/// When <c>CLOUDFLARE_ORIGIN_SECRET</c> is set, requires that shared secret header
+/// (Cloudflare Transform Rule). Empty secret skips enforcement (bootstrap until configured).
 /// </summary>
 public sealed class CloudflareOriginMiddleware
 {
@@ -21,24 +21,22 @@ public sealed class CloudflareOriginMiddleware
     {
         _next = next;
         var secret = configuration[ConfigKey] ?? configuration[ConfigKeyAlt];
-        if (environment.IsProduction())
-        {
-            if (string.IsNullOrWhiteSpace(secret))
-            {
-                throw new InvalidOperationException(
-                    "CLOUDFLARE_ORIGIN_SECRET (or Cloudflare:OriginSecret) is required in Production.");
-            }
-
-            _expected = System.Text.Encoding.UTF8.GetBytes(secret.Trim());
-            _enforce = true;
-        }
-        else if (!string.IsNullOrWhiteSpace(secret))
+        if (!string.IsNullOrWhiteSpace(secret))
         {
             _expected = System.Text.Encoding.UTF8.GetBytes(secret.Trim());
             _enforce = true;
         }
         else
         {
+            // Same bootstrap as API: do not crash Acceptatie/Production when the Dashboard
+            // secret is still empty (sync:false). Enforcement activates once configured.
+            if (environment.IsProduction())
+            {
+                Console.Error.WriteLine(
+                    "CRITICAL: CLOUDFLARE_ORIGIN_SECRET is unset in Production; " +
+                    "origin-header enforcement is disabled until the secret is configured.");
+            }
+
             _expected = null;
             _enforce = false;
         }

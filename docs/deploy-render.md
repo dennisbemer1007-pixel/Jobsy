@@ -71,6 +71,8 @@ De Blueprint zet `JobsyAuth__AllowDevelopmentAuth=false` op **alle** services (P
 - `JobsyAuth__LocalSessionSigningKey` wordt apart gegenereerd en gedeeld voor HMAC-sessietokens.
 - `JobsyAuth__ExternalProvisionSecret` wordt apart gegenereerd en gedeeld met web voor OAuth credential-provisioning.
 - `JobsyFeatures__ExposeRegistrationActivationLinks=false` (geen activatie-URL in API-responses).
+- **ES256 JWT PEMs** (`JobsyAuth__Jwt__PublicKeyPem` op API, `JobsyAuth__Jwt__PrivateKeyPem` op Web) staan in de Blueprint als `sync: false`. Zonder Dashboard-waarde start de app met een gelogde **Development bootstrap-pair** (Critical in logs) zodat Acceptatie/Production niet crashen. Zet zo snel mogelijk een **eigen** ES256-paar per environment (openssl / `JobsyAccessToken.GenerateDevelopmentKeyPair`), zelfde private op Web en public op API. Production-PEMs mogen niet gelijk zijn aan Acceptatie.
+- `CLOUDFLARE_ORIGIN_SECRET` is ook `sync: false`. Leeg = geen origin-header-handhaving (Critical-log); gezet = Transform Rule verplicht (behalve `/health` op de API).
 
 Na Blueprint sync: controleer per environment dat API en web dezelfde `JobsyAuth__DevelopmentAuthSecret`, `JobsyAuth__LocalSessionSigningKey` én `JobsyAuth__ExternalProvisionSecret` hebben. Production-secrets mogen **niet** gelijk zijn aan Acceptatie.
 
@@ -104,6 +106,8 @@ WHERE lower("Email") = lower('jij@jouwdomein.nl');
 4. Controleer na sync:
    - `jobsy-api` → **Environment**: `ConnectionStrings__JobsyDb` is een echte `postgres://` / `postgresql://` URL
    - `JobsyAuth__AllowDevelopmentAuth=false`, `JobsyAuth__AllowStubPayments=false`, geen `Seed__PurgeDemoData`
+   - Idealiter: `JobsyAuth__Jwt__PublicKeyPem` (API) + `JobsyAuth__Jwt__PrivateKeyPem` (Web) gezet; anders Critical bootstrap-log en Development-PEMs
+   - Idealiter: `CLOUDFLARE_ORIGIN_SECRET` gezet op API én Web (zelfde waarde) + Transform Rule
    - Production API-logs: **geen** “Operational wipe” / purge; alleen migrate (+ geen seed tenzij `Seed__Enabled`)
    - Acceptatie API-logs: `Seed completed` / `Seeding Jobsy mock data` (geen wipe)
    - `jobsy-api` URL + `/health` → OK
