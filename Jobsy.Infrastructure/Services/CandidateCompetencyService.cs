@@ -10,20 +10,20 @@ namespace Jobsy.Infrastructure.Services;
 public sealed class CandidateCompetencyService : ICandidateCompetencyService
 {
     private readonly JobsyDbContext _db;
-    private readonly IVacancyDiscoveryIndex _discovery;
-    private readonly IProfileVacancyMatchService _matches;
     private readonly IFlexCommercialService _commercial;
+    private readonly ICandidateMatchSnapshotService _matchSnapshots;
+    private readonly ICandidateInsightsQueue _queue;
 
     public CandidateCompetencyService(
         JobsyDbContext db,
-        IVacancyDiscoveryIndex discovery,
-        IProfileVacancyMatchService matches,
-        IFlexCommercialService commercial)
+        IFlexCommercialService commercial,
+        ICandidateMatchSnapshotService matchSnapshots,
+        ICandidateInsightsQueue queue)
     {
         _db = db;
-        _discovery = discovery;
-        _matches = matches;
         _commercial = commercial;
+        _matchSnapshots = matchSnapshots;
+        _queue = queue;
     }
 
     public async Task<CandidateCompetencyStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -109,6 +109,11 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        if (complete)
+        {
+            _queue.TryEnqueue(userId);
+        }
+
         var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
         return ToDto(row, price);
     }
@@ -137,71 +142,8 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var context = await _matches.TryLoadForUserIdAsync(userId, cancellationToken);
-        if (context is null)
-        {
-            return [];
-        }
-
-        var vacancies = await _discovery.GetActiveAsync(cancellationToken);
-        var transport = TransportLabels.Parse(context.Prefs.PreferredTransport);
-        var scored = _matches.Score(
-            context,
-            vacancies.Select(vacancy =>
-            {
-                int? travelMinutes = null;
-                if (context.HomeLatitude is double lat && context.HomeLongitude is double lng)
-                {
-                    var estimate = TravelReach.Estimate(
-                        lat,
-                        lng,
-                        vacancy.Latitude,
-                        vacancy.Longitude,
-                        transport);
-                    travelMinutes = estimate.TravelMinutes;
-                }
-
-                return (vacancy, travelMinutes);
-            }));
-
-        var ranked = ProfileVacancyMatchCalculator.RankScored(scored.Values);
-        var byId = vacancies.ToDictionary(v => v.Id);
-        var result = new List<CandidateMatchedVacancyDto>(ranked.Count);
-        foreach (var match in ranked)
-        {
-            if (!byId.TryGetValue(match.VacancyId, out var vacancy))
-            {
-                continue;
-            }
-
-            result.Add(new CandidateMatchedVacancyDto(
-                vacancy.Id,
-                vacancy.Title,
-                vacancy.CompanyName,
-                vacancy.ImageUrl,
-                vacancy.CompanyLogoUrl,
-                match.TotalPercent,
-                match.ColorBand,
-                PreferWhy(match),
-                match.Gaps.Select(g => g.Text).ToList(),
-                match.IsBroadMatch,
-                match.MatchRationale));
-        }
-
-        return result;
-    }
-
-    private static IReadOnlyList<string> PreferWhy(ProfileVacancyMatch match)
-    {
-        var lines = match.Why.Select(w => w.Text).ToList();
-        if (match.IsBroadMatch
-            && !string.IsNullOrWhiteSpace(match.MatchRationale)
-            && !lines.Contains(match.MatchRationale, StringComparer.Ordinal))
-        {
-            lines.Insert(0, match.MatchRationale);
-        }
-
-        return lines;
+        var (matches, _) = await _matchSnapshots.GetAsync(userId, cancellationToken);
+        return matches;
     }
 
     private static CandidateCompetencyStateDto ToDto(CandidateCompetency? row, decimal deepAnalysisPriceEuro)

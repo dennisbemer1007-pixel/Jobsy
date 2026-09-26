@@ -20,6 +20,10 @@
     else if (_state is { IsUnlocked: true } open)
     {
         <p class="login-lead">@Culture["WhoAmI.LeadOpen"]</p>
+        @if (string.Equals(open.InsightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+        {
+            <p class="state-message" aria-live="polite">@Culture["Insights.Updating"]</p>
+        }
         @if (!string.IsNullOrWhiteSpace(_message))
         {
             <p class="kompas-status kompas-status--ok">@_message</p>
@@ -190,6 +194,7 @@
     private bool _loadStarted;
     private string? _message;
     private WhoAmIState? _state;
+    private int _insightsRefreshAttempts;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -257,6 +262,10 @@
             {
                 _state = next;
                 _message = null;
+                if (string.Equals(next.InsightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+                {
+                    _ = RefreshInsightsLaterAsync();
+                }
             }
             else if (_state is null)
             {
@@ -266,6 +275,36 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task RefreshInsightsLaterAsync()
+    {
+        while (_insightsRefreshAttempts < 3
+               && _state is not null
+               && string.Equals(_state.InsightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+        {
+            _insightsRefreshAttempts++;
+            try
+            {
+                await Task.Delay(3000);
+                var next = await Api.GetMyWhoAmIAsync();
+                if (next is null)
+                {
+                    continue;
+                }
+
+                _state = next;
+                await InvokeAsync(StateHasChanged);
+                if (!string.Equals(next.InsightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+            }
+            catch
+            {
+                break;
+            }
         }
     }
 

@@ -21,9 +21,13 @@
             <p class="login-lead">@Culture["Profile.ReturnHint"]</p>
         }
     </header>
-        <CandidateKompas>
+        <CandidateKompas SharedKompas="_kompasState">
             <ProfileTab>
         <p class="login-lead">@Culture["Profile.Lead"]</p>
+        @if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+        {
+            <p class="state-message" aria-live="polite">@Culture["Insights.Updating"]</p>
+        }
         @if (!string.IsNullOrWhiteSpace(_returnUrl))
         {
             <p class="login-lead profile-return-hint">@Culture["Profile.ReturnHint"]</p>
@@ -595,6 +599,9 @@
     private static readonly string[] WeekdayCodes = ["Ma", "Di", "Wo", "Do", "Vr"];
     private bool _matchesLoading = true;
     private IReadOnlyList<CandidateMatchedVacancy> _matchedVacancies = [];
+    private string _insightsStatus = "Ready";
+    private CandidateKompasState? _kompasState;
+    private int _insightsRefreshAttempts;
 
     private string? AvailabilityKind =>
         CandidateAvailabilityPresets.Detect(_minHours, _maxHours, _flexibleTimes);
@@ -610,8 +617,12 @@
         _returnUrl = SanitizeReturnUrl(ReturnUrl);
         try
         {
-            await LoadMasterdataAsync();
-            var profile = await Api.GetMyProfileAsync();
+            var masterdataTask = LoadMasterdataAsync();
+            var kompasTask = Api.GetMyKompasAsync();
+            await Task.WhenAll(masterdataTask, kompasTask);
+            var kompas = kompasTask.Result;
+            _kompasState = kompas;
+            var profile = kompas?.Profile;
             if (profile is null)
             {
                 _message = Culture["Profile.NotFound"];
@@ -629,6 +640,17 @@
             _authenticatorEnabled = profile.AuthenticatorEnabled;
             _homeLat = profile.HomeLatitude;
             _homeLng = profile.HomeLongitude;
+            _insightsStatus = kompas?.InsightsStatus ?? "Ready";
+            if (kompas?.TopMatches is { Count: > 0 } matches)
+            {
+                _matchedVacancies = matches;
+                _matchesLoading = false;
+            }
+            else if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+            {
+                _matchedVacancies = [];
+                _matchesLoading = false;
+            }
             _maxTravel = prefs.MaxTravelMinutes ?? 30;
             _preferredTransport = string.IsNullOrWhiteSpace(prefs.PreferredTransport)
                 ? ""
@@ -672,9 +694,18 @@
             _certificates.AddRange(prefs.Certificates ?? []);
             ApplyCvAndReferences(profile);
 
-            // Paint Top 10 as soon as matches resolve — do not wait for reverse-geocode.
-            await LoadMatchedVacanciesAsync();
+            // Paint Top 10 from kompas snapshot — fallback GET only when Ready and empty.
+            if (_matchedVacancies.Count == 0
+                && !string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+            {
+                await LoadMatchedVacanciesAsync();
+            }
+
             await InvokeAsync(StateHasChanged);
+            if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+            {
+                _ = RefreshInsightsLaterAsync();
+            }
 
             _selectedEducations.Clear();
             foreach (var education in prefs.Educations ?? [])
@@ -699,13 +730,14 @@
                 }
             }
 
+            // Reverse-geocode only when the stored address is missing (not every open).
             if (_homeLat is not null && _homeLng is not null)
             {
                 if (!string.IsNullOrWhiteSpace(prefs.HomeAddress) && !LooksLikeCoordinates(prefs.HomeAddress))
                 {
                     _homeAddress = prefs.HomeAddress!;
                 }
-                else
+                else if (string.IsNullOrWhiteSpace(prefs.HomeAddress))
                 {
                     try
                     {
@@ -719,6 +751,10 @@
                     {
                         _homeAddress = FormatCoordinateFallback(_homeLat.Value, _homeLng.Value);
                     }
+                }
+                else
+                {
+                    _homeAddress = FormatCoordinateFallback(_homeLat.Value, _homeLng.Value);
                 }
             }
         }
@@ -748,6 +784,41 @@
         finally
         {
             _matchesLoading = false;
+        }
+    }
+
+    private async Task RefreshInsightsLaterAsync()
+    {
+        while (_insightsRefreshAttempts < 3
+               && string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+        {
+            _insightsRefreshAttempts++;
+            try
+            {
+                await Task.Delay(3000);
+                var kompas = await Api.GetMyKompasAsync();
+                if (kompas is null)
+                {
+                    continue;
+                }
+
+                _kompasState = kompas;
+                _insightsStatus = kompas.InsightsStatus ?? "Ready";
+                if (kompas.TopMatches is { Count: > 0 })
+                {
+                    _matchedVacancies = kompas.TopMatches;
+                }
+
+                await InvokeAsync(StateHasChanged);
+                if (!string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+            }
+            catch
+            {
+                break;
+            }
         }
     }
 

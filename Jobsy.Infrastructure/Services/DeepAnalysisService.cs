@@ -18,6 +18,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     private readonly IHostEnvironment _environment;
     private readonly IConfiguration _configuration;
     private readonly ICareerCompassGenerationService _careerCompass;
+    private readonly ICandidateInsightsQueue _queue;
     private readonly ILogger<DeepAnalysisService> _logger;
 
     public DeepAnalysisService(
@@ -27,12 +28,25 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         IConfiguration configuration,
         ICareerCompassGenerationService careerCompass,
         ILogger<DeepAnalysisService> logger)
+        : this(db, commercial, environment, configuration, careerCompass, new CandidateInsightsQueue(), logger)
+    {
+    }
+
+    public DeepAnalysisService(
+        JobsyDbContext db,
+        IFlexCommercialService commercial,
+        IHostEnvironment environment,
+        IConfiguration configuration,
+        ICareerCompassGenerationService careerCompass,
+        ICandidateInsightsQueue queue,
+        ILogger<DeepAnalysisService> logger)
     {
         _db = db;
         _commercial = commercial;
         _environment = environment;
         _configuration = configuration;
         _careerCompass = careerCompass;
+        _queue = queue;
         _logger = logger;
     }
 
@@ -268,6 +282,11 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        if (complete)
+        {
+            _queue.TryEnqueue(userId);
+        }
+
         var commercial = await _commercial.GetAsync(cancellationToken);
         return ToDto(kind, row, commercial.DeepAnalysisPriceEuro);
     }

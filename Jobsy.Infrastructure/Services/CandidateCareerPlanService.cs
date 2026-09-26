@@ -18,11 +18,16 @@ public sealed class CandidateCareerPlanService : ICandidateCareerPlanService
 
     private readonly JobsyDbContext _db;
     private readonly ICareerPathPlanGenerationService _generate;
+    private readonly ICandidateInsightsQueue _insightsQueue;
 
-    public CandidateCareerPlanService(JobsyDbContext db, ICareerPathPlanGenerationService generate)
+    public CandidateCareerPlanService(
+        JobsyDbContext db,
+        ICareerPathPlanGenerationService generate,
+        ICandidateInsightsQueue insightsQueue)
     {
         _db = db;
         _generate = generate;
+        _insightsQueue = insightsQueue;
     }
 
     public async Task<HorizonCareerPathPlanView?> GetAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -157,6 +162,7 @@ public sealed class CandidateCareerPlanService : ICandidateCareerPlanService
             certificates.Add(new CandidateCertificateDto(name, DateTime.UtcNow.Year));
             user.PreferencesJson = SerializePreferences(prefs with { Certificates = certificates });
             await _db.SaveChangesAsync(cancellationToken);
+            _insightsQueue.TryEnqueue(userId);
         }
 
         return await MaterializeAsync(plan, persistAuto: true, cancellationToken);

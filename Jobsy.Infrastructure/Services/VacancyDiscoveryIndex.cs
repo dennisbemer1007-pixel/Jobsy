@@ -24,6 +24,7 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
     private volatile VacancyMapView _mapView = VacancyMapViewCalculator.Fallback;
     private volatile bool _dirty = true;
     private DateOnly _indexedForDate;
+    private long _lastRefreshedTicks;
 
     public VacancyDiscoveryIndex(
         IServiceScopeFactory scopeFactory,
@@ -31,6 +32,15 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+    }
+
+    public DateTime? LastRefreshedAtUtc
+    {
+        get
+        {
+            var ticks = Interlocked.Read(ref _lastRefreshedTicks);
+            return ticks <= 0 ? null : new DateTime(ticks, DateTimeKind.Utc);
+        }
     }
 
     public void Invalidate() => _dirty = true;
@@ -75,6 +85,7 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             _snapshot = records;
             _mapView = VacancyMapViewCalculator.FromRecords(VisibleToday(records, todayAfterLoad));
             _indexedForDate = todayAfterLoad;
+            Interlocked.Exchange(ref _lastRefreshedTicks, DateTime.UtcNow.Ticks);
             _logger.LogInformation("Banenkaart index refreshed with {Count} public vacancies.", records.Count);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

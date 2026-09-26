@@ -16,23 +16,23 @@ public sealed class WhoAmIService : IWhoAmIService
     };
 
     private readonly JobsyDbContext _db;
-    private readonly IWhoAmIGenerationService _generate;
+    private readonly ICandidateInsightsQueue _queue;
 
-    public WhoAmIService(JobsyDbContext db, IWhoAmIGenerationService generate)
+    public WhoAmIService(JobsyDbContext db, ICandidateInsightsQueue queue)
     {
         _db = db;
-        _generate = generate;
+        _queue = queue;
     }
 
     public Task<WhoAmIStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
-        => LoadAsync(userId, persistStory: true, cancellationToken);
+        => LoadAsync(userId, cancellationToken);
 
     public async Task<WhoAmIStateDto> SetIncludeOnCvAsync(
         Guid userId,
         bool includeOnCv,
         CancellationToken cancellationToken = default)
     {
-        var state = await LoadAsync(userId, persistStory: true, cancellationToken);
+        var state = await LoadAsync(userId, cancellationToken);
         if (!state.IsUnlocked)
         {
             throw new InvalidOperationException("Rond eerst alle vier stappen af voordat je het persoonsprofiel aan je Lobsy-CV kunt toevoegen.");
@@ -54,7 +54,8 @@ public sealed class WhoAmIService : IWhoAmIService
 
     public async Task<LobsyCvWhoAmI?> GetCvAttachmentAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var state = await LoadAsync(userId, persistStory: true, cancellationToken);
+        // Stored story only — never generate inside CV/PDF requests.
+        var state = await LoadAsync(userId, cancellationToken);
         if (!state.IsUnlocked || !state.IncludeOnCv || string.IsNullOrWhiteSpace(state.Story)
             || state.CompetencyScores is not { IsComplete: true } competency
             || state.CultureScores is not { IsComplete: true } culture)
@@ -65,7 +66,7 @@ public sealed class WhoAmIService : IWhoAmIService
         return ToAttachment(state.Story, state.Keywords, competency, culture);
     }
 
-    private async Task<WhoAmIStateDto> LoadAsync(Guid userId, bool persistStory, CancellationToken cancellationToken)
+    private async Task<WhoAmIStateDto> LoadAsync(Guid userId, CancellationToken cancellationToken)
     {
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -173,12 +174,20 @@ public sealed class WhoAmIService : IWhoAmIService
         var fromOpenAi = false;
         DateTime? generatedAt = null;
         var includeOnCv = false;
+        var insightsStatus = InsightsStatuses.Ready;
 
-        var stored = await _db.CandidateWhoAmIProfiles
+        var stored = await _db.CandidateWhoAmIProfiles.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (stored is not null)
         {
             includeOnCv = stored.IncludeOnCv;
+            if (WhoAmIStoryBuilder.Sanitize(stored.StoryText) is { } cachedStory)
+            {
+                story = cachedStory;
+                keywords = LikertAnswerJson.ParseTags(stored.KeywordsJson);
+                fromOpenAi = stored.FromOpenAi;
+                generatedAt = stored.StoryGeneratedAtUtc;
+            }
         }
 
         if (unlocked && competency is { IsComplete: true } cScores
@@ -186,41 +195,18 @@ public sealed class WhoAmIService : IWhoAmIService
             && culture is { IsComplete: true } cultureScores)
         {
             var fingerprint = WhoAmICompleteness.Fingerprint(cScores, rScores, cultureScores, profileHighlights, values);
-            if (stored is not null
-                && string.Equals(stored.InputFingerprint, fingerprint, StringComparison.Ordinal)
-                && WhoAmIStoryBuilder.Sanitize(stored.StoryText) is { } cachedStory)
+            var fingerprintMatch = stored is not null
+                                   && string.Equals(stored.InputFingerprint, fingerprint, StringComparison.Ordinal)
+                                   && story is not null;
+            var retryFallback = stored is not null
+                                && CandidateInsightsFingerprint.ShouldRetryFallback(
+                                    stored.FromOpenAi,
+                                    stored.StoryGeneratedAtUtc,
+                                    DateTime.UtcNow);
+            if (!fingerprintMatch || retryFallback || story is null)
             {
-                story = cachedStory;
-                keywords = LikertAnswerJson.ParseTags(stored.KeywordsJson);
-                fromOpenAi = stored.FromOpenAi;
-                generatedAt = stored.StoryGeneratedAtUtc;
-            }
-            else
-            {
-                var generated = await _generate.GenerateAsync(
-                    cScores, rScores, cultureScores, profileHighlights, values, cancellationToken);
-                story = generated.Story;
-                keywords = generated.Keywords;
-                fromOpenAi = generated.FromOpenAi;
-                generatedAt = DateTime.UtcNow;
-                if (persistStory)
-                {
-                    var track = stored;
-                    if (track is null)
-                    {
-                        track = NewRow(userId);
-                        _db.CandidateWhoAmIProfiles.Add(track);
-                    }
-
-                    track.StoryText = story ?? "";
-                    track.KeywordsJson = JsonSerializer.Serialize(keywords, Json);
-                    track.InputFingerprint = fingerprint;
-                    track.FromOpenAi = fromOpenAi;
-                    track.StoryGeneratedAtUtc = generatedAt;
-                    track.UpdatedAtUtc = DateTime.UtcNow;
-                    await _db.SaveChangesAsync(cancellationToken);
-                    includeOnCv = track.IncludeOnCv;
-                }
+                insightsStatus = InsightsStatuses.Updating;
+                _queue.TryEnqueue(userId);
             }
         }
 
@@ -241,7 +227,8 @@ public sealed class WhoAmIService : IWhoAmIService
             generatedAt,
             employers,
             educations,
-            certificates);
+            certificates,
+            insightsStatus);
     }
 
     internal static LobsyCvWhoAmI ToAttachment(

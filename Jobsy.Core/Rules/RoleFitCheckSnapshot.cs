@@ -11,7 +11,9 @@ public sealed record RoleFitCheckSnapshot(
     bool FromOpenAi = false,
     RoleFitVacancyFit? VacancyFit = null,
     IReadOnlyList<RoleFitSimilarRole>? SimilarRoles = null,
-    CareerPathPlan? CareerPath = null)
+    CareerPathPlan? CareerPath = null,
+    IReadOnlyList<RoleFitStoredTrainingOffer>? TrainingOffers = null,
+    IReadOnlyList<RoleFitStoredDirectVacancy>? DirectVacancies = null)
 {
     public string MapQuery
     {
@@ -42,4 +44,21 @@ public sealed record RoleFitVacancyFit(
     bool ShowUpskill);
 
 public sealed record RoleFitSimilarRole(string Title, string Why, int FitPercent);
+
+public sealed record RoleFitStoredTrainingOffer(
+    Guid OfferId,
+    string Title,
+    string ProviderName,
+    string Kind,
+    string Network,
+    string Region,
+    string CtaLabel,
+    string Advice);
+
+public sealed record RoleFitStoredDirectVacancy(
+    Guid Id,
+    string Title,
+    string CompanyName,
+    int MatchPercent,
+    string Href);
 

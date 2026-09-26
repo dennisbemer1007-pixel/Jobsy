@@ -11,23 +11,29 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
 {
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
-    private readonly ICandidateCompetencyService _competencies;
+    private readonly ICandidateMatchSnapshotService _matchSnapshots;
+    private readonly ICandidateInsightsQueue _queue;
 
     public CandidateCareerInterestService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
-        ICandidateCompetencyService competencies)
+        ICandidateMatchSnapshotService matchSnapshots,
+        ICandidateInsightsQueue queue)
     {
         _db = db;
         _commercial = commercial;
-        _competencies = competencies;
+        _matchSnapshots = matchSnapshots;
+        _queue = queue;
     }
 
-    public async Task<CandidateCareerInterestStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<CandidateCareerInterestStateDto> GetAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default,
+        bool includeMatches = true)
     {
         var row = await _db.CandidateCareerInterests.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        return await ComposeDtoAsync(userId, row, cancellationToken);
+        return await ComposeDtoAsync(userId, row, includeMatches, cancellationToken);
     }
 
     public async Task<CandidateCareerInterestStateDto> SaveAsync(
@@ -52,7 +58,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
                     "Lege antwoorden overschrijven je bestaande test niet. Stuur de huidige antwoorden mee.");
             }
 
-            return await ComposeDtoAsync(userId, null, cancellationToken);
+            return await ComposeDtoAsync(userId, null, includeMatches: true, cancellationToken);
         }
 
         var now = DateTime.UtcNow;
@@ -109,7 +115,12 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        return await ComposeDtoAsync(userId, row, cancellationToken);
+        if (complete)
+        {
+            _queue.TryEnqueue(userId);
+        }
+
+        return await ComposeDtoAsync(userId, row, includeMatches: true, cancellationToken);
     }
 
     public async Task<RiasecScores?> GetCompletedScoresAsync(
@@ -150,24 +161,49 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
     private async Task<CandidateCareerInterestStateDto> ComposeDtoAsync(
         Guid userId,
         CandidateCareerInterest? row,
+        bool includeMatches,
         CancellationToken cancellationToken)
     {
         var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
-        var matches = await _competencies.GetTopMatchesAsync(userId, cancellationToken);
+        IReadOnlyList<CandidateMatchedVacancyDto> matches = [];
+        var matchStatus = InsightsStatuses.Ready;
+        if (includeMatches)
+        {
+            (matches, matchStatus) = await _matchSnapshots.GetAsync(userId, cancellationToken);
+        }
+
         var deepDone = await _db.CandidateDeepAnalyses.AsNoTracking()
             .AnyAsync(
                 d => d.UserId == userId
                      && d.Kind == AssessmentKind.Career
                      && d.Status == CandidateDeepAnalysisStatuses.Completed,
                 cancellationToken);
-        return ToDto(row, price, matches, deepDone);
+        var completed = CareerTestCatalog.CompletedScoresOrNull(
+            row?.Status,
+            row?.RealisticPercent,
+            row?.InvestigativePercent,
+            row?.ArtisticPercent,
+            row?.SocialPercent,
+            row?.EnterprisingPercent,
+            row?.ConventionalPercent);
+        var (compass, compassUpdating) = ResolveCompass(row, deepDone);
+        if (compassUpdating && completed is { IsComplete: true })
+        {
+            _queue.TryEnqueue(userId);
+        }
+
+        var insights = InsightsStatuses.IsUpdating(matchStatus) || compassUpdating
+            ? InsightsStatuses.Updating
+            : InsightsStatuses.Ready;
+        return ToDto(row, price, matches, compass, insights);
     }
 
     private static CandidateCareerInterestStateDto ToDto(
         CandidateCareerInterest? row,
         decimal deepAnalysisPriceEuro,
         IReadOnlyList<CandidateMatchedVacancyDto> matches,
-        bool fromDeepAnalysis)
+        CareerCompassSnapshot compass,
+        string insightsStatus)
     {
         var answers = CareerTestCatalog.ParseAnswersJson(row?.AnswersJson);
         var preview = CareerTestCatalog.Score(answers);
@@ -196,20 +232,34 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             CareerTestCatalog.ParseTagsJson(row?.MatchTagsJson),
             DeepAnalysisService.FormatUpsellCopy(deepAnalysisPriceEuro, AssessmentKind.Career),
             matches,
-            ResolveCompass(row, completed, fromDeepAnalysis));
+            compass,
+            insightsStatus);
     }
 
-    private static CareerCompassSnapshot ResolveCompass(
+    /// <summary>Stored compass only — never rebuild on GET.</summary>
+    private static (CareerCompassSnapshot Compass, bool Updating) ResolveCompass(
         CandidateCareerInterest? row,
-        RiasecScores? completed,
         bool fromDeepAnalysis)
     {
         var stored = CareerCompassJson.TryDeserialize(row?.CompassJson);
         if (stored is { HasOccupations: true })
         {
-            return stored;
+            return (stored, false);
         }
 
-        return CareerCompassBuilder.Build(completed, fromDeepAnalysis);
+        var completed = CareerTestCatalog.CompletedScoresOrNull(
+            row?.Status,
+            row?.RealisticPercent,
+            row?.InvestigativePercent,
+            row?.ArtisticPercent,
+            row?.SocialPercent,
+            row?.EnterprisingPercent,
+            row?.ConventionalPercent);
+        if (completed is { IsComplete: true })
+        {
+            return (CareerCompassSnapshot.Empty(fromDeepAnalysis), true);
+        }
+
+        return (CareerCompassSnapshot.Empty(fromDeepAnalysis), false);
     }
 }

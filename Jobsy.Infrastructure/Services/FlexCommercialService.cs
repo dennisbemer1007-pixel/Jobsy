@@ -3,24 +3,41 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Jobsy.Infrastructure.Services;
 
 public sealed class FlexCommercialService : IFlexCommercialService
 {
     public static readonly Guid SettingsSingletonId = Guid.Parse("f1e20001-0000-4000-8000-000000000001");
+    public static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
+    private const string CacheKey = "flex-commercial-settings";
 
     private readonly JobsyDbContext _db;
+    private readonly IMemoryCache _cache;
 
     public FlexCommercialService(JobsyDbContext db)
+        : this(db, new MemoryCache(new MemoryCacheOptions()))
+    {
+    }
+
+    public FlexCommercialService(JobsyDbContext db, IMemoryCache cache)
     {
         _db = db;
+        _cache = cache;
     }
 
     public async Task<FlexCommercialSettingsDto> GetAsync(CancellationToken cancellationToken = default)
     {
+        if (_cache.TryGetValue(CacheKey, out FlexCommercialSettingsDto? cached) && cached is not null)
+        {
+            return cached;
+        }
+
         var settings = await EnsureSettingsAsync(cancellationToken);
-        return MapSettings(settings);
+        var dto = MapSettings(settings);
+        _cache.Set(CacheKey, dto, CacheTtl);
+        return dto;
     }
 
     public async Task<FlexCommercialSettingsDto> UpdateAsync(
@@ -62,7 +79,10 @@ public sealed class FlexCommercialService : IFlexCommercialService
 
         await SyncContactUnlockSpendCostAsync(settings.ContactUnlockCostTokens, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
-        return MapSettings(settings);
+        _cache.Remove(CacheKey);
+        var dto = MapSettings(settings);
+        _cache.Set(CacheKey, dto, CacheTtl);
+        return dto;
     }
 
     public async Task<bool> HasActiveAgencySubscriptionAsync(

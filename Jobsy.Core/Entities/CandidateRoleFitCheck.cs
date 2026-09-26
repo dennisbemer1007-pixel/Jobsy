@@ -10,6 +10,8 @@ public class CandidateRoleFitCheck
     public string JobTitle { get; set; } = "";
     public int MatchPercent { get; set; }
     public string ResultJson { get; set; } = "{}";
+    /// <summary>Hash of job title/vacancy + test scores + preferences at evaluate time.</summary>
+    public string InputFingerprint { get; set; } = "";
     public bool FromDeepAnalysis { get; set; }
     public bool FromOpenAi { get; set; }
     public DateTime CreatedAtUtc { get; set; }

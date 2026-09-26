@@ -45,6 +45,7 @@
 
 @code {
     [Parameter] public bool Active { get; set; }
+    [Parameter] public CandidateKompasState? Snapshot { get; set; }
 
     private bool _loading = true;
     private bool _loaded;
@@ -53,10 +54,36 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (Active && !_loaded)
+        if (!Active)
+        {
+            return;
+        }
+
+        if (Snapshot is not null)
+        {
+            ApplySnapshot(Snapshot);
+            return;
+        }
+
+        if (!_loaded)
         {
             await LoadAsync();
         }
+    }
+
+    private void ApplySnapshot(CandidateKompasState kompas)
+    {
+        Paint(
+            kompas.Competencies,
+            kompas.CareerInterests,
+            kompas.Culture,
+            kompas.Values,
+            kompas.CompetenceDeep,
+            kompas.CareerDeep,
+            kompas.CultureDeep,
+            kompas.ValuesDeep);
+        _loaded = true;
+        _loading = false;
     }
 
     private async Task LoadAsync()
@@ -64,6 +91,13 @@
         _loading = true;
         try
         {
+            var kompas = await Api.GetMyKompasAsync();
+            if (kompas is not null)
+            {
+                ApplySnapshot(kompas);
+                return;
+            }
+
             var competence = await Api.GetMyCompetenciesAsync();
             var career = await Api.GetMyCareerInterestsAsync();
             var culture = await Api.GetMyCultureAsync();
@@ -72,98 +106,110 @@
             var careerDeep = await Api.GetDeepAnalysisAsync("career");
             var cultureDeep = await Api.GetDeepAnalysisAsync("culture");
             var valuesDeep = await Api.GetDeepAnalysisAsync("values");
-
-            _tiles.Clear();
-            foreach (var def in AssessmentTestCatalog.All)
-            {
-                var (freeDone, outcome) = def.Kind switch
-                {
-                    AssessmentKind.Competence => (
-                        IsCompleted(competence?.Status),
-                        AssessmentOutcomeLines.Competence(
-                            competence?.Scores?.Samenwerken,
-                            competence?.Scores?.Resultaatgerichtheid,
-                            competence?.Scores?.Stressbestendigheid,
-                            competence?.Scores?.Innovatie,
-                            competence?.Scores?.Extraversie)),
-                    AssessmentKind.Career => (
-                        IsCompleted(career?.Status),
-                        AssessmentOutcomeLines.Career(
-                            career?.Scores?.Realistic,
-                            career?.Scores?.Investigative,
-                            career?.Scores?.Artistic,
-                            career?.Scores?.Social,
-                            career?.Scores?.Enterprising,
-                            career?.Scores?.Conventional)),
-                    AssessmentKind.Culture => (
-                        IsCompleted(culture?.Status),
-                        AssessmentOutcomeLines.Culture(
-                            culture?.Scores?.Autonomy,
-                            culture?.Scores?.Informal,
-                            culture?.Scores?.Collaboration,
-                            culture?.Scores?.Flexibility,
-                            culture?.Scores?.Innovation,
-                            culture?.Scores?.PeopleFirst)),
-                    _ => (
-                        IsCompleted(values?.Status),
-                        AssessmentOutcomeLines.Values(
-                            values?.Scores?.Autonomy,
-                            values?.Scores?.Connection,
-                            values?.Scores?.Achievement,
-                            values?.Scores?.Stability,
-                            values?.Scores?.Impact))
-                };
-
-                var deep = def.Kind switch
-                {
-                    AssessmentKind.Competence => competenceDeep,
-                    AssessmentKind.Career => careerDeep,
-                    AssessmentKind.Culture => cultureDeep,
-                    _ => valuesDeep
-                };
-
-                var extended = deep is { IsCompleted: true };
-                var done = freeDone || extended;
-                string accent;
-                string statusKey;
-                string icon;
-                if (extended)
-                {
-                    accent = "gold";
-                    statusKey = "Test.Status.Extended";
-                    icon = "★";
-                }
-                else if (freeDone)
-                {
-                    accent = "success";
-                    statusKey = "Test.Status.FreeDone";
-                    icon = "✓";
-                }
-                else
-                {
-                    accent = "pending";
-                    statusKey = "Test.Status.NotDone";
-                    icon = "○";
-                }
-
-                _tiles.Add(new TileVm(
-                    def.TitleKey,
-                    def.DetailHref,
-                    accent,
-                    statusKey,
-                    icon,
-                    done ? outcome : null,
-                    def.FreeQuestionCount,
-                    def.FreeMinutesApprox));
-            }
-
-            _doneCount = _tiles.Count(t => t.Accent is "success" or "gold");
+            Paint(competence, career, culture, values, competenceDeep, careerDeep, cultureDeep, valuesDeep);
             _loaded = true;
         }
         finally
         {
             _loading = false;
         }
+    }
+
+    private void Paint(
+        CandidateCompetencyState? competence,
+        CandidateCareerInterestState? career,
+        CandidateCultureState? culture,
+        CandidateValuesState? values,
+        DeepAnalysisState? competenceDeep,
+        DeepAnalysisState? careerDeep,
+        DeepAnalysisState? cultureDeep,
+        DeepAnalysisState? valuesDeep)
+    {
+        _tiles.Clear();
+        foreach (var def in AssessmentTestCatalog.All)
+        {
+            var (freeDone, outcome) = def.Kind switch
+            {
+                AssessmentKind.Competence => (
+                    IsCompleted(competence?.Status),
+                    AssessmentOutcomeLines.Competence(
+                        competence?.Scores?.Samenwerken,
+                        competence?.Scores?.Resultaatgerichtheid,
+                        competence?.Scores?.Stressbestendigheid,
+                        competence?.Scores?.Innovatie,
+                        competence?.Scores?.Extraversie)),
+                AssessmentKind.Career => (
+                    IsCompleted(career?.Status),
+                    AssessmentOutcomeLines.Career(
+                        career?.Scores?.Realistic,
+                        career?.Scores?.Investigative,
+                        career?.Scores?.Artistic,
+                        career?.Scores?.Social,
+                        career?.Scores?.Enterprising,
+                        career?.Scores?.Conventional)),
+                AssessmentKind.Culture => (
+                    IsCompleted(culture?.Status),
+                    AssessmentOutcomeLines.Culture(
+                        culture?.Scores?.Autonomy,
+                        culture?.Scores?.Informal,
+                        culture?.Scores?.Collaboration,
+                        culture?.Scores?.Flexibility,
+                        culture?.Scores?.Innovation,
+                        culture?.Scores?.PeopleFirst)),
+                _ => (
+                    IsCompleted(values?.Status),
+                    AssessmentOutcomeLines.Values(
+                        values?.Scores?.Autonomy,
+                        values?.Scores?.Connection,
+                        values?.Scores?.Achievement,
+                        values?.Scores?.Stability,
+                        values?.Scores?.Impact))
+            };
+
+            var deep = def.Kind switch
+            {
+                AssessmentKind.Competence => competenceDeep,
+                AssessmentKind.Career => careerDeep,
+                AssessmentKind.Culture => cultureDeep,
+                _ => valuesDeep
+            };
+
+            var extended = deep is { IsCompleted: true };
+            var done = freeDone || extended;
+            string accent;
+            string statusKey;
+            string icon;
+            if (extended)
+            {
+                accent = "gold";
+                statusKey = "Test.Status.Extended";
+                icon = "★";
+            }
+            else if (freeDone)
+            {
+                accent = "success";
+                statusKey = "Test.Status.FreeDone";
+                icon = "✓";
+            }
+            else
+            {
+                accent = "pending";
+                statusKey = "Test.Status.NotDone";
+                icon = "○";
+            }
+
+            _tiles.Add(new TileVm(
+                def.TitleKey,
+                def.DetailHref,
+                accent,
+                statusKey,
+                icon,
+                done ? outcome : null,
+                def.FreeQuestionCount,
+                def.FreeMinutesApprox));
+        }
+
+        _doneCount = _tiles.Count(t => t.Accent is "success" or "gold");
     }
 
     private static bool IsCompleted(string? status)

@@ -3,12 +3,22 @@
 @inject CultureState Culture
 @implements IDisposable
 
+@if (!Active)
+{
+    return;
+}
+
 <div class="kompas-card--fit">
     <h3 class="visually-hidden">@Culture["Kompas.TabFit"]</h3>
 
     @if (!string.IsNullOrWhiteSpace(_message))
     {
         <p class="state-message">@_message</p>
+    }
+
+    @if (_state?.NeedsRecheck == true)
+    {
+        <p class="state-message" aria-live="polite">@Culture["Fit.NeedsRecheck"]</p>
     }
 
     @if (_loading)
@@ -39,7 +49,9 @@
                        autocomplete="off"
                        placeholder="@Culture["Fit.Placeholder"]"
                        @bind="_jobTitle" />
-                <button class="login-submit fit-hero__submit" type="submit" disabled="@_busy">@Culture["Fit.Check"]</button>
+                <button class="login-submit fit-hero__submit" type="submit" disabled="@_busy">
+                    @(_activeVacancyId is Guid ? Culture["Fit.CheckMyFit"] : Culture["Fit.Check"])
+                </button>
             </form>
         </section>
 
@@ -220,6 +232,7 @@
 
 @code {
     [Parameter] public Guid? VacancyId { get; set; }
+    [Parameter] public bool Active { get; set; } = true;
 
     private bool _loadStarted;
     private bool _loading = true;
@@ -227,8 +240,8 @@
     private string? _message;
     private string _jobTitle = "";
     private RoleFitCheckState? _state;
-    private bool _autoEvaluated;
     private Guid? _activeVacancyId;
+    private bool _wasActive;
 
     protected override void OnInitialized()
     {
@@ -236,11 +249,20 @@
         Culture.Changed += OnCultureChanged;
     }
 
-    protected override Task OnInitializedAsync()
-        => TryLoadAsync();
+    protected override async Task OnParametersSetAsync()
+    {
+        if (VacancyId is Guid vid)
+        {
+            _activeVacancyId = vid;
+        }
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
-        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+        var opening = Active && !_wasActive;
+        _wasActive = Active;
+        if (opening)
+        {
+            await LoadAsync();
+        }
+    }
 
     public void Dispose()
         => Culture.Changed -= OnCultureChanged;
@@ -248,37 +270,33 @@
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
 
-    private async Task TryLoadAsync()
+    private async Task LoadAsync()
     {
-        if (!HomeDashboardLoad.TryBegin(ref _loadStarted, RendererInfo.IsInteractive))
+        if (_loadStarted && _state is not null)
         {
             return;
         }
 
-        await LoadAsync();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task LoadAsync()
-    {
+        _loadStarted = true;
         _loading = true;
         _message = null;
         try
         {
             _state = await Api.GetMyRoleFitAsync();
-            if (VacancyId is Guid vid && _state is { IsUnlocked: true } && !_autoEvaluated)
+            // Prefill vacancy title only — never auto-POST role-fit (AI or scoring).
+            if (VacancyId is Guid && _state?.LastResult is { VacancyId: Guid } lastVacancy
+                && lastVacancy.VacancyId == VacancyId)
             {
-                _autoEvaluated = true;
-                _activeVacancyId = vid;
-                _state = await Api.EvaluateRoleFitAsync(_jobTitle, vid);
-                if (_state.LastResult is { } fresh)
-                {
-                    _jobTitle = fresh.JobTitle;
-                }
+                _jobTitle = lastVacancy.JobTitle;
             }
             else if (_state?.LastResult is { } last && string.IsNullOrWhiteSpace(_jobTitle))
             {
                 _jobTitle = last.JobTitle;
+            }
+            else if (VacancyId is Guid && string.IsNullOrWhiteSpace(_jobTitle))
+            {
+                // Keep empty title; user taps "Check mijn fit" after seeing the prefilled vacancy context.
+                _activeVacancyId = VacancyId;
             }
         }
         catch

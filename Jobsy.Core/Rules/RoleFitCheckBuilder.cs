@@ -121,7 +121,9 @@ public static class RoleFitCheckBuilder
             snapshot.FromOpenAi,
             snapshot.VacancyFit is null ? null : SanitizeVacancy(snapshot.VacancyFit),
             RoleFitFunnel.MergeSimilar(snapshot.SimilarRoles, null),
-            SanitizePath(snapshot.CareerPath));
+            SanitizePath(snapshot.CareerPath),
+            snapshot.TrainingOffers,
+            snapshot.DirectVacancies);
     }
 
     private static RoleFitVacancyFit SanitizeVacancy(RoleFitVacancyFit fit)

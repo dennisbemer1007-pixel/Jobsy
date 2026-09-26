@@ -60,7 +60,28 @@ public static class RoleFitCheckJson
                     .Where(s => !string.IsNullOrWhiteSpace(s.Title))
                     .Select(s => new RoleFitSimilarRole(s.Title!.Trim(), s.Why ?? "", s.FitPercent))
                     .ToList(),
-                ReadPath(dto.CareerPath));
+                ReadPath(dto.CareerPath),
+                (dto.TrainingOffers ?? [])
+                    .Where(t => !string.IsNullOrWhiteSpace(t.Title))
+                    .Select(t => new RoleFitStoredTrainingOffer(
+                        t.OfferId,
+                        t.Title!.Trim(),
+                        t.ProviderName ?? "",
+                        t.Kind ?? "",
+                        t.Network ?? "",
+                        t.Region ?? "",
+                        t.CtaLabel ?? "",
+                        t.Advice ?? ""))
+                    .ToList(),
+                (dto.DirectVacancies ?? [])
+                    .Where(d => d.Id != Guid.Empty)
+                    .Select(d => new RoleFitStoredDirectVacancy(
+                        d.Id,
+                        d.Title ?? "",
+                        d.CompanyName ?? "",
+                        d.MatchPercent,
+                        d.Href ?? $"/vacancies/{d.Id}"))
+                    .ToList());
             return RoleFitCheckBuilder.Sanitize(snapshot);
         }
         catch (JsonException)
@@ -115,7 +136,26 @@ public static class RoleFitCheckJson
                 DurationLabel = s.DurationLabel,
                 Detail = s.Detail
             }).ToList()
-        }
+        },
+        TrainingOffers = snapshot.TrainingOffers?.Select(t => new TrainingDto
+        {
+            OfferId = t.OfferId,
+            Title = t.Title,
+            ProviderName = t.ProviderName,
+            Kind = t.Kind,
+            Network = t.Network,
+            Region = t.Region,
+            CtaLabel = t.CtaLabel,
+            Advice = t.Advice
+        }).ToList(),
+        DirectVacancies = snapshot.DirectVacancies?.Select(d => new DirectDto
+        {
+            Id = d.Id,
+            Title = d.Title,
+            CompanyName = d.CompanyName,
+            MatchPercent = d.MatchPercent,
+            Href = d.Href
+        }).ToList()
     };
 
     private static CareerPathPlan? ReadPath(CareerPathDto? dto)
@@ -163,6 +203,29 @@ public static class RoleFitCheckJson
         public bool? ShowUpskill { get; set; }
         public List<SimilarDto>? SimilarRoles { get; set; }
         public CareerPathDto? CareerPath { get; set; }
+        public List<TrainingDto>? TrainingOffers { get; set; }
+        public List<DirectDto>? DirectVacancies { get; set; }
+    }
+
+    private sealed class TrainingDto
+    {
+        public Guid OfferId { get; set; }
+        public string? Title { get; set; }
+        public string? ProviderName { get; set; }
+        public string? Kind { get; set; }
+        public string? Network { get; set; }
+        public string? Region { get; set; }
+        public string? CtaLabel { get; set; }
+        public string? Advice { get; set; }
+    }
+
+    private sealed class DirectDto
+    {
+        public Guid Id { get; set; }
+        public string? Title { get; set; }
+        public string? CompanyName { get; set; }
+        public int MatchPercent { get; set; }
+        public string? Href { get; set; }
     }
 
     private sealed class CareerPathDto

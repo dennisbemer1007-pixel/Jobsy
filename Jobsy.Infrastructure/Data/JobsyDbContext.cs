@@ -38,6 +38,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
     public DbSet<CandidateRoleFitCheck> CandidateRoleFitChecks => Set<CandidateRoleFitCheck>();
+    public DbSet<CandidateMatchSnapshot> CandidateMatchSnapshots => Set<CandidateMatchSnapshot>();
     public DbSet<TrainingProvider> TrainingProviders => Set<TrainingProvider>();
     public DbSet<TrainingOffer> TrainingOffers => Set<TrainingOffer>();
     public DbSet<TrainingClick> TrainingClicks => Set<TrainingClick>();
@@ -655,6 +656,21 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.JobTitle).HasMaxLength(80).IsRequired();
             entity.Property(e => e.ResultJson).HasColumnType("text").IsRequired();
+            entity.Property(e => e.InputFingerprint).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateMatchSnapshot>(entity =>
+        {
+            entity.ToTable("CandidateMatchSnapshots");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.MatchesJson).HasColumnType("text").IsRequired();
+            entity.Property(e => e.InputFingerprint).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
             entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasOne(e => e.User)
                 .WithMany()

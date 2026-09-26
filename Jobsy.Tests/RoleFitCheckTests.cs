@@ -115,6 +115,10 @@ public class RoleFitCheckTests
         Assert.Contains("Fit.Step1", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.SimilarTitle", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.DirectTitle", panel, StringComparison.Ordinal);
+        Assert.Contains("Fit.CheckMyFit", panel, StringComparison.Ordinal);
+        Assert.Contains("Fit.NeedsRecheck", panel, StringComparison.Ordinal);
+        Assert.Contains("Active", panel, StringComparison.Ordinal);
+        Assert.Contains("never auto-POST", panel, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
 

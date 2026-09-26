@@ -5,6 +5,7 @@ using Jobsy.Core.Options;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
@@ -12,14 +13,16 @@ namespace Jobsy.Infrastructure.Services;
 public sealed class IntegrationCredentialService : IIntegrationCredentialService
 {
     private static readonly IntegrationKey[] ConfigurableKeys = Enum.GetValues<IntegrationKey>();
+    public static readonly TimeSpan SecretsCacheTtl = TimeSpan.FromMinutes(10);
 
     private readonly JobsyDbContext _db;
     private readonly ISecretProtector _secrets;
     private readonly MailOptions _mailOptions;
     private readonly KvkOptions _kvkOptions;
+    private readonly IMemoryCache? _cache;
 
     public IntegrationCredentialService(JobsyDbContext db, ISecretProtector secrets)
-        : this(db, secrets, Options.Create(new MailOptions()), Options.Create(new KvkOptions()))
+        : this(db, secrets, Options.Create(new MailOptions()), Options.Create(new KvkOptions()), cache: null)
     {
     }
 
@@ -27,7 +30,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         JobsyDbContext db,
         ISecretProtector secrets,
         IOptions<MailOptions> mailOptions)
-        : this(db, secrets, mailOptions, Options.Create(new KvkOptions()))
+        : this(db, secrets, mailOptions, Options.Create(new KvkOptions()), cache: null)
     {
     }
 
@@ -36,11 +39,22 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         ISecretProtector secrets,
         IOptions<MailOptions> mailOptions,
         IOptions<KvkOptions> kvkOptions)
+        : this(db, secrets, mailOptions, kvkOptions, cache: null)
+    {
+    }
+
+    public IntegrationCredentialService(
+        JobsyDbContext db,
+        ISecretProtector secrets,
+        IOptions<MailOptions> mailOptions,
+        IOptions<KvkOptions> kvkOptions,
+        IMemoryCache? cache)
     {
         _db = db;
         _secrets = secrets;
         _mailOptions = mailOptions.Value ?? new MailOptions();
         _kvkOptions = kvkOptions.Value ?? new KvkOptions();
+        _cache = cache;
     }
 
     public async Task<IntegrationCredentialView?> GetAsync(
@@ -177,6 +191,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
 
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
+        _cache?.Remove("integration-secrets:" + key);
         return ToView(key, row);
     }
 
@@ -233,6 +248,13 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         IntegrationKey key,
         CancellationToken cancellationToken = default)
     {
+        var cacheKey = "integration-secrets:" + key;
+        if (_cache is not null
+            && _cache.TryGetValue(cacheKey, out IntegrationCredentialSecrets? cached))
+        {
+            return cached;
+        }
+
         var row = await _db.IntegrationCredentials.AsNoTracking()
             .FirstOrDefaultAsync(c => c.Key == key, cancellationToken);
 
@@ -271,10 +293,11 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         if (apiKey is null && clientId is null && clientSecret is null && tenantId is null
             && model is null && baseUrl is null && fromAddress is null)
         {
+            _cache?.Set(cacheKey, (IntegrationCredentialSecrets?)null, SecretsCacheTtl);
             return null;
         }
 
-        return new IntegrationCredentialSecrets(
+        var secrets = new IntegrationCredentialSecrets(
             apiKey,
             clientId,
             clientSecret,
@@ -282,6 +305,8 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             model,
             baseUrl,
             fromAddress);
+        _cache?.Set(cacheKey, secrets, SecretsCacheTtl);
+        return secrets;
     }
 
     private static string? TrimOrNull(string? value)

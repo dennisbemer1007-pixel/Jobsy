@@ -21,7 +21,9 @@ public sealed record RoleFitCheckStateDto(
     decimal DeepAnalysisPriceEuro,
     string LockMessage,
     string DeepUpsellCopy,
-    RoleFitCheckResultDto? LastResult);
+    RoleFitCheckResultDto? LastResult,
+    string InsightsStatus = InsightsStatuses.Ready,
+    bool NeedsRecheck = false);
 
 public sealed record RoleFitCheckResultDto(
     string JobTitle,

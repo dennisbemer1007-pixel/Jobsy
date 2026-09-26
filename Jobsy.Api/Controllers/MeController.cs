@@ -37,6 +37,7 @@ public class MeController : ControllerBase
     private readonly ICvTextExtractor _cvText;
     private readonly ICvExtractionService _cvExtraction;
     private readonly IWhoAmIService _whoAmI;
+    private readonly ICandidateInsightsQueue _insightsQueue;
     private const string VacancySourceLanguage = "nl";
 
     public MeController(
@@ -48,7 +49,8 @@ public class MeController : ControllerBase
         ILobsyCvPdfService lobsyCvPdf,
         ICvTextExtractor cvText,
         ICvExtractionService cvExtraction,
-        IWhoAmIService whoAmI)
+        IWhoAmIService whoAmI,
+        ICandidateInsightsQueue insightsQueue)
     {
         _companyAuth = companyAuth;
         _users = users;
@@ -59,6 +61,7 @@ public class MeController : ControllerBase
         _cvText = cvText;
         _cvExtraction = cvExtraction;
         _whoAmI = whoAmI;
+        _insightsQueue = insightsQueue;
     }
 
     [HttpGet("access")]
@@ -309,6 +312,7 @@ public class MeController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        _insightsQueue.TryEnqueue(user.Id);
         var features = await _features.GetAsync(cancellationToken);
         return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
     }
@@ -680,6 +684,7 @@ public class MeController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        _insightsQueue.TryEnqueue(user.Id);
         var features = await _features.GetAsync(cancellationToken);
         return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
     }

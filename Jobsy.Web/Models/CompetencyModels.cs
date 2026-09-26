@@ -19,6 +19,7 @@ public sealed class WhoAmIState
     public List<WhoAmIEmployerItem> Employers { get; set; } = [];
     public List<string> Educations { get; set; } = [];
     public List<string> Certificates { get; set; } = [];
+    public string InsightsStatus { get; set; } = "Ready";
 
     public int CompletedCount =>
         (ProfileFilled ? 1 : 0)
@@ -65,6 +66,7 @@ public sealed class CandidateCareerInterestState
     public CareerCompassModel Compass { get; set; } = new();
     public string DeepAnalysisUpsellCopy { get; set; } = "";
     public List<CandidateMatchedVacancy> TopVacancies { get; set; } = [];
+    public string InsightsStatus { get; set; } = "Ready";
 }
 
 public sealed class CompetencyScoreSet
@@ -275,6 +277,23 @@ public sealed class RoleFitCheckState
     public string LockMessage { get; set; } = "";
     public string DeepUpsellCopy { get; set; } = "";
     public RoleFitCheckResult? LastResult { get; set; }
+    public string InsightsStatus { get; set; } = "Ready";
+    public bool NeedsRecheck { get; set; }
+}
+
+public sealed class CandidateKompasState
+{
+    public MeProfile? Profile { get; set; }
+    public CandidateCompetencyState? Competencies { get; set; }
+    public CandidateCareerInterestState? CareerInterests { get; set; }
+    public CandidateCultureState? Culture { get; set; }
+    public CandidateValuesState? Values { get; set; }
+    public DeepAnalysisState? CompetenceDeep { get; set; }
+    public DeepAnalysisState? CareerDeep { get; set; }
+    public DeepAnalysisState? CultureDeep { get; set; }
+    public DeepAnalysisState? ValuesDeep { get; set; }
+    public List<CandidateMatchedVacancy> TopMatches { get; set; } = [];
+    public string InsightsStatus { get; set; } = "Ready";
 }
 
 public sealed class RoleFitCheckResult

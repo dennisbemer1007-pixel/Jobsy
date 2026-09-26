@@ -32,6 +32,7 @@ public sealed record WhoAmIStateDto(
     DateTime? StoryGeneratedAtUtc,
     IReadOnlyList<WhoAmIEmployerDto> Employers,
     IReadOnlyList<string> Educations,
-    IReadOnlyList<string> Certificates);
+    IReadOnlyList<string> Certificates,
+    string InsightsStatus = InsightsStatuses.Ready);
 
 public sealed record WhoAmIEmployerDto(string EmployerName, string? Role);

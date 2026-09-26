@@ -5,7 +5,10 @@ namespace Jobsy.Core.Interfaces;
 
 public interface ICandidateCareerInterestService
 {
-    Task<CandidateCareerInterestStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<CandidateCareerInterestStateDto> GetAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default,
+        bool includeMatches = true);
 
     Task<CandidateCareerInterestStateDto> SaveAsync(
         Guid userId,
@@ -33,7 +36,8 @@ public sealed record CandidateCareerInterestStateDto(
     IReadOnlyList<string> MatchTags,
     string DeepAnalysisUpsellCopy,
     IReadOnlyList<CandidateMatchedVacancyDto> TopVacancies,
-    CareerCompassSnapshot Compass);
+    CareerCompassSnapshot Compass,
+    string InsightsStatus = InsightsStatuses.Ready);
 
 public sealed record CareerQuestionDto(
     int Id,

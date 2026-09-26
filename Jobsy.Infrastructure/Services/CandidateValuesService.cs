@@ -10,11 +10,16 @@ public sealed class CandidateValuesService : ICandidateValuesService
 {
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
+    private readonly ICandidateInsightsQueue _queue;
 
-    public CandidateValuesService(JobsyDbContext db, IFlexCommercialService commercial)
+    public CandidateValuesService(
+        JobsyDbContext db,
+        IFlexCommercialService commercial,
+        ICandidateInsightsQueue queue)
     {
         _db = db;
         _commercial = commercial;
+        _queue = queue;
     }
 
     public async Task<CandidateValuesStateDto> GetAsync(
@@ -93,6 +98,11 @@ public sealed class CandidateValuesService : ICandidateValuesService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        if (complete)
+        {
+            _queue.TryEnqueue(userId);
+        }
+
         var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
         return ToDto(row, price);
     }

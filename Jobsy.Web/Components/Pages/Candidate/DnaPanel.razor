@@ -66,6 +66,7 @@
 @code {
     [Parameter] public bool Active { get; set; }
     [Parameter] public EventCallback<string> OnOpenTab { get; set; }
+    [Parameter] public CandidateKompasState? Snapshot { get; set; }
 
     private bool _loading = true;
     private bool _loaded;
@@ -74,10 +75,48 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (Active && !_loaded)
+        if (!Active)
+        {
+            return;
+        }
+
+        if (Snapshot is not null && !_loaded)
+        {
+            ApplySnapshot(Snapshot);
+            return;
+        }
+
+        if (!_loaded)
         {
             await LoadAsync();
         }
+        else if (Snapshot is not null)
+        {
+            ApplySnapshot(Snapshot);
+        }
+    }
+
+    private void ApplySnapshot(CandidateKompasState kompas)
+    {
+        var competence = kompas.Competencies;
+        var career = kompas.CareerInterests;
+        var culture = kompas.Culture;
+        var values = kompas.Values;
+        Paint(
+            competence?.Status,
+            competence?.Scores,
+            career?.Status,
+            career?.Scores,
+            culture?.Status,
+            culture?.Scores,
+            values?.Status,
+            values?.Scores,
+            kompas.CompetenceDeep,
+            kompas.CareerDeep,
+            kompas.CultureDeep,
+            kompas.ValuesDeep);
+        _loaded = true;
+        _loading = false;
     }
 
     private async Task LoadAsync()
@@ -85,6 +124,13 @@
         _loading = true;
         try
         {
+            var kompas = await Api.GetMyKompasAsync();
+            if (kompas is not null)
+            {
+                ApplySnapshot(kompas);
+                return;
+            }
+
             var competence = await Api.GetMyCompetenciesAsync();
             var career = await Api.GetMyCareerInterestsAsync();
             var culture = await Api.GetMyCultureAsync();
@@ -93,62 +139,89 @@
             var careerDeep = await Api.GetDeepAnalysisAsync("career");
             var cultureDeep = await Api.GetDeepAnalysisAsync("culture");
             var valuesDeep = await Api.GetDeepAnalysisAsync("values");
-
-            _items.Clear();
-            _items.Add(Build(
-                AssessmentKind.Competence,
-                "Test.Competence.Title",
-                IsCompleted(competence?.Status),
+            Paint(
+                competence?.Status,
+                competence?.Scores,
+                career?.Status,
+                career?.Scores,
+                culture?.Status,
+                culture?.Scores,
+                values?.Status,
+                values?.Scores,
                 competenceDeep,
-                AssessmentOutcomeLines.Competence(
-                    competence?.Scores?.Samenwerken,
-                    competence?.Scores?.Resultaatgerichtheid,
-                    competence?.Scores?.Stressbestendigheid,
-                    competence?.Scores?.Innovatie,
-                    competence?.Scores?.Extraversie)));
-            _items.Add(Build(
-                AssessmentKind.Career,
-                "Test.Career.Title",
-                IsCompleted(career?.Status),
                 careerDeep,
-                AssessmentOutcomeLines.Career(
-                    career?.Scores?.Realistic,
-                    career?.Scores?.Investigative,
-                    career?.Scores?.Artistic,
-                    career?.Scores?.Social,
-                    career?.Scores?.Enterprising,
-                    career?.Scores?.Conventional)));
-            _items.Add(Build(
-                AssessmentKind.Culture,
-                "Test.Culture.Title",
-                IsCompleted(culture?.Status),
                 cultureDeep,
-                AssessmentOutcomeLines.Culture(
-                    culture?.Scores?.Autonomy,
-                    culture?.Scores?.Informal,
-                    culture?.Scores?.Collaboration,
-                    culture?.Scores?.Flexibility,
-                    culture?.Scores?.Innovation,
-                    culture?.Scores?.PeopleFirst)));
-            _items.Add(Build(
-                AssessmentKind.Values,
-                "Test.Values.Title",
-                IsCompleted(values?.Status),
-                valuesDeep,
-                AssessmentOutcomeLines.Values(
-                    values?.Scores?.Autonomy,
-                    values?.Scores?.Connection,
-                    values?.Scores?.Achievement,
-                    values?.Scores?.Stability,
-                    values?.Scores?.Impact)));
-
-            _completedCount = _items.Count(i => i.Completed);
+                valuesDeep);
             _loaded = true;
         }
         finally
         {
             _loading = false;
         }
+    }
+
+    private void Paint(
+        string? competenceStatus,
+        CompetencyScoreSet? competenceScores,
+        string? careerStatus,
+        RiasecScoreSet? careerScores,
+        string? cultureStatus,
+        CulturePersonalityScoreSet? cultureScores,
+        string? valuesStatus,
+        SchwartzValuesScoreSet? valuesScores,
+        DeepAnalysisState? competenceDeep,
+        DeepAnalysisState? careerDeep,
+        DeepAnalysisState? cultureDeep,
+        DeepAnalysisState? valuesDeep)
+    {
+        _items.Clear();
+        _items.Add(Build(
+            AssessmentKind.Competence,
+            "Test.Competence.Title",
+            IsCompleted(competenceStatus),
+            competenceDeep,
+            AssessmentOutcomeLines.Competence(
+                competenceScores?.Samenwerken,
+                competenceScores?.Resultaatgerichtheid,
+                competenceScores?.Stressbestendigheid,
+                competenceScores?.Innovatie,
+                competenceScores?.Extraversie)));
+        _items.Add(Build(
+            AssessmentKind.Career,
+            "Test.Career.Title",
+            IsCompleted(careerStatus),
+            careerDeep,
+            AssessmentOutcomeLines.Career(
+                careerScores?.Realistic,
+                careerScores?.Investigative,
+                careerScores?.Artistic,
+                careerScores?.Social,
+                careerScores?.Enterprising,
+                careerScores?.Conventional)));
+        _items.Add(Build(
+            AssessmentKind.Culture,
+            "Test.Culture.Title",
+            IsCompleted(cultureStatus),
+            cultureDeep,
+            AssessmentOutcomeLines.Culture(
+                cultureScores?.Autonomy,
+                cultureScores?.Informal,
+                cultureScores?.Collaboration,
+                cultureScores?.Flexibility,
+                cultureScores?.Innovation,
+                cultureScores?.PeopleFirst)));
+        _items.Add(Build(
+            AssessmentKind.Values,
+            "Test.Values.Title",
+            IsCompleted(valuesStatus),
+            valuesDeep,
+            AssessmentOutcomeLines.Values(
+                valuesScores?.Autonomy,
+                valuesScores?.Connection,
+                valuesScores?.Achievement,
+                valuesScores?.Stability,
+                valuesScores?.Impact)));
+        _completedCount = _items.Count(i => i.Completed);
     }
 
     private static bool IsCompleted(string? status)

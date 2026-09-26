@@ -5,6 +5,7 @@ using Jobsy.Infrastructure.Jobs;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -55,7 +56,13 @@ public static class DependencyInjection
         }
 
         services.AddJobsyDataProtection(connectionString);
+        services.AddMemoryCache();
         services.AddSingleton<ISecretProtector, SecretProtector>();
+        services.AddSingleton<ICandidateInsightsQueue, CandidateInsightsQueue>();
+        services.AddScoped<ICandidateMatchSnapshotService, CandidateMatchSnapshotService>();
+        services.AddScoped<ICandidateInsightsComputer, CandidateInsightsComputer>();
+        services.AddScoped<ICandidateKompasService, CandidateKompasService>();
+        services.AddHostedService<CandidateInsightsWorker>();
 
         services.AddOptions<JobsyFeatureOptions>()
             .Bind(configuration.GetSection(JobsyFeatureOptions.SectionName));
@@ -230,7 +237,12 @@ public static class DependencyInjection
         services.AddScoped<IPushNotificationService, WebPushNotificationService>();
         services.AddScoped<PushNotificationServiceStub>();
         services.AddScoped<IIntegrationHealthService, IntegrationHealthStub>();
-        services.AddScoped<IIntegrationCredentialService, IntegrationCredentialService>();
+        services.AddScoped<IIntegrationCredentialService>(sp => new IntegrationCredentialService(
+            sp.GetRequiredService<JobsyDbContext>(),
+            sp.GetRequiredService<ISecretProtector>(),
+            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MailOptions>>(),
+            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<KvkOptions>>(),
+            sp.GetRequiredService<IMemoryCache>()));
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
         services.AddScoped<IPlatformCompanySettingsService, PlatformCompanySettingsService>();
         services.AddScoped<IAboutPageSettingsService, AboutPageSettingsService>();

@@ -10,11 +10,16 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
 {
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
+    private readonly ICandidateInsightsQueue _queue;
 
-    public CandidateCulturePersonalityService(JobsyDbContext db, IFlexCommercialService commercial)
+    public CandidateCulturePersonalityService(
+        JobsyDbContext db,
+        IFlexCommercialService commercial,
+        ICandidateInsightsQueue queue)
     {
         _db = db;
         _commercial = commercial;
+        _queue = queue;
     }
 
     public async Task<CandidateCulturePersonalityStateDto> GetAsync(
@@ -92,6 +97,11 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        if (complete)
+        {
+            _queue.TryEnqueue(userId);
+        }
+
         var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
         return ToDto(row, price);
     }

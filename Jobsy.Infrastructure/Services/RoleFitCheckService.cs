@@ -79,6 +79,27 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         var last = await _db.CandidateRoleFitChecks.AsNoTracking()
             .FirstOrDefaultAsync(r => r.UserId == userId, cancellationToken);
 
+        RoleFitCheckResultDto? result = null;
+        var needsRecheck = false;
+        if (last is not null)
+        {
+            result = ToStoredResult(last, deep);
+            if (unlocked && competence is { IsComplete: true } && career is { IsComplete: true })
+            {
+                var cultureScores = await _culture.GetCompletedScoresAsync(userId, cancellationToken);
+                var prefs = await LoadPrefsAsync(userId, cancellationToken);
+                var fingerprint = CandidateInsightsFingerprint.ForRoleFit(
+                    last.JobTitle,
+                    result.VacancyId,
+                    competence,
+                    career,
+                    cultureScores,
+                    prefs);
+                needsRecheck = !string.IsNullOrWhiteSpace(last.InputFingerprint)
+                               && !string.Equals(last.InputFingerprint, fingerprint, StringComparison.Ordinal);
+            }
+        }
+
         return new RoleFitCheckStateDto(
             unlocked,
             competence is { IsComplete: true },
@@ -87,7 +108,9 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             price,
             unlocked ? "" : RoleFitCheckCopy.Locked,
             RoleFitCheckCopy.DeepUpsell,
-            last is null ? null : await ToResultAsync(userId, last, deep, cancellationToken));
+            result,
+            InsightsStatuses.Ready,
+            needsRecheck);
     }
 
     public async Task<RoleFitCheckStateDto> EvaluateAsync(
@@ -124,7 +147,29 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             throw new RoleFitLockedException();
         }
 
+        var prefs = await LoadPrefsAsync(userId, cancellationToken);
+        var fingerprint = CandidateInsightsFingerprint.ForRoleFit(
+            title, vacancy?.Id, competence, career, cultureScores, prefs);
         var fromDeep = await HasCompletedDeepAsync(userId, cancellationToken);
+        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+
+        var existing = await _db.CandidateRoleFitChecks.FirstOrDefaultAsync(r => r.UserId == userId, cancellationToken);
+        if (existing is not null
+            && string.Equals(existing.InputFingerprint, fingerprint, StringComparison.Ordinal))
+        {
+            return new RoleFitCheckStateDto(
+                true,
+                true,
+                true,
+                fromDeep,
+                price,
+                "",
+                RoleFitCheckCopy.DeepUpsell,
+                ToStoredResult(existing, fromDeep),
+                InsightsStatuses.Ready,
+                NeedsRecheck: false);
+        }
+
         var local = RoleFitCheckBuilder.Build(title, competence, career, fromDeep, cultureScores);
         var snapshot = await TryOpenAiAsync(title, competence, career, fromDeep, userId, local, cultureScores, cancellationToken)
                        ?? local;
@@ -134,7 +179,6 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 local.SimilarRoles,
                 OccupationTaxonomy.WithinDomain(title, snapshot.SimilarRoles))
         };
-        var prefs = await LoadPrefsAsync(userId, cancellationToken);
         var path = CareerPathPlanner.Personalize(snapshot.JobTitle, prefs, formal: null);
         if (path is not null)
         {
@@ -150,8 +194,10 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             snapshot = await AttachVacancyAsync(userId, vacancy, competence, snapshot, cultureScores, cancellationToken);
         }
 
+        snapshot = await EnrichAndStoreOffersAsync(userId, snapshot, cancellationToken);
+
         var now = DateTime.UtcNow;
-        var row = await _db.CandidateRoleFitChecks.FirstOrDefaultAsync(r => r.UserId == userId, cancellationToken);
+        var row = existing;
         if (row is null)
         {
             row = new CandidateRoleFitCheck
@@ -166,12 +212,12 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         row.JobTitle = snapshot.JobTitle;
         row.MatchPercent = snapshot.MatchPercent;
         row.ResultJson = RoleFitCheckJson.Serialize(snapshot);
+        row.InputFingerprint = fingerprint;
         row.FromDeepAnalysis = snapshot.FromDeepAnalysis;
         row.FromOpenAi = snapshot.FromOpenAi;
         row.UpdatedAtUtc = now;
         await _db.SaveChangesAsync(cancellationToken);
 
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
         return new RoleFitCheckStateDto(
             true,
             true,
@@ -180,7 +226,9 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             price,
             "",
             RoleFitCheckCopy.DeepUpsell,
-            await ToResultAsync(userId, row, fromDeep, cancellationToken));
+            ToStoredResult(row, fromDeep),
+            InsightsStatuses.Ready,
+            NeedsRecheck: false);
     }
 
     private async Task<RoleFitCheckSnapshot?> TryOpenAiAsync(
@@ -318,11 +366,41 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 d => d.UserId == userId && d.Status == CandidateDeepAnalysisStatuses.Completed,
                 cancellationToken);
 
-    private async Task<RoleFitCheckResultDto> ToResultAsync(
+    private async Task<RoleFitCheckSnapshot> EnrichAndStoreOffersAsync(
         Guid userId,
-        CandidateRoleFitCheck row,
-        bool deepNow,
+        RoleFitCheckSnapshot snapshot,
         CancellationToken cancellationToken)
+    {
+        var fit = snapshot.VacancyFit;
+        var searchKeys = CareerOccupationKeys.FromTitle(snapshot.JobTitle);
+        IReadOnlyList<TrainingOfferCardDto> offers = [];
+        if (fit is { ShowUpskill: true } || snapshot.Gaps.Count > 0)
+        {
+            offers = await _training.RecommendAsync(
+                userId,
+                snapshot.JobTitle,
+                searchKeys,
+                TrainingTracking.CampaignFit,
+                cancellationToken);
+        }
+
+        if (fit is { ShowUpskill: false })
+        {
+            offers = [];
+        }
+
+        var direct = await ScanDirectVacanciesAsync(userId, fit?.VacancyId, snapshot.JobTitle, cancellationToken);
+        return snapshot with
+        {
+            TrainingOffers = offers.Select(o => new RoleFitStoredTrainingOffer(
+                o.OfferId, o.Title, o.ProviderName, o.Kind, o.Network, o.Region, o.CtaLabel, o.Advice)).ToList(),
+            DirectVacancies = direct.Select(d => new RoleFitStoredDirectVacancy(
+                d.Id, d.Title, d.CompanyName, d.MatchPercent, d.Href)).ToList()
+        };
+    }
+
+    /// <summary>Map stored ResultJson only — no AI or vacancy scoring.</summary>
+    private static RoleFitCheckResultDto ToStoredResult(CandidateRoleFitCheck row, bool deepNow)
     {
         var snapshot = RoleFitCheckJson.TryDeserialize(row.ResultJson, row.JobTitle, row.FromDeepAnalysis || deepNow)
                        ?? new RoleFitCheckSnapshot(
@@ -336,25 +414,16 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                            row.FromOpenAi);
         var query = Uri.EscapeDataString(snapshot.MapQuery);
         var fit = snapshot.VacancyFit;
-        var searchKeys = CareerOccupationKeys.FromTitle(snapshot.JobTitle);
-
-        var offers = (fit is { ShowUpskill: true } || snapshot.Gaps.Count > 0)
-            ? await _training.RecommendAsync(
-                userId,
-                snapshot.JobTitle,
-                searchKeys,
-                TrainingTracking.CampaignFit,
-                cancellationToken)
-            : Array.Empty<TrainingOfferCardDto>();
-        if (fit is { ShowUpskill: false })
-        {
-            offers = [];
-        }
-
+        var offers = (snapshot.TrainingOffers ?? [])
+            .Select(o => new TrainingOfferCardDto(
+                o.OfferId, o.Title, o.ProviderName, o.Kind, o.Network, o.Region, o.CtaLabel, o.Advice))
+            .ToList();
         var similar = (snapshot.SimilarRoles ?? [])
             .Select(s => new RoleFitSimilarRoleDto(s.Title, s.Why, s.FitPercent))
             .ToList();
-        var direct = await ScanDirectVacanciesAsync(userId, fit?.VacancyId, snapshot.JobTitle, cancellationToken);
+        var direct = (snapshot.DirectVacancies ?? [])
+            .Select(d => new RoleFitDirectVacancyDto(d.Id, d.Title, d.CompanyName, d.MatchPercent, d.Href))
+            .ToList();
 
         return new RoleFitCheckResultDto(
             snapshot.JobTitle,

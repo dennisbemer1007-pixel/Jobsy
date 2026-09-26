@@ -8,6 +8,9 @@ namespace Jobsy.Core.Interfaces;
 /// </summary>
 public interface IVacancyDiscoveryIndex
 {
+    /// <summary>UTC timestamp of the last successful index rebuild (null until first refresh).</summary>
+    DateTime? LastRefreshedAtUtc { get; }
+
     /// <summary>Mark the snapshot stale so the next read (or the refresh job) rebuilds it.</summary>
     void Invalidate();
 

@@ -73,7 +73,7 @@
              aria-labelledby="kompas-tab-dna"
              hidden="@(_tab != CandidateKompasTabs.Dna)">
         <h3 id="kompas-dna-title" class="visually-hidden">@Culture["Kompas.TabDna"]</h3>
-        <DnaPanel Active="@(_tab == CandidateKompasTabs.Dna)" OnOpenTab="SetTab" />
+        <DnaPanel Active="@(_tab == CandidateKompasTabs.Dna)" OnOpenTab="SetTab" Snapshot="_kompas" />
     </article>
 
     <article id="kompas-panel-profile"
@@ -172,7 +172,7 @@
              aria-labelledby="kompas-tab-tests"
              hidden="@(_tab != CandidateKompasTabs.Tests)">
         <h3 id="kompas-tests-title" class="visually-hidden">@Culture["Kompas.TabTests"]</h3>
-        <TestsOverviewPanel Active="@(_tab == CandidateKompasTabs.Tests)" />
+        <TestsOverviewPanel Active="@(_tab == CandidateKompasTabs.Tests)" Snapshot="_kompas" />
     </article>
 
     <article id="kompas-panel-fit"
@@ -180,7 +180,7 @@
              role="tabpanel"
              aria-labelledby="kompas-tab-fit"
              hidden="@(_tab != CandidateKompasTabs.Fit)">
-        <RoleFitCheckPanel VacancyId="@_vacancyId" />
+        <RoleFitCheckPanel VacancyId="@_vacancyId" Active="@(_tab == CandidateKompasTabs.Fit)" />
     </article>
     </div>
     @if (Side is not null)
@@ -198,6 +198,7 @@
     private bool _busy;
     private string? _message;
     private MeProfile? _profile;
+    private CandidateKompasState? _kompas;
     private int _maxTravel = 30;
     private string _transport = TransportLabels.Bike;
     private readonly HashSet<string> _licenses = new(StringComparer.OrdinalIgnoreCase);
@@ -214,6 +215,8 @@
     [Parameter] public string? InitialTab { get; set; }
     [Parameter] public RenderFragment? ProfileTab { get; set; }
     [Parameter] public RenderFragment? Side { get; set; }
+    /// <summary>When set (e.g. from Profile.razor), reuse the single kompas GET.</summary>
+    [Parameter] public CandidateKompasState? SharedKompas { get; set; }
 
     protected override void OnInitialized()
     {
@@ -224,7 +227,17 @@
     }
 
     protected override void OnParametersSet()
-        => ApplyTabFromUri();
+    {
+        ApplyTabFromUri();
+        if (SharedKompas is not null)
+        {
+            _kompas = SharedKompas;
+            if (ProfileTab is not null)
+            {
+                _loading = false;
+            }
+        }
+    }
 
     protected override Task OnInitializedAsync()
         => TryLoadAsync();
@@ -332,11 +345,20 @@
 
     private async Task LoadAsync()
     {
+        // When ProfileTab is provided ( /candidate/profile ), Profile.razor owns the kompas GET.
+        if (ProfileTab is not null)
+        {
+            _kompas = SharedKompas;
+            _loading = false;
+            return;
+        }
+
         _loading = true;
         _message = null;
         try
         {
-            _profile = await Api.GetMyProfileAsync();
+            _kompas = SharedKompas ?? await Api.GetMyKompasAsync();
+            _profile = _kompas?.Profile;
             if (_profile?.Preferences is { } prefs)
             {
                 _maxTravel = prefs.MaxTravelMinutes ?? 30;

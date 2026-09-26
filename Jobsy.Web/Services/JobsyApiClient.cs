@@ -1178,6 +1178,18 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
+    public async Task<CandidateKompasState?> GetMyKompasAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CandidateKompasState>("api/me/kompas", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
     public async Task<RoleFitCheckState> EvaluateRoleFitAsync(
         string jobTitle,
         Guid? vacancyId = null,
