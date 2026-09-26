@@ -484,11 +484,16 @@
                         var travelText = vacancy.TravelMinutes is not null
                             ? $"± {vacancy.TravelMinutes} {Culture["Discovery.Minutes"]}"
                             : Culture.Format("Discovery.MaxMinutes", _maxTravelMinutes);
-                        <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null)"
+                        <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null) @(_pressedVacancyId == vacancy.Id ? "is-pressed" : null)"
                                  @onmouseenter="() => OnHover(vacancy.Id)"
                                  @onmouseleave="() => OnHover(null)"
                                  @onclick="() => OnSelect(vacancy.Id)">
-                            <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick:stopPropagation="true">
+                            <a class="job-card__stretch-link"
+                               href="@($"/vacancies/{vacancy.Id}")"
+                               aria-label="@vacancy.Title"
+                               @onclick="() => OnOpenVacancy(vacancy.Id)"
+                               @onclick:stopPropagation="true"></a>
+                            <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick="() => OnOpenVacancy(vacancy.Id)" @onclick:stopPropagation="true">
                                 <VacancyPhoto Src="@vacancy.ImageUrl"
                                               FallbackSrc="@vacancy.CompanyLogoUrl"
                                               VacancyId="vacancy.Id"
@@ -2924,6 +2929,11 @@
             await Js.InvokeVoidAsync("jobMap.highlight", id?.ToString());
         }
     }
+
+    private Guid? _pressedVacancyId;
+
+    private void OnOpenVacancy(Guid id)
+        => _pressedVacancyId = id;
 
     private async Task OnSelect(Guid id)
     {

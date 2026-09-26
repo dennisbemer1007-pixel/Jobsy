@@ -51,6 +51,19 @@ public static class VideoEmbed
     public static string? TryGetSafeWatchUrl(string? url)
         => HtmlSanitize.NormalizeMediaUrl(url);
 
+    /// <summary>YouTube thumbnail (hqdefault) for click-to-load embeds; null for Vimeo/unknown.</summary>
+    public static string? TryGetThumbnailUrl(string? url)
+    {
+        var embed = TryGetEmbedUrl(url);
+        if (embed is null || !embed.Contains("youtube-nocookie.com/embed/", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var id = embed.Split('/').LastOrDefault();
+        return IsYouTubeId(id) ? $"https://i.ytimg.com/vi/{id}/hqdefault.jpg" : null;
+    }
+
     private static string? GetQueryValue(string query, string key)
     {
         if (string.IsNullOrWhiteSpace(query))

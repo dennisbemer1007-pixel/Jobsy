@@ -21,6 +21,16 @@ public class VideoEmbedTests
     }
 
     [Fact]
+    public void TryGetThumbnailUrl_returns_youtube_hq_image()
+    {
+        Assert.Equal(
+            "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+            VideoEmbed.TryGetThumbnailUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
+        Assert.Null(VideoEmbed.TryGetThumbnailUrl("https://vimeo.com/123456789"));
+        Assert.Null(VideoEmbed.TryGetThumbnailUrl(null));
+    }
+
+    [Fact]
     public void TryGetSafeWatchUrl_keeps_https_link()
         => Assert.Equal(
             "https://example.com/video.mp4",

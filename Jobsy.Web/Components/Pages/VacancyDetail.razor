@@ -99,77 +99,7 @@
                 </div>
             </div>
 
-            @if (HasPhoto || HasLocation)
-            {
-                <div class="vacancy-media @(HasPhoto && HasLocation ? "vacancy-media--split" : null)">
-                    @if (HasPhoto)
-                    {
-                        <VacancyPhoto Src="@_vacancy.ImageUrl"
-                                      FallbackSrc="@_vacancy.CompanyLogoUrl"
-                                      VacancyId="_vacancy.Id"
-                                      WorkType="@(_vacancy.WorkTypes.FirstOrDefault())"
-                                      Class="detail-card__image vacancy-media__photo"
-                                      Eager="true"
-                                      Sizes="@(HasLocation ? "(max-width: 640px) 100vw, 55vw" : "(max-width: 700px) 100vw, 720px")" />
-                    }
-
-                    @if (HasLocation)
-                    {
-                        <div class="vacancy-location__map-wrap vacancy-media__map" aria-label="@Culture["Vacancy.LocationMap"]">
-                            <div id="vacancy-detail-map" class="vacancy-location__map vacancy-detail-map"></div>
-                        </div>
-                    }
-                </div>
-                @if (HasLocation)
-                {
-                    <div class="vacancy-location__actions">
-                        <label class="vacancy-location__transport">
-                            @Culture["Vacancy.YourTransport"]
-                            <select value="@_transport" @onchange="OnTransportChanged">
-                                <option value="Fiets">@Culture["Transport.Bike"]</option>
-                                <option value="E-bike">@Culture["Transport.EBike"]</option>
-                                <option value="Auto">@Culture["Transport.Car"]</option>
-                                <option value="OV">@Culture["Transport.Transit"]</option>
-                                <option value="Lopend">@Culture["Transport.Walk"]</option>
-                            </select>
-                        </label>
-                        <p class="vacancy-location__eta" aria-live="polite">
-                            @if (_travelLoading)
-                            {
-                                <span class="vacancy-location__eta-loading">@Culture["Vacancy.TravelLoading"]</span>
-                            }
-                            else if (_vacancy.TravelMinutes is int minutes && _vacancy.DistanceKm is double km)
-                            {
-                                <span class="vacancy-location__eta-value">@FormatTravelEta(minutes, km)</span>
-                            }
-                            else if (_hasOrigin)
-                            {
-                                <span class="vacancy-location__eta-hint">@Culture["Vacancy.TravelUnavailable"]</span>
-                            }
-                            else
-                            {
-                                <span class="vacancy-location__eta-hint">@Culture["Vacancy.TravelNeedOrigin"]</span>
-                            }
-                        </p>
-                        <div class="vacancy-location__buttons">
-                            <button class="engagement-btn vacancy-location__btn" type="button" disabled="@_openingRoute" @onclick="OpenRouteAsync">
-                                @Culture["Vacancy.Route"]
-                            </button>
-                            <button class="engagement-btn vacancy-location__btn" type="button" @onclick="OpenStreetViewAsync">
-                                @Culture["Vacancy.StreetView"]
-                            </button>
-                        </div>
-                    </div>
-                    @if (_vacancy.RequiredTransport.Length > 0)
-                    {
-                        <p class="vacancy-location__required">
-                            @Culture["Vacancy.Transport"]: @string.Join(" · ", _vacancy.RequiredTransport.Select(LocalizeTransport))
-                        </p>
-                    }
-                }
-            }
-
-            <div class="detail-card__top">
+            <div class="detail-card__top detail-card__top--before-media">
                 <div>
                     <h1>@_vacancy.Title</h1>
                     @if (_vacancy.MatchPercent is int matchPct)
@@ -253,15 +183,104 @@
                 }
             </div>
 
+            @if (HasPhoto || HasLocation)
+            {
+                <div class="vacancy-media @(HasPhoto && HasLocation ? "vacancy-media--split" : null)">
+                    @if (HasPhoto)
+                    {
+                        <VacancyPhoto Src="@_vacancy.ImageUrl"
+                                      FallbackSrc="@_vacancy.CompanyLogoUrl"
+                                      VacancyId="_vacancy.Id"
+                                      WorkType="@(_vacancy.WorkTypes.FirstOrDefault())"
+                                      Class="detail-card__image vacancy-media__photo"
+                                      Eager="true"
+                                      Sizes="@(HasLocation ? "(max-width: 640px) 100vw, 55vw" : "(max-width: 700px) 100vw, 720px")" />
+                    }
+
+                    @if (HasLocation)
+                    {
+                        <div class="vacancy-location__map-wrap vacancy-media__map"
+                             aria-label="@Culture["Vacancy.LocationMap"]"
+                             @ref="_mapWrapElement">
+                            <div id="vacancy-detail-map" class="vacancy-location__map vacancy-detail-map"></div>
+                        </div>
+                    }
+                </div>
+                @if (HasLocation)
+                {
+                    <div class="vacancy-location__actions">
+                        <label class="vacancy-location__transport">
+                            @Culture["Vacancy.YourTransport"]
+                            <select value="@_transport" @onchange="OnTransportChanged">
+                                <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                <option value="E-bike">@Culture["Transport.EBike"]</option>
+                                <option value="Auto">@Culture["Transport.Car"]</option>
+                                <option value="OV">@Culture["Transport.Transit"]</option>
+                                <option value="Lopend">@Culture["Transport.Walk"]</option>
+                            </select>
+                        </label>
+                        <p class="vacancy-location__eta" aria-live="polite">
+                            @if (_travelLoading)
+                            {
+                                <span class="vacancy-location__eta-loading">@Culture["Vacancy.TravelLoading"]</span>
+                            }
+                            else if (_vacancy.TravelMinutes is int minutes && _vacancy.DistanceKm is double km)
+                            {
+                                <span class="vacancy-location__eta-value">@FormatTravelEta(minutes, km)</span>
+                            }
+                            else if (_hasOrigin)
+                            {
+                                <span class="vacancy-location__eta-hint">@Culture["Vacancy.TravelUnavailable"]</span>
+                            }
+                            else
+                            {
+                                <span class="vacancy-location__eta-hint">@Culture["Vacancy.TravelNeedOrigin"]</span>
+                            }
+                        </p>
+                        <div class="vacancy-location__buttons">
+                            <button class="engagement-btn vacancy-location__btn" type="button" disabled="@_openingRoute" @onclick="OpenRouteAsync">
+                                @Culture["Vacancy.Route"]
+                            </button>
+                            <button class="engagement-btn vacancy-location__btn" type="button" @onclick="OpenStreetViewAsync">
+                                @Culture["Vacancy.StreetView"]
+                            </button>
+                        </div>
+                    </div>
+                    @if (_vacancy.RequiredTransport.Length > 0)
+                    {
+                        <p class="vacancy-location__required">
+                            @Culture["Vacancy.Transport"]: @string.Join(" · ", _vacancy.RequiredTransport.Select(LocalizeTransport))
+                        </p>
+                    }
+                }
+            }
+
             @if (VideoEmbedUrl is not null)
             {
                 <div class="detail-card__video">
-                    <iframe src="@VideoEmbedUrl"
-                            title="@Culture["Vacancy.Video"]"
-                            loading="lazy"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowfullscreen
-                            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                    @if (_videoActivated)
+                    {
+                        <iframe src="@VideoEmbedUrl"
+                                title="@Culture["Vacancy.Video"]"
+                                loading="lazy"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen
+                                referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                    }
+                    else if (VideoThumbnailUrl is { } thumb)
+                    {
+                        <button type="button"
+                                class="detail-card__video-poster"
+                                aria-label="@Culture["Vacancy.Video"]"
+                                @onclick="() => _videoActivated = true">
+                            <img src="@thumb" alt="" width="640" height="360" loading="lazy" />
+                            <span class="detail-card__video-play" aria-hidden="true"></span>
+                        </button>
+                    }
+                    else
+                    {
+                        <p class="detail-card__video-unavailable muted">Video niet beschikbaar</p>
+                    }
                 </div>
             }
             else if (SafeVideoWatchUrl is not null)
@@ -799,6 +818,10 @@
     private bool _confirmSafetyNet;
     private int? _ageYears;
     private bool _mapReady;
+    private bool _videoActivated;
+    private bool _mapObserveAttached;
+    private ElementReference _mapWrapElement;
+    private DotNetObjectReference<VacancyDetail>? _dotNetMapRef;
     private bool _openingRoute;
     private Guid? _mappedVacancyId;
     private Guid? _loadedVacancyId;
@@ -905,6 +928,9 @@
 
     private string? VideoEmbedUrl =>
         _vacancy is null ? null : VideoEmbed.TryGetEmbedUrl(_vacancy.VideoUrl);
+
+    private string? VideoThumbnailUrl =>
+        _vacancy is null ? null : VideoEmbed.TryGetThumbnailUrl(_vacancy.VideoUrl);
 
     private string? SafeVideoWatchUrl =>
         VideoEmbedUrl is not null
@@ -1056,6 +1082,8 @@
         _ageYears = null;
         _mapReady = false;
         _mappedVacancyId = null;
+        _mapObserveAttached = false;
+        _videoActivated = false;
         _pendingInitialHydration = true;
         if (keepPrerendered)
         {
@@ -1109,6 +1137,10 @@
     {
         Culture.Changed -= OnCultureChanged;
         _persistSubscription.Dispose();
+        _dotNetMapRef?.Dispose();
+        _dotNetMapRef = null;
+        try { await Js.InvokeVoidAsync("jobsyList.disconnect"); }
+        catch { /* ignore */ }
         if (_mapReady)
         {
             try
@@ -1227,8 +1259,35 @@
             }
         }
 
-        await EnsureDetailMapAsync();
+        await ObserveDetailMapAsync();
     }
+
+    private async Task ObserveDetailMapAsync()
+    {
+        if (!HasLocation || _mapObserveAttached)
+        {
+            return;
+        }
+
+        try
+        {
+            _dotNetMapRef ??= DotNetObjectReference.Create(this);
+            await Js.InvokeVoidAsync(
+                "jobsyList.observeMore",
+                _mapWrapElement,
+                _dotNetMapRef,
+                nameof(OnMapVisibleAsync));
+            _mapObserveAttached = true;
+        }
+        catch
+        {
+            await EnsureDetailMapAsync();
+        }
+    }
+
+    [JSInvokable]
+    public Task OnMapVisibleAsync()
+        => EnsureDetailMapAsync();
 
     /// <summary>
     /// Age for wages: stored banenkaart filter age, else none (“Alle” → full table).

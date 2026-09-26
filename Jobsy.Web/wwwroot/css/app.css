@@ -2113,6 +2113,32 @@ html[dir="rtl"] .account-menu__panel {
     padding: 0;
 }
 
+.job-card {
+    position: relative;
+}
+
+.job-card__stretch-link {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+}
+
+.job-card__footer,
+.job-card__actions,
+.job-card .engagement-icon-btn,
+.job-card .competency-help,
+.job-card button {
+    position: relative;
+    z-index: 2;
+}
+
+.job-card.is-pressed {
+    transform: scale(0.985);
+    opacity: 0.92;
+    transition: transform 80ms ease, opacity 80ms ease;
+}
+
 .job-card__media {
     position: relative;
     display: block;
@@ -6280,6 +6306,52 @@ a.engagement-btn {
         max-height: 12.75rem;
         aspect-ratio: 16 / 10;
     }
+}
+
+.detail-card__video-poster {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+    background: #111;
+}
+
+.detail-card__video-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.detail-card__video-play {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 3.25rem;
+    height: 3.25rem;
+    margin: -1.625rem 0 0 -1.625rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--brand) 88%, #000);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.detail-card__video-play::before {
+    content: "";
+    position: absolute;
+    left: 1.2rem;
+    top: 0.95rem;
+    border-style: solid;
+    border-width: 0.7rem 0 0.7rem 1.1rem;
+    border-color: transparent transparent transparent #fff;
+}
+
+.detail-card__video-unavailable {
+    margin: 0;
+    padding: 1.25rem;
+    text-align: center;
 }
 
 .detail-card__video {
