@@ -2845,6 +2845,9 @@ window.jobMap = (function () {
         focusCompany,
         dispose,
         invalidate,
-        isAlive
+        isAlive,
+        /** @internal Playwright / diagnostics */
+        __testGetMap: function () { return map; },
+        __testGetPinCount: function () { return Object.keys(markersById).length; }
     };
 })();
