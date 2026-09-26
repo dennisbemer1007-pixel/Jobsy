@@ -1458,7 +1458,7 @@ window.jobMap = (function () {
                         "text-field": ["get", "label"],
                         "text-size": 12,
                         "text-allow-overlap": true,
-                        "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"]
+                        "text-font": ["Noto Sans Regular", "Arial Unicode MS Regular"]
                     },
                     paint: {
                         "text-color": "#0f2d5c",
@@ -1985,7 +1985,7 @@ window.jobMap = (function () {
                 layout: {
                     "text-field": ["get", "point_count_abbreviated"],
                     "text-size": 12,
-                    "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"]
+                    "text-font": ["Noto Sans Bold", "Arial Unicode MS Bold"]
                 },
                 paint: { "text-color": "#ffffff" }
             });
@@ -2001,7 +2001,8 @@ window.jobMap = (function () {
                         ["==", ["get", "featured"], 1], "#c9a227",
                         [
                             "case",
-                            ["all", ["!=", ["get", "colour"], ""], ["!=", ["get", "colour"], null]],
+                            // Avoid literal null in the style (MapLibre warns); empty string means "no colour".
+                            ["all", ["has", "colour"], ["!=", ["get", "colour"], ""]],
                             ["get", "colour"],
                             "#7c3aed"
                         ]
@@ -2050,21 +2051,43 @@ window.jobMap = (function () {
         }
     }
 
-    function onClusterClick(ev) {
+    /**
+     * MapLibre GL JS 5.x is promise-only for getClusterExpansionZoom / getClusterLeaves.
+     * Callback-style calls never fire — clusters appeared dead on Acc.
+     */
+    async function onClusterClick(ev) {
         if (!map || !ev.features || !ev.features.length) {
             return;
         }
         const feature = ev.features[0];
         const clusterId = feature.properties.cluster_id;
         const source = map.getSource(PIN_SOURCE);
-        if (!source || typeof source.getClusterExpansionZoom !== "function") {
+        if (!source
+            || typeof source.getClusterExpansionZoom !== "function"
+            || typeof source.getClusterLeaves !== "function") {
             return;
         }
-        source.getClusterExpansionZoom(clusterId, function (err, zoom) {
-            if (err) {
+
+        const openLeavesPager = async function () {
+            const leaves = await source.getClusterLeaves(clusterId, 100, 0);
+            if (!leaves || !leaves.length) {
                 return;
             }
+            const childMarkers = leaves.map(function (leaf) {
+                const id = leaf.properties && leaf.properties.id;
+                return markersById[id];
+            }).filter(Boolean);
+            if (childMarkers.length === 0) {
+                return;
+            }
+            openClusterList(childMarkers, feature.geometry.coordinates);
+        };
+
+        try {
+            const zoom = await source.getClusterExpansionZoom(clusterId);
             const maxZoom = CLUSTER_OPTS.clusterMaxZoom;
+            // Expand when MapLibre can zoom further; otherwise identical-coordinate /
+            // max-zoom clusters open the existing pager popup ("1 van N").
             if (zoom != null && zoom <= maxZoom && zoom > map.getZoom() + 0.15) {
                 map.easeTo({
                     center: feature.geometry.coordinates,
@@ -2073,17 +2096,14 @@ window.jobMap = (function () {
                 });
                 return;
             }
-            source.getClusterLeaves(clusterId, 100, 0, function (leafErr, leaves) {
-                if (leafErr || !leaves) {
-                    return;
-                }
-                const childMarkers = leaves.map(function (leaf) {
-                    const id = leaf.properties && leaf.properties.id;
-                    return markersById[id];
-                }).filter(Boolean);
-                openClusterList(childMarkers, feature.geometry.coordinates);
-            });
-        });
+            await openLeavesPager();
+        } catch (_err) {
+            try {
+                await openLeavesPager();
+            } catch (_leafErr) {
+                // leave map as-is
+            }
+        }
     }
 
     function onPinClick(ev) {

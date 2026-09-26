@@ -90,7 +90,17 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("AbortController", js);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("jobMap.min.js?v=20260926-mapfix4", maps);
+        Assert.Contains("jobMap.min.js?v=20260926-mapfix5", maps);
+        Assert.DoesNotContain(
+            "getClusterExpansionZoom(clusterId, function",
+            js,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "getClusterLeaves(clusterId, 100, 0, function",
+            js,
+            StringComparison.Ordinal);
+        Assert.Contains("await source.getClusterExpansionZoom", js, StringComparison.Ordinal);
+        Assert.Contains("await source.getClusterLeaves", js, StringComparison.Ordinal);
     }
 
     [Fact]
