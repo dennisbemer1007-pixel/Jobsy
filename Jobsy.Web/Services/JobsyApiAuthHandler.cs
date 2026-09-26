@@ -338,15 +338,49 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             // ignore
         }
 
-        // Interactive navigations: send the browser to login. Blazor API calls surface 401.
-        if (httpContext.Request.Headers.Accept.ToString().Contains("text/html", StringComparison.OrdinalIgnoreCase)
-            && !httpContext.Response.HasStarted)
+        // Interactive navigations for an authenticated session: send the browser to login.
+        // Anonymous SSR routinely gets 401 from optional layout chips (notifications, sales
+        // dashboard) — never hijack those into a /login redirect loop.
+        if (!ShouldRedirectHtmlNavigationToLogin(httpContext))
         {
-            var returnUrl = httpContext.Request.Path.Value ?? "/";
-            httpContext.Response.Redirect($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
+            return;
         }
 
+        var returnUrl = AuthRedirects.SafeLocalUrl(httpContext.Request.Path.Value);
+        httpContext.Response.Redirect(
+            AuthRedirects.AppendReturnUrl("/login?error=session-expired", returnUrl));
+
         await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Whether an API 401 during an HTML document request should bounce the browser to login.
+    /// </summary>
+    public static bool ShouldRedirectHtmlNavigationToLogin(HttpContext httpContext)
+    {
+        if (httpContext.Response.HasStarted)
+        {
+            return false;
+        }
+
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+        {
+            return false;
+        }
+
+        var path = httpContext.Request.Path.Value ?? string.Empty;
+        if (path.StartsWith("/login", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/account/login", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/account/demo-login", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/account/external", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/register", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/signin-", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return httpContext.Request.Headers.Accept.ToString()
+            .Contains("text/html", StringComparison.OrdinalIgnoreCase);
     }
 
     private static Task<HttpRequestMessage> CloneRequestAsync(
