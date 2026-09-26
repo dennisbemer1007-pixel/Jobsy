@@ -2017,15 +2017,49 @@ window.jobMap = (function () {
                 },
                 paint: { "text-color": "#ffffff" }
             });
+            // Soft outer halo for selected / cluster-on pins (coral ring per mockups).
+            if (!map.getLayer("jobsy-pins-halo")) {
+                map.addLayer({
+                    id: "jobsy-pins-halo",
+                    type: "circle",
+                    source: PIN_SOURCE,
+                    filter: ["!", ["has", "point_count"]],
+                    paint: {
+                        "circle-radius": [
+                            "case",
+                            ["any",
+                                ["==", ["feature-state", "selected"], true],
+                                ["==", ["feature-state", "clusterOn"], true]
+                            ], 16,
+                            0
+                        ],
+                        "circle-color": "transparent",
+                        "circle-stroke-width": [
+                            "case",
+                            ["any",
+                                ["==", ["feature-state", "selected"], true],
+                                ["==", ["feature-state", "clusterOn"], true]
+                            ], 3,
+                            0
+                        ],
+                        "circle-stroke-color": "#f54a1b",
+                        "circle-opacity": [
+                            "case",
+                            ["==", ["feature-state", "dimmed"], true], 0.2,
+                            1
+                        ]
+                    }
+                });
+            }
             map.addLayer({
                 id: PIN_LAYER_UNCLUSTERED,
                 type: "circle",
                 source: PIN_SOURCE,
                 filter: ["!", ["has", "point_count"]],
                 paint: {
+                    // Keep pin fill purple/gold; coral is only the ring (halo + stroke).
                     "circle-color": [
                         "case",
-                        ["==", ["feature-state", "selected"], true], "#f54a1b",
                         ["==", ["get", "featured"], 1], "#c9a227",
                         [
                             "case",
@@ -2036,19 +2070,25 @@ window.jobMap = (function () {
                     ],
                     "circle-radius": [
                         "case",
-                        ["==", ["feature-state", "selected"], true], 11,
+                        ["==", ["feature-state", "selected"], true], 12,
+                        ["==", ["feature-state", "clusterOn"], true], 10,
                         ["==", ["get", "featured"], 1], 10,
                         8
                     ],
                     "circle-stroke-width": [
                         "case",
-                        ["==", ["feature-state", "selected"], true], 3,
+                        ["any",
+                            ["==", ["feature-state", "selected"], true],
+                            ["==", ["feature-state", "clusterOn"], true]
+                        ], 3,
                         2
                     ],
                     "circle-stroke-color": [
                         "case",
-                        ["==", ["feature-state", "selected"], true], "#f54a1b",
-                        ["==", ["feature-state", "clusterOn"], true], "#f54a1b",
+                        ["any",
+                            ["==", ["feature-state", "selected"], true],
+                            ["==", ["feature-state", "clusterOn"], true]
+                        ], "#f54a1b",
                         "#ffffff"
                     ],
                     "circle-opacity": [
@@ -2064,12 +2104,25 @@ window.jobMap = (function () {
                 source: PIN_SOURCE,
                 filter: ["!", ["has", "point_count"]],
                 layout: {
-                    "text-field": ["get", "glyph"],
-                    "text-size": 11,
+                    "text-field": [
+                        "case",
+                        ["==", ["get", "featured"], 1], "★",
+                        ["get", "glyph"]
+                    ],
+                    "text-size": [
+                        "case",
+                        ["==", ["get", "featured"], 1], 13,
+                        11
+                    ],
                     "text-allow-overlap": true,
                     "text-ignore-placement": true
                 },
                 paint: {
+                    "text-color": [
+                        "case",
+                        ["==", ["get", "featured"], 1], "#ffffff",
+                        "#ffffff"
+                    ],
                     "text-opacity": [
                         "case",
                         ["==", ["feature-state", "dimmed"], true], 0.28,
@@ -2935,7 +2988,7 @@ window.jobMap = (function () {
         if (minutes == null || !isFinite(Number(minutes))) {
             return "";
         }
-        return "<span class=\"vac-compact__chip vac-compact__chip--travel\">" +
+        return "<span class=\"vac-compact__chip vac-compact__chip--travel\">🚲 " +
             escapeHtml(String(Math.round(Number(minutes)))) + " min fietsen</span>";
     }
 
@@ -2944,7 +2997,7 @@ window.jobMap = (function () {
             return "";
         }
         return "<span class=\"vac-compact__chip vac-compact__chip--match\">" +
-            escapeHtml(String(Math.round(Number(pct)))) + "%</span>";
+            escapeHtml(String(Math.round(Number(pct)))) + "% match</span>";
     }
 
     function formatWageLabel(card) {
@@ -3004,6 +3057,27 @@ window.jobMap = (function () {
         });
     }
 
+    function paintCardIntoHost(card) {
+        const el = document.getElementById("map-sheet-card-host");
+        if (!el) {
+            return;
+        }
+        el.hidden = false;
+        if (!card) {
+            el.innerHTML = "<p class=\"state-message\">Vacature niet beschikbaar</p>";
+            return;
+        }
+        el.innerHTML = compactCardHtml(card);
+        el.querySelectorAll(".vac-compact").forEach(function (node) {
+            node.addEventListener("click", function (ev) {
+                if (ev.target && ev.target.closest && ev.target.closest(".vac-compact__save")) {
+                    return;
+                }
+                window.location.href = "/vacancies/" + encodeURIComponent(String(card.id));
+            });
+        });
+    }
+
     function openMobileCard(record) {
         if (!record) {
             return;
@@ -3013,33 +3087,21 @@ window.jobMap = (function () {
         const id = record.options && record.options.jobData ? record.options.jobData.id : null;
         const host = document.getElementById("map-sheet-card-host");
         if (host) {
+            host.hidden = false;
             host.innerHTML = compactCardSkeletonHtml();
         }
+        if (window.mapBottomSheet && typeof window.mapBottomSheet.setSnap === "function") {
+            try { window.mapBottomSheet.setSnap("discovery-map-sheet", "card", true); } catch (e) { }
+        }
+        setSheetPadding(160);
+        easePinAboveSheet(record);
         if (openCallback) {
             try {
                 openCallback.invokeMethodAsync("OnMobilePinSelected", String(id));
             } catch (e) { }
         }
-        setSheetPadding(160);
-        easePinAboveSheet(record);
         fetchVacancyCard(id).then(function (card) {
-            const el = document.getElementById("map-sheet-card-host");
-            if (!el) {
-                return;
-            }
-            if (!card) {
-                el.innerHTML = "<p class=\"state-message\">Vacature niet beschikbaar</p>";
-                return;
-            }
-            el.innerHTML = compactCardHtml(card);
-            el.querySelectorAll(".vac-compact").forEach(function (node) {
-                node.addEventListener("click", function (ev) {
-                    if (ev.target && ev.target.closest && ev.target.closest(".vac-compact__save")) {
-                        return;
-                    }
-                    window.location.href = "/vacancies/" + encodeURIComponent(String(card.id));
-                });
-            });
+            paintCardIntoHost(card);
         });
     }
 
@@ -3114,6 +3176,19 @@ window.jobMap = (function () {
         }).filter(Boolean);
         setClusterDim(ids);
         const place = placeLabelNear(lngLat);
+        const status = ids.length + " vacatures hier" + (place ? " · " + place : "");
+        const pill = document.getElementById("map-sheet-status-pill");
+        if (pill) {
+            pill.hidden = false;
+            pill.textContent = status;
+        }
+        const clusterHost = document.querySelector(".map-sheet__cluster-host");
+        if (clusterHost) {
+            clusterHost.hidden = false;
+        }
+        if (window.mapBottomSheet && typeof window.mapBottomSheet.setSnap === "function") {
+            try { window.mapBottomSheet.setSnap("discovery-map-sheet", "card", true); } catch (e) { }
+        }
         if (openCallback) {
             try {
                 openCallback.invokeMethodAsync("OnMobileClusterSelected", ids, place || null);
@@ -3123,12 +3198,12 @@ window.jobMap = (function () {
         const row = document.getElementById("map-sheet-cluster-row");
         const dots = document.getElementById("map-sheet-cluster-dots");
         if (row) {
-            row.innerHTML = ids.slice(0, 5).map(function () {
+            row.innerHTML = ids.slice(0, Math.min(5, ids.length)).map(function () {
                 return "<div class=\"map-sheet__cluster-slide\">" + compactCardSkeletonHtml() + "</div>";
             }).join("");
         }
         if (dots) {
-            dots.innerHTML = ids.map(function (_, i) {
+            dots.innerHTML = ids.slice(0, Math.min(ids.length, 8)).map(function (_, i) {
                 return "<span class=\"map-sheet__dot" + (i === 0 ? " is-on" : "") + "\"></span>";
             }).join("");
         }
