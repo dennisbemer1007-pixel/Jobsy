@@ -42,7 +42,9 @@
         }
     </header>
 
-    <CandidateOnboardingResumeCard />
+    <PanelErrorBoundary Name="onboarding-resume">
+        <CandidateOnboardingResumeCard />
+    </PanelErrorBoundary>
 
     @if (!string.IsNullOrWhiteSpace(_message))
     {
@@ -103,7 +105,9 @@
              aria-labelledby="kompas-tab-dna"
              hidden="@(_tab != CandidateKompasTabs.Dna)">
         <h3 id="kompas-dna-title" class="visually-hidden">@Culture["Kompas.TabDna"]</h3>
-        <DnaPanel Active="@(_tab == CandidateKompasTabs.Dna)" OnOpenTab="SetTab" Snapshot="_kompas" />
+        <PanelErrorBoundary Name="dna">
+            <DnaPanel Active="@(_tab == CandidateKompasTabs.Dna)" OnOpenTab="SetTab" Snapshot="_kompas" />
+        </PanelErrorBoundary>
     </article>
 
     <article id="kompas-panel-profile"
@@ -202,7 +206,9 @@
              aria-labelledby="kompas-tab-tests"
              hidden="@(_tab != CandidateKompasTabs.Tests)">
         <h3 id="kompas-tests-title" class="visually-hidden">@Culture["Kompas.TabTests"]</h3>
-        <TestsOverviewPanel Active="@(_tab == CandidateKompasTabs.Tests)" Snapshot="_kompas" />
+        <PanelErrorBoundary Name="tests-overview">
+            <TestsOverviewPanel Active="@(_tab == CandidateKompasTabs.Tests)" Snapshot="_kompas" />
+        </PanelErrorBoundary>
     </article>
 
     <article id="kompas-panel-fit"
@@ -210,7 +216,9 @@
              role="tabpanel"
              aria-labelledby="kompas-tab-fit"
              hidden="@(_tab != CandidateKompasTabs.Fit)">
-        <RoleFitCheckPanel VacancyId="@_vacancyId" Active="@(_tab == CandidateKompasTabs.Fit)" />
+        <PanelErrorBoundary Name="role-fit">
+            <RoleFitCheckPanel VacancyId="@_vacancyId" Active="@(_tab == CandidateKompasTabs.Fit)" />
+        </PanelErrorBoundary>
     </article>
     </div>
     @if (Side is not null && ShouldShowSide)

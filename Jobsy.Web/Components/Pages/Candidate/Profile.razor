@@ -641,11 +641,13 @@
         }
             </ProfileTab>
             <Side>
-                <div class="profile-layout__matches">
-                    <div class="detail-card">
-                        <CompetencyMatchPanel Items="_matchedVacancies" Loading="_matchesLoading" />
+                <PanelErrorBoundary Name="matched-vacancies">
+                    <div class="profile-layout__matches">
+                        <div class="detail-card">
+                            <CompetencyMatchPanel Items="_matchedVacancies" Loading="_matchesLoading" />
+                        </div>
                     </div>
-                </div>
+                </PanelErrorBoundary>
             </Side>
         </CandidateKompas>
 </div>

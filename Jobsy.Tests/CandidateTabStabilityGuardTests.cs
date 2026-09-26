@@ -1,0 +1,55 @@
+using System.Text.RegularExpressions;
+
+namespace Jobsy.Tests;
+
+/// <summary>Source guards for candidate-tab stability (error boundary recover + panel shells).</summary>
+public class CandidateTabStabilityGuardTests
+{
+    [Fact]
+    public void MainLayout_recovers_error_boundary_on_location_change()
+    {
+        var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/MainLayout.razor"));
+        Assert.Contains("_errorBoundary?.Recover()", src);
+        Assert.Contains("OnLocationChanged", src);
+        Assert.Contains("LogCircuitError", src);
+        Assert.Contains("SentrySdk.CaptureException", src);
+        Assert.DoesNotContain("ex.Message", src);
+        Assert.DoesNotContain("ex.ToString()", src);
+    }
+
+    [Fact]
+    public void Heavy_candidate_panels_are_wrapped_in_PanelErrorBoundary()
+    {
+        var kompas = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+        var profile = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
+        Assert.Contains("PanelErrorBoundary Name=\"dna\"", kompas);
+        Assert.Contains("PanelErrorBoundary Name=\"tests-overview\"", kompas);
+        Assert.Contains("PanelErrorBoundary Name=\"role-fit\"", kompas);
+        Assert.Contains("PanelErrorBoundary Name=\"onboarding-resume\"", kompas);
+        Assert.Contains("PanelErrorBoundary Name=\"matched-vacancies\"", profile);
+    }
+
+    [Fact]
+    public void Panel_error_copy_exists_in_dutch_strings()
+    {
+        var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Localization/UiStrings.cs"));
+        Assert.Contains("Dit onderdeel laadt even niet", src);
+        Assert.Contains("[\"Panel.ErrorRetry\"]", src);
+    }
+
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException("Repo root not found.");
+    }
+}

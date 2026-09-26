@@ -22907,3 +22907,16 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     text-decoration: underline;
     text-underline-offset: 2px;
 }
+
+.panel-inline-error {
+    margin: 0.75rem 0;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius);
+    border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--border));
+    background: var(--surface);
+}
+.panel-inline-error__text {
+    margin: 0 0 0.5rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+}

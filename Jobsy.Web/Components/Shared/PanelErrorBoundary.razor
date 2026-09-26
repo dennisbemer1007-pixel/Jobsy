@@ -1,0 +1,97 @@
+@using System.Security.Claims
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject ILogger<PanelErrorBoundary> Logger
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+
+<ErrorBoundary @ref="_boundary" @key="_recoverKey">
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+    <ErrorContent Context="ex">
+        @{
+            LogOnce(ex);
+        }
+        <div class="panel-inline-error" role="alert">
+            <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
+            <button type="button" class="btn-compact" @onclick="Recover">@Culture["Panel.ErrorRetry"]</button>
+        </div>
+    </ErrorContent>
+</ErrorBoundary>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Name { get; set; }
+
+    private ErrorBoundary? _boundary;
+    private Exception? _logged;
+    private int _recoverKey;
+
+    private void Recover()
+    {
+        _logged = null;
+        _boundary?.Recover();
+        _recoverKey++;
+    }
+
+    private void LogOnce(Exception ex)
+    {
+        if (ReferenceEquals(_logged, ex))
+        {
+            return;
+        }
+
+        _logged = ex;
+        var route = SafeRoute();
+        var userId = ResolveUserId();
+        Logger.LogError(
+            ex,
+            "Panel error boundary caught exception in {Panel} at {Route} for user {UserId}",
+            Name ?? "panel",
+            route,
+            userId);
+        try
+        {
+            Sentry.SentrySdk.CaptureException(ex, scope =>
+            {
+                scope.SetTag("panel", Name ?? "panel");
+                scope.SetTag("route", route);
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    scope.User = new Sentry.SentryUser { Id = userId };
+                }
+            });
+        }
+        catch
+        {
+            // Sentry optional.
+        }
+    }
+
+    private string SafeRoute()
+    {
+        try
+        {
+            return new Uri(Navigation.Uri).PathAndQuery;
+        }
+        catch
+        {
+            return "/";
+        }
+    }
+
+    private string ResolveUserId()
+    {
+        var user = HttpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return "";
+        }
+
+        return user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+               ?? user.FindFirst("sub")?.Value
+               ?? "";
+    }
+}
+
