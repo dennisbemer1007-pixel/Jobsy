@@ -7,7 +7,7 @@ alwaysApply: true
 
 When the user writes **`456`** (alone or as the clear instruction), run this **full quality gate** end-to-end **without asking for confirmation**. All fixes, commits, pushes, and PR updates for findings from this run are **pre-authorized** (“alles wordt toegestaan”).
 
-Do **not** merge to `main` or deploy — that remains shortcut **`123`**. Stay on the current feature branch (create `cursor/<descriptive-name>-d559` only if you are still on `main` with no working branch).
+Do **not** merge to `main` or deploy — that remains shortcut **`123`**. Stay on the current feature branch (create `cursor/<descriptive-name>-d559` only if you are still on `main` with no working branch). Shortcut **`111`** is the deeper production audit (cleanup + role E2E + pentest + AVG).
 
 ## Pipeline (in order)
 
