@@ -17,6 +17,13 @@ window.jobMap = (function () {
     let lastOrigin = null;
     let selectedId = null;
     let zoomHandlerBound = false;
+    let fundaMobile = false;
+    let sheetPaddingBottom = 64;
+    let viewportCountTimer = null;
+    let lastViewportCount = -1;
+    let dimmedIds = null;
+    let clusterHighlightIds = null;
+    let calmStyleApplied = false;
 
     let cameraLocked = false;
     let originHasBeenFramed = false;
@@ -775,6 +782,10 @@ window.jobMap = (function () {
         }
 
         const target = ev.target || ev.srcElement;
+        if (target && target.closest && target.closest(".map-sheet, .jobsy-chrome__float, .filter-sheet")) {
+            return;
+        }
+
         const onMarkerOrCluster = !!(target && target.closest &&
             target.closest(".job-cluster, .job-marker, .vacancy-detail-marker"));
 
@@ -782,7 +793,20 @@ window.jobMap = (function () {
             return;
         }
 
+        // MapLibre native pin layers: ignore if click hit a pin/cluster feature.
+        if (ev && ev.point && typeof map.queryRenderedFeatures === "function") {
+            const hits = map.queryRenderedFeatures(ev.point, {
+                layers: [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH, PIN_LAYER_CLUSTERS]
+            });
+            if (hits && hits.length) {
+                return;
+            }
+        }
+
         closeActivePopup();
+        if (fundaMobile) {
+            dismissMobileSheet();
+        }
     }
 
     function closeWagePopoverIfOutside(ev) {
@@ -1590,6 +1614,10 @@ window.jobMap = (function () {
             // Locate sits at the corner; zoom + 3D sit above it (bottom: 58px).
             padding.bottom = Math.max(padding.bottom, 110);
         }
+        if (fundaMobile) {
+            padding.bottom = Math.max(padding.bottom, Math.round(sheetPaddingBottom) + 24);
+            padding.top = Math.max(padding.top, 72);
+        }
         padding.right = Math.max(padding.right, 52);
         return padding;
     }
@@ -2020,9 +2048,14 @@ window.jobMap = (function () {
                     "circle-stroke-color": [
                         "case",
                         ["==", ["feature-state", "selected"], true], "#f54a1b",
+                        ["==", ["feature-state", "clusterOn"], true], "#f54a1b",
                         "#ffffff"
                     ],
-                    "circle-opacity": 0.95
+                    "circle-opacity": [
+                        "case",
+                        ["==", ["feature-state", "dimmed"], true], 0.28,
+                        0.95
+                    ]
                 }
             });
             map.addLayer({
@@ -2035,8 +2068,22 @@ window.jobMap = (function () {
                     "text-size": 11,
                     "text-allow-overlap": true,
                     "text-ignore-placement": true
+                },
+                paint: {
+                    "text-opacity": [
+                        "case",
+                        ["==", ["feature-state", "dimmed"], true], 0.28,
+                        1
+                    ]
                 }
             });
+            try {
+                map.setPaintProperty(PIN_LAYER_CLUSTERS, "circle-opacity", [
+                    "case",
+                    ["==", ["feature-state", "dimmed"], true], 0.25,
+                    0.95
+                ]);
+            } catch (e) { }
         }
         if (!map._jobsyPinClicksBound) {
             map._jobsyPinClicksBound = true;
@@ -2081,7 +2128,11 @@ window.jobMap = (function () {
                     const id = leaf.properties && leaf.properties.id;
                     return markersById[id];
                 }).filter(Boolean);
-                openClusterList(childMarkers, feature.geometry.coordinates);
+                if (fundaMobile) {
+                    openMobileCluster(childMarkers, feature.geometry.coordinates);
+                } else {
+                    openClusterList(childMarkers, feature.geometry.coordinates);
+                }
             });
         });
     }
@@ -2100,7 +2151,11 @@ window.jobMap = (function () {
             fetchVacancyCard(id);
         }
         highlight(id);
-        openVacancyPopup(record);
+        if (fundaMobile) {
+            openMobileCard(record);
+        } else {
+            openVacancyPopup(record);
+        }
     }
 
     function clearRenderedMarkers() {
@@ -2134,6 +2189,11 @@ window.jobMap = (function () {
         }
         if (window.jobsyMapLibre) {
             window.jobsyMapLibre.hideChrome(map);
+        }
+        if (fundaMobile) {
+            calmStyleApplied = false;
+            applyCalmMobileStyle();
+            applySheetPadding();
         }
     }
 
@@ -2285,6 +2345,13 @@ window.jobMap = (function () {
             ? (Number(options.highlightSeed) >>> 0)
             : 0;
         pinsUrl = options && options.pinsUrl ? String(options.pinsUrl) : null;
+        fundaMobile = !!(options && options.fundaMobile);
+        if (fundaMobile) {
+            sheetPaddingBottom = 64;
+            applyCalmMobileStyle();
+            bindViewportCount();
+            applySheetPadding();
+        }
 
         bindMapRuntime();
 
@@ -2595,7 +2662,7 @@ window.jobMap = (function () {
     }
 
     function highlight(id) {
-        if (id == null && activeClusterPopup) {
+        if (id == null && activeClusterPopup && !fundaMobile) {
             return;
         }
         const prev = selectedId;
@@ -2607,7 +2674,12 @@ window.jobMap = (function () {
             try { map.setFeatureState({ source: PIN_SOURCE, id: String(prev) }, { selected: false }); } catch (e) { }
         }
         if (id != null) {
-            try { map.setFeatureState({ source: PIN_SOURCE, id: String(id) }, { selected: true }); } catch (e) { }
+            try {
+                map.setFeatureState({ source: PIN_SOURCE, id: String(id) }, {
+                    selected: true,
+                    dimmed: false
+                });
+            } catch (e) { }
         }
     }
 
@@ -2620,7 +2692,11 @@ window.jobMap = (function () {
         highlight(id);
 
         clusterGroup.zoomToShowLayer(record, function () {
-            openVacancyPopup(record);
+            if (fundaMobile || isFundaMobile()) {
+                openMobileCard(record);
+            } else {
+                openVacancyPopup(record);
+            }
         });
     }
 
@@ -2718,6 +2794,473 @@ window.jobMap = (function () {
         return /^#[0-9A-Fa-f]{6}$/.test(s) ? s : "#64748b";
     }
 
+    function isFundaMobile() {
+        if (typeof window.matchMedia === "function") {
+            return window.matchMedia("(max-width: 768px)").matches;
+        }
+        return fundaMobile;
+    }
+
+    function applyCalmMobileStyle() {
+        if (!map || calmStyleApplied || !isFundaMobile()) {
+            return;
+        }
+        calmStyleApplied = true;
+        const style = map.getStyle && map.getStyle();
+        if (!style || !style.layers) {
+            map.once("load", function () {
+                calmStyleApplied = false;
+                applyCalmMobileStyle();
+            });
+            return;
+        }
+        const hideRe = /(poi|shop|amenity|attraction|park|golf|pitch|stadium|hospital|school|college|university|place_of_worship|religion|fuel|charging|parking|bus|rail|subway|tram|ferry|airport|lighthouse|castle|monument|museum|theatre|cinema|zoo|theme_park|viewpoint)/i;
+        const keepLabelRe = /(road|street|highway|path|bridge|tunnel|water|place-|settlement|continent|country|state|city|town|village|suburb|neighbourhood|housenumber|building)/i;
+        style.layers.forEach(function (layer) {
+            if (!layer || !layer.id || String(layer.id).indexOf("jobsy-") === 0) {
+                return;
+            }
+            const id = String(layer.id);
+            const sourceLayer = String(layer["source-layer"] || "");
+            const isSymbol = layer.type === "symbol";
+            const looksPoi = hideRe.test(id) || hideRe.test(sourceLayer);
+            const keep = keepLabelRe.test(id) || keepLabelRe.test(sourceLayer);
+            try {
+                if (isSymbol && looksPoi && !keep) {
+                    map.setLayoutProperty(id, "visibility", "none");
+                } else if (layer.type === "fill" && /park|grass|pitch|golf/i.test(id)) {
+                    map.setPaintProperty(id, "fill-opacity", 0.35);
+                } else if (layer.type === "fill" && /building/i.test(id)) {
+                    map.setPaintProperty(id, "fill-color", "#e8e4df");
+                    map.setPaintProperty(id, "fill-opacity", 0.55);
+                }
+            } catch (e) { }
+        });
+        try {
+            const canvas = map.getCanvas();
+            if (canvas) {
+                canvas.style.filter = "saturate(0.82) contrast(0.98) brightness(1.03)";
+            }
+        } catch (e) { }
+    }
+
+    function applySheetPadding() {
+        if (!map || typeof map.setPadding !== "function") {
+            return;
+        }
+        try {
+            map.setPadding({
+                top: fundaMobile ? 72 : 0,
+                bottom: Math.round(sheetPaddingBottom),
+                left: 0,
+                right: 48
+            });
+        } catch (e) { }
+    }
+
+    function setSheetPadding(bottomPx) {
+        sheetPaddingBottom = Math.max(0, Number(bottomPx) || 0);
+        applySheetPadding();
+    }
+
+    function bindViewportCount() {
+        if (!map || map._jobsyViewportBound) {
+            return;
+        }
+        map._jobsyViewportBound = true;
+        const schedule = function () {
+            if (viewportCountTimer) {
+                clearTimeout(viewportCountTimer);
+            }
+            viewportCountTimer = setTimeout(publishViewportCount, 200);
+        };
+        map.on("moveend", schedule);
+        map.on("zoomend", schedule);
+        map.on("idle", schedule);
+        schedule();
+    }
+
+    function getViewportPinIds() {
+        if (!map || !map.getSource(PIN_SOURCE)) {
+            return [];
+        }
+        const bounds = map.getBounds();
+        if (!bounds) {
+            return [];
+        }
+        const ids = [];
+        Object.keys(markersById).forEach(function (key) {
+            const rec = markersById[key];
+            if (!rec) {
+                return;
+            }
+            if (bounds.contains([rec.lng, rec.lat])) {
+                ids.push(String(key));
+            }
+        });
+        return ids;
+    }
+
+    function publishViewportCount() {
+        const ids = getViewportPinIds();
+        const count = ids.length;
+        if (count === lastViewportCount) {
+            return;
+        }
+        lastViewportCount = count;
+        const el = document.querySelector(".map-sheet__collapsed-title");
+        if (el) {
+            el.textContent = count + " vacatures in dit gebied";
+        }
+        if (openCallback) {
+            try {
+                openCallback.invokeMethodAsync("OnViewportPinCountChanged", count);
+            } catch (e) { }
+        }
+    }
+
+    function compactCardSkeletonHtml() {
+        return "<article class=\"vac-compact vac-compact--skeleton\" aria-busy=\"true\" aria-label=\"Vacature laden\">" +
+            "<div class=\"vac-compact__thumb\" aria-hidden=\"true\"></div>" +
+            "<div class=\"vac-compact__body\">" +
+            "<div class=\"vac-compact__skel vac-compact__skel--title\"></div>" +
+            "<div class=\"vac-compact__skel vac-compact__skel--sub\"></div>" +
+            "<div class=\"vac-compact__skel-row\">" +
+            "<span class=\"vac-compact__skel vac-compact__skel--chip\"></span>" +
+            "<span class=\"vac-compact__skel vac-compact__skel--chip\"></span>" +
+            "</div></div></article>";
+    }
+
+    function formatTravelChip(minutes) {
+        if (minutes == null || !isFinite(Number(minutes))) {
+            return "";
+        }
+        return "<span class=\"vac-compact__chip vac-compact__chip--travel\">" +
+            escapeHtml(String(Math.round(Number(minutes)))) + " min fietsen</span>";
+    }
+
+    function formatMatchChip(pct) {
+        if (pct == null || !isFinite(Number(pct)) || Number(pct) < 0) {
+            return "";
+        }
+        return "<span class=\"vac-compact__chip vac-compact__chip--match\">" +
+            escapeHtml(String(Math.round(Number(pct)))) + "%</span>";
+    }
+
+    function formatWageLabel(card) {
+        if (!card || card.wageVisible === false || card.hourlyWage == null) {
+            return "";
+        }
+        const n = Number(card.hourlyWage);
+        if (!isFinite(n)) {
+            return "";
+        }
+        const label = "€ " + n.toFixed(2).replace(".", ",") + "/uur";
+        return "<span class=\"vac-compact__wage\">" + escapeHtml(label) + "</span>";
+    }
+
+    function compactCardHtml(card, opts) {
+        opts = opts || {};
+        if (!card) {
+            return compactCardSkeletonHtml();
+        }
+        const title = card.title || "Vacature";
+        const company = card.offeredByLabel || card.companyName || "";
+        const place = card.place || "";
+        const sub = company && place ? company + " · " + place : (company || place);
+        const thumb = card.thumbnailUrl || card.logoUrl || "";
+        const media = thumb
+            ? "<img class=\"vac-compact__thumb\" src=\"" + escapeAttr(thumb) +
+              "\" alt=\"\" width=\"72\" height=\"96\" loading=\"lazy\" decoding=\"async\" />"
+            : "<div class=\"vac-compact__thumb vac-compact__thumb--empty\" aria-hidden=\"true\"><span>Foto</span></div>";
+        const href = "/vacancies/" + encodeURIComponent(String(card.id || ""));
+        return "<article class=\"vac-compact" + (opts.active ? " is-active" : "") +
+            "\" data-vacancy-id=\"" + escapeAttr(card.id) + "\" role=\"button\" tabindex=\"0\" " +
+            "aria-label=\"" + escapeAttr(title) + "\">" +
+            "<a class=\"vac-compact__media\" href=\"" + escapeAttr(href) + "\" tabindex=\"-1\">" + media + "</a>" +
+            "<div class=\"vac-compact__body\">" +
+            "<div class=\"vac-compact__top\"><h3 class=\"vac-compact__title\">" + escapeHtml(title) + "</h3>" +
+            "<button type=\"button\" class=\"vac-compact__save\" aria-label=\"Bewaar vacature\">" +
+            "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\">" +
+            "<path d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z\"/></svg>" +
+            "</button></div>" +
+            "<p class=\"vac-compact__sub\">" + escapeHtml(sub) + "</p>" +
+            "<div class=\"vac-compact__meta\">" +
+            formatTravelChip(card.travelMinutes) +
+            formatMatchChip(card.matchPercent) +
+            formatWageLabel(card) +
+            "</div></div></article>";
+    }
+
+    function easePinAboveSheet(record) {
+        if (!map || !record) {
+            return;
+        }
+        const pad = overlayFitPadding();
+        map.easeTo({
+            center: [record.lng, record.lat],
+            padding: pad,
+            duration: prefersReducedMotion() ? 0 : 280
+        });
+    }
+
+    function openMobileCard(record) {
+        if (!record) {
+            return;
+        }
+        closeActivePopup();
+        clearClusterDim();
+        const id = record.options && record.options.jobData ? record.options.jobData.id : null;
+        const host = document.getElementById("map-sheet-card-host");
+        if (host) {
+            host.innerHTML = compactCardSkeletonHtml();
+        }
+        if (openCallback) {
+            try {
+                openCallback.invokeMethodAsync("OnMobilePinSelected", String(id));
+            } catch (e) { }
+        }
+        setSheetPadding(160);
+        easePinAboveSheet(record);
+        fetchVacancyCard(id).then(function (card) {
+            const el = document.getElementById("map-sheet-card-host");
+            if (!el) {
+                return;
+            }
+            if (!card) {
+                el.innerHTML = "<p class=\"state-message\">Vacature niet beschikbaar</p>";
+                return;
+            }
+            el.innerHTML = compactCardHtml(card);
+            el.querySelectorAll(".vac-compact").forEach(function (node) {
+                node.addEventListener("click", function (ev) {
+                    if (ev.target && ev.target.closest && ev.target.closest(".vac-compact__save")) {
+                        return;
+                    }
+                    window.location.href = "/vacancies/" + encodeURIComponent(String(card.id));
+                });
+            });
+        });
+    }
+
+    function setClusterDim(activeIds) {
+        clusterHighlightIds = {};
+        (activeIds || []).forEach(function (id) {
+            clusterHighlightIds[String(id)] = true;
+        });
+        Object.keys(markersById).forEach(function (key) {
+            const on = !!clusterHighlightIds[String(key)];
+            try {
+                map.setFeatureState({ source: PIN_SOURCE, id: String(key) }, {
+                    dimmed: !on,
+                    clusterOn: on,
+                    selected: on && Object.keys(clusterHighlightIds).length === 1
+                });
+            } catch (e) { }
+        });
+        // Dim cluster circles via paint when possible.
+        try {
+            map.setPaintProperty(PIN_LAYER_CLUSTERS, "circle-opacity", 0.22);
+            map.setPaintProperty(PIN_LAYER_CLUSTER_COUNT, "text-opacity", 0.22);
+        } catch (e) { }
+    }
+
+    function clearClusterDim() {
+        if (!map) {
+            clusterHighlightIds = null;
+            return;
+        }
+        Object.keys(markersById).forEach(function (key) {
+            try {
+                map.setFeatureState({ source: PIN_SOURCE, id: String(key) }, {
+                    dimmed: false,
+                    clusterOn: false
+                });
+            } catch (e) { }
+        });
+        try {
+            map.setPaintProperty(PIN_LAYER_CLUSTERS, "circle-opacity", 0.95);
+            map.setPaintProperty(PIN_LAYER_CLUSTER_COUNT, "text-opacity", 1);
+        } catch (e) { }
+        clusterHighlightIds = null;
+    }
+
+    function placeLabelNear(lngLat) {
+        if (!lngLat) {
+            return "";
+        }
+        // Best-effort: use nearest pin's place from cached card/pin data.
+        let best = null;
+        let bestD = Infinity;
+        Object.keys(markersById).forEach(function (key) {
+            const rec = markersById[key];
+            if (!rec) return;
+            const dx = rec.lng - lngLat[0];
+            const dy = rec.lat - lngLat[1];
+            const d = dx * dx + dy * dy;
+            if (d < bestD) {
+                bestD = d;
+                best = rec;
+            }
+        });
+        const data = best && best.options ? best.options.jobData : null;
+        return (data && (data.place || data.companyAddress)) || "";
+    }
+
+    function openMobileCluster(childMarkers, lngLat) {
+        closeActivePopup();
+        const ids = (childMarkers || []).map(function (m) {
+            return m && m.options && m.options.jobData ? String(m.options.jobData.id) : null;
+        }).filter(Boolean);
+        setClusterDim(ids);
+        const place = placeLabelNear(lngLat);
+        if (openCallback) {
+            try {
+                openCallback.invokeMethodAsync("OnMobileClusterSelected", ids, place || null);
+            } catch (e) { }
+        }
+        setSheetPadding(160);
+        const row = document.getElementById("map-sheet-cluster-row");
+        const dots = document.getElementById("map-sheet-cluster-dots");
+        if (row) {
+            row.innerHTML = ids.slice(0, 5).map(function () {
+                return "<div class=\"map-sheet__cluster-slide\">" + compactCardSkeletonHtml() + "</div>";
+            }).join("");
+        }
+        if (dots) {
+            dots.innerHTML = ids.map(function (_, i) {
+                return "<span class=\"map-sheet__dot" + (i === 0 ? " is-on" : "") + "\"></span>";
+            }).join("");
+        }
+        let loaded = 0;
+        function loadBatch(from, count) {
+            const slice = ids.slice(from, from + count);
+            if (!slice.length) {
+                return Promise.resolve();
+            }
+            return fetchVacancyCards(slice).then(function (cards) {
+                if (!row) {
+                    return;
+                }
+                slice.forEach(function (id, i) {
+                    const card = cards[i];
+                    const slide = row.children[from + i];
+                    if (!slide) {
+                        const wrap = document.createElement("div");
+                        wrap.className = "map-sheet__cluster-slide";
+                        wrap.innerHTML = compactCardHtml(card);
+                        wrap.dataset.vacancyId = id;
+                        row.appendChild(wrap);
+                    } else {
+                        slide.innerHTML = compactCardHtml(card);
+                        slide.dataset.vacancyId = id;
+                    }
+                });
+                loaded = Math.max(loaded, from + slice.length);
+                bindClusterRowInteractions(row, ids);
+            });
+        }
+        loadBatch(0, 5).then(function () {
+            // Prefetch next 5 as user starts swiping.
+            if (ids.length > 5) {
+                loadBatch(5, 5);
+            }
+        });
+        if (childMarkers[0]) {
+            easePinAboveSheet(childMarkers[0]);
+        }
+    }
+
+    function bindClusterRowInteractions(row, ids) {
+        if (!row || row.dataset.boundCluster === "1") {
+            return;
+        }
+        row.dataset.boundCluster = "1";
+        row.addEventListener("scroll", function () {
+            const w = row.clientWidth || 1;
+            const idx = Math.round(row.scrollLeft / Math.max(1, w * 0.86));
+            const dots = document.getElementById("map-sheet-cluster-dots");
+            if (dots) {
+                Array.prototype.forEach.call(dots.children, function (dot, i) {
+                    dot.classList.toggle("is-on", i === idx);
+                });
+            }
+            const id = ids[idx];
+            if (id) {
+                highlightPinOnly(id);
+                try {
+                    map.setFeatureState({ source: PIN_SOURCE, id: String(id) }, {
+                        selected: true,
+                        clusterOn: true,
+                        dimmed: false
+                    });
+                } catch (e) { }
+            }
+        }, { passive: true });
+        row.addEventListener("click", function (ev) {
+            const card = ev.target && ev.target.closest ? ev.target.closest("[data-vacancy-id]") : null;
+            if (!card) {
+                return;
+            }
+            if (ev.target.closest && ev.target.closest(".vac-compact__save")) {
+                return;
+            }
+            const id = card.getAttribute("data-vacancy-id");
+            if (id) {
+                window.location.href = "/vacancies/" + encodeURIComponent(id);
+            }
+        });
+    }
+
+    function dismissMobileSheet() {
+        clearClusterDim();
+        highlight(null);
+        setSheetPadding(64);
+        if (openCallback) {
+            try {
+                openCallback.invokeMethodAsync("OnMobileSheetDismissed");
+            } catch (e) { }
+        }
+    }
+
+    function clearMobileSelection() {
+        clearClusterDim();
+        highlight(null);
+        setSheetPadding(64);
+    }
+
+    function highlightPinOnly(id) {
+        highlight(id);
+        const record = markersById[id];
+        if (record) {
+            easePinAboveSheet(record);
+        }
+    }
+
+    function fetchCardsForSheet(ids) {
+        return fetchVacancyCards(ids || []).then(function (cards) {
+            return (cards || []).map(function (c) {
+                if (!c) {
+                    return null;
+                }
+                return {
+                    id: c.id,
+                    title: c.title,
+                    companyName: c.companyName,
+                    offeredByLabel: c.offeredByLabel,
+                    place: c.place,
+                    thumbnailUrl: c.thumbnailUrl,
+                    logoUrl: c.logoUrl,
+                    hourlyWage: c.hourlyWage,
+                    wageVisible: c.wageVisible !== false,
+                    travelMinutes: c.travelMinutes,
+                    matchPercent: c.matchPercent,
+                    matchColorBand: c.matchColorBand
+                };
+            }).filter(Boolean);
+        });
+    }
+
     return {
         boot,
         init,
@@ -2734,6 +3277,12 @@ window.jobMap = (function () {
         focusCompany,
         dispose,
         invalidate,
-        isAlive
+        isAlive,
+        setSheetPadding,
+        clearMobileSelection,
+        getViewportPinIds,
+        fetchCardsForSheet,
+        highlightPinOnly,
+        applyCalmMobileStyle
     };
 })();
