@@ -82,9 +82,10 @@
     </style>
     @if (LoadBlazorRuntime)
     {
-        <link rel="stylesheet" href="css/app.min.css?v=20260926-mobile1" media="print" data-app-css />
+        @* Render-blocking versioned CSS — critical shell is already inlined above; full stylesheet is cacheable. *@
+        <link rel="stylesheet" href="css/app.min.css?v=20260926-mobile3" data-app-css />
     }
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260926-mobile1" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260926-mobile3" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
@@ -99,12 +100,6 @@
                     return el;
                 };
             }
-            document.querySelectorAll("link[data-app-css]").forEach(function (link) {
-                function apply() { link.media = "all"; }
-                link.addEventListener("load", apply);
-                link.addEventListener("error", apply);
-                if (link.sheet) apply();
-            });
             try {
                 var add = EventTarget.prototype.addEventListener;
                 var remove = EventTarget.prototype.removeEventListener;

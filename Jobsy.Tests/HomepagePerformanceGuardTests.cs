@@ -9,28 +9,33 @@ namespace Jobsy.Tests;
 public class HomepagePerformanceGuardTests
 {
     [Fact]
-    public void First_paint_stylesheets_are_non_blocking()
+    public void First_paint_app_css_is_render_blocking_and_versioned()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         var appCssIdx = app.IndexOf("css/app.min.css", StringComparison.Ordinal);
         var appCssLinkStart = app.LastIndexOf("<link", appCssIdx, StringComparison.Ordinal);
         var appCssLinkEnd = app.IndexOf("/>", appCssIdx, StringComparison.Ordinal);
         var appCssLink = app[appCssLinkStart..(appCssLinkEnd + 2)];
-        Assert.Contains("media=\"print\"", appCssLink);
+        // Versioned app.css is cacheable — load render-blocking to avoid CLS from late styles.
+        Assert.DoesNotContain("media=\"print\"", appCssLink);
         Assert.Contains("data-app-css", appCssLink);
         Assert.DoesNotContain("onload=", appCssLink);
-        Assert.Contains("link.media = \"all\"", app);
+        Assert.Contains("?v=", appCssLink);
 
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", home);
         Assert.DoesNotContain("rel=\"preload\"", home);
 
+        // Map CSS stays non-blocking (print→all) until Zoeken needs it.
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("link.media = \"print\"", maps);
         Assert.DoesNotContain("link.setAttribute(\"fetchpriority\"", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("link.media = \"print\"", bundle);
         Assert.DoesNotContain("link.setAttribute(\"fetchpriority\"", bundle);
+
+        var program = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Program.cs"));
+        Assert.Contains("VersionedAssetCacheMiddleware", program);
     }
 
     [Fact]
@@ -44,7 +49,7 @@ public class HomepagePerformanceGuardTests
         Assert.DoesNotContain("photoEager", discovery);
         Assert.Contains("jobsyViewport.isWide", discovery);
         Assert.Contains("MeasureViewportAsync", discovery);
-        Assert.Contains("VacancyCardPageSize = 12", discovery);
+        Assert.Contains("VacancyCardPageSize = 20", discovery);
         Assert.DoesNotContain("@foreach (var vacancy in SortedVacancies)", discovery);
     }
 

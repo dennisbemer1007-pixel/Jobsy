@@ -2117,9 +2117,10 @@ html[dir="rtl"] .account-menu__panel {
     position: relative;
     display: block;
     width: 100%;
-    /* padding-bottom aspect ratio so CSS Grid max-content sizing gets a real height */
+    /* Reserved media box — padding-bottom + aspect-ratio to avoid CLS when photos arrive */
     height: 0;
     padding-bottom: 75%; /* 4:3 */
+    aspect-ratio: 4 / 3;
     flex: none;
     background:
         linear-gradient(160deg, color-mix(in srgb, var(--brand) 35%, #1a2332), color-mix(in srgb, var(--secondary) 55%, #0b1b33));

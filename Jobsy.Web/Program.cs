@@ -153,6 +153,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles(WebPerformanceExtensions.JobsyStaticFiles());
+app.UseMiddleware<VersionedAssetCacheMiddleware>();
 
 // MapLibre is self-hosted — OpenFreeMap tiles/styles load over HTTPS; no unpkg.
 // Scripts use a per-request nonce (no script-src 'unsafe-inline').
