@@ -313,14 +313,46 @@
     }
 
     private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
+    {
+        _ = SafeStateHasChangedAsync();
+    }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-        => InvokeAsync(() =>
+    {
+        _ = SafeInvokeAsync(() =>
         {
             ApplyTabFromUri();
             StateHasChanged();
         });
+    }
+
+    private async Task SafeStateHasChangedAsync()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    private async Task SafeInvokeAsync(Action action)
+    {
+        try
+        {
+            await InvokeAsync(action);
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
 
     private async Task TryLoadAsync()
     {
@@ -526,7 +558,7 @@
         _message = null;
         try
         {
-            var prefs = _profile.Preferences;
+            var prefs = _profile.Preferences ??= new CandidatePreferences();
             prefs.MaxTravelMinutes = _maxTravel;
             prefs.PreferredTransport = _transport;
             prefs.DrivingLicenses = _licenses.OrderBy(x => x).ToList();

@@ -960,6 +960,7 @@
     private bool _branchMenuOpen;
     private bool _categoryMenuOpen;
     private bool _mapReady;
+    private bool _disposed;
     private bool _mapPainted;
     private bool _mapInitScheduled;
     private bool _mapHostReady;
@@ -1395,40 +1396,64 @@
 
     private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
-        var beforeTypes = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var beforeQuery = _searchQuery;
-        var beforeMinutes = _maxTravelMinutes;
-        var beforeTransport = _selectedTransport;
-        var beforeMinHours = _minHoursPerWeek;
-        var beforeMaxHours = _maxHoursPerWeek;
-        var beforeCompanies = _companyFocusIds is null
-            ? ""
-            : string.Join(',', _companyFocusIds.OrderBy(x => x));
-        ApplyWorkTypeFromQuery();
-        ApplySearchQueryFromQuery();
-        ApplyTravelFromQuery();
-        ApplyTransportFromQuery();
-        ApplyHoursFromQuery();
-        ApplyCompanyFocusFromQuery();
-        var afterCompanies = _companyFocusIds is null
-            ? ""
-            : string.Join(',', _companyFocusIds.OrderBy(x => x));
-        if (!beforeTypes.SetEquals(_selectedWorkTypes)
-            || !string.Equals(beforeQuery, _searchQuery, StringComparison.Ordinal)
-            || beforeMinutes != _maxTravelMinutes
-            || !string.Equals(beforeTransport, _selectedTransport, StringComparison.OrdinalIgnoreCase)
-            || beforeMinHours != _minHoursPerWeek
-            || beforeMaxHours != _maxHoursPerWeek
-            || !string.Equals(beforeCompanies, afterCompanies, StringComparison.Ordinal))
+        try
         {
-            showMapOnMobile = true;
-            if (_mapReady)
+            if (_disposed)
             {
-                try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
-                catch { /* ignore */ }
+                return;
             }
-            await LoadVacanciesAsync();
-            await InvokeAsync(StateHasChanged);
+
+            var beforeTypes = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var beforeQuery = _searchQuery;
+            var beforeMinutes = _maxTravelMinutes;
+            var beforeTransport = _selectedTransport;
+            var beforeMinHours = _minHoursPerWeek;
+            var beforeMaxHours = _maxHoursPerWeek;
+            var beforeCompanies = _companyFocusIds is null
+                ? ""
+                : string.Join(',', _companyFocusIds.OrderBy(x => x));
+            ApplyWorkTypeFromQuery();
+            ApplySearchQueryFromQuery();
+            ApplyTravelFromQuery();
+            ApplyTransportFromQuery();
+            ApplyHoursFromQuery();
+            ApplyCompanyFocusFromQuery();
+            var afterCompanies = _companyFocusIds is null
+                ? ""
+                : string.Join(',', _companyFocusIds.OrderBy(x => x));
+            if (!beforeTypes.SetEquals(_selectedWorkTypes)
+                || !string.Equals(beforeQuery, _searchQuery, StringComparison.Ordinal)
+                || beforeMinutes != _maxTravelMinutes
+                || !string.Equals(beforeTransport, _selectedTransport, StringComparison.OrdinalIgnoreCase)
+                || beforeMinHours != _minHoursPerWeek
+                || beforeMaxHours != _maxHoursPerWeek
+                || !string.Equals(beforeCompanies, afterCompanies, StringComparison.Ordinal))
+            {
+                showMapOnMobile = true;
+                if (_mapReady)
+                {
+                    try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
+                    catch (JSDisconnectedException) { }
+                    catch (ObjectDisposedException) { }
+                    catch (JSException) { }
+                    catch (InvalidOperationException) { }
+                }
+                await LoadVacanciesAsync();
+                if (!_disposed)
+                {
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Vacancy discovery location-changed handler failed.");
         }
     }
 
@@ -1669,8 +1694,29 @@
 
     private async void OnCultureChanged()
     {
-        await LoadVacanciesAsync();
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            await LoadVacanciesAsync();
+            if (!_disposed)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Vacancy discovery culture-changed handler failed.");
+        }
     }
 
     private string? FormatWage(VacancyListItem vacancy)
@@ -1715,7 +1761,7 @@
             await TryInitJobMapAsync();
         }
 
-        if (HasMoreVacancyCards && _dotNetRef is not null)
+        if (HasMoreVacancyCards && _dotNetRef is not null && !_disposed)
         {
             try
             {
@@ -1724,6 +1770,12 @@
                     _moreCardsSentinel,
                     _dotNetRef,
                     nameof(ShowMoreVacancyCardsFromJs));
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
             }
             catch (JSException)
             {
@@ -3250,13 +3302,28 @@
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
         Culture.Changed -= OnCultureChanged;
         Navigation.LocationChanged -= OnLocationChanged;
         _suggestCts?.Cancel();
         _suggestCts?.Dispose();
         _searchDebounceCts?.Cancel();
         _searchDebounceCts?.Dispose();
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyList.disconnect");
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
         _dotNetRef?.Dispose();
+        _dotNetRef = null;
         if (_mapReady)
         {
             try
@@ -3264,6 +3331,12 @@
                 await Js.InvokeVoidAsync("jobMap.dispose");
             }
             catch (JSDisconnectedException)
+            {
+            }
+            catch (JSException)
+            {
+            }
+            catch (InvalidOperationException)
             {
             }
         }

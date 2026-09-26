@@ -22468,3 +22468,6 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     height: 1.1rem;
     vertical-align: -0.15em;
 }
+
+.circuit-error { max-width: 28rem; }
+.circuit-error .login-submit { margin-top: 0.75rem; }

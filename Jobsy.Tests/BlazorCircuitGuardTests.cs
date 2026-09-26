@@ -99,6 +99,19 @@ public class BlazorCircuitGuardTests
         Assert.Equal("public,max-age=31536000,immutable", http.Response.Headers.CacheControl.ToString());
     }
 
+
+    [Fact]
+    public void Main_layout_wraps_body_in_ErrorBoundary_and_registers_circuit_logger()
+    {
+        var root = FindRepoRoot();
+        var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
+        Assert.Contains("ErrorBoundary", layout);
+        Assert.Contains("Circuit.ErrorRetry", layout);
+        var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Program.cs"));
+        Assert.Contains("CircuitExceptionLogger", program);
+        Assert.True(File.Exists(Path.Combine(root, "Jobsy.Web", "Hosting", "CircuitExceptionLogger.cs")));
+    }
+
     private sealed class NamedFile : Microsoft.Extensions.FileProviders.IFileInfo
     {
         public NamedFile(string name) => Name = name;

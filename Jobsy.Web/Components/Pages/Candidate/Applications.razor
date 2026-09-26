@@ -121,6 +121,7 @@
     private List<ApplicationItem> _items = [];
     private List<ApplicationItem> _filtered = [];
     private bool _loading = true;
+    private bool _disposed;
     private bool _restored;
     private bool _readOnly;
     private string _tab = "all";
@@ -179,19 +180,33 @@
     {
         try
         {
+            if (_disposed)
+            {
+                return;
+            }
+
             _items = (await Api.GetMyApplicationsAsync()).ToList();
             ApplyTab();
+            if (!_disposed)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (JSDisconnectedException)
+        {
         }
         catch
         {
             // keep current list
         }
-
-        await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
     {
+        _disposed = true;
         Culture.Changed -= OnCultureChanged;
         _persistSubscription.Dispose();
     }

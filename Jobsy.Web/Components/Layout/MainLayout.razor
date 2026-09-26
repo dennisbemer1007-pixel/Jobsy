@@ -35,7 +35,18 @@
     }
 
     <main class="app-main">
-        @Body
+        <ErrorBoundary @ref="_errorBoundary">
+            <ChildContent>
+                @Body
+            </ChildContent>
+            <ErrorContent Context="ex">
+                <div class="panel-page circuit-error" role="alert">
+                    <h1>@Culture["Circuit.ErrorTitle"]</h1>
+                    <p class="login-lead">@Culture["Circuit.ErrorLead"]</p>
+                    <button type="button" class="login-submit" @onclick="RecoverFromError">@Culture["Circuit.ErrorRetry"]</button>
+                </div>
+            </ErrorContent>
+        </ErrorBoundary>
         @if (!_isMatchPage && !_isQuestionnairePage)
         {
             <AppFooter />
@@ -67,6 +78,10 @@
     private bool _hasBottomNav;
     private bool _isMatchPage;
     private bool _isQuestionnairePage;
+    private ErrorBoundary? _errorBoundary;
+
+    private void RecoverFromError()
+        => _errorBoundary?.Recover();
 
     protected override async Task OnInitializedAsync()
     {

@@ -51,6 +51,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions
     options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(5);
     options.DisconnectedCircuitMaxRetained = 200;
 });
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Jobsy.Web.Hosting.CircuitExceptionLogger>();
 
 builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddMemoryCache();
