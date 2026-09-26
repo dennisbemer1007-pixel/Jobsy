@@ -42,9 +42,10 @@ public class BandwidthGuardTests
     [Fact]
     public void Hidden_tabs_do_not_keep_polling_session_or_notifications()
     {
-        var bell = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/NotificationBell.razor"));
-        Assert.Contains("PageIsVisibleAsync", bell);
-        Assert.Contains("jobsyPageVisible", bell);
+        // Polling lives in NotificationUnreadStore (not the bell remount).
+        var store = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Services/NotificationUnreadStore.cs"));
+        Assert.Contains("PageIsVisibleAsync", store);
+        Assert.Contains("jobsyPageVisible", store);
 
         var idle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/SessionIdleGuard.razor"));
         Assert.Contains("jobsyPageVisible", idle);
