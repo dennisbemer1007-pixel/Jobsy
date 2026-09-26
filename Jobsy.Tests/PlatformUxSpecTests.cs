@@ -38,24 +38,17 @@ public class PlatformUxSpecTests
     }
 
     [Fact]
-    public void Job_map_highlight_toggles_class_without_rewriting_marker_html()
+    public void Job_map_highlight_uses_feature_state_without_rewriting_markers()
     {
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
         var highlightIdx = js.IndexOf("function highlight(id)", StringComparison.Ordinal);
         Assert.True(highlightIdx > 0);
         var nextFn = js.IndexOf("function focus(id)", highlightIdx, StringComparison.Ordinal);
         var highlight = js[highlightIdx..nextFn];
-        Assert.Contains("applyMarkerSelected", highlight);
+        Assert.Contains("setFeatureState", highlight);
         Assert.DoesNotContain("fillMarkerElement", highlight);
         Assert.DoesNotContain("innerHTML", highlight);
         Assert.DoesNotContain("style.zIndex", highlight);
-
-        var applyIdx = js.IndexOf("function applyMarkerSelected", StringComparison.Ordinal);
-        Assert.True(applyIdx > 0);
-        var applyEnd = js.IndexOf("function highlight(id)", applyIdx, StringComparison.Ordinal);
-        var apply = js[applyIdx..applyEnd];
-        Assert.Contains("classList.toggle", apply);
-        Assert.Contains("job-marker--active", apply);
     }
 
     [Fact]

@@ -83,6 +83,11 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("map-popup__main", js);
         Assert.Contains("data-retry-card", js);
         Assert.Contains("function reloadPins", js);
+        Assert.Contains("clusterRadius", js);
+        Assert.Contains("jobsy-pins", js);
+        Assert.Contains("getClusterExpansionZoom", js);
+        Assert.Contains("setFeatureState", js);
+        Assert.Contains("AbortController", js);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("jobMap.min.js?v=20260926-mapfix3", maps);
