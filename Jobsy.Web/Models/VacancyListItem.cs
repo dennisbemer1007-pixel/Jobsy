@@ -344,3 +344,17 @@ public sealed class VacancyMapViewResponse
     public double Zoom { get; set; }
     public int PinCount { get; set; }
 }
+
+/// <summary>Compact pin row for #jobsy-map-boot / early HTTP pins (mirrors VacancyPinDto).</summary>
+public sealed class VacancyPinBootItem
+{
+    public Guid Id { get; set; }
+    public double Lat { get; set; }
+    public double Lng { get; set; }
+    public string? Colour { get; set; }
+    public int? MatchPercent { get; set; }
+    public bool Highlighted { get; set; }
+    public uint HighlightRank { get; set; }
+    public string? WorkType { get; set; }
+    public string? MatchColorBand { get; set; }
+}

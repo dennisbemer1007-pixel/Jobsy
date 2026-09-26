@@ -60,6 +60,7 @@ public class VacancyPinsApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("BuildCompactPins", discovery);
         Assert.Contains("BuildPinsApiUrl", discovery);
+        Assert.Contains("LoadBootPinsAsync", discovery);
         Assert.Contains("pinsUrl", discovery);
         Assert.Contains("VacancyCardPageSize = 20", discovery);
         Assert.Contains("jobsyList.observeMore", discovery);

@@ -85,7 +85,7 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("function reloadPins", js);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("jobMap.min.js?v=20260926-mapfix1", maps);
+        Assert.Contains("jobMap.min.js?v=20260926-mapfix2", maps);
     }
 
     [Fact]

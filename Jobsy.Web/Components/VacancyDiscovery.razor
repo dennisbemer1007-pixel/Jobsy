@@ -965,6 +965,7 @@
     private bool _mapInitScheduled;
     private bool _mapHostReady;
     private VacancyMapView? _mapView;
+    private List<Dictionary<string, object?>> _bootPins = [];
 
     private ElementReference _mapElement;
     private ElementReference _moreCardsSentinel;
@@ -1285,14 +1286,15 @@
 
         if (!RendererInfo.IsInteractive)
         {
-            // Load the warm catalog + precomputed camera during prerender so
-            // #jobsy-map-boot has the opening view (and pins) before the circuit.
+            // Load warm pins + camera during prerender so #jobsy-map-boot is never empty
+            // when the index has vacancies (pins API is faster than full discover).
             try
             {
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
                 var viewTask = LoadMapViewAsync(cts.Token);
+                var pinsTask = LoadBootPinsAsync(cts.Token);
                 await LoadVacanciesAsync(cts.Token);
-                await viewTask;
+                await Task.WhenAll(viewTask, pinsTask);
                 try
                 {
                     await regionHostTask.WaitAsync(cts.Token);
@@ -1312,8 +1314,9 @@
 
         _ = regionHostTask;
 
-        // Catalog + map-view in parallel — do not wait on profile/masterdata before pins appear.
+        // Catalog + map-view + pins in parallel — do not wait on profile/masterdata before pins appear.
         var viewTaskInteractive = LoadMapViewAsync();
+        var bootPinsTask = LoadBootPinsAsync();
         var catalogTask = LoadVacanciesAsync();
         var profileChangedFilters = false;
         try
@@ -1384,6 +1387,7 @@
 
         await catalogTask;
         await viewTaskInteractive;
+        await bootPinsTask;
         if (_isCandidate && !_sortChosenByUser && _vacancies.Any(v => v.MatchPercent is not null))
         {
             _sortMode = "match";
@@ -1894,6 +1898,21 @@
     {
         try
         {
+            // Start pins HTTP immediately (no MapLibre required) so first pins beat the circuit.
+            await Js.InvokeVoidAsync("jobsyMaps.prefetchPins", BuildPinsApiUrl());
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        catch
+        {
+        }
+
+        try
+        {
             await MapScripts.EnsureDiscoveryAsync(Js);
         }
         catch (JSException)
@@ -2235,6 +2254,55 @@
         }
     }
 
+    private async Task LoadBootPinsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var pins = await Api.GetVacancyPinsAsync(
+                _selectedTransport,
+                _maxTravelMinutes,
+                _origin?.Latitude,
+                _origin?.Longitude,
+                _origin is null ? null : _radiusKm,
+                _selectedWorkTypes.Count > 0 ? _selectedWorkTypes : null,
+                _searchQuery,
+                _selectedCategoryIds.Count > 0 ? _selectedCategoryIds : null,
+                _companyFocusIds,
+                _isCandidate && _minMatchPercent > 0 ? _minMatchPercent : null,
+                ct);
+            if (pins.Count == 0)
+            {
+                return;
+            }
+
+            _bootPins = pins.Select(p =>
+            {
+                var dict = new Dictionary<string, object?>
+                {
+                    ["id"] = p.Id.ToString("D"),
+                    ["lat"] = p.Lat,
+                    ["lng"] = p.Lng,
+                    ["colour"] = p.Colour,
+                    ["categoryColor"] = p.Colour,
+                    ["matchPercent"] = p.MatchPercent,
+                    ["matchColorBand"] = p.MatchColorBand,
+                    ["highlighted"] = p.Highlighted,
+                    ["highlightRank"] = p.HighlightRank,
+                    ["workType"] = p.WorkType
+                };
+                return dict;
+            }).ToList();
+            if (_bootPins.Count > 0)
+            {
+                _mapPainted = true;
+            }
+        }
+        catch
+        {
+            // Boot pins stay empty — jobMap still fetches pinsUrl over HTTP.
+        }
+    }
+
     private bool HasCompanyMapFocus =>
         _mapFocusCompanyId is not null || _companyFocusIds is { Count: > 0 };
 
@@ -2274,7 +2342,8 @@
     private string MapBootPinsJson()
     {
         var opening = ResolveOpeningView();
-        var pins = BuildCompactPins(_vacancies);
+        // Prefer dedicated pins API payload so prerender never ships 0 pins when the index is warm.
+        var pins = _bootPins.Count > 0 ? _bootPins : BuildCompactPins(_vacancies);
         var payload = new Dictionary<string, object?>
         {
             ["preferFilledLocation"] = !HasCompanyMapFocus,

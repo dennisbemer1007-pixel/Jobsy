@@ -2141,7 +2141,24 @@ window.jobMap = (function () {
                 setVacancies([]);
             }
         }
-        if (pinsUrl) {
+        // Apply early prefetch (started from maps-loader / boot JSON) before a new fetch.
+        if (pinsUrl && window.__jobsyPinsPrefetch && window.__jobsyPinsPrefetchUrl === pinsUrl) {
+            const gen = ++pinsFetchGen;
+            Promise.resolve(window.__jobsyPinsPrefetch).then(function (data) {
+                if (gen !== pinsFetchGen || !data) {
+                    if (pinsUrl) {
+                        fetchPins(pinsUrl);
+                    }
+                    return;
+                }
+                const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
+                if (pins.length) {
+                    setVacancies(pins);
+                } else if (pinsUrl) {
+                    fetchPins(pinsUrl);
+                }
+            });
+        } else if (pinsUrl) {
             fetchPins(pinsUrl);
         }
         var originApplied = false;

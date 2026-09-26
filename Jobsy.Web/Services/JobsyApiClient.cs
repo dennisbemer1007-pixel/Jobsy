@@ -241,6 +241,76 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
+    /// <summary>Compact banenkaart pins for prerender boot JSON (same payload as jobMap fetchPins).</summary>
+    public async Task<IReadOnlyList<VacancyPinBootItem>> GetVacancyPinsAsync(
+        string transport,
+        int maxMinutes,
+        double? originLat = null,
+        double? originLng = null,
+        double? radiusKm = null,
+        IEnumerable<string>? workTypes = null,
+        string? searchQuery = null,
+        IEnumerable<Guid>? categoryIds = null,
+        IEnumerable<Guid>? companyIds = null,
+        int? minMatchPercent = null,
+        CancellationToken ct = default)
+    {
+        var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
+        if (originLat is not null && originLng is not null)
+        {
+            qs += $"&originLat={originLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+                + $"&originLng={originLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        if (radiusKm is not null)
+        {
+            qs += $"&radiusKm={radiusKm.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        if (workTypes is not null)
+        {
+            foreach (var workType in WorkTypeLabels.NormalizeFilterLabels(workTypes))
+            {
+                qs += $"&workType={Uri.EscapeDataString(workType)}";
+            }
+        }
+
+        if (categoryIds is not null)
+        {
+            foreach (var id in categoryIds.Where(x => x != Guid.Empty).Distinct())
+            {
+                qs += $"&categoryId={id:D}";
+            }
+        }
+
+        if (companyIds is not null)
+        {
+            foreach (var id in companyIds.Where(x => x != Guid.Empty).Distinct())
+            {
+                qs += $"&companyId={id:D}";
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            qs += $"&q={Uri.EscapeDataString(searchQuery.Trim())}";
+        }
+
+        if (minMatchPercent is int floor)
+        {
+            qs += $"&minMatchPercent={Math.Clamp(floor, 0, 100)}";
+        }
+
+        try
+        {
+            return await _http.GetFromJsonAsync<List<VacancyPinBootItem>>($"api/vacancies/pins?{qs}", ct) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
     public async Task<VacancyListItem?> GetVacancyAsync(
         Guid id,
         double? originLat = null,

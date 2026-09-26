@@ -13,7 +13,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20260822-r195"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260926-mapfix1"
+        "/js/jobMap.min.js?v=20260926-mapfix2"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20260822-r195"
@@ -180,7 +180,53 @@ window.jobsyMaps = (function () {
         return pending[kind];
     }
 
+    /** Start pins HTTP before MapLibre finishes loading (first pins &lt; 1.5s target). */
+    function prefetchPins(url) {
+        if (!url || typeof fetch !== "function") {
+            return Promise.resolve(null);
+        }
+        if (window.__jobsyPinsPrefetch && window.__jobsyPinsPrefetchUrl === url) {
+            return window.__jobsyPinsPrefetch;
+        }
+        window.__jobsyPinsPrefetchUrl = url;
+        window.__jobsyPinsPrefetch = fetch(url, {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        })
+            .then(function (res) {
+                if (!res.ok) {
+                    throw new Error("pins " + res.status);
+                }
+                return res.json();
+            })
+            .catch(function () {
+                window.__jobsyPinsPrefetch = null;
+                return null;
+            });
+        return window.__jobsyPinsPrefetch;
+    }
+
+    // Kick off pins fetch as soon as boot JSON is in the DOM (no MapLibre needed).
+    function warmBootPins() {
+        try {
+            var node = document.getElementById("jobsy-map-boot");
+            if (!node || !node.textContent) {
+                return;
+            }
+            var parsed = JSON.parse(node.textContent);
+            if (parsed && parsed.pinsUrl) {
+                prefetchPins(String(parsed.pinsUrl));
+            }
+        } catch (e) { }
+    }
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", warmBootPins);
+    } else {
+        warmBootPins();
+    }
+
     return {
-        ensure: ensure
+        ensure: ensure,
+        prefetchPins: prefetchPins
     };
 })();
