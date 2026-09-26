@@ -23086,6 +23086,7 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     inset: 0;
     z-index: 12;
     pointer-events: none;
+    /* Start collapsed (off-screen) until JS measures — avoid covering the map at y=0. */
     --map-sheet-y: 100%;
 }
 
@@ -23107,11 +23108,12 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -8px 28px rgba(15, 45, 92, 0.14);
     pointer-events: auto;
-    transform: translate3d(0, var(--map-sheet-y), 0);
+    transform: translate3d(0, var(--map-sheet-y, 100%), 0);
     will-change: transform;
     display: flex;
     flex-direction: column;
     overscroll-behavior: contain;
+    touch-action: none;
 }
 
 .map-sheet__handle {
@@ -23281,6 +23283,26 @@ html:not(.cookie-consent-known) .login-modal__dialog {
         padding: 0.4rem 0.75rem;
         min-height: 2.75rem;
         color: #fff;
+        position: relative;
+    }
+
+    .jobsy-discovery.show-map .jobsy-chrome__sample-badge {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        display: inline-flex;
+        align-items: center;
+        min-height: 1.35rem;
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+        background: color-mix(in srgb, #fff 18%, transparent);
+        color: color-mix(in srgb, #fff 88%, var(--pearl-mid));
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+        pointer-events: none;
     }
 
     .jobsy-discovery.show-map .jobsy-chrome__header .jobsy-logo__mark {

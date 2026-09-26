@@ -25,6 +25,10 @@
                 <span class="jobsy-logo__mark">Lobsy</span>
             </a>
             <h1 class="visually-hidden">@Culture["Seo.HomeHeading"]</h1>
+            @if (ShowSampleDataBadge)
+            {
+                <span class="jobsy-chrome__sample-badge" title="Deze omgeving toont voorbeelddata">Voorbeelddata</span>
+            }
             <div class="jobsy-chrome__header-actions">
                 <PageHelp />
                 <NotificationBell />
@@ -631,74 +635,69 @@
                             OnClose="OnSheetClosedAsync"
                             HeightChanged="OnSheetHeightChangedAsync"
                             CssClass="@($"map-sheet--{_sheetMode}")">
-                @if (_sheetMode == SheetMode.Cluster && !string.IsNullOrEmpty(_clusterStatusLabel))
-                {
-                    <div class="map-sheet__status-pill">@_clusterStatusLabel</div>
-                }
+                @* Hosts stay mounted so jobMap can paint skeleton/card instantly (no Blazor wipe race). *@
+                <div class="map-sheet__collapsed" hidden="@(_sheetMode != SheetMode.Collapsed && _sheetSnap != MapBottomSheet.Snap.Collapsed)">
+                    <p class="map-sheet__collapsed-title">@_viewportPinCount vacatures in dit gebied</p>
+                    <p class="map-sheet__collapsed-hint">Veeg omhoog voor de lijst</p>
+                </div>
 
-                @if (_sheetSnap == MapBottomSheet.Snap.Collapsed || _sheetMode == SheetMode.Collapsed)
-                {
-                    <div class="map-sheet__collapsed">
-                        <p class="map-sheet__collapsed-title">@_viewportPinCount vacatures in dit gebied</p>
-                        <p class="map-sheet__collapsed-hint">Veeg omhoog voor de lijst</p>
+                <div class="map-sheet__status-pill"
+                     id="map-sheet-status-pill"
+                     hidden="@(_sheetMode != SheetMode.Cluster || string.IsNullOrEmpty(_clusterStatusLabel))">
+                    @_clusterStatusLabel
+                </div>
+
+                <div class="map-sheet__card-host"
+                     id="map-sheet-card-host"
+                     aria-live="polite"
+                     hidden="@(_sheetMode != SheetMode.Card)"></div>
+
+                <div class="map-sheet__cluster-host" hidden="@(_sheetMode != SheetMode.Cluster)">
+                    <div class="map-sheet__cluster-row" id="map-sheet-cluster-row"></div>
+                    <div class="map-sheet__dots" id="map-sheet-cluster-dots" aria-hidden="true"></div>
+                </div>
+
+                <div class="map-sheet__list-host" hidden="@(_sheetMode != SheetMode.List)">
+                    <div class="map-sheet__list-header">
+                        <h2>@_viewportPinCount vacatures in beeld</h2>
+                        <label class="visually-hidden" for="map-sheet-sort">Sorteren</label>
+                        <select id="map-sheet-sort" class="map-sheet__sort" value="@EffectiveSheetSort" @onchange="OnSheetSortChanged">
+                            @if (_origin is not null)
+                            {
+                                <option value="distance">Kortste reistijd</option>
+                            }
+                            <option value="recent">Nieuwste</option>
+                            @if (_isCandidate)
+                            {
+                                <option value="match">Beste match</option>
+                            }
+                        </select>
                     </div>
-                }
-                else if (_sheetMode == SheetMode.Card)
-                {
-                    @* Instant skeleton/fill from jobMap.js (no Blazor round-trip). *@
-                    <div class="map-sheet__card-host" id="map-sheet-card-host" aria-live="polite"></div>
-                }
-                else if (_sheetMode == SheetMode.Cluster)
-                {
-                    <div class="map-sheet__cluster-host">
-                        <div class="map-sheet__cluster-row" id="map-sheet-cluster-row"></div>
-                        <div class="map-sheet__dots" id="map-sheet-cluster-dots" aria-hidden="true"></div>
-                    </div>
-                }
-                else if (_sheetMode == SheetMode.List)
-                {
-                    <div class="map-sheet__list-host">
-                        <div class="map-sheet__list-header">
-                            <h2>@_viewportPinCount vacatures in beeld</h2>
-                            <label class="visually-hidden" for="map-sheet-sort">Sorteren</label>
-                            <select id="map-sheet-sort" class="map-sheet__sort" value="@EffectiveSheetSort" @onchange="OnSheetSortChanged">
-                                @if (_origin is not null)
-                                {
-                                    <option value="distance">Kortste reistijd</option>
-                                }
-                                <option value="recent">Nieuwste</option>
-                                @if (_isCandidate)
-                                {
-                                    <option value="match">Beste match</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="map-sheet__list-scroll"
-                             id="map-sheet-list-scroll"
-                             @onscroll="OnListScroll">
-                            <div style="height:@(_listVirtualTotalHeight.ToString(System.Globalization.CultureInfo.InvariantCulture))px; position:relative;">
-                                @foreach (var row in VisibleSheetListRows)
-                                {
-                                    var card = row.Card;
-                                    <div style="position:absolute; top:@(row.Top.ToString(System.Globalization.CultureInfo.InvariantCulture))px; left:0; right:0; height:120px;">
-                                        <VacancyCompactCard Skeleton="@(card is null)"
-                                                            Id="@row.Id"
-                                                            Title="@card?.Title"
-                                                            CompanyName="@(card?.OfferedByLabel ?? card?.CompanyName)"
-                                                            Place="@card?.Place"
-                                                            ThumbnailUrl="@(card?.ThumbnailUrl ?? card?.LogoUrl)"
-                                                            TravelLabel="@FormatCardTravel(card)"
-                                                            MatchPercent="@(_isCandidate ? card?.MatchPercent : null)"
-                                                            WageLabel="@FormatCardWage(card)"
-                                                            ShowSave="@_isCandidate"
-                                                            IsActive="@(_sheetSelectedId == row.Id)"
-                                                            OnClick="() => OnListRowSelectAsync(row.Id)" />
-                                    </div>
-                                }
-                            </div>
+                    <div class="map-sheet__list-scroll"
+                         id="map-sheet-list-scroll"
+                         @onscroll="OnListScroll">
+                        <div style="height:@(_listVirtualTotalHeight.ToString(System.Globalization.CultureInfo.InvariantCulture))px; position:relative;">
+                            @foreach (var row in VisibleSheetListRows)
+                            {
+                                var card = row.Card;
+                                <div style="position:absolute; top:@(row.Top.ToString(System.Globalization.CultureInfo.InvariantCulture))px; left:0; right:0; height:120px;">
+                                    <VacancyCompactCard Skeleton="@(card is null)"
+                                                        Id="@row.Id"
+                                                        Title="@card?.Title"
+                                                        CompanyName="@(card?.OfferedByLabel ?? card?.CompanyName)"
+                                                        Place="@card?.Place"
+                                                        ThumbnailUrl="@(card?.ThumbnailUrl ?? card?.LogoUrl)"
+                                                        TravelLabel="@FormatCardTravel(card)"
+                                                        MatchPercent="@(_isCandidate ? card?.MatchPercent : null)"
+                                                        WageLabel="@FormatCardWage(card)"
+                                                        ShowSave="@_isCandidate"
+                                                        IsActive="@(_sheetSelectedId == row.Id)"
+                                                        OnClick="() => OnListRowSelectAsync(row.Id)" />
+                                </div>
+                            }
                         </div>
                     </div>
-                }
+                </div>
             </MapBottomSheet>
         }
     </section>
@@ -3465,9 +3464,48 @@
     }
 
     private string MobileSearchDisplay
-        => !string.IsNullOrWhiteSpace(_addressQuery)
-            ? _addressQuery
-            : string.Empty;
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_addressQuery))
+            {
+                return string.Empty;
+            }
+
+            // Mockup: "Naaldwijk · alle banen" when a place is set and no keyword filter.
+            var place = _addressQuery.Trim();
+            if (place.Contains('·', StringComparison.Ordinal))
+            {
+                return place;
+            }
+
+            if (string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                return $"{place} · alle banen";
+            }
+
+            return $"{place} · {_searchQuery.Trim()}";
+        }
+    }
+
+    private bool ShowSampleDataBadge
+    {
+        get
+        {
+            try
+            {
+                var host = new Uri(Navigation.Uri).Host;
+                return host.Contains("acceptatie", StringComparison.OrdinalIgnoreCase)
+                       || host.Contains("lobsy-acc", StringComparison.OrdinalIgnoreCase)
+                       || host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                       || host.StartsWith("127.", StringComparison.Ordinal);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
 
     private string EffectiveSheetSort
         => _sheetSortMode == "distance" && _origin is null
@@ -3506,7 +3544,7 @@
             return null;
         }
 
-        return $"{m} min fietsen";
+        return $"🚲 {m} min fietsen";
     }
 
     private static string? FormatCardWage(VacancyCompactCardModel? card)
