@@ -1,10 +1,11 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @inject JobsyApiClient Api
+@inject NotificationUnreadStore UnreadStore
 @inject NavigationManager Navigation
 @inject CultureState Culture
-@inject IJSRuntime Js
 @implements IDisposable
 
 <AuthorizeView>
@@ -105,38 +106,21 @@
     private bool _busy;
     private int _unread;
     private List<UserNotificationItem> _items = [];
-    private PeriodicTimer? _timer;
-    private CancellationTokenSource? _cts;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         Culture.Changed += OnCultureChanged;
-        await RefreshUnreadAsync();
-        _cts = new CancellationTokenSource();
-        _timer = new PeriodicTimer(TimeSpan.FromSeconds(45));
-        _ = PollAsync(_cts.Token);
+        UnreadStore.Changed += OnUnreadChanged;
+        UnreadStore.EnsureStarted();
+        _unread = UnreadStore.Unread;
     }
 
-    private async Task PollAsync(CancellationToken ct)
-    {
-        try
+    private void OnUnreadChanged()
+        => InvokeAsync(() =>
         {
-            while (_timer is not null && await _timer.WaitForNextTickAsync(ct))
-            {
-                if (!await PageIsVisibleAsync())
-                {
-                    continue;
-                }
-
-                await RefreshUnreadAsync();
-                await InvokeAsync(StateHasChanged);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // disposed
-        }
-    }
+            _unread = UnreadStore.Unread;
+            StateHasChanged();
+        });
 
     private async Task ToggleAsync()
     {
@@ -156,6 +140,7 @@
         {
             _items = (await Api.GetNotificationsAsync()).ToList();
             _unread = _items.Count(n => !n.IsRead);
+            UnreadStore.SetUnread(_unread);
         }
         catch
         {
@@ -164,30 +149,6 @@
         finally
         {
             _loading = false;
-        }
-    }
-
-    private async Task RefreshUnreadAsync()
-    {
-        try
-        {
-            _unread = await Api.GetUnreadNotificationCountAsync();
-        }
-        catch
-        {
-            // Not signed in / transient — ignore.
-        }
-    }
-
-    private async Task<bool> PageIsVisibleAsync()
-    {
-        try
-        {
-            return await Js.InvokeAsync<bool>("jobsyPageVisible");
-        }
-        catch
-        {
-            return true;
         }
     }
 
@@ -215,7 +176,8 @@
             {
                 n.IsRead = true;
                 n.ReadAtUtc = updated.ReadAtUtc;
-                _unread = Math.Max(0, _unread - 1);
+                UnreadStore.Decrement();
+                _unread = UnreadStore.Unread;
             }
         }
         catch
@@ -235,6 +197,7 @@
                 n.IsRead = true;
             }
 
+            UnreadStore.SetUnread(0);
             _unread = 0;
         }
         catch
@@ -269,8 +232,6 @@
     public void Dispose()
     {
         Culture.Changed -= OnCultureChanged;
-        _cts?.Cancel();
-        _cts?.Dispose();
-        _timer?.Dispose();
+        UnreadStore.Changed -= OnUnreadChanged;
     }
 }

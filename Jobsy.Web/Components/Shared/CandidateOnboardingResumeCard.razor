@@ -20,19 +20,11 @@
         => Culture.Changed += OnCultureChanged;
 
     protected override Task OnInitializedAsync()
-        => TryLoadAsync();
+        => LoadOnceAsync();
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
-        => firstRender ? TryLoadAsync() : Task.CompletedTask;
-
-    private async Task TryLoadAsync()
+    private async Task LoadOnceAsync()
     {
-        if (_loadStarted && _visible)
-        {
-            return;
-        }
-
-        if (!RendererInfo.IsInteractive && _loadStarted)
+        if (_loadStarted)
         {
             return;
         }
@@ -47,8 +39,6 @@
         {
             _visible = false;
         }
-
-        await InvokeAsync(StateHasChanged);
     }
 
     private void OnCultureChanged()

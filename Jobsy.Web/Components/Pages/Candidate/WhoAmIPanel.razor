@@ -4,6 +4,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@implements IDisposable
 
 <div class="whoami">
     @if (_loading)
@@ -195,6 +196,7 @@
     private string? _message;
     private WhoAmIState? _state;
     private int _insightsRefreshAttempts;
+    private CancellationTokenSource? _insightsCts;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -280,32 +282,43 @@
 
     private async Task RefreshInsightsLaterAsync()
     {
-        while (_insightsRefreshAttempts < 3
-               && _state is not null
-               && string.Equals(_state.InsightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+        if (_insightsRefreshAttempts >= 1
+            || _state is null
+            || !string.Equals(_state.InsightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
         {
-            _insightsRefreshAttempts++;
-            try
-            {
-                await Task.Delay(3000);
-                var next = await Api.GetMyWhoAmIAsync();
-                if (next is null)
-                {
-                    continue;
-                }
-
-                _state = next;
-                await InvokeAsync(StateHasChanged);
-                if (!string.Equals(next.InsightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
-                {
-                    break;
-                }
-            }
-            catch
-            {
-                break;
-            }
+            return;
         }
+
+        _insightsRefreshAttempts++;
+        _insightsCts?.Cancel();
+        _insightsCts?.Dispose();
+        _insightsCts = new CancellationTokenSource();
+        var ct = _insightsCts.Token;
+        try
+        {
+            await Task.Delay(3000, ct);
+            var next = await Api.GetMyWhoAmIAsync(ct);
+            if (next is null)
+            {
+                return;
+            }
+
+            _state = next;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+        }
+        catch
+        {
+            // leave last known insights
+        }
+    }
+
+    public void Dispose()
+    {
+        _insightsCts?.Cancel();
+        _insightsCts?.Dispose();
     }
 
     private async Task GoTab(string tab)

@@ -13,11 +13,16 @@ namespace Jobsy.Web.Services;
 
 public sealed class JobsyApiClient : IAsyncDisposable
 {
-    private readonly HttpClient _http;
+    public const string KompasCacheKey = "me/kompas";
+    public const string OnboardingCacheKey = "me/onboarding";
 
-    public JobsyApiClient(HttpClient http)
+    private readonly HttpClient _http;
+    private readonly MeGetCache? _meCache;
+
+    public JobsyApiClient(HttpClient http, MeGetCache? meCache = null)
     {
         _http = http;
+        _meCache = meCache;
     }
 
     public async Task<IReadOnlyList<MasterdataOptionItem>> GetMasterdataAsync(
@@ -872,10 +877,29 @@ public sealed class JobsyApiClient : IAsyncDisposable
             clearAvailableFromDate
         }, ct);
         response.EnsureSuccessStatusCode();
+        InvalidateMeCache(KompasCacheKey);
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
     }
 
     public async Task<OnboardingState?> GetMyOnboardingAsync(CancellationToken ct = default)
+    {
+        if (_meCache is not null)
+        {
+            var cached = await _meCache.GetOrCreateAsync(
+                OnboardingCacheKey,
+                async token =>
+                {
+                    var value = await FetchOnboardingAsync(token);
+                    return MeGetResult<OnboardingState>.Ok(value);
+                },
+                ct);
+            return cached.Value;
+        }
+
+        return await FetchOnboardingAsync(ct);
+    }
+
+    private async Task<OnboardingState?> FetchOnboardingAsync(CancellationToken ct)
     {
         try
         {
@@ -1320,7 +1344,19 @@ public sealed class JobsyApiClient : IAsyncDisposable
     }
 
     public Task<MeGetResult<CandidateKompasState>> GetMyKompasResultAsync(CancellationToken ct = default)
-        => GetMeJsonAsync<CandidateKompasState>("api/me/kompas", ct);
+    {
+        if (_meCache is null)
+        {
+            return GetMeJsonAsync<CandidateKompasState>("api/me/kompas", ct);
+        }
+
+        return _meCache.GetOrCreateAsync(
+            KompasCacheKey,
+            token => GetMeJsonAsync<CandidateKompasState>("api/me/kompas", token),
+            ct);
+    }
+
+    public void InvalidateMeCache(string? key = null) => _meCache?.Invalidate(key);
 
     public async Task<RoleFitCheckState> EvaluateRoleFitAsync(
         string jobTitle,

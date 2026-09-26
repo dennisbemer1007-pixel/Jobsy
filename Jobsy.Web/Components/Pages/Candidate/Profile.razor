@@ -8,6 +8,7 @@
 @inject CultureState Culture
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
+@inject Jobsy.Web.Services.ApiCallTracker ApiCalls
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Components.Shared
@@ -23,6 +24,7 @@
             <p class="login-lead">@Culture["Profile.ReturnHint"]</p>
         }
     </header>
+        <CascadingValue Value="_kompasState">
         <CandidateKompas SharedKompas="_kompasState">
             <ProfileTab>
         <p class="login-lead">@Culture["Profile.Lead"]</p>
@@ -103,7 +105,13 @@
                             <section class="profile-devices" aria-labelledby="profile-devices-title">
                                 <h3 id="profile-devices-title">@Culture["Profile.Devices.Title"]</h3>
                                 <p class="login-lead">@Culture["Profile.Devices.Lead"]</p>
-                                @if (_devicesLoading)
+                                @if (!_devicesLoadStarted && !_devicesLoading)
+                                {
+                                    <button type="button" class="btn-compact" @onclick="LoadDevicesAsync">
+                                        @Culture["Profile.Devices.Title"]
+                                    </button>
+                                }
+                                else if (_devicesLoading)
                                 {
                                     <p class="state-message">@Culture["Common.Loading"]</p>
                                 }
@@ -650,6 +658,7 @@
                 </PanelErrorBoundary>
             </Side>
         </CandidateKompas>
+        </CascadingValue>
 </div>
 
 <UnsubscribeDialog IsOpen="_unsubscribeOpen"
@@ -723,6 +732,8 @@
     private string _insightsStatus = "Ready";
     private CandidateKompasState? _kompasState;
     private int _insightsRefreshAttempts;
+    private CancellationTokenSource? _insightsCts;
+    private bool _devicesLoadStarted;
     private const string PersistKey = "candidateProfileKompas";
     private bool _restored;
     private PersistingComponentStateSubscription _persistSubscription;
@@ -756,6 +767,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        ApiCalls.SetPath("/candidate/profile");
         _returnUrl = SanitizeReturnUrl(ReturnUrl);
         try
         {
@@ -791,6 +803,7 @@
         {
             _loading = false;
             _matchesLoading = false;
+            ApiCalls.Flush("/candidate/profile");
         }
     }
 
@@ -818,7 +831,6 @@
         _parentalConsentEmail = profile.ParentalConsentEmail ?? "";
         _homeLat = profile.HomeLatitude;
         _homeLng = profile.HomeLongitude;
-        _ = LoadDevicesAsync();
         _insightsStatus = kompas?.InsightsStatus ?? "Ready";
         if (kompas?.TopMatches is { Count: > 0 } matches)
         {
@@ -962,36 +974,48 @@
 
     private async Task RefreshInsightsLaterAsync()
     {
-        while (_insightsRefreshAttempts < 3
-               && string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+        // Max one retry with backoff; cancelled when the page is disposed.
+        if (_insightsRefreshAttempts >= 1
+            || !string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
         {
-            _insightsRefreshAttempts++;
-            try
-            {
-                await Task.Delay(3000);
-                var kompas = await Api.GetMyKompasAsync();
-                if (kompas is null)
-                {
-                    continue;
-                }
+            return;
+        }
 
-                _kompasState = kompas;
-                _insightsStatus = kompas.InsightsStatus ?? "Ready";
-                if (kompas.TopMatches is { Count: > 0 })
-                {
-                    _matchedVacancies = kompas.TopMatches;
-                }
-
-                await InvokeAsync(StateHasChanged);
-                if (!string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
-                {
-                    break;
-                }
-            }
-            catch
+        _insightsRefreshAttempts++;
+        _insightsCts?.Cancel();
+        _insightsCts?.Dispose();
+        _insightsCts = new CancellationTokenSource();
+        var ct = _insightsCts.Token;
+        try
+        {
+            await Task.Delay(3000, ct);
+            Api.InvalidateMeCache(JobsyApiClient.KompasCacheKey);
+            var kompas = await Api.GetMyKompasAsync(ct);
+            if (kompas is null)
             {
-                break;
+                return;
             }
+
+            _kompasState = kompas;
+            _insightsStatus = kompas.InsightsStatus ?? "Ready";
+            if (kompas.TopMatches is { Count: > 0 })
+            {
+                _matchedVacancies = kompas.TopMatches;
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // navigated away
+        }
+        catch (Exception ex) when (Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            // circuit gone
+        }
+        catch
+        {
+            // leave last known insights
         }
     }
 
@@ -1683,6 +1707,12 @@
 
     private async Task LoadDevicesAsync()
     {
+        if (_devicesLoading)
+        {
+            return;
+        }
+
+        _devicesLoadStarted = true;
         _devicesLoading = true;
         try
         {
@@ -1708,6 +1738,7 @@
         {
             await Api.RevokeDeviceSessionAsync(id);
             _devicesMessage = Culture["Profile.Devices.Done"];
+            _devicesLoadStarted = true;
             await LoadDevicesAsync();
         }
         catch (Exception ex)
@@ -1744,6 +1775,9 @@
         _persistSubscription.Dispose();
         _suggestCts?.Cancel();
         _suggestCts?.Dispose();
+        _insightsCts?.Cancel();
+        _insightsCts?.Dispose();
+        ApiCalls.Flush("/candidate/profile");
         return ValueTask.CompletedTask;
     }
 

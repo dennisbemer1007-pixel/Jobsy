@@ -68,6 +68,9 @@ builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();
 builder.Services.AddScoped<TokenBalanceCache>();
+builder.Services.AddScoped<Jobsy.Web.Services.MeGetCache>();
+builder.Services.AddScoped<Jobsy.Web.Services.ApiCallTracker>();
+builder.Services.AddScoped<Jobsy.Web.Services.NotificationUnreadStore>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.AssistantChatHost>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.FeedbackHost>();
@@ -109,7 +112,9 @@ builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(clien
 // That resolves AuthenticationStateProvider outside the Razor component scope.
 // JobsyApiClient is IAsyncDisposable so the circuit scope disposes the HttpClient.
 builder.Services.AddScoped(sp =>
-    new JobsyApiClient(JobsyApiClientFactory.Create(sp, builder.Configuration)));
+    new JobsyApiClient(
+        JobsyApiClientFactory.Create(sp, builder.Configuration),
+        sp.GetRequiredService<Jobsy.Web.Services.MeGetCache>()));
 builder.Services.AddScoped<IVacancyMapApiForwarder, VacancyMapApiForwarder>();
 
 builder.Services.AddJobsyWebPerformance();

@@ -24,9 +24,13 @@ public static class JobsyApiClientFactory
                 AutomaticDecompression = System.Net.DecompressionMethods.All
             }
         };
-        var handler = new JobsyApiTransientRetryHandler
+        var retry = new JobsyApiTransientRetryHandler
         {
             InnerHandler = auth
+        };
+        var handler = new ApiCallTrackingHandler(sp.GetService<ApiCallTracker>())
+        {
+            InnerHandler = retry
         };
 
         var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(

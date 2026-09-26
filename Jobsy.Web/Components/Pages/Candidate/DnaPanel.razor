@@ -182,6 +182,7 @@
     [Parameter] public bool Active { get; set; }
     [Parameter] public EventCallback<string> OnOpenTab { get; set; }
     [Parameter] public CandidateKompasState? Snapshot { get; set; }
+    [CascadingParameter] public CandidateKompasState? CascadedKompas { get; set; }
 
     private bool _loading = true;
     private bool _loaded;
@@ -200,10 +201,11 @@
             return;
         }
 
-        if (Snapshot is not null)
+        var shared = Snapshot ?? CascadedKompas;
+        if (shared is not null)
         {
             _loadFailed = false;
-            ApplySnapshot(Snapshot);
+            ApplySnapshot(shared);
             return;
         }
 

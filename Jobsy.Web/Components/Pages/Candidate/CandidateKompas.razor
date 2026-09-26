@@ -106,7 +106,9 @@
              hidden="@(_tab != CandidateKompasTabs.Dna)">
         <h3 id="kompas-dna-title" class="visually-hidden">@Culture["Kompas.TabDna"]</h3>
         <PanelErrorBoundary Name="dna">
-            <DnaPanel Active="@(_tab == CandidateKompasTabs.Dna)" OnOpenTab="SetTab" Snapshot="_kompas" />
+            <CascadingValue Value="_kompas" IsFixed="false">
+                <DnaPanel Active="@(_tab == CandidateKompasTabs.Dna)" OnOpenTab="SetTab" Snapshot="_kompas" />
+            </CascadingValue>
         </PanelErrorBoundary>
     </article>
 

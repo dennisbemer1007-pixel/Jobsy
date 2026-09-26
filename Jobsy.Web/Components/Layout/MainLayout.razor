@@ -9,6 +9,7 @@
 @inject NavigationManager Navigation
 @inject ILogger<MainLayout> Logger
 @inject IHttpContextAccessor HttpContextAccessor
+@inject Jobsy.Web.Services.ApiCallTracker ApiCalls
 @implements IDisposable
 
 <div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null)"
@@ -236,6 +237,16 @@
         // An error on one tab must never follow the user to the next route.
         _loggedCircuitError = null;
         _errorBoundary?.Recover();
+
+        try
+        {
+            var path = new Uri(e.Location).AbsolutePath;
+            ApiCalls.SetPath(path);
+        }
+        catch
+        {
+            // ignore malformed locations
+        }
 
         var changed = RefreshFocusedFlags();
         if (changed)
