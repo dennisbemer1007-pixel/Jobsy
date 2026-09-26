@@ -6,6 +6,7 @@ using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -25,9 +26,16 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
     private static readonly Color Muted = Color.FromHex("#5a6a7a");
     private static readonly Color Line = Color.FromHex("#d5e3ec");
 
+    /// <summary>Gold accent used only on the uitgebreid (deep) competence report — cover badge, tips, bar fills.</summary>
+    private static readonly Color Gold = Color.FromHex("#c9a227");
+    private static readonly Color SoftGold = Color.FromHex("#f7ecd4");
+
+    private static readonly TimeSpan DeepPdfCacheDuration = TimeSpan.FromHours(12);
+
     private readonly JobsyDbContext _db;
     private readonly IPlatformCompanySettingsService _companySettings;
     private readonly ICareerCompassGenerationService _careerCompass;
+    private readonly IMemoryCache _cache;
 
     static AssessmentReportPdfService()
     {
@@ -37,11 +45,13 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
     public AssessmentReportPdfService(
         JobsyDbContext db,
         IPlatformCompanySettingsService companySettings,
-        ICareerCompassGenerationService careerCompass)
+        ICareerCompassGenerationService careerCompass,
+        IMemoryCache cache)
     {
         _db = db;
         _companySettings = companySettings;
         _careerCompass = careerCompass;
+        _cache = cache;
     }
 
     public async Task<AssessmentReportPdf?> TryRenderAsync(
@@ -109,14 +119,20 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         }
         else
         {
-            // TODO: 9-page rich PDF in follow-up commit — RenderCompetenceDeep below already
-            // renders a multi-page report from the stored CompetenceDeepReport (cover, overview,
-            // one page per trait, work fit, action plan); the fixed-score fallback stays for
-            // legacy rows without a stored report.
+            // The 9-page rich report is built only from a stored CompetenceDeepReport (no AI on
+            // download) and cached by report version/generation time; legacy rows without a
+            // stored report fall back to the older fixed-score summary below.
             var report = CompetenceDeepReportJson.Deserialize(deep.ReportJson);
             if (report is not null)
             {
-                bytes = RenderCompetenceDeep(brand, logo, user.FullName, generated, report);
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{report.ReportVersion}:{report.GeneratedAtUtc:O}";
+                if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
+                {
+                    cached = RenderCompetenceDeep(brand, logo, user.FullName, generated, report);
+                    _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
+                }
+
+                bytes = cached;
             }
             else
             {
@@ -220,11 +236,9 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             AccentCoral);
 
     /// <summary>
-    /// Multi-page competence deep-analysis report built from a persisted <see cref="CompetenceDeepReport"/>:
-    /// cover, overview, one page per trait, work fit, and action plan.
-    /// TODO: 9-page rich PDF in follow-up commit — this is a first working multi-page skeleton
-    /// (cover + overview + 5 trait pages + work fit + action plan = 9 pages); later iterations
-    /// can add facet-level charts, norm-comparison bars, and richer occupation cards.
+    /// Rich 9-page competence deep-analysis report built entirely from a stored
+    /// <see cref="CompetenceDeepReport"/> (no AI on download): cover, overview, one page per
+    /// trait (exactly <see cref="CompetenceDeepReport.Traits"/> order), work fit, and action plan.
     /// </summary>
     internal static byte[] RenderCompetenceDeep(
         string brand,
@@ -236,17 +250,18 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         return Document.Create(container =>
         {
             AddCompetenceDeepCoverPage(container, brand, logo, fullName, generated, report);
-            AddCompetenceDeepOverviewPage(container, brand, logo, fullName, generated, report);
+            AddCompetenceDeepOverviewPage(container, brand, fullName, report);
             foreach (var trait in report.Traits)
             {
-                AddCompetenceDeepTraitPage(container, brand, logo, fullName, generated, trait);
+                AddCompetenceDeepTraitPage(container, brand, fullName, trait);
             }
 
-            AddCompetenceDeepWorkFitPage(container, brand, logo, fullName, generated, report);
-            AddCompetenceDeepActionPlanPage(container, brand, logo, fullName, generated, report);
+            AddCompetenceDeepWorkFitPage(container, brand, fullName, report);
+            AddCompetenceDeepActionPlanPage(container, brand, fullName, report);
         }).GeneratePdf();
     }
 
+    /// <summary>Page 1 — cover. Deliberately does not use <see cref="BrandHeader"/>/<see cref="BrandFooter"/>.</summary>
     private static void AddCompetenceDeepCoverPage(
         IDocumentContainer container, string brand, byte[] logo, string fullName, string generated,
         CompetenceDeepReport report)
@@ -254,36 +269,47 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         container.Page(page =>
         {
             page.Size(PageSizes.A4);
-            page.MarginHorizontal(28);
-            page.MarginVertical(24);
-            page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
-            BrandHeader(page, brand, logo, "Jouw uitgebreide competentie-rapport", fullName, generated, AccentCoral);
+            page.Margin(0);
+            page.DefaultTextStyle(x => x.FontSize(10).FontColor(Colors.White));
+            page.PageColor(BrandDeep);
 
-            page.Content().PaddingTop(24).Column(col =>
+            page.Content().Padding(44).Column(col =>
             {
-                col.Spacing(14);
-                col.Item().Text("Wie ben jij in je werk?").FontSize(20).Bold().FontColor(BrandNavy);
-                col.Item().Text(report.Summary).FontSize(12);
+                col.Spacing(16);
+
+                if (logo is { Length: > 0 })
+                {
+                    col.Item().Height(48).AlignLeft().Image(logo).FitArea();
+                }
+
+                col.Item().PaddingTop(18).AlignLeft().Background(Gold)
+                    .PaddingHorizontal(12).PaddingVertical(6)
+                    .Text("Uitgebreid rapport").FontSize(10).Bold().FontColor(Colors.White);
+
+                col.Item().Text($"{brand} · Uitgebreid rapport – Competentietest")
+                    .FontSize(24).Bold().FontColor(Colors.White);
+                col.Item().Text("150 vragen · Big Five (IPIP)").FontSize(11).FontColor(Gold);
+
+                col.Item().PaddingTop(18).Background(SoftGold).Padding(16).Column(box =>
+                {
+                    box.Spacing(4);
+                    box.Item().Text(fullName).FontSize(16).Bold().FontColor(BrandDeep);
+                    box.Item().Text(generated).FontSize(10).FontColor(Slate);
+                });
+
+                col.Item().PaddingTop(10).Text(report.Summary).FontSize(10).FontColor(SoftSky);
 
                 if (!string.IsNullOrWhiteSpace(report.NormSourceLine))
                 {
-                    col.Item().PaddingTop(6).Background(SoftSky).Padding(10)
-                        .Text(report.NormSourceLine!).FontSize(9).FontColor(Muted).Italic();
+                    col.Item().PaddingTop(4).Text(report.NormSourceLine!).FontSize(8).FontColor(SoftSky).Italic();
                 }
-
-                col.Item().PaddingTop(10).Text(
-                        "Dit rapport is opgebouwd uit vijf persoonlijke eigenschappen, elk met facetten, " +
-                        "je eigen sterktes en aandachtspunten, en sluit af met beroepen die passen en een actieplan.")
-                    .FontColor(Muted);
             });
-
-            BrandFooter(page, brand);
         });
     }
 
+    /// <summary>Page 2 — "Jij in het kort" summary, per-trait bars vs. the norm average, and band labels.</summary>
     private static void AddCompetenceDeepOverviewPage(
-        IDocumentContainer container, string brand, byte[] logo, string fullName, string generated,
-        CompetenceDeepReport report)
+        IDocumentContainer container, string brand, string fullName, CompetenceDeepReport report)
     {
         container.Page(page =>
         {
@@ -291,138 +317,189 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             page.MarginHorizontal(28);
             page.MarginVertical(24);
             page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
-            BrandHeader(page, brand, logo, "Overzicht van je vijf eigenschappen", fullName, generated, AccentCoral);
+            DeepReportHeader(page, brand, fullName);
 
-            page.Content().PaddingTop(14).Column(col =>
-            {
-                col.Spacing(10);
-                foreach (var trait in report.Traits)
-                {
-                    col.Item().Background(SoftSky).Padding(10).Column(box =>
-                    {
-                        box.Spacing(3);
-                        box.Item().Row(r =>
-                        {
-                            r.RelativeItem().Text(trait.LabelNl).FontSize(13).Bold().FontColor(BrandNavy);
-                            r.ConstantItem(90).AlignRight()
-                                .Text($"{trait.Score}/100 · {trait.Level}").FontColor(BrandDeep).SemiBold();
-                        });
-                        box.Item().Text(trait.Meaning).FontColor(Muted);
-                        if (!string.IsNullOrWhiteSpace(trait.NormBand))
-                        {
-                            box.Item().Text($"Vergeleken met anderen: {trait.NormBand}")
-                                .FontSize(9).FontColor(Muted).Italic();
-                        }
-                    });
-                }
-            });
-
-            BrandFooter(page, brand);
-        });
-    }
-
-    private static void AddCompetenceDeepTraitPage(
-        IDocumentContainer container, string brand, byte[] logo, string fullName, string generated,
-        CompetenceDeepTraitReport trait)
-    {
-        container.Page(page =>
-        {
-            page.Size(PageSizes.A4);
-            page.MarginHorizontal(28);
-            page.MarginVertical(24);
-            page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
-            BrandHeader(page, brand, logo, trait.LabelNl, fullName, generated, AccentCoral);
-
-            page.Content().PaddingTop(14).Column(col =>
+            page.Content().PaddingTop(12).Column(col =>
             {
                 col.Spacing(8);
-                col.Item().Row(r =>
+                col.Item().Text("Jij in het kort").FontSize(16).Bold().FontColor(BrandNavy);
+                col.Item().Text(report.Summary).FontSize(10);
+
+                col.Item().PaddingTop(6).Text("Jouw vijf eigenschappen").FontSize(13).Bold().FontColor(BrandNavy);
+                foreach (var trait in report.Traits)
                 {
-                    r.RelativeItem().Text($"Score: {trait.Score}/100 ({trait.Level})")
-                        .FontSize(13).Bold().FontColor(BrandNavy);
+                    col.Item().Row(r =>
+                    {
+                        r.RelativeItem().Text(trait.LabelNl).SemiBold();
+                        r.ConstantItem(110).AlignRight()
+                            .Text($"{trait.Score}/100 · {trait.Level}").FontColor(BrandDeep).SemiBold();
+                    });
+                    col.Item().Element(e => ScoreBar(e, trait.Score, trait.NormMean, Gold));
                     if (!string.IsNullOrWhiteSpace(trait.NormBand))
                     {
-                        r.ConstantItem(200).AlignRight().Text(trait.NormBand!).FontColor(Muted).Italic();
+                        col.Item().Text(trait.NormBand!).FontSize(8).FontColor(Muted).Italic();
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(report.NormSourceLine))
+                {
+                    col.Item().PaddingTop(6).Background(SoftSky).Padding(8)
+                        .Text(report.NormSourceLine!).FontSize(8).FontColor(Muted).Italic();
+                }
+            });
+
+            DeepReportFooter(page);
+        });
+    }
+
+    /// <summary>
+    /// Pages 3–7 — one page per trait (exactly <see cref="CompetenceDeepReport.Traits"/> order):
+    /// big score/level/norm band, bar vs. average, six facet bars with norm markers, and the
+    /// "Wat betekent dit?", "Zo zie je het op je werk", "Valkuil", "Tip", "Sterk in" sections.
+    /// </summary>
+    private static void AddCompetenceDeepTraitPage(
+        IDocumentContainer container, string brand, string fullName, CompetenceDeepTraitReport trait)
+    {
+        container.Page(page =>
+        {
+            page.Size(PageSizes.A4);
+            page.MarginHorizontal(28);
+            page.MarginVertical(24);
+            page.DefaultTextStyle(x => x.FontSize(9.5f).FontColor(Slate));
+            DeepReportHeader(page, brand, fullName);
+
+            page.Content().PaddingTop(10).Column(col =>
+            {
+                col.Spacing(7);
+
+                col.Item().Row(r =>
+                {
+                    r.RelativeItem().Column(head =>
+                    {
+                        head.Item().Text(trait.LabelNl).FontSize(17).Bold().FontColor(BrandNavy);
+                        head.Item().Text($"{trait.Score}/100 · {trait.Level}")
+                            .FontSize(11).FontColor(BrandDeep).SemiBold();
+                    });
+                    if (!string.IsNullOrWhiteSpace(trait.NormBand))
+                    {
+                        r.ConstantItem(190).AlignRight().AlignMiddle().Background(SoftSky)
+                            .PaddingHorizontal(8).PaddingVertical(6)
+                            .Text(trait.NormBand!).FontSize(8.5f).FontColor(Muted).Italic();
                     }
                 });
 
-                col.Item().Text(trait.Meaning);
-                col.Item().Background(SoftMint).Padding(8).Text(t =>
+                col.Item().Element(e => ScoreBar(e, trait.Score, trait.NormMean, Gold));
+                if (trait.NormMean is double avg)
                 {
-                    t.Span("In de praktijk: ").Bold();
-                    t.Span(trait.WorkQuote);
-                });
-
-                col.Item().Row(r =>
-                {
-                    r.RelativeItem().Background(WarmSand).Padding(8).Column(b =>
-                    {
-                        b.Item().Text("Let op").Bold().FontColor(AccentCoral);
-                        b.Item().Text(trait.Pitfall);
-                    });
-                    r.ConstantItem(8);
-                    r.RelativeItem().Background(SoftSky).Padding(8).Column(b =>
-                    {
-                        b.Item().Text("Tip").Bold().FontColor(AccentTeal);
-                        b.Item().Text(trait.Tip);
-                    });
-                });
-
-                col.Item().Text(t =>
-                {
-                    t.Span("Jouw kracht: ").Bold();
-                    t.Span(trait.Strength);
-                });
-                col.Item().Text(t =>
-                {
-                    t.Span("Je floreert bij: ").Bold();
-                    t.Span(trait.ThriveAtWork);
-                });
-                col.Item().Text(t =>
-                {
-                    t.Span("Fijne manager: ").Bold();
-                    t.Span(trait.FittingManager);
-                });
-                col.Item().Text(t =>
-                {
-                    t.Span("In een team: ").Bold();
-                    t.Span(trait.InTeam);
-                });
+                    col.Item().Text($"Gemiddelde van de normgroep: {Math.Round(avg)}/100")
+                        .FontSize(8).FontColor(Muted);
+                }
 
                 if (trait.Facets.Count > 0)
                 {
-                    col.Item().PaddingTop(6).Text("Facetten").FontSize(12).Bold().FontColor(BrandNavy);
+                    col.Item().PaddingTop(2).Text("Facetten").FontSize(11).Bold().FontColor(BrandNavy);
                     foreach (var facet in trait.Facets)
                     {
                         col.Item().Row(r =>
                         {
-                            r.RelativeItem().Text(facet.LabelNl);
-                            r.ConstantItem(50).AlignRight().Text($"{facet.Score}/100").FontColor(BrandDeep);
-                            r.ConstantItem(160).AlignRight().Text(facet.NormBand ?? "").FontSize(9).FontColor(Muted);
+                            r.ConstantItem(140).Text(facet.LabelNl).FontSize(8.5f);
+                            r.RelativeItem().Element(e => ScoreBar(e, facet.Score, facet.NormMean, AccentTeal));
+                            r.ConstantItem(30).AlignRight().Text($"{facet.Score}")
+                                .FontSize(8.5f).FontColor(BrandDeep).Bold();
                         });
                     }
                 }
+
+                col.Item().PaddingTop(2).Background(SoftSky).Padding(7).Column(b =>
+                {
+                    b.Spacing(1);
+                    b.Item().Text("Wat betekent dit?").Bold().FontColor(BrandNavy).FontSize(9.5f);
+                    b.Item().Text(trait.Meaning).FontSize(9);
+                });
+
+                col.Item().Background(SoftMint).Padding(7).Column(b =>
+                {
+                    b.Spacing(1);
+                    b.Item().Text("Zo zie je het op je werk").Bold().FontColor(AccentTeal).FontSize(9.5f);
+                    b.Item().Text(trait.WorkQuote).FontSize(9);
+                });
+
+                col.Item().Row(r =>
+                {
+                    r.RelativeItem().Background(WarmSand).Padding(7).Column(b =>
+                    {
+                        b.Item().Text("Valkuil").Bold().FontColor(AccentCoral).FontSize(9.5f);
+                        b.Item().Text(trait.Pitfall).FontSize(9);
+                    });
+                    r.ConstantItem(8);
+                    r.RelativeItem().Background(SoftGold).Padding(7).Column(b =>
+                    {
+                        b.Item().Text("Tip").Bold().FontColor(Gold).FontSize(9.5f);
+                        b.Item().Text(trait.Tip).FontSize(9);
+                    });
+                });
+
+                col.Item().Background(SoftSky).Padding(7).Column(b =>
+                {
+                    b.Spacing(1);
+                    b.Item().Text("Sterk in").Bold().FontColor(BrandNavy).FontSize(9.5f);
+                    b.Item().Text(trait.Strength).FontSize(9);
+                });
             });
 
-            BrandFooter(page, brand);
+            DeepReportFooter(page);
         });
     }
 
+    /// <summary>
+    /// Page 8 — three cards (Hier bloei je op / Leidinggevende die past / Jij in een team) using the
+    /// candidate's top-scoring trait, plus occupation matches with match-percent bars and reasons.
+    /// </summary>
     private static void AddCompetenceDeepWorkFitPage(
-        IDocumentContainer container, string brand, byte[] logo, string fullName, string generated,
-        CompetenceDeepReport report)
+        IDocumentContainer container, string brand, string fullName, CompetenceDeepReport report)
     {
         container.Page(page =>
         {
             page.Size(PageSizes.A4);
             page.MarginHorizontal(28);
             page.MarginVertical(24);
-            page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
-            BrandHeader(page, brand, logo, "Werk dat bij je past", fullName, generated, AccentCoral);
+            page.DefaultTextStyle(x => x.FontSize(9.5f).FontColor(Slate));
+            DeepReportHeader(page, brand, fullName);
 
-            page.Content().PaddingTop(14).Column(col =>
+            page.Content().PaddingTop(12).Column(col =>
             {
                 col.Spacing(8);
+                col.Item().Text("Werk dat bij je past").FontSize(16).Bold().FontColor(BrandNavy);
+
+                var top = report.Traits.OrderByDescending(t => t.Score).FirstOrDefault();
+                if (top is not null)
+                {
+                    col.Item().Row(r =>
+                    {
+                        r.RelativeItem().Background(SoftSky).Padding(8).Column(b =>
+                        {
+                            b.Spacing(2);
+                            b.Item().Text("Hier bloei je op").Bold().FontColor(BrandNavy).FontSize(9.5f);
+                            b.Item().Text(top.ThriveAtWork).FontSize(9);
+                        });
+                        r.ConstantItem(8);
+                        r.RelativeItem().Background(SoftMint).Padding(8).Column(b =>
+                        {
+                            b.Spacing(2);
+                            b.Item().Text("Leidinggevende die past").Bold().FontColor(AccentTeal).FontSize(9.5f);
+                            b.Item().Text(top.FittingManager).FontSize(9);
+                        });
+                        r.ConstantItem(8);
+                        r.RelativeItem().Background(SoftGold).Padding(8).Column(b =>
+                        {
+                            b.Spacing(2);
+                            b.Item().Text("Jij in een team").Bold().FontColor(Gold).FontSize(9.5f);
+                            b.Item().Text(top.InTeam).FontSize(9);
+                        });
+                    });
+                }
+
+                col.Item().PaddingTop(4).Text("Beroepen die bij je passen").FontSize(13).Bold().FontColor(BrandNavy);
                 if (report.Occupations.Count == 0)
                 {
                     col.Item().Text("Vul de vragenlijst volledig in voor persoonlijke beroepssuggesties.")
@@ -431,57 +508,133 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
 
                 foreach (var occupation in report.Occupations)
                 {
-                    col.Item().Background(SoftSky).Padding(10).Column(box =>
+                    col.Item().Row(r =>
                     {
-                        box.Spacing(3);
-                        box.Item().Row(r =>
-                        {
-                            r.RelativeItem().Text(occupation.Title).FontSize(13).Bold().FontColor(BrandNavy);
-                            r.ConstantItem(60).AlignRight()
-                                .Text($"{occupation.MatchPercent}%").FontColor(BrandDeep).Bold();
-                        });
-                        box.Item().Text(occupation.Reason).FontColor(Muted);
+                        r.RelativeItem().Text(occupation.Title).FontSize(11).SemiBold().FontColor(BrandNavy);
+                        r.ConstantItem(50).AlignRight().Text($"{occupation.MatchPercent}%")
+                            .FontColor(BrandDeep).Bold();
                     });
+                    col.Item().Element(e => ScoreBar(e, occupation.MatchPercent, null, AccentTeal));
+                    col.Item().Text(occupation.Reason).FontSize(9).FontColor(Muted);
                 }
             });
 
-            BrandFooter(page, brand);
+            DeepReportFooter(page);
         });
     }
 
+    /// <summary>
+    /// Page 9 — three action-plan steps with a "☐ Gedaan op: ____" checkbox line, then "Over deze
+    /// test" crediting the IPIP Big Five source, the Johnson (2014) norm line, and a diagnosis disclaimer.
+    /// </summary>
     private static void AddCompetenceDeepActionPlanPage(
-        IDocumentContainer container, string brand, byte[] logo, string fullName, string generated,
-        CompetenceDeepReport report)
+        IDocumentContainer container, string brand, string fullName, CompetenceDeepReport report)
     {
         container.Page(page =>
         {
             page.Size(PageSizes.A4);
             page.MarginHorizontal(28);
             page.MarginVertical(24);
-            page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
-            BrandHeader(page, brand, logo, "Jouw actieplan", fullName, generated, AccentCoral);
+            page.DefaultTextStyle(x => x.FontSize(9.5f).FontColor(Slate));
+            DeepReportHeader(page, brand, fullName);
 
-            page.Content().PaddingTop(14).Column(col =>
+            page.Content().PaddingTop(12).Column(col =>
             {
-                col.Spacing(10);
+                col.Spacing(9);
+                col.Item().Text("Jouw actieplan").FontSize(16).Bold().FontColor(BrandNavy);
+
                 var step = 1;
-                foreach (var action in report.ActionPlan)
+                foreach (var action in report.ActionPlan.Take(3))
                 {
-                    col.Item().Background(SoftMint).Padding(10).Column(box =>
+                    col.Item().Background(SoftMint).Padding(9).Column(box =>
                     {
-                        box.Spacing(3);
-                        box.Item().Text($"{step}. {action.Title}").FontSize(13).Bold().FontColor(BrandNavy);
-                        box.Item().Text(action.Body);
+                        box.Spacing(2);
+                        box.Item().Text($"{step}. {action.Title}").FontSize(11).Bold().FontColor(BrandNavy);
+                        box.Item().Text(action.Body).FontSize(9);
+                        box.Item().Text("☐ Gedaan op: ____").FontSize(9).FontColor(Muted);
                     });
                     step++;
                 }
 
-                col.Item().PaddingTop(10).Text(
-                        "Dit rapport is geen medische of klinische diagnose. Je antwoorden blijven in jouw account. Werkgevers zien ze niet.")
-                    .FontColor(Muted).Italic().FontSize(9);
+                col.Item().PaddingTop(6).Text("Over deze test").FontSize(12).Bold().FontColor(BrandNavy);
+                col.Item().Text("150 vragen · Big Five (IPIP).").FontSize(9);
+                col.Item().Text(
+                        "Goldberg, L. R., Johnson, J. A., Eber, H. W., Hogan, R., Ashton, M. C., Cloninger, C. R., " +
+                        "& Gough, H. G. (2006). The International Personality Item Pool and the future of " +
+                        "public-domain personality measures. Journal of Research in Personality, 40(1), 84–96. " +
+                        "ipip.ori.org")
+                    .FontSize(8).FontColor(Muted);
+                if (!string.IsNullOrWhiteSpace(report.NormSourceLine))
+                {
+                    col.Item().Text(report.NormSourceLine!).FontSize(8).FontColor(Muted).Italic();
+                }
+
+                col.Item().PaddingTop(4).Text("Dit is geen diagnose.").FontSize(9).FontColor(Muted).Italic();
             });
 
-            BrandFooter(page, brand);
+            DeepReportFooter(page);
+        });
+    }
+
+    /// <summary>Shared header for the deep-report pages 2–9 (cover intentionally has none).</summary>
+    private static void DeepReportHeader(PageDescriptor page, string brand, string fullName)
+    {
+        page.Header().Column(header =>
+        {
+            header.Item().PaddingBottom(6)
+                .Text($"{brand} · Uitgebreid rapport · Competentietest · {fullName}")
+                .FontSize(9).FontColor(Muted);
+            header.Item().Height(2).Background(Gold);
+        });
+    }
+
+    /// <summary>Shared footer for the deep-report pages 2–9: "persoonlijk en vertrouwelijk · pagina x / N".</summary>
+    private static void DeepReportFooter(PageDescriptor page)
+    {
+        page.Footer().PaddingTop(4).Row(row =>
+        {
+            row.RelativeItem().Text("persoonlijk en vertrouwelijk").FontColor(Muted).FontSize(8);
+            row.ConstantItem(110).AlignRight().Text(x =>
+            {
+                x.Span("pagina ").FontColor(Muted).FontSize(8);
+                x.CurrentPageNumber().FontColor(Muted).FontSize(8);
+                x.Span(" / ").FontColor(Muted).FontSize(8);
+                x.TotalPages().FontColor(Muted).FontSize(8);
+            });
+        });
+    }
+
+    /// <summary>
+    /// Vector horizontal bar (QuestPDF <c>Row</c>/<c>Layers</c> primitives, not a rasterized
+    /// screenshot): a track filled up to <paramref name="scorePercent"/> in <paramref name="fillColor"/>,
+    /// with an optional thin navy marker line at <paramref name="markerPercent"/> (e.g. the norm mean).
+    /// </summary>
+    private static void ScoreBar(IContainer container, double scorePercent, double? markerPercent, Color fillColor)
+    {
+        var score = (float)Math.Clamp(scorePercent, 0, 100);
+        var left = Math.Max(score, 0.01f);
+        var right = Math.Max(100f - score, 0.01f);
+
+        container.Height(10).Layers(layers =>
+        {
+            layers.PrimaryLayer().Background(Line).Row(row =>
+            {
+                row.RelativeItem(left).Background(fillColor);
+                row.RelativeItem(right);
+            });
+
+            if (markerPercent is double markerRaw)
+            {
+                var marker = (float)Math.Clamp(markerRaw, 0, 100);
+                var markerLeft = Math.Max(marker, 0.01f);
+                var markerRight = Math.Max(100f - marker, 0.01f);
+                layers.Layer().Row(row =>
+                {
+                    row.RelativeItem(markerLeft);
+                    row.ConstantItem(2).Background(BrandDeep);
+                    row.RelativeItem(markerRight);
+                });
+            }
         });
     }
 

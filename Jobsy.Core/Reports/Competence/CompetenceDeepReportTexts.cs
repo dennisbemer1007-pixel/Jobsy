@@ -214,15 +214,8 @@ public static class CompetenceDeepReportTexts
             ? text
             : null;
 
-    public static string LabelNl(string domain) => domain switch
-    {
-        DeepAnalysisCompetenceItems.Consciëntieusheid => "Consciëntieusheid",
-        DeepAnalysisCompetenceItems.Vriendelijkheid => "Vriendelijkheid",
-        DeepAnalysisCompetenceItems.EmotioneleStabiliteit => "Emotionele stabiliteit",
-        DeepAnalysisCompetenceItems.Openheid => "Openheid",
-        DeepAnalysisCompetenceItems.Extraversie => "Extraversie",
-        _ => domain
-    };
+    /// <summary>Plain Dutch (B1) trait label — same wording as <see cref="DeepAnalysisQuestionHelp.DomainLabel"/>.</summary>
+    public static string LabelNl(string domain) => DeepAnalysisQuestionHelp.DomainLabel(domain);
 
     /// <summary>Three occupation suggestions for a trait, used when the trait scores "Hoog".</summary>
     public static IReadOnlyList<(string Title, string Reason)> OccupationsFor(string domain)
