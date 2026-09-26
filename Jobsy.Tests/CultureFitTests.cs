@@ -81,7 +81,8 @@ public class CultureFitTests
 
         var discovery = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/VacancyDiscovery.razor"));
         Assert.Contains("CultureFitLabel", discovery, StringComparison.Ordinal);
-        Assert.Contains("cultureFitLabel", discovery, StringComparison.Ordinal);
+        var jobMap = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/jobMap.js"));
+        Assert.Contains("cultureFitLabel", jobMap, StringComparison.Ordinal);
 
         var detail = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/VacancyDetail.razor"));
         Assert.Contains("CultureFitLabel", detail, StringComparison.Ordinal);

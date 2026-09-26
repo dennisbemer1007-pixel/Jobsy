@@ -46,7 +46,7 @@ public static class DimensionLabels
             CulturePersonalityCatalog.Extraversion => "Energie van mensen",
             CulturePersonalityCatalog.Agreeableness => "Prettig samen optrekken",
             CulturePersonalityCatalog.EmotionalStability => "Kalm onder druk",
-            CulturePersonalityCatalog.Autonomy => "Eigen regie & uitdaging",
+            // Autonomy shares the string with SchwartzValuesCatalog.Autonomy above.
             _ => domain
         };
     }

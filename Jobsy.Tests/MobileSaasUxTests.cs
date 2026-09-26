@@ -157,7 +157,7 @@ public class MobileSaasUxTests
         Assert.Contains("application-card__company", razor);
         Assert.Contains("Apps.StatusNow", razor);
         Assert.Contains("application-stepper", razor);
-        Assert.Contains("visually-hidden", razor);
+        Assert.Contains("application-stepper__label", razor);
         Assert.Contains("application-card__btn", razor);
         Assert.DoesNotContain("class=\"table-list\"", razor);
         Assert.DoesNotContain("<table", razor);

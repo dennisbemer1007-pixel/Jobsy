@@ -60,8 +60,8 @@ public class WhoAmITests
             new CulturePersonalityScores(
             Autonomy: 70, Informal: 60, Collaboration: 80, Flexibility: 55, Innovation: 50, PeopleFirst: 65,
             Openness: 55, Conscientiousness: 70, Extraversion: 60, Agreeableness: 75, EmotionalStability: 70));
-        Assert.Contains("samenwerken", user, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("zelfstandig", user, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Samen", user, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Eigen regie", user, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("@", user, StringComparison.Ordinal);
         Assert.DoesNotContain("ada", user, StringComparison.OrdinalIgnoreCase);
         Assert.True(CareerCompassBuilder.ContainsForbiddenJargon(WhoAmIPrompt.System));

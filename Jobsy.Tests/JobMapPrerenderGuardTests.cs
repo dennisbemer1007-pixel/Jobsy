@@ -231,7 +231,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("defer", app);
         Assert.DoesNotContain("app-core.js?v=20260816-perf\" defer", app);
         Assert.Contains("css/app.min.css", app);
-        Assert.Contains("media=\"print\"", app);
+        Assert.DoesNotContain("media=\"print\"", app);
+        Assert.Contains("data-app-css", app);
         Assert.Contains("jobsyLogoFallback", app);
         Assert.Contains("#job-map", app);
         Assert.Contains("min-height: 55dvh", app);
