@@ -1,4 +1,5 @@
-@* Funda-style mobile bottom sheet: collapsed / card / half (/ full). *@
+@* Funda-style mobile bottom sheet: collapsed / card / half (/ full).
+   Drag runs on the JS thread (translate3d) for 60 fps; Blazor owns snap state. *@
 @implements IAsyncDisposable
 @inject IJSRuntime Js
 
@@ -7,15 +8,9 @@
      role="dialog"
      aria-label="@AriaLabel"
      aria-modal="false"
-     data-snap="@SnapName"
-     style="--map-sheet-y: @(_translateY.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))px;">
+     data-snap="@SnapName">
     <div class="map-sheet__scrim" @onclick="OnScrimClick" hidden="@(!ShowScrim)"></div>
-    <div class="map-sheet__panel"
-         @ref="_panel"
-         @onpointerdown="OnPointerDown"
-         @onpointermove="OnPointerMove"
-         @onpointerup="OnPointerUp"
-         @onpointercancel="OnPointerUp">
+    <div class="map-sheet__panel" @ref="_panel">
         <div class="map-sheet__handle" aria-hidden="true">
             <span class="map-sheet__grab"></span>
         </div>
@@ -45,22 +40,12 @@
     [Parameter] public EventCallback<double> HeightChanged { get; set; }
 
     private ElementReference _panel;
-    private double _translateY;
-    private double _viewportH;
-    private bool _dragging;
-    private double _dragStartY;
-    private double _dragStartTranslate;
     private bool _historyPushed;
     private DotNetObjectReference<MapBottomSheet>? _self;
     private bool _jsReady;
     private Snap? _appliedSnap;
 
     private string SnapName => Current.ToString().ToLowerInvariant();
-
-    private double CollapsedH => 64;
-    private double CardH => 160;
-    private double HalfH => Math.Max(CardH, _viewportH * 0.5);
-    private double FullH => Math.Max(HalfH, _viewportH * 0.92);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -74,9 +59,9 @@
             }
             catch (JSException)
             {
-                // mapBottomSheet.js not loaded yet — layout still works via CSS.
+                // mapBottomSheet.js not loaded yet
             }
-            await MeasureAsync();
+
             await ApplySnapAsync(animate: false);
         }
         else if (_appliedSnap != Current)
@@ -85,37 +70,22 @@
         }
     }
 
-    private async Task MeasureAsync()
-    {
-        try
-        {
-            _viewportH = await Js.InvokeAsync<double>("mapBottomSheet.viewportHeight");
-        }
-        catch
-        {
-            _viewportH = 844;
-        }
-    }
-
-    private double HeightFor(Snap snap) => snap switch
-    {
-        Snap.Card => CardH,
-        Snap.Half => HalfH,
-        Snap.Full => FullH,
-        _ => CollapsedH
-    };
-
     private async Task ApplySnapAsync(bool animate)
     {
-        var h = HeightFor(Current);
-        _translateY = Math.Max(0, _viewportH - h);
         _appliedSnap = Current;
-        await HeightChanged.InvokeAsync(h);
+        var snap = SnapName;
+        double height = Current switch
+        {
+            Snap.Card => 160,
+            Snap.Half => 400,
+            Snap.Full => 700,
+            _ => 64
+        };
         if (_jsReady)
         {
             try
             {
-                await Js.InvokeVoidAsync("mapBottomSheet.setTranslate", Id, _translateY, animate && !PrefersReducedMotion());
+                height = await Js.InvokeAsync<double>("mapBottomSheet.setSnap", Id, snap, animate);
             }
             catch
             {
@@ -123,17 +93,20 @@
             }
         }
 
+        await HeightChanged.InvokeAsync(height);
         await SyncHistoryAsync();
     }
 
-    private bool PrefersReducedMotion()
-        => false; // JS path respects prefers-reduced-motion; Blazor fallback skips spring.
-
     private async Task SyncHistoryAsync()
     {
+        if (!_jsReady)
+        {
+            return;
+        }
+
         if (Current == Snap.Collapsed)
         {
-            if (_historyPushed && _jsReady)
+            if (_historyPushed)
             {
                 try { await Js.InvokeVoidAsync("mapBottomSheet.clearHistory", Id); } catch { }
                 _historyPushed = false;
@@ -141,7 +114,7 @@
             return;
         }
 
-        if (!_historyPushed && _jsReady)
+        if (!_historyPushed)
         {
             try
             {
@@ -150,65 +123,6 @@
             }
             catch { }
         }
-    }
-
-    private void OnPointerDown(PointerEventArgs e)
-    {
-        if (e.PointerType == "mouse" && e.Button != 0)
-        {
-            return;
-        }
-
-        _dragging = true;
-        _dragStartY = e.ClientY;
-        _dragStartTranslate = _translateY;
-    }
-
-    private void OnPointerMove(PointerEventArgs e)
-    {
-        if (!_dragging)
-        {
-            return;
-        }
-
-        var dy = e.ClientY - _dragStartY;
-        var next = Math.Clamp(_dragStartTranslate + dy, _viewportH - FullH, _viewportH - CollapsedH);
-        _translateY = next;
-    }
-
-    private async Task OnPointerUp(PointerEventArgs e)
-    {
-        if (!_dragging)
-        {
-            return;
-        }
-
-        _dragging = false;
-        var h = _viewportH - _translateY;
-        var target = NearestSnap(h);
-        if (target != Current)
-        {
-            Current = target;
-            await CurrentChanged.InvokeAsync(target);
-        }
-
-        await ApplySnapAsync(animate: true);
-        if (target == Snap.Collapsed)
-        {
-            await OnClose.InvokeAsync();
-        }
-    }
-
-    private Snap NearestSnap(double height)
-    {
-        var candidates = new[]
-        {
-            (Snap.Collapsed, CollapsedH),
-            (Snap.Card, CardH),
-            (Snap.Half, HalfH),
-            (Snap.Full, FullH)
-        };
-        return candidates.OrderBy(c => Math.Abs(c.Item2 - height)).First().Item1;
     }
 
     private async Task OnScrimClick()
@@ -237,8 +151,36 @@
     [JSInvokable]
     public async Task OnViewportResize(double height)
     {
-        _viewportH = height;
         await ApplySnapAsync(animate: false);
+    }
+
+    [JSInvokable]
+    public async Task OnJsSnapChanged(string snap)
+    {
+        var next = snap?.ToLowerInvariant() switch
+        {
+            "card" => Snap.Card,
+            "half" => Snap.Half,
+            "full" => Snap.Full,
+            _ => Snap.Collapsed
+        };
+        if (next == Current)
+        {
+            _appliedSnap = next;
+            return;
+        }
+
+        Current = next;
+        _appliedSnap = next;
+        await CurrentChanged.InvokeAsync(next);
+        if (next == Snap.Collapsed)
+        {
+            await OnClose.InvokeAsync();
+        }
+        else
+        {
+            await SyncHistoryAsync();
+        }
     }
 
     public async ValueTask DisposeAsync()
