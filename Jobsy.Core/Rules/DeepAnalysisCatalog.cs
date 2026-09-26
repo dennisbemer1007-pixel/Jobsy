@@ -61,7 +61,16 @@ public static class DeepAnalysisCatalog
         => kind is AssessmentKind.Competence or AssessmentKind.Career or AssessmentKind.Values or AssessmentKind.Culture;
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildCompetenceQuestions()
-        => Materialize("BigFive", DeepAnalysisCompetenceItems.All, AssessmentKind.Competence, CompetenceItemsPerDomain, CompetenceItemsPerDomain);
+    {
+        var list = Materialize("BigFive", DeepAnalysisCompetenceItems.All, AssessmentKind.Competence, CompetenceItemsPerDomain, CompetenceItemsPerDomain)
+            .ToList();
+        for (var i = 0; i < list.Count; i++)
+        {
+            list[i] = list[i] with { Facet = DeepAnalysisCompetenceFacets.CodeForIndex(i) };
+        }
+
+        return list;
+    }
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildCareerQuestions()
         => Materialize("RIASEC", DeepAnalysisCareerItems.All, AssessmentKind.Career, CareerItemsPerDomainMin, CareerItemsPerDomainMax);
@@ -276,6 +285,53 @@ public static class DeepAnalysisCatalog
             .ToList();
     }
 
+    /// <summary>
+    /// 0-100 per IPIP-NEO facet from reverse-corrected competence answers. Only the competence
+    /// deep analysis carries facet codes, so this always scores <see cref="Questions"/>.
+    /// </summary>
+    public static IReadOnlyList<(string Facet, string Domain, int Percent, int Count)> ScoreFacets(
+        IReadOnlyDictionary<int, int> answers)
+    {
+        var buckets = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
+        var domainByFacet = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var question in Questions)
+        {
+            if (string.IsNullOrEmpty(question.Facet))
+            {
+                continue;
+            }
+
+            if (!answers.TryGetValue(question.Id, out var raw) || !IsValidAnswer(raw))
+            {
+                continue;
+            }
+
+            var value = question.Reverse ? LikertMax + LikertMin - raw : raw;
+            if (!buckets.TryGetValue(question.Facet, out var list))
+            {
+                list = [];
+                buckets[question.Facet] = list;
+            }
+
+            list.Add(value);
+            domainByFacet[question.Facet] = question.Domain;
+        }
+
+        return buckets
+            .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(kv =>
+            {
+                var avg = kv.Value.Average();
+                var percent = (int)Math.Clamp(
+                    Math.Round(100 * (avg - LikertMin) / (LikertMax - LikertMin), MidpointRounding.AwayFromZero),
+                    0,
+                    100);
+                return (kv.Key, domainByFacet[kv.Key], percent, kv.Value.Count);
+            })
+            .ToList();
+    }
+
     public static RiasecScores ToRiasecScores(IReadOnlyList<DeepAnalysisDomainScore> scores)
     {
         int Get(string code) =>
@@ -450,6 +506,7 @@ public sealed record DeepAnalysisQuestion(
     string Family,
     string Domain,
     bool Reverse,
-    string PromptNl);
+    string PromptNl,
+    string Facet = "");
 
 public sealed record DeepAnalysisDomainScore(string Domain, int Percent, int AnsweredCount);
