@@ -2,25 +2,28 @@ window.jobsyMapLibre = (function () {
     "use strict";
 
     var LIBERTY_URL = "https://tiles.openfreemap.org/styles/liberty";
-    var BRIGHT_URL = "https://tiles.openfreemap.org/styles/bright";
     var STORAGE_KEY = "jobsy.mapStyle";
+    var BUILDINGS_LAYER = "jobsy-3d-buildings";
 
     function styleSpec(key) {
+        // One basemap (liberty). "bright"/3D only tilts and extrudes buildings — no second style download.
         if (key === "bright") {
             return {
                 key: "bright",
-                url: BRIGHT_URL,
-                pitch: 45,
+                url: LIBERTY_URL,
+                pitch: 50,
                 maxPitch: 60,
-                minPitch: 0
+                minPitch: 0,
+                threeD: true
             };
         }
         return {
             key: "liberty",
             url: LIBERTY_URL,
             pitch: 0,
-            maxPitch: 0,
-            minPitch: 0
+            maxPitch: 60,
+            minPitch: 0,
+            threeD: false
         };
     }
 
@@ -51,7 +54,6 @@ window.jobsyMapLibre = (function () {
             return;
         }
         container.dataset.jobsyTouchLock = "1";
-        // One-finger pan on the map must not scroll the rest of the page.
         container.addEventListener("touchmove", function (ev) {
             if (ev.cancelable) {
                 ev.preventDefault();
@@ -73,6 +75,72 @@ window.jobsyMapLibre = (function () {
         }
     }
 
+    function findBuildingSourceLayer(map) {
+        if (!map || typeof map.getStyle !== "function") {
+            return null;
+        }
+        var style = map.getStyle();
+        if (!style || !style.layers) {
+            return null;
+        }
+        for (var i = 0; i < style.layers.length; i++) {
+            var layer = style.layers[i];
+            if (!layer || layer.type !== "fill" || !layer["source-layer"]) {
+                continue;
+            }
+            var id = String(layer.id || "").toLowerCase();
+            var sourceLayer = String(layer["source-layer"] || "").toLowerCase();
+            if (id.indexOf("building") >= 0 || sourceLayer.indexOf("building") >= 0) {
+                return { source: layer.source, sourceLayer: layer["source-layer"] };
+            }
+        }
+        return null;
+    }
+
+    function ensureBuildingsLayer(map) {
+        if (!map || map.getLayer(BUILDINGS_LAYER)) {
+            return;
+        }
+        var found = findBuildingSourceLayer(map);
+        if (!found) {
+            return;
+        }
+        try {
+            map.addLayer({
+                id: BUILDINGS_LAYER,
+                source: found.source,
+                "source-layer": found.sourceLayer,
+                type: "fill-extrusion",
+                minzoom: 14,
+                paint: {
+                    "fill-extrusion-color": "#d6d2cc",
+                    "fill-extrusion-height": [
+                        "coalesce",
+                        ["get", "render_height"],
+                        ["get", "height"],
+                        12
+                    ],
+                    "fill-extrusion-base": [
+                        "coalesce",
+                        ["get", "render_min_height"],
+                        ["get", "min_height"],
+                        0
+                    ],
+                    "fill-extrusion-opacity": 0.72
+                }
+            });
+        } catch (e) { }
+    }
+
+    function removeBuildingsLayer(map) {
+        if (!map || !map.getLayer(BUILDINGS_LAYER)) {
+            return;
+        }
+        try {
+            map.removeLayer(BUILDINGS_LAYER);
+        } catch (e) { }
+    }
+
     function applyCameraForStyle(map, spec) {
         if (!map || !spec) {
             return;
@@ -83,13 +151,14 @@ window.jobsyMapLibre = (function () {
         if (typeof map.setMaxPitch === "function") {
             map.setMaxPitch(spec.maxPitch);
         }
-        if (spec.key === "bright") {
+        if (spec.threeD) {
             if (map.dragRotate && typeof map.dragRotate.enable === "function") {
                 map.dragRotate.enable();
             }
             if (map.touchPitch && typeof map.touchPitch.enable === "function") {
                 map.touchPitch.enable();
             }
+            ensureBuildingsLayer(map);
             map.easeTo({ pitch: spec.pitch, duration: 450 });
         } else {
             if (map.dragRotate && typeof map.dragRotate.disable === "function") {
@@ -98,6 +167,7 @@ window.jobsyMapLibre = (function () {
             if (map.touchPitch && typeof map.touchPitch.disable === "function") {
                 map.touchPitch.disable();
             }
+            removeBuildingsLayer(map);
             if (typeof map.resetNorthPitch === "function") {
                 map.resetNorthPitch({ duration: 450 });
             } else {
@@ -157,26 +227,25 @@ window.jobsyMapLibre = (function () {
     }
 
     function setStyle(map, key) {
-        if (!map || typeof map.setStyle !== "function") {
+        if (!map) {
             return;
         }
         var spec = styleSpec(key);
-        if (map._jobsyStyleKey === spec.key && typeof map.isStyleLoaded === "function" && map.isStyleLoaded()) {
+        if (map._jobsyStyleKey === spec.key) {
+            applyCameraForStyle(map, spec);
             return;
         }
         map._jobsyStyleKey = spec.key;
         storeStyle(spec.key);
         syncStyleToggle(map._jobsyStyleSwitch, spec.key);
+        // Same liberty tiles — only pitch + extrusion change (no setStyle download).
+        applyCameraForStyle(map, spec);
+        hideChrome(map);
+        lockTouch(map.getContainer());
         var onRestore = map._jobsyOnStyleRestored;
-        map.setStyle(spec.url);
-        map.once("style.load", function () {
-            applyCameraForStyle(map, spec);
-            hideChrome(map);
-            lockTouch(map.getContainer());
-            if (typeof onRestore === "function") {
-                onRestore(spec);
-            }
-        });
+        if (typeof onRestore === "function") {
+            onRestore(spec);
+        }
     }
 
     function createMap(container, options) {
@@ -198,9 +267,9 @@ window.jobsyMapLibre = (function () {
             pitch: spec.pitch,
             maxPitch: spec.maxPitch,
             minPitch: spec.minPitch,
-            dragRotate: spec.key === "bright",
-            touchPitch: spec.key === "bright",
-            pitchWithRotate: spec.key === "bright",
+            dragRotate: !!spec.threeD,
+            touchPitch: !!spec.threeD,
+            pitchWithRotate: !!spec.threeD,
             scrollZoom: options.scrollZoom !== false,
             dragPan: true,
             touchZoomRotate: options.touchZoomRotate !== false,
@@ -230,6 +299,9 @@ window.jobsyMapLibre = (function () {
 
         map.on("load", function () {
             hideChrome(map);
+            if (spec.threeD) {
+                ensureBuildingsLayer(map);
+            }
         });
         map.on("styledata", function () {
             hideChrome(map);
@@ -241,7 +313,7 @@ window.jobsyMapLibre = (function () {
     return {
         STYLES: {
             liberty: LIBERTY_URL,
-            bright: BRIGHT_URL
+            bright: LIBERTY_URL
         },
         styleSpec: styleSpec,
         readStoredStyle: readStoredStyle,

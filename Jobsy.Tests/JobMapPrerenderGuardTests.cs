@@ -161,8 +161,9 @@ public class JobMapPrerenderGuardTests
     {
         var helper = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.js"));
         Assert.Contains("https://tiles.openfreemap.org/styles/liberty", helper);
-        Assert.Contains("https://tiles.openfreemap.org/styles/bright", helper);
-        Assert.Contains("map.setStyle", helper);
+        Assert.DoesNotContain("https://tiles.openfreemap.org/styles/bright", helper);
+        Assert.Contains("fill-extrusion", helper);
+        Assert.Contains("pitch: 50", helper);
         Assert.Contains("attributionControl: false", helper);
         Assert.Contains("maplibreLogo: false", helper);
         Assert.Contains("cooperativeGestures: false", helper);
