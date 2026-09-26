@@ -755,6 +755,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
         string? phoneNumber = null,
         bool? whatsAppContactAllowed = null,
         IReadOnlyList<CandidateReferenceItem>? references = null,
+        DateOnly? availableFromDate = null,
+        bool clearAvailableFromDate = false,
         CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync("api/me/profile", new
@@ -769,10 +771,69 @@ public sealed class JobsyApiClient : IAsyncDisposable
             lastName,
             phoneNumber,
             whatsAppContactAllowed,
-            references
+            references,
+            availableFromDate,
+            clearAvailableFromDate
         }, ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
+    public async Task<OnboardingState?> GetMyOnboardingAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<OnboardingState>("api/me/onboarding", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<OnboardingState> SaveMyOnboardingProgressAsync(
+        int currentStep,
+        bool? stepCompleted = null,
+        bool? stepSkipped = null,
+        string? source = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/me/onboarding", new
+        {
+            currentStep,
+            stepCompleted,
+            stepSkipped,
+            source
+        }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Voortgang opslaan mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<OnboardingState>(cancellationToken: ct))!;
+    }
+
+    public async Task<OnboardingState> CompleteMyOnboardingAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/me/onboarding/complete", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Startprofiel afronden mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<OnboardingState>(cancellationToken: ct))!;
+    }
+
+    public async Task SaveOnboardingDreamJobAsync(string? dreamTitle, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/me/onboarding/dream-job", new { dreamTitle }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Droombaan opslaan mislukt.");
+        }
     }
 
     public async Task<CandidateCompetencyState?> GetMyCompetenciesAsync(CancellationToken ct = default)

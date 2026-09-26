@@ -182,7 +182,9 @@ public record MeProfileDto(
     string? PhoneNumber = null,
     bool WhatsAppContactAllowed = false,
     CandidateUploadedCvInfoDto? UploadedCv = null,
-    IReadOnlyList<CandidateReferenceDto>? References = null);
+    IReadOnlyList<CandidateReferenceDto>? References = null,
+    /// <summary>Null = available immediately (Direct).</summary>
+    DateOnly? AvailableFromDate = null);
 
 public record CandidateUploadedCvInfoDto(
     string FileName,
@@ -212,7 +214,9 @@ public record UpdateCandidateProfileRequest(
     string? LastName = null,
     string? PhoneNumber = null,
     bool? WhatsAppContactAllowed = null,
-    IReadOnlyList<CandidateReferenceDto>? References = null);
+    IReadOnlyList<CandidateReferenceDto>? References = null,
+    DateOnly? AvailableFromDate = null,
+    bool ClearAvailableFromDate = false);
 
 public record UpdateLanguageRequest(string Language);
 

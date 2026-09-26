@@ -116,6 +116,10 @@ public sealed class CandidateKompasService : ICandidateKompasService
         var careerDone = CandidateCompetencyStatuses.IsCompleted(career.Status);
         var cultureDone = CandidateCompetencyStatuses.IsCompleted(culture.Status);
         var valuesDone = CandidateCompetencyStatuses.IsCompleted(values.Status);
+        var competencyProvisional = !competencyDone && competencies.AnsweredCount > 0;
+        var careerProvisional = !careerDone && career.AnsweredCount > 0;
+        var cultureProvisional = !cultureDone && culture.Answers.Count > 0;
+        var valuesProvisional = !valuesDone && values.Answers.Count > 0;
         var profileFilled = WhoAmICompleteness.IsProfileFilled(
             user.FullName,
             user.FirstName,
@@ -138,7 +142,11 @@ public sealed class CandidateKompasService : ICandidateKompasService
             careerDone,
             cultureDone,
             valuesDone,
-            hasBackground);
+            hasBackground,
+            competencyProvisional,
+            careerProvisional,
+            cultureProvisional,
+            valuesProvisional);
 
         var whoAmI = BuildWhoAmIStory(
             whoAmIRow?.StoryText,

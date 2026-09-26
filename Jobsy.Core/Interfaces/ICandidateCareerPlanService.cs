@@ -6,6 +6,19 @@ public interface ICandidateCareerPlanService
 {
     Task<HorizonCareerPathPlanView?> GetAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    /// <summary>Persists the dream job title without regenerating the plan.</summary>
+    Task SaveDreamAsync(Guid userId, string? dreamTitle, CancellationToken cancellationToken = default);
+
+    Task<string?> GetDreamTitleAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Enqueues background plan generation when a dream title exists but the plan has no steps yet.
+    /// </summary>
+    Task EnqueueGenerationIfNeededAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>Generates the plan when a pending dream stub exists (called from insights worker).</summary>
+    Task TryGeneratePendingAsync(Guid userId, HorizonCareerProfileSnapshot snapshot, CancellationToken cancellationToken = default);
+
     Task<HorizonCareerPathPlanView> GenerateAndSaveAsync(
         Guid userId,
         string dreamTitle,

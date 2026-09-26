@@ -22,6 +22,7 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
     private readonly IWhoAmIGenerationService _whoAmIGenerate;
     private readonly ICandidateMatchSnapshotService _matches;
     private readonly ICompetenceDeepReportService _competenceReport;
+    private readonly ICandidateCareerPlanService _careerPlans;
     private readonly ILogger<CandidateInsightsComputer> _logger;
 
     public CandidateInsightsComputer(
@@ -29,12 +30,14 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         IWhoAmIGenerationService whoAmIGenerate,
         ICandidateMatchSnapshotService matches,
         ICompetenceDeepReportService competenceReport,
+        ICandidateCareerPlanService careerPlans,
         ILogger<CandidateInsightsComputer> logger)
     {
         _db = db;
         _whoAmIGenerate = whoAmIGenerate;
         _matches = matches;
         _competenceReport = competenceReport;
+        _careerPlans = careerPlans;
         _logger = logger;
     }
 
@@ -61,23 +64,49 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         var valuesRow = await _db.CandidateValuesProfiles.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
 
-        var competency = CompetencyTestCatalog.CompletedScoresOrNull(
+        var competencyResolved = ProvisionalAssessmentScores.ResolveCompetency(
             competencyRow?.Status,
+            competencyRow?.AnswersJson,
             competencyRow?.SamenwerkenPercent,
             competencyRow?.ResultaatgerichtheidPercent,
             competencyRow?.StressbestendigheidPercent,
             competencyRow?.InnovatiePercent,
             competencyRow?.ExtraversiePercent);
-        var career = CareerTestCatalog.CompletedScoresOrNull(
+        var careerResolved = ProvisionalAssessmentScores.ResolveCareer(
             careerRow?.Status,
+            careerRow?.AnswersJson,
             careerRow?.RealisticPercent,
             careerRow?.InvestigativePercent,
             careerRow?.ArtisticPercent,
             careerRow?.SocialPercent,
             careerRow?.EnterprisingPercent,
             careerRow?.ConventionalPercent);
-        var culture = ReadCulture(cultureRow);
-        var values = ReadValues(valuesRow);
+        var cultureResolved = ProvisionalAssessmentScores.ResolveCulture(
+            cultureRow?.Status,
+            cultureRow?.AnswersJson,
+            ReadCulture(cultureRow));
+        var valuesResolved = ProvisionalAssessmentScores.ResolveValues(
+            valuesRow?.Status,
+            valuesRow?.AnswersJson,
+            valuesRow?.AutonomyPercent,
+            valuesRow?.ConnectionPercent,
+            valuesRow?.AchievementPercent,
+            valuesRow?.StabilityPercent,
+            valuesRow?.ImpactPercent);
+
+        // WhoAmI story still requires completed tests (not provisional).
+        var competency = competencyResolved is { IsProvisional: false, Scores: { IsComplete: true } }
+            ? competencyResolved.Scores
+            : null;
+        var career = careerResolved is { IsProvisional: false, Scores: { IsComplete: true } }
+            ? careerResolved.Scores
+            : null;
+        var culture = cultureResolved is { IsProvisional: false, Scores: { IsComplete: true } }
+            ? cultureResolved.Scores
+            : null;
+        var values = valuesResolved is { IsProvisional: false, Scores: { IsComplete: true } }
+            ? valuesResolved.Scores
+            : null;
 
         var deepDone = await _db.CandidateDeepAnalyses.AsNoTracking()
             .AnyAsync(
@@ -86,7 +115,12 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
                      && d.Status == CandidateDeepAnalysisStatuses.Completed,
                 cancellationToken);
 
-        await RefreshCompassAsync(careerRow, career, deepDone, cancellationToken);
+        // Compass can use provisional RIASEC so Carrière has a first signal after the wizard.
+        await RefreshCompassAsync(
+            careerRow,
+            careerResolved.Scores is { IsComplete: true } ? careerResolved.Scores : career,
+            deepDone,
+            cancellationToken);
         await RefreshWhoAmIAsync(userId, competency, career, culture, values, highlights, cancellationToken);
         await RefreshCompetenceDeepReportAsync(userId, cancellationToken);
 
@@ -100,6 +134,77 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         {
             _logger.LogWarning(ex, "Match snapshot recompute failed for {UserId}.", userId);
         }
+
+        try
+        {
+            var snapshot = BuildCareerSnapshot(
+                competencyResolved.Scores,
+                careerResolved.Scores,
+                cultureResolved.Scores,
+                valuesResolved.Scores);
+            await _careerPlans.TryGeneratePendingAsync(userId, snapshot, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Pending career plan generation failed for {UserId}.", userId);
+        }
+    }
+
+    private static HorizonCareerProfileSnapshot BuildCareerSnapshot(
+        CompetencyScores? competency,
+        RiasecScores? career,
+        CulturePersonalityScores? culture,
+        SchwartzValuesScores? values)
+    {
+        var strengths = new List<string>();
+        var gaps = new List<string>();
+        if (competency is not null)
+        {
+            foreach (var code in CompetencyTestCatalog.CategoryCodes)
+            {
+                var label = WhoAmIKeywords.EverydayCompetency(code);
+                var score = competency.Get(code);
+                if (score >= 60)
+                {
+                    strengths.Add(label);
+                }
+                else if (score is > 0 and < 50)
+                {
+                    gaps.Add(label);
+                }
+            }
+        }
+
+        if (career is { IsComplete: true })
+        {
+            foreach (var code in CareerTestCatalog.RiasecCodes.OrderByDescending(career.Get).Take(2))
+            {
+                strengths.Add(CareerCompassBuilder.TypeLabel(code));
+            }
+        }
+
+        if (culture is not null)
+        {
+            foreach (var code in OnboardingWizardCatalog.CultureDimensionCodes
+                         .OrderByDescending(culture.Get)
+                         .Take(2))
+            {
+                strengths.Add(CulturePersonalityCatalog.EverydayLabel(code));
+            }
+        }
+
+        if (values is { IsComplete: true })
+        {
+            foreach (var code in SchwartzValuesCatalog.CategoryCodes.OrderByDescending(values.Get).Take(2))
+            {
+                strengths.Add(SchwartzValuesCatalog.EverydayLabel(code));
+            }
+        }
+
+        return new HorizonCareerProfileSnapshot(
+            strengths.Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList(),
+            gaps.Distinct(StringComparer.OrdinalIgnoreCase).Take(6).ToList(),
+            HasDnaSignal: strengths.Count > 0 || gaps.Count > 0);
     }
 
     private async Task RefreshCompassAsync(

@@ -78,12 +78,22 @@
                             {
                                 <span class="dna-card__badge">@Culture["Test.Status.Extended"]</span>
                             }
+                            else if (card.IsProvisional)
+                            {
+                                <span class="dna-card__badge dna-card__badge--provisional">@Culture["Onboarding.ProvisionalBadge"]</span>
+                            }
                         </header>
 
-                        @if (!card.Completed)
+                        @if (!card.Completed && !card.IsProvisional)
                         {
                             <p class="dna-card__pending">@Culture["Test.Status.NotDone"]</p>
                             <a class="engagement-btn" href="@card.StartHref">@Culture["Dna.StartTest"]</a>
+                        }
+                        else if (!card.Completed && card.IsProvisional)
+                        {
+                            <p class="dna-card__pending">
+                                <a class="engagement-btn" href="@card.StartHref">@Culture["Onboarding.Result.FullTests"]</a>
+                            </p>
                         }
                         else
                         {
@@ -198,13 +208,17 @@
         ApplyStory(kompas.WhoAmI);
         Paint(
             kompas.Competencies?.Status,
-            kompas.Competencies?.Scores,
+            kompas.Competencies?.Scores ?? kompas.Competencies?.PreviewScores,
+            kompas.Competencies?.AnsweredCount ?? 0,
             kompas.CareerInterests?.Status,
-            kompas.CareerInterests?.Scores,
+            kompas.CareerInterests?.Scores ?? kompas.CareerInterests?.PreviewScores,
+            kompas.CareerInterests?.AnsweredCount ?? 0,
             kompas.Culture?.Status,
             kompas.Culture?.Scores,
+            kompas.Culture?.AnsweredCount ?? 0,
             kompas.Values?.Status,
             kompas.Values?.Scores,
+            kompas.Values?.AnsweredCount ?? 0,
             kompas.CompetenceDeep,
             kompas.CareerDeep,
             kompas.CultureDeep,
@@ -246,32 +260,37 @@
     private void Paint(
         string? competenceStatus,
         CompetencyScoreSet? competenceScores,
+        int competenceAnswered,
         string? careerStatus,
         RiasecScoreSet? careerScores,
+        int careerAnswered,
         string? cultureStatus,
         CulturePersonalityScoreSet? cultureScores,
+        int cultureAnswered,
         string? valuesStatus,
         SchwartzValuesScoreSet? valuesScores,
+        int valuesAnswered,
         DeepAnalysisState? competenceDeep,
         DeepAnalysisState? careerDeep,
         DeepAnalysisState? cultureDeep,
         DeepAnalysisState? valuesDeep)
     {
         _cards.Clear();
-        _cards.Add(BuildCompetence(competenceStatus, competenceScores, competenceDeep));
-        _cards.Add(BuildCareer(careerStatus, careerScores, careerDeep));
-        _cards.Add(BuildCulture(cultureStatus, cultureScores, cultureDeep));
-        _cards.Add(BuildValues(valuesStatus, valuesScores, valuesDeep));
+        _cards.Add(BuildCompetence(competenceStatus, competenceScores, competenceAnswered, competenceDeep));
+        _cards.Add(BuildCareer(careerStatus, careerScores, careerAnswered, careerDeep));
+        _cards.Add(BuildCulture(cultureStatus, cultureScores, cultureAnswered, cultureDeep));
+        _cards.Add(BuildValues(valuesStatus, valuesScores, valuesAnswered, valuesDeep));
     }
 
-    private static DnaCard BuildCompetence(string? status, CompetencyScoreSet? scores, DeepAnalysisState? deep)
+    private static DnaCard BuildCompetence(string? status, CompetencyScoreSet? scores, int answered, DeepAnalysisState? deep)
     {
         var freeDone = IsCompleted(status);
         var extended = deep is { IsCompleted: true };
         var completed = freeDone || extended;
+        var provisional = !completed && answered > 0;
         var bars = new List<DnaBar>();
         string? sentence = null;
-        if (completed && scores is not null)
+        if ((completed || provisional) && scores is not null)
         {
             var ranked = Rank(
                 (CompetencyTestCatalog.Samenwerken, scores.Samenwerken),
@@ -300,17 +319,19 @@
             bars,
             [],
             [],
-            sentence);
+            sentence,
+            provisional);
     }
 
-    private static DnaCard BuildCareer(string? status, RiasecScoreSet? scores, DeepAnalysisState? deep)
+    private static DnaCard BuildCareer(string? status, RiasecScoreSet? scores, int answered, DeepAnalysisState? deep)
     {
         var freeDone = IsCompleted(status);
         var extended = deep is { IsCompleted: true };
         var completed = freeDone || extended;
+        var provisional = !completed && answered > 0;
         var chips = new List<DnaChip>();
         string? sentence = null;
-        if (completed && scores is not null)
+        if ((completed || provisional) && scores is not null)
         {
             var ranked = Rank(
                 (CareerTestCatalog.Realistic, scores.Realistic),
@@ -340,17 +361,19 @@
             [],
             chips,
             [],
-            sentence);
+            sentence,
+            provisional);
     }
 
-    private static DnaCard BuildCulture(string? status, CulturePersonalityScoreSet? scores, DeepAnalysisState? deep)
+    private static DnaCard BuildCulture(string? status, CulturePersonalityScoreSet? scores, int answered, DeepAnalysisState? deep)
     {
         var freeDone = IsCompleted(status);
         var extended = deep is { IsCompleted: true };
         var completed = freeDone || extended;
+        var provisional = !completed && answered > 0;
         var poles = new List<DnaPole>();
         string? sentence = null;
-        if (completed && scores is not null)
+        if ((completed || provisional) && scores is not null)
         {
             var ranked = Rank(
                 (CulturePersonalityCatalog.Autonomy, scores.Autonomy),
@@ -388,17 +411,19 @@
             [],
             [],
             poles,
-            sentence);
+            sentence,
+            provisional);
     }
 
-    private static DnaCard BuildValues(string? status, SchwartzValuesScoreSet? scores, DeepAnalysisState? deep)
+    private static DnaCard BuildValues(string? status, SchwartzValuesScoreSet? scores, int answered, DeepAnalysisState? deep)
     {
         var freeDone = IsCompleted(status);
         var extended = deep is { IsCompleted: true };
         var completed = freeDone || extended;
+        var provisional = !completed && answered > 0;
         var bars = new List<DnaBar>();
         string? sentence = null;
-        if (completed && scores is not null)
+        if ((completed || provisional) && scores is not null)
         {
             var ranked = Rank(
                 (SchwartzValuesCatalog.Autonomy, scores.Autonomy),
@@ -427,7 +452,8 @@
             bars,
             [],
             [],
-            sentence);
+            sentence,
+            provisional);
     }
 
     private static List<(string Code, int Percent)> Rank(params (string Code, int? Value)[] items)
@@ -461,5 +487,6 @@
         IReadOnlyList<DnaBar> Bars,
         IReadOnlyList<DnaChip> Chips,
         IReadOnlyList<DnaPole> Poles,
-        string? Sentence);
+        string? Sentence,
+        bool IsProvisional = false);
 }

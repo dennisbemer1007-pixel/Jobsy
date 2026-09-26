@@ -4,7 +4,8 @@ namespace Jobsy.Core.Rules;
 
 /// <summary>
 /// Unlock gate for the candidate Match &amp; Swipe tab.
-/// Basics + education answer (including "Geen") + competency (IPIP) + career + culture scan.
+/// Basics + education answer (including "Geen") + onboarding wizard completed.
+/// Full tests deepen the first impression; they are no longer required to unlock Match.
 /// </summary>
 public static class MatchProfileCompleteness
 {
@@ -35,31 +36,23 @@ public static class MatchProfileCompleteness
         => HasEducationLevel(prefs?.Educations);
 
     /// <summary>
-    /// <c>IsProfileComplete</c> for Match: all required checklist items done.
+    /// <c>IsProfileComplete</c> for Match: basics + education + wizard done.
     /// </summary>
     public static bool IsProfileComplete(
         bool profileBasicsFilled,
         bool hasEducationLevel,
-        bool competencyCompleted,
-        bool careerCompleted,
-        bool cultureCompleted)
+        bool wizardCompleted)
         => profileBasicsFilled
            && hasEducationLevel
-           && competencyCompleted
-           && careerCompleted
-           && cultureCompleted;
+           && wizardCompleted;
 
     public static int CompletedCount(
         bool profileBasicsFilled,
         bool hasEducationLevel,
-        bool competencyCompleted,
-        bool careerCompleted,
-        bool cultureCompleted)
+        bool wizardCompleted)
         => (profileBasicsFilled ? 1 : 0)
            + (hasEducationLevel ? 1 : 0)
-           + (competencyCompleted ? 1 : 0)
-           + (careerCompleted ? 1 : 0)
-           + (cultureCompleted ? 1 : 0);
+           + (wizardCompleted ? 1 : 0);
 
-    public const int RequiredStepCount = 5;
+    public const int RequiredStepCount = 3;
 }

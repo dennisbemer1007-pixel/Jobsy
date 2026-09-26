@@ -231,7 +231,7 @@ public sealed class DeviceSessionService : IDeviceSessionService
             companyIds.Insert(0, home);
         }
 
-        var showHowTo = user.Role == UserRole.Candidate && user.CandidateHowToCompletedAt is null;
+        var showHowTo = ShouldShowCandidateOnboarding(user);
         var hasApps = await _db.Applications.AsNoTracking()
             .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
         var hasSales = user.CompanyId is Guid cid
@@ -423,7 +423,7 @@ public sealed class DeviceSessionService : IDeviceSessionService
             companyIds.Insert(0, home);
         }
 
-        var showHowTo = user.Role == UserRole.Candidate && user.CandidateHowToCompletedAt is null;
+        var showHowTo = ShouldShowCandidateOnboarding(user);
         var hasApps = await _db.Applications.AsNoTracking()
             .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
         var hasSales = user.CompanyId is Guid cid
@@ -527,4 +527,23 @@ public sealed class DeviceSessionService : IDeviceSessionService
         => string.IsNullOrWhiteSpace(value)
             ? null
             : value.Length <= max ? value.Trim() : value.Trim()[..max];
+
+    /// <summary>
+    /// New candidates without how-to/wizard completion see <c>/candidate/start</c>.
+    /// Existing candidates with basics + education already filled never see it.
+    /// </summary>
+    internal static bool ShouldShowCandidateOnboarding(User user)
+    {
+        if (user.Role != UserRole.Candidate || user.CandidateHowToCompletedAt is not null)
+        {
+            return false;
+        }
+
+        var prefs = MatchingProfileMapper.DeserializePrefs(user.PreferencesJson);
+        var hasBasics = !string.IsNullOrWhiteSpace(user.FullName)
+                        && prefs.MaxTravelMinutes is > 0
+                        && !string.IsNullOrWhiteSpace(prefs.PreferredTransport);
+        var hasEducation = MatchProfileCompleteness.HasEducationLevel(prefs.Educations);
+        return !(hasBasics && hasEducation);
+    }
 }

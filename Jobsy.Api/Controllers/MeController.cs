@@ -143,7 +143,9 @@ public class MeController : ControllerBase
             existing.MaxHoursPerWeek,
             existing.FlexibleTimes,
             existing.Certificates,
-            existing.ShowAddressOnCv);
+            existing.ShowAddressOnCv,
+            existing.NoWorkExperience,
+            existing.EducationDirection);
 
         await _db.SaveChangesAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
@@ -299,7 +301,29 @@ public class MeController : ControllerBase
                 request.Preferences.MaxHoursPerWeek,
                 request.Preferences.FlexibleTimes,
                 request.Preferences.Certificates,
-                request.Preferences.ShowAddressOnCv);
+                request.Preferences.ShowAddressOnCv,
+                request.Preferences.NoWorkExperience ?? existing.NoWorkExperience,
+                request.Preferences.EducationDirection ?? existing.EducationDirection);
+        }
+
+        if (request.AvailableFromDate.HasValue
+            || request.ClearAvailableFromDate)
+        {
+            if (request.ClearAvailableFromDate)
+            {
+                user.AvailableFromDate = null;
+            }
+            else if (request.AvailableFromDate is DateOnly availableFrom)
+            {
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                if (availableFrom < today.AddYears(-1) || availableFrom > today.AddYears(5))
+                {
+                    return BadRequest(new { message = "Ongeldige beschikbaar-vanaf datum." });
+                }
+
+                // Today or past → treat as Direct (null).
+                user.AvailableFromDate = availableFrom <= today ? null : availableFrom;
+            }
         }
 
         if (request.References is not null)
@@ -676,7 +700,9 @@ public class MeController : ControllerBase
                 merged.Preferences.MaxHoursPerWeek,
                 merged.Preferences.FlexibleTimes,
                 merged.Preferences.Certificates,
-                merged.Preferences.ShowAddressOnCv);
+                merged.Preferences.ShowAddressOnCv,
+                merged.Preferences.NoWorkExperience ?? prefs.NoWorkExperience,
+                merged.Preferences.EducationDirection ?? prefs.EducationDirection);
             existing.ExtractedAtUtc = DateTime.UtcNow;
             existing.FilledFieldsJson = JsonSerializer.Serialize(merged.FilledFields, JsonOptions);
         }
@@ -833,7 +859,8 @@ public class MeController : ControllerBase
             user.PhoneNumber,
             user.WhatsAppContactAllowed,
             cv,
-            references);
+            references,
+            user.AvailableFromDate);
     }
 
     private async Task<string?> ReplaceReferencesAsync(
@@ -1169,6 +1196,28 @@ public class MeController : ControllerBase
                 showAddressOnCv = showAddrEl.GetBoolean();
             }
 
+            bool? noWorkExperience = null;
+            if (root.TryGetProperty("noWorkExperience", out var noWorkEl)
+                && (noWorkEl.ValueKind is JsonValueKind.True or JsonValueKind.False))
+            {
+                noWorkExperience = noWorkEl.GetBoolean();
+            }
+
+            string? educationDirection = null;
+            if (root.TryGetProperty("educationDirection", out var eduDirEl)
+                && eduDirEl.ValueKind == JsonValueKind.String)
+            {
+                educationDirection = eduDirEl.GetString()?.Trim();
+                if (string.IsNullOrWhiteSpace(educationDirection))
+                {
+                    educationDirection = null;
+                }
+                else if (educationDirection.Length > 80)
+                {
+                    educationDirection = educationDirection[..80];
+                }
+            }
+
             return new CandidatePreferencesDto(
                 roles,
                 maxTravel,
@@ -1186,7 +1235,9 @@ public class MeController : ControllerBase
                 maxHours,
                 flexibleTimes,
                 certificates,
-                showAddressOnCv);
+                showAddressOnCv,
+                noWorkExperience,
+                educationDirection);
         }
         catch (Exception)
         {
@@ -1247,6 +1298,8 @@ public class MeController : ControllerBase
         null,
         null,
         [],
+        null,
+        null,
         null);
 
     public static string SerializePreferences(
@@ -1266,7 +1319,9 @@ public class MeController : ControllerBase
         decimal? maxHoursPerWeek = null,
         bool? flexibleTimes = null,
         IEnumerable<CandidateCertificateDto>? certificates = null,
-        bool? showAddressOnCv = null)
+        bool? showAddressOnCv = null,
+        bool? noWorkExperience = null,
+        string? educationDirection = null)
     {
         var trimmedHome = string.IsNullOrWhiteSpace(homeAddress) ? null : homeAddress.Trim();
         if (trimmedHome is { Length: > 256 })
@@ -1345,7 +1400,13 @@ public class MeController : ControllerBase
                 })
                 .Take(30)
                 .ToArray(),
-            showAddressOnCv
+            showAddressOnCv,
+            noWorkExperience,
+            educationDirection = string.IsNullOrWhiteSpace(educationDirection)
+                ? null
+                : (educationDirection.Trim().Length > 80
+                    ? educationDirection.Trim()[..80]
+                    : educationDirection.Trim())
         }, JsonOptions);
     }
 }

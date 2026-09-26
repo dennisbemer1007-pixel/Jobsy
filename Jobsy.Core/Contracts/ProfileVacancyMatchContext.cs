@@ -18,4 +18,7 @@ public sealed class ProfileVacancyMatchContext
     public CulturePersonalityScores? CultureScores { get; init; }
     public CulturePersonalityScores? CompanyCultureScores { get; init; }
     public SchwartzValuesScores? ValuesScores { get; init; }
+
+    /// <summary>True when any assessment score came from wizard/draft answers rather than a completed test.</summary>
+    public bool IsProvisional { get; init; }
 }

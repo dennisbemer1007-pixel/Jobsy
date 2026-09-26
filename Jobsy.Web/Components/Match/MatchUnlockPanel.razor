@@ -7,7 +7,7 @@
     @if (!Gate.IsAuthenticated)
     {
         <h2 class="match-gate__title">Ontgrendel Match</h2>
-        <p class="match-gate__lead">Log in als kandidaat en rond je profiel af om relevante vacatures te swipen.</p>
+        <p class="match-gate__lead">Log in als kandidaat en rond je startprofiel af om relevante vacatures te swipen.</p>
         <div class="match-gate__actions">
             <a class="match-page__cta" href="@($"/login?returnUrl={Uri.EscapeDataString("/candidate/match")}")">Inloggen</a>
             <a class="match-page__cta match-page__cta--ghost" href="/">Naar de banenkaart</a>
@@ -20,7 +20,7 @@
     {
         <h2 class="match-gate__title">Maak Match compleet</h2>
         <p class="match-gate__lead">
-            Vul de checklist in — daarna tonen we vacatures die bij jouw voorkeuren passen.
+            Rond je startprofiel af (ongeveer 6 minuten) — daarna tonen we vacatures die bij jou passen.
             Opleiding mag <strong>Geen</strong> zijn.
         </p>
         <p class="match-gate__progress">@Gate.CompletedCount van @Gate.RequiredCount klaar</p>
@@ -30,10 +30,10 @@
                 <span class="whoami-check" aria-hidden="true">@(Gate.ProfileBasicsFilled ? "✓" : "")</span>
                 <div>
                     <strong>Basisgegevens</strong>
-                    <p>Naam, achtergrond en reistijd/vervoer</p>
+                    <p>Naam, beschikbaarheid en reistijd/vervoer</p>
                     @if (!Gate.ProfileBasicsFilled)
                     {
-                        <a class="engagement-btn" href="/home?tab=profile">Naar profiel</a>
+                        <a class="engagement-btn" href="/candidate/start">Verder met starten</a>
                     }
                 </div>
             </li>
@@ -41,43 +41,21 @@
                 <span class="whoami-check" aria-hidden="true">@(Gate.HasEducationLevel ? "✓" : "")</span>
                 <div>
                     <strong>Opleidingsniveau</strong>
-                    <p>Optioneel — kies je niveau of <em>Geen</em> als je niets specifiek wilt eisen</p>
+                    <p>Kies je niveau of <em>Geen</em></p>
                     @if (!Gate.HasEducationLevel)
                     {
-                        <a class="engagement-btn" href="/home?tab=profile">Kies niveau of Geen</a>
+                        <a class="engagement-btn" href="/candidate/start">Verder met starten</a>
                     }
                 </div>
             </li>
-            <li class="@(Gate.CompetencyCompleted ? "is-done" : null)">
-                <span class="whoami-check" aria-hidden="true">@(Gate.CompetencyCompleted ? "✓" : "")</span>
+            <li class="@(Gate.WizardCompleted ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(Gate.WizardCompleted ? "✓" : "")</span>
                 <div>
-                    <strong>Competentietest (IPIP)</strong>
-                    <p>25 vragen over hoe jij werkt</p>
-                    @if (!Gate.CompetencyCompleted)
+                    <strong>Startprofiel</strong>
+                    <p>Korte wizard met mini-tests voor je eerste indruk</p>
+                    @if (!Gate.WizardCompleted)
                     {
-                        <a class="engagement-btn" href="/candidate/competencies">Start test</a>
-                    }
-                </div>
-            </li>
-            <li class="@(Gate.CareerCompleted ? "is-done" : null)">
-                <span class="whoami-check" aria-hidden="true">@(Gate.CareerCompleted ? "✓" : "")</span>
-                <div>
-                    <strong>Beroepentest</strong>
-                    <p>Welke richtingen bij je passen</p>
-                    @if (!Gate.CareerCompleted)
-                    {
-                        <a class="engagement-btn" href="/candidate/career">Start test</a>
-                    }
-                </div>
-            </li>
-            <li class="@(Gate.CultureCompleted ? "is-done" : null)">
-                <span class="whoami-check" aria-hidden="true">@(Gate.CultureCompleted ? "✓" : "")</span>
-                <div>
-                    <strong>Cultuurscan</strong>
-                    <p>18 korte stellingen over hoe jij graag werkt</p>
-                    @if (!Gate.CultureCompleted)
-                    {
-                        <a class="engagement-btn" href="/candidate/culture">Start scan</a>
+                        <a class="engagement-btn" href="/candidate/start">Start of hervat</a>
                     }
                 </div>
             </li>

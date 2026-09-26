@@ -130,6 +130,8 @@ public sealed class MeProfile
     public string CurrentConsentVersion { get; set; } = string.Empty;
     public CandidateUploadedCvInfo? UploadedCv { get; set; }
     public List<CandidateReferenceItem> References { get; set; } = [];
+    /// <summary>Null = available immediately (Direct).</summary>
+    public DateOnly? AvailableFromDate { get; set; }
 }
 
 public sealed class CandidateUploadedCvInfo
@@ -171,6 +173,8 @@ public sealed class CandidatePreferences
     public List<CandidateCertificate> Certificates { get; set; } = [];
     /// <summary>When false, Lobsy-CV omits address text and map (AVG).</summary>
     public bool? ShowAddressOnCv { get; set; }
+    public bool? NoWorkExperience { get; set; }
+    public string? EducationDirection { get; set; }
 }
 
 public sealed class CandidateEmployerHistory

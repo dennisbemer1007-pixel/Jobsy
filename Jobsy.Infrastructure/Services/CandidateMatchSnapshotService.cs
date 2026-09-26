@@ -109,6 +109,7 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
             .Select(c => new
             {
                 c.Status,
+                c.AnswersJson,
                 c.SamenwerkenPercent,
                 c.ResultaatgerichtheidPercent,
                 c.StressbestendigheidPercent,
@@ -121,6 +122,7 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
             .Select(c => new
             {
                 c.Status,
+                c.AnswersJson,
                 c.RealisticPercent,
                 c.InvestigativePercent,
                 c.ArtisticPercent,
@@ -134,6 +136,7 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
             .Select(c => new
             {
                 c.Status,
+                c.AnswersJson,
                 c.AutonomyPercent,
                 c.InformalPercent,
                 c.CollaborationPercent,
@@ -152,6 +155,7 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
             .Select(c => new
             {
                 c.Status,
+                c.AnswersJson,
                 c.AutonomyPercent,
                 c.ConnectionPercent,
                 c.AchievementPercent,
@@ -162,27 +166,29 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
 
         var competencies = competency is null
             ? null
-            : CompetencyTestCatalog.CompletedScoresOrNull(
+            : ProvisionalAssessmentScores.ResolveCompetency(
                 competency.Status,
+                competency.AnswersJson,
                 competency.SamenwerkenPercent,
                 competency.ResultaatgerichtheidPercent,
                 competency.StressbestendigheidPercent,
                 competency.InnovatiePercent,
-                competency.ExtraversiePercent);
+                competency.ExtraversiePercent).Scores;
         var riasec = career is null
             ? null
-            : CareerTestCatalog.CompletedScoresOrNull(
+            : ProvisionalAssessmentScores.ResolveCareer(
                 career.Status,
+                career.AnswersJson,
                 career.RealisticPercent,
                 career.InvestigativePercent,
                 career.ArtisticPercent,
                 career.SocialPercent,
                 career.EnterprisingPercent,
-                career.ConventionalPercent);
-        CulturePersonalityScores? cultureScores = null;
+                career.ConventionalPercent).Scores;
+        CulturePersonalityScores? storedCulture = null;
         if (culture is not null && CandidateCompetencyStatuses.IsCompleted(culture.Status))
         {
-            var c = new CulturePersonalityScores(
+            storedCulture = new CulturePersonalityScores(
                 culture.AutonomyPercent,
                 culture.InformalPercent,
                 culture.CollaborationPercent,
@@ -194,32 +200,28 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
                 culture.ExtraversionPercent,
                 culture.AgreeablenessPercent,
                 culture.EmotionalStabilityPercent);
-            if (c is { IsComplete: true })
-            {
-                cultureScores = c;
-            }
         }
 
-        SchwartzValuesScores? valuesScores = null;
-        if (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status))
-        {
-            var v = new SchwartzValuesScores(
+        var cultureScores = culture is null
+            ? null
+            : ProvisionalAssessmentScores.ResolveCulture(
+                culture.Status, culture.AnswersJson, storedCulture).Scores;
+        var valuesScores = values is null
+            ? null
+            : ProvisionalAssessmentScores.ResolveValues(
+                values.Status,
+                values.AnswersJson,
                 values.AutonomyPercent,
                 values.ConnectionPercent,
                 values.AchievementPercent,
                 values.StabilityPercent,
-                values.ImpactPercent);
-            if (v is { IsComplete: true })
-            {
-                valuesScores = v;
-            }
-        }
+                values.ImpactPercent).Scores;
 
         return CandidateInsightsFingerprint.ForMatches(
-            competencies,
-            riasec,
-            cultureScores,
-            valuesScores,
+            competencies is { IsComplete: true } ? competencies : null,
+            riasec is { IsComplete: true } ? riasec : null,
+            cultureScores is { IsComplete: true } ? cultureScores : null,
+            valuesScores is { IsComplete: true } ? valuesScores : null,
             prefs,
             userRow.PreferencesJson);
     }

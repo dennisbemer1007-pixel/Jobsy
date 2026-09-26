@@ -115,7 +115,9 @@ public static class SchwartzValuesCatalog
                 scored.Add(question.Reverse ? LikertMax + LikertMin - raw : raw);
             }
 
-            return scored.Count == CategoryQuestionCount ? LikertAnswerJson.ToPercent(scored) : null;
+            // Allow provisional / draft scores from any answered items in the dimension
+            // (e.g. onboarding mini-test with one item per driver).
+            return scored.Count == 0 ? null : LikertAnswerJson.ToPercent(scored);
         }
 
         var autonomy = Pct(Autonomy);

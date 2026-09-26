@@ -37,6 +37,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateCareerPlan> CandidateCareerPlans => Set<CandidateCareerPlan>();
     public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
+    public DbSet<CandidateOnboarding> CandidateOnboardings => Set<CandidateOnboarding>();
     public DbSet<CandidateRoleFitCheck> CandidateRoleFitChecks => Set<CandidateRoleFitCheck>();
     public DbSet<CandidateMatchSnapshot> CandidateMatchSnapshots => Set<CandidateMatchSnapshot>();
     public DbSet<CandidateVacancyCultureFit> CandidateVacancyCultureFits => Set<CandidateVacancyCultureFit>();
@@ -612,6 +613,19 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.DreamKey).HasMaxLength(120).IsRequired();
             entity.Property(e => e.PlanJson).HasColumnType("text").IsRequired();
             entity.Property(e => e.MatchSummary).HasMaxLength(500).IsRequired();
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateOnboarding>(entity =>
+        {
+            entity.ToTable("CandidateOnboardings");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Source).HasMaxLength(64);
+            entity.Property(e => e.StepsJson).HasColumnType("text").IsRequired();
             entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasOne(e => e.User)
                 .WithMany()

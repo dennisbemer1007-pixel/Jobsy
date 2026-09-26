@@ -100,29 +100,35 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
         var career = await _db.CandidateCareerInterests.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
 
-        var scores = competency is null
-            ? null
-            : CompetencyTestCatalog.CompletedScoresOrNull(
+        var competencyResolved = competency is null
+            ? new ProvisionalAssessmentScores.ResolvedCompetency(null, false)
+            : ProvisionalAssessmentScores.ResolveCompetency(
                 competency.Status,
+                competency.AnswersJson,
                 competency.SamenwerkenPercent,
                 competency.ResultaatgerichtheidPercent,
                 competency.StressbestendigheidPercent,
                 competency.InnovatiePercent,
                 competency.ExtraversiePercent);
+        var scores = competencyResolved.Scores is { IsComplete: true } ? competencyResolved.Scores : null;
 
-        var riasecTags = career is not null && CandidateCompetencyStatuses.IsCompleted(career.Status)
-            ? CareerTestCatalog.ParseTagsJson(career.RiasecTagsJson)
-            : Array.Empty<string>();
-        var riasecScores = career is null
-            ? null
-            : CareerTestCatalog.CompletedScoresOrNull(
+        var careerResolved = career is null
+            ? new ProvisionalAssessmentScores.ResolvedRiasec(null, false)
+            : ProvisionalAssessmentScores.ResolveCareer(
                 career.Status,
+                career.AnswersJson,
                 career.RealisticPercent,
                 career.InvestigativePercent,
                 career.ArtisticPercent,
                 career.SocialPercent,
                 career.EnterprisingPercent,
                 career.ConventionalPercent);
+        var riasecScores = careerResolved.Scores is { IsComplete: true } ? careerResolved.Scores : null;
+        var riasecTags = riasecScores is not null
+            ? CareerTestCatalog.DeriveRiasecTags(riasecScores)
+            : career is not null && CandidateCompetencyStatuses.IsCompleted(career.Status)
+                ? CareerTestCatalog.ParseTagsJson(career.RiasecTagsJson)
+                : Array.Empty<string>();
         var careerDeep = await _db.CandidateDeepAnalyses.AsNoTracking()
             .AnyAsync(
                 d => d.UserId == userId
@@ -134,10 +140,10 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
 
         var cultureRow = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        CulturePersonalityScores? culture = null;
+        CulturePersonalityScores? storedCulture = null;
         if (cultureRow is not null && CandidateCompetencyStatuses.IsCompleted(cultureRow.Status))
         {
-            culture = new CulturePersonalityScores(
+            storedCulture = new CulturePersonalityScores(
                 cultureRow.AutonomyPercent,
                 cultureRow.InformalPercent,
                 cultureRow.CollaborationPercent,
@@ -149,28 +155,25 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 cultureRow.ExtraversionPercent,
                 cultureRow.AgreeablenessPercent,
                 cultureRow.EmotionalStabilityPercent);
-            if (culture is not { IsComplete: true })
-            {
-                culture = null;
-            }
         }
+
+        var cultureResolved = ProvisionalAssessmentScores.ResolveCulture(
+            cultureRow?.Status, cultureRow?.AnswersJson, storedCulture);
+        var culture = cultureResolved.Scores is { IsComplete: true } ? cultureResolved.Scores : null;
 
         var valuesRow = await _db.CandidateValuesProfiles.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        SchwartzValuesScores? values = null;
-        if (valuesRow is not null && CandidateCompetencyStatuses.IsCompleted(valuesRow.Status))
-        {
-            values = new SchwartzValuesScores(
+        var valuesResolved = valuesRow is null
+            ? new ProvisionalAssessmentScores.ResolvedValues(null, false)
+            : ProvisionalAssessmentScores.ResolveValues(
+                valuesRow.Status,
+                valuesRow.AnswersJson,
                 valuesRow.AutonomyPercent,
                 valuesRow.ConnectionPercent,
                 valuesRow.AchievementPercent,
                 valuesRow.StabilityPercent,
                 valuesRow.ImpactPercent);
-            if (values is not { IsComplete: true })
-            {
-                values = null;
-            }
-        }
+        var values = valuesResolved.Scores is { IsComplete: true } ? valuesResolved.Scores : null;
 
         return new ProfileVacancyMatchContext
         {
@@ -185,7 +188,11 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             CareerDeepCompleted = careerDeep,
             CareerOccupations = occupations,
             CultureScores = culture,
-            ValuesScores = values
+            ValuesScores = values,
+            IsProvisional = competencyResolved.IsProvisional
+                            || careerResolved.IsProvisional
+                            || cultureResolved.IsProvisional
+                            || valuesResolved.IsProvisional
         };
     }
 

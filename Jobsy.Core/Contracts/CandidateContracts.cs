@@ -20,7 +20,11 @@ public record CandidatePreferencesDto(
     bool? FlexibleTimes = null,
     IReadOnlyList<CandidateCertificateDto>? Certificates = null,
     /// <summary>Legacy flag; candidate home is never shown on Lobsy-CV regardless.</summary>
-    bool? ShowAddressOnCv = null);
+    bool? ShowAddressOnCv = null,
+    /// <summary>Wizard/profile: candidate indicated they have no work experience yet.</summary>
+    bool? NoWorkExperience = null,
+    /// <summary>Optional study direction (e.g. E&amp;M) paired with education level.</summary>
+    string? EducationDirection = null);
 
 public record CandidateEmployerHistoryDto(
     string EmployerName,

@@ -43,6 +43,91 @@ public sealed class CandidateCareerPlanService : ICandidateCareerPlanService
         return await MaterializeAsync(plan, persistAuto: true, cancellationToken);
     }
 
+    public async Task SaveDreamAsync(Guid userId, string? dreamTitle, CancellationToken cancellationToken = default)
+    {
+        var dream = (dreamTitle ?? "").Trim();
+        if (dream.Length > 80)
+        {
+            dream = dream[..80];
+        }
+
+        // "Weet ik nog niet" and empty are allowed — store as-is for resume; generation skips blanks.
+        var now = DateTime.UtcNow;
+        var existing = await _db.CandidateCareerPlans
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        if (existing is null)
+        {
+            if (string.IsNullOrWhiteSpace(dream))
+            {
+                return;
+            }
+
+            _db.CandidateCareerPlans.Add(new CandidateCareerPlan
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                DreamTitle = dream,
+                DreamKey = CareerStepKey.NormalizeDreamKey(dream),
+                PlanJson = "[]",
+                MatchPercent = 0,
+                MatchSummary = "",
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now
+            });
+        }
+        else
+        {
+            existing.DreamTitle = string.IsNullOrWhiteSpace(dream) ? existing.DreamTitle : dream;
+            existing.DreamKey = CareerStepKey.NormalizeDreamKey(existing.DreamTitle);
+            existing.UpdatedAtUtc = now;
+            // Keep existing steps; wizard save must not regenerate.
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<string?> GetDreamTitleAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var title = await _db.CandidateCareerPlans.AsNoTracking()
+            .Where(p => p.UserId == userId)
+            .Select(p => p.DreamTitle)
+            .FirstOrDefaultAsync(cancellationToken);
+        return string.IsNullOrWhiteSpace(title) ? null : title;
+    }
+
+    public Task EnqueueGenerationIfNeededAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        _insightsQueue.TryEnqueue(userId);
+        return Task.CompletedTask;
+    }
+
+    public async Task TryGeneratePendingAsync(
+        Guid userId,
+        HorizonCareerProfileSnapshot snapshot,
+        CancellationToken cancellationToken = default)
+    {
+        var plan = await _db.CandidateCareerPlans
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        if (plan is null || string.IsNullOrWhiteSpace(plan.DreamTitle))
+        {
+            return;
+        }
+
+        if (string.Equals(plan.DreamTitle.Trim(), "Weet ik nog niet", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var steps = CareerPlanJson.Deserialize(plan.PlanJson);
+        if (steps.Count > 0)
+        {
+            return;
+        }
+
+        await GenerateAndSaveAsync(userId, plan.DreamTitle, snapshot, cancellationToken);
+    }
+
     public async Task<HorizonCareerPathPlanView> GenerateAndSaveAsync(
         Guid userId,
         string dreamTitle,

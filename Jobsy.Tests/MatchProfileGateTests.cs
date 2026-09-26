@@ -7,13 +7,15 @@ namespace Jobsy.Tests;
 public class MatchProfileGateTests
 {
     [Fact]
-    public void IsProfileComplete_requires_basics_education_and_three_tests()
+    public void IsProfileComplete_requires_basics_education_and_wizard()
     {
-        Assert.False(MatchProfileCompleteness.IsProfileComplete(true, false, true, true, true));
-        Assert.False(MatchProfileCompleteness.IsProfileComplete(true, true, false, true, true));
-        Assert.True(MatchProfileCompleteness.IsProfileComplete(true, true, true, true, true));
-        Assert.Equal(5, MatchProfileCompleteness.RequiredStepCount);
-        Assert.Equal(3, MatchProfileCompleteness.CompletedCount(true, true, true, false, false));
+        Assert.False(MatchProfileCompleteness.IsProfileComplete(true, false, true));
+        Assert.False(MatchProfileCompleteness.IsProfileComplete(true, true, false));
+        Assert.False(MatchProfileCompleteness.IsProfileComplete(false, true, true));
+        Assert.True(MatchProfileCompleteness.IsProfileComplete(true, true, true));
+        Assert.Equal(3, MatchProfileCompleteness.RequiredStepCount);
+        Assert.Equal(2, MatchProfileCompleteness.CompletedCount(true, true, false));
+        Assert.Equal(3, MatchProfileCompleteness.CompletedCount(true, true, true));
     }
 
     [Fact]
@@ -24,6 +26,7 @@ public class MatchProfileGateTests
         Assert.False(MatchProfileCompleteness.HasEducationLevel([" ", ""]));
         Assert.False(MatchProfileCompleteness.HasEducationLevel(Array.Empty<string>()));
         Assert.True(MatchProfileCompleteness.HasEducationLevel(["MBO"]));
+        Assert.True(MatchProfileCompleteness.HasEducationLevel(["HAVO – E&M"]));
     }
 
     [Fact]
@@ -37,6 +40,12 @@ public class MatchProfileGateTests
 
         Assert.True(MatchVacancyRelevance.IsRelevant(
             ["MBO", "HBO"], 30, "Fiets",
+            vacancyRequiredEducation: "MBO",
+            vacancyTravelMinutes: 20,
+            vacancyRequiredTransport: null));
+
+        Assert.True(MatchVacancyRelevance.IsRelevant(
+            ["MBO 3"], 30, "Fiets",
             vacancyRequiredEducation: "MBO",
             vacancyTravelMinutes: 20,
             vacancyRequiredTransport: null));
@@ -85,5 +94,9 @@ public class MatchProfileGateTests
         var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Program.cs"));
         Assert.Contains("CandidateMatchProfileService", program, StringComparison.Ordinal);
         Assert.Contains("MatchVacancyService", program, StringComparison.Ordinal);
+
+        var unlock = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Match/MatchUnlockPanel.razor"));
+        Assert.Contains("WizardCompleted", unlock, StringComparison.Ordinal);
+        Assert.Contains("/candidate/start", unlock, StringComparison.Ordinal);
     }
 }

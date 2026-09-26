@@ -48,8 +48,14 @@ public class User
 
     /// <summary>
     /// When the candidate completed (or dismissed) the "Hoe werkt Lobsy" onboarding page.
+    /// Also set when the first-login wizard (<c>/candidate/start</c>) is finished.
     /// </summary>
     public DateTime? CandidateHowToCompletedAt { get; set; }
+
+    /// <summary>
+    /// Earliest date the candidate is available for work. Null means "Direct" (available now).
+    /// </summary>
+    public DateOnly? AvailableFromDate { get; set; }
 
     /// <summary>Last successful login (local or external). Null = never logged in before.</summary>
     public DateTime? LastLoginAtUtc { get; set; }

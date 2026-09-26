@@ -4,7 +4,11 @@ namespace Jobsy.Web.Auth;
 
 public static partial class AuthRedirects
 {
-    public const string CandidateHowToPath = "/candidate/hoe-werkt-lobsy";
+    /// <summary>First-login onboarding wizard (replaces hoe-werkt-lobsy redirect for new candidates).</summary>
+    public const string CandidateHowToPath = "/candidate/start";
+
+    /// <summary>Guide remains reachable from the (i) menu.</summary>
+    public const string CandidateHowToGuidePath = "/candidate/hoe-werkt-lobsy";
     public const string BanenkaartPath = "/";
 
     /// <summary>Post-login landing for a candidate based on first-login how-to flag.</summary>
