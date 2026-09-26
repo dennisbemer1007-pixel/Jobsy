@@ -66,7 +66,7 @@ public class MobileSmokePlaywrightTests
 
         await OpenFiltersAsync(mobilePage);
         await mobilePage.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, "03-anonymous-filters.png"), FullPage = true });
-        await mobilePage.Keyboard.PressAsync("Escape");
+        await CloseFiltersAsync(mobilePage);
 
         await OpenListAsync(mobilePage);
         await mobilePage.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, "04-anonymous-list.png"), FullPage = true });
