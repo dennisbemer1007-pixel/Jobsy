@@ -60,6 +60,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 a.SnapshotDrivingLicenses,
                 a.SnapshotEducations,
                 a.SnapshotAboutMe,
+                a.SnapshotWhoAmIJson,
                 a.SnapshotCertificatesJson,
                 a.SnapshotShowAddressOnCv,
                 a.CandidateCity,
@@ -267,6 +268,105 @@ public sealed class PrivacyDataService : IPrivacyDataService
             })
             .ToListAsync(cancellationToken);
 
+        var valuesProfiles = await _db.CandidateValuesProfiles.AsNoTracking()
+            .Where(v => v.UserId == user.Id)
+            .Select(v => new
+            {
+                v.Status,
+                v.AnswersJson,
+                v.AutonomyPercent,
+                v.ConnectionPercent,
+                v.AchievementPercent,
+                v.StabilityPercent,
+                v.ImpactPercent,
+                v.MatchTagsJson,
+                v.CompletedAtUtc,
+                v.UpdatedAtUtc
+            })
+            .ToListAsync(cancellationToken);
+
+        var careerPlans = await _db.CandidateCareerPlans.AsNoTracking()
+            .Where(p => p.UserId == user.Id)
+            .Select(p => new
+            {
+                p.Id,
+                p.DreamTitle,
+                p.DreamKey,
+                p.PlanJson,
+                p.MatchPercent,
+                p.MatchSummary,
+                p.CreatedAtUtc,
+                p.UpdatedAtUtc,
+                StepProgress = p.StepProgress.Select(s => new
+                {
+                    s.StepKey,
+                    s.StepOrder,
+                    s.CompletedAtUtc,
+                    s.Source,
+                    s.UpdatedAtUtc
+                }).ToList()
+            })
+            .ToListAsync(cancellationToken);
+
+        var cultureFits = await _db.CandidateVacancyCultureFits.AsNoTracking()
+            .Where(f => f.UserId == user.Id)
+            .Select(f => new
+            {
+                f.VacancyId,
+                f.ResultJson,
+                f.InputFingerprint,
+                f.FromOpenAi,
+                f.ComputedAtUtc
+            })
+            .ToListAsync(cancellationToken);
+
+        var matchSnapshots = await _db.CandidateMatchSnapshots.AsNoTracking()
+            .Where(s => s.UserId == user.Id)
+            .Select(s => new
+            {
+                s.MatchesJson,
+                s.InputFingerprint,
+                s.ComputedAtUtc,
+                s.Status
+            })
+            .ToListAsync(cancellationToken);
+
+        // Device and push records are portable metadata only. Tokens, hashes and endpoints
+        // are credentials or bearer-like identifiers and must never leave the service.
+        var deviceSessions = await _db.UserDeviceSessions.AsNoTracking()
+            .Where(s => s.UserId == user.Id)
+            .Select(s => new
+            {
+                s.Id,
+                s.FamilyId,
+                s.CreatedAtUtc,
+                s.LastUsedAtUtc,
+                s.ExpiresAtUtc,
+                s.RevokedAtUtc,
+                s.RevokedReason,
+                s.UserAgent,
+                s.DeviceName
+            })
+            .ToListAsync(cancellationToken);
+
+        var pushSubscriptions = await _db.WebPushSubscriptions.AsNoTracking()
+            .Where(s => s.UserId == user.Id)
+            .Select(s => new
+            {
+                s.Id,
+                s.DeviceSessionId,
+                s.UserAgent,
+                s.CreatedAtUtc,
+                s.UpdatedAtUtc,
+                s.LastUsedAtUtc
+            })
+            .ToListAsync(cancellationToken);
+
+        var externalLogins = await _db.UserExternalLogins.AsNoTracking()
+            .Where(l => l.UserId == user.Id)
+            .Select(l => new { l.Provider })
+            .ToListAsync(cancellationToken);
+
         return new
         {
             ExportedAtUtc = DateTime.UtcNow,
@@ -408,6 +508,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     d.Status,
                     d.AnswersJson,
                     d.TagsJson,
+                    d.ReportJson,
+                    d.ReportVersion,
                     d.UnlockedAtUtc,
                     d.CompletedAtUtc,
                     d.ReportGeneratedAtUtc,
@@ -487,7 +589,32 @@ public sealed class PrivacyDataService : IPrivacyDataService
             PartnerAffiliateProfile = partnerProfile,
             CommissionLedger = commissionEntries,
             SelfBillingInvoices = invoices,
-            SalesManagerPayouts = payouts
+            SalesManagerPayouts = payouts,
+            Waardenprofielen = valuesProfiles,
+            Loopbaanplannen = careerPlans,
+            Cultuurfits = cultureFits,
+            Matchmomentopnamen = matchSnapshots,
+            Apparaatsessies = deviceSessions,
+            Pushabonnementen = pushSubscriptions,
+            ExterneAanmeldingen = externalLogins,
+            WieBenIkMomentopnamen = new
+            {
+                Profiel = await _db.CandidateWhoAmIProfiles.AsNoTracking()
+                    .Where(p => p.UserId == user.Id)
+                    .Select(p => new
+                    {
+                        p.IncludeOnCv,
+                        p.StoryText,
+                        p.KeywordsJson,
+                        p.FromOpenAi,
+                        p.StoryGeneratedAtUtc,
+                        p.UpdatedAtUtc
+                    })
+                    .FirstOrDefaultAsync(cancellationToken),
+                Sollicitaties = applications
+                    .Where(a => !string.IsNullOrWhiteSpace(a.SnapshotWhoAmIJson))
+                    .Select(a => new { a.Id, a.VacancyId, a.SnapshotWhoAmIJson })
+            }
         };
     }
 
@@ -638,12 +765,19 @@ public sealed class PrivacyDataService : IPrivacyDataService
     {
         var now = DateTime.UtcNow;
         var deviceSessions = await _db.UserDeviceSessions
-            .Where(s => s.UserId == user.Id && s.RevokedAtUtc == null)
+            .Where(s => s.UserId == user.Id)
             .ToListAsync(cancellationToken);
-        foreach (var session in deviceSessions)
+        if (deviceSessions.Count > 0)
         {
-            session.RevokedAtUtc = now;
-            session.RevokedReason = "account-deleted";
+            _db.UserDeviceSessions.RemoveRange(deviceSessions);
+        }
+
+        var loginHandoffs = await _db.DeviceLoginHandoffs
+            .Where(h => h.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (loginHandoffs.Count > 0)
+        {
+            _db.DeviceLoginHandoffs.RemoveRange(loginHandoffs);
         }
 
         var pushRows = await _db.WebPushSubscriptions
@@ -681,6 +815,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             app.SnapshotDrivingLicenses = null;
             app.SnapshotEducations = null;
             app.SnapshotAboutMe = null;
+            app.SnapshotWhoAmIJson = null;
             app.SnapshotPhoneNumber = null;
             app.SnapshotWhatsAppAllowed = false;
             app.SnapshotHomeLatitude = null;
@@ -845,6 +980,15 @@ public sealed class PrivacyDataService : IPrivacyDataService
             company.PartnerReferralRewardedAtUtc = null;
         }
 
+        var ambassadeurReferredCompanies = await _db.Companies
+            .Where(c => c.ReferredByAmbassadeurUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var company in ambassadeurReferredCompanies)
+        {
+            company.ReferredByAmbassadeurUserId = null;
+            company.CommissionAmbassadeurRateSnapshot = null;
+        }
+
         // Detach SM→SM hierarchy links and scrub pending/closed applications.
         var referredProfiles = await _db.SalesManagerProfiles
             .Where(p => p.ReferredBySalesManagerUserId == user.Id)
@@ -860,6 +1004,26 @@ public sealed class PrivacyDataService : IPrivacyDataService
         {
             salesProfile.ReferredBySalesManagerUserId = null;
             salesProfile.CanRecruitSalesManagers = false;
+        }
+
+        var ambassadeurProfile = await _db.AmbassadeurProfiles
+            .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+        if (ambassadeurProfile is not null)
+        {
+            ambassadeurProfile.CompanyName = "Verwijderde ambassadeur";
+            ambassadeurProfile.KvkNumber = null;
+            ambassadeurProfile.VatNumber = null;
+            ambassadeurProfile.Address = null;
+            ambassadeurProfile.PostalCode = null;
+            ambassadeurProfile.City = null;
+            ambassadeurProfile.Country = null;
+            ambassadeurProfile.Iban = null;
+            ambassadeurProfile.TrackingCode = null;
+            ambassadeurProfile.AgreementSignedAt = null;
+            ambassadeurProfile.AgreementVersion = null;
+            ambassadeurProfile.OnboardingCompletedAt = null;
+            ambassadeurProfile.CommissionPercentageOverride = null;
+            ambassadeurProfile.UpdatedAt = now;
         }
 
         var smApplications = await _db.SalesManagerApplications
@@ -943,6 +1107,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
         user.UnsubscribeVerificationFailedAttempts = 0;
         user.UnsubscribeReasonCode = null;
         user.UnsubscribeReasonOther = null;
+        user.ReferredByAmbassadeurUserId = null;
+        user.ReferredByAmbassadeurTrackingCode = null;
 
         var uploadedCvs = await _db.CandidateUploadedCvs
             .Where(c => c.UserId == user.Id)
@@ -976,6 +1142,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateCulturePersonalityProfiles.RemoveRange(discs);
         }
 
+        var valuesProfiles = await _db.CandidateValuesProfiles
+            .Where(v => v.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (valuesProfiles.Count > 0)
+        {
+            _db.CandidateValuesProfiles.RemoveRange(valuesProfiles);
+        }
+
         var whoAmI = await _db.CandidateWhoAmIProfiles
             .Where(c => c.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -990,6 +1164,30 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (careers.Count > 0)
         {
             _db.CandidateCareerInterests.RemoveRange(careers);
+        }
+
+        var careerStepProgress = await _db.CandidateCareerStepProgress
+            .Where(p => p.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (careerStepProgress.Count > 0)
+        {
+            _db.CandidateCareerStepProgress.RemoveRange(careerStepProgress);
+        }
+
+        var careerPlans = await _db.CandidateCareerPlans
+            .Where(p => p.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (careerPlans.Count > 0)
+        {
+            _db.CandidateCareerPlans.RemoveRange(careerPlans);
+        }
+
+        var onboardings = await _db.CandidateOnboardings
+            .Where(o => o.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (onboardings.Count > 0)
+        {
+            _db.CandidateOnboardings.RemoveRange(onboardings);
         }
 
         var roleFits = await _db.CandidateRoleFitChecks

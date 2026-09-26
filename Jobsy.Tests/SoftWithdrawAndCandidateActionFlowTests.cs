@@ -24,6 +24,7 @@ public class SoftWithdrawAndCandidateActionFlowTests
             CandidateCity = "Delft",
             Motivation = "Ik wil graag",
             SnapshotAboutMe = "Bio",
+            SnapshotWhoAmIJson = """{"story":"Ik ben Jan"}""",
             SnapshotPhoneNumber = "0612345678",
             SnapshotCertificatesJson = "[]",
             SnapshotAvailabilityJson = "{}",
@@ -43,6 +44,7 @@ public class SoftWithdrawAndCandidateActionFlowTests
         Assert.Null(app.CandidateCity);
         Assert.Null(app.Motivation);
         Assert.Null(app.SnapshotAboutMe);
+        Assert.Null(app.SnapshotWhoAmIJson);
         Assert.Null(app.SnapshotPhoneNumber);
         Assert.Null(app.SnapshotCertificatesJson);
         Assert.Null(app.SnapshotAvailabilityJson);

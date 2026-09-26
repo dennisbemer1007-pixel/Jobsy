@@ -86,6 +86,7 @@ public static class ApplicationRules
         application.SnapshotDrivingLicenses = null;
         application.SnapshotEducations = null;
         application.SnapshotAboutMe = null;
+        application.SnapshotWhoAmIJson = null;
         application.SnapshotPhoneNumber = null;
         application.SnapshotWhatsAppAllowed = false;
         application.SnapshotHomeLatitude = null;

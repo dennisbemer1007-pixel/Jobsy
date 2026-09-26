@@ -469,6 +469,318 @@ public class AccountUnsubscribeTests
         Assert.StartsWith("deleted-", user.Email);
     }
 
+    [Fact]
+    public void Candidate_user_relation_catalog_requires_anonymize_coverage_for_every_model_entity()
+    {
+        using var db = CreateDb();
+
+        var userRelationTypes = db.Model.GetEntityTypes()
+            .Where(entity => entity.ClrType != typeof(User)
+                && (entity.FindProperty("UserId") is not null
+                    || entity.FindProperty("CandidateUserId") is not null))
+            .Select(entity => entity.ClrType)
+            .OrderBy(type => type.Name)
+            .ToArray();
+
+        // This catalog is intentionally exhaustive: additions to the EF model must be
+        // explicitly reviewed and added to PrivacyDataService.AnonymizeUserAsync.
+        var anonymizeCoverage = new[]
+        {
+            typeof(AmbassadeurProfile),
+            typeof(Application),
+            typeof(CandidateActionToken),
+            typeof(CandidateCareerInterest),
+            typeof(CandidateCareerPlan),
+            typeof(CandidateCareerStepProgress),
+            typeof(CandidateCompetency),
+            typeof(CandidateCulturePersonalityProfile),
+            typeof(CandidateDeepAnalysis),
+            typeof(CandidateMatchSnapshot),
+            typeof(CandidateOnboarding),
+            typeof(CandidateReference),
+            typeof(CandidateRoleFitCheck),
+            typeof(CandidateUploadedCv),
+            typeof(CandidateVacancyCultureFit),
+            typeof(CandidateValuesProfile),
+            typeof(CandidateWhoAmIProfile),
+            typeof(DeepAnalysisCheckout),
+            typeof(DeviceLoginHandoff),
+            typeof(LocalAuthCredential),
+            typeof(PartnerAffiliateProfile),
+            typeof(PlatformFeedback),
+            typeof(SalesManagerProfile),
+            typeof(SiteVisit),
+            typeof(TalentContactRequest),
+            typeof(TrainingClick),
+            typeof(UserCompany),
+            typeof(UserDeviceSession),
+            typeof(UserExternalLogin),
+            typeof(UserNotification),
+            typeof(VacancyClick),
+            typeof(VacancyLike),
+            typeof(VacancySearchImpression),
+            typeof(VacancyShare),
+            typeof(WebPushSubscription)
+        }
+        .OrderBy(type => type.Name)
+        .ToArray();
+
+        Assert.Equal(userRelationTypes, anonymizeCoverage);
+    }
+
+    [Fact]
+    public async Task Delete_removes_candidate_data_sessions_and_identity_bindings()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        var companyId = Guid.NewGuid();
+        var vacancyId = Guid.NewGuid();
+        const string email = "privacy-coverage@test.nl";
+
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = email,
+            FullName = "Privacy kandidaat",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            ReferredByAmbassadeurUserId = Guid.NewGuid(),
+            ReferredByAmbassadeurTrackingCode = "AM-PRIVATE"
+        });
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = "Privacy BV",
+            KvkNumber = "12345678",
+            Address = "Straat 1",
+            Location = new GeoPoint(52, 4),
+            ReferredByAmbassadeurUserId = userId,
+            CommissionAmbassadeurRateSnapshot = 0.05m
+        });
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = vacancyId,
+            CompanyId = companyId,
+            Title = "Privacy vacature",
+            Description = "x",
+            HourlyWage = 14m,
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
+            Status = VacancyStatus.Active,
+            Location = new GeoPoint(52, 4),
+            RequiredTransport = TransportMode.Bike
+        });
+        db.Applications.Add(new Application
+        {
+            Id = Guid.NewGuid(),
+            VacancyId = vacancyId,
+            CandidateUserId = userId,
+            CandidateName = "Privacy kandidaat",
+            CandidateEmail = email,
+            PreferredTransport = "Bike",
+            Status = ApplicationStatus.Pending,
+            SnapshotWhoAmIJson = """{"story":"privé"}""",
+            CreatedAt = DateTime.UtcNow
+        });
+        var planId = Guid.NewGuid();
+        var deviceSessionId = Guid.NewGuid();
+        db.CandidateValuesProfiles.Add(new CandidateValuesProfile { Id = Guid.NewGuid(), UserId = userId });
+        db.CandidateCareerPlans.Add(new CandidateCareerPlan
+        {
+            Id = planId,
+            UserId = userId,
+            DreamTitle = "Verpleegkundige",
+            DreamKey = "verpleegkundige",
+            MatchSummary = "Past goed"
+        });
+        db.CandidateCareerStepProgress.Add(new CandidateCareerStepProgress
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PlanId = planId,
+            StepKey = "start"
+        });
+        db.CandidateVacancyCultureFits.Add(new CandidateVacancyCultureFit
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            VacancyId = vacancyId
+        });
+        db.CandidateMatchSnapshots.Add(new CandidateMatchSnapshot { Id = Guid.NewGuid(), UserId = userId });
+        db.CandidateOnboardings.Add(new CandidateOnboarding { Id = Guid.NewGuid(), UserId = userId });
+        db.CandidateWhoAmIProfiles.Add(new CandidateWhoAmIProfile { Id = Guid.NewGuid(), UserId = userId });
+        db.UserExternalLogins.Add(new UserExternalLogin
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Provider = "google",
+            ProviderSubject = "subject-private"
+        });
+        db.UserDeviceSessions.Add(new UserDeviceSession
+        {
+            Id = deviceSessionId,
+            UserId = userId,
+            RefreshTokenHash = "refresh-secret",
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(1)
+        });
+        db.DeviceLoginHandoffs.Add(new DeviceLoginHandoff
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            CodeHash = "handoff-secret",
+            ExpiresAtUtc = DateTime.UtcNow.AddMinutes(5)
+        });
+        db.WebPushSubscriptions.Add(new WebPushSubscription
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            DeviceSessionId = deviceSessionId,
+            Endpoint = "https://push.example/private",
+            P256dh = "p256dh-secret",
+            Auth = "auth-secret"
+        });
+        await db.SaveChangesAsync();
+
+        await CreatePrivacy(db).DeleteOrAnonymizeAsync(CreatePrincipal(email));
+
+        Assert.False(await db.CandidateValuesProfiles.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.CandidateCareerPlans.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.CandidateCareerStepProgress.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.CandidateVacancyCultureFits.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.CandidateMatchSnapshots.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.CandidateOnboardings.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.CandidateWhoAmIProfiles.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.UserExternalLogins.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.UserDeviceSessions.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.DeviceLoginHandoffs.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.WebPushSubscriptions.AnyAsync(row => row.UserId == userId));
+
+        var application = await db.Applications.SingleAsync();
+        Assert.Null(application.CandidateUserId);
+        Assert.Null(application.SnapshotWhoAmIJson);
+        var user = await db.Users.SingleAsync(row => row.Id == userId);
+        Assert.Null(user.ReferredByAmbassadeurUserId);
+        Assert.Null(user.ReferredByAmbassadeurTrackingCode);
+        var company = await db.Companies.SingleAsync(row => row.Id == companyId);
+        Assert.Null(company.ReferredByAmbassadeurUserId);
+        Assert.Null(company.CommissionAmbassadeurRateSnapshot);
+    }
+
+    [Fact]
+    public async Task Export_includes_new_dutch_privacy_sections_without_credentials()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        var vacancyId = Guid.NewGuid();
+        const string email = "export-privacy@test.nl";
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = email,
+            FullName = "Export privacy",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        db.Applications.Add(new Application
+        {
+            Id = Guid.NewGuid(),
+            VacancyId = vacancyId,
+            CandidateUserId = userId,
+            CandidateName = "Export privacy",
+            CandidateEmail = email,
+            PreferredTransport = "Bike",
+            SnapshotWhoAmIJson = """{"story":"Mijn verhaal"}"""
+        });
+        var planId = Guid.NewGuid();
+        db.CandidateValuesProfiles.Add(new CandidateValuesProfile
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            AnswersJson = """{"waarde":"autonomie"}"""
+        });
+        db.CandidateCareerPlans.Add(new CandidateCareerPlan
+        {
+            Id = planId,
+            UserId = userId,
+            DreamTitle = "Zorgverlener",
+            DreamKey = "zorgverlener",
+            MatchSummary = "Sterke match"
+        });
+        db.CandidateCareerStepProgress.Add(new CandidateCareerStepProgress
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PlanId = planId,
+            StepKey = "opleiding"
+        });
+        db.CandidateVacancyCultureFits.Add(new CandidateVacancyCultureFit
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            VacancyId = vacancyId,
+            ResultJson = """{"fit":88}"""
+        });
+        db.CandidateMatchSnapshots.Add(new CandidateMatchSnapshot
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            MatchesJson = """[{"vacancy":"zorg"}]"""
+        });
+        var deviceSessionId = Guid.NewGuid();
+        db.UserDeviceSessions.Add(new UserDeviceSession
+        {
+            Id = deviceSessionId,
+            UserId = userId,
+            RefreshTokenHash = "refresh-secret",
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(1),
+            DeviceName = "Test device"
+        });
+        db.WebPushSubscriptions.Add(new WebPushSubscription
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            DeviceSessionId = deviceSessionId,
+            Endpoint = "https://push.example/private",
+            P256dh = "p256dh-secret",
+            Auth = "auth-secret"
+        });
+        db.UserExternalLogins.Add(new UserExternalLogin
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Provider = "google",
+            ProviderSubject = "subject-private",
+            EmailAtLink = "linked-private@test.nl"
+        });
+        db.CandidateWhoAmIProfiles.Add(new CandidateWhoAmIProfile
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            StoryText = "Mijn verhaal"
+        });
+        await db.SaveChangesAsync();
+
+        var export = await CreatePrivacy(db).ExportAsync(CreatePrincipal(email));
+        var json = System.Text.Json.JsonSerializer.Serialize(export);
+
+        Assert.Contains("Waardenprofielen", json);
+        Assert.Contains("Loopbaanplannen", json);
+        Assert.Contains("Cultuurfits", json);
+        Assert.Contains("Matchmomentopnamen", json);
+        Assert.Contains("Apparaatsessies", json);
+        Assert.Contains("Pushabonnementen", json);
+        Assert.Contains("ExterneAanmeldingen", json);
+        Assert.Contains("WieBenIkMomentopnamen", json);
+        Assert.Contains("google", json);
+        Assert.Contains("Mijn verhaal", json);
+        Assert.DoesNotContain("refresh-secret", json);
+        Assert.DoesNotContain("p256dh-secret", json);
+        Assert.DoesNotContain("auth-secret", json);
+        Assert.DoesNotContain("push.example", json);
+        Assert.DoesNotContain("subject-private", json);
+        Assert.DoesNotContain("linked-private@test.nl", json);
+    }
+
     private static PrivacyDataService CreatePrivacy(JobsyDbContext db, out CapturingEmailService email)
     {
         email = new CapturingEmailService();
