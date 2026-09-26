@@ -4,8 +4,7 @@ using Jobsy.Web.Models;
 namespace Jobsy.Web.Services;
 
 /// <summary>
-/// Career-path dashboard: free-text horizon → deep steps (local builder; API/OpenAI when available).
-/// No hardcoded "huidige rol".
+/// Career-path dashboard mapping. Persistence and status resolution live in the API.
 /// </summary>
 public sealed class CareerPathService
 {
@@ -24,6 +23,17 @@ public sealed class CareerPathService
 
     public IReadOnlyList<CareerDreamOption> GetDreamSuggestions() => DreamSuggestions;
 
+    /// <summary>Empty shell used before the first saved plan (dream input only).</summary>
+    public CareerDashboardModel EmptyDashboard(string? dreamDraft = null)
+        => new()
+        {
+            DreamRoleId = ResolveSuggestionId(dreamDraft ?? "") ?? "custom",
+            DreamRoleTitle = string.IsNullOrWhiteSpace(dreamDraft) ? "" : ClampTitle(dreamDraft),
+            HasPlan = false,
+            DreamOptions = DreamSuggestions,
+            Steps = []
+        };
+
     public CareerDashboardModel GetDashboard(string? dreamRoleIdOrTitle = null)
     {
         var raw = string.IsNullOrWhiteSpace(dreamRoleIdOrTitle)
@@ -35,58 +45,73 @@ public sealed class CareerPathService
             ? DreamSuggestions.First(o => o.Id == id).Title
             : ClampTitle(raw);
         var plan = HorizonCareerPathBuilder.BuildLocal(title);
-        return Map(plan, id ?? "custom");
+        return MapLocalPreview(plan, id ?? "custom");
     }
 
     public CareerDashboardModel FromApi(CareerPathPlanApiModel plan)
     {
-        var mapped = new HorizonCareerPathPlan(
-            plan.DreamTitle,
-            plan.MatchPercent,
-            plan.MatchSummary,
-            plan.Steps.Select(s => new HorizonCareerPathStep(
-                s.Id,
-                s.Order,
-                s.Title,
-                Enum.TryParse<HorizonCareerStepKind>(s.Status, true, out var kind) ? kind : HorizonCareerStepKind.Open,
-                s.Summary,
-                s.SkillsGap,
-                s.Courses,
-                s.MinRequirements,
-                s.YearsExperienceNeeded,
-                s.ActionLabel,
-                s.ActionHref,
-                s.StepMatchPercent)).ToList());
-        return Map(mapped, ResolveSuggestionId(plan.DreamTitle) ?? "custom");
+        return new CareerDashboardModel
+        {
+            DreamRoleId = ResolveSuggestionId(plan.DreamTitle) ?? "custom",
+            DreamRoleTitle = plan.DreamTitle,
+            MatchPercent = plan.MatchPercent,
+            MatchSummary = plan.MatchSummary,
+            GoalReached = plan.GoalReached,
+            HasPlan = true,
+            DreamOptions = DreamSuggestions,
+            Steps = plan.Steps.Select(MapStep).ToList()
+        };
     }
 
-    private static CareerDashboardModel Map(HorizonCareerPathPlan plan, string dreamRoleId)
+    private static CareerPathDashboardStep MapStep(CareerPathStepApiModel s)
+    {
+        var courses = s.CourseStatuses is { Count: > 0 }
+            ? s.CourseStatuses.Select(c => new CareerPathCourseStatus { Name = c.Name, OnProfile = c.OnProfile }).ToList()
+            : (s.Courses ?? []).Select(c => new CareerPathCourseStatus { Name = c, OnProfile = false }).ToList();
+
+        return new CareerPathDashboardStep
+        {
+            Id = s.Id,
+            Order = s.Order,
+            Title = s.Title,
+            Status = Enum.TryParse<CareerStepStatus>(s.Status, true, out var st) ? st : CareerStepStatus.Open,
+            Summary = s.Summary,
+            SkillsGap = s.SkillsGap ?? [],
+            Courses = courses,
+            MinRequirements = s.MinRequirements ?? [],
+            YearsExperienceNeeded = s.YearsExperienceNeeded,
+            ActionLabel = s.ActionLabel,
+            ActionHref = s.ActionHref,
+            StepMatchPercent = s.StepMatchPercent,
+            MatchedCourseCount = s.MatchedCourseCount > 0
+                ? s.MatchedCourseCount
+                : courses.Count(c => c.OnProfile)
+        };
+    }
+
+    private static CareerDashboardModel MapLocalPreview(HorizonCareerPathPlan plan, string dreamRoleId)
         => new()
         {
             DreamRoleId = dreamRoleId,
             DreamRoleTitle = plan.DreamTitle,
             MatchPercent = plan.MatchPercent,
             MatchSummary = plan.MatchSummary,
+            HasPlan = false,
             DreamOptions = DreamSuggestions,
             Steps = plan.Steps.Select(s => new CareerPathDashboardStep
             {
                 Id = s.Id,
                 Order = s.Order,
                 Title = s.Title,
-                Status = s.Status switch
-                {
-                    HorizonCareerStepKind.Completed => CareerStepStatus.Completed,
-                    HorizonCareerStepKind.Active => CareerStepStatus.Active,
-                    _ => CareerStepStatus.Open
-                },
+                Status = CareerStepStatus.Open,
                 Summary = s.Summary,
                 SkillsGap = s.SkillsGap.ToList(),
-                Courses = s.Courses.ToList(),
+                Courses = s.Courses.Select(c => new CareerPathCourseStatus { Name = c }).ToList(),
                 MinRequirements = s.MinRequirements.ToList(),
                 YearsExperienceNeeded = s.YearsExperienceNeeded,
                 ActionLabel = s.ActionLabel,
                 ActionHref = s.ActionHref,
-                StepMatchPercent = s.StepMatchPercent
+                StepMatchPercent = 0
             }).ToList()
         };
 

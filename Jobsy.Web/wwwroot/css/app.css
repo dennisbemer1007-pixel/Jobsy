@@ -19436,10 +19436,22 @@ html.cookie-consent-known .cookie-consent {
 }
 
 .horizon-stepper__node--goal {
+    border-color: color-mix(in srgb, var(--gold) 55%, var(--border));
+    background: color-mix(in srgb, var(--gold-soft) 70%, var(--surface));
+    color: var(--gold-deep);
+    cursor: default;
+}
+
+.horizon-stepper__item--goal.is-goal-reached .horizon-stepper__node--goal {
     border-color: var(--gold);
     background: var(--gold);
     color: #fff;
-    cursor: default;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 22%, transparent);
+}
+
+.horizon-stepper__item--goal.is-goal-reached .horizon-stepper__caption {
+    color: var(--gold-ink);
+    font-weight: 750;
 }
 
 .horizon-card {
@@ -19553,7 +19565,7 @@ html.cookie-consent-known .cookie-consent {
 
 .horizon-course {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 1fr;
     align-items: center;
     gap: 0.65rem;
     padding: 0.7rem 0.8rem;
@@ -19570,9 +19582,27 @@ html.cookie-consent-known .cookie-consent {
     background: var(--surface);
 }
 
+.horizon-course.is-on-profile {
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--success) 55%, var(--border));
+    background: color-mix(in srgb, var(--success-soft) 55%, var(--surface));
+}
+
 .horizon-course__icon {
     display: inline-flex;
     color: var(--brand);
+}
+
+.horizon-course.is-on-profile .horizon-course__icon {
+    color: var(--success);
+}
+
+.horizon-course__body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    min-width: 0;
 }
 
 .horizon-course__label {
@@ -19581,12 +19611,52 @@ html.cookie-consent-known .cookie-consent {
     line-height: 1.35;
 }
 
+.horizon-course.is-on-profile .horizon-course__label {
+    color: var(--muted);
+    font-weight: 550;
+}
+
+.horizon-course__status {
+    font-size: 0.78rem;
+    font-weight: 650;
+    color: var(--success);
+}
+
+.horizon-course__claim {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 650;
+    cursor: pointer;
+    text-align: left;
+}
+
+.horizon-course__claim:hover,
+.horizon-course__claim:focus-visible {
+    text-decoration: underline;
+}
+
+.horizon-course__claim:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
 .horizon-course__chevron {
     width: 0.45rem;
     height: 0.45rem;
     border-right: 2px solid var(--muted);
     border-bottom: 2px solid var(--muted);
     transform: rotate(-45deg);
+}
+
+.horizon-card__block-meta {
+    font-weight: 550;
+    color: var(--muted);
 }
 
 .horizon-card__meta-grid {
@@ -19649,6 +19719,126 @@ html.cookie-consent-known .cookie-consent {
     margin-top: 0.15rem;
     text-align: center;
     text-decoration: none;
+}
+
+.horizon-card__ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 0.15rem 0 0;
+    padding: 0.55rem 0.75rem;
+    border: 0;
+    background: transparent;
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.horizon-card__ghost:hover,
+.horizon-card__ghost:focus-visible {
+    text-decoration: underline;
+}
+
+.horizon-card__ghost:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
+.horizon-card--goal {
+    text-align: center;
+    border-color: color-mix(in srgb, var(--gold) 40%, var(--border));
+    background: color-mix(in srgb, var(--gold-soft) 45%, var(--surface));
+}
+
+.horizon-card--goal .horizon-card__eyebrow {
+    color: var(--gold-ink);
+}
+
+.horizon-card--goal .horizon-card__title {
+    color: var(--brand);
+}
+
+.career-dash__regen {
+    margin: 1rem 0 0.25rem;
+    text-align: center;
+}
+
+.career-dash__regen-btn {
+    margin: 0;
+    padding: 0.25rem 0.35rem;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 550;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+
+.career-dash__regen-btn:hover,
+.career-dash__regen-btn:focus-visible {
+    color: var(--brand);
+}
+
+.career-dash__regen-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.lobsy-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--bottom-nav-clearance, 4.5rem) + 0.65rem);
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: min(28rem, calc(100vw - 1.5rem));
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    transform: translateX(-50%);
+    color: var(--text);
+}
+
+.lobsy-toast__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: var(--success);
+}
+
+.lobsy-toast__message {
+    flex: 1;
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    font-weight: 550;
+}
+
+.lobsy-toast__undo {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0.15rem 0.2rem;
+    border: 0;
+    background: none;
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.lobsy-toast__undo:hover,
+.lobsy-toast__undo:focus-visible {
+    text-decoration: underline;
 }
 
 .career-dash-link-row {

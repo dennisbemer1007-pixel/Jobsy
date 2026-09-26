@@ -34,6 +34,8 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateValuesProfile> CandidateValuesProfiles => Set<CandidateValuesProfile>();
     public DbSet<CompanyCultureProfile> CompanyCultureProfiles => Set<CompanyCultureProfile>();
     public DbSet<CandidateWhoAmIProfile> CandidateWhoAmIProfiles => Set<CandidateWhoAmIProfile>();
+    public DbSet<CandidateCareerPlan> CandidateCareerPlans => Set<CandidateCareerPlan>();
+    public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
     public DbSet<CandidateRoleFitCheck> CandidateRoleFitChecks => Set<CandidateRoleFitCheck>();
     public DbSet<TrainingProvider> TrainingProviders => Set<TrainingProvider>();
@@ -591,6 +593,39 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.KeywordsJson).HasMaxLength(1000).IsRequired();
             entity.Property(e => e.InputFingerprint).HasMaxLength(128).IsRequired();
             entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateCareerPlan>(entity =>
+        {
+            entity.ToTable("CandidateCareerPlans");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DreamTitle).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.DreamKey).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.PlanJson).HasColumnType("text").IsRequired();
+            entity.Property(e => e.MatchSummary).HasMaxLength(500).IsRequired();
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateCareerStepProgress>(entity =>
+        {
+            entity.ToTable("CandidateCareerStepProgress");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.StepKey).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.Source).HasMaxLength(16).IsRequired();
+            entity.HasIndex(e => new { e.PlanId, e.StepKey }).IsUnique();
+            entity.HasIndex(e => e.UserId);
+            entity.HasOne(e => e.Plan)
+                .WithMany(p => p.StepProgress)
+                .HasForeignKey(e => e.PlanId)
+                .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

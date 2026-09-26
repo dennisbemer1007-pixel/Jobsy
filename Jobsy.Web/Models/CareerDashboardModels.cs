@@ -15,6 +15,8 @@ public sealed class CareerDashboardModel
     public string DreamRoleId { get; set; } = "";
     public int MatchPercent { get; set; }
     public string MatchSummary { get; set; } = "";
+    public bool GoalReached { get; set; }
+    public bool HasPlan { get; set; }
     public IReadOnlyList<CareerDreamOption> DreamOptions { get; set; } = [];
     public IReadOnlyList<CareerPathDashboardStep> Steps { get; set; } = [];
 }
@@ -33,13 +35,20 @@ public sealed class CareerPathDashboardStep
     public CareerStepStatus Status { get; set; }
     public string Summary { get; set; } = "";
     public IReadOnlyList<string> SkillsGap { get; set; } = [];
-    public IReadOnlyList<string> Courses { get; set; } = [];
+    public IReadOnlyList<CareerPathCourseStatus> Courses { get; set; } = [];
     public IReadOnlyList<string> MinRequirements { get; set; } = [];
     public int YearsExperienceNeeded { get; set; }
     public IReadOnlyList<string> Competencies { get; set; } = [];
     public string ActionLabel { get; set; } = "";
     public string ActionHref { get; set; } = "";
     public int StepMatchPercent { get; set; }
+    public int MatchedCourseCount { get; set; }
+}
+
+public sealed class CareerPathCourseStatus
+{
+    public string Name { get; set; } = "";
+    public bool OnProfile { get; set; }
 }
 
 public sealed class CareerPathPlanApiModel
@@ -47,6 +56,7 @@ public sealed class CareerPathPlanApiModel
     public string DreamTitle { get; set; } = "";
     public int MatchPercent { get; set; }
     public string MatchSummary { get; set; } = "";
+    public bool GoalReached { get; set; }
     public List<CareerPathStepApiModel> Steps { get; set; } = [];
 }
 
@@ -59,9 +69,17 @@ public sealed class CareerPathStepApiModel
     public string Summary { get; set; } = "";
     public List<string> SkillsGap { get; set; } = [];
     public List<string> Courses { get; set; } = [];
+    public List<CareerPathCourseApiModel> CourseStatuses { get; set; } = [];
     public List<string> MinRequirements { get; set; } = [];
     public int YearsExperienceNeeded { get; set; }
     public string ActionLabel { get; set; } = "";
     public string ActionHref { get; set; } = "";
     public int StepMatchPercent { get; set; }
+    public int MatchedCourseCount { get; set; }
+}
+
+public sealed class CareerPathCourseApiModel
+{
+    public string Name { get; set; } = "";
+    public bool OnProfile { get; set; }
 }

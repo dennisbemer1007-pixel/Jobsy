@@ -6,6 +6,7 @@
 @inject CareerPathService CareerPaths
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject IJSRuntime Js
 
 <PageTitle>@Culture["CareerDash.Title"] · Lobsy</PageTitle>
 
@@ -17,7 +18,7 @@
         </div>
     </header>
 
-    @if (_model is null)
+    @if (_bootstrapping)
     {
         <div class="horizon-skeleton" aria-busy="true" aria-live="polite">
             <p class="visually-hidden">@Culture["Common.Loading"]</p>
@@ -26,41 +27,59 @@
             <div class="horizon-skeleton__card"></div>
         </div>
     }
+    else if (_model is null || !_model.HasPlan)
+    {
+        <section class="horizon-hero" aria-labelledby="horizon-dream-title">
+            <div class="horizon-hero__art" aria-hidden="true">
+                @HorizonArt()
+            </div>
+            <div class="horizon-hero__content">
+                <p class="horizon-hero__eyebrow">@Culture["CareerDash.HorizonEyebrow"]</p>
+                <h2 id="horizon-dream-title" class="horizon-hero__title">@Culture["CareerDash.DreamPlaceholder"]</h2>
+            </div>
+            <div id="career-dream-sheet" class="horizon-dream-sheet" role="region" aria-label="@Culture["CareerDash.DreamRole"]">
+                <label class="horizon-dream-sheet__label" for="career-dream-input">@Culture["CareerDash.DreamRole"]</label>
+                <input id="career-dream-input"
+                       class="career-dash__input"
+                       type="text"
+                       maxlength="80"
+                       autocomplete="off"
+                       list="career-dream-suggestions"
+                       placeholder="@Culture["CareerDash.DreamPlaceholder"]"
+                       value="@_dreamDraft"
+                       disabled="@_busy"
+                       @oninput="OnDreamInput"
+                       @onkeydown="OnDreamKeyDown" />
+                <datalist id="career-dream-suggestions">
+                    @foreach (var option in CareerPaths.GetDreamSuggestions())
+                    {
+                        <option value="@option.Title"></option>
+                    }
+                </datalist>
+                <button type="button" class="login-submit horizon-card__cta" disabled="@_busy" @onclick="CreatePlanAsync">
+                    @Culture["CareerDash.CreatePlan"]
+                </button>
+            </div>
+        </section>
+        @if (_busy)
+        {
+            <p class="state-message" aria-live="polite">@Culture["CareerDash.Generating"]</p>
+        }
+        else if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <p class="state-message error">@_message</p>
+        }
+    }
     else
     {
         var selected = SelectedStep;
         var active = _model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active);
         var stepCount = _model.Steps.Count;
+        var goalReached = _model.GoalReached;
 
         <section class="horizon-hero" aria-labelledby="horizon-dream-title">
             <div class="horizon-hero__art" aria-hidden="true">
-                <svg class="horizon-hero__svg" viewBox="0 0 390 190" preserveAspectRatio="xMidYMid slice" focusable="false">
-                    <defs>
-                        <linearGradient id="horizon-sky" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#0f2d5c"/>
-                            <stop offset="48%" stop-color="#5b3a7a"/>
-                            <stop offset="78%" stop-color="#c44a3a"/>
-                            <stop offset="100%" stop-color="#f54a1b"/>
-                        </linearGradient>
-                        <radialGradient id="horizon-sun-glow" cx="78%" cy="78%" r="42%">
-                            <stop offset="0%" stop-color="#ffd27a" stop-opacity="0.9"/>
-                            <stop offset="55%" stop-color="#f54a1b" stop-opacity="0.35"/>
-                            <stop offset="100%" stop-color="#f54a1b" stop-opacity="0"/>
-                        </radialGradient>
-                    </defs>
-                    <rect width="390" height="190" fill="url(#horizon-sky)"/>
-                    <circle cx="48" cy="36" r="1.4" fill="#fff" opacity="0.55"/>
-                    <circle cx="112" cy="22" r="1.1" fill="#fff" opacity="0.4"/>
-                    <circle cx="168" cy="48" r="1.3" fill="#fff" opacity="0.5"/>
-                    <circle cx="230" cy="28" r="1" fill="#fff" opacity="0.35"/>
-                    <circle cx="290" cy="42" r="1.2" fill="#fff" opacity="0.45"/>
-                    <circle cx="330" cy="18" r="1" fill="#fff" opacity="0.3"/>
-                    <rect width="390" height="190" fill="url(#horizon-sun-glow)"/>
-                    <path d="M0 148 C70 128 120 156 180 142 C240 128 280 150 390 136 L390 190 L0 190 Z" fill="#2a1a4a" opacity="0.92"/>
-                    <path d="M0 162 C90 148 150 168 220 156 C290 144 340 160 390 152 L390 190 L0 190 Z" fill="#1a1238" opacity="0.95"/>
-                    <circle cx="318" cy="148" r="28" fill="#ffb347"/>
-                    <circle cx="318" cy="148" r="22" fill="#ffd27a"/>
-                </svg>
+                @HorizonArt()
             </div>
 
             <div class="horizon-hero__content">
@@ -107,6 +126,7 @@
                             <option value="@option.Title"></option>
                         }
                     </datalist>
+                    <p class="horizon-dream-sheet__hint muted">@Culture["CareerDash.RegenerateHint"]</p>
                 </div>
             }
         </section>
@@ -125,7 +145,6 @@
                 @foreach (var step in _model.Steps)
                 {
                     var isSelected = string.Equals(_selectedStepId, step.Id, StringComparison.Ordinal);
-                    var isActiveStatus = step.Status == CareerStepStatus.Active;
                     var isCompleted = step.Status == CareerStepStatus.Completed;
                     var label = StepperLabel(step, active);
                     <li class="horizon-stepper__item @StatusClass(step.Status) @(isSelected ? "is-selected" : null)">
@@ -158,8 +177,8 @@
                         }
                     </li>
                 }
-                <li class="horizon-stepper__item horizon-stepper__item--goal">
-                    <span class="horizon-stepper__line" aria-hidden="true"></span>
+                <li class="horizon-stepper__item horizon-stepper__item--goal @(goalReached ? "is-goal-reached" : null)">
+                    <span class="horizon-stepper__line @(goalReached || active is null ? "is-filled" : null)" aria-hidden="true"></span>
                     <span class="horizon-stepper__node horizon-stepper__node--goal" aria-hidden="true" title="@Culture["CareerDash.StepperGoal"]">
                         <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
                             <path d="M3 1.5v13"/>
@@ -171,7 +190,15 @@
             </ol>
         </nav>
 
-        @if (selected is not null)
+        @if (goalReached)
+        {
+            <article class="horizon-card horizon-card--goal" aria-label="@Culture["CareerDash.GoalReachedTitle"]">
+                <p class="horizon-card__eyebrow">@Culture["CareerDash.GoalReachedEyebrow"]</p>
+                <h2 class="horizon-card__title">@Culture["CareerDash.GoalReachedTitle"]</h2>
+                <p class="horizon-card__lead">@Culture.Format("CareerDash.GoalReachedLead", _model.DreamRoleTitle)</p>
+            </article>
+        }
+        else if (selected is not null)
         {
             <article class="horizon-card @( _cardExpanded ? "is-expanded" : "is-collapsed" )"
                      aria-label="@selected.Title">
@@ -186,7 +213,8 @@
                         </svg>
                     </button>
 
-                    <h2 id="horizon-card-title" class="visually-hidden">@selected.Title</h2>
+                    <p class="horizon-card__eyebrow">@CollapsedEyebrow(selected, stepCount)</p>
+                    <h2 id="horizon-card-title" class="horizon-card__title">@selected.Title</h2>
                     <p class="horizon-card__lead">@selected.Summary</p>
 
                     @if (selected.SkillsGap.Count > 0)
@@ -205,22 +233,50 @@
                     @if (selected.Courses.Count > 0)
                     {
                         <section class="horizon-card__block" aria-labelledby="horizon-courses-title">
-                            <h3 id="horizon-courses-title" class="horizon-card__block-title">@Culture["CareerDash.Courses"]</h3>
+                            <h3 id="horizon-courses-title" class="horizon-card__block-title">
+                                @Culture["CareerDash.Courses"]
+                                <span class="horizon-card__block-meta">
+                                    · @Culture.Format("CareerDash.CoursesOnProfile", selected.MatchedCourseCount, selected.Courses.Count)
+                                </span>
+                            </h3>
                             <ul class="horizon-courses">
                                 @foreach (var course in selected.Courses)
                                 {
                                     <li>
-                                        <a class="horizon-course" href="@selected.ActionHref">
+                                        <div class="horizon-course @(course.OnProfile ? "is-on-profile" : null)">
                                             <span class="horizon-course__icon" aria-hidden="true">
-                                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M22 10 12 5 2 10l10 5 10-5Z"/>
-                                                    <path d="M6 12.5v4.2c0 .8 2.7 2.3 6 2.3s6-1.5 6-2.3v-4.2"/>
-                                                    <path d="M22 10v6"/>
-                                                </svg>
+                                                @if (course.OnProfile)
+                                                {
+                                                    <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M3.5 8.2 6.4 11l6.1-6.5"/>
+                                                    </svg>
+                                                }
+                                                else
+                                                {
+                                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M22 10 12 5 2 10l10 5 10-5Z"/>
+                                                        <path d="M6 12.5v4.2c0 .8 2.7 2.3 6 2.3s6-1.5 6-2.3v-4.2"/>
+                                                        <path d="M22 10v6"/>
+                                                    </svg>
+                                                }
                                             </span>
-                                            <span class="horizon-course__label">@course</span>
-                                            <span class="horizon-course__chevron" aria-hidden="true"></span>
-                                        </a>
+                                            <span class="horizon-course__body">
+                                                <span class="horizon-course__label">@course.Name</span>
+                                                @if (course.OnProfile)
+                                                {
+                                                    <span class="horizon-course__status">@Culture["CareerDash.CourseOnProfile"]</span>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button"
+                                                            class="horizon-course__claim"
+                                                            disabled="@_busy"
+                                                            @onclick="() => ClaimCourseAsync(course.Name)">
+                                                        @Culture["CareerDash.CourseClaim"]
+                                                    </button>
+                                                }
+                                            </span>
+                                        </div>
                                     </li>
                                 }
                             </ul>
@@ -266,6 +322,25 @@
                     </section>
 
                     <a class="login-submit horizon-card__cta" href="@selected.ActionHref">@selected.ActionLabel</a>
+
+                    @if (selected.Status == CareerStepStatus.Completed)
+                    {
+                        <button type="button"
+                                class="horizon-card__ghost"
+                                disabled="@_busy"
+                                @onclick="() => UncompleteStepAsync(selected)">
+                            @Culture["CareerDash.MarkIncomplete"]
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button"
+                                class="horizon-card__ghost"
+                                disabled="@_busy"
+                                @onclick="() => CompleteStepAsync(selected)">
+                            @Culture["CareerDash.MarkComplete"]
+                        </button>
+                    }
                 }
                 else
                 {
@@ -273,6 +348,10 @@
                     <h2 id="horizon-card-title" class="horizon-card__title">@selected.Title</h2>
                     <p class="horizon-card__meta-line">
                         @Culture.Format("CareerDash.CollapsedMeta", selected.SkillsGap.Count, selected.Courses.Count)
+                        @if (selected.StepMatchPercent > 0)
+                        {
+                            <span> · @Culture.Format("CareerDash.CollapsedMatch", selected.StepMatchPercent)</span>
+                        }
                     </p>
                     <button type="button" class="login-submit horizon-card__cta" @onclick="ExpandCard">
                         @Culture["CareerDash.ViewStep"]
@@ -280,7 +359,18 @@
                 }
             </article>
         }
+
+        <p class="career-dash__regen">
+            <button type="button" class="career-dash__regen-btn" disabled="@_busy" @onclick="ConfirmRegenerateAsync">
+                @Culture["CareerDash.Regenerate"]
+            </button>
+        </p>
     }
+
+    <LobsyToast Message="@_toastMessage"
+                UndoLabel="@Culture["CareerDash.ToastUndo"]"
+                ShowUndo="@(!string.IsNullOrWhiteSpace(_toastUndoStepKey))"
+                OnUndo="UndoToastAsync" />
 </div>
 
 @code {
@@ -288,18 +378,44 @@
     private string? _selectedStepId;
     private bool _cardExpanded;
     private bool _editingDream;
-    private string _dreamDraft = CareerPathService.DefaultDreamTitle;
+    private string _dreamDraft = "";
     private bool _busy;
+    private bool _bootstrapping = true;
     private string? _message;
+    private string? _toastMessage;
+    private string? _toastUndoStepKey;
+    private int? _toastCompletedOrder;
 
     private CareerPathDashboardStep? SelectedStep
         => _model?.Steps.FirstOrDefault(s => string.Equals(s.Id, _selectedStepId, StringComparison.Ordinal))
+           ?? _model?.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)
            ?? _model?.Steps.FirstOrDefault();
 
     protected override async Task OnInitializedAsync()
     {
-        ApplyDashboard(CareerPaths.GetDashboard());
-        await RefreshFromApiAsync(_dreamDraft);
+        try
+        {
+            var saved = await Api.GetCareerPathAsync();
+            if (saved is not null && saved.Steps.Count > 0)
+            {
+                ApplyDashboard(CareerPaths.FromApi(saved), expandActive: false);
+            }
+            else
+            {
+                _model = CareerPaths.EmptyDashboard();
+                _dreamDraft = "";
+                _editingDream = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _model = CareerPaths.EmptyDashboard();
+        }
+        finally
+        {
+            _bootstrapping = false;
+        }
     }
 
     private void OnDreamInput(ChangeEventArgs e)
@@ -309,7 +425,14 @@
     {
         if (e.Key is "Enter")
         {
-            await CommitDreamAsync();
+            if (_model?.HasPlan == true)
+            {
+                await CommitDreamAsync();
+            }
+            else
+            {
+                await CreatePlanAsync();
+            }
         }
     }
 
@@ -318,8 +441,20 @@
         _editingDream = !_editingDream;
         if (_editingDream)
         {
-            _dreamDraft = _model?.DreamRoleTitle ?? CareerPathService.DefaultDreamTitle;
+            _dreamDraft = _model?.DreamRoleTitle ?? "";
         }
+    }
+
+    private async Task CreatePlanAsync()
+    {
+        var next = (_dreamDraft ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(next))
+        {
+            _message = Culture["CareerDash.DreamRequired"];
+            return;
+        }
+
+        await RefreshFromApiAsync(next, regenerating: true);
     }
 
     private async Task CommitDreamAsync()
@@ -327,7 +462,7 @@
         var next = (_dreamDraft ?? "").Trim();
         if (string.IsNullOrWhiteSpace(next))
         {
-            _dreamDraft = _model?.DreamRoleTitle ?? CareerPathService.DefaultDreamTitle;
+            _dreamDraft = _model?.DreamRoleTitle ?? "";
             return;
         }
 
@@ -339,21 +474,63 @@
             return;
         }
 
-        ApplyDashboard(CareerPaths.GetDashboard(next));
-        await RefreshFromApiAsync(next);
+        var confirmed = await ConfirmRegenerateUiAsync();
+        if (!confirmed)
+        {
+            _dreamDraft = _model?.DreamRoleTitle ?? next;
+            _editingDream = false;
+            return;
+        }
+
+        await RefreshFromApiAsync(next, regenerating: true);
         _editingDream = false;
     }
 
-    private async Task RefreshFromApiAsync(string dream)
+    private async Task ConfirmRegenerateAsync()
+    {
+        if (!await ConfirmRegenerateUiAsync())
+        {
+            return;
+        }
+
+        var dream = _model?.DreamRoleTitle ?? _dreamDraft;
+        if (string.IsNullOrWhiteSpace(dream))
+        {
+            _editingDream = true;
+            return;
+        }
+
+        await RefreshFromApiAsync(dream, regenerating: true);
+    }
+
+    private async Task<bool> ConfirmRegenerateUiAsync()
+    {
+        try
+        {
+            return await Js.InvokeAsync<bool>("confirm", Culture["CareerDash.RegenerateConfirm"]);
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
+    private async Task RefreshFromApiAsync(string dream, bool regenerating)
     {
         _busy = true;
         _message = null;
         try
         {
-            var plan = await Api.GenerateCareerPathAsync(dream);
+            var plan = regenerating
+                ? await Api.GenerateCareerPathAsync(dream)
+                : await Api.GetCareerPathAsync();
             if (plan is not null)
             {
-                ApplyDashboard(CareerPaths.FromApi(plan));
+                ApplyDashboard(CareerPaths.FromApi(plan), expandActive: false);
+            }
+            else if (regenerating)
+            {
+                _message = Culture["Common.Error"];
             }
         }
         catch (Exception ex)
@@ -366,13 +543,155 @@
         }
     }
 
-    private void ApplyDashboard(CareerDashboardModel model)
+    private async Task CompleteStepAsync(CareerPathDashboardStep step)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var plan = await Api.CompleteCareerStepAsync(step.Id);
+            if (plan is not null)
+            {
+                var completedOrder = step.Order;
+                ApplyDashboard(CareerPaths.FromApi(plan), expandActive: false);
+                var next = _model?.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active);
+                if (next is not null)
+                {
+                    _toastCompletedOrder = completedOrder;
+                    _toastUndoStepKey = step.Id;
+                    _toastMessage = Culture.Format("CareerDash.ToastCompleted", completedOrder, next.Order);
+                }
+                else if (_model?.GoalReached == true)
+                {
+                    _toastUndoStepKey = step.Id;
+                    _toastMessage = Culture.Format("CareerDash.ToastGoal", completedOrder);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task UncompleteStepAsync(CareerPathDashboardStep step)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var plan = await Api.UncompleteCareerStepAsync(step.Id);
+            if (plan is not null)
+            {
+                ApplyDashboard(CareerPaths.FromApi(plan), expandActive: true);
+                ClearToast();
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ClaimCourseAsync(string courseName)
+    {
+        _busy = true;
+        _message = null;
+        var beforeKey = SelectedStep?.Id;
+        var beforeCompleted = SelectedStep?.Status == CareerStepStatus.Completed;
+        try
+        {
+            var plan = await Api.ClaimCareerCourseAsync(courseName);
+            if (plan is not null)
+            {
+                ApplyDashboard(CareerPaths.FromApi(plan), expandActive: false);
+                if (beforeKey is not null)
+                {
+                    _selectedStepId = beforeKey;
+                    _cardExpanded = true;
+                }
+
+                var after = _model?.Steps.FirstOrDefault(s => string.Equals(s.Id, beforeKey, StringComparison.Ordinal));
+                if (after is not null && !beforeCompleted && after.Status == CareerStepStatus.Completed)
+                {
+                    var next = _model!.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active);
+                    _toastUndoStepKey = after.Id;
+                    _toastCompletedOrder = after.Order;
+                    _toastMessage = next is null
+                        ? Culture.Format("CareerDash.ToastGoal", after.Order)
+                        : Culture.Format("CareerDash.ToastCompleted", after.Order, next.Order);
+                    if (next is not null)
+                    {
+                        _selectedStepId = next.Id;
+                        _cardExpanded = false;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task UndoToastAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_toastUndoStepKey))
+        {
+            ClearToast();
+            return;
+        }
+
+        var key = _toastUndoStepKey;
+        ClearToast();
+        _busy = true;
+        try
+        {
+            var plan = await Api.UncompleteCareerStepAsync(key);
+            if (plan is not null)
+            {
+                ApplyDashboard(CareerPaths.FromApi(plan), expandActive: true);
+                _selectedStepId = key;
+                _cardExpanded = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ClearToast()
+    {
+        _toastMessage = null;
+        _toastUndoStepKey = null;
+        _toastCompletedOrder = null;
+    }
+
+    private void ApplyDashboard(CareerDashboardModel model, bool expandActive)
     {
         _model = model;
         _dreamDraft = model.DreamRoleTitle;
         _selectedStepId = model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)?.Id
+                          ?? model.Steps.LastOrDefault(s => s.Status == CareerStepStatus.Completed)?.Id
                           ?? model.Steps.FirstOrDefault()?.Id;
-        _cardExpanded = false;
+        _cardExpanded = expandActive && !model.GoalReached;
     }
 
     private void SelectStep(string id)
@@ -392,9 +711,13 @@
             return false;
         }
 
+        if (_model.GoalReached)
+        {
+            return true;
+        }
+
         var activeOrder = _model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)?.Order
                           ?? _model.Steps.Count(s => s.Status == CareerStepStatus.Completed) + 1;
-        // Line before this step is green when the previous step is completed / reached.
         return step.Order <= activeOrder;
     }
 
@@ -430,5 +753,36 @@
         CareerStepStatus.Completed => "is-completed",
         CareerStepStatus.Active => "is-active",
         _ => "is-open-step"
+    };
+
+    private RenderFragment HorizonArt() => __builder =>
+    {
+        <svg class="horizon-hero__svg" viewBox="0 0 390 190" preserveAspectRatio="xMidYMid slice" focusable="false">
+            <defs>
+                <linearGradient id="horizon-sky" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#0f2d5c"/>
+                    <stop offset="48%" stop-color="#5b3a7a"/>
+                    <stop offset="78%" stop-color="#c44a3a"/>
+                    <stop offset="100%" stop-color="#f54a1b"/>
+                </linearGradient>
+                <radialGradient id="horizon-sun-glow" cx="78%" cy="78%" r="42%">
+                    <stop offset="0%" stop-color="#ffd27a" stop-opacity="0.9"/>
+                    <stop offset="55%" stop-color="#f54a1b" stop-opacity="0.35"/>
+                    <stop offset="100%" stop-color="#f54a1b" stop-opacity="0"/>
+                </radialGradient>
+            </defs>
+            <rect width="390" height="190" fill="url(#horizon-sky)"/>
+            <circle cx="48" cy="36" r="1.4" fill="#fff" opacity="0.55"/>
+            <circle cx="112" cy="22" r="1.1" fill="#fff" opacity="0.4"/>
+            <circle cx="168" cy="48" r="1.3" fill="#fff" opacity="0.5"/>
+            <circle cx="230" cy="28" r="1" fill="#fff" opacity="0.35"/>
+            <circle cx="290" cy="42" r="1.2" fill="#fff" opacity="0.45"/>
+            <circle cx="330" cy="18" r="1" fill="#fff" opacity="0.3"/>
+            <rect width="390" height="190" fill="url(#horizon-sun-glow)"/>
+            <path d="M0 148 C70 128 120 156 180 142 C240 128 280 150 390 136 L390 190 L0 190 Z" fill="#2a1a4a" opacity="0.92"/>
+            <path d="M0 162 C90 148 150 168 220 156 C290 144 340 160 390 152 L390 190 L0 190 Z" fill="#1a1238" opacity="0.95"/>
+            <circle cx="318" cy="148" r="28" fill="#ffb347"/>
+            <circle cx="318" cy="148" r="22" fill="#ffd27a"/>
+        </svg>
     };
 }

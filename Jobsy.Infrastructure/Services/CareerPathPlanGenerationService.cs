@@ -157,22 +157,20 @@ public sealed class CareerPathPlanGenerationService : ICareerPathPlanGenerationS
         for (var i = 0; i < Math.Min(4, dto.Steps.Count); i++)
         {
             var row = dto.Steps[i];
-            var status = i == 0
-                ? HorizonCareerStepKind.Completed
-                : i == 1
-                    ? HorizonCareerStepKind.Active
-                    : HorizonCareerStepKind.Open;
+            var order = i + 1;
+            var title = string.IsNullOrWhiteSpace(row.Title) ? $"Stap {order}" : row.Title.Trim();
             var href = i switch
             {
                 0 => "/candidate/profile",
                 1 => "/candidate/profile?tab=fit",
                 _ => "/?q=" + query
             };
+            // Content only — status and StepMatchPercent are resolved on read from progress + certificates.
             steps.Add(new HorizonCareerPathStep(
-                $"ai-{i + 1}",
-                i + 1,
-                string.IsNullOrWhiteSpace(row.Title) ? $"Stap {i + 1}" : row.Title.Trim(),
-                status,
+                CareerStepKey.Create(order, title),
+                order,
+                title,
+                HorizonCareerStepKind.Open,
                 string.IsNullOrWhiteSpace(row.Summary) ? "Werk gericht aan deze stap." : row.Summary.Trim(),
                 CleanList(row.SkillsGap),
                 CleanList(row.Courses),
@@ -180,14 +178,14 @@ public sealed class CareerPathPlanGenerationService : ICareerPathPlanGenerationS
                 Math.Clamp(row.YearsExperienceNeeded ?? 0, 0, 15),
                 string.IsNullOrWhiteSpace(row.ActionLabel) ? "Verder" : row.ActionLabel.Trim(),
                 href,
-                i == 0 ? 100 : Math.Max(0, 55 - (i * 15))));
+                StepMatchPercent: 0));
         }
 
         var match = Math.Clamp(dto.MatchPercent ?? 28, 15, 70);
         var summary = string.IsNullOrWhiteSpace(dto.MatchSummary)
             ? $"Pad naar “{dream}” op basis van je profiel en DNA."
             : dto.MatchSummary.Trim();
-        return new HorizonCareerPathPlan(dream, match, summary, steps);
+        return CareerPlanJson.WithStableKeys(new HorizonCareerPathPlan(dream, match, summary, steps));
     }
 
     private static IReadOnlyList<string> CleanList(IReadOnlyList<string>? items)

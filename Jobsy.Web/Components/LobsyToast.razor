@@ -1,0 +1,81 @@
+@implements IAsyncDisposable
+
+@if (_visible && !string.IsNullOrWhiteSpace(Message))
+{
+    <div class="lobsy-toast" role="status" aria-live="polite">
+        <span class="lobsy-toast__icon" aria-hidden="true">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3.5 8.2 6.4 11l6.1-6.5"/>
+            </svg>
+        </span>
+        <p class="lobsy-toast__message">@Message</p>
+        @if (ShowUndo && OnUndo.HasDelegate)
+        {
+            <button type="button" class="lobsy-toast__undo" @onclick="HandleUndoAsync">@UndoLabel</button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public string UndoLabel { get; set; } = "Ongedaan maken";
+    [Parameter] public bool ShowUndo { get; set; } = true;
+    [Parameter] public EventCallback OnUndo { get; set; }
+    [Parameter] public int AutoHideMs { get; set; } = 6000;
+
+    private bool _visible;
+    private CancellationTokenSource? _hideCts;
+    private string? _lastMessage;
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrWhiteSpace(Message))
+        {
+            _visible = false;
+            _lastMessage = null;
+            return;
+        }
+
+        if (!string.Equals(_lastMessage, Message, StringComparison.Ordinal))
+        {
+            _lastMessage = Message;
+            _visible = true;
+            _ = ScheduleHideAsync();
+        }
+    }
+
+    private async Task ScheduleHideAsync()
+    {
+        _hideCts?.Cancel();
+        _hideCts?.Dispose();
+        _hideCts = new CancellationTokenSource();
+        var token = _hideCts.Token;
+        try
+        {
+            await Task.Delay(AutoHideMs, token);
+            _visible = false;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (TaskCanceledException)
+        {
+            // replaced by a newer toast
+        }
+    }
+
+    private async Task HandleUndoAsync()
+    {
+        _visible = false;
+        _hideCts?.Cancel();
+        if (OnUndo.HasDelegate)
+        {
+            await OnUndo.InvokeAsync();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _hideCts?.Cancel();
+        _hideCts?.Dispose();
+        await ValueTask.CompletedTask;
+    }
+}

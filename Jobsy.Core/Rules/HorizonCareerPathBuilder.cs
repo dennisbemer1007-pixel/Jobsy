@@ -1,6 +1,6 @@
 namespace Jobsy.Core.Rules;
 
-/// <summary>Local + OpenAI career path steps toward a free-text horizon (no hardcoded current job title).</summary>
+/// <summary>Local career path steps toward a free-text horizon (content only; status resolved on read).</summary>
 public static class HorizonCareerPathBuilder
 {
     public const int MaxSteps = 4;
@@ -24,69 +24,81 @@ public static class HorizonCareerPathBuilder
 
         var steps = new List<HorizonCareerPathStep>
         {
-            new(
-                "base",
+            ContentStep(
                 1,
                 "Profiel & DNA als basis",
-                HorizonCareerStepKind.Completed,
                 "Je Lobsy-profiel en DNA-tests vormen het startpunt. We wegen wat je al meeneemt richting je stip — zonder vaste huidige functietitel.",
                 strength,
                 [],
                 ["DNA/Kompas bijgewerkt zodat matching scherper wordt"],
                 YearsExperienceNeeded: 0,
                 "Open Mijn Kompas",
-                "/candidate/profile",
-                100),
-            new(
-                "skills",
+                "/candidate/profile"),
+            ContentStep(
                 2,
                 "Skills & competenties dichten",
-                HorizonCareerStepKind.Active,
                 $"Gap-analyse naar “{dream}”: wat je nog mist op skills en competenties, plus gerichte opleidingen.",
                 gaps,
                 DreamCourses(dream),
                 ["Aantoonbare basisvaardigheden uit je DNA/competentiescan"],
                 YearsExperienceNeeded: 0,
                 "Bekijk opleidingen & fit",
-                "/candidate/profile?tab=fit",
-                Math.Clamp(match + 8, 32, 58)),
-            new(
-                "experience",
+                "/candidate/profile?tab=fit"),
+            ContentStep(
                 3,
                 "Ervaring opbouwen",
-                HorizonCareerStepKind.Open,
                 "Concrete praktijk: tussentijdse rollen of projecten die richting je horizon wijzen.",
                 ["Verantwoordelijkheid in team of proces", "Meetbare resultaten in een verwante rol"],
                 ["On-the-job learning / interne stage", "Branchegerichte cursus met praktijkopdracht"],
                 ["Minimaal aantoonbare inzet in een verwante functie of project"],
                 YearsExperienceNeeded: EstimateYears(dream, mid: true),
                 "Zoek stap-vacatures",
-                "/?q=" + query,
-                Math.Max(8, match / 2)),
-            new(
-                "land",
+                "/?q=" + query),
+            ContentStep(
                 4,
                 dream,
-                HorizonCareerStepKind.Open,
                 $"Land bij je stip op de horizon: {dream}. Minimale eisen en ervaring hieronder zijn richtinggevend.",
                 ["Eindcompetenties van de droomrol", "Eigenaarschap en besluitvaardigheid"],
                 ["Optioneel: vervolgopleiding of branchecertificaat"],
                 [$"Passende opleiding of gelijkwaardige ervaring voor {dream}", "Betrouwbare referenties of aantoonbare inzet"],
                 YearsExperienceNeeded: EstimateYears(dream, mid: false),
                 "Zoek droomvacatures",
-                "/?q=" + query,
-                0)
+                "/?q=" + query)
         };
 
         var dnaNote = profile?.HasDnaSignal == true
             ? "op basis van je profiel en DNA"
             : "op basis van je stip; vul DNA in voor een scherpere gap-analyse";
-        return new HorizonCareerPathPlan(
+        return CareerPlanJson.WithStableKeys(new HorizonCareerPathPlan(
             dream,
             match,
             $"Pad naar “{dream}” {dnaNote} — rustige, diepe stappen zonder vaste huidige rol.",
-            steps);
+            steps));
     }
+
+    private static HorizonCareerPathStep ContentStep(
+        int order,
+        string title,
+        string summary,
+        IReadOnlyList<string> skillsGap,
+        IReadOnlyList<string> courses,
+        IReadOnlyList<string> minRequirements,
+        int YearsExperienceNeeded,
+        string actionLabel,
+        string actionHref)
+        => new(
+            CareerStepKey.Create(order, title),
+            order,
+            title,
+            HorizonCareerStepKind.Open,
+            summary,
+            skillsGap,
+            courses,
+            minRequirements,
+            YearsExperienceNeeded,
+            actionLabel,
+            actionHref,
+            StepMatchPercent: 0);
 
     private static IReadOnlyList<string> DreamCourses(string dream)
     {

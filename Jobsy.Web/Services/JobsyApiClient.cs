@@ -995,6 +995,47 @@ public sealed class JobsyApiClient : IAsyncDisposable
                ?? new CandidateValuesState();
     }
 
+    public async Task<CareerPathPlanApiModel?> GetCareerPathAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _http.GetAsync("api/me/career-path", ct);
+            if (response.StatusCode is HttpStatusCode.NoContent or HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var body = await response.Content.ReadAsStringAsync(ct);
+            if (string.IsNullOrWhiteSpace(body) || body.Trim() == "null")
+            {
+                return null;
+            }
+
+            return JsonSerializer.Deserialize<CareerPathPlanApiModel>(body, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
     public async Task<CareerPathPlanApiModel?> GenerateCareerPathAsync(string dreamTitle, CancellationToken ct = default)
     {
         try
@@ -1012,6 +1053,49 @@ public sealed class JobsyApiClient : IAsyncDisposable
             return null;
         }
     }
+
+    public async Task<CareerPathPlanApiModel?> CompleteCareerStepAsync(string stepKey, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/me/career-path/steps/{Uri.EscapeDataString(stepKey)}/complete",
+            content: null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Stap voltooien mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
+    }
+
+    public async Task<CareerPathPlanApiModel?> UncompleteCareerStepAsync(string stepKey, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/me/career-path/steps/{Uri.EscapeDataString(stepKey)}/uncomplete",
+            content: null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Stap openzetten mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
+    }
+
+    public async Task<CareerPathPlanApiModel?> ClaimCareerCourseAsync(string courseName, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/me/career-path/courses/claim", new { courseName }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Cursus toevoegen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
+    }
+
 
     public async Task<CompanyCultureState?> GetCompanyCultureAsync(Guid? companyId = null, CancellationToken ct = default)
     {
