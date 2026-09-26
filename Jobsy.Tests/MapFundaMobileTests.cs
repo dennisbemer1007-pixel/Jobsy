@@ -16,12 +16,15 @@ public class MapFundaMobileTests
         Assert.Contains("Full = 3", razor);
         Assert.Contains("OnBrowserBack", razor);
         Assert.Contains("mapBottomSheet.pushHistory", razor);
-        Assert.Contains("mapBottomSheet.setTranslate", razor);
+        Assert.Contains("mapBottomSheet.setSnap", razor);
+        Assert.Contains("OnJsSnapChanged", razor);
         Assert.Contains("aria-label", razor);
 
         var sheetJs = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "mapBottomSheet.js"));
         Assert.Contains("translate3d", sheetJs);
         Assert.Contains("prefers-reduced-motion", sheetJs);
+        Assert.Contains("pointerdown", sheetJs);
+        Assert.Contains("setPointerCapture", sheetJs);
     }
 
     [Fact]
@@ -32,6 +35,7 @@ public class MapFundaMobileTests
         Assert.Contains("vac-compact__title", razor);
         Assert.Contains("vac-compact__chip--travel", razor);
         Assert.Contains("vac-compact__chip--match", razor);
+        Assert.Contains("% match", razor);
         Assert.Contains("vac-compact__wage", razor);
         Assert.Contains("vac-compact__save", razor);
         Assert.Contains("loading=\"lazy\"", razor);
@@ -53,6 +57,12 @@ public class MapFundaMobileTests
         Assert.Contains("OpenMobileListSheetAsync", discovery);
         Assert.Contains("_wideViewport", discovery);
         Assert.Contains("highlight-carousel--map", discovery);
+        Assert.Contains("Voorbeelddata", discovery);
+        Assert.Contains("ShowSampleDataBadge", discovery);
+        Assert.Contains("alle banen", discovery);
+        Assert.Contains("map-sheet-card-host", discovery);
+        // Card/cluster hosts stay mounted for instant skeleton (no Blazor wipe race).
+        Assert.Contains("Hosts stay mounted", discovery);
         // Carousel only on wide (desktop) map pane.
         Assert.Contains("&& _wideViewport", discovery);
     }
@@ -69,7 +79,10 @@ public class MapFundaMobileTests
         Assert.Contains("publishViewportCount", js);
         Assert.Contains("setTimeout(publishViewportCount, 200)", js);
         Assert.Contains("#f54a1b", js);
+        Assert.Contains("jobsy-pins-halo", js);
         Assert.Contains("compactCardSkeletonHtml", js);
+        Assert.Contains("paintCardIntoHost", js);
+        Assert.Contains("% match", js);
         Assert.Contains("fetchVacancyCards", js);
         Assert.Contains("setFeatureState", js);
         Assert.Contains("dimmed", js);
