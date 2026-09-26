@@ -401,6 +401,9 @@ window.jobsyCulture = {
     window.jobsyViewport = {
         isWide: function () {
             return window.matchMedia("(min-width: 769px)").matches;
+        },
+        isKompasWide: function () {
+            return window.matchMedia("(min-width: 1024px)").matches;
         }
     };
 

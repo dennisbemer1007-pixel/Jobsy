@@ -299,6 +299,16 @@ public sealed class CandidateKompasState
     public DeepAnalysisState? ValuesDeep { get; set; }
     public List<CandidateMatchedVacancy> TopMatches { get; set; } = [];
     public string InsightsStatus { get; set; } = "Ready";
+    public WhoAmIStorySummary? WhoAmI { get; set; }
+    public int ProfileCompletenessPercent { get; set; }
+}
+
+public sealed class WhoAmIStorySummary
+{
+    public string? Story { get; set; }
+    public List<string> Keywords { get; set; } = [];
+    public DateTime? GeneratedAtUtc { get; set; }
+    public string Status { get; set; } = "Empty";
 }
 
 public sealed class RoleFitCheckResult

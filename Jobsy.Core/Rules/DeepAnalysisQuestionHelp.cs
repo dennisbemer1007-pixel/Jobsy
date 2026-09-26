@@ -27,6 +27,11 @@ public static class DeepAnalysisQuestionHelp
         DeepAnalysisCompetenceItems.Extraversie => "Energie van mensen",
         DeepAnalysisCompetenceItems.Vriendelijkheid => "Samen & aardig",
         DeepAnalysisCompetenceItems.EmotioneleStabiliteit => "Kalm blijven",
+        // Free competentietest categories (Extraversie shares the Big Five label above)
+        CompetencyTestCatalog.Samenwerken => "Samen & aardig",
+        CompetencyTestCatalog.Resultaatgerichtheid => "Afmaken & netjes werken",
+        CompetencyTestCatalog.Stressbestendigheid => "Kalm blijven",
+        CompetencyTestCatalog.Innovatie => "Nieuwe dingen proberen",
         CareerTestCatalog.Realistic => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Realistic),
         CareerTestCatalog.Investigative => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Investigative),
         CareerTestCatalog.Artistic => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Artistic),
@@ -43,6 +48,7 @@ public static class DeepAnalysisQuestionHelp
         CulturePersonalityCatalog.Flexibility => "Flexibel meebewegen",
         CulturePersonalityCatalog.Innovation => "Nieuwe dingen proberen",
         CulturePersonalityCatalog.PeopleFirst => "Mensen voorop",
+        // Autonomy shares the string code with SchwartzValuesCatalog.Autonomy above.
         CulturePersonalityCatalog.Openness => "Openstaan voor nieuw",
         CulturePersonalityCatalog.Conscientiousness => "Netjes en betrouwbaar",
         CulturePersonalityCatalog.Extraversion => "Energie van mensen",

@@ -123,7 +123,7 @@ public class RoleNavCatalogTests
                 "/candidate/liked",
                 "/candidate/applications",
                 "/carriere",
-                "/profiel"
+                "/candidate/profile"
             },
             items.Select(i => i.Href));
         Assert.Equal("Nav.Search", items[0].TitleKey);
@@ -132,11 +132,12 @@ public class RoleNavCatalogTests
         Assert.Equal("Nav.Profile", items[4].TitleKey);
         Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
         Assert.DoesNotContain(items, i => i.Href == "/home");
+        Assert.DoesNotContain(items, i => i.Href == "/profiel");
         var saved = items.First(i => i.Href == "/candidate/liked");
         Assert.Contains("/candidate/shared", saved.ExtraActivePaths ?? []);
         Assert.DoesNotContain("/candidate/applications", saved.ExtraActivePaths ?? []);
-        var profile = items.First(i => i.Href == "/profiel");
-        Assert.Contains("/candidate/profile", profile.ExtraActivePaths ?? []);
+        var profile = items.First(i => i.Href == "/candidate/profile");
+        Assert.Contains("/profiel", profile.ExtraActivePaths ?? []);
         Assert.Contains("/home", profile.ExtraActivePaths ?? []);
         Assert.Equal("/candidate/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(user));
     }

@@ -6,12 +6,33 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@inject IJSRuntime Js
 @implements IDisposable
 
 <section class="kompas" aria-labelledby="kompas-title">
     <header class="kompas__intro">
         <h2 id="kompas-title" class="kompas__heading">@Culture["Kompas.Title"]</h2>
-        <p class="login-lead">@Culture["Kompas.Lead"]</p>
+        @if (!_loading && _completenessPercent < 100)
+        {
+            <div class="kompas__completeness"
+                 aria-label="@Culture.Format("Kompas.CompletenessAria", _completenessPercent)">
+                <p class="kompas__completeness-line">
+                    @Culture.Format("Kompas.CompletenessLine", _completenessPercent)
+                    <button type="button"
+                            class="kompas__completeness-link"
+                            @onclick='() => SetTab(CandidateKompasTabs.Profile)'>
+                        @Culture["Kompas.CompletenessFill"]
+                    </button>
+                </p>
+                <div class="kompas__completeness-bar"
+                     role="progressbar"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     aria-valuenow="@_completenessPercent">
+                    <span style="width: @_completenessPercent%"></span>
+                </div>
+            </div>
+        }
     </header>
 
     @if (!string.IsNullOrWhiteSpace(_message))
@@ -65,7 +86,7 @@
         </button>
     </div>
 
-    <div class="kompas-workspace @(Side is not null ? "kompas-workspace--with-side" : null)">
+    <div class="kompas-workspace @(Side is not null && ShouldShowSide ? "kompas-workspace--with-side" : null)">
     <div class="kompas-workspace__main">
     <article id="kompas-panel-dna"
              class="kompas-card kompas-card--tab"
@@ -183,7 +204,7 @@
         <RoleFitCheckPanel VacancyId="@_vacancyId" Active="@(_tab == CandidateKompasTabs.Fit)" />
     </article>
     </div>
-    @if (Side is not null)
+    @if (Side is not null && ShouldShowSide)
     {
         <div class="kompas-workspace__side">
             @Side
@@ -211,12 +232,17 @@
     private string _tab = CandidateKompasTabs.Dna;
     private Guid? _vacancyId;
     private bool _listeningToLocation;
+    private bool _isWideViewport = true;
+    private int _completenessPercent;
 
     [Parameter] public string? InitialTab { get; set; }
     [Parameter] public RenderFragment? ProfileTab { get; set; }
     [Parameter] public RenderFragment? Side { get; set; }
     /// <summary>When set (e.g. from Profile.razor), reuse the single kompas GET.</summary>
     [Parameter] public CandidateKompasState? SharedKompas { get; set; }
+
+    private bool ShouldShowSide
+        => _tab != CandidateKompasTabs.Dna || _isWideViewport;
 
     protected override void OnInitialized()
     {
@@ -232,6 +258,7 @@
         if (SharedKompas is not null)
         {
             _kompas = SharedKompas;
+            _completenessPercent = SharedKompas.ProfileCompletenessPercent;
             if (ProfileTab is not null)
             {
                 _loading = false;
@@ -242,8 +269,26 @@
     protected override Task OnInitializedAsync()
         => TryLoadAsync();
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
-        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RefreshViewportAsync();
+            await TryLoadAsync();
+        }
+    }
+
+    private async Task RefreshViewportAsync()
+    {
+        try
+        {
+            _isWideViewport = await Js.InvokeAsync<bool>("jobsyViewport.isKompasWide");
+        }
+        catch
+        {
+            _isWideViewport = true;
+        }
+    }
 
     public void Dispose()
     {
@@ -349,6 +394,7 @@
         if (ProfileTab is not null)
         {
             _kompas = SharedKompas;
+            _completenessPercent = SharedKompas?.ProfileCompletenessPercent ?? 0;
             _loading = false;
             return;
         }
@@ -358,6 +404,7 @@
         try
         {
             _kompas = SharedKompas ?? await Api.GetMyKompasAsync();
+            _completenessPercent = _kompas?.ProfileCompletenessPercent ?? 0;
             _profile = _kompas?.Profile;
             if (_profile?.Preferences is { } prefs)
             {

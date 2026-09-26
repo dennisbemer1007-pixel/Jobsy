@@ -25,7 +25,7 @@ public static class RoleNavCatalog
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]),
         new("Nav.Applications", "/candidate/applications", NavIcons.Applications),
         new("Nav.CareerPath", "/carriere", NavIcons.Career),
-        new("Nav.Profile", "/profiel", NavIcons.Profile, ["/candidate/profile", "/home"])
+        new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/profiel", "/home"])
     ];
 
     public static readonly NavItem MyApplicationsReadOnly =

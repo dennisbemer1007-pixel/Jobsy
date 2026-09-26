@@ -43,6 +43,14 @@ public class CandidateInsightsOnWriteApiTests : IClassFixture<CandidateInsightsO
         Assert.True(body.TryGetProperty("topMatches", out _));
         Assert.True(body.TryGetProperty("insightsStatus", out var status));
         Assert.Contains(status.GetString(), ["Ready", "Updating"], StringComparer.OrdinalIgnoreCase);
+        Assert.True(body.TryGetProperty("whoAmI", out var whoAmI));
+        Assert.True(whoAmI.TryGetProperty("status", out var whoStatus));
+        Assert.Contains(whoStatus.GetString(), ["Empty", "Ready", "Updating"], StringComparer.OrdinalIgnoreCase);
+        Assert.True(whoAmI.TryGetProperty("story", out _));
+        Assert.True(whoAmI.TryGetProperty("keywords", out _));
+        Assert.True(whoAmI.TryGetProperty("generatedAtUtc", out _));
+        Assert.True(body.TryGetProperty("profileCompletenessPercent", out var completeness));
+        Assert.InRange(completeness.GetInt32(), 0, 100);
     }
 
     [Fact]

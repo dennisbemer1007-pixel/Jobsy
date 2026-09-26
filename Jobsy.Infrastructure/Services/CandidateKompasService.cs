@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -59,8 +60,18 @@ public sealed class CandidateKompasService : ICandidateKompasService
             .ThenBy(r => r.CreatedAtUtc)
             .Select(r => new CandidateReferenceSummaryDto(r.Id, r.EmployerName, r.ContactName, r.Email, r.Phone))
             .ToListAsync(cancellationToken);
+        var whoAmIRowTask = _db.CandidateWhoAmIProfiles.AsNoTracking()
+            .Where(w => w.UserId == userId)
+            .Select(w => new
+            {
+                w.StoryText,
+                w.KeywordsJson,
+                w.StoryGeneratedAtUtc,
+                w.InputFingerprint,
+                w.FromOpenAi
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        // One query path per table; career skips matches (loaded once below).
         var competenciesTask = _competencies.GetAsync(userId, cancellationToken);
         var careerTask = _career.GetAsync(userId, cancellationToken, includeMatches: false);
         var cultureTask = _culture.GetAsync(userId, cancellationToken);
@@ -75,6 +86,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
             featuresTask,
             cvTask,
             refsTask,
+            whoAmIRowTask,
             competenciesTask,
             careerTask,
             cultureTask,
@@ -86,6 +98,8 @@ public sealed class CandidateKompasService : ICandidateKompasService
             valuesDeepTask);
 
         var prefs = TryPrefs(user.PreferencesJson);
+        var hasUploadedCv = cvTask.Result is not null;
+        var hasReferences = refsTask.Result.Count > 0;
         var profile = new MeProfileSummaryDto(
             user.Id,
             user.Email,
@@ -112,6 +126,49 @@ public sealed class CandidateKompasService : ICandidateKompasService
             ? InsightsStatuses.Updating
             : InsightsStatuses.Ready;
 
+        var competencyDone = CandidateCompetencyStatuses.IsCompleted(competenciesTask.Result.Status);
+        var careerDone = CandidateCompetencyStatuses.IsCompleted(career.Status);
+        var cultureDone = CandidateCompetencyStatuses.IsCompleted(cultureTask.Result.Status);
+        var valuesDone = CandidateCompetencyStatuses.IsCompleted(valuesTask.Result.Status);
+        var profileFilled = WhoAmICompleteness.IsProfileFilled(
+            user.FullName,
+            user.FirstName,
+            user.LastName,
+            user.PreferencesJson,
+            hasUploadedCv,
+            hasReferences);
+        var hasBackground = WhoAmICompleteness.IsProfileFilled(
+                                 user.FullName,
+                                 user.FirstName,
+                                 user.LastName,
+                                 user.PreferencesJson,
+                                 hasUploadedCv,
+                                 hasReferences)
+                             || MatchProfileCompleteness.HasEducationLevel(prefs);
+
+        var completeness = KompasProfileCompleteness.Percent(
+            profileFilled,
+            competencyDone,
+            careerDone,
+            cultureDone,
+            valuesDone,
+            hasBackground);
+
+        var whoAmI = BuildWhoAmIStory(
+            whoAmIRowTask.Result?.StoryText,
+            whoAmIRowTask.Result?.KeywordsJson,
+            whoAmIRowTask.Result?.StoryGeneratedAtUtc,
+            whoAmIRowTask.Result?.InputFingerprint,
+            whoAmIRowTask.Result?.FromOpenAi ?? false,
+            profileFilled,
+            competencyDone,
+            careerDone,
+            cultureDone,
+            competenciesTask.Result.Scores,
+            career.Scores,
+            cultureTask.Result.Scores,
+            valuesTask.Result.Scores);
+
         return new CandidateKompasDto(
             profile,
             competenciesTask.Result,
@@ -123,7 +180,72 @@ public sealed class CandidateKompasService : ICandidateKompasService
             cultureDeepTask.Result,
             valuesDeepTask.Result,
             matches,
-            insights);
+            insights,
+            whoAmI,
+            completeness);
+    }
+
+    /// <summary>
+    /// Pure read of stored story — never calls AI or enqueues generation.
+    /// </summary>
+    internal static WhoAmIStorySummaryDto BuildWhoAmIStory(
+        string? storyText,
+        string? keywordsJson,
+        DateTime? generatedAtUtc,
+        string? storedFingerprint,
+        bool fromOpenAi,
+        bool profileFilled,
+        bool competencyDone,
+        bool careerDone,
+        bool cultureDone,
+        CompetencyScores? competency,
+        RiasecScores? career,
+        CulturePersonalityScores? culture,
+        SchwartzValuesScores? values)
+    {
+        var keywords = ParseKeywords(keywordsJson);
+        var story = string.IsNullOrWhiteSpace(storyText) ? null : storyText.Trim();
+        var unlocked = WhoAmICompleteness.IsUnlocked(profileFilled, competencyDone, careerDone, cultureDone);
+
+        if (story is null)
+        {
+            return new WhoAmIStorySummaryDto(null, keywords, generatedAtUtc, WhoAmIStoryStatuses.Empty);
+        }
+
+        if (!unlocked
+            || competency is not { IsComplete: true }
+            || career is not { IsComplete: true }
+            || culture is not { IsComplete: true })
+        {
+            return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc, WhoAmIStoryStatuses.Ready);
+        }
+
+        var highlights = WhoAmIProfileHighlights.Empty;
+        var expected = WhoAmICompleteness.Fingerprint(competency, career, culture, highlights, values);
+        var stale = !string.Equals(storedFingerprint, expected, StringComparison.Ordinal);
+        var retryFallback = CandidateInsightsFingerprint.ShouldRetryFallback(
+            fromOpenAi,
+            generatedAtUtc,
+            DateTime.UtcNow);
+        var status = stale || retryFallback ? WhoAmIStoryStatuses.Updating : WhoAmIStoryStatuses.Ready;
+        return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc, status);
+    }
+
+    private static IReadOnlyList<string> ParseKeywords(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json, PrefsJson) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
     }
 
     private async Task<CandidateUploadedCvSummaryDto?> LoadCvAsync(Guid userId, CancellationToken cancellationToken)

@@ -262,9 +262,9 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
 | Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard **Mijn Lobsy Kompas** (tabbladen **Mijn DNA** / **Profiel** / **Tests** / **Functiefit**) plus KPI’s sollicitaties/likes/shares/reacties. |
-| Kandidaat | Home: Kompas-tabbladen Mijn DNA / Profiel / Tests / Functiefit. | Vier tabs; DNA=aggregatie van afgeronde tests (leeg→knop naar Tests); Profiel=sectienav Persoonlijk/Voorkeuren/Beschikbaarheid/CV; Tests=tegeloverzicht + detail `/profiel/tests/{key}`; Fit=4 stappen Functiefit checker. |
-| Kandidaat | Mijn DNA: leeg tot eerste test afgerond. | Uitleg + knop **Bekijk de tests**; geen uitkomsten. |
-| Kandidaat | Mijn DNA: deels afgerond toont bekende uitkomsten + incompleet. | Bekende testuitkomsten zichtbaar; badge profiel nog niet compleet; ontbrekende tests gemarkeerd. |
+| Kandidaat | Home: Kompas-tabbladen Mijn DNA / Profiel / Tests / Functiefit. | Vier tabs; DNA=Jouw verhaal + Samenvatting van je tests (leeg→**Naar de tests**); Profiel=sectienav Persoonlijk/Voorkeuren/Beschikbaarheid/CV; Tests=tegeloverzicht + detail `/profiel/tests/{key}`; Fit=4 stappen Functiefit checker. |
+| Kandidaat | Mijn DNA: leeg tot eerste test afgerond. | **Jouw verhaal** empty + knop **Naar de tests**; testkaarten **Nog niet gedaan** + **Start test**. |
+| Kandidaat | Mijn DNA: deels afgerond toont bekende uitkomsten + incompleet. | Afgeronde tests als samenvattingskaarten; open tests **Nog niet gedaan**; geen aparte incompleet-badge. |
 | Kandidaat | Home: Kompas toont Quick-Scan 25 vs diepte-analyse 150 + PDF als klaar. | Status zichtbaar; PDF-knop alleen na afgeronde diepte-analyse; geen extra nav-tab. |
 | Kandidaat | Home: **Mijn Beroepen-kompas** toont Super-match / Sterke keus / Handige verbreding. | Groepen >95% / >85% / >75%; sectie **Wat betekent dit voor jou?**; geen RIASEC/OCEAN in kandidaattekst. |
 | Kandidaat | Download loopbaan-PDF na uitgebreide beroepentest (150). | Gekleurd Lobsy-logo; Super-match/Sterke keus/Handige verbreding; **Wat betekent dit voor jou?**; geen RIASEC/OCEAN. |
@@ -277,7 +277,7 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Vacatures: open een vacature en terug naar Vacatures. | Onlangs bekeken toont die vacature (localStorage, alleen IDs). |
 | Kandidaat | Bottom-nav **Sollicitaties**. | `/candidate/applications`. |
 | Kandidaat | Bottom-nav **Carrière**. | `/carriere`. |
-| Kandidaat | Bottom-nav **Profiel**. | `/profiel` (active ook op `/candidate/profile` en `/home`). |
+| Kandidaat | Bottom-nav **Profiel**. | `/candidate/profile` (active ook op `/profiel` en `/home`; `/profiel` redirect). |
 | Kandidaat | Account-menu (userknop) **Hoe werkt Lobsy**. | `/candidate/hoe-werkt-lobsy`. |
 | Kandidaat | TokenWalletChip. | Niet zichtbaar. |
 | Kandidaat | Home: KPI’s sollicitaties/likes/shares/reacties. | KPI-tegels zichtbaar (weekdefault); loading-skeletons bij laden. |

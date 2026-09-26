@@ -21133,49 +21133,314 @@ body {
     font-size: 0.8rem;
 }
 
-.dna-summary {
-    list-style: none;
-    margin: 0 0 1rem;
-    padding: 0;
-    display: grid;
-    gap: 0.65rem;
+/* —— Mijn DNA: story + test summary cards —— */
+.kompas__completeness {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
 }
 
-.dna-summary__item {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    padding: 0.75rem 0.85rem;
-}
-
-.dna-summary__item--missing {
-    opacity: 0.72;
-}
-
-.dna-summary__link {
-    display: grid;
-    gap: 0.25rem;
-    color: inherit;
-    text-decoration: none;
-}
-
-.dna-summary__title {
-    font-weight: 700;
-    color: var(--brand);
-}
-
-.dna-summary__outcome {
-    font-size: 0.92rem;
-}
-
-.dna-summary__status {
-    font-size: 0.82rem;
+.kompas__completeness-line {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--muted);
     font-weight: 600;
 }
 
-.dna-summary__status--success { color: var(--success); }
-.dna-summary__status--gold { color: var(--gold-deep); }
-.dna-summary__status--pending { color: var(--muted); }
+.kompas__completeness-link {
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--brand);
+    font: inherit;
+    font-weight: 750;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.kompas__completeness-bar {
+    height: 0.28rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border) 70%, var(--surface));
+    overflow: hidden;
+}
+
+.kompas__completeness-bar span {
+    display: block;
+    height: 100%;
+    background: var(--brand);
+}
+
+.dna-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+}
+
+.dna-section__title {
+    margin: 0 0 0.65rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--brand);
+}
+
+.dna-story__empty {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.dna-story__updating {
+    margin: 0 0 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 650;
+    color: var(--muted);
+}
+
+.dna-story__body {
+    position: relative;
+}
+
+.dna-story__body.is-clamped .dna-story__text {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+}
+
+.dna-story__text p {
+    margin: 0 0 0.65rem;
+    line-height: 1.45;
+}
+
+.dna-story__text p:last-child {
+    margin-bottom: 0;
+}
+
+.dna-story__fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2.5rem;
+    background: linear-gradient(transparent, var(--surface));
+    pointer-events: none;
+}
+
+.dna-story__toggle {
+    margin: 0.45rem 0 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--brand);
+    font: inherit;
+    font-weight: 750;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.dna-story__chips {
+    list-style: none;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.dna-story__chips li {
+    padding: 0.22rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--border));
+    background: color-mix(in srgb, var(--brand) 6%, var(--surface));
+    color: var(--brand);
+    font-size: 0.78rem;
+    font-weight: 650;
+}
+
+.dna-story__meta {
+    margin: 0.55rem 0 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+.dna-tests__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.dna-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.85rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+}
+
+.dna-card--pending {
+    background: color-mix(in srgb, var(--surface) 88%, var(--bg));
+}
+
+.dna-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.dna-card__title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.dna-card__badge {
+    flex: 0 0 auto;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    background: var(--gold-soft, color-mix(in srgb, var(--gold) 18%, var(--surface)));
+    color: var(--gold-ink, var(--gold-deep));
+    font-size: 0.68rem;
+    font-weight: 750;
+}
+
+.dna-card__pending {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.dna-card__bars,
+.dna-card__chips,
+.dna-card__poles,
+.dna-card__ranked {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.dna-card__bar-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 650;
+}
+
+.dna-card__bar {
+    height: 0.4rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border) 70%, var(--surface));
+    overflow: hidden;
+}
+
+.dna-card__bar span {
+    display: block;
+    height: 100%;
+    background: var(--brand);
+}
+
+.dna-card__chips li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.84rem;
+    font-weight: 650;
+}
+
+.dna-card__chip-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+    color: var(--brand);
+    font-weight: 800;
+    font-size: 0.78rem;
+}
+
+.dna-card__pole-labels {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 650;
+    color: var(--muted);
+}
+
+.dna-card__pole-track {
+    position: relative;
+    height: 0.35rem;
+    margin-top: 0.35rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border) 75%, var(--surface));
+}
+
+.dna-card__pole-dot {
+    position: absolute;
+    top: 50%;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-left: -0.35rem;
+    border-radius: 50%;
+    background: var(--brand);
+    transform: translateY(-50%);
+}
+
+.dna-card__ranked li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.88rem;
+    font-weight: 650;
+}
+
+.dna-card__rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+    color: var(--brand);
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.dna-card__sentence {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    color: var(--text);
+}
+
+.dna-card__link {
+    align-self: flex-start;
+    margin-top: 0.15rem;
+    color: var(--brand);
+    font-size: 0.84rem;
+    font-weight: 750;
+    text-decoration: underline;
+}
+
+@media (min-width: 1024px) {
+    .dna-tests__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
 
 .tests-overview__head {
     display: flex;

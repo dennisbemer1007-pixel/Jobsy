@@ -505,12 +505,14 @@ public static class UatScriptRunner
                 StringComparison.Ordinal);
         }
 
-        if (Contains(blob, "Mijn DNA", "leeg", "Bekijk de tests"))
+        if (Contains(blob, "Mijn DNA", "leeg", "Jouw verhaal")
+            || Contains(blob, "Mijn DNA", "leeg", "Naar de tests"))
         {
             var root = RepoRoot.Find();
             var dna = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor"));
-            Assert.Contains("Dna.EmptyLead", dna, StringComparison.Ordinal);
-            Assert.Contains("Dna.ViewTests", dna, StringComparison.Ordinal);
+            Assert.Contains("Dna.StoryEmpty", dna, StringComparison.Ordinal);
+            Assert.Contains("Dna.StoryEmptyCta", dna, StringComparison.Ordinal);
+            Assert.Contains("Dna.TestsTitle", dna, StringComparison.Ordinal);
         }
 
         if (Contains(blob, "Wie ben ik?", "persoonsprofiel", "Lobsy-CV-bijlage"))

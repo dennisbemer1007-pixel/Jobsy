@@ -11,55 +11,152 @@
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
-    else if (_completedCount == 0)
-    {
-        <div class="dna-empty">
-            <div class="dna-empty__icon" aria-hidden="true">
-                <svg viewBox="0 0 64 64" width="64" height="64" fill="none">
-                    <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="2" opacity="0.35"/>
-                    <path d="M24 14c6 6 6 30 0 36M40 14c-6 6-6 30 0 36" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                    <path d="M22 24h20M22 32h20M22 40h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
-                </svg>
-            </div>
-            <p class="login-lead">@Culture["Dna.EmptyLead"]</p>
-            <button type="button" class="login-submit" @onclick="GoTests">@Culture["Dna.ViewTests"]</button>
-        </div>
-    }
     else
     {
-        <p class="login-lead">@Culture["Dna.Lead"]</p>
-        @if (_completedCount < 4)
-        {
-            <p class="dna-incomplete">
-                <span class="dna-incomplete__badge">@Culture["Dna.IncompleteBadge"]</span>
-                @Culture.Format("Dna.IncompleteHint", _completedCount, 4)
-            </p>
-        }
+        <section class="dna-story" aria-labelledby="dna-story-title">
+            <h3 id="dna-story-title" class="dna-section__title">@Culture["Dna.StoryTitle"]</h3>
 
-        <ul class="dna-summary">
-            @foreach (var item in _items.Where(i => i.Completed))
+            @if (string.IsNullOrWhiteSpace(_story))
             {
-                <li class="dna-summary__item">
-                    <a class="dna-summary__link" href="@item.DetailHref">
-                        <span class="dna-summary__title">@Culture[item.TitleKey]</span>
-                        @if (!string.IsNullOrWhiteSpace(item.Outcome))
+                <div class="dna-story__empty">
+                    <p class="login-lead">@Culture["Dna.StoryEmpty"]</p>
+                    <button type="button" class="login-submit" @onclick="GoTests">@Culture["Dna.StoryEmptyCta"]</button>
+                </div>
+            }
+            else
+            {
+                @if (_storyUpdating)
+                {
+                    <p class="dna-story__updating" aria-live="polite">@Culture["Dna.StoryUpdating"]</p>
+                }
+                <div class="dna-story__body @(_storyExpanded ? "is-expanded" : "is-clamped")">
+                    <div class="dna-story__text">
+                        @foreach (var para in StoryParagraphs(_story))
                         {
-                            <span class="dna-summary__outcome">@item.Outcome</span>
+                            <p>@para</p>
                         }
-                        <span class="dna-summary__status dna-summary__status--@item.StatusCss">@Culture[item.StatusKey]</span>
-                    </a>
-                </li>
-            }
-            @foreach (var item in _items.Where(i => !i.Completed))
-            {
-                <li class="dna-summary__item dna-summary__item--missing">
-                    <span class="dna-summary__title">@Culture[item.TitleKey]</span>
-                    <span class="dna-summary__status dna-summary__status--pending">@Culture["Test.Status.NotDone"]</span>
-                </li>
-            }
-        </ul>
+                    </div>
+                    @if (!_storyExpanded)
+                    {
+                        <div class="dna-story__fade" aria-hidden="true"></div>
+                    }
+                </div>
+                <button type="button"
+                        class="dna-story__toggle"
+                        @onclick="ToggleStory">
+                    @(_storyExpanded ? Culture["Dna.StoryLess"] : Culture["Dna.StoryMore"])
+                </button>
 
-        <button type="button" class="engagement-btn" @onclick="GoTests">@Culture["Dna.ViewTests"]</button>
+                @if (_keywords.Count > 0)
+                {
+                    <ul class="dna-story__chips" aria-label="@Culture["Dna.KeywordsLabel"]">
+                        @foreach (var keyword in _keywords.Take(6))
+                        {
+                            <li>@keyword</li>
+                        }
+                    </ul>
+                }
+
+                @if (_storyGeneratedAt is DateTime generated)
+                {
+                    <p class="dna-story__meta">
+                        @Culture.Format("Dna.StoryUpdated", generated.ToLocalTime().ToString("dd-MM-yyyy"))
+                    </p>
+                }
+            }
+        </section>
+
+        <section class="dna-tests" aria-labelledby="dna-tests-title">
+            <h3 id="dna-tests-title" class="dna-section__title">@Culture["Dna.TestsTitle"]</h3>
+            <div class="dna-tests__grid">
+                @foreach (var card in _cards)
+                {
+                    <article class="dna-card @(card.Completed ? null : "dna-card--pending") @(card.Extended ? "dna-card--extended" : null)">
+                        <header class="dna-card__head">
+                            <h4 class="dna-card__title">@Culture[card.TitleKey]</h4>
+                            @if (card.Extended)
+                            {
+                                <span class="dna-card__badge">@Culture["Test.Status.Extended"]</span>
+                            }
+                        </header>
+
+                        @if (!card.Completed)
+                        {
+                            <p class="dna-card__pending">@Culture["Test.Status.NotDone"]</p>
+                            <a class="engagement-btn" href="@card.StartHref">@Culture["Dna.StartTest"]</a>
+                        }
+                        else
+                        {
+                            @if (card.Kind == AssessmentKind.Competence && card.Bars.Count > 0)
+                            {
+                                <ul class="dna-card__bars">
+                                    @foreach (var bar in card.Bars)
+                                    {
+                                        <li>
+                                            <div class="dna-card__bar-top">
+                                                <span>@bar.Label</span>
+                                                <strong>@bar.Percent%</strong>
+                                            </div>
+                                            <div class="dna-card__bar" role="presentation">
+                                                <span style="width: @bar.Percent%"></span>
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else if (card.Kind == AssessmentKind.Career && card.Chips.Count > 0)
+                            {
+                                <ul class="dna-card__chips">
+                                    @foreach (var chip in card.Chips)
+                                    {
+                                        <li>
+                                            <span class="dna-card__chip-letter" aria-hidden="true">@chip.Letter</span>
+                                            <span>@chip.Label</span>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else if (card.Kind == AssessmentKind.Culture && card.Poles.Count > 0)
+                            {
+                                <ul class="dna-card__poles">
+                                    @foreach (var pole in card.Poles)
+                                    {
+                                        <li>
+                                            <div class="dna-card__pole-labels">
+                                                <span>@Culture[pole.LowKey]</span>
+                                                <span>@Culture[pole.HighKey]</span>
+                                            </div>
+                                            <div class="dna-card__pole-track" role="presentation">
+                                                <span class="dna-card__pole-dot" style="left: @pole.Percent%"></span>
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else if (card.Kind == AssessmentKind.Values && card.Bars.Count > 0)
+                            {
+                                <ol class="dna-card__ranked">
+                                    @for (var i = 0; i < card.Bars.Count; i++)
+                                    {
+                                        <li>
+                                            <span class="dna-card__rank" aria-hidden="true">@(i + 1)</span>
+                                            <span>@card.Bars[i].Label</span>
+                                        </li>
+                                    }
+                                </ol>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(card.Sentence))
+                            {
+                                <p class="dna-card__sentence">@card.Sentence</p>
+                            }
+
+                            <a class="dna-card__link" href="@card.DetailHref">@Culture["Dna.ViewResult"]</a>
+                        }
+                    </article>
+                }
+            </div>
+        </section>
     }
 </div>
 
@@ -70,8 +167,12 @@
 
     private bool _loading = true;
     private bool _loaded;
-    private int _completedCount;
-    private readonly List<DnaItem> _items = [];
+    private bool _storyExpanded;
+    private bool _storyUpdating;
+    private string? _story;
+    private DateTime? _storyGeneratedAt;
+    private readonly List<string> _keywords = [];
+    private readonly List<DnaCard> _cards = [];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -80,7 +181,7 @@
             return;
         }
 
-        if (Snapshot is not null && !_loaded)
+        if (Snapshot is not null)
         {
             ApplySnapshot(Snapshot);
             return;
@@ -90,33 +191,38 @@
         {
             await LoadAsync();
         }
-        else if (Snapshot is not null)
-        {
-            ApplySnapshot(Snapshot);
-        }
     }
 
     private void ApplySnapshot(CandidateKompasState kompas)
     {
-        var competence = kompas.Competencies;
-        var career = kompas.CareerInterests;
-        var culture = kompas.Culture;
-        var values = kompas.Values;
+        ApplyStory(kompas.WhoAmI);
         Paint(
-            competence?.Status,
-            competence?.Scores,
-            career?.Status,
-            career?.Scores,
-            culture?.Status,
-            culture?.Scores,
-            values?.Status,
-            values?.Scores,
+            kompas.Competencies?.Status,
+            kompas.Competencies?.Scores,
+            kompas.CareerInterests?.Status,
+            kompas.CareerInterests?.Scores,
+            kompas.Culture?.Status,
+            kompas.Culture?.Scores,
+            kompas.Values?.Status,
+            kompas.Values?.Scores,
             kompas.CompetenceDeep,
             kompas.CareerDeep,
             kompas.CultureDeep,
             kompas.ValuesDeep);
         _loaded = true;
         _loading = false;
+    }
+
+    private void ApplyStory(WhoAmIStorySummary? who)
+    {
+        _story = string.IsNullOrWhiteSpace(who?.Story) ? null : who!.Story;
+        _storyGeneratedAt = who?.GeneratedAtUtc;
+        _storyUpdating = string.Equals(who?.Status, WhoAmIStoryStatuses.Updating, StringComparison.OrdinalIgnoreCase);
+        _keywords.Clear();
+        if (who?.Keywords is { Count: > 0 })
+        {
+            _keywords.AddRange(who.Keywords.Where(k => !string.IsNullOrWhiteSpace(k)).Take(6));
+        }
     }
 
     private async Task LoadAsync()
@@ -128,35 +234,12 @@
             if (kompas is not null)
             {
                 ApplySnapshot(kompas);
-                return;
             }
-
-            var competence = await Api.GetMyCompetenciesAsync();
-            var career = await Api.GetMyCareerInterestsAsync();
-            var culture = await Api.GetMyCultureAsync();
-            var values = await Api.GetMyValuesAsync();
-            var competenceDeep = await Api.GetDeepAnalysisAsync("competence");
-            var careerDeep = await Api.GetDeepAnalysisAsync("career");
-            var cultureDeep = await Api.GetDeepAnalysisAsync("culture");
-            var valuesDeep = await Api.GetDeepAnalysisAsync("values");
-            Paint(
-                competence?.Status,
-                competence?.Scores,
-                career?.Status,
-                career?.Scores,
-                culture?.Status,
-                culture?.Scores,
-                values?.Status,
-                values?.Scores,
-                competenceDeep,
-                careerDeep,
-                cultureDeep,
-                valuesDeep);
-            _loaded = true;
         }
         finally
         {
             _loading = false;
+            _loaded = true;
         }
     }
 
@@ -174,85 +257,209 @@
         DeepAnalysisState? cultureDeep,
         DeepAnalysisState? valuesDeep)
     {
-        _items.Clear();
-        _items.Add(Build(
+        _cards.Clear();
+        _cards.Add(BuildCompetence(competenceStatus, competenceScores, competenceDeep));
+        _cards.Add(BuildCareer(careerStatus, careerScores, careerDeep));
+        _cards.Add(BuildCulture(cultureStatus, cultureScores, cultureDeep));
+        _cards.Add(BuildValues(valuesStatus, valuesScores, valuesDeep));
+    }
+
+    private static DnaCard BuildCompetence(string? status, CompetencyScoreSet? scores, DeepAnalysisState? deep)
+    {
+        var freeDone = IsCompleted(status);
+        var extended = deep is { IsCompleted: true };
+        var completed = freeDone || extended;
+        var bars = new List<DnaBar>();
+        string? sentence = null;
+        if (completed && scores is not null)
+        {
+            var ranked = Rank(
+                (CompetencyTestCatalog.Samenwerken, scores.Samenwerken),
+                (CompetencyTestCatalog.Resultaatgerichtheid, scores.Resultaatgerichtheid),
+                (CompetencyTestCatalog.Stressbestendigheid, scores.Stressbestendigheid),
+                (CompetencyTestCatalog.Innovatie, scores.Innovatie),
+                (CompetencyTestCatalog.Extraversie, scores.Extraversie));
+            foreach (var (code, pct) in ranked.Take(3))
+            {
+                bars.Add(new DnaBar(DeepAnalysisQuestionHelp.DomainLabel(code), pct));
+            }
+
+            if (ranked.Count > 0)
+            {
+                sentence = DnaSummarySentences.Competence(ranked[0].Code, ranked[0].Percent);
+            }
+        }
+
+        return new DnaCard(
             AssessmentKind.Competence,
             "Test.Competence.Title",
-            IsCompleted(competenceStatus),
-            competenceDeep,
-            AssessmentOutcomeLines.Competence(
-                competenceScores?.Samenwerken,
-                competenceScores?.Resultaatgerichtheid,
-                competenceScores?.Stressbestendigheid,
-                competenceScores?.Innovatie,
-                competenceScores?.Extraversie)));
-        _items.Add(Build(
+            completed,
+            extended,
+            AssessmentTestCatalog.DetailHref(AssessmentKind.Competence),
+            AssessmentTestCatalog.TryGet(AssessmentKind.Competence)!.FreeStartHref,
+            bars,
+            [],
+            [],
+            sentence);
+    }
+
+    private static DnaCard BuildCareer(string? status, RiasecScoreSet? scores, DeepAnalysisState? deep)
+    {
+        var freeDone = IsCompleted(status);
+        var extended = deep is { IsCompleted: true };
+        var completed = freeDone || extended;
+        var chips = new List<DnaChip>();
+        string? sentence = null;
+        if (completed && scores is not null)
+        {
+            var ranked = Rank(
+                (CareerTestCatalog.Realistic, scores.Realistic),
+                (CareerTestCatalog.Investigative, scores.Investigative),
+                (CareerTestCatalog.Artistic, scores.Artistic),
+                (CareerTestCatalog.Social, scores.Social),
+                (CareerTestCatalog.Enterprising, scores.Enterprising),
+                (CareerTestCatalog.Conventional, scores.Conventional));
+            foreach (var (code, _) in ranked.Take(3))
+            {
+                chips.Add(new DnaChip(code[..1], CareerCompassBuilder.TypeLabel(code)));
+            }
+
+            if (ranked.Count > 0)
+            {
+                sentence = DnaSummarySentences.Career(ranked[0].Code);
+            }
+        }
+
+        return new DnaCard(
             AssessmentKind.Career,
             "Test.Career.Title",
-            IsCompleted(careerStatus),
-            careerDeep,
-            AssessmentOutcomeLines.Career(
-                careerScores?.Realistic,
-                careerScores?.Investigative,
-                careerScores?.Artistic,
-                careerScores?.Social,
-                careerScores?.Enterprising,
-                careerScores?.Conventional)));
-        _items.Add(Build(
+            completed,
+            extended,
+            AssessmentTestCatalog.DetailHref(AssessmentKind.Career),
+            AssessmentTestCatalog.TryGet(AssessmentKind.Career)!.FreeStartHref,
+            [],
+            chips,
+            [],
+            sentence);
+    }
+
+    private static DnaCard BuildCulture(string? status, CulturePersonalityScoreSet? scores, DeepAnalysisState? deep)
+    {
+        var freeDone = IsCompleted(status);
+        var extended = deep is { IsCompleted: true };
+        var completed = freeDone || extended;
+        var poles = new List<DnaPole>();
+        string? sentence = null;
+        if (completed && scores is not null)
+        {
+            var ranked = Rank(
+                (CulturePersonalityCatalog.Autonomy, scores.Autonomy),
+                (CulturePersonalityCatalog.Informal, scores.Informal),
+                (CulturePersonalityCatalog.Collaboration, scores.Collaboration),
+                (CulturePersonalityCatalog.Flexibility, scores.Flexibility),
+                (CulturePersonalityCatalog.Innovation, scores.Innovation),
+                (CulturePersonalityCatalog.PeopleFirst, scores.PeopleFirst));
+            // Culture dimensions only (not Big Five personality facets)
+            foreach (var (code, pct) in ranked.Take(2))
+            {
+                var (low, high) = DnaSummarySentences.CulturePoles(code);
+                poles.Add(new DnaPole(low, high, Math.Clamp(pct, 0, 100)));
+            }
+
+            if (ranked.Count >= 2)
+            {
+                sentence = DnaSummarySentences.CultureCombined(
+                    ranked[0].Code, ranked[0].Percent,
+                    ranked[1].Code, ranked[1].Percent);
+            }
+            else if (ranked.Count == 1)
+            {
+                sentence = DnaSummarySentences.Culture(ranked[0].Code, ranked[0].Percent);
+            }
+        }
+
+        return new DnaCard(
             AssessmentKind.Culture,
             "Test.Culture.Title",
-            IsCompleted(cultureStatus),
-            cultureDeep,
-            AssessmentOutcomeLines.Culture(
-                cultureScores?.Autonomy,
-                cultureScores?.Informal,
-                cultureScores?.Collaboration,
-                cultureScores?.Flexibility,
-                cultureScores?.Innovation,
-                cultureScores?.PeopleFirst)));
-        _items.Add(Build(
+            completed,
+            extended,
+            AssessmentTestCatalog.DetailHref(AssessmentKind.Culture),
+            AssessmentTestCatalog.TryGet(AssessmentKind.Culture)!.FreeStartHref,
+            [],
+            [],
+            poles,
+            sentence);
+    }
+
+    private static DnaCard BuildValues(string? status, SchwartzValuesScoreSet? scores, DeepAnalysisState? deep)
+    {
+        var freeDone = IsCompleted(status);
+        var extended = deep is { IsCompleted: true };
+        var completed = freeDone || extended;
+        var bars = new List<DnaBar>();
+        string? sentence = null;
+        if (completed && scores is not null)
+        {
+            var ranked = Rank(
+                (SchwartzValuesCatalog.Autonomy, scores.Autonomy),
+                (SchwartzValuesCatalog.Connection, scores.Connection),
+                (SchwartzValuesCatalog.Achievement, scores.Achievement),
+                (SchwartzValuesCatalog.Stability, scores.Stability),
+                (SchwartzValuesCatalog.Impact, scores.Impact));
+            foreach (var (code, pct) in ranked.Take(3))
+            {
+                bars.Add(new DnaBar(DeepAnalysisQuestionHelp.DomainLabel(code), pct));
+            }
+
+            if (ranked.Count > 0)
+            {
+                sentence = DnaSummarySentences.Values(ranked[0].Code);
+            }
+        }
+
+        return new DnaCard(
             AssessmentKind.Values,
             "Test.Values.Title",
-            IsCompleted(valuesStatus),
-            valuesDeep,
-            AssessmentOutcomeLines.Values(
-                valuesScores?.Autonomy,
-                valuesScores?.Connection,
-                valuesScores?.Achievement,
-                valuesScores?.Stability,
-                valuesScores?.Impact)));
-        _completedCount = _items.Count(i => i.Completed);
+            completed,
+            extended,
+            AssessmentTestCatalog.DetailHref(AssessmentKind.Values),
+            AssessmentTestCatalog.TryGet(AssessmentKind.Values)!.FreeStartHref,
+            bars,
+            [],
+            [],
+            sentence);
     }
+
+    private static List<(string Code, int Percent)> Rank(params (string Code, int? Value)[] items)
+        => items
+            .Where(x => x.Value is not null)
+            .Select(x => (x.Code, Percent: x.Value!.Value))
+            .OrderByDescending(x => x.Percent)
+            .ThenBy(x => x.Code, StringComparer.Ordinal)
+            .ToList();
 
     private static bool IsCompleted(string? status)
         => string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase);
 
-    private static DnaItem Build(
-        AssessmentKind kind,
-        string titleKey,
-        bool freeDone,
-        DeepAnalysisState? deep,
-        string? outcome)
-    {
-        var deepDone = deep is { IsCompleted: true };
-        var completed = freeDone || deepDone;
-        var extended = deepDone;
-        return new DnaItem(
-            titleKey,
-            AssessmentTestCatalog.DetailHref(kind),
-            completed,
-            outcome,
-            extended ? "Test.Status.Extended" : "Test.Status.FreeDone",
-            extended ? "gold" : "success");
-    }
+    private static IEnumerable<string> StoryParagraphs(string story)
+        => story.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private void ToggleStory() => _storyExpanded = !_storyExpanded;
 
     private Task GoTests() => OnOpenTab.InvokeAsync(CandidateKompasTabs.Tests);
 
-    private sealed record DnaItem(
+    private sealed record DnaBar(string Label, int Percent);
+    private sealed record DnaChip(string Letter, string Label);
+    private sealed record DnaPole(string LowKey, string HighKey, int Percent);
+    private sealed record DnaCard(
+        AssessmentKind Kind,
         string TitleKey,
-        string DetailHref,
         bool Completed,
-        string? Outcome,
-        string StatusKey,
-        string StatusCss);
+        bool Extended,
+        string DetailHref,
+        string StartHref,
+        IReadOnlyList<DnaBar> Bars,
+        IReadOnlyList<DnaChip> Chips,
+        IReadOnlyList<DnaPole> Poles,
+        string? Sentence);
 }

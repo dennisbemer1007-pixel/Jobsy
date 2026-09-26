@@ -55,7 +55,8 @@ public class RegisterWizardUiTests
     public void Production_asset_query_is_cache_busted_and_commit_is_exposed()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
-        Assert.Contains("css/app.min.css?v=20260926-q-compact", app);
+        Assert.Contains("css/app.min.css?v=20260926-dna-landing", app);
+        Assert.DoesNotContain("css/app.min.css?v=20260926-q-compact", app);
         Assert.DoesNotContain("css/app.min.css?v=20260926-career-progress", app);
         Assert.DoesNotContain("css/app.min.css?v=20260925-tests-dna2", app);
         Assert.DoesNotContain("css/app.min.css?v=20260925-horizonai", app);

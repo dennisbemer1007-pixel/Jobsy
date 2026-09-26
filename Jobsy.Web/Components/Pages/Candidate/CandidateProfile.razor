@@ -1,51 +1,10 @@
 @page "/profiel"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
-@using Jobsy.Web.Localization
-@using Jobsy.Web.Models
-@inject CandidateProfileService Profiles
-@inject CultureState Culture
+@inject NavigationManager Navigation
 
-<PageTitle>@Culture["ProfileHub.Title"] · Lobsy</PageTitle>
-
-<div class="panel-page profile-hub profile-hub--gateway pb-28">
-    <header class="profile-hub__header profile-hub__header--gateway">
-        <div class="profile-hub__intro">
-            <h1>@Culture["ProfileHub.Title"]</h1>
-            <p class="login-lead">@Culture["ProfileHub.GatewayLead"]</p>
-        </div>
-        @if (_model is not null)
-        {
-            <div class="profile-hub__completeness" aria-label="@Culture.Format("ProfileHub.CompletenessAria", _model.ProfileCompletenessPercent)">
-                <span class="profile-hub__completeness-label">@Culture["ProfileHub.Completeness"]</span>
-                <strong>@_model.ProfileCompletenessPercent%</strong>
-                <div class="profile-hub__completeness-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@_model.ProfileCompletenessPercent">
-                    <span style="width: @_model.ProfileCompletenessPercent%"></span>
-                </div>
-            </div>
-        }
-    </header>
-
-    @if (_model is null)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else
-    {
-        <section class="profile-hub-gateway" aria-labelledby="profile-hub-kompas-title">
-            <a class="profile-hub-kompas" href="/candidate/profile">
-                <span class="profile-hub-kompas__eyebrow">@Culture["ProfileHub.KompasEyebrow"]</span>
-                <span class="profile-hub-kompas__title" id="profile-hub-kompas-title">@Culture["Kompas.Title"]</span>
-                <span class="profile-hub-kompas__lead">@Culture["ProfileHub.KompasLead"]</span>
-                <span class="profile-hub-kompas__cta">@Culture["ProfileHub.OpenKompas"]</span>
-            </a>
-        </section>
-    }
-</div>
-
+@* Legacy hub URL → Kompas (DNA tab). Keep route so old links keep working. *@
 @code {
-    private CandidateProfileHubModel? _model;
-
     protected override void OnInitialized()
-        => _model = Profiles.GetProfile();
+        => Navigation.NavigateTo("/candidate/profile", forceLoad: false, replace: true);
 }

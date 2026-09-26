@@ -19,7 +19,16 @@ public sealed record CandidateKompasDto(
     DeepAnalysisStateDto CultureDeep,
     DeepAnalysisStateDto ValuesDeep,
     IReadOnlyList<CandidateMatchedVacancyDto> TopMatches,
-    string InsightsStatus);
+    string InsightsStatus,
+    WhoAmIStorySummaryDto? WhoAmI = null,
+    int ProfileCompletenessPercent = 0);
+
+/// <summary>Read-only story snippet for Mijn DNA (never generated inside GET).</summary>
+public sealed record WhoAmIStorySummaryDto(
+    string? Story,
+    IReadOnlyList<string> Keywords,
+    DateTime? GeneratedAtUtc,
+    string Status);
 
 /// <summary>Profile fields needed by Kompas/Profile without a second profile GET.</summary>
 public sealed record MeProfileSummaryDto(
