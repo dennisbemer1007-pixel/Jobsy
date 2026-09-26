@@ -54,6 +54,12 @@ public class User
     /// <summary>Last successful login (local or external). Null = never logged in before.</summary>
     public DateTime? LastLoginAtUtc { get; set; }
 
+    /// <summary>
+    /// Incremented to invalidate all cookie principals (password change, logout-all, admin block).
+    /// Mirrored as a claim and checked in CookieAuthenticationEvents.OnValidatePrincipal.
+    /// </summary>
+    public int SessionVersion { get; set; }
+
     /// <summary>Pending account-unsubscribe email verification code (6 digits).</summary>
     public string? UnsubscribeVerificationCode { get; set; }
 

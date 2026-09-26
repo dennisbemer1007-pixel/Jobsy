@@ -56,7 +56,7 @@ public static class DependencyInjection
                 "Default local postgres connection is not allowed outside Development.");
         }
 
-        services.AddJobsyDataProtection(connectionString);
+        services.AddJobsyDataProtection(connectionString, isDev, configuration);
         services.AddMemoryCache();
         services.AddSingleton<ISecretProtector, SecretProtector>();
         services.AddSingleton<ICandidateInsightsQueue, CandidateInsightsQueue>();
@@ -236,9 +236,11 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<IEmailCatalogService, EmailCatalogService>();
         services.AddSingleton<WebPushVapidKeyProvider>();
+        services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<WebPushVapidKeyProvider>());
         services.Configure<Jobsy.Core.Options.WebPushOptions>(configuration.GetSection(Jobsy.Core.Options.WebPushOptions.SectionName));
         services.AddScoped<IWebPushSubscriptionService, WebPushSubscriptionService>();
         services.AddScoped<IPushNotificationService, WebPushNotificationService>();
+        services.AddScoped<IDeviceSessionService, DeviceSessionService>();
         services.AddScoped<PushNotificationServiceStub>();
         services.AddScoped<IIntegrationHealthService, IntegrationHealthStub>();
         services.AddScoped<IIntegrationCredentialService>(sp => new IntegrationCredentialService(

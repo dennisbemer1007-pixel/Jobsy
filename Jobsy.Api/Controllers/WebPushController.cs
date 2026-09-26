@@ -30,7 +30,14 @@ public sealed class WebPushController : ControllerBase
     [AllowAnonymous]
     [EnableRateLimiting("public-read")]
     public ActionResult<WebPushVapidPublicKeyDto> VapidPublicKey()
-        => Ok(new WebPushVapidPublicKeyDto(_vapid.PublicKey));
+    {
+        if (!_vapid.IsEnabled)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = "Web Push is not configured." });
+        }
+
+        return Ok(new WebPushVapidPublicKeyDto(_vapid.PublicKey));
+    }
 
     [HttpPost("subscribe")]
     [Authorize]
@@ -39,6 +46,11 @@ public sealed class WebPushController : ControllerBase
         [FromBody] WebPushSubscribeRequest request,
         CancellationToken cancellationToken)
     {
+        if (!_vapid.IsEnabled)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = "Web Push is not configured." });
+        }
+
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
         {
@@ -53,13 +65,20 @@ public sealed class WebPushController : ControllerBase
             return BadRequest(new { error = "Incomplete subscription." });
         }
 
+        Guid? deviceSessionId = null;
+        if (Guid.TryParse(User.FindFirst(JobsyClaimTypes.DeviceSessionId)?.Value, out var parsed))
+        {
+            deviceSessionId = parsed;
+        }
+
         await _subscriptions.UpsertAsync(
             user.Id,
             new WebPushSubscriptionInput(
                 request.Endpoint,
                 request.Keys.P256dh,
                 request.Keys.Auth,
-                Request.Headers.UserAgent.ToString()),
+                Request.Headers.UserAgent.ToString(),
+                deviceSessionId),
             cancellationToken);
 
         return NoContent();

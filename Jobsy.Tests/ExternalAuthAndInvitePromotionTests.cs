@@ -218,7 +218,12 @@ public class ExternalAuthAndInvitePromotionTests
         return new AuthController(
             db, config, credentials,
             new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance),
-            new StubHostEnvironment { EnvironmentName = Environments.Development });
+            new StubHostEnvironment { EnvironmentName = Environments.Development },
+            new DeviceSessionService(
+                db,
+                config,
+                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()),
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<DeviceSessionService>.Instance));
     }
 
     private sealed class StubHostEnvironment : IHostEnvironment

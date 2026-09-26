@@ -4,6 +4,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -28,6 +29,7 @@ public class WebPushNotificationServiceTests
 
         var vapid = new WebPushVapidKeyProvider(
             new TestOptionsMonitor(new Jobsy.Core.Options.WebPushOptions()),
+            new FakeHostEnvironment { EnvironmentName = Environments.Development },
             NullLogger<WebPushVapidKeyProvider>.Instance);
         var sut = new WebPushNotificationService(db, vapid, NullLogger<WebPushNotificationService>.Instance);
 
@@ -102,5 +104,14 @@ public class WebPushNotificationServiceTests
         public Jobsy.Core.Options.WebPushOptions CurrentValue { get; } = current;
         public Jobsy.Core.Options.WebPushOptions Get(string? name) => CurrentValue;
         public IDisposable? OnChange(Action<Jobsy.Core.Options.WebPushOptions, string?> listener) => null;
+    }
+
+    private sealed class FakeHostEnvironment : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = Environments.Development;
+        public string ApplicationName { get; set; } = "Jobsy.Tests";
+        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+        public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; }
+            = new Microsoft.Extensions.FileProviders.NullFileProvider();
     }
 }

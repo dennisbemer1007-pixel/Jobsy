@@ -8,6 +8,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager Navigation
 @inject FeedbackHost FeedbackHost
+@inject IJSRuntime Js
 @implements IDisposable
 
 <div class="auth-header">
@@ -48,13 +49,15 @@
                         <button type="submit"
                                 form="auth-logout"
                                 class="account-menu__link account-menu__link--logout"
-                                role="menuitem">
+                                role="menuitem"
+                                @onclick="PrepareLogoutAsync">
                             @Culture["Auth.Logout"]
                         </button>
                     </div>
                 }
             </div>
-            <form id="auth-logout" method="post" action="/account/logout" class="auth-logout-form auth-logout-form--chrome visually-hidden" aria-hidden="true">
+            <form id="auth-logout" method="post" action="/account/logout" class="auth-logout-form auth-logout-form--chrome visually-hidden" aria-hidden="true"
+                  @onsubmit="PrepareLogoutAsync">
                 @if (!string.IsNullOrEmpty(_antiforgeryFieldName) && !string.IsNullOrEmpty(_antiforgeryToken))
                 {
                     <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
@@ -116,6 +119,19 @@
         _open = false;
         FeedbackHost.RequestOpen();
         return Task.CompletedTask;
+    }
+
+    private async Task PrepareLogoutAsync()
+    {
+        _open = false;
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyPush.dropSubscription");
+        }
+        catch
+        {
+            // Best-effort; server still revokes linked subscriptions by device session.
+        }
     }
 
     private async Task OnFocusOut(FocusEventArgs _)

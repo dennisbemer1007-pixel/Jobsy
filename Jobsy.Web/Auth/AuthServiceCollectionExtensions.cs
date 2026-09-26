@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -73,6 +74,7 @@ public static class AuthServiceCollectionExtensions
                     StampLastActivity(context.HttpContext);
                     return Task.CompletedTask;
                 };
+                options.Events.OnValidatePrincipal = ValidatePrincipalSessionVersionAsync;
             });
 
         // Always register schemes so Integraties credentials can activate login without env vars.
@@ -273,8 +275,13 @@ public static class AuthServiceCollectionExtensions
 
             var email = form["email"].ToString().Trim();
             var password = form["password"].ToString();
+            var rememberDevice = string.Equals(
+                form["rememberDevice"].ToString(),
+                "true",
+                StringComparison.OrdinalIgnoreCase);
 
             ClaimsPrincipal? principal = null;
+            LocalApiLoginProfile? apiProfile = null;
             var allowDemoLogin = IsDemoLoginEnabled(http, configuration);
 
             if (allowDemoLogin && users.TryAuthenticate(email, password, out var user) && user is not null)
@@ -283,7 +290,11 @@ public static class AuthServiceCollectionExtensions
             }
             else
             {
-                principal = await TryLocalApiLoginAsync(configuration, email, password);
+                apiProfile = await TryLocalApiLoginProfileAsync(configuration, email, password, rememberDevice);
+                if (apiProfile is not null)
+                {
+                    principal = CreatePrincipalFromProfile(apiProfile, "local-registration");
+                }
             }
 
             if (principal is null)
@@ -298,6 +309,25 @@ public static class AuthServiceCollectionExtensions
                 || principal.HasClaim(ClaimTypes.Role, "Candidate"))
             {
                 returnUrl = AuthRedirects.ResolveCandidateReturnUrl(returnUrl, showHowTo);
+            }
+
+            if (principal.Identity is ClaimsIdentity identity)
+            {
+                if (apiProfile?.DeviceSessionId is Guid deviceId
+                    && !string.IsNullOrWhiteSpace(apiProfile.DeviceRefreshToken)
+                    && apiProfile.DeviceExpiresAtUtc is DateTime deviceExp)
+                {
+                    AuthPrincipalFactory.StampDeviceClaims(identity, deviceId, apiProfile.SessionVersion);
+                    DeviceSessionCookie.Set(http, apiProfile.DeviceRefreshToken, deviceExp);
+                }
+                else if (rememberDevice)
+                {
+                    await TryAttachProvisionedDeviceSessionAsync(http, configuration, identity, email);
+                }
+                else
+                {
+                    AuthPrincipalFactory.StampSessionVersion(identity, apiProfile?.SessionVersion ?? 0);
+                }
             }
 
             await http.SignInAsync(
@@ -344,6 +374,15 @@ public static class AuthServiceCollectionExtensions
                 || principal.HasClaim(ClaimTypes.Role, "Candidate"))
             {
                 returnUrl = AuthRedirects.ResolveCandidateReturnUrl(returnUrl, showHowTo);
+            }
+
+            var rememberDevice = string.Equals(
+                form["rememberDevice"].ToString(),
+                "true",
+                StringComparison.OrdinalIgnoreCase);
+            if (rememberDevice && principal.Identity is ClaimsIdentity demoIdentity)
+            {
+                await TryAttachProvisionedDeviceSessionAsync(http, configuration, demoIdentity, email);
             }
 
             await http.SignInAsync(
@@ -427,8 +466,22 @@ public static class AuthServiceCollectionExtensions
             }
 
             var reason = http.Request.Query["reason"].ToString();
+            var deviceToken = DeviceSessionCookie.Read(http);
+            var deviceSessionId = http.User.FindFirst(JobsyClaimTypes.DeviceSessionId)?.Value;
+
+            // Best-effort revoke + push unsubscribe before clearing cookies.
+            try
+            {
+                await RevokeCurrentDeviceOnLogoutAsync(http, deviceToken, deviceSessionId);
+            }
+            catch
+            {
+                // Always continue with local sign-out.
+            }
+
             await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             SessionActivityCookie.Clear(http);
+            DeviceSessionCookie.Clear(http);
 
             if (string.Equals(reason, "session-expired", StringComparison.OrdinalIgnoreCase))
             {
@@ -442,6 +495,89 @@ public static class AuthServiceCollectionExtensions
 
             return Results.Redirect("/");
         });
+
+        // In-scope exchange after Google/Entra (iOS standalone PWA cookie jar).
+        app.MapGet("/account/complete-login", async (HttpContext http, string? code, string? returnUrl) =>
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return Results.Redirect("/login?error=retry");
+            }
+
+            var config = http.RequestServices.GetRequiredService<IConfiguration>();
+            var factory = http.RequestServices.GetRequiredService<IHttpClientFactory>();
+            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(config["ApiBaseUrl"], "http://localhost:5200/");
+            var client = factory.CreateClient("JobsyAuthProvision");
+            client.BaseAddress = new Uri(apiBase);
+            client.Timeout = TimeSpan.FromSeconds(8);
+
+            using var response = await client.PostAsJsonAsync(
+                "api/auth/device-sessions/handoff/exchange",
+                new { code, userAgent = http.Request.Headers.UserAgent.ToString() });
+            if (!response.IsSuccessStatusCode)
+            {
+                return Results.Redirect("/login?error=retry");
+            }
+
+            var profile = await response.Content.ReadFromJsonAsync<HandoffExchangeProfile>();
+            if (profile is null || string.IsNullOrWhiteSpace(profile.Email))
+            {
+                return Results.Redirect("/login?error=retry");
+            }
+
+            var refreshProfile = new DeviceSessionRefreshMiddleware.RefreshProfile
+            {
+                Email = profile.Email,
+                FullName = profile.FullName,
+                Role = profile.Role,
+                CompanyId = profile.CompanyId,
+                CompanyIds = profile.CompanyIds,
+                ShowCandidateHowTo = profile.ShowCandidateHowTo,
+                HasCandidateApplications = profile.HasCandidateApplications,
+                HasSalesReferral = profile.HasSalesReferral,
+                SessionVersion = profile.SessionVersion,
+                SessionToken = profile.SessionToken,
+                DeviceSessionId = profile.DeviceSessionId ?? Guid.Empty,
+                RefreshToken = profile.RefreshToken,
+                ExpiresAtUtc = profile.DeviceExpiresAtUtc
+            };
+            var principal = AuthPrincipalFactory.FromDeviceRefresh(refreshProfile);
+            if (profile.DeviceSessionId is null && principal.Identity is ClaimsIdentity id)
+            {
+                foreach (var c in id.FindAll(JobsyClaimTypes.DeviceSessionId).ToList())
+                {
+                    id.RemoveClaim(c);
+                }
+
+                foreach (var c in id.FindAll(JobsyClaimTypes.HasDeviceSession).ToList())
+                {
+                    id.RemoveClaim(c);
+                }
+
+                AuthPrincipalFactory.StampSessionVersion(id, profile.SessionVersion);
+            }
+
+            await http.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                CreateSessionAuthProperties());
+            StampLastActivity(http);
+            if (!string.IsNullOrWhiteSpace(profile.RefreshToken) && profile.DeviceExpiresAtUtc is DateTime exp)
+            {
+                DeviceSessionCookie.Set(http, profile.RefreshToken, exp);
+            }
+
+            var dest = AuthRedirects.SafeLocalUrl(
+                profile.ReturnUrl ?? returnUrl ?? "/home");
+            if (profile.ShowCandidateHowTo
+                || string.Equals(profile.Role, "Candidate", StringComparison.OrdinalIgnoreCase))
+            {
+                dest = AuthRedirects.SafeLocalUrl(
+                    AuthRedirects.ResolveCandidateReturnUrl(dest, profile.ShowCandidateHowTo));
+            }
+
+            return Results.Redirect(dest);
+        }).AllowAnonymous().DisableAntiforgery();
 
         // Idle-timer beacon (no antiforgery): refreshes LastActivity for authenticated users only.
         // Also slides the local-session HMAC so API auth stays valid while the cookie is alive.
@@ -468,6 +604,9 @@ public static class AuthServiceCollectionExtensions
             return Results.Json(new { inactivityTimeoutMinutes = minutes });
         }).AllowAnonymous().DisableAntiforgery();
     }
+
+    public static AuthenticationProperties CreateSessionAuthPropertiesPublic()
+        => CreateSessionAuthProperties();
 
     private static AuthenticationProperties CreateSessionAuthProperties() =>
         new()
@@ -576,13 +715,25 @@ public static class AuthServiceCollectionExtensions
         string email,
         string password)
     {
+        var profile = await TryLocalApiLoginProfileAsync(configuration, email, password, rememberDevice: false);
+        return profile is null ? null : CreatePrincipalFromProfile(profile, "local-registration");
+    }
+
+    private static async Task<LocalApiLoginProfile?> TryLocalApiLoginProfileAsync(
+        IConfiguration configuration,
+        string email,
+        string password,
+        bool rememberDevice)
+    {
         try
         {
             var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
                 configuration["ApiBaseUrl"],
                 "http://localhost:5200/");
             using var client = new HttpClient { BaseAddress = new Uri(apiBase), Timeout = TimeSpan.FromSeconds(8) };
-            using var response = await client.PostAsJsonAsync("api/auth/local-login", new { email, password });
+            using var response = await client.PostAsJsonAsync(
+                "api/auth/local-login",
+                new { email, password, rememberDevice });
             if (!response.IsSuccessStatusCode)
             {
                 return null;
@@ -594,12 +745,234 @@ public static class AuthServiceCollectionExtensions
                 return null;
             }
 
-            return CreatePrincipalFromProfile(profile, "local-registration");
+            return profile;
         }
         catch
         {
             return null;
         }
+    }
+
+    private static async Task TryAttachProvisionedDeviceSessionAsync(
+        HttpContext http,
+        IConfiguration configuration,
+        ClaimsIdentity identity,
+        string email)
+    {
+        try
+        {
+            var secret = configuration["JobsyAuth:ExternalProvisionSecret"];
+            if (string.IsNullOrWhiteSpace(secret))
+            {
+                return;
+            }
+
+            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
+                configuration["ApiBaseUrl"],
+                "http://localhost:5200/");
+            var factory = http.RequestServices.GetRequiredService<IHttpClientFactory>();
+            var client = factory.CreateClient("JobsyAuthProvision");
+            client.BaseAddress = new Uri(apiBase);
+            client.Timeout = TimeSpan.FromSeconds(8);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/device-sessions/for-login")
+            {
+                Content = JsonContent.Create(new
+                {
+                    email,
+                    rememberDevice = true,
+                    userAgent = http.Request.Headers.UserAgent.ToString()
+                })
+            };
+            request.Headers.TryAddWithoutValidation("X-Jobsy-Provision-Secret", secret);
+            using var response = await client.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                return;
+            }
+
+            var created = await response.Content.ReadFromJsonAsync<ProvisionedDeviceSession>();
+            if (created is null || string.IsNullOrWhiteSpace(created.RefreshToken))
+            {
+                return;
+            }
+
+            AuthPrincipalFactory.StampDeviceClaims(identity, created.DeviceSessionId, created.SessionVersion);
+            DeviceSessionCookie.Set(http, created.RefreshToken, created.ExpiresAtUtc);
+        }
+        catch
+        {
+            // Device remember is best-effort for demo path.
+        }
+    }
+
+    private static async Task RevokeCurrentDeviceOnLogoutAsync(
+        HttpContext http,
+        string? deviceToken,
+        string? deviceSessionId)
+    {
+        var config = http.RequestServices.GetRequiredService<IConfiguration>();
+        var factory = http.RequestServices.GetRequiredService<IHttpClientFactory>();
+        var apiBase = JobsyPublicUrl.NormalizeBaseUrl(config["ApiBaseUrl"], "http://localhost:5200/");
+        var client = factory.CreateClient("JobsyAuthProvision");
+        client.BaseAddress = new Uri(apiBase);
+        client.Timeout = TimeSpan.FromSeconds(5);
+
+        // Forward local session so the API can authorize the revoke.
+        var localSession = http.User.FindFirst(JobsyClaimTypes.LocalSession)?.Value;
+        var email = http.User.FindFirst(ClaimTypes.Email)?.Value
+                    ?? http.User.FindFirst("email")?.Value;
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Email", email);
+        }
+
+        var role = http.User.FindFirst(ClaimTypes.Role)?.Value;
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Role", role);
+        }
+
+        var devSecret = config["JobsyAuth:DevelopmentAuthSecret"];
+        if (!string.IsNullOrWhiteSpace(devSecret))
+        {
+            client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Dev-Secret", devSecret);
+        }
+
+        if (!string.IsNullOrWhiteSpace(localSession))
+        {
+            client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Local-Session", localSession);
+        }
+
+        if (Guid.TryParse(deviceSessionId, out var id))
+        {
+            await client.DeleteAsync($"api/auth/device-sessions/{id}");
+        }
+
+        // Also ask push unsubscribe for this browser endpoint when possible — handled client-side too.
+        _ = deviceToken;
+    }
+
+    private static async Task ValidatePrincipalSessionVersionAsync(CookieValidatePrincipalContext context)
+    {
+        var user = context.Principal;
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        var claimVersionText = user.FindFirst(JobsyClaimTypes.SessionVersion)?.Value;
+        if (!int.TryParse(claimVersionText, out var claimVersion))
+        {
+            // Legacy cookies without session_version stay valid until next login.
+            return;
+        }
+
+        var email = user.FindFirst(ClaimTypes.Email)?.Value
+                    ?? user.FindFirst("email")?.Value;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return;
+        }
+
+        var cache = context.HttpContext.RequestServices.GetRequiredService<IMemoryCache>();
+        var cacheKey = $"session-validity:{email.Trim().ToLowerInvariant()}";
+        if (!cache.TryGetValue(cacheKey, out SessionValidityCacheEntry? entry) || entry is null)
+        {
+            entry = await FetchSessionValidityAsync(context.HttpContext, email);
+            if (entry is not null)
+            {
+                cache.Set(cacheKey, entry, TimeSpan.FromSeconds(45));
+            }
+        }
+
+        if (entry is null)
+        {
+            return;
+        }
+
+        if (claimVersion < entry.SessionVersion || claimVersion < entry.MinimumSessionVersion)
+        {
+            context.RejectPrincipal();
+            await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            DeviceSessionCookie.Clear(context.HttpContext);
+            SessionActivityCookie.Clear(context.HttpContext);
+        }
+    }
+
+    private static async Task<SessionValidityCacheEntry?> FetchSessionValidityAsync(HttpContext http, string email)
+    {
+        try
+        {
+            var config = http.RequestServices.GetRequiredService<IConfiguration>();
+            var factory = http.RequestServices.GetRequiredService<IHttpClientFactory>();
+            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(config["ApiBaseUrl"], "http://localhost:5200/");
+            var client = factory.CreateClient("JobsyAuthProvision");
+            client.BaseAddress = new Uri(apiBase);
+            client.Timeout = TimeSpan.FromSeconds(3);
+            client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Email", email);
+            var role = http.User.FindFirst(ClaimTypes.Role)?.Value;
+            if (!string.IsNullOrWhiteSpace(role))
+            {
+                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Role", role);
+            }
+
+            var localSession = http.User.FindFirst(JobsyClaimTypes.LocalSession)?.Value;
+            if (!string.IsNullOrWhiteSpace(localSession))
+            {
+                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Local-Session", localSession);
+            }
+
+            var devSecret = config["JobsyAuth:DevelopmentAuthSecret"];
+            if (!string.IsNullOrWhiteSpace(devSecret))
+            {
+                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Jobsy-Dev-Secret", devSecret);
+            }
+
+            using var response = await client.GetAsync("api/auth/device-sessions/validity");
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var dto = await response.Content.ReadFromJsonAsync<SessionValidityCacheEntry>();
+            return dto;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private sealed class SessionValidityCacheEntry
+    {
+        public int SessionVersion { get; set; }
+        public int MinimumSessionVersion { get; set; }
+    }
+
+    private sealed class ProvisionedDeviceSession
+    {
+        public Guid DeviceSessionId { get; set; }
+        public string RefreshToken { get; set; } = "";
+        public DateTime ExpiresAtUtc { get; set; }
+        public int SessionVersion { get; set; }
+    }
+
+    private sealed class HandoffExchangeProfile
+    {
+        public string Email { get; set; } = "";
+        public string FullName { get; set; } = "";
+        public string Role { get; set; } = "Candidate";
+        public Guid? CompanyId { get; set; }
+        public List<Guid>? CompanyIds { get; set; }
+        public bool ShowCandidateHowTo { get; set; }
+        public bool HasCandidateApplications { get; set; }
+        public bool HasSalesReferral { get; set; }
+        public int SessionVersion { get; set; }
+        public string? SessionToken { get; set; }
+        public string? ReturnUrl { get; set; }
+        public Guid? DeviceSessionId { get; set; }
+        public string? RefreshToken { get; set; }
+        public DateTime? DeviceExpiresAtUtc { get; set; }
     }
 
     private static bool IsEmailUnverified(ClaimsPrincipal? principal)
@@ -674,7 +1047,10 @@ public static class AuthServiceCollectionExtensions
                     fullName,
                     provider,
                     providerSubject,
-                    referralCode
+                    referralCode,
+                    rememberDevice = true,
+                    returnUrl = properties?.RedirectUri,
+                    userAgent = http.Request.Headers.UserAgent.ToString()
                 })
             };
             if (!string.IsNullOrWhiteSpace(secret))
@@ -698,7 +1074,23 @@ public static class AuthServiceCollectionExtensions
 
             ApplyProfileClaims(identity, profile, "external");
 
-            if (properties is not null)
+            if (properties is not null && !string.IsNullOrWhiteSpace(profile.HandoffCode))
+            {
+                // Finish inside the PWA scope via one-time code (iOS standalone cookie jar).
+                var returnDest = properties.RedirectUri ?? "/home";
+                var role = NormalizeRole(profile.Role);
+                if (profile.ShowCandidateHowTo || role == "Candidate")
+                {
+                    returnDest = AuthRedirects.ResolveCandidateReturnUrl(
+                        returnDest,
+                        profile.ShowCandidateHowTo);
+                }
+
+                properties.RedirectUri =
+                    $"/account/complete-login?code={Uri.EscapeDataString(profile.HandoffCode)}" +
+                    $"&returnUrl={Uri.EscapeDataString(AuthRedirects.SafeLocalUrl(returnDest))}";
+            }
+            else if (properties is not null)
             {
                 var role = NormalizeRole(profile.Role);
                 if (profile.ShowCandidateHowTo || role == "Candidate")
@@ -788,6 +1180,8 @@ public static class AuthServiceCollectionExtensions
             identity.AddClaim(new Claim(JobsyClaimTypes.LocalSession, profile.SessionToken));
         }
 
+        AuthPrincipalFactory.StampSessionVersion(identity, profile.SessionVersion);
+
         if (profile.ShowCandidateHowTo)
         {
             identity.AddClaim(new Claim("show_candidate_how_to", "1"));
@@ -839,6 +1233,11 @@ public static class AuthServiceCollectionExtensions
         public bool HasSalesReferral { get; set; }
         public bool IsNewUser { get; set; }
         public string? SessionToken { get; set; }
+        public int SessionVersion { get; set; }
+        public Guid? DeviceSessionId { get; set; }
+        public string? DeviceRefreshToken { get; set; }
+        public DateTime? DeviceExpiresAtUtc { get; set; }
+        public string? HandoffCode { get; set; }
     }
 
     private static string NormalizeRole(string role) => role.Trim().ToLowerInvariant() switch

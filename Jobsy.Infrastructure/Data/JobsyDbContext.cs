@@ -53,6 +53,8 @@ public class JobsyDbContext : DbContext
     public DbSet<ApplicationUploadedCv> ApplicationUploadedCvs => Set<ApplicationUploadedCv>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
     public DbSet<WebPushSubscription> WebPushSubscriptions => Set<WebPushSubscription>();
+    public DbSet<UserDeviceSession> UserDeviceSessions => Set<UserDeviceSession>();
+    public DbSet<DeviceLoginHandoff> DeviceLoginHandoffs => Set<DeviceLoginHandoff>();
     public DbSet<CandidateActionToken> CandidateActionTokens => Set<CandidateActionToken>();
     public DbSet<MinimumWageRate> MinimumWageRates => Set<MinimumWageRate>();
     public DbSet<VacancyClick> VacancyClicks => Set<VacancyClick>();
@@ -833,6 +835,45 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.UserAgent).HasMaxLength(512);
             entity.HasIndex(e => e.Endpoint).IsUnique();
             entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.DeviceSessionId);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.DeviceSession)
+                .WithMany()
+                .HasForeignKey(e => e.DeviceSessionId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<UserDeviceSession>(entity =>
+        {
+            entity.ToTable("UserDeviceSessions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.RefreshTokenHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.PreviousRefreshTokenHash).HasMaxLength(64);
+            entity.Property(e => e.RevokedReason).HasMaxLength(64);
+            entity.Property(e => e.UserAgent).HasMaxLength(512);
+            entity.Property(e => e.DeviceName).HasMaxLength(128);
+            entity.HasIndex(e => e.RefreshTokenHash);
+            entity.HasIndex(e => e.PreviousRefreshTokenHash);
+            entity.HasIndex(e => e.FamilyId);
+            entity.HasIndex(e => new { e.UserId, e.RevokedAtUtc });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DeviceLoginHandoff>(entity =>
+        {
+            entity.ToTable("DeviceLoginHandoffs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CodeHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.ReturnUrl).HasMaxLength(2048);
+            entity.Property(e => e.UserAgent).HasMaxLength(512);
+            entity.HasIndex(e => e.CodeHash).IsUnique();
+            entity.HasIndex(e => e.ExpiresAtUtc);
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

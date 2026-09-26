@@ -18,7 +18,8 @@ public sealed record PlatformFeatureSnapshot(
     int InactiveCompanyDays = 120,
     int SessionInactivityTimeoutMinutes = 30,
     /// <summary>Inclusive last day publish is free; null = promo off.</summary>
-    DateOnly? FreePublishUntil = null);
+    DateOnly? FreePublishUntil = null,
+    int MinimumSessionVersion = 0);
 
 public sealed record PlatformFeatureUpdate(
     bool VacancyContentModerationEnabled,
@@ -33,4 +34,5 @@ public sealed record PlatformFeatureUpdate(
     /// <see cref="FreePublishUntil"/> is null, the existing value is preserved so partial
     /// platform-feature updates do not silently disable the launch promo.
     /// </summary>
-    bool ClearFreePublishUntil = false);
+    bool ClearFreePublishUntil = false,
+    int? MinimumSessionVersion = null);

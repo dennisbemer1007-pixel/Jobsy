@@ -54,6 +54,20 @@
             return;
         }
 
+        // Candidates with a remembered device skip the client idle logout.
+        var hasDevice = state.User.HasClaim(c =>
+            c.Type == Jobsy.Core.Authorization.JobsyClaimTypes.HasDeviceSession && c.Value == "1");
+        var isEmployerOrAdmin = state.User.IsInRole("Admin")
+            || state.User.IsInRole("BranchManager")
+            || state.User.IsInRole("RegionalManager")
+            || state.User.IsInRole("EnterpriseManager")
+            || state.User.IsInRole("Intermediary")
+            || state.User.IsInRole("SalesManager");
+        if (hasDevice && !isEmployerOrAdmin)
+        {
+            return;
+        }
+
         var minutes = await TimeoutProvider.GetInactivityTimeoutMinutesAsync();
         minutes = SessionSecurityRules.ClampTimeoutMinutes(minutes);
         var apiBase = Configuration["ApiBaseUrl"] ?? "http://localhost:5200/";

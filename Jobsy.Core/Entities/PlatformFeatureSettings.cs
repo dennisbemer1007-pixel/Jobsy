@@ -29,6 +29,12 @@ public class PlatformFeatureSettings
     public int SessionInactivityTimeoutMinutes { get; set; } = 30;
 
     /// <summary>
+    /// Global floor for cookie <c>session_version</c>. Raise on a release to force every
+    /// user to sign in again. Default 0 (no forced re-login).
+    /// </summary>
+    public int MinimumSessionVersion { get; set; }
+
+    /// <summary>
     /// Inclusive last calendar day (UTC date) on which publishing a vacancy costs 0 tokens.
     /// Highlight and PushBom stay paid. Null = promo off (normal publish rates).
     /// Seeded default: 2026-11-18.

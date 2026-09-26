@@ -114,6 +114,7 @@ public sealed class RegisteredUserProductionAuthFactory : WebApplicationFactory<
         // Production: @jobsy.local gate + local session requirement kick in.
         builder.UseEnvironment("Production");
         builder.UseSetting("JobsyAuth:AllowDevelopmentAuth", "true");
+        builder.UseSetting("JobsyAuth:AllowEphemeralDataProtection", "true");
         builder.UseSetting("JobsyAuth:DevelopmentAuthSecret", DevSecret);
         builder.UseSetting("VerificationCodes:Pepper", "test-pepper-registered-user-prod-auth-32chars");
         builder.UseSetting("Seed:Enabled", "false");

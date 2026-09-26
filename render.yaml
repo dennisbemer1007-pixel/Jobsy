@@ -92,6 +92,13 @@ projects:
                 sync: false
               - key: Mail__FromAddress
                 sync: false
+              # VAPID keys for Web Push (generate once; do not rotate casually — see PR / docs).
+              - key: WebPush__Subject
+                sync: false
+              - key: WebPush__PublicKey
+                sync: false
+              - key: WebPush__PrivateKey
+                sync: false
 
           - type: web
             name: jobsy-web
@@ -134,6 +141,12 @@ projects:
                 fromDatabase:
                   name: jobsy-db
                   property: connectionString
+              - key: WebPush__Subject
+                sync: false
+              - key: WebPush__PublicKey
+                sync: false
+              - key: WebPush__PrivateKey
+                sync: false
 
       - name: Acceptatie
         databases:
@@ -201,6 +214,12 @@ projects:
                 sync: false
               - key: Mail__FromAddress
                 sync: false
+              - key: WebPush__Subject
+                sync: false
+              - key: WebPush__PublicKey
+                sync: false
+              - key: WebPush__PrivateKey
+                sync: false
 
           - type: web
             name: lobsy-acc-web
@@ -243,3 +262,9 @@ projects:
                 fromDatabase:
                   name: lobsy-acc-db
                   property: connectionString
+              - key: WebPush__Subject
+                sync: false
+              - key: WebPush__PublicKey
+                sync: false
+              - key: WebPush__PrivateKey
+                sync: false

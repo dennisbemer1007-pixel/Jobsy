@@ -99,6 +99,28 @@ window.lobsyPush = (function () {
         return { ok: true, endpoint: endpoint };
     }
 
+    /** After login / silent refresh: re-post an existing browser subscription to the API. */
+    async function getExistingSubscription() {
+        if (!supported()) {
+            return { ok: false, reason: "unsupported" };
+        }
+        var reg = await navigator.serviceWorker.getRegistration();
+        if (!reg) {
+            return { ok: false, reason: "no-registration" };
+        }
+        var sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+            return { ok: false, reason: "none" };
+        }
+        var json = sub.toJSON();
+        return {
+            ok: true,
+            endpoint: json.endpoint,
+            p256dh: json.keys && json.keys.p256dh,
+            auth: json.keys && json.keys.auth
+        };
+    }
+
     return {
         supported: supported,
         permission: permission,
@@ -106,6 +128,7 @@ window.lobsyPush = (function () {
         dismissPrompt: dismissPrompt,
         createSubscription: createSubscription,
         dropSubscription: dropSubscription,
+        getExistingSubscription: getExistingSubscription,
         ensureRegistration: getRegistration
     };
 })();

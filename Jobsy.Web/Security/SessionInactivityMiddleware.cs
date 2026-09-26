@@ -36,6 +36,14 @@ public sealed class SessionInactivityMiddleware
             return;
         }
 
+        // Candidates with a remembered device session are not subject to idle logout.
+        if (IsIdleExempt(user))
+        {
+            SessionActivityCookie.Stamp(context, DateTimeOffset.UtcNow);
+            await _next(context);
+            return;
+        }
+
         var timeoutMinutes = await timeoutProvider.GetInactivityTimeoutMinutesAsync(context.RequestAborted);
         var now = DateTimeOffset.UtcNow;
         var hasActivityCookie = context.Request.Cookies.ContainsKey(LastActivityCookieName);
@@ -66,6 +74,27 @@ public sealed class SessionInactivityMiddleware
 
         SessionActivityCookie.Stamp(context, now);
         await _next(context);
+    }
+
+    private static bool IsIdleExempt(System.Security.Claims.ClaimsPrincipal user)
+    {
+        if (!DeviceSessionCookie.HasDeviceSessionClaim(user))
+        {
+            return false;
+        }
+
+        // Idle logout stays for Employer and Admin roles even with a device session.
+        if (user.IsInRole("Admin")
+            || user.IsInRole("BranchManager")
+            || user.IsInRole("RegionalManager")
+            || user.IsInRole("EnterpriseManager")
+            || user.IsInRole("Intermediary")
+            || user.IsInRole("SalesManager"))
+        {
+            return false;
+        }
+
+        return user.IsInRole("Candidate") || user.IsInRole("Ambassadeur");
     }
 
     private static bool ShouldSkip(HttpContext context)

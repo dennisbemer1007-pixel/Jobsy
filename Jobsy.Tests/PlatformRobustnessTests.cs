@@ -370,7 +370,12 @@ public class PlatformRobustnessTests
             config,
             new IntegrationCredentialService(db, new PassthroughSecretProtector()),
             new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance),
-            new TestHostEnvironment());
+            new TestHostEnvironment(),
+            new DeviceSessionService(
+                db,
+                config,
+                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()),
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<DeviceSessionService>.Instance));
     }
 
     private static ControllerContext WithProvisionSecret(string secret)

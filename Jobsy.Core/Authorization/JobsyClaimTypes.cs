@@ -19,4 +19,13 @@ public static class JobsyClaimTypes
     /// <c>X-Jobsy-Local-Session</c> so Production DevelopmentAuth can authorize non-demo emails.
     /// </summary>
     public const string LocalSession = "jobsy_local_session";
+
+    /// <summary>Current <see cref="Entities.User.SessionVersion"/> stamped into the auth cookie.</summary>
+    public const string SessionVersion = "session_version";
+
+    /// <summary>Active <see cref="Entities.UserDeviceSession"/> id when "remember this device" is on.</summary>
+    public const string DeviceSessionId = "device_session_id";
+
+    /// <summary>Set to "1" when a long-lived device cookie backs this interactive session.</summary>
+    public const string HasDeviceSession = "has_device_session";
 }

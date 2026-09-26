@@ -73,7 +73,7 @@ public record TakeoverDecisionResponse(
 
 public record RejectTakeoverRequest(string? Note = null);
 
-public record LocalLoginRequest(string Email, string Password);
+public record LocalLoginRequest(string Email, string Password, bool RememberDevice = true);
 
 public record LocalLoginResponse(
     string Email,
@@ -85,7 +85,11 @@ public record LocalLoginResponse(
     bool HasCandidateApplications = false,
     bool HasSalesReferral = false,
     /// <summary>HMAC session proof for Production DevelopmentAuth (non-demo emails).</summary>
-    string? SessionToken = null);
+    string? SessionToken = null,
+    int SessionVersion = 0,
+    Guid? DeviceSessionId = null,
+    string? DeviceRefreshToken = null,
+    DateTime? DeviceExpiresAtUtc = null);
 
 public record EnsureExternalUserRequest(
     string Email,
@@ -95,7 +99,10 @@ public record EnsureExternalUserRequest(
     /// <summary>Stable subject (Entra OID / OIDC sub).</summary>
     string? ProviderSubject = null,
     /// <summary>Optional Ambassadeur tracking code (AM-…) for new candidates.</summary>
-    string? ReferralCode = null);
+    string? ReferralCode = null,
+    bool RememberDevice = true,
+    string? ReturnUrl = null,
+    string? UserAgent = null);
 
 public record EnsureExternalUserResponse(
     string Email,
@@ -107,7 +114,10 @@ public record EnsureExternalUserResponse(
     bool ShowCandidateHowTo,
     bool HasCandidateApplications,
     bool HasSalesReferral = false,
-    string? SessionToken = null);
+    string? SessionToken = null,
+    int SessionVersion = 0,
+    /// <summary>One-time code for in-scope PWA cookie exchange (external login).</summary>
+    string? HandoffCode = null);
 
 public record ExternalProvidersStatusResponse(bool Entra, bool Google);
 

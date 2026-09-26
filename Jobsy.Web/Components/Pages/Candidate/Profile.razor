@@ -98,6 +98,55 @@
                                 <p class="profile-address__hint">@Culture["Profile.ContactHint"]</p>
                             </fieldset>
 
+                            <section class="profile-devices" aria-labelledby="profile-devices-title">
+                                <h3 id="profile-devices-title">@Culture["Profile.Devices.Title"]</h3>
+                                <p class="login-lead">@Culture["Profile.Devices.Lead"]</p>
+                                @if (_devicesLoading)
+                                {
+                                    <p class="state-message">@Culture["Common.Loading"]</p>
+                                }
+                                else if (_devices.Count == 0)
+                                {
+                                    <p class="state-message">@Culture["Profile.Devices.Empty"]</p>
+                                }
+                                else
+                                {
+                                    <ul class="profile-devices__list">
+                                        @foreach (var device in _devices)
+                                        {
+                                            <li class="profile-devices__item">
+                                                <div>
+                                                    <strong>@device.DeviceName</strong>
+                                                    @if (device.IsCurrent)
+                                                    {
+                                                        <span class="profile-devices__current"> · @Culture["Profile.Devices.Current"]</span>
+                                                    }
+                                                    <p class="profile-address__hint">
+                                                        @Culture["Profile.Devices.LastUsed"]: @device.LastUsedAtUtc.ToLocalTime().ToString("g")
+                                                    </p>
+                                                </div>
+                                                <button type="button"
+                                                        class="engagement-btn"
+                                                        disabled="@_devicesBusy"
+                                                        @onclick="() => RevokeDeviceAsync(device.Id)">
+                                                    @Culture["Profile.Devices.Logout"]
+                                                </button>
+                                            </li>
+                                        }
+                                    </ul>
+                                    <button type="button"
+                                            class="engagement-btn"
+                                            disabled="@_devicesBusy"
+                                            @onclick="RevokeAllDevicesAsync">
+                                        @Culture["Profile.Devices.LogoutAll"]
+                                    </button>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(_devicesMessage))
+                                {
+                                    <p class="state-message" aria-live="polite">@_devicesMessage</p>
+                                }
+                            </section>
+
                             <label>
                                 @Culture["Profile.DateOfBirth"]
                                 <input type="date" @bind="_dobInput" />
@@ -557,6 +606,10 @@
     private bool _saving;
     private bool _pdfBusy;
     private bool _openForWork;
+    private bool _devicesLoading;
+    private bool _devicesBusy;
+    private string? _devicesMessage;
+    private List<JobsyApiClient.DeviceSessionItem> _devices = [];
     private string _firstName = "";
     private string _lastName = "";
     private string _phoneNumber = "";
@@ -640,6 +693,7 @@
             _authenticatorEnabled = profile.AuthenticatorEnabled;
             _homeLat = profile.HomeLatitude;
             _homeLng = profile.HomeLongitude;
+            _ = LoadDevicesAsync();
             _insightsStatus = kompas?.InsightsStatus ?? "Ready";
             if (kompas?.TopMatches is { Count: > 0 } matches)
             {
@@ -1439,6 +1493,63 @@
         }
 
         return raw;
+    }
+
+    private async Task LoadDevicesAsync()
+    {
+        _devicesLoading = true;
+        try
+        {
+            var rows = await Api.GetDeviceSessionsAsync();
+            _devices = rows.ToList();
+        }
+        catch
+        {
+            _devices = [];
+        }
+        finally
+        {
+            _devicesLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task RevokeDeviceAsync(Guid id)
+    {
+        _devicesBusy = true;
+        _devicesMessage = null;
+        try
+        {
+            await Api.RevokeDeviceSessionAsync(id);
+            _devicesMessage = Culture["Profile.Devices.Done"];
+            await LoadDevicesAsync();
+        }
+        catch (Exception ex)
+        {
+            _devicesMessage = ex.Message;
+        }
+        finally
+        {
+            _devicesBusy = false;
+        }
+    }
+
+    private async Task RevokeAllDevicesAsync()
+    {
+        _devicesBusy = true;
+        _devicesMessage = null;
+        try
+        {
+            await Api.RevokeAllDeviceSessionsAsync();
+            _devicesMessage = Culture["Profile.Devices.Done"];
+            // Signing out everywhere invalidates this cookie too — send user to login.
+            Navigation.NavigateTo("/account/logout", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _devicesMessage = ex.Message;
+            _devicesBusy = false;
+        }
     }
 
     public ValueTask DisposeAsync()

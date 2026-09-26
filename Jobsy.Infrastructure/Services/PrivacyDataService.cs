@@ -636,6 +636,26 @@ public sealed class PrivacyDataService : IPrivacyDataService
         string? reasonOther,
         CancellationToken cancellationToken)
     {
+        var now = DateTime.UtcNow;
+        var deviceSessions = await _db.UserDeviceSessions
+            .Where(s => s.UserId == user.Id && s.RevokedAtUtc == null)
+            .ToListAsync(cancellationToken);
+        foreach (var session in deviceSessions)
+        {
+            session.RevokedAtUtc = now;
+            session.RevokedReason = "account-deleted";
+        }
+
+        var pushRows = await _db.WebPushSubscriptions
+            .Where(s => s.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (pushRows.Count > 0)
+        {
+            _db.WebPushSubscriptions.RemoveRange(pushRows);
+        }
+
+        user.SessionVersion++;
+
         // Ensure memberships are loaded for removal.
         if (!_db.Entry(user).Collection(u => u.CompanyMemberships).IsLoaded)
         {

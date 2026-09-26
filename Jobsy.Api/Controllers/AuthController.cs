@@ -24,19 +24,22 @@ public class AuthController : ControllerBase
     private readonly IIntegrationCredentialService _credentials;
     private readonly IAmbassadeurAttributionService _ambassadeurAttribution;
     private readonly IHostEnvironment _environment;
+    private readonly IDeviceSessionService _deviceSessions;
 
     public AuthController(
         JobsyDbContext db,
         IConfiguration configuration,
         IIntegrationCredentialService credentials,
         IAmbassadeurAttributionService ambassadeurAttribution,
-        IHostEnvironment environment)
+        IHostEnvironment environment,
+        IDeviceSessionService deviceSessions)
     {
         _db = db;
         _configuration = configuration;
         _credentials = credentials;
         _ambassadeurAttribution = ambassadeurAttribution;
         _environment = environment;
+        _deviceSessions = deviceSessions;
     }
 
     /// <summary>
@@ -82,6 +85,23 @@ public class AuthController : ControllerBase
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
         var sessionToken = CreateLocalSessionToken(user.Email, user.Id);
+        Guid? deviceSessionId = null;
+        string? deviceRefresh = null;
+        DateTime? deviceExpires = null;
+        if (request.RememberDevice)
+        {
+            var device = await _deviceSessions.CreateAsync(
+                user.Id,
+                Request.Headers.UserAgent.ToString(),
+                cancellationToken);
+            deviceSessionId = device.DeviceSessionId;
+            deviceRefresh = device.RefreshToken;
+            deviceExpires = device.ExpiresAtUtc;
+        }
+
+        user.LastLoginAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+
         return Ok(new LocalLoginResponse(
             user.Email,
             user.FullName,
@@ -91,7 +111,11 @@ public class AuthController : ControllerBase
             flags.ShowCandidateHowTo,
             flags.HasCandidateApplications,
             flags.HasSalesReferral,
-            sessionToken));
+            sessionToken,
+            user.SessionVersion,
+            deviceSessionId,
+            deviceRefresh,
+            deviceExpires));
     }
 
     /// <summary>
@@ -210,6 +234,19 @@ public class AuthController : ControllerBase
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
         var sessionToken = CreateLocalSessionToken(user.Email, user.Id);
+        string? handoffCode = null;
+        // Always issue a handoff for external login so iOS standalone can finish in-scope.
+        var handoff = await _deviceSessions.CreateHandoffAsync(
+            user.Id,
+            request.RememberDevice,
+            request.ReturnUrl,
+            request.UserAgent ?? Request.Headers.UserAgent.ToString(),
+            cancellationToken);
+        handoffCode = handoff.Code;
+
+        user.LastLoginAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+
         return Ok(new EnsureExternalUserResponse(
             user.Email,
             user.FullName,
@@ -220,7 +257,9 @@ public class AuthController : ControllerBase
             flags.ShowCandidateHowTo,
             flags.HasCandidateApplications,
             flags.HasSalesReferral,
-            sessionToken));
+            sessionToken,
+            user.SessionVersion,
+            handoffCode));
     }
 
     private string? CreateLocalSessionToken(string email, Guid userId)

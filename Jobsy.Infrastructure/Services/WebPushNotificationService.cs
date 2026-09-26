@@ -82,6 +82,13 @@ public sealed class WebPushNotificationService : IPushNotificationService
             return;
         }
 
+        if (!_vapid.IsEnabled)
+        {
+            _logger.LogWarning("Web Push send skipped; VAPID keys are not configured.");
+            await _db.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
         var (subject, publicKey, privateKey) = _vapid.GetKeys();
         var client = new WebPushClient();
         var payload = JsonSerializer.Serialize(new

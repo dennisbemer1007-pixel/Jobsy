@@ -10,7 +10,7 @@ namespace Jobsy.Web.Security;
 /// <summary>
 /// Persists ASP.NET Data Protection keys in Postgres so antiforgery/auth cookies
 /// survive Render redeploys (ephemeral container disks wipe the default key ring).
-/// Falls back to the default ephemeral key ring when Postgres is unreachable.
+/// Development may fall back to an ephemeral key ring; Production fails startup.
 /// </summary>
 public static class DataProtectionSetup
 {
@@ -25,6 +25,12 @@ public static class DataProtectionSetup
         var connectionString = ResolveConnectionString(configuration);
         if (string.IsNullOrWhiteSpace(connectionString))
         {
+            if (!environment.IsDevelopment())
+            {
+                throw new InvalidOperationException(
+                    "Data Protection: ConnectionStrings:JobsyDb (or DATABASE_URL) is required in Production so auth cookies survive redeploys.");
+            }
+
             return services;
         }
 
@@ -34,6 +40,13 @@ public static class DataProtectionSetup
             var repository = new PostgresXmlRepository(normalized);
             if (!repository.TryEnsureTable())
             {
+                if (!environment.IsDevelopment())
+                {
+                    throw new InvalidOperationException(
+                        "Data Protection: could not create or open Postgres table \"__DataProtectionKeys\". " +
+                        "Fix the JobsyDb connection string; ephemeral keys are not allowed outside Development.");
+                }
+
                 return services;
             }
 
@@ -43,9 +56,21 @@ public static class DataProtectionSetup
                     options.XmlRepository = repository;
                 }));
         }
-        catch
+        catch (InvalidOperationException)
         {
-            // Keep ephemeral keys so the site still boots without Postgres.
+            throw;
+        }
+        catch (Exception ex) when (environment.IsDevelopment())
+        {
+            // Keep ephemeral keys so local DX still boots without Postgres.
+            Console.Error.WriteLine(
+                $"Data Protection: Postgres key store unavailable ({ex.Message}); using ephemeral keys in Development.");
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                "Data Protection: Postgres key store is required in Production so auth cookies survive redeploys. " +
+                $"Underlying error: {ex.Message}", ex);
         }
 
         return services;
@@ -136,26 +161,19 @@ public static class DataProtectionSetup
 
         public void StoreElement(XElement element, string friendlyName)
         {
-            try
-            {
-                EnsureTable();
-                using var conn = new NpgsqlConnection(_connectionString);
-                conn.Open();
-                using var cmd = new NpgsqlCommand(
-                    """
-                    INSERT INTO "__DataProtectionKeys" ("Id", "Xml")
-                    VALUES (@id, @xml)
-                    ON CONFLICT ("Id") DO UPDATE SET "Xml" = EXCLUDED."Xml"
-                    """,
-                    conn);
-                cmd.Parameters.AddWithValue("id", friendlyName);
-                cmd.Parameters.AddWithValue("xml", element.ToString(SaveOptions.DisableFormatting));
-                cmd.ExecuteNonQuery();
-            }
-            catch
-            {
-                // Ignore persistence failures; in-memory key ring still works for this process.
-            }
+            EnsureTable();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            using var cmd = new NpgsqlCommand(
+                """
+                INSERT INTO "__DataProtectionKeys" ("Id", "Xml")
+                VALUES (@id, @xml)
+                ON CONFLICT ("Id") DO UPDATE SET "Xml" = EXCLUDED."Xml"
+                """,
+                conn);
+            cmd.Parameters.AddWithValue("id", friendlyName);
+            cmd.Parameters.AddWithValue("xml", element.ToString(SaveOptions.DisableFormatting));
+            cmd.ExecuteNonQuery();
         }
 
         private void EnsureTable()

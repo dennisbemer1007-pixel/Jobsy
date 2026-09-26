@@ -2,6 +2,7 @@ using System.Xml.Linq;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.DataProtection.Repositories;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Npgsql;
@@ -12,7 +13,9 @@ internal static class DataProtectionExtensions
 {
     public static IServiceCollection AddJobsyDataProtection(
         this IServiceCollection services,
-        string connectionString)
+        string connectionString,
+        bool isDevelopment,
+        IConfiguration? configuration = null)
     {
         services.AddDataProtection()
             .SetApplicationName("Jobsy.Api");
@@ -22,6 +25,13 @@ internal static class DataProtectionExtensions
             var repository = new PostgresXmlRepository(connectionString);
             if (!repository.TryEnsureTable())
             {
+                if (!isDevelopment && !AllowEphemeral(configuration))
+                {
+                    throw new InvalidOperationException(
+                        "Data Protection: could not create or open Postgres table \"__DataProtectionKeys\". " +
+                        "Ephemeral keys are not allowed outside Development.");
+                }
+
                 return services;
             }
 
@@ -31,13 +41,28 @@ internal static class DataProtectionExtensions
                     options.XmlRepository = repository;
                 }));
         }
-        catch
+        catch (InvalidOperationException)
         {
-            // Keep default key ring so the API still starts.
+            throw;
+        }
+        catch (Exception ex) when (isDevelopment || AllowEphemeral(configuration))
+        {
+            // Keep default key ring so local API / test hosts still start.
+            Console.Error.WriteLine(
+                $"Data Protection: Postgres key store unavailable ({ex.Message}); using ephemeral keys.");
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                "Data Protection: Postgres key store is required outside Development. " +
+                $"Underlying error: {ex.Message}", ex);
         }
 
         return services;
     }
+
+    private static bool AllowEphemeral(IConfiguration? configuration)
+        => configuration?.GetValue("JobsyAuth:AllowEphemeralDataProtection", false) == true;
 
     private sealed class PostgresXmlRepository : IXmlRepository
     {
@@ -81,26 +106,19 @@ internal static class DataProtectionExtensions
 
         public void StoreElement(XElement element, string friendlyName)
         {
-            try
-            {
-                EnsureTable();
-                using var conn = new NpgsqlConnection(_connectionString);
-                conn.Open();
-                using var cmd = new NpgsqlCommand(
-                    """
-                    INSERT INTO "__DataProtectionKeys" ("Id", "Xml")
-                    VALUES (@id, @xml)
-                    ON CONFLICT ("Id") DO UPDATE SET "Xml" = EXCLUDED."Xml"
-                    """,
-                    conn);
-                cmd.Parameters.AddWithValue("id", friendlyName);
-                cmd.Parameters.AddWithValue("xml", element.ToString(SaveOptions.DisableFormatting));
-                cmd.ExecuteNonQuery();
-            }
-            catch
-            {
-                // Ignore persistence failures for this process lifetime.
-            }
+            EnsureTable();
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+            using var cmd = new NpgsqlCommand(
+                """
+                INSERT INTO "__DataProtectionKeys" ("Id", "Xml")
+                VALUES (@id, @xml)
+                ON CONFLICT ("Id") DO UPDATE SET "Xml" = EXCLUDED."Xml"
+                """,
+                conn);
+            cmd.Parameters.AddWithValue("id", friendlyName);
+            cmd.Parameters.AddWithValue("xml", element.ToString(SaveOptions.DisableFormatting));
+            cmd.ExecuteNonQuery();
         }
 
         private void EnsureTable()

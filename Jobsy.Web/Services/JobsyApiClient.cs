@@ -2117,6 +2117,32 @@ public sealed class JobsyApiClient : IAsyncDisposable
         await _http.PostAsJsonAsync("api/push/unsubscribe", new { endpoint }, ct);
     }
 
+    public async Task<IReadOnlyList<DeviceSessionItem>> GetDeviceSessionsAsync(CancellationToken ct = default)
+    {
+        var rows = await _http.GetFromJsonAsync<List<DeviceSessionItem>>("api/auth/device-sessions", ct);
+        return rows ?? [];
+    }
+
+    public async Task RevokeDeviceSessionAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/auth/device-sessions/{id}", ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task RevokeAllDeviceSessionsAsync(CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync("api/auth/device-sessions", ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public sealed record DeviceSessionItem(
+        Guid Id,
+        string DeviceName,
+        DateTime LastUsedAtUtc,
+        DateTime CreatedAtUtc,
+        DateTime ExpiresAtUtc,
+        bool IsCurrent);
+
     private sealed class WebPushVapidPublicKeyWire
     {
         public string PublicKey { get; set; } = "";

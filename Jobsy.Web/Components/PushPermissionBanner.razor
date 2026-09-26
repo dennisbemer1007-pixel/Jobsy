@@ -47,6 +47,9 @@
                 return;
             }
 
+            // Re-link an existing browser push subscription to the current user/device.
+            await RelinkExistingSubscriptionAsync();
+
             var show = await Js.InvokeAsync<bool>("lobsyPush.shouldShowPrompt");
             if (show)
             {
@@ -58,6 +61,27 @@
         {
             // JS not ready yet.
             _checked = false;
+        }
+    }
+
+    private async Task RelinkExistingSubscriptionAsync()
+    {
+        try
+        {
+            var existing = await Js.InvokeAsync<PushCreateResult>("lobsyPush.getExistingSubscription");
+            if (existing is not { Ok: true }
+                || string.IsNullOrWhiteSpace(existing.Endpoint)
+                || string.IsNullOrWhiteSpace(existing.P256dh)
+                || string.IsNullOrWhiteSpace(existing.Auth))
+            {
+                return;
+            }
+
+            await Api.SubscribeWebPushAsync(existing.Endpoint, existing.P256dh, existing.Auth);
+        }
+        catch
+        {
+            // Best-effort; prompt / later subscribe still works.
         }
     }
 

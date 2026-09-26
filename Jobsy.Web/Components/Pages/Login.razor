@@ -103,6 +103,10 @@
                 @Culture["Login.Password"]
                 <input type="password" name="password" class="w-full px-4 py-3" required autocomplete="current-password" placeholder="••••••••" />
             </label>
+            <label class="login-remember">
+                <input type="checkbox" name="rememberDevice" value="true" checked />
+                <span>@Culture["Login.RememberDevice"]</span>
+            </label>
             <button type="submit" class="login-submit" disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">@Culture["Login.Submit"]</button>
             @if (string.IsNullOrEmpty(_antiforgeryToken))
             {

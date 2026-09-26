@@ -38,6 +38,7 @@ public sealed class WebPushSubscriptionService : IWebPushSubscriptionService
                 P256dh = input.P256dh.Trim(),
                 Auth = input.Auth.Trim(),
                 UserAgent = Truncate(input.UserAgent, 512),
+                DeviceSessionId = input.DeviceSessionId,
                 CreatedAtUtc = now,
                 UpdatedAtUtc = now
             });
@@ -48,6 +49,11 @@ public sealed class WebPushSubscriptionService : IWebPushSubscriptionService
             existing.P256dh = input.P256dh.Trim();
             existing.Auth = input.Auth.Trim();
             existing.UserAgent = Truncate(input.UserAgent, 512);
+            if (input.DeviceSessionId is Guid deviceSessionId)
+            {
+                existing.DeviceSessionId = deviceSessionId;
+            }
+
             existing.UpdatedAtUtc = now;
         }
 
@@ -86,6 +92,20 @@ public sealed class WebPushSubscriptionService : IWebPushSubscriptionService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task RemoveByDeviceSessionAsync(Guid deviceSessionId, CancellationToken cancellationToken = default)
+    {
+        var rows = await _db.WebPushSubscriptions
+            .Where(s => s.DeviceSessionId == deviceSessionId)
+            .ToListAsync(cancellationToken);
+        if (rows.Count == 0)
+        {
+            return;
+        }
+
+        _db.WebPushSubscriptions.RemoveRange(rows);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<WebPushSubscriptionRecord>> ListForUserAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
@@ -93,7 +113,7 @@ public sealed class WebPushSubscriptionService : IWebPushSubscriptionService
         return await _db.WebPushSubscriptions.AsNoTracking()
             .Where(s => s.UserId == userId)
             .OrderByDescending(s => s.UpdatedAtUtc)
-            .Select(s => new WebPushSubscriptionRecord(s.Id, s.Endpoint, s.CreatedAtUtc, s.LastUsedAtUtc))
+            .Select(s => new WebPushSubscriptionRecord(s.Id, s.Endpoint, s.CreatedAtUtc, s.LastUsedAtUtc, s.DeviceSessionId))
             .ToListAsync(cancellationToken);
     }
 

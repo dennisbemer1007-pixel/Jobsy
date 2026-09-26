@@ -53,6 +53,10 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.InactiveCompanyDays = Math.Clamp(update.InactiveCompanyDays, 30, 730);
         row.SessionInactivityTimeoutMinutes =
             SessionSecurityRules.ClampTimeoutMinutes(update.SessionInactivityTimeoutMinutes);
+        if (update.MinimumSessionVersion is int minSession)
+        {
+            row.MinimumSessionVersion = Math.Max(0, minSession);
+        }
         // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
         // so session-timeout-only PUTs do not silently disable the free-publish promo.
         if (update.ClearFreePublishUntil)
@@ -153,6 +157,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             SessionSecurityRules.ClampTimeoutMinutes(
                 row?.SessionInactivityTimeoutMinutes
                 ?? SessionSecurityRules.DefaultInactivityTimeoutMinutes),
-            freeUntil);
+            freeUntil,
+            row?.MinimumSessionVersion ?? 0);
     }
 }

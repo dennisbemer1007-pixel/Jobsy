@@ -164,6 +164,7 @@ app.UseRateLimiter();
 app.UseExternalAuthCallbackCredentials();
 
 app.UseAuthentication();
+app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();
 app.UseAuthorization();
 app.UseAntiforgery();
