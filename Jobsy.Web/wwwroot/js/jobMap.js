@@ -2286,12 +2286,12 @@ window.jobMap = (function () {
     function readBootPayload() {
         const node = document.getElementById("jobsy-map-boot");
         if (!node || !node.textContent) {
-            return { pins: [], view: null, preferFilledLocation: true };
+            return { pins: [], view: null, preferFilledLocation: true, pinsUrl: null };
         }
         try {
             const parsed = JSON.parse(node.textContent);
             if (Array.isArray(parsed)) {
-                return { pins: parsed, view: null, preferFilledLocation: true };
+                return { pins: parsed, view: null, preferFilledLocation: true, pinsUrl: null };
             }
             const pins = parsed && Array.isArray(parsed.pins) ? parsed.pins : [];
             let view = parsed ? readOpeningView(parsed.view) : null;
@@ -2302,16 +2302,45 @@ window.jobMap = (function () {
                     view = filled;
                 }
             }
-            return { pins: pins, view: view, preferFilledLocation: preferFilledLocation };
+            const bootPinsUrl = parsed && parsed.pinsUrl ? String(parsed.pinsUrl) : null;
+            return {
+                pins: pins,
+                view: view,
+                preferFilledLocation: preferFilledLocation,
+                pinsUrl: bootPinsUrl
+            };
         } catch (e) {
-            return { pins: [], view: null, preferFilledLocation: true };
+            return { pins: [], view: null, preferFilledLocation: true, pinsUrl: null };
         }
     }
 
-    // Paint the basemap immediately from a single jobMap.init after hydrate.
-    // Pre-circuit boot() was discarded when Blazor replaced #job-map (double tile load).
+    /**
+     * Start the map from #jobsy-map-boot before the Blazor circuit is up.
+     * Blazor jobMap.init reuses the live map when #job-map is still connected.
+     */
     function boot(elementId) {
-        return;
+        const id = elementId || "job-map";
+        if (typeof maplibregl === "undefined" || !window.jobsyMapLibre) {
+            return;
+        }
+        const el = document.getElementById(id);
+        if (!el) {
+            return;
+        }
+        if (map && typeof map.getContainer === "function"
+            && map.getContainer() === el && el.isConnected) {
+            return;
+        }
+        const bootPayload = readBootPayload();
+        try {
+            init(id, bootPayload.pins || [], {
+                view: bootPayload.view,
+                preferFilledLocation: bootPayload.preferFilledLocation !== false,
+                pinsUrl: bootPayload.pinsUrl || null
+            });
+        } catch (_err) {
+            // Circuit init will retry.
+        }
     }
 
     function init(elementId, vacancies, options) {
@@ -2352,48 +2381,62 @@ window.jobMap = (function () {
         highlightSeed = options && Number.isFinite(Number(options.highlightSeed))
             ? (Number(options.highlightSeed) >>> 0)
             : 0;
-        pinsUrl = options && options.pinsUrl ? String(options.pinsUrl) : null;
+        const nextPinsUrl = options && options.pinsUrl ? String(options.pinsUrl) : null;
+        if (nextPinsUrl) {
+            pinsUrl = nextPinsUrl;
+        }
 
         bindMapRuntime();
 
-        const seedPins = (vacancies || []).map(normalizePin).filter(Boolean);
-        if (seedPins.length > 0) {
-            setVacancies(seedPins);
-        } else {
-            // Prefer #jobsy-map-boot compact pins until HTTP pins arrive.
-            try {
-                const boot = readBootPayload();
-                if (boot && Array.isArray(boot.pins) && boot.pins.length) {
-                    setVacancies(boot.pins.map(normalizePin).filter(Boolean));
-                    if (!pinsUrl && boot.pinsUrl) {
-                        pinsUrl = String(boot.pinsUrl);
+        // Early boot() may already have painted pins — do not re-fetch (one pins request/load).
+        const alreadyPinned = live && Object.keys(markersById).length > 0;
+        if (!alreadyPinned) {
+            const seedPins = (vacancies || []).map(normalizePin).filter(Boolean);
+            if (seedPins.length > 0) {
+                setVacancies(seedPins);
+            } else {
+                // Prefer #jobsy-map-boot compact pins until HTTP pins arrive — never wait on the circuit.
+                try {
+                    const bootPayload = readBootPayload();
+                    if (!pinsUrl && bootPayload.pinsUrl) {
+                        pinsUrl = String(bootPayload.pinsUrl);
                     }
-                } else {
+                    if (bootPayload && Array.isArray(bootPayload.pins) && bootPayload.pins.length) {
+                        setVacancies(bootPayload.pins.map(normalizePin).filter(Boolean));
+                    } else {
+                        setVacancies([]);
+                    }
+                } catch (e) {
                     setVacancies([]);
                 }
-            } catch (e) {
-                setVacancies([]);
             }
-        }
-        // Apply early prefetch (started from maps-loader / boot JSON) before a new fetch.
-        if (pinsUrl && window.__jobsyPinsPrefetch && window.__jobsyPinsPrefetchUrl === pinsUrl) {
-            const gen = ++pinsFetchGen;
-            Promise.resolve(window.__jobsyPinsPrefetch).then(function (data) {
-                if (gen !== pinsFetchGen || !data) {
-                    if (pinsUrl) {
+            // Apply early prefetch (started from maps-loader / boot JSON) before a new fetch.
+            if (pinsUrl && window.__jobsyPinsPrefetch && window.__jobsyPinsPrefetchUrl === pinsUrl) {
+                const gen = ++pinsFetchGen;
+                Promise.resolve(window.__jobsyPinsPrefetch).then(function (data) {
+                    if (gen !== pinsFetchGen || !data) {
+                        if (pinsUrl) {
+                            fetchPins(pinsUrl);
+                        }
+                        return;
+                    }
+                    const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
+                    if (pins.length) {
+                        setVacancies(pins);
+                    } else if (pinsUrl) {
                         fetchPins(pinsUrl);
                     }
-                    return;
+                });
+            } else if (pinsUrl) {
+                fetchPins(pinsUrl);
+            }
+        } else if (!pinsUrl) {
+            try {
+                const bootPayload = readBootPayload();
+                if (bootPayload.pinsUrl) {
+                    pinsUrl = String(bootPayload.pinsUrl);
                 }
-                const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
-                if (pins.length) {
-                    setVacancies(pins);
-                } else if (pinsUrl) {
-                    fetchPins(pinsUrl);
-                }
-            });
-        } else if (pinsUrl) {
-            fetchPins(pinsUrl);
+            } catch (e) { }
         }
         var originApplied = false;
         if (options && options.origin) {

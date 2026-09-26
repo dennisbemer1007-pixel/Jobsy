@@ -1,8 +1,8 @@
 @page "/"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-@* Map chrome prerenders. MapLibre CSS/JS are not linked from this document — that
-   kept a 300KB+ critical request chain on first paint. jobsyMaps injects them after
-   the first frame (and Blazor ensure() can start them immediately once interactive). *@
+@* Map chrome prerenders with #jobsy-map-boot. jobsyMaps preloads maplibre+jobMap,
+   loads the three scripts in parallel, boots from page data, and fetches pins over
+   HTTP — first pins do not wait on the Blazor circuit. *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inject CultureState Culture
 @implements IDisposable

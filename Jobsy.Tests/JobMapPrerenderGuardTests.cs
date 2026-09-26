@@ -15,22 +15,22 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("prerender: false", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.min.js", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.css", home);
-        Assert.DoesNotContain("rel=\"preload\"", home);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", home);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl-csp.js", home);
         Assert.DoesNotContain("jobMap.min.js", home);
-        Assert.DoesNotContain("fetchpriority=\"high\"", home);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("lib/maplibre/maplibre-gl-csp.js", maps);
         Assert.Contains("jobMap.min.js", maps);
         Assert.Contains("ensure: ensure", maps);
         Assert.Contains("link.media = \"print\"", maps);
-        Assert.Contains("fetchpriority\", \"low\"", maps);
+        Assert.Contains("loadScriptsParallel", maps);
+        Assert.Contains("preloadScripts", maps);
+        Assert.Contains("fetchpriority\", \"high\"", maps);
+        Assert.Contains("jobMap.boot", maps);
+        Assert.Contains("mapfix7", maps);
         Assert.DoesNotContain("warmDiscovery", maps);
         Assert.DoesNotContain("jobsyMapsAfterFirstPaint", maps);
-        Assert.DoesNotContain("fetchpriority\", \"high\"", maps);
-        Assert.DoesNotContain("jobMap.boot", maps);
     }
 
     [Fact]
@@ -49,7 +49,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("readBootPayload", js);
         Assert.Contains("jobsy-map-boot", js);
         Assert.Contains("const live", js);
-        Assert.Contains("Paint the basemap immediately", js);
+        Assert.Contains("alreadyPinned", js);
+        Assert.Contains("Start the map from #jobsy-map-boot", js);
         Assert.Contains("fitMapToVacancies", js);
         Assert.Contains("lockCamera", js);
         Assert.Contains("openingCamera", js);
