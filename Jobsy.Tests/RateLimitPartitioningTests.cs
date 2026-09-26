@@ -23,28 +23,45 @@ public class RateLimitPartitioningUnitTests
     private const string Secret = "unit-test-internal-client-ip-secret";
 
     [Fact]
-    public void Prefers_client_ip_claim_over_user_id()
+    public void Prefers_user_id_over_client_ip_claim()
     {
+        var userId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
         var http = new DefaultHttpContext();
         http.User = new ClaimsPrincipal(new ClaimsIdentity(
         [
-            new Claim("sub", Guid.NewGuid().ToString("D")),
+            new Claim("sub", userId.ToString("D")),
             new Claim(JobsyAccessToken.ClientIpClaim, "203.0.113.10")
         ], "JobsyJwt"));
         http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
 
         var key = RateLimitPartitioning.ResolvePartitionKey(http, Secret);
-        Assert.Equal("cip:203.0.113.10", key);
+        Assert.Equal("uid:" + userId.ToString("D"), key);
     }
 
     [Fact]
-    public void Falls_back_to_user_id_when_claim_missing()
+    public void Falls_back_to_user_id_when_trusted_ip_missing()
     {
         var userId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
         var http = new DefaultHttpContext();
         http.User = new ClaimsPrincipal(new ClaimsIdentity(
             [new Claim("sub", userId.ToString("D"))],
             "JobsyJwt"));
+        http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
+
+        var key = RateLimitPartitioning.ResolvePartitionKey(http, Secret);
+        Assert.Equal("uid:" + userId.ToString("D"), key);
+    }
+
+    [Fact]
+    public void Authenticated_user_ignores_forged_visitor_ip_header()
+    {
+        var userId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var http = new DefaultHttpContext();
+        http.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("sub", userId.ToString("D"))],
+            "JobsyJwt"));
+        http.Request.Headers[RateLimitPartitioning.ClientIpHeader] = "198.51.100.7";
+        http.Request.Headers[RateLimitPartitioning.InternalSecretHeader] = Secret;
         http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
 
         var key = RateLimitPartitioning.ResolvePartitionKey(http, Secret);
@@ -108,6 +125,36 @@ public class RateLimitUserIsolationTests : IClassFixture<RateLimitIsolationFacto
         Assert.Equal(HttpStatusCode.TooManyRequests, over.StatusCode);
         Assert.True(over.Headers.TryGetValues("Retry-After", out var values));
         Assert.NotEmpty(values);
+    }
+
+    [Fact]
+    public async Task Twenty_map_visitors_from_different_ips_do_not_get_429()
+    {
+        const string secret = "test-internal-client-ip-secret";
+        // Each anonymous visitor loads pins + a few cards (map session).
+        // Shared hop-IP bucket would exhaust after 100 total; per-visitor
+        // partitions keep every visitor under the 100/min public-read limit.
+        for (var visitor = 0; visitor < 20; visitor++)
+        {
+            using var client = _factory.CreateClient();
+            var visitorIp = $"198.51.100.{visitor + 1}";
+            client.DefaultRequestHeaders.Remove(RateLimitPartitioning.ClientIpHeader);
+            client.DefaultRequestHeaders.Remove(RateLimitPartitioning.InternalSecretHeader);
+            client.DefaultRequestHeaders.TryAddWithoutValidation(
+                RateLimitPartitioning.ClientIpHeader,
+                visitorIp);
+            client.DefaultRequestHeaders.TryAddWithoutValidation(
+                RateLimitPartitioning.InternalSecretHeader,
+                secret);
+
+            for (var i = 0; i < 8; i++)
+            {
+                using var response = await client.GetAsync("/api/vacancies/pins");
+                Assert.True(
+                    response.StatusCode != HttpStatusCode.TooManyRequests,
+                    $"Visitor {visitorIp} request {i + 1} got 429");
+            }
+        }
     }
 
     private HttpClient CreateClient(Guid userId)
