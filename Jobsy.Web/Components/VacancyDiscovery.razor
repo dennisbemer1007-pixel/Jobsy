@@ -16,8 +16,7 @@
 @using System.Text.Json
 
 <PageSeo JsonLd="@JobListJsonLd" />
-<div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null)"
-     data-sheet="@_sheetSnap.ToString().ToLowerInvariant()">
+<div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null)">
     <div class="jobsy-chrome">
         <header class="jobsy-chrome__header">
             <a class="jobsy-logo" href="/" aria-label="Lobsy">
@@ -25,10 +24,6 @@
                 <span class="jobsy-logo__mark">Lobsy</span>
             </a>
             <h1 class="visually-hidden">@Culture["Seo.HomeHeading"]</h1>
-            @if (ShowSampleDataBadge)
-            {
-                <span class="jobsy-chrome__sample-badge" title="Deze omgeving toont voorbeelddata">Voorbeelddata</span>
-            }
             <div class="jobsy-chrome__header-actions">
                 <PageHelp />
                 <NotificationBell />
@@ -37,115 +32,117 @@
             </div>
         </header>
 
-        <div class="jobsy-chrome__float">
-            <div class="jobsy-chrome__search">
-                <label class="visually-hidden" for="discovery-address">@Culture["Discovery.Address"]</label>
-                <div class="jobsy-search @(_origin is not null ? "jobsy-search--with-clear" : null)">
-                    <span class="jobsy-chrome__float-search-icon" aria-hidden="true">@((MarkupString)NavIcons.Search)</span>
-                    <input id="discovery-address"
-                           type="text"
-                           autocomplete="off"
-                           placeholder="@Culture["Discovery.AddressPlaceholder"]"
-                           value="@MobileSearchDisplay"
-                           @oninput="OnAddressInputAsync"
-                           @onfocus="OnAddressFocus"
-                           @onkeydown="OnAddressKeyDown" />
-                    @if (_origin is not null)
-                    {
-                        <button type="button"
-                                class="jobsy-search__clear"
-                                title="@Culture["Common.Clear"]"
-                                @onclick="ClearOriginAsync"
-                                aria-label="@Culture["Common.Clear"]">
-                            @Culture["Common.Clear"]
-                        </button>
-                    }
+        <div class="jobsy-chrome__search">
+            <label class="visually-hidden" for="discovery-address">@Culture["Discovery.Address"]</label>
+            <div class="jobsy-search @(_origin is not null ? "jobsy-search--with-clear" : null)">
+                <input id="discovery-address"
+                       type="text"
+                       autocomplete="off"
+                       placeholder="@Culture["Discovery.AddressPlaceholder"]"
+                       value="@_addressQuery"
+                       @oninput="OnAddressInputAsync"
+                       @onfocus="OnAddressFocus"
+                       @onkeydown="OnAddressKeyDown" />
+                @if (_origin is not null)
+                {
                     <button type="button"
-                            class="jobsy-search__btn"
-                            title="@Culture["Discovery.UseMyLocation"]"
-                            disabled="@_locating"
-                            @onclick="RequestLocationAsync"
-                            aria-label="@Culture["Discovery.UseMyLocation"]">
-                        <span class="jobsy-search__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                <circle cx="12" cy="12" r="3"/>
-                                <circle cx="12" cy="12" r="7"/>
-                                <path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21"/>
-                            </svg>
-                        </span>
+                            class="jobsy-search__clear"
+                            title="@Culture["Common.Clear"]"
+                            @onclick="ClearOriginAsync"
+                            aria-label="@Culture["Common.Clear"]">
+                        @Culture["Common.Clear"]
                     </button>
-                </div>
-                @if (_showSuggestions)
-                {
-                    <ul class="address-suggestions" role="listbox">
-                        @if (_suggesting)
-                        {
-                            <li class="address-suggestions__status">@Culture["Common.Loading"]</li>
-                        }
-                        else if (_suggestions.Count == 0 && _addressQuery.Trim().Length >= 3)
-                        {
-                            <li class="address-suggestions__status">@Culture["Discovery.AddressNoResults"]</li>
-                        }
-                        else
-                        {
-                            @foreach (var suggestion in _suggestions)
-                            {
-                                <li>
-                                    <button type="button"
-                                            class="address-suggestions__item"
-                                            @onclick="() => SelectSuggestionAsync(suggestion)">
-                                        @suggestion.Label
-                                    </button>
-                                </li>
-                            }
-                        }
-                    </ul>
                 }
-                @if (!string.IsNullOrEmpty(_locationError))
-                {
-                    <p class="state-message error filter-bar__error">@_locationError</p>
-                }
-            </div>
-
-            <div class="jobsy-chrome__actions @(ActiveFilterCount > 0 ? "jobsy-chrome__actions--with-clear" : null)" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
                 <button type="button"
-                        class="jobsy-action @(_filtersOpen ? "is-active" : null)"
-                        @onclick="ToggleFilters"
-                        aria-expanded="@(_filtersOpen ? "true" : "false")"
-                        aria-controls="@(_filtersOpen ? "discovery-filters" : null)">
-                    <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
-                    <span>Filter</span>
-                    @if (ActiveFilterCount > 0)
-                    {
-                        <span class="jobsy-action__badge">@ActiveFilterCount</span>
-                    }
+                        class="jobsy-search__btn"
+                        title="@Culture["Discovery.UseMyLocation"]"
+                        disabled="@_locating"
+                        @onclick="RequestLocationAsync"
+                        aria-label="@Culture["Discovery.UseMyLocation"]">
+                    <span class="jobsy-search__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <circle cx="12" cy="12" r="7"/>
+                            <path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21"/>
+                        </svg>
+                    </span>
                 </button>
+            </div>
+            @if (_showSuggestions)
+            {
+                <ul class="address-suggestions" role="listbox">
+                    @if (_suggesting)
+                    {
+                        <li class="address-suggestions__status">@Culture["Common.Loading"]</li>
+                    }
+                    else if (_suggestions.Count == 0 && _addressQuery.Trim().Length >= 3)
+                    {
+                        <li class="address-suggestions__status">@Culture["Discovery.AddressNoResults"]</li>
+                    }
+                    else
+                    {
+                        @foreach (var suggestion in _suggestions)
+                        {
+                            <li>
+                                <button type="button"
+                                        class="address-suggestions__item"
+                                        @onclick="() => SelectSuggestionAsync(suggestion)">
+                                    @suggestion.Label
+                                </button>
+                            </li>
+                        }
+                    }
+                </ul>
+            }
+            @if (!string.IsNullOrEmpty(_locationError))
+            {
+                <p class="state-message error filter-bar__error">@_locationError</p>
+            }
+        </div>
+
+        <div class="jobsy-chrome__actions @(ActiveFilterCount > 0 ? "jobsy-chrome__actions--with-clear" : null)" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
+            <button type="button"
+                    class="jobsy-action @(_filtersOpen ? "is-active" : null)"
+                    @onclick="ToggleFilters"
+                    aria-expanded="@(_filtersOpen ? "true" : "false")"
+                    aria-controls="@(_filtersOpen ? "discovery-filters" : null)">
+                <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
+                <span>@Culture["Discovery.Filters"]</span>
                 @if (ActiveFilterCount > 0)
                 {
-                    <button type="button"
-                            class="jobsy-action jobsy-action--clear"
-                            title="@Culture["Discovery.ClearFilters"]"
-                            @onclick="ClearAllFiltersAsync"
-                            aria-label="@Culture["Discovery.ClearFilters"]">
-                        <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
-                    </button>
+                    <span class="jobsy-action__badge">@ActiveFilterCount</span>
                 }
-                <AuthorizeView>
-                    <Authorized>
-                        <a class="jobsy-action jobsy-action--match" href="/candidate/match">
-                            <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
-                            <span>@Culture["Nav.Match"]</span>
-                        </a>
-                    </Authorized>
-                </AuthorizeView>
+            </button>
+            @if (ActiveFilterCount > 0)
+            {
                 <button type="button"
-                        class="jobsy-action jobsy-action--toggle"
-                        @onclick="OpenMobileListSheetAsync"
-                        aria-label="@Culture["Discovery.List"]">
+                        class="jobsy-action jobsy-action--clear"
+                        title="@Culture["Discovery.ClearFilters"]"
+                        @onclick="ClearAllFiltersAsync"
+                        aria-label="@Culture["Discovery.ClearFilters"]">
+                    <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
+                </button>
+            }
+            <AuthorizeView>
+                <Authorized>
+                    <a class="jobsy-action jobsy-action--match" href="/candidate/match">
+                        <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
+                        <span>@Culture["Nav.Match"]</span>
+                    </a>
+                </Authorized>
+            </AuthorizeView>
+            <button type="button" class="jobsy-action jobsy-action--toggle" @onclick="ToggleMobileView">
+                @if (showMapOnMobile)
+                {
                     <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.List)</span>
                     <span>@Culture["Discovery.List"]</span>
-                </button>
-            </div>
+                }
+                else
+                {
+                    <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Map)</span>
+                    <span>@Culture["Discovery.Map"]</span>
+                }
+            </button>
         </div>
     </div>
 
@@ -575,7 +572,7 @@
     </aside>
 
     <section class="map-pane" aria-label="@Culture["Page.JobMapTitle"]">
-        @if (RendererInfo.IsInteractive && _mapPainted && _vacancies.Count > 0 && _wideViewport)
+        @if (RendererInfo.IsInteractive && _mapPainted && _vacancies.Count > 0)
         {
             <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
                                       ActiveId="_hoveredId"
@@ -625,81 +622,6 @@
                 </div>
             }
         </div>
-
-        @if (!_wideViewport)
-        {
-            <MapBottomSheet Id="discovery-map-sheet"
-                            AriaLabel="Vacatures op de kaart"
-                            Current="_sheetSnap"
-                            CurrentChanged="OnSheetSnapChangedAsync"
-                            OnClose="OnSheetClosedAsync"
-                            HeightChanged="OnSheetHeightChangedAsync"
-                            CssClass="@($"map-sheet--{_sheetMode}")">
-                @* Hosts stay mounted so jobMap can paint skeleton/card instantly (no Blazor wipe race). *@
-                <div class="map-sheet__collapsed" hidden="@(_sheetMode != SheetMode.Collapsed && _sheetSnap != MapBottomSheet.Snap.Collapsed)">
-                    <p class="map-sheet__collapsed-title">@_viewportPinCount vacatures in dit gebied</p>
-                    <p class="map-sheet__collapsed-hint">Veeg omhoog voor de lijst</p>
-                </div>
-
-                <div class="map-sheet__status-pill"
-                     id="map-sheet-status-pill"
-                     hidden="@(_sheetMode != SheetMode.Cluster || string.IsNullOrEmpty(_clusterStatusLabel))">
-                    @_clusterStatusLabel
-                </div>
-
-                <div class="map-sheet__card-host"
-                     id="map-sheet-card-host"
-                     aria-live="polite"
-                     hidden="@(_sheetMode != SheetMode.Card)"></div>
-
-                <div class="map-sheet__cluster-host" hidden="@(_sheetMode != SheetMode.Cluster)">
-                    <div class="map-sheet__cluster-row" id="map-sheet-cluster-row"></div>
-                    <div class="map-sheet__dots" id="map-sheet-cluster-dots" aria-hidden="true"></div>
-                </div>
-
-                <div class="map-sheet__list-host" hidden="@(_sheetMode != SheetMode.List)">
-                    <div class="map-sheet__list-header">
-                        <h2>@_viewportPinCount vacatures in beeld</h2>
-                        <label class="visually-hidden" for="map-sheet-sort">Sorteren</label>
-                        <select id="map-sheet-sort" class="map-sheet__sort" value="@EffectiveSheetSort" @onchange="OnSheetSortChanged">
-                            @if (_origin is not null)
-                            {
-                                <option value="distance">Kortste reistijd</option>
-                            }
-                            <option value="recent">Nieuwste</option>
-                            @if (_isCandidate)
-                            {
-                                <option value="match">Beste match</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="map-sheet__list-scroll"
-                         id="map-sheet-list-scroll"
-                         @onscroll="OnListScroll">
-                        <div style="height:@(_listVirtualTotalHeight.ToString(System.Globalization.CultureInfo.InvariantCulture))px; position:relative;">
-                            @foreach (var row in VisibleSheetListRows)
-                            {
-                                var card = row.Card;
-                                <div style="position:absolute; top:@(row.Top.ToString(System.Globalization.CultureInfo.InvariantCulture))px; left:0; right:0; height:120px;">
-                                    <VacancyCompactCard Skeleton="@(card is null)"
-                                                        Id="@row.Id"
-                                                        Title="@card?.Title"
-                                                        CompanyName="@(card?.OfferedByLabel ?? card?.CompanyName)"
-                                                        Place="@card?.Place"
-                                                        ThumbnailUrl="@(card?.ThumbnailUrl ?? card?.LogoUrl)"
-                                                        TravelLabel="@FormatCardTravel(card)"
-                                                        MatchPercent="@(_isCandidate ? card?.MatchPercent : null)"
-                                                        WageLabel="@FormatCardWage(card)"
-                                                        ShowSave="@_isCandidate"
-                                                        IsActive="@(_sheetSelectedId == row.Id)"
-                                                        OnClick="() => OnListRowSelectAsync(row.Id)" />
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </MapBottomSheet>
-        }
     </section>
 
     @if (_filtersOpen)
@@ -1028,19 +950,6 @@
     private Guid? _hoveredId;
     private uint _highlightShuffleSeed;
     private bool showMapOnMobile = true;
-
-    private enum SheetMode { Collapsed, Card, Cluster, List }
-    private MapBottomSheet.Snap _sheetSnap = MapBottomSheet.Snap.Collapsed;
-    private SheetMode _sheetMode = SheetMode.Collapsed;
-    private int _viewportPinCount;
-    private string? _clusterStatusLabel;
-    private Guid? _sheetSelectedId;
-    private string _sheetSortMode = "distance";
-    private readonly List<Guid> _listViewportIds = [];
-    private readonly Dictionary<Guid, VacancyCompactCardModel> _listCards = new();
-    private int _listScrollTop;
-    private const int ListRowHeight = 120;
-    private const int ListOverscan = 4;
     /// <summary>Desktop split view (≥769px). Default false so mobile PSI does not mount 200+ cards.</summary>
     private bool _wideViewport;
     private const int VacancyCardPageSize = 20;
@@ -2073,7 +1982,6 @@
                 ["highlightSeed"] = _highlightShuffleSeed,
                 ["preferFilledLocation"] = preferFilledLocation,
                 ["pinsUrl"] = BuildPinsApiUrl(),
-                ["fundaMobile"] = !_wideViewport,
                 ["view"] = new Dictionary<string, object?>
                 {
                     ["lat"] = opening.CenterLat,
@@ -3461,411 +3369,6 @@
             await Task.Delay(50);
             await Js.InvokeVoidAsync("jobMap.invalidate");
         }
-    }
-
-    private string MobileSearchDisplay
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(_addressQuery))
-            {
-                return string.Empty;
-            }
-
-            // Mockup: "Naaldwijk · alle banen" when a place is set and no keyword filter.
-            var place = _addressQuery.Trim();
-            if (place.Contains('·', StringComparison.Ordinal))
-            {
-                return place;
-            }
-
-            if (string.IsNullOrWhiteSpace(_searchQuery))
-            {
-                return $"{place} · alle banen";
-            }
-
-            return $"{place} · {_searchQuery.Trim()}";
-        }
-    }
-
-    private bool ShowSampleDataBadge
-    {
-        get
-        {
-            try
-            {
-                var host = new Uri(Navigation.Uri).Host;
-                return host.Contains("acceptatie", StringComparison.OrdinalIgnoreCase)
-                       || host.Contains("lobsy-acc", StringComparison.OrdinalIgnoreCase)
-                       || host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
-                       || host.StartsWith("127.", StringComparison.Ordinal);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-    }
-
-    private string EffectiveSheetSort
-        => _sheetSortMode == "distance" && _origin is null
-            ? "recent"
-            : _sheetSortMode == "match" && !_isCandidate
-                ? (_origin is not null ? "distance" : "recent")
-                : _sheetSortMode;
-
-    private int _listVirtualTotalHeight => Math.Max(ListRowHeight, _listViewportIds.Count * ListRowHeight);
-
-    private IEnumerable<(Guid Id, VacancyCompactCardModel? Card, int Top)> VisibleSheetListRows
-    {
-        get
-        {
-            if (_listViewportIds.Count == 0)
-            {
-                yield break;
-            }
-
-            var first = Math.Max(0, (_listScrollTop / ListRowHeight) - ListOverscan);
-            var visible = (int)Math.Ceiling(400.0 / ListRowHeight) + (ListOverscan * 2);
-            var last = Math.Min(_listViewportIds.Count - 1, first + visible);
-            for (var i = first; i <= last; i++)
-            {
-                var id = _listViewportIds[i];
-                _listCards.TryGetValue(id, out var card);
-                yield return (id, card, i * ListRowHeight);
-            }
-        }
-    }
-
-    private static string? FormatCardTravel(VacancyCompactCardModel? card)
-    {
-        if (card?.TravelMinutes is not int m || m < 0)
-        {
-            return null;
-        }
-
-        return $"🚲 {m} min fietsen";
-    }
-
-    private static string? FormatCardWage(VacancyCompactCardModel? card)
-    {
-        if (card is null || !card.WageVisible || card.HourlyWage is not decimal w)
-        {
-            return null;
-        }
-
-        return $"€ {w.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"))}/uur";
-    }
-
-    private async Task OpenMobileListSheetAsync()
-    {
-        if (!showMapOnMobile)
-        {
-            showMapOnMobile = true;
-            await InvokeAsync(StateHasChanged);
-            if (_mapReady)
-            {
-                await Task.Delay(50);
-                await Js.InvokeVoidAsync("jobMap.invalidate");
-            }
-        }
-
-        _sheetMode = SheetMode.List;
-        _sheetSnap = MapBottomSheet.Snap.Half;
-        await RefreshSheetListAsync();
-        await SyncMapSheetPaddingAsync();
-    }
-
-    private async Task OnSheetSnapChangedAsync(MapBottomSheet.Snap snap)
-    {
-        _sheetSnap = snap;
-        if (snap == MapBottomSheet.Snap.Collapsed)
-        {
-            _sheetMode = SheetMode.Collapsed;
-            _clusterStatusLabel = null;
-            await ClearMapSelectionAsync();
-        }
-        else if (snap is MapBottomSheet.Snap.Half or MapBottomSheet.Snap.Full
-                 && _sheetMode is SheetMode.Collapsed or SheetMode.Card)
-        {
-            _sheetMode = SheetMode.List;
-            await RefreshSheetListAsync();
-        }
-
-        await SyncMapSheetPaddingAsync();
-    }
-
-    private async Task OnSheetClosedAsync()
-    {
-        _sheetMode = SheetMode.Collapsed;
-        _sheetSnap = MapBottomSheet.Snap.Collapsed;
-        _clusterStatusLabel = null;
-        _sheetSelectedId = null;
-        await ClearMapSelectionAsync();
-        await SyncMapSheetPaddingAsync();
-    }
-
-    private Task OnSheetHeightChangedAsync(double height)
-        => SyncMapSheetPaddingAsync(height);
-
-    private async Task SyncMapSheetPaddingAsync(double? height = null)
-    {
-        if (_wideViewport || !_mapReady)
-        {
-            return;
-        }
-
-        try
-        {
-            var h = height ?? _sheetSnap switch
-            {
-                MapBottomSheet.Snap.Card => 160,
-                MapBottomSheet.Snap.Half => 400,
-                MapBottomSheet.Snap.Full => 700,
-                _ => 64
-            };
-            await Js.InvokeVoidAsync("jobMap.setSheetPadding", h);
-        }
-        catch
-        {
-            // map not ready
-        }
-    }
-
-    private async Task ClearMapSelectionAsync()
-    {
-        if (!_mapReady)
-        {
-            return;
-        }
-
-        try
-        {
-            await Js.InvokeVoidAsync("jobMap.clearMobileSelection");
-        }
-        catch
-        {
-            // ignore
-        }
-    }
-
-    private async Task RefreshSheetListAsync()
-    {
-        try
-        {
-            var ids = await Js.InvokeAsync<string[]>("jobMap.getViewportPinIds") ?? [];
-            _listViewportIds.Clear();
-            foreach (var s in ids)
-            {
-                if (Guid.TryParse(s, out var id))
-                {
-                    _listViewportIds.Add(id);
-                }
-            }
-
-            await SortSheetListIds();
-            await PrefetchListCardsAsync(_listViewportIds.Take(12).ToList());
-        }
-        catch
-        {
-            _listViewportIds.Clear();
-            foreach (var v in SortedVacancies.Take(40))
-            {
-                _listViewportIds.Add(v.Id);
-            }
-        }
-
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private Task SortSheetListIds()
-    {
-        var sort = EffectiveSheetSort;
-        if (sort == "distance")
-        {
-            _listViewportIds.Sort((a, b) =>
-            {
-                var ta = TravelMinutesOf(a);
-                var tb = TravelMinutesOf(b);
-                return ta.CompareTo(tb);
-            });
-        }
-        else if (sort == "match" && _isCandidate)
-        {
-            _listViewportIds.Sort((a, b) => MatchOf(b).CompareTo(MatchOf(a)));
-        }
-        else
-        {
-            // Nieuwste — discovery list order is already recent-biased when sort=recent.
-            var order = SortedVacancies.Select((v, i) => (v.Id, i)).ToDictionary(x => x.Id, x => x.i);
-            _listViewportIds.Sort((a, b) =>
-            {
-                order.TryGetValue(a, out var ia);
-                order.TryGetValue(b, out var ib);
-                return ia.CompareTo(ib);
-            });
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private int TravelMinutesOf(Guid id)
-    {
-        if (_listCards.TryGetValue(id, out var c) && c.TravelMinutes is int m)
-        {
-            return m;
-        }
-
-        var v = _vacancies.FirstOrDefault(x => x.Id == id);
-        return v?.TravelMinutes ?? int.MaxValue;
-    }
-
-    private int MatchOf(Guid id)
-    {
-        if (_listCards.TryGetValue(id, out var c) && c.MatchPercent is int m)
-        {
-            return m;
-        }
-
-        var v = _vacancies.FirstOrDefault(x => x.Id == id);
-        return v?.MatchPercent ?? -1;
-    }
-
-    private async Task PrefetchListCardsAsync(IReadOnlyList<Guid> ids)
-    {
-        var missing = ids.Where(id => !_listCards.ContainsKey(id)).ToList();
-        if (missing.Count == 0)
-        {
-            return;
-        }
-
-        try
-        {
-            var cards = await Js.InvokeAsync<VacancyCompactCardModel[]>(
-                "jobMap.fetchCardsForSheet",
-                missing.Select(id => id.ToString("D")).ToArray());
-            if (cards is null)
-            {
-                return;
-            }
-
-            foreach (var card in cards)
-            {
-                if (card is not null && card.Id != Guid.Empty)
-                {
-                    _listCards[card.Id] = card;
-                }
-            }
-        }
-        catch
-        {
-            // keep skeletons
-        }
-    }
-
-    private async Task OnSheetSortChanged(ChangeEventArgs e)
-    {
-        var value = e.Value?.ToString();
-        _sheetSortMode = value switch
-        {
-            "match" when _isCandidate => "match",
-            "distance" when _origin is not null => "distance",
-            "recent" => "recent",
-            _ => _origin is not null ? "distance" : "recent"
-        };
-        await SortSheetListIds();
-        await PrefetchListCardsAsync(_listViewportIds.Take(12).ToList());
-    }
-
-    private async Task OnListScroll(EventArgs _)
-    {
-        try
-        {
-            _listScrollTop = await Js.InvokeAsync<int>("mapBottomSheet.listScrollTop", "map-sheet-list-scroll");
-        }
-        catch
-        {
-            // ignore
-        }
-
-        var first = Math.Max(0, (_listScrollTop / ListRowHeight) - ListOverscan);
-        var slice = _listViewportIds.Skip(first).Take(16).ToList();
-        await PrefetchListCardsAsync(slice);
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnListRowSelectAsync(Guid id)
-    {
-        _sheetSelectedId = id;
-        if (_mapReady)
-        {
-            try
-            {
-                await Js.InvokeVoidAsync("jobMap.focus", id.ToString("D"));
-                await Js.InvokeVoidAsync("jobMap.highlightPinOnly", id.ToString("D"));
-            }
-            catch
-            {
-                // ignore
-            }
-        }
-
-        await InvokeAsync(StateHasChanged);
-    }
-
-    [JSInvokable]
-    public Task OnViewportPinCountChanged(int count)
-    {
-        if (_viewportPinCount == count)
-        {
-            return Task.CompletedTask;
-        }
-
-        _viewportPinCount = Math.Max(0, count);
-        if (_sheetMode == SheetMode.List)
-        {
-            return RefreshSheetListAsync();
-        }
-
-        return InvokeAsync(StateHasChanged);
-    }
-
-    [JSInvokable]
-    public async Task OnMobilePinSelected(string id)
-    {
-        if (!Guid.TryParse(id, out var vacancyId))
-        {
-            return;
-        }
-
-        _sheetSelectedId = vacancyId;
-        _sheetMode = SheetMode.Card;
-        _sheetSnap = MapBottomSheet.Snap.Card;
-        _clusterStatusLabel = null;
-        await SyncMapSheetPaddingAsync(160);
-        await InvokeAsync(StateHasChanged);
-    }
-
-    [JSInvokable]
-    public async Task OnMobileClusterSelected(string[] ids, string? placeLabel)
-    {
-        var list = (ids ?? [])
-            .Select(s => Guid.TryParse(s, out var g) ? g : Guid.Empty)
-            .Where(g => g != Guid.Empty)
-            .ToList();
-        _sheetMode = SheetMode.Cluster;
-        _sheetSnap = MapBottomSheet.Snap.Card;
-        _clusterStatusLabel = $"{list.Count} vacatures hier" +
-            (string.IsNullOrWhiteSpace(placeLabel) ? "" : $" · {placeLabel}");
-        await SyncMapSheetPaddingAsync(160);
-        await InvokeAsync(StateHasChanged);
-    }
-
-    [JSInvokable]
-    public async Task OnMobileSheetDismissed()
-    {
-        await OnSheetClosedAsync();
-        await InvokeAsync(StateHasChanged);
     }
 
     private static bool IsFinite(double value) =>
