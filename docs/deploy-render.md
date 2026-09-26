@@ -50,26 +50,45 @@ Acceptatie in het dashboard is alleen een lege map totdat de Blueprint de drie `
 5. Check:
    - `https://lobsy-acc-api.onrender.com/health` → OK
    - `https://lobsy-acc-web.onrender.com` opent de site
-   - Login: `kandidaat@jobsy.local` / `Jobsy123!`
+   - Login via **e-mail + wachtwoord** (Acceptatie seedt lokale demo-accounts; `POST /account/demo-login` is 404 omdat `ASPNETCORE_ENVIRONMENT=Production`)
 6. Optioneel: Acceptatie → **•••** → **Block cross-environment connections** (acc kan dan niet via het private netwerk bij Production).
 
 Mail op Acceptatie blijft leeg tot je `Mail__ResendApiKey` / `Mail__FromAddress` in het Dashboard zet. Laat dat zo als je geen echte mails vanuit acc wilt.
 
-## Security (demo)
+## Security (production)
 
-De Blueprint houdt `JobsyAuth__AllowDevelopmentAuth=true` zodat demo-login via de Web UI werkt, maar:
+De Blueprint zet `JobsyAuth__AllowDevelopmentAuth=false` op **alle** services (Production én Acceptatie). Daarnaast:
 
-- Buiten Development accepteert header-auth `@jobsy.local` demo-accounts met de gedeelde secret; echte registratie-/OAuth-gebruikers sturen ook `X-Jobsy-Local-Session` (HMAC met `LocalSessionSigningKey`, vernieuwd bij session-activity).
-- OAuth client-secrets vereisen een aparte `JobsyAuth__ExternalProvisionSecret` (niet dezelfde DevelopmentAuthSecret; Web gebruikt geen DevelopmentAuthSecret-fallback meer).
+- `POST /account/demo-login` geeft **altijd 404** in Production (harde environment-check), ongeacht config.
+- DemoUsers staan alleen in `appsettings.Development.json` (niet in `appsettings.json`).
+- `Seed__PurgeDemoData` / `DemoDataPurge` bestaan niet meer — geen startup-wipe van users/bedrijven.
+- Mollie `test_…` keys worden buiten Development geweigerd (fail closed); Production vereist `live_…`.
+- OAuth client-secrets vereisen een aparte `JobsyAuth__ExternalProvisionSecret`.
 - Production custom domain: `PublicWebBaseUrl=https://lobsy.nl` + CORS voor `lobsy.nl` / `www.lobsy.nl`.
-- Acceptatie gebruikt het `onrender.com`-subdomein van `lobsy-acc-web` (geen `lobsy.nl` in CORS).
+- Acceptatie gebruikt `acceptatie.lobsy.nl` / het `onrender.com`-subdomein (geen apex `lobsy.nl` in CORS).
 
 - `JobsyAuth__DevelopmentAuthSecret` wordt per environment gegenereerd op de API en gedeeld met de web-service van **diezelfde** environment.
-- `JobsyAuth__LocalSessionSigningKey` wordt apart gegenereerd en gedeeld voor HMAC-sessietokens van niet-demo gebruikers.
+- `JobsyAuth__LocalSessionSigningKey` wordt apart gegenereerd en gedeeld voor HMAC-sessietokens.
 - `JobsyAuth__ExternalProvisionSecret` wordt apart gegenereerd en gedeeld met web voor OAuth credential-provisioning.
 - `JobsyFeatures__ExposeRegistrationActivationLinks=false` (geen activatie-URL in API-responses).
 
 Na Blueprint sync: controleer per environment dat API en web dezelfde `JobsyAuth__DevelopmentAuthSecret`, `JobsyAuth__LocalSessionSigningKey` én `JobsyAuth__ExternalProvisionSecret` hebben. Production-secrets mogen **niet** gelijk zijn aan Acceptatie.
+
+### Named admin aanmaken (Production)
+
+Er is geen `admin@jobsy.local` keep-list meer. Maak een echte admin zo:
+
+1. Registreer of log in via Entra/Google (of local-login) met je eigen e-mailadres tot er een `Users`-rij bestaat.
+2. Open Render → `jobsy-db` → **Shell** (of `psql` met de connection string).
+3. Promoteer die user (Admin = enum `5`):
+
+```sql
+UPDATE "Users"
+SET "Role" = 5
+WHERE lower("Email") = lower('jij@jouwdomein.nl');
+```
+
+4. Log opnieuw in. Verwijder of deactiveer daarna eventuele oude `admin@jobsy.local` / `@jobsy.local` demo-accounts.
 
 ## Eenmalig: code + Blueprint
 
@@ -84,10 +103,11 @@ Na Blueprint sync: controleer per environment dat API en web dezelfde `JobsyAuth
 3. Bevestig instance types (Starter / Basic-256mb) in het Dashboard.
 4. Controleer na sync:
    - `jobsy-api` → **Environment**: `ConnectionStrings__JobsyDb` is een echte `postgres://` / `postgresql://` URL
-   - Production API-logs: `Operational wipe finished` of `nothing to delete` (geen nieuwe Westland-seed). Daarna: `already marked`.
+   - `JobsyAuth__AllowDevelopmentAuth=false`, `JobsyAuth__AllowStubPayments=false`, geen `Seed__PurgeDemoData`
+   - Production API-logs: **geen** “Operational wipe” / purge; alleen migrate (+ geen seed tenzij `Seed__Enabled`)
    - Acceptatie API-logs: `Seed completed` / `Seeding Jobsy mock data` (geen wipe)
    - `jobsy-api` URL + `/health` → OK
-5. `https://lobsy.nl` toont geen bedrijven/vacatures meer (alleen `admin@jobsy.local`); `https://acceptatie.lobsy.nl` blijft geseeded.
+5. Production: login met je named admin (zie hierboven). Acceptatie: local-login met geseede accounts.
 
 Als de connection string leeg is of corrupt (vaak na DB-upgrade), zie hieronder.
 
@@ -107,8 +127,8 @@ Verwijder Acceptatie-resources niet samen met Production.
 
 ## Gebruiken
 
-- Production: `https://lobsy.nl` of klik **`jobsy-web`** → link bovenaan. Na de operational wipe: login `admin@jobsy.local` / `Jobsy123!` (geen vacatures/bedrijven tot je ze opnieuw aanmaakt).
-- Acceptatie: klik **`lobsy-acc-web`** → `https://acceptatie.lobsy.nl` of `https://lobsy-acc-web.onrender.com`. Demo-login: `kandidaat@jobsy.local` / `Jobsy123!`
+- Production: `https://lobsy.nl` of klik **`jobsy-web`** → link bovenaan. Login met Entra/Google of je named admin (geen demo one-click; geen gedeeld demo-wachtwoord in deze docs).
+- Acceptatie: klik **`lobsy-acc-web`** → `https://acceptatie.lobsy.nl` of `https://lobsy-acc-web.onrender.com`. Gebruik e-mail + wachtwoord van geseede accounts (one-click demo-login is uit in Production).
 - API check: **`jobsy-api`** of **`lobsy-acc-api`** URL + `/health`
 
 Services blijven draaien; geen cold start na idle.
@@ -174,7 +194,7 @@ dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string — mockd
 | Alles `frankfurt` | Zelfde private network voor Postgres |
 | `RENDER_EXTERNAL_URL` | Stabiele cross-service HTTP (ook op free bruikbaar) |
 | `ConnectionStrings__JobsyDb` op **web én api** | Data Protection-keys in Postgres (antiforgery/auth cookies na redeploy) |
-| `JobsyAuth__AllowDevelopmentAuth` | Demo-logins zonder Entra (niet voor echte productie) |
+| `JobsyAuth__AllowDevelopmentAuth` | Altijd `false` op Render (demo-login is sowieso 404 in Production) |
 | `lobsy-acc-*` namen | Render vereist unieke servicenamen over de hele workspace |
 
 ## Database backups (productie)
@@ -253,12 +273,12 @@ Als KVK IP-whitelisting aan heeft staan in het Developer Portal, voeg de uitgaan
 3. `TokenCheckoutReconcileHostedService` herstelt betaalde checkouts zonder credit/factuur (idempotent).
 4. Optioneel: zet `VerificationCodes__Pepper` op een lange random string per omgeving.
 
-## Echte productie vs publieke demo
+## Echte productie vs Acceptatie
 
-| Flag | Demo (Render blueprint) | Echte productie |
-|------|-------------------------|-----------------|
-| `JobsyAuth__AllowDevelopmentAuth` | `true` | `false` + Entra/Google |
-| `JobsyAuth__AllowStubPayments` | `true` | `false` + live Mollie |
+| Flag | Acceptatie (`lobsy-acc-*`) | Production (`jobsy-*`) |
+|------|----------------------------|------------------------|
+| `JobsyAuth__AllowDevelopmentAuth` | `false` | `false` + Entra/Google |
+| `JobsyAuth__AllowStubPayments` | `true` (alleen acc) | `false` + live Mollie (`live_…` key) |
 | `Swagger__Enabled` | `false` | `false` (of tijdelijk `true` voor partners) |
-| `Seed:Enabled` | `true` op Acceptatie | `false` |
-| `Seed:PurgeDemoData` | uit | `true` (eenmalige wipe: alle bedrijven/vacatures/kandidaten; houdt `admin@jobsy.local`). Draait ook als `PublicWebBaseUrl` `https://lobsy.nl` is, zodat Blueprint-env-sync niet verplicht is. |
+| `Seed:Enabled` | `true` | `false` |
+| DemoDataPurge / `Seed:PurgeDemoData` | verwijderd | verwijderd |

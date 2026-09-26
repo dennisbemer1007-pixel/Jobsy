@@ -45,7 +45,7 @@ public class MolliePaymentServiceTests
     }
 
     [Fact]
-    public async Task With_api_key_creates_mollie_payment_and_persists_session()
+    public async Task With_live_api_key_creates_mollie_payment_and_persists_session()
     {
         await using var db = CreateDb();
         var companyId = await SeedCompanyAsync(db);
@@ -53,30 +53,65 @@ public class MolliePaymentServiceTests
         {
             Assert.Equal(HttpMethod.Post, request.Method);
             Assert.EndsWith("/payments", request.RequestUri!.AbsoluteUri, StringComparison.Ordinal);
+            Assert.Equal("Bearer live_abc123", request.Headers.Authorization?.ToString());
+            return JsonResponse(new
+            {
+                id = "tr_livepayment1",
+                status = "open",
+                _links = new
+                {
+                    checkout = new { href = "https://www.mollie.com/checkout/live" }
+                }
+            });
+        });
+
+        var sut = CreateSut(db, handler, isDevelopment: false, apiKey: "live_abc123");
+        var result = await sut.CreateTokenPurchaseCheckoutAsync(companyId, 10);
+
+        Assert.False(result.IsStub);
+        Assert.Equal("tr_livepayment1", result.PaymentId);
+        Assert.Equal("https://www.mollie.com/checkout/live", result.CheckoutUrl);
+        Assert.Equal(40.00m, result.AmountEuro);
+
+        var session = await db.TokenPurchaseCheckouts.SingleAsync();
+        Assert.Equal("tr_livepayment1", session.PaymentId);
+        Assert.Equal(companyId, session.CompanyId);
+        Assert.Equal(TokenPurchaseCheckoutStatus.Pending, session.Status);
+    }
+
+    [Fact]
+    public async Task Test_api_key_is_rejected_outside_development()
+    {
+        await using var db = CreateDb();
+        var companyId = await SeedCompanyAsync(db);
+        var sut = CreateSut(db, handler: null, isDevelopment: false, apiKey: "test_abc123");
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => sut.CreateTokenPurchaseCheckoutAsync(companyId, 10));
+        Assert.Contains("test", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Test_api_key_is_allowed_in_development()
+    {
+        await using var db = CreateDb();
+        var companyId = await SeedCompanyAsync(db);
+        var handler = new StubMollieHandler(request =>
+        {
             Assert.Equal("Bearer test_abc123", request.Headers.Authorization?.ToString());
             return JsonResponse(new
             {
                 id = "tr_testpayment1",
                 status = "open",
-                _links = new
-                {
-                    checkout = new { href = "https://www.mollie.com/checkout/test" }
-                }
+                _links = new { checkout = new { href = "https://www.mollie.com/checkout/test" } }
             });
         });
 
-        var sut = CreateSut(db, handler, isDevelopment: false, apiKey: "test_abc123");
+        var sut = CreateSut(db, handler, isDevelopment: true, apiKey: "test_abc123");
         var result = await sut.CreateTokenPurchaseCheckoutAsync(companyId, 10);
 
         Assert.False(result.IsStub);
         Assert.Equal("tr_testpayment1", result.PaymentId);
-        Assert.Equal("https://www.mollie.com/checkout/test", result.CheckoutUrl);
-        Assert.Equal(40.00m, result.AmountEuro);
-
-        var session = await db.TokenPurchaseCheckouts.SingleAsync();
-        Assert.Equal("tr_testpayment1", session.PaymentId);
-        Assert.Equal(companyId, session.CompanyId);
-        Assert.Equal(TokenPurchaseCheckoutStatus.Pending, session.Status);
     }
 
     [Fact]
@@ -102,7 +137,7 @@ public class MolliePaymentServiceTests
             status = "paid"
         }));
 
-        var sut = CreateSut(db, handler, isDevelopment: false, apiKey: "test_abc123");
+        var sut = CreateSut(db, handler, isDevelopment: false, apiKey: "live_abc123");
         var status = await sut.GetPaymentStatusAsync("tr_paid1");
 
         Assert.True(status.IsPaid);

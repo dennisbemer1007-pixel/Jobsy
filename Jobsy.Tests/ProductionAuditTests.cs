@@ -50,31 +50,32 @@ public class ProductionAuditTests
     }
 
     [Fact]
-    public void Demo_login_is_gated_on_allow_development_auth()
+    public void Demo_login_returns_404_in_production_regardless_of_config()
     {
         var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Auth", "AuthServiceCollectionExtensions.cs"));
         var demoIdx = src.IndexOf("MapPost(\"/account/demo-login\"", StringComparison.Ordinal);
         Assert.True(demoIdx > 0);
-        var slice = src[demoIdx..Math.Min(src.Length, demoIdx + 1800)];
-        Assert.Contains("IsDemoLoginEnabled", slice);
-        Assert.Contains("AllowDevelopmentAuth", src);
+        var slice = src[demoIdx..Math.Min(src.Length, demoIdx + 2200)];
+        Assert.Contains("IsProduction()", slice, StringComparison.Ordinal);
+        Assert.Contains("Results.NotFound()", slice, StringComparison.Ordinal);
+        Assert.Contains("IsDemoLoginEnabled", slice, StringComparison.Ordinal);
+
+        var appsettings = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "appsettings.json"));
+        Assert.DoesNotContain("DemoUsers", appsettings, StringComparison.Ordinal);
+        var devSettings = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "appsettings.Development.json"));
+        Assert.Contains("DemoUsers", devSettings, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Production_seed_is_not_tied_to_allow_development_auth()
+    public void Production_seed_is_not_tied_to_allow_development_auth_and_never_wipes()
     {
         var hosted = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api", "Jobs", "DatabaseSeedHostedService.cs"));
-        Assert.Contains("Seed:Enabled", hosted);
-        Assert.Contains("PreferWipeOverSeed", hosted);
-        Assert.Contains("PurgeDemoDataAsync", hosted);
-        Assert.DoesNotContain("JobsyAuth:AllowDevelopmentAuth", hosted);
-
-        var purge = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Infrastructure", "Data", "DemoDataPurge.cs"));
-        Assert.Contains("Seed:PurgeDemoData", purge);
-        Assert.Contains("RENDER_SERVICE_NAME", purge);
-        Assert.Contains("jobsy-api", purge);
-        Assert.Contains("IsLiveProductionSite", purge);
-        Assert.Contains("admin@jobsy.local", purge);
+        Assert.Contains("Seed:Enabled", hosted, StringComparison.Ordinal);
+        Assert.DoesNotContain("PreferWipeOverSeed", hosted, StringComparison.Ordinal);
+        Assert.DoesNotContain("PurgeDemoDataAsync", hosted, StringComparison.Ordinal);
+        Assert.DoesNotContain("JobsyAuth:AllowDevelopmentAuth", hosted, StringComparison.Ordinal);
+        Assert.False(
+            File.Exists(Path.Combine(FindRepoRoot(), "Jobsy.Infrastructure", "Data", "DemoDataPurge.cs")));
     }
 
     [Fact]

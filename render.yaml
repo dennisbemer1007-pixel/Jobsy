@@ -45,16 +45,12 @@ projects:
               - key: AllowedHosts
                 value: "*"
               - key: JobsyAuth__AllowDevelopmentAuth
-                value: "true"
-              # Stub Mollie payouts for the public demo only — keep false for real production money paths.
+                value: "false"
+              # Never enable stub payments or Mollie test_ keys on live production money paths.
               - key: JobsyAuth__AllowStubPayments
-                value: "true"
+                value: "false"
               - key: Seed__Enabled
                 value: "false"
-              # One-shot wipe of companies/vacancies/users except admin@jobsy.local.
-              # Also triggered when PublicWebBaseUrl is https://lobsy.nl (code path; no Blueprint sync required).
-              - key: Seed__PurgeDemoData
-                value: "true"
               - key: JobsyAuth__DevelopmentAuthSecret
                 generateValue: true
               - key: JobsyAuth__LocalSessionSigningKey
@@ -116,7 +112,7 @@ projects:
               - key: AllowedHosts
                 value: "*"
               - key: JobsyAuth__AllowDevelopmentAuth
-                value: "true"
+                value: "false"
               - key: JobsyAuth__DevelopmentAuthSecret
                 fromService:
                   name: jobsy-api
@@ -173,8 +169,10 @@ projects:
                 value: "false"
               - key: AllowedHosts
                 value: "*"
+              # Acc runs ASPNETCORE_ENVIRONMENT=Production; demo-login is 404 there.
+              # Seed still creates local-login demo users for password login.
               - key: JobsyAuth__AllowDevelopmentAuth
-                value: "true"
+                value: "false"
               - key: JobsyAuth__AllowStubPayments
                 value: "true"
               - key: Seed__Enabled
@@ -237,7 +235,7 @@ projects:
               - key: AllowedHosts
                 value: "*"
               - key: JobsyAuth__AllowDevelopmentAuth
-                value: "true"
+                value: "false"
               - key: JobsyAuth__DevelopmentAuthSecret
                 fromService:
                   name: lobsy-acc-api

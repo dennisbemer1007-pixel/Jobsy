@@ -340,12 +340,19 @@ public static class AuthServiceCollectionExtensions
         }).RequireRateLimiting("auth");
 
         // Demo one-click login resolves password server-side so credentials stay out of HTML.
+        // Impossible in Production regardless of JobsyAuth:AllowDevelopmentAuth (fail closed).
         app.MapPost("/account/demo-login", async (
             HttpContext http,
             DemoUserStore users,
             IConfiguration configuration,
+            IHostEnvironment environment,
             IAntiforgery antiforgery) =>
         {
+            if (environment.IsProduction())
+            {
+                return Results.NotFound();
+            }
+
             var form = await http.Request.ReadFormAsync();
             var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
                 form["returnUrl"], form["returnTo"], form["redirect"]);
@@ -681,6 +688,12 @@ public static class AuthServiceCollectionExtensions
     private static bool IsDemoLoginEnabled(HttpContext http, IConfiguration configuration)
     {
         var env = http.RequestServices.GetRequiredService<IHostEnvironment>();
+        // Production is hard-blocked above (404). Elsewhere require Development or explicit flag.
+        if (env.IsProduction())
+        {
+            return false;
+        }
+
         return env.IsDevelopment()
                || configuration.GetValue("JobsyAuth:AllowDevelopmentAuth", false);
     }

@@ -61,7 +61,7 @@ public class MolliePaymentMethodTests
             });
         });
 
-        var sut = CreateSut(db, handler, apiKey: "test_key");
+        var sut = CreateSut(db, handler, apiKey: "live_key");
         var result = await sut.CreateTokenPurchaseCheckoutAsync(companyId, 10, MolliePaymentMethods.CreditCard);
 
         Assert.False(result.IsStub);
@@ -92,7 +92,7 @@ public class MolliePaymentMethodTests
             });
         });
 
-        var sut = CreateSut(db, handler, apiKey: "test_key");
+        var sut = CreateSut(db, handler, apiKey: "live_key");
         var result = await sut.CreateTokenPurchaseCheckoutAsync(companyId, 10);
 
         Assert.Equal(MolliePaymentMethods.CreditCard, result.PaymentMethod);
@@ -116,7 +116,7 @@ public class MolliePaymentMethodTests
             });
         });
 
-        var sut = CreateSut(db, handler, apiKey: "test_key");
+        var sut = CreateSut(db, handler, apiKey: "live_key");
         await sut.CreateTokenPurchaseCheckoutAsync(companyId, 10);
 
         using var doc = JsonDocument.Parse(postedJson!);
@@ -176,7 +176,7 @@ public class MolliePaymentMethodTests
             method = "creditcard"
         }));
 
-        var sut = CreateSut(db, handler, apiKey: "test_key");
+        var sut = CreateSut(db, handler, apiKey: "live_key");
         var status = await sut.GetPaymentStatusAsync("tr_paid_cc");
 
         Assert.True(status.IsPaid);

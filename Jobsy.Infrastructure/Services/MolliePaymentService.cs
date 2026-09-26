@@ -313,7 +313,31 @@ public sealed class MolliePaymentService : IPaymentService
     private async Task<bool> TryGetApiKeyAsync(CancellationToken cancellationToken)
     {
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mollie, cancellationToken);
-        return !string.IsNullOrWhiteSpace(secrets?.ApiKey);
+        var apiKey = secrets?.ApiKey?.Trim();
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return false;
+        }
+
+        EnsureLiveKeyOutsideDevelopment(apiKey);
+        return true;
+    }
+
+    /// <summary>
+    /// Mollie <c>test_</c> keys must never run outside Development (fail closed).
+    /// </summary>
+    private void EnsureLiveKeyOutsideDevelopment(string apiKey)
+    {
+        if (_environment.IsDevelopment())
+        {
+            return;
+        }
+
+        if (apiKey.StartsWith("test_", StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "Mollie test-mode keys (test_…) zijn niet toegestaan buiten Development. Gebruik een live_ key in Production.");
+        }
     }
 
     private string? ResolveWebhookUrl()
@@ -352,6 +376,7 @@ public sealed class MolliePaymentService : IPaymentService
             ?? throw new InvalidOperationException("Geen Mollie API-key geconfigureerd.");
         var apiKey = secrets.ApiKey?.Trim()
             ?? throw new InvalidOperationException("Geen Mollie API-key geconfigureerd.");
+        EnsureLiveKeyOutsideDevelopment(apiKey);
 
         var rawBase = string.IsNullOrWhiteSpace(secrets.BaseUrl) ? DefaultApiBaseUrl : secrets.BaseUrl;
         if (!IntegrationEndpointUrl.TryNormalizeBaseUrl(rawBase, out var baseUrl, out var error)

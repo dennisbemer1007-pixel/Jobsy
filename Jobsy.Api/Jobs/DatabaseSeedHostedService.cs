@@ -42,13 +42,10 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             throw;
         }
 
-        var wipeInsteadOfSeed = JobsyDbSeeder.PreferWipeOverSeed(_configuration);
-        var allowSeed = !wipeInsteadOfSeed
-                        && (_environment.IsDevelopment()
-                            || _configuration.GetValue("Seed:Enabled", false));
+        var allowSeed = _environment.IsDevelopment()
+                        || _configuration.GetValue("Seed:Enabled", false);
         _logger.LogInformation(
-            "Startup data path: wipe={Wipe} seed={Seed} service={Service} publicWeb={PublicWeb} seedEnabled={SeedEnabled}",
-            wipeInsteadOfSeed,
+            "Startup data path: seed={Seed} service={Service} publicWeb={PublicWeb} seedEnabled={SeedEnabled}",
             allowSeed,
             _configuration["RENDER_SERVICE_NAME"],
             _configuration["PublicWebBaseUrl"],
@@ -63,17 +60,6 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             {
                 // Keep API available (salesmanager endpoints, auth, etc.) even if demo seed flakes.
                 _logger.LogError(ex, "Database seed failed during startup; API continues without full seed.");
-            }
-        }
-        else
-        {
-            try
-            {
-                await JobsyDbSeeder.PurgeDemoDataAsync(_services, _configuration);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _logger.LogError(ex, "Operational wipe failed during startup; API continues.");
             }
         }
 
