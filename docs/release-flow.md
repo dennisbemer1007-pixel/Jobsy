@@ -37,8 +37,17 @@ Zie de PR-beschrijving van de safe-release-flow en `.github/rulesets/` voor:
 2. **Render** — per service de juiste Git-branch (`main` vs `acceptatie`)
 3. **Secrets** — `JOBSY_E2E_*` voor Acc-smoke; nooit wachtwoorden in code
 
+## Automatische checks
+
+| Workflow | Wanneer | Wat |
+|----------|---------|-----|
+| `pr-tests.yml` | Elke PR | Build + unit tests + Playwright smoke tegen CI-stack; screenshots als artifact |
+| `acceptatie-smoke.yml` | Push naar `acceptatie` + elke 30 min | Zelfde smoke tegen `JOBSY_E2E_BASE_URL`; opent issue bij falen |
+| `production-health.yml` | Push naar `main` + elke 30 min | Alleen GET: homepage, `/health`, pins > 0; opent issue bij falen |
+
 ## Gerelateerd
 
 - Deploy-details: [`deploy-render.md`](deploy-render.md)
+- Branch-bescherming: [`github-branch-protection.md`](github-branch-protection.md)
 - Blueprint: [`../render.yaml`](../render.yaml)
 - CI: [`.github/workflows/pr-tests.yml`](../.github/workflows/pr-tests.yml)

@@ -1,0 +1,107 @@
+name: Acceptatie smoke
+
+# After Acc deploys (push to acceptatie) and every 30 minutes.
+# Uses dedicated secrets — never hardcode credentials.
+on:
+  push:
+    branches: [acceptatie]
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      JOBSY_E2E_BASE_URL: ${{ secrets.JOBSY_E2E_BASE_URL }}
+      JOBSY_E2E_CANDIDATE_EMAIL: ${{ secrets.JOBSY_E2E_CANDIDATE_EMAIL }}
+      JOBSY_E2E_CANDIDATE_PASSWORD: ${{ secrets.JOBSY_E2E_CANDIDATE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require Acc base URL secret
+        if: env.JOBSY_E2E_BASE_URL == ''
+        run: |
+          echo "JOBSY_E2E_BASE_URL secret is not set (expected https://acceptatie.lobsy.nl)."
+          exit 1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Restore + build tests
+        run: |
+          dotnet restore Jobsy.Tests/Jobsy.Tests.csproj
+          dotnet build Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-restore
+
+      - name: Install Playwright Chromium
+        run: pwsh Jobsy.Tests/bin/Release/net9.0/playwright.ps1 install --with-deps chromium
+
+      - name: Wait for Acceptatie healthy
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$JOBSY_E2E_BASE_URL/" || true)
+            if echo "$code" | grep -Eq '200|301|302'; then
+              echo "Acceptatie reachable ($code)"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Acceptatie not reachable"
+          exit 1
+
+      - name: Run Playwright smoke against Acceptatie
+        id: smoke
+        run: |
+          mkdir -p artifacts/playwright-smoke
+          dotnet test Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
+            --filter "FullyQualifiedName~MobileSmokePlaywrightTests|FullyQualifiedName~Mobile_candidate_tab_switching" \
+            --logger "trx;LogFileName=acc-smoke.trx"
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptatie-smoke-screenshots
+          path: artifacts/playwright-smoke/**
+          if-no-files-found: ignore
+
+      - name: Open GitHub issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Acceptatie smoke FAILED (${new Date().toISOString().slice(0,16)} UTC)`;
+            const body = [
+              'Automated Acceptatie Playwright smoke failed.',
+              '',
+              `- Workflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              `- Base URL: secrets.JOBSY_E2E_BASE_URL`,
+              '',
+              'Check the Playwright screenshot artifact and Acc deploy logs.'
+            ].join('\n');
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'acceptatie-smoke'
+            });
+            const existing = issues.data.find(i => i.title.startsWith('Acceptatie smoke FAILED'));
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['acceptatie-smoke', 'bug']
+              });
+            }
