@@ -33,7 +33,7 @@
     {
         var questions = QuestionsFor(category);
         <section class="questionnaire-section" aria-labelledby="@($"cat-{category}")">
-            <h2 class="questionnaire-section__label" id="@($"cat-{category}")">@Culture[$"Career.Cat.{category}"]</h2>
+            <h2 class="questionnaire-section__label" id="@($"cat-{category}")">@(CareerTestCatalog.HollandLetter.TryGetValue(category, out var letter) ? $"{letter} — " : null)@Culture[$"Career.Cat.{category}"]</h2>
             @foreach (var question in questions)
             {
                 var answered = _answers.ContainsKey(question.Id);

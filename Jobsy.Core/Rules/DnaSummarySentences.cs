@@ -124,7 +124,7 @@ public static class DnaSummarySentences
         }
 
         // Shorten second into a trailing clause when possible.
-        return $"{TrimSentence(a)} Daarnaast: {LowerFirst(TrimSentence(b))}.";
+        return $"{TrimSentence(a)}. Daarnaast: {LowerFirst(TrimSentence(b))}.";
     }
 
     public static string Values(string valueCode)

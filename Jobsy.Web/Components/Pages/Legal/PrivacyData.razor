@@ -8,7 +8,7 @@
 <div class="panel-page">
     <h1>Mijn gegevens (AVG)</h1>
     <p class="login-lead">
-        Exporteer je persoonsgegevens of meld je account af. Afmelden vereist een reden en een verificatiecode per e-mail;
+        Exporteer je persoonsgegevens of verwijder je account. Verwijderen vereist een reden en een verificatiecode per e-mail;
         daarna wordt je account geblokkeerd en worden je gegevens opgeschoond.
     </p>
 
@@ -17,7 +17,7 @@
             @(_busyExport ? "Bezig…" : "Exporteer JSON")
         </button>
         <button class="provider-btn provider-btn--danger" type="button" disabled="@_busyExport" @onclick="OpenUnsubscribe">
-            Account afmelden
+            Account verwijderen
         </button>
         <a class="auth-link" href="/privacy">Terug naar privacyverklaring</a>
     </div>
