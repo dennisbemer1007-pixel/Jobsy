@@ -195,22 +195,11 @@ public static class CulturePersonalityCatalog
     public static IReadOnlyList<CompetencyQuestion> QuestionsFor(string category)
         => Questions.Where(q => string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase)).ToList();
 
-    /// <summary>Short Dutch label for UI / stories — no DISC or Big Five jargon.</summary>
-    public static string EverydayLabel(string code) => code switch
-    {
-        Autonomy => "zelfstandig werken",
-        Informal => "informele sfeer",
-        Collaboration => "samenwerken",
-        Flexibility => "flexibel meebewegen",
-        Innovation => "nieuwe dingen proberen",
-        PeopleFirst => "mensen voorop zetten",
-        Openness => "openstaan voor nieuw",
-        Conscientiousness => "netjes en betrouwbaar werken",
-        Extraversion => "energie van mensen om je heen",
-        Agreeableness => "prettig samen optrekken",
-        EmotionalStability => "kalm blijven als het druk is",
-        _ => "hoe jij graag werkt"
-    };
+    /// <summary>Short Dutch label for UI / stories — shared via <see cref="DimensionLabels"/>.</summary>
+    public static string EverydayLabel(string code)
+        => CategoryCodes.Contains(code, StringComparer.OrdinalIgnoreCase)
+            ? DimensionLabels.For(code)
+            : "hoe jij graag werkt";
 }
 
 /// <summary>0–100 scores per culture dimension and IPIP-style personality facet.</summary>

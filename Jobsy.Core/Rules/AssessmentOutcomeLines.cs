@@ -34,23 +34,9 @@ public static class AssessmentOutcomeLines
         int? enterprising,
         int? conventional)
     {
-        var ranked = new (string Code, int? Value)[]
-        {
-            (CareerTestCatalog.Realistic, realistic),
-            (CareerTestCatalog.Investigative, investigative),
-            (CareerTestCatalog.Artistic, artistic),
-            (CareerTestCatalog.Social, social),
-            (CareerTestCatalog.Enterprising, enterprising),
-            (CareerTestCatalog.Conventional, conventional)
-        }
-            .Where(x => x.Value is not null)
-            .OrderByDescending(x => x.Value)
-            .ThenBy(x => x.Code, StringComparer.Ordinal)
-            .ToList();
-
-        return ranked.Count == 0
-            ? null
-            : $"Richting: {CareerCompassBuilder.TypeLabel(ranked[0].Code).ToLowerInvariant()}";
+        var line = RiasecRanking.FormatCareerOutcomeLine(
+            realistic, investigative, artistic, social, enterprising, conventional);
+        return string.IsNullOrWhiteSpace(line) ? null : line;
     }
 
     public static string? Culture(
@@ -104,6 +90,6 @@ public static class AssessmentOutcomeLines
 
         return ranked.Count == 0
             ? null
-            : $"Prioriteit: {SchwartzValuesCatalog.EverydayLabel(ranked[0].Code)}";
+            : $"Prioriteit: {DimensionLabels.For(ranked[0].Code)}";
     }
 }

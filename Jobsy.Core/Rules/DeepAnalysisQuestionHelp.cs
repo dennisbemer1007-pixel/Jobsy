@@ -20,42 +20,7 @@ public static class DeepAnalysisQuestionHelp
         return $"{pick} {angle}";
     }
 
-    public static string DomainLabel(string domain) => domain switch
-    {
-        DeepAnalysisCompetenceItems.Openheid => "Nieuwe dingen proberen",
-        DeepAnalysisCompetenceItems.Consciëntieusheid => "Afmaken & netjes werken",
-        DeepAnalysisCompetenceItems.Extraversie => "Energie van mensen",
-        DeepAnalysisCompetenceItems.Vriendelijkheid => "Samen & aardig",
-        DeepAnalysisCompetenceItems.EmotioneleStabiliteit => "Kalm blijven",
-        // Free competentietest categories (Extraversie shares the Big Five label above)
-        CompetencyTestCatalog.Samenwerken => "Samen & aardig",
-        CompetencyTestCatalog.Resultaatgerichtheid => "Afmaken & netjes werken",
-        CompetencyTestCatalog.Stressbestendigheid => "Kalm blijven",
-        CompetencyTestCatalog.Innovatie => "Nieuwe dingen proberen",
-        CareerTestCatalog.Realistic => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Realistic),
-        CareerTestCatalog.Investigative => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Investigative),
-        CareerTestCatalog.Artistic => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Artistic),
-        CareerTestCatalog.Social => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social),
-        CareerTestCatalog.Enterprising => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Enterprising),
-        CareerTestCatalog.Conventional => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional),
-        SchwartzValuesCatalog.Autonomy => "Eigen regie & uitdaging",
-        SchwartzValuesCatalog.Connection => "Verbinding & zorg",
-        SchwartzValuesCatalog.Achievement => "Prestatie & groei",
-        SchwartzValuesCatalog.Stability => "Zekerheid & traditie",
-        SchwartzValuesCatalog.Impact => "Impact & rechtvaardigheid",
-        CulturePersonalityCatalog.Informal => "Informele sfeer",
-        CulturePersonalityCatalog.Collaboration => "Samenwerken",
-        CulturePersonalityCatalog.Flexibility => "Flexibel meebewegen",
-        CulturePersonalityCatalog.Innovation => "Nieuwe dingen proberen",
-        CulturePersonalityCatalog.PeopleFirst => "Mensen voorop",
-        // Autonomy shares the string code with SchwartzValuesCatalog.Autonomy above.
-        CulturePersonalityCatalog.Openness => "Openstaan voor nieuw",
-        CulturePersonalityCatalog.Conscientiousness => "Netjes en betrouwbaar",
-        CulturePersonalityCatalog.Extraversion => "Energie van mensen",
-        CulturePersonalityCatalog.Agreeableness => "Prettig samen optrekken",
-        CulturePersonalityCatalog.EmotionalStability => "Kalm onder druk",
-        _ => string.IsNullOrWhiteSpace(domain) ? "Onderwerp" : domain
-    };
+    public static string DomainLabel(string domain) => DimensionLabels.For(domain);
 
     private static readonly string[] FallbackScenarios =
     [

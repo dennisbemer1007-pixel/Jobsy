@@ -434,12 +434,14 @@
             return;
         }
 
-        var top = AssessmentOutcomeLines.Career(
+        var topCodes = RiasecRanking.TopCodes(
             scores.Realistic, scores.Investigative, scores.Artistic,
             scores.Social, scores.Enterprising, scores.Conventional);
-        _headline = string.IsNullOrWhiteSpace(top)
+        _headline = topCodes.Count == 0
             ? null
-            : $"{CareerCompassBuilder.TypeLabel(TopRiasec(scores))} past het best";
+            : topCodes.Count == 1
+                ? $"{RiasecRanking.FormatTopEqualOrLabel(topCodes)} past het best"
+                : RiasecRanking.FormatTopEqualOrLabel(topCodes);
         _headlineLead = Culture["Tests.CareerResultLead"];
         AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social), scores.Social);
         AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional), scores.Conventional);
@@ -537,23 +539,6 @@
         CulturePersonalityCatalog.EmotionalStability => scores.EmotionalStability,
         _ => null
     };
-
-    private static string TopRiasec(RiasecScoreSet scores)
-    {
-        var ranked = new (string Code, int? Value)[]
-        {
-            (CareerTestCatalog.Realistic, scores.Realistic),
-            (CareerTestCatalog.Investigative, scores.Investigative),
-            (CareerTestCatalog.Artistic, scores.Artistic),
-            (CareerTestCatalog.Social, scores.Social),
-            (CareerTestCatalog.Enterprising, scores.Enterprising),
-            (CareerTestCatalog.Conventional, scores.Conventional)
-        }
-            .Where(x => x.Value is not null)
-            .OrderByDescending(x => x.Value)
-            .ToList();
-        return ranked.Count == 0 ? CareerTestCatalog.Social : ranked[0].Code;
-    }
 
     private string FormatCompleted(DateTime? completedAtUtc, bool deep)
     {

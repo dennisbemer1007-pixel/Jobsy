@@ -432,33 +432,7 @@ public static class DeepAnalysisCatalog
         _ => $"Op {Label(domain)} scoor je hoog; weeg dat mee bij branchevorkeur en matching."
     };
 
-    private static string Label(string domain) => domain switch
-    {
-        CareerTestCatalog.Realistic => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Realistic),
-        CareerTestCatalog.Investigative => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Investigative),
-        CareerTestCatalog.Artistic => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Artistic),
-        CareerTestCatalog.Social => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social),
-        CareerTestCatalog.Enterprising => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Enterprising),
-        CareerTestCatalog.Conventional => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional),
-        DeepAnalysisCompetenceItems.EmotioneleStabiliteit => "emotionele stabiliteit",
-        DeepAnalysisCompetenceItems.Vriendelijkheid => "vriendelijkheid",
-        SchwartzValuesCatalog.Autonomy => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Autonomy),
-        SchwartzValuesCatalog.Connection => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Connection),
-        SchwartzValuesCatalog.Achievement => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Achievement),
-        SchwartzValuesCatalog.Stability => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Stability),
-        SchwartzValuesCatalog.Impact => SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Impact),
-        CulturePersonalityCatalog.Informal => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Informal),
-        CulturePersonalityCatalog.Collaboration => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Collaboration),
-        CulturePersonalityCatalog.Flexibility => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Flexibility),
-        CulturePersonalityCatalog.Innovation => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Innovation),
-        CulturePersonalityCatalog.PeopleFirst => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.PeopleFirst),
-        CulturePersonalityCatalog.Openness => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Openness),
-        CulturePersonalityCatalog.Conscientiousness => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Conscientiousness),
-        CulturePersonalityCatalog.Extraversion => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Extraversion),
-        CulturePersonalityCatalog.Agreeableness => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.Agreeableness),
-        CulturePersonalityCatalog.EmotionalStability => CulturePersonalityCatalog.EverydayLabel(CulturePersonalityCatalog.EmotionalStability),
-        _ => domain.ToLowerInvariant()
-    };
+    private static string Label(string domain) => DimensionLabels.For(domain);
 
     public static SchwartzValuesScores ToSchwartzScores(IReadOnlyList<DeepAnalysisDomainScore> scores)
     {

@@ -1,3 +1,4 @@
+using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 
 namespace Jobsy.Web.Services;
@@ -102,28 +103,28 @@ public sealed class CandidateProfileService
                 new CandidateProfileScoreBar
                 {
                     Id = "samenwerken",
-                    Label = "Samenwerken",
+                    Label = DimensionLabels.For(CompetencyTestCatalog.Samenwerken),
                     Percent = 82,
                     Hint = "Sterk in teamverband"
                 },
                 new CandidateProfileScoreBar
                 {
                     Id = "resultaat",
-                    Label = "Resultaatgerichtheid",
+                    Label = DimensionLabels.For(CompetencyTestCatalog.Resultaatgerichtheid),
                     Percent = 74,
                     Hint = "Betrouwbaar afronden"
                 },
                 new CandidateProfileScoreBar
                 {
                     Id = "stress",
-                    Label = "Stressbestendigheid",
+                    Label = DimensionLabels.For(CompetencyTestCatalog.Stressbestendigheid),
                     Percent = 68,
                     Hint = "Stabiel bij pieken"
                 },
                 new CandidateProfileScoreBar
                 {
                     Id = "innovatie",
-                    Label = "Innovatie",
+                    Label = DimensionLabels.For(CompetencyTestCatalog.Innovatie),
                     Percent = 55,
                     Hint = "Ruimte om te groeien"
                 },

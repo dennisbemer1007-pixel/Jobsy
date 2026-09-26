@@ -44,12 +44,8 @@ public static class WhoAmIKeywords
             .ToList();
     }
 
-    public static string EverydayCompetency(string code) => code switch
-    {
-        CompetencyTestCatalog.Samenwerken => "samenwerken",
-        CompetencyTestCatalog.Resultaatgerichtheid => "resultaat halen",
-        CompetencyTestCatalog.Stressbestendigheid => "rust onder druk",
-        CompetencyTestCatalog.Innovatie => "nieuwe wegen zoeken",
-        _ => "werksterkte"
-    };
+    public static string EverydayCompetency(string code)
+        => CompetencyTestCatalog.CategoryCodes.Contains(code, StringComparer.OrdinalIgnoreCase)
+            ? DimensionLabels.For(code)
+            : "werksterkte";
 }

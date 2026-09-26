@@ -1,3 +1,5 @@
+using Jobsy.Core.Rules;
+
 namespace Jobsy.Web.Localization;
 
 internal static class UiStringsValues
@@ -31,15 +33,15 @@ internal static class UiStringsValues
         ["ValuesScan.ScienceNote"] = "Wetenschappelijk model: Schwartz Value Model (werkplek-drivers: autonomie, verbinding, prestatie, stabiliteit, impact). Geen diagnose — wel een helder startpunt voor waardenfit in matching.",
         ["ValuesScan.PrivacyNote"] = "Je antwoorden blijven in jouw account. Werkgevers zien geen ruwe antwoorden. Export en wissen via Mijn gegevens. Meer in de",
 
-        ["ValuesScan.Cat.Autonomy"] = "Eigen regie & uitdaging",
+        ["ValuesScan.Cat.Autonomy"] = DimensionLabels.For(SchwartzValuesCatalog.Autonomy),
         ["ValuesScan.Cat.Autonomy.Hint"] = "Hoe belangrijk is het om zelf te bepalen hoe je werkt en nieuwe dingen te proberen?",
-        ["ValuesScan.Cat.Connection"] = "Verbinding & zorg",
+        ["ValuesScan.Cat.Connection"] = DimensionLabels.For(SchwartzValuesCatalog.Connection),
         ["ValuesScan.Cat.Connection.Hint"] = "Hoe belangrijk zijn warme relaties met collega's, klanten en een behulpzame sfeer?",
-        ["ValuesScan.Cat.Achievement"] = "Prestatie & groei",
+        ["ValuesScan.Cat.Achievement"] = DimensionLabels.For(SchwartzValuesCatalog.Achievement),
         ["ValuesScan.Cat.Achievement.Hint"] = "Hoe sterk wil je resultaat zien, doelen halen en jezelf verbeteren?",
-        ["ValuesScan.Cat.Stability"] = "Zekerheid & traditie",
+        ["ValuesScan.Cat.Stability"] = DimensionLabels.For(SchwartzValuesCatalog.Stability),
         ["ValuesScan.Cat.Stability.Hint"] = "Hoe belangrijk zijn vaste afspraken, veiligheid en voorspelbaarheid?",
-        ["ValuesScan.Cat.Impact"] = "Impact & rechtvaardigheid",
+        ["ValuesScan.Cat.Impact"] = DimensionLabels.For(SchwartzValuesCatalog.Impact),
         ["ValuesScan.Cat.Impact.Hint"] = "Hoe belangrijk is het om via je werk iets goed te doen voor mens en omgeving?",
 
         ["ValuesScan.Q01"] = "Ik wil zelf kunnen bepalen hoe ik mijn werk aanpak.",

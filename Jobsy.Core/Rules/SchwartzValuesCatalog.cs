@@ -165,15 +165,13 @@ public static class SchwartzValuesCatalog
     public static IReadOnlyList<CompetencyQuestion> QuestionsFor(string category)
         => Questions.Where(q => string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase)).ToList();
 
-    public static string EverydayLabel(string code) => code switch
-    {
-        Autonomy => "eigen regie en nieuwe uitdagingen",
-        Connection => "warme band met collega's en klanten",
-        Achievement => "resultaat en groei",
-        Stability => "zekerheid en voorspelbaarheid",
-        Impact => "bijdrage aan mens en omgeving",
-        _ => "wat jij belangrijk vindt op werk"
-    };
+    /// <summary>Shared dimension label (title case). Legacy lowercase phrases map via <see cref="DimensionLabels.MapStored"/>.</summary>
+    public static string EverydayLabel(string code)
+        => code switch
+        {
+            Autonomy or Connection or Achievement or Stability or Impact => DimensionLabels.For(code),
+            _ => "wat jij belangrijk vindt op werk"
+        };
 }
 
 /// <summary>0–100 scores per Schwartz workplace value driver.</summary>
