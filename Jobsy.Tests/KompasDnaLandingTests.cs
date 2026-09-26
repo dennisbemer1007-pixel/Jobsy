@@ -12,8 +12,9 @@ public class KompasDnaLandingTests
     public void Template_sentences_cover_all_tests_and_levels()
     {
         var entries = DnaSummarySentences.AllEntries();
-        Assert.True(entries.Count >= 40);
+        Assert.True(entries.Count >= 38);
         Assert.Contains(entries, e => e.Key.StartsWith("competence.Samenwerken.", StringComparison.Ordinal));
+        Assert.Contains(entries, e => e.Key.StartsWith("competence.Extraversie.", StringComparison.Ordinal));
         Assert.Contains(entries, e => e.Key == "career.Social");
         Assert.Contains(entries, e => e.Key == "culture.Autonomy.high");
         Assert.Contains(entries, e => e.Key == "values.Impact");

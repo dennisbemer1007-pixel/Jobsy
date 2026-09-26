@@ -147,7 +147,7 @@ public static class DnaSummarySentences
     public static IReadOnlyList<(string Key, string Sentence)> AllEntries()
     {
         var list = new List<(string, string)>();
-        foreach (var cat in CompetencyTestCatalog.CategoryCodes)
+        foreach (var cat in CompetencyTestCatalog.QuickScanCategories)
         {
             foreach (var level in new[] { "high", "mid", "low" })
             {
