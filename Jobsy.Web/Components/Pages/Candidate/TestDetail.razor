@@ -1,15 +1,18 @@
 @page "/profiel/tests/{TestKey}"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using System.Globalization
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
+@using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
+@inject PersistentComponentState Persist
+@implements IDisposable
 
 <PageTitle>@(_def is null ? Culture["Kompas.TabTests"] : Culture[_def.TitleKey]) · Lobsy</PageTitle>
 
@@ -20,7 +23,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">@Culture["Common.Loading"]</p>
+        <PageContentSkeleton Variant="test-detail" LoadingLabel="@Culture["Common.Loading"]" />
     }
     else if (_def is null)
     {
@@ -231,7 +234,9 @@
     [Parameter] public string? TestKey { get; set; }
     [SupplyParameterFromQuery] public string? PaymentError { get; set; }
 
+    private const string PersistKeyPrefix = "candidateTestDetail:";
     private bool _loading = true;
+    private bool _restored;
     private bool _busy;
     private AssessmentTestDefinition? _def;
     private bool _freeDone;
@@ -249,6 +254,67 @@
     private CompetencyScoreSet? _competencyScores;
     private DeepAnalysisState? _deepState;
     private CompetenceDeepReport? _competenceReport;
+    private PersistingComponentStateSubscription _persistSubscription;
+
+    protected override void OnInitialized()
+    {
+        _persistSubscription = Persist.RegisterOnPersisting(PersistState);
+        var key = PersistKeyPrefix + (TestKey ?? "");
+        if (Persist.TryTakeFromJson<TestDetailPersistState>(key, out var saved)
+            && saved is not null
+            && string.Equals(saved.TestKey, TestKey, StringComparison.OrdinalIgnoreCase))
+        {
+            _freeDone = saved.FreeDone;
+            _deepUnlocked = saved.DeepUnlocked;
+            _deepCompleted = saved.DeepCompleted;
+            _priceEuro = saved.PriceEuro;
+            _headline = saved.Headline;
+            _headlineLead = saved.HeadlineLead;
+            _completedMeta = saved.CompletedMeta;
+            _scoreBars.Clear();
+            _scoreBars.AddRange(saved.ScoreBars ?? []);
+            _personalityBars.Clear();
+            _personalityBars.AddRange(saved.PersonalityBars ?? []);
+            _careerCompass = saved.CareerCompass;
+            _riasecScores = saved.RiasecScores;
+            _competencyScores = saved.CompetencyScores;
+            _deepState = saved.DeepState;
+            _competenceReport = saved.CompetenceReport;
+            _restored = true;
+            _loading = false;
+        }
+    }
+
+    private Task PersistState()
+    {
+        if (_def is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        Persist.PersistAsJson(PersistKeyPrefix + (TestKey ?? ""), new TestDetailPersistState
+        {
+            TestKey = TestKey,
+            FreeDone = _freeDone,
+            DeepUnlocked = _deepUnlocked,
+            DeepCompleted = _deepCompleted,
+            PriceEuro = _priceEuro,
+            Headline = _headline,
+            HeadlineLead = _headlineLead,
+            CompletedMeta = _completedMeta,
+            ScoreBars = _scoreBars.ToList(),
+            PersonalityBars = _personalityBars.ToList(),
+            CareerCompass = _careerCompass,
+            RiasecScores = _riasecScores,
+            CompetencyScores = _competencyScores,
+            DeepState = _deepState,
+            CompetenceReport = _competenceReport
+        });
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+        => _persistSubscription.Dispose();
 
     protected override async Task OnInitializedAsync()
     {
@@ -261,6 +327,11 @@
         if (_def is null)
         {
             _loading = false;
+            return;
+        }
+
+        if (_restored)
+        {
             return;
         }
 
@@ -298,6 +369,25 @@
         {
             _loading = false;
         }
+    }
+
+    private sealed class TestDetailPersistState
+    {
+        public string? TestKey { get; set; }
+        public bool FreeDone { get; set; }
+        public bool DeepUnlocked { get; set; }
+        public bool DeepCompleted { get; set; }
+        public decimal PriceEuro { get; set; }
+        public string? Headline { get; set; }
+        public string? HeadlineLead { get; set; }
+        public string? CompletedMeta { get; set; }
+        public List<ScoreBar>? ScoreBars { get; set; }
+        public List<ScoreBar>? PersonalityBars { get; set; }
+        public CareerCompassModel? CareerCompass { get; set; }
+        public RiasecScoreSet? RiasecScores { get; set; }
+        public CompetencyScoreSet? CompetencyScores { get; set; }
+        public DeepAnalysisState? DeepState { get; set; }
+        public CompetenceDeepReport? CompetenceReport { get; set; }
     }
 
     private async Task LoadCompetenceAsync()

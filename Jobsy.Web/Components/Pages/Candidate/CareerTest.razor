@@ -1,11 +1,12 @@
 @page "/candidate/career"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@inject PersistentComponentState Persist
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
@@ -56,10 +57,12 @@
 }
 
 @code {
+    private const string PersistKey = "candidateCareerTest";
     private bool _loading = true;
     private bool _loadFailed;
     private bool _completing;
     private bool _smoothScroll;
+    private bool _restored;
     private string? _message;
     private string? _banner;
     private int? _currentId;
@@ -68,6 +71,7 @@
     private List<CompetencyQuestionItem> _questions = [];
     private List<CandidateMatchedVacancy> _matches = [];
     private QuestionnaireAutosave? _autosave;
+    private PersistingComponentStateSubscription _persistSubscription;
 
     private int AnsweredCount => _answers.Count;
 
@@ -92,6 +96,46 @@
         }
     }
 
+    protected override void OnInitialized()
+    {
+        _persistSubscription = Persist.RegisterOnPersisting(PersistState);
+        if (Persist.TryTakeFromJson<CandidateCareerInterestState>(PersistKey, out var saved) && saved is not null)
+        {
+            ApplyState(saved);
+            _restored = true;
+            _loading = false;
+        }
+    }
+
+    private Task PersistState()
+    {
+        Persist.PersistAsJson(PersistKey, new CandidateCareerInterestState
+        {
+            Questions = _questions,
+            Answers = _answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            TopVacancies = _matches
+        });
+        return Task.CompletedTask;
+    }
+
+    private void ApplyState(CandidateCareerInterestState state)
+    {
+        _questions = state.Questions ?? [];
+        _matches = state.TopVacancies ?? [];
+        _answers.Clear();
+        foreach (var (key, value) in state.Answers ?? [])
+        {
+            if (int.TryParse(key, out var id) && value is >= 1 and <= 5)
+            {
+                _answers[id] = value;
+            }
+        }
+
+        _currentId = FirstUnanswered() ?? QuestionsFlat().LastOrDefault()?.Id;
+        _scrollToId = _currentId;
+        _smoothScroll = false;
+    }
+
     protected override async Task OnInitializedAsync()
     {
         _autosave = new QuestionnaireAutosave(
@@ -102,27 +146,26 @@
             },
             onChanged: () => InvokeAsync(StateHasChanged));
 
+        if (_restored)
+        {
+            _autosave.ReplaceAll(_answers);
+            return;
+        }
+
         try
         {
             var state = await Api.GetMyCareerInterestsAsync();
             if (state is not null)
             {
-                _questions = state.Questions;
-                _matches = state.TopVacancies ?? [];
-                _answers.Clear();
-                foreach (var (key, value) in state.Answers)
-                {
-                    if (int.TryParse(key, out var id) && value is >= 1 and <= 5)
-                    {
-                        _answers[id] = value;
-                    }
-                }
+                ApplyState(state);
+            }
+            else
+            {
+                _currentId = FirstUnanswered() ?? QuestionsFlat().LastOrDefault()?.Id;
+                _scrollToId = _currentId;
             }
 
             _autosave.ReplaceAll(_answers);
-            _currentId = FirstUnanswered() ?? QuestionsFlat().LastOrDefault()?.Id;
-            _scrollToId = _currentId;
-            _smoothScroll = false;
         }
         catch (Exception ex)
         {
@@ -247,6 +290,7 @@
 
     public async ValueTask DisposeAsync()
     {
+        _persistSubscription.Dispose();
         if (_autosave is not null)
         {
             await _autosave.DisposeAsync();

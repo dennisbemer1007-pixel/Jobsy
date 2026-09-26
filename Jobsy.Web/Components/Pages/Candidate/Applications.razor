@@ -1,14 +1,16 @@
 @page "/candidate/applications"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
 @inject IJSRuntime Js
+@inject PersistentComponentState Persist
 @implements IDisposable
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
@@ -32,7 +34,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">@Culture["Common.Loading"]</p>
+        <PageContentSkeleton Variant="apps" CardCount="3" LoadingLabel="@Culture["Common.Loading"]" />
     }
     else if (_filtered.Count == 0)
     {
@@ -115,23 +117,47 @@
 </div>
 
 @code {
+    private const string PersistKey = "candidateApplications";
     private List<ApplicationItem> _items = [];
     private List<ApplicationItem> _filtered = [];
     private bool _loading = true;
+    private bool _restored;
     private bool _readOnly;
     private string _tab = "all";
     private Guid? _busyId;
     private bool _pdfBusy;
     private string? _message;
+    private PersistingComponentStateSubscription _persistSubscription;
     private static readonly System.Globalization.CultureInfo Dutch = new("nl-NL");
 
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        _persistSubscription = Persist.RegisterOnPersisting(PersistState);
+        if (Persist.TryTakeFromJson<List<ApplicationItem>>(PersistKey, out var saved) && saved is not null)
+        {
+            _items = saved;
+            ApplyTab();
+            _loading = false;
+            _restored = true;
+        }
+    }
+
+    private Task PersistState()
+    {
+        Persist.PersistAsJson(PersistKey, _items);
+        return Task.CompletedTask;
+    }
 
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthState.GetAuthenticationStateAsync();
         _readOnly = !RoleClaimMatching.HasRole(state.User, JobsyRoles.Candidate);
+
+        if (_restored)
+        {
+            return;
+        }
 
         try
         {
@@ -165,7 +191,10 @@
     }
 
     public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    {
+        Culture.Changed -= OnCultureChanged;
+        _persistSubscription.Dispose();
+    }
 
     private void SetTab(string tab)
     {

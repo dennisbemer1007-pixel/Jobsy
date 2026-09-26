@@ -12,7 +12,14 @@
 <section class="kompas" aria-labelledby="kompas-title">
     <header class="kompas__intro">
         <h2 id="kompas-title" class="kompas__heading">@Culture["Kompas.Title"]</h2>
-        @if (!_loading && _completenessPercent < 100)
+        @if (_loading || (_kompas is null && ProfileTab is not null && SharedKompas is null))
+        {
+            <div class="kompas__completeness kompas__completeness--pending" aria-busy="true">
+                <span class="skeleton-line skeleton-line--lead"></span>
+                <span class="skeleton-line skeleton-line--row" style="height:0.45rem;margin-top:0.4rem;"></span>
+            </div>
+        }
+        else if (_completenessPercent < 100)
         {
             <div class="kompas__completeness"
                  aria-label="@Culture.Format("Kompas.CompletenessAria", _completenessPercent)">
@@ -264,6 +271,12 @@
                 _loading = false;
             }
         }
+        else if (ProfileTab is not null)
+        {
+            // Parent still loading — keep skeleton; never flash "0% compleet".
+            _loading = true;
+            _completenessPercent = 0;
+        }
     }
 
     protected override Task OnInitializedAsync()
@@ -394,8 +407,16 @@
         if (ProfileTab is not null)
         {
             _kompas = SharedKompas;
-            _completenessPercent = SharedKompas?.ProfileCompletenessPercent ?? 0;
-            _loading = false;
+            if (SharedKompas is not null)
+            {
+                _completenessPercent = SharedKompas.ProfileCompletenessPercent;
+                _loading = false;
+            }
+            else
+            {
+                _completenessPercent = 0;
+                _loading = true;
+            }
             return;
         }
 

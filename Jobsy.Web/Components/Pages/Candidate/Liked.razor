@@ -1,11 +1,13 @@
 @page "/candidate/liked"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
+@inject PersistentComponentState Persist
 @implements IDisposable
 
 <PageTitle>@Culture["Saved.Title"] · Lobsy</PageTitle>
@@ -24,7 +26,7 @@
 
             @if (_loading)
             {
-                <p class="state-message">@Culture["Common.Loading"]</p>
+                <PageContentSkeleton Variant="cards" CardCount="4" LoadingLabel="@Culture["Common.Loading"]" />
             }
             else if (_items.Count == 0)
             {
@@ -91,11 +93,29 @@
 </AuthorizeView>
 
 @code {
+    private const string PersistKey = "candidateLiked";
     private List<CandidateEngagementItem> _items = [];
     private bool _loading = true;
+    private bool _restored;
+    private PersistingComponentStateSubscription _persistSubscription;
 
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        _persistSubscription = Persist.RegisterOnPersisting(PersistState);
+        if (Persist.TryTakeFromJson<List<CandidateEngagementItem>>(PersistKey, out var saved) && saved is not null)
+        {
+            _items = saved;
+            _loading = false;
+            _restored = true;
+        }
+    }
+
+    private Task PersistState()
+    {
+        Persist.PersistAsJson(PersistKey, _items);
+        return Task.CompletedTask;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -103,6 +123,11 @@
         if (state.User.Identity?.IsAuthenticated != true || !state.User.IsInRole("Candidate"))
         {
             _loading = false;
+            return;
+        }
+
+        if (_restored)
+        {
             return;
         }
 
@@ -135,5 +160,8 @@
     }
 
     public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    {
+        Culture.Changed -= OnCultureChanged;
+        _persistSubscription.Dispose();
+    }
 }

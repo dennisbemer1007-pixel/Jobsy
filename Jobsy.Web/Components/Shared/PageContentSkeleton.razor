@@ -1,0 +1,88 @@
+@* Layout-stable loading shell for candidate pages (avoids CLS when data arrives). *@
+@if (Variant == "apps")
+{
+    <div class="page-skeleton page-skeleton--apps" aria-busy="true">
+        <p class="visually-hidden">@LoadingLabel</p>
+        @for (var i = 0; i < CardCount; i++)
+        {
+            <div class="page-skeleton__card">
+                <span class="skeleton-line skeleton-line--title"></span>
+                <span class="skeleton-line skeleton-line--lead"></span>
+                <span class="skeleton-line skeleton-line--row"></span>
+                <span class="skeleton-line skeleton-line--row"></span>
+            </div>
+        }
+    </div>
+}
+else if (Variant == "cards")
+{
+    <div class="page-skeleton page-skeleton--cards" aria-busy="true">
+        <p class="visually-hidden">@LoadingLabel</p>
+        @for (var i = 0; i < CardCount; i++)
+        {
+            <div class="page-skeleton__card">
+                <span class="skeleton-line page-skeleton__media"></span>
+                <div class="page-skeleton__body">
+                    <span class="skeleton-line skeleton-line--title"></span>
+                    <span class="skeleton-line skeleton-line--lead"></span>
+                </div>
+            </div>
+        }
+    </div>
+}
+else if (Variant == "match")
+{
+    <div class="page-skeleton page-skeleton--match" aria-busy="true">
+        <p class="visually-hidden">@LoadingLabel</p>
+        <div class="page-skeleton__card">
+            <span class="skeleton-line page-skeleton__media" style="aspect-ratio: 4 / 3; border-radius: 18px 18px 0 0;"></span>
+            <div class="page-skeleton__body">
+                <span class="skeleton-line skeleton-line--title"></span>
+                <span class="skeleton-line skeleton-line--lead"></span>
+                <span class="skeleton-line skeleton-line--row"></span>
+            </div>
+        </div>
+    </div>
+}
+else if (Variant == "profile")
+{
+    <div class="page-skeleton page-skeleton--profile" aria-busy="true">
+        <p class="visually-hidden">@LoadingLabel</p>
+        <div class="page-skeleton__card">
+            <span class="skeleton-line skeleton-line--title"></span>
+            <span class="skeleton-line skeleton-line--lead"></span>
+            <span class="skeleton-line skeleton-line--row"></span>
+            <span class="skeleton-line skeleton-line--row"></span>
+            <span class="skeleton-line skeleton-line--row"></span>
+        </div>
+    </div>
+}
+else if (Variant == "questionnaire")
+{
+    <div class="page-skeleton page-skeleton--questionnaire" aria-busy="true">
+        <p class="visually-hidden">@LoadingLabel</p>
+        @for (var i = 0; i < CardCount; i++)
+        {
+            <div class="page-skeleton__card">
+                <span class="skeleton-line skeleton-line--title"></span>
+                <span class="skeleton-line skeleton-line--row"></span>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="page-skeleton page-skeleton--test-detail" aria-busy="true">
+        <p class="visually-hidden">@LoadingLabel</p>
+        <span class="skeleton-line skeleton-line--title"></span>
+        <span class="skeleton-line skeleton-line--lead"></span>
+        <span class="skeleton-line skeleton-line--row"></span>
+        <span class="skeleton-line skeleton-line--row"></span>
+    </div>
+}
+
+@code {
+    [Parameter] public string Variant { get; set; } = "apps";
+    [Parameter] public int CardCount { get; set; } = 3;
+    [Parameter] public string LoadingLabel { get; set; } = "Laden…";
+}

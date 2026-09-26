@@ -22079,3 +22079,92 @@ body {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
+
+/* Page skeletons — reserve final layout height to avoid CLS on candidate pages. */
+.page-skeleton {
+    display: grid;
+    gap: 0.85rem;
+    padding: 0.15rem 0 1rem;
+    min-height: 12rem;
+}
+
+.page-skeleton--apps .page-skeleton__card,
+.page-skeleton--cards .page-skeleton__card {
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 0.85rem 1rem;
+    min-height: 7.5rem;
+}
+
+.page-skeleton--cards {
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+}
+
+.page-skeleton--cards .page-skeleton__card {
+    min-height: 11rem;
+    padding: 0;
+    overflow: hidden;
+}
+
+.page-skeleton__media {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    border-radius: 14px 14px 0 0;
+}
+
+.page-skeleton__body {
+    display: grid;
+    gap: 0.45rem;
+    padding: 0.7rem 0.85rem 0.9rem;
+}
+
+.page-skeleton--match {
+    min-height: min(70dvh, 34rem);
+    align-content: start;
+}
+
+.page-skeleton--match .page-skeleton__card {
+    min-height: min(58dvh, 28rem);
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    background: var(--surface);
+}
+
+.page-skeleton--profile {
+    min-height: 18rem;
+}
+
+.page-skeleton--profile .page-skeleton__card {
+    min-height: 14rem;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    background: var(--surface);
+    padding: 1rem;
+}
+
+.page-skeleton--questionnaire {
+    min-height: 22rem;
+    gap: 1rem;
+}
+
+.page-skeleton--questionnaire .page-skeleton__card {
+    min-height: 5.5rem;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    background: var(--surface);
+    padding: 0.85rem 1rem;
+}
+
+.page-skeleton--test-detail {
+    min-height: 16rem;
+}
+
+.kompas__completeness--pending {
+    min-height: 2.75rem;
+}
+
+.kompas__completeness--pending .skeleton-line {
+    margin-top: 0.35rem;
+}

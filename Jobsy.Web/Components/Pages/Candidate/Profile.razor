@@ -1,5 +1,5 @@
 @page "/candidate/profile"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Rules
 @inject JobsyApiClient Api
@@ -7,8 +7,10 @@
 @inject NavigationManager Navigation
 @inject CultureState Culture
 @inject IJSRuntime Js
+@inject PersistentComponentState Persist
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Components.Shared
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Profile.Title"] · Lobsy</PageTitle>
@@ -35,7 +37,7 @@
 
         @if (_loading)
         {
-            <p class="state-message">@Culture["Common.Loading"]</p>
+            <PageContentSkeleton Variant="profile" LoadingLabel="@Culture["Common.Loading"]" />
         }
         else
         {
@@ -655,6 +657,9 @@
     private string _insightsStatus = "Ready";
     private CandidateKompasState? _kompasState;
     private int _insightsRefreshAttempts;
+    private const string PersistKey = "candidateProfileKompas";
+    private bool _restored;
+    private PersistingComponentStateSubscription _persistSubscription;
 
     private string? AvailabilityKind =>
         CandidateAvailabilityPresets.Detect(_minHours, _maxHours, _flexibleTimes);
@@ -663,154 +668,44 @@
     public string? ReturnUrl { get; set; }
 
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        _persistSubscription = Persist.RegisterOnPersisting(PersistState);
+        if (Persist.TryTakeFromJson<CandidateKompasState>(PersistKey, out var saved) && saved is not null)
+        {
+            _kompasState = saved;
+            _restored = true;
+        }
+    }
+
+    private Task PersistState()
+    {
+        if (_kompasState is not null)
+        {
+            Persist.PersistAsJson(PersistKey, _kompasState);
+        }
+
+        return Task.CompletedTask;
+    }
 
     protected override async Task OnInitializedAsync()
     {
         _returnUrl = SanitizeReturnUrl(ReturnUrl);
         try
         {
+            if (_restored && _kompasState is not null)
+            {
+                await LoadMasterdataAsync();
+                await ApplyKompasAsync(_kompasState, allowGeocode: false);
+                return;
+            }
+
             var masterdataTask = LoadMasterdataAsync();
             var kompasTask = Api.GetMyKompasAsync();
             await Task.WhenAll(masterdataTask, kompasTask);
             var kompas = kompasTask.Result;
             _kompasState = kompas;
-            var profile = kompas?.Profile;
-            if (profile is null)
-            {
-                _message = Culture["Profile.NotFound"];
-                _matchesLoading = false;
-                return;
-            }
-
-            var prefs = profile.Preferences ?? new CandidatePreferences();
-            _dobInput = profile.DateOfBirth;
-            _openForWork = profile.OpenForWork;
-            _firstName = profile.FirstName ?? "";
-            _lastName = profile.LastName ?? "";
-            _phoneNumber = profile.PhoneNumber ?? "";
-            _whatsAppAllowed = profile.WhatsAppContactAllowed;
-            _authenticatorEnabled = profile.AuthenticatorEnabled;
-            _homeLat = profile.HomeLatitude;
-            _homeLng = profile.HomeLongitude;
-            _ = LoadDevicesAsync();
-            _insightsStatus = kompas?.InsightsStatus ?? "Ready";
-            if (kompas?.TopMatches is { Count: > 0 } matches)
-            {
-                _matchedVacancies = matches;
-                _matchesLoading = false;
-            }
-            else if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
-            {
-                _matchedVacancies = [];
-                _matchesLoading = false;
-            }
-            _maxTravel = prefs.MaxTravelMinutes ?? 30;
-            _preferredTransport = string.IsNullOrWhiteSpace(prefs.PreferredTransport)
-                ? ""
-                : TransportLabels.Canonical(prefs.PreferredTransport);
-            _selectedRoles.Clear();
-            foreach (var role in prefs.Roles ?? [])
-            {
-                var label = WorkTypeLabels.Expand(WorkTypeLabels.Parse(role)).FirstOrDefault()
-                    ?? _branchOptions.FirstOrDefault(b => string.Equals(b, role, StringComparison.OrdinalIgnoreCase))
-                    ?? role;
-                if (!string.IsNullOrWhiteSpace(label))
-                {
-                    _selectedRoles.Add(label);
-                }
-            }
-            _selectedLicenses.Clear();
-            foreach (var license in prefs.DrivingLicenses ?? [])
-            {
-                foreach (var normalized in DrivingLicenseLabels.Split(license))
-                {
-                    _selectedLicenses.Add(normalized);
-                }
-            }
-            _aboutMe = prefs.AboutMe;
-            _defaultMotivation = prefs.DefaultMotivation;
-            _availability.Clear();
-            foreach (var day in prefs.Availability ?? [])
-            {
-                foreach (var slot in day.Value ?? [])
-                {
-                    _availability.Add($"{day.Key}:{slot}");
-                }
-            }
-
-            _minHours = prefs.MinHoursPerWeek ?? 8;
-            _maxHours = prefs.MaxHoursPerWeek ?? 24;
-            _flexibleTimes = prefs.FlexibleTimes == true;
-            _employers.Clear();
-            _employers.AddRange(prefs.Employers ?? []);
-            _certificates.Clear();
-            _certificates.AddRange(prefs.Certificates ?? []);
-            ApplyCvAndReferences(profile);
-
-            // Paint Top 10 from kompas snapshot — fallback GET only when Ready and empty.
-            if (_matchedVacancies.Count == 0
-                && !string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
-            {
-                await LoadMatchedVacanciesAsync();
-            }
-
-            await InvokeAsync(StateHasChanged);
-            if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
-            {
-                _ = RefreshInsightsLaterAsync();
-            }
-
-            _selectedEducations.Clear();
-            foreach (var education in prefs.Educations ?? [])
-            {
-                foreach (var level in EducationLevelLabels.Split(education))
-                {
-                    _selectedEducations.Add(level);
-                }
-
-                // Legacy free-text: map if it clearly mentions a known level.
-                foreach (var level in EducationLevelLabels.ProfileAll)
-                {
-                    if (string.Equals(level, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
-                    if (education.Contains(level, StringComparison.OrdinalIgnoreCase))
-                    {
-                        _selectedEducations.Add(level);
-                    }
-                }
-            }
-
-            // Reverse-geocode only when the stored address is missing (not every open).
-            if (_homeLat is not null && _homeLng is not null)
-            {
-                if (!string.IsNullOrWhiteSpace(prefs.HomeAddress) && !LooksLikeCoordinates(prefs.HomeAddress))
-                {
-                    _homeAddress = prefs.HomeAddress!;
-                }
-                else if (string.IsNullOrWhiteSpace(prefs.HomeAddress))
-                {
-                    try
-                    {
-                        using var geoCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                        var label = await Geocoder.ReverseAsync(_homeLat.Value, _homeLng.Value, geoCts.Token);
-                        _homeAddress = string.IsNullOrWhiteSpace(label)
-                            ? FormatCoordinateFallback(_homeLat.Value, _homeLng.Value)
-                            : label;
-                    }
-                    catch
-                    {
-                        _homeAddress = FormatCoordinateFallback(_homeLat.Value, _homeLng.Value);
-                    }
-                }
-                else
-                {
-                    _homeAddress = FormatCoordinateFallback(_homeLat.Value, _homeLng.Value);
-                }
-            }
+            await ApplyKompasAsync(kompas, allowGeocode: true);
         }
         catch (Exception ex)
         {
@@ -821,6 +716,151 @@
         {
             _loading = false;
             _matchesLoading = false;
+        }
+    }
+
+    private async Task ApplyKompasAsync(CandidateKompasState? kompas, bool allowGeocode)
+    {
+        var profile = kompas?.Profile;
+        if (profile is null)
+        {
+            _message = Culture["Profile.NotFound"];
+            _matchesLoading = false;
+            return;
+        }
+
+        var prefs = profile.Preferences ?? new CandidatePreferences();
+        _dobInput = profile.DateOfBirth;
+        _openForWork = profile.OpenForWork;
+        _firstName = profile.FirstName ?? "";
+        _lastName = profile.LastName ?? "";
+        _phoneNumber = profile.PhoneNumber ?? "";
+        _whatsAppAllowed = profile.WhatsAppContactAllowed;
+        _authenticatorEnabled = profile.AuthenticatorEnabled;
+        _homeLat = profile.HomeLatitude;
+        _homeLng = profile.HomeLongitude;
+        _ = LoadDevicesAsync();
+        _insightsStatus = kompas?.InsightsStatus ?? "Ready";
+        if (kompas?.TopMatches is { Count: > 0 } matches)
+        {
+            _matchedVacancies = matches;
+            _matchesLoading = false;
+        }
+        else if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+        {
+            _matchedVacancies = [];
+            _matchesLoading = false;
+        }
+        _maxTravel = prefs.MaxTravelMinutes ?? 30;
+        _preferredTransport = string.IsNullOrWhiteSpace(prefs.PreferredTransport)
+            ? ""
+            : TransportLabels.Canonical(prefs.PreferredTransport);
+        _selectedRoles.Clear();
+        foreach (var role in prefs.Roles ?? [])
+        {
+            var label = WorkTypeLabels.Expand(WorkTypeLabels.Parse(role)).FirstOrDefault()
+                ?? _branchOptions.FirstOrDefault(b => string.Equals(b, role, StringComparison.OrdinalIgnoreCase))
+                ?? role;
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                _selectedRoles.Add(label);
+            }
+        }
+        _selectedLicenses.Clear();
+        foreach (var license in prefs.DrivingLicenses ?? [])
+        {
+            foreach (var normalized in DrivingLicenseLabels.Split(license))
+            {
+                _selectedLicenses.Add(normalized);
+            }
+        }
+        _aboutMe = prefs.AboutMe;
+        _defaultMotivation = prefs.DefaultMotivation;
+        _availability.Clear();
+        foreach (var day in prefs.Availability ?? [])
+        {
+            foreach (var slot in day.Value ?? [])
+            {
+                _availability.Add($"{day.Key}:{slot}");
+            }
+        }
+
+        _minHours = prefs.MinHoursPerWeek ?? 8;
+        _maxHours = prefs.MaxHoursPerWeek ?? 24;
+        _flexibleTimes = prefs.FlexibleTimes == true;
+        _employers.Clear();
+        _employers.AddRange(prefs.Employers ?? []);
+        _certificates.Clear();
+        _certificates.AddRange(prefs.Certificates ?? []);
+        ApplyCvAndReferences(profile);
+
+        // Paint Top 10 from kompas snapshot — fallback GET only when Ready and empty.
+        if (_matchedVacancies.Count == 0
+            && !string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase)
+            && allowGeocode)
+        {
+            await LoadMatchedVacanciesAsync();
+        }
+
+        await InvokeAsync(StateHasChanged);
+        if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+        {
+            _ = RefreshInsightsLaterAsync();
+        }
+
+        _selectedEducations.Clear();
+        foreach (var education in prefs.Educations ?? [])
+        {
+            foreach (var level in EducationLevelLabels.Split(education))
+            {
+                _selectedEducations.Add(level);
+            }
+
+            // Legacy free-text: map if it clearly mentions a known level.
+            foreach (var level in EducationLevelLabels.ProfileAll)
+            {
+                if (string.Equals(level, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (education.Contains(level, StringComparison.OrdinalIgnoreCase))
+                {
+                    _selectedEducations.Add(level);
+                }
+            }
+        }
+
+        // Reverse-geocode only when the stored address is missing (not every open).
+        if (_homeLat is not null && _homeLng is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(prefs.HomeAddress) && !LooksLikeCoordinates(prefs.HomeAddress))
+            {
+                _homeAddress = prefs.HomeAddress!;
+            }
+            else if (string.IsNullOrWhiteSpace(prefs.HomeAddress) && allowGeocode)
+            {
+                try
+                {
+                    using var geoCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    var label = await Geocoder.ReverseAsync(_homeLat.Value, _homeLng.Value, geoCts.Token);
+                    _homeAddress = string.IsNullOrWhiteSpace(label)
+                        ? FormatCoordinateFallback(_homeLat.Value, _homeLng.Value)
+                        : label;
+                }
+                catch
+                {
+                    _homeAddress = FormatCoordinateFallback(_homeLat.Value, _homeLng.Value);
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(prefs.HomeAddress))
+            {
+                _homeAddress = prefs.HomeAddress!;
+            }
+            else
+            {
+                _homeAddress = FormatCoordinateFallback(_homeLat.Value, _homeLng.Value);
+            }
         }
     }
 
@@ -1555,6 +1595,7 @@
     public ValueTask DisposeAsync()
     {
         Culture.Changed -= OnCultureChanged;
+        _persistSubscription.Dispose();
         _suggestCts?.Cancel();
         _suggestCts?.Dispose();
         return ValueTask.CompletedTask;

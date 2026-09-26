@@ -1,7 +1,8 @@
 @page "/candidate/match"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using Jobsy.Web.Components.Match
+@using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
 @inject MatchVacancyService MatchVacancies
@@ -9,6 +10,8 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject PersistentComponentState Persist
+@implements IDisposable
 
 <PageTitle>@Culture["Nav.Match"] · Lobsy</PageTitle>
 
@@ -35,7 +38,7 @@
              aria-label="@(_gate.IsProfileComplete ? "Match swipen" : "Match ontgrendelen")">
         @if (_loading)
         {
-            <p class="match-page__state">Bezig met laden…</p>
+            <PageContentSkeleton Variant="match" LoadingLabel="Bezig met laden…" />
         }
         else if (!_gate.IsProfileComplete)
         {
@@ -88,12 +91,15 @@
 </div>
 
 @code {
+    private const string PersistKey = "candidateMatchDeck";
     private readonly List<SwipeViewModel> _deck = [];
     private MatchProfileGateViewModel _gate = new();
     private int _index;
     private bool _loading = true;
+    private bool _restored;
     private string? _toast;
     private CancellationTokenSource? _toastCts;
+    private PersistingComponentStateSubscription _persistSubscription;
 
     private SwipeViewModel? Current =>
         _index >= 0 && _index < _deck.Count ? _deck[_index] : null;
@@ -104,15 +110,50 @@
     private SwipeViewModel? PeekAfterNext =>
         _index + 2 < _deck.Count ? _deck[_index + 2] : null;
 
+    protected override void OnInitialized()
+    {
+        _persistSubscription = Persist.RegisterOnPersisting(PersistState);
+        if (Persist.TryTakeFromJson<MatchPagePersistState>(PersistKey, out var saved) && saved is not null)
+        {
+            _gate = saved.Gate ?? new();
+            _deck.Clear();
+            _deck.AddRange(saved.Deck ?? []);
+            _index = Math.Clamp(saved.Index, 0, Math.Max(0, _deck.Count));
+            _loading = false;
+            _restored = true;
+        }
+    }
+
+    private Task PersistState()
+    {
+        Persist.PersistAsJson(PersistKey, new MatchPagePersistState
+        {
+            Gate = _gate,
+            Deck = _deck.ToList(),
+            Index = _index
+        });
+        return Task.CompletedTask;
+    }
+
     protected override async Task OnInitializedAsync()
-        => await ReloadDeckAsync();
+    {
+        if (_restored)
+        {
+            return;
+        }
+
+        await ReloadDeckAsync();
+    }
+
+    public void Dispose()
+        => _persistSubscription.Dispose();
 
     private async Task ReloadDeckAsync()
     {
         _loading = true;
         _deck.Clear();
         _index = 0;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
 
         _gate = await MatchProfile.RefreshAsync();
 
@@ -127,6 +168,13 @@
 
         _index = 0;
         _loading = false;
+    }
+
+    private sealed class MatchPagePersistState
+    {
+        public MatchProfileGateViewModel? Gate { get; set; }
+        public List<SwipeViewModel>? Deck { get; set; }
+        public int Index { get; set; }
     }
 
     private void HandleReject(SwipeViewModel model)

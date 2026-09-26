@@ -49,7 +49,21 @@
     <div class="questionnaire__body">
         @if (Loading)
         {
-            <p class="state-message">@Culture["Common.Loading"]</p>
+            <div class="page-skeleton page-skeleton--questionnaire" aria-busy="true">
+                <p class="visually-hidden">@Culture["Common.Loading"]</p>
+                <div class="page-skeleton__card">
+                    <span class="skeleton-line skeleton-line--title"></span>
+                    <span class="skeleton-line skeleton-line--row"></span>
+                </div>
+                <div class="page-skeleton__card">
+                    <span class="skeleton-line skeleton-line--title"></span>
+                    <span class="skeleton-line skeleton-line--row"></span>
+                </div>
+                <div class="page-skeleton__card">
+                    <span class="skeleton-line skeleton-line--title"></span>
+                    <span class="skeleton-line skeleton-line--row"></span>
+                </div>
+            </div>
         }
         else if (LoadFailed)
         {
