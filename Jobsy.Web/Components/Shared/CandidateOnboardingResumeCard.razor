@@ -1,0 +1,59 @@
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+@if (_visible)
+{
+    <aside class="ob-resume-card" aria-labelledby="ob-resume-title">
+        <p id="ob-resume-title" class="ob-resume-card__title">@Culture["Onboarding.Resume.Title"]</p>
+        <p class="ob-resume-card__lead">@Culture["Onboarding.Resume.Lead"]</p>
+        <a class="ob-resume-card__link" href="/candidate/start">@Culture["Onboarding.Resume.Cta"]</a>
+    </aside>
+}
+
+@code {
+    private bool _visible;
+    private bool _loadStarted;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    protected override Task OnInitializedAsync()
+        => TryLoadAsync();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+
+    private async Task TryLoadAsync()
+    {
+        if (_loadStarted && _visible)
+        {
+            return;
+        }
+
+        if (!RendererInfo.IsInteractive && _loadStarted)
+        {
+            return;
+        }
+
+        _loadStarted = true;
+        try
+        {
+            var state = await Api.GetMyOnboardingAsync();
+            _visible = state is not null && !state.IsComplete;
+        }
+        catch
+        {
+            _visible = false;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+}

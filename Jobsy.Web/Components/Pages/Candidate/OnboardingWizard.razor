@@ -1,0 +1,1445 @@
+@page "/candidate/start"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject IGeocodingClient Geocoder
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+<PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
+
+<div class="ob-wizard">
+    @if (_loading)
+    {
+        <p class="ob-wizard__loading state-message" aria-busy="true">@Culture["Common.Loading"]</p>
+    }
+    else if (_phase == WizardPhase.Install)
+    {
+        <div class="ob-wizard__shell">
+            <header class="ob-wizard__header">
+                <h1 class="ob-wizard__title">@Culture["Onboarding.Install.Title"]</h1>
+                <p class="ob-wizard__lead">@Culture["Onboarding.Install.Lead"]</p>
+            </header>
+            <div class="ob-install">
+                @if (_installIos)
+                {
+                    <p class="ob-install__hint">@Culture["Pwa.IosHint"]</p>
+                }
+                else if (_installCanPrompt)
+                {
+                    <button type="button" class="login-submit ob-install__btn" disabled="@_installBusy" @onclick="InstallPwaAsync">
+                        @Culture["Onboarding.Install.AddApp"]
+                    </button>
+                }
+                <button type="button" class="login-submit ob-install__btn" disabled="@_installBusy" @onclick="EnablePushAsync">
+                    @Culture["Onboarding.Install.EnablePush"]
+                </button>
+                @if (!string.IsNullOrWhiteSpace(_installMessage))
+                {
+                    <p class="state-message" aria-live="polite">@_installMessage</p>
+                }
+            </div>
+            <footer class="ob-wizard__footer">
+                <button type="button" class="ob-wizard__link" @onclick="FinishInstallLaterAsync">@Culture["Onboarding.Install.Later"]</button>
+            </footer>
+        </div>
+    }
+    else
+    {
+        <div class="ob-wizard__shell">
+            <div class="ob-wizard__progress" role="progressbar"
+                 aria-valuemin="1" aria-valuemax="@OnboardingWizardCatalog.StepCount" aria-valuenow="@_step"
+                 aria-label="@Culture.Format("Onboarding.ProgressAria", _step, OnboardingWizardCatalog.StepCount)">
+                <span class="ob-wizard__progress-fill" style="width: @ProgressPercent%"></span>
+            </div>
+
+            <header class="ob-wizard__header">
+                <div class="ob-wizard__top">
+                    <button type="button"
+                            class="ob-wizard__back"
+                            disabled="@(_step <= 1 || _busy)"
+                            aria-label="@Culture["Onboarding.BackAria"]"
+                            @onclick="GoBackAsync">
+                        <span aria-hidden="true">←</span>
+                    </button>
+                    <div class="ob-wizard__meta">
+                        <p class="ob-wizard__step-line">@Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.RemainingMinutes(_step))</p>
+                        @if (_progressSaveStatus == SaveQuietStatus.Saved && _progressSavedVisible)
+                        {
+                            <p class="ob-wizard__saved" aria-live="polite">@Culture["Onboarding.Saved"]</p>
+                        }
+                    </div>
+                    <button type="button" class="ob-wizard__later" disabled="@_busy" @onclick="LaterAsync">
+                        @Culture["Onboarding.Later"]
+                    </button>
+                </div>
+                <h1 class="ob-wizard__title">@StepTitle</h1>
+                @if (!string.IsNullOrWhiteSpace(StepLead))
+                {
+                    <p class="ob-wizard__lead">@StepLead</p>
+                }
+            </header>
+
+            <div class="ob-wizard__body">
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <p class="state-message error">@_error</p>
+                }
+
+                @switch (_step)
+                {
+                    case 1:
+                        <div class="ob-step">
+                            <div class="ob-step__row">
+                                <label class="ob-field">
+                                    <span>@Culture["Profile.FirstName"]</span>
+                                    <input type="text" maxlength="128" autocomplete="given-name" @bind="_firstName" @bind:event="oninput" @bind:after="ScheduleProfileSave" />
+                                </label>
+                                <label class="ob-field">
+                                    <span>@Culture["Profile.LastName"]</span>
+                                    <input type="text" maxlength="128" autocomplete="family-name" @bind="_lastName" @bind:event="oninput" @bind:after="ScheduleProfileSave" />
+                                </label>
+                            </div>
+                            <div class="ob-step__row">
+                                <label class="ob-field">
+                                    <span>@Culture["Onboarding.Postcode"]</span>
+                                    <input type="text" inputmode="numeric" maxlength="7" autocomplete="postal-code" @bind="_postcode" @bind:event="oninput" @bind:after="OnAddressFieldsChanged" />
+                                </label>
+                                <label class="ob-field">
+                                    <span>@Culture["Onboarding.City"]</span>
+                                    <input type="text" maxlength="128" autocomplete="address-level2" @bind="_city" @bind:event="oninput" @bind:after="OnAddressFieldsChanged" />
+                                </label>
+                            </div>
+                            @if (_showAddressSuggestions)
+                            {
+                                <ul class="ob-suggest" role="listbox">
+                                    @if (_geocoding)
+                                    {
+                                        <li class="ob-suggest__status">@Culture["Common.Loading"]</li>
+                                    }
+                                    else if (_addressSuggestions.Count == 0)
+                                    {
+                                        <li class="ob-suggest__status">@Culture["Discovery.AddressNoResults"]</li>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var suggestion in _addressSuggestions)
+                                        {
+                                            <li>
+                                                <button type="button" class="ob-suggest__item" @onclick="() => SelectAddressSuggestion(suggestion)">
+                                                    @suggestion.Label
+                                                </button>
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            }
+                            <label class="ob-field">
+                                <span>@Culture["Profile.Phone"]</span>
+                                <input type="tel" maxlength="32" autocomplete="tel" placeholder="@Culture["Profile.PhonePlaceholder"]" @bind="_phone" @bind:event="oninput" @bind:after="ScheduleProfileSave" />
+                            </label>
+                            @if (_profileSaveStatus == SaveQuietStatus.Saving)
+                            {
+                                <p class="ob-wizard__saved" aria-live="polite">@Culture["Onboarding.Saving"]</p>
+                            }
+                            else if (_profileSaveStatus == SaveQuietStatus.Saved && _profileSavedVisible)
+                            {
+                                <p class="ob-wizard__saved" aria-live="polite">@Culture["Onboarding.Saved"]</p>
+                            }
+                        </div>
+                        break;
+                    case 2:
+                        <div class="ob-step">
+                            <fieldset class="vacancy-hours profile-hours ob-hours">
+                                <legend class="visually-hidden">@Culture["Vacancy.HoursPerWeek"]</legend>
+                                <div class="vacancy-hours__row">
+                                    <span class="vacancy-hours__title">@Culture["Vacancy.HoursPerWeek"]</span>
+                                    <label>
+                                        Min.
+                                        <input type="number" min="1" max="60" step="0.5" @bind="_minHours" @bind:after="ScheduleProfileSave" />
+                                    </label>
+                                    <span class="vacancy-hours__sep" aria-hidden="true">–</span>
+                                    <label>
+                                        Max.
+                                        <input type="number" min="1" max="60" step="0.5" @bind="_maxHours" @bind:after="ScheduleProfileSave" />
+                                    </label>
+                                </div>
+                            </fieldset>
+                            <fieldset class="profile-availability ob-dayparts">
+                                <legend>@Culture["Profile.Availability"]</legend>
+                                <div class="availability-matrix ob-dayparts__grid" role="grid" aria-label="@Culture["Profile.Availability"]">
+                                    <div class="availability-matrix__corner" role="columnheader"></div>
+                                    @foreach (var slot in AvailabilitySlots)
+                                    {
+                                        <div class="availability-matrix__slot" role="columnheader">@UiLabels.AvailabilitySlot(Culture, slot)</div>
+                                    }
+                                    @foreach (var day in AvailabilityDays)
+                                    {
+                                        <div class="availability-matrix__day" role="rowheader">@UiLabels.Weekday(Culture, day)</div>
+                                        @foreach (var slot in AvailabilitySlots)
+                                        {
+                                            var key = $"{day}:{slot}";
+                                            var on = _availability.Contains(key);
+                                            <label class="availability-matrix__cell @(on ? "is-on" : null)">
+                                                <input type="checkbox" checked="@on" @onchange="e => ToggleAvailability(key, (bool)(e.Value ?? false))" />
+                                                <span class="visually-hidden">@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot)</span>
+                                            </label>
+                                        }
+                                    }
+                                </div>
+                            </fieldset>
+                            <label class="ob-field">
+                                <span>@Culture["Profile.MaxTravel"]</span>
+                                <input type="number" min="1" max="180" @bind="_maxTravel" @bind:after="ScheduleProfileSave" />
+                            </label>
+                            <label class="ob-field">
+                                <span>@Culture["Profile.PreferredTransport"]</span>
+                                <select @bind="_preferredTransport" @bind:after="ScheduleProfileSave">
+                                    <option value="">—</option>
+                                    <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                    <option value="E-bike">@Culture["Transport.EBike"]</option>
+                                    <option value="Auto">@Culture["Transport.Car"]</option>
+                                    <option value="OV">@Culture["Transport.Transit"]</option>
+                                    <option value="Lopend">@Culture["Transport.Walk"]</option>
+                                </select>
+                            </label>
+                            <fieldset class="ob-field">
+                                <legend>@Culture["Onboarding.AvailableFrom"]</legend>
+                                <label class="ob-toggle">
+                                    <input type="checkbox" checked="@_availableImmediate" @onchange="OnAvailableImmediateChanged" />
+                                    <span>@Culture["Onboarding.AvailableImmediate"]</span>
+                                </label>
+                                @if (!_availableImmediate)
+                                {
+                                    <input type="date" @bind="_availableFrom" @bind:after="ScheduleProfileSave" />
+                                }
+                            </fieldset>
+                        </div>
+                        break;
+                    case 3:
+                        <div class="ob-step">
+                            <p class="ob-step__optional">@Culture["Onboarding.Step3.Optional"]</p>
+                            <label class="ob-toggle">
+                                <input type="checkbox" @bind="_noWorkExperience" @bind:after="ScheduleProfileSave" />
+                                <span>@Culture["Onboarding.NoWorkExperience"]</span>
+                            </label>
+                            @if (!_noWorkExperience)
+                            {
+                                @for (var i = 0; i < _employers.Count; i++)
+                                {
+                                    var idx = i;
+                                    <div class="ob-job-card">
+                                        <label class="ob-field">
+                                            <span>@Culture["Profile.Role"]</span>
+                                            <input @bind="_employers[idx].Role" @bind:event="oninput" @bind:after="ScheduleProfileSave" />
+                                        </label>
+                                        <label class="ob-field">
+                                            <span>@Culture["Profile.Employer"]</span>
+                                            <input @bind="_employers[idx].EmployerName" @bind:event="oninput" @bind:after="ScheduleProfileSave" />
+                                        </label>
+                                        <div class="ob-step__row">
+                                            <label class="ob-field">
+                                                <span>@Culture["Profile.EmployerFrom"]</span>
+                                                <input type="month" value="@(_employers[idx].StartMonth ?? "")" @onchange="e => SetEmployerStart(idx, e.Value?.ToString())" />
+                                            </label>
+                                            <label class="ob-field">
+                                                <span>@Culture["Profile.EmployerTo"]</span>
+                                                <input type="month" value="@(_employers[idx].EndMonth ?? "")" @onchange="e => SetEmployerEnd(idx, e.Value?.ToString())" />
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                                @if (_employers.Count < 3)
+                                {
+                                    <button type="button" class="engagement-btn" @onclick="AddEmployer">@Culture["Onboarding.AddJob"]</button>
+                                }
+                            }
+                            <button type="button" class="ob-wizard__skip" @onclick="SkipStep3Async">@Culture["Onboarding.Skip"]</button>
+                        </div>
+                        break;
+                    case 4:
+                        <div class="ob-step">
+                            <div class="ob-chips" role="group" aria-label="@Culture["Profile.Education"]">
+                                @foreach (var level in OnboardingWizardCatalog.EducationChips)
+                                {
+                                    var selected = string.Equals(_educationLevel, level, StringComparison.OrdinalIgnoreCase);
+                                    var label = string.Equals(level, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase)
+                                        ? Culture["Education.None"]
+                                        : level;
+                                    <button type="button"
+                                            class="ob-chip @(selected ? "is-on" : null)"
+                                            aria-pressed="@selected"
+                                            @onclick="() => SelectEducation(level)">
+                                        @label
+                                    </button>
+                                }
+                            </div>
+                            @if (!string.Equals(_educationLevel, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase)
+                                 && !string.IsNullOrWhiteSpace(_educationLevel))
+                            {
+                                <label class="ob-field">
+                                    <span>@Culture["Onboarding.EducationDirection"]</span>
+                                    <input type="text" maxlength="128" @bind="_educationDirection" @bind:event="oninput" @bind:after="ScheduleProfileSave" placeholder="@Culture["Onboarding.EducationDirectionPlaceholder"]" />
+                                </label>
+                            }
+                        </div>
+                        break;
+                    case 5:
+                        <div class="ob-step">
+                            <label class="ob-field">
+                                <span>@Culture["Onboarding.DreamJob"]</span>
+                                <input type="text" maxlength="128" @bind="_dreamJob" @bind:event="oninput" @bind:after="ScheduleDreamSave" />
+                            </label>
+                            <div class="ob-chips" role="group" aria-label="@Culture["Onboarding.DreamChips"]">
+                                @foreach (var chip in OnboardingWizardCatalog.PopularDreamJobChips)
+                                {
+                                    <button type="button" class="ob-chip" @onclick="() => PickDreamChip(chip)">@chip</button>
+                                }
+                                <button type="button" class="ob-chip" @onclick="PickDreamUnknown">@Culture["Onboarding.DreamUnknown"]</button>
+                            </div>
+                        </div>
+                        break;
+                    case 6:
+                    case 7:
+                    case 8:
+                    case 9:
+                        <div class="ob-step ob-step--questions">
+                            @foreach (var q in _visibleMiniQuestions)
+                            {
+                                var answered = _miniAnswers.ContainsKey(q.Id);
+                                <LikertScaleQuestion QuestionId="q.Id"
+                                                     Text="@MiniQuestionText(q)"
+                                                     Value="@(answered ? _miniAnswers[q.Id] : null)"
+                                                     IsAnswered="answered"
+                                                     InputPrefix="@MiniInputPrefix"
+                                                     ValueChanged="value => OnMiniAnswerAsync(q.Id, value)" />
+                            }
+                            @if (_visibleMiniQuestions.Count == 0)
+                            {
+                                <p class="login-lead">@Culture["Onboarding.MiniAllDone"]</p>
+                            }
+                        </div>
+                        break;
+                    case 10:
+                        <div class="ob-step ob-result">
+                            @if (_impression is null)
+                            {
+                                <p class="state-message">@Culture["Common.Loading"]</p>
+                            }
+                            else
+                            {
+                                <p class="ob-result__label">@_impression.Label</p>
+                                @if (_impression.Strengths.Count > 0)
+                                {
+                                    <section class="ob-result__block">
+                                        <h2 class="ob-result__heading">@Culture["Onboarding.Result.Strengths"]</h2>
+                                        <ul class="ob-result__list">
+                                            @foreach (var item in _impression.Strengths.Take(2))
+                                            {
+                                                <li><strong>@item.Label</strong> — @item.Sentence</li>
+                                            }
+                                        </ul>
+                                    </section>
+                                }
+                                @if (_impression.Riasec.Count > 0)
+                                {
+                                    <section class="ob-result__block">
+                                        <h2 class="ob-result__heading">@Culture["Onboarding.Result.Riasec"]</h2>
+                                        <ul class="ob-result__list">
+                                            @foreach (var item in _impression.Riasec.Take(2))
+                                            {
+                                                <li><strong>@item.Label</strong> — @item.Sentence</li>
+                                            }
+                                        </ul>
+                                    </section>
+                                }
+                                @if (_impression.CultureHighlight is not null)
+                                {
+                                    <section class="ob-result__block">
+                                        <h2 class="ob-result__heading">@Culture["Onboarding.Result.Culture"]</h2>
+                                        <p>@_impression.CultureHighlight.Sentence</p>
+                                    </section>
+                                }
+                                @if (_impression.TopValue is not null)
+                                {
+                                    <section class="ob-result__block">
+                                        <h2 class="ob-result__heading">@Culture["Onboarding.Result.Value"]</h2>
+                                        <p>@_impression.TopValue.Sentence</p>
+                                    </section>
+                                }
+                                <p class="ob-result__matches-line">@Culture.Format("Onboarding.Result.MatchCount", _impression.MatchingVacancyCount)</p>
+                                <div class="ob-match-cards">
+                                    @foreach (var card in _impression.MatchCards.Take(3))
+                                    {
+                                        <article class="ob-match-card">
+                                            <div class="ob-match-card__top">
+                                                <h3 class="ob-match-card__title">@card.Title</h3>
+                                                <span class="ob-match-card__pct">@card.MatchPercent%</span>
+                                            </div>
+                                            <p class="ob-match-card__company">@card.CompanyName</p>
+                                            <p class="ob-match-card__why">@card.WhyLine</p>
+                                            @if (card.IsProvisional)
+                                            {
+                                                <span class="ob-match-card__badge">@Culture["Onboarding.ProvisionalBadge"]</span>
+                                            }
+                                        </article>
+                                    }
+                                </div>
+                                <div class="ob-result__actions">
+                                    <a class="login-submit ob-result__cta" href="/candidate/match">@Culture["Onboarding.Result.ViewMatches"]</a>
+                                    <a class="ob-wizard__link" href="/home?tab=tests">@Culture["Onboarding.Result.FullTests"]</a>
+                                </div>
+                                @if (_impression.DreamJobSuggestions.Count > 0)
+                                {
+                                    <section class="ob-result__block">
+                                        <h2 class="ob-result__heading">@Culture["Onboarding.Result.DreamCheck"]</h2>
+                                        <div class="ob-chips">
+                                            @foreach (var chip in _impression.DreamJobSuggestions)
+                                            {
+                                                <button type="button" class="ob-chip" @onclick="() => PickDreamChip(chip)">@chip</button>
+                                            }
+                                        </div>
+                                    </section>
+                                }
+                            }
+                        </div>
+                        break;
+                }
+            </div>
+
+            <footer class="ob-wizard__footer">
+                <button type="button" class="login-submit ob-wizard__next" disabled="@(!CanGoNext || _busy)" @onclick="GoNextAsync">
+                    @(_step >= OnboardingWizardCatalog.StepCount ? Culture["Onboarding.Finish"] : Culture["Onboarding.Next"])
+                </button>
+            </footer>
+        </div>
+    }
+</div>
+
+@code {
+    private enum WizardPhase { Wizard, Install }
+    private enum SaveQuietStatus { Idle, Saving, Saved }
+
+    private sealed record MiniQuestion(int Id, string TextKey);
+
+    private static readonly string[] AvailabilityDays = DayPartMatrix.DayCodes;
+    private static readonly string[] AvailabilitySlots = DayPartMatrix.DayPartCodes;
+
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private WizardPhase _phase = WizardPhase.Wizard;
+    private int _step = 1;
+
+    private OnboardingState? _onboarding;
+    private OnboardingImpression? _impression;
+
+    private string _firstName = "";
+    private string _lastName = "";
+    private string _phone = "";
+    private string _postcode = "";
+    private string _city = "";
+    private double? _homeLat;
+    private double? _homeLng;
+
+    private decimal? _minHours = 8;
+    private decimal? _maxHours = 24;
+    private readonly HashSet<string> _availability = new(StringComparer.OrdinalIgnoreCase);
+    private int? _maxTravel = 30;
+    private string _preferredTransport = "";
+    private bool _availableImmediate = true;
+    private DateOnly? _availableFrom;
+
+    private bool _noWorkExperience;
+    private readonly List<CandidateEmployerHistory> _employers = [];
+    private string? _educationLevel;
+    private string? _educationDirection;
+    private string? _dreamJob;
+
+    private readonly Dictionary<int, int> _miniAnswers = new();
+    private readonly Dictionary<int, int> _miniServerAnswers = new();
+    private readonly HashSet<int> _miniLockedIds = new();
+    private List<MiniQuestion> _visibleMiniQuestions = [];
+    private QuestionnaireAutosave? _miniAutosave;
+    private string MiniInputPrefix => _step switch
+    {
+        6 => "obc",
+        7 => "obr",
+        8 => "obu",
+        9 => "obv",
+        _ => "obq"
+    };
+
+    private SaveQuietStatus _profileSaveStatus = SaveQuietStatus.Idle;
+    private bool _profileSavedVisible;
+    private CancellationTokenSource? _profileSaveCts;
+
+    private SaveQuietStatus _progressSaveStatus = SaveQuietStatus.Idle;
+    private bool _progressSavedVisible;
+
+    private List<AddressSuggestion> _addressSuggestions = [];
+    private bool _showAddressSuggestions;
+    private bool _geocoding;
+    private CancellationTokenSource? _geocodeCts;
+
+    private bool _installIos;
+    private bool _installCanPrompt;
+    private bool _installBusy;
+    private string? _installMessage;
+    private CancellationTokenSource? _dreamSaveCts;
+
+    private double ProgressPercent => 100.0 * _step / OnboardingWizardCatalog.StepCount;
+
+    private string StepTitle => Culture[$"Onboarding.Step{_step}.Title"];
+
+    private string? StepLead
+    {
+        get
+        {
+            var key = $"Onboarding.Step{_step}.Lead";
+            var value = Culture[key];
+            return string.Equals(value, key, StringComparison.Ordinal) ? null : value;
+        }
+    }
+
+    private bool CanGoNext
+    {
+        get
+        {
+            return _step switch
+            {
+                1 => !string.IsNullOrWhiteSpace(_firstName)
+                     && !string.IsNullOrWhiteSpace(_lastName)
+                     && (!AddressFilled || (_homeLat is not null && _homeLng is not null)),
+                2 => _minHours is > 0m
+                     && _maxHours is > 0m
+                     && _maxHours >= _minHours
+                     && _maxTravel is > 0,
+                4 => !string.IsNullOrWhiteSpace(_educationLevel),
+                6 or 7 or 8 or 9 => _visibleMiniQuestions.Count == 0
+                                     || _visibleMiniQuestions.All(q => _miniAnswers.ContainsKey(q.Id)),
+                _ => true
+            };
+        }
+    }
+
+    private bool AddressFilled => !string.IsNullOrWhiteSpace(_postcode) || !string.IsNullOrWhiteSpace(_city);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var onboardingTask = Api.GetMyOnboardingAsync();
+            var profileTask = Api.GetMyProfileAsync();
+            await Task.WhenAll(onboardingTask, profileTask);
+            _onboarding = await onboardingTask;
+            var profile = await profileTask;
+            if (profile is not null)
+            {
+                ApplyProfile(profile);
+            }
+
+            if (_onboarding is null)
+            {
+                _onboarding = new OnboardingState { CurrentStep = 1, ShouldShow = true };
+            }
+
+            if (_onboarding.IsComplete)
+            {
+                if (await ShouldShowInstallPhaseAsync())
+                {
+                    _phase = WizardPhase.Install;
+                    _loading = false;
+                    return;
+                }
+
+                Navigation.NavigateTo("/home", replace: true);
+                return;
+            }
+
+            if (!_onboarding.ShouldShow && _onboarding.IsComplete)
+            {
+                Navigation.NavigateTo("/home", replace: true);
+                return;
+            }
+
+            _step = Math.Clamp(_onboarding.CurrentStep, 1, OnboardingWizardCatalog.StepCount);
+            if (_step >= 10)
+            {
+                await RefreshImpressionAsync();
+            }
+
+            await MarkStepStartedAsync(_step);
+            await PrepareMiniStepAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ApplyProfile(MeProfile profile)
+    {
+        _firstName = profile.FirstName ?? "";
+        _lastName = profile.LastName ?? "";
+        _phone = profile.PhoneNumber ?? "";
+        _homeLat = profile.HomeLatitude;
+        _homeLng = profile.HomeLongitude;
+        var prefs = profile.Preferences ?? new CandidatePreferences();
+        SplitHomeAddress(prefs.HomeAddress);
+        _minHours = prefs.MinHoursPerWeek ?? 8;
+        _maxHours = prefs.MaxHoursPerWeek ?? 24;
+        _maxTravel = prefs.MaxTravelMinutes ?? 30;
+        _preferredTransport = string.IsNullOrWhiteSpace(prefs.PreferredTransport)
+            ? ""
+            : TransportLabels.Canonical(prefs.PreferredTransport);
+        _availability.Clear();
+        foreach (var (day, slots) in prefs.Availability ?? new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase))
+        {
+            foreach (var slot in slots)
+            {
+                _availability.Add($"{day}:{slot}");
+            }
+        }
+
+        _availableImmediate = profile.AvailableFromDate is null;
+        _availableFrom = profile.AvailableFromDate;
+        _noWorkExperience = prefs.NoWorkExperience == true;
+        _employers.Clear();
+        foreach (var e in prefs.Employers.Take(3))
+        {
+            _employers.Add(new CandidateEmployerHistory
+            {
+                EmployerName = e.EmployerName,
+                Role = e.Role,
+                StartMonth = e.StartMonth,
+                EndMonth = e.EndMonth
+            });
+        }
+
+        if (_employers.Count == 0 && !_noWorkExperience)
+        {
+            _employers.Add(new CandidateEmployerHistory());
+        }
+
+        var edu = prefs.Educations.FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(edu))
+        {
+            var parts = edu.Split('–', 2, StringSplitOptions.TrimEntries);
+            _educationLevel = parts[0];
+            _educationDirection = parts.Length > 1 ? parts[1] : prefs.EducationDirection;
+        }
+    }
+
+    private void SplitHomeAddress(string? homeAddress)
+    {
+        if (string.IsNullOrWhiteSpace(homeAddress))
+        {
+            return;
+        }
+
+        var trimmed = homeAddress.Trim();
+        var space = trimmed.IndexOf(' ');
+        if (space > 0)
+        {
+            _postcode = trimmed[..space].Trim();
+            _city = trimmed[(space + 1)..].Trim();
+        }
+        else
+        {
+            _postcode = trimmed;
+        }
+    }
+
+    private string ComposedHomeAddress()
+    {
+        var pc = _postcode.Trim();
+        var city = _city.Trim();
+        if (string.IsNullOrWhiteSpace(pc) && string.IsNullOrWhiteSpace(city))
+        {
+            return "";
+        }
+
+        return $"{pc} {city}".Trim();
+    }
+
+    private async Task MarkStepStartedAsync(int step)
+    {
+        try
+        {
+            _onboarding = await Api.SaveMyOnboardingProgressAsync(step);
+            FlashProgressSaved();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private async Task GoBackAsync()
+    {
+        if (_step <= 1 || _busy)
+        {
+            return;
+        }
+
+        _step--;
+        _error = null;
+        await MarkStepStartedAsync(_step);
+        await PrepareMiniStepAsync();
+    }
+
+    private async Task GoNextAsync()
+    {
+        if (!CanGoNext || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            if (_step is 1 or 2 or 3 or 4)
+            {
+                await FlushProfileSaveAsync();
+            }
+
+            if (_step is 6 or 7 or 8 or 9 && _miniAutosave is not null)
+            {
+                await _miniAutosave.FlushAsync();
+            }
+
+            if (_step == 5)
+            {
+                await SaveDreamJobAsync();
+            }
+
+            if (_step < OnboardingWizardCatalog.StepCount)
+            {
+                var completed = true;
+                var skipped = false;
+                if (_step == 3 && _noWorkExperience && !_employers.Any(e => !string.IsNullOrWhiteSpace(e.EmployerName)))
+                {
+                    skipped = true;
+                }
+
+                _step++;
+                _onboarding = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: completed, stepSkipped: skipped ? true : null);
+                FlashProgressSaved();
+                if (_step == 10)
+                {
+                    await RefreshImpressionAsync();
+                }
+
+                await PrepareMiniStepAsync();
+                return;
+            }
+
+            await EnterInstallPhaseAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SkipStep3Async()
+    {
+        _busy = true;
+        try
+        {
+            await FlushProfileSaveAsync();
+            _step = 4;
+            _onboarding = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
+            FlashProgressSaved();
+            await PrepareMiniStepAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task LaterAsync()
+    {
+        try
+        {
+            await FlushProfileSaveAsync();
+            await Api.SaveMyOnboardingProgressAsync(_step);
+        }
+        catch
+        {
+            // Best-effort before leaving.
+        }
+
+        Navigation.NavigateTo("/home");
+    }
+
+    private async Task EnterInstallPhaseAsync()
+    {
+        try
+        {
+            _onboarding = await Api.CompleteMyOnboardingAsync();
+            _impression = _onboarding.Impression;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            return;
+        }
+
+        if (await ShouldShowInstallPhaseAsync())
+        {
+            _phase = WizardPhase.Install;
+        }
+        else
+        {
+            Navigation.NavigateTo("/candidate/match");
+        }
+    }
+
+    private async Task<bool> ShouldShowInstallPhaseAsync()
+    {
+        try
+        {
+            var standalone = await Js.InvokeAsync<bool>("lobsyPwaInstall.isStandalone");
+            if (standalone)
+            {
+                return false;
+            }
+
+            _installIos = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");
+            _installCanPrompt = await Js.InvokeAsync<bool>("lobsyPwaInstall.canPrompt");
+            return _installIos || _installCanPrompt;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task RefreshImpressionAsync()
+    {
+        _onboarding = await Api.GetMyOnboardingAsync();
+        _impression = _onboarding?.Impression;
+    }
+
+    private async Task PrepareMiniStepAsync()
+    {
+        if (_miniAutosave is not null)
+        {
+            await _miniAutosave.DisposeAsync();
+            _miniAutosave = null;
+        }
+        _miniAnswers.Clear();
+        _miniServerAnswers.Clear();
+        _miniLockedIds.Clear();
+        _visibleMiniQuestions = [];
+
+        if (_step is not (6 or 7 or 8 or 9))
+        {
+            return;
+        }
+
+        switch (_step)
+        {
+            case 6:
+                await LoadMiniCompetencyAsync();
+                break;
+            case 7:
+                await LoadMiniCareerAsync();
+                break;
+            case 8:
+                await LoadMiniCultureAsync();
+                break;
+            case 9:
+                await LoadMiniValuesAsync();
+                break;
+        }
+
+        _miniAutosave = new QuestionnaireAutosave(
+            persist: async (draft, ct) =>
+            {
+                var merged = MergeMiniAnswers(draft);
+                switch (_step)
+                {
+                    case 6:
+                        await Api.SaveMyCompetenciesAsync(merged, complete: false, ct);
+                        break;
+                    case 7:
+                        await Api.SaveMyCareerInterestsAsync(merged, complete: false, ct);
+                        break;
+                    case 8:
+                        await Api.SaveMyCultureAsync(merged, complete: false, ct);
+                        break;
+                    case 9:
+                        await Api.SaveMyValuesAsync(merged, complete: false, ct);
+                        break;
+                }
+            },
+            onChanged: () => InvokeAsync(StateHasChanged),
+            debounceMs: 500);
+        _miniAutosave.ReplaceAll(_miniAnswers);
+    }
+
+    private Dictionary<int, int> MergeMiniAnswers(IReadOnlyDictionary<int, int> draft)
+    {
+        var merged = new Dictionary<int, int>(_miniServerAnswers);
+        var ids = MiniQuestionIdsForStep(_step);
+        foreach (var id in ids)
+        {
+            if (_miniLockedIds.Contains(id))
+            {
+                continue;
+            }
+
+            if (draft.TryGetValue(id, out var value))
+            {
+                merged[id] = value;
+            }
+        }
+
+        return merged;
+    }
+
+    private static int[] MiniQuestionIdsForStep(int step) => step switch
+    {
+        6 => OnboardingWizardCatalog.CompetencyQuestionIds,
+        7 => OnboardingWizardCatalog.CareerQuestionIds,
+        8 => OnboardingWizardCatalog.CultureQuestionIds,
+        9 => OnboardingWizardCatalog.ValuesQuestionIds,
+        _ => []
+    };
+
+    private async Task LoadMiniCompetencyAsync()
+    {
+        var state = await Api.GetMyCompetenciesAsync();
+        LoadMiniFromAnswers(
+            ParseAnswers(state?.Answers),
+            OnboardingWizardCatalog.CompetencyQuestionIds,
+            CompetencyTestCatalog.Questions.Select(q => new MiniQuestion(q.Id, q.TextKey)).ToList());
+    }
+
+    private async Task LoadMiniCareerAsync()
+    {
+        var state = await Api.GetMyCareerInterestsAsync();
+        LoadMiniFromAnswers(
+            ParseAnswers(state?.Answers),
+            OnboardingWizardCatalog.CareerQuestionIds,
+            CareerTestCatalog.Questions.Select(q => new MiniQuestion(q.Id, q.TextKey)).ToList());
+    }
+
+    private async Task LoadMiniCultureAsync()
+    {
+        var state = await Api.GetMyCultureAsync();
+        LoadMiniFromAnswers(
+            ParseAnswers(state?.Answers),
+            OnboardingWizardCatalog.CultureQuestionIds,
+            CulturePersonalityCatalog.Questions.Select(q => new MiniQuestion(q.Id, q.TextKey)).ToList());
+    }
+
+    private async Task LoadMiniValuesAsync()
+    {
+        var state = await Api.GetMyValuesAsync();
+        LoadMiniFromAnswers(
+            ParseAnswers(state?.Answers),
+            OnboardingWizardCatalog.ValuesQuestionIds,
+            SchwartzValuesCatalog.Questions.Select(q => new MiniQuestion(q.Id, q.TextKey)).ToList());
+    }
+
+    private void LoadMiniFromAnswers(
+        Dictionary<int, int> server,
+        int[] wizardIds,
+        List<MiniQuestion> catalog)
+    {
+        _miniServerAnswers.Clear();
+        foreach (var (k, v) in server)
+        {
+            _miniServerAnswers[k] = v;
+        }
+
+        _miniLockedIds.Clear();
+        foreach (var id in wizardIds)
+        {
+            if (_miniServerAnswers.ContainsKey(id))
+            {
+                _miniLockedIds.Add(id);
+            }
+        }
+
+        var visibleIds = wizardIds.Where(id => !_miniLockedIds.Contains(id)).ToHashSet();
+        _visibleMiniQuestions = catalog.Where(q => visibleIds.Contains(q.Id)).OrderBy(q => q.Id).ToList();
+        foreach (var id in visibleIds)
+        {
+            if (_miniServerAnswers.TryGetValue(id, out var val))
+            {
+                _miniAnswers[id] = val;
+            }
+        }
+    }
+
+    private static Dictionary<int, int> ParseAnswers(Dictionary<string, int>? answers)
+    {
+        var map = new Dictionary<int, int>();
+        if (answers is null)
+        {
+            return map;
+        }
+
+        foreach (var (key, value) in answers)
+        {
+            if (int.TryParse(key, out var id) && value is >= 1 and <= 5)
+            {
+                map[id] = value;
+            }
+        }
+
+        return map;
+    }
+
+    private string MiniQuestionText(MiniQuestion q) => $"{q.Id}. {Culture[q.TextKey]}";
+
+    private async Task OnMiniAnswerAsync(int id, int value)
+    {
+        _miniAnswers[id] = value;
+        if (_miniAutosave is not null)
+        {
+            await _miniAutosave.SetAnswerAsync(id, value);
+        }
+    }
+
+    private void ToggleAvailability(string key, bool on)
+    {
+        if (on)
+        {
+            _availability.Add(key);
+        }
+        else
+        {
+            _availability.Remove(key);
+        }
+
+        ScheduleProfileSave();
+    }
+
+    private void SelectEducation(string level)
+    {
+        _educationLevel = level;
+        if (string.Equals(level, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase))
+        {
+            _educationDirection = null;
+        }
+
+        ScheduleProfileSave();
+    }
+
+    private void PickDreamChip(string chip)
+    {
+        _dreamJob = chip;
+        ScheduleDreamSave();
+    }
+
+    private void PickDreamUnknown()
+    {
+        _dreamJob = "";
+        ScheduleDreamSave();
+    }
+
+    private void AddEmployer()
+    {
+        if (_employers.Count >= 3)
+        {
+            return;
+        }
+
+        _employers.Add(new CandidateEmployerHistory());
+    }
+
+    private void SetEmployerStart(int idx, string? value)
+    {
+        if (idx < 0 || idx >= _employers.Count)
+        {
+            return;
+        }
+
+        _employers[idx].StartMonth = value;
+        ScheduleProfileSave();
+    }
+
+    private void SetEmployerEnd(int idx, string? value)
+    {
+        if (idx < 0 || idx >= _employers.Count)
+        {
+            return;
+        }
+
+        _employers[idx].EndMonth = value;
+        ScheduleProfileSave();
+    }
+
+    private void OnAvailableImmediateChanged(ChangeEventArgs e)
+    {
+        _availableImmediate = e.Value is true;
+        if (_availableImmediate)
+        {
+            _availableFrom = null;
+        }
+
+        ScheduleProfileSave();
+    }
+
+    private void OnAddressFieldsChanged()
+    {
+        _homeLat = null;
+        _homeLng = null;
+        ScheduleProfileSave();
+        ScheduleGeocode();
+    }
+
+    private void ScheduleGeocode()
+    {
+        _geocodeCts?.Cancel();
+        _geocodeCts?.Dispose();
+        _geocodeCts = new CancellationTokenSource();
+        var token = _geocodeCts.Token;
+        _ = GeocodeDebouncedAsync(token);
+    }
+
+    private async Task GeocodeDebouncedAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(500, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        var query = ComposedHomeAddress();
+        if (query.Length < 3)
+        {
+            _showAddressSuggestions = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        _geocoding = true;
+        _showAddressSuggestions = true;
+        await InvokeAsync(StateHasChanged);
+        try
+        {
+            _addressSuggestions = (await Geocoder.SuggestAsync(query, token)).ToList();
+            if (_addressSuggestions.Count == 1)
+            {
+                SelectAddressSuggestion(_addressSuggestions[0]);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch
+        {
+            _addressSuggestions = [];
+        }
+        finally
+        {
+            _geocoding = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void SelectAddressSuggestion(AddressSuggestion suggestion)
+    {
+        _homeLat = suggestion.Latitude;
+        _homeLng = suggestion.Longitude;
+        if (!string.IsNullOrWhiteSpace(suggestion.Label))
+        {
+            SplitHomeAddress(suggestion.Label);
+        }
+
+        _showAddressSuggestions = false;
+        ScheduleProfileSave();
+    }
+
+    private void ScheduleProfileSave()
+    {
+        if (_loading)
+        {
+            return;
+        }
+        _profileSaveCts?.Cancel();
+        _profileSaveCts?.Dispose();
+        _profileSaveCts = new CancellationTokenSource();
+        var token = _profileSaveCts.Token;
+        _profileSaveStatus = SaveQuietStatus.Saving;
+        _ = ProfileSaveDebouncedAsync(token);
+    }
+
+    private async Task ProfileSaveDebouncedAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(500, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        try
+        {
+            await SaveProfileAsync(token);
+            _profileSaveStatus = SaveQuietStatus.Saved;
+            _profileSavedVisible = true;
+            await InvokeAsync(StateHasChanged);
+            _ = HideProfileSavedSoonAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _profileSaveStatus = SaveQuietStatus.Idle;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task HideProfileSavedSoonAsync()
+    {
+        await Task.Delay(2000);
+        _profileSavedVisible = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task FlushProfileSaveAsync()
+    {
+        _profileSaveCts?.Cancel();
+        await SaveProfileAsync(CancellationToken.None);
+    }
+
+    private async Task SaveProfileAsync(CancellationToken ct)
+    {
+        var home = ComposedHomeAddress();
+        var clearHome = string.IsNullOrWhiteSpace(home);
+        var educations = string.IsNullOrWhiteSpace(_educationLevel)
+            ? []
+            : new List<string>
+            {
+                OnboardingWizardCatalog.FormatEducationLine(_educationLevel!, _educationDirection)
+            };
+
+        await Api.UpdateMyProfileAsync(
+            firstName: _firstName.Trim(),
+            lastName: _lastName.Trim(),
+            phoneNumber: string.IsNullOrWhiteSpace(_phone) ? null : _phone.Trim(),
+            homeLatitude: clearHome ? null : _homeLat,
+            homeLongitude: clearHome ? null : _homeLng,
+            clearHomeLocation: clearHome,
+            availableFromDate: _availableImmediate ? null : _availableFrom,
+            clearAvailableFromDate: _availableImmediate,
+            preferences: new CandidatePreferences
+            {
+                MinHoursPerWeek = _minHours,
+                MaxHoursPerWeek = _maxHours,
+                MaxTravelMinutes = _maxTravel,
+                PreferredTransport = string.IsNullOrWhiteSpace(_preferredTransport) ? null : _preferredTransport,
+                Availability = BuildAvailability(),
+                Employers = _employers
+                    .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role))
+                    .Select(e => new CandidateEmployerHistory
+                    {
+                        EmployerName = e.EmployerName?.Trim() ?? "",
+                        Role = string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
+                        StartMonth = e.StartMonth,
+                        EndMonth = e.EndMonth
+                    })
+                    .ToList(),
+                Educations = educations,
+                EducationDirection = string.IsNullOrWhiteSpace(_educationDirection) ? null : _educationDirection.Trim(),
+                NoWorkExperience = _noWorkExperience,
+                HomeAddress = clearHome ? null : home
+            },
+            ct: ct);
+    }
+
+    private Dictionary<string, List<string>> BuildAvailability()
+    {
+        var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var key in _availability)
+        {
+            var parts = key.Split(':', 2);
+            if (parts.Length != 2)
+            {
+                continue;
+            }
+
+            if (!map.TryGetValue(parts[0], out var slots))
+            {
+                slots = [];
+                map[parts[0]] = slots;
+            }
+
+            if (!slots.Contains(parts[1], StringComparer.OrdinalIgnoreCase))
+            {
+                slots.Add(parts[1]);
+            }
+        }
+
+        return map;
+    }
+
+    private void ScheduleDreamSave()
+    {
+        _dreamSaveCts?.Cancel();
+        _dreamSaveCts?.Dispose();
+        _dreamSaveCts = new CancellationTokenSource();
+        var token = _dreamSaveCts.Token;
+        _ = DreamSaveDebouncedAsync(token);
+    }
+
+    private async Task DreamSaveDebouncedAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(500, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        await SaveDreamJobAsync();
+    }
+
+    private Task SaveDreamJobAsync()
+        => Api.SaveOnboardingDreamJobAsync(string.IsNullOrWhiteSpace(_dreamJob) ? null : _dreamJob.Trim());
+
+    private void FlashProgressSaved()
+    {
+        _progressSaveStatus = SaveQuietStatus.Saved;
+        _progressSavedVisible = true;
+        _ = HideProgressSavedSoonAsync();
+    }
+
+    private async Task HideProgressSavedSoonAsync()
+    {
+        await Task.Delay(2000);
+        _progressSavedVisible = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task InstallPwaAsync()
+    {
+        _installBusy = true;
+        _installMessage = null;
+        try
+        {
+            await Js.InvokeAsync<object>("lobsyPwaInstall.prompt");
+            _installCanPrompt = await Js.InvokeAsync<bool>("lobsyPwaInstall.canPrompt");
+        }
+        catch
+        {
+            _installMessage = Culture["Onboarding.Install.Failed"];
+        }
+        finally
+        {
+            _installBusy = false;
+        }
+    }
+
+    private async Task EnablePushAsync()
+    {
+        _installBusy = true;
+        _installMessage = null;
+        try
+        {
+            var key = await Api.GetWebPushVapidPublicKeyAsync();
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                _installMessage = Culture["Push.Unavailable"];
+                return;
+            }
+
+            var result = await Js.InvokeAsync<PushCreateResult>("lobsyPush.createSubscription", key);
+            if (result is { Ok: true }
+                && !string.IsNullOrWhiteSpace(result.Endpoint)
+                && !string.IsNullOrWhiteSpace(result.P256dh)
+                && !string.IsNullOrWhiteSpace(result.Auth))
+            {
+                await Api.SubscribeWebPushAsync(result.Endpoint, result.P256dh, result.Auth);
+                _installMessage = Culture["Onboarding.Install.PushOk"];
+            }
+            else
+            {
+                _installMessage = Culture["Push.Denied"];
+            }
+        }
+        catch
+        {
+            _installMessage = Culture["Onboarding.Install.Failed"];
+        }
+        finally
+        {
+            _installBusy = false;
+        }
+    }
+
+    private Task FinishInstallLaterAsync()
+    {
+        Navigation.NavigateTo("/candidate/match");
+        return Task.CompletedTask;
+    }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public async ValueTask DisposeAsync()
+    {
+        Culture.Changed -= OnCultureChanged;
+        _profileSaveCts?.Cancel();
+        _profileSaveCts?.Dispose();
+        _geocodeCts?.Cancel();
+        _geocodeCts?.Dispose();
+        _dreamSaveCts?.Cancel();
+        _dreamSaveCts?.Dispose();
+        if (_miniAutosave is not null)
+        {
+            await _miniAutosave.DisposeAsync();
+        }
+    }
+
+    private sealed class PushCreateResult
+    {
+        public bool Ok { get; set; }
+        public string? Endpoint { get; set; }
+        public string? P256dh { get; set; }
+        public string? Auth { get; set; }
+        public string? Reason { get; set; }
+    }
+}
