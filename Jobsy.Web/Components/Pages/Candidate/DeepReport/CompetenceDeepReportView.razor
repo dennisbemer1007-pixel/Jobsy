@@ -1,0 +1,249 @@
+@* Full paid Competence deep report (150-item Big Five test). *@
+@using System.Globalization
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Report is not null)
+{
+    <article class="competence-report" aria-label="@Culture["Deep.CompetenceTitle"]">
+        <header class="competence-report__header">
+            <span class="test-status-badge test-status-badge--gold competence-report__badge">
+                <span aria-hidden="true">★</span>
+                @Culture["Deep.Competence.Badge"]
+            </span>
+            <p class="competence-report__meta muted">
+                @Culture.Format("Deep.Competence.Meta", QuestionCount, FormattedDate)
+            </p>
+        </header>
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@Culture["Deep.Competence.SummaryTitle"]</h2>
+            <p class="competence-report__summary">@Report.Summary</p>
+        </section>
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@Culture["Deep.Competence.TraitsTitle"]</h2>
+            <ScoreRadarChart AriaLabel="@Culture["Deep.Competence.RadarLabel"]"
+                             Labels="@_traitLabels"
+                             Values="@_traitScores"
+                             NormValues="@_traitNorms"
+                             NormLegendLabel="@Culture["Deep.Competence.AverageLegend"]" />
+        </section>
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@Culture["Deep.Competence.CompareTitle"]</h2>
+            <ul class="competence-norm-bars" aria-label="@Culture["Deep.Competence.CompareTitle"]">
+                @foreach (var trait in Report.Traits)
+                {
+                    <li class="competence-norm-bar">
+                        <div class="competence-norm-bar__row">
+                            <span>@trait.LabelNl</span>
+                            <strong>@trait.Score%</strong>
+                        </div>
+                        <div class="competence-norm-bar__track" role="presentation">
+                            <span class="competence-norm-bar__fill" style="width: @(trait.Score.ToString(CultureInfo.InvariantCulture))%"></span>
+                            @if (trait.NormMean is double norm)
+                            {
+                                <span class="competence-norm-bar__marker"
+                                      style="left: @(FormatPercent(norm))%"
+                                      aria-hidden="true"></span>
+                            }
+                        </div>
+                        @if (trait.NormMean is double normValue)
+                        {
+                            <p class="competence-norm-bar__band muted">
+                                @Culture["Deep.Competence.AverageLegend"]: @(Math.Round(normValue))%
+                                @if (!string.IsNullOrWhiteSpace(trait.NormBand))
+                                {
+                                    <span> · @trait.NormBand</span>
+                                }
+                            </p>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(trait.NormBand))
+                        {
+                            <p class="competence-norm-bar__band muted">@trait.NormBand</p>
+                        }
+                    </li>
+                }
+            </ul>
+            @if (!string.IsNullOrWhiteSpace(Report.NormSourceLine))
+            {
+                <p class="competence-norm-source muted">@Report.NormSourceLine</p>
+            }
+        </section>
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@Culture["Deep.Competence.DeeperTitle"]</h2>
+            <div class="competence-trait-chips" role="tablist" aria-label="@Culture["Deep.Competence.TraitsTitle"]">
+                @foreach (var trait in Report.Traits)
+                {
+                    <button type="button"
+                            role="tab"
+                            class="competence-trait-chip @(trait.Domain == _selectedDomain ? "is-active" : null)"
+                            aria-selected="@(trait.Domain == _selectedDomain ? "true" : "false")"
+                            @onclick="() => SelectTrait(trait.Domain)">
+                        @trait.LabelNl
+                    </button>
+                }
+            </div>
+
+            @if (SelectedTrait is { } selected)
+            {
+                <div class="competence-trait-detail">
+                    <ul class="competence-facet-bars" aria-label="@Culture.Format("Deep.Competence.FacetsLabel", selected.LabelNl)">
+                        @foreach (var facet in selected.Facets)
+                        {
+                            <li class="competence-facet-bar">
+                                <div class="competence-facet-bar__row">
+                                    <span>@facet.LabelNl</span>
+                                    <strong>@facet.Score%</strong>
+                                </div>
+                                <div class="competence-facet-bar__track" role="presentation">
+                                    <span class="competence-facet-bar__fill" style="width: @(facet.Score.ToString(CultureInfo.InvariantCulture))%"></span>
+                                    @if (facet.NormMean is double facetNorm)
+                                    {
+                                        <span class="competence-facet-bar__marker" style="left: @(FormatPercent(facetNorm))%"></span>
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ul>
+
+                    <div class="competence-text-block">
+                        <h3>@Culture["Deep.Competence.MeaningLabel"]</h3>
+                        <p>@selected.Meaning</p>
+                    </div>
+                    <div class="competence-text-block">
+                        <h3>@Culture["Deep.Competence.WorkQuoteLabel"]</h3>
+                        <p class="competence-text-block__quote">“@selected.WorkQuote”</p>
+                    </div>
+                    <div class="competence-text-block competence-text-block--pitfall">
+                        <h3>@Culture["Deep.Competence.PitfallLabel"]</h3>
+                        <p>@selected.Pitfall</p>
+                    </div>
+                    <div class="competence-text-block competence-text-block--tip">
+                        <h3>@Culture["Deep.Competence.TipLabel"]</h3>
+                        <p>@selected.Tip</p>
+                    </div>
+                    <div class="competence-text-block competence-text-block--strength">
+                        <h3>@Culture["Deep.Competence.StrengthLabel"]</h3>
+                        <p>@selected.Strength</p>
+                    </div>
+                </div>
+            }
+        </section>
+
+        @if (SelectedTrait is { } workTrait)
+        {
+            <section class="competence-report__section">
+                <h2 class="test-detail__section-title">@Culture["Deep.Competence.WorkTitle"]</h2>
+                <div class="competence-work-cards">
+                    <article class="competence-work-card">
+                        <h3>@Culture["Deep.Competence.ThriveTitle"]</h3>
+                        <p>@workTrait.ThriveAtWork</p>
+                    </article>
+                    <article class="competence-work-card">
+                        <h3>@Culture["Deep.Competence.ManagerTitle"]</h3>
+                        <p>@workTrait.FittingManager</p>
+                    </article>
+                    <article class="competence-work-card">
+                        <h3>@Culture["Deep.Competence.TeamTitle"]</h3>
+                        <p>@workTrait.InTeam</p>
+                    </article>
+                </div>
+            </section>
+        }
+
+        @if (Report.Occupations.Count > 0)
+        {
+            <section class="competence-report__section">
+                <h2 class="test-detail__section-title">@Culture["Deep.Competence.OccupationsTitle"]</h2>
+                <ul class="competence-occupations">
+                    @foreach (var occupation in Report.Occupations)
+                    {
+                        <li class="competence-occupation">
+                            <div class="competence-occupation__row">
+                                <span class="competence-occupation__title">@occupation.Title</span>
+                                <span class="competence-occupation__match">@Culture.Format("Deep.Competence.MatchPercent", occupation.MatchPercent)</span>
+                            </div>
+                            <p class="muted">@occupation.Reason</p>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+
+        @if (Report.ActionPlan.Count > 0)
+        {
+            <section class="competence-report__section">
+                <h2 class="test-detail__section-title">@Culture["Deep.Competence.ActionPlanTitle"]</h2>
+                <ol class="competence-action-plan">
+                    @foreach (var (step, index) in Report.ActionPlan.Select((s, i) => (s, i + 1)))
+                    {
+                        <li class="competence-action-plan__item">
+                            <span class="competence-action-plan__num" aria-hidden="true">@index</span>
+                            <div>
+                                <p class="competence-action-plan__title">@step.Title</p>
+                                <p class="muted">@step.Body</p>
+                            </div>
+                        </li>
+                    }
+                </ol>
+            </section>
+        }
+
+        <button type="button" class="btn-gold" disabled="@Busy" @onclick="() => OnDownloadPdf.InvokeAsync()">
+            @Culture["Deep.DownloadPdf"]
+        </button>
+    </article>
+}
+
+@code {
+    [Parameter, EditorRequired] public CompetenceDeepReport? Report { get; set; }
+    [Parameter] public DateTime? CompletedAtUtc { get; set; }
+    [Parameter] public int QuestionCount { get; set; } = 150;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnDownloadPdf { get; set; }
+
+    private string[] _traitLabels = [];
+    private int[] _traitScores = [];
+    private int[]? _traitNorms;
+    private string? _selectedDomain;
+
+    private CompetenceDeepTraitReport? SelectedTrait =>
+        Report?.Traits.FirstOrDefault(t => t.Domain == _selectedDomain) ?? Report?.Traits.FirstOrDefault();
+
+    private string FormattedDate =>
+        CompletedAtUtc is DateTime dt
+            ? dt.ToLocalTime().ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL"))
+            : "";
+
+    protected override void OnParametersSet()
+    {
+        if (Report is null)
+        {
+            _traitLabels = [];
+            _traitScores = [];
+            _traitNorms = null;
+            return;
+        }
+
+        _traitLabels = Report.Traits.Select(t => t.LabelNl).ToArray();
+        _traitScores = Report.Traits.Select(t => t.Score).ToArray();
+        _traitNorms = Report.Traits.All(t => t.NormMean is not null)
+            ? Report.Traits.Select(t => (int)Math.Round(t.NormMean!.Value)).ToArray()
+            : null;
+
+        if (_selectedDomain is null || Report.Traits.All(t => t.Domain != _selectedDomain))
+        {
+            _selectedDomain = Report.Traits
+                .OrderByDescending(t => t.Score)
+                .FirstOrDefault()?.Domain;
+        }
+    }
+
+    private void SelectTrait(string domain) => _selectedDomain = domain;
+
+    private static string FormatPercent(double value)
+        => Math.Clamp(value, 0, 100).ToString("0.#", CultureInfo.InvariantCulture);
+}

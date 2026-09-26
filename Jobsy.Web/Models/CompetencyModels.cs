@@ -1,3 +1,5 @@
+using Jobsy.Core.Reports.Competence;
+
 namespace Jobsy.Web.Models;
 
 public sealed class WhoAmIState
@@ -244,6 +246,9 @@ public sealed class DeepAnalysisState
     public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public List<DeepAnalysisQuestionItem> Questions { get; set; } = [];
     public string UpsellCopy { get; set; } = "";
+
+    /// <summary>Populated only for a completed Competence deep analysis; null otherwise.</summary>
+    public CompetenceDeepReport? CompetenceReport { get; set; }
 }
 
 public sealed class DeepAnalysisQuestionItem

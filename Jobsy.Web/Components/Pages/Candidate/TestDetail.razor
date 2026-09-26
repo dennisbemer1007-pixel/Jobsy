@@ -37,7 +37,7 @@
             </div>
         }
 
-        @if (!_deepCompleted)
+        @if (!_deepCompleted && _def.Kind != AssessmentKind.Competence)
         {
             <button type="button"
                     class="btn-gold"
@@ -137,7 +137,26 @@
             </p>
         </details>
 
-        @if (_deepUnlocked && !_deepCompleted)
+        @if (_def.Kind == AssessmentKind.Competence)
+        {
+            @if (_deepCompleted && _competenceReport is not null)
+            {
+                <CompetenceDeepReportView Report="_competenceReport"
+                                          CompletedAtUtc="@_deepState?.CompletedAtUtc"
+                                          QuestionCount="@(_deepState?.QuestionCount ?? 150)"
+                                          Busy="_busy"
+                                          OnDownloadPdf="DownloadPdfAsync" />
+            }
+            else if (_freeDone)
+            {
+                <CompetenceDeepTeaser PriceEuro="_priceEuro"
+                                      IsUnlockedNotCompleted="_deepUnlocked && !_deepCompleted"
+                                      Busy="_busy"
+                                      OnUnlock="StartExtendedAsync"
+                                      OnContinueTest="StartExtendedAsync" />
+            }
+        }
+        else if (_deepUnlocked && !_deepCompleted)
         {
             <a class="login-submit" href="@_def.DeepStartHref">@Culture["Tests.ContinueExtended"]</a>
         }
@@ -228,6 +247,8 @@
     private CareerCompassModel? _careerCompass;
     private RiasecScoreSet? _riasecScores;
     private CompetencyScoreSet? _competencyScores;
+    private DeepAnalysisState? _deepState;
+    private CompetenceDeepReport? _competenceReport;
 
     protected override async Task OnInitializedAsync()
     {
@@ -246,9 +267,11 @@
         try
         {
             var deep = await Api.GetDeepAnalysisAsync(_def.Key);
+            _deepState = deep;
             _deepUnlocked = deep?.IsUnlocked == true;
             _deepCompleted = deep?.IsCompleted == true;
             _priceEuro = deep?.PriceEuro > 0 ? deep.PriceEuro : 2.99m;
+            _competenceReport = deep?.CompetenceReport;
 
             switch (_def.Kind)
             {

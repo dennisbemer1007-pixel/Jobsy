@@ -16912,6 +16912,21 @@ html.cookie-consent-known .cookie-consent {
     stroke-linejoin: round;
 }
 
+.score-radar__norm {
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.75;
+    stroke-linejoin: round;
+    stroke-dasharray: 4 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .score-radar__norm,
+    .score-radar__fill {
+        transition: none;
+    }
+}
+
 .score-radar__dot {
     fill: var(--coral);
     stroke: #fff;
@@ -16969,6 +16984,11 @@ html.cookie-consent-known .cookie-consent {
     margin-top: 0.28rem;
     background: color-mix(in srgb, var(--coral) 55%, transparent);
     border: 1.5px solid var(--coral);
+}
+
+.score-radar__legend-swatch--norm {
+    background: transparent;
+    border: 1.5px dashed var(--muted);
 }
 
 .score-radar__legend-name {
@@ -20924,5 +20944,382 @@ body {
     .btn-gold,
     .btn-outline-brand {
         max-width: 28rem;
+    }
+}
+
+/* Competence deep report */
+.competence-report {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+.competence-report__header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+
+.competence-report__badge {
+    font-size: 0.85rem;
+}
+
+.competence-report__meta {
+    margin: 0;
+    font-size: 0.88rem;
+}
+
+.competence-report__section {
+    margin-bottom: 1.5rem;
+}
+
+.competence-report__summary {
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Norm-compare bars ("Jij vergeleken met anderen") */
+.competence-norm-bars {
+    list-style: none;
+    margin: 0 0 0.5rem;
+    padding: 0;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.competence-norm-bar__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.92rem;
+    margin-bottom: 0.3rem;
+}
+
+.competence-norm-bar__track {
+    position: relative;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: var(--hover);
+    overflow: visible;
+}
+
+.competence-norm-bar__fill {
+    display: block;
+    height: 100%;
+    background: var(--brand);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.competence-norm-bar__marker {
+    position: absolute;
+    top: -0.2rem;
+    bottom: -0.2rem;
+    width: 2px;
+    background: var(--gold-deep);
+}
+
+.competence-norm-bar__marker::after {
+    content: "";
+    position: absolute;
+    top: -0.15rem;
+    left: -0.2rem;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--gold-deep);
+}
+
+.competence-norm-bar__band {
+    margin: 0.3rem 0 0;
+    font-size: 0.82rem;
+}
+
+.competence-norm-source {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+}
+
+/* Trait chips ("Dieper kijken per eigenschap") */
+.competence-trait-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.competence-trait-chip {
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--brand);
+    font-weight: 650;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.competence-trait-chip.is-active {
+    border-color: var(--brand);
+    background: var(--accent-soft);
+    color: var(--brand);
+}
+
+.competence-trait-detail {
+    display: grid;
+    gap: 1rem;
+}
+
+/* Facet bars within a selected trait */
+.competence-facet-bars {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.7rem;
+}
+
+.competence-facet-bar__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.88rem;
+    margin-bottom: 0.25rem;
+}
+
+.competence-facet-bar__track {
+    position: relative;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--hover);
+    overflow: visible;
+}
+
+.competence-facet-bar__fill {
+    display: block;
+    height: 100%;
+    background: color-mix(in srgb, var(--brand) 75%, var(--accent));
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.competence-facet-bar__marker {
+    position: absolute;
+    top: -0.15rem;
+    bottom: -0.15rem;
+    width: 2px;
+    background: var(--gold-deep);
+}
+
+/* Meaning / quote / pitfall / tip / strength text blocks */
+.competence-text-block {
+    padding: 0.75rem 0.9rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.competence-text-block h3 {
+    margin: 0 0 0.3rem;
+    font-size: 0.9rem;
+    color: var(--brand);
+}
+
+.competence-text-block p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.competence-text-block__quote {
+    font-style: italic;
+}
+
+.competence-text-block--pitfall {
+    border-color: color-mix(in srgb, var(--warn, #b45309) 30%, var(--border));
+    background: color-mix(in srgb, var(--warn-soft, #fef3e2) 55%, var(--surface));
+}
+
+.competence-text-block--tip {
+    border-color: color-mix(in srgb, var(--success) 30%, var(--border));
+    background: color-mix(in srgb, var(--success-soft) 55%, var(--surface));
+}
+
+.competence-text-block--strength {
+    border-color: color-mix(in srgb, var(--gold) 40%, var(--border));
+    background: color-mix(in srgb, var(--gold-soft) 55%, var(--surface));
+}
+
+/* "Wat betekent dit voor je werk?" cards */
+.competence-work-cards {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.competence-work-card {
+    padding: 0.85rem 0.95rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.competence-work-card h3 {
+    margin: 0 0 0.3rem;
+    font-size: 0.92rem;
+    color: var(--brand);
+}
+
+.competence-work-card p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Occupations */
+.competence-occupations {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.65rem;
+}
+
+.competence-occupation {
+    padding: 0.7rem 0.85rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.competence-occupation__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.2rem;
+}
+
+.competence-occupation__title {
+    font-weight: 650;
+    color: var(--brand);
+}
+
+.competence-occupation__match {
+    font-weight: 700;
+    color: var(--gold-deep);
+    white-space: nowrap;
+}
+
+/* Action plan */
+.competence-action-plan {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.competence-action-plan__item {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 0.6rem;
+    align-items: start;
+}
+
+.competence-action-plan__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: var(--gold-gradient);
+    color: var(--gold-ink);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.competence-action-plan__title {
+    margin: 0 0 0.15rem;
+    font-weight: 650;
+    color: var(--brand);
+}
+
+/* Free teaser under the Quick-Scan result */
+.competence-teaser {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+.competence-teaser__locked-grid {
+    display: grid;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.competence-teaser__locked-card {
+    position: relative;
+    padding: 0.85rem 0.95rem 1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.competence-teaser__locked-card h3 {
+    margin: 0.35rem 0 0.6rem;
+    font-size: 0.95rem;
+    color: var(--brand);
+}
+
+.competence-teaser__locked-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: var(--hover);
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+}
+
+.competence-teaser__blur {
+    filter: blur(4px);
+    opacity: 0.75;
+    pointer-events: none;
+    user-select: none;
+}
+
+.competence-teaser__list {
+    margin: 0 0 1rem;
+    padding-left: 1.2rem;
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.92rem;
+}
+
+.competence-teaser__secure {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.6rem 0 0;
+    font-size: 0.82rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .competence-norm-bar__fill,
+    .competence-facet-bar__fill {
+        transition: none;
+    }
+}
+
+@media (min-width: 640px) {
+    .competence-teaser__locked-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .competence-work-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }

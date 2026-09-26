@@ -32,6 +32,12 @@
                     ShortLabel(Labels[i]),
                     $"{Labels[i]}: {Values[i]}%"))
             }
+            @if (HasNorms)
+            {
+                <polygon class="score-radar__norm" points="@NormShapePoints()">
+                    <title>@NormLegendLabel</title>
+                </polygon>
+            }
             <polygon class="score-radar__fill" points="@ShapePoints()">
                 <title>@AriaLabel</title>
             </polygon>
@@ -46,6 +52,14 @@
                 <span class="score-radar__legend-value">@Values[i]%</span>
             </li>
         }
+        @if (HasNorms)
+        {
+            <li>
+                <span class="score-radar__legend-swatch score-radar__legend-swatch--norm"></span>
+                <span class="score-radar__legend-name">@NormLegendLabel</span>
+                <span class="score-radar__legend-value"></span>
+            </li>
+        }
     </ul>
 </div>
 
@@ -56,8 +70,14 @@
     [Parameter, EditorRequired] public IReadOnlyList<string> Labels { get; set; } = [];
     [Parameter, EditorRequired] public IReadOnlyList<int> Values { get; set; } = [];
     [Parameter] public string AriaLabel { get; set; } = "Scores";
+    [Parameter] public IReadOnlyList<int>? NormValues { get; set; }
+    [Parameter] public string NormLegendLabel { get; set; } = "Gemiddelde";
 
     private int AxisCount => Math.Min(Labels.Count, Values.Count);
+    private bool HasNorms => NormValues is { Count: > 0 } norms && norms.Count >= AxisCount;
+
+    private string NormShapePoints()
+        => string.Join(" ", Enumerable.Range(0, AxisCount).Select(i => FormatPoint(Point(NormValues![i], i))));
 
     private string RingPoints(double percent)
         => string.Join(" ", Enumerable.Range(0, AxisCount).Select(i => FormatPoint(Point(percent, i))));

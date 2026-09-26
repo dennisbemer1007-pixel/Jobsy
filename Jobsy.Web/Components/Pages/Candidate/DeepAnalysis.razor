@@ -35,12 +35,23 @@
             </button>
             <a class="engagement-btn" href="/candidate/profile">@Culture["Competency.BackToProfile"]</a>
         }
-        else if (_state is { IsCompleted: true })
+        else if (_state is { IsCompleted: true } completedState)
         {
-            <p class="login-lead">@Culture["Deep.Completed"]</p>
-            <button class="login-submit" type="button" disabled="@_saving" @onclick="DownloadPdfAsync">
-                @Culture["Deep.DownloadPdf"]
-            </button>
+            @if (_slug == "competence" && completedState.CompetenceReport is not null)
+            {
+                <CompetenceDeepReportView Report="completedState.CompetenceReport"
+                                          CompletedAtUtc="@completedState.CompletedAtUtc"
+                                          QuestionCount="@completedState.QuestionCount"
+                                          Busy="_saving"
+                                          OnDownloadPdf="DownloadPdfAsync" />
+            }
+            else
+            {
+                <p class="login-lead">@Culture["Deep.Completed"]</p>
+                <button class="login-submit" type="button" disabled="@_saving" @onclick="DownloadPdfAsync">
+                    @Culture["Deep.DownloadPdf"]
+                </button>
+            }
             <a class="engagement-btn" href="/candidate/profile">@Culture["Competency.BackToProfile"]</a>
         }
         else

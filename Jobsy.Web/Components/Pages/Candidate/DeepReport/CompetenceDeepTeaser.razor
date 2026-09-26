@@ -1,0 +1,91 @@
+@* Free teaser for the paid Competence deep report — generic dummy preview only, never real paid data. *@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="competence-teaser" aria-label="@Culture["Deep.CompetenceTeaser.Title"]">
+    <h2 class="test-detail__section-title">@Culture["Deep.CompetenceTeaser.Title"]</h2>
+
+    <div class="competence-teaser__locked-grid">
+        <div class="competence-teaser__locked-card">
+            <span class="competence-teaser__locked-badge">
+                <span aria-hidden="true">🔒</span>
+                @Culture["Deep.CompetenceTeaser.Locked"]
+            </span>
+            <h3>@Culture["Deep.CompetenceTeaser.LockedCompareTitle"]</h3>
+            <div class="competence-teaser__blur" aria-hidden="true">
+                <ul class="competence-norm-bars competence-norm-bars--dummy">
+                    <li class="competence-norm-bar">
+                        <div class="competence-norm-bar__row"><span>Eigenschap A</span><strong>72%</strong></div>
+                        <div class="competence-norm-bar__track"><span class="competence-norm-bar__fill" style="width: 72%"></span><span class="competence-norm-bar__marker" style="left: 55%"></span></div>
+                    </li>
+                    <li class="competence-norm-bar">
+                        <div class="competence-norm-bar__row"><span>Eigenschap B</span><strong>48%</strong></div>
+                        <div class="competence-norm-bar__track"><span class="competence-norm-bar__fill" style="width: 48%"></span><span class="competence-norm-bar__marker" style="left: 60%"></span></div>
+                    </li>
+                    <li class="competence-norm-bar">
+                        <div class="competence-norm-bar__row"><span>Eigenschap C</span><strong>81%</strong></div>
+                        <div class="competence-norm-bar__track"><span class="competence-norm-bar__fill" style="width: 81%"></span><span class="competence-norm-bar__marker" style="left: 50%"></span></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="competence-teaser__locked-card">
+            <span class="competence-teaser__locked-badge">
+                <span aria-hidden="true">🔒</span>
+                @Culture["Deep.CompetenceTeaser.Locked"]
+            </span>
+            <h3>@Culture["Deep.CompetenceTeaser.LockedFacetsTitle"]</h3>
+            <div class="competence-teaser__blur" aria-hidden="true">
+                <ul class="competence-facet-bars competence-facet-bars--dummy">
+                    <li class="competence-facet-bar">
+                        <div class="competence-facet-bar__row"><span>Facet 1</span><strong>65%</strong></div>
+                        <div class="competence-facet-bar__track"><span class="competence-facet-bar__fill" style="width: 65%"></span></div>
+                    </li>
+                    <li class="competence-facet-bar">
+                        <div class="competence-facet-bar__row"><span>Facet 2</span><strong>40%</strong></div>
+                        <div class="competence-facet-bar__track"><span class="competence-facet-bar__fill" style="width: 40%"></span></div>
+                    </li>
+                    <li class="competence-facet-bar">
+                        <div class="competence-facet-bar__row"><span>Facet 3</span><strong>77%</strong></div>
+                        <div class="competence-facet-bar__track"><span class="competence-facet-bar__fill" style="width: 77%"></span></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <ul class="competence-teaser__list">
+        <li>@Culture["Deep.CompetenceTeaser.List1"]</li>
+        <li>@Culture["Deep.CompetenceTeaser.List2"]</li>
+        <li>@Culture["Deep.CompetenceTeaser.List3"]</li>
+    </ul>
+
+    @if (IsUnlockedNotCompleted)
+    {
+        <button type="button" class="btn-gold" disabled="@Busy" @onclick="() => OnContinueTest.InvokeAsync()">
+            @Culture["Deep.CompetenceTeaser.Continue"]
+        </button>
+    }
+    else
+    {
+        <button type="button" class="btn-gold" disabled="@Busy" @onclick="() => OnUnlock.InvokeAsync()">
+            @Culture.Format("Deep.CompetenceTeaser.Unlock", FormattedPrice)
+        </button>
+    }
+
+    <p class="competence-teaser__secure muted">
+        <span aria-hidden="true">🔒</span>
+        @Culture["Deep.CompetenceTeaser.SecureLine"]
+    </p>
+</section>
+
+@code {
+    [Parameter] public decimal PriceEuro { get; set; } = 2.99m;
+    [Parameter] public bool IsUnlockedNotCompleted { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnUnlock { get; set; }
+    [Parameter] public EventCallback OnContinueTest { get; set; }
+
+    private string FormattedPrice => PriceEuro.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+}
