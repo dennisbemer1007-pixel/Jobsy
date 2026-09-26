@@ -9,27 +9,21 @@ namespace Jobsy.Api.Security;
 
 /// <summary>
 /// Partition keys for public API rate limits. Prefer end-user identity over the
-/// Web→API hop IP (which is shared for all Blazor Server circuits).
+/// Web→API hop IP (which is shared for all Blazor Server / map-proxy traffic).
 /// </summary>
 public static class RateLimitPartitioning
 {
-    public const string ClientIpHeader = "X-Jobsy-Client-Ip";
-    public const string InternalSecretHeader = "X-Jobsy-Internal-Secret";
-    public const string ConfigKey = "JobsyAuth:InternalClientIpSecret";
+    public const string ClientIpHeader = InternalClientIpHeaders.ClientIpHeader;
+    public const string InternalSecretHeader = InternalClientIpHeaders.InternalSecretHeader;
+    public const string ConfigKey = InternalClientIpHeaders.ConfigKey;
     public const string PartitionItemKey = "Jobsy.RateLimit.Partition";
 
     /// <summary>
-    /// Order: JWT <c>client_ip</c> claim → authenticated user id → trusted
-    /// <see cref="ClientIpHeader"/> (secret via FixedTimeEquals) → RemoteIpAddress.
+    /// Order: authenticated user id → trusted visitor IP (header + secret via
+    /// FixedTimeEquals, or JWT <c>client_ip</c> claim) → RemoteIpAddress.
     /// </summary>
     public static string ResolvePartitionKey(HttpContext httpContext, string? internalSecret)
     {
-        var clientIpClaim = httpContext.User.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value;
-        if (!string.IsNullOrWhiteSpace(clientIpClaim))
-        {
-            return Store(httpContext, "cip:" + clientIpClaim.Trim());
-        }
-
         var userId = ResolveUserId(httpContext.User);
         if (!string.IsNullOrWhiteSpace(userId))
         {
@@ -39,6 +33,12 @@ public static class RateLimitPartitioning
         if (TryReadTrustedClientIp(httpContext, internalSecret, out var trustedIp))
         {
             return Store(httpContext, "cip:" + trustedIp);
+        }
+
+        var clientIpClaim = httpContext.User.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value;
+        if (!string.IsNullOrWhiteSpace(clientIpClaim))
+        {
+            return Store(httpContext, "cip:" + clientIpClaim.Trim());
         }
 
         var remote = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";

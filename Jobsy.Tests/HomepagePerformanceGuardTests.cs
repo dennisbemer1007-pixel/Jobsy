@@ -132,7 +132,8 @@ public class HomepagePerformanceGuardTests
         Assert.DoesNotContain("IntersectionObserver", maps);
         Assert.DoesNotContain("requestIdleCallback", maps);
         Assert.Contains("fetchpriority", maps);
-        Assert.Contains("Blazor calls ensure()", maps);
+        Assert.Contains("loadScriptsParallel", maps);
+        Assert.Contains("first pins do not wait on the Blazor circuit", maps);
 
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.DoesNotContain("ensureAfterPaint", bundle);
@@ -140,7 +141,8 @@ public class HomepagePerformanceGuardTests
         Assert.DoesNotContain("jobsyMapsAfterFirstPaint", bundle);
         Assert.DoesNotContain("requestIdleCallback", bundle);
         Assert.Contains("fetchpriority", bundle);
-        Assert.Contains("Blazor calls ensure()", bundle);
+        Assert.Contains("loadScriptsParallel", bundle);
+        Assert.Contains("first pins do not wait on the Blazor circuit", bundle);
 
         var preview = Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "images", "maps", "nl-preview.webp");
         Assert.False(File.Exists(preview));

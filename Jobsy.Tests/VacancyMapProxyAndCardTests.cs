@@ -90,7 +90,50 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("AbortController", js);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("jobMap.min.js?v=20260926-mapfix4", maps);
+        Assert.Contains("jobMap.min.js?v=20260926-mapfix7", maps);
+        Assert.Contains("PersistentComponentState", File.ReadAllText(
+            Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor")));
+        Assert.DoesNotContain(
+            "getClusterExpansionZoom(clusterId, function",
+            js,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "getClusterLeaves(clusterId, 100, 0, function",
+            js,
+            StringComparison.Ordinal);
+        Assert.Contains("await source.getClusterExpansionZoom", js, StringComparison.Ordinal);
+        Assert.Contains("await source.getClusterLeaves", js, StringComparison.Ordinal);
+        Assert.Contains("fetchJsonWithOneRetry", js);
+        Assert.Contains("retryAfterMs", js);
+        Assert.Contains("map-popup--skeleton", js);
+        Assert.Contains("touchstart", js);
+    }
+
+    [Fact]
+    public void Proxy_forwards_visitor_ip_and_caches_anonymous_reads()
+    {
+        var proxy = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs"));
+        Assert.Contains("ApplyVisitorIdentity", proxy);
+        Assert.Contains("CF-Connecting-IP", proxy);
+        Assert.Contains("Retry-After", proxy);
+        Assert.Contains("AnonymousCacheTtl", proxy);
+        Assert.Contains("InternalClientIpHeaders.ClientIpHeader", proxy);
+        Assert.Contains("InternalClientIpHeaders.InternalSecretHeader", proxy);
+        Assert.Contains("Never cache failures", proxy);
+
+        var auth = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Services", "JobsyApiAuthHandler.cs"));
+        Assert.Contains("ResolveVisitorIp", auth);
+        Assert.Contains("CF-Connecting-IP", File.ReadAllText(
+            Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs")));
+    }
+
+    [Fact]
+    public void ResolveVisitorIp_prefers_cloudflare_header()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Headers["CF-Connecting-IP"] = "203.0.113.44";
+        http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
+        Assert.Equal("203.0.113.44", VacancyMapApiForwarder.ResolveVisitorIp(http));
     }
 
     [Fact]

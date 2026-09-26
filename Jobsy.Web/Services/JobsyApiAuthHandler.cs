@@ -6,6 +6,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -127,7 +128,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             return;
         }
 
-        var clientIp = httpContext?.Connection.RemoteIpAddress?.ToString();
+        var clientIp = VacancyMapApiForwarder.ResolveVisitorIp(httpContext);
         var jwt = _accessTokens.TryCreate(user, clientIp);
         if (!string.IsNullOrWhiteSpace(jwt))
         {
@@ -136,28 +137,29 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     }
 
     /// <summary>
-    /// Forwards the browser client IP to the API behind a shared internal secret so
-    /// anonymous public-* rate limits can partition by real user, not the Web hop.
+    /// Forwards the browser client IP (CF-Connecting-IP when present) to the API
+    /// behind a shared internal secret so anonymous public-* rate limits partition
+    /// per visitor, not the shared Web→API hop.
     /// </summary>
     private void ApplyTrustedClientIp(HttpRequestMessage request, HttpContext? httpContext)
     {
-        request.Headers.Remove("X-Jobsy-Client-Ip");
-        request.Headers.Remove("X-Jobsy-Internal-Secret");
+        request.Headers.Remove(InternalClientIpHeaders.ClientIpHeader);
+        request.Headers.Remove(InternalClientIpHeaders.InternalSecretHeader);
 
-        var secret = _configuration["JobsyAuth:InternalClientIpSecret"];
+        var secret = _configuration[InternalClientIpHeaders.ConfigKey];
         if (string.IsNullOrWhiteSpace(secret))
         {
             return;
         }
 
-        var clientIp = httpContext?.Connection.RemoteIpAddress?.ToString();
+        var clientIp = VacancyMapApiForwarder.ResolveVisitorIp(httpContext);
         if (string.IsNullOrWhiteSpace(clientIp))
         {
             return;
         }
 
-        request.Headers.TryAddWithoutValidation("X-Jobsy-Client-Ip", clientIp);
-        request.Headers.TryAddWithoutValidation("X-Jobsy-Internal-Secret", secret.Trim());
+        request.Headers.TryAddWithoutValidation(InternalClientIpHeaders.ClientIpHeader, clientIp);
+        request.Headers.TryAddWithoutValidation(InternalClientIpHeaders.InternalSecretHeader, secret.Trim());
     }
 
     private async Task<bool> TrySilentDeviceRefreshAsync(HttpContext? httpContext, CancellationToken cancellationToken)

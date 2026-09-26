@@ -995,14 +995,25 @@ window.jobMap = (function () {
     }
 
     function skeletonPopupHtml(pin) {
+        // Same structure/size as buildPopupHtml so the popup never jumps when filled.
         return (
-            "<div class=\"map-popup map-popup--loading map-popup--skeleton\">" +
+            "<div class=\"map-popup map-popup--loading map-popup--skeleton\" aria-busy=\"true\">" +
                 "<div class=\"map-popup__main\">" +
                     "<div class=\"map-popup__media map-popup__media--logo-only map-popup__shimmer\" aria-hidden=\"true\"></div>" +
                     "<div class=\"map-popup__body\">" +
-                        "<p class=\"map-popup__title map-popup__shimmer-line\">Laden…</p>" +
-                        "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>" +
-                        "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>" +
+                        "<div class=\"map-popup__header\">" +
+                            "<p class=\"map-popup__title map-popup__shimmer-line\">&nbsp;</p>" +
+                            "<p class=\"map-popup__address map-popup__shimmer-line\">&nbsp;</p>" +
+                            "<p class=\"map-popup__travel map-popup__shimmer-line\">&nbsp;</p>" +
+                        "</div>" +
+                        "<p class=\"map-popup__wage map-popup__shimmer-line\">&nbsp;</p>" +
+                        "<div class=\"map-popup__specs map-popup__specs--empty\" aria-hidden=\"true\"></div>" +
+                        "<div class=\"map-popup__footer\">" +
+                            "<div class=\"map-popup__footer-meta\">" +
+                                "<p class=\"map-popup__company map-popup__shimmer-line\">&nbsp;</p>" +
+                            "</div>" +
+                            "<span class=\"map-popup__apply map-popup__shimmer-line\" aria-hidden=\"true\">&nbsp;</span>" +
+                        "</div>" +
                     "</div>" +
                 "</div>" +
             "</div>"
@@ -1062,6 +1073,53 @@ window.jobMap = (function () {
         return fetchVacancyCard(id);
     }
 
+    function sleepMs(ms) {
+        return new Promise(function (resolve) { setTimeout(resolve, ms); });
+    }
+
+    /** Retry-After seconds → ms; default 700, cap 1500. */
+    function retryAfterMs(res) {
+        const raw = res && res.headers && res.headers.get
+            ? res.headers.get("Retry-After")
+            : null;
+        let ms = 700;
+        if (raw != null && String(raw).trim() !== "") {
+            const sec = Number(raw);
+            if (Number.isFinite(sec) && sec >= 0) {
+                ms = Math.round(sec * 1000);
+            }
+        }
+        return Math.max(0, Math.min(1500, ms || 700));
+    }
+
+    function isRetryableStatus(status) {
+        return status === 429 || status >= 500;
+    }
+
+    function fetchJsonWithOneRetry(url) {
+        const opts = {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        };
+        return fetch(url, opts).then(function (res) {
+            if (res.ok) {
+                return res.json();
+            }
+            if (!isRetryableStatus(res.status)) {
+                throw new Error("http " + res.status);
+            }
+            // Keep callers on skeleton while we wait Retry-After, then retry once.
+            return sleepMs(retryAfterMs(res)).then(function () {
+                return fetch(url, opts).then(function (retryRes) {
+                    if (!retryRes.ok) {
+                        throw new Error("http " + retryRes.status);
+                    }
+                    return retryRes.json();
+                });
+            });
+        });
+    }
+
     function fetchVacancyCard(id) {
         const key = String(id || "");
         if (!key) {
@@ -1070,16 +1128,9 @@ window.jobMap = (function () {
         if (detailCache[key]) {
             return detailCache[key];
         }
-        detailCache[key] = fetch("/api/vacancies/" + encodeURIComponent(key) + "/card", {
-            credentials: "same-origin",
-            headers: { Accept: "application/json" }
-        })
-            .then(function (res) {
-                if (!res.ok) {
-                    throw new Error("card " + res.status);
-                }
-                return res.json();
-            })
+        detailCache[key] = fetchJsonWithOneRetry(
+            "/api/vacancies/" + encodeURIComponent(key) + "/card"
+        )
             .then(function (card) {
                 return card;
             })
@@ -1099,16 +1150,9 @@ window.jobMap = (function () {
         const missing = list.filter(function (id) { return !detailCache[id]; });
         const batch = missing.length === 0
             ? Promise.resolve([])
-            : fetch("/api/vacancies/cards?ids=" + missing.map(encodeURIComponent).join(","), {
-                credentials: "same-origin",
-                headers: { Accept: "application/json" }
-            })
-                .then(function (res) {
-                    if (!res.ok) {
-                        throw new Error("cards " + res.status);
-                    }
-                    return res.json();
-                })
+            : fetchJsonWithOneRetry(
+                "/api/vacancies/cards?ids=" + missing.map(encodeURIComponent).join(",")
+            )
                 .then(function (rows) {
                     (Array.isArray(rows) ? rows : []).forEach(function (card) {
                         if (card && card.id != null) {
@@ -1458,7 +1502,7 @@ window.jobMap = (function () {
                         "text-field": ["get", "label"],
                         "text-size": 12,
                         "text-allow-overlap": true,
-                        "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"]
+                        "text-font": ["Noto Sans Regular", "Arial Unicode MS Regular"]
                     },
                     paint: {
                         "text-color": "#0f2d5c",
@@ -1985,7 +2029,7 @@ window.jobMap = (function () {
                 layout: {
                     "text-field": ["get", "point_count_abbreviated"],
                     "text-size": 12,
-                    "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"]
+                    "text-font": ["Noto Sans Bold", "Arial Unicode MS Bold"]
                 },
                 paint: { "text-color": "#ffffff" }
             });
@@ -2001,7 +2045,8 @@ window.jobMap = (function () {
                         ["==", ["get", "featured"], 1], "#c9a227",
                         [
                             "case",
-                            ["all", ["!=", ["get", "colour"], ""], ["!=", ["get", "colour"], null]],
+                            // Avoid literal null in the style (MapLibre warns); empty string means "no colour".
+                            ["all", ["has", "colour"], ["!=", ["get", "colour"], ""]],
                             ["get", "colour"],
                             "#7c3aed"
                         ]
@@ -2050,21 +2095,43 @@ window.jobMap = (function () {
         }
     }
 
-    function onClusterClick(ev) {
+    /**
+     * MapLibre GL JS 5.x is promise-only for getClusterExpansionZoom / getClusterLeaves.
+     * Callback-style calls never fire — clusters appeared dead on Acc.
+     */
+    async function onClusterClick(ev) {
         if (!map || !ev.features || !ev.features.length) {
             return;
         }
         const feature = ev.features[0];
         const clusterId = feature.properties.cluster_id;
         const source = map.getSource(PIN_SOURCE);
-        if (!source || typeof source.getClusterExpansionZoom !== "function") {
+        if (!source
+            || typeof source.getClusterExpansionZoom !== "function"
+            || typeof source.getClusterLeaves !== "function") {
             return;
         }
-        source.getClusterExpansionZoom(clusterId, function (err, zoom) {
-            if (err) {
+
+        const openLeavesPager = async function () {
+            const leaves = await source.getClusterLeaves(clusterId, 100, 0);
+            if (!leaves || !leaves.length) {
                 return;
             }
+            const childMarkers = leaves.map(function (leaf) {
+                const id = leaf.properties && leaf.properties.id;
+                return markersById[id];
+            }).filter(Boolean);
+            if (childMarkers.length === 0) {
+                return;
+            }
+            openClusterList(childMarkers, feature.geometry.coordinates);
+        };
+
+        try {
+            const zoom = await source.getClusterExpansionZoom(clusterId);
             const maxZoom = CLUSTER_OPTS.clusterMaxZoom;
+            // Expand when MapLibre can zoom further; otherwise identical-coordinate /
+            // max-zoom clusters open the existing pager popup ("1 van N").
             if (zoom != null && zoom <= maxZoom && zoom > map.getZoom() + 0.15) {
                 map.easeTo({
                     center: feature.geometry.coordinates,
@@ -2073,17 +2140,14 @@ window.jobMap = (function () {
                 });
                 return;
             }
-            source.getClusterLeaves(clusterId, 100, 0, function (leafErr, leaves) {
-                if (leafErr || !leaves) {
-                    return;
-                }
-                const childMarkers = leaves.map(function (leaf) {
-                    const id = leaf.properties && leaf.properties.id;
-                    return markersById[id];
-                }).filter(Boolean);
-                openClusterList(childMarkers, feature.geometry.coordinates);
-            });
-        });
+            await openLeavesPager();
+        } catch (_err) {
+            try {
+                await openLeavesPager();
+            } catch (_leafErr) {
+                // leave map as-is
+            }
+        }
     }
 
     function onPinClick(ev) {
@@ -2197,18 +2261,22 @@ window.jobMap = (function () {
                 }
             };
         }
-        // Native MapLibre clusters update on zoom without rebuilding HTML markers.
+        // Prefetch card on touch/pointer before click so the popup fills faster.
         if (!zoomHandlerBound) {
             zoomHandlerBound = true;
-            map.on("pointerdown", function (ev) {
-                if (!ev || !ev.point) {
+            const prefetchAtPoint = function (ev) {
+                if (!ev || !ev.point || !map) {
                     return;
                 }
-                const feats = map.queryRenderedFeatures(ev.point, { layers: [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH] });
+                const feats = map.queryRenderedFeatures(ev.point, {
+                    layers: [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH]
+                });
                 if (feats && feats[0] && feats[0].properties && feats[0].properties.id) {
                     fetchVacancyCard(feats[0].properties.id);
                 }
-            });
+            };
+            map.on("pointerdown", prefetchAtPoint);
+            map.on("touchstart", prefetchAtPoint);
         }
         addLocateControl();
         bindOutsideClickCloser();
@@ -2218,12 +2286,12 @@ window.jobMap = (function () {
     function readBootPayload() {
         const node = document.getElementById("jobsy-map-boot");
         if (!node || !node.textContent) {
-            return { pins: [], view: null, preferFilledLocation: true };
+            return { pins: [], view: null, preferFilledLocation: true, pinsUrl: null };
         }
         try {
             const parsed = JSON.parse(node.textContent);
             if (Array.isArray(parsed)) {
-                return { pins: parsed, view: null, preferFilledLocation: true };
+                return { pins: parsed, view: null, preferFilledLocation: true, pinsUrl: null };
             }
             const pins = parsed && Array.isArray(parsed.pins) ? parsed.pins : [];
             let view = parsed ? readOpeningView(parsed.view) : null;
@@ -2234,16 +2302,45 @@ window.jobMap = (function () {
                     view = filled;
                 }
             }
-            return { pins: pins, view: view, preferFilledLocation: preferFilledLocation };
+            const bootPinsUrl = parsed && parsed.pinsUrl ? String(parsed.pinsUrl) : null;
+            return {
+                pins: pins,
+                view: view,
+                preferFilledLocation: preferFilledLocation,
+                pinsUrl: bootPinsUrl
+            };
         } catch (e) {
-            return { pins: [], view: null, preferFilledLocation: true };
+            return { pins: [], view: null, preferFilledLocation: true, pinsUrl: null };
         }
     }
 
-    // Paint the basemap immediately from a single jobMap.init after hydrate.
-    // Pre-circuit boot() was discarded when Blazor replaced #job-map (double tile load).
+    /**
+     * Start the map from #jobsy-map-boot before the Blazor circuit is up.
+     * Blazor jobMap.init reuses the live map when #job-map is still connected.
+     */
     function boot(elementId) {
-        return;
+        const id = elementId || "job-map";
+        if (typeof maplibregl === "undefined" || !window.jobsyMapLibre) {
+            return;
+        }
+        const el = document.getElementById(id);
+        if (!el) {
+            return;
+        }
+        if (map && typeof map.getContainer === "function"
+            && map.getContainer() === el && el.isConnected) {
+            return;
+        }
+        const bootPayload = readBootPayload();
+        try {
+            init(id, bootPayload.pins || [], {
+                view: bootPayload.view,
+                preferFilledLocation: bootPayload.preferFilledLocation !== false,
+                pinsUrl: bootPayload.pinsUrl || null
+            });
+        } catch (_err) {
+            // Circuit init will retry.
+        }
     }
 
     function init(elementId, vacancies, options) {
@@ -2284,48 +2381,62 @@ window.jobMap = (function () {
         highlightSeed = options && Number.isFinite(Number(options.highlightSeed))
             ? (Number(options.highlightSeed) >>> 0)
             : 0;
-        pinsUrl = options && options.pinsUrl ? String(options.pinsUrl) : null;
+        const nextPinsUrl = options && options.pinsUrl ? String(options.pinsUrl) : null;
+        if (nextPinsUrl) {
+            pinsUrl = nextPinsUrl;
+        }
 
         bindMapRuntime();
 
-        const seedPins = (vacancies || []).map(normalizePin).filter(Boolean);
-        if (seedPins.length > 0) {
-            setVacancies(seedPins);
-        } else {
-            // Prefer #jobsy-map-boot compact pins until HTTP pins arrive.
-            try {
-                const boot = readBootPayload();
-                if (boot && Array.isArray(boot.pins) && boot.pins.length) {
-                    setVacancies(boot.pins.map(normalizePin).filter(Boolean));
-                    if (!pinsUrl && boot.pinsUrl) {
-                        pinsUrl = String(boot.pinsUrl);
+        // Early boot() may already have painted pins — do not re-fetch (one pins request/load).
+        const alreadyPinned = live && Object.keys(markersById).length > 0;
+        if (!alreadyPinned) {
+            const seedPins = (vacancies || []).map(normalizePin).filter(Boolean);
+            if (seedPins.length > 0) {
+                setVacancies(seedPins);
+            } else {
+                // Prefer #jobsy-map-boot compact pins until HTTP pins arrive — never wait on the circuit.
+                try {
+                    const bootPayload = readBootPayload();
+                    if (!pinsUrl && bootPayload.pinsUrl) {
+                        pinsUrl = String(bootPayload.pinsUrl);
                     }
-                } else {
+                    if (bootPayload && Array.isArray(bootPayload.pins) && bootPayload.pins.length) {
+                        setVacancies(bootPayload.pins.map(normalizePin).filter(Boolean));
+                    } else {
+                        setVacancies([]);
+                    }
+                } catch (e) {
                     setVacancies([]);
                 }
-            } catch (e) {
-                setVacancies([]);
             }
-        }
-        // Apply early prefetch (started from maps-loader / boot JSON) before a new fetch.
-        if (pinsUrl && window.__jobsyPinsPrefetch && window.__jobsyPinsPrefetchUrl === pinsUrl) {
-            const gen = ++pinsFetchGen;
-            Promise.resolve(window.__jobsyPinsPrefetch).then(function (data) {
-                if (gen !== pinsFetchGen || !data) {
-                    if (pinsUrl) {
+            // Apply early prefetch (started from maps-loader / boot JSON) before a new fetch.
+            if (pinsUrl && window.__jobsyPinsPrefetch && window.__jobsyPinsPrefetchUrl === pinsUrl) {
+                const gen = ++pinsFetchGen;
+                Promise.resolve(window.__jobsyPinsPrefetch).then(function (data) {
+                    if (gen !== pinsFetchGen || !data) {
+                        if (pinsUrl) {
+                            fetchPins(pinsUrl);
+                        }
+                        return;
+                    }
+                    const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
+                    if (pins.length) {
+                        setVacancies(pins);
+                    } else if (pinsUrl) {
                         fetchPins(pinsUrl);
                     }
-                    return;
+                });
+            } else if (pinsUrl) {
+                fetchPins(pinsUrl);
+            }
+        } else if (!pinsUrl) {
+            try {
+                const bootPayload = readBootPayload();
+                if (bootPayload.pinsUrl) {
+                    pinsUrl = String(bootPayload.pinsUrl);
                 }
-                const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
-                if (pins.length) {
-                    setVacancies(pins);
-                } else if (pinsUrl) {
-                    fetchPins(pinsUrl);
-                }
-            });
-        } else if (pinsUrl) {
-            fetchPins(pinsUrl);
+            } catch (e) { }
         }
         var originApplied = false;
         if (options && options.origin) {
@@ -2734,6 +2845,9 @@ window.jobMap = (function () {
         focusCompany,
         dispose,
         invalidate,
-        isAlive
+        isAlive,
+        /** @internal Playwright / diagnostics */
+        __testGetMap: function () { return map; },
+        __testGetPinCount: function () { return Object.keys(markersById).length; }
     };
 })();

@@ -450,8 +450,8 @@ window.jobsyCulture = {
 window.jobsyMaps = (function () {
     "use strict";
 
-    // MapLibre is not linked from the homepage document. Load it only when
-    // Blazor calls ensure() so crawlers/Lighthouse never download the GL bundle.
+    // MapLibre is not linked from every document. On the banenkaart we preload +
+    // load the three map scripts in parallel so first pins do not wait on the Blazor circuit.
     var pending = {};
     var mapLibreWorker = "/lib/maplibre/maplibre-gl-csp-worker.js?v=20260820-r166";
     var css = [
@@ -459,10 +459,10 @@ window.jobsyMaps = (function () {
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20260926-mapfix4"
+        "/js/jobsyMapLibre.min.js?v=20260926-mapfix7"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260926-mapfix4"
+        "/js/jobMap.min.js?v=20260926-mapfix7"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20260822-r195"
@@ -528,6 +528,20 @@ window.jobsyMaps = (function () {
         }
     }
 
+    function preloadScripts(urls) {
+        urls.forEach(function (href) {
+            if (document.querySelector('link[data-jobsy-map-preload="' + href + '"]')) {
+                return;
+            }
+            var link = document.createElement("link");
+            link.rel = "preload";
+            link.as = "script";
+            link.href = href;
+            link.setAttribute("data-jobsy-map-preload", href);
+            document.head.appendChild(link);
+        });
+    }
+
     function loadScript(src) {
         if (document.querySelector('script[data-jobsy-map="' + src + '"]')) {
             if (isMapLibreMain(src)) {
@@ -551,9 +565,9 @@ window.jobsyMaps = (function () {
         return new Promise(function (resolve, reject) {
             var script = document.createElement("script");
             script.src = src;
-            script.async = false;
+            script.async = true;
             script.setAttribute("data-jobsy-map", src);
-            script.setAttribute("fetchpriority", "low");
+            script.setAttribute("fetchpriority", "high");
             script.onload = function () {
                 if (isMapLibreMain(src)) {
                     configureMapLibreWorker();
@@ -565,13 +579,9 @@ window.jobsyMaps = (function () {
         });
     }
 
-    function loadScriptsInOrder(urls, index) {
-        if (index >= urls.length) {
-            return Promise.resolve();
-        }
-        return loadScript(urls[index]).then(function () {
-            return loadScriptsInOrder(urls, index + 1);
-        });
+    /** Load all map scripts in parallel (maplibre / jobsyMapLibre / jobMap). */
+    function loadScriptsParallel(urls) {
+        return Promise.all(urls.map(loadScript));
     }
 
     function normalizeKind(kind) {
@@ -619,9 +629,11 @@ window.jobsyMaps = (function () {
         if (pending[kind]) {
             return pending[kind];
         }
+        var urls = scriptsFor(kind);
+        preloadScripts(urls);
         pending[kind] = Promise.all([
             Promise.all(css.map(loadCss)),
-            loadScriptsInOrder(scriptsFor(kind), 0)
+            loadScriptsParallel(urls)
         ]).catch(function (err) {
             pending[kind] = null;
             throw err;
@@ -646,6 +658,10 @@ window.jobsyMaps = (function () {
                 if (!res.ok) {
                     throw new Error("pins " + res.status);
                 }
+                var etag = res.headers.get("ETag");
+                if (etag) {
+                    window.__jobsyPinsEtag = etag;
+                }
                 return res.json();
             })
             .catch(function () {
@@ -655,7 +671,16 @@ window.jobsyMaps = (function () {
         return window.__jobsyPinsPrefetch;
     }
 
-    // Kick off pins fetch as soon as boot JSON is in the DOM (no MapLibre needed).
+    function isDiscoveryPath() {
+        try {
+            var path = (window.location && window.location.pathname) || "";
+            return path === "/" || path === "";
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // Kick off pins fetch + map scripts as soon as boot JSON is in the DOM (no circuit).
     function warmBootPins() {
         try {
             var node = document.getElementById("jobsy-map-boot");
@@ -665,6 +690,13 @@ window.jobsyMaps = (function () {
             var parsed = JSON.parse(node.textContent);
             if (parsed && parsed.pinsUrl) {
                 prefetchPins(String(parsed.pinsUrl));
+            }
+            if (isDiscoveryPath()) {
+                ensure("discovery").then(function () {
+                    if (window.jobMap && typeof window.jobMap.boot === "function") {
+                        window.jobMap.boot("job-map");
+                    }
+                }).catch(function () { });
             }
         } catch (e) { }
     }
