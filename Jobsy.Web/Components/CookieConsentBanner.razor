@@ -70,14 +70,24 @@
         _busy = true;
         try
         {
-            await Js.InvokeVoidAsync(
+            var saved = await Js.InvokeAsync<bool>(
                 "jobsyCookieConsent.set",
                 analyticsAllowed ? MintAnalyticsToken() : CookieConsentNames.NecessaryValue);
+            if (!saved)
+            {
+                // Storage blocked — keep the banner visible so the user can retry.
+                return;
+            }
+
             _visible = false;
             if (OnConsentChanged.HasDelegate)
             {
                 await OnConsentChanged.InvokeAsync();
             }
+        }
+        catch
+        {
+            // Keep banner visible when the interop call fails.
         }
         finally
         {
