@@ -6,6 +6,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
@@ -65,7 +66,7 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "E-mail en wachtwoord zijn verplicht." });
         }
 
-        var email = request.Email.Trim().ToLowerInvariant();
+        var email = LoginIdentity.Normalize(request.Email);
         var credential = await _db.LocalAuthCredentials
             .FirstOrDefaultAsync(c => c.Email == email, cancellationToken);
 

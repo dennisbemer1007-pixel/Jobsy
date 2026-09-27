@@ -97,7 +97,16 @@
             <input type="hidden" name="returnUrl" value="@_returnUrl" />
             <label>
                 @Culture["Login.Email"]
-                <input type="email" name="email" class="w-full px-4 py-3" required autocomplete="username" placeholder="naam@voorbeeld.nl" />
+                <input type="text"
+                       name="email"
+                       class="w-full px-4 py-3"
+                       required
+                       autocomplete="username"
+                       inputmode="email"
+                       autocapitalize="none"
+                       autocorrect="off"
+                       spellcheck="false"
+                       placeholder="naam@voorbeeld.nl" />
             </label>
             <label>
                 @Culture["Login.Password"]
