@@ -179,8 +179,8 @@ public class CandidateOnboardingWizardTests
         Assert.Contains("CompleteMyOnboardingAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("lobsyPwaInstall", wizard, StringComparison.Ordinal);
         Assert.Contains("Onboarding.Later", wizard, StringComparison.Ordinal);
-        Assert.DoesNotContain("PopularDreamJobChips", wizard, StringComparison.Ordinal);
-        Assert.DoesNotContain("DreamChipsForRiasec", wizard, StringComparison.Ordinal);
+        Assert.Null(typeof(OnboardingWizardCatalog).GetField("PopularDreamJobChips"));
+        Assert.Null(typeof(OnboardingWizardCatalog).GetMethod("DreamChipsForRiasec"));
 
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Layout/MainLayout.razor"));
         Assert.Contains("candidate/start", layout, StringComparison.Ordinal);
