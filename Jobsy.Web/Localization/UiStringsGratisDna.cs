@@ -2,7 +2,7 @@ using Jobsy.Core.Rules;
 
 namespace Jobsy.Web.Localization;
 
-internal static class UiStringsGratisDna
+public static class UiStringsGratisDna
 {
     public static void MergeAll(
         Dictionary<string, string> nl, Dictionary<string, string> en,

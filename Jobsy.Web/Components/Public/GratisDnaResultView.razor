@@ -1,0 +1,132 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="gd-result" aria-labelledby="gd-result-title" data-testid="gd-result">
+    <p class="gd-result__badge" data-testid="gd-result-badge">@Culture["GratisDna.Result.Badge"]</p>
+    <h1 id="gd-result-title" class="visually-hidden">@Culture["GratisDna.Landing.Title"]</h1>
+    <div class="gd-tiles" data-testid="gd-tiles">
+        @if (!string.IsNullOrWhiteSpace(StrengthSentence))
+        {
+            <article class="gd-tile" data-testid="gd-tile-strength">
+                <h3>@Culture["GratisDna.Tile.Title.Strength"]</h3>
+                <p>@StrengthSentence</p>
+            </article>
+        }
+        @if (!string.IsNullOrWhiteSpace(RiasecSentence))
+        {
+            <article class="gd-tile" data-testid="gd-tile-riasec">
+                <h3>@Culture["GratisDna.Tile.Title.Riasec"]</h3>
+                <p>@RiasecSentence</p>
+            </article>
+        }
+        @if (!string.IsNullOrWhiteSpace(CultureSentence))
+        {
+            <article class="gd-tile" data-testid="gd-tile-culture">
+                <h3>@Culture["GratisDna.Tile.Title.Culture"]</h3>
+                <p>@CultureSentence</p>
+            </article>
+        }
+        @if (!string.IsNullOrWhiteSpace(ValueSentence))
+        {
+            <article class="gd-tile" data-testid="gd-tile-value">
+                <h3>@Culture["GratisDna.Tile.Title.Value"]</h3>
+                <p>@ValueSentence</p>
+            </article>
+        }
+    </div>
+    <p class="gd-hero__lead">@Culture["GratisDna.Result.Disclaimer"]</p>
+
+    <a class="gd-jobs-teaser" href="@RegisterHref" data-testid="gd-jobs-teaser">
+        <h3>@Culture["GratisDna.JobsTeaser.Title"]</h3>
+        <p>@Culture["GratisDna.JobsTeaser.Lead"]</p>
+        <div class="gd-jobs-teaser__rows" aria-hidden="true">
+            <div>🔒 @Culture["GratisDna.JobsTeaser.Title"]</div>
+            <div>🔒 ——— ———</div>
+            <div>🔒 ——— ———</div>
+        </div>
+    </a>
+
+    <div class="gd-share" data-testid="gd-share">
+        <h3>@Culture["GratisDna.Share.Title"]</h3>
+        <div class="gd-share__row">
+            <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("whatsapp")'>@Culture["GratisDna.Share.WhatsApp"]</button>
+            <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("instagram")'>@Culture["GratisDna.Share.Instagram"]</button>
+            <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("generic")'>@Culture["GratisDna.Share.Generic"]</button>
+        </div>
+        @if (!string.IsNullOrEmpty(ShareMessage))
+        {
+            <p class="gd-footnote">@ShareMessage</p>
+        }
+    </div>
+
+    <div class="gd-preciezer">
+        <h3>@Culture["GratisDna.Preciezer.Title"]</h3>
+        <ul>
+            <li>
+                <a href="@RegisterHref">
+                    <span>
+                        <strong>@Culture["GratisDna.Preciezer.FinishTests"]</strong>
+                        <small>@Culture["GratisDna.Preciezer.FinishTestsMeta"]</small>
+                    </span>
+                    <span class="gd-tag">@Culture["GratisDna.Tag.Free"]</span>
+                </a>
+            </li>
+            <li>
+                <a href="@RegisterHref">
+                    <span>
+                        <strong>@Culture["GratisDna.Preciezer.Deep"]</strong>
+                        <small>@Culture["GratisDna.Preciezer.DeepMeta"]</small>
+                    </span>
+                    <span class="gd-tag">@Culture["GratisDna.Tag.Paid"]</span>
+                </a>
+            </li>
+            <li>
+                <a href="@RegisterHref">
+                    <span>
+                        <strong>@Culture["GratisDna.Preciezer.Jobs"]</strong>
+                    </span>
+                    <span class="gd-tag">@Culture["GratisDna.Tag.Free"]</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <a class="gd-quiet-link" href="@RegisterHref">@Culture["GratisDna.SharperLink"]</a>
+
+    <div class="gd-wipe" data-testid="gd-wipe">
+        @if (WipeConfirm)
+        {
+            <p>@Culture["GratisDna.Wipe.Confirm"]</p>
+            <button type="button" class="gd-cta" @onclick="OnWipeConfirmed">@Culture["GratisDna.Wipe.Yes"]</button>
+            <button type="button" class="gd-cta gd-cta--ghost" @onclick="OnWipeCancel">@Culture["GratisDna.Wipe.No"]</button>
+        }
+        else
+        {
+            <button type="button" data-testid="gd-wipe-link" @onclick="OnWipeRequest">@Culture["GratisDna.Wipe.Link"]</button>
+        }
+    </div>
+</section>
+
+@if (ShowSticky)
+{
+    <div class="gd-sticky" data-testid="gd-sticky">
+        <a class="gd-cta" href="@RegisterHref" data-testid="gd-sticky-cta">@Culture["GratisDna.Sticky.Cta"]</a>
+        <button type="button" class="gd-cta gd-cta--ghost" @onclick="OnStickyDismiss">@Culture["GratisDna.Sticky.Dismiss"]</button>
+    </div>
+}
+
+@code {
+    [Parameter] public string RegisterHref { get; set; } = "/register?van=ontdek";
+    [Parameter] public string? StrengthSentence { get; set; }
+    [Parameter] public string? RiasecSentence { get; set; }
+    [Parameter] public string? CultureSentence { get; set; }
+    [Parameter] public string? ValueSentence { get; set; }
+    [Parameter] public string? ShareMessage { get; set; }
+    [Parameter] public bool WipeConfirm { get; set; }
+    [Parameter] public bool ShowSticky { get; set; } = true;
+    [Parameter] public EventCallback<string> OnShare { get; set; }
+    [Parameter] public EventCallback OnWipeRequest { get; set; }
+    [Parameter] public EventCallback OnWipeConfirmed { get; set; }
+    [Parameter] public EventCallback OnWipeCancel { get; set; }
+    [Parameter] public EventCallback OnStickyDismiss { get; set; }
+}
