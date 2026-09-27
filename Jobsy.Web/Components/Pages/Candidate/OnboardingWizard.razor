@@ -10,6 +10,7 @@
 @inject CultureState Culture
 @inject IGeocodingClient Geocoder
 @inject IJSRuntime Js
+@inject GratisDnaMergeService GratisDnaMerge
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
@@ -635,6 +636,7 @@
     private bool _noWork;
     private bool _hasConsent;
     private bool _consentRequested;
+    private bool _miniArrivedViaBack;
     private bool _installIos;
     private bool _installCanPrompt;
     private bool _customTravel;
@@ -759,6 +761,7 @@
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += CultureChanged;
+        GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
         await LoadAsync();
     }
 
@@ -766,6 +769,8 @@
     {
         try
         {
+            await GratisDnaMerge.TryMergeAsync();
+
             var onboardingTask = Api.GetMyOnboardingAsync();
             var profileTask = Api.GetMyProfileAsync();
             await Task.WhenAll(onboardingTask, profileTask);
@@ -793,6 +798,7 @@
             {
                 await MarkStartedAsync();
                 await PrepareMiniAsync();
+                await TryAutoAdvanceEmptyMiniStepAsync();
             }
         }
         catch (Exception ex)
@@ -866,6 +872,7 @@
     {
         if (_step <= 1) return;
         await FlushAsync();
+        _miniArrivedViaBack = true;
         _step--;
         await MarkStartedAsync();
         await PrepareMiniAsync();
@@ -876,6 +883,7 @@
         if (!CanNext || _busy) return;
         _busy = true;
         _error = null;
+        _miniArrivedViaBack = false;
         try
         {
             if (_step == 7 && !_hasConsent)
@@ -898,6 +906,7 @@
             _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
             FlashSaved();
             await PrepareMiniAsync();
+            await TryAutoAdvanceEmptyMiniStepAsync();
         }
         catch (Exception ex)
         {
@@ -913,9 +922,11 @@
     private async Task SkipOptionalAsync()
     {
         await FlushAsync();
+        _miniArrivedViaBack = false;
         _step++;
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
+        await TryAutoAdvanceEmptyMiniStepAsync();
     }
 
     private async Task LaterAsync()
@@ -1156,9 +1167,11 @@
     {
         _dream = "";
         await SaveDreamAsync();
+        _miniArrivedViaBack = false;
         _step = 7;
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
+        await TryAutoAdvanceEmptyMiniStepAsync();
     }
 
     private void ScheduleDreamSave()
@@ -1267,6 +1280,56 @@
         }, () => InvokeAsync(StateHasChanged), 150);
     }
 
+    private async Task TryAutoAdvanceEmptyMiniStepAsync()
+    {
+        if (_miniArrivedViaBack || _welcome || _finish)
+        {
+            return;
+        }
+
+        if (_step is < 7 or > 10)
+        {
+            return;
+        }
+
+        if (_step == 7 && !_hasConsent)
+        {
+            return;
+        }
+
+        if (_miniQuestions.Count > 0)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            if (_step == 10)
+            {
+                _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
+                _finish = true;
+                _state = await Api.GetMyOnboardingAsync() ?? _state;
+                return;
+            }
+
+            _step++;
+            _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
+            FlashSaved();
+            await PrepareMiniAsync();
+            await TryAutoAdvanceEmptyMiniStepAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _saveError = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
     private string QuestionText(MiniQuestion question) => Culture[question.TextKey];
 
     private async Task AnswerAsync(int id, int value)
@@ -1283,8 +1346,39 @@
     {
         var profile = await Api.AcceptTestAiConsentAsync();
         _hasConsent = profile?.TestAiConsentAt is not null;
-        if (_hasConsent) await PrepareMiniAsync();
+        if (_hasConsent)
+        {
+            await PrepareMiniAsync();
+            await TryAutoAdvanceEmptyMiniStepAsync();
+        }
         else _error = Culture["Onboarding.Consent.Failed"];
+    }
+
+    private async void OnGratisDnaMerged()
+    {
+        try
+        {
+            await InvokeAsync(async () =>
+            {
+                var profile = await Api.GetMyProfileAsync();
+                if (profile is not null)
+                {
+                    _hasConsent = profile.TestAiConsentAt is not null;
+                }
+
+                if (!_loading && !_welcome && !_finish && _step is >= 7 and <= 10)
+                {
+                    await PrepareMiniAsync();
+                    await TryAutoAdvanceEmptyMiniStepAsync();
+                }
+
+                StateHasChanged();
+            });
+        }
+        catch
+        {
+            // Reload is best effort.
+        }
     }
 
     private void ScheduleProfileSave()
@@ -1458,6 +1552,7 @@
     public async ValueTask DisposeAsync()
     {
         Culture.Changed -= CultureChanged;
+        GratisDnaMergeNotifier.Merged -= OnGratisDnaMerged;
         _saveCts?.Cancel();
         _geocodeCts?.Cancel();
         _dreamCts?.Cancel();

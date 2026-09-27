@@ -54,3 +54,8 @@
 .gd-sticky{position:fixed;inset-inline:0;inset-block-end:0;z-index:30;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 28%);display:grid;gap:8px}
 .gd-sticky .gd-cta{margin:0}
 @media (min-width:640px){.gd-page__inner{padding-inline:24px}}
+.gd-register-box{margin:16px 0;padding:14px 16px;border-radius:var(--radius-sm);background:var(--success-soft);border:1px solid color-mix(in srgb,var(--success) 35%,var(--border));color:var(--text)}
+.gd-register-box__title{margin:0 0 10px;color:var(--success);font-size:var(--text-md);font-weight:600;line-height:1.35}
+.gd-register-box__tests{margin:0 0 8px;padding:0;list-style:none;display:grid;gap:4px;font-size:var(--text-sm);font-weight:600}
+.gd-register-box__tests li{display:flex;align-items:center;gap:8px;min-block-size:28px}
+.gd-register-box__lead{margin:0;color:var(--muted);font-size:var(--text-sm);line-height:1.4}

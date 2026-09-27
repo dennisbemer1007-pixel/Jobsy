@@ -1,0 +1,56 @@
+@inject GratisDnaStorage Storage
+@inject CultureState Culture
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Services
+
+@if (_visible)
+{
+    <div class="gd-register-box" role="status">
+        <p class="gd-register-box__title">@Culture.Format("GratisDna.RegisterBox.Title", _answerCount)</p>
+        <ul class="gd-register-box__tests">
+            @foreach (var titleKey in TestTitleKeys)
+            {
+                <li><span aria-hidden="true">✓</span> @Culture[titleKey]</li>
+            }
+        </ul>
+        <p class="gd-register-box__lead">@Culture["GratisDna.RegisterBox.Lead"]</p>
+    </div>
+}
+
+@code {
+    private static readonly string[] TestTitleKeys =
+    [
+        "Onboarding.Test.Competency",
+        "Onboarding.Test.Career",
+        "Onboarding.Test.Culture",
+        "Onboarding.Test.Values"
+    ];
+
+    private bool _visible;
+    private int _answerCount;
+    private bool _loaded;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _loaded)
+        {
+            return;
+        }
+
+        _loaded = true;
+        try
+        {
+            var payload = await Storage.LoadAsync();
+            _answerCount = payload is null ? 0 : GratisDnaScoring.CountAnswers(payload.Answers);
+            _visible = _answerCount > 0;
+            if (_visible)
+            {
+                StateHasChanged();
+            }
+        }
+        catch
+        {
+            // Storage is best-effort on auth pages.
+        }
+    }
+}
