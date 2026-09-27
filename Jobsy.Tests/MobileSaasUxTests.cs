@@ -98,11 +98,14 @@ public class MobileSaasUxTests
         Assert.Contains(".auth-logout-form--chrome {\n    display: none;", css);
 
         var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
-        Assert.Contains("id=\"auth-logout\"", header);
-        Assert.Contains("form=\"auth-logout\"", header);
         Assert.Contains("account-menu__link--logout", header);
         Assert.Contains("Auth.Logout", header);
-        Assert.Contains("auth-logout-form--chrome", header);
+        Assert.Contains("LogoutAsync", header);
+        Assert.Contains("NavigateTo(\"/account/logout\"", header);
+        Assert.DoesNotContain("Auth.Profile", header);
+        Assert.DoesNotContain("Auth.Settings", header);
+        Assert.DoesNotContain("Footer.Westland", header);
+        Assert.DoesNotContain("href=\"/westland\"", header);
         Assert.DoesNotContain("auth-icon-btn", header);
         Assert.DoesNotContain("NavIcons.Logout", header);
 
