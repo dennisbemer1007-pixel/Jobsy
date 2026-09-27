@@ -79,6 +79,24 @@ internal static class DemoUsersSeeder
             IsActive = true
         });
 
+        // Named test candidate (login email + display name Twalieb).
+        added += await EnsureUserAsync(
+            db,
+            new User
+            {
+                Id = Guid.Parse("aaaaaaaa-6666-6666-6666-666666666666"),
+                Email = "twalieb@jobsy.local",
+                FullName = "Twalieb",
+                Role = UserRole.Candidate,
+                CompanyId = null,
+                DateOfBirth = new DateOnly(1996, 6, 15),
+                OpenForWork = true,
+                HomeLocation = new GeoPoint(51.9930, 4.2150),
+                PreferencesJson = """{"roles":["horeca","retail","logistiek"],"maxTravelMinutes":35}""",
+                IsActive = true
+            },
+            password: "Lobsy123!");
+
         var branchManagerId = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111");
         added += await EnsureUserAsync(db, new User
         {
@@ -181,7 +199,10 @@ internal static class DemoUsersSeeder
         }
     }
 
-    private static async Task<int> EnsureUserAsync(JobsyDbContext db, User template)
+    private static Task<int> EnsureUserAsync(JobsyDbContext db, User template)
+        => EnsureUserAsync(db, template, DemoPassword);
+
+    private static async Task<int> EnsureUserAsync(JobsyDbContext db, User template, string password)
     {
         StampDemoConsent(template);
 
@@ -205,9 +226,15 @@ internal static class DemoUsersSeeder
                 existing.CompanyId = companyId;
             }
 
+            if (!string.Equals(existing.FullName, template.FullName, StringComparison.Ordinal)
+                && !string.IsNullOrWhiteSpace(template.FullName))
+            {
+                existing.FullName = template.FullName;
+            }
+
             // Demo accounts stay on the current consent version so version bumps don't block the public demo.
             StampDemoConsent(existing);
-            await EnsureDemoPasswordAsync(db, existing);
+            await EnsurePasswordAsync(db, existing, password);
 
             return 0;
         }
@@ -219,15 +246,18 @@ internal static class DemoUsersSeeder
         }
 
         db.Users.Add(template);
-        await EnsureDemoPasswordAsync(db, template);
+        await EnsurePasswordAsync(db, template, password);
         return 1;
     }
 
     /// <summary>
-    /// Creates or resets the local-login hash so demo accounts always accept <see cref="DemoPassword"/>.
+    /// Creates or resets the local-login hash so demo accounts always accept the given password.
     /// Production web login uses <c>POST api/auth/local-login</c> (demo-store is Development-only unless allowed).
     /// </summary>
-    private static async Task EnsureDemoPasswordAsync(JobsyDbContext db, User user)
+    private static Task EnsureDemoPasswordAsync(JobsyDbContext db, User user)
+        => EnsurePasswordAsync(db, user, DemoPassword);
+
+    private static async Task EnsurePasswordAsync(JobsyDbContext db, User user, string password)
     {
         var email = user.Email.Trim().ToLowerInvariant();
         var credential = await db.LocalAuthCredentials.FirstOrDefaultAsync(c => c.UserId == user.Id)
@@ -240,17 +270,17 @@ internal static class DemoUsersSeeder
                 Id = Guid.NewGuid(),
                 UserId = user.Id,
                 Email = email,
-                PasswordHash = JobsyPasswordHasher.Hash(DemoPassword)
+                PasswordHash = JobsyPasswordHasher.Hash(password)
             });
             return;
         }
 
         credential.UserId = user.Id;
         credential.Email = email;
-        if (!JobsyPasswordHasher.Verify(DemoPassword, credential.PasswordHash)
+        if (!JobsyPasswordHasher.Verify(password, credential.PasswordHash)
             || JobsyPasswordHasher.NeedsRehash(credential.PasswordHash))
         {
-            credential.PasswordHash = JobsyPasswordHasher.Hash(DemoPassword);
+            credential.PasswordHash = JobsyPasswordHasher.Hash(password);
         }
     }
 

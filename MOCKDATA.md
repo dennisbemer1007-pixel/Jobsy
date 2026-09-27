@@ -86,6 +86,7 @@ Guard: platform-log `"Haaglanden banenkaart seed DH100-Delft75-Zoetermeer50"`.
 | E-mail | Rol |
 |--------|-----|
 | kandidaat@jobsy.local | Candidate (+ OpenForWork, home geo) |
+| twalieb@jobsy.local | Candidate (display name Twalieb, wachtwoord `Lobsy123!`) |
 | kandidaat.denhaag@jobsy.local / kandidaat.ver@jobsy.local | Extra PushBom-kandidaten |
 | branch@jobsy.local | BranchManager |
 | regional@jobsy.local | RegionalManager |

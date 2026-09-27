@@ -38,6 +38,29 @@ public class DemoAccountPasswordSeedTests
     }
 
     [Fact]
+    public async Task Seed_creates_twalieb_candidate_with_custom_password()
+    {
+        await using var db = CreateDb();
+        await DemoUsersSeeder.SeedUsersAsync(db, NullLogger.Instance);
+
+        var user = await db.Users.SingleAsync(u => u.Email == "twalieb@jobsy.local");
+        Assert.Equal("Twalieb", user.FullName);
+        Assert.Equal(Jobsy.Core.Enums.UserRole.Candidate, user.Role);
+        Assert.True(user.IsActive);
+
+        var credential = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "twalieb@jobsy.local");
+        Assert.True(JobsyPasswordHasher.Verify("Lobsy123!", credential.PasswordHash));
+        Assert.False(JobsyPasswordHasher.Verify(DemoUsersSeeder.DemoPassword, credential.PasswordHash));
+
+        // Re-seed keeps the custom password (does not overwrite with Jobsy123!).
+        credential.PasswordHash = JobsyPasswordHasher.Hash("ChangedPass1!");
+        await db.SaveChangesAsync();
+        await DemoUsersSeeder.SeedUsersAsync(db, NullLogger.Instance);
+        var restored = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "twalieb@jobsy.local");
+        Assert.True(JobsyPasswordHasher.Verify("Lobsy123!", restored.PasswordHash));
+    }
+
+    [Fact]
     public async Task Seed_resets_demo_password_if_it_was_changed()
     {
         await using var db = CreateDb();
