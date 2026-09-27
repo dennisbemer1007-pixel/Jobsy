@@ -88,8 +88,8 @@ public class CandidateProfileServiceTests
         Assert.Contains("\"/carriere\"", nav);
         Assert.Contains("NavIcons.Career", nav);
 
-        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".dna-tests__grid", css);
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/mijn-dna.css"));
+        Assert.Contains(".dna-tiles__grid", css);
         Assert.Contains(".dna-story__body", css);
     }
 }
