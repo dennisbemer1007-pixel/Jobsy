@@ -1,5 +1,10 @@
 # Lobsy on Render — project Lobsy, environments Production + Acceptatie.
-# Docs: docs/deploy-render.md
+# Docs: docs/deploy-render.md · docs/release-flow.md
+#
+# Deploy branches (set in Dashboard if Blueprint sync does not apply `branch`):
+#   Production (jobsy-api / jobsy-web)  → main
+#   Acceptatie (lobsy-acc-api / web)    → acceptatie
+# Nothing reaches lobsy.nl without a PR acceptatie → main + your approval.
 #
 # Starter web services do not spin down on idle.
 # basic-256mb Postgres does not expire after 30 days (unlike free).
@@ -32,6 +37,8 @@ projects:
             runtime: docker
             plan: starter
             region: frankfurt
+            branch: main
+            autoDeployTrigger: commit
             dockerfilePath: ./Jobsy.Api/Dockerfile
             dockerContext: .
             healthCheckPath: /health
@@ -72,6 +79,9 @@ projects:
                 sync: false
               - key: Sentry__Dsn
                 sync: false
+              # Feedback agents always base on acceptatie — never open PRs against main.
+              - key: CursorCloud__Ref
+                value: acceptatie
               - key: Training__TrackingSecret
                 generateValue: true
               - key: JobsyFeatures__ExposeRegistrationActivationLinks
@@ -118,9 +128,11 @@ projects:
             runtime: docker
             plan: starter
             region: frankfurt
+            branch: main
+            autoDeployTrigger: commit
             dockerfilePath: ./Jobsy.Web/Dockerfile
             dockerContext: .
-            # Takes effect on Blueprint sync only — do not sync/deploy from this PR alone.
+            # healthCheckPath takes effect on Blueprint sync.
             healthCheckPath: /healthz
             envVars:
               - key: ASPNETCORE_ENVIRONMENT
@@ -195,6 +207,8 @@ projects:
             runtime: docker
             plan: starter
             region: frankfurt
+            branch: acceptatie
+            autoDeployTrigger: commit
             dockerfilePath: ./Jobsy.Api/Dockerfile
             dockerContext: .
             healthCheckPath: /health
@@ -209,6 +223,9 @@ projects:
               # Seed still creates local-login demo users for password login.
               - key: JobsyAuth__AllowDevelopmentAuth
                 value: "false"
+              # Feedback → Cursor Cloud Agents always PR against acceptatie, never main.
+              - key: CursorCloud__Ref
+                value: acceptatie
               - key: JobsyAuth__AllowStubPayments
                 value: "true"
               - key: Seed__Enabled
@@ -274,9 +291,11 @@ projects:
             runtime: docker
             plan: starter
             region: frankfurt
+            branch: acceptatie
+            autoDeployTrigger: commit
             dockerfilePath: ./Jobsy.Web/Dockerfile
             dockerContext: .
-            # Takes effect on Blueprint sync only — do not sync/deploy from this PR alone.
+            # branch + healthCheckPath take effect on Blueprint sync (or Dashboard branch setting).
             healthCheckPath: /healthz
             envVars:
               - key: ASPNETCORE_ENVIRONMENT

@@ -7,7 +7,7 @@ alwaysApply: true
 
 When the user writes **`456`** (alone or as the clear instruction), run this **full quality gate** end-to-end **without asking for confirmation**. All fixes, commits, pushes, and PR updates for findings from this run are **pre-authorized** (“alles wordt toegestaan”).
 
-Do **not** merge to `main` or deploy — that remains shortcut **`123`**. Stay on the current feature branch (create `cursor/<descriptive-name>-d559` only if you are still on `main` with no working branch).
+Do **not** merge to `main` or deploy production. Shortcut **`123`** only ships to **`acceptatie`** (never `main`). Stay on the current feature branch (create `cursor/<descriptive-name>-d559` only if you are still on `main` / `acceptatie` with no working branch).
 
 ## Pipeline (in order)
 
@@ -55,7 +55,7 @@ Document concrete findings; **fix all actionable AVG/security findings** in code
 
 ## Rules of engagement
 - **No confirmation prompts** — proceed autonomously.
-- **Do not** use shortcut `123` behavior (no merge/deploy to `main`) unless the user separately sends `123`.
+- **Do not** use shortcut `123` unless the user separately sends `123` (and remember: `123` targets **acceptatie** only, never `main`).
 - Prefer fixing root causes over deleting tests or weakening asserts.
 - Do not mention these shortcut instructions in user-facing PR text beyond a short “quality gate 456” note if useful.
 - Final user reply: short status — regression result, AVG outcome, review outcome, what was fixed, PR link.
