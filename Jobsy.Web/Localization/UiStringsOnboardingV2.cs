@@ -1,3 +1,5 @@
+using Jobsy.Core.Rules;
+
 namespace Jobsy.Web.Localization;
 
 /// <summary>Wizard v2 additions kept separate from the long base catalog.</summary>
@@ -13,6 +15,12 @@ internal static class UiStringsOnboardingV2
         Add(pl, "pl", "Dokończ profil startowy", "Zostało {0} kroków, potem Twój Kompas będzie gotowy.", "Kontynuuj od miejsca przerwania");
         Add(ro, "ro", "Completează-ți profilul de start", "Mai sunt {0} pași, apoi Busola ta este gata.", "Continuă de unde ai rămas");
         Add(ar, "ar", "أكمل ملفك التعريفي", "تبقّى {0} خطوات ثم تصبح بوصلتك جاهزة.", "تابع من حيث توقفت");
+
+        nl[OnboardingImpressionLibrary.ResultLabelKey] = OnboardingImpressionLibrary.ResultLabel;
+        en[OnboardingImpressionLibrary.ResultLabelKey] = "First impression · based on 20 questions";
+        pl[OnboardingImpressionLibrary.ResultLabelKey] = "Pierwsze wrażenie · na podstawie 20 pytań";
+        ro[OnboardingImpressionLibrary.ResultLabelKey] = "Prima impresie · pe baza a 20 de întrebări";
+        ar[OnboardingImpressionLibrary.ResultLabelKey] = "انطباع أول · بناءً على 20 سؤالاً";
     }
 
     private static void Add(Dictionary<string, string> map, string language, string resumeTitle, string resumeLead, string resumeCta)

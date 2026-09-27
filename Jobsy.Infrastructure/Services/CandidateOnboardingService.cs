@@ -267,52 +267,15 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
             valuesRow?.StabilityPercent,
             valuesRow?.ImpactPercent);
 
-        var strengths = TopCompetencyItems(competency.Scores, 2);
-        var riasecTop = career.Scores is { } rs
-            ? RiasecRanking.Rank(
-                    rs.Realistic, rs.Investigative, rs.Artistic,
-                    rs.Social, rs.Enterprising, rs.Conventional)
-                .Take(2)
-                .Select(x => x.Code)
-                .ToList()
-            : [];
-        var riasecItems = riasecTop
-            .Select(code => new OnboardingImpressionItemDto(
-                code,
-                DimensionLabels.For(code),
-                OnboardingImpressionLibrary.RiasecSentence(code),
-                career.Scores?.Get(code)))
-            .ToList();
-
-        OnboardingImpressionItemDto? cultureHighlight = null;
-        if (culture.Scores is { } cs)
-        {
-            var best = OnboardingWizardCatalog.CultureDimensionCodes
-                .Select(code => (Code: code, Pct: cs.Get(code)))
-                .OrderByDescending(x => x.Pct)
-                .ThenBy(x => x.Code, StringComparer.Ordinal)
-                .First();
-            cultureHighlight = new OnboardingImpressionItemDto(
-                best.Code,
-                DimensionLabels.For(best.Code),
-                OnboardingImpressionLibrary.CultureSentence(best.Code),
-                best.Pct);
-        }
-
-        OnboardingImpressionItemDto? topValue = null;
-        if (values.Scores is { } vs)
-        {
-            var best = SchwartzValuesCatalog.CategoryCodes
-                .Select(code => (Code: code, Pct: vs.Get(code)))
-                .OrderByDescending(x => x.Pct)
-                .ThenBy(x => x.Code, StringComparer.Ordinal)
-                .First();
-            topValue = new OnboardingImpressionItemDto(
-                best.Code,
-                DimensionLabels.For(best.Code),
-                OnboardingImpressionLibrary.ValueSentence(best.Code),
-                best.Pct);
-        }
+        var core = OnboardingImpressionComposer.Compose(
+            competency.Scores,
+            career.Scores,
+            culture.Scores,
+            values.Scores);
+        var strengths = core.Strengths.Select(ToImpressionItem).ToList();
+        var riasecItems = core.RiasecTop.Select(ToImpressionItem).ToList();
+        var cultureHighlight = core.CultureHighlight is { } ch ? ToImpressionItem(ch) : null;
+        var topValue = core.TopValue is { } tv ? ToImpressionItem(tv) : null;
 
         var liveMatches = await _matches.ComputeLiveAsync(userId, cancellationToken);
         var topStrengthLabel = strengths.FirstOrDefault()?.Label;
@@ -344,27 +307,8 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
             values.IsProvisional);
     }
 
-    private static List<OnboardingImpressionItemDto> TopCompetencyItems(CompetencyScores? scores, int take)
-    {
-        if (scores is null)
-        {
-            return [];
-        }
-
-        return CompetencyTestCatalog.CategoryCodes
-            .Concat([CompetencyTestCatalog.Extraversie])
-            .Select(code => (Code: code, Pct: scores.TryGet(code)))
-            .Where(x => x.Pct is not null)
-            .OrderByDescending(x => x.Pct)
-            .ThenBy(x => x.Code, StringComparer.Ordinal)
-            .Take(take)
-            .Select(x => new OnboardingImpressionItemDto(
-                x.Code,
-                DimensionLabels.For(x.Code),
-                OnboardingImpressionLibrary.StrengthSentence(x.Code),
-                x.Pct))
-            .ToList();
-    }
+    private static OnboardingImpressionItemDto ToImpressionItem(OnboardingImpressionCoreItem item)
+        => new(item.Code, item.Label, item.Sentence, item.Percent);
 
     private static CandidateOnboardingStateDto ToDto(
         CandidateOnboarding row,

@@ -9,10 +9,53 @@ namespace Jobsy.Tests;
 public class CandidateOnboardingWizardTests
 {
     [Fact]
+    public void Catalog_mini_question_ids_sum_to_twenty_distinct_catalog_items()
+    {
+        Assert.Equal(20, OnboardingWizardCatalog.TotalMiniQuestionCount);
+        Assert.Equal(5, OnboardingWizardCatalog.CompetencyQuestionIds.Length);
+        Assert.Equal(5, OnboardingWizardCatalog.CareerQuestionIds.Length);
+        Assert.Equal(5, OnboardingWizardCatalog.CultureQuestionIds.Length);
+        Assert.Equal(5, OnboardingWizardCatalog.ValuesQuestionIds.Length);
+
+        Assert.Equal(
+            OnboardingWizardCatalog.CompetencyQuestionIds.Length,
+            OnboardingWizardCatalog.CompetencyQuestionIds.Distinct().Count());
+        Assert.Equal(
+            OnboardingWizardCatalog.CareerQuestionIds.Length,
+            OnboardingWizardCatalog.CareerQuestionIds.Distinct().Count());
+        Assert.Equal(
+            OnboardingWizardCatalog.CultureQuestionIds.Length,
+            OnboardingWizardCatalog.CultureQuestionIds.Distinct().Count());
+        Assert.Equal(
+            OnboardingWizardCatalog.ValuesQuestionIds.Length,
+            OnboardingWizardCatalog.ValuesQuestionIds.Distinct().Count());
+
+        foreach (var id in OnboardingWizardCatalog.CompetencyQuestionIds)
+        {
+            Assert.Contains(CompetencyTestCatalog.Questions, q => q.Id == id);
+        }
+
+        foreach (var id in OnboardingWizardCatalog.CareerQuestionIds)
+        {
+            Assert.Contains(CareerTestCatalog.Questions, q => q.Id == id);
+        }
+
+        foreach (var id in OnboardingWizardCatalog.CultureQuestionIds)
+        {
+            Assert.Contains(CulturePersonalityCatalog.Questions, q => q.Id == id);
+        }
+
+        foreach (var id in OnboardingWizardCatalog.ValuesQuestionIds)
+        {
+            Assert.Contains(SchwartzValuesCatalog.Questions, q => q.Id == id);
+        }
+    }
+
+    [Fact]
     public void Catalog_mini_question_ids_cover_each_dimension()
     {
         Assert.Equal(5, OnboardingWizardCatalog.CompetencyQuestionIds.Length);
-        Assert.Equal(6, OnboardingWizardCatalog.CareerQuestionIds.Length);
+        Assert.Equal(5, OnboardingWizardCatalog.CareerQuestionIds.Length);
         Assert.Equal(5, OnboardingWizardCatalog.CultureQuestionIds.Length);
         Assert.Equal(5, OnboardingWizardCatalog.ValuesQuestionIds.Length);
         Assert.Equal(10, OnboardingWizardCatalog.StepCount);
@@ -26,6 +69,7 @@ public class CandidateOnboardingWizardTests
         Assert.Contains(1, OnboardingWizardCatalog.CompetencyQuestionIds);
         Assert.Contains(21, OnboardingWizardCatalog.CompetencyQuestionIds);
         Assert.Contains(22, OnboardingWizardCatalog.CareerQuestionIds);
+        Assert.DoesNotContain(10, OnboardingWizardCatalog.CareerQuestionIds);
         Assert.Equal(
             [
                 CulturePersonalityCatalog.Autonomy,
@@ -40,7 +84,7 @@ public class CandidateOnboardingWizardTests
     [Fact]
     public void Impression_library_and_education_line_are_reviewable()
     {
-        Assert.Contains("21 vragen", OnboardingImpressionLibrary.ResultLabel, StringComparison.Ordinal);
+        Assert.Contains("20 vragen", OnboardingImpressionLibrary.ResultLabel, StringComparison.Ordinal);
         Assert.Equal(
             "HAVO – E&M",
             OnboardingWizardCatalog.FormatEducationLine("HAVO", "E&M"));
