@@ -21,9 +21,16 @@ public class CandidateKompasSideVisibilityTests
         Assert.Contains("OnKompasWideChanged", profile, StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".kompas-workspace__side,", css, StringComparison.Ordinal);
-        Assert.Contains(".questionnaire-matches", css, StringComparison.Ordinal);
+        Assert.Contains(".kompas-workspace__side", css, StringComparison.Ordinal);
         Assert.Contains("display: none !important;", css, StringComparison.Ordinal);
+
+        // Questionnaire match cards live in the feature stylesheet (step 1 extract).
+        var qCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/questionnaire.css"));
+        Assert.Contains(".questionnaire-matches", qCss, StringComparison.Ordinal);
+        Assert.Contains("display: none !important;", qCss, StringComparison.Ordinal);
+
+        var min = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.min.css"));
+        Assert.Contains(".kompas-workspace__side", min, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()
