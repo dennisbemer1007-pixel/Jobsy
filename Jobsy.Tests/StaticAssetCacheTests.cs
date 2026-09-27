@@ -96,6 +96,34 @@ public class StaticAssetCacheTests
         Assert.Contains("maplibre-gl-csp.js", bundle);
     }
 
+    [Fact]
+    public void App_core_cache_bust_includes_jobMap_version_tag()
+    {
+        var root = FindRepoRoot();
+        var bundle = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-core.js"));
+        var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
+
+        var jobMapMatch = System.Text.RegularExpressions.Regex.Match(
+            bundle,
+            @"jobMap\.min\.js\?v=([^""'\s]+)");
+        Assert.True(jobMapMatch.Success, "app-core.js must load a versioned jobMap.min.js");
+        var jobMapTag = jobMapMatch.Groups[1].Value;
+        Assert.False(string.IsNullOrWhiteSpace(jobMapTag));
+
+        // Phones cache app-core for 1y; bumping only jobMap leaves them on the old loader.
+        // Require App.razor's app-core.js?v= to contain the jobMap tag (e.g. banenkaart-v3).
+        var appCoreMatch = System.Text.RegularExpressions.Regex.Match(
+            app,
+            @"js/app-core\.js\?v=([^""'\s]+)");
+        Assert.True(appCoreMatch.Success, "App.razor must version app-core.js");
+        var appCoreTag = appCoreMatch.Groups[1].Value;
+        Assert.Contains(jobMapTag, appCoreTag, StringComparison.Ordinal);
+
+        Assert.Contains($"css/app.min.css?v={appCoreTag}", app, StringComparison.Ordinal);
+        Assert.Contains($"css/features/banenkaart.css?v={appCoreTag}", app, StringComparison.Ordinal);
+        Assert.DoesNotContain("js/app-core.js?v=20260927-acc-review", app, StringComparison.Ordinal);
+    }
+
     private static HttpResponse PrepareResponse(string fileName, string? query)
     {
         var http = new DefaultHttpContext();
