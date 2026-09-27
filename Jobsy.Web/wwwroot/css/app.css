@@ -18135,6 +18135,16 @@ html.cookie-consent-known .cookie-consent {
     box-shadow: 0 10px 12px -10px rgba(15, 23, 42, 0.18);
 }
 
+/* Mobile: keep the Kompas tab ribbon in normal document flow so it does not
+   float inside .panel-page (which is the real scroll container ≤768px). */
+@media (max-width: 1023px) {
+    .kompas-tabs.admin-sublinks {
+        position: static;
+        z-index: auto;
+        box-shadow: none;
+    }
+}
+
 .kompas-tabs.admin-sublinks .admin-sublink {
     flex: 0 0 auto;
     width: auto;
