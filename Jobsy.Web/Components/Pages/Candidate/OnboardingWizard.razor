@@ -533,9 +533,9 @@ else
                                 <input type="text" maxlength="128" @bind="_dreamJob" @bind:event="oninput" @bind:after="ScheduleDreamSave" />
                             </label>
                             <div class="ob-chips" role="group" aria-label="@Culture["Onboarding.DreamChips"]">
-                                @foreach (var chip in OnboardingWizardCatalog.PopularDreamJobChips)
+                                @foreach (var chip in DreamJobCatalog.All)
                                 {
-                                    <button type="button" class="ob-chip" @onclick="() => PickDreamChip(chip)">@chip</button>
+                                    <button type="button" class="ob-chip" @onclick="() => PickDreamChip(chip.TitleNl)">@chip.TitleNl</button>
                                 }
                                 <button type="button" class="ob-chip" @onclick="PickDreamUnknown">@Culture["Onboarding.DreamUnknown"]</button>
                             </div>
@@ -618,7 +618,7 @@ else
                                     </section>
                                 }
                                 <p class="ob-result__matches-line">@Culture.Format("Onboarding.Result.MatchCount", _impression.MatchingVacancyCount)</p>
-                                <div class="ob-match-cards">
+                                <div class="ob-legacy-result-cards">
                                     @foreach (var card in _impression.MatchCards.Take(3))
                                     {
                                         <article class="ob-match-card">
@@ -639,12 +639,12 @@ else
                                     <a class="login-submit ob-result__cta" href="/candidate/match">@Culture["Onboarding.Result.ViewMatches"]</a>
                                     <a class="ob-wizard__link" href="/home?tab=tests">@Culture["Onboarding.Result.FullTests"]</a>
                                 </div>
-                                @if (_impression.DreamJobSuggestions.Count > 0)
+                                @if (false)
                                 {
                                     <section class="ob-result__block">
                                         <h2 class="ob-result__heading">@Culture["Onboarding.Result.DreamCheck"]</h2>
                                         <div class="ob-chips">
-                                            @foreach (var chip in _impression.DreamJobSuggestions)
+                                            @foreach (var chip in Array.Empty<string>())
                                             {
                                                 <button type="button" class="ob-chip" @onclick="() => PickDreamChip(chip)">@chip</button>
                                             }
@@ -1071,7 +1071,7 @@ else
         }
         else
         {
-            Navigation.NavigateTo("/candidate/match");
+            Navigation.NavigateTo("/candidate/profile");
         }
     }
 
@@ -1694,7 +1694,7 @@ else
 
     private Task FinishInstallLaterAsync()
     {
-        Navigation.NavigateTo("/candidate/match");
+        Navigation.NavigateTo("/candidate/profile");
         return Task.CompletedTask;
     }
 
