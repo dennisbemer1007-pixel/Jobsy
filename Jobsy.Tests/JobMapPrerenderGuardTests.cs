@@ -28,7 +28,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("preloadScripts", maps);
         Assert.Contains("fetchpriority\", \"high\"", maps);
         Assert.Contains("jobMap.boot", maps);
-        Assert.Contains("mapfix7", maps);
+        Assert.Contains("mapfix8", maps);
         Assert.DoesNotContain("warmDiscovery", maps);
         Assert.DoesNotContain("jobsyMapsAfterFirstPaint", maps);
     }
