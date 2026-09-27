@@ -2669,6 +2669,15 @@ html[dir="rtl"] .account-menu__panel {
     background: var(--brand-deep);
 }
 
+/* Mobile: hide fixed bottom-nav while the filter sheet is open so Toepassen/Annuleren
+   are tappable. .app-main (z-index: 1) creates a stacking context that otherwise traps
+   .filter-sheet (z-index 90) below .bottom-nav (z-index 50). */
+@media (max-width: 768px) {
+    .app-shell:has(.jobsy-discovery.filters-open) .bottom-nav {
+        display: none;
+    }
+}
+
 .filter-sheet .filter-branches__options {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
