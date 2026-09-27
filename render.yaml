@@ -132,7 +132,7 @@ projects:
             autoDeployTrigger: commit
             dockerfilePath: ./Jobsy.Web/Dockerfile
             dockerContext: .
-            # Takes effect on Blueprint sync only — do not sync/deploy from this PR alone.
+            # healthCheckPath takes effect on Blueprint sync.
             healthCheckPath: /healthz
             envVars:
               - key: ASPNETCORE_ENVIRONMENT
@@ -295,7 +295,7 @@ projects:
             autoDeployTrigger: commit
             dockerfilePath: ./Jobsy.Web/Dockerfile
             dockerContext: .
-            # Takes effect on Blueprint sync only — do not sync/deploy from this PR alone.
+            # branch + healthCheckPath take effect on Blueprint sync (or Dashboard branch setting).
             healthCheckPath: /healthz
             envVars:
               - key: ASPNETCORE_ENVIRONMENT
