@@ -60,7 +60,7 @@
                 id="kompas-tab-dna"
                 class="admin-sublink @(_tab == CandidateKompasTabs.Dna ? "admin-sublink--active" : null)"
                 role="tab"
-                aria-selected="@(_tab == CandidateKompasTabs.Dna)"
+                aria-selected="@(_tab == CandidateKompasTabs.Dna ? "true" : "false")"
                 aria-controls="kompas-panel-dna"
                 tabindex="@(_tab == CandidateKompasTabs.Dna ? 0 : -1)"
                 @onclick='() => SetTab(CandidateKompasTabs.Dna)'>
@@ -70,7 +70,7 @@
                 id="kompas-tab-profile"
                 class="admin-sublink @(_tab == CandidateKompasTabs.Profile ? "admin-sublink--active" : null)"
                 role="tab"
-                aria-selected="@(_tab == CandidateKompasTabs.Profile)"
+                aria-selected="@(_tab == CandidateKompasTabs.Profile ? "true" : "false")"
                 aria-controls="kompas-panel-profile"
                 tabindex="@(_tab == CandidateKompasTabs.Profile ? 0 : -1)"
                 @onclick='() => SetTab(CandidateKompasTabs.Profile)'>
@@ -80,7 +80,7 @@
                 id="kompas-tab-tests"
                 class="admin-sublink @(_tab == CandidateKompasTabs.Tests ? "admin-sublink--active" : null)"
                 role="tab"
-                aria-selected="@(_tab == CandidateKompasTabs.Tests)"
+                aria-selected="@(_tab == CandidateKompasTabs.Tests ? "true" : "false")"
                 aria-controls="kompas-panel-tests"
                 tabindex="@(_tab == CandidateKompasTabs.Tests ? 0 : -1)"
                 @onclick='() => SetTab(CandidateKompasTabs.Tests)'>
@@ -90,7 +90,7 @@
                 id="kompas-tab-fit"
                 class="admin-sublink @(_tab == CandidateKompasTabs.Fit ? "admin-sublink--active" : null)"
                 role="tab"
-                aria-selected="@(_tab == CandidateKompasTabs.Fit)"
+                aria-selected="@(_tab == CandidateKompasTabs.Fit ? "true" : "false")"
                 aria-controls="kompas-panel-fit"
                 tabindex="@(_tab == CandidateKompasTabs.Fit ? 0 : -1)"
                 @onclick='() => SetTab(CandidateKompasTabs.Fit)'>
