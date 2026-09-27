@@ -4006,6 +4006,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateOnly?>("AvailableFromDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("CandidateHowToCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("AuthenticatorEnabled")
                         .HasColumnType("boolean");
 
@@ -4015,12 +4021,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("AuthenticatorSecret")
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
-
-                    b.Property<DateOnly?>("AvailableFromDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime?>("CandidateHowToCompletedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("CompanyId")
                         .HasColumnType("uuid");
@@ -4065,6 +4065,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("OpenForWork")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<DateTime?>("ParentalConsentAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -4072,28 +4076,24 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<DateTime?>("ParentalConsentTokenExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("ParentalConsentTokenHash")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                    b.Property<DateTime?>("ParentalConsentTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PreferencesJson")
                         .HasMaxLength(8000)
                         .HasColumnType("character varying(8000)");
 
-                    b.Property<string>("RecoveryCodesHash")
-                        .HasMaxLength(4096)
-                        .HasColumnType("character varying(4096)");
-
                     b.Property<string>("ReferredByAmbassadeurTrackingCode")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<string>("RecoveryCodesHash")
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
 
                     b.Property<Guid?>("ReferredByAmbassadeurUserId")
                         .HasColumnType("uuid");
@@ -4111,15 +4111,15 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
-                    b.Property<DateTime?>("TermsAcceptedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<DateTime?>("TestAiConsentAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("TestAiConsentVersion")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime?>("TermsAcceptedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UnsubscribeReasonCode")
                         .HasMaxLength(64)
