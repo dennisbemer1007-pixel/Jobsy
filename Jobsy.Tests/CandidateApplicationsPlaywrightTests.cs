@@ -232,7 +232,10 @@ public class CandidateApplicationsPlaywrightTests
         => text.Contains("favicon", StringComparison.OrdinalIgnoreCase)
            || text.Contains("WebSocket closed", StringComparison.OrdinalIgnoreCase)
            || text.Contains("Failed to load resource", StringComparison.OrdinalIgnoreCase)
-           || text.Contains("net::ERR_", StringComparison.OrdinalIgnoreCase);
+           || text.Contains("net::ERR_", StringComparison.OrdinalIgnoreCase)
+           || text.Contains("openfreemap.org", StringComparison.OrdinalIgnoreCase)
+           || text.Contains("AJAXError", StringComparison.OrdinalIgnoreCase)
+           || text.Contains("maplibre", StringComparison.OrdinalIgnoreCase);
 
     private static async Task<bool> TryLoginAsync(IPage page, string baseUrl)
     {
