@@ -23,7 +23,8 @@ public sealed record CandidateCulturePersonalityStateDto(
     CulturePersonalityScores? Scores,
     IReadOnlyList<string> MatchTags,
     DateTime? CompletedAtUtc,
-    decimal DeepAnalysisPriceEuro);
+    decimal DeepAnalysisPriceEuro,
+    CulturePersonalityScores? PreviewScores = null);
 
 public interface ICompanyCultureService
 {

@@ -160,12 +160,15 @@ public sealed class CandidateValuesService : ICandidateValuesService
                 price);
         }
 
+        var answers = SchwartzValuesCatalog.ParseAnswers(row.AnswersJson);
+        var preview = SchwartzValuesCatalog.Score(answers);
         return new CandidateValuesStateDto(
             row.Status,
-            SchwartzValuesCatalog.ParseAnswers(row.AnswersJson),
+            answers,
             FromRow(row),
             SchwartzValuesCatalog.ParseTags(row.MatchTagsJson),
             row.CompletedAtUtc,
-            price);
+            price,
+            preview);
     }
 }

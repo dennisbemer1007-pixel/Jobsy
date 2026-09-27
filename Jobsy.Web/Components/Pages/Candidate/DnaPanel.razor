@@ -97,14 +97,9 @@
                             <p class="dna-card__pending">@Culture["Test.Status.NotDone"]</p>
                             <a class="engagement-btn" href="@card.StartHref">@Culture["Dna.StartTest"]</a>
                         }
-                        else if (!card.Completed && card.IsProvisional)
-                        {
-                            <p class="dna-card__pending">
-                                <a class="engagement-btn" href="@card.StartHref">@Culture["Onboarding.Result.FullTests"]</a>
-                            </p>
-                        }
                         else
                         {
+                            @* Completed and first-impression (provisional) both show charts. *@
                             @if (card.Kind == AssessmentKind.Competence && card.Bars.Count > 0)
                             {
                                 <ul class="dna-card__bars">
@@ -169,7 +164,14 @@
                                 <p class="dna-card__sentence">@card.Sentence</p>
                             }
 
-                            <a class="dna-card__link" href="@card.DetailHref">@Culture["Dna.ViewResult"]</a>
+                            @if (card.IsProvisional)
+                            {
+                                <a class="engagement-btn" href="@card.StartHref">@Culture["Onboarding.Result.FullTests"]</a>
+                            }
+                            else
+                            {
+                                <a class="dna-card__link" href="@card.DetailHref">@Culture["Dna.ViewResult"]</a>
+                            }
                         }
                     </article>
                 }
@@ -226,10 +228,10 @@
             kompas.CareerInterests?.Scores ?? kompas.CareerInterests?.PreviewScores,
             kompas.CareerInterests?.AnsweredCount ?? 0,
             kompas.Culture?.Status,
-            kompas.Culture?.Scores,
+            kompas.Culture?.Scores ?? kompas.Culture?.PreviewScores,
             kompas.Culture?.AnsweredCount ?? 0,
             kompas.Values?.Status,
-            kompas.Values?.Scores,
+            kompas.Values?.Scores ?? kompas.Values?.PreviewScores,
             kompas.Values?.AnsweredCount ?? 0,
             kompas.CompetenceDeep,
             kompas.CareerDeep,

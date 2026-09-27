@@ -179,13 +179,16 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
                 price);
         }
 
+        var answers = CulturePersonalityCatalog.ParseAnswers(row.AnswersJson);
+        var preview = CulturePersonalityCatalog.Score(answers);
         return new CandidateCulturePersonalityStateDto(
             row.Status,
-            CulturePersonalityCatalog.ParseAnswers(row.AnswersJson),
+            answers,
             FromRow(row),
             CulturePersonalityCatalog.ParseTags(row.MatchTagsJson),
             row.CompletedAtUtc,
-            price);
+            price,
+            preview);
     }
 }
 

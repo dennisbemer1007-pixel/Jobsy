@@ -119,6 +119,7 @@ public sealed class CandidateCultureState
     public string Status { get; set; } = "Draft";
     public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public CulturePersonalityScoreSet? Scores { get; set; }
+    public CulturePersonalityScoreSet? PreviewScores { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
     public List<string> MatchTags { get; set; } = [];
     public decimal DeepAnalysisPriceEuro { get; set; }
@@ -132,6 +133,7 @@ public sealed class CandidateValuesState
     public string Status { get; set; } = "Draft";
     public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public SchwartzValuesScoreSet? Scores { get; set; }
+    public SchwartzValuesScoreSet? PreviewScores { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
     public List<string> MatchTags { get; set; } = [];
     public decimal DeepAnalysisPriceEuro { get; set; }
