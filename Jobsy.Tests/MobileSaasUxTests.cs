@@ -149,27 +149,36 @@ public class MobileSaasUxTests
     {
         var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/Applications.razor"));
         Assert.Contains("class=\"panel-page apps-page\"", razor);
-        Assert.Contains("apps-tabs", razor);
+        Assert.Contains("application-counters", razor);
         Assert.Contains("class=\"application-card-list\"", razor);
-        Assert.Contains("class=\"application-card\"", razor);
+        Assert.Contains("application-card", razor);
         Assert.Contains("application-card__title", razor);
-        Assert.Contains("application-card__meta", razor);
+        Assert.Contains("application-card__img", razor);
+        Assert.Contains("application-card__progress", razor);
         Assert.Contains("application-card__company", razor);
+        Assert.Contains("application-card--hired", razor);
         Assert.Contains("Apps.StatusNow", razor);
-        Assert.Contains("application-stepper", razor);
-        Assert.Contains("application-stepper__label", razor);
-        Assert.Contains("application-card__btn", razor);
+        Assert.Contains("Apps.TabRunning", razor);
+        Assert.Contains("Apps.WithdrawConfirm", razor);
+        Assert.Contains("LobsyFriendlyDialog", razor);
+        Assert.Contains("aria-haspopup=\"menu\"", razor);
+        Assert.DoesNotContain("apps-tabs", razor);
+        Assert.DoesNotContain("application-stepper", razor);
         Assert.DoesNotContain("class=\"table-list\"", razor);
         Assert.DoesNotContain("<table", razor);
-        Assert.DoesNotContain("<span>@steps[i]</span>", razor);
 
-        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".application-card-list {\n    display: flex;\n    flex-direction: column;\n    gap: 1rem;", css);
-        Assert.Contains(".apps-tabs.admin-sublinks {\n    position: static;\n    top: auto;", css);
-        Assert.DoesNotContain(".apps-tabs.admin-sublinks {\n    position: sticky;\n    top: 0;", css);
-        Assert.Contains(".application-card__actions {\n    display: flex;\n    flex-wrap: wrap;", css);
-        Assert.Contains(".application-card__actions .application-card__btn {\n    flex: 1 1 8.5rem;\n    min-height: 2.6rem;\n    border-radius: 10px;", css);
-        Assert.Contains(".application-stepper__step.is-done .application-stepper__bar,\n.application-stepper__step.is-current .application-stepper__bar {\n    background: var(--brand);", css);
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/applications.css"));
+        Assert.Contains(".application-counters", css);
+        Assert.Contains(".application-card__img", css);
+        Assert.Contains(".application-card__progress", css);
+        Assert.Contains(".application-card--hired", css);
+        Assert.Contains("aria-haspopup", razor);
+        Assert.DoesNotContain("application-stepper", css);
+        Assert.DoesNotContain("application-card__actions", css);
+
+        var appCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.DoesNotContain(".apps-tabs.admin-sublinks", appCss);
+        Assert.DoesNotContain(".application-stepper", appCss);
     }
 
     [Fact]

@@ -95,7 +95,9 @@ public record ApplicationDto(
     DateTime CreatedAt,
     string Status,
     DateTime? RespondedAt = null,
-    string? LocationLabel = null);
+    string? LocationLabel = null,
+    string? PictureUrl = null,
+    string? PictureKind = null);
 
 public record ApplyRequest(
     Guid VacancyId,

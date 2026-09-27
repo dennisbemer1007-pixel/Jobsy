@@ -118,6 +118,28 @@ public static class VacancyImageUrls
         return Placeholder(id, workType);
     }
 
+    /// <summary>
+    /// Card picture kind for UI styling: <c>photo</c>, <c>logo</c>, or <c>placeholder</c>.
+    /// </summary>
+    public static string ForCardKind(string pictureUrl, string? logoUrl)
+    {
+        var logo = Normalize(logoUrl);
+        if (!string.IsNullOrWhiteSpace(logo)
+            && string.Equals(pictureUrl, logo, StringComparison.OrdinalIgnoreCase))
+        {
+            return "logo";
+        }
+
+        if (IsLocalVacancySvg(pictureUrl)
+            || (!string.IsNullOrWhiteSpace(pictureUrl)
+                && pictureUrl.StartsWith(LocalPrefix, StringComparison.OrdinalIgnoreCase)))
+        {
+            return "placeholder";
+        }
+
+        return "photo";
+    }
+
     private static bool IsUsableSameOriginPhoto(string? normalized)
         => !string.IsNullOrWhiteSpace(normalized)
            && !normalized.StartsWith("blob:", StringComparison.OrdinalIgnoreCase)

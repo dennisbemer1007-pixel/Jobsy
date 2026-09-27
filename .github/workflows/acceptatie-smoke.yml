@@ -57,7 +57,7 @@ jobs:
         run: |
           mkdir -p artifacts/playwright-smoke
           dotnet test Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
-            --filter "FullyQualifiedName~MobileSmokePlaywrightTests|FullyQualifiedName~Mobile_candidate_tab_switching|FullyQualifiedName~Blazor_circuit_starts" \
+            --filter "FullyQualifiedName~MobileSmokePlaywrightTests|FullyQualifiedName~Mobile_candidate_tab_switching|FullyQualifiedName~Blazor_circuit_starts|FullyQualifiedName~CandidateApplicationsPlaywrightTests" \
             --logger "trx;LogFileName=acc-smoke.trx"
 
       - name: Upload screenshots

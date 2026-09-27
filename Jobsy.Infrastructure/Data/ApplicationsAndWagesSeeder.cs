@@ -33,6 +33,7 @@ internal static class ApplicationsAndWagesSeeder
 
         if (await db.Applications.AnyAsync())
         {
+            await EnsureDemoCandidateApplicationCardsAsync(db, logger);
             return;
         }
 
@@ -102,5 +103,111 @@ internal static class ApplicationsAndWagesSeeder
 
         await db.SaveChangesAsync();
         logger.LogInformation("Seeded demo applications.");
+
+        await EnsureDemoCandidateApplicationCardsAsync(db, logger);
     }
+
+    /// <summary>
+    /// Ensures the public demo candidate has a mix of statuses + photo/logo cards
+    /// for the fotokaarten UI / Playwright smoke (dev/e2e seed only).
+    /// </summary>
+    public static async Task EnsureDemoCandidateApplicationCardsAsync(JobsyDbContext db, ILogger logger)
+    {
+        var candidate = await db.Users.FirstOrDefaultAsync(u => u.Id == DemoCandidateId)
+            ?? await db.Users.FirstOrDefaultAsync(u => u.Email == "kandidaat@jobsy.local");
+        if (candidate is null)
+        {
+            return;
+        }
+
+        var vacancies = await db.Vacancies.AsTracking()
+            .Include(v => v.Company)
+            .Where(v => v.Status == VacancyStatus.Active)
+            .OrderBy(v => v.CreatedAtUtc)
+            .Take(8)
+            .ToListAsync();
+        if (vacancies.Count < 5)
+        {
+            return;
+        }
+
+        // One vacancy with a same-origin photo; one with logo only (no vacancy photo).
+        var photoVacancy = vacancies[0];
+        photoVacancy.ImageUrl = "/images/brand/dennis.jpg";
+        var logoVacancy = vacancies[1];
+        logoVacancy.ImageUrl = null;
+        if (logoVacancy.Company is not null
+            && string.IsNullOrWhiteSpace(logoVacancy.Company.LogoUrl))
+        {
+            logoVacancy.Company.LogoUrl = "/images/logos/westland.svg";
+        }
+
+        var mine = await db.Applications
+            .Where(a => a.CandidateUserId == candidate.Id && a.EmailVerifiedAt != null)
+            .ToListAsync();
+
+        var needed = new (ApplicationStatus Status, Guid VacancyId, int DaysAgo)[]
+        {
+            (ApplicationStatus.Pending, photoVacancy.Id, 2),
+            (ApplicationStatus.Pending, logoVacancy.Id, 3),
+            (ApplicationStatus.Accepted, vacancies[2].Id, 5),
+            (ApplicationStatus.Hired, vacancies[3].Id, 8),
+            (ApplicationStatus.Rejected, vacancies[4].Id, 10),
+        };
+
+        var now = DateTime.UtcNow;
+        foreach (var (status, vacancyId, daysAgo) in needed)
+        {
+            var existing = mine.FirstOrDefault(a => a.Status == status && a.VacancyId == vacancyId)
+                ?? mine.FirstOrDefault(a => a.Status == status);
+            if (existing is not null)
+            {
+                if (status == ApplicationStatus.Pending && existing.VacancyId != vacancyId
+                    && !mine.Any(a => a.Status == ApplicationStatus.Pending && a.VacancyId == vacancyId))
+                {
+                    // Keep an extra Pending on the other vacancy.
+                    db.Applications.Add(MakeApp(candidate, vacancyId, status, now.AddDays(-daysAgo)));
+                }
+
+                continue;
+            }
+
+            db.Applications.Add(MakeApp(candidate, vacancyId, status, now.AddDays(-daysAgo)));
+        }
+
+        // Guarantee at least two Pending (withdraw + remain).
+        var pendingCount = await db.Applications.CountAsync(a =>
+            a.CandidateUserId == candidate.Id
+            && a.EmailVerifiedAt != null
+            && a.Status == ApplicationStatus.Pending);
+        if (pendingCount < 2)
+        {
+            for (var i = pendingCount; i < 2; i++)
+            {
+                var v = vacancies[Math.Min(5 + i, vacancies.Count - 1)];
+                db.Applications.Add(MakeApp(candidate, v.Id, ApplicationStatus.Pending, now.AddHours(-(6 + i))));
+            }
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Ensured demo candidate application cards for fotokaarten UI.");
+    }
+
+    private static Application MakeApp(User candidate, Guid vacancyId, ApplicationStatus status, DateTime createdAt)
+        => new()
+        {
+            Id = Guid.NewGuid(),
+            VacancyId = vacancyId,
+            CandidateUserId = candidate.Id,
+            CandidateName = candidate.FullName,
+            CandidateEmail = candidate.Email,
+            CandidateCity = "Den Haag",
+            PreferredTransport = "Fiets",
+            EstimatedTravelMinutes = 15,
+            DistanceKm = 4,
+            Status = status,
+            CreatedAt = createdAt,
+            EmailVerifiedAt = createdAt,
+            RespondedAt = status is ApplicationStatus.Pending ? null : createdAt.AddHours(6)
+        };
 }

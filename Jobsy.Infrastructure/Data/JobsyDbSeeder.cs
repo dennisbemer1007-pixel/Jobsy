@@ -108,6 +108,7 @@ public static class JobsyDbSeeder
                 // EnsureForAll also fills empty tables and assigns missing vacancy salary tables.
                 await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
                 await AtsScrapeSourceSeeder.SeedAsync(db, logger);
+                await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
             }
             catch (Exception ex)
             {
@@ -136,6 +137,7 @@ public static class JobsyDbSeeder
             // EnsureForAll also fills empty tables and assigns missing vacancy salary tables.
             await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
             await AtsScrapeSourceSeeder.SeedAsync(db, logger);
+            await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
             logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
         }
         catch (Exception ex)
