@@ -1,0 +1,731 @@
+@page "/ontdek"
+@page "/dna"
+@layout TeaserLayout
+@attribute [AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using System.Security.Claims
+@using Jobsy.Core.Privacy
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared.Questionnaire
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Microsoft.JSInterop
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+@inject CultureState Culture
+@inject GratisDnaStorage Storage
+@inject IJSRuntime Js
+@implements IDisposable
+
+<PageTitle>@Culture["GratisDna.Seo.Title"] · Lobsy</PageTitle>
+
+<HeadContent>
+    <link rel="stylesheet" href="css/features/gratis-dna.css?v=20260927-gratis-dna" />
+    <script>
+        window.jobsyEnsureGratisDna = function () {
+            if (window.jobsyGratisDna) {
+                return Promise.resolve();
+            }
+            return new Promise(function (resolve, reject) {
+                var existing = document.querySelector('script[data-gratis-dna]');
+                if (existing) {
+                    existing.addEventListener('load', function () { resolve(); });
+                    existing.addEventListener('error', reject);
+                    return;
+                }
+                var s = document.createElement('script');
+                s.src = '/js/gratis-dna.js?v=20260927-gratis-dna';
+                s.defer = true;
+                s.dataset.gratisDna = 'true';
+                s.onload = function () { resolve(); };
+                s.onerror = reject;
+                document.head.appendChild(s);
+            });
+        };
+    </script>
+</HeadContent>
+
+<div class="gd-page" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <div class="gd-page__inner">
+        @if (_hydrating)
+        {
+            <p class="visually-hidden">@Culture["Common.Loading"]</p>
+        }
+        else if (_state == FlowState.Under16)
+        {
+            <section class="gd-hero" aria-labelledby="gd-under16-title">
+                <h1 id="gd-under16-title">@Culture["GratisDna.Under16.Title"]</h1>
+                <p class="gd-hero__lead">@Culture["GratisDna.Under16.Lead"]</p>
+                <a class="gd-cta" href="/register">@Culture["GratisDna.Under16.Cta"]</a>
+            </section>
+        }
+        else if (_state == FlowState.Landing)
+        {
+            <section class="gd-hero" aria-labelledby="gd-landing-title">
+                <p class="gd-badge">@Culture["GratisDna.Landing.Badge"]</p>
+                <h1 id="gd-landing-title">@Culture["GratisDna.Landing.Title"]</h1>
+                <p class="gd-hero__lead">@Culture["GratisDna.Landing.Lead"]</p>
+                <div class="gd-meta">
+                    <span>@Culture["GratisDna.Landing.MetaMinutes"]</span>
+                    <span>@Culture.Format("GratisDna.Landing.MetaQuestions", _totalQuestions)</span>
+                </div>
+                @if (_employerView)
+                {
+                    <p class="gd-note">@Culture["GratisDna.Landing.EmployerNote"]</p>
+                }
+                <div class="gd-preview" aria-hidden="true">
+                    <p class="gd-preview__title">@Culture["GratisDna.Landing.PreviewTitle"]</p>
+                    <div class="gd-preview__grid">
+                        <span>@Culture["GratisDna.Tile.Title.Strength"]</span>
+                        <span>@Culture["GratisDna.Tile.Title.Riasec"]</span>
+                        <span>@Culture["GratisDna.Tile.Title.Culture"]</span>
+                        <span>@Culture["GratisDna.Tile.Title.Value"]</span>
+                    </div>
+                </div>
+                <ol class="gd-steps">
+                    <li><strong>1</strong><span>@Culture["GratisDna.Landing.Step1"]</span></li>
+                    <li><strong>2</strong><span>@Culture["GratisDna.Landing.Step2"]</span></li>
+                    <li><strong>3</strong><span>@Culture["GratisDna.Landing.Step3"]</span></li>
+                </ol>
+                @if (_needsConsentRenew)
+                {
+                    <p class="gd-note">@Culture["GratisDna.Consent.Renew"]</p>
+                }
+                <div class="gd-age" role="group" aria-label="@Culture["GratisDna.Landing.Age16"]">
+                    <button type="button" class="gd-pill @(_age16Plus == true ? "is-on" : null)" @onclick="() => ChooseAge(true)">
+                        @Culture["GratisDna.Landing.Age16"]
+                    </button>
+                    <button type="button" class="gd-pill @(_age16Plus == false ? "is-on" : null)" @onclick="() => ChooseAge(false)">
+                        @Culture["GratisDna.Landing.AgeUnder16"]
+                    </button>
+                </div>
+                @if (_age16Plus == true)
+                {
+                    <label class="gd-consent">
+                        <input type="checkbox" @bind="_consentChecked" />
+                        <span>
+                            @Culture["GratisDna.Landing.Consent"]
+                            <a href="/privacy">@Culture["Legal.Privacy"]</a>
+                        </span>
+                    </label>
+                }
+                @if (_resumeAvailable)
+                {
+                    <button type="button" class="gd-cta gd-cta--ghost" @onclick="ResumeAsync">@Culture["GratisDna.Landing.Resume"]</button>
+                }
+                <button type="button" class="gd-cta" disabled="@(!CanStart)" @onclick="StartAsync">
+                    @Culture["GratisDna.Landing.StartCta"] →
+                </button>
+                <p class="gd-footnote">
+                    @Culture["GratisDna.Landing.Footer"]
+                    <a href="/privacy">@Culture["Legal.Privacy"]</a>
+                </p>
+            </section>
+        }
+        else if (_state == FlowState.Questions && _payload is not null)
+        {
+            <div class="gd-questions">
+                <QuestionnaireShell Title="@CurrentTestTitle"
+                                    Subtitle="@Culture.Format("GratisDna.Questions.Progress", _currentIndex + 1, _totalQuestions)"
+                                    AnsweredCount="@AnsweredCount"
+                                    TotalCount="@_totalQuestions"
+                                    SaveStatus="@_saveStatus"
+                                    SaveStatusText="@Culture["GratisDna.Questions.SavedOnDevice"]"
+                                    ShowPrivacyNote="false"
+                                    OnBack="BackAsync"
+                                    OnNext="NextQuestionAsync">
+                    <HeaderExtra>
+                        <div class="gd-test-tabs" aria-hidden="false">
+                            @foreach (var tab in _testTabs)
+                            {
+                                var done = tab.Index < CurrentTestIndex;
+                                var current = tab.Index == CurrentTestIndex;
+                                <span class="@(current ? "is-current" : done ? "is-done" : null)">@Culture[tab.TitleKey]</span>
+                            }
+                        </div>
+                    </HeaderExtra>
+                    <ChildContent>
+                        @foreach (var q in VisibleQuestions)
+                        {
+                            var index = _questions.IndexOf(q);
+                            var answered = TryGetAnswer(q, out var value);
+                            <LikertScaleQuestion QuestionId="@(1000 + index)"
+                                                 Text="@QuestionText(q)"
+                                                 Value="@(answered ? value : null)"
+                                                 Collapsed="@(answered && index != _currentIndex)"
+                                                 Dimmed="@(index > _currentIndex)"
+                                                 Interactive="@(index <= _currentIndex)"
+                                                 IsCurrent="@(index == _currentIndex)"
+                                                 Index="@(index + 1)"
+                                                 Total="@_totalQuestions"
+                                                 HighLabel="@Culture["Onboarding.Likert.High"]"
+                                                 LowLabel="@Culture["Onboarding.Likert.Low"]"
+                                                 ValueChanged="v => AnswerAsync(q, v)"
+                                                 Expanded="() => ExpandQuestion(index)" />
+                        }
+                    </ChildContent>
+                </QuestionnaireShell>
+            </div>
+        }
+        else if (_state == FlowState.Result && _payload is not null)
+        {
+            <section class="gd-result" aria-labelledby="gd-result-title">
+                <p class="gd-result__badge">@Culture["GratisDna.Result.Badge"]</p>
+                <h1 id="gd-result-title" class="visually-hidden">@Culture["GratisDna.Landing.Title"]</h1>
+                <div class="gd-tiles">
+                    @if (_strengthTile is not null)
+                    {
+                        <article class="gd-tile">
+                            <h3>@Culture["GratisDna.Tile.Title.Strength"]</h3>
+                            <p>@TileSentence("Strength", _strengthTile.Code)</p>
+                        </article>
+                    }
+                    @if (_riasecTile is not null)
+                    {
+                        <article class="gd-tile">
+                            <h3>@Culture["GratisDna.Tile.Title.Riasec"]</h3>
+                            <p>@TileSentence("Riasec", _riasecTile.Code)</p>
+                        </article>
+                    }
+                    @if (_cultureTile is not null)
+                    {
+                        <article class="gd-tile">
+                            <h3>@Culture["GratisDna.Tile.Title.Culture"]</h3>
+                            <p>@TileSentence("Culture", _cultureTile.Code)</p>
+                        </article>
+                    }
+                    @if (_valueTile is not null)
+                    {
+                        <article class="gd-tile">
+                            <h3>@Culture["GratisDna.Tile.Title.Value"]</h3>
+                            <p>@TileSentence("Value", _valueTile.Code)</p>
+                        </article>
+                    }
+                </div>
+                <p class="gd-hero__lead">@Culture["GratisDna.Result.Disclaimer"]</p>
+
+                <a class="gd-jobs-teaser" href="@RegisterHref">
+                    <h3>@Culture["GratisDna.JobsTeaser.Title"]</h3>
+                    <p>@Culture["GratisDna.JobsTeaser.Lead"]</p>
+                    <div class="gd-jobs-teaser__rows" aria-hidden="true">
+                        <div>🔒 @Culture["GratisDna.JobsTeaser.Title"]</div>
+                        <div>🔒 ——— ———</div>
+                        <div>🔒 ——— ———</div>
+                    </div>
+                </a>
+
+                <div class="gd-share">
+                    <h3>@Culture["GratisDna.Share.Title"]</h3>
+                    <div class="gd-share__row">
+                        <button type="button" class="gd-share__btn" @onclick='() => ShareAsync("whatsapp")'>@Culture["GratisDna.Share.WhatsApp"]</button>
+                        <button type="button" class="gd-share__btn" @onclick='() => ShareAsync("instagram")'>@Culture["GratisDna.Share.Instagram"]</button>
+                        <button type="button" class="gd-share__btn" @onclick='() => ShareAsync("generic")'>@Culture["GratisDna.Share.Generic"]</button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(_shareMessage))
+                    {
+                        <p class="gd-footnote">@_shareMessage</p>
+                    }
+                </div>
+
+                <div class="gd-preciezer">
+                    <h3>@Culture["GratisDna.Preciezer.Title"]</h3>
+                    <ul>
+                        <li>
+                            <a href="@RegisterHref">
+                                <span>
+                                    <strong>@Culture["GratisDna.Preciezer.FinishTests"]</strong>
+                                    <small>@Culture["GratisDna.Preciezer.FinishTestsMeta"]</small>
+                                </span>
+                                <span class="gd-tag">@Culture["GratisDna.Tag.Free"]</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@RegisterHref">
+                                <span>
+                                    <strong>@Culture["GratisDna.Preciezer.Deep"]</strong>
+                                    <small>@Culture["GratisDna.Preciezer.DeepMeta"]</small>
+                                </span>
+                                <span class="gd-tag">@Culture["GratisDna.Tag.Paid"]</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@RegisterHref">
+                                <span>
+                                    <strong>@Culture["GratisDna.Preciezer.Jobs"]</strong>
+                                </span>
+                                <span class="gd-tag">@Culture["GratisDna.Tag.Free"]</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <a class="gd-quiet-link" href="@RegisterHref">@Culture["GratisDna.SharperLink"]</a>
+
+                <div class="gd-wipe">
+                    @if (_wipeConfirm)
+                    {
+                        <p>@Culture["GratisDna.Wipe.Confirm"]</p>
+                        <button type="button" class="gd-cta" @onclick="WipeConfirmedAsync">@Culture["GratisDna.Wipe.Yes"]</button>
+                        <button type="button" class="gd-cta gd-cta--ghost" @onclick="() => _wipeConfirm = false">@Culture["GratisDna.Wipe.No"]</button>
+                    }
+                    else
+                    {
+                        <button type="button" @onclick="() => _wipeConfirm = true">@Culture["GratisDna.Wipe.Link"]</button>
+                    }
+                </div>
+            </section>
+
+            @if (!_stickyDismissed)
+            {
+                <div class="gd-sticky">
+                    <a class="gd-cta" href="@RegisterHref">@Culture["GratisDna.Sticky.Cta"]</a>
+                    <button type="button" class="gd-cta gd-cta--ghost" @onclick="() => _stickyDismissed = true">@Culture["GratisDna.Sticky.Dismiss"]</button>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private enum FlowState { Landing, Questions, Result, Under16 }
+    private enum TestKind { Competency, Career, Culture, Values }
+
+    private sealed record DnaQuestion(TestKind Kind, int Id, string TextKey);
+    private sealed record TestTab(int Index, string TitleKey);
+
+    private static readonly TestTab[] _testTabs =
+    [
+        new(0, "Onboarding.Test.Competency"),
+        new(1, "Onboarding.Test.Career"),
+        new(2, "Onboarding.Test.Culture"),
+        new(3, "Onboarding.Test.Values")
+    ];
+
+    private readonly List<DnaQuestion> _questions = BuildQuestions();
+    private readonly int _totalQuestions = OnboardingWizardCatalog.TotalMiniQuestionCount;
+
+    private FlowState _state = FlowState.Landing;
+    private GratisDnaStoragePayload? _payload;
+    private bool _hydrating = true;
+    private bool _employerView;
+    private bool _storageDisabled;
+    private bool? _age16Plus;
+    private bool _consentChecked;
+    private bool _needsConsentRenew;
+    private bool _resumeAvailable;
+    private int _currentIndex;
+    private QuestionnaireSaveStatus _saveStatus = QuestionnaireSaveStatus.Saved;
+    private bool _wipeConfirm;
+    private bool _stickyDismissed;
+    private string? _shareMessage;
+
+    private OnboardingImpressionCoreItem? _strengthTile;
+    private OnboardingImpressionCoreItem? _riasecTile;
+    private OnboardingImpressionCoreItem? _cultureTile;
+    private OnboardingImpressionCoreItem? _valueTile;
+
+    private string RegisterHref => "/register?van=ontdek";
+
+    private bool CanStart => _age16Plus == true && _consentChecked && !_storageDisabled;
+
+    private int AnsweredCount => _payload is null ? 0 : GratisDnaScoring.CountAnswers(_payload.Answers);
+
+    private int CurrentTestIndex => CurrentQuestion?.Kind switch
+    {
+        TestKind.Competency => 0,
+        TestKind.Career => 1,
+        TestKind.Culture => 2,
+        TestKind.Values => 3,
+        _ => 0
+    };
+
+    private DnaQuestion? CurrentQuestion =>
+        _currentIndex >= 0 && _currentIndex < _questions.Count ? _questions[_currentIndex] : null;
+
+    private string CurrentTestTitle => CurrentQuestion?.Kind switch
+    {
+        TestKind.Competency => Culture["Onboarding.Test.Competency"],
+        TestKind.Career => Culture["Onboarding.Test.Career"],
+        TestKind.Culture => Culture["Onboarding.Test.Culture"],
+        TestKind.Values => Culture["Onboarding.Test.Values"],
+        _ => Culture["GratisDna.Landing.Title"]
+    };
+
+    private IEnumerable<DnaQuestion> VisibleQuestions
+    {
+        get
+        {
+            var take = Math.Min(_currentIndex + 2, _questions.Count);
+            return _questions.Take(take);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (user.Identity?.IsAuthenticated == true && user.IsInRole("Candidate"))
+        {
+            Navigation.NavigateTo("/candidate/start", replace: true);
+            return;
+        }
+
+        _employerView = user.Identity?.IsAuthenticated == true && !user.IsInRole("Candidate");
+        _storageDisabled = _employerView;
+
+        try
+        {
+            await Storage.EnsureModuleAsync();
+            if (!_storageDisabled)
+            {
+                _payload = await Storage.LoadAsync();
+            }
+
+            ApplyLoadedState();
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        finally
+        {
+            _hydrating = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    private void ApplyLoadedState()
+    {
+        if (_payload is null)
+        {
+            _resumeAvailable = false;
+            _state = FlowState.Landing;
+            return;
+        }
+
+        _resumeAvailable = AnsweredCount > 0 && AnsweredCount < _totalQuestions;
+        _needsConsentRenew = !GratisDnaStorageValidator.StoredConsentMatchesCurrent(_payload);
+
+        if (AnsweredCount >= _totalQuestions && !_needsConsentRenew)
+        {
+            BuildResultTiles();
+            _state = FlowState.Result;
+            _currentIndex = _totalQuestions - 1;
+            return;
+        }
+
+        if (AnsweredCount > 0)
+        {
+            _currentIndex = FirstUnansweredIndex();
+            _state = FlowState.Questions;
+        }
+    }
+
+    private int FirstUnansweredIndex()
+    {
+        for (var i = 0; i < _questions.Count; i++)
+        {
+            if (!TryGetAnswer(_questions[i], out _))
+            {
+                return i;
+            }
+        }
+
+        return Math.Max(0, _questions.Count - 1);
+    }
+
+    private void ChooseAge(bool is16Plus)
+    {
+        if (is16Plus)
+        {
+            _age16Plus = true;
+            return;
+        }
+
+        _age16Plus = false;
+        _state = FlowState.Under16;
+    }
+
+    private async Task StartAsync()
+    {
+        if (!CanStart)
+        {
+            return;
+        }
+
+        if (_payload is null && !_storageDisabled)
+        {
+            _payload = await Storage.CreateEmptyAsync(PrivacyConstants.CandidateProfilingConsentVersion);
+        }
+
+        if (_payload is not null && _needsConsentRenew)
+        {
+            var now = DateTime.UtcNow;
+            _payload = ClonePayload(_payload, new GratisDnaStoredConsent
+            {
+                Version = PrivacyConstants.CandidateProfilingConsentVersion,
+                AtUtc = now
+            });
+            _needsConsentRenew = false;
+            await PersistAsync();
+        }
+
+        _currentIndex = FirstUnansweredIndex();
+        _state = FlowState.Questions;
+    }
+
+    private Task ResumeAsync()
+    {
+        _state = FlowState.Questions;
+        _currentIndex = FirstUnansweredIndex();
+        return Task.CompletedTask;
+    }
+
+    private async Task AnswerAsync(DnaQuestion question, int value)
+    {
+        if (_payload is null || _storageDisabled)
+        {
+            return;
+        }
+
+        SetAnswer(question, value);
+        _saveStatus = QuestionnaireSaveStatus.Saving;
+        await PersistAsync();
+        _saveStatus = QuestionnaireSaveStatus.Saved;
+
+        if (AnsweredCount >= _totalQuestions)
+        {
+            BuildResultTiles();
+            _state = FlowState.Result;
+            return;
+        }
+
+        if (_currentIndex < _questions.Count - 1)
+        {
+            _currentIndex++;
+        }
+    }
+
+    private async Task PersistAsync()
+    {
+        if (_payload is null || _storageDisabled)
+        {
+            return;
+        }
+
+        await Storage.SaveAsync(_payload);
+    }
+
+    private async Task BackAsync()
+    {
+        if (_currentIndex > 0)
+        {
+            _currentIndex--;
+            return;
+        }
+
+        _state = FlowState.Landing;
+        await Task.CompletedTask;
+    }
+
+    private Task NextQuestionAsync()
+    {
+        if (_currentIndex < _questions.Count - 1)
+        {
+            _currentIndex++;
+        }
+        else if (AnsweredCount >= _totalQuestions)
+        {
+            BuildResultTiles();
+            _state = FlowState.Result;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void ExpandQuestion(int index) => _currentIndex = index;
+
+    private void BuildResultTiles()
+    {
+        if (_payload is null)
+        {
+            return;
+        }
+
+        var core = GratisDnaScoring.Compose(_payload.Answers);
+        _strengthTile = core.Strengths.FirstOrDefault();
+        _riasecTile = core.RiasecTop.FirstOrDefault();
+        _cultureTile = core.CultureHighlight;
+        _valueTile = core.TopValue;
+    }
+
+    private string TileSentence(string group, string code)
+        => Culture[$"GratisDna.Tile.{group}.{code}"];
+
+    private string QuestionText(DnaQuestion q) => Culture[q.TextKey];
+
+    private bool TryGetAnswer(DnaQuestion q, out int value)
+    {
+        value = 0;
+        if (_payload is null)
+        {
+            return false;
+        }
+
+        var map = q.Kind switch
+        {
+            TestKind.Competency => _payload.Answers.Competency,
+            TestKind.Career => _payload.Answers.Career,
+            TestKind.Culture => _payload.Answers.Culture,
+            TestKind.Values => _payload.Answers.Values,
+            _ => null
+        };
+
+        if (map is null || !map.TryGetValue(q.Id, out value))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void SetAnswer(DnaQuestion q, int value)
+    {
+        if (_payload is null)
+        {
+            return;
+        }
+
+        var map = q.Kind switch
+        {
+            TestKind.Competency => _payload.Answers.Competency,
+            TestKind.Career => _payload.Answers.Career,
+            TestKind.Culture => _payload.Answers.Culture,
+            TestKind.Values => _payload.Answers.Values,
+            _ => null
+        };
+        if (map is not null)
+        {
+            map[q.Id] = value;
+        }
+    }
+
+    private async Task ShareAsync(string channel)
+    {
+        _shareMessage = null;
+        await Storage.EnsureModuleAsync();
+        var model = new
+        {
+            title = Culture["GratisDna.Share.CardTitle"],
+            badge = Culture["GratisDna.Result.Badge"],
+            footerCta = Culture["GratisDna.Share.CardFooter"],
+            shareText = Culture["GratisDna.Share.Text"],
+            rtl = Culture.IsRightToLeft,
+            tiles = new[]
+            {
+                new { title = Culture["GratisDna.Tile.Title.Strength"], sentence = _strengthTile is null ? "" : TileSentence("Strength", _strengthTile.Code) },
+                new { title = Culture["GratisDna.Tile.Title.Riasec"], sentence = _riasecTile is null ? "" : TileSentence("Riasec", _riasecTile.Code) },
+                new { title = Culture["GratisDna.Tile.Title.Culture"], sentence = _cultureTile is null ? "" : TileSentence("Culture", _cultureTile.Code) },
+                new { title = Culture["GratisDna.Tile.Title.Value"], sentence = _valueTile is null ? "" : TileSentence("Value", _valueTile.Code) }
+            }
+        };
+
+        try
+        {
+            var result = await Js.InvokeAsync<ShareResult>("jobsyGratisDna.share", model, channel);
+            if (result?.Hint == "instagram")
+            {
+                _shareMessage = Culture["GratisDna.Share.InstagramHint"];
+            }
+            else if (result?.Copied == true)
+            {
+                _shareMessage = Culture["GratisDna.Share.Copied"];
+            }
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    private async Task WipeConfirmedAsync()
+    {
+        if (!_storageDisabled)
+        {
+            await Storage.ClearAsync();
+        }
+
+        _payload = null;
+        _wipeConfirm = false;
+        _stickyDismissed = false;
+        _state = FlowState.Landing;
+        _age16Plus = null;
+        _consentChecked = false;
+        _resumeAvailable = false;
+    }
+
+    private static List<DnaQuestion> BuildQuestions()
+    {
+        var list = new List<DnaQuestion>();
+        Add(list, TestKind.Competency, OnboardingWizardCatalog.CompetencyQuestionIds);
+        Add(list, TestKind.Career, OnboardingWizardCatalog.CareerQuestionIds);
+        Add(list, TestKind.Culture, OnboardingWizardCatalog.CultureQuestionIds);
+        Add(list, TestKind.Values, OnboardingWizardCatalog.ValuesQuestionIds);
+        return list;
+    }
+
+    private static void Add(List<DnaQuestion> target, TestKind kind, int[] ids)
+    {
+        foreach (var id in ids)
+        {
+            var textKey = kind switch
+            {
+                TestKind.Competency => CompetencyTestCatalog.Questions.First(q => q.Id == id).TextKey,
+                TestKind.Career => CareerTestCatalog.Questions.First(q => q.Id == id).TextKey,
+                TestKind.Culture => CulturePersonalityCatalog.Questions.First(q => q.Id == id).TextKey,
+                TestKind.Values => SchwartzValuesCatalog.Questions.First(q => q.Id == id).TextKey,
+                _ => ""
+            };
+            target.Add(new DnaQuestion(kind, id, textKey));
+        }
+    }
+
+    private static GratisDnaStoragePayload ClonePayload(GratisDnaStoragePayload source, GratisDnaStoredConsent consent)
+        => new()
+        {
+            V = source.V,
+            CreatedAtUtc = source.CreatedAtUtc,
+            ExpiresAtUtc = source.ExpiresAtUtc,
+            AgeBand = source.AgeBand,
+            Consent = consent,
+            Answers = new GratisDnaStoredAnswers
+            {
+                Competency = new Dictionary<int, int>(source.Answers.Competency),
+                Career = new Dictionary<int, int>(source.Answers.Career),
+                Culture = new Dictionary<int, int>(source.Answers.Culture),
+                Values = new Dictionary<int, int>(source.Answers.Values)
+            }
+        };
+
+    private sealed class ShareResult
+    {
+        public bool Ok { get; set; }
+        public bool Copied { get; set; }
+        public string? Hint { get; set; }
+    }
+}

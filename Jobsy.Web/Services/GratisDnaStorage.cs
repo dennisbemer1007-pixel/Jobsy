@@ -46,11 +46,21 @@ public sealed class GratisDnaStorage(IJSRuntime js)
         await js.InvokeVoidAsync("jobsyGratisDna.clear");
     }
 
-    public async Task<GratisDnaStoragePayload> CreateEmptyAsync(string consentVersion)
+    public Task<GratisDnaStoragePayload> CreateEmptyAsync(string consentVersion)
     {
-        await EnsureModuleAsync();
-        var json = await js.InvokeAsync<string>("jobsyGratisDna.createEmpty", consentVersion);
-        return JsonSerializer.Deserialize<GratisDnaStoragePayload>(json, JsonOptions)
-               ?? throw new InvalidOperationException("Failed to create gratis DNA storage payload.");
+        var now = DateTime.UtcNow;
+        return Task.FromResult(new GratisDnaStoragePayload
+        {
+            V = GratisDnaStoragePayload.SchemaVersion,
+            CreatedAtUtc = now,
+            ExpiresAtUtc = now.AddDays(GratisDnaStoragePayload.RetentionDays),
+            AgeBand = GratisDnaStoragePayload.AgeBand16Plus,
+            Consent = new GratisDnaStoredConsent
+            {
+                Version = consentVersion,
+                AtUtc = now
+            },
+            Answers = new GratisDnaStoredAnswers()
+        });
     }
 }
