@@ -6,7 +6,6 @@
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
 @inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
-@inject PersistentComponentState Persist
 @implements IAsyncDisposable
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Media
@@ -965,11 +964,8 @@
     private bool _mapPainted;
     private bool _mapInitScheduled;
     private bool _mapHostReady;
-    private bool _restoredFromPersist;
     private VacancyMapView? _mapView;
     private List<Dictionary<string, object?>> _bootPins = [];
-    private PersistingComponentStateSubscription _persistSubscription;
-    private const string PersistKey = "vacancyDiscovery";
 
     private ElementReference _mapElement;
     private ElementReference _moreCardsSentinel;
@@ -1275,61 +1271,6 @@
         && _radiusKm == 15
         && string.Equals(_selectedTransport, "Fiets", StringComparison.Ordinal);
 
-    protected override void OnInitialized()
-    {
-        _persistSubscription = Persist.RegisterOnPersisting(PersistDiscoveryState);
-        if (Persist.TryTakeFromJson<DiscoveryPersistState>(PersistKey, out var saved)
-            && saved is not null)
-        {
-            _vacancies = saved.Vacancies ?? [];
-            _mapView = saved.MapView;
-            _bootPins = (saved.BootPins ?? [])
-                .Select(p => new Dictionary<string, object?>
-                {
-                    ["id"] = p.Id,
-                    ["lat"] = p.Lat,
-                    ["lng"] = p.Lng,
-                    ["colour"] = p.Colour,
-                    ["categoryColor"] = p.Colour,
-                    ["matchPercent"] = p.MatchPercent,
-                    ["matchColorBand"] = p.MatchColorBand,
-                    ["highlighted"] = p.Highlighted,
-                    ["highlightRank"] = p.HighlightRank,
-                    ["workType"] = p.WorkType
-                })
-                .ToList();
-            _loading = false;
-            _mapPainted = _bootPins.Count > 0 || _vacancies.Count > 0 || _mapView is { PinCount: > 0 };
-            _restoredFromPersist = true;
-        }
-    }
-
-    private Task PersistDiscoveryState()
-    {
-        Persist.PersistAsJson(PersistKey, new DiscoveryPersistState
-        {
-            Vacancies = _vacancies,
-            BootPins = _bootPins.Select(p => new BootPinPersist
-            {
-                Id = p.TryGetValue("id", out var id) ? id?.ToString() ?? "" : "",
-                Lat = p.TryGetValue("lat", out var lat) && lat is IConvertible cLat ? Convert.ToDouble(cLat) : 0,
-                Lng = p.TryGetValue("lng", out var lng) && lng is IConvertible cLng ? Convert.ToDouble(cLng) : 0,
-                Colour = p.TryGetValue("colour", out var colour) ? colour?.ToString() : null,
-                MatchPercent = p.TryGetValue("matchPercent", out var mp) && mp is IConvertible cMp
-                    ? Convert.ToInt32(cMp)
-                    : null,
-                MatchColorBand = p.TryGetValue("matchColorBand", out var band) ? band?.ToString() : null,
-                Highlighted = p.TryGetValue("highlighted", out var hl) && hl is true,
-                HighlightRank = p.TryGetValue("highlightRank", out var hr) && hr is IConvertible cHr
-                    ? Convert.ToUInt32(cHr)
-                    : 0u,
-                WorkType = p.TryGetValue("workType", out var wt) ? wt?.ToString() : null
-            }).ToList(),
-            MapView = _mapView
-        });
-        return Task.CompletedTask;
-    }
-
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
@@ -1345,14 +1286,14 @@
 
         if (!RendererInfo.IsInteractive)
         {
-            // Load warm pins + camera during prerender so #jobsy-map-boot is never empty
-            // when the index has vacancies (pins API is faster than full discover).
+            // Warm pins + camera only — never persist the full vacancy catalog into the
+            // HTML (that blew past the 2 MB Blazor hub limit and killed the circuit).
+            // Pins API is ~6 KB / ~370 ms; the interactive render loads the list.
             try
             {
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
                 var viewTask = LoadMapViewAsync(cts.Token);
                 var pinsTask = LoadBootPinsAsync(cts.Token);
-                await LoadVacanciesAsync(cts.Token);
                 await Task.WhenAll(viewTask, pinsTask);
                 try
                 {
@@ -1373,16 +1314,10 @@
 
         _ = regionHostTask;
 
-        // Restored prerender payload — do not fetch catalog/pins/view again over the circuit.
-        Task viewTaskInteractive = _restoredFromPersist && _mapView is not null
-            ? Task.CompletedTask
-            : LoadMapViewAsync();
-        Task bootPinsTask = _restoredFromPersist && _bootPins.Count > 0
-            ? Task.CompletedTask
-            : LoadBootPinsAsync();
-        Task catalogTask = _restoredFromPersist && _vacancies.Count > 0
-            ? Task.CompletedTask
-            : LoadVacanciesAsync();
+        // Catalog + map-view + pins in parallel — do not wait on profile/masterdata before pins appear.
+        var viewTaskInteractive = LoadMapViewAsync();
+        var bootPinsTask = LoadBootPinsAsync();
+        var catalogTask = LoadVacanciesAsync();
         var profileChangedFilters = false;
         try
         {
@@ -3436,7 +3371,6 @@
     public async ValueTask DisposeAsync()
     {
         _disposed = true;
-        _persistSubscription.Dispose();
         Culture.Changed -= OnCultureChanged;
         Navigation.LocationChanged -= OnLocationChanged;
         _suggestCts?.Cancel();
@@ -3481,26 +3415,5 @@
         public double Lat { get; set; }
         public double Lng { get; set; }
         public string? Label { get; set; }
-    }
-
-    /// <summary>Prerender → interactive handoff so the circuit does not re-fetch map data.</summary>
-    private sealed class DiscoveryPersistState
-    {
-        public List<VacancyListItem>? Vacancies { get; set; }
-        public List<BootPinPersist>? BootPins { get; set; }
-        public VacancyMapView? MapView { get; set; }
-    }
-
-    private sealed class BootPinPersist
-    {
-        public string Id { get; set; } = "";
-        public double Lat { get; set; }
-        public double Lng { get; set; }
-        public string? Colour { get; set; }
-        public int? MatchPercent { get; set; }
-        public string? MatchColorBand { get; set; }
-        public bool Highlighted { get; set; }
-        public uint HighlightRank { get; set; }
-        public string? WorkType { get; set; }
     }
 }
