@@ -2,7 +2,8 @@ namespace Jobsy.Tests;
 
 /// <summary>
 /// Guards the MapLibre 5 promise-only cluster API. Callback-style
-/// getClusterExpansionZoom / getClusterLeaves never fire (dead clusters on Acc).
+/// getClusterLeaves never fire (dead clusters on Acc). Cluster tap must open
+/// the pager immediately (openClusterList) without easeTo zoom.
 /// </summary>
 public class JobMapClusterPromiseApiTests
 {
@@ -19,11 +20,17 @@ public class JobMapClusterPromiseApiTests
             "getClusterLeaves(clusterId, 100, 0, function",
             js,
             StringComparison.Ordinal);
-        Assert.Contains("await source.getClusterExpansionZoom", js, StringComparison.Ordinal);
         Assert.Contains("await source.getClusterLeaves", js, StringComparison.Ordinal);
         Assert.Contains("async function onClusterClick", js, StringComparison.Ordinal);
-        Assert.Contains("openLeavesPager", js, StringComparison.Ordinal);
-        Assert.Contains("easeTo", js, StringComparison.Ordinal);
+
+        var start = js.IndexOf("async function onClusterClick", StringComparison.Ordinal);
+        Assert.True(start >= 0);
+        var end = js.IndexOf("\n    function onPinClick", start, StringComparison.Ordinal);
+        Assert.True(end > start);
+        var onCluster = js.Substring(start, end - start);
+        Assert.Contains("openClusterList", onCluster, StringComparison.Ordinal);
+        Assert.DoesNotContain("easeTo", onCluster, StringComparison.Ordinal);
+        Assert.DoesNotContain("getClusterExpansionZoom", onCluster, StringComparison.Ordinal);
     }
 
     [Fact]

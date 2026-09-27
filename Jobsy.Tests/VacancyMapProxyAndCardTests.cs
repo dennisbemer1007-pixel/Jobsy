@@ -85,12 +85,13 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("function reloadPins", js);
         Assert.Contains("clusterRadius", js);
         Assert.Contains("jobsy-pins", js);
-        Assert.Contains("getClusterExpansionZoom", js);
+        Assert.Contains("getClusterLeaves", js);
+        Assert.Contains("openClusterList", js);
         Assert.Contains("setFeatureState", js);
         Assert.Contains("AbortController", js);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("jobMap.min.js?v=20260926-mapfix7", maps);
+        Assert.Contains("jobMap.min.js?v=20260926-mapfix8", maps);
         Assert.Contains("PersistentComponentState", File.ReadAllText(
             Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor")));
         Assert.DoesNotContain(
@@ -101,8 +102,14 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
             "getClusterLeaves(clusterId, 100, 0, function",
             js,
             StringComparison.Ordinal);
-        Assert.Contains("await source.getClusterExpansionZoom", js, StringComparison.Ordinal);
         Assert.Contains("await source.getClusterLeaves", js, StringComparison.Ordinal);
+        var onClusterStart = js.IndexOf("async function onClusterClick", StringComparison.Ordinal);
+        Assert.True(onClusterStart >= 0);
+        var onClusterEnd = js.IndexOf("\n    function onPinClick", onClusterStart, StringComparison.Ordinal);
+        Assert.True(onClusterEnd > onClusterStart);
+        var onCluster = js.Substring(onClusterStart, onClusterEnd - onClusterStart);
+        Assert.Contains("openClusterList", onCluster, StringComparison.Ordinal);
+        Assert.DoesNotContain("easeTo", onCluster, StringComparison.Ordinal);
         Assert.Contains("fetchJsonWithOneRetry", js);
         Assert.Contains("retryAfterMs", js);
         Assert.Contains("map-popup--skeleton", js);

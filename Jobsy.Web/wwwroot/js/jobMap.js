@@ -2,6 +2,9 @@ window.jobMap = (function () {
     let map = null;
     let clusterGroup = null;
     let markersById = {};
+    /** @type {Object.<string, Array>} lat,lng → marker records (6-decimal coordKey). */
+    let markersByCoordKey = {};
+    let lastClusterTapAt = 0;
     let originMarker = null;
     let travelRingLayers = [];
     let travelRingGeo = null;
@@ -766,6 +769,11 @@ window.jobMap = (function () {
             return;
         }
 
+        // Cluster tap wins: MapLibre layer click + container capture can race.
+        if (lastClusterTapAt && (Date.now() - lastClusterTapAt) < 500) {
+            return;
+        }
+
         if (!eventTargetInsideWagePopover(ev)) {
             closeAllWagePopovers(map.getContainer());
         }
@@ -783,6 +791,15 @@ window.jobMap = (function () {
         }
 
         closeActivePopup();
+    }
+
+    function coordKey(lat, lng) {
+        const la = Number(lat);
+        const ln = Number(lng);
+        if (!Number.isFinite(la) || !Number.isFinite(ln)) {
+            return null;
+        }
+        return la.toFixed(6) + "," + ln.toFixed(6);
     }
 
     function closeWagePopoverIfOutside(ev) {
@@ -2096,67 +2113,47 @@ window.jobMap = (function () {
     }
 
     /**
-     * MapLibre GL JS 5.x is promise-only for getClusterExpansionZoom / getClusterLeaves.
-     * Callback-style calls never fire — clusters appeared dead on Acc.
+     * MapLibre GL JS 5.x is promise-only for getClusterLeaves.
+     * Pre-#316 behaviour: cluster tap opens the pager immediately — no zoom.
      */
     async function onClusterClick(ev) {
-        if (!map || !ev.features || !ev.features.length) {
-            return;
-        }
+        if (!map || !ev.features || !ev.features.length) return;
         const feature = ev.features[0];
-        const clusterId = feature.properties.cluster_id;
+        const props = feature.properties || {};
         const source = map.getSource(PIN_SOURCE);
-        if (!source
-            || typeof source.getClusterExpansionZoom !== "function"
-            || typeof source.getClusterLeaves !== "function") {
-            return;
+        if (!source || typeof source.getClusterLeaves !== "function") return;
+        if (ev.originalEvent && typeof ev.originalEvent.stopPropagation === "function") {
+            ev.originalEvent.stopPropagation();
         }
-
-        const openLeavesPager = async function () {
-            const leaves = await source.getClusterLeaves(clusterId, 100, 0);
-            if (!leaves || !leaves.length) {
-                return;
-            }
-            const childMarkers = leaves.map(function (leaf) {
-                const id = leaf.properties && leaf.properties.id;
-                return markersById[id];
-            }).filter(Boolean);
-            if (childMarkers.length === 0) {
-                return;
-            }
-            openClusterList(childMarkers, feature.geometry.coordinates);
-        };
-
+        lastClusterTapAt = Date.now();
         try {
-            const zoom = await source.getClusterExpansionZoom(clusterId);
-            const maxZoom = CLUSTER_OPTS.clusterMaxZoom;
-            // Expand when MapLibre can zoom further; otherwise identical-coordinate /
-            // max-zoom clusters open the existing pager popup ("1 van N").
-            if (zoom != null && zoom <= maxZoom && zoom > map.getZoom() + 0.15) {
-                map.easeTo({
-                    center: feature.geometry.coordinates,
-                    zoom: zoom,
-                    duration: prefersReducedMotion() ? 0 : 320
-                });
-                return;
-            }
-            await openLeavesPager();
-        } catch (_err) {
-            try {
-                await openLeavesPager();
-            } catch (_leafErr) {
-                // leave map as-is
-            }
-        }
+            const total = Number(props.point_count) || 100;
+            const leaves = await source.getClusterLeaves(props.cluster_id, total, 0);
+            const childMarkers = (leaves || [])
+                .map(function (leaf) { return markersById[leaf.properties && leaf.properties.id]; })
+                .filter(Boolean);
+            if (childMarkers.length) openClusterList(childMarkers, feature.geometry.coordinates);
+        } catch (_e) { }
     }
 
     function onPinClick(ev) {
+        // Cluster layer click can also hit unclustered layers in the same gesture.
+        if (lastClusterTapAt && (Date.now() - lastClusterTapAt) < 500) {
+            return;
+        }
         if (!ev.features || !ev.features.length) {
             return;
         }
         const id = ev.features[0].properties && ev.features[0].properties.id;
         const record = markersById[id];
         if (!record) {
+            return;
+        }
+        const key = coordKey(record.lat, record.lng);
+        const sameSpot = key && markersByCoordKey[key] ? markersByCoordKey[key] : null;
+        if (sameSpot && sameSpot.length > 1) {
+            lastClusterTapAt = Date.now();
+            openClusterList(sameSpot, [record.lng, record.lat]);
             return;
         }
         // Prefetch card on interaction (also bound via pointerdown on canvas).
@@ -2245,6 +2242,7 @@ window.jobMap = (function () {
                 clearLayers: function () {
                     clearRenderedMarkers();
                     markersById = {};
+                    markersByCoordKey = {};
                 },
                 zoomToShowLayer: function (record, cb) {
                     map.easeTo({
@@ -2530,6 +2528,7 @@ window.jobMap = (function () {
 
         clusterGroup.clearLayers();
         markersById = {};
+        markersByCoordKey = {};
         const bounds = [];
 
         (vacancies || []).forEach(function (raw) {
@@ -2554,6 +2553,13 @@ window.jobMap = (function () {
                 getLngLat: function () { return { lng: lng, lat: lat }; }
             };
             markersById[v.id] = record;
+            const key = coordKey(lat, lng);
+            if (key) {
+                if (!markersByCoordKey[key]) {
+                    markersByCoordKey[key] = [];
+                }
+                markersByCoordKey[key].push(record);
+            }
             bounds.push([lat, lng]);
         });
 
@@ -2798,6 +2804,8 @@ window.jobMap = (function () {
         }
         clusterGroup = null;
         markersById = {};
+        markersByCoordKey = {};
+        lastClusterTapAt = 0;
         lastFitPoints = [];
         firstSizedFit = false;
         cameraLocked = false;
