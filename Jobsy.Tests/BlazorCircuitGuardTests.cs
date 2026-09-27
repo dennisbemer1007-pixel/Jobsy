@@ -46,7 +46,7 @@ public class BlazorCircuitGuardTests
         Assert.Contains("KeepAliveInterval", program);
         Assert.Contains("ClientTimeoutInterval", program);
         Assert.Contains("DisconnectedCircuitRetentionPeriod", program);
-        Assert.Contains("TimeSpan.FromMinutes(5)", program);
+        Assert.Contains("TimeSpan.FromMinutes(15)", program);
     }
 
     [Fact]

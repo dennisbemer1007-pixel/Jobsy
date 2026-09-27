@@ -125,12 +125,11 @@ public class CompactQuestionnaireContractTests
         var likert = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/Questionnaire/LikertScaleQuestion.razor"));
         Assert.Contains("<fieldset", likert);
         Assert.Contains("q-likert__legend", likert);
-        Assert.Contains("type=\"radio\"", likert);
-        Assert.Contains("aria-label=\"@Culture[$\"Competency.Likert.{current}\"]\"", likert);
-        Assert.Contains("q-likert__opt--lg", likert);
-        Assert.Contains("q-likert__opt--sm", likert);
-        Assert.Contains("Questionnaire.Disagree", likert);
-        Assert.Contains("Questionnaire.Agree", likert);
+        Assert.Contains("aria-pressed", likert);
+        Assert.Contains("q-likert__opt", likert);
+        Assert.Contains("Onboarding.Likert.OfFive", likert);
+        Assert.Contains("Onboarding.Likert.Low", likert);
+        Assert.Contains("Onboarding.Likert.High", likert);
 
         var shell = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/Questionnaire/QuestionnaireShell.razor"));
         Assert.Contains("Questionnaire.BackAria", shell);
