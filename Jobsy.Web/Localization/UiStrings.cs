@@ -3339,6 +3339,7 @@ public static class UiStrings
         UiStringsValues.MergeAll(nl, en, pl, ro, ar);
         UiStringsWhoAmI.MergeAll(nl, en, pl, ro, ar);
         UiStringsHowLobsyRoles.MergeAll(nl, en, pl, ro, ar);
+        UiStringsOnboardingV2.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

@@ -1,60 +1,48 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<fieldset id="@DomId"
-          class="q-likert @CssClass @(IsCurrent ? "is-current" : null) @(IsAnswered ? "is-answered" : null)"
-          data-question-id="@QuestionId">
-    <legend class="q-likert__legend">
+@if (Collapsed)
+{
+    <button type="button" id="@DomId" class="q-likert q-likert--collapsed @CssClass"
+            data-question-id="@QuestionId" disabled="@(!Interactive)" @onclick="ExpandAsync">
+        <span class="q-likert__check" aria-hidden="true">✓</span>
         <span class="q-likert__text">@Text</span>
-        @if (Extra is not null)
-        {
-            <div class="q-likert__extra">@Extra</div>
-        }
-    </legend>
-
-    <div class="q-likert__scale" role="presentation">
-        @for (var value = 1; value <= 5; value++)
-        {
-            var current = value;
-            var sizeClass = current switch
+        <strong class="q-likert__value">@Value</strong>
+    </button>
+}
+else
+{
+    <fieldset id="@DomId"
+              class="q-likert @CssClass @(IsCurrent ? "is-current" : null) @(Dimmed ? "is-dimmed" : null)"
+              data-question-id="@QuestionId" disabled="@(!Interactive)">
+        <legend class="q-likert__legend">
+            @if (Index is not null && Total is not null)
             {
-                1 or 5 => "q-likert__opt--lg",
-                2 or 4 => "q-likert__opt--md",
-                _ => "q-likert__opt--sm"
-            };
-            var tintClass = current switch
+                <span class="q-likert__index">@Index/@Total</span>
+            }
+            <span class="q-likert__text">@Text</span>
+            @if (Extra is not null)
             {
-                1 => "q-likert__opt--coral-strong",
-                2 => "q-likert__opt--coral",
-                3 => "q-likert__opt--neutral",
-                4 => "q-likert__opt--green",
-                _ => "q-likert__opt--green-strong"
-            };
-            var inputId = $"{InputName}-{current}";
-            var selected = Value == current;
-            <label class="q-likert__opt @sizeClass @tintClass @(selected ? "is-on" : null)"
-                   for="@inputId">
-                <input class="q-likert__input"
-                       type="radio"
-                       name="@InputName"
-                       id="@inputId"
-                       value="@current"
-                       checked="@selected"
-                       aria-label="@Culture[$"Competency.Likert.{current}"]"
-                       @onchange="() => OnSelectAsync(current)" />
-                <span class="q-likert__circle" aria-hidden="true"></span>
-                @if (current == 1)
-                {
-                    <span class="q-likert__end-label">@Culture["Questionnaire.Disagree"]</span>
-                }
-                else if (current == 5)
-                {
-                    <span class="q-likert__end-label">@Culture["Questionnaire.Agree"]</span>
-                }
-            </label>
-        }
-    </div>
-</fieldset>
+                <span class="q-likert__extra">@Extra</span>
+            }
+        </legend>
+        <div class="q-likert__scale" role="group">
+            @for (var value = 1; value <= 5; value++)
+            {
+                var current = value;
+                var selected = Value == current;
+                <button type="button" class="q-likert__opt @(selected ? "is-on" : null)"
+                        disabled="@(!Interactive)" aria-pressed="@selected"
+                        aria-label="@($"{current} {Culture["Onboarding.Likert.OfFive"]}")"
+                        @onclick="() => OnSelectAsync(current)">@current</button>
+            }
+        </div>
+        <div class="q-likert__labels">
+            <span>@(LowLabel ?? Culture["Onboarding.Likert.Low"])</span>
+            <span>@(HighLabel ?? Culture["Onboarding.Likert.High"])</span>
+        </div>
+    </fieldset>
+}
 
 @code {
     [Parameter] public int QuestionId { get; set; }
@@ -62,6 +50,14 @@
     [Parameter] public int? Value { get; set; }
     [Parameter] public bool IsCurrent { get; set; }
     [Parameter] public bool IsAnswered { get; set; }
+    [Parameter] public bool Collapsed { get; set; }
+    [Parameter] public bool Dimmed { get; set; }
+    [Parameter] public bool Interactive { get; set; } = true;
+    [Parameter] public EventCallback Expanded { get; set; }
+    [Parameter] public string? LowLabel { get; set; }
+    [Parameter] public string? HighLabel { get; set; }
+    [Parameter] public int? Index { get; set; }
+    [Parameter] public int? Total { get; set; }
     [Parameter] public string InputPrefix { get; set; } = "q";
     [Parameter] public string? CssClass { get; set; }
     [Parameter] public RenderFragment? Extra { get; set; }
@@ -72,11 +68,13 @@
 
     private async Task OnSelectAsync(int value)
     {
-        if (Value == value)
+        if (!Interactive || Value == value)
         {
             return;
         }
 
         await ValueChanged.InvokeAsync(value);
     }
+
+    private Task ExpandAsync() => Interactive ? Expanded.InvokeAsync() : Task.CompletedTask;
 }

@@ -7,7 +7,7 @@
 {
     <aside class="ob-resume-card" aria-labelledby="ob-resume-title">
         <p id="ob-resume-title" class="ob-resume-card__title">@Culture["Onboarding.Resume.Title"]</p>
-        <p class="ob-resume-card__lead">@Culture["Onboarding.Resume.Lead"]</p>
+        <p class="ob-resume-card__lead">@Culture.Format("Onboarding.Resume.Lead", _remainingSteps)</p>
         <a class="ob-resume-card__link" href="/candidate/start">@Culture["Onboarding.Resume.Cta"]</a>
     </aside>
 }
@@ -15,6 +15,7 @@
 @code {
     private bool _visible;
     private bool _loadStarted;
+    private int _remainingSteps = 1;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -34,6 +35,10 @@
         {
             var state = await Api.GetMyOnboardingAsync();
             _visible = state is not null && !state.IsComplete;
+            if (_visible)
+            {
+                _remainingSteps = Math.Max(1, 11 - state!.CurrentStep);
+            }
         }
         catch
         {

@@ -632,6 +632,8 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Source).HasMaxLength(64);
             entity.Property(e => e.StepsJson).HasColumnType("text").IsRequired();
+            entity.Property(e => e.WizardVersion).HasDefaultValue(1);
+            entity.Property(e => e.FinishReached).HasDefaultValue(false);
             entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasOne(e => e.User)
                 .WithMany()

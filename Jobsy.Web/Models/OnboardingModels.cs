@@ -10,6 +10,8 @@ public sealed class OnboardingState
     public string? Source { get; set; }
     public List<OnboardingStepEvent> Steps { get; set; } = [];
     public OnboardingImpression? Impression { get; set; }
+    public int WizardVersion { get; set; } = 2;
+    public bool FinishReached { get; set; }
 }
 
 public sealed class OnboardingStepEvent
@@ -29,7 +31,6 @@ public sealed class OnboardingImpression
     public OnboardingImpressionItem? TopValue { get; set; }
     public int MatchingVacancyCount { get; set; }
     public List<OnboardingMatchCard> MatchCards { get; set; } = [];
-    public List<string> DreamJobSuggestions { get; set; } = [];
     public bool CompetencyProvisional { get; set; }
     public bool CareerProvisional { get; set; }
     public bool CultureProvisional { get; set; }

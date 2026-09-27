@@ -66,6 +66,19 @@ internal static class DemoUsersSeeder
             IsActive = true
         });
 
+        // Dedicated e2e candidate. The test fixture can reset this deterministic account
+        // without altering the public candidate demo profile.
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = Guid.Parse("aaaaaaaa-4444-4444-4444-444444444444"),
+            Email = "onboarding.e2e@jobsy.local",
+            FullName = "Onboarding E2E",
+            Role = UserRole.Candidate,
+            CompanyId = null,
+            OpenForWork = true,
+            IsActive = true
+        });
+
         var branchManagerId = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111");
         added += await EnsureUserAsync(db, new User
         {

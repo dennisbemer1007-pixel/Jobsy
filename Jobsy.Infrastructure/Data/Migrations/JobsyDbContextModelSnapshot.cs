@@ -1069,6 +1069,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("CurrentStep")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("FinishReached")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("SchoolVoucherId")
                         .HasColumnType("uuid");
 
@@ -1088,6 +1091,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("WizardVersion")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

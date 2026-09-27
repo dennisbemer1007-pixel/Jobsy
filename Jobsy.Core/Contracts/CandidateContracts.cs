@@ -24,7 +24,11 @@ public record CandidatePreferencesDto(
     /// <summary>Wizard/profile: candidate indicated they have no work experience yet.</summary>
     bool? NoWorkExperience = null,
     /// <summary>Optional study direction (e.g. E&amp;M) paired with education level.</summary>
-    string? EducationDirection = null);
+    string? EducationDirection = null,
+    /// <summary>Selected availability preset codes from onboarding wizard v2.</summary>
+    IReadOnlyList<string>? AvailabilityPresets = null,
+    /// <summary>True when the candidate manually overrode preset-computed hours/day-parts.</summary>
+    bool? AvailabilityPresetsOverridden = null);
 
 public record CandidateEmployerHistoryDto(
     string EmployerName,
