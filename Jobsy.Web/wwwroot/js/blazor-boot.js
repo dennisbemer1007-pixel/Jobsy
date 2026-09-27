@@ -15,21 +15,33 @@
         return document.getElementById("components-reconnect-modal");
     }
 
+    // Only intervene after Blazor's built-in loop has ended (failed).
+    // Never call Blazor.reconnect() while "components-reconnect-show" is set —
+    // Blazor already retries immediately on visibilitychange, and a parallel
+    // reconnect() would dispose the loop and leave a false "failed" toast.
     function modalShowsReconnect() {
         var m = modal();
         if (!m || !m.classList) return false;
-        return m.classList.contains("components-reconnect-show")
-            || m.classList.contains("components-reconnect-failed");
+        return m.classList.contains("components-reconnect-failed");
     }
 
-    function tryReconnect(reason) {
+    async function tryReconnect(reason) {
         if (!modalShowsReconnect()) return;
         if (!window.Blazor || typeof Blazor.reconnect !== "function") return;
         reconnectAttempts += 1;
         try {
             console.info("[lobsy] Blazor.reconnect #" + reconnectAttempts + " (" + reason + ")");
         } catch (e) { }
-        Blazor.reconnect();
+        try {
+            var ok = await Blazor.reconnect();
+            if (ok === true) return; // Blazor hides the toast
+            // Circuit gone — reload once, guarded against loops.
+            try {
+                if (sessionStorage.getItem(reloadKey) === "1") return;
+                sessionStorage.setItem(reloadKey, "1");
+            } catch (e) { }
+            location.reload();
+        } catch (e) { /* silent */ }
     }
 
     function onRejectedAutoReload() {
