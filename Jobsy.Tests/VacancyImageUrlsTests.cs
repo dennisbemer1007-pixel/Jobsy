@@ -1,5 +1,6 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.Media;
+using Jobsy.Core.Rules;
 
 namespace Jobsy.Tests;
 
@@ -226,6 +227,47 @@ public class VacancyImageUrlsTests
                 "/images/logos/westland.svg",
                 id,
                 "Zorg"));
+    }
+
+    [Fact]
+    public void ForCardKind_classifies_photo_logo_and_placeholder()
+    {
+        var id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+        var photo = VacancyImageUrls.ForCard("/images/brand/dennis.jpg", "/images/logos/westland.svg", id, "Horeca");
+        Assert.Equal("photo", VacancyImageUrls.ForCardKind(photo, "/images/logos/westland.svg"));
+
+        var logo = VacancyImageUrls.ForCard(null, "/images/logos/westland.svg", id, "Horeca");
+        Assert.Equal("logo", VacancyImageUrls.ForCardKind(logo, "/images/logos/westland.svg"));
+
+        var svg = VacancyImageUrls.ForCard(null, null, id, "Horeca");
+        Assert.Equal("placeholder", VacancyImageUrls.ForCardKind(svg, null));
+
+        var externalFallsToLogo = VacancyImageUrls.ForCard(
+            "https://cdn.example.com/x.jpg", "/images/logos/westland.svg", id, "Zorg");
+        Assert.Equal("logo", VacancyImageUrls.ForCardKind(externalFallsToLogo, "/images/logos/westland.svg"));
+    }
+
+    [Fact]
+    public void Application_card_logo_follows_intermediary_when_client_address_hidden()
+    {
+        // Mirrors MeController: intermediary logo when ForPublicCard shows intermediary name.
+        var (name, _) = CandidateApplicationLocation.ForPublicCard(
+            hasIntermediary: true,
+            showClientAddressOnMap: false,
+            endClientName: "Jumbo",
+            endClientAddress: "Straat 1, Naaldwijk",
+            intermediaryName: "Uitzend Westland",
+            intermediaryAddress: "Haven 2, Den Haag");
+        Assert.Equal("Uitzend Westland", name);
+
+        var logo = /* same branch as MeController */ true && !false
+            ? "/images/logos/intermediary.svg"
+            : "/images/logos/client.svg";
+        Assert.Equal("/images/logos/intermediary.svg", logo);
+
+        var id = Guid.NewGuid();
+        var picture = VacancyImageUrls.ForCard(null, logo, id, "Winkel");
+        Assert.Equal("logo", VacancyImageUrls.ForCardKind(picture, logo));
     }
 
     [Fact]

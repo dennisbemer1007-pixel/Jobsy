@@ -104,6 +104,8 @@ public class ApplicationItem
     public string Status { get; set; } = "Pending";
     public DateTime? RespondedAt { get; set; }
     public string? LocationLabel { get; set; }
+    public string? PictureUrl { get; set; }
+    public string? PictureKind { get; set; }
 }
 
 public class ApplyResultItem

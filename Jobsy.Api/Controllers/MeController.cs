@@ -389,10 +389,15 @@ public class MeController : ControllerBase
                 Title = a.Vacancy.Title,
                 CompanyName = a.Vacancy.Company.Name,
                 CompanyAddress = a.Vacancy.Company.Address,
+                CompanyLogoUrl = a.Vacancy.Company.LogoUrl,
                 IntermediaryName = a.Vacancy.IntermediaryCompany != null ? a.Vacancy.IntermediaryCompany.Name : null,
                 IntermediaryAddress = a.Vacancy.IntermediaryCompany != null ? a.Vacancy.IntermediaryCompany.Address : null,
+                IntermediaryLogoUrl = a.Vacancy.IntermediaryCompany != null ? a.Vacancy.IntermediaryCompany.LogoUrl : null,
                 a.Vacancy.ShowClientAddressOnMap,
                 HasIntermediary = a.Vacancy.IntermediaryCompanyId != null,
+                ImageUrl = a.Vacancy.ImageUrl,
+                WorkTypes = a.Vacancy.WorkTypes,
+                WorkTypeLabels = a.Vacancy.WorkTypeLabels,
                 a.CandidateName,
                 a.CandidateEmail,
                 a.PreferredTransport,
@@ -412,6 +417,13 @@ public class MeController : ControllerBase
                 row.CompanyAddress,
                 row.IntermediaryName,
                 row.IntermediaryAddress);
+            // Same company whose name is shown → same logo (intermediary when masked).
+            var logo = row.HasIntermediary && !row.ShowClientAddressOnMap
+                ? row.IntermediaryLogoUrl
+                : row.CompanyLogoUrl;
+            var workType = WorkTypeLabels.ResolveLabels(row.WorkTypes, row.WorkTypeLabels).FirstOrDefault();
+            var pictureUrl = VacancyImageUrls.ForCard(row.ImageUrl, logo, row.VacancyId, workType);
+            var pictureKind = VacancyImageUrls.ForCardKind(pictureUrl, logo);
             return new ApplicationDto(
                 row.Id,
                 row.VacancyId,
@@ -424,7 +436,9 @@ public class MeController : ControllerBase
                 row.CreatedAt,
                 row.Status,
                 row.RespondedAt,
-                location);
+                location,
+                pictureUrl,
+                pictureKind);
         }).ToList();
 
         var lang = await ResolveTargetLanguageAsync(user, cancellationToken);

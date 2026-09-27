@@ -15339,161 +15339,6 @@ html.cookie-consent-known .cookie-consent {
     font-size: 0.88rem;
 }
 
-.apps-page.panel-page {
-    padding-left: 1rem;
-    padding-right: 1rem;
-    padding-bottom: 1.25rem;
-}
-
-.apps-tabs.admin-sublinks {
-    position: static;
-    top: auto;
-    z-index: auto;
-    background: transparent;
-    margin: 0 0 0.85rem;
-    padding: 0.15rem 0 0.35rem;
-    box-shadow: none;
-}
-
-.application-card-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.application-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    padding: 1rem 1rem 0.95rem;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    background: var(--surface);
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
-}
-
-.application-card__header {
-    display: flex;
-    flex-direction: column;
-    gap: 0.18rem;
-}
-
-.application-card__link {
-    display: block;
-    min-width: 0;
-}
-
-.apps-page .application-card__title,
-.application-card__title {
-    margin: 0;
-    font-size: 1.12rem;
-    font-weight: 800;
-    color: var(--text);
-    line-height: 1.25;
-    letter-spacing: -0.02em;
-}
-
-.application-card__meta {
-    margin: 0;
-    font-size: 0.82rem;
-    color: var(--muted);
-    line-height: 1.35;
-}
-
-.application-card__company {
-    margin: 0.12rem 0 0;
-    font-size: 0.95rem;
-    font-weight: 650;
-    color: var(--text);
-}
-
-.application-card__date {
-    margin: 0.08rem 0 0;
-    font-size: 0.78rem;
-    color: var(--muted);
-}
-
-.application-card__status {
-    margin: 0.7rem 0 0.45rem;
-    font-size: 0.92rem;
-    font-weight: 800;
-    color: var(--brand);
-}
-
-.application-stepper {
-    display: flex;
-    gap: 0.35rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.application-stepper__step {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-
-.application-stepper__bar {
-    height: 6px;
-    border-radius: 99px;
-    background: color-mix(in srgb, var(--border) 80%, transparent);
-}
-
-.application-stepper__step.is-done .application-stepper__bar,
-.application-stepper__step.is-current .application-stepper__bar {
-    background: var(--brand);
-}
-
-.application-stepper__step.is-current .application-stepper__bar {
-    height: 8px;
-}
-
-.application-stepper__step.is-rejected .application-stepper__bar {
-    background: color-mix(in srgb, #b42318 80%, var(--brand));
-}
-
-.application-card__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.55rem;
-    margin-top: 0.9rem;
-}
-
-.application-card__actions .application-card__btn {
-    flex: 1 1 8.5rem;
-    min-height: 2.6rem;
-    border-radius: 10px;
-    padding: 0.55rem 0.85rem;
-    justify-content: center;
-}
-
-.application-card__actions .application-card__btn.btn-compact--primary {
-    background: var(--brand);
-    border-color: var(--brand);
-    color: #fff;
-}
-
-.application-card__actions .application-card__btn:not(.btn-compact--primary) {
-    background: var(--surface-2, var(--pearl));
-}
-
-@media (min-width: 901px) {
-    .apps-tabs.admin-sublinks {
-        position: static;
-        padding: 0.15rem 0.25rem;
-        margin: 0 0 1rem;
-        box-shadow: none;
-        background: transparent;
-    }
-
-    .application-card-list {
-        gap: 1.1rem;
-    }
-}
-
 .contact-details {
     list-style: none;
     margin: 0;
@@ -16200,13 +16045,6 @@ html.cookie-consent-known .cookie-consent {
         align-items: stretch;
     }
 
-    .application-stepper {
-        gap: 0.2rem;
-    }
-
-    .application-stepper__step {
-        font-size: 0.62rem;
-    }
 }
 
 /* —— Mobile SaaS shell: less-is-more (sticky nav, pills, token grid) —— */
@@ -22384,27 +22222,7 @@ h1:focus:not(:focus-visible) {
     }
 }
 
-.application-stepper__label {
-    display: block;
-    margin-top: 0.28rem;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.2;
-    color: var(--muted);
-    text-align: center;
-    overflow: visible;
-    white-space: normal;
-    hyphens: auto;
-}
-
-.application-stepper__step.is-current .application-stepper__label {
-    color: var(--brand);
-}
-
 @media (max-width: 640px) {
-    .application-stepper__step {
-        font-size: 12px;
-    }
 }
 
 /* ==== mobile-candidate-login-cookie ==== */
