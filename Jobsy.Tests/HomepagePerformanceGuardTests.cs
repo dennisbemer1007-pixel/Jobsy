@@ -120,6 +120,17 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);
         Assert.Contains("jobsy-map-boot", discovery);
         Assert.Contains("MapBootPinsJson", discovery);
+        // Prerender must not load/persist the full vacancy catalog (2 MB hub limit).
+        Assert.DoesNotContain("PersistentComponentState", discovery);
+        Assert.DoesNotContain("DiscoveryPersistState", discovery);
+        var prerenderIdx = discovery.IndexOf("if (!RendererInfo.IsInteractive)", StringComparison.Ordinal);
+        Assert.True(prerenderIdx >= 0);
+        var interactiveResume = discovery.IndexOf("_ = regionHostTask", prerenderIdx, StringComparison.Ordinal);
+        Assert.True(interactiveResume > prerenderIdx);
+        var prerenderBlock = discovery[prerenderIdx..interactiveResume];
+        Assert.Contains("LoadBootPinsAsync", prerenderBlock);
+        Assert.Contains("LoadMapViewAsync", prerenderBlock);
+        Assert.DoesNotContain("LoadVacanciesAsync", prerenderBlock);
         Assert.Contains("OperationCanceledException", discovery);
         Assert.Contains("_mapPainted = true", discovery);
         Assert.Contains("OnMapTilesReady", discovery);

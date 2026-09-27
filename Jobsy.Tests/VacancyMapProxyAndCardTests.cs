@@ -104,8 +104,12 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("photoIsWorkTypePlaceholder", js);
         Assert.Contains("/api/vacancies/{id:guid}/image",
             File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs")));
-        Assert.Contains("PersistentComponentState", File.ReadAllText(
-            Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor")));
+        var discovery = File.ReadAllText(
+            Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
+        // Full vacancy catalog must never be persisted into / HTML (2 MB hub limit).
+        Assert.DoesNotContain("PersistentComponentState", discovery);
+        Assert.DoesNotContain("PersistAsJson", discovery);
+        Assert.DoesNotContain("DiscoveryPersistState", discovery);
         Assert.Contains("await source.getClusterLeaves", js, StringComparison.Ordinal);
         var onClusterStart = js.IndexOf("async function onClusterClick", StringComparison.Ordinal);
         Assert.True(onClusterStart >= 0);

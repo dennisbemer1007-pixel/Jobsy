@@ -56,6 +56,8 @@ public class RegisterWizardUiTests
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
         Assert.Contains("css/app.min.css?v=20260927-apps-b", app);
+        Assert.DoesNotContain("css/app.min.css?v=20260927-acc-review", app);
+        Assert.DoesNotContain("css/app.min.css?v=20260926-mapfix4", app);
         Assert.DoesNotContain("css/app.min.css?v=20260926-dna-landing", app);
         Assert.DoesNotContain("css/app.min.css?v=20260926-q-compact", app);
         Assert.DoesNotContain("css/app.min.css?v=20260926-career-progress", app);
