@@ -109,10 +109,11 @@
                 EventTarget.prototype.addEventListener = function (type, listener, options) {
                     if (type === "unload") {
                         type = "pagehide";
-                        if (wrapped && typeof listener === "function") {
+                        if (wrapped && typeof listener === "function" && !listener.__jobsyPagehideMapped) {
                             var mapped = wrapped.get(listener);
                             if (!mapped) {
                                 mapped = function (ev) { return listener.call(this, ev); };
+                                mapped.__jobsyPagehideMapped = true;
                                 wrapped.set(listener, mapped);
                             }
                             listener = mapped;
