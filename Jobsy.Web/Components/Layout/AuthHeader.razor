@@ -1,11 +1,8 @@
 @using System.Security.Claims
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
-@using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
-@inject IAntiforgery Antiforgery
-@inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager Navigation
 @inject FeedbackHost FeedbackHost
 @inject IJSRuntime Js
@@ -41,11 +38,6 @@
                                 <span class="account-menu__identity-email">@EmailOf(context.User)</span>
                             }
                         </div>
-                        @if (context.User.IsInRole("Candidate"))
-                        {
-                            <a class="account-menu__link" href="/candidate/profile" role="menuitem">@Culture["Auth.Profile"]</a>
-                            <a class="account-menu__link" href="/candidate/profile?tab=profile" role="menuitem">@Culture["Auth.Settings"]</a>
-                        }
                         @if (RoleNavCatalog.HowLobsyHrefFor(context.User) is { } howHref)
                         {
                             <a class="account-menu__link" href="@howHref" role="menuitem">@Culture["Nav.HowLobsyWorks"]</a>
@@ -69,24 +61,15 @@
                         <a class="account-menu__link" href="/algemene-voorwaarden" role="menuitem">@Culture["Footer.Terms"]</a>
                         <a class="account-menu__link" href="/gebruiksvoorwaarden" role="menuitem">@Culture["Footer.Usage"]</a>
                         <a class="account-menu__link" href="/wie-zijn-wij" role="menuitem">@Culture["Footer.About"]</a>
-                        <a class="account-menu__link" href="/westland" role="menuitem">@Culture["Footer.Westland"]</a>
-                        <button type="submit"
-                                form="auth-logout"
+                        <button type="button"
                                 class="account-menu__link account-menu__link--logout"
                                 role="menuitem"
-                                @onclick="PrepareLogoutAsync">
+                                @onclick="LogoutAsync">
                             @Culture["Auth.Logout"]
                         </button>
                     </div>
                 }
             </div>
-            <form id="auth-logout" method="post" action="/account/logout" class="auth-logout-form auth-logout-form--chrome visually-hidden" aria-hidden="true"
-                  @onsubmit="PrepareLogoutAsync">
-                @if (!string.IsNullOrEmpty(_antiforgeryFieldName) && !string.IsNullOrEmpty(_antiforgeryToken))
-                {
-                    <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
-                }
-            </form>
         </Authorized>
         <NotAuthorized>
             @if (!IsLoginRoute)
@@ -101,23 +84,15 @@
 </div>
 
 @code {
-    private string _antiforgeryFieldName = "";
-    private string _antiforgeryToken = "";
     private bool _open;
     private bool _showInstall;
     private bool _installChecked;
+    private bool _loggingOut;
 
     protected override void OnInitialized()
     {
         Culture.Changed += OnCultureChanged;
         Navigation.LocationChanged += OnLocationChanged;
-        var http = HttpContextAccessor.HttpContext;
-        if (http is not null)
-        {
-            var tokens = Antiforgery.GetAndStoreTokens(http);
-            _antiforgeryFieldName = tokens.FormFieldName;
-            _antiforgeryToken = tokens.RequestToken ?? "";
-        }
     }
 
     private void OnCultureChanged()
@@ -193,8 +168,14 @@
         }
     }
 
-    private async Task PrepareLogoutAsync()
+    private async Task LogoutAsync()
     {
+        if (_loggingOut)
+        {
+            return;
+        }
+
+        _loggingOut = true;
         _open = false;
         try
         {
@@ -204,11 +185,25 @@
         {
             // Best-effort; server still revokes linked subscriptions by device session.
         }
+
+        // Full document navigation — GET /account/logout always signs out.
+        // A form submit from inside the menu raced with focusout closing the panel.
+        Navigation.NavigateTo("/account/logout", forceLoad: true);
     }
 
     private async Task OnFocusOut(FocusEventArgs _)
     {
+        if (_loggingOut)
+        {
+            return;
+        }
+
         await Task.Delay(150);
+        if (_loggingOut)
+        {
+            return;
+        }
+
         _open = false;
         await InvokeAsync(StateHasChanged);
     }
