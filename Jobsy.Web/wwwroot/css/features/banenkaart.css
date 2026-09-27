@@ -1,0 +1,385 @@
+/* Banenkaart v3 — docked cluster sheet, fixed pager, calmer map chrome */
+
+:root {
+    --map-iso-fill: #2563eb;
+    --map-iso-line: #1d4ed8;
+    --map-cluster: #16a34a;
+    --map-cluster-selected: #0f5f2e;
+    --map-popup-sheet-h: 199px;
+    --map-popup-pager-h: 44px;
+    --map-popup-progress-h: 3px;
+    --map-popup-content-h: 152px;
+}
+
+/* Fixed-height cluster card (mobile docked + desktop anchored) */
+.map-cluster-sheet,
+.job-map-popup--cluster .maplibregl-popup-content {
+    box-sizing: border-box;
+}
+
+.map-cluster-sheet {
+    position: absolute;
+    inset-inline: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    z-index: 6;
+    height: var(--map-popup-sheet-h);
+    max-height: var(--map-popup-sheet-h);
+    min-height: var(--map-popup-sheet-h);
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+/* Bottom nav sits outside .map-pane; sheet stays above it inside the pane */
+@media (max-width: 768px) {
+    .map-pane {
+        position: relative;
+    }
+
+    .map-pane.is-cluster-open .highlight-carousel--map {
+        visibility: hidden;
+        pointer-events: none;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
+        opacity: 0;
+    }
+
+    .map-pane.is-cluster-open .job-map-popup--cluster {
+        display: none !important;
+    }
+
+    .map-cluster-chip {
+        position: absolute;
+        top: 10px;
+        inset-inline: 0;
+        margin-inline: auto;
+        z-index: 5;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        min-height: 44px;
+        padding: 0.4rem 0.9rem;
+        width: max-content;
+        max-width: calc(100% - 96px);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--brand);
+        font-size: 0.875rem;
+        font-weight: 600;
+        box-shadow: var(--shadow);
+        cursor: pointer;
+    }
+
+    .map-cluster-chip[hidden] {
+        display: none !important;
+    }
+
+    .map-cluster-chip__chevron {
+        font-size: 0.75rem;
+        line-height: 1;
+        opacity: 0.7;
+    }
+}
+
+@media (min-width: 769px) {
+    .map-cluster-sheet {
+        display: none !important;
+    }
+
+    .map-cluster-chip {
+        display: none !important;
+    }
+
+    /* Desktop anchored popup: same fixed geometry */
+    .job-map-popup--cluster .maplibregl-popup-content {
+        width: min(520px, calc(100vw - 48px));
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .job-map-popup--cluster .map-cluster-card {
+        height: 252px;
+        min-height: 252px;
+        max-height: 252px;
+    }
+
+    .job-map-popup--cluster .map-cluster-card__viewport,
+    .job-map-popup--cluster .map-popup__main {
+        height: 205px;
+        min-height: 205px;
+        max-height: 205px;
+    }
+}
+
+.map-cluster-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    background: var(--surface);
+}
+
+.map-cluster-card__chrome {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    height: var(--map-popup-pager-h);
+    min-height: var(--map-popup-pager-h);
+    max-height: var(--map-popup-pager-h);
+    border-block-end: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.map-cluster-card__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    height: calc(var(--map-popup-pager-h) - var(--map-popup-progress-h));
+    padding-inline: 0.55rem;
+    min-width: 0;
+}
+
+.map-cluster-card__title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--brand);
+}
+
+.map-cluster-card__pager {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 0;
+}
+
+.map-cluster-card__nav,
+.map-cluster-card__close {
+    box-sizing: border-box;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.map-cluster-card__nav:hover:not(:disabled),
+.map-cluster-card__close:hover {
+    color: var(--brand);
+    background: var(--pearl);
+}
+
+.map-cluster-card__nav:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.map-cluster-card__counter {
+    min-width: 3.6rem;
+    padding-inline: 0.15rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--brand);
+}
+
+.map-cluster-card__progress {
+    height: var(--map-popup-progress-h);
+    background: var(--pearl-mid);
+    overflow: hidden;
+}
+
+.map-cluster-card__progress > i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--map-iso-line);
+    transition: width 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .map-cluster-card__progress > i {
+        transition: none;
+    }
+}
+
+.map-cluster-card__viewport {
+    position: relative;
+    flex: 1 1 auto;
+    height: var(--map-popup-content-h);
+    min-height: var(--map-popup-content-h);
+    max-height: var(--map-popup-content-h);
+    overflow: hidden;
+    touch-action: pan-y;
+}
+
+.map-cluster-card__slide {
+    position: absolute;
+    inset: 0;
+    will-change: transform, opacity;
+}
+
+.map-cluster-card__slide.is-enter-from-end {
+    transform: translateX(100%);
+    opacity: 0.01;
+}
+
+.map-cluster-card__slide.is-enter-from-start {
+    transform: translateX(-100%);
+    opacity: 0.01;
+}
+
+.map-cluster-card__slide.is-leave-to-start {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+.map-cluster-card__slide.is-leave-to-end {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.map-cluster-card__slide.is-active {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.map-cluster-card__slide.is-animating {
+    transition: transform 200ms ease-out, opacity 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .map-cluster-card__slide.is-animating {
+        transition: opacity 120ms ease-out;
+    }
+}
+
+/* Keep Dennis card layout, force ellipsis + fixed media in cluster frame */
+.map-cluster-card .map-popup {
+    height: 100%;
+}
+
+.map-cluster-card .map-popup__main {
+    height: 100%;
+    min-height: 0 !important;
+    max-height: none !important;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.map-cluster-card .map-popup__media,
+.map-cluster-card .map-popup__media--logo-only,
+.map-cluster-card .map-popup__media--empty {
+    flex: 0 0 96px;
+    width: 96px;
+    min-width: 96px;
+    max-width: 96px;
+    height: 100% !important;
+    min-height: 0 !important;
+    align-self: stretch;
+}
+
+.map-cluster-card .map-popup__media--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #0f2d5c 0%, #163a6b 55%, #0a2044 100%);
+    color: #fff;
+}
+
+.map-cluster-card .map-popup__media--empty svg {
+    width: 28px;
+    height: 28px;
+    opacity: 0.92;
+}
+
+.map-cluster-card .map-popup__photo {
+    width: 96px;
+    height: 100%;
+    object-fit: cover;
+}
+
+.map-cluster-card .map-popup__title,
+.map-cluster-card .map-popup__address,
+.map-cluster-card .map-popup__company {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.map-cluster-card .map-popup__header {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.map-cluster-card .map-popup__body {
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* Hide MapLibre tip/close for cluster — chrome has its own × */
+.job-map-popup--cluster .maplibregl-popup-tip,
+.job-map-popup--cluster .maplibregl-popup-close-button {
+    display: none !important;
+}
+
+.job-map-popup--cluster .maplibregl-popup-content {
+    background: transparent;
+    box-shadow: none;
+}
+
+/* Isochrone ring label pills (HTML markers) */
+.map-iso-label {
+    pointer-events: none;
+    white-space: nowrap;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    border: 1.5px solid var(--map-iso-line);
+    background: #fff;
+    color: var(--map-iso-line);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    box-shadow: 0 1px 2px rgba(15, 45, 92, 0.12);
+}
+
+.map-iso-label--chosen {
+    border-width: 2px;
+    border-color: #fff;
+    background: var(--map-iso-line);
+    color: #fff;
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.35);
+}
+
+.map-iso-label__icon {
+    margin-inline-end: 0.2rem;
+}

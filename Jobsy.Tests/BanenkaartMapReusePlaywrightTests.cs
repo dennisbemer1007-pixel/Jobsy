@@ -43,7 +43,7 @@ public class BanenkaartMapReusePlaywrightTests
         Assert.DoesNotContain("if (map) {\n                dispose();", initFn);
 
         var maps = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("jobMap.min.js?v=20260927-mapreuse", maps);
+        Assert.Contains("jobMap.min.js?v=20260927-banenkaart-v3", maps);
 
         var testFile = Path.Combine(root, "Jobsy.Tests", "BanenkaartMapReusePlaywrightTests.cs");
         Assert.True(File.Exists(testFile));
