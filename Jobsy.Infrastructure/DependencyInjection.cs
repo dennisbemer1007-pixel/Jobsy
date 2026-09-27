@@ -184,6 +184,18 @@ public static class DependencyInjection
         services.AddHttpClient(OsrmRoutingService.TransitClientName, client =>
             OsrmRoutingService.ConfigureClient(client, TimeSpan.FromSeconds(12)));
         services.AddScoped<IExactRoutingService, OsrmRoutingService>();
+        services.AddHttpClient(ValhallaIsochroneService.HttpClientName, client =>
+            ValhallaIsochroneService.ConfigureClient(client, TimeSpan.FromSeconds(6)));
+        var isochroneBase = configuration["Routing:IsochroneBaseUrl"];
+        if (string.Equals(isochroneBase, "mock", StringComparison.OrdinalIgnoreCase)
+            || environment?.IsEnvironment("Testing") == true)
+        {
+            services.AddScoped<IIsochroneService, MockIsochroneService>();
+        }
+        else
+        {
+            services.AddScoped<IIsochroneService, ValhallaIsochroneService>();
+        }
         services.AddScoped<ISalaryService, SalaryService>();
         services.AddScoped<ICompanyAuthorizationService, CompanyAuthorizationService>();
         services.AddScoped<ICompanyApiKeyService, CompanyApiKeyService>();

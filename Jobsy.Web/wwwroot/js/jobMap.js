@@ -1967,15 +1967,21 @@ window.jobMap = (function () {
 
     function ringMinutes(maxMinutes) {
         const max = Math.max(5, Number(maxMinutes) || 30);
-        if (max <= 10) return [max];
-        if (max <= 20) return [Math.round(max / 2), max];
-        const step = max <= 40 ? 10 : Math.max(10, Math.round(max / 3 / 5) * 5);
+        // Always show 3 areas. For a chosen max ≤30, show 10/20/30.
+        if (max <= 30) {
+            return [10, 20, 30];
+        }
+        const step = max <= 60 ? 15 : Math.max(10, Math.round(max / 3 / 5) * 5);
         const rings = [];
         for (let m = step; m < max; m += step) {
             rings.push(m);
         }
         rings.push(max);
         return rings.slice(-3);
+    }
+
+    function chosenRingMinutes() {
+        return Math.max(5, Number(travelOptions.maxMinutes) || 30);
     }
 
     function metersPerMinute(transport) {
@@ -1992,6 +1998,10 @@ window.jobMap = (function () {
             }
         });
         travelRingLayers = [];
+        (isochroneLabelMarkers || []).forEach(function (m) {
+            try { if (m && typeof m.remove === "function") m.remove(); } catch (e) { }
+        });
+        isochroneLabelMarkers = [];
     }
 
     function clearTravelRings() {
@@ -2092,6 +2102,7 @@ window.jobMap = (function () {
 
     function eachTravelRing(lat, lng, fn) {
         const minutes = ringMinutes(travelOptions.maxMinutes);
+        const chosen = chosenRingMinutes();
         const cap = maxRingRadiusMeters();
         minutes.forEach(function (mins, index) {
             const radius = ringRadiusForMinutes(mins);
@@ -2101,80 +2112,263 @@ window.jobMap = (function () {
             if (index > 0 && radius >= cap - 1 && ringRadiusForMinutes(minutes[index - 1]) >= cap - 1) {
                 return;
             }
-            fn(mins, index, radius, index === minutes.length - 1);
+            fn(mins, index, radius, mins === chosen || (chosen > 30 && index === minutes.length - 1));
         });
     }
 
     function buildTravelRingFeatures(lat, lng) {
         const features = [];
-        eachTravelRing(lat, lng, function (mins, index, radius, outer) {
+        const chosen = chosenRingMinutes();
+        eachTravelRing(lat, lng, function (mins, index, radius, isChosen) {
             features.push({
                 type: "Feature",
-                properties: { index: index, outer: outer ? 1 : 0 },
+                properties: {
+                    index: index,
+                    minutes: mins,
+                    chosen: isChosen || mins === chosen ? 1 : 0,
+                    outer: isChosen ? 1 : 0
+                },
                 geometry: { type: "Polygon", coordinates: circlePolygon(lat, lng, radius) }
             });
+        });
+        // Largest first so fills stack darkest inside when sorted by paint.
+        features.sort(function (a, b) {
+            return (b.properties.minutes || 0) - (a.properties.minutes || 0);
         });
         return features;
     }
 
-    function placeTravelRingLabels(lat, lng) {
+    function isochroneCacheKey(lat, lng, mode, minutes) {
+        return lat.toFixed(3) + "|" + lng.toFixed(3) + "|" + mode + "|" + minutes.join(",");
+    }
+
+    function fetchIsochrones(lat, lng) {
+        const mode = canonicalTransport(travelOptions.transport || "Fiets");
+        const minutes = ringMinutes(travelOptions.maxMinutes);
+        const key = isochroneCacheKey(lat, lng, mode, minutes);
+        if (isochroneCache[key]) {
+            return Promise.resolve(isochroneCache[key]);
+        }
+        // OV: no transit isochrones on the public Valhalla instance.
+        if (mode === "OV") {
+            isochroneCache[key] = Promise.resolve(null);
+            return isochroneCache[key];
+        }
+        const url = "/api/travel/isochrones?lat=" + encodeURIComponent(lat) +
+            "&lng=" + encodeURIComponent(lng) +
+            "&mode=" + encodeURIComponent(mode) +
+            "&minutes=" + encodeURIComponent(minutes.join(","));
+        isochroneCache[key] = fetch(url, {
+            credentials: "same-origin",
+            headers: { Accept: "application/geo+json, application/json" }
+        }).then(function (res) {
+            if (!res.ok) {
+                return null;
+            }
+            return res.json();
+        }).then(function (fc) {
+            if (!fc || !Array.isArray(fc.features) || !fc.features.length) {
+                return null;
+            }
+            return fc;
+        }).catch(function () {
+            return null;
+        });
+        return isochroneCache[key];
+    }
+
+    function featuresFromIsochroneFc(fc) {
+        const chosen = chosenRingMinutes();
+        const features = (fc.features || []).map(function (f, index) {
+            const mins = Number((f.properties && (f.properties.minutes != null
+                ? f.properties.minutes
+                : f.properties.contour)) || 0);
+            return {
+                type: "Feature",
+                properties: {
+                    index: index,
+                    minutes: mins,
+                    chosen: mins === chosen ? 1 : 0,
+                    outer: mins === chosen ? 1 : 0
+                },
+                geometry: f.geometry
+            };
+        }).filter(function (f) {
+            return f.geometry && f.properties.minutes > 0;
+        });
+        features.sort(function (a, b) {
+            return (b.properties.minutes || 0) - (a.properties.minutes || 0);
+        });
+        return features;
+    }
+
+    function transportIconChar(transport) {
+        const t = canonicalTransport(transport);
+        if (t === "Auto") return "🚗";
+        if (t === "Lopend") return "🚶";
+        if (t === "OV") return "🚌";
+        return "🚲";
+    }
+
+    function labelBearingForMinutes(mins, index) {
+        // Mockup bearings ≈ 30° (10), 190° (20), 160° (30).
+        if (mins <= 10) return 30;
+        if (mins <= 20) return 190;
+        if (index === 0) return 160;
+        return 125;
+    }
+
+    function pointOnRingEdge(lat, lng, mins, index, feature) {
+        const bearing = labelBearingForMinutes(mins, index);
+        if (feature && feature.geometry && feature.geometry.type === "Polygon") {
+            const ring = feature.geometry.coordinates && feature.geometry.coordinates[0];
+            if (ring && ring.length > 8) {
+                // Pick the vertex closest to the preferred bearing from origin.
+                let best = null;
+                let bestDiff = 1e9;
+                for (let i = 0; i < ring.length; i++) {
+                    const c = ring[i];
+                    const dLng = (c[0] - lng) * Math.cos(lat * Math.PI / 180);
+                    var dLat = c[1] - lat;
+                    var ang = Math.atan2(dLng, dLat) * 180 / Math.PI;
+                    if (ang < 0) ang += 360;
+                    var diff = Math.abs(ang - bearing);
+                    if (diff > 180) diff = 360 - diff;
+                    if (diff < bestDiff) {
+                        bestDiff = diff;
+                        best = c;
+                    }
+                }
+                if (best) {
+                    return best;
+                }
+            }
+        }
+        return destinationLngLat(lat, lng, ringRadiusForMinutes(mins), bearing);
+    }
+
+    function placeTravelRingLabels(lat, lng, features) {
         clearTravelRingLabels();
-        if (!map) {
+        if (!map || typeof maplibregl === "undefined" || !maplibregl.Marker) {
             return;
         }
         const transport = canonicalTransport(travelOptions.transport || "Fiets");
         const labelVerb = TRANSPORT_LABEL[transport] || "reistijd";
-        const labelFeatures = [];
-        eachTravelRing(lat, lng, function (mins, index, radius) {
-            // East-southeast keeps labels off the featured carousel and zoom stack.
-            const labelLngLat = destinationLngLat(lat, lng, radius, 125);
-            const effectiveMins = Math.max(1, Math.round(radius / metersPerMinute(transport)));
-            labelFeatures.push({
-                type: "Feature",
-                properties: { label: effectiveMins + " min " + labelVerb },
-                geometry: { type: "Point", coordinates: labelLngLat }
-            });
+        const chosen = chosenRingMinutes();
+        const list = features || buildTravelRingFeatures(lat, lng);
+        list.forEach(function (feature, index) {
+            const mins = Number(feature.properties && feature.properties.minutes) || 0;
+            if (!mins) {
+                return;
+            }
+            const isChosen = !!feature.properties.chosen || mins === chosen;
+            const ll = pointOnRingEdge(lat, lng, mins, index, feature);
+            const el = document.createElement("div");
+            el.className = "map-iso-label" + (isChosen ? " map-iso-label--chosen" : "");
+            el.setAttribute("title", mins + " min " + labelVerb);
+            el.setAttribute("aria-label", mins + " min " + labelVerb);
+            if (isChosen) {
+                el.innerHTML = "<span class=\"map-iso-label__icon\" aria-hidden=\"true\">" +
+                    transportIconChar(transport) + "</span>" + mins + " min";
+            } else {
+                el.textContent = mins + " min";
+            }
+            try {
+                const marker = new maplibregl.Marker({ element: el, anchor: "center" })
+                    .setLngLat(ll)
+                    .addTo(map);
+                isochroneLabelMarkers.push(marker);
+            } catch (e) { }
         });
-        const sourceId = "jobsy-travel-ring-labels";
-        const layerId = sourceId + "-text";
-        const data = { type: "FeatureCollection", features: labelFeatures };
+    }
+
+    function ensureTravelRingLayers(sourceId) {
+        const fillId = sourceId + "-fill";
+        const haloId = sourceId + "-halo";
+        const lineId = sourceId + "-line";
+        const beforeId = map.getLayer(PIN_LAYER_CLUSTERS) ? PIN_LAYER_CLUSTERS : undefined;
+
+        if (!map.getLayer(fillId)) {
+            map.addLayer({
+                id: fillId,
+                type: "fill",
+                source: sourceId,
+                paint: {
+                    "fill-color": "#2563eb",
+                    "fill-opacity": [
+                        "match", ["get", "minutes"],
+                        10, 0.16,
+                        20, 0.11,
+                        30, 0.07,
+                        0.09
+                    ]
+                }
+            }, beforeId);
+        }
+        if (!map.getLayer(haloId)) {
+            map.addLayer({
+                id: haloId,
+                type: "line",
+                source: sourceId,
+                filter: ["==", ["get", "chosen"], 1],
+                paint: {
+                    "line-color": "#ffffff",
+                    "line-width": 8,
+                    "line-opacity": 0.8
+                }
+            }, beforeId);
+        }
+        if (!map.getLayer(lineId)) {
+            map.addLayer({
+                id: lineId,
+                type: "line",
+                source: sourceId,
+                paint: {
+                    "line-color": "#1d4ed8",
+                    "line-width": [
+                        "case",
+                        ["==", ["get", "chosen"], 1],
+                        5,
+                        3
+                    ],
+                    "line-opacity": 1
+                }
+            }, beforeId);
+        }
+        // Rings must never capture clicks.
+        [fillId, haloId, lineId].forEach(function (id) {
+            try {
+                map.on("click", id, function (ev) {
+                    if (ev && ev.originalEvent && typeof ev.originalEvent.stopPropagation === "function") {
+                        /* allow click-through by not stopping — MapLibre still hits top layer */
+                    }
+                });
+                map.setLayoutProperty(id, "visibility", "visible");
+            } catch (e) { }
+        });
+        return [fillId, haloId, lineId];
+    }
+
+    function applyTravelRingData(features, lat, lng) {
+        if (!features.length) {
+            clearTravelRings();
+            return;
+        }
+        const sourceId = "jobsy-travel-rings";
+        const data = { type: "FeatureCollection", features: features };
         try {
             if (map.getSource(sourceId)) {
                 map.getSource(sourceId).setData(data);
             } else {
                 map.addSource(sourceId, { type: "geojson", data: data });
             }
-            if (!map.getLayer(layerId)) {
-                map.addLayer({
-                    id: layerId,
-                    type: "symbol",
-                    source: sourceId,
-                    layout: {
-                        "text-field": ["get", "label"],
-                        "text-size": 12,
-                        "text-allow-overlap": true,
-                        "text-font": ["Noto Sans Regular", "Arial Unicode MS Regular"]
-                    },
-                    paint: {
-                        "text-color": "#0f2d5c",
-                        "text-halo-color": "#ffffff",
-                        "text-halo-width": 1.5
-                    }
-                });
-            }
-            travelRingLayers.push({
-                remove: function () {
-                    try {
-                        if (map.getLayer(layerId)) {
-                            map.removeLayer(layerId);
-                        }
-                        if (map.getSource(sourceId)) {
-                            map.removeSource(sourceId);
-                        }
-                    } catch (e) { }
-                }
-            });
-        } catch (e) { }
+            const ids = ensureTravelRingLayers(sourceId);
+            travelRingGeo = { sourceId: sourceId, ids: ids };
+            ringRedrawTries = 0;
+            placeTravelRingLabels(lat, lng, features);
+        } catch (e) {
+            scheduleTravelRingRedraw();
+        }
     }
 
     function drawTravelRings(lat, lng) {
@@ -2186,76 +2380,31 @@ window.jobMap = (function () {
             return;
         }
 
-        const features = buildTravelRingFeatures(lat, lng);
-        if (!features.length) {
+        // Circles first, swap isochrones when they arrive (no flash).
+        const circleFeatures = buildTravelRingFeatures(lat, lng);
+        if (!circleFeatures.length) {
             clearTravelRings();
             return;
         }
+        applyTravelRingData(circleFeatures, lat, lng);
 
-        const sourceId = "jobsy-travel-rings";
-        const fillId = sourceId + "-fill";
-        const haloId = sourceId + "-halo";
-        const lineId = sourceId + "-line";
-
-        try {
-            const data = { type: "FeatureCollection", features: features };
-            if (map.getSource(sourceId)) {
-                map.getSource(sourceId).setData(data);
-            } else {
-                map.addSource(sourceId, {
-                    type: "geojson",
-                    data: data
-                });
+        const drawGen = ++ringRedrawTries;
+        fetchIsochrones(lat, lng).then(function (fc) {
+            if (!map || !lastOrigin || Math.abs(lastOrigin.lat - lat) > 1e-7 ||
+                Math.abs(lastOrigin.lng - lng) > 1e-7) {
+                return;
             }
-
-            if (!map.getLayer(fillId)) {
-                map.addLayer({
-                    id: fillId,
-                    type: "fill",
-                    source: sourceId,
-                    paint: {
-                        "fill-color": "#0d6efd",
-                        "fill-opacity": 0.16
-                    }
-                });
+            if (!fc) {
+                try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
+                return;
             }
-            if (!map.getLayer(haloId)) {
-                map.addLayer({
-                    id: haloId,
-                    type: "line",
-                    source: sourceId,
-                    paint: {
-                        "line-color": "#ffffff",
-                        "line-width": 5,
-                        "line-opacity": 0.72
-                    }
-                });
+            const isoFeatures = featuresFromIsochroneFc(fc);
+            if (!isoFeatures.length) {
+                return;
             }
-            if (!map.getLayer(lineId)) {
-                map.addLayer({
-                    id: lineId,
-                    type: "line",
-                    source: sourceId,
-                    paint: {
-                        "line-color": "#0d6efd",
-                        "line-width": [
-                            "case",
-                            ["==", ["get", "outer"], 1],
-                            3.2,
-                            2.4
-                        ],
-                        "line-opacity": 0.95
-                    }
-                });
-            }
-            travelRingGeo = { sourceId: sourceId, ids: [fillId, haloId, lineId] };
-            ringRedrawTries = 0;
-        } catch (e) {
-            scheduleTravelRingRedraw();
-            return;
-        }
-
-        placeTravelRingLabels(lat, lng);
+            applyTravelRingData(isoFeatures, lat, lng);
+            ringRedrawTries = Math.min(ringRedrawTries, drawGen);
+        });
     }
 
     function ringBounds(lat, lng, radiusM) {
@@ -2656,6 +2805,39 @@ window.jobMap = (function () {
                 promoteId: "id"
             });
         }
+        const PIN_LAYER_CLUSTER_HALO = PIN_LAYER_CLUSTERS + "-halo";
+        const PIN_LAYER_CLUSTER_HIT = PIN_LAYER_CLUSTERS + "-hit";
+        const PIN_LAYER_UNCLUSTERED_HIT = PIN_LAYER_UNCLUSTERED + "-hit";
+        if (!map.getLayer(PIN_LAYER_CLUSTER_HALO)) {
+            map.addLayer({
+                id: PIN_LAYER_CLUSTER_HALO,
+                type: "circle",
+                source: PIN_SOURCE,
+                filter: ["has", "point_count"],
+                paint: {
+                    "circle-color": "#16a34a",
+                    "circle-radius": [
+                        "step", ["get", "point_count"],
+                        20, 10, 22, 30, 25
+                    ],
+                    "circle-opacity": 0.22,
+                    "circle-blur": 0.4
+                }
+            });
+        }
+        if (!map.getLayer(PIN_LAYER_CLUSTER_HIT)) {
+            map.addLayer({
+                id: PIN_LAYER_CLUSTER_HIT,
+                type: "circle",
+                source: PIN_SOURCE,
+                filter: ["has", "point_count"],
+                paint: {
+                    "circle-color": "#000000",
+                    "circle-radius": 22,
+                    "circle-opacity": 0
+                }
+            });
+        }
         if (!map.getLayer(PIN_LAYER_CLUSTERS)) {
             map.addLayer({
                 id: PIN_LAYER_CLUSTERS,
@@ -2663,15 +2845,10 @@ window.jobMap = (function () {
                 source: PIN_SOURCE,
                 filter: ["has", "point_count"],
                 paint: {
-                    "circle-color": [
-                        "case",
-                        [">=", ["get", "point_count"], 10], "#16a34a",
-                        [">=", ["get", "point_count"], 4], "#22c55e",
-                        "#4ade80"
-                    ],
+                    "circle-color": "#16a34a",
                     "circle-radius": [
                         "step", ["get", "point_count"],
-                        16, 4, 20, 10, 26
+                        15, 10, 17, 30, 20
                     ],
                     "circle-stroke-width": 2,
                     "circle-stroke-color": "#ffffff"
@@ -2684,10 +2861,22 @@ window.jobMap = (function () {
                 filter: ["has", "point_count"],
                 layout: {
                     "text-field": ["get", "point_count_abbreviated"],
-                    "text-size": 12,
-                    "text-font": ["Noto Sans Bold", "Arial Unicode MS Bold"]
+                    "text-size": 13,
+                    "text-font": ["Noto Sans Bold", "Arial Unicode MS Bold"],
+                    "text-allow-overlap": true
                 },
                 paint: { "text-color": "#ffffff" }
+            });
+            map.addLayer({
+                id: PIN_LAYER_UNCLUSTERED_HIT,
+                type: "circle",
+                source: PIN_SOURCE,
+                filter: ["!", ["has", "point_count"]],
+                paint: {
+                    "circle-color": "#000000",
+                    "circle-radius": 22,
+                    "circle-opacity": 0
+                }
             });
             map.addLayer({
                 id: PIN_LAYER_UNCLUSTERED,
@@ -2704,20 +2893,16 @@ window.jobMap = (function () {
                             // Avoid literal null in the style (MapLibre warns); empty string means "no colour".
                             ["all", ["has", "colour"], ["!=", ["get", "colour"], ""]],
                             ["get", "colour"],
-                            "#7c3aed"
+                            "#16a34a"
                         ]
                     ],
                     "circle-radius": [
                         "case",
-                        ["==", ["feature-state", "selected"], true], 11,
-                        ["==", ["get", "featured"], 1], 10,
-                        8
+                        ["==", ["feature-state", "selected"], true], 10,
+                        ["==", ["get", "featured"], 1], 8,
+                        7
                     ],
-                    "circle-stroke-width": [
-                        "case",
-                        ["==", ["feature-state", "selected"], true], 3,
-                        2
-                    ],
+                    "circle-stroke-width": 2,
                     "circle-stroke-color": [
                         "case",
                         ["==", ["feature-state", "selected"], true], "#f54a1b",
@@ -2733,7 +2918,7 @@ window.jobMap = (function () {
                 filter: ["!", ["has", "point_count"]],
                 layout: {
                     "text-field": ["get", "glyph"],
-                    "text-size": 11,
+                    "text-size": 10,
                     "text-allow-overlap": true,
                     "text-ignore-placement": true
                 }
@@ -2741,7 +2926,9 @@ window.jobMap = (function () {
         }
         if (!map._jobsyPinClicksBound) {
             map._jobsyPinClicksBound = true;
+            map.on("click", PIN_LAYER_CLUSTER_HIT, onClusterClick);
             map.on("click", PIN_LAYER_CLUSTERS, onClusterClick);
+            map.on("click", PIN_LAYER_UNCLUSTERED_HIT, onPinClick);
             map.on("click", PIN_LAYER_UNCLUSTERED, onPinClick);
             map.on("click", PIN_LAYER_UNCLUSTERED_GLYPH, onPinClick);
             map.on("mouseenter", PIN_LAYER_CLUSTERS, function () { map.getCanvas().style.cursor = "pointer"; });
@@ -2749,6 +2936,46 @@ window.jobMap = (function () {
             map.on("mouseenter", PIN_LAYER_UNCLUSTERED, function () { map.getCanvas().style.cursor = "pointer"; });
             map.on("mouseleave", PIN_LAYER_UNCLUSTERED, function () { map.getCanvas().style.cursor = ""; });
         }
+        muteBaseMapStyle();
+    }
+
+    function muteBaseMapStyle() {
+        if (!map || map._jobsyBaseMuted) {
+            return;
+        }
+        map._jobsyBaseMuted = true;
+        const style = map.getStyle && map.getStyle();
+        if (!style || !Array.isArray(style.layers)) {
+            return;
+        }
+        style.layers.forEach(function (layer) {
+            if (!layer || !layer.id || String(layer.id).indexOf("jobsy-") === 0) {
+                return;
+            }
+            try {
+                if (layer.type === "background" && map.getPaintProperty(layer.id, "background-color") != null) {
+                    map.setPaintProperty(layer.id, "background-color", "#eef1f4");
+                }
+                if (layer.type === "fill") {
+                    const id = String(layer.id).toLowerCase();
+                    if (id.indexOf("water") >= 0) {
+                        map.setPaintProperty(layer.id, "fill-color", "#c5d4e0");
+                    } else if (id.indexOf("park") >= 0 || id.indexOf("landuse") >= 0 || id.indexOf("grass") >= 0) {
+                        map.setPaintProperty(layer.id, "fill-color", "#e7ebe6");
+                        try { map.setPaintProperty(layer.id, "fill-opacity", 0.55); } catch (e) { }
+                    } else if (id.indexOf("building") >= 0) {
+                        map.setPaintProperty(layer.id, "fill-color", "#dde2e6");
+                    }
+                }
+                if (layer.type === "line") {
+                    const id = String(layer.id).toLowerCase();
+                    if (id.indexOf("road") >= 0 || id.indexOf("highway") >= 0 || id.indexOf("street") >= 0) {
+                        try { map.setPaintProperty(layer.id, "line-color", "#d5dbe2"); } catch (e) { }
+                        try { map.setPaintProperty(layer.id, "line-opacity", 0.85); } catch (e) { }
+                    }
+                }
+            } catch (e) { }
+        });
     }
 
     /**
@@ -3567,6 +3794,43 @@ window.jobMap = (function () {
         /** @internal Playwright / diagnostics */
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },
-        __testGetMapCreateCount: function () { return mapCreateCount; }
+        __testGetMapCreateCount: function () { return mapCreateCount; },
+        /** @internal Open the densest visible cluster for v3 popup tests. */
+        debugOpenLargestCluster: async function () {
+            if (!map || typeof map.queryRenderedFeatures !== "function") {
+                return false;
+            }
+            const layers = [PIN_LAYER_CLUSTERS + "-hit", PIN_LAYER_CLUSTERS].filter(function (id) {
+                return !!map.getLayer(id);
+            });
+            if (!layers.length) {
+                return false;
+            }
+            const feats = map.queryRenderedFeatures({ layers: layers }) || [];
+            if (!feats.length) {
+                return false;
+            }
+            feats.sort(function (a, b) {
+                return (Number(b.properties && b.properties.point_count) || 0) -
+                    (Number(a.properties && a.properties.point_count) || 0);
+            });
+            const f = feats[0];
+            const props = f.properties || {};
+            const source = map.getSource(PIN_SOURCE);
+            if (!source || typeof source.getClusterLeaves !== "function") {
+                return false;
+            }
+            lastClusterTapAt = Date.now();
+            const total = Math.max(Number(props.point_count) || 0, 2);
+            const leaves = await source.getClusterLeaves(props.cluster_id, total, 0);
+            const childMarkers = (leaves || [])
+                .map(function (leaf) { return markerByLeafId(leaf.properties && leaf.properties.id); })
+                .filter(Boolean);
+            if (!childMarkers.length) {
+                return false;
+            }
+            openClusterList(childMarkers, f.geometry.coordinates);
+            return true;
+        }
     };
 })();
