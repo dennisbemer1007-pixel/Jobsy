@@ -162,6 +162,14 @@ internal static class ApplicationsAndWagesSeeder
                 ?? mine.FirstOrDefault(a => a.Status == status);
             if (existing is not null)
             {
+                // Keep fotokaarten cards verified + on the intended vacancy/status.
+                existing.EmailVerifiedAt ??= now.AddDays(-daysAgo);
+                if (existing.VacancyId != vacancyId
+                    && !mine.Any(a => a.VacancyId == vacancyId && a.Id != existing.Id))
+                {
+                    existing.VacancyId = vacancyId;
+                }
+
                 if (status == ApplicationStatus.Pending && existing.VacancyId != vacancyId
                     && !mine.Any(a => a.Status == ApplicationStatus.Pending && a.VacancyId == vacancyId))
                 {
@@ -169,6 +177,16 @@ internal static class ApplicationsAndWagesSeeder
                     db.Applications.Add(MakeApp(candidate, vacancyId, status, now.AddDays(-daysAgo)));
                 }
 
+                continue;
+            }
+
+            // Prefer updating an unverified/other-status row on this vacancy over inserting a duplicate.
+            var onVacancy = mine.FirstOrDefault(a => a.VacancyId == vacancyId);
+            if (onVacancy is not null)
+            {
+                onVacancy.Status = status;
+                onVacancy.EmailVerifiedAt ??= now.AddDays(-daysAgo);
+                onVacancy.RespondedAt ??= status is ApplicationStatus.Pending ? null : now.AddDays(-daysAgo).AddHours(6);
                 continue;
             }
 
