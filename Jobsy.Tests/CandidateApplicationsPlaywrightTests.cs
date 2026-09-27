@@ -101,19 +101,24 @@ public class CandidateApplicationsPlaywrightTests
 
         await rejectedBtn.ClickAsync();
         await Assertions.Expect(page.Locator(".application-card")).ToHaveCountAsync(rejectedN, new() { Timeout = 5_000 });
-        // Clear filter (toggle off) and wait for Blazor to re-render the full list —
-        // Hired lives in the "running" group and is hidden while Afgewezen is selected.
-        await rejectedBtn.ClickAsync();
-        if (await page.Locator(".application-counters__show-all").CountAsync() > 0)
+
+        // Hired is in the "Lopend" (running) group — open that filter explicitly.
+        await runningBtn.ClickAsync();
+        await Assertions.Expect(page.Locator(".application-card")).ToHaveCountAsync(runningN, new() { Timeout = 5_000 });
+        var hiredCard = page.Locator(".application-card--hired, .application-card:has(.application-card__pill--hired)").First;
+        try
         {
-            await page.Locator(".application-counters__show-all").ClickAsync();
+            await hiredCard.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+        }
+        catch (TimeoutException)
+        {
+            var statuses = await page.Locator(".application-card__pill").AllInnerTextsAsync();
+            Assert.Fail("expected a hired card in Lopend; pills=" + string.Join(" | ", statuses));
         }
 
-        await page.Locator(".application-card--hired").First.WaitForAsync(new()
-        {
-            State = WaitForSelectorState.Visible,
-            Timeout = 10_000
-        });
+        // Back to full list for Pending menu / withdraw flows.
+        await page.Locator(".application-counters__show-all").ClickAsync();
+        await Assertions.Expect(page.Locator(".application-card")).ToHaveCountAsync(allCount, new() { Timeout = 5_000 });
 
         // Menu: open / Esc
         var pendingCard = page.Locator(".application-card").Filter(new()
@@ -183,8 +188,13 @@ public class CandidateApplicationsPlaywrightTests
         Assert.Equal(openBefore - 1, openAfter);
         Assert.Equal(rejectedBefore + 1, rejectedAfter);
 
-        // Withdraw absent on non-pending
-        var hiredCard = page.Locator(".application-card--hired").First;
+        // Withdraw absent on Hired (list may still be unfiltered after withdraw).
+        if (await page.Locator(".application-counters__show-all").CountAsync() > 0)
+        {
+            await page.Locator(".application-counters__show-all").ClickAsync();
+        }
+
+        hiredCard = page.Locator(".application-card--hired, .application-card:has(.application-card__pill--hired)").First;
         await hiredCard.Locator(".application-card__menu-toggle").ClickAsync();
         Assert.Equal(0, await hiredCard.Locator(".application-card__menu-item--danger").CountAsync());
         await page.Keyboard.PressAsync("Escape");

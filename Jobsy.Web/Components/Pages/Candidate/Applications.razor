@@ -101,7 +101,7 @@
             @foreach (var a in _filtered)
             {
                 var rejectedTrack = ApplicationStatusWizard.IsRejectedTrack(a.Status);
-                var hired = a.Status == "Hired";
+                var hired = string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase);
                 var current = ApplicationStatusWizard.CurrentStepIndex(a.Status);
                 var menuOpen = _openMenuId == a.Id;
                 var vacancyHref = $"/vacancies/{a.VacancyId}";
@@ -109,7 +109,7 @@
                 var pictureUrl = string.IsNullOrWhiteSpace(a.PictureUrl)
                     ? "/images/vacancies/flex-0.svg"
                     : a.PictureUrl;
-                <article class="application-card @(hired ? "application-card--hired" : null) @(rejectedTrack ? "application-card--closed" : null) @(menuOpen ? "is-menu-open" : null)">
+                <article class="application-card @(hired ? "application-card--hired" : "") @(rejectedTrack ? "application-card--closed" : "") @(menuOpen ? "is-menu-open" : "")">
                     <a class="application-card__img-link"
                        href="@vacancyHref"
                        tabindex="-1"

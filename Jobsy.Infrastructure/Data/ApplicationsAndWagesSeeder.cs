@@ -142,8 +142,9 @@ internal static class ApplicationsAndWagesSeeder
             logoVacancy.Company.LogoUrl = "/images/logos/westland.svg";
         }
 
+        // Include unverified rows so we can promote them instead of inserting duplicates.
         var mine = await db.Applications
-            .Where(a => a.CandidateUserId == candidate.Id && a.EmailVerifiedAt != null)
+            .Where(a => a.CandidateUserId == candidate.Id)
             .ToListAsync();
 
         var needed = new (ApplicationStatus Status, Guid VacancyId, int DaysAgo)[]
@@ -158,57 +159,87 @@ internal static class ApplicationsAndWagesSeeder
         var now = DateTime.UtcNow;
         foreach (var (status, vacancyId, daysAgo) in needed)
         {
-            var existing = mine.FirstOrDefault(a => a.Status == status && a.VacancyId == vacancyId)
-                ?? mine.FirstOrDefault(a => a.Status == status);
-            if (existing is not null)
-            {
-                // Keep fotokaarten cards verified + on the intended vacancy/status.
-                existing.EmailVerifiedAt ??= now.AddDays(-daysAgo);
-                if (existing.VacancyId != vacancyId
-                    && !mine.Any(a => a.VacancyId == vacancyId && a.Id != existing.Id))
-                {
-                    existing.VacancyId = vacancyId;
-                }
-
-                if (status == ApplicationStatus.Pending && existing.VacancyId != vacancyId
-                    && !mine.Any(a => a.Status == ApplicationStatus.Pending && a.VacancyId == vacancyId))
-                {
-                    // Keep an extra Pending on the other vacancy.
-                    db.Applications.Add(MakeApp(candidate, vacancyId, status, now.AddDays(-daysAgo)));
-                }
-
-                continue;
-            }
-
-            // Prefer updating an unverified/other-status row on this vacancy over inserting a duplicate.
-            var onVacancy = mine.FirstOrDefault(a => a.VacancyId == vacancyId);
-            if (onVacancy is not null)
-            {
-                onVacancy.Status = status;
-                onVacancy.EmailVerifiedAt ??= now.AddDays(-daysAgo);
-                onVacancy.RespondedAt ??= status is ApplicationStatus.Pending ? null : now.AddDays(-daysAgo).AddHours(6);
-                continue;
-            }
-
-            db.Applications.Add(MakeApp(candidate, vacancyId, status, now.AddDays(-daysAgo)));
+            EnsureStatusCard(db, mine, candidate, status, vacancyId, now.AddDays(-daysAgo));
         }
 
         // Guarantee at least two Pending (withdraw + remain).
-        var pendingCount = await db.Applications.CountAsync(a =>
-            a.CandidateUserId == candidate.Id
-            && a.EmailVerifiedAt != null
-            && a.Status == ApplicationStatus.Pending);
-        if (pendingCount < 2)
+        var pendingCount = mine.Count(a =>
+            a.EmailVerifiedAt != null && a.Status == ApplicationStatus.Pending);
+        for (var i = pendingCount; i < 2; i++)
         {
-            for (var i = pendingCount; i < 2; i++)
-            {
-                var v = vacancies[Math.Min(5 + i, vacancies.Count - 1)];
-                db.Applications.Add(MakeApp(candidate, v.Id, ApplicationStatus.Pending, now.AddHours(-(6 + i))));
-            }
+            var v = vacancies[Math.Min(5 + i, vacancies.Count - 1)];
+            var created = MakeApp(candidate, v.Id, ApplicationStatus.Pending, now.AddHours(-(6 + i)));
+            db.Applications.Add(created);
+            mine.Add(created);
+        }
+
+        // Hard guarantee: fotokaarten smoke needs a visible Hired card.
+        if (!mine.Any(a => a.EmailVerifiedAt != null && a.Status == ApplicationStatus.Hired))
+        {
+            var used = mine.Select(a => a.VacancyId).ToHashSet();
+            var free = vacancies.FirstOrDefault(v => !used.Contains(v.Id)) ?? vacancies[3];
+            var hired = MakeApp(candidate, free.Id, ApplicationStatus.Hired, now.AddDays(-8));
+            db.Applications.Add(hired);
+            mine.Add(hired);
         }
 
         await db.SaveChangesAsync();
-        logger.LogInformation("Ensured demo candidate application cards for fotokaarten UI.");
+        logger.LogInformation(
+            "Ensured demo candidate application cards for fotokaarten UI (pending={Pending}, hired={Hired}).",
+            mine.Count(a => a.Status == ApplicationStatus.Pending && a.EmailVerifiedAt != null),
+            mine.Count(a => a.Status == ApplicationStatus.Hired && a.EmailVerifiedAt != null));
+    }
+
+    private static void EnsureStatusCard(
+        JobsyDbContext db,
+        List<Application> mine,
+        User candidate,
+        ApplicationStatus status,
+        Guid vacancyId,
+        DateTime createdAt)
+    {
+        var existing = mine.FirstOrDefault(a => a.Status == status && a.VacancyId == vacancyId)
+            ?? mine.FirstOrDefault(a => a.Status == status && a.EmailVerifiedAt != null);
+        if (existing is not null)
+        {
+            existing.EmailVerifiedAt ??= createdAt;
+            if (status == ApplicationStatus.Pending
+                && existing.VacancyId != vacancyId
+                && !mine.Any(a => a.Status == ApplicationStatus.Pending && a.VacancyId == vacancyId))
+            {
+                var extra = MakeApp(candidate, vacancyId, status, createdAt);
+                db.Applications.Add(extra);
+                mine.Add(extra);
+            }
+
+            return;
+        }
+
+        // Prefer an empty vacancy slot; never overwrite the only Pending when seeding Hired/etc.
+        var onVacancy = mine.FirstOrDefault(a => a.VacancyId == vacancyId);
+        if (onVacancy is not null
+            && status != ApplicationStatus.Pending
+            && onVacancy.Status is ApplicationStatus.Pending or ApplicationStatus.Withdrawn)
+        {
+            onVacancy = null;
+        }
+
+        if (onVacancy is not null
+            && status == ApplicationStatus.Hired
+            && onVacancy.Status is ApplicationStatus.Accepted or ApplicationStatus.EmployerContacting)
+        {
+            onVacancy.Status = ApplicationStatus.Hired;
+            onVacancy.EmailVerifiedAt ??= createdAt;
+            onVacancy.RespondedAt ??= createdAt.AddHours(6);
+            return;
+        }
+
+        if (onVacancy is null)
+        {
+            var created = MakeApp(candidate, vacancyId, status, createdAt);
+            db.Applications.Add(created);
+            mine.Add(created);
+        }
     }
 
     private static Application MakeApp(User candidate, Guid vacancyId, ApplicationStatus status, DateTime createdAt)
