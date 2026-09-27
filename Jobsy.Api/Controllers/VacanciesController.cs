@@ -1849,8 +1849,8 @@ public class VacanciesController : ControllerBase
         string? matchBand)
     {
         var workType = record.WorkTypeLabelList.FirstOrDefault() ?? record.WorkTypeLabels;
-        var thumbnail = VacancyImageUrls.ForPublicList(record.ImageUrl, record.Id, workType)
-                        ?? VacancyImageUrls.Placeholder(record.Id, workType);
+        var thumbnail = VacancyImageUrls.ForCard(
+            record.ImageUrl, record.CompanyLogoUrl, record.Id, workType);
         var highlighted = VacancyHighlightRules.IsActive(
             record.IsHighlighted, record.HighlightedUntil, DateTime.UtcNow);
         return new VacancyCardDto(
@@ -1989,7 +1989,7 @@ public class VacanciesController : ControllerBase
             r.CompanyName,
             r.CompanyAddress,
             VacancyImageUrls.Normalize(r.CompanyLogoUrl),
-            VacancyImageUrls.ForPublicList(r.ImageUrl, r.Id, workType),
+            VacancyImageUrls.ForCard(r.ImageUrl, r.CompanyLogoUrl, r.Id, workType),
             r.Latitude,
             r.Longitude,
             r.RequiredTransportLabels,
@@ -2132,7 +2132,11 @@ public class VacanciesController : ControllerBase
             VacancyImageUrls.Normalize(display.DisplayLogoUrl),
             includeDescription
                 ? VacancyImageUrls.Normalize(v.ImageUrl)
-                : VacancyImageUrls.ForPublicList(v.ImageUrl, v.Id, VacancyImageUrls.FirstSlug(v.WorkTypes)),
+                : VacancyImageUrls.ForCard(
+                    v.ImageUrl,
+                    display.DisplayLogoUrl,
+                    v.Id,
+                    VacancyImageUrls.FirstSlug(v.WorkTypes)),
             display.Latitude,
             display.Longitude,
             TransportLabels.Expand(v.RequiredTransport),

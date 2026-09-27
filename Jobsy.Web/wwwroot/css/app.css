@@ -16495,7 +16495,15 @@ html.cookie-consent-known .cookie-consent {
     transition: opacity 0.2s ease, visibility 0s linear 0.5s;
 }
 
-.reconnect-toast.components-reconnect-show,
+/* Brief blips (<1.5s) stay invisible; failed/rejected stay immediate. */
+.reconnect-toast.components-reconnect-show {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 0.2s ease 1.5s, visibility 0s linear 1.5s;
+}
+
 .reconnect-toast.components-reconnect-failed,
 .reconnect-toast.components-reconnect-rejected {
     display: block;
@@ -17713,6 +17721,14 @@ html.cookie-consent-known .cookie-consent {
     margin: 0 auto 1rem;
 }
 
+/* Acc 27-09 §3: Top 10 / side matches are desktop-only (safety net vs prerender). */
+@media (max-width: 1023px) {
+    .kompas-workspace__side,
+    .questionnaire-matches {
+        display: none !important;
+    }
+}
+
 .deep-analysis-chrome--compact {
     position: static;
     margin: 0;
@@ -18133,6 +18149,16 @@ html.cookie-consent-known .cookie-consent {
     margin: 0 0 0.85rem;
     padding: 0.4rem 0 0.55rem;
     box-shadow: 0 10px 12px -10px rgba(15, 23, 42, 0.18);
+}
+
+/* Mobile: keep the Kompas tab ribbon in normal document flow so it does not
+   float inside .panel-page (which is the real scroll container ≤768px). */
+@media (max-width: 1023px) {
+    .kompas-tabs.admin-sublinks {
+        position: static;
+        z-index: auto;
+        box-shadow: none;
+    }
 }
 
 .kompas-tabs.admin-sublinks .admin-sublink {

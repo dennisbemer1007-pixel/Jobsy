@@ -27,6 +27,11 @@ public static class VacancyMapProxyEndpoints
         app.MapGet("/api/vacancies/{id:guid}/card", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/card", ct));
 
+        // Vacancy photo bytes (inline data-URI decode or redirect to /images/…).
+        // Same-origin so CSP img-src 'self' covers map popup / list / carousel.
+        app.MapGet("/api/vacancies/{id:guid}/image", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
+            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/image", ct));
+
         // Legacy detail path still used by older cached jobMap bundles.
         app.MapGet("/api/vacancies/{id:guid}", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, $"api/vacancies/{id:D}", ct));
@@ -84,7 +89,12 @@ public sealed class VacancyMapApiForwarder : IVacancyMapApiForwarder
 
         using var client = JobsyApiClientFactory.Create(_services, _configuration);
         using var request = new HttpRequestMessage(HttpMethod.Get, target);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        // Image proxy accepts any content; JSON endpoints keep application/json preference.
+        if (!apiPath.EndsWith("/image", StringComparison.OrdinalIgnoreCase))
+        {
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
+
         if (http.Request.Headers.TryGetValue("If-None-Match", out var etag))
         {
             request.Headers.TryAddWithoutValidation("If-None-Match", etag.ToString());
@@ -96,6 +106,21 @@ public sealed class VacancyMapApiForwarder : IVacancyMapApiForwarder
             request,
             HttpCompletionOption.ResponseHeadersRead,
             ct);
+
+        // Follow same-origin redirects (e.g. /api/.../image → /images/vacancies/…)
+        // so the browser never has to leave img-src 'self'.
+        if ((int)response.StatusCode is >= 300 and < 400
+            && response.Headers.Location is { } location)
+        {
+            var redirect = location.IsAbsoluteUri
+                ? location.PathAndQuery
+                : location.ToString();
+            if (redirect.StartsWith('/'))
+            {
+                http.Response.Redirect(redirect, permanent: false);
+                return;
+            }
+        }
 
         http.Response.StatusCode = (int)response.StatusCode;
 

@@ -56,8 +56,9 @@ builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions
 {
     // DetailedErrors only in Development and Acceptatie (Circuit__DetailedErrors=true).
     options.DetailedErrors = circuitDetailedErrors;
-    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(5);
-    options.DisconnectedCircuitMaxRetained = 200;
+    // Acc 27-09 §4: keep backgrounded mobile tabs longer; cap retained circuits on Starter RAM.
+    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(15);
+    options.DisconnectedCircuitMaxRetained = 100;
 });
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Jobsy.Web.Hosting.CircuitExceptionLogger>();
 
@@ -191,6 +192,8 @@ app.UseAntiforgery();
 
 app.MapJobsyAuthEndpoints();
 app.MapSeoEndpoints();
+// Lightweight probe for Render — no auth, no prerender, no API client.
+app.MapGet("/healthz", () => Results.Text("ok"));
 // Banenkaart same-origin API proxies — must be before MapRazorComponents.
 app.MapVacancyMapProxyEndpoints();
 

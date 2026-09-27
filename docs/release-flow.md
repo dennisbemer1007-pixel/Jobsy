@@ -29,12 +29,21 @@ feature-branch  →  PR naar acceptatie  →  test op acceptatie.lobsy.nl
 
 Shortcut **`123`** mag **nooit** naar `main` pushen. Die opent alleen een PR naar `acceptatie` (of merged naar `acceptatie` als checks groen zijn). Promotie naar `main` doe jij zelf.
 
+## Wat zie je waar?
+
+| Omgeving | URL | Git-branch | Doel |
+|----------|-----|------------|------|
+| **Acceptatie** | https://acceptatie.lobsy.nl | `acceptatie` | Alle PR’s reviewen vóór productie |
+| **Productie** | https://lobsy.nl | `main` | Alleen goedgekeurde releases |
+
+Check op Acc: `curl -s https://acceptatie.lobsy.nl/ | grep lobsy-commit` — die SHA moet gelijk zijn aan `origin/acceptatie` HEAD (niet `main`).
+
 ## Handmatige stappen (eenmalig)
 
-Zie de PR-beschrijving van de safe-release-flow en `.github/rulesets/` voor:
+Zie ook `.github/rulesets/` en [`deploy-render.md`](deploy-render.md):
 
 1. **GitHub** — branch protection / rulesets op `main` en `acceptatie`
-2. **Render** — per service de juiste Git-branch (`main` vs `acceptatie`)
+2. **Render** — zet per Acc-service de Git-branch op **`acceptatie`** (Dashboard → `lobsy-acc-api` / `lobsy-acc-web` → Settings → Build & Deploy → Branch), of Blueprint sync van `render.yaml` (`branch: acceptatie`). Production blijft op **`main`**.
 3. **Secrets** — `JOBSY_E2E_*` voor Acc-smoke; nooit wachtwoorden in code
 
 ## Automatische checks

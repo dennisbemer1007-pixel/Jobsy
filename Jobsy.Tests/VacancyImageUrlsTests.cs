@@ -167,6 +167,68 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
+    public void ForCard_data_uri_uses_public_image_path()
+    {
+        var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        Assert.Equal(
+            VacancyImageUrls.PublicImagePath(id),
+            VacancyImageUrls.ForCard("data:image/png;base64,abc", "/images/logos/westland.svg", id, "Horeca"));
+    }
+
+    [Fact]
+    public void ForCard_keeps_same_origin_https_path_photo()
+    {
+        var id = Guid.NewGuid();
+        Assert.Equal(
+            "/images/uploads/photo.jpg",
+            VacancyImageUrls.ForCard("/images/uploads/photo.jpg", "/images/logos/westland.svg", id, "Zorg"));
+    }
+
+    [Fact]
+    public void ForCard_empty_photo_with_logo_returns_logo()
+    {
+        var id = Guid.NewGuid();
+        Assert.Equal(
+            "/images/logos/westland.svg",
+            VacancyImageUrls.ForCard(null, "/images/logos/westland.svg", id, "Winkel"));
+    }
+
+    [Fact]
+    public void ForCard_empty_photo_without_logo_returns_svg_placeholder()
+    {
+        var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        Assert.Equal(
+            VacancyImageUrls.Placeholder(id, "Horeca"),
+            VacancyImageUrls.ForCard(null, null, id, "Horeca"));
+    }
+
+    [Fact]
+    public void ForCard_picsum_falls_back_to_logo_then_svg()
+    {
+        var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        Assert.Equal(
+            "/images/logos/westland.svg",
+            VacancyImageUrls.ForCard(VacancyImageUrls.PicsumUrl(id), "/images/logos/westland.svg", id, "Horeca"));
+        Assert.Equal(
+            VacancyImageUrls.Placeholder(id, "Horeca"),
+            VacancyImageUrls.ForCard(VacancyImageUrls.PicsumUrl(id), null, id, "Horeca"));
+    }
+
+    [Fact]
+    public void ForCard_external_https_falls_back_for_csp()
+    {
+        var id = Guid.NewGuid();
+        // External absolute URLs are not returned (img-src 'self'); logo/SVG instead.
+        Assert.Equal(
+            "/images/logos/westland.svg",
+            VacancyImageUrls.ForCard(
+                "https://cdn.example.com/vacancy.jpg",
+                "/images/logos/westland.svg",
+                id,
+                "Zorg"));
+    }
+
+    [Fact]
     public void TryDecodeInlineImage_reads_png_data_uri()
     {
         var png = Convert.ToBase64String(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3 });

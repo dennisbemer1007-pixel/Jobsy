@@ -58,6 +58,7 @@ public static class VacancyImageUrls
     /// <summary>
     /// List/map JSON: never ship Base64. Inline photos and third-party placeholders
     /// become a local work-type SVG (or company logo via <see cref="Resolve"/>).
+    /// Prefer <see cref="ForCard"/> for card/list/popup so inline photos and logos match detail.
     /// </summary>
     public static string? ForPublicList(string? imageUrl, Guid? vacancyId = null, string? workType = null)
     {
@@ -75,6 +76,55 @@ public static class VacancyImageUrls
 
         return normalized;
     }
+
+    /// <summary>
+    /// Card / list / map popup thumbnail aligned with the detail page photo chain:
+    /// inline data URI → same-origin <see cref="PublicImagePath"/>;
+    /// usable same-origin <c>/images/…</c> photo → itself;
+    /// else company logo (same-origin);
+    /// else work-type SVG placeholder.
+    /// <para>
+    /// CSP choice: external absolute http(s) photo URLs are <b>not</b> returned
+    /// (web <c>img-src 'self'</c>). They fall through to logo → SVG instead of
+    /// widening CSP to <c>https:</c>. Inline uploads stay available via
+    /// <c>/api/vacancies/{id}/image</c>.
+    /// </para>
+    /// </summary>
+    public static string ForCard(string? imageUrl, string? logoUrl, Guid id, string? workType)
+    {
+        if (id == Guid.Empty)
+        {
+            return Placeholder(Guid.Empty, workType);
+        }
+
+        var photo = Normalize(imageUrl);
+        if (IsInlineDataUri(photo))
+        {
+            return PublicImagePath(id);
+        }
+
+        if (IsUsableSameOriginPhoto(photo))
+        {
+            return photo!;
+        }
+
+        // picsum / broken Unsplash / external https / empty → try logo
+        var logo = Normalize(logoUrl);
+        if (IsUsableSameOriginPhoto(logo))
+        {
+            return logo!;
+        }
+
+        return Placeholder(id, workType);
+    }
+
+    private static bool IsUsableSameOriginPhoto(string? normalized)
+        => !string.IsNullOrWhiteSpace(normalized)
+           && !normalized.StartsWith("blob:", StringComparison.OrdinalIgnoreCase)
+           && !IsInlineDataUri(normalized)
+           && !IsPicsum(normalized)
+           && !IsBrokenUnsplash(normalized)
+           && IsSafeSameOriginPath(normalized);
 
     /// <summary>Decode a stored <c>data:image/…;base64,</c> photo for the public image endpoint.</summary>
     public static bool TryDecodeInlineImage(string? imageUrl, out byte[] bytes, out string contentType)

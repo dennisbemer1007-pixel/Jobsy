@@ -460,7 +460,9 @@ window.jobMap = (function () {
         let mediaInner = "";
         const photoSrc = v.imageUrl ? String(v.imageUrl) : "";
         const logoSrc = v.logoUrl ? String(v.logoUrl) : "";
-        if (photoSrc) {
+        // Work-type SVG placeholders look empty next to a real company logo — prefer the logo.
+        const photoIsWorkTypePlaceholder = photoSrc.indexOf("/images/vacancies/") === 0;
+        if (photoSrc && !(photoIsWorkTypePlaceholder && logoSrc)) {
             const fb = logoSrc && logoSrc !== photoSrc
                 ? " data-fallback-src=\"" + escapeAttr(logoSrc) + "\""
                 : "";
