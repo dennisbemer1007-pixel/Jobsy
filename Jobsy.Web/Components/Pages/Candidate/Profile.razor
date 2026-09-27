@@ -25,7 +25,7 @@
         }
     </header>
         <CascadingValue Value="_kompasState">
-        <CandidateKompas SharedKompas="_kompasState">
+        <CandidateKompas SharedKompas="_kompasState" WideViewportChanged="OnKompasWideChanged">
             <ProfileTab>
         <p class="login-lead">@Culture["Profile.Lead"]</p>
         @if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
@@ -729,6 +729,7 @@
     private static readonly string[] WeekdayCodes = ["Ma", "Di", "Wo", "Do", "Vr"];
     private bool _matchesLoading = true;
     private IReadOnlyList<CandidateMatchedVacancy> _matchedVacancies = [];
+    private bool _isWideViewport;
     private string _insightsStatus = "Ready";
     private CandidateKompasState? _kompasState;
     private int _insightsRefreshAttempts;
@@ -832,12 +833,12 @@
         _homeLat = profile.HomeLatitude;
         _homeLng = profile.HomeLongitude;
         _insightsStatus = kompas?.InsightsStatus ?? "Ready";
-        if (kompas?.TopMatches is { Count: > 0 } matches)
+        if (_isWideViewport && kompas?.TopMatches is { Count: > 0 } matches)
         {
             _matchedVacancies = matches;
             _matchesLoading = false;
         }
-        else if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+        else if (!_isWideViewport || string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
         {
             _matchedVacancies = [];
             _matchesLoading = false;
@@ -885,8 +886,9 @@
         _certificates.AddRange(prefs.Certificates ?? []);
         ApplyCvAndReferences(profile);
 
-        // Paint Top 10 from kompas snapshot — fallback GET only when Ready and empty.
-        if (_matchedVacancies.Count == 0
+        // Paint Top 10 from kompas snapshot on desktop only — skip the API call on mobile.
+        if (_isWideViewport
+            && _matchedVacancies.Count == 0
             && !string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase)
             && allowGeocode)
         {
@@ -998,7 +1000,7 @@
 
             _kompasState = kompas;
             _insightsStatus = kompas.InsightsStatus ?? "Ready";
-            if (kompas.TopMatches is { Count: > 0 })
+            if (_isWideViewport && kompas.TopMatches is { Count: > 0 })
             {
                 _matchedVacancies = kompas.TopMatches;
             }
@@ -1016,6 +1018,34 @@
         catch
         {
             // leave last known insights
+        }
+    }
+
+    private async Task OnKompasWideChanged(bool isWide)
+    {
+        if (_isWideViewport == isWide)
+        {
+            return;
+        }
+
+        _isWideViewport = isWide;
+        if (!isWide)
+        {
+            _matchedVacancies = [];
+            _matchesLoading = false;
+            return;
+        }
+
+        if (_matchedVacancies.Count == 0
+            && _kompasState?.TopMatches is { Count: > 0 } snapshot)
+        {
+            _matchedVacancies = snapshot;
+            _matchesLoading = false;
+        }
+        else if (_matchedVacancies.Count == 0
+                 && !string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+        {
+            await LoadMatchedVacanciesAsync();
         }
     }
 

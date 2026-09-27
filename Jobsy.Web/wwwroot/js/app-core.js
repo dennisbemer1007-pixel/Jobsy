@@ -404,6 +404,35 @@ window.jobsyCulture = {
         },
         isKompasWide: function () {
             return window.matchMedia("(min-width: 1024px)").matches;
+        },
+        /** Subscribe to ≥1024px changes; returns { dispose() } for Blazor interop. */
+        watchKompasWide: function (dotNetRef, methodName) {
+            if (!dotNetRef || !methodName || !window.matchMedia) {
+                return { dispose: function () { } };
+            }
+            var mql = window.matchMedia("(min-width: 1024px)");
+            var handler = function (ev) {
+                try {
+                    dotNetRef.invokeMethodAsync(methodName, !!(ev && typeof ev.matches === "boolean" ? ev.matches : mql.matches));
+                } catch (e) { }
+            };
+            if (typeof mql.addEventListener === "function") {
+                mql.addEventListener("change", handler);
+            } else if (typeof mql.addListener === "function") {
+                mql.addListener(handler);
+            }
+            try {
+                dotNetRef.invokeMethodAsync(methodName, !!mql.matches);
+            } catch (e) { }
+            return {
+                dispose: function () {
+                    if (typeof mql.removeEventListener === "function") {
+                        mql.removeEventListener("change", handler);
+                    } else if (typeof mql.removeListener === "function") {
+                        mql.removeListener(handler);
+                    }
+                }
+            };
         }
     };
 

@@ -7,6 +7,7 @@
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
+@implements IAsyncDisposable
 @implements IDisposable
 
 <section class="kompas" aria-labelledby="kompas-title">
@@ -251,17 +252,22 @@
     private string _tab = CandidateKompasTabs.Dna;
     private Guid? _vacancyId;
     private bool _listeningToLocation;
-    private bool _isWideViewport = true;
+    /// <summary>False until JS reports ≥1024px — avoids Top 10 flash on mobile prerender.</summary>
+    private bool _isWideViewport;
     private int _completenessPercent;
+    private DotNetObjectReference<CandidateKompas>? _dotNetRef;
+    private IJSObjectReference? _viewportWatch;
 
     [Parameter] public string? InitialTab { get; set; }
     [Parameter] public RenderFragment? ProfileTab { get; set; }
     [Parameter] public RenderFragment? Side { get; set; }
     /// <summary>When set (e.g. from Profile.razor), reuse the single kompas GET.</summary>
     [Parameter] public CandidateKompasState? SharedKompas { get; set; }
+    /// <summary>Fired when the wide (≥1024px) viewport flag changes.</summary>
+    [Parameter] public EventCallback<bool> WideViewportChanged { get; set; }
 
-    private bool ShouldShowSide
-        => _tab != CandidateKompasTabs.Dna || _isWideViewport;
+    /// <summary>Top 10 side panel is desktop-only on every tab.</summary>
+    private bool ShouldShowSide => _isWideViewport;
 
     protected override void OnInitialized()
     {
@@ -308,11 +314,50 @@
         try
         {
             _isWideViewport = await Js.InvokeAsync<bool>("jobsyViewport.isKompasWide");
+            await WideViewportChanged.InvokeAsync(_isWideViewport);
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            _viewportWatch ??= await Js.InvokeAsync<IJSObjectReference>(
+                "jobsyViewport.watchKompasWide", _dotNetRef, nameof(SetWide));
         }
         catch
         {
-            _isWideViewport = true;
+            // Keep false (mobile-safe) until JS is available.
+            _isWideViewport = false;
         }
+    }
+
+    [JSInvokable]
+    public async Task SetWide(bool isWide)
+    {
+        if (_isWideViewport == isWide)
+        {
+            return;
+        }
+
+        _isWideViewport = isWide;
+        await WideViewportChanged.InvokeAsync(isWide);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_viewportWatch is not null)
+            {
+                await _viewportWatch.InvokeVoidAsync("dispose");
+                await _viewportWatch.DisposeAsync();
+            }
+        }
+        catch
+        {
+            // Best-effort unsubscribe.
+        }
+
+        _viewportWatch = null;
+        _dotNetRef?.Dispose();
+        _dotNetRef = null;
+        Dispose();
     }
 
     public void Dispose()
@@ -321,6 +366,7 @@
         if (_listeningToLocation)
         {
             Navigation.LocationChanged -= OnLocationChanged;
+            _listeningToLocation = false;
         }
     }
 

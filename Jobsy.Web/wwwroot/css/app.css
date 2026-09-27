@@ -17713,6 +17713,14 @@ html.cookie-consent-known .cookie-consent {
     margin: 0 auto 1rem;
 }
 
+/* Acc 27-09 §3: Top 10 / side matches are desktop-only (safety net vs prerender). */
+@media (max-width: 1023px) {
+    .kompas-workspace__side,
+    .questionnaire-matches {
+        display: none !important;
+    }
+}
+
 .deep-analysis-chrome--compact {
     position: static;
     margin: 0;
