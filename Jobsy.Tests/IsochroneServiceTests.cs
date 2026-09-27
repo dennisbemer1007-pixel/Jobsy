@@ -2,7 +2,6 @@ using System.Text.Json;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Services;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobsy.Tests;
 

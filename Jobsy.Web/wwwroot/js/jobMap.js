@@ -3720,7 +3720,7 @@ window.jobMap = (function () {
 
     function dispose() {
         window.removeEventListener("resize", invalidate);
-        activeClusterPopup = null;
+        closeActivePopup();
         openCallback = null;
         clearTravelRings();
         lastOrigin = null;

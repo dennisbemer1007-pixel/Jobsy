@@ -36,6 +36,6 @@ assert.match(initMatch[0], /let live\s*=/);
 
 assert.match(min, /304/);
 assert.match(min, /__testGetMapCreateCount/);
-assert.match(maps, /jobMap\.min\.js\?v=20260927-mapreuse/);
+assert.match(maps, /jobMap\.min\.js\?v=20260927-banenkaart-v3/);
 
 console.log("jobMap-pins-304-reuse: ok");
