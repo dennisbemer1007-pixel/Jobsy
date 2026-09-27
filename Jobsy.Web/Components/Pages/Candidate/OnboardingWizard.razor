@@ -418,7 +418,7 @@
                                     var item = job;
                                     <article class="ob-wizard__job">
                                         <button type="button" class="icon-btn"
-                                                aria-label="@Culture.Format("Onboarding.DeleteJob", item.Role)"
+                                                aria-label="@Culture.Format("Onboarding.DeleteJob", item.Role ?? "")"
                                                 @onclick="() => RemoveJob(item)">×</button>
                                         <label>
                                             @Culture["Profile.Role"]
