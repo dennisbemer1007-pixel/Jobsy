@@ -39,4 +39,24 @@ public sealed class CandidateKompasController : ControllerBase
             return NotFound(new { message = ex.Message });
         }
     }
+
+    [HttpGet("dna")]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<CandidateDnaSummaryDto>> GetDna(CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        try
+        {
+            return Ok(await _kompas.GetDnaAsync(user.Id, cancellationToken));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
 }

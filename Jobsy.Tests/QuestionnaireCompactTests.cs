@@ -119,7 +119,7 @@ public class QuestionnaireFlowTests
 public class CompactQuestionnaireContractTests
 {
     [Fact]
-    public void Shared_components_expose_a11y_radios_and_shell_chrome()
+    public void Shared_components_expose_a11y_buttons_and_shell_chrome()
     {
         var root = FindRepoRoot();
         var likert = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/Questionnaire/LikertScaleQuestion.razor"));
@@ -127,17 +127,22 @@ public class CompactQuestionnaireContractTests
         Assert.Contains("q-likert__legend", likert);
         Assert.Contains("aria-pressed", likert);
         Assert.Contains("q-likert__opt", likert);
-        Assert.Contains("Onboarding.Likert.OfFive", likert);
-        Assert.Contains("Onboarding.Likert.Low", likert);
-        Assert.Contains("Onboarding.Likert.High", likert);
+        Assert.Contains("Questionnaire.Likert.Aria", likert);
+        Assert.Contains("Questionnaire.Likert.Low", likert);
+        Assert.Contains("Questionnaire.Likert.High", likert);
+        Assert.Contains("q-likert--collapsed", likert);
 
         var shell = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/Questionnaire/QuestionnaireShell.razor"));
         Assert.Contains("Questionnaire.BackAria", shell);
         Assert.Contains("questionnaire__meter", shell);
-        Assert.Contains("Questionnaire.FinishCta", shell);
-        Assert.Contains("Questionnaire.FinishAfter", shell);
+        Assert.Contains("Questionnaire.FinishCtaShort", shell);
+        Assert.Contains("Questionnaire.NextCta", shell);
+        Assert.Contains("Questionnaire.PrivacyShort", shell);
+        Assert.Contains("Questionnaire.PrivacyMore", shell);
+        Assert.Contains("@(\" \")", shell);
         Assert.Contains("jobsyQuestionnaire.scrollToQuestion", shell);
         Assert.DoesNotContain("Competency.SaveDraft", shell);
+        Assert.DoesNotContain("<text> </text>", shell);
     }
 
     [Fact]
@@ -159,6 +164,8 @@ public class CompactQuestionnaireContractTests
             Assert.Contains("<QuestionnaireShell", text);
             Assert.Contains("QuestionnaireAutosave", text);
             Assert.Contains("<LikertScaleQuestion", text);
+            Assert.Contains("Collapsed=", text);
+            Assert.Contains("OnNext=", text);
             Assert.DoesNotContain("Competency.SaveDraft", text);
             Assert.DoesNotContain("profile-save-bar", text);
             Assert.DoesNotContain("competency-likert", text);
@@ -179,14 +186,46 @@ public class CompactQuestionnaireContractTests
     }
 
     [Fact]
-    public void Css_defines_compact_likert_circle_sizes_and_footer()
+    public void Questionnaire_css_is_scoped_feature_file_with_overflow_fixes()
     {
-        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".q-likert__opt--lg .q-likert__circle {\n    width: 34px;\n    height: 34px;", css);
-        Assert.Contains(".q-likert__opt--sm .q-likert__circle {\n    width: 22px;\n    height: 22px;", css);
-        Assert.Contains(".questionnaire__footer", css);
-        Assert.Contains("max-width: 40rem", css);
-        Assert.Contains("jobsyQuestionnaire", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/app-core.js")));
+        var root = FindRepoRoot();
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/questionnaire.css"));
+        Assert.Contains("fieldset.q-likert", css);
+        Assert.Contains("min-inline-size: 0", css);
+        Assert.Contains("white-space: normal", css);
+        Assert.Contains("overflow-wrap: anywhere", css);
+        Assert.Contains("float: inline-start", css);
+        Assert.Contains("grid-template-columns: repeat(5, minmax(0, 1fr))", css);
+        Assert.Contains("min-block-size: 48px", css);
+        Assert.Contains(".q-likert--collapsed .q-likert__text", css);
+
+        var appCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.DoesNotContain(".questionnaire {\n", appCss);
+        Assert.DoesNotContain(".q-likert {\n", appCss);
+
+        var appMin = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.min.css"));
+        Assert.DoesNotContain(".questionnaire{", appMin);
+        Assert.DoesNotContain(".q-likert{", appMin);
+
+        var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/onboarding-wizard.css"));
+        var idx = 0;
+        while ((idx = wizard.IndexOf(".q-likert", idx, StringComparison.Ordinal)) >= 0)
+        {
+            var window = wizard[Math.Max(0, idx - 80)..idx];
+            Assert.Contains(".ob-wizard", window);
+            idx += ".q-likert".Length;
+        }
+
+        Assert.Contains(
+            ".ob-wizard .q-likert--collapsed .q-likert__text",
+            wizard);
+        Assert.DoesNotContain(
+            ".ob-wizard .q-likert__text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+            wizard);
+
+        var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/App.razor"));
+        Assert.Contains("css/features/questionnaire.css?v=20260927-dna-c", app);
+        Assert.Contains("css/features/onboarding-wizard.css?v=20260927-dna-c", app);
     }
 
     private static string FindRepoRoot()

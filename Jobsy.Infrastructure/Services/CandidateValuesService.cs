@@ -11,15 +11,18 @@ public sealed class CandidateValuesService : ICandidateValuesService
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
     private readonly ICandidateInsightsQueue _queue;
+    private readonly ICandidateMatchSnapshotService _matchSnapshots;
 
     public CandidateValuesService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
-        ICandidateInsightsQueue queue)
+        ICandidateInsightsQueue queue,
+        ICandidateMatchSnapshotService matchSnapshots)
     {
         _db = db;
         _commercial = commercial;
         _queue = queue;
+        _matchSnapshots = matchSnapshots;
     }
 
     public async Task<CandidateValuesStateDto> GetAsync(
@@ -98,6 +101,7 @@ public sealed class CandidateValuesService : ICandidateValuesService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);
         if (complete)
         {
             _queue.TryEnqueue(userId);
@@ -160,12 +164,15 @@ public sealed class CandidateValuesService : ICandidateValuesService
                 price);
         }
 
+        var answers = SchwartzValuesCatalog.ParseAnswers(row.AnswersJson);
+        var preview = SchwartzValuesCatalog.Score(answers);
         return new CandidateValuesStateDto(
             row.Status,
-            SchwartzValuesCatalog.ParseAnswers(row.AnswersJson),
+            answers,
             FromRow(row),
             SchwartzValuesCatalog.ParseTags(row.MatchTagsJson),
             row.CompletedAtUtc,
-            price);
+            price,
+            preview);
     }
 }

@@ -584,6 +584,8 @@
                                                          Index="@(index + 1)"
                                                          Total="@_miniQuestions.Count"
                                                          InputPrefix="@MiniPrefix"
+                                                         HighLabel="@Culture["Onboarding.Likert.High"]"
+                                                         LowLabel="@Culture["Onboarding.Likert.Low"]"
                                                          ValueChanged="value => AnswerAsync(question.Id, value)"
                                                          Expanded="() => ExpandQuestion(index)" />
                                 }

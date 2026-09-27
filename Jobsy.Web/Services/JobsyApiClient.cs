@@ -14,6 +14,7 @@ namespace Jobsy.Web.Services;
 public sealed class JobsyApiClient : IAsyncDisposable
 {
     public const string KompasCacheKey = "me/kompas";
+    public const string KompasDnaCacheKey = "me/kompas/dna";
     public const string OnboardingCacheKey = "me/onboarding";
 
     private readonly HttpClient _http;
@@ -878,6 +879,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }, ct);
         response.EnsureSuccessStatusCode();
         InvalidateMeCache(KompasCacheKey);
+        InvalidateMeCache(KompasDnaCacheKey);
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
     }
 
@@ -1355,6 +1357,25 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return _meCache.GetOrCreateAsync(
             KompasCacheKey,
             token => GetMeJsonAsync<CandidateKompasState>("api/me/kompas", token),
+            ct);
+    }
+
+    public async Task<CandidateDnaSummary?> GetMyKompasDnaAsync(CancellationToken ct = default)
+    {
+        var result = await GetMyKompasDnaResultAsync(ct);
+        return result.Value;
+    }
+
+    public Task<MeGetResult<CandidateDnaSummary>> GetMyKompasDnaResultAsync(CancellationToken ct = default)
+    {
+        if (_meCache is null)
+        {
+            return GetMeJsonAsync<CandidateDnaSummary>("api/me/kompas/dna", ct);
+        }
+
+        return _meCache.GetOrCreateAsync(
+            KompasDnaCacheKey,
+            token => GetMeJsonAsync<CandidateDnaSummary>("api/me/kompas/dna", token),
             ct);
     }
 

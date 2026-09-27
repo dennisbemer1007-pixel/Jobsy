@@ -40,6 +40,7 @@ public class MeController : ControllerBase
     private readonly ICvExtractionService _cvExtraction;
     private readonly IWhoAmIService _whoAmI;
     private readonly ICandidateInsightsQueue _insightsQueue;
+    private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly IEmailService _email;
     private const string VacancySourceLanguage = "nl";
 
@@ -54,6 +55,7 @@ public class MeController : ControllerBase
         ICvExtractionService cvExtraction,
         IWhoAmIService whoAmI,
         ICandidateInsightsQueue insightsQueue,
+        ICandidateMatchSnapshotService matchSnapshots,
         IEmailService email)
     {
         _companyAuth = companyAuth;
@@ -66,6 +68,7 @@ public class MeController : ControllerBase
         _cvExtraction = cvExtraction;
         _whoAmI = whoAmI;
         _insightsQueue = insightsQueue;
+        _matchSnapshots = matchSnapshots;
         _email = email;
     }
 
@@ -350,6 +353,7 @@ public class MeController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _matchSnapshots.MarkInputsStaleAsync(user.Id, cancellationToken);
         _insightsQueue.TryEnqueue(user.Id);
         var features = await _features.GetAsync(cancellationToken);
         return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));

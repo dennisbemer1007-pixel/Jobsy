@@ -6,7 +6,50 @@ namespace Jobsy.Core.Interfaces;
 public interface ICandidateKompasService
 {
     Task<CandidateKompasDto> GetAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task<CandidateDnaSummaryDto> GetDnaAsync(Guid userId, CancellationToken cancellationToken = default);
 }
+
+/// <summary>Slim read model for Mijn DNA (no questions, answers, profile, or matches).</summary>
+public sealed record CandidateDnaSummaryDto(
+    WhoAmIStorySummaryDto? WhoAmI,
+    int ProfileCompletenessPercent,
+    CandidateDnaCompetencySummaryDto Competencies,
+    CandidateDnaCareerSummaryDto CareerInterests,
+    CandidateDnaCultureSummaryDto Culture,
+    CandidateDnaValuesSummaryDto Values);
+
+public sealed record CandidateDnaCompetencySummaryDto(
+    string Status,
+    int AnsweredCount,
+    int QuestionCount,
+    CompetencyScores? Scores,
+    CompetencyScores? PreviewScores,
+    bool DeepCompleted);
+
+public sealed record CandidateDnaCareerSummaryDto(
+    string Status,
+    int AnsweredCount,
+    int QuestionCount,
+    RiasecScores? Scores,
+    RiasecScores? PreviewScores,
+    bool DeepCompleted);
+
+public sealed record CandidateDnaCultureSummaryDto(
+    string Status,
+    int AnsweredCount,
+    int QuestionCount,
+    CulturePersonalityScores? Scores,
+    CulturePersonalityScores? PreviewScores,
+    bool DeepCompleted);
+
+public sealed record CandidateDnaValuesSummaryDto(
+    string Status,
+    int AnsweredCount,
+    int QuestionCount,
+    SchwartzValuesScores? Scores,
+    SchwartzValuesScores? PreviewScores,
+    bool DeepCompleted);
 
 public sealed record CandidateKompasDto(
     MeProfileSummaryDto Profile,

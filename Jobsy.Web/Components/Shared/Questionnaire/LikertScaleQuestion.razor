@@ -32,14 +32,15 @@ else
                 var current = value;
                 var selected = Value == current;
                 <button type="button" class="q-likert__opt @(selected ? "is-on" : null)"
-                        disabled="@(!Interactive)" aria-pressed="@selected"
-                        aria-label="@($"{current} {Culture["Onboarding.Likert.OfFive"]}")"
+                        disabled="@(!Interactive)"
+                        aria-pressed="@(selected ? "true" : "false")"
+                        aria-label="@Culture.Format("Questionnaire.Likert.Aria", current)"
                         @onclick="() => OnSelectAsync(current)">@current</button>
             }
         </div>
         <div class="q-likert__labels">
-            <span>@(LowLabel ?? Culture["Onboarding.Likert.Low"])</span>
-            <span>@(HighLabel ?? Culture["Onboarding.Likert.High"])</span>
+            <span>@(LowLabel ?? Culture["Questionnaire.Likert.Low"])</span>
+            <span>@(HighLabel ?? Culture["Questionnaire.Likert.High"])</span>
         </div>
     </fieldset>
 }
@@ -64,7 +65,6 @@ else
     [Parameter] public EventCallback<int> ValueChanged { get; set; }
 
     private string DomId => $"questionnaire-q-{QuestionId}";
-    private string InputName => $"{InputPrefix}{QuestionId}";
 
     private async Task OnSelectAsync(int value)
     {

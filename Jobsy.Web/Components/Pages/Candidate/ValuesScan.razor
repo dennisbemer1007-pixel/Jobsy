@@ -27,6 +27,7 @@
                     ScrollToQuestionId="_scrollToId"
                     SmoothScroll="_smoothScroll"
                     OnComplete="CompleteAsync"
+                    OnNext="GoNextAsync"
                     OnRetrySave="RetrySaveAsync">
     @foreach (var category in SchwartzValuesCatalog.CategoryCodes)
     {
@@ -37,16 +38,27 @@
         }
         <section class="questionnaire-section" aria-labelledby="@($"cat-{category}")">
             <h2 class="questionnaire-section__label" id="@($"cat-{category}")">@Culture[$"ValuesScan.Cat.{category}"]</h2>
+            @{
+                var catIndex = 0;
+            }
             @foreach (var question in questions)
             {
+                catIndex++;
                 var answered = _answers.ContainsKey(question.Id);
+                var isCurrent = _currentId == question.Id;
+                var isDimmed = _dimmedId == question.Id;
                 <LikertScaleQuestion QuestionId="question.Id"
                                      Text="@($"{question.Id}. {Culture[question.TextKey]}")"
                                      Value="@(answered ? _answers[question.Id] : null)"
                                      IsAnswered="answered"
-                                     IsCurrent="_currentId == question.Id"
+                                     IsCurrent="isCurrent"
+                                     Collapsed="@(answered && !isCurrent && _expandedId != question.Id)"
+                                     Dimmed="isDimmed"
+                                     Index="catIndex"
+                                     Total="questions.Count"
                                      InputPrefix="vq"
-                                     ValueChanged="value => OnAnswerAsync(question.Id, value)" />
+                                     ValueChanged="value => OnAnswerAsync(question.Id, value)"
+                                     Expanded="() => ExpandQuestion(question.Id)" />
             }
         </section>
     }
@@ -60,6 +72,8 @@
     private string? _message;
     private string? _banner;
     private int? _currentId;
+    private int? _dimmedId;
+    private int? _expandedId;
     private int? _scrollToId;
     private readonly Dictionary<int, int> _answers = [];
     private QuestionnaireAutosave? _autosave;
@@ -113,6 +127,7 @@
 
             _autosave.ReplaceAll(_answers);
             _currentId = FirstUnanswered() ?? QuestionsFlat().FirstOrDefault()?.Id;
+            _dimmedId = _currentId is int c0 ? NextUnansweredAfter(c0) : null;
             _scrollToId = _currentId;
             _smoothScroll = false;
         }
@@ -150,7 +165,9 @@
     {
         _answers[id] = value;
         _banner = null;
+        _expandedId = null;
         _currentId = NextUnansweredAfter(id) ?? id;
+        _dimmedId = _currentId is int cur ? NextUnansweredAfter(cur) : null;
         _scrollToId = _currentId;
         _smoothScroll = true;
         try
@@ -179,6 +196,25 @@
         }
 
         return FirstUnanswered();
+    }
+
+
+    private void ExpandQuestion(int id)
+    {
+        _expandedId = id;
+        _currentId = id;
+        _dimmedId = NextUnansweredAfter(id);
+        _scrollToId = id;
+        _smoothScroll = true;
+    }
+
+    private Task GoNextAsync()
+    {
+        _currentId = FirstUnanswered() ?? _currentId;
+        _dimmedId = _currentId is int cur ? NextUnansweredAfter(cur) : null;
+        _scrollToId = _currentId;
+        _smoothScroll = true;
+        return Task.CompletedTask;
     }
 
     private async Task RetrySaveAsync()

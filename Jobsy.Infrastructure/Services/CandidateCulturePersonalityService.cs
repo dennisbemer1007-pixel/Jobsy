@@ -11,15 +11,18 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
     private readonly ICandidateInsightsQueue _queue;
+    private readonly ICandidateMatchSnapshotService _matchSnapshots;
 
     public CandidateCulturePersonalityService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
-        ICandidateInsightsQueue queue)
+        ICandidateInsightsQueue queue,
+        ICandidateMatchSnapshotService matchSnapshots)
     {
         _db = db;
         _commercial = commercial;
         _queue = queue;
+        _matchSnapshots = matchSnapshots;
     }
 
     public async Task<CandidateCulturePersonalityStateDto> GetAsync(
@@ -97,6 +100,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);
         if (complete)
         {
             _queue.TryEnqueue(userId);
@@ -179,13 +183,16 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
                 price);
         }
 
+        var answers = CulturePersonalityCatalog.ParseAnswers(row.AnswersJson);
+        var preview = CulturePersonalityCatalog.Score(answers);
         return new CandidateCulturePersonalityStateDto(
             row.Status,
-            CulturePersonalityCatalog.ParseAnswers(row.AnswersJson),
+            answers,
             FromRow(row),
             CulturePersonalityCatalog.ParseTags(row.MatchTagsJson),
             row.CompletedAtUtc,
-            price);
+            price,
+            preview);
     }
 }
 

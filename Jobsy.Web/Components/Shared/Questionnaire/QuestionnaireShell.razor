@@ -31,14 +31,42 @@
                     <p class="questionnaire__subtitle">@Subtitle</p>
                 }
             </div>
+            <span class="questionnaire__header-save @SaveStatusClass" aria-live="polite">
+                @if (SaveStatus == QuestionnaireSaveStatus.Saved)
+                {
+                    <span class="questionnaire__save-icon" aria-hidden="true">✓</span>
+                    <span>@Culture["Questionnaire.Saved"]</span>
+                }
+                else if (SaveStatus == QuestionnaireSaveStatus.Saving)
+                {
+                    <span>@Culture["Questionnaire.Saving"]</span>
+                }
+                else if (OnRetrySave.HasDelegate)
+                {
+                    <button type="button"
+                            class="questionnaire__retry"
+                            @onclick="OnRetrySave">
+                        @Culture["Questionnaire.SaveFailed"]
+                    </button>
+                }
+                else
+                {
+                    <span>@Culture["Questionnaire.SaveFailed"]</span>
+                }
+            </span>
         </div>
-        <div class="questionnaire__meter"
-             role="progressbar"
-             aria-valuemin="0"
-             aria-valuemax="@TotalCount"
-             aria-valuenow="@AnsweredCount"
-             aria-label="@Culture.Format("Questionnaire.ProgressCount", AnsweredCount, TotalCount)">
-            <span style="width: @ProgressPercent%"></span>
+        <div class="questionnaire__meter-row">
+            <div class="questionnaire__meter"
+                 role="progressbar"
+                 aria-valuemin="0"
+                 aria-valuemax="@TotalCount"
+                 aria-valuenow="@AnsweredCount"
+                 aria-label="@Culture.Format("Questionnaire.ProgressCount", AnsweredCount, TotalCount)">
+                <span style="--w: @(ProgressPercent)%"></span>
+            </div>
+            <span class="questionnaire__meter-count">
+                @Culture.Format("Questionnaire.ProgressCount", AnsweredCount, TotalCount)
+            </span>
         </div>
         @if (HeaderExtra is not null)
         {
@@ -77,12 +105,30 @@
         {
             @if (!string.IsNullOrWhiteSpace(PrivacyNote))
             {
-                <p class="questionnaire__privacy">
-                    @PrivacyNote@if (!string.IsNullOrWhiteSpace(PrivacyHref))
-                    {
-                        <text> </text><a href="@PrivacyHref">@Culture["Legal.Privacy"]</a>
-                    }
-                </p>
+                <div class="questionnaire__privacy">
+                    <span class="questionnaire__privacy-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+                            <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+                        </svg>
+                    </span>
+                    <span class="questionnaire__privacy-text">@Culture["Questionnaire.PrivacyShort"]</span>
+                    <button type="button"
+                            class="questionnaire__privacy-more"
+                            @onclick="() => _privacyOpen = true">
+                        @Culture["Questionnaire.PrivacyMore"]
+                    </button>
+                </div>
+                <LobsyFriendlyDialog IsOpen="_privacyOpen"
+                                     Title="@Culture["Questionnaire.PrivacyMore"]"
+                                     OnClose="() => _privacyOpen = false">
+                    <p class="questionnaire__privacy-dialog">
+                        @PrivacyNote@if (!string.IsNullOrWhiteSpace(PrivacyHref))
+                        {
+                            @(" ")<a href="@PrivacyHref">@Culture["Legal.Privacy"]</a>
+                        }
+                    </p>
+                </LobsyFriendlyDialog>
             }
 
             @ChildContent
@@ -91,49 +137,18 @@
 
     @if (!Loading && !LoadFailed)
     {
-        <footer class="questionnaire__footer" aria-live="polite">
-            @if (IsComplete)
+        <footer class="questionnaire__footer">
+            <button class="login-submit questionnaire__finish"
+                    type="button"
+                    disabled="@(Completing || SaveStatus == QuestionnaireSaveStatus.Saving)"
+                    @onclick="OnPrimaryAsync">
+                @(IsComplete ? Culture["Questionnaire.FinishCtaShort"] : Culture["Questionnaire.NextCta"])
+            </button>
+            @if (!IsComplete && RemainingCount > 0)
             {
-                <button class="login-submit questionnaire__finish"
-                        type="button"
-                        disabled="@(Completing || SaveStatus == QuestionnaireSaveStatus.Saving)"
-                        @onclick="OnFinishAsync">
-                    @Culture["Questionnaire.FinishCta"]
-                </button>
-            }
-            else
-            {
-                <div class="questionnaire__status-row">
-                    <span class="questionnaire__count">
-                        @Culture.Format("Questionnaire.ProgressCount", AnsweredCount, TotalCount)
-                    </span>
-                    <span class="questionnaire__save @SaveStatusClass">
-                        @if (SaveStatus == QuestionnaireSaveStatus.Saved)
-                        {
-                            <span class="questionnaire__save-icon" aria-hidden="true">✓</span>
-                            <span>@Culture["Questionnaire.Saved"]</span>
-                        }
-                        else if (SaveStatus == QuestionnaireSaveStatus.Saving)
-                        {
-                            <span>@Culture["Questionnaire.Saving"]</span>
-                        }
-                        else if (OnRetrySave.HasDelegate)
-                        {
-                            <button type="button"
-                                    class="questionnaire__retry"
-                                    @onclick="OnRetrySave">
-                                @Culture["Questionnaire.SaveFailed"]
-                            </button>
-                        }
-                        else
-                        {
-                            <span>@Culture["Questionnaire.SaveFailed"]</span>
-                        }
-                    </span>
-                    <span class="questionnaire__finish-hint">
-                        @Culture.Format("Questionnaire.FinishAfter", TotalCount)
-                    </span>
-                </div>
+                <p class="questionnaire__remaining">
+                    @Culture.Format("Questionnaire.RemainingHint", RemainingCount)
+                </p>
             }
             @if (!string.IsNullOrEmpty(Message))
             {
@@ -162,14 +177,17 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? HeaderExtra { get; set; }
     [Parameter] public EventCallback OnComplete { get; set; }
+    [Parameter] public EventCallback OnNext { get; set; }
     [Parameter] public EventCallback OnBack { get; set; }
     [Parameter] public EventCallback OnRetrySave { get; set; }
     [Parameter] public int? ScrollToQuestionId { get; set; }
     [Parameter] public bool SmoothScroll { get; set; } = true;
 
     private int? _lastScrolledId;
+    private bool _privacyOpen;
 
     private bool IsComplete => TotalCount > 0 && AnsweredCount >= TotalCount;
+    private int RemainingCount => Math.Max(0, TotalCount - AnsweredCount);
 
     private string ProgressPercent
     {
@@ -206,20 +224,28 @@
             }
             catch (JSException)
             {
-                // Interop may be unavailable during disconnect.
             }
             catch (InvalidOperationException)
             {
-                // Circuit not ready yet.
             }
         }
     }
 
-    private async Task OnFinishAsync()
+    private async Task OnPrimaryAsync()
     {
-        if (OnComplete.HasDelegate)
+        if (IsComplete)
         {
-            await OnComplete.InvokeAsync();
+            if (OnComplete.HasDelegate)
+            {
+                await OnComplete.InvokeAsync();
+            }
+
+            return;
+        }
+
+        if (OnNext.HasDelegate)
+        {
+            await OnNext.InvokeAsync();
         }
     }
 

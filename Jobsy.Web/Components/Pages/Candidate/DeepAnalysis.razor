@@ -95,6 +95,7 @@ else
                         SmoothScroll="_smoothScroll"
                         CssClass="questionnaire--deep"
                         OnComplete="CompleteAsync"
+                        OnNext="GoNextAsync"
                         OnRetrySave="RetrySaveAsync">
         <HeaderExtra>
             <div class="deep-analysis-chrome deep-analysis-chrome--compact" aria-label="@Culture["Deep.ChromeLabel"]">
@@ -139,13 +140,18 @@ else
                 {
                     var answered = _answers.ContainsKey(question.Id);
                     var q = question;
+                    var isCurrent = _currentId == question.Id;
+                    var isDimmed = _dimmedId == question.Id;
                     <LikertScaleQuestion QuestionId="question.Id"
                                          Text="@($"{question.Id}. {question.PromptNl}")"
                                          Value="@(answered ? _answers[question.Id] : null)"
                                          IsAnswered="answered"
-                                         IsCurrent="_currentId == question.Id"
+                                         IsCurrent="isCurrent"
+                                         Collapsed="@(answered && !isCurrent && _expandedId != question.Id)"
+                                         Dimmed="isDimmed"
                                          InputPrefix="@($"d{_slug}")"
-                                         ValueChanged="value => OnAnswerAsync(q.Id, value)">
+                                         ValueChanged="value => OnAnswerAsync(q.Id, value)"
+                                         Expanded="() => ExpandQuestion(q.Id)">
                         <Extra>
                             <button type="button"
                                     class="q-likert__example"
@@ -205,6 +211,8 @@ else
     private DeepAnalysisQuestionItem? _exampleQuestion;
     private int? _boosterMilestone;
     private int? _currentId;
+    private int? _dimmedId;
+    private int? _expandedId;
     private int? _scrollToId;
     private QuestionnaireAutosave? _autosave;
 
@@ -469,6 +477,22 @@ else
         {
             _banner = ex.Message;
         }
+    }
+
+    private void ExpandQuestion(int id)
+    {
+        _expandedId = id;
+        _currentId = id;
+        _dimmedId = null;
+        _scrollToId = id;
+        _smoothScroll = true;
+    }
+
+    private Task GoNextAsync()
+    {
+        _scrollToId = _currentId;
+        _smoothScroll = true;
+        return Task.CompletedTask;
     }
 
     private async Task CompleteAsync()

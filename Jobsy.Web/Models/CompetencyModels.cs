@@ -119,6 +119,7 @@ public sealed class CandidateCultureState
     public string Status { get; set; } = "Draft";
     public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public CulturePersonalityScoreSet? Scores { get; set; }
+    public CulturePersonalityScoreSet? PreviewScores { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
     public List<string> MatchTags { get; set; } = [];
     public decimal DeepAnalysisPriceEuro { get; set; }
@@ -132,6 +133,7 @@ public sealed class CandidateValuesState
     public string Status { get; set; } = "Draft";
     public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public SchwartzValuesScoreSet? Scores { get; set; }
+    public SchwartzValuesScoreSet? PreviewScores { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
     public List<string> MatchTags { get; set; } = [];
     public decimal DeepAnalysisPriceEuro { get; set; }
@@ -284,6 +286,56 @@ public sealed class RoleFitCheckState
     public RoleFitCheckResult? LastResult { get; set; }
     public string InsightsStatus { get; set; } = "Ready";
     public bool NeedsRecheck { get; set; }
+}
+
+public sealed class CandidateDnaSummary
+{
+    public WhoAmIStorySummary? WhoAmI { get; set; }
+    public int ProfileCompletenessPercent { get; set; }
+    public CandidateDnaCompetencySummary? Competencies { get; set; }
+    public CandidateDnaCareerSummary? CareerInterests { get; set; }
+    public CandidateDnaCultureSummary? Culture { get; set; }
+    public CandidateDnaValuesSummary? Values { get; set; }
+}
+
+public sealed class CandidateDnaCompetencySummary
+{
+    public string Status { get; set; } = "Draft";
+    public int AnsweredCount { get; set; }
+    public int QuestionCount { get; set; }
+    public CompetencyScoreSet? Scores { get; set; }
+    public CompetencyScoreSet? PreviewScores { get; set; }
+    public bool DeepCompleted { get; set; }
+}
+
+public sealed class CandidateDnaCultureSummary
+{
+    public string Status { get; set; } = "Draft";
+    public int AnsweredCount { get; set; }
+    public int QuestionCount { get; set; }
+    public CulturePersonalityScoreSet? Scores { get; set; }
+    public CulturePersonalityScoreSet? PreviewScores { get; set; }
+    public bool DeepCompleted { get; set; }
+}
+
+public sealed class CandidateDnaValuesSummary
+{
+    public string Status { get; set; } = "Draft";
+    public int AnsweredCount { get; set; }
+    public int QuestionCount { get; set; }
+    public SchwartzValuesScoreSet? Scores { get; set; }
+    public SchwartzValuesScoreSet? PreviewScores { get; set; }
+    public bool DeepCompleted { get; set; }
+}
+
+public sealed class CandidateDnaCareerSummary
+{
+    public string Status { get; set; } = "Draft";
+    public int AnsweredCount { get; set; }
+    public int QuestionCount { get; set; }
+    public RiasecScoreSet? Scores { get; set; }
+    public RiasecScoreSet? PreviewScores { get; set; }
+    public bool DeepCompleted { get; set; }
 }
 
 public sealed class CandidateKompasState
