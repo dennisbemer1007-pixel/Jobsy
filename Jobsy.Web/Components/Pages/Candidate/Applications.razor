@@ -42,7 +42,7 @@
     <div class="application-counters" role="group" aria-label="@Culture["Nav.MyApplications"]">
         <button type="button"
                 class="application-counters__btn @(_filter == "open" ? "is-selected" : null)"
-                aria-pressed="@(_filter == "open")"
+                aria-pressed="@(_filter == "open" ? "true" : "false")"
                 aria-label="@($"{_countOpen} {Culture["Apps.TabOpen"]}")"
                 @onclick='() => ToggleFilter("open")'>
             <span class="application-counters__n">@_countOpen</span>
@@ -50,7 +50,7 @@
         </button>
         <button type="button"
                 class="application-counters__btn application-counters__btn--running @(_filter == "running" ? "is-selected" : null)"
-                aria-pressed="@(_filter == "running")"
+                aria-pressed="@(_filter == "running" ? "true" : "false")"
                 aria-label="@($"{_countRunning} {Culture["Apps.TabRunning"]}")"
                 @onclick='() => ToggleFilter("running")'>
             <span class="application-counters__n">@_countRunning</span>
@@ -58,7 +58,7 @@
         </button>
         <button type="button"
                 class="application-counters__btn @(_filter == "rejected" ? "is-selected" : null)"
-                aria-pressed="@(_filter == "rejected")"
+                aria-pressed="@(_filter == "rejected" ? "true" : "false")"
                 aria-label="@($"{_countRejected} {Culture["Apps.TabRejected"]}")"
                 @onclick='() => ToggleFilter("rejected")'>
             <span class="application-counters__n">@_countRejected</span>
@@ -160,7 +160,7 @@
                         <button type="button"
                                 class="icon-btn application-card__menu-toggle @(menuOpen ? "is-open" : null)"
                                 aria-haspopup="menu"
-                                aria-expanded="@menuOpen"
+                                aria-expanded="@(menuOpen ? "true" : "false")"
                                 data-app-menu-btn="@a.Id"
                                 aria-label="@string.Format(Culture["Apps.ActionsFor"], a.VacancyTitle)"
                                 @onclick="() => ToggleMenu(a.Id)"
