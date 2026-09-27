@@ -2270,23 +2270,7 @@
                 return;
             }
 
-            _bootPins = pins.Select(p =>
-            {
-                var dict = new Dictionary<string, object?>
-                {
-                    ["id"] = p.Id.ToString("D"),
-                    ["lat"] = p.Lat,
-                    ["lng"] = p.Lng,
-                    ["colour"] = p.Colour,
-                    ["categoryColor"] = p.Colour,
-                    ["matchPercent"] = p.MatchPercent,
-                    ["matchColorBand"] = p.MatchColorBand,
-                    ["highlighted"] = p.Highlighted,
-                    ["highlightRank"] = p.HighlightRank,
-                    ["workType"] = p.WorkType
-                };
-                return dict;
-            }).ToList();
+            _bootPins = pins.Select(ToBootPinDict).ToList();
             if (_bootPins.Count > 0)
             {
                 _mapPainted = true;
@@ -2351,40 +2335,84 @@
             ["pins"] = pins,
             ["pinsUrl"] = BuildPinsApiUrl()
         };
-        return JsonSerializer.Serialize(payload).Replace("<", "\\u003c", StringComparison.Ordinal);
+        return JsonSerializer.Serialize(payload, BootPinJsonOptions)
+            .Replace("<", "\\u003c", StringComparison.Ordinal);
     }
 
     /// <summary>
     /// Compact pin payload for the circuit / boot JSON — id, lat, lng, colour, match% only.
     /// Full vacancy fields load over HTTP when a pin or card is opened.
+    /// Omit nulls/false/0 so #jobsy-map-boot stays under the Acc HTML budget.
     /// </summary>
+    private static readonly JsonSerializerOptions BootPinJsonOptions = new()
+    {
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+    };
+
     private List<Dictionary<string, object?>> BuildMarkers() => BuildCompactPins(SortedVacancies);
+
+    private static Dictionary<string, object?> ToBootPinDict(VacancyPinBootItem p)
+    {
+        var dict = new Dictionary<string, object?>
+        {
+            ["id"] = p.Id.ToString("D"),
+            ["lat"] = p.Lat,
+            ["lng"] = p.Lng
+        };
+        if (!string.IsNullOrWhiteSpace(p.Colour))
+        {
+            // jobMap falls back colour ← categoryColor ← colour; one field is enough.
+            dict["colour"] = p.Colour;
+        }
+
+        if (p.MatchPercent is not null)
+        {
+            dict["matchPercent"] = p.MatchPercent;
+        }
+
+        if (!string.IsNullOrWhiteSpace(p.MatchColorBand))
+        {
+            dict["matchColorBand"] = p.MatchColorBand;
+        }
+
+        if (p.Highlighted)
+        {
+            dict["highlighted"] = true;
+            if (p.HighlightRank != 0)
+            {
+                dict["highlightRank"] = p.HighlightRank;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(p.WorkType))
+        {
+            dict["workType"] = p.WorkType;
+        }
+
+        return dict;
+    }
 
     private List<Dictionary<string, object?>> BuildCompactPins(IEnumerable<VacancyListItem> source) =>
         source
             .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
             .Select(v =>
             {
+                var colour = ShowsSuitableFor65Plus(v)
+                    ? VacancyCategoryDefaults.SeniorPlusColorHex
+                    : v.CategoryColorHex;
                 var workType = v.WorkTypes is { Length: > 0 } ? v.WorkTypes[0] : null;
-                var dict = new Dictionary<string, object?>
+                return ToBootPinDict(new VacancyPinBootItem
                 {
-                    ["id"] = v.Id.ToString("D"),
-                    ["lat"] = v.Latitude,
-                    ["lng"] = v.Longitude,
-                    ["colour"] = ShowsSuitableFor65Plus(v)
-                        ? VacancyCategoryDefaults.SeniorPlusColorHex
-                        : v.CategoryColorHex,
-                    ["categoryColor"] = ShowsSuitableFor65Plus(v)
-                        ? VacancyCategoryDefaults.SeniorPlusColorHex
-                        : v.CategoryColorHex,
-                    ["matchPercent"] = v.MatchPercent,
-                    ["matchColorBand"] = v.MatchColorBand,
-                    ["highlighted"] = v.IsHighlighted,
-                    ["highlightRank"] = v.IsHighlighted ? HighlightShuffleRank(v.Id) : 0u,
-                    ["workType"] = workType,
-                    ["workTypes"] = v.WorkTypes
-                };
-                return dict;
+                    Id = v.Id,
+                    Lat = v.Latitude,
+                    Lng = v.Longitude,
+                    Colour = colour,
+                    MatchPercent = v.MatchPercent,
+                    MatchColorBand = v.MatchColorBand,
+                    Highlighted = v.IsHighlighted,
+                    HighlightRank = v.IsHighlighted ? HighlightShuffleRank(v.Id) : 0u,
+                    WorkType = workType
+                });
             })
             .ToList();
 
