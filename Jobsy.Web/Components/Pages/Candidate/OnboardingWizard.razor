@@ -1,3 +1,231 @@
+@* Wizard v1 is retained below as a reference while v2 owns this route. *@
+@page "/candidate/start"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject IGeocodingClient Geocoder
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+<PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
+<div class="ob-wizard">
+@if (_v2Loading) { <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p> }
+else if (_v2Phase == V2Phase.Install)
+{
+    <section class="ob-wizard__install">
+        <h1>@Culture["Onboarding.Install.Title"]</h1><p>@Culture["Onboarding.Install.Lead"]</p>
+        <div class="ob-install">
+            @if (_v2InstallIos) { <p class="ob-install__hint">@Culture["Pwa.IosHint"]</p> }
+            else if (_v2InstallCanPrompt) { <button type="button" class="btn-compact btn-compact--primary" @onclick="V2InstallAsync">@Culture["Onboarding.Install.AddApp"]</button> }
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="V2PushAsync">@Culture["Onboarding.Install.EnablePush"]</button>
+            @if (!string.IsNullOrEmpty(_v2InstallMessage)) { <p aria-live="polite">@_v2InstallMessage</p> }
+        </div>
+        <button type="button" class="ob-wizard__ghost" @onclick="V2InstallLaterAsync">@Culture["Onboarding.Install.Later"]</button>
+    </section>
+}
+else if (_v2Finish || _v2State?.FinishReached == true)
+{
+    <section class="ob-wizard__finish">
+        <div class="ob-wizard__compass" aria-hidden="true">⌾</div>
+        <span class="ob-wizard__badge">@Culture["Onboarding.Finish.Badge"]</span>
+        <h1>@Culture.Format("Onboarding.Finish.Title", _v2FirstName)</h1>
+        <p class="ob-wizard__lead">@Culture["Onboarding.Finish.Lead"]</p>
+        @if (_v2State?.Impression is { } impression)
+        {
+            <div class="ob-wizard__highlights">
+                @if (impression.Strengths.FirstOrDefault() is { } strength) { <article><small>@Culture["Onboarding.Finish.Strength"]</small><strong>@strength.Sentence</strong></article> }
+                @if (impression.Riasec.Take(2).ToList() is { Count: > 0 } riasec) { <article><small>@Culture["Onboarding.Finish.Work"]</small><strong>@string.Join($" {Culture["Onboarding.And"]} ", riasec.Select(x => x.Label))</strong></article> }
+                @if (impression.TopValue is { } value) { <article><small>@Culture["Onboarding.Finish.Value"]</small><strong>@value.Label</strong></article> }
+            </div>
+            @if (impression.MatchingVacancyCount > 0) { <p class="ob-wizard__figure"><strong>@impression.MatchingVacancyCount</strong> @Culture["Onboarding.Finish.Matches"]</p> }
+        }
+        <button type="button" class="btn-compact btn-compact--primary ob-wizard__cta" @onclick="V2CompleteAsync">@Culture["Onboarding.Finish.Cta"]</button>
+        <a class="ob-wizard__ghost" href="/home?tab=tests">@Culture["Onboarding.Finish.FullTests"]</a>
+    </section>
+}
+else if (_v2Welcome)
+{
+    <section class="ob-wizard__welcome">
+        <div class="lobsy-logo"><img class="lobsy-logo__img" src="/images/brand/lobsy-128.png" alt="" /></div>
+        <h1>@Culture.Format("Onboarding.Welcome.Title", _v2FirstName)</h1><p class="ob-wizard__lead">@Culture["Onboarding.Welcome.Lead"]</p>
+        <div class="ob-wizard__phase-cards">
+            @foreach (var phase in V2WelcomePhases) { <article><span>@phase.Number</span><div><strong>@Culture[phase.Title]</strong><small>@Culture[phase.Lead]</small></div><small>@Culture[phase.Time]</small></article> }
+        </div>
+        <p class="ob-wizard__hint">@Culture["Onboarding.Welcome.Hint"]</p>
+        <button type="button" class="btn-compact btn-compact--primary ob-wizard__cta" @onclick="V2BeginAsync">@Culture["Onboarding.Welcome.Cta"]</button>
+    </section>
+}
+else
+{
+    var phase = OnboardingWizardCatalog.PhaseForStep(_v2Step);
+    <div class="ob-wizard__layout">
+        <aside class="ob-wizard__sidebar">
+            <div class="lobsy-logo"><img class="lobsy-logo__img" src="/images/brand/lobsy-128.png" alt="" /></div>
+            @foreach (var item in V2Sidebar) { var current = item.First <= _v2Step && _v2Step <= item.Last; var done = _v2Step > item.Last; <div class="ob-wizard__side-item @(current ? "is-current" : null) @(done ? "is-done" : null)"><span>@(done ? "✓" : item.Number)</span><div><strong>@Culture[item.Title]</strong><small>@Culture[item.Lead]</small></div></div> }
+            <p class="ob-wizard__saved">✓ @Culture["Onboarding.AllSaved"]</p><button type="button" class="ob-wizard__ghost" @onclick="V2LaterAsync">@Culture["Onboarding.Later"]</button>
+        </aside>
+        <main class="ob-wizard__main">
+            <header class="ob-wizard__header">
+                <div class="ob-wizard__header-row">
+                    <button type="button" class="icon-btn ob-wizard__back" disabled="@(_v2Step == 1)" aria-label="@Culture["Onboarding.BackAria"]" @onclick="V2BackAsync">‹</button>
+                    <div class="ob-wizard__segments" role="progressbar" aria-valuemin="1" aria-valuemax="10" aria-valuenow="@_v2Step" aria-label="@Culture.Format("Onboarding.ProgressAria", _v2Step, 10)">
+                        @foreach (var item in OnboardingWizardCatalog.Phases) { <span><i style="--w:@(OnboardingWizardCatalog.PhaseFill(item, _v2Step) * 100)%"></i></span> }
+                    </div>
+                    <button type="button" class="ob-wizard__later" @onclick="V2LaterAsync">@Culture["Onboarding.Later"]</button>
+                </div>
+                <div class="ob-wizard__status-row"><span><strong>@Culture[phase.NameKey]</strong> · @Culture.Format("Onboarding.StepLine", _v2Step, OnboardingWizardCatalog.RemainingMinutes(_v2Step))</span><span aria-live="polite" class="@(_v2SaveError ? "is-error" : null)">@V2SaveText</span></div>
+            </header>
+            <section class="ob-wizard__content">
+                @if (!string.IsNullOrWhiteSpace(_v2Error)) { <p class="state-message error">@_v2Error</p> }
+                @switch (_v2Step)
+                {
+                    case 1:
+                        <h1 tabindex="-1">@Culture["Onboarding.Step1.Title"]</h1><p class="ob-wizard__lead">@Culture["Onboarding.Step1.Lead"]</p>
+                        <div class="ob-wizard__field-row"><label>@Culture["Profile.FirstName"]<input autocomplete="given-name" maxlength="128" @bind="_v2FirstName" @bind:event="oninput" @bind:after="V2ScheduleProfileSave" /></label><label>@Culture["Profile.LastName"]<input autocomplete="family-name" maxlength="128" @bind="_v2LastName" @bind:event="oninput" @bind:after="V2ScheduleProfileSave" /></label></div>
+                        <label>@Culture["Onboarding.Postcode"]<input inputmode="text" autocomplete="postal-code" maxlength="7" @bind="_v2Postcode" @bind:event="oninput" @bind:after="V2AddressChanged" /></label>
+                        @if (_v2PostcodeResolved) { <p class="ob-wizard__hint">✓ @Culture.Format("Onboarding.PostcodeResolved", _v2City)</p> }
+                        @if (_v2PostcodeMissing) { <p class="error">@Culture["Onboarding.PostcodeNotFound"] <button type="button" class="ob-wizard__inline-link" @onclick="() => _v2ShowCity = true">@Culture["Onboarding.EnterCity"]</button></p> }
+                        @if (_v2ShowCity) { <label>@Culture["Onboarding.City"]<input autocomplete="address-level2" @bind="_v2City" @bind:event="oninput" @bind:after="V2AddressChanged" /></label> }
+                        @if (_v2Suggestions.Count > 0) { <ul class="ob-wizard__suggestions">@foreach (var item in _v2Suggestions) { <li><button type="button" @onclick="() => V2SelectAddress(item)">@item.Label</button></li> }</ul> }
+                        <fieldset><legend>@Culture["Onboarding.BirthDate"]</legend><div class="ob-wizard__birth"><label>@Culture["Onboarding.Day"]<input inputmode="numeric" maxlength="2" @bind="_v2BirthDay" @bind:event="oninput" @bind:after="V2DateChanged" /></label><label>@Culture["Onboarding.Month"]<input inputmode="numeric" maxlength="2" @bind="_v2BirthMonth" @bind:event="oninput" @bind:after="V2DateChanged" /></label><label>@Culture["Onboarding.Year"]<input inputmode="numeric" maxlength="4" @bind="_v2BirthYear" @bind:event="oninput" @bind:after="V2DateChanged" /></label></div><small>@Culture["Onboarding.BirthHint"]</small></fieldset>
+                        <label>@Culture["Profile.Phone"] <small>@Culture["Onboarding.Optional"]</small><input type="tel" autocomplete="tel" @bind="_v2Phone" @bind:event="oninput" @bind:after="V2ScheduleProfileSave" /></label>
+                        break;
+                    case 2:
+                        <h1 tabindex="-1">@Culture["Onboarding.Step2.Title"]</h1><p class="ob-wizard__lead">@Culture["Onboarding.Step2.Lead"]</p>
+                        <fieldset><legend class="visually-hidden">@Culture["Onboarding.Step2.Title"]</legend><div class="ob-wizard__presets">@foreach (var preset in V2Presets) { var selected = _v2Presets.Contains(preset.Code); <button type="button" aria-pressed="@selected" class="@(selected ? "is-selected" : null)" @onclick="() => V2TogglePreset(preset.Code)"><span>@(selected ? "✓" : "")</span><b>@Culture[preset.Title]</b><small>@Culture[preset.Lead]</small></button> }</div></fieldset>
+                        <div class="ob-wizard__availability-summary"><strong>@Culture["Onboarding.AvailabilitySummary"]</strong><button type="button" aria-expanded="@_v2FineTune" @onclick="() => _v2FineTune = !_v2FineTune">@Culture["Onboarding.Adjust"]</button><dl><div><dt>@Culture["Vacancy.HoursPerWeek"]</dt><dd>@V2HoursLabel</dd></div><div><dt>@Culture["Profile.Availability"]</dt><dd>@V2DaysSummary</dd></div><div><dt>@Culture["Onboarding.AvailableFrom"]</dt><dd>@(_v2Immediate ? Culture["Onboarding.AvailableImmediate"] : _v2AvailableFrom?.ToString())</dd></div></dl></div>
+                        @if (!_v2Immediate) { <label>@Culture["Onboarding.AvailableFrom"]<input type="date" @bind="_v2AvailableFrom" @bind:after="V2ScheduleProfileSave" /></label> }
+                        @if (_v2FineTune) { <div class="ob-wizard__fine-tune"><div class="ob-wizard__field-row"><label>@Culture["Onboarding.MinHours"]<input type="number" min="1" max="60" @bind="_v2MinHours" @bind:after="V2ManualAvailability" /></label><label>@Culture["Onboarding.MaxHours"]<input type="number" min="1" max="60" @bind="_v2MaxHours" @bind:after="V2ManualAvailability" /></label></div><fieldset><legend>@Culture["Profile.Availability"]</legend><div class="ob-wizard__matrix">@foreach (var day in V2Days) { <span>@UiLabels.Weekday(Culture, day)</span> @foreach (var slot in V2Slots.Where(x => x != "Nacht")) { var key = $"{day}:{slot}"; var on = _v2Availability.Contains(key); <button type="button" aria-pressed="@on" aria-label="@($"{UiLabels.Weekday(Culture, day)} {UiLabels.AvailabilitySlot(Culture, slot)}")" class="@(on ? "is-on" : null)" @onclick="() => V2ToggleAvailability(key)">@UiLabels.AvailabilitySlot(Culture, slot)</button> } }</div></fieldset>@if (_v2PresetsOverridden) { <p class="ob-wizard__hint">@Culture["Onboarding.ManualOverride"] <button type="button" class="ob-wizard__inline-link" @onclick="V2ResetPresets">@Culture["Onboarding.Refill"]</button></p> }</div> }
+                        @if (!V2AvailabilityValid) { <p class="ob-wizard__hint error">@Culture["Onboarding.AvailabilityRequired"]</p> }
+                        break;
+                    case 3:
+                        <h1 tabindex="-1">@Culture["Onboarding.Step3.Title"]</h1><p class="ob-wizard__lead">@Culture["Onboarding.Step3.Lead"]</p><fieldset><legend>@Culture["Onboarding.Transport"]</legend><div class="ob-wizard__transport">@foreach (var transport in V2Transport) { var selected = _v2Transport == transport; <button type="button" aria-pressed="@selected" class="@(selected ? "is-selected" : null)" @onclick="() => { _v2Transport = transport; V2ScheduleProfileSave(); }">@Culture[$"Transport.{transport}"]</button> }</div></fieldset><fieldset><legend>@Culture["Onboarding.MaxTravel"] <strong>@_v2MaxTravel @Culture["Onboarding.Minutes"]</strong></legend><div class="ob-wizard__transport">@foreach (var minute in V2TravelChoices) { <button type="button" aria-pressed="@(_v2MaxTravel == minute)" @onclick="() => { _v2MaxTravel = minute; _v2CustomTravel = false; V2ScheduleProfileSave(); }">@minute</button> }</div><button type="button" class="ob-wizard__inline-link" @onclick="() => _v2CustomTravel = true">@Culture["Onboarding.Other"]</button>@if (_v2CustomTravel) { <input type="number" min="1" max="180" @bind="_v2MaxTravel" @bind:after="V2ScheduleProfileSave" /> }</fieldset>
+                        break;
+                    case 4:
+                        <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span><h1 tabindex="-1">@Culture["Onboarding.Step4.Title"]</h1><p class="ob-wizard__lead">@Culture["Onboarding.Step4.Lead"]</p><label class="ob-wizard__check"><input type="checkbox" @bind="_v2NoWork" @bind:after="V2ScheduleProfileSave" />@Culture["Onboarding.NoWorkExperience"]</label>@if (!_v2NoWork) { @foreach (var job in _v2Jobs) { var item = job; <article class="ob-wizard__job"><button type="button" class="icon-btn" aria-label="@Culture.Format("Onboarding.DeleteJob", item.Role)" @onclick="() => V2RemoveJob(item)">×</button><strong>@item.Role</strong><small>@item.EmployerName</small></article> } @if (_v2Jobs.Count < 3) { <button type="button" class="ob-wizard__add-job" @onclick="V2AddJob">@Culture["Onboarding.AddJob"]</button> } }<button type="button" class="ob-wizard__ghost" @onclick="V2SkipOptionalAsync">@Culture["Onboarding.Skip"]</button>
+                        break;
+                    case 5:
+                        <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span><h1 tabindex="-1">@Culture["Onboarding.Step5.Title"]</h1><p class="ob-wizard__lead">@Culture["Onboarding.Step5.Lead"]</p><fieldset><legend class="visually-hidden">@Culture["Profile.Education"]</legend>@foreach (var level in OnboardingWizardCatalog.EducationRadioLevels) { var on = _v2Education == level || (level == "MBO" && _v2Education?.StartsWith("MBO") == true); <label class="ob-wizard__radio @(on ? "is-selected" : null)"><input type="radio" name="education" checked="@on" @onchange="() => V2SelectEducation(level)" />@(level == EducationLevelLabels.None ? Culture["Education.None"] : level)</label> }@if (_v2Education?.StartsWith("MBO") == true) { <div class="ob-wizard__transport">@foreach (var level in new[] { "1", "2", "3", "4" }) { <button type="button" aria-pressed="@(_v2Education == $"MBO {level}")" @onclick="() => V2SelectEducation($"MBO {level}")">@level</button> }</div> }</fieldset><label>@Culture["Onboarding.EducationDirection"]<input maxlength="128" @bind="_v2EducationDirection" @bind:event="oninput" @bind:after="V2ScheduleProfileSave" /></label><button type="button" class="ob-wizard__ghost" @onclick="V2SkipOptionalAsync">@Culture["Onboarding.Skip"]</button>
+                        break;
+                    case 6:
+                        <h1 tabindex="-1">@Culture["Onboarding.Step6.Title"]</h1><p class="ob-wizard__lead">@Culture["Onboarding.Step6.Lead"]</p><div class="ob-wizard__dream-search"><input role="combobox" aria-expanded="@(_v2DreamSearch.Length > 0)" aria-autocomplete="list" placeholder="@Culture["Onboarding.DreamSearch"]" @bind="_v2DreamSearch" @bind:event="oninput" @onkeydown="V2DreamKeyDown" />@if (_v2DreamSearch.Length > 0) { <div role="listbox">@foreach (var job in DreamJobCatalog.Search(_v2DreamSearch)) { <button type="button" role="option" @onclick="() => V2ChooseDream(job)">@((MarkupString)(DreamJobIcons.TryGet(job.IconKey) ?? ""))<span>@Culture[$"DreamJob.{job.Key}"]</span></button> }<button type="button" @onclick="V2ChooseOwnDream">＋ @Culture.Format("Onboarding.DreamOwn", _v2DreamSearch.Trim())</button></div> }</div><div class="ob-wizard__dream-grid">@foreach (var job in DreamJobCatalog.All) { var selected = _v2Dream == job.TitleNl; <button type="button" aria-pressed="@selected" class="@(selected ? "is-selected" : null)" @onclick="() => V2ChooseDream(job)"><span>@((MarkupString)(DreamJobIcons.TryGet(job.IconKey) ?? ""))</span><small>@Culture[$"DreamJob.{job.Key}"]</small></button> }</div><button type="button" class="ob-wizard__ghost" @onclick="V2DreamUnknownAsync">@Culture["Onboarding.DreamUnknown"]</button>
+                        break;
+                    case 7 when !_v2HasConsent:
+                        <h1 tabindex="-1">@Culture["Onboarding.Consent.Title"]</h1><p class="ob-wizard__lead">@Culture["Onboarding.Consent.Lead"]</p><ol class="ob-wizard__test-list">@foreach (var item in V2TestTabs) { <li><strong>@Culture[item.Title]</strong><small>@Culture[item.Lead]</small></li> }</ol><label class="ob-wizard__consent" role="switch" aria-checked="@_v2ConsentRequested"><input type="checkbox" @bind="_v2ConsentRequested" />@Culture["Onboarding.Consent.Check"]</label><details><summary>@Culture["Onboarding.Consent.More"]</summary><p>@Culture["Onboarding.Consent.MoreText"]</p></details><p class="ob-wizard__hint">🔒 @Culture["Onboarding.Consent.Private"]</p>
+                        break;
+                    case >= 7 and <= 10:
+                        <div class="ob-wizard__test-tabs">@foreach (var tab in V2TestTabs) { var isCurrent = tab.Step == _v2Step; var done = tab.Step < _v2Step; <span class="@(isCurrent ? "is-current" : done ? "is-done" : null)">@Culture[tab.Title]</span> }</div><h1 tabindex="-1">@Culture[$"Onboarding.Step{_v2Step}.Title"]</h1><p class="ob-wizard__lead">@Culture["Onboarding.Test.Lead"]</p>@if (_v2MiniQuestions.Count == 0) { <p>@Culture["Onboarding.MiniAllDone"]</p> } else { @foreach (var question in _v2MiniQuestions.Take(_v2CurrentQuestion + 2)) { var index = _v2MiniQuestions.IndexOf(question); var answered = _v2MiniAnswers.ContainsKey(question.Id); <LikertScaleQuestion QuestionId="question.Id" Text="@V2QuestionText(question)" Value="@(answered ? _v2MiniAnswers[question.Id] : null)" Collapsed="@(answered && index != _v2CurrentQuestion)" Dimmed="@(index > _v2CurrentQuestion)" Interactive="@(index <= _v2CurrentQuestion)" IsCurrent="@(index == _v2CurrentQuestion)" Index="@(index + 1)" Total="@_v2MiniQuestions.Count" InputPrefix="@V2MiniPrefix" ValueChanged="value => V2AnswerAsync(question.Id, value)" Expanded="() => V2ExpandQuestion(index)" /> } }
+                        break;
+                }
+            </section>
+            <footer class="ob-wizard__footer"><button type="button" class="btn-compact btn-compact--primary ob-wizard__cta" disabled="@(!_v2CanNext || _v2Busy)" @onclick="V2NextAsync">@V2NextLabel</button></footer>
+        </main>
+    </div>
+}
+</div>
+
+@code {
+    private enum V2Phase { Wizard, Install }
+    private sealed record V2Preset(string Code, string Title, string Lead);
+    private sealed record V2Side(int Number, int First, int Last, string Title, string Lead);
+    private sealed record V2Tab(int Step, string Title, string Lead);
+    private sealed record V2Welcome(int Number, string Title, string Lead, string Time);
+    private sealed record V2Question(int Id, string TextKey);
+    private bool _v2Loading = true, _v2Busy, _v2Welcome, _v2Finish, _v2FineTune, _v2PresetsOverridden, _v2Immediate = true, _v2NoWork, _v2HasConsent, _v2ConsentRequested, _v2InstallIos, _v2InstallCanPrompt, _v2CustomTravel, _v2ShowCity, _v2PostcodeMissing, _v2PostcodeResolved, _v2Saving, _v2SavedVisible, _v2SaveError;
+    private int _v2Step = 1, _v2CurrentQuestion, _v2MaxTravel = 30;
+    private decimal? _v2MinHours = 8, _v2MaxHours = 24;
+    private string _v2FirstName = "", _v2LastName = "", _v2Phone = "", _v2Postcode = "", _v2City = "", _v2Transport = "", _v2Dream = "", _v2DreamSearch = "", _v2BirthDay = "", _v2BirthMonth = "", _v2BirthYear = "", _v2Education = "", _v2EducationDirection = "", _v2InstallMessage = "";
+    private DateOnly? _v2BirthDate, _v2AvailableFrom;
+    private double? _v2HomeLat, _v2HomeLng;
+    private V2Phase _v2Phase;
+    private OnboardingState? _v2State;
+    private readonly HashSet<string> _v2Availability = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _v2Presets = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<CandidateEmployerHistory> _v2Jobs = [];
+    private readonly List<AddressSuggestion> _v2Suggestions = [];
+    private readonly Dictionary<int, int> _v2MiniAnswers = new();
+    private readonly Dictionary<int, int> _v2ServerAnswers = new();
+    private readonly HashSet<int> _v2LockedIds = [];
+    private List<V2Question> _v2MiniQuestions = [];
+    private QuestionnaireAutosave? _v2Autosave;
+    private CancellationTokenSource? _v2SaveCts, _v2GeoCts, _v2DreamCts;
+    private static readonly string[] V2Days = DayPartMatrix.DayCodes;
+    private static readonly string[] V2Slots = DayPartMatrix.DayPartCodes;
+    private static readonly string[] V2Transport = ["Lopend", "Fiets", "E-bike", "OV", "Auto"];
+    private static readonly int[] V2TravelChoices = [10, 20, 30, 45];
+    private static readonly V2Preset[] V2Presets = [new("direct","Onboarding.Preset.Direct","Onboarding.Preset.Direct.Lead"),new("school","Onboarding.Preset.School","Onboarding.Preset.School.Lead"),new("weekend","Onboarding.Preset.Weekend","Onboarding.Preset.Weekend.Lead"),new("evening","Onboarding.Preset.Evening","Onboarding.Preset.Evening.Lead"),new("office","Onboarding.Preset.Office","Onboarding.Preset.Office.Lead"),new("holiday","Onboarding.Preset.Holiday","Onboarding.Preset.Holiday.Lead"),new("parttime","Onboarding.Preset.Parttime","Onboarding.Preset.Parttime.Lead"),new("fulltime","Onboarding.Preset.Fulltime","Onboarding.Preset.Fulltime.Lead")];
+    private static readonly V2Side[] V2Sidebar = [new(1,1,3,"Onboarding.Phase.OverJou","Onboarding.Side.OverJou"),new(2,4,5,"Onboarding.Phase.Achtergrond","Onboarding.Side.Achtergrond"),new(3,6,6,"Onboarding.Phase.Droom","Onboarding.Side.Droom"),new(4,7,10,"Onboarding.Phase.WieBenJij","Onboarding.Side.WieBenJij"),new(5,11,11,"Onboarding.Side.Kompas","Onboarding.Side.KompasLead")];
+    private static readonly V2Tab[] V2TestTabs = [new(7,"Onboarding.Test.Competency","Onboarding.Test.Competency.Lead"),new(8,"Onboarding.Test.Career","Onboarding.Test.Career.Lead"),new(9,"Onboarding.Test.Culture","Onboarding.Test.Culture.Lead"),new(10,"Onboarding.Test.Values","Onboarding.Test.Values.Lead")];
+    private static readonly V2Welcome[] V2WelcomePhases = [new(1,"Onboarding.Phase.OverJou","Onboarding.Welcome.OverJou","Onboarding.Welcome.Time2"),new(2,"Onboarding.Welcome.Background","Onboarding.Welcome.BackgroundLead","Onboarding.Welcome.Time1"),new(3,"Onboarding.Welcome.Dream","Onboarding.Welcome.DreamLead","Onboarding.Welcome.TimeHalf"),new(4,"Onboarding.Phase.WieBenJij","Onboarding.Welcome.TestsLead","Onboarding.Welcome.Time2")];
+    private string V2SaveText => _v2SaveError ? Culture["Onboarding.NotSaved"] : _v2Saving ? Culture["Onboarding.Saving"] : _v2SavedVisible ? $"✓ {Culture["Onboarding.Saved"]}" : "";
+    private string V2HoursLabel => _v2MinHours is not null && _v2MaxHours is not null ? $"{_v2MinHours:0} – {_v2MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";
+    private string V2DaysSummary => _v2Availability.Count == 0 ? "–" : Culture.Format("Onboarding.DayPartsCount", _v2Availability.Count);
+    private bool V2AvailabilityValid => _v2MinHours is > 0 && _v2MaxHours >= _v2MinHours && _v2Availability.Count > 0;
+    private string V2MiniPrefix => $"obv2-{_v2Step}-";
+    private string V2NextLabel => _v2Step == 7 && !_v2HasConsent ? Culture["Onboarding.Consent.Cta"] : _v2Step == 10 ? Culture["Onboarding.Finish.Cta"] : _v2Step is >= 7 ? Culture["Onboarding.NextTest"] : _v2FineTune && _v2Step == 2 ? Culture["Onboarding.Done"] : Culture["Onboarding.Next"];
+    private bool _v2CanNext => _v2Step switch { 1 => !string.IsNullOrWhiteSpace(_v2FirstName) && !string.IsNullOrWhiteSpace(_v2LastName) && _v2BirthDate is not null && ((_v2HomeLat is not null && _v2HomeLng is not null) || !string.IsNullOrWhiteSpace(_v2City)), 2 => V2AvailabilityValid, 3 => !string.IsNullOrWhiteSpace(_v2Transport) && _v2MaxTravel > 0, 6 => !string.IsNullOrWhiteSpace(_v2Dream), 7 when !_v2HasConsent => _v2ConsentRequested, >= 7 => _v2MiniQuestions.All(q => _v2MiniAnswers.ContainsKey(q.Id)), _ => true };
+
+    protected override async Task OnInitializedAsync() { Culture.Changed += V2CultureChanged; await V2LoadAsync(); }
+    private async Task V2LoadAsync() { try { var onboardingTask = Api.GetMyOnboardingAsync(); var profileTask = Api.GetMyProfileAsync(); await Task.WhenAll(onboardingTask, profileTask); _v2State = await onboardingTask ?? new OnboardingState { CurrentStep = 1, ShouldShow = true }; V2ApplyProfile(await profileTask); if (_v2State.IsComplete) { if (await V2ShouldInstallAsync()) _v2Phase = V2Phase.Install; else Navigation.NavigateTo("/candidate/profile", true); return; } _v2Step = Math.Clamp(_v2State.CurrentStep, 1, 10); _v2Finish = _v2State.FinishReached; _v2Welcome = _v2Step == 1 && (_v2State.Steps.Count == 0 || _v2State.Steps.All(x => x.Step == 1 && x.CompletedAtUtc is null)); if (!_v2Welcome && !_v2Finish) { await V2MarkStartedAsync(); await V2PrepareMiniAsync(); } } catch (Exception ex) { _v2Error = ex.Message; } finally { _v2Loading = false; } }
+    private string? _v2Error;
+    private void V2ApplyProfile(MeProfile? profile) { if (profile is null) return; _v2FirstName = profile.FirstName ?? ""; _v2LastName = profile.LastName ?? ""; _v2Phone = profile.PhoneNumber ?? ""; _v2BirthDate = profile.DateOfBirth; if (_v2BirthDate is { } date) { _v2BirthDay = date.Day.ToString(); _v2BirthMonth = date.Month.ToString(); _v2BirthYear = date.Year.ToString(); } _v2HasConsent = profile.TestAiConsentAt is not null; _v2HomeLat = profile.HomeLatitude; _v2HomeLng = profile.HomeLongitude; var prefs = profile.Preferences ?? new(); V2SplitAddress(prefs.HomeAddress); _v2MinHours = prefs.MinHoursPerWeek ?? 8; _v2MaxHours = prefs.MaxHoursPerWeek ?? 24; _v2MaxTravel = prefs.MaxTravelMinutes ?? 30; _v2Transport = prefs.PreferredTransport is null ? "" : TransportLabels.Canonical(prefs.PreferredTransport); _v2Immediate = profile.AvailableFromDate is null; _v2AvailableFrom = profile.AvailableFromDate; foreach (var item in prefs.AvailabilityPresets.Where(AvailabilityPresetRules.IsKnown)) _v2Presets.Add(item); _v2PresetsOverridden = prefs.AvailabilityPresetsOverridden == true; foreach (var (day, parts) in prefs.Availability) foreach (var part in parts) _v2Availability.Add($"{day}:{part}"); _v2NoWork = prefs.NoWorkExperience == true; _v2Jobs.AddRange(prefs.Employers.Take(3)); var education = prefs.Educations.FirstOrDefault(); if (!string.IsNullOrWhiteSpace(education)) { var parts = education.Split('–', 2, StringSplitOptions.TrimEntries); _v2Education = parts[0]; _v2EducationDirection = parts.Length > 1 ? parts[1] : prefs.EducationDirection ?? ""; } }
+    private void V2SplitAddress(string? value) { if (string.IsNullOrWhiteSpace(value)) return; var i = value.Trim().IndexOf(' '); _v2Postcode = i > 0 ? value[..i].Trim() : value.Trim(); _v2City = i > 0 ? value[(i + 1)..].Trim() : ""; }
+    private string V2HomeAddress() => $"{V2NormalizePostcode(_v2Postcode)} {_v2City.Trim()}".Trim();
+    private static string V2NormalizePostcode(string value) { var raw = value.Replace(" ", "").ToUpperInvariant(); return raw.Length == 6 ? raw[..4] + " " + raw[4..] : value.Trim().ToUpperInvariant(); }
+    private async Task V2BeginAsync() { _v2Welcome = false; await V2MarkStartedAsync(); }
+    private async Task V2MarkStartedAsync() { _v2State = await Api.SaveMyOnboardingProgressAsync(_v2Step); V2FlashSaved(); }
+    private async Task V2BackAsync() { if (_v2Step <= 1) return; await V2FlushAsync(); _v2Step--; await V2MarkStartedAsync(); await V2PrepareMiniAsync(); }
+    private async Task V2NextAsync() { if (!_v2CanNext || _v2Busy) return; _v2Busy = true; _v2Error = null; try { if (_v2Step == 7 && !_v2HasConsent) { await V2AcceptConsentAsync(); return; } if (_v2Step is <= 5) await V2FlushAsync(); if (_v2Step == 6) await V2SaveDreamAsync(); if (_v2Step >= 7 && _v2Autosave is not null) await _v2Autosave.FlushAsync(); if (_v2Step == 10) { _v2State = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true); _v2Finish = true; _v2State = await Api.GetMyOnboardingAsync() ?? _v2State; return; } var old = _v2Step; _v2Step++; _v2State = await Api.SaveMyOnboardingProgressAsync(_v2Step, stepCompleted: true); V2FlashSaved(); await V2PrepareMiniAsync(); } catch (Exception ex) { _v2Error = ex.Message; _v2SaveError = true; } finally { _v2Busy = false; } }
+    private async Task V2SkipOptionalAsync() { await V2FlushAsync(); _v2Step++; _v2State = await Api.SaveMyOnboardingProgressAsync(_v2Step, stepSkipped: true); await V2PrepareMiniAsync(); }
+    private async Task V2LaterAsync() { try { await V2FlushAsync(); await Api.SaveMyOnboardingProgressAsync(_v2Step); } catch { } Navigation.NavigateTo("/home"); }
+    private void V2AddressChanged() { _v2HomeLat = _v2HomeLng = null; _v2PostcodeResolved = false; V2ScheduleProfileSave(); _v2GeoCts?.Cancel(); _v2GeoCts = new(); _ = V2GeocodeAsync(_v2GeoCts.Token); }
+    private async Task V2GeocodeAsync(CancellationToken ct) { try { await Task.Delay(350, ct); var post = V2NormalizePostcode(_v2Postcode); if (!System.Text.RegularExpressions.Regex.IsMatch(post, "^[1-9][0-9]{3} [A-Z]{2}$")) return; var found = (await Geocoder.SuggestAsync(post, ct)).FirstOrDefault(x => x.Label.Replace(" ", "").StartsWith(post.Replace(" ", ""), StringComparison.OrdinalIgnoreCase)); if (found is null) { _v2PostcodeMissing = true; await InvokeAsync(StateHasChanged); return; } V2SelectAddress(found); } catch (OperationCanceledException) { } catch { _v2PostcodeMissing = true; } }
+    private void V2SelectAddress(AddressSuggestion item) { _v2HomeLat = item.Latitude; _v2HomeLng = item.Longitude; V2SplitAddress(item.Label); _v2Postcode = V2NormalizePostcode(_v2Postcode); _v2PostcodeResolved = true; _v2PostcodeMissing = false; V2ScheduleProfileSave(); }
+    private void V2DateChanged() { if (int.TryParse(_v2BirthDay, out var d) && int.TryParse(_v2BirthMonth, out var m) && int.TryParse(_v2BirthYear, out var y) && DateOnly.TryParse($"{y:D4}-{m:D2}-{d:D2}", out var date)) _v2BirthDate = date; else _v2BirthDate = null; V2ScheduleProfileSave(); }
+    private void V2TogglePreset(string code) { if (!_v2Presets.Add(code)) _v2Presets.Remove(code); if (!_v2PresetsOverridden) V2ApplyPresets(); V2ScheduleProfileSave(); }
+    private void V2ApplyPresets() { var result = AvailabilityPresetRules.Compute(_v2Presets, _v2MinHours, _v2MaxHours); _v2MinHours = result.MinHours; _v2MaxHours = result.MaxHours; _v2Availability.Clear(); foreach (var dayPart in result.DayParts) _v2Availability.Add(dayPart); _v2Immediate = result.Immediate; if (_v2Immediate) _v2AvailableFrom = null; }
+    private void V2ResetPresets() { _v2PresetsOverridden = false; V2ApplyPresets(); V2ScheduleProfileSave(); }
+    private void V2ManualAvailability() { _v2PresetsOverridden = true; V2ScheduleProfileSave(); }
+    private void V2ToggleAvailability(string key) { if (!_v2Availability.Add(key)) _v2Availability.Remove(key); V2ManualAvailability(); }
+    private void V2AddJob() => _v2Jobs.Add(new CandidateEmployerHistory());
+    private void V2RemoveJob(CandidateEmployerHistory job) { _v2Jobs.Remove(job); V2ScheduleProfileSave(); }
+    private void V2SelectEducation(string level) { _v2Education = level == "MBO" ? "MBO 1" : level; if (level == EducationLevelLabels.None) _v2EducationDirection = ""; V2ScheduleProfileSave(); }
+    private void V2ChooseDream(DreamJob job) { _v2Dream = job.TitleNl; _v2DreamSearch = ""; V2ScheduleDreamSave(); }
+    private void V2ChooseOwnDream() { _v2Dream = _v2DreamSearch.Trim()[..Math.Min(128, _v2DreamSearch.Trim().Length)]; _v2DreamSearch = ""; V2ScheduleDreamSave(); }
+    private Task V2DreamKeyDown(KeyboardEventArgs e) { if (e.Key == "Escape") _v2DreamSearch = ""; if (e.Key == "Enter" && _v2DreamSearch.Length > 0) V2ChooseOwnDream(); return Task.CompletedTask; }
+    private async Task V2DreamUnknownAsync() { _v2Dream = ""; await V2SaveDreamAsync(); await V2NextAsync(); }
+    private void V2ScheduleDreamSave() { _v2DreamCts?.Cancel(); _v2DreamCts = new(); _ = V2DreamDebounceAsync(_v2DreamCts.Token); }
+    private async Task V2DreamDebounceAsync(CancellationToken token) { try { await Task.Delay(350, token); await V2SaveDreamAsync(); V2FlashSaved(); } catch (OperationCanceledException) { } }
+    private Task V2SaveDreamAsync() => Api.SaveOnboardingDreamJobAsync(string.IsNullOrWhiteSpace(_v2Dream) ? null : _v2Dream.Trim());
+    private async Task V2PrepareMiniAsync() { if (_v2Autosave is not null) { await _v2Autosave.DisposeAsync(); _v2Autosave = null; } _v2MiniAnswers.Clear(); _v2ServerAnswers.Clear(); _v2LockedIds.Clear(); _v2MiniQuestions = []; _v2CurrentQuestion = 0; if (_v2Step is < 7 or > 10 || !_v2HasConsent) return; Dictionary<string,int>? answers = null; IEnumerable<(int Id, string Key)> catalog; int[] ids; switch (_v2Step) { case 7: var a = await Api.GetMyCompetenciesAsync(); answers = a?.Answers; ids = OnboardingWizardCatalog.CompetencyQuestionIds; catalog = CompetencyTestCatalog.Questions.Select(x => (x.Id,x.TextKey)); break; case 8: var b = await Api.GetMyCareerInterestsAsync(); answers = b?.Answers; ids = OnboardingWizardCatalog.CareerQuestionIds; catalog = CareerTestCatalog.Questions.Select(x => (x.Id,x.TextKey)); break; case 9: var c = await Api.GetMyCultureAsync(); answers = c?.Answers; ids = OnboardingWizardCatalog.CultureQuestionIds; catalog = CulturePersonalityCatalog.Questions.Select(x => (x.Id,x.TextKey)); break; default: var d = await Api.GetMyValuesAsync(); answers = d?.Answers; ids = OnboardingWizardCatalog.ValuesQuestionIds; catalog = SchwartzValuesCatalog.Questions.Select(x => (x.Id,x.TextKey)); break; } foreach (var pair in answers ?? []) if (int.TryParse(pair.Key, out var id) && pair.Value is >= 1 and <= 5) _v2ServerAnswers[id] = pair.Value; foreach (var id in ids) if (_v2ServerAnswers.ContainsKey(id)) _v2LockedIds.Add(id); _v2MiniQuestions = catalog.Where(x => ids.Contains(x.Id) && !_v2LockedIds.Contains(x.Id)).Select(x => new V2Question(x.Id,x.Key)).ToList(); _v2Autosave = new QuestionnaireAutosave(async (draft, ct) => { var merged = new Dictionary<int,int>(_v2ServerAnswers); foreach (var item in draft) merged[item.Key] = item.Value; switch (_v2Step) { case 7: await Api.SaveMyCompetenciesAsync(merged, false, ct); break; case 8: await Api.SaveMyCareerInterestsAsync(merged, false, ct); break; case 9: await Api.SaveMyCultureAsync(merged, false, ct); break; case 10: await Api.SaveMyValuesAsync(merged, false, ct); break; } }, () => InvokeAsync(StateHasChanged), 150); }
+    private string V2QuestionText(V2Question q) => Culture[q.TextKey];
+    private async Task V2AnswerAsync(int id, int value) { _v2MiniAnswers[id] = value; if (_v2Autosave is not null) await _v2Autosave.SetAnswerAsync(id, value); _v2CurrentQuestion = Math.Min(_v2CurrentQuestion + 1, Math.Max(0, _v2MiniQuestions.Count - 1)); V2FlashSaved(); }
+    private void V2ExpandQuestion(int index) => _v2CurrentQuestion = index;
+    private async Task V2AcceptConsentAsync() { var profile = await Api.AcceptTestAiConsentAsync(); _v2HasConsent = profile?.TestAiConsentAt is not null; if (_v2HasConsent) await V2PrepareMiniAsync(); else _v2Error = Culture["Onboarding.Consent.Failed"]; }
+    private void V2ScheduleProfileSave() { if (_v2Loading) return; _v2SaveCts?.Cancel(); _v2SaveCts = new(); _v2Saving = true; _v2SaveError = false; _ = V2ProfileDebounceAsync(_v2SaveCts.Token); }
+    private async Task V2ProfileDebounceAsync(CancellationToken ct) { try { await Task.Delay(350, ct); await V2SaveProfileAsync(ct); V2FlashSaved(); } catch (OperationCanceledException) { } catch (Exception ex) { _v2Error = ex.Message; _v2SaveError = true; } finally { _v2Saving = false; await InvokeAsync(StateHasChanged); } }
+    private async Task V2FlushAsync() { _v2SaveCts?.Cancel(); await V2SaveProfileAsync(CancellationToken.None); }
+    private Task V2SaveProfileAsync(CancellationToken ct) => Api.UpdateMyProfileAsync(_v2FirstName.Trim(), _v2LastName.Trim(), _v2BirthDate, string.IsNullOrWhiteSpace(_v2Phone) ? null : _v2Phone.Trim(), _v2HomeLat, _v2HomeLng, string.IsNullOrWhiteSpace(V2HomeAddress()), _v2Immediate ? null : _v2AvailableFrom, _v2Immediate, new CandidatePreferences { MinHoursPerWeek = _v2MinHours, MaxHoursPerWeek = _v2MaxHours, MaxTravelMinutes = _v2MaxTravel, PreferredTransport = string.IsNullOrWhiteSpace(_v2Transport) ? null : _v2Transport, Availability = V2BuildAvailability(), AvailabilityPresets = _v2Presets.ToList(), AvailabilityPresetsOverridden = _v2PresetsOverridden, Employers = _v2Jobs, NoWorkExperience = _v2NoWork, Educations = string.IsNullOrWhiteSpace(_v2Education) ? [] : [OnboardingWizardCatalog.FormatEducationLine(_v2Education, _v2EducationDirection)], EducationDirection = _v2EducationDirection, HomeAddress = V2HomeAddress() }, ct);
+    private Dictionary<string,List<string>> V2BuildAvailability() { var result = new Dictionary<string,List<string>>(StringComparer.OrdinalIgnoreCase); foreach (var key in _v2Availability) { var pair = key.Split(':',2); if (pair.Length == 2) { if (!result.TryGetValue(pair[0], out var values)) result[pair[0]] = values = []; values.Add(pair[1]); } } return result; }
+    private void V2FlashSaved() { _v2Saving = false; _v2SaveError = false; _v2SavedVisible = true; _ = V2HideSavedAsync(); }
+    private async Task V2HideSavedAsync() { await Task.Delay(2500); _v2SavedVisible = false; await InvokeAsync(StateHasChanged); }
+    private async Task V2CompleteAsync() { _v2State = await Api.CompleteMyOnboardingAsync(); if (await V2ShouldInstallAsync()) _v2Phase = V2Phase.Install; else Navigation.NavigateTo("/candidate/profile"); }
+    private async Task<bool> V2ShouldInstallAsync() { try { if (await Js.InvokeAsync<bool>("lobsyPwaInstall.isStandalone")) return false; _v2InstallIos = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos"); _v2InstallCanPrompt = await Js.InvokeAsync<bool>("lobsyPwaInstall.canPrompt"); return _v2InstallIos || _v2InstallCanPrompt; } catch { return false; } }
+    private async Task V2InstallAsync() { try { await Js.InvokeAsync<object>("lobsyPwaInstall.prompt"); } catch { _v2InstallMessage = Culture["Onboarding.Install.Failed"]; } }
+    private async Task V2PushAsync() { try { var key = await Api.GetWebPushVapidPublicKeyAsync(); if (string.IsNullOrWhiteSpace(key)) { _v2InstallMessage = Culture["Push.Unavailable"]; return; } var result = await Js.InvokeAsync<V2PushResult>("lobsyPush.createSubscription", key); if (result.Ok && !string.IsNullOrWhiteSpace(result.Endpoint) && !string.IsNullOrWhiteSpace(result.P256dh) && !string.IsNullOrWhiteSpace(result.Auth)) { await Api.SubscribeWebPushAsync(result.Endpoint,result.P256dh,result.Auth); _v2InstallMessage = Culture["Onboarding.Install.PushOk"]; } else _v2InstallMessage = Culture["Push.Denied"]; } catch { _v2InstallMessage = Culture["Onboarding.Install.Failed"]; } }
+    private Task V2InstallLaterAsync() { Navigation.NavigateTo("/candidate/profile"); return Task.CompletedTask; }
+    private void V2CultureChanged() => InvokeAsync(StateHasChanged);
+    public async ValueTask DisposeAsync() { Culture.Changed -= V2CultureChanged; _v2SaveCts?.Cancel(); _v2GeoCts?.Cancel(); _v2DreamCts?.Cancel(); if (_v2Autosave is not null) await _v2Autosave.DisposeAsync(); }
+    private sealed class V2PushResult { public bool Ok { get; set; } public string? Endpoint { get; set; } public string? P256dh { get; set; } public string? Auth { get; set; } }
+}
+
+@*
 @page "/candidate/start"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
@@ -1492,3 +1720,4 @@
         public string? Reason { get; set; }
     }
 }
+*@

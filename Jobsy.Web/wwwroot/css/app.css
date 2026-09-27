@@ -22502,7 +22502,9 @@ html:not(.cookie-consent-known) .login-modal__dialog {
 .circuit-error { max-width: 28rem; }
 .circuit-error .login-submit { margin-top: 0.75rem; }
 
-/* === Candidate onboarding wizard (ob-) === */
+/*
+ Legacy onboarding wizard v1 rules, superseded by css/features/onboarding-wizard.css.
+ Kept disabled here so cached/minified legacy assets cannot style the v2 route.
 .ob-wizard {
     min-height: 100dvh;
     background: var(--bg);
@@ -22907,6 +22909,7 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     text-decoration: underline;
     text-underline-offset: 2px;
 }
+*/
 
 .panel-inline-error {
     margin: 0.75rem 0;

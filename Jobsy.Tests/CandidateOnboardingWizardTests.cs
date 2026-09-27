@@ -16,6 +16,12 @@ public class CandidateOnboardingWizardTests
         Assert.Equal(5, OnboardingWizardCatalog.CultureQuestionIds.Length);
         Assert.Equal(5, OnboardingWizardCatalog.ValuesQuestionIds.Length);
         Assert.Equal(10, OnboardingWizardCatalog.StepCount);
+        Assert.Equal(4, OnboardingWizardCatalog.Phases.Length);
+        Assert.Equal(Enumerable.Range(1, 10), OnboardingWizardCatalog.Phases.SelectMany(p => Enumerable.Range(p.FirstStep, p.StepCount)));
+        Assert.Equal(1, OnboardingWizardCatalog.MapV1Step(1));
+        Assert.Equal(2, OnboardingWizardCatalog.MapV1Step(2));
+        Assert.Equal(4, OnboardingWizardCatalog.MapV1Step(3));
+        Assert.Equal(10, OnboardingWizardCatalog.MapV1Step(10));
 
         Assert.Contains(1, OnboardingWizardCatalog.CompetencyQuestionIds);
         Assert.Contains(21, OnboardingWizardCatalog.CompetencyQuestionIds);
@@ -173,6 +179,8 @@ public class CandidateOnboardingWizardTests
         Assert.Contains("CompleteMyOnboardingAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("lobsyPwaInstall", wizard, StringComparison.Ordinal);
         Assert.Contains("Onboarding.Later", wizard, StringComparison.Ordinal);
+        Assert.DoesNotContain("PopularDreamJobChips", wizard, StringComparison.Ordinal);
+        Assert.DoesNotContain("DreamChipsForRiasec", wizard, StringComparison.Ordinal);
 
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Layout/MainLayout.razor"));
         Assert.Contains("candidate/start", layout, StringComparison.Ordinal);
@@ -183,6 +191,9 @@ public class CandidateOnboardingWizardTests
         var migration = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Data/Migrations/20260926153316_SyncOnboardingModelSnapshot.cs"));
         Assert.Contains("CandidateOnboardings", migration, StringComparison.Ordinal);
         Assert.Contains("AvailableFromDate", migration, StringComparison.Ordinal);
+
+        var v2Migration = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Data/Migrations/20260927080000_AddOnboardingWizardVersion.cs"));
+        Assert.Contains("AddOnboardingWizardVersion", v2Migration, StringComparison.Ordinal);
 
         var library = File.ReadAllText(Path.Combine(root, "Jobsy.Core/Rules/OnboardingImpressionLibrary.cs"));
         Assert.Contains("OnboardingImpressionLibrary", library, StringComparison.Ordinal);

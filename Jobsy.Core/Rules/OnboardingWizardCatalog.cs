@@ -1,13 +1,14 @@
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Mini-test question IDs, education chips, dream-job suggestions, and step metadata
-/// for the candidate first-login wizard (<c>/candidate/start</c>).
+/// Mini-test question IDs, education chips, phases, and step metadata
+/// for the candidate first-login wizard v2 (<c>/candidate/start</c>).
 /// </summary>
 public static class OnboardingWizardCatalog
 {
     public const int StepCount = 10;
     public const int TotalMinutesEstimate = 6;
+    public const int WizardVersionV2 = 2;
 
     /// <summary>Minutes remaining estimate by current step (1-based), inclusive of current step.</summary>
     public static readonly int[] RemainingMinutesByStep =
@@ -18,6 +19,70 @@ public static class OnboardingWizardCatalog
 
     public static int RemainingMinutes(int step)
         => step is >= 1 and <= StepCount ? RemainingMinutesByStep[step] : 1;
+
+    public sealed record PhaseInfo(string Code, string NameKey, int FirstStep, int LastStep)
+    {
+        public int StepCount => LastStep - FirstStep + 1;
+
+        public bool Contains(int step) => step >= FirstStep && step <= LastStep;
+
+        public int IndexInPhase(int step) => Contains(step) ? step - FirstStep : -1;
+    }
+
+    /// <summary>Progress-bar phases covering steps 1–10 without gaps.</summary>
+    public static readonly PhaseInfo[] Phases =
+    [
+        new("over-jou", "Onboarding.Phase.OverJou", 1, 3),
+        new("achtergrond", "Onboarding.Phase.Achtergrond", 4, 5),
+        new("droom", "Onboarding.Phase.Droom", 6, 6),
+        new("wie-ben-jij", "Onboarding.Phase.WieBenJij", 7, 10)
+    ];
+
+    public static PhaseInfo PhaseForStep(int step)
+        => Phases.FirstOrDefault(p => p.Contains(step)) ?? Phases[0];
+
+    /// <summary>
+    /// Fill fraction (0–1) for a phase segment given the current counted step.
+    /// Completed = 1, future = 0, current = (index in phase + 1) / steps in phase.
+    /// </summary>
+    public static double PhaseFill(PhaseInfo phase, int currentStep)
+    {
+        if (currentStep > phase.LastStep)
+        {
+            return 1;
+        }
+
+        if (currentStep < phase.FirstStep)
+        {
+            return 0;
+        }
+
+        var index = phase.IndexInPhase(currentStep);
+        return (index + 1) / (double)phase.StepCount;
+    }
+
+    /// <summary>
+    /// Map an in-progress v1 wizard step to v2 numbering.
+    /// Old step 10 (result) maps to 10; callers should also open the finish screen
+    /// via <see cref="MapV1ShowsFinish"/>.
+    /// </summary>
+    public static int MapV1Step(int v1Step) => v1Step switch
+    {
+        1 => 1,
+        2 => 2,
+        3 => 4,
+        4 => 5,
+        5 => 6,
+        6 => 7,
+        7 => 8,
+        8 => 9,
+        9 => 10,
+        10 => 10,
+        _ => Math.Clamp(v1Step, 1, StepCount)
+    };
+
+    /// <summary>True when a v1 in-progress row was on the old result step.</summary>
+    public static bool MapV1ShowsFinish(int v1Step) => v1Step == 10;
 
     /// <summary>
     /// Competentie mini: one item per Big Five workplace dimension
@@ -69,80 +134,36 @@ public static class OnboardingWizardCatalog
         "WO"
     ];
 
-    /// <summary>Popular dream-job chips before the Beroepentest is answered.</summary>
-    public static readonly string[] PopularDreamJobChips =
+    /// <summary>Radio rows for education (MBO expands to niveau 1–4).</summary>
+    public static readonly string[] EducationRadioLevels =
     [
-        "Verkoper",
-        "Magazijnmedewerker",
-        "Zorghulp",
-        "Horecamedewerker",
-        "Administratief medewerker",
-        "Chauffeur",
-        "Productiemedewerker",
-        "Klantenservice"
+        EducationLevelLabels.None,
+        "Basisschool",
+        "VMBO",
+        "HAVO",
+        "VWO",
+        "MBO",
+        "HBO",
+        "WO"
     ];
 
-    public static readonly string[] DreamJobChipsByRiasecR =
+    public static readonly string[] EducationDirectionHavoVwo =
     [
-        "Monteur", "Magazijnmedewerker", "Chauffeur", "Productiemedewerker"
+        "Natuur & Techniek",
+        "Natuur & Gezondheid",
+        "Economie & Maatschappij",
+        "Cultuur & Maatschappij"
     ];
 
-    public static readonly string[] DreamJobChipsByRiasecI =
+    public static readonly string[] EducationDirectionVmboMbo =
     [
-        "Laborant", "IT-support", "Kwaliteitscontroleur", "Analist"
+        "Zorg & welzijn",
+        "Techniek",
+        "Economie & handel",
+        "ICT",
+        "Horeca & bakkerij",
+        "Groen"
     ];
-
-    public static readonly string[] DreamJobChipsByRiasecA =
-    [
-        "Vormgever", "Contentmaker", "Winkelstylist", "Fotograaf"
-    ];
-
-    public static readonly string[] DreamJobChipsByRiasecS =
-    [
-        "Zorghulp", "Docent-assistent", "Klantenservice", "Recreatiemedewerker"
-    ];
-
-    public static readonly string[] DreamJobChipsByRiasecE =
-    [
-        "Verkoper", "Teamleider", "Accountmanager", "Ondernemer"
-    ];
-
-    public static readonly string[] DreamJobChipsByRiasecC =
-    [
-        "Administratief medewerker", "Boekhoudkundig medewerker", "Planner", "Receptionist"
-    ];
-
-    public static IReadOnlyList<string> DreamChipsForRiasec(IEnumerable<string>? topCodes)
-    {
-        var chips = new List<string>();
-        foreach (var code in topCodes ?? [])
-        {
-            var set = code switch
-            {
-                CareerTestCatalog.Realistic => DreamJobChipsByRiasecR,
-                CareerTestCatalog.Investigative => DreamJobChipsByRiasecI,
-                CareerTestCatalog.Artistic => DreamJobChipsByRiasecA,
-                CareerTestCatalog.Social => DreamJobChipsByRiasecS,
-                CareerTestCatalog.Enterprising => DreamJobChipsByRiasecE,
-                CareerTestCatalog.Conventional => DreamJobChipsByRiasecC,
-                _ => []
-            };
-            foreach (var c in set)
-            {
-                if (!chips.Contains(c, StringComparer.OrdinalIgnoreCase))
-                {
-                    chips.Add(c);
-                }
-            }
-        }
-
-        if (chips.Count == 0)
-        {
-            return PopularDreamJobChips;
-        }
-
-        return chips.Take(8).ToList();
-    }
 
     public static string FormatEducationLine(string level, string? direction)
     {

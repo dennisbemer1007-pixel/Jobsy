@@ -150,7 +150,9 @@ public class MeController : ControllerBase
             existing.Certificates,
             existing.ShowAddressOnCv,
             existing.NoWorkExperience,
-            existing.EducationDirection);
+            existing.EducationDirection,
+            existing.AvailabilityPresets,
+            existing.AvailabilityPresetsOverridden);
 
         await _db.SaveChangesAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
@@ -313,7 +315,9 @@ public class MeController : ControllerBase
                 request.Preferences.Certificates,
                 request.Preferences.ShowAddressOnCv,
                 request.Preferences.NoWorkExperience ?? existing.NoWorkExperience,
-                request.Preferences.EducationDirection ?? existing.EducationDirection);
+                request.Preferences.EducationDirection ?? existing.EducationDirection,
+                request.Preferences.AvailabilityPresets ?? existing.AvailabilityPresets,
+                request.Preferences.AvailabilityPresetsOverridden ?? existing.AvailabilityPresetsOverridden);
         }
 
         if (request.AvailableFromDate.HasValue
@@ -716,7 +720,9 @@ public class MeController : ControllerBase
                 merged.Preferences.Certificates,
                 merged.Preferences.ShowAddressOnCv,
                 merged.Preferences.NoWorkExperience ?? prefs.NoWorkExperience,
-                merged.Preferences.EducationDirection ?? prefs.EducationDirection);
+                merged.Preferences.EducationDirection ?? prefs.EducationDirection,
+                merged.Preferences.AvailabilityPresets ?? prefs.AvailabilityPresets,
+                merged.Preferences.AvailabilityPresetsOverridden ?? prefs.AvailabilityPresetsOverridden);
             existing.ExtractedAtUtc = DateTime.UtcNow;
             existing.FilledFieldsJson = JsonSerializer.Serialize(merged.FilledFields, JsonOptions);
         }
@@ -1410,6 +1416,35 @@ public class MeController : ControllerBase
                 }
             }
 
+            List<string>? availabilityPresets = null;
+            if (root.TryGetProperty("availabilityPresets", out var presetsEl)
+                && presetsEl.ValueKind == JsonValueKind.Array)
+            {
+                availabilityPresets = [];
+                foreach (var item in presetsEl.EnumerateArray())
+                {
+                    if (item.ValueKind != JsonValueKind.String)
+                    {
+                        continue;
+                    }
+
+                    var code = item.GetString()?.Trim();
+                    if (!string.IsNullOrWhiteSpace(code)
+                        && AvailabilityPresetRules.IsKnown(code)
+                        && !availabilityPresets.Contains(code, StringComparer.OrdinalIgnoreCase))
+                    {
+                        availabilityPresets.Add(AvailabilityPresetRules.TryGet(code)!.Code);
+                    }
+                }
+            }
+
+            bool? availabilityPresetsOverridden = null;
+            if (root.TryGetProperty("availabilityPresetsOverridden", out var overriddenEl)
+                && (overriddenEl.ValueKind is JsonValueKind.True or JsonValueKind.False))
+            {
+                availabilityPresetsOverridden = overriddenEl.GetBoolean();
+            }
+
             return new CandidatePreferencesDto(
                 roles,
                 maxTravel,
@@ -1429,7 +1464,9 @@ public class MeController : ControllerBase
                 certificates,
                 showAddressOnCv,
                 noWorkExperience,
-                educationDirection);
+                educationDirection,
+                availabilityPresets,
+                availabilityPresetsOverridden);
         }
         catch (Exception)
         {
@@ -1513,7 +1550,9 @@ public class MeController : ControllerBase
         IEnumerable<CandidateCertificateDto>? certificates = null,
         bool? showAddressOnCv = null,
         bool? noWorkExperience = null,
-        string? educationDirection = null)
+        string? educationDirection = null,
+        IEnumerable<string>? availabilityPresets = null,
+        bool? availabilityPresetsOverridden = null)
     {
         var trimmedHome = string.IsNullOrWhiteSpace(homeAddress) ? null : homeAddress.Trim();
         if (trimmedHome is { Length: > 256 })
@@ -1598,7 +1637,13 @@ public class MeController : ControllerBase
                 ? null
                 : (educationDirection.Trim().Length > 80
                     ? educationDirection.Trim()[..80]
-                    : educationDirection.Trim())
+                    : educationDirection.Trim()),
+            availabilityPresets = availabilityPresets?
+                .Where(x => !string.IsNullOrWhiteSpace(x) && AvailabilityPresetRules.IsKnown(x))
+                .Select(x => AvailabilityPresetRules.TryGet(x)!.Code)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            availabilityPresetsOverridden
         }, JsonOptions);
     }
 }

@@ -916,6 +916,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         bool? stepCompleted = null,
         bool? stepSkipped = null,
         string? source = null,
+        bool? finishReached = null,
         CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync("api/me/onboarding", new
@@ -923,7 +924,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
             currentStep,
             stepCompleted,
             stepSkipped,
-            source
+            source,
+            finishReached
         }, ct);
         if (!response.IsSuccessStatusCode)
         {

@@ -181,6 +181,8 @@ public sealed class CandidatePreferences
     public bool? ShowAddressOnCv { get; set; }
     public bool? NoWorkExperience { get; set; }
     public string? EducationDirection { get; set; }
+    public List<string> AvailabilityPresets { get; set; } = [];
+    public bool? AvailabilityPresetsOverridden { get; set; }
 }
 
 public sealed class CandidateEmployerHistory

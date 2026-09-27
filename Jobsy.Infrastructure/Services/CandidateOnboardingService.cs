@@ -31,9 +31,12 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         CancellationToken cancellationToken = default)
     {
         var row = await EnsureRowAsync(userId, cancellationToken);
+        await MigrateV1RowIfNeededAsync(row, cancellationToken);
         var shouldShow = await ShouldShowWizardAsync(userId, cancellationToken);
         CandidateOnboardingImpressionDto? impression = null;
-        if (row.CurrentStep >= OnboardingWizardCatalog.StepCount || row.CompletedAtUtc is not null)
+        if (row.FinishReached
+            || row.CurrentStep >= OnboardingWizardCatalog.StepCount
+            || row.CompletedAtUtc is not null)
         {
             impression = await BuildImpressionAsync(userId, cancellationToken);
         }
@@ -47,6 +50,7 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         CancellationToken cancellationToken = default)
     {
         var row = await EnsureRowAsync(userId, cancellationToken);
+        await MigrateV1RowIfNeededAsync(row, cancellationToken);
         var now = DateTime.UtcNow;
         var step = Math.Clamp(request.CurrentStep, 1, OnboardingWizardCatalog.StepCount);
 
@@ -62,6 +66,12 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         }
 
         row.CurrentStep = step;
+        row.WizardVersion = OnboardingWizardCatalog.WizardVersionV2;
+        if (request.FinishReached == true)
+        {
+            row.FinishReached = true;
+        }
+
         if (!string.IsNullOrWhiteSpace(request.Source))
         {
             row.Source = request.Source.Trim();
@@ -73,7 +83,13 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
 
         row.UpdatedAtUtc = now;
         await _db.SaveChangesAsync(cancellationToken);
-        return ToDto(row, await ShouldShowWizardAsync(userId, cancellationToken), null);
+        CandidateOnboardingImpressionDto? impression = null;
+        if (row.FinishReached)
+        {
+            impression = await BuildImpressionAsync(userId, cancellationToken);
+        }
+
+        return ToDto(row, await ShouldShowWizardAsync(userId, cancellationToken), impression);
     }
 
     public async Task<CandidateOnboardingStateDto> CompleteAsync(
@@ -85,6 +101,8 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         row.StepsJson = OnboardingStepAnalytics.MarkCompleted(
             row.StepsJson, OnboardingWizardCatalog.StepCount, now);
         row.CurrentStep = OnboardingWizardCatalog.StepCount;
+        row.FinishReached = true;
+        row.WizardVersion = OnboardingWizardCatalog.WizardVersionV2;
         row.CompletedAtUtc ??= now;
         row.UpdatedAtUtc = now;
 
@@ -154,6 +172,8 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
             Id = Guid.NewGuid(),
             UserId = userId,
             CurrentStep = 1,
+            WizardVersion = OnboardingWizardCatalog.WizardVersionV2,
+            FinishReached = false,
             StartedAtUtc = now,
             UpdatedAtUtc = now,
             StepsJson = OnboardingStepAnalytics.MarkStarted("[]", 1, now)
@@ -161,6 +181,28 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         _db.CandidateOnboardings.Add(row);
         await _db.SaveChangesAsync(cancellationToken);
         return row;
+    }
+
+    private async Task MigrateV1RowIfNeededAsync(
+        CandidateOnboarding row,
+        CancellationToken cancellationToken)
+    {
+        if (row.WizardVersion >= OnboardingWizardCatalog.WizardVersionV2
+            || row.CompletedAtUtc is not null)
+        {
+            return;
+        }
+
+        var v1Step = row.CurrentStep;
+        row.CurrentStep = OnboardingWizardCatalog.MapV1Step(v1Step);
+        if (OnboardingWizardCatalog.MapV1ShowsFinish(v1Step))
+        {
+            row.FinishReached = true;
+        }
+
+        row.WizardVersion = OnboardingWizardCatalog.WizardVersionV2;
+        row.UpdatedAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
     }
 
     private async Task<CandidateOnboardingImpressionDto> BuildImpressionAsync(
@@ -288,8 +330,6 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
                                || culture.IsProvisional);
         }).ToList();
 
-        var dreamSuggestions = OnboardingWizardCatalog.DreamChipsForRiasec(riasecTop);
-
         return new CandidateOnboardingImpressionDto(
             OnboardingImpressionLibrary.ResultLabel,
             strengths,
@@ -298,7 +338,6 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
             topValue,
             liveMatches.Count,
             cards,
-            dreamSuggestions,
             competency.IsProvisional,
             career.IsProvisional,
             culture.IsProvisional,
@@ -339,7 +378,9 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
             shouldShow,
             row.Source,
             OnboardingStepAnalytics.Parse(row.StepsJson),
-            impression);
+            impression,
+            row.WizardVersion,
+            row.FinishReached);
 
     private static int? TryParseTravelMinutes(IReadOnlyList<string>? why)
     {
