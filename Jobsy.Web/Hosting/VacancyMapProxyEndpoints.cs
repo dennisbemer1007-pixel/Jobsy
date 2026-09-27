@@ -35,6 +35,10 @@ public static class VacancyMapProxyEndpoints
         // Legacy detail path still used by older cached jobMap bundles.
         app.MapGet("/api/vacancies/{id:guid}", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, $"api/vacancies/{id:D}", ct));
+
+        // Travel-time polygons for banenkaart rings (Valhalla; client falls back to circles).
+        app.MapGet("/api/travel/isochrones", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
+            forwarder.ForwardAsync(http, "api/travel/isochrones", ct));
     }
 }
 
@@ -221,9 +225,10 @@ public sealed class VacancyMapApiForwarder : IVacancyMapApiForwarder
             return false;
         }
 
-        // Cache pins + card(s) only — not legacy full vacancy detail.
+        // Cache pins + card(s) + isochrones — not legacy full vacancy detail.
         return apiPath.Equals("api/vacancies/pins", StringComparison.OrdinalIgnoreCase)
                || apiPath.Equals("api/vacancies/cards", StringComparison.OrdinalIgnoreCase)
+               || apiPath.Equals("api/travel/isochrones", StringComparison.OrdinalIgnoreCase)
                || (apiPath.StartsWith("api/vacancies/", StringComparison.OrdinalIgnoreCase)
                    && apiPath.EndsWith("/card", StringComparison.OrdinalIgnoreCase));
     }

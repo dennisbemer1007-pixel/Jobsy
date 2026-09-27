@@ -1981,6 +1981,7 @@
                 ["highlightSeed"] = _highlightShuffleSeed,
                 ["preferFilledLocation"] = preferFilledLocation,
                 ["pinsUrl"] = BuildPinsApiUrl(),
+                ["labels"] = MapUiLabels(),
                 ["view"] = new Dictionary<string, object?>
                 {
                     ["lat"] = opening.CenterLat,
@@ -2689,6 +2690,24 @@
         ["maxMinutes"] = _maxTravelMinutes,
         ["transport"] = _selectedTransport,
         ["radiusKm"] = _radiusKm
+    };
+
+    private Dictionary<string, object?> MapUiLabels() => new()
+    {
+        ["vacanciesAtPlace"] = Culture["Map.VacanciesCount"],
+        ["vacanciesAtPlaceWithPlace"] = Culture["Map.VacanciesCountPlace"],
+        ["vacanciesInView"] = Culture["Map.VacanciesInView"],
+        ["prevVacancy"] = Culture["Map.PrevVacancy"],
+        ["nextVacancy"] = Culture["Map.NextVacancy"],
+        ["vacancyOf"] = Culture["Map.VacancyOf"],
+        ["close"] = Culture["Common.Close"],
+        ["apply"] = Culture["Map.Apply"],
+        ["featured"] = Culture["Discovery.Featured"],
+        ["unavailableTitle"] = Culture["Map.UnavailableTitle"],
+        ["unavailableHint"] = Culture["Map.UnavailableHint"],
+        ["retry"] = Culture["Common.Retry"],
+        ["view"] = Culture["Common.Open"],
+        ["pagerNav"] = Culture["Map.PagerNav"]
     };
 
     private void OnTravelSliderInput(ChangeEventArgs e)

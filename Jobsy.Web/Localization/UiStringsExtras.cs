@@ -464,6 +464,16 @@ internal static class UiStringsExtras
         ["Feedback.Status.New"] = "Nieuw",
         ["Feedback.Status.InProgress"] = "In behandeling",
         ["Feedback.Status.Resolved"] = "Opgelost",
+        ["Map.VacanciesCount"] = "{count} vacatures",
+        ["Map.VacanciesCountPlace"] = "{count} vacatures · {place}",
+        ["Map.VacanciesInView"] = "{count} vacatures in beeld",
+        ["Map.PrevVacancy"] = "Vorige vacature",
+        ["Map.NextVacancy"] = "Volgende vacature",
+        ["Map.VacancyOf"] = "Vacature {current} van {total}",
+        ["Map.UnavailableTitle"] = "Vacature niet beschikbaar",
+        ["Map.UnavailableHint"] = "Probeer het opnieuw of open de vacaturepagina.",
+        ["Map.PagerNav"] = "Vacatures op deze locatie",
+        ["Map.Apply"] = "Solliciteer",
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -900,6 +910,16 @@ internal static class UiStringsExtras
         ["Feedback.Status.New"] = "New",
         ["Feedback.Status.InProgress"] = "In progress",
         ["Feedback.Status.Resolved"] = "Resolved",
+        ["Map.VacanciesCount"] = "{count} vacancies",
+        ["Map.VacanciesCountPlace"] = "{count} vacancies · {place}",
+        ["Map.VacanciesInView"] = "{count} vacancies in view",
+        ["Map.PrevVacancy"] = "Previous vacancy",
+        ["Map.NextVacancy"] = "Next vacancy",
+        ["Map.VacancyOf"] = "Vacancy {current} of {total}",
+        ["Map.UnavailableTitle"] = "Vacancy unavailable",
+        ["Map.UnavailableHint"] = "Try again or open the vacancy page.",
+        ["Map.PagerNav"] = "Vacancies at this location",
+        ["Map.Apply"] = "Apply",
     };
 
     private static Dictionary<string, string> Pl() => new(StringComparer.OrdinalIgnoreCase)
@@ -1336,6 +1356,16 @@ internal static class UiStringsExtras
         ["Feedback.Status.New"] = "Nowe",
         ["Feedback.Status.InProgress"] = "W toku",
         ["Feedback.Status.Resolved"] = "Rozwiązane",
+        ["Map.VacanciesCount"] = "{count} ofert",
+        ["Map.VacanciesCountPlace"] = "{count} ofert · {place}",
+        ["Map.VacanciesInView"] = "{count} ofert w widoku",
+        ["Map.PrevVacancy"] = "Poprzednia oferta",
+        ["Map.NextVacancy"] = "Następna oferta",
+        ["Map.VacancyOf"] = "Oferta {current} z {total}",
+        ["Map.UnavailableTitle"] = "Oferta niedostępna",
+        ["Map.UnavailableHint"] = "Spróbuj ponownie lub otwórz stronę oferty.",
+        ["Map.PagerNav"] = "Oferty w tej lokalizacji",
+        ["Map.Apply"] = "Aplikuj",
     };
 
     private static Dictionary<string, string> Ro() => new(StringComparer.OrdinalIgnoreCase)
@@ -1772,6 +1802,16 @@ internal static class UiStringsExtras
         ["Feedback.Status.New"] = "Nou",
         ["Feedback.Status.InProgress"] = "În lucru",
         ["Feedback.Status.Resolved"] = "Rezolvat",
+        ["Map.VacanciesCount"] = "{count} posturi",
+        ["Map.VacanciesCountPlace"] = "{count} posturi · {place}",
+        ["Map.VacanciesInView"] = "{count} posturi în vizualizare",
+        ["Map.PrevVacancy"] = "Postul anterior",
+        ["Map.NextVacancy"] = "Postul următor",
+        ["Map.VacancyOf"] = "Postul {current} din {total}",
+        ["Map.UnavailableTitle"] = "Post indisponibil",
+        ["Map.UnavailableHint"] = "Încearcă din nou sau deschide pagina postului.",
+        ["Map.PagerNav"] = "Posturi la această locație",
+        ["Map.Apply"] = "Aplică",
     };
 
     private static Dictionary<string, string> Ar() => new(StringComparer.OrdinalIgnoreCase)
@@ -2208,5 +2248,15 @@ internal static class UiStringsExtras
         ["Feedback.Status.New"] = "جديد",
         ["Feedback.Status.InProgress"] = "قيد المعالجة",
         ["Feedback.Status.Resolved"] = "محلول",
+        ["Map.VacanciesCount"] = "{count} وظائف",
+        ["Map.VacanciesCountPlace"] = "{count} وظائف · {place}",
+        ["Map.VacanciesInView"] = "{count} وظائف في العرض",
+        ["Map.PrevVacancy"] = "الوظيفة السابقة",
+        ["Map.NextVacancy"] = "الوظيفة التالية",
+        ["Map.VacancyOf"] = "وظيفة {current} من {total}",
+        ["Map.UnavailableTitle"] = "الوظيفة غير متاحة",
+        ["Map.UnavailableHint"] = "حاول مرة أخرى أو افتح صفحة الوظيفة.",
+        ["Map.PagerNav"] = "وظائف في هذا الموقع",
+        ["Map.Apply"] = "قدّم",
     };
 }

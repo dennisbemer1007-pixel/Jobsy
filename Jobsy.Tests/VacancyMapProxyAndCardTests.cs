@@ -100,7 +100,7 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
             StringComparison.Ordinal);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("jobMap.min.js?v=20260927-mapreuse", maps);
+        Assert.Contains("jobMap.min.js?v=20260927-banenkaart-v3", maps);
         Assert.Contains("photoIsWorkTypePlaceholder", js);
         Assert.Contains("/api/vacancies/{id:guid}/image",
             File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs")));
@@ -120,7 +120,18 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.DoesNotContain("easeTo", onCluster, StringComparison.Ordinal);
         Assert.Contains("fetchJsonWithOneRetry", js);
         Assert.Contains("retryAfterMs", js);
-        Assert.Contains("map-popup--skeleton", js);
+        // Cluster paging uses pin/card HTML in a fixed frame — never the shimmer skeleton.
+        var renderClusterStart = js.IndexOf("function renderClusterPage", StringComparison.Ordinal);
+        Assert.True(renderClusterStart >= 0);
+        var renderClusterEnd = js.IndexOf("\n    function bindClusterPopupInteractions", renderClusterStart, StringComparison.Ordinal);
+        Assert.True(renderClusterEnd > renderClusterStart);
+        var renderCluster = js.Substring(renderClusterStart, renderClusterEnd - renderClusterStart);
+        Assert.DoesNotContain("skeletonPopupHtml", renderCluster, StringComparison.Ordinal);
+        Assert.DoesNotContain("map-popup--skeleton", renderCluster, StringComparison.Ordinal);
+        Assert.Contains("prefetchClusterCards", js, StringComparison.Ordinal);
+        Assert.Contains("map-cluster-card", js, StringComparison.Ordinal);
+        // Single-pin flow may still use the skeleton helper.
+        Assert.Contains("function skeletonPopupHtml", js, StringComparison.Ordinal);
         Assert.Contains("touchstart", js);
     }
 

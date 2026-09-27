@@ -4323,7 +4323,7 @@ html[dir="rtl"] .account-menu__panel {
     flex-direction: column;
 }
 
-/* Desktop cluster: keep card size stable while paging (mobile already clamps). */
+/* Desktop cluster: fixed card size (v3). Content height lives under banenkaart.css. */
 @media (min-width: 769px) {
     .job-map-popup--cluster .map-popup__main,
     .job-map-popup--cluster .map-popup__media,
@@ -4331,6 +4331,14 @@ html[dir="rtl"] .account-menu__panel {
         height: 252px;
         min-height: 252px;
         max-height: 252px;
+    }
+
+    .job-map-popup--cluster .map-cluster-card .map-popup__main,
+    .job-map-popup--cluster .map-cluster-card .map-popup__media,
+    .job-map-popup--cluster .map-cluster-card .map-popup__body {
+        height: 100%;
+        min-height: 0;
+        max-height: none;
     }
 
     .job-map-popup--cluster .map-popup__header {
@@ -4402,9 +4410,10 @@ html[dir="rtl"] .account-menu__panel {
     border-radius: 6px;
 }
 
+/* Skeleton media matches compact card — never taller than the filled popup. */
 .map-popup--skeleton .map-popup__media {
-    min-width: 112px;
-    min-height: 252px;
+    min-width: 96px;
+    min-height: 152px;
 }
 
 @keyframes map-popup-shimmer {
@@ -4968,25 +4977,34 @@ a.map-popup__apply.map-popup__cta:visited {
         right: -10px;
     }
 
-    /* Compact horizontal card — keep title/address/travel + Solliciteer visible */
+    /* Compact horizontal card — fixed height so cluster paging never jumps */
     .map-popup__main {
         flex-direction: row;
-        height: auto;
-        min-height: 168px;
-        max-height: min(52vh, 280px);
+        height: 152px;
+        min-height: 152px;
+        max-height: 152px;
+    }
+
+    .job-map-popup--cluster .map-popup__main {
+        height: 152px;
+        min-height: 152px;
+        max-height: 152px;
     }
 
     .map-popup__media {
         flex: 0 0 96px;
         width: 96px;
         align-self: stretch;
-        height: auto;
-        min-height: 168px;
+        height: 152px;
+        min-height: 152px;
+        max-height: 152px;
     }
 
-    .map-popup__media--logo-only {
-        height: auto;
-        min-height: 168px;
+    .map-popup__media--logo-only,
+    .map-popup__media--empty {
+        height: 152px;
+        min-height: 152px;
+        max-height: 152px;
     }
 
     .map-popup__media-logo {
