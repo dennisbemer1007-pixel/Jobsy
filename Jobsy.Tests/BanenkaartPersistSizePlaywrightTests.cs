@@ -93,41 +93,30 @@ public class BanenkaartPersistSizePlaywrightTests
         await AssertHtmlUnderLimitAsync(baseUrl, cookieHeader: null);
 
         var page = await context.NewPageAsync();
-        IWebSocket? blazorWs = null;
         var wsClosedEarly = false;
-        page.WebSocket += (_, ws) =>
-        {
-            if (!(ws.Url ?? "").Contains("_blazor", StringComparison.OrdinalIgnoreCase))
+        // Capture the hub socket during navigation — desktop can race past a
+        // late page.WebSocket handler even when Blazor._internal is already up.
+        var blazorWs = await page.RunAndWaitForWebSocketAsync(
+            async () =>
             {
-                return;
-            }
-
-            blazorWs = ws;
-            ws.Close += (_, _) =>
+                await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            },
+            new()
             {
-                // Closed before the 10 s hold window counts as a failure.
-                wsClosedEarly = true;
-            };
-        };
-
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                Timeout = 30_000,
+                Predicate = socket => (socket.Url ?? "").Contains("_blazor", StringComparison.OrdinalIgnoreCase)
+            });
+        Assert.NotNull(blazorWs);
+        blazorWs.Close += (_, _) => wsClosedEarly = true;
 
         await page.WaitForFunctionAsync(
-            """
-            () => {
-              const sockets = performance.getEntriesByType('resource')
-                .filter(r => (r.name || '').includes('_blazor'));
-              return sockets.length > 0
-                || !!(window.Blazor && window.Blazor._internal);
-            }
-            """,
+            "() => !!(window.Blazor && window.Blazor._internal)",
             null,
             new() { Timeout = 30_000 });
 
-        Assert.NotNull(blazorWs);
         await page.WaitForTimeoutAsync(10_000);
         Assert.False(wsClosedEarly, "_blazor WebSocket closed within 10 s (anonymous).");
-        Assert.False(blazorWs!.IsClosed, "_blazor WebSocket should stay open ≥10 s (anonymous).");
+        Assert.False(blazorWs.IsClosed, "_blazor WebSocket should stay open ≥10 s (anonymous).");
 
         await AssertLijstShowsCardsWithin2sAsync(page, width);
     }
@@ -154,27 +143,19 @@ public class BanenkaartPersistSizePlaywrightTests
         var cookieHeader = string.Join("; ", cookies.Select(c => $"{c.Name}={c.Value}"));
         await AssertHtmlUnderLimitAsync(baseUrl, cookieHeader);
 
-        IWebSocket? blazorWs = null;
-        page.WebSocket += (_, ws) =>
-        {
-            if ((ws.Url ?? "").Contains("_blazor", StringComparison.OrdinalIgnoreCase))
-            {
-                blazorWs = ws;
-            }
-        };
-
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-
-        // Wait until a _blazor socket appears, then hold 10 s and assert it stayed open.
-        var sw = Stopwatch.StartNew();
-        while (blazorWs is null && sw.Elapsed < TimeSpan.FromSeconds(30))
-        {
-            await page.WaitForTimeoutAsync(200);
-        }
-
-        Assert.NotNull(blazorWs);
         var closedDuringHold = false;
-        blazorWs!.Close += (_, _) => closedDuringHold = true;
+        var blazorWs = await page.RunAndWaitForWebSocketAsync(
+            async () =>
+            {
+                await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            },
+            new()
+            {
+                Timeout = 30_000,
+                Predicate = socket => (socket.Url ?? "").Contains("_blazor", StringComparison.OrdinalIgnoreCase)
+            });
+        Assert.NotNull(blazorWs);
+        blazorWs.Close += (_, _) => closedDuringHold = true;
         await page.WaitForTimeoutAsync(10_000);
         Assert.False(closedDuringHold, "_blazor WebSocket closed within 10 s (candidate).");
         Assert.False(blazorWs.IsClosed, "_blazor WebSocket should stay open ≥10 s (candidate).");

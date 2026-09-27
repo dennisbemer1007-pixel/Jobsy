@@ -133,7 +133,8 @@ public class BlazorReconnectAndHealthzTests
 
         pageErrors.Clear();
         await profileTab.ClickAsync();
-        await Assertions.Expect(profileTab).ToHaveAttributeAsync("aria-selected", new Regex("(?i)^true$"), new() { Timeout = 1_000 });
+        // Playwright's attribute matcher compiles to a JS RegExp — do not pass (?i).
+        await Assertions.Expect(profileTab).ToHaveAttributeAsync("aria-selected", "true", new() { Timeout = 5_000 });
 
         Assert.True(pageErrors.Count == 0, "pageerror: " + string.Join(" | ", pageErrors));
     }
@@ -144,10 +145,17 @@ public class BlazorReconnectAndHealthzTests
         var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
         try
         {
-            await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+            await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+            await page.WaitForSelectorAsync("input[name='email']", new() { Timeout = 30_000 });
             await page.FillAsync("input[name='email']", email);
             await page.FillAsync("input[name='password']", password);
-            await page.ClickAsync("button.login-submit");
+            var submit = page.Locator("button.login-submit");
+            await submit.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+            await page.WaitForFunctionAsync(
+                "() => { const b = document.querySelector('button.login-submit'); return b && !b.disabled; }",
+                null,
+                new() { Timeout = 30_000 });
+            await submit.ClickAsync();
             await page.WaitForURLAsync(
                 url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
                 new() { Timeout = 60_000 });
