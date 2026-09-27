@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Net;
-using System.Text.RegularExpressions;
 using Jobsy.Web.Hosting;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
