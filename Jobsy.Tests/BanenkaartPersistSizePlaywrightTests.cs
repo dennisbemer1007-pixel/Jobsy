@@ -17,9 +17,10 @@ public class BanenkaartPersistSizePlaywrightTests
 {
     private const string DefaultEmail = "kandidaat@jobsy.local";
     private const string DefaultPassword = "Jobsy123!";
-    // Acc-scale boot pins (~70 KB JSON for ~328 pins) dominate /. Catalog persist
-    // made this 1.9–2.4 MB; keep a tight ceiling far below the 2 MB hub limit.
-    private const int MaxHtmlBytes = 150_000;
+    // Acc-scale boot pins dominate / (~50–70 KB JSON for ~328 pins). Catalog
+    // persist made this 1.9–2.4 MB; keep Acc HTML under 100 KB (far below the
+    // 2 MB hub limit).
+    private const int MaxHtmlBytes = 100_000;
 
     [Fact]
     public void Discovery_does_not_persist_catalog_and_hub_limit_stays_2mb()
@@ -42,7 +43,7 @@ public class BanenkaartPersistSizePlaywrightTests
         var testFile = Path.Combine(root, "Jobsy.Tests", "BanenkaartPersistSizePlaywrightTests.cs");
         Assert.True(File.Exists(testFile));
         var src = File.ReadAllText(testFile);
-        Assert.Contains("150_000", src);
+        Assert.Contains("100_000", src);
         Assert.Contains("390", src);
         Assert.Contains("844", src);
         Assert.Contains("1280", src);
