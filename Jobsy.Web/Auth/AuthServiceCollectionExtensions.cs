@@ -273,7 +273,7 @@ public static class AuthServiceCollectionExtensions
                     $"/login?error=retry&returnUrl={Uri.EscapeDataString(safeReturn)}");
             }
 
-            var email = form["email"].ToString().Trim();
+            var email = LoginIdentity.Normalize(form["email"].ToString());
             var password = form["password"].ToString();
             var rememberDevice = string.Equals(
                 form["rememberDevice"].ToString(),
