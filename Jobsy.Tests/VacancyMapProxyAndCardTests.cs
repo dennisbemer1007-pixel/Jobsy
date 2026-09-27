@@ -87,13 +87,9 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("jobsy-pins", js);
         Assert.Contains("getClusterLeaves", js);
         Assert.Contains("openClusterList", js);
+        Assert.Contains("async function onClusterClick", js);
         Assert.Contains("setFeatureState", js);
         Assert.Contains("AbortController", js);
-
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("jobMap.min.js?v=20260926-mapfix8", maps);
-        Assert.Contains("PersistentComponentState", File.ReadAllText(
-            Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor")));
         Assert.DoesNotContain(
             "getClusterExpansionZoom(clusterId, function",
             js,
@@ -102,6 +98,11 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
             "getClusterLeaves(clusterId, 100, 0, function",
             js,
             StringComparison.Ordinal);
+
+        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
+        Assert.Contains("jobMap.min.js?v=20260926-mapfix9", maps);
+        Assert.Contains("PersistentComponentState", File.ReadAllText(
+            Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor")));
         Assert.Contains("await source.getClusterLeaves", js, StringComparison.Ordinal);
         var onClusterStart = js.IndexOf("async function onClusterClick", StringComparison.Ordinal);
         Assert.True(onClusterStart >= 0);

@@ -802,6 +802,13 @@ window.jobMap = (function () {
         return la.toFixed(6) + "," + ln.toFixed(6);
     }
 
+    function markerByLeafId(rawId) {
+        if (rawId == null || rawId === "") {
+            return null;
+        }
+        return markersById[rawId] || markersById[String(rawId)] || null;
+    }
+
     function closeWagePopoverIfOutside(ev) {
         if (!eventTargetInsideWagePopover(ev)) {
             closeAllWagePopovers();
@@ -2127,10 +2134,10 @@ window.jobMap = (function () {
         }
         lastClusterTapAt = Date.now();
         try {
-            const total = Number(props.point_count) || 100;
+            const total = Math.max(Number(props.point_count) || 0, 2);
             const leaves = await source.getClusterLeaves(props.cluster_id, total, 0);
             const childMarkers = (leaves || [])
-                .map(function (leaf) { return markersById[leaf.properties && leaf.properties.id]; })
+                .map(function (leaf) { return markerByLeafId(leaf.properties && leaf.properties.id); })
                 .filter(Boolean);
             if (childMarkers.length) openClusterList(childMarkers, feature.geometry.coordinates);
         } catch (_e) { }
@@ -2145,7 +2152,7 @@ window.jobMap = (function () {
             return;
         }
         const id = ev.features[0].properties && ev.features[0].properties.id;
-        const record = markersById[id];
+        const record = markerByLeafId(id);
         if (!record) {
             return;
         }
@@ -2542,6 +2549,7 @@ window.jobMap = (function () {
             }
             const lat = pt[0];
             const lng = pt[1];
+            const idKey = String(v.id);
             const record = {
                 id: v.id,
                 lat: lat,
@@ -2552,6 +2560,7 @@ window.jobMap = (function () {
                 getLatLng: function () { return { lat: lat, lng: lng }; },
                 getLngLat: function () { return { lng: lng, lat: lat }; }
             };
+            markersById[idKey] = record;
             markersById[v.id] = record;
             const key = coordKey(lat, lng);
             if (key) {

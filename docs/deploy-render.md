@@ -143,7 +143,7 @@ Verwijder Acceptatie-resources niet samen met Production.
 
 Services blijven draaien; geen cold start na idle.
 
-Eerst Acceptatie, daarna Production: zet op `jobsy-api` en `jobsy-web` auto-deploy **uit** (alleen Manual Deploy). Laat `lobsy-acc-*` auto-deployen vanaf `main`.
+Eerst Acceptatie, daarna Production: zet op `jobsy-api` en `jobsy-web` auto-deploy **uit** (alleen Manual Deploy). Laat `lobsy-acc-*` auto-deployen vanaf branch **`acceptatie`** (niet `main` — zie `render.yaml`).
 
 ## Antiforgery / “key was not found in the key ring”
 
