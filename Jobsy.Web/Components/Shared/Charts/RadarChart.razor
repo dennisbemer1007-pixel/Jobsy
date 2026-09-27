@@ -1,0 +1,62 @@
+@namespace Jobsy.Web.Components.Shared.Charts
+
+<div class="radar-chart" role="img" aria-label="@AriaLabel">
+    <svg class="radar @(Ghost ? "radar--ghost" : null) @(Dashed && !Ghost ? "radar--dashed" : null)"
+         viewBox="0 0 @ViewSize @ViewSize"
+         focusable="false"
+         aria-hidden="true">
+        <g transform="translate(@Center,@Center)">
+            @foreach (var ringPct in GridRingPercents)
+            {
+                var ringValues = Enumerable.Repeat((int?)ringPct, AxisCount).ToArray();
+                <polygon class="radar__grid"
+                         points="@RadarChartGeometry.ToSvgPoints(RadarChartGeometry.PolygonPoints(ringValues, 0, 0, Radius))" />
+            }
+            @foreach (var end in RadarChartGeometry.AxisEndpoints(AxisCount, 0, 0, Radius))
+            {
+                <line class="radar__axis"
+                      x1="0"
+                      y1="0"
+                      x2="@RadarChartGeometry.FormatCoord(end.X)"
+                      y2="@RadarChartGeometry.FormatCoord(end.Y)" />
+            }
+            @if (!Ghost && AxisCount > 0)
+            {
+                <polygon class="radar__shape"
+                         points="@RadarChartGeometry.ToSvgPoints(RadarChartGeometry.PolygonPoints(ValuePercents, 0, 0, Radius))" />
+            }
+        </g>
+    </svg>
+    <ul class="visually-hidden">
+        @foreach (var axis in Axes)
+        {
+            <li>@AltTextLine(axis)</li>
+        }
+    </ul>
+</div>
+
+@code {
+    private const int ViewSize = 200;
+    private const int Center = 100;
+    private const double Radius = 72;
+    private static readonly int[] GridRingPercents = [33, 66, 100];
+
+    [Parameter, EditorRequired] public IReadOnlyList<ChartAxisValue> Axes { get; set; } = [];
+
+    [Parameter] public bool Dashed { get; set; }
+
+    [Parameter] public bool Ghost { get; set; }
+
+    [Parameter] public string? AriaLabel { get; set; }
+
+    private int AxisCount => Axes.Count;
+
+    private IReadOnlyList<int?> ValuePercents => Axes.Select(a => a.Percent).ToArray();
+
+    private string AltTextLine(ChartAxisValue axis)
+    {
+        if (Ghost || axis.Percent is not int pct)
+            return $"{axis.Label}:";
+        return $"{axis.Label}: {pct}%";
+    }
+}

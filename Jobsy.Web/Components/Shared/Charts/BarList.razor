@@ -1,0 +1,35 @@
+@namespace Jobsy.Web.Components.Shared.Charts
+
+<ul class="bar-list @(Ghost ? "bar-list--ghost" : null)">
+    @for (var i = 0; i < Items.Count; i++)
+    {
+        var item = Items[i];
+        var highlighted = !Ghost && i < HighlightTop;
+        <li class="bar-list__item @(highlighted ? "bar-list__item--top" : "bar-list__item--muted")">
+            @if (ShowLetters && !string.IsNullOrWhiteSpace(item.Letter))
+            {
+                <span class="bar-list__letter" aria-hidden="true">@item.Letter</span>
+            }
+            <span class="bar-list__label">@item.Label</span>
+            @if (!Ghost)
+            {
+                <span class="bar-list__value">@(item.Percent is int pct ? $"{pct}%" : "")</span>
+                <span class="bar-list__bar" style="--w:@(item.Percent ?? 0)%"></span>
+            }
+            else
+            {
+                <span class="bar-list__bar bar-list__bar--ghost"></span>
+            }
+        </li>
+    }
+</ul>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<ChartAxisValue> Items { get; set; } = [];
+
+    [Parameter] public int HighlightTop { get; set; } = 3;
+
+    [Parameter] public bool Ghost { get; set; }
+
+    [Parameter] public bool ShowLetters { get; set; }
+}
