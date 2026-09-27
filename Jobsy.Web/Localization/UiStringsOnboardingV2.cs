@@ -67,7 +67,9 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Test.Culture"] = english ? "Atmosphere" : "Sfeer"; map["Onboarding.Test.Culture.Lead"] = english ? "Work culture" : "Waar je je thuis voelt";
         map["Onboarding.Test.Values"] = english ? "Values" : "Waarden"; map["Onboarding.Test.Values.Lead"] = english ? "What matters to you" : "Wat je belangrijk vindt";
         map["Onboarding.Likert.OfFive"] = english ? "of 5" : "van 5"; map["Onboarding.Likert.Low"] = english ? "Does not fit" : "Past niet"; map["Onboarding.Likert.High"] = english ? "Fits very well" : "Past heel goed";
-        map["Onboarding.NextTest"] = english ? "Next test" : "Volgende test"; map["Onboarding.Done"] = english ? "Done" : "Klaar";
+        map["Onboarding.NextTest"] = english ? "Next test" : "Volgende test";
+        map["Onboarding.ViewKompas"] = english ? "View my Compass" : "Bekijk mijn Kompas";
+        map["Onboarding.Done"] = english ? "Done" : "Klaar";
         map["Onboarding.NotSaved"] = english ? "Not saved · Retry" : "Niet bewaard · Opnieuw"; map["Onboarding.AllSaved"] = english ? "Everything is saved" : "Alles is bewaard";
         map["Onboarding.And"] = english ? "and" : "en";
         map["Onboarding.Finish.Badge"] = english ? "First impression" : "Eerste indruk"; map["Onboarding.Finish.Title"] = english ? "Your Compass is ready, {0}" : "Je Kompas staat klaar, {0}";
