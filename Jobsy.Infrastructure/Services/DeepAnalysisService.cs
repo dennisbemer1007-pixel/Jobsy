@@ -76,11 +76,40 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         AssessmentKind kind,
         CancellationToken cancellationToken = default)
     {
-        var row = await _db.CandidateDeepAnalyses.AsNoTracking()
-            .FirstOrDefaultAsync(d => d.UserId == userId && d.Kind == kind, cancellationToken);
+        var map = await GetStatesAsync(userId, [kind], cancellationToken);
+        return map[kind];
+    }
+
+    public async Task<IReadOnlyDictionary<AssessmentKind, DeepAnalysisStateDto>> GetStatesAsync(
+        Guid userId,
+        IReadOnlyList<AssessmentKind> kinds,
+        CancellationToken cancellationToken = default)
+    {
+        if (kinds.Count == 0)
+        {
+            return new Dictionary<AssessmentKind, DeepAnalysisStateDto>();
+        }
+
+        var distinct = kinds.Distinct().ToList();
+        var rows = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .Where(d => d.UserId == userId && distinct.Contains(d.Kind))
+            .ToListAsync(cancellationToken);
         var commercial = await _commercial.GetAsync(cancellationToken);
-        var competenceReport = await LoadOrBuildCompetenceReportAsync(userId, kind, row, cancellationToken);
-        return ToDto(kind, row, commercial.DeepAnalysisPriceEuro, competenceReport);
+        var price = commercial.DeepAnalysisPriceEuro;
+        var result = new Dictionary<AssessmentKind, DeepAnalysisStateDto>(distinct.Count);
+        foreach (var kind in distinct)
+        {
+            var row = rows.FirstOrDefault(r => r.Kind == kind);
+            CompetenceDeepReport? competenceReport = null;
+            if (kind == AssessmentKind.Competence)
+            {
+                competenceReport = await LoadOrBuildCompetenceReportAsync(userId, kind, row, cancellationToken);
+            }
+
+            result[kind] = ToDto(kind, row, price, competenceReport);
+        }
+
+        return result;
     }
 
     /// <summary>

@@ -25,7 +25,10 @@
         }
     </header>
         <CascadingValue Value="_kompasState">
-        <CandidateKompas SharedKompas="_kompasState" WideViewportChanged="OnKompasWideChanged">
+        <CandidateKompas SharedKompas="_kompasState"
+                         SharedDna="_dnaState"
+                         TabChanged="OnKompasTabChangedAsync"
+                         WideViewportChanged="OnKompasWideChanged">
             <ProfileTab>
         <p class="login-lead">@Culture["Profile.Lead"]</p>
         @if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
@@ -732,10 +735,16 @@
     private bool _isWideViewport;
     private string _insightsStatus = "Ready";
     private CandidateKompasState? _kompasState;
+    private CandidateDnaSummary? _dnaState;
     private int _insightsRefreshAttempts;
     private CancellationTokenSource? _insightsCts;
+    private CancellationTokenSource? _geocodeCts;
     private bool _devicesLoadStarted;
-    private const string PersistKey = "candidateProfileKompas";
+    private bool _kompasLoadStarted;
+    private bool _pendingGeocode;
+    private double? _pendingGeocodeLat;
+    private double? _pendingGeocodeLng;
+    private const string DnaPersistKey = "candidateProfileDna";
     private bool _restored;
     private PersistingComponentStateSubscription _persistSubscription;
 
@@ -749,18 +758,18 @@
     {
         Culture.Changed += OnCultureChanged;
         _persistSubscription = Persist.RegisterOnPersisting(PersistState);
-        if (Persist.TryTakeFromJson<CandidateKompasState>(PersistKey, out var saved) && saved is not null)
+        if (Persist.TryTakeFromJson<CandidateDnaSummary>(DnaPersistKey, out var savedDna) && savedDna is not null)
         {
-            _kompasState = saved;
+            _dnaState = savedDna;
             _restored = true;
         }
     }
 
     private Task PersistState()
     {
-        if (_kompasState is not null)
+        if (_dnaState is not null)
         {
-            Persist.PersistAsJson(PersistKey, _kompasState);
+            Persist.PersistAsJson(DnaPersistKey, _dnaState);
         }
 
         return Task.CompletedTask;
@@ -772,27 +781,28 @@
         _returnUrl = SanitizeReturnUrl(ReturnUrl);
         try
         {
-            if (_restored && _kompasState is not null)
+            if (_restored && _dnaState is not null)
             {
                 await LoadMasterdataAsync();
-                await ApplyKompasAsync(_kompasState, allowGeocode: false);
                 return;
             }
 
             var masterdataTask = LoadMasterdataAsync();
-            var kompasTask = Api.GetMyKompasResultAsync();
-            await Task.WhenAll(masterdataTask, kompasTask);
-            var kompasResult = await kompasTask;
-            if (kompasResult.TemporarilyUnavailable)
+            var dnaTask = Api.GetMyKompasDnaResultAsync();
+            await Task.WhenAll(masterdataTask, dnaTask);
+            var dnaResult = await dnaTask;
+            if (dnaResult.TemporarilyUnavailable)
             {
                 _message = Culture["Panel.ErrorInline"];
                 _matchedVacancies = [];
                 return;
             }
 
-            var kompas = kompasResult.Value;
-            _kompasState = kompas;
-            await ApplyKompasAsync(kompas, allowGeocode: true);
+            _dnaState = dnaResult.Value;
+            if (_isWideViewport)
+            {
+                await LoadMatchedVacanciesAsync();
+            }
         }
         catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
         {
@@ -933,18 +943,10 @@
             }
             else if (string.IsNullOrWhiteSpace(prefs.HomeAddress) && allowGeocode)
             {
-                try
-                {
-                    using var geoCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                    var label = await Geocoder.ReverseAsync(_homeLat.Value, _homeLng.Value, geoCts.Token);
-                    _homeAddress = string.IsNullOrWhiteSpace(label)
-                        ? FormatCoordinateFallback(_homeLat.Value, _homeLng.Value)
-                        : label;
-                }
-                catch
-                {
-                    _homeAddress = FormatCoordinateFallback(_homeLat.Value, _homeLng.Value);
-                }
+                _homeAddress = FormatCoordinateFallback(_homeLat.Value, _homeLng.Value);
+                _pendingGeocode = true;
+                _pendingGeocodeLat = _homeLat;
+                _pendingGeocodeLng = _homeLng;
             }
             else if (!string.IsNullOrWhiteSpace(prefs.HomeAddress))
             {
@@ -974,6 +976,92 @@
         }
     }
 
+    private async Task OnKompasTabChangedAsync(string tab)
+    {
+        if (string.Equals(CandidateKompasTabs.Normalize(tab), CandidateKompasTabs.Dna, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (_kompasState is not null || _kompasLoadStarted)
+        {
+            return;
+        }
+
+        _kompasLoadStarted = true;
+        _loading = true;
+        try
+        {
+            await EnsureFullKompasLoadedAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task EnsureFullKompasLoadedAsync()
+    {
+        var kompasResult = await Api.GetMyKompasResultAsync();
+        if (kompasResult.TemporarilyUnavailable)
+        {
+            _message = Culture["Panel.ErrorInline"];
+            return;
+        }
+
+        var kompas = kompasResult.Value;
+        if (kompas is null)
+        {
+            _message = Culture["Profile.NotFound"];
+            return;
+        }
+
+        _kompasState = kompas;
+        await ApplyKompasAsync(kompas, allowGeocode: true);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_pendingGeocode || _pendingGeocodeLat is not double lat || _pendingGeocodeLng is not double lng)
+        {
+            return;
+        }
+
+        _pendingGeocode = false;
+        _geocodeCts?.Cancel();
+        _geocodeCts?.Dispose();
+        _geocodeCts = new CancellationTokenSource();
+        var ct = _geocodeCts.Token;
+        _ = ReverseGeocodeInBackgroundAsync(lat, lng, ct);
+        await Task.CompletedTask;
+    }
+
+    private async Task ReverseGeocodeInBackgroundAsync(double lat, double lng, CancellationToken ct)
+    {
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(TimeSpan.FromSeconds(5));
+            var label = await Geocoder.ReverseAsync(lat, lng, timeout.Token);
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                return;
+            }
+
+            _homeAddress = label;
+            var prefs = new CandidatePreferences { HomeAddress = label };
+            await Api.UpdateMyProfileAsync(preferences: prefs, ct: ct);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+        }
+        catch
+        {
+            // keep coordinate fallback
+        }
+    }
+
     private async Task RefreshInsightsLaterAsync()
     {
         // Max one retry with backoff; cancelled when the page is disposed.
@@ -991,18 +1079,10 @@
         try
         {
             await Task.Delay(3000, ct);
-            Api.InvalidateMeCache(JobsyApiClient.KompasCacheKey);
-            var kompas = await Api.GetMyKompasAsync(ct);
-            if (kompas is null)
+            await LoadMatchedVacanciesAsync();
+            if (_matchedVacancies.Count > 0)
             {
-                return;
-            }
-
-            _kompasState = kompas;
-            _insightsStatus = kompas.InsightsStatus ?? "Ready";
-            if (_isWideViewport && kompas.TopMatches is { Count: > 0 })
-            {
-                _matchedVacancies = kompas.TopMatches;
+                _insightsStatus = "Ready";
             }
 
             await InvokeAsync(StateHasChanged);
@@ -1807,6 +1887,8 @@
         _suggestCts?.Dispose();
         _insightsCts?.Cancel();
         _insightsCts?.Dispose();
+        _geocodeCts?.Cancel();
+        _geocodeCts?.Dispose();
         ApiCalls.Flush("/candidate/profile");
         return ValueTask.CompletedTask;
     }

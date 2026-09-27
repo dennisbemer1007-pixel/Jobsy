@@ -109,6 +109,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);
         if (complete)
         {
             _queue.TryEnqueue(userId);

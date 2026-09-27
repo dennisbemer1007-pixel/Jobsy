@@ -115,6 +115,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);
         if (complete)
         {
             _queue.TryEnqueue(userId);

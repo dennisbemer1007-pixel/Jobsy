@@ -54,7 +54,7 @@ public class CultureValuesPreviewScoresTests
         });
         await db.SaveChangesAsync();
 
-        var sut = new CandidateCulturePersonalityService(db, new StubCommercial(), new StubQueue());
+        var sut = new CandidateCulturePersonalityService(db, new StubCommercial(), new StubQueue(), new StubMatchSnapshots());
         var dto = await sut.GetAsync(userId);
 
         Assert.Equal(CandidateCompetencyStatuses.Draft, dto.Status);
@@ -77,7 +77,7 @@ public class CultureValuesPreviewScoresTests
         });
         await db.SaveChangesAsync();
 
-        var sut = new CandidateValuesService(db, new StubCommercial(), new StubQueue());
+        var sut = new CandidateValuesService(db, new StubCommercial(), new StubQueue(), new StubMatchSnapshots());
         var dto = await sut.GetAsync(userId);
 
         Assert.Equal(CandidateCompetencyStatuses.Draft, dto.Status);
@@ -92,6 +92,36 @@ public class CultureValuesPreviewScoresTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
             .Options;
         return new JobsyDbContext(options);
+    }
+
+    private sealed class StubMatchSnapshots : ICandidateMatchSnapshotService
+    {
+        public Task<(IReadOnlyList<CandidateMatchedVacancyDto> Matches, string InsightsStatus)> GetAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<(IReadOnlyList<CandidateMatchedVacancyDto>, string)>(([], "Ready"));
+
+        public Task SaveComputedAsync(
+            Guid userId,
+            IReadOnlyList<CandidateMatchedVacancyDto> matches,
+            string inputFingerprint,
+            CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task<string> ComputeInputFingerprintAsync(Guid userId, CancellationToken cancellationToken = default)
+            => Task.FromResult("stub");
+
+        public Task<IReadOnlyList<CandidateMatchedVacancyDto>> ComputeLiveAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<CandidateMatchedVacancyDto>>([]);
+
+        public void InvalidateContextCache(Guid userId)
+        {
+        }
+
+        public Task MarkInputsStaleAsync(Guid userId, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
     }
 
     private sealed class StubQueue : ICandidateInsightsQueue

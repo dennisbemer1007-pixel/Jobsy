@@ -290,6 +290,7 @@
     [Parameter] public bool Active { get; set; }
     [Parameter] public EventCallback<string> OnOpenTab { get; set; }
     [Parameter] public CandidateKompasState? Snapshot { get; set; }
+    [Parameter] public CandidateDnaSummary? DnaSnapshot { get; set; }
     [CascadingParameter] public CandidateKompasState? CascadedKompas { get; set; }
 
     private bool _loading = true;
@@ -324,6 +325,13 @@
             return;
         }
 
+        if (DnaSnapshot is not null)
+        {
+            _loadFailed = false;
+            ApplyDnaSnapshot(DnaSnapshot);
+            return;
+        }
+
         if (!_loaded)
         {
             await LoadAsync();
@@ -354,6 +362,37 @@
         _loading = false;
     }
 
+    private void ApplyDnaSnapshot(CandidateDnaSummary dna)
+    {
+        ApplyStory(dna.WhoAmI);
+        var competence = dna.Competencies;
+        var career = dna.CareerInterests;
+        var culture = dna.Culture;
+        var values = dna.Values;
+        Paint(
+            competence?.Status,
+            competence?.Scores ?? competence?.PreviewScores,
+            competence?.AnsweredCount ?? 0,
+            career?.Status,
+            career?.Scores ?? career?.PreviewScores,
+            career?.AnsweredCount ?? 0,
+            culture?.Status,
+            culture?.Scores ?? culture?.PreviewScores,
+            culture?.AnsweredCount ?? 0,
+            values?.Status,
+            values?.Scores ?? values?.PreviewScores,
+            values?.AnsweredCount ?? 0,
+            DeepStub(competence?.DeepCompleted ?? false),
+            DeepStub(career?.DeepCompleted ?? false),
+            DeepStub(culture?.DeepCompleted ?? false),
+            DeepStub(values?.DeepCompleted ?? false));
+        _loaded = true;
+        _loading = false;
+    }
+
+    private static DeepAnalysisState? DeepStub(bool completed)
+        => completed ? new DeepAnalysisState { IsCompleted = true } : null;
+
     private void ApplyStory(WhoAmIStorySummary? who)
     {
         _story = string.IsNullOrWhiteSpace(who?.Story) ? null : who!.Story;
@@ -378,7 +417,7 @@
         _loadFailed = false;
         try
         {
-            var result = await Api.GetMyKompasResultAsync();
+            var result = await Api.GetMyKompasDnaResultAsync();
             if (result.TemporarilyUnavailable)
             {
                 _loadFailed = true;
@@ -387,7 +426,7 @@
 
             if (result.Value is not null)
             {
-                ApplySnapshot(result.Value);
+                ApplyDnaSnapshot(result.Value);
             }
         }
         catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))

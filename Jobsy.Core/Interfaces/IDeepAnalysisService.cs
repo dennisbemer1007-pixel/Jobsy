@@ -11,6 +11,11 @@ public interface IDeepAnalysisService
         AssessmentKind kind,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyDictionary<AssessmentKind, DeepAnalysisStateDto>> GetStatesAsync(
+        Guid userId,
+        IReadOnlyList<AssessmentKind> kinds,
+        CancellationToken cancellationToken = default);
+
     Task<DeepAnalysisCheckoutResult> StartCheckoutAsync(
         Guid userId,
         AssessmentKind kind,

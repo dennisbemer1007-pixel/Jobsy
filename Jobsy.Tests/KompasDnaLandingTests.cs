@@ -115,6 +115,7 @@ public class KompasDnaLandingTests
 
         var controller = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/CandidateKompasController.cs"));
         Assert.Contains("[EnableRateLimiting(\"public-read\")]", controller);
+        Assert.Contains("HttpGet(\"dna\")", controller, StringComparison.Ordinal);
         Assert.DoesNotContain("EnableRateLimiting(\"ai\")", controller);
 
         var webModel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Models/CompetencyModels.cs"));
