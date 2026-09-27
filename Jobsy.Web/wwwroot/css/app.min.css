@@ -3,3 +3,4 @@
 .panel-inline-error{margin:.75rem 0;padding:.85rem 1rem;border-radius:var(--radius);border:1px solid color-mix(in srgb,var(--brand) 18%,var(--border));background:var(--surface)}.panel-inline-error__text{margin:0 0 .5rem;color:var(--muted);font-size:.9rem}
 @media (max-width:1023px){.kompas-tabs.admin-sublinks{position:static;z-index:auto;box-shadow:none}}
 @media (max-width:1023px){.kompas-workspace__side,.questionnaire-matches{display:none!important}}
+.reconnect-toast.components-reconnect-show{transition:opacity .2s ease 1.5s,visibility 0s linear 1.5s}

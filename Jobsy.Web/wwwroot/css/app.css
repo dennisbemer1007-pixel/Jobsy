@@ -16495,7 +16495,15 @@ html.cookie-consent-known .cookie-consent {
     transition: opacity 0.2s ease, visibility 0s linear 0.5s;
 }
 
-.reconnect-toast.components-reconnect-show,
+/* Brief blips (<1.5s) stay invisible; failed/rejected stay immediate. */
+.reconnect-toast.components-reconnect-show {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 0.2s ease 1.5s, visibility 0s linear 1.5s;
+}
+
 .reconnect-toast.components-reconnect-failed,
 .reconnect-toast.components-reconnect-rejected {
     display: block;

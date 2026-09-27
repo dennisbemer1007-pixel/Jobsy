@@ -120,7 +120,8 @@ projects:
             region: frankfurt
             dockerfilePath: ./Jobsy.Web/Dockerfile
             dockerContext: .
-            healthCheckPath: /
+            # Takes effect on Blueprint sync only — do not sync/deploy from this PR alone.
+            healthCheckPath: /healthz
             envVars:
               - key: ASPNETCORE_ENVIRONMENT
                 value: Production
@@ -275,7 +276,8 @@ projects:
             region: frankfurt
             dockerfilePath: ./Jobsy.Web/Dockerfile
             dockerContext: .
-            healthCheckPath: /
+            # Takes effect on Blueprint sync only — do not sync/deploy from this PR alone.
+            healthCheckPath: /healthz
             envVars:
               - key: ASPNETCORE_ENVIRONMENT
                 value: Production
