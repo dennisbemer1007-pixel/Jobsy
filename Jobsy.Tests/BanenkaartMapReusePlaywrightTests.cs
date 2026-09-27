@@ -76,11 +76,37 @@ public class BanenkaartMapReusePlaywrightTests
 
         for (var run = 1; run <= RepeatCount; run++)
         {
+            var injectLocal = string.Equals(
+                Environment.GetEnvironmentVariable("JOBSY_E2E_INJECT_LOCAL_JOBMAP"),
+                "1",
+                StringComparison.Ordinal);
+
             await using var context = await browser.NewContextAsync(new()
             {
                 ViewportSize = new() { Width = width, Height = height },
-                IgnoreHTTPSErrors = true
+                IgnoreHTTPSErrors = true,
+                // Acc PWA service worker bypasses page.route for jobMap — block it when injecting.
+                ServiceWorkers = injectLocal ? ServiceWorkerPolicy.Block : ServiceWorkerPolicy.Allow
             });
+
+            // Optional: verify this branch's jobMap against a remote Acc URL
+            // that has not deployed the fix yet (JOBSY_E2E_INJECT_LOCAL_JOBMAP=1).
+            // Route on the context before login so candidate sessions also get it.
+            if (injectLocal)
+            {
+                var localMin = Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobMap.min.js");
+                var body = await File.ReadAllBytesAsync(localMin);
+                var js = System.Text.Encoding.UTF8.GetString(body);
+                await context.RouteAsync("**/jobMap.min.js**", async route =>
+                {
+                    await route.FulfillAsync(new()
+                    {
+                        Status = 200,
+                        ContentType = "application/javascript; charset=utf-8",
+                        Body = js
+                    });
+                });
+            }
 
             if (asCandidate)
             {
@@ -107,38 +133,45 @@ public class BanenkaartMapReusePlaywrightTests
                 "#job-map canvas, #job-map .maplibregl-canvas, canvas.maplibregl-canvas",
                 new() { Timeout = 60_000 });
 
-            // Pins must be visible within 3s of the map canvas appearing.
+            // Pins within 3s, single MapLibre instance, still painted after Blazor attach.
             await page.WaitForFunctionAsync(
                 """
                 () => {
-                  const n = window.jobMap && typeof window.jobMap.__testGetPinCount === 'function'
-                    ? window.jobMap.__testGetPinCount()
-                    : 0;
-                  return n > 0;
+                  if (!window.jobMap || typeof window.jobMap.__testGetPinCount !== 'function') {
+                    return false;
+                  }
+                  const pins = window.jobMap.__testGetPinCount();
+                  const creates = typeof window.jobMap.__testGetMapCreateCount === 'function'
+                    ? window.jobMap.__testGetMapCreateCount()
+                    : -1;
+                  const alive = typeof window.jobMap.isAlive === 'function'
+                    ? window.jobMap.isAlive()
+                    : true;
+                  return pins > 0 && creates === 1 && alive;
                 }
                 """,
                 null,
                 new() { Timeout = PinsVisibleMs });
 
-            // Give Blazor a moment to attach and (wrongly) rebuild — then assert once.
+            // Blazor attach race window (~1.5s) — pins and createCount must hold.
             await page.WaitForTimeoutAsync(2000);
 
-            var pinCount = await page.EvaluateAsync<int>(
+            var snapshot = await page.EvaluateAsync<MapSnapshot>(
                 """
-                () => window.jobMap && typeof window.jobMap.__testGetPinCount === 'function'
-                  ? window.jobMap.__testGetPinCount()
-                  : 0
+                () => ({
+                  pins: window.jobMap && typeof window.jobMap.__testGetPinCount === 'function'
+                    ? window.jobMap.__testGetPinCount() : 0,
+                  creates: window.jobMap && typeof window.jobMap.__testGetMapCreateCount === 'function'
+                    ? window.jobMap.__testGetMapCreateCount() : -1,
+                  alive: window.jobMap && typeof window.jobMap.isAlive === 'function'
+                    ? window.jobMap.isAlive() : false
+                })
                 """);
-            Assert.True(pinCount > 0,
-                $"Run {run}/{RepeatCount} ({width}x{height}, candidate={asCandidate}): expected pins, got {pinCount}.");
-
-            var createCount = await page.EvaluateAsync<int>(
-                """
-                () => window.jobMap && typeof window.jobMap.__testGetMapCreateCount === 'function'
-                  ? window.jobMap.__testGetMapCreateCount()
-                  : -1
-                """);
-            Assert.Equal(1, createCount);
+            Assert.True(snapshot.Pins > 0,
+                $"Run {run}/{RepeatCount} ({width}x{height}, candidate={asCandidate}): expected pins, got {snapshot.Pins}.");
+            Assert.Equal(1, snapshot.Creates);
+            Assert.True(snapshot.Alive,
+                $"Run {run}/{RepeatCount}: map not alive after Blazor settle.");
 
             Assert.True(string.IsNullOrEmpty(pageError),
                 $"Run {run}/{RepeatCount}: page error: {pageError}");
@@ -221,5 +254,12 @@ public class BanenkaartMapReusePlaywrightTests
         }
 
         throw new InvalidOperationException("Jobsy.sln not found.");
+    }
+
+    private sealed class MapSnapshot
+    {
+        public int Pins { get; set; }
+        public int Creates { get; set; }
+        public bool Alive { get; set; }
     }
 }
