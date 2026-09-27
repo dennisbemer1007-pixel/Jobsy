@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using System.Text.RegularExpressions;
 using Jobsy.Web.Hosting;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -8,23 +9,46 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Playwright;
 
 namespace Jobsy.Tests;
 
+[Collection("PlaywrightSmoke")]
 public class BlazorReconnectAndHealthzTests
 {
+    private const string DefaultEmail = "kandidaat@jobsy.local";
+    private const string DefaultPassword = "Jobsy123!";
+
     [Fact]
-    public void App_razor_starts_blazor_with_reconnect_options_and_rejected_reload()
+    public void App_loads_blazor_boot_js_with_defer_after_framework()
     {
         var root = FindRepoRoot();
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/App.razor"));
         Assert.Contains("autostart=\"false\"", app, StringComparison.Ordinal);
-        Assert.Contains("Blazor.start(", app, StringComparison.Ordinal);
-        Assert.Contains("reconnectionOptions", app, StringComparison.Ordinal);
-        Assert.Contains("components-reconnect-rejected", app, StringComparison.Ordinal);
-        Assert.Contains("location.reload()", app, StringComparison.Ordinal);
-        Assert.Contains("Blazor.reconnect", app, StringComparison.Ordinal);
-        Assert.Contains("visibilitychange", app, StringComparison.Ordinal);
+        Assert.Contains("blazor.web.js", app, StringComparison.Ordinal);
+        Assert.Contains("js/blazor-boot.js", app, StringComparison.Ordinal);
+        Assert.DoesNotContain("Blazor.start(", app, StringComparison.Ordinal);
+
+        var bootIdx = app.IndexOf("js/blazor-boot.js", StringComparison.Ordinal);
+        var frameworkIdx = app.IndexOf("blazor.web.js", StringComparison.Ordinal);
+        Assert.True(frameworkIdx >= 0 && bootIdx > frameworkIdx, "blazor-boot.js must load after blazor.web.js");
+
+        var frameworkTagEnd = app.IndexOf(">", frameworkIdx, StringComparison.Ordinal);
+        var frameworkTag = app.Substring(frameworkIdx, Math.Max(0, frameworkTagEnd - frameworkIdx));
+        Assert.Contains("defer", frameworkTag, StringComparison.Ordinal);
+
+        var bootTagEnd = app.IndexOf(">", bootIdx, StringComparison.Ordinal);
+        var bootTag = app.Substring(bootIdx, Math.Max(0, bootTagEnd - bootIdx));
+        Assert.Contains("defer", bootTag, StringComparison.Ordinal);
+
+        var boot = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/blazor-boot.js"));
+        Assert.Contains("Blazor.start(", boot, StringComparison.Ordinal);
+        Assert.Contains("reconnectionOptions", boot, StringComparison.Ordinal);
+        Assert.Contains("components-reconnect-rejected", boot, StringComparison.Ordinal);
+        Assert.Contains("location.reload()", boot, StringComparison.Ordinal);
+        Assert.Contains("Blazor.reconnect", boot, StringComparison.Ordinal);
+        Assert.Contains("visibilitychange", boot, StringComparison.Ordinal);
+        Assert.Contains("Blazor is not defined", boot, StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains("1.5s", css, StringComparison.Ordinal);
@@ -54,6 +78,99 @@ public class BlazorReconnectAndHealthzTests
         var program = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Program.cs"));
         Assert.Contains("MapGet(\"/healthz\", () => Results.Text(\"ok\"))", program, StringComparison.Ordinal);
         Assert.DoesNotContain("MapGet(\"/healthz\", (IJobsyApiClient", program, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(390, 844)]
+    [InlineData(1280, 800)]
+    public async Task Blazor_circuit_starts_and_kompas_tab_updates(int width, int height)
+    {
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl) || !await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            IgnoreHTTPSErrors = true
+        });
+
+        var page = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        page.PageError += (_, err) => pageErrors.Add(err);
+
+        var ws = await page.RunAndWaitForWebSocketAsync(
+            async () =>
+            {
+                await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            },
+            new()
+            {
+                Timeout = 5_000,
+                Predicate = socket => (socket.Url ?? "").Contains("_blazor", StringComparison.OrdinalIgnoreCase)
+            });
+        Assert.NotNull(ws);
+        Assert.Contains("_blazor", ws.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.True(pageErrors.Count == 0, "pageerror on /: " + string.Join(" | ", pageErrors));
+
+        if (!await TryLoginAsync(page, baseUrl))
+        {
+            Assert.Fail("Candidate login failed — cannot verify Kompas interactivity.");
+        }
+
+        pageErrors.Clear();
+        await page.GotoAsync(
+            baseUrl + "/candidate/profile?tab=dna",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+
+        var profileTab = page.Locator("#kompas-tab-profile");
+        await profileTab.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+
+        pageErrors.Clear();
+        await profileTab.ClickAsync();
+        await Assertions.Expect(profileTab).ToHaveAttributeAsync("aria-selected", new Regex("(?i)^true$"), new() { Timeout = 1_000 });
+
+        Assert.True(pageErrors.Count == 0, "pageerror: " + string.Join(" | ", pageErrors));
+    }
+
+    private static async Task<bool> TryLoginAsync(IPage page, string baseUrl)
+    {
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
+        try
+        {
+            await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+            await page.FillAsync("input[name='email']", email);
+            await page.FillAsync("input[name='password']", password);
+            await page.ClickAsync("button.login-submit");
+            await page.WaitForURLAsync(
+                url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
+                new() { Timeout = 60_000 });
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static async Task<bool> IsReachableAsync(string baseUrl)
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+            using var response = await http.GetAsync(baseUrl.TrimEnd('/') + "/");
+            return (int)response.StatusCode is >= 200 and < 500;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static string FindRepoRoot()
