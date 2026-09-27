@@ -39,4 +39,59 @@ public class AvailabilityPresetRulesTests
         Assert.Equal(4, result.DayParts.Count);
         Assert.DoesNotContain("Ma:Ochtend", result.DayParts);
     }
+
+    [Fact]
+    public void Parttime_alone_adds_weekday_dayparts()
+    {
+        var result = AvailabilityPresetRules.Compute(new HashSet<string> { "parttime" });
+        Assert.Equal(12, result.MinHours);
+        Assert.Equal(32, result.MaxHours);
+        Assert.Contains("Ma:Ochtend", result.DayParts);
+        Assert.Equal(10, result.DayParts.Count);
+    }
+
+    [Fact]
+    public void Combinations_are_order_independent_for_common_sets()
+    {
+        string[][] sets =
+        [
+            ["school", "evening"],
+            ["office", "parttime", "direct"],
+            ["weekend", "fulltime", "holiday"]
+        ];
+
+        foreach (var set in sets)
+        {
+            var baseline = AvailabilityPresetRules.Compute(set.ToHashSet(StringComparer.OrdinalIgnoreCase));
+            foreach (var perm in Permute(set))
+            {
+                var result = AvailabilityPresetRules.Compute(perm.ToHashSet(StringComparer.OrdinalIgnoreCase));
+                Assert.Equal(baseline.MinHours, result.MinHours);
+                Assert.Equal(baseline.MaxHours, result.MaxHours);
+                Assert.Equal(baseline.Immediate, result.Immediate);
+                Assert.Equal(
+                    baseline.DayParts.OrderBy(x => x, StringComparer.Ordinal),
+                    result.DayParts.OrderBy(x => x, StringComparer.Ordinal));
+            }
+        }
+    }
+
+    private static IEnumerable<string[]> Permute(string[] items)
+    {
+        if (items.Length == 0)
+        {
+            yield return [];
+            yield break;
+        }
+
+        for (var i = 0; i < items.Length; i++)
+        {
+            var head = items[i];
+            var rest = items.Where((_, idx) => idx != i).ToArray();
+            foreach (var tail in Permute(rest))
+            {
+                yield return [head, .. tail];
+            }
+        }
+    }
 }
