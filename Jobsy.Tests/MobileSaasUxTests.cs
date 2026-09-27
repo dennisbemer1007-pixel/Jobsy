@@ -155,6 +155,7 @@ public class MobileSaasUxTests
         Assert.Contains("application-card__title", razor);
         Assert.Contains("application-card__img", razor);
         Assert.Contains("application-card__progress", razor);
+        Assert.Contains("application-card__status", razor);
         Assert.Contains("application-card__company", razor);
         Assert.Contains("application-card--hired", razor);
         Assert.Contains("Apps.StatusNow", razor);
@@ -172,9 +173,30 @@ public class MobileSaasUxTests
         Assert.Contains(".application-card__img", css);
         Assert.Contains(".application-card__progress", css);
         Assert.Contains(".application-card--hired", css);
+        // Mobile truncation: title up to 2 lines; status chip never ellipsized; company 1 line.
+        Assert.Contains("line-clamp: 2", css);
+        Assert.Contains("-webkit-line-clamp: 2", css);
+        Assert.Contains("flex-shrink: 0", css);
+        Assert.Contains("flex-wrap: wrap", css);
+        Assert.Contains(".application-card__status", css);
+        Assert.Contains("@media (max-width: 430px)", css);
+        Assert.Contains(".application-card__company", css);
+        Assert.Contains(
+            ".application-card__company {\n    margin: 0;\n    font-size: var(--text-sm);\n    color: var(--muted);\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;",
+            css);
+        Assert.DoesNotContain(
+            ".application-card__title {\n    margin: 0;\n    font-size: var(--text-md);\n    font-weight: 600;\n    color: var(--text);\n    line-height: 1.25;\n    white-space: nowrap;",
+            css);
+        Assert.DoesNotContain(
+            ".application-card__pill {\n    display: inline-flex;\n    align-items: center;\n    gap: 5px;\n    block-size: 24px;\n    padding-inline: 8px;\n    border-radius: var(--radius-pill);\n    font-size: var(--text-xs);\n    font-weight: 600;\n    white-space: nowrap;\n    flex: 0 1 auto;\n    min-inline-size: 0;\n    max-inline-size: 100%;\n    overflow: hidden;\n    text-overflow: ellipsis;",
+            css);
         Assert.Contains("aria-haspopup", razor);
         Assert.DoesNotContain("application-stepper", css);
         Assert.DoesNotContain("application-card__actions", css);
+
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
+        Assert.Contains("css/features/applications.css?v=20260927-apps-clamp", app);
+        Assert.DoesNotContain("css/features/applications.css?v=20260927-apps-b\"", app);
 
         var appCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.DoesNotContain(".apps-tabs.admin-sublinks", appCss);
