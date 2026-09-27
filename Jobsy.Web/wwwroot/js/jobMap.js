@@ -1203,7 +1203,11 @@ window.jobMap = (function () {
 
     let pinsAbort = null;
     let pinsEtag = null;
+    /** Last successful pins JSON body — redraw from this on HTTP 304. */
+    let pinsCachedPayload = null;
     let pinsReloadTimer = null;
+    /** How many MapLibre instances this module created (boot + Blazor should stay at 1). */
+    let mapCreateCount = 0;
 
     function fetchPins(url) {
         if (!url) {
@@ -1228,7 +1232,8 @@ window.jobMap = (function () {
                     return null;
                 }
                 if (res.status === 304) {
-                    return null;
+                    // Server says unchanged — redraw from the payload we kept with the ETag.
+                    return pinsCachedPayload;
                 }
                 if (!res.ok) {
                     throw new Error("pins " + res.status);
@@ -1237,10 +1242,13 @@ window.jobMap = (function () {
                 if (etag) {
                     pinsEtag = etag;
                 }
-                return res.json();
+                return res.json().then(function (body) {
+                    pinsCachedPayload = body;
+                    return body;
+                });
             })
             .then(function (data) {
-                if (gen !== pinsFetchGen || !data) {
+                if (gen !== pinsFetchGen || data == null) {
                     return;
                 }
                 const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
@@ -2224,6 +2232,7 @@ window.jobMap = (function () {
             lastFitPoints = openingPoints.slice();
         }
 
+        mapCreateCount += 1;
         map = window.jobsyMapLibre.createMap(el, {
             center: opening.center,
             zoom: opening.zoom,
@@ -2239,6 +2248,50 @@ window.jobMap = (function () {
             restoreOverlays();
         }
         window.addEventListener("resize", invalidate);
+    }
+
+    /**
+     * Blazor interactive attach often replaces #job-map with a fresh empty host.
+     * Move the live MapLibre DOM into that host and rebind internals — do not
+     * dispose()/createMap a second instance (that raced pins ETag → empty map).
+     */
+    function adoptMapContainer(host) {
+        if (!map || !host) {
+            return false;
+        }
+        const old = typeof map.getContainer === "function" ? map.getContainer() : null;
+        if (!old) {
+            return false;
+        }
+        if (old === host) {
+            return !!host.isConnected;
+        }
+        if (!host.isConnected) {
+            return false;
+        }
+        try {
+            if (old.classList && host.classList) {
+                old.classList.forEach(function (cls) {
+                    if (cls) {
+                        host.classList.add(cls);
+                    }
+                });
+            }
+            while (old.firstChild) {
+                host.appendChild(old.firstChild);
+            }
+            if (map._resizeObserver) {
+                try { map._resizeObserver.unobserve(old); } catch (e1) { }
+                try { map._resizeObserver.observe(host); } catch (e2) { }
+            }
+            map._container = host;
+            if (typeof map.resize === "function") {
+                map.resize();
+            }
+            return !!(host.isConnected && map.getContainer() === host);
+        } catch (err) {
+            return false;
+        }
     }
 
     function bindMapRuntime() {
@@ -2323,7 +2376,7 @@ window.jobMap = (function () {
 
     /**
      * Start the map from #jobsy-map-boot before the Blazor circuit is up.
-     * Blazor jobMap.init reuses the live map when #job-map is still connected.
+     * Blazor jobMap.init reuses that MapLibre instance (same host or adoptMapContainer).
      */
     function boot(elementId) {
         const id = elementId || "job-map";
@@ -2334,9 +2387,15 @@ window.jobMap = (function () {
         if (!el) {
             return;
         }
-        if (map && typeof map.getContainer === "function"
-            && map.getContainer() === el && el.isConnected) {
-            return;
+        if (map && typeof map.getContainer === "function") {
+            const host = map.getContainer();
+            if (host === el && el.isConnected) {
+                return;
+            }
+            // Boot map already exists on a prior host — adopt into current #job-map.
+            if (adoptMapContainer(el)) {
+                return;
+            }
         }
         const bootPayload = readBootPayload();
         try {
@@ -2368,13 +2427,20 @@ window.jobMap = (function () {
         const preferFilledLocation = !options || options.preferFilledLocation !== false;
         const filledOrigin = preferFilledLocation ? readFilledOrigin() : null;
         const hasOrigin = !!(options && options.origin) || !!filledOrigin;
-        const live = !!(map && typeof map.getContainer === "function"
+        let live = !!(map && typeof map.getContainer === "function"
             && map.getContainer() === el && el.isConnected);
 
-        if (!live) {
-            if (map) {
+        if (!live && map) {
+            // Early boot map is still alive but Blazor swapped the #job-map node —
+            // attach handlers to the existing MapLibre instance instead of dispose+rebuild.
+            if (adoptMapContainer(el)) {
+                live = true;
+            } else {
                 dispose();
             }
+        }
+
+        if (!live) {
             deferMapReveal = hasOrigin;
             try {
                 createMapInstance(el, openingPoints, openingView, preferFilledLocation);
@@ -2829,6 +2895,14 @@ window.jobMap = (function () {
         tileLayer = null;
         selectedId = null;
         zoomHandlerBound = false;
+        // Stale If-None-Match after dispose+rebuild used to yield 304 with no body
+        // while markers were already cleared — empty map. Always drop etag + cache.
+        pinsEtag = null;
+        pinsCachedPayload = null;
+        if (pinsAbort) {
+            try { pinsAbort.abort(); } catch (e) { }
+            pinsAbort = null;
+        }
     }
 
     function escapeHtml(value) {
@@ -2867,6 +2941,7 @@ window.jobMap = (function () {
         isAlive,
         /** @internal Playwright / diagnostics */
         __testGetMap: function () { return map; },
-        __testGetPinCount: function () { return Object.keys(markersById).length; }
+        __testGetPinCount: function () { return Object.keys(markersById).length; },
+        __testGetMapCreateCount: function () { return mapCreateCount; }
     };
 })();

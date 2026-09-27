@@ -48,8 +48,13 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("function boot(", js);
         Assert.Contains("readBootPayload", js);
         Assert.Contains("jobsy-map-boot", js);
-        Assert.Contains("const live", js);
+        Assert.Contains("let live", js);
         Assert.Contains("alreadyPinned", js);
+        Assert.Contains("adoptMapContainer", js);
+        Assert.Contains("pinsCachedPayload", js);
+        Assert.Contains("mapCreateCount", js);
+        Assert.Contains("__testGetMapCreateCount", js);
+        Assert.Contains("pinsEtag = null", js);
         Assert.Contains("Start the map from #jobsy-map-boot", js);
         Assert.Contains("fitMapToVacancies", js);
         Assert.Contains("lockCamera", js);
