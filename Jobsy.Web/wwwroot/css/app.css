@@ -5681,13 +5681,6 @@ html[dir="rtl"] .language-selector__menu {
     justify-content: flex-end;
 }
 
-.raamflyer-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 0.65rem;
-}
-
 .raamflyer-actions .login-submit {
     width: auto;
     min-height: 2.4rem;
@@ -5695,53 +5688,9 @@ html[dir="rtl"] .language-selector__menu {
     font-size: 0.9rem;
 }
 
-.raamflyer-actions .login-submit--secondary {
-    background: transparent;
-    color: var(--brand-navy, #0f2d5c);
-    border: 1px solid color-mix(in srgb, var(--brand-navy, #0f2d5c) 35%, transparent);
-}
-
-.raamflyer-scope {
-    display: inline-flex;
-    border: 1px solid color-mix(in srgb, var(--brand-navy, #0f2d5c) 22%, transparent);
-    border-radius: 8px;
-    overflow: hidden;
-    background: #fff;
-}
-
-.raamflyer-scope__btn {
-    border: 0;
-    background: transparent;
-    color: var(--brand-navy, #0f2d5c);
-    padding: 0.4rem 0.7rem;
-    font-size: 0.85rem;
-    cursor: pointer;
-    min-height: 2.4rem;
-}
-
 .raamflyer-scope__btn.is-active {
     background: var(--brand-navy, #0f2d5c);
     color: #fff;
-}
-
-.raamflyer-branch select,
-.raamflyer-format select {
-    min-height: 2.4rem;
-    border-radius: 8px;
-    border: 1px solid color-mix(in srgb, var(--brand-navy, #0f2d5c) 22%, transparent);
-    padding: 0.35rem 0.55rem;
-    background: #fff;
-    max-width: 14rem;
-}
-
-.raamflyer-format select {
-    max-width: 5rem;
-}
-
-.raamflyer-error {
-    flex-basis: 100%;
-    margin: 0;
-    font-size: 0.85rem;
 }
 
 .table-row__actions {
@@ -5749,51 +5698,6 @@ html[dir="rtl"] .language-selector__menu {
     align-items: center;
     gap: 0.65rem;
     flex-wrap: wrap;
-}
-
-.vacancy-manage-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.75rem 1rem;
-    align-items: center;
-}
-
-.vacancy-manage-row__main {
-    min-width: 0;
-}
-
-.vacancy-manage-row__title {
-    display: block;
-    font-size: 1.05rem;
-    font-weight: 700;
-    line-height: 1.3;
-}
-
-.vacancy-manage-row__actions {
-    justify-content: flex-end;
-}
-
-.application-row {
-    align-items: flex-start;
-}
-
-.application-row__link {
-    flex: 1;
-    min-width: 0;
-    color: inherit;
-    text-decoration: none;
-}
-
-.application-row__link:hover strong {
-    text-decoration: underline;
-}
-
-.application-row__meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.45rem;
-    flex-shrink: 0;
 }
 
 .profile-roles--wide {
@@ -5814,36 +5718,6 @@ a.icon-btn {
 }
 
 @media (max-width: 640px) {
-    .vacancy-manage-row {
-        grid-template-columns: 1fr;
-    }
-
-    .vacancy-manage-row__title {
-        font-size: 1.12rem;
-    }
-
-    .vacancy-manage-row__actions {
-        width: 100%;
-        justify-content: flex-start;
-    }
-
-    .application-row {
-        flex-wrap: wrap;
-    }
-
-    .application-row__meta {
-        width: 100%;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-    }
-}
-
-.engagement-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 1rem 0;
 }
 
 .engagement-btn {
@@ -5928,36 +5802,6 @@ a.engagement-btn {
     max-height: 1.05rem !important;
     display: block;
     flex-shrink: 0;
-}
-
-.location-banner {
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-    margin: 0 0 0.85rem;
-    padding: 0.85rem 1rem;
-    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
-    border-radius: var(--radius);
-    background: linear-gradient(135deg, var(--accent-soft), color-mix(in srgb, var(--accent-soft) 70%, white));
-}
-
-.location-banner p {
-    margin: 0.2rem 0 0;
-    color: var(--muted);
-    font-size: 0.9rem;
-}
-
-.location-banner__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.location-banner--compact {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--surface);
 }
 
 .wage--cta {
@@ -6489,36 +6333,6 @@ a.engagement-btn {
         max-width: 0.88rem !important;
         max-height: 0.88rem !important;
     }
-}
-
-.mock-interview-cta {
-    margin: 1.15rem 0 0.35rem;
-    padding: 0.95rem 1rem;
-    border: 1px dashed color-mix(in srgb, var(--accent) 40%, var(--border));
-    border-radius: var(--radius);
-    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.45rem;
-}
-
-.mock-interview-cta__btn {
-    font-weight: 600;
-    border-color: var(--accent);
-    color: var(--brand);
-    background: var(--surface);
-}
-
-.mock-interview-cta__btn:hover {
-    background: var(--accent-soft);
-}
-
-.mock-interview-cta__hint {
-    margin: 0;
-    color: var(--muted);
-    font-size: 0.88rem;
-    line-height: 1.4;
 }
 
 /* Lobster coach CTA on vacancy detail (candidates only) */
