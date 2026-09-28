@@ -419,7 +419,7 @@ public static class UatScriptRunner
                         > ProfileVacancyMatchCalculator.InterestWeightQuickScanOnly);
 
             var root = RepoRoot.Find();
-            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor"));
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CareerCompassPanel.razor"));
             Assert.Contains("Kompas.BandSuper", panel, StringComparison.Ordinal);
             Assert.Contains("Kompas.BandStrong", panel, StringComparison.Ordinal);
             Assert.Contains("Kompas.BandBroaden", panel, StringComparison.Ordinal);
@@ -470,9 +470,9 @@ public static class UatScriptRunner
         if (Contains(blob, "Mijn Lobsy Kompas", "match-%", "Beste match", ">80% match"))
         {
             var root = RepoRoot.Find();
-            var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateHomePanel.razor"));
+            var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateHomePanel.razor"));
             Assert.Contains("CandidateKompas", home, StringComparison.Ordinal);
-            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
             Assert.Contains("Kompas.TabDna", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabProfile", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabTests", kompas, StringComparison.Ordinal);
@@ -494,7 +494,7 @@ public static class UatScriptRunner
             || Contains(blob, "Mijn DNA", "Profiel", "Tests", "Functiefit"))
         {
             var root = RepoRoot.Find();
-            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
             Assert.Contains("Kompas.TabDna", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabTests", kompas, StringComparison.Ordinal);
             Assert.Contains("DnaPanel", kompas, StringComparison.Ordinal);
@@ -509,7 +509,7 @@ public static class UatScriptRunner
             || Contains(blob, "Mijn DNA", "leeg", "Naar de tests"))
         {
             var root = RepoRoot.Find();
-            var dna = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor"));
+            var dna = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/DnaPanel.razor"));
             Assert.Contains("Dna.StoryEmpty", dna, StringComparison.Ordinal);
             Assert.Contains("Dna.StoryEmptyCta", dna, StringComparison.Ordinal);
             Assert.Contains("Dna.TestsTitle", dna, StringComparison.Ordinal);
@@ -519,7 +519,7 @@ public static class UatScriptRunner
             || Contains(blob, "Mijn DNA", "verhaal", "tests"))
         {
             var root = RepoRoot.Find();
-            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor"));
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/DnaPanel.razor"));
             Assert.Contains("Dna.StoryEmpty", panel, StringComparison.Ordinal);
             Assert.Contains("Dna.TestsTitle", panel, StringComparison.Ordinal);
             Assert.Contains("WhoAmIStoryStatuses", panel, StringComparison.Ordinal);
@@ -536,14 +536,14 @@ public static class UatScriptRunner
         if (Contains(blob, "accordeon per vaardigheid", "workshops"))
         {
             var root = RepoRoot.Find();
-            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor"));
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CompetencyScorePanel.razor"));
             Assert.Contains("competency-skill__details", panel, StringComparison.Ordinal);
             Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
             Assert.Contains("CampaignCompetence", panel, StringComparison.Ordinal);
             Assert.Contains("CompetencyTrainingCatalog.MeaningKey", panel, StringComparison.Ordinal);
             Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
-            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
             Assert.Contains("TestsOverviewPanel", kompas, StringComparison.Ordinal);
             Assert.DoesNotContain("Talent.CandidateTitle", kompas, StringComparison.Ordinal);
             Assert.Equal("competence", TrainingTracking.CampaignCompetence);
@@ -553,7 +553,7 @@ public static class UatScriptRunner
         if (Contains(blob, "DISC-Analyse", "gedragsstijl", "workshops"))
         {
             var root = RepoRoot.Find();
-            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CultureScorePanel.razor"));
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CultureScorePanel.razor"));
             Assert.Contains("competency-skill__details", panel, StringComparison.Ordinal);
             Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
             Assert.Equal(18, CulturePersonalityCatalog.QuestionCount);

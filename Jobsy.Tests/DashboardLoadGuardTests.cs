@@ -22,11 +22,11 @@ public class DashboardLoadGuardTests
     }
 
     [Theory]
-    [InlineData("Components/Pages/Admin/AdminHomePanel.razor")]
-    [InlineData("Components/Pages/EmployerHomePanel.razor")]
-    [InlineData("Components/Pages/Candidate/CandidateHomePanel.razor")]
-    [InlineData("Components/Pages/SalesManagerHomePanel.razor")]
-    [InlineData("Components/Pages/AmbassadeurHomePanel.razor")]
+    [InlineData("Components/Admin/AdminHomePanel.razor")]
+    [InlineData("Components/Home/EmployerHomePanel.razor")]
+    [InlineData("Components/Candidate/CandidateHomePanel.razor")]
+    [InlineData("Components/Home/SalesManagerHomePanel.razor")]
+    [InlineData("Components/Home/AmbassadeurHomePanel.razor")]
     public void Role_dashboard_retries_load_after_first_interactive_render(string relativePath)
     {
         var text = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", relativePath));

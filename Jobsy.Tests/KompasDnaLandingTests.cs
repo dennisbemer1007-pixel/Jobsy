@@ -143,7 +143,7 @@ public class KompasDnaLandingTests
     public void Dna_panel_has_story_and_summary_cards_without_old_list()
     {
         var root = RepoRoot.Find();
-        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor"));
+        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/DnaPanel.razor"));
         Assert.Contains("Dna.StoryTitle", panel);
         Assert.Contains("Dna.TestsTitle", panel);
         Assert.Contains("Dna.HighlightsTitle", panel);
@@ -159,7 +159,7 @@ public class KompasDnaLandingTests
         Assert.Contains(".dna-tiles__grid", css);
         Assert.Contains(".dna-highlights__grid", css);
 
-        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
         Assert.Contains("Kompas.CompletenessLine", kompas);
         Assert.Contains("ShouldShowSide", kompas);
         Assert.Contains("jobsyViewport.isKompasWide", kompas);

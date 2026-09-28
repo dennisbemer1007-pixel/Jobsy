@@ -8,7 +8,7 @@ public class CandidateKompasSideVisibilityTests
     {
         var root = FindRepoRoot();
         var razor = File.ReadAllText(
-            Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
         Assert.Contains("private bool ShouldShowSide => _isWideViewport;", razor, StringComparison.Ordinal);
         Assert.DoesNotContain("_tab != CandidateKompasTabs.Dna || _isWideViewport", razor, StringComparison.Ordinal);
         Assert.Contains("private bool _isWideViewport;", razor, StringComparison.Ordinal);

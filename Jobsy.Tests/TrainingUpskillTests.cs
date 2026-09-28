@@ -133,11 +133,11 @@ public class TrainingUpskillTests
         var compass = CareerCompassBuilder.Build(new RiasecScores(20, 30, 25, 95, 40, 35), fromDeepAnalysis: true);
         Assert.Contains(TrainingCopy.GapAdvice, compass.PracticalNotes);
 
-        var panel = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Pages/Candidate/RoleFitCheckPanel.razor"));
+        var panel = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Candidate/RoleFitCheckPanel.razor"));
         Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
-        var compassPanel = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor"));
+        var compassPanel = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Candidate/CareerCompassPanel.razor"));
         Assert.Contains("TrainingOffersBlock", compassPanel, StringComparison.Ordinal);
-        var competencyPanel = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor"));
+        var competencyPanel = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Candidate/CompetencyScorePanel.razor"));
         Assert.Contains("TrainingOffersBlock", competencyPanel, StringComparison.Ordinal);
         Assert.Contains("CampaignCompetence", competencyPanel, StringComparison.Ordinal);
         var admin = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Pages/Admin/TrainingAdmin.razor"));

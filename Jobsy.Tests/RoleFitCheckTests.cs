@@ -96,7 +96,7 @@ public class RoleFitCheckTests
     public void Pages_wire_tabs_and_gated_fit_checker()
     {
         var root = RepoRoot.Find();
-        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
         Assert.Contains("CandidateKompasTabs.Fit", kompas, StringComparison.Ordinal);
         Assert.Contains("RoleFitCheckPanel", kompas, StringComparison.Ordinal);
         Assert.Contains("kompas-tab-fit", kompas, StringComparison.Ordinal);
@@ -106,7 +106,7 @@ public class RoleFitCheckTests
         var profile = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         Assert.Contains("<CandidateKompas", profile, StringComparison.Ordinal);
 
-        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/RoleFitCheckPanel.razor"));
+        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/RoleFitCheckPanel.razor"));
         Assert.Contains("Fit.Locked", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.DeepUpsell", panel, StringComparison.Ordinal);
         Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);

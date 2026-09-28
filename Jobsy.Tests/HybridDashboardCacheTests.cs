@@ -116,11 +116,11 @@ public sealed class HybridDashboardCacheTests
 
         string[] files =
         [
-            "Components/Pages/Admin/AdminHomePanel.razor",
-            "Components/Pages/EmployerHomePanel.razor",
+            "Components/Admin/AdminHomePanel.razor",
+            "Components/Home/EmployerHomePanel.razor",
             "Components/Pages/Intermediary/IntermediaryDashboard.razor",
-            "Components/Pages/SalesManagerHomePanel.razor",
-            "Components/Pages/AmbassadeurHomePanel.razor"
+            "Components/Home/SalesManagerHomePanel.razor",
+            "Components/Home/AmbassadeurHomePanel.razor"
         ];
 
         foreach (var relative in files)

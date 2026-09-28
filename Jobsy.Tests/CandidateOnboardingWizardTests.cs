@@ -232,7 +232,7 @@ public class CandidateOnboardingWizardTests
         Assert.Contains("candidate/start", layout, StringComparison.Ordinal);
         Assert.Contains("<GratisDnaMerge", layout, StringComparison.Ordinal);
 
-        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateHomePanel.razor"));
+        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateHomePanel.razor"));
         Assert.Contains("CandidateOnboardingResumeCard", home, StringComparison.Ordinal);
 
         var migration = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Data/Migrations/20260926153316_SyncOnboardingModelSnapshot.cs"));
