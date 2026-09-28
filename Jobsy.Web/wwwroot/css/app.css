@@ -15270,24 +15270,6 @@ html.cookie-consent-known .cookie-consent {
     font-size: 1rem;
 }
 
-.profile-accordion__toggle {
-    display: flex;
-    width: 100%;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    min-height: 2.75rem;
-    padding: 0.7rem 0.9rem;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--surface);
-    color: var(--text);
-    font: inherit;
-    font-weight: 750;
-    cursor: pointer;
-    text-align: left;
-}
-
 .profile-accordion__toggle.is-open {
     border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
     background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
@@ -16011,13 +15993,6 @@ html.cookie-consent-known .cookie-consent {
     align-items: center;
 }
 
-.competency-radar {
-    width: 100%;
-    max-width: 13rem;
-    height: auto;
-    justify-self: center;
-}
-
 .score-radar {
     width: 100%;
     max-width: 22rem;
@@ -16076,13 +16051,6 @@ html.cookie-consent-known .cookie-consent {
     paint-order: stroke;
     stroke: color-mix(in srgb, var(--surface) 88%, transparent);
     stroke-width: 3px;
-}
-
-.score-radar__value {
-    fill: var(--coral-deep);
-    font-size: 10px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
 }
 
 .score-radar__ring-label {
@@ -16224,19 +16192,6 @@ html.cookie-consent-known .cookie-consent {
     color: var(--text);
 }
 
-.competency-radar__grid,
-.competency-radar__axis {
-    fill: none;
-    stroke: var(--border);
-    stroke-width: 1;
-}
-
-.competency-radar__fill {
-    fill: color-mix(in srgb, var(--brand) 28%, transparent);
-    stroke: var(--brand);
-    stroke-width: 1.5;
-}
-
 .competency-bars {
     list-style: none;
     margin: 0;
@@ -16314,12 +16269,6 @@ html.cookie-consent-known .cookie-consent {
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
 }
 
-.deep-analysis-chrome__progress {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
 .deep-analysis-topics {
     list-style: none;
     margin: 0;
@@ -16375,21 +16324,9 @@ html.cookie-consent-known .cookie-consent {
     flex-shrink: 0;
 }
 
-.competency-question__head {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.45rem;
-    margin: 0 0 0.45rem;
-}
-
 .competency-question__head .competency-question__text {
     margin: 0;
     flex: 1;
-}
-
-.deep-analysis-info {
-    flex-shrink: 0;
-    margin-top: 0.1rem;
 }
 
 @media (max-width: 640px) {
@@ -16624,19 +16561,6 @@ html.cookie-consent-known .cookie-consent {
     max-width: 100%;
 }
 
-.kompas__toolbar {
-    display: flex;
-    justify-content: flex-end;
-    margin: 0 0 0.75rem;
-}
-
-.kompas-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem;
-    margin-bottom: 0.5rem;
-}
-
 .kompas-tabs.admin-sublinks {
     position: sticky;
     top: 0;
@@ -16682,9 +16606,6 @@ html.cookie-consent-known .cookie-consent {
 }
 
 @media (max-width: 640px) {
-    .kompas__toolbar {
-        margin-bottom: 0.35rem;
-    }
 
     .kompas-tabs.admin-sublinks {
         gap: 0.3rem;
@@ -16724,12 +16645,6 @@ html.cookie-consent-known .cookie-consent {
     gap: 0.75rem;
 }
 
-.role-fit-result {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-}
-
 .role-fit-result__pct {
     margin: 0;
     font-size: 1.35rem;
@@ -16738,16 +16653,6 @@ html.cookie-consent-known .cookie-consent {
 .role-fit-result__pct strong {
     color: var(--brand);
     font-size: 1.7rem;
-}
-
-.role-fit-result h4 {
-    margin: 0 0 0.35rem;
-}
-
-.role-fit-result ul,
-.role-fit-result ol {
-    margin: 0;
-    padding-left: 1.1rem;
 }
 
 .fit-upsell {
@@ -17038,12 +16943,6 @@ html.cookie-consent-known .cookie-consent {
     margin-bottom: 1.25rem;
 }
 
-.kompas-status-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
 .kompas-card h3 {
     margin: 0;
     font-size: 1.05rem;
@@ -17063,23 +16962,6 @@ html.cookie-consent-known .cookie-consent {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-}
-
-.kompas-chip-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-}
-
-.kompas-chip {
-    border-radius: 999px;
-    padding: 0.2rem 0.6rem;
-    background: color-mix(in srgb, var(--brand) 12%, var(--surface));
-    font-size: 0.8rem;
-    font-weight: 600;
 }
 
 .job-card__match {
@@ -17307,12 +17189,6 @@ html.cookie-consent-known .cookie-consent {
     line-height: 1.4;
 }
 
-.whoami-visuals {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
 .whoami-checklist {
     list-style: none;
     margin: 0;
@@ -17443,55 +17319,6 @@ html.cookie-consent-known .cookie-consent {
     font-size: 1rem;
 }
 
-.kompas-workstyle {
-    margin: 1rem 0;
-    padding: 0.85rem 0.95rem;
-    border-radius: 0.85rem;
-    border: 1px solid var(--border);
-    background: var(--surface);
-}
-
-
-.whoami-disc {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.45rem;
-}
-
-.whoami-disc__cell {
-    border-radius: 12px;
-    padding: 0.7rem 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    min-height: 5.2rem;
-}
-
-.whoami-disc__pct {
-    font-weight: 800;
-    font-size: 1.2rem;
-}
-
-.whoami-disc__name {
-    font-size: 0.78rem;
-    line-height: 1.25;
-}
-
-.whoami-disc__cell--dominant {
-    background: color-mix(in srgb, #c45c3e 18%, var(--surface));
-}
-
-.whoami-disc__cell--invloed {
-    background: color-mix(in srgb, #d4a017 18%, var(--surface));
-}
-
-.whoami-disc__cell--stabiel {
-    background: color-mix(in srgb, #1a7a6d 16%, var(--surface));
-}
-
-.whoami-disc__cell--nauwkeurig {
-    background: color-mix(in srgb, #0f2d5c 14%, var(--surface));
-}
 
 /* ===== Match & Swipe (mobile) ===== */
 .app-shell--match {
@@ -17820,13 +17647,6 @@ html.cookie-consent-known .cookie-consent {
 }
 
 /* legacy badge class kept for safety */
-.swipe-card__match-badge {
-    display: none;
-}
-
-.swipe-card__logo-row {
-    display: none;
-}
 
 .swipe-card__logo {
     max-height: 2.15rem;
@@ -17865,11 +17685,6 @@ html.cookie-consent-known .cookie-consent {
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 2px 8px rgba(18, 32, 51, 0.14);
-}
-
-.swipe-card__logo-text {
-    max-width: 9.5rem;
-    line-height: 1.1;
 }
 
 .swipe-card__photo {
@@ -18818,14 +18633,6 @@ html.cookie-consent-known .cookie-consent {
     opacity: 0.55;
     cursor: not-allowed;
     text-decoration: none;
-}
-
-.horizon-course__chevron {
-    width: 0.45rem;
-    height: 0.45rem;
-    border-right: 2px solid var(--muted);
-    border-bottom: 2px solid var(--muted);
-    transform: rotate(-45deg);
 }
 
 .horizon-card__block-meta {
