@@ -193,6 +193,8 @@ public static partial class PageSeoCatalog
             ["/admin/finance"] = Private("Admin.Finance", "Seo.PrivateDescription"),
             ["/admin/integrations"] = Private("Admin.Integrations", "Seo.PrivateDescription"),
             ["/admin/logging"] = Private("Admin.Logging", "Seo.PrivateDescription"),
+            ["/admin/personal-data-access-log"] = Private("Admin.PersonalDataAccessLog", "Seo.PrivateDescription"),
+
             ["/admin/mail-test"] = Private("Admin.MailTest", "Seo.PrivateDescription"),
             ["/admin/marketing-flyer"] = Private("Admin.MarketingFlyer", "Seo.PrivateDescription"),
             ["/admin/masterdata"] = Private("Admin.Masterdata", "Seo.PrivateDescription"),

@@ -70,7 +70,15 @@ public class AmbassadeursController : ControllerBase
     [HttpGet]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<IEnumerable<AmbassadeurListItemDto>>> List(CancellationToken cancellationToken)
-        => Ok(await _dashboard.ListAmbassadeursAsync(cancellationToken));
+    {
+        var rows = await _dashboard.ListAmbassadeursAsync(cancellationToken);
+        var masked = rows.Select(r => r with
+        {
+            Email = Jobsy.Core.Privacy.PersonalDataMasker.MaskEmail(r.Email),
+            FullName = Jobsy.Core.Privacy.PersonalDataMasker.MaskName(r.FullName)
+        }).ToList();
+        return Ok(masked);
+    }
 
     [HttpGet("settings")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]

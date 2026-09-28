@@ -11,6 +11,13 @@ public static class PrivacyConstants
     public const string CandidateProfilingConsentVersion = "2026-09-26";
 
     public const int PlatformLogRetentionDays = 90;
+
+    /// <summary>
+    /// Personal-data access log retention (AVG accountability). Configurable override:
+    /// <c>Privacy:PersonalDataAccessLogRetentionDays</c>.
+    /// </summary>
+    public const int PersonalDataAccessLogRetentionDays = 730;
+
     public const int CancelledRegistrationRetentionDays = 30;
     public const int EngagementEventRetentionDays = 365;
 

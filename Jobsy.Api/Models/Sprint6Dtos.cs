@@ -30,6 +30,53 @@ public record AdminUserDetailDto(
     bool IsActive,
     IReadOnlyList<Guid> MembershipCompanyIds);
 
+/// <summary>Paginated, masked admin users overview (prompt 05).</summary>
+public record AdminUsersPageDto(
+    AdminUsersAggregateDto Aggregates,
+    IReadOnlyList<AdminUserDetailDto> Items,
+    int Page,
+    int PageSize,
+    int TotalCount,
+    bool Masked);
+
+public record AdminUsersAggregateDto(
+    IReadOnlyDictionary<string, int> ByRole,
+    IReadOnlyList<AdminUsersCompanyCountDto> TopCompanies,
+    int ActiveCount,
+    int InactiveCount,
+    IReadOnlyList<AdminUsersWeekBucketDto> ByRegistrationWeek);
+
+public record AdminUsersCompanyCountDto(Guid? CompanyId, string CompanyName, int Count);
+
+public record AdminUsersWeekBucketDto(string WeekStartUtc, int Count);
+
+/// <summary>Admin applications without company/vacancy filter: aggregates only.</summary>
+public record AdminApplicationsAggregateDto(
+    int TotalCount,
+    IReadOnlyDictionary<string, int> ByStatus,
+    IReadOnlyList<AdminApplicationsCompanyCountDto> TopCompanies);
+
+public record AdminApplicationsCompanyCountDto(Guid CompanyId, string CompanyName, int Count);
+
+public record PersonalDataAccessLogItemDto(
+    Guid Id,
+    DateTime OccurredAt,
+    Guid ActorUserId,
+    string ActorRole,
+    Guid? SubjectUserId,
+    Guid? SubjectCompanyId,
+    string Resource,
+    string Action,
+    string? Reason,
+    Guid? SupportAccessGrantId,
+    string CorrelationId);
+
+public record PersonalDataAccessLogPageDto(
+    IReadOnlyList<PersonalDataAccessLogItemDto> Items,
+    int Page,
+    int PageSize,
+    int TotalCount);
+
 public record AdminVacancyDetailDto(
     Guid Id,
     string Title,

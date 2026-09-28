@@ -77,7 +77,16 @@ public class SalesManagersController : ControllerBase
     [HttpGet]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<IEnumerable<SalesManagerListItemDto>>> List(CancellationToken cancellationToken)
-        => Ok(await _dashboard.ListSalesManagersAsync(cancellationToken));
+    {
+        var rows = await _dashboard.ListSalesManagersAsync(cancellationToken);
+        // Admin list: mask personal data by default (prompt 05).
+        var masked = rows.Select(r => r with
+        {
+            Email = Jobsy.Core.Privacy.PersonalDataMasker.MaskEmail(r.Email),
+            FullName = Jobsy.Core.Privacy.PersonalDataMasker.MaskName(r.FullName)
+        }).ToList();
+        return Ok(masked);
+    }
 
     [HttpPost("me/applications")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]

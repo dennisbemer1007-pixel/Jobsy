@@ -1,8 +1,10 @@
 using Jobsy.Api.Models;
+using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
@@ -22,19 +24,22 @@ public class AdminController : ControllerBase
     private readonly IVacancyProductService _products;
     private readonly IUserLookupService _users;
     private readonly ICompanyApiKeyService _apiKeys;
+    private readonly IPersonalDataAccessLogger _accessLog;
 
     public AdminController(
         JobsyDbContext db,
         IKvkService kvk,
         IVacancyProductService products,
         IUserLookupService users,
-        ICompanyApiKeyService apiKeys)
+        ICompanyApiKeyService apiKeys,
+        IPersonalDataAccessLogger accessLog)
     {
         _db = db;
         _kvk = kvk;
         _products = products;
         _users = users;
         _apiKeys = apiKeys;
+        _accessLog = accessLog;
     }
 
     [HttpGet("companies")]
@@ -212,26 +217,230 @@ public class AdminController : ControllerBase
             0));
     }
 
+    /// <summary>
+    /// Aggregated admin users overview + searchable paginated masked list (AVG default).
+    /// Unmasked values require support access (prompt 06).
+    /// </summary>
     [HttpGet("users")]
-    public async Task<ActionResult<IEnumerable<AdminUserDetailDto>>> GetUsers(CancellationToken cancellationToken)
+    public async Task<ActionResult<AdminUsersPageDto>> GetUsers(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50,
+        [FromQuery] string? q = null,
+        [FromQuery] string? role = null,
+        [FromQuery] string? companyType = null,
+        [FromQuery] Guid? companyId = null,
+        [FromQuery] bool earlyOnly = false,
+        CancellationToken cancellationToken = default)
     {
-        var users = await _db.Users
-            .AsNoTracking()
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var baseQuery = _db.Users.AsNoTracking().AsQueryable();
+
+        // Aggregates over the full (unfiltered) set for overview cards.
+        var allRows = await _db.Users.AsNoTracking()
+            .Select(u => new
+            {
+                u.Id,
+                u.Role,
+                u.CompanyId,
+                CompanyName = u.Company != null ? u.Company.Name : null,
+                u.IsActive,
+                u.TermsAcceptedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        var byRole = allRows
+            .GroupBy(u => u.Role.ToString())
+            .ToDictionary(g => g.Key, g => g.Count());
+        var activeCount = allRows.Count(u => u.IsActive);
+        var inactiveCount = allRows.Count - activeCount;
+        var topCompanies = allRows
+            .Where(u => u.CompanyId != null)
+            .GroupBy(u => new { u.CompanyId, Name = u.CompanyName ?? "—" })
+            .Select(g => new AdminUsersCompanyCountDto(g.Key.CompanyId, g.Key.Name, g.Count()))
+            .OrderByDescending(x => x.Count)
+            .Take(20)
+            .ToList();
+        var byWeek = allRows
+            .Select(u =>
+            {
+                var stamp = u.TermsAcceptedAt ?? DateTime.UnixEpoch;
+                var weekStart = stamp.Date.AddDays(-(int)stamp.DayOfWeek);
+                return weekStart;
+            })
+            .GroupBy(d => d)
+            .OrderByDescending(g => g.Key)
+            .Take(12)
+            .Select(g => new AdminUsersWeekBucketDto(g.Key.ToString("yyyy-MM-dd"), g.Count()))
+            .ToList();
+
+        if (companyId is Guid cid)
+        {
+            baseQuery = baseQuery.Where(u =>
+                u.CompanyId == cid || u.CompanyMemberships.Any(m => m.CompanyId == cid));
+        }
+
+        if (earlyOnly)
+        {
+            baseQuery = baseQuery.Where(u => u.IsEarlyAdapter);
+        }
+
+        if (!string.IsNullOrWhiteSpace(role)
+            && Enum.TryParse<UserRole>(role, ignoreCase: true, out var roleEnum))
+        {
+            baseQuery = baseQuery.Where(u => u.Role == roleEnum);
+        }
+
+        if (string.Equals(companyType, "none", StringComparison.OrdinalIgnoreCase))
+        {
+            baseQuery = baseQuery.Where(u => u.CompanyId == null);
+        }
+        else if (!string.IsNullOrWhiteSpace(companyType)
+                 && Enum.TryParse<CompanyType>(companyType, ignoreCase: true, out var typeEnum))
+        {
+            baseQuery = baseQuery.Where(u => u.Company != null && u.Company.Type == typeEnum);
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var term = q.Trim();
+            baseQuery = baseQuery.Where(u =>
+                u.Email.Contains(term)
+                || u.FullName.Contains(term)
+                || (u.Company != null && u.Company.Name.Contains(term)));
+        }
+
+        var total = await baseQuery.CountAsync(cancellationToken);
+        var pageRows = await baseQuery
             .OrderBy(u => u.Email)
-            .Select(u => new AdminUserDetailDto(
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(u => new
+            {
                 u.Id,
                 u.Email,
                 u.FullName,
-                u.Role.ToString(),
+                Role = u.Role.ToString(),
                 u.CompanyId,
-                u.Company != null ? u.Company.Name : null,
-                u.Company != null ? u.Company.Type.ToString() : null,
+                CompanyName = u.Company != null ? u.Company.Name : null,
+                CompanyType = u.Company != null ? u.Company.Type.ToString() : null,
                 u.IsEarlyAdapter,
                 u.IsActive,
-                u.CompanyMemberships.Select(m => m.CompanyId).ToList()))
+                MembershipCompanyIds = u.CompanyMemberships.Select(m => m.CompanyId).ToList()
+            })
             .ToListAsync(cancellationToken);
 
-        return Ok(users);
+        var items = pageRows.Select(u =>
+        {
+            // Own admin record may stay unmasked; everyone else is masked by default.
+            var self = u.Id == actor.Id;
+            return new AdminUserDetailDto(
+                u.Id,
+                self ? u.Email : PersonalDataMasker.MaskEmail(u.Email),
+                self ? u.FullName : PersonalDataMasker.MaskName(u.FullName),
+                u.Role,
+                u.CompanyId,
+                u.CompanyName,
+                u.CompanyType,
+                u.IsEarlyAdapter,
+                u.IsActive,
+                u.MembershipCompanyIds);
+        }).ToList();
+
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            actor.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "admin.users.list",
+            "list",
+            reason: $"page={page};pageSize={pageSize};q={(q ?? "")};role={(role ?? "")};companyId={companyId};earlyOnly={earlyOnly}",
+            cancellationToken: cancellationToken);
+
+        return Ok(new AdminUsersPageDto(
+            new AdminUsersAggregateDto(byRole, topCompanies, activeCount, inactiveCount, byWeek),
+            items,
+            page,
+            pageSize,
+            total,
+            Masked: true));
+    }
+
+    [HttpGet("personal-data-access-log")]
+    public async Task<ActionResult<PersonalDataAccessLogPageDto>> GetPersonalDataAccessLog(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50,
+        [FromQuery] Guid? actorUserId = null,
+        [FromQuery] Guid? subjectUserId = null,
+        [FromQuery] DateTime? fromUtc = null,
+        [FromQuery] DateTime? toUtc = null,
+        CancellationToken cancellationToken = default)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var query = _db.PersonalDataAccessLogs.AsNoTracking().AsQueryable();
+        if (actorUserId is Guid aid)
+        {
+            query = query.Where(l => l.ActorUserId == aid);
+        }
+
+        if (subjectUserId is Guid sid)
+        {
+            query = query.Where(l => l.SubjectUserId == sid);
+        }
+
+        if (fromUtc is DateTime from)
+        {
+            query = query.Where(l => l.OccurredAt >= from.ToUniversalTime());
+        }
+
+        if (toUtc is DateTime to)
+        {
+            query = query.Where(l => l.OccurredAt <= to.ToUniversalTime());
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderByDescending(l => l.OccurredAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(l => new PersonalDataAccessLogItemDto(
+                l.Id,
+                l.OccurredAt,
+                l.ActorUserId,
+                l.ActorRole,
+                l.SubjectUserId,
+                l.SubjectCompanyId,
+                l.Resource,
+                l.Action,
+                l.Reason,
+                l.SupportAccessGrantId,
+                l.CorrelationId))
+            .ToListAsync(cancellationToken);
+
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            actor.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "admin.personal_data_access_log.list",
+            "list",
+            reason: $"page={page};actor={actorUserId};subject={subjectUserId}",
+            cancellationToken: cancellationToken);
+
+        return Ok(new PersonalDataAccessLogPageDto(items, page, pageSize, total));
     }
 
     [HttpGet("vacancies")]

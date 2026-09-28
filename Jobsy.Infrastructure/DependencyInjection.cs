@@ -59,6 +59,13 @@ public static class DependencyInjection
         services.AddJobsyDataProtection(connectionString, isDev, configuration);
         services.AddMemoryCache();
         services.AddSingleton<ISecretProtector, SecretProtector>();
+        services.AddSingleton<IIbanProtector>(sp =>
+        {
+            var protector = new IbanProtector(sp.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>());
+            IbanEfProtection.Configure(protector);
+            return protector;
+        });
+        services.AddScoped<IPersonalDataAccessLogger, PersonalDataAccessLogger>();
         services.AddSingleton<ICandidateInsightsQueue, CandidateInsightsQueue>();
         services.AddSingleton<ICultureFitRefineQueue, CultureFitRefineQueue>();
         services.AddScoped<ICandidateMatchSnapshotService, CandidateMatchSnapshotService>();
@@ -399,6 +406,7 @@ public static class DependencyInjection
         services.AddHostedService<AtsVacancyHealthHostedService>();
         services.AddHostedService<FeedbackAutomationPollHostedService>();
         services.AddHostedService<DataRetentionHostedService>();
+        services.AddHostedService<IbanEncryptionMigrationHostedService>();
         services.AddHostedService<TalentContactRefundHostedService>();
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();

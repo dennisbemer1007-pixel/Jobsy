@@ -1,5 +1,6 @@
 using System.Net;
 using Jobsy.Api.Models;
+using Jobsy.Api.Privacy;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
@@ -35,6 +36,7 @@ public class ApplicationsController : ControllerBase
     private readonly ICandidateActionTokenService _actionTokens;
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
     private readonly IWhoAmIService _whoAmI;
+    private readonly IPersonalDataAccessLogger _accessLog;
 
     public ApplicationsController(
         JobsyDbContext db,
@@ -47,7 +49,8 @@ public class ApplicationsController : ControllerBase
         IUserNotificationService notifications,
         ICandidateActionTokenService actionTokens,
         IVacancyDiscoveryIndex discoveryIndex,
-        IWhoAmIService whoAmI)
+        IWhoAmIService whoAmI,
+        IPersonalDataAccessLogger accessLog)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -60,13 +63,23 @@ public class ApplicationsController : ControllerBase
         _actionTokens = actionTokens;
         _discoveryIndex = discoveryIndex;
         _whoAmI = whoAmI;
+        _accessLog = accessLog;
     }
 
     [HttpGet]
     [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
-    public async Task<ActionResult<IEnumerable<EmployerApplicationDto>>> GetForManagedCompanies(CancellationToken cancellationToken)
+    public async Task<ActionResult> GetForManagedCompanies(
+        [FromQuery] Guid? companyId = null,
+        [FromQuery] Guid? vacancyId = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50,
+        CancellationToken cancellationToken = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        var isAdmin = accessible is null;
         var query = _db.Applications
             .AsNoTracking()
             .Where(a => a.EmailVerifiedAt != null)
@@ -79,11 +92,69 @@ public class ApplicationsController : ControllerBase
                 || (a.Vacancy.IntermediaryCompanyId != null
                     && accessible.Contains(a.Vacancy.IntermediaryCompanyId.Value)));
         }
+        else
+        {
+            // Admin: require companyId or vacancyId; otherwise return aggregates only.
+            if (companyId is null && vacancyId is null)
+            {
+                var aggRows = await query
+                    .Select(a => new { a.Status, a.Vacancy.CompanyId, CompanyName = a.Vacancy.Company.Name })
+                    .ToListAsync(cancellationToken);
+                var byStatus = aggRows
+                    .GroupBy(a => a.Status.ToString())
+                    .ToDictionary(g => g.Key, g => g.Count());
+                var topCompanies = aggRows
+                    .GroupBy(a => new { a.CompanyId, a.CompanyName })
+                    .Select(g => new AdminApplicationsCompanyCountDto(g.Key.CompanyId, g.Key.CompanyName, g.Count()))
+                    .OrderByDescending(x => x.Count)
+                    .Take(20)
+                    .ToList();
 
-        var rows = await query
+                var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+                if (actor is not null)
+                {
+                    await this.LogPersonalDataAccessAsync(
+                        _accessLog,
+                        actor.Id,
+                        PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                        "admin.applications.aggregate",
+                        "list",
+                        reason: "no-filter",
+                        cancellationToken: cancellationToken);
+                }
+
+                return Ok(new AdminApplicationsAggregateDto(aggRows.Count, byStatus, topCompanies));
+            }
+        }
+
+        if (companyId is Guid cid)
+        {
+            query = query.Where(a =>
+                a.Vacancy.CompanyId == cid
+                || a.Vacancy.IntermediaryCompanyId == cid);
+        }
+
+        if (vacancyId is Guid vid)
+        {
+            query = query.Where(a => a.VacancyId == vid);
+        }
+
+        query = query
             .OrderByDescending(a => a.MatchPercent ?? -1)
             .ThenBy(a => a.EstimatedTravelMinutes)
-            .ThenByDescending(a => a.CreatedAt)
+            .ThenByDescending(a => a.CreatedAt);
+
+        if (isAdmin)
+        {
+            query = query.Skip((page - 1) * pageSize).Take(pageSize);
+        }
+        else
+        {
+            // Employer lists stay uncapped by page for now (existing behaviour) but hard-cap Take.
+            query = query.Take(500);
+        }
+
+        var rows = await query
             .Select(a => new
             {
                 a.Id,
@@ -120,15 +191,53 @@ public class ApplicationsController : ControllerBase
                 a.SnapshotWhatsAppAllowed,
                 a.CandidateAgeYears,
                 a.HasUploadedCv,
-                a.CandidateReferenceCount
+                a.CandidateReferenceCount,
+                a.CandidateUserId,
+                a.Vacancy.CompanyId
             })
             .ToListAsync(cancellationToken);
+
+        if (isAdmin)
+        {
+            var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+            if (actor is not null)
+            {
+                await this.LogPersonalDataAccessAsync(
+                    _accessLog,
+                    actor.Id,
+                    PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                    "admin.applications.list",
+                    "list",
+                    subjectCompanyId: companyId,
+                    reason: $"companyId={companyId};vacancyId={vacancyId};page={page};pageSize={pageSize}",
+                    cancellationToken: cancellationToken);
+            }
+        }
 
         return Ok(rows.Select(a =>
         {
             var revealed = ApplicationRules.IsPiiRevealed(a.Status);
             var contact = ApplicationRules.IsDirectContactRevealed(a.Status);
             var availability = LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson);
+
+            // Admin sees masked PII by default even when status would reveal to employers.
+            var name = revealed ? a.CandidateName : null;
+            var email = contact ? a.CandidateEmail : null;
+            var address = revealed ? a.CandidateAddress : null;
+            var phone = contact ? a.SnapshotPhoneNumber : null;
+            var city = revealed ? a.CandidateCity : null;
+            int? age = a.CandidateAgeYears;
+
+            if (isAdmin)
+            {
+                name = name is null ? null : PersonalDataMasker.MaskName(name);
+                email = email is null ? null : PersonalDataMasker.MaskEmail(email);
+                phone = phone is null ? null : PersonalDataMasker.MaskPhone(phone);
+                address = PersonalDataMasker.MaskAddressToCity(address, city);
+                // Age band only for admin surfaces.
+                age = null; // EmployerApplicationDto uses int? CandidateAgeYears — keep numeric for employers
+            }
+
             return new EmployerApplicationDto(
                 a.Id,
                 a.VacancyId,
@@ -139,41 +248,43 @@ public class ApplicationsController : ControllerBase
                 a.CreatedAt,
                 a.Status.ToString(),
                 a.RespondedAt,
-                revealed ? a.CandidateCity : null,
+                isAdmin ? city : (revealed ? a.CandidateCity : null),
                 // Distance without address/city is allowed pre-accept for screening.
                 a.DistanceKm,
-                ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed),
-                revealed ? a.CandidateName : null,
-                contact ? a.CandidateEmail : null,
-                revealed ? a.CandidateAddress : null,
+                ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed && !isAdmin),
+                name,
+                email,
+                isAdmin ? address : (revealed ? a.CandidateAddress : null),
                 revealed,
-                revealed && a.WorkPermitConfirmed,
+                revealed && a.WorkPermitConfirmed && !isAdmin,
                 // Availability is screening data (not identity PII) — same matrix before and after Accept.
-                a.SnapshotAvailabilityJson,
-                revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotDrivingLicenses) : null,
-                revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
-                revealed ? a.SnapshotAboutMe : null,
-                revealed ? a.CandidateEmployerCount : 0,
+                isAdmin ? null : a.SnapshotAvailabilityJson,
+                revealed && !isAdmin ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotDrivingLicenses) : null,
+                revealed && !isAdmin ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
+                revealed && !isAdmin ? a.SnapshotAboutMe : null,
+                revealed && !isAdmin ? a.CandidateEmployerCount : 0,
                 a.MatchPercent,
                 MatchBreakdownJson: null,
                 a.ViaSafetyNet,
                 // Motivation is candidate-authored for the employer — show after verified apply (pre-accept OK).
-                a.Motivation,
+                isAdmin ? null : a.Motivation,
                 LegalEligible: true,
-                revealed ? a.StudentNumber : null,
-                contact ? a.SchoolEmail : null,
-                revealed ? a.StudyProgram : null,
-                revealed ? a.StudyYear : null,
-                revealed ? a.ExclusivityValidationStatus : null,
+                revealed && !isAdmin ? a.StudentNumber : null,
+                contact && !isAdmin ? a.SchoolEmail : null,
+                revealed && !isAdmin ? a.StudyProgram : null,
+                revealed && !isAdmin ? a.StudyYear : null,
+                revealed && !isAdmin ? a.ExclusivityValidationStatus : null,
                 CvPdfAvailable: revealed,
-                CandidatePhone: contact ? a.SnapshotPhoneNumber : null,
-                WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed,
-                CandidateAgeYears: a.CandidateAgeYears,
-                AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
-                    availability.Slots,
-                    availability.FlexibleTimes),
+                CandidatePhone: phone,
+                WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed && !isAdmin,
+                CandidateAgeYears: isAdmin ? null : age,
+                AvailabilitySummary: isAdmin
+                    ? null
+                    : LobsyCvModelFactory.FormatAvailability(
+                        availability.Slots,
+                        availability.FlexibleTimes),
                 UploadedCvAvailable: revealed && a.HasUploadedCv,
-                CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0);
+                CandidateReferenceCount: revealed && !isAdmin ? a.CandidateReferenceCount : 0);
         }));
     }
 
@@ -227,6 +338,16 @@ public class ApplicationsController : ControllerBase
                 includePii: true,
                 includeDirectContact: true);
             var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
+            await this.LogPersonalDataAccessAsync(
+                _accessLog,
+                caller.Id,
+                PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                "application.cv.download",
+                "download",
+                subjectUserId: application.CandidateUserId,
+                subjectCompanyId: application.Vacancy.CompanyId,
+                reason: "lobsy-cv;owner",
+                cancellationToken: cancellationToken);
             return File(pdf, "application/pdf", _lobsyCvPdf.BuildFileName(model));
         }
 
@@ -254,6 +375,16 @@ public class ApplicationsController : ControllerBase
             includePii: true,
             includeDirectContact: ApplicationRules.IsDirectContactRevealed(application.Status));
         var employerPdf = await _lobsyCvPdf.RenderAsync(employerModel, cancellationToken);
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            caller.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "application.cv.download",
+            "download",
+            subjectUserId: application.CandidateUserId,
+            subjectCompanyId: application.Vacancy.CompanyId,
+            reason: "lobsy-cv",
+            cancellationToken: cancellationToken);
         return File(employerPdf, "application/pdf", _lobsyCvPdf.BuildFileName(employerModel));
     }
 
@@ -318,6 +449,17 @@ public class ApplicationsController : ControllerBase
         {
             return NotFound(new { message = "Er is geen geüpload CV bij deze sollicitatie." });
         }
+
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            caller.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "application.cv.download",
+            "download",
+            subjectUserId: application.CandidateUserId,
+            subjectCompanyId: application.Vacancy.CompanyId,
+            reason: isOwner ? "uploaded-cv;owner" : "uploaded-cv",
+            cancellationToken: cancellationToken);
 
         return File(application.UploadedCv.Content, application.UploadedCv.ContentType, application.UploadedCv.FileName);
     }

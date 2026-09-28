@@ -1,3 +1,4 @@
+using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -16,15 +17,18 @@ public sealed class TalentPoolController : ControllerBase
     private readonly ITalentPoolService _talent;
     private readonly IUserLookupService _users;
     private readonly ICompanyAuthorizationService _authz;
+    private readonly IPersonalDataAccessLogger _accessLog;
 
     public TalentPoolController(
         ITalentPoolService talent,
         IUserLookupService users,
-        ICompanyAuthorizationService authz)
+        ICompanyAuthorizationService authz,
+        IPersonalDataAccessLogger accessLog)
     {
         _talent = talent;
         _users = users;
         _authz = authz;
+        _accessLog = accessLog;
     }
 
     [HttpGet("search")]
@@ -82,12 +86,23 @@ public sealed class TalentPoolController : ControllerBase
 
         try
         {
-            return Ok(await _talent.UnlockAsync(
+            var dto = await _talent.UnlockAsync(
                 companyId.Value,
                 user.Id,
                 body.CandidateUserId,
                 body.Message ?? "",
-                cancellationToken));
+                cancellationToken);
+            await this.LogPersonalDataAccessAsync(
+                _accessLog,
+                user.Id,
+                PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                "talentpool.unlock",
+                "reveal",
+                subjectUserId: body.CandidateUserId,
+                subjectCompanyId: companyId,
+                reason: "contact-unlock",
+                cancellationToken: cancellationToken);
+            return Ok(dto);
         }
         catch (InvalidOperationException ex)
         {
