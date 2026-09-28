@@ -58,12 +58,6 @@ public sealed class ApiCallTracker
         _counts.AddOrUpdate(_currentPath, 1, static (_, n) => n + 1);
     }
 
-    public int GetCount(string? path = null)
-    {
-        var key = Normalize(path) is var p && p.Length > 0 ? p : _currentPath;
-        return _counts.TryGetValue(key, out var n) ? n : 0;
-    }
-
     public void Flush(string? path = null)
     {
         if (!IsEnabled)

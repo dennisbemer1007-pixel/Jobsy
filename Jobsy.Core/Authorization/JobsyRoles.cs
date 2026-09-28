@@ -40,8 +40,6 @@ public static class JobsyRoles
             or UserRole.Intermediary
             or UserRole.Admin;
 
-    public static bool CanCreateVacancies(UserRole role) => CanManageVacancyLifecycle(role);
-
     /// <summary>Roles allowed to mutate vacancy lifecycle (API Authorize attribute).</summary>
     public const string VacancyLifecycleRoles =
         $"{BranchManager},{EnterpriseManager},{Intermediary},{Admin}";
@@ -96,5 +94,4 @@ public static class JobsyRoles
             or UserRole.Intermediary
             or UserRole.Admin;
 
-    public static bool RequiresCompanyLink(UserRole role) => IsEmployer(role);
 }

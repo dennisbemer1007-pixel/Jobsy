@@ -66,9 +66,6 @@ public static class AtsListingValidation
         return true;
     }
 
-    public static bool LooksLikeErrorPage(string? text)
-        => ContainsAny(text, StrongErrorPageHints) || ContainsAny(text, TitleErrorHints);
-
     private static bool ContainsAny(string? text, string[] hints)
     {
         if (string.IsNullOrWhiteSpace(text))

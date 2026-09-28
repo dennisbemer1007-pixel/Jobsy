@@ -107,17 +107,6 @@ public static class MetricDashboardCatalog
     public static bool IsMinutes(string key)
         => string.Equals(key, "avg_travel_minutes", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>Keys that render a compact sparkline when trend points are available.</summary>
-    public static bool SupportsSparkline(string key)
-        => key.Equals("clicks", StringComparison.OrdinalIgnoreCase)
-           || key.Equals("impressions", StringComparison.OrdinalIgnoreCase)
-           || key.Equals("applications", StringComparison.OrdinalIgnoreCase)
-           || key.Equals("shares", StringComparison.OrdinalIgnoreCase)
-           || key.Equals("likes", StringComparison.OrdinalIgnoreCase)
-           || key.Equals("site_visits", StringComparison.OrdinalIgnoreCase)
-           || key.Equals("site_visits_unique", StringComparison.OrdinalIgnoreCase)
-           || key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase);
-
     /// <summary>
     /// Ratio progress (0–100) for ring/meter visuals: conversion, token usage, reengagement.
     /// </summary>

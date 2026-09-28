@@ -463,9 +463,6 @@
     private static string MetricHref(VacancyListItem v, string metric)
         => $"/vacancies/{v.Id}?metric={metric}";
 
-    private static string MetricLabel(VacancyListItem v, string label, int count)
-        => $"{label} voor {v.Title}: {count}";
-
     private async Task RefreshAsync()
     {
         try

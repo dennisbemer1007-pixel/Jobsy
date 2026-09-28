@@ -313,31 +313,6 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         return Task.FromResult(clone);
     }
 
-    /// <summary>
-    /// Never fall back to display name — API DevelopmentAuth looks up users by email.
-    /// </summary>
-    internal static string? ResolveEmail(ClaimsPrincipal user)
-    {
-        foreach (var type in new[]
-                 {
-                     ClaimTypes.Email,
-                     "email",
-                     "preferred_username",
-                     "emails",
-                     ClaimTypes.NameIdentifier,
-                     "sub"
-                 })
-        {
-            var value = user.FindFirst(type)?.Value?.Trim();
-            if (!string.IsNullOrWhiteSpace(value) && value.Contains('@', StringComparison.Ordinal))
-            {
-                return value;
-            }
-        }
-
-        return null;
-    }
-
     private async Task<ClaimsPrincipal> ResolveUserAsync()
     {
         var user = await ResolveUserCoreAsync();
