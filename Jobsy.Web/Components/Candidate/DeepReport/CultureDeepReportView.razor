@@ -1,0 +1,115 @@
+@namespace Jobsy.Web.Components.Pages.Candidate.DeepReport
+@using Jobsy.Core.Reports
+@using Jobsy.Core.Reports.Culture
+@using Jobsy.Core.Rules
+@inject CultureState Culture
+
+@if (Report is not null)
+{
+    var lang = ReportLanguage.FromUi(Culture.Language);
+    <article class="competence-report" aria-label="@DeepReportCatalog.Get("title.culture", lang)">
+        <header class="competence-report__header">
+            <span class="test-status-badge test-status-badge--gold competence-report__badge">
+                <span aria-hidden="true">★</span>
+                @Culture["Test.Status.Extended"]
+            </span>
+        </header>
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@DeepReportCatalog.Get("pdf.overview", lang)</h2>
+            <p class="competence-report__summary">@Report.Summary.Resolve(lang)</p>
+            <ScoreRadarChart AriaLabel="@DeepReportCatalog.Get("pdf.radar", lang)"
+                             Labels="@_cultureLabels"
+                             Values="@_cultureScores"
+                             NormValues="@(Report.ComparisonAvailable ? _cultureNorms : null)"
+                             NormLegendLabel="@Culture["TestResult.Card.Radar.Sub.Lobsy"]" />
+        </section>
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@Culture["TestResult.Card.Employers"]</h2>
+            <ul class="competence-norm-bars">
+                @foreach (var e in Report.Employers)
+                {
+                    <li class="competence-norm-bar">
+                        <div class="competence-norm-bar__row">
+                            <span>@DeepReportCatalog.Get($"org.{e.OrgTypeKey}", lang)</span>
+                            <strong>@e.MatchPercent%</strong>
+                        </div>
+                        <p class="muted">@DeepReportCatalog.Get($"org.{e.OrgTypeKey}.why", lang)</p>
+                    </li>
+                }
+            </ul>
+        </section>
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@Culture["TestResult.Card.Facets"]</h2>
+            <h3>@Culture["TestResult.Card.Facets.Sub.Culture"]</h3>
+            <ul class="competence-norm-bars">
+                @foreach (var d in Report.Domains)
+                {
+                    <li class="competence-norm-bar">
+                        <div class="competence-norm-bar__row">
+                            <span>@DeepReportCatalog.CultureLabel(d.Domain, lang)</span>
+                            <strong>@d.Score%</strong>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </section>
+
+        @if (Report.ComparisonAvailable)
+        {
+            <section class="competence-report__section">
+                <h2 class="test-detail__section-title">@Culture["TestResult.Card.Comparison"]</h2>
+                <p class="muted">@Culture["TestResult.Card.Comparison.Sub.Lobsy"]</p>
+            </section>
+        }
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@Culture["TestResult.Card.ActionPlan"]</h2>
+            @foreach (var step in Report.ActionPlan)
+            {
+                <h3>@step.Title.Resolve(lang)</h3>
+                <p>@step.Body.Resolve(lang)</p>
+            }
+        </section>
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@Culture["TestResult.Card.Strengths"]</h2>
+            <ul>
+                @foreach (var key in Report.StrengthKeys)
+                {
+                    <li>@DeepReportCatalog.CultureLabel(key.Split('.').Last(), lang)</li>
+                }
+            </ul>
+        </section>
+
+        <button type="button" class="engagement-btn" disabled="@Busy" @onclick="OnDownloadPdf">
+            @Culture["Deep.DownloadPdf"]
+        </button>
+    </article>
+}
+
+@code {
+    [Parameter] public CultureDeepReport? Report { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnDownloadPdf { get; set; }
+
+    private string[] _cultureLabels = [];
+    private int[] _cultureScores = [];
+    private int[]? _cultureNorms;
+
+    protected override void OnParametersSet()
+    {
+        if (Report is null) return;
+        var lang = ReportLanguage.FromUi(Culture.Language);
+        var culture = Report.Domains
+            .Where(d => CulturePersonalityCatalog.CultureDimensionCodes.Contains(d.Domain, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+        _cultureLabels = culture.Select(d => DeepReportCatalog.CultureLabel(d.Domain, lang)).ToArray();
+        _cultureScores = culture.Select(d => d.Score).ToArray();
+        _cultureNorms = Report.ComparisonAvailable
+            ? culture.Select(d => (int)Math.Round(d.NormMean ?? 0)).ToArray()
+            : null;
+    }
+}

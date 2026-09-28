@@ -5,38 +5,38 @@ namespace Jobsy.Tests;
 
 public class DeepReportCapabilitiesTests
 {
-    [Fact]
-    public void Competence_exposes_all_six_paid_cards()
+    [Theory]
+    [InlineData(AssessmentKind.Competence)]
+    [InlineData(AssessmentKind.Career)]
+    [InlineData(AssessmentKind.Culture)]
+    [InlineData(AssessmentKind.Values)]
+    public void Each_kind_exposes_six_paid_cards(AssessmentKind kind)
     {
-        var keys = DeepReportCapabilities.CardKeys(AssessmentKind.Competence);
+        var keys = DeepReportCapabilities.CardKeys(kind);
         Assert.Equal(6, keys.Count);
-        Assert.Contains(DeepReportCardKey.RadarVsNorm, keys);
-        Assert.Contains(DeepReportCardKey.Comparison, keys);
-        Assert.Contains(DeepReportCardKey.Facets, keys);
-        Assert.Contains(DeepReportCardKey.Occupations, keys);
-        Assert.Contains(DeepReportCardKey.ActionPlan, keys);
-        Assert.Contains(DeepReportCardKey.StrengthsPitfalls, keys);
-        Assert.Equal(9, DeepReportCapabilities.For(AssessmentKind.Competence).PdfPageCount);
+        Assert.True(DeepReportCapabilities.For(kind).PdfPageCount >= 7);
     }
 
     [Fact]
-    public void Culture_and_values_hide_locked_cards_until_part_b()
+    public void Comparison_hidden_when_lobsy_norms_not_ready()
     {
-        Assert.Empty(DeepReportCapabilities.CardKeys(AssessmentKind.Culture));
-        Assert.Empty(DeepReportCapabilities.CardKeys(AssessmentKind.Values));
+        var visible = DeepReportCapabilities.VisibleCards(AssessmentKind.Career, lobsyNormsReady: false);
+        Assert.DoesNotContain(visible, c => c.Key == DeepReportCardKey.Comparison);
+        Assert.Contains(DeepReportCapabilities.VisibleCards(AssessmentKind.Career, true),
+            c => c.Key == DeepReportCardKey.Comparison);
     }
 
     [Fact]
-    public void Career_only_gates_real_occupations_card()
+    public void Competence_keeps_comparison_without_lobsy_norms()
     {
-        var keys = DeepReportCapabilities.CardKeys(AssessmentKind.Career);
-        Assert.Equal(new[] { DeepReportCardKey.Occupations }, keys);
+        var visible = DeepReportCapabilities.VisibleCards(AssessmentKind.Competence, lobsyNormsReady: false);
+        Assert.Contains(visible, c => c.Key == DeepReportCardKey.Comparison);
     }
 
     [Fact]
-    public void Unknown_card_is_not_in_capabilities()
+    public void Career_includes_holland_code()
     {
+        Assert.True(DeepReportCapabilities.HasCard(AssessmentKind.Career, DeepReportCardKey.HollandCode));
         Assert.False(DeepReportCapabilities.HasCard(AssessmentKind.Competence, DeepReportCardKey.HollandCode));
-        Assert.False(DeepReportCapabilities.HasCard(AssessmentKind.Career, DeepReportCardKey.RadarVsNorm));
     }
 }

@@ -16,15 +16,40 @@ public sealed class AssessmentAdjustmentsController : ControllerBase
     private readonly IAssessmentAdjustmentService _adjustments;
     private readonly IAssessmentRetakeService _retakes;
     private readonly IUserLookupService _users;
+    private readonly ISampleAssessmentReportPdfService _samplePdf;
 
     public AssessmentAdjustmentsController(
         IAssessmentAdjustmentService adjustments,
         IAssessmentRetakeService retakes,
-        IUserLookupService users)
+        IUserLookupService users,
+        ISampleAssessmentReportPdfService samplePdf)
     {
         _adjustments = adjustments;
         _retakes = retakes;
         _users = users;
+        _samplePdf = samplePdf;
+    }
+
+    [HttpGet("{kind}/sample-report.pdf")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SampleReport(
+        string kind,
+        [FromQuery] string? lang,
+        CancellationToken cancellationToken = default)
+    {
+        if (!AssessmentKindLabels.TryParse(kind, out var k))
+        {
+            return BadRequest(new { message = "Unknown assessment kind." });
+        }
+
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        var pdf = await _samplePdf.RenderSampleAsync(k, lang, cancellationToken);
+        return File(pdf.Content, "application/pdf", pdf.FileName);
     }
 
     [HttpGet("{kind}/adjustments")]

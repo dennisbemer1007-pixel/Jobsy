@@ -51,6 +51,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateDeepAnalysis> CandidateDeepAnalyses => Set<CandidateDeepAnalysis>();
     public DbSet<CandidateAssessmentAdjustment> CandidateAssessmentAdjustments => Set<CandidateAssessmentAdjustment>();
     public DbSet<CandidateAssessmentAttempt> CandidateAssessmentAttempts => Set<CandidateAssessmentAttempt>();
+    public DbSet<AssessmentNormSnapshot> AssessmentNormSnapshots => Set<AssessmentNormSnapshot>();
     public DbSet<DeepAnalysisCheckout> DeepAnalysisCheckouts => Set<DeepAnalysisCheckout>();
     public DbSet<TalentContactRequest> TalentContactRequests => Set<TalentContactRequest>();
     public DbSet<FlexCommercialSettings> FlexCommercialSettings => Set<FlexCommercialSettings>();
@@ -789,6 +790,14 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AssessmentNormSnapshot>(entity =>
+        {
+            entity.ToTable("AssessmentNormSnapshots");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Domain).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => new { e.Kind, e.Domain, e.ComputedAtUtc });
         });
 
         modelBuilder.Entity<DeepAnalysisCheckout>(entity =>

@@ -3,11 +3,16 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using System.Globalization
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Reports.Career
+@using Jobsy.Core.Reports.Competence
+@using Jobsy.Core.Reports.Culture
+@using Jobsy.Core.Reports.Values
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Core.Options
 @using Jobsy.Web.Components.Candidate.TestResult
+@using Jobsy.Web.Components.Pages.Candidate.DeepReport
 @using Jobsy.Web.Components.Shared
 @using Microsoft.Extensions.Options
 @inject JobsyApiClient Api
@@ -181,6 +186,18 @@
                                           Busy="_busy"
                                           OnDownloadPdf="DownloadPdfAsync" />
             }
+            else if (_def.Kind == AssessmentKind.Career && _careerReport is not null)
+            {
+                <CareerDeepReportView Report="_careerReport" Busy="_busy" OnDownloadPdf="DownloadPdfAsync" />
+            }
+            else if (_def.Kind == AssessmentKind.Culture && _cultureReport is not null)
+            {
+                <CultureDeepReportView Report="_cultureReport" Busy="_busy" OnDownloadPdf="DownloadPdfAsync" />
+            }
+            else if (_def.Kind == AssessmentKind.Values && _valuesReport is not null)
+            {
+                <ValuesDeepReportView Report="_valuesReport" Busy="_busy" OnDownloadPdf="DownloadPdfAsync" />
+            }
             else
             {
                 <button type="button" class="engagement-btn" disabled="@_busy" @onclick="DownloadPdfAsync">
@@ -202,7 +219,8 @@
                                     ProgressCurrent="@(_deepState?.AnsweredCount ?? 0)"
                                     ProgressTotal="@_def.DeepQuestionCount"
                                     ShowSamplePdf="_samplePdfEnabled"
-                                    OnStart="StartExtendedAsync" />
+                                    OnStart="StartExtendedAsync"
+                                    OnSamplePdf="OpenSamplePdfAsync" />
         }
 
         @if (_history.Count > 0)
@@ -314,6 +332,9 @@
     private CompetencyScoreSet? _competencyScores;
     private DeepAnalysisState? _deepState;
     private CompetenceDeepReport? _competenceReport;
+    private CareerDeepReport? _careerReport;
+    private CultureDeepReport? _cultureReport;
+    private ValuesDeepReport? _valuesReport;
     private bool _heavyLoadStarted;
     private PersistingComponentStateSubscription _persistSubscription;
     private AssessmentAdjustmentState _adjustments = new() { Remaining = AssessmentAdjustmentRules.MaxAdjustments, Max = AssessmentAdjustmentRules.MaxAdjustments };
@@ -403,6 +424,9 @@
             _deepCompleted = deep?.IsCompleted == true;
             _priceEuro = deep?.PriceEuro > 0 ? deep.PriceEuro : 2.99m;
             _competenceReport = deep?.CompetenceReport;
+            _careerReport = deep?.CareerReport;
+            _cultureReport = deep?.CultureReport;
+            _valuesReport = deep?.ValuesReport;
             _editModeEnabled = FeatureOptions.Value.TestEditMode;
             _samplePdfEnabled = FeatureOptions.Value.SamplePdf;
 
@@ -727,7 +751,29 @@
         _busy = true;
         try
         {
-            await Api.DownloadDeepAnalysisReportAsync(Js, _def.Key);
+            await Api.DownloadDeepAnalysisReportAsync(Js, _def.Key, Culture.Language);
+        }
+        catch (Exception ex)
+        {
+            _payError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task OpenSamplePdfAsync()
+    {
+        if (_def is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Api.DownloadSampleAssessmentReportAsync(Js, _def.Key, Culture.Language);
         }
         catch (Exception ex)
         {

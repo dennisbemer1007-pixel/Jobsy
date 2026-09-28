@@ -2,7 +2,11 @@ using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Reports;
+using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Reports.Competence;
+using Jobsy.Core.Reports.Culture;
+using Jobsy.Core.Reports.Values;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -54,11 +58,19 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         _cache = cache;
     }
 
-    public async Task<AssessmentReportPdf?> TryRenderAsync(
+    public Task<AssessmentReportPdf?> TryRenderAsync(
         Guid userId,
         AssessmentKind kind,
         CancellationToken cancellationToken = default)
+        => TryRenderAsync(userId, kind, lang: null, cancellationToken);
+
+    public async Task<AssessmentReportPdf?> TryRenderAsync(
+        Guid userId,
+        AssessmentKind kind,
+        string? lang,
+        CancellationToken cancellationToken = default)
     {
+        var reportLang = ReportLanguage.FromUi(lang);
         var deep = await _db.CandidateDeepAnalyses.AsNoTracking()
             .FirstOrDefaultAsync(
                 d => d.UserId == userId && d.Kind == kind && d.Status == CandidateDeepAnalysisStatuses.Completed,
@@ -78,7 +90,9 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         var platform = await _companySettings.GetAsync(cancellationToken);
         var brand = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy" : platform.CompanyName.Trim();
         var logo = _companySettings.GetBrandLogoPng();
-        var culture = CultureInfo.GetCultureInfo("nl-NL");
+        var culture = ReportLanguage.IsEnglish(reportLang)
+            ? CultureInfo.GetCultureInfo("en-GB")
+            : CultureInfo.GetCultureInfo("nl-NL");
         var generated = (deep.ReportGeneratedAtUtc ?? deep.CompletedAtUtc ?? DateTime.UtcNow)
             .ToLocalTime()
             .ToString("d MMMM yyyy", culture);
@@ -89,43 +103,100 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         byte[] bytes;
         if (kind == AssessmentKind.Career)
         {
-            var careerRow = await _db.CandidateCareerInterests
-                .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-            var compass = CareerCompassJson.TryDeserialize(careerRow?.CompassJson);
-            if (compass is not { HasOccupations: true })
+            var careerDeep = CareerDeepReportJson.Deserialize(deep.ReportJson);
+            if (careerDeep is not null)
             {
-                compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
-                if (careerRow is not null)
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{careerDeep.ReportVersion}:{careerDeep.GeneratedAtUtc:O}";
+                if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
                 {
-                    careerRow.CompassJson = CareerCompassJson.Serialize(compass);
-                    careerRow.UpdatedAtUtc = DateTime.UtcNow;
-                    await _db.SaveChangesAsync(cancellationToken);
+                    cached = RenderCareerDeep(brand, logo, user.FullName, generated, careerDeep, reportLang);
+                    _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
                 }
-            }
 
-            bytes = RenderCareer(brand, logo, user.FullName, generated, compass);
+                bytes = cached;
+            }
+            else
+            {
+                var careerRow = await _db.CandidateCareerInterests
+                    .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+                var compass = CareerCompassJson.TryDeserialize(careerRow?.CompassJson);
+                if (compass is not { HasOccupations: true })
+                {
+                    compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
+                }
+
+                bytes = RenderCareer(brand, logo, user.FullName, generated, compass);
+            }
         }
         else if (kind == AssessmentKind.Culture)
         {
-            var scoreLines = domainScores
-                .Select(s => $"{LabelCulture(s.Domain)}: {s.Percent}%")
-                .ToList();
-            var tags = CulturePersonalityCatalog.ParseTags(deep.TagsJson)
-                .Select(FriendlyTag)
-                .Where(t => !string.IsNullOrWhiteSpace(t))
-                .ToList();
-            var advice = DeepAnalysisCatalog.CareerAdviceParagraphs(domainScores);
-            bytes = RenderCulture(brand, logo, user.FullName, generated, scoreLines, tags, advice);
+            var cultureDeep = CultureDeepReportJson.Deserialize(deep.ReportJson);
+            if (cultureDeep is not null)
+            {
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{cultureDeep.ReportVersion}:{cultureDeep.GeneratedAtUtc:O}";
+                if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
+                {
+                    cached = RenderCultureDeep(brand, logo, user.FullName, generated, cultureDeep, reportLang);
+                    _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
+                }
+
+                bytes = cached;
+            }
+            else
+            {
+                var scoreLines = domainScores
+                    .Select(s => $"{DeepReportCatalog.CultureLabel(s.Domain, reportLang)}: {s.Percent}%")
+                    .ToList();
+                var tags = CulturePersonalityCatalog.ParseTags(deep.TagsJson)
+                    .Select(t => DeepReportCatalog.CultureLabel(t, reportLang))
+                    .Where(t => !string.IsNullOrWhiteSpace(t))
+                    .ToList();
+                // Never use CareerAdviceParagraphs here (prints "Werk dat bij je past").
+                var advice = CultureLegacyAdvice(domainScores, reportLang);
+                bytes = RenderCulture(brand, logo, user.FullName, generated, scoreLines, tags, advice, reportLang);
+            }
+        }
+        else if (kind == AssessmentKind.Values)
+        {
+            var valuesDeep = ValuesDeepReportJson.Deserialize(deep.ReportJson);
+            if (valuesDeep is not null)
+            {
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{valuesDeep.ReportVersion}:{valuesDeep.GeneratedAtUtc:O}";
+                if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
+                {
+                    cached = RenderValuesDeep(brand, logo, user.FullName, generated, valuesDeep, reportLang);
+                    _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
+                }
+
+                bytes = cached;
+            }
+            else
+            {
+                var scoreLines = domainScores
+                    .Select(s => $"{DeepReportCatalog.ValueLabel(s.Domain, reportLang)}: {s.Percent}%")
+                    .ToList();
+                var advice = ValuesLegacyAdvice(domainScores, reportLang);
+                bytes = RenderScoreReport(
+                    brand,
+                    logo,
+                    user.FullName,
+                    generated,
+                    DeepReportCatalog.Get("title.values", reportLang),
+                    ReportLanguage.IsEnglish(reportLang)
+                        ? "This report summarises your work values from the extended test — without clinical language."
+                        : "Dit rapport vat je waarden op werk samen uit de uitgebreide test — zonder klinische taal.",
+                    scoreLines,
+                    [],
+                    advice,
+                    AccentTeal);
+            }
         }
         else
         {
-            // The 9-page rich report is built only from a stored CompetenceDeepReport (no AI on
-            // download) and cached by report version/generation time; legacy rows without a
-            // stored report fall back to the older fixed-score summary below.
             var report = CompetenceDeepReportJson.Deserialize(deep.ReportJson);
             if (report is not null)
             {
-                var cacheKey = $"deep-pdf:{userId}:{kind}:{report.ReportVersion}:{report.GeneratedAtUtc:O}";
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{report.ReportVersion}:{report.GeneratedAtUtc:O}";
                 if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
                 {
                     cached = RenderCompetenceDeep(brand, logo, user.FullName, generated, report);
@@ -154,8 +225,34 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         }
 
         var slug = AssessmentKindLabels.ToSlug(kind);
-        var date = DateTime.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-        return new AssessmentReportPdf($"Lobsy-{slug}-rapport-{date}.pdf", bytes);
+        var fileName = DeepReportCatalog.FileName(new AssessmentKindSlug(slug), reportLang, DateTime.UtcNow);
+        return new AssessmentReportPdf(fileName, bytes);
+    }
+
+    private static IReadOnlyList<string> CultureLegacyAdvice(
+        IReadOnlyList<DeepAnalysisDomainScore> scores, string lang)
+    {
+        var top = scores.OrderByDescending(s => s.Percent).Take(3)
+            .Select(s => DeepReportCatalog.CultureLabel(s.Domain, lang));
+        return
+        [
+            ReportLanguage.IsEnglish(lang)
+                ? $"You score highest on {string.Join(", ", top)}. Look for workplaces where those show up every week."
+                : $"Je scoort het hoogst op {string.Join(", ", top)}. Zoek werkplekken waar dat elke week zichtbaar is."
+        ];
+    }
+
+    private static IReadOnlyList<string> ValuesLegacyAdvice(
+        IReadOnlyList<DeepAnalysisDomainScore> scores, string lang)
+    {
+        var top = scores.OrderByDescending(s => s.Percent).Take(2)
+            .Select(s => DeepReportCatalog.ValueLabel(s.Domain, lang));
+        return
+        [
+            ReportLanguage.IsEnglish(lang)
+                ? $"Your top values are {string.Join(" and ", top)}. Use them when you choose roles and employers."
+                : $"Jouw topwaarden zijn {string.Join(" en ", top)}. Gebruik die bij het kiezen van rollen en werkgevers."
+        ];
     }
 
     internal static byte[] RenderCareer(
@@ -645,18 +742,231 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         string generated,
         IReadOnlyList<string> scoreLines,
         IReadOnlyList<string> tags,
-        IReadOnlyList<string> advice)
+        IReadOnlyList<string> advice,
+        string? lang = null)
         => RenderScoreReport(
             brand,
             logo,
             fullName,
             generated,
-            "Jouw cultuur- & persoonlijkheidsrapport",
-            "Dit rapport vat je 150 antwoorden samen: hoe jij graag werkt (cultuurfit) en hoe jij in een team past — zonder moeilijke testtaal.",
+            DeepReportCatalog.Get("title.culture", lang),
+            ReportLanguage.IsEnglish(lang)
+                ? "This report summarises your 150 answers: how you like to work (culture fit) and how you show up in a team — without jargon."
+                : "Dit rapport vat je 150 antwoorden samen: hoe jij graag werkt (cultuurfit) en hoe jij in een team past — zonder moeilijke testtaal.",
             scoreLines,
             tags,
             advice,
             AccentTeal);
+
+    internal static byte[] RenderCareerDeep(
+        string brand,
+        byte[] logo,
+        string fullName,
+        string generated,
+        CareerDeepReport report,
+        string lang)
+        => RenderKindDeep(
+            brand, logo, fullName, generated, lang,
+            DeepReportCatalog.Get("title.career", lang),
+            report.Summary.Resolve(lang),
+            report.Domains.Select(d => (
+                DeepReportCatalog.RiasecLabel(d.Domain, lang),
+                d.Score,
+                d.NormMean)).ToList(),
+            Extra: col =>
+            {
+                col.Item().Text(DeepReportCatalog.Get("holland.title", lang)).FontSize(13).Bold().FontColor(BrandNavy);
+                col.Item().Text(DeepReportCatalog.Format(
+                    "holland.body",
+                    lang,
+                    report.HollandCode,
+                    string.Join(", ", report.Domains.OrderByDescending(d => d.Score).Take(3)
+                        .Select(d => DeepReportCatalog.RiasecLabel(d.Domain, lang))),
+                    string.Join(", ", report.Occupations.Take(3).Select(o => o.Title(lang)))));
+                if (report.Occupations.Count > 0)
+                {
+                    col.Item().PaddingTop(6)
+                        .Text(ReportLanguage.IsEnglish(lang) ? "Occupations that fit you" : "Beroepen die bij je passen")
+                        .FontSize(13).Bold().FontColor(BrandNavy);
+                    foreach (var o in report.Occupations.Take(8))
+                    {
+                        col.Item().Text($"{o.Title(lang)} — {o.MatchPercent}%").SemiBold();
+                        col.Item().Text(o.Reason(lang)).FontSize(9).FontColor(Muted);
+                    }
+                }
+
+                WriteActionAndStrengths(col, report.ActionPlan, report.StrengthKeys, report.PitfallKeys, lang, label: "riasec");
+            });
+
+    internal static byte[] RenderCultureDeep(
+        string brand,
+        byte[] logo,
+        string fullName,
+        string generated,
+        CultureDeepReport report,
+        string lang)
+        => RenderKindDeep(
+            brand, logo, fullName, generated, lang,
+            DeepReportCatalog.Get("title.culture", lang),
+            report.Summary.Resolve(lang),
+            report.Domains.Select(d => (
+                DeepReportCatalog.CultureLabel(d.Domain, lang),
+                d.Score,
+                d.NormMean)).ToList(),
+            Extra: col =>
+            {
+                col.Item().Text(ReportLanguage.IsEnglish(lang) ? "Employers that fit you" : "Werkgevers die bij je passen")
+                    .FontSize(13).Bold().FontColor(BrandNavy);
+                foreach (var e in report.Employers.Take(6))
+                {
+                    col.Item().Text($"{DeepReportCatalog.Get($"org.{e.OrgTypeKey}", lang)} — {e.MatchPercent}%").SemiBold();
+                    col.Item().Text(DeepReportCatalog.Get($"org.{e.OrgTypeKey}.why", lang)).FontSize(9).FontColor(Muted);
+                }
+
+                WriteActionAndStrengths(col, report.ActionPlan, report.StrengthKeys, report.PitfallKeys, lang, label: "culture");
+            });
+
+    internal static byte[] RenderValuesDeep(
+        string brand,
+        byte[] logo,
+        string fullName,
+        string generated,
+        ValuesDeepReport report,
+        string lang)
+        => RenderKindDeep(
+            brand, logo, fullName, generated, lang,
+            DeepReportCatalog.Get("title.values", lang),
+            report.Summary.Resolve(lang),
+            report.Domains.Select(d => (
+                DeepReportCatalog.ValueLabel(d.Domain, lang),
+                d.Score,
+                d.NormMean)).ToList(),
+            Extra: col =>
+            {
+                col.Item().Text(DeepReportCatalog.Get("values.rank.title", lang)).FontSize(13).Bold().FontColor(BrandNavy);
+                col.Item().Text(DeepReportCatalog.Get("values.rank.lead", lang)).FontColor(Muted).Italic();
+                var rank = 1;
+                foreach (var d in report.Domains)
+                {
+                    col.Item().Text($"{rank}. {DeepReportCatalog.ValueLabel(d.Domain, lang)} — {d.Score}%").SemiBold();
+                    col.Item().Text(DeepReportCatalog.Get("values.choose", lang)).FontSize(9).FontColor(Muted);
+                    rank++;
+                }
+
+                col.Item().PaddingTop(6).Text(ReportLanguage.IsEnglish(lang) ? "Employers that fit you" : "Werkgevers die bij je passen")
+                    .FontSize(13).Bold().FontColor(BrandNavy);
+                foreach (var e in report.Employers.Take(6))
+                {
+                    col.Item().Text($"{DeepReportCatalog.Get($"org.{e.OrgTypeKey}", lang)} — {e.MatchPercent}%").SemiBold();
+                }
+
+                WriteActionAndStrengths(col, report.ActionPlan, report.StrengthKeys, report.PitfallKeys, lang, label: "value");
+            });
+
+    private static byte[] RenderKindDeep(
+        string brand,
+        byte[] logo,
+        string fullName,
+        string generated,
+        string lang,
+        string title,
+        string summary,
+        IReadOnlyList<(string Label, int Score, double? Norm)> domains,
+        Action<ColumnDescriptor> Extra)
+    {
+        return Document.Create(container =>
+        {
+            // Cover
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.MarginHorizontal(28);
+                page.MarginVertical(24);
+                page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
+                BrandHeader(page, brand, logo, title, fullName, generated, AccentTeal);
+                page.Content().PaddingTop(40).Column(col =>
+                {
+                    col.Spacing(12);
+                    col.Item().Text(title).FontSize(22).Bold().FontColor(BrandNavy);
+                    col.Item().Text(summary).FontSize(12);
+                    col.Item().PaddingTop(20).Text(DeepReportCatalog.Get("pdf.disclaimer", lang))
+                        .FontColor(Muted).Italic().FontSize(9);
+                });
+                BrandFooter(page, brand);
+            });
+
+            // Overview scores
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.MarginHorizontal(28);
+                page.MarginVertical(24);
+                page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
+                BrandHeader(page, brand, logo, title, fullName, generated, AccentTeal);
+                page.Content().PaddingTop(14).Column(col =>
+                {
+                    col.Spacing(8);
+                    col.Item().Text(DeepReportCatalog.Get("pdf.overview", lang)).FontSize(14).Bold().FontColor(BrandNavy);
+                    col.Item().Text(DeepReportCatalog.Get("pdf.scores", lang)).FontSize(12).Bold().FontColor(BrandNavy);
+                    foreach (var (label, score, norm) in domains)
+                    {
+                        var line = norm is double n
+                            ? $"{label}: {score}% (Ø {Math.Round(n)}%)"
+                            : $"{label}: {score}%";
+                        col.Item().Text(line);
+                    }
+
+                    Extra(col);
+                    col.Item().PaddingTop(10).Text(DeepReportCatalog.Get("pdf.disclaimer", lang))
+                        .FontColor(Muted).Italic().FontSize(9);
+                });
+                BrandFooter(page, brand);
+            });
+        }).GeneratePdf();
+    }
+
+    private static void WriteActionAndStrengths(
+        ColumnDescriptor col,
+        IReadOnlyList<DeepActionStep> plan,
+        IReadOnlyList<string> strengths,
+        IReadOnlyList<string> pitfalls,
+        string lang,
+        string label)
+    {
+        col.Item().PaddingTop(8).Text(DeepReportCatalog.Get("pdf.actionPlan", lang)).FontSize(13).Bold().FontColor(BrandNavy);
+        col.Item().Text(DeepReportCatalog.Get("action.lead", lang)).FontColor(Muted).Italic();
+        foreach (var step in plan.Take(3))
+        {
+            col.Item().Text(step.Title.Resolve(lang)).SemiBold();
+            col.Item().Text(step.Body.Resolve(lang)).FontSize(9).FontColor(Muted);
+        }
+
+        col.Item().PaddingTop(8).Text(DeepReportCatalog.Get("pdf.strengths", lang)).FontSize(13).Bold().FontColor(BrandNavy);
+        col.Item().Text(DeepReportCatalog.Get("strength.lead", lang)).FontColor(Muted).Italic();
+        foreach (var key in strengths.Take(3))
+        {
+            var code = key.Split('.').LastOrDefault() ?? key;
+            var name = label switch
+            {
+                "riasec" => DeepReportCatalog.RiasecLabel(code, lang),
+                "culture" => DeepReportCatalog.CultureLabel(code, lang),
+                _ => DeepReportCatalog.ValueLabel(code, lang)
+            };
+            col.Item().Text("• " + name);
+        }
+
+        foreach (var key in pitfalls.Take(3))
+        {
+            var code = key.Split('.').LastOrDefault() ?? key;
+            var name = label switch
+            {
+                "riasec" => DeepReportCatalog.RiasecLabel(code, lang),
+                "culture" => DeepReportCatalog.CultureLabel(code, lang),
+                _ => DeepReportCatalog.ValueLabel(code, lang)
+            };
+            col.Item().Text("△ " + name).FontColor(AccentCoral);
+        }
+    }
 
     private static byte[] RenderScoreReport(
         string brand,

@@ -13,9 +13,19 @@ namespace Jobsy.Web.Services;
 
 public sealed partial class JobsyApiClient
 {
-    public async Task DownloadDeepAnalysisReportAsync(IJSRuntime js, string kind, CancellationToken ct = default)
+    public Task DownloadDeepAnalysisReportAsync(IJSRuntime js, string kind, CancellationToken ct = default)
+        => DownloadDeepAnalysisReportAsync(js, kind, lang: null, ct);
+
+    public async Task DownloadDeepAnalysisReportAsync(
+        IJSRuntime js, string kind, string? lang, CancellationToken ct = default)
     {
-        var response = await _http.GetAsync($"api/me/deep-analysis/report?kind={Uri.EscapeDataString(kind)}", ct);
+        var url = $"api/me/deep-analysis/report?kind={Uri.EscapeDataString(kind)}";
+        if (!string.IsNullOrWhiteSpace(lang))
+        {
+            url += $"&lang={Uri.EscapeDataString(lang)}";
+        }
+
+        var response = await _http.GetAsync(url, ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
@@ -25,6 +35,29 @@ public sealed partial class JobsyApiClient
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
                        ?? $"Lobsy-{kind}-rapport.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
+    }
+
+    public async Task DownloadSampleAssessmentReportAsync(
+        IJSRuntime js, string kind, string? lang, CancellationToken ct = default)
+    {
+        var url = $"api/assessments/{Uri.EscapeDataString(kind)}/sample-report.pdf";
+        if (!string.IsNullOrWhiteSpace(lang))
+        {
+            url += $"?lang={Uri.EscapeDataString(lang)}";
+        }
+
+        var response = await _http.GetAsync(url, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Voorbeeld-PDF downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                       ?? $"Lobsy-{kind}-voorbeeld.pdf";
         var base64 = Convert.ToBase64String(bytes);
         await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }

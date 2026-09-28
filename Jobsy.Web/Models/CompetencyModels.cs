@@ -1,4 +1,7 @@
+using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Reports.Competence;
+using Jobsy.Core.Reports.Culture;
+using Jobsy.Core.Reports.Values;
 
 namespace Jobsy.Web.Models;
 
@@ -251,6 +254,10 @@ public sealed class DeepAnalysisState
 
     /// <summary>Populated only for a completed Competence deep analysis; null otherwise.</summary>
     public CompetenceDeepReport? CompetenceReport { get; set; }
+
+    public CareerDeepReport? CareerReport { get; set; }
+    public CultureDeepReport? CultureReport { get; set; }
+    public ValuesDeepReport? ValuesReport { get; set; }
 }
 
 public sealed class DeepAnalysisQuestionItem

@@ -2,7 +2,10 @@ using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Reports.Competence;
+using Jobsy.Core.Reports.Culture;
+using Jobsy.Core.Reports.Values;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +23,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     private readonly IConfiguration _configuration;
     private readonly ICareerCompassGenerationService _careerCompass;
     private readonly ICompetenceDeepReportService _competenceReport;
+    private readonly IKindDeepReportService? _kindReports;
     private readonly ICandidateInsightsQueue _queue;
     private readonly ILogger<DeepAnalysisService> _logger;
 
@@ -31,7 +35,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         ICareerCompassGenerationService careerCompass,
         ICompetenceDeepReportService competenceReport,
         ILogger<DeepAnalysisService> logger)
-        : this(db, commercial, environment, configuration, careerCompass, competenceReport, new CandidateInsightsQueue(), logger)
+        : this(db, commercial, environment, configuration, careerCompass, competenceReport, new CandidateInsightsQueue(), logger, null)
     {
     }
 
@@ -43,7 +47,8 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         ICareerCompassGenerationService careerCompass,
         ICompetenceDeepReportService competenceReport,
         ICandidateInsightsQueue queue,
-        ILogger<DeepAnalysisService> logger)
+        ILogger<DeepAnalysisService> logger,
+        IKindDeepReportService? kindReports = null)
     {
         _db = db;
         _commercial = commercial;
@@ -51,6 +56,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         _configuration = configuration;
         _careerCompass = careerCompass;
         _competenceReport = competenceReport;
+        _kindReports = kindReports;
         _queue = queue;
         _logger = logger;
     }
@@ -367,6 +373,17 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
                     _logger.LogWarning(ex, "Competence deep-report build-on-complete failed for {UserId}.", userId);
                 }
             }
+            else if (_kindReports is not null)
+            {
+                try
+                {
+                    await _kindReports.BuildAndStoreAsync(userId, kind, cancellationToken);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _logger.LogWarning(ex, "{Kind} deep-report build-on-complete failed for {UserId}.", kind, userId);
+                }
+            }
         }
 
         var commercial = await _commercial.GetAsync(cancellationToken);
@@ -543,7 +560,13 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         || _configuration.GetValue("JobsyAuth:AllowStubPayments", false);
 
     private static DeepAnalysisStateDto ToDto(
-        AssessmentKind kind, CandidateDeepAnalysis? row, decimal priceEuro, CompetenceDeepReport? competenceReport = null)
+        AssessmentKind kind,
+        CandidateDeepAnalysis? row,
+        decimal priceEuro,
+        CompetenceDeepReport? competenceReport = null,
+        CareerDeepReport? careerReport = null,
+        CultureDeepReport? cultureReport = null,
+        ValuesDeepReport? valuesReport = null)
     {
         var status = row?.Status ?? CandidateDeepAnalysisStatuses.Locked;
         var answers = DeepAnalysisCatalog.ParseAnswersJson(row?.AnswersJson, kind);
@@ -552,6 +575,23 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         // Status alone is not enough: older/stub rows could be marked Completed without a full answer set.
         var completed = CandidateDeepAnalysisStatuses.IsCompleted(status)
                         && answers.Count >= expected;
+
+        if (completed && row is not null)
+        {
+            competenceReport ??= kind == AssessmentKind.Competence
+                ? CompetenceDeepReportJson.Deserialize(row.ReportJson)
+                : null;
+            careerReport ??= kind == AssessmentKind.Career
+                ? CareerDeepReportJson.Deserialize(row.ReportJson)
+                : null;
+            cultureReport ??= kind == AssessmentKind.Culture
+                ? CultureDeepReportJson.Deserialize(row.ReportJson)
+                : null;
+            valuesReport ??= kind == AssessmentKind.Values
+                ? ValuesDeepReportJson.Deserialize(row.ReportJson)
+                : null;
+        }
+
         return new DeepAnalysisStateDto(
             kind,
             status,
@@ -578,6 +618,9 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
                     .ToList()
                 : [],
             FormatUpsellCopy(priceEuro, kind),
-            completed && kind == AssessmentKind.Competence ? competenceReport : null);
+            completed && kind == AssessmentKind.Competence ? competenceReport : null,
+            completed && kind == AssessmentKind.Career ? careerReport : null,
+            completed && kind == AssessmentKind.Culture ? cultureReport : null,
+            completed && kind == AssessmentKind.Values ? valuesReport : null);
     }
 }

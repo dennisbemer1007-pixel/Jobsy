@@ -362,7 +362,11 @@ public static class DependencyInjection
         });
         services.AddScoped<ICompetenceDeepReportAiService, OpenAiCompetenceDeepReportAiService>();
         services.AddScoped<ICompetenceDeepReportService, CompetenceDeepReportService>();
+        services.AddScoped<IKindDeepReportService, KindDeepReportService>();
+        services.AddScoped<IAssessmentNormService, AssessmentNormService>();
         services.AddScoped<IAssessmentReportPdfService, AssessmentReportPdfService>();
+        services.AddScoped<ISampleAssessmentReportPdfService, SampleAssessmentReportPdfService>();
+        services.AddHostedService<AssessmentNormSnapshotHostedService>();
         services.AddScoped<ITalentPoolService, TalentPoolService>();
         services.AddScoped<ICandidateInsightsService, CandidateInsightsService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();
