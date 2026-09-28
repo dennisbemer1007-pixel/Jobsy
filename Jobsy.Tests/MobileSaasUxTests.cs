@@ -84,7 +84,6 @@ public class MobileSaasUxTests
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".token-pack-options {\n    display: grid;\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
-        Assert.Contains(".token-pack-options--vertical {\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
         Assert.Contains(".token-buy .login-submit {\n    width: 100%;", css);
     }
 
@@ -95,7 +94,6 @@ public class MobileSaasUxTests
         Assert.Contains("html, body {\n    margin: 0;\n    height: 100%;\n    max-width: 100%;\n    overflow-x: hidden;", css);
         Assert.Contains(".app-shell {\n    display: flex;\n    flex-direction: column;\n    height: 100vh;\n    min-height: 100vh;\n    max-width: 100%;\n    min-width: 0;\n    overflow-x: hidden;", css);
         Assert.Contains(".app-header__actions {\n    display: flex;\n    align-items: center;\n    gap: 0.75rem;\n    flex: 1 1 auto;\n    min-width: 0;", css);
-        Assert.Contains(".auth-logout-form--chrome {\n    display: none;", css);
 
         var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
         Assert.Contains("account-menu__link--logout", header);
@@ -470,7 +468,6 @@ public class MobileSaasUxTests
         Assert.Contains(".lobsy-assistant-tab__btn {\n    display: inline-flex;\n    align-items: center;\n    gap: 0.35rem;\n    writing-mode: vertical-rl;", css);
         Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: 46%;\n    right: 0;", css);
         Assert.Contains(".feedback-widget__tab {\n    writing-mode: vertical-rl;", css);
-        Assert.Contains(".lobsy-assistant__fab {\n    display: none !important;", css);
         Assert.Contains(".lobsy-assistant-tab--edge,\n    .feedback-widget__tab--edge {\n        display: none !important;", css);
         Assert.Contains("button.bottom-nav__item {", css);
         Assert.DoesNotContain(".bottom-nav__item--assistant {", css);

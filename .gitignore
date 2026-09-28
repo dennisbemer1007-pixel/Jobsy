@@ -51,3 +51,4 @@ appsettings.*.local.json
 # Node (demo screenshot/pptx tooling)
 node_modules/
 package-lock.json
+!tools/css/package-lock.json

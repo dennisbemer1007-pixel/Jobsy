@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "ffc8beb8a47a9d503ef2a3f011e89f350ccfa621bf0d6f46e0160a841055036f",
-    "v": "20260927-cookie-map"
+    "sha256": "813bef16c0b4695c00b1d90c5474a207af93e2e1a8bbe2b08666debd76fd7154",
+    "v": "20260928-dead-css"
   },
   "css/features/applications.css": {
     "sha256": "08e8ccce5618f81b8e728a073d7630c2e9c6759ae09a2552c936bad4910e713d",
@@ -28,8 +28,8 @@
     "v": "20260927-dna-c"
   },
   "css/features/questionnaire.css": {
-    "sha256": "ccb4a304f1a1f7dc2111740c824596366d4b8340e12ffdcd23c6dcf9d268a421",
-    "v": "20260927-dna-c"
+    "sha256": "15586b612fe0b26daad7427e168300f8f9193f51a5dd6d424322617359d007d9",
+    "v": "20260928-dead-css"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
