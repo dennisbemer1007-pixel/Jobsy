@@ -224,7 +224,7 @@ public class CompactQuestionnaireContractTests
             wizard);
 
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/App.razor"));
-        Assert.Contains("css/features/questionnaire.css?v=20260927-dna-c", app);
+        Assert.Contains("css/features/questionnaire.css?v=20260928-dead-css", app);
         Assert.Contains("css/features/onboarding-wizard.css?v=20260927-dna-c", app);
     }
 
