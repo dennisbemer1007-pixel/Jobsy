@@ -1,0 +1,18 @@
+# Allow documented local-dev placeholders and demo passwords only.
+# Real secrets must never be committed; CI gitleaks fails on anything else.
+
+title = "Jobsy / Lobsy gitleaks allowlist"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Development placeholders in appsettings.Development.json (local-dev-*, demo passwords)"
+paths = [
+  '''(^|/)appsettings\.Development\.json$''',
+]
+regexes = [
+  '''local-dev-[A-Za-z0-9_-]+''',
+  '''Jobsy123!''',
+  '''Lobsy123!''',
+]
