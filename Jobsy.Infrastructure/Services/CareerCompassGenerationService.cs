@@ -4,10 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -21,19 +19,16 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<CareerCompassGenerationService> _logger;
 
     public CareerCompassGenerationService(
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options,
+        IOpenAiEndpointResolver openAi,
         ILogger<CareerCompassGenerationService> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
-        _options = options.Value;
+        _openAi = openAi;
         _logger = logger;
     }
 
@@ -43,7 +38,8 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
     {
         var scores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career);
         var local = CareerCompassBuilder.Build(DeepAnalysisCatalog.ToRiasecScores(scores), fromDeepAnalysis: true);
-        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.CareerCompass, cancellationToken);
+        var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             return local;
@@ -51,8 +47,8 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
 
         try
         {
-            var model = await ResolveModelAsync(cancellationToken);
-            var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
+            var model = endpoint.Model;
+            var baseUrl = endpoint.BaseUrl;
             var generated = await GenerateWithOpenAiAsync(scores, answers, apiKey, model, baseUrl, cancellationToken);
             if (generated is { HasOccupations: true })
             {
@@ -113,49 +109,8 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
         return parsed is null ? null : parsed with { FromOpenAi = true, FromDeepAnalysis = true };
     }
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
-
-        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? "https://api.openai.com/v1/"
-            : _options.BaseUrl;
-        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalizedFallback, out _)
-            && !string.IsNullOrWhiteSpace(normalizedFallback))
-        {
-            return normalizedFallback;
-        }
-
-        return "https://api.openai.com/v1/";
-    }
 
     private sealed class ChatCompletionResponse
     {

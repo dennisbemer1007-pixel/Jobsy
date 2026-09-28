@@ -8,12 +8,10 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
-using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -42,30 +40,27 @@ public sealed class AssistantChatService : IAssistantChatService
 
     private readonly JobsyDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
     private readonly IMetricsQueryService _metrics;
     private readonly ICandidateMetricsQueryService _candidateMetrics;
     private readonly ISalesManagerDashboardService _salesDashboard;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<AssistantChatService> _logger;
 
     public AssistantChatService(
         JobsyDbContext db,
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
         IMetricsQueryService metrics,
         ICandidateMetricsQueryService candidateMetrics,
         ISalesManagerDashboardService salesDashboard,
-        IOptions<OpenAiOptions> options,
+        IOpenAiEndpointResolver openAi,
         ILogger<AssistantChatService> logger)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
         _metrics = metrics;
         _candidateMetrics = candidateMetrics;
         _salesDashboard = salesDashboard;
-        _options = options.Value;
+        _openAi = openAi;
         _logger = logger;
     }
 
@@ -93,12 +88,14 @@ public sealed class AssistantChatService : IAssistantChatService
             return scripted;
         }
 
-        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.AssistantChat, cancellationToken);
+        var apiKey = endpoint.ApiKey;
         if (!string.IsNullOrWhiteSpace(apiKey))
         {
             try
             {
-                var ai = await CompleteWithOpenAiAsync(context, sanitized, apiKey, cancellationToken);
+                var ai = await CompleteWithOpenAiAsync(
+                    context, sanitized, apiKey, endpoint.Model, endpoint.BaseUrl, cancellationToken);
                 if (!string.IsNullOrWhiteSpace(ai))
                 {
                     return new AssistantChatResult(ai.Trim(), UsedAi: true, []);
@@ -965,6 +962,8 @@ Verbetervoorstellen:
         AssistantChatContext context,
         IReadOnlyList<AssistantChatMessage> history,
         string apiKey,
+        string model,
+        string baseUrl,
         CancellationToken cancellationToken)
     {
         var lang = MockInterviewLabels.For(context.Language);
@@ -975,9 +974,6 @@ Verbetervoorstellen:
         {
             messages.Add(new { role = turn.Role, content = turn.Content });
         }
-
-        var model = await ResolveModelAsync(cancellationToken);
-        var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
         var client = _httpClientFactory.CreateClient("IntegrationProbe");
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
@@ -1493,44 +1489,8 @@ Verbetervoorstellen:
         return cleaned;
     }
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
-        return !string.IsNullOrWhiteSpace(fromDb)
-            ? fromDb
-            : (string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim());
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl) ? "https://api.openai.com/v1/" : _options.BaseUrl;
-        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalizedFallback, out _)
-            && !string.IsNullOrWhiteSpace(normalizedFallback))
-        {
-            return normalizedFallback;
-        }
-
-        return "https://api.openai.com/v1/";
-    }
 
     private sealed class ChatCompletionResponse
     {

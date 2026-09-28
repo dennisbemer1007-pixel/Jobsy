@@ -7,11 +7,9 @@ using Jobsy.Core;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Jobsy.Infrastructure.Data;
 
 namespace Jobsy.Infrastructure.Services;
@@ -31,8 +29,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
     private readonly ICandidateCulturePersonalityService _culture;
     private readonly IFlexCommercialService _commercial;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<RoleFitCheckService> _logger;
     private readonly ITrainingUpskillService _training;
     private readonly ICultureFitAiService _cultureFit;
@@ -46,8 +43,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         ICandidateCulturePersonalityService culture,
         IFlexCommercialService commercial,
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options,
+        IOpenAiEndpointResolver openAi,
         ILogger<RoleFitCheckService> logger,
         ITrainingUpskillService training,
         ICultureFitAiService cultureFit,
@@ -60,8 +56,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         _culture = culture;
         _commercial = commercial;
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
-        _options = options.Value;
+        _openAi = openAi;
         _logger = logger;
         _training = training;
         _cultureFit = cultureFit;
@@ -241,7 +236,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         CulturePersonalityScores? culture,
         CancellationToken cancellationToken)
     {
-        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.RoleFitCheck, cancellationToken);
+        var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             return null;
@@ -260,8 +256,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 prefs.Licenses,
                 prefs.Roles,
                 culture);
-            var model = await ResolveModelAsync(cancellationToken);
-            var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
+            var model = endpoint.Model;
+            var baseUrl = endpoint.BaseUrl;
             var client = _httpClientFactory.CreateClient(HttpClientName);
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
@@ -644,49 +640,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         return cards;
     }
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
-
-        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? "https://api.openai.com/v1/"
-            : _options.BaseUrl;
-        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalizedFallback, out _)
-            && !string.IsNullOrWhiteSpace(normalizedFallback))
-        {
-            return normalizedFallback;
-        }
-
-        return "https://api.openai.com/v1/";
-    }
 
     private sealed class ChatCompletionResponse
     {

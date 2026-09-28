@@ -5,10 +5,8 @@ using System.Text.RegularExpressions;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
-using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -82,19 +80,16 @@ public sealed class MockInterviewService : IMockInterviewService
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<MockInterviewService> _logger;
 
     public MockInterviewService(
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options,
+        IOpenAiEndpointResolver openAi,
         ILogger<MockInterviewService> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
-        _options = options.Value;
+        _openAi = openAi;
         _logger = logger;
     }
 
@@ -108,13 +103,14 @@ public sealed class MockInterviewService : IMockInterviewService
         var lang = JobsyLanguages.Normalize(language);
         var labels = Jobsy.Core.Localization.MockInterviewLabels.For(lang);
         var sanitized = SanitizeHistory(history);
-        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.MockInterview, cancellationToken);
+        var apiKey = endpoint.ApiKey;
         if (!string.IsNullOrWhiteSpace(apiKey))
         {
             try
             {
-                var model = await ResolveModelAsync(cancellationToken);
-                var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
+                var model = endpoint.Model;
+                var baseUrl = endpoint.BaseUrl;
                 var reply = await CompleteWithOpenAiAsync(
                     vacancy, candidate, sanitized, labels, apiKey, model, baseUrl, cancellationToken);
                 if (!string.IsNullOrWhiteSpace(reply))
@@ -374,49 +370,8 @@ public sealed class MockInterviewService : IMockInterviewService
     private static string Truncate(string value, int max)
         => value.Length <= max ? value : value[..(max - 1)].TrimEnd() + "…";
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
-
-        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? "https://api.openai.com/v1/"
-            : _options.BaseUrl;
-        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalizedFallback, out _)
-            && !string.IsNullOrWhiteSpace(normalizedFallback))
-        {
-            return normalizedFallback;
-        }
-
-        return "https://api.openai.com/v1/";
-    }
 
     private sealed class ChatCompletionResponse
     {
