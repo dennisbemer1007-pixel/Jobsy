@@ -61,9 +61,22 @@
 
     private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        // Active styling is URI-based; avoid re-hitting takeover/sales APIs on every nav.
-        await RefreshItemsAsync(forceRoleApis: false);
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            // Active styling is URI-based; avoid re-hitting takeover/sales APIs on every nav.
+            await RefreshItemsAsync(forceRoleApis: false);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (Exception)
+        {
+            // async void: swallow to avoid crashing the circuit on dispose/nav races.
+        }
     }
 
     private async Task RefreshItemsAsync(bool forceRoleApis)

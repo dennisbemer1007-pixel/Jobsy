@@ -138,12 +138,14 @@ builder.Services.AddRateLimiter(options =>
     // Prefer authenticated user id when present so forged X-Forwarded-For cannot bypass limits alone.
     options.AddPolicy("otp-verify", httpContext =>
     {
-        var userKey = httpContext.User?.Identity?.IsAuthenticated == true
-            ? httpContext.User.FindFirst("sub")?.Value
-              ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-              ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+        // User is always present on HttpContext; capture once for null-flow analysis (CS8602).
+        var user = httpContext.User;
+        var userKey = user.Identity?.IsAuthenticated == true
+            ? user.FindFirst("sub")?.Value
+              ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+              ?? user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
             : null;
-        var ip = httpContext.User.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value
+        var ip = user.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value
                  ?? httpContext.Connection.RemoteIpAddress?.ToString()
                  ?? "unknown";
         var partition = string.IsNullOrWhiteSpace(userKey) ? $"ip:{ip}" : $"user:{userKey}|ip:{ip}";

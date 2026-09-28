@@ -60,7 +60,7 @@ public class ZapFindingsTests
         Assert.Contains("https://tiles.openfreemap.org", csp);
         Assert.DoesNotContain("https://picsum.photos", csp);
         Assert.Contains("https://i.ytimg.com", csp);
-        Assert.Contains("'unsafe-eval'", csp);
+        Assert.DoesNotContain("'unsafe-eval'", csp);
     }
 
     [Fact]

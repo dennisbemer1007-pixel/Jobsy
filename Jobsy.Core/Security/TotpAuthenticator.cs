@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -51,6 +52,10 @@ public static class TotpAuthenticator
     public static string BuildProvisioningUri(string accountName, string secret)
         => $"otpauth://totp/Lobsy:{Uri.EscapeDataString(accountName)}?secret={secret}&issuer=Lobsy&algorithm=SHA1&digits={Digits}&period=30";
 
+    [SuppressMessage(
+        "Security",
+        "CA5350:Do Not Use Weak Cryptographic Algorithms",
+        Justification = "RFC 6238 TOTP requires HMAC-SHA1; changing the algorithm would break authenticator apps.")]
     private static string ComputeCode(byte[] key, long counter)
     {
         Span<byte> counterBytes = stackalloc byte[8];

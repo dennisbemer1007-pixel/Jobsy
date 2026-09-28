@@ -419,22 +419,67 @@ public sealed class TalentPoolService : ITalentPoolService
         Guid companyId,
         CancellationToken cancellationToken = default)
     {
-        var ids = await _db.TalentContactRequests.AsNoTracking()
+        var rows = await _db.TalentContactRequests.AsNoTracking()
             .Where(r => r.CompanyId == companyId)
             .OrderByDescending(r => r.CreatedAtUtc)
-            .Select(r => r.Id)
             .Take(100)
             .ToListAsync(cancellationToken);
 
-        var list = new List<TalentContactRequestDto>();
-        foreach (var id in ids)
+        if (rows.Count == 0)
         {
-            var row = await _db.TalentContactRequests.AsNoTracking()
-                .FirstAsync(r => r.Id == id, cancellationToken);
-            list.Add(await ToDtoAsync(id, revealPii: row.Status == TalentContactStatus.ContactShared, cancellationToken));
+            return [];
         }
 
-        return list;
+        var revealIds = rows
+            .Where(r => r.Status == TalentContactStatus.ContactShared)
+            .Select(r => r.CandidateUserId)
+            .Distinct()
+            .ToList();
+
+        var candidates = revealIds.Count == 0
+            ? new Dictionary<Guid, (string FullName, string Email, string? PhoneNumber)>()
+            : await _db.Users.AsNoTracking()
+                .Where(u => revealIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.FullName, u.Email, u.PhoneNumber })
+                .ToDictionaryAsync(
+                    u => u.Id,
+                    u => (FullName: u.FullName, Email: u.Email, PhoneNumber: u.PhoneNumber),
+                    cancellationToken);
+
+        var companyName = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => c.Name)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return rows.Select(request =>
+        {
+            var reveal = request.Status == TalentContactStatus.ContactShared;
+            string? name = null;
+            string? email = null;
+            string? phone = null;
+            if (reveal && candidates.TryGetValue(request.CandidateUserId, out var candidate))
+            {
+                name = candidate.FullName;
+                email = candidate.Email;
+                phone = candidate.PhoneNumber;
+            }
+
+            return new TalentContactRequestDto(
+                request.Id,
+                request.CompanyId,
+                request.CandidateUserId,
+                request.Status,
+                request.Message,
+                request.CreatedAtUtc,
+                request.RespondByUtc,
+                request.RespondedAtUtc,
+                request.ContactSharedAtUtc,
+                PiiRevealed: reveal,
+                name,
+                email,
+                phone,
+                companyName);
+        }).ToList();
     }
 
     public async Task<IReadOnlyList<TalentContactRequestDto>> ListForCandidateAsync(

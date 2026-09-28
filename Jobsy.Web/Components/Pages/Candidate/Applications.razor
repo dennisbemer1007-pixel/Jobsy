@@ -159,16 +159,45 @@
                     </div>
 
                     <div class="application-card__menu">
-                        <button type="button"
-                                class="icon-btn application-card__menu-toggle @(menuOpen ? "is-open" : null)"
-                                aria-haspopup="menu"
-                                aria-expanded="@(menuOpen ? "true" : "false")"
-                                data-app-menu-btn="@a.Id"
-                                aria-label="@string.Format(Culture["Apps.ActionsFor"], a.VacancyTitle)"
-                                @onclick="() => ToggleMenu(a.Id)"
-                                @onclick:stopPropagation="true">
-                            @((MarkupString)ActionIcons.MoreHorizontal)
-                        </button>
+                        @{
+                            var bindToggleRef = menuOpen || _focusMenuButtonId == a.Id;
+                            var menuSlot = 0;
+                            var vacancySlot = !_readOnly ? 1 : 0;
+                            var withdrawSlot = vacancySlot + 1;
+                            if (menuOpen)
+                            {
+                                _menuItemCount = (!_readOnly ? 1 : 0)
+                                    + 1
+                                    + (!_readOnly && CanWithdraw(a.Status) ? 1 : 0);
+                            }
+                        }
+                        @if (bindToggleRef)
+                        {
+                            <button type="button"
+                                    class="icon-btn application-card__menu-toggle @(menuOpen ? "is-open" : null)"
+                                    aria-haspopup="menu"
+                                    aria-expanded="@(menuOpen ? "true" : "false")"
+                                    data-app-menu-btn="@a.Id"
+                                    aria-label="@string.Format(Culture["Apps.ActionsFor"], a.VacancyTitle)"
+                                    @ref="_menuToggleRef"
+                                    @onclick="() => ToggleMenu(a.Id)"
+                                    @onclick:stopPropagation="true">
+                                @((MarkupString)ActionIcons.MoreHorizontal)
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button"
+                                    class="icon-btn application-card__menu-toggle"
+                                    aria-haspopup="menu"
+                                    aria-expanded="false"
+                                    data-app-menu-btn="@a.Id"
+                                    aria-label="@string.Format(Culture["Apps.ActionsFor"], a.VacancyTitle)"
+                                    @onclick="() => ToggleMenu(a.Id)"
+                                    @onclick:stopPropagation="true">
+                                @((MarkupString)ActionIcons.MoreHorizontal)
+                            </button>
+                        }
                         @if (menuOpen)
                         {
                             <button type="button"
@@ -187,6 +216,7 @@
                                             role="menuitem"
                                             class="application-card__menu-item"
                                             disabled="@(_busyId == a.Id)"
+                                            @ref="_menuItemRefs[menuSlot]"
                                             @onclick="() => OnMenuCvAsync(a)">
                                         <span class="application-card__menu-icon" aria-hidden="true">@((MarkupString)ActionIcons.Document)</span>
                                         @(_busyId == a.Id && _pdfBusy ? "…" : Culture["Apps.MenuCv"])
@@ -195,6 +225,7 @@
                                 <a role="menuitem"
                                    class="application-card__menu-item"
                                    href="@vacancyHref"
+                                   @ref="_menuItemRefs[vacancySlot]"
                                    @onclick="CloseMenu">
                                     <span class="application-card__menu-icon" aria-hidden="true">@((MarkupString)ActionIcons.ExternalLink)</span>
                                     @Culture["Apps.MenuVacancy"]
@@ -205,6 +236,7 @@
                                     <button type="button"
                                             role="menuitem"
                                             class="application-card__menu-item application-card__menu-item--danger"
+                                            @ref="_menuItemRefs[withdrawSlot]"
                                             @onclick="() => OpenWithdrawConfirm(a)">
                                         <span class="application-card__menu-icon" aria-hidden="true">@((MarkupString)ActionIcons.Withdraw)</span>
                                         @Culture["Apps.MenuWithdraw"]
@@ -260,6 +292,11 @@
     private int _countRunning;
     private int _countRejected;
     private Guid? _focusMenuOnRender;
+    private Guid? _focusMenuButtonId;
+    private ElementReference _menuToggleRef;
+    private readonly ElementReference[] _menuItemRefs = new ElementReference[3];
+    private int _menuItemCount;
+    private int _menuFocusIndex;
     private PersistingComponentStateSubscription _persistSubscription;
     private static readonly System.Globalization.CultureInfo Dutch = new("nl-NL");
 
@@ -315,18 +352,27 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_focusMenuOnRender is Guid id)
+        if (_focusMenuOnRender is not null)
         {
             _focusMenuOnRender = null;
+            _menuFocusIndex = 0;
+            await FocusMenuItemAsync(0);
+        }
+
+        if (_focusMenuButtonId is not null)
+        {
+            _focusMenuButtonId = null;
             try
             {
-                await Js.InvokeVoidAsync("eval",
-                    $"document.querySelector('[data-app-menu-panel=\"{id}\"] [role=menuitem]')?.focus()");
+                await _menuToggleRef.FocusAsync();
             }
             catch (JSDisconnectedException)
             {
             }
             catch (ObjectDisposedException)
+            {
+            }
+            catch (InvalidOperationException)
             {
             }
         }
@@ -436,35 +482,44 @@
             return;
         }
 
-        if (e.Key is not ("ArrowDown" or "ArrowUp"))
+        if (e.Key is not ("ArrowDown" or "ArrowUp") || _menuItemCount <= 0)
         {
             return;
         }
 
+        var next = e.Key == "ArrowDown"
+            ? (_menuFocusIndex + 1) % _menuItemCount
+            : (_menuFocusIndex - 1 + _menuItemCount) % _menuItemCount;
+        await FocusMenuItemAsync(next);
+    }
+
+    private async Task FocusMenuItemAsync(int index)
+    {
+        if (index < 0 || index >= _menuItemCount || index >= _menuItemRefs.Length)
+        {
+            return;
+        }
+
+        _menuFocusIndex = index;
         try
         {
-            var script = e.Key == "ArrowDown"
-                ? "(()=>{const items=[...document.querySelectorAll('.application-card__menu-panel [role=menuitem]')];const i=items.indexOf(document.activeElement);(items[(i+1)%items.length]||items[0])?.focus();})()"
-                : "(()=>{const items=[...document.querySelectorAll('.application-card__menu-panel [role=menuitem]')];const i=items.indexOf(document.activeElement);(items[(i-1+items.length)%items.length]||items[0])?.focus();})()";
-            await Js.InvokeVoidAsync("eval", script);
+            await _menuItemRefs[index].FocusAsync();
         }
-        catch
+        catch (JSDisconnectedException)
         {
-            // ignore
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
         }
     }
 
-    private async Task FocusMenuButtonAsync(Guid id)
+    private Task FocusMenuButtonAsync(Guid id)
     {
-        try
-        {
-            await Js.InvokeVoidAsync("eval",
-                $"document.querySelector('[data-app-menu-btn=\"{id}\"]')?.focus()");
-        }
-        catch
-        {
-            // ignore
-        }
+        _focusMenuButtonId = id;
+        return Task.CompletedTask;
     }
 
     private async Task OnMenuCvAsync(ApplicationItem a)
