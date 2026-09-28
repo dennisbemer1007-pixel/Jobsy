@@ -17,16 +17,4 @@ public static class EnterpriseNavItems
         new("Nav.CsvImport", "/employer/csv-import", NavIcons.Batch),
         new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches)
     ];
-
-    public static bool IsOrganizationPath(string relativePath)
-    {
-        var path = RoleNavCatalog.NormalizePath(relativePath);
-        if (string.Equals(path, "employer/organization", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        return OrganizationModules.Any(m =>
-            RoleNavCatalog.IsActive(m, path.TrimStart('/'), OrganizationModules));
-    }
 }

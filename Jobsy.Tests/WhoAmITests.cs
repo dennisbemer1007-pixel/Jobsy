@@ -80,18 +80,12 @@ public class WhoAmITests
         Assert.Equal(CandidateKompasTabs.Dna, CandidateKompasTabs.All[0]);
         Assert.Equal(CandidateKompasTabs.Dna, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Fit, 1));
         Assert.Equal(4, CandidateKompasTabs.All.Length);
-        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/WhoAmIPanel.razor"));
-        Assert.Contains("WhoAmI.AttachCv", panel, StringComparison.Ordinal);
-        Assert.Contains("CompetencyScorePanel", panel, StringComparison.Ordinal);
-        Assert.Contains("CultureScorePanel", panel, StringComparison.Ordinal);
-        Assert.Contains("RiasecScorePanel", panel, StringComparison.Ordinal);
-        Assert.Contains("Career.ScienceNote", panel, StringComparison.Ordinal);
-        Assert.Contains("Competency.ScienceNote", panel, StringComparison.Ordinal);
-        Assert.Contains("CultureScan.ScienceNote", panel, StringComparison.Ordinal);
-        Assert.Contains("WhoAmI.WorkExperience", panel, StringComparison.Ordinal);
+        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor"));
+        Assert.Contains("Dna.StoryEmpty", panel, StringComparison.Ordinal);
+        Assert.Contains("Dna.TestsTitle", panel, StringComparison.Ordinal);
+        Assert.Contains("GetMyKompasDnaResultAsync", panel, StringComparison.Ordinal);
         Assert.Contains("OnParametersSetAsync", panel, StringComparison.Ordinal);
-        Assert.Contains("Common.Retry", panel, StringComparison.Ordinal);
-        Assert.Contains("HomeDashboardLoad.IsTransient", panel, StringComparison.Ordinal);
+        Assert.Contains("WhoAmIStoryStatuses", panel, StringComparison.Ordinal);
         Assert.Contains("Active=", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor")), StringComparison.Ordinal);
     }
 

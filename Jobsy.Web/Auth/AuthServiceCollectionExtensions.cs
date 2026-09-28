@@ -779,15 +779,6 @@ public static class AuthServiceCollectionExtensions
         return new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
     }
 
-    private static async Task<ClaimsPrincipal?> TryLocalApiLoginAsync(
-        IConfiguration configuration,
-        string email,
-        string password)
-    {
-        var profile = await TryLocalApiLoginProfileAsync(configuration, email, password, rememberDevice: false);
-        return profile is null ? null : CreatePrincipalFromProfile(profile, "local-registration");
-    }
-
     private static async Task<LocalApiLoginProfile?> TryLocalApiLoginProfileAsync(
         IConfiguration configuration,
         string email,

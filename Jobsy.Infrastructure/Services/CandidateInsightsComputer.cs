@@ -347,22 +347,6 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         return culture is { IsComplete: true } ? culture : null;
     }
 
-    private static SchwartzValuesScores? ReadValues(CandidateValuesProfile? row)
-    {
-        if (row is null || !CandidateCompetencyStatuses.IsCompleted(row.Status))
-        {
-            return null;
-        }
-
-        var values = new SchwartzValuesScores(
-            row.AutonomyPercent,
-            row.ConnectionPercent,
-            row.AchievementPercent,
-            row.StabilityPercent,
-            row.ImpactPercent);
-        return values is { IsComplete: true } ? values : null;
-    }
-
     private static CandidatePreferencesDto? TryReadPreferences(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))

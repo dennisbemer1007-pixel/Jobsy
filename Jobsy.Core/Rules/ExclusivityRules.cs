@@ -14,11 +14,6 @@ public static class ExclusivityRules
     public static bool RequiresApplicantExtras(ExclusivitySetting? setting)
         => setting is { IsOpenOption: false };
 
-    public static string BadgeText(ExclusivitySetting? setting)
-        => setting is null || setting.IsOpenOption
-            ? DefaultOpenName
-            : setting.Name;
-
     public static string? ValidateSchoolEmail(ExclusivitySetting setting, string? schoolEmail)
     {
         if (setting.IsOpenOption)
@@ -168,21 +163,4 @@ public static class ExclusivityRules
         return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
     }
 
-    /// <summary>
-    /// Soft eligibility for UI (profile e-mail). Does not replace apply-time school-email validation.
-    /// </summary>
-    public static bool ProfileEmailLooksEligible(ExclusivitySetting? setting, string? profileEmail)
-    {
-        if (setting is null || setting.IsOpenOption || string.IsNullOrWhiteSpace(setting.SchoolDomain))
-        {
-            return true;
-        }
-
-        if (string.IsNullOrWhiteSpace(profileEmail))
-        {
-            return false;
-        }
-
-        return ValidateSchoolEmail(setting, profileEmail) is null;
-    }
 }
