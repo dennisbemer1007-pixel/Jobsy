@@ -43,6 +43,7 @@ internal static class MediaBackfillSeeder
         {
             var touched = false;
 
+            // Includes one-time SVG → category WebP replacement via NeedsImageBackfill.
             if (MockVacancyMedia.NeedsImageBackfill(vacancy.ImageUrl))
             {
                 vacancy.ImageUrl = MockVacancyMedia.ImageUrl(vacancy.Id, vacancy.WorkTypes);

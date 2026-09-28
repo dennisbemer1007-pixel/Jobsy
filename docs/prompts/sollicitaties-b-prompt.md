@@ -26,7 +26,7 @@
 | API DTO | `Jobsy.Api/Models/DashboardDtos.cs` → `record ApplicationDto(...)`, used in several places in `ApplicationsController` and `MeController` |
 | Candidate list endpoint | `Jobsy.Api/Controllers/MeController.cs` → `GET api/me/applications` (`GetMyApplications`). It projects rows and uses `CandidateApplicationLocation.ForPublicCard(...)` to decide which company name to show (client or intermediary). |
 | Client call | `JobsyApiClient.GetMyApplicationsAsync()` |
-| Image helper | `Jobsy.Core/Media/VacancyImageUrls.cs` → `ForCard(imageUrl, logoUrl, id, workType)`: vacancy photo → company logo → local work-type SVG (`/images/vacancies/{slug}-{n}.svg`). Used in `VacanciesController` with `WorkTypeLabelList.FirstOrDefault()`. |
+| Image helper | `Jobsy.Core/Media/VacancyImageUrls.cs` → `ForCard(imageUrl, logoUrl, id, workType)`: vacancy photo → company logo → local work-type WebP (`/images/vacancies/{slug}.webp`). Used in `VacanciesController` with `WorkTypeLabelList.FirstOrDefault()`. |
 | Dialog | `Jobsy.Web/Components/LobsyFriendlyDialog.razor` (`IsOpen`, `Title`, `Lead`, `ChildContent`, `OnClose`) |
 | Styles | `.application-card*`, `.application-stepper*` and `.apps-tabs` in `wwwroot/css/app.css` (~line 15358), mirrored in `app.min.css`. Feature CSS lives in `wwwroot/css/features/` and is linked in `Components/App.razor` (both the `<link>` and the `<noscript>` copy, with `?v=`). |
 | Tests | `Jobsy.Tests/MobileSaasUxTests.cs` → `Candidate_applications_use_cards_with_current_status_and_bar_stepper` asserts the old markup and CSS. Update it for the new design. Playwright pattern: `MobileSmokePlaywrightTests.cs`, `CandidateTabStabilityPlaywrightTests.cs` (`JOBSY_E2E_BASE_URL`, soft-skip, 390×844). |
