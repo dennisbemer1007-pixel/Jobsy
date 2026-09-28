@@ -8,4 +8,17 @@ public interface ISampleAssessmentReportPdfService
         AssessmentKind kind,
         string? lang,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// First two sample-PDF pages as PNG (for the preview dialog), plus total report page count.
+    /// </summary>
+    Task<SampleAssessmentReportPreview> RenderSamplePreviewAsync(
+        AssessmentKind kind,
+        string? lang,
+        CancellationToken ct = default);
 }
+
+public sealed record SampleAssessmentReportPreview(
+    string FileName,
+    int TotalPages,
+    IReadOnlyList<string> PagePngBase64);

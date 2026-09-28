@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using System.Globalization
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Reports
 @using Jobsy.Core.Reports.Career
 @using Jobsy.Core.Reports.Competence
 @using Jobsy.Core.Reports.Culture
@@ -248,6 +249,19 @@
                               OnConfirm="ConfirmRetakeAsync"
                               OnPreferEdit="BeginEditAsync"
                               OnCancel="() => _redoOpen = false" />
+
+        <TestResultSamplePdfDialog Open="_samplePdfOpen"
+                                   Busy="_busy"
+                                   Loading="_samplePdfLoading"
+                                   TestTitle="@Culture[_def.TitleKey]"
+                                   PriceEuro="_priceEuro"
+                                   QuestionCount="_def.DeepQuestionCount"
+                                   MinutesApprox="@(_def.Kind == AssessmentKind.Career ? 25 : 20)"
+                                   TotalPages="_samplePdfTotalPages"
+                                   PagePngBase64="_samplePdfPages"
+                                   OnClose="CloseSamplePdf"
+                                   OnDownload="DownloadSamplePdfAsync"
+                                   OnStart="StartExtendedFromSampleAsync" />
     }
     else
     {
@@ -342,6 +356,10 @@
     private bool _redoOpen;
     private bool _editModeEnabled;
     private bool _samplePdfEnabled;
+    private bool _samplePdfOpen;
+    private bool _samplePdfLoading;
+    private int _samplePdfTotalPages;
+    private IReadOnlyList<string> _samplePdfPages = Array.Empty<string>();
 
     protected override void OnInitialized()
     {
@@ -770,6 +788,50 @@
             return;
         }
 
+        _samplePdfOpen = true;
+        _samplePdfLoading = true;
+        _samplePdfPages = Array.Empty<string>();
+        _payError = null;
+        try
+        {
+            var preview = await Api.GetSampleAssessmentReportPreviewAsync(_def.Key, Culture.Language);
+            if (preview is null || preview.PagePngBase64.Count == 0)
+            {
+                // Fallback: open/download the PDF directly when image export is unavailable.
+                await Api.DownloadSampleAssessmentReportAsync(Js, _def.Key, Culture.Language);
+                _samplePdfOpen = false;
+                return;
+            }
+
+            _samplePdfPages = preview.PagePngBase64;
+            _samplePdfTotalPages = preview.TotalPages > 0
+                ? preview.TotalPages
+                : DeepReportCapabilities.For(_def.Kind).PdfPageCount;
+        }
+        catch (Exception ex)
+        {
+            _payError = ex.Message;
+            _samplePdfOpen = false;
+        }
+        finally
+        {
+            _samplePdfLoading = false;
+        }
+    }
+
+    private void CloseSamplePdf()
+    {
+        _samplePdfOpen = false;
+        _samplePdfLoading = false;
+    }
+
+    private async Task DownloadSamplePdfAsync()
+    {
+        if (_def is null)
+        {
+            return;
+        }
+
         _busy = true;
         try
         {
@@ -783,6 +845,12 @@
         {
             _busy = false;
         }
+    }
+
+    private async Task StartExtendedFromSampleAsync()
+    {
+        _samplePdfOpen = false;
+        await StartExtendedAsync();
     }
 
     private sealed record ScoreBar(string Label, int Percent);

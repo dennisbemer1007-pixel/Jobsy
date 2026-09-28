@@ -52,6 +52,27 @@ public sealed class AssessmentAdjustmentsController : ControllerBase
         return File(pdf.Content, "application/pdf", pdf.FileName);
     }
 
+    [HttpGet("{kind}/sample-report-preview")]
+    [ProducesResponseType(typeof(SampleAssessmentReportPreview), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SampleAssessmentReportPreview>> SampleReportPreview(
+        string kind,
+        [FromQuery] string? lang,
+        CancellationToken cancellationToken = default)
+    {
+        if (!AssessmentKindLabels.TryParse(kind, out var k))
+        {
+            return BadRequest(new { message = "Unknown assessment kind." });
+        }
+
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await _samplePdf.RenderSamplePreviewAsync(k, lang, cancellationToken));
+    }
+
     [HttpGet("{kind}/adjustments")]
     [ProducesResponseType(typeof(AssessmentAdjustmentDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<AssessmentAdjustmentDto>> Get(

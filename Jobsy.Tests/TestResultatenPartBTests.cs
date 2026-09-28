@@ -64,6 +64,26 @@ public class TestResultatenPartBTests
     }
 
     [Fact]
+    public async Task Sample_preview_returns_two_png_pages_and_total_count()
+    {
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var sut = new SampleAssessmentReportPdfService(cache, new FakeCompanySettings());
+
+        var preview = await sut.RenderSamplePreviewAsync(AssessmentKind.Career, "nl");
+        Assert.Equal(2, preview.PagePngBase64.Count);
+        Assert.Equal(DeepReportCapabilities.For(AssessmentKind.Career).PdfPageCount, preview.TotalPages);
+        Assert.All(preview.PagePngBase64, b64 =>
+        {
+            var bytes = Convert.FromBase64String(b64);
+            Assert.True(bytes.Length > 8);
+            Assert.Equal(0x89, bytes[0]); // PNG magic
+            Assert.Equal((byte)'P', bytes[1]);
+            Assert.Equal((byte)'N', bytes[2]);
+            Assert.Equal((byte)'G', bytes[3]);
+        });
+    }
+
+    [Fact]
     public void Deep_pdf_renderers_produce_non_empty_pdf_bytes()
     {
         var values = ValuesDeepReportBuilder.Build(SyntheticDomains(AssessmentKind.Values), null, DateTime.UtcNow);

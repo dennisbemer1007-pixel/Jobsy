@@ -18,6 +18,7 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
     private static readonly Color BrandNavy = Color.FromHex("#0f2d5c");
     private static readonly Color AccentTeal = Color.FromHex("#1a7a6d");
     private static readonly Color SoftSky = Color.FromHex("#e8f3fa");
+    private static readonly Color SoftPearl = Color.FromHex("#f7f4f0");
     private static readonly Color Slate = Color.FromHex("#2c3a4a");
     private static readonly Color Muted = Color.FromHex("#5a6a7a");
     private static readonly Color Watermark = Color.FromHex("#c9a227");
@@ -43,6 +44,44 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
         string? lang,
         CancellationToken ct = default)
     {
+        var (reportLang, version, cacheKey) = CacheParts(kind, lang, "pdf");
+        if (!_cache.TryGetValue(cacheKey, out byte[]? bytes) || bytes is null)
+        {
+            bytes = BuildDocument(kind, reportLang).GeneratePdf();
+            _cache.Set(cacheKey, bytes, TimeSpan.FromHours(12));
+        }
+
+        return Task.FromResult(new AssessmentReportPdf(FileName(kind, reportLang), bytes));
+    }
+
+    public Task<SampleAssessmentReportPreview> RenderSamplePreviewAsync(
+        AssessmentKind kind,
+        string? lang,
+        CancellationToken ct = default)
+    {
+        var (reportLang, version, cacheKey) = CacheParts(kind, lang, "preview");
+        if (!_cache.TryGetValue(cacheKey, out SampleAssessmentReportPreview? preview) || preview is null)
+        {
+            var doc = BuildDocument(kind, reportLang);
+            var images = doc.GenerateImages(new ImageGenerationSettings
+            {
+                RasterDpi = 96,
+                ImageFormat = ImageFormat.Png
+            }).Take(2).Select(Convert.ToBase64String).ToList();
+
+            preview = new SampleAssessmentReportPreview(
+                FileName(kind, reportLang),
+                DeepReportCapabilities.For(kind).PdfPageCount,
+                images);
+            _cache.Set(cacheKey, preview, TimeSpan.FromHours(12));
+        }
+
+        return Task.FromResult(preview);
+    }
+
+    private static (string Lang, int Version, string CacheKey) CacheParts(
+        AssessmentKind kind, string? lang, string kindTag)
+    {
         var reportLang = ReportLanguage.FromUi(lang);
         var version = kind switch
         {
@@ -51,22 +90,19 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
             AssessmentKind.Values => ValuesDeepReportJson.CurrentReportVersion,
             _ => 1
         };
-        var cacheKey = $"sample-pdf:{kind}:{reportLang}:{version}";
-        if (!_cache.TryGetValue(cacheKey, out byte[]? bytes) || bytes is null)
-        {
-            bytes = BuildSample(kind, reportLang);
-            _cache.Set(cacheKey, bytes, TimeSpan.FromHours(12));
-        }
-
-        var slug = AssessmentKindLabels.ToSlug(kind);
-        var name = DeepReportCatalog.FileName(new AssessmentKindSlug($"voorbeeld-{slug}"), reportLang, DateTime.UtcNow);
-        return Task.FromResult(new AssessmentReportPdf(name, bytes));
+        return (reportLang, version, $"sample-{kindTag}:{kind}:{reportLang}:{version}");
     }
 
-    private byte[] BuildSample(AssessmentKind kind, string lang)
+    private static string FileName(AssessmentKind kind, string reportLang)
+    {
+        var slug = AssessmentKindLabels.ToSlug(kind);
+        return DeepReportCatalog.FileName(
+            new AssessmentKindSlug($"voorbeeld-{slug}"), reportLang, DateTime.UtcNow);
+    }
+
+    private Document BuildDocument(AssessmentKind kind, string lang)
     {
         var brand = "Lobsy";
-        var logo = _companySettings.GetBrandLogoPng();
         var fullName = ReportLanguage.IsEnglish(lang) ? "Sample candidate" : "Voorbeeldkandidaat";
         var generated = DateTime.UtcNow.ToString("d MMMM yyyy",
             ReportLanguage.IsEnglish(lang)
@@ -74,31 +110,16 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
                 : System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
         var watermark = DeepReportCatalog.Get("pdf.watermark", lang);
         var coverNote = DeepReportCatalog.Get("pdf.sampleCover", lang);
-
         var answers = LoadSampleAnswers(kind);
         var domains = DeepAnalysisCatalog.ScoreDomains(answers, kind);
-
-        byte[] inner = kind switch
+        var titleKey = kind switch
         {
-            AssessmentKind.Career => AssessmentReportPdfService.RenderCareerDeep(
-                brand, logo, fullName, generated,
-                CareerDeepReportBuilder.Build(domains, CareerCompassBuilder.Build(DeepAnalysisCatalog.ToRiasecScores(domains), true), null, DateTime.UtcNow),
-                lang),
-            AssessmentKind.Culture => AssessmentReportPdfService.RenderCultureDeep(
-                brand, logo, fullName, generated,
-                CultureDeepReportBuilder.Build(domains, null, DateTime.UtcNow),
-                lang),
-            AssessmentKind.Values => AssessmentReportPdfService.RenderValuesDeep(
-                brand, logo, fullName, generated,
-                ValuesDeepReportBuilder.Build(domains, null, DateTime.UtcNow),
-                lang),
-            _ => AssessmentReportPdfService.RenderCareerDeep(
-                brand, logo, fullName, generated,
-                CareerDeepReportBuilder.Build(domains, CareerCompassSnapshot.Empty(true), null, DateTime.UtcNow),
-                lang)
+            AssessmentKind.Culture => "title.culture",
+            AssessmentKind.Values => "title.values",
+            AssessmentKind.Competence => "title.competence",
+            _ => "title.career"
         };
 
-        // Re-render with watermark overlay (simpler: wrap a short watermarked 2-page sample).
         return Document.Create(container =>
         {
             container.Page(page =>
@@ -109,20 +130,15 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
                 page.Header().Background(SoftSky).Padding(12).Row(r =>
                 {
                     r.RelativeItem().Text(brand).Bold().FontColor(BrandNavy).FontSize(16);
-                    r.ConstantItem(160).AlignRight().Text(coverNote).FontColor(AccentTeal).FontSize(9);
+                    r.ConstantItem(180).AlignRight().Text(coverNote).FontColor(AccentTeal).FontSize(9);
                 });
                 page.Content().Layers(layers =>
                 {
                     layers.PrimaryLayer().PaddingTop(24).Column(col =>
                     {
                         col.Spacing(10);
-                        col.Item().Text(DeepReportCatalog.Get(kind switch
-                        {
-                            AssessmentKind.Culture => "title.culture",
-                            AssessmentKind.Values => "title.values",
-                            AssessmentKind.Competence => "title.competence",
-                            _ => "title.career"
-                        }, lang)).FontSize(20).Bold().FontColor(BrandNavy);
+                        col.Item().Text(DeepReportCatalog.Get(titleKey, lang))
+                            .FontSize(20).Bold().FontColor(BrandNavy);
                         col.Item().Text(fullName);
                         col.Item().Text(generated).FontColor(Muted);
                         col.Item().PaddingTop(12).Text(DeepReportCatalog.Get("pdf.scores", lang)).Bold();
@@ -135,7 +151,8 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
                                 AssessmentKind.Career => DeepReportCatalog.RiasecLabel(s.Domain, lang),
                                 _ => s.Domain
                             };
-                            col.Item().Text($"{label}: {s.Percent}%");
+                            col.Item().Background(SoftPearl).Padding(8)
+                                .Text($"{label}: {s.Percent}%");
                         }
                     });
                     layers.Layer().AlignCenter().AlignMiddle()
@@ -155,9 +172,14 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
                 {
                     layers.PrimaryLayer().Column(col =>
                     {
-                        col.Item().Text(DeepReportCatalog.Get("pdf.overview", lang)).FontSize(14).Bold().FontColor(BrandNavy);
-                        col.Item().PaddingTop(8).Text(DeepReportCatalog.Get("pdf.disclaimer", lang)).FontColor(Muted).Italic();
-                        col.Item().PaddingTop(16).Text($"{domains.Count} · {inner.Length}").FontColor(Muted).FontSize(8);
+                        col.Item().Text(DeepReportCatalog.Get("pdf.overview", lang))
+                            .FontSize(14).Bold().FontColor(BrandNavy);
+                        col.Item().PaddingTop(8)
+                            .Text(DeepReportCatalog.Get("pdf.disclaimer", lang))
+                            .FontColor(Muted).Italic();
+                        col.Item().PaddingTop(16)
+                            .Text(DeepReportCatalog.Get("pdf.sampleCover", lang))
+                            .FontColor(AccentTeal);
                     });
                     layers.Layer().AlignCenter().AlignMiddle()
                         .Rotate(-28)
@@ -168,7 +190,7 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
                 });
                 page.Footer().AlignCenter().Text(watermark).FontColor(Muted).FontSize(9);
             });
-        }).GeneratePdf();
+        });
     }
 
     private static IReadOnlyDictionary<int, int> LoadSampleAnswers(AssessmentKind kind)

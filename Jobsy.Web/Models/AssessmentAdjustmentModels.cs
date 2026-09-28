@@ -1,5 +1,12 @@
 namespace Jobsy.Web.Models;
 
+public sealed class SampleAssessmentReportPreviewState
+{
+    public string FileName { get; set; } = "";
+    public int TotalPages { get; set; }
+    public List<string> PagePngBase64 { get; set; } = [];
+}
+
 public sealed class AssessmentAdjustmentState
 {
     public int Used { get; set; }

@@ -62,6 +62,27 @@ public sealed partial class JobsyApiClient
         await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }
 
+    public async Task<SampleAssessmentReportPreviewState?> GetSampleAssessmentReportPreviewAsync(
+        string kind, string? lang, CancellationToken ct = default)
+    {
+        var url = $"api/assessments/{Uri.EscapeDataString(kind)}/sample-report-preview";
+        if (!string.IsNullOrWhiteSpace(lang))
+        {
+            url += $"?lang={Uri.EscapeDataString(lang)}";
+        }
+
+        try
+        {
+            return await _http.GetFromJsonAsync<SampleAssessmentReportPreviewState>(url, ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized
+                                               or HttpStatusCode.NotFound
+                                               or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
     public async Task<CandidateCompetencyState?> GetMyCompetenciesAsync(CancellationToken ct = default)
         => (await GetMeJsonAsync<CandidateCompetencyState>("api/me/competencies", ct)).Value;
 
