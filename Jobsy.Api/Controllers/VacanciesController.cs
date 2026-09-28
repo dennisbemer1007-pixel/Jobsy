@@ -1607,39 +1607,6 @@ public class VacanciesController : ControllerBase
         return Forbid();
     }
 
-    private async Task<Guid?> ResolveIntermediaryOrganizationIdAsync(CancellationToken cancellationToken)
-    {
-        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (actor?.CompanyId is not Guid companyId)
-        {
-            return null;
-        }
-
-        var company = await _db.Companies.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
-        if (company is null)
-        {
-            return null;
-        }
-
-        if (company.Type == CompanyType.Intermediary)
-        {
-            return company.Id;
-        }
-
-        if (company.ParentCompanyId is Guid parentId)
-        {
-            var parent = await _db.Companies.AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Id == parentId, cancellationToken);
-            if (parent?.Type == CompanyType.Intermediary)
-            {
-                return parent.Id;
-            }
-        }
-
-        return null;
-    }
-
     private async Task<VacancyProductActionResultDto> ToProductResultAsync(
         VacancyProductOutcome result,
         CancellationToken cancellationToken)

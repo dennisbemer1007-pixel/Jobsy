@@ -23,7 +23,6 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
     private static readonly Color Muted = Color.FromHex("#5a6a7a");
     private static readonly Color Line = Color.FromHex("#d5e3ec");
     private static readonly Color CellOn = Color.FromHex("#1a7a6d");
-    private static readonly Color CellOff = Color.FromHex("#f2f6f8");
 
     private readonly IPlatformCompanySettingsService _companySettings;
     private readonly ICandidateMapImageService _mapImages;
