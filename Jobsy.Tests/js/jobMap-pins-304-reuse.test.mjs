@@ -10,7 +10,10 @@ import assert from "node:assert/strict";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const js = readFileSync(join(root, "Jobsy.Web", "wwwroot", "js", "jobMap.js"), "utf8");
 const min = readFileSync(join(root, "Jobsy.Web", "wwwroot", "js", "jobMap.min.js"), "utf8");
-const maps = readFileSync(join(root, "Jobsy.Web", "wwwroot", "js", "maps-loader.js"), "utf8");
+const core = readFileSync(join(root, "Jobsy.Web", "wwwroot", "js", "app-core.js"), "utf8");
+const manifest = JSON.parse(readFileSync(join(root, "Jobsy.Tests", "asset-versions.json"), "utf8"));
+const jobMapVersion = manifest["js/jobMap.min.js"]?.v;
+assert.ok(jobMapVersion, "asset-versions.json must list js/jobMap.min.js");
 
 assert.match(js, /let pinsCachedPayload\s*=\s*null/);
 assert.match(js, /if\s*\(\s*res\.status\s*===\s*304\s*\)/);
@@ -36,6 +39,6 @@ assert.match(initMatch[0], /let live\s*=/);
 
 assert.match(min, /304/);
 assert.match(min, /__testGetMapCreateCount/);
-assert.match(maps, /jobMap\.min\.js\?v=20260927-banenkaart-v3/);
+assert.match(core, new RegExp(`jobMap\\.min\\.js\\?v=${jobMapVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
 
 console.log("jobMap-pins-304-reuse: ok");

@@ -42,8 +42,8 @@ public class BanenkaartMapReusePlaywrightTests
         Assert.Contains("adoptMapContainer(el)", initFn);
         Assert.DoesNotContain("if (map) {\n                dispose();", initFn);
 
-        var maps = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("jobMap.min.js?v=20260928-mapperf", maps);
+        var maps = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-core.js"));
+        AssetVersions.AssertVersionedRefMatchesManifest(maps, "js/jobMap.min.js");
 
         var testFile = Path.Combine(root, "Jobsy.Tests", "BanenkaartMapReusePlaywrightTests.cs");
         Assert.True(File.Exists(testFile));

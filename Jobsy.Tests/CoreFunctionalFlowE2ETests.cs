@@ -440,7 +440,7 @@ public class CoreFunctionalFlowE2ETests
         var root = FindRepoRoot();
         var loginSource = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Login.razor"));
         var uiStrings = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Localization", "UiStrings.cs"));
-        var idleJs = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "sessionIdle.js"));
+        var idleJs = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-extras.js"));
 
         Assert.Contains("session-expired", loginSource, StringComparison.Ordinal);
         Assert.Contains("Login.ErrorSessionExpired", uiStrings, StringComparison.Ordinal);

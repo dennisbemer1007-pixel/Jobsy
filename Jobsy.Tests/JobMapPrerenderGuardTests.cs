@@ -19,7 +19,7 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("lib/maplibre/maplibre-gl-csp.js", home);
         Assert.DoesNotContain("jobMap.min.js", home);
 
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
+        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("lib/maplibre/maplibre-gl-csp.js", maps);
         Assert.Contains("jobMap.min.js", maps);
         Assert.Contains("ensure: ensure", maps);
@@ -236,7 +236,7 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("unpkg.com", app);
         Assert.Contains("js/app-core.js", app);
         Assert.Contains("defer", app);
-        Assert.DoesNotContain("app-core.js?v=20260816-perf\" defer", app);
+        AssetVersions.AssertVersionedRefMatchesManifest(app, "js/app-core.js");
         Assert.Contains("css/app.min.css", app);
         Assert.DoesNotContain("media=\"print\"", app);
         Assert.Contains("data-app-css", app);
@@ -255,18 +255,12 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", app);
         Assert.DoesNotContain("<script src=\"https://unpkg.com/leaflet", app);
 
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("pending[kind] = null", maps);
-        Assert.Contains("discovery", maps);
-        Assert.Contains("fetchpriority", maps);
-        // MapLibre boot waits for Blazor circuit or idle (Safari: 1500 ms fallback).
-        Assert.Contains("whenCircuitOrIdle", maps);
-        Assert.Contains("requestIdleCallback", maps);
-        Assert.DoesNotContain("ensureAfterPaint", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("pending[kind] = null", bundle);
+        Assert.Contains("discovery", bundle);
         Assert.Contains("maplibre-gl-csp.js", bundle);
         Assert.Contains("fetchpriority", bundle);
+        // MapLibre boot waits for Blazor circuit or idle (Safari: 1500 ms fallback).
         Assert.Contains("whenCircuitOrIdle", bundle);
         Assert.Contains("requestIdleCallback", bundle);
         Assert.DoesNotContain("ensureAfterPaint", bundle);

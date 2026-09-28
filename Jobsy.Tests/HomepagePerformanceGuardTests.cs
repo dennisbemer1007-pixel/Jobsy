@@ -27,9 +27,6 @@ public class HomepagePerformanceGuardTests
         Assert.DoesNotContain("rel=\"preload\"", home);
 
         // Map CSS stays non-blocking (print→all) until Zoeken needs it.
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("link.media = \"print\"", maps);
-        Assert.DoesNotContain("link.setAttribute(\"fetchpriority\"", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("link.media = \"print\"", bundle);
         Assert.DoesNotContain("link.setAttribute(\"fetchpriority\"", bundle);
@@ -91,7 +88,7 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("cookie-consent__privacy", banner);
         Assert.DoesNotContain("class=\"auth-link\"", banner);
 
-        var consentJs = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "cookieConsent.js"));
+        var consentJs = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("cookie-consent-known", consentJs);
         Assert.Contains("jobsyViewport", consentJs);
 
@@ -136,27 +133,21 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("OnMapTilesReady", discovery);
         Assert.Contains("_mapPainted = true", discovery);
 
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.DoesNotContain("ensureAfterPaint", maps);
-        Assert.DoesNotContain("warmDiscovery", maps);
-        Assert.DoesNotContain("jobsyMapsAfterFirstPaint", maps);
-        Assert.DoesNotContain("IntersectionObserver", maps);
-        // Pins HTTP still starts immediately; MapLibre create/style waits for circuit/idle.
-        Assert.Contains("whenCircuitOrIdle", maps);
-        Assert.Contains("requestIdleCallback", maps);
-        Assert.Contains("fetchpriority", maps);
-        Assert.Contains("loadScriptsParallel", maps);
-        Assert.Contains("first pins do not wait on the Blazor circuit", maps);
-
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.DoesNotContain("ensureAfterPaint", bundle);
         Assert.DoesNotContain("warmDiscovery", bundle);
         Assert.DoesNotContain("jobsyMapsAfterFirstPaint", bundle);
+        // Pins HTTP still starts immediately; MapLibre create/style waits for circuit/idle.
         Assert.Contains("whenCircuitOrIdle", bundle);
         Assert.Contains("requestIdleCallback", bundle);
         Assert.Contains("fetchpriority", bundle);
         Assert.Contains("loadScriptsParallel", bundle);
         Assert.Contains("first pins do not wait on the Blazor circuit", bundle);
+        // Map-loader section must not use IntersectionObserver (list sentinel lives elsewhere in the bundle).
+        var mapsStart = bundle.IndexOf("/* === maps-loader.js === */", StringComparison.Ordinal);
+        var mapsEnd = bundle.IndexOf("/* === extras-loader.js === */", StringComparison.Ordinal);
+        Assert.True(mapsStart >= 0 && mapsEnd > mapsStart);
+        Assert.DoesNotContain("IntersectionObserver", bundle[mapsStart..mapsEnd]);
 
         var preview = Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "images", "maps", "nl-preview.webp");
         Assert.False(File.Exists(preview));
@@ -172,7 +163,7 @@ public class HomepagePerformanceGuardTests
     [Fact]
     public void Map_loader_does_not_always_fetch_detail_and_discovery_scripts()
     {
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
+        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("ensure: ensure", maps);
         Assert.DoesNotContain("ensureAfterPaint", maps);
         Assert.Contains("discoveryScripts", maps);

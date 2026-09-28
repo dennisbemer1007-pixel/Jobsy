@@ -29,7 +29,8 @@ public class EmailLayoutTests
     public void LogoUrl_points_at_the_small_png_not_the_site_mark()
     {
         var url = EmailLayout.LogoUrl("https://lobsy.nl");
-        Assert.Equal("https://lobsy.nl/images/brand/lobsy-email.png?v=20260904-mail", url);
+        Assert.Equal("https://lobsy.nl" + EmailLayout.LogoRelativePath, url);
+        Assert.Contains("/images/brand/lobsy-email.png?v=", url);
         Assert.Contains(EmailLayout.LogoRelativePath, url);
     }
 
