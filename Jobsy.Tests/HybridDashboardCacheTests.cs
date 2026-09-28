@@ -112,7 +112,9 @@ public sealed class HybridDashboardCacheTests
         var root = FindRepoRoot();
         var button = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Shared", "DashboardRefreshButton.razor"));
         Assert.Contains("Ververs", button, StringComparison.Ordinal);
-        Assert.Contains("api/dashboard/refresh", File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Services", "JobsyApiClient.cs")));
+        var clientDir = Path.Combine(root, "Jobsy.Web", "Services", "ApiClient");
+        var client = string.Concat(Directory.EnumerateFiles(clientDir, "JobsyApiClient*.cs").Select(File.ReadAllText));
+        Assert.Contains("api/dashboard/refresh", client);
 
         string[] files =
         [

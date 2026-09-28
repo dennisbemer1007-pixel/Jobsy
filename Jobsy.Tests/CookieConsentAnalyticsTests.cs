@@ -29,7 +29,8 @@ public class CookieConsentAnalyticsTests
     public void Api_client_gates_engagement_recording_on_consent()
     {
         var root = FindRepoRoot();
-        var client = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Services", "JobsyApiClient.cs"));
+        var clientDir = Path.Combine(root, "Jobsy.Web", "Services", "ApiClient");
+        var client = string.Concat(Directory.EnumerateFiles(clientDir, "JobsyApiClient*.cs").Select(File.ReadAllText));
         Assert.Contains("AllowsAnalyticsAsync", client);
 
         var impressionsIdx = client.IndexOf("public async Task RecordImpressionsAsync", StringComparison.Ordinal);

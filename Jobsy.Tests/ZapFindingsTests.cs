@@ -16,7 +16,8 @@ public class ZapFindingsTests
         var root = FindRepoRoot();
         var company = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "CompanyPublicPage.razor"));
         var discovery = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
-        var client = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Services", "JobsyApiClient.cs"));
+        var clientDir = Path.Combine(root, "Jobsy.Web", "Services", "ApiClient");
+        var client = string.Concat(Directory.EnumerateFiles(clientDir, "JobsyApiClient*.cs").Select(File.ReadAllText));
 
         Assert.DoesNotContain("Format(\"Discovery.LoadFailed\", ex.Message)", company);
         Assert.DoesNotContain("Format(\"Discovery.LoadFailed\", ex.Message)", discovery);
