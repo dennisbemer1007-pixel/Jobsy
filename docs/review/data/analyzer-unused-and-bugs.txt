@@ -1,0 +1,31 @@
+Jobsy.Api/Controllers/ApplicationsController.cs(1628,27): warning IDE0051: Private member 'ApplicationsController.Html' is unused
+Jobsy.Api/Controllers/DeviceSessionsController.cs(19,37): warning IDE0052: Private member 'DeviceSessionsController._db' can be removed as the value assigned to it is never read
+Jobsy.Api/Controllers/MeController.cs(575,96): warning IDE0060: Remove unused parameter 'cancellationToken'
+Jobsy.Api/Controllers/VacanciesController.cs(1610,31): warning IDE0051: Private member 'VacanciesController.ResolveIntermediaryOrganizationIdAsync' is unused
+Jobsy.Core/Email/TransactionalEmails.cs(252,14): warning IDE0060: Remove unused parameter 'hiredApplicationId' if it is not part of a shipped public API
+Jobsy.Core/Email/TransactionalEmails.cs(69,34): warning IDE0059: Unnecessary assignment of a value to 'info'
+Jobsy.Core/Media/VacancyImageUrls.cs(424,65): warning IDE0060: Remove unused parameter 'vacancyId'
+Jobsy.Core/Privacy/PrivacyConstants.cs(43,64): warning IDE0060: Remove unused parameter 'role' if it is not part of a shipped public API
+Jobsy.Core/Reports/Competence/CompetenceDeepReportBuilder.cs(19,17): warning IDE0060: Remove unused parameter 'jobTitle' if it is not part of a shipped public API
+Jobsy.Core/Rules/AtsListingValidation.cs(28,17): warning IDE0060: Remove unused parameter 'locationLabel' if it is not part of a shipped public API
+Jobsy.Core/Rules/CulturePersonalityCatalog.cs(170,25): warning IDE0060: Remove unused parameter 'code'
+Jobsy.Core/Rules/SchwartzValuesCatalog.cs(140,25): warning IDE0060: Remove unused parameter 'code'
+Jobsy.Infrastructure/Data/DemoUsersSeeder.cs(257,25): warning IDE0051: Private member 'DemoUsersSeeder.EnsureDemoPasswordAsync' is unused
+Jobsy.Infrastructure/Data/HaaglandenVacanciesSeeder.cs(138,21): warning IDE0059: Unnecessary assignment of a value to 'role'
+Jobsy.Infrastructure/Jobs/CompanyReengagementHostedService.cs(178,14): warning IDE0060: Remove unused parameter 'orgId'
+Jobsy.Infrastructure/Services/CandidateInsightsComputer.cs(350,42): warning IDE0051: Private member 'CandidateInsightsComputer.ReadValues' is unused
+Jobsy.Infrastructure/Services/FlexCommercialService.cs(49,19): warning CA2208: Method UpdateAsync passes 'MarginPerHourEuro' as the paramName argument to a ArgumentOutOfRangeException constructor. Replace this argument with one of the method's parameter names. Note that the provided parameter name should have the exact casing as declared on the method.
+Jobsy.Infrastructure/Services/FlexCommercialService.cs(54,19): warning CA2208: Method UpdateAsync passes 'DeepAnalysisPriceEuro' as the paramName argument to a ArgumentOutOfRangeException constructor. Replace this argument with one of the method's parameter names. Note that the provided parameter name should have the exact casing as declared on the method.
+Jobsy.Infrastructure/Services/FlexCommercialService.cs(59,19): warning CA2208: Method UpdateAsync passes 'AgencyAnnualPriceEuro' as the paramName argument to a ArgumentOutOfRangeException constructor. Replace this argument with one of the method's parameter names. Note that the provided parameter name should have the exact casing as declared on the method.
+Jobsy.Infrastructure/Services/FlexCommercialService.cs(64,19): warning CA2208: Method UpdateAsync passes 'ContactUnlockCostTokens' as the paramName argument to a ArgumentOutOfRangeException constructor. Replace this argument with one of the method's parameter names. Note that the provided parameter name should have the exact casing as declared on the method.
+Jobsy.Infrastructure/Services/IntegrationHealthStub.cs(59,13): warning IDE0059: Unnecessary assignment of a value to 'view'
+Jobsy.Infrastructure/Services/LobsyCvPdfService.cs(26,35): warning IDE0052: Private member 'LobsyCvPdfService.CellOff' can be removed as the value assigned to it is never read
+Jobsy.Infrastructure/Services/PrivacyDataService.cs(1339,27): warning IDE0051: Private member 'PrivacyDataService.Html' is unused
+Jobsy.Infrastructure/Services/TrainingUpskillService.cs(384,27): warning IDE0051: Private member 'TrainingUpskillService.CombineUrl' is unused
+Jobsy.Infrastructure/Services/VacancyDiscoveryIndex.cs(17,21): warning CA1001: Type 'VacancyDiscoveryIndex' owns disposable field(s) '_refreshLock' but is not disposable
+Jobsy.Infrastructure/Services/WebPushNotificationService.cs(110,23): warning CA2016: Forward the 'cancellationToken' parameter to the 'SendNotificationAsync' method or pass in 'CancellationToken.None' explicitly to indicate intentionally not propagating the token
+Jobsy.Web/Auth/AuthServiceCollectionExtensions.cs(1003,110): warning IDE0060: Remove unused parameter 'email'
+Jobsy.Web/Auth/AuthServiceCollectionExtensions.cs(782,49): warning IDE0051: Private member 'AuthServiceCollectionExtensions.TryLocalApiLoginAsync' is unused
+Jobsy.Web/Auth/EntraOidcOptionsApplier.cs(53,23): warning IDE0060: Remove unused parameter '_token' if it is not part of a shipped public API
+Jobsy.Web/Auth/EntraOidcOptionsApplier.cs(54,35): warning IDE0060: Remove unused parameter '_parameters' if it is not part of a shipped public API
+Jobsy.Web/Services/JobsyApiAuthHandler.cs(293,27): warning IDE0060: Remove unused parameter 'cancellationToken'

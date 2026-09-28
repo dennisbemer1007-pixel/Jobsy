@@ -1,0 +1,287 @@
+# status	location	selector (all classes in selector have zero references in .razor/.cs/.js/.html outside Jobsy.Tests)
+SAFE	Jobsy.Web/wwwroot/css/app.css:602-608	.detail-actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:615-621	.vacancy-card__link
+SAFE	Jobsy.Web/wwwroot/css/app.css:623-627	.ok-hint
+SAFE	Jobsy.Web/wwwroot/css/app.css:763-765	.auth-link--muted
+SAFE	Jobsy.Web/wwwroot/css/app.css:785-788	.auth-logout-form
+SAFE	Jobsy.Web/wwwroot/css/app.css:790-792	.auth-logout-form--chrome
+SAFE	Jobsy.Web/wwwroot/css/app.css:794-803	.auth-link--button
+SAFE	Jobsy.Web/wwwroot/css/app.css:805-808	.auth-link--button:hover
+SAFE	Jobsy.Web/wwwroot/css/app.css:810-823	.auth-icon-btn
+SAFE	Jobsy.Web/wwwroot/css/app.css:825-829	.auth-icon-btn:hover
+SAFE	Jobsy.Web/wwwroot/css/app.css:831-835	.auth-icon-btn__icon
+SAFE	Jobsy.Web/wwwroot/css/app.css:837-840	.auth-icon-btn__icon svg
+SAFE	Jobsy.Web/wwwroot/css/app.css:946-952	.login-modal__actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:954-969	.login-modal__cancel
+SAFE	Jobsy.Web/wwwroot/css/app.css:971-973	.login-modal__cancel:hover
+SAFE	Jobsy.Web/wwwroot/css/app.css:1087-1090	.login-modal__actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:1092-1094	.login-modal__cancel
+SAFE	Jobsy.Web/wwwroot/css/app.css:1274-1278	.provider-btn--register
+SAFE	Jobsy.Web/wwwroot/css/app.css:1280-1282	.provider-btn--register:hover
+SAFE	Jobsy.Web/wwwroot/css/app.css:1430-1434	.login-demo
+SAFE	Jobsy.Web/wwwroot/css/app.css:1436-1440	.login-demo summary
+SAFE	Jobsy.Web/wwwroot/css/app.css:1442-1446	.login-demo__list
+SAFE	Jobsy.Web/wwwroot/css/app.css:1448-1450	.login-demo__form
+SAFE	Jobsy.Web/wwwroot/css/app.css:1452-1466	.login-demo__btn
+SAFE	Jobsy.Web/wwwroot/css/app.css:1468-1471	.login-demo__btn:hover
+SAFE	Jobsy.Web/wwwroot/css/app.css:1473-1477	.login-demo__role
+SAFE	Jobsy.Web/wwwroot/css/app.css:1479-1483	.login-demo__email
+SAFE	Jobsy.Web/wwwroot/css/app.css:1485-1489	.login-demo__hint
+SAFE	Jobsy.Web/wwwroot/css/app.css:1491-1494	.login-demo ul
+SAFE	Jobsy.Web/wwwroot/css/app.css:1496-1501	.login-demo code
+SAFE	Jobsy.Web/wwwroot/css/app.css:2751-2753	.branch-multiselect__chips
+SAFE	Jobsy.Web/wwwroot/css/app.css:2755-2757	.branch-multiselect__chip
+SAFE	Jobsy.Web/wwwroot/css/app.css:2759-2761	.branch-multiselect__chip-swatch
+SAFE	Jobsy.Web/wwwroot/css/app.css:3215-3229	.travel-badge
+SAFE	Jobsy.Web/wwwroot/css/app.css:3231-3235	.travel-badge--soft
+SAFE	Jobsy.Web/wwwroot/css/app.css:3237-3239	.travel-hint .travel-badge
+SAFE	Jobsy.Web/wwwroot/css/app.css:3333-3338	.lobsy-proximity__chip--soft
+SAFE	Jobsy.Web/wwwroot/css/app.css:3623-3627	.badge--worktype
+SAFE	Jobsy.Web/wwwroot/css/app.css:3629-3634	.worktype-fieldset
+SAFE	Jobsy.Web/wwwroot/css/app.css:3636-3643	.worktype-fieldset legend
+SAFE	Jobsy.Web/wwwroot/css/app.css:3645-3649	.worktype-options
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:3971-3976	.job-cluster--featured div
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:3992-3995	.map-popup__category, .map-popup__senior65
+SAFE	Jobsy.Web/wwwroot/css/app.css:4085-4092	.highlight-carousel__media--placeholder
+SAFE	Jobsy.Web/wwwroot/css/app.css:4127-4140	.job-marker__pin
+SAFE	Jobsy.Web/wwwroot/css/app.css:4172-4178	.job-marker:hover .job-marker__pin
+SAFE	Jobsy.Web/wwwroot/css/app.css:4190-4197	.job-marker:active .job-marker__pin, .job-marker--active .job-marker__pin
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:4231-4233	.job-cluster--sm div
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:4235-4238	.job-cluster--md div
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:4240-4243	.job-cluster--lg div
+SAFE	Jobsy.Web/wwwroot/css/app.css:4273-4278	.travel-ring-label
+SAFE	Jobsy.Web/wwwroot/css/app.css:4280-4292	.travel-ring-label span
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:4523-4527	.map-popup__badge.map-popup__badge--type
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:4529-4533	.map-popup__badge.map-popup__badge--soft
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:4855-4863	.map-popup__logo
+SAFE	Jobsy.Web/wwwroot/css/app.css:4911-4913	.mobile-toggle
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:5110-5113	.map-popup__logo
+SAFE	Jobsy.Web/wwwroot/css/app.css:5431-5433	.mobile-toggle
+SAFE	Jobsy.Web/wwwroot/css/app.css:5993-5999	.placeholder-card
+SAFE	Jobsy.Web/wwwroot/css/app.css:6009-6014	.raamflyer-actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:6016-6021	.raamflyer-actions .login-submit
+SAFE	Jobsy.Web/wwwroot/css/app.css:6023-6027	.raamflyer-actions .login-submit--secondary
+SAFE	Jobsy.Web/wwwroot/css/app.css:6029-6035	.raamflyer-scope
+SAFE	Jobsy.Web/wwwroot/css/app.css:6037-6045	.raamflyer-scope__btn
+SAFE	Jobsy.Web/wwwroot/css/app.css:6047-6050	.raamflyer-scope__btn.is-active
+SAFE	Jobsy.Web/wwwroot/css/app.css:6052-6060	.raamflyer-branch select, .raamflyer-format select
+SAFE	Jobsy.Web/wwwroot/css/app.css:6062-6064	.raamflyer-format select
+SAFE	Jobsy.Web/wwwroot/css/app.css:6066-6070	.raamflyer-error
+SAFE	Jobsy.Web/wwwroot/css/app.css:6079-6084	.vacancy-manage-row
+SAFE	Jobsy.Web/wwwroot/css/app.css:6086-6088	.vacancy-manage-row__main
+SAFE	Jobsy.Web/wwwroot/css/app.css:6090-6095	.vacancy-manage-row__title
+SAFE	Jobsy.Web/wwwroot/css/app.css:6097-6099	.vacancy-manage-row__actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:6101-6103	.application-row
+SAFE	Jobsy.Web/wwwroot/css/app.css:6105-6110	.application-row__link
+SAFE	Jobsy.Web/wwwroot/css/app.css:6112-6114	.application-row__link:hover strong
+SAFE	Jobsy.Web/wwwroot/css/app.css:6116-6122	.application-row__meta
+SAFE	Jobsy.Web/wwwroot/css/app.css:6142-6144	.vacancy-manage-row
+SAFE	Jobsy.Web/wwwroot/css/app.css:6146-6148	.vacancy-manage-row__title
+SAFE	Jobsy.Web/wwwroot/css/app.css:6150-6153	.vacancy-manage-row__actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:6155-6157	.application-row
+SAFE	Jobsy.Web/wwwroot/css/app.css:6159-6164	.application-row__meta
+SAFE	Jobsy.Web/wwwroot/css/app.css:6167-6171	.vacancy-card__actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:6173-6176	.vacancy-card__link--primary
+SAFE	Jobsy.Web/wwwroot/css/app.css:6178-6180	.vacancy-card__link--primary:hover
+SAFE	Jobsy.Web/wwwroot/css/app.css:6182-6187	.engagement-actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:6273-6282	.location-banner
+SAFE	Jobsy.Web/wwwroot/css/app.css:6284-6288	.location-banner p
+SAFE	Jobsy.Web/wwwroot/css/app.css:6290-6294	.location-banner__actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:6296-6301	.location-banner--compact
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:6424-6428	.detail-card__video-unavailable
+SAFE	Jobsy.Web/wwwroot/css/app.css:6834-6844	.mock-interview-cta
+SAFE	Jobsy.Web/wwwroot/css/app.css:6846-6851	.mock-interview-cta__btn
+SAFE	Jobsy.Web/wwwroot/css/app.css:6853-6855	.mock-interview-cta__btn:hover
+SAFE	Jobsy.Web/wwwroot/css/app.css:6857-6862	.mock-interview-cta__hint
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:7823-7828	.bottom-nav:not(.bottom-nav--compact) .bottom-nav__item
+SAFE	Jobsy.Web/wwwroot/css/app.css:7886-7888	.org-module-grid
+SAFE	Jobsy.Web/wwwroot/css/app.css:7891-7896	.org-module-grid
+SAFE	Jobsy.Web/wwwroot/css/app.css:7898-7908	.org-module-card
+SAFE	Jobsy.Web/wwwroot/css/app.css:7910-7913	.org-module-card:hover
+SAFE	Jobsy.Web/wwwroot/css/app.css:7915-7920	.org-module-card__icon
+SAFE	Jobsy.Web/wwwroot/css/app.css:7922-7925	.org-module-card__icon svg
+SAFE	Jobsy.Web/wwwroot/css/app.css:7927-7930	.org-module-card__title
+SAFE	Jobsy.Web/wwwroot/css/app.css:7932-7936	.org-module-card__lead
+SAFE	Jobsy.Web/wwwroot/css/app.css:8002-8008	.company-toolbar
+SAFE	Jobsy.Web/wwwroot/css/app.css:8010-8013	.company-search
+SAFE	Jobsy.Web/wwwroot/css/app.css:8015-8024	.company-search input
+SAFE	Jobsy.Web/wwwroot/css/app.css:8026-8030	.company-search input:focus
+SAFE	Jobsy.Web/wwwroot/css/app.css:8032-8036	.company-toolbar__count
+SAFE	Jobsy.Web/wwwroot/css/app.css:8775-8778	.stat-card--nav
+SAFE	Jobsy.Web/wwwroot/css/app.css:9132-9136	.client-perf-action--emphasis
+SAFE	Jobsy.Web/wwwroot/css/app.css:9138-9140	.client-perf-action--emphasis:hover
+SAFE	Jobsy.Web/wwwroot/css/app.css:9602-9607	.applicant-card__contact
+SAFE	Jobsy.Web/wwwroot/css/app.css:9616-9618	.applicants-grid
+SAFE	Jobsy.Web/wwwroot/css/app.css:9620-9625	.applicants-grid__table td .muted
+SAFE	Jobsy.Web/wwwroot/css/app.css:9627-9631	.applicants-grid__col--expand, .applicants-grid__expand-cell
+SAFE	Jobsy.Web/wwwroot/css/app.css:9633-9644	.applicants-grid__expand
+SAFE	Jobsy.Web/wwwroot/css/app.css:9646-9648	.applicants-grid__row.is-expanded td
+SAFE	Jobsy.Web/wwwroot/css/app.css:9650-9654	.applicants-grid__row:focus-visible td
+SAFE	Jobsy.Web/wwwroot/css/app.css:9656-9658	.data-table tbody tr.applicants-grid__details-row:hover td
+SAFE	Jobsy.Web/wwwroot/css/app.css:9660-9664	.applicants-grid__details-row > td
+SAFE	Jobsy.Web/wwwroot/css/app.css:9666-9672	.applicants-grid__details
+SAFE	Jobsy.Web/wwwroot/css/app.css:9674-9678	.applicants-grid__details h3
+SAFE	Jobsy.Web/wwwroot/css/app.css:9680-9683	.applicants-grid__details p
+SAFE	Jobsy.Web/wwwroot/css/app.css:9794-9796	.applicant-card__facts
+SAFE	Jobsy.Web/wwwroot/css/app.css:10195-10203	.checkbox-set
+SAFE	Jobsy.Web/wwwroot/css/app.css:10205-10209	.checkbox-set legend
+SAFE	Jobsy.Web/wwwroot/css/app.css:11143-11148	.login-register__actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:11150-11154	.login-register__actions .provider-btn
+SAFE	Jobsy.Web/wwwroot/css/app.css:11949-11954	.action-row
+SAFE	Jobsy.Web/wwwroot/css/app.css:12099-12105	.csv-celebrate
+SAFE	Jobsy.Web/wwwroot/css/app.css:12404-12410	.profile-entry-row
+SAFE	Jobsy.Web/wwwroot/css/app.css:12412-12415	.profile-entry-row input
+SAFE	Jobsy.Web/wwwroot/css/app.css:12566-12576	.profile-address-cv
+SAFE	Jobsy.Web/wwwroot/css/app.css:12578-12581	.profile-address-cv input
+SAFE	Jobsy.Web/wwwroot/css/app.css:13510-13512	.lobsy-assistant__fab
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:13842-13849	.cookie-consent__mascot
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:13852-13854	.cookie-consent__mascot
+SAFE	Jobsy.Web/wwwroot/css/app.css:13961-13965	.category-filter
+SAFE	Jobsy.Web/wwwroot/css/app.css:13967-13973	.category-filter--desktop
+SAFE	Jobsy.Web/wwwroot/css/app.css:13975-13979	.category-filter__option
+SAFE	Jobsy.Web/wwwroot/css/app.css:14099-14101	.category-filter--desktop
+SAFE	Jobsy.Web/wwwroot/css/app.css:14130-14133	.suitable65-inline
+SAFE	Jobsy.Web/wwwroot/css/app.css:14140-14144	.suitable65-filter
+SAFE	Jobsy.Web/wwwroot/css/app.css:15392-15396	.contact-icons
+SAFE	Jobsy.Web/wwwroot/css/app.css:15398-15409	.contact-icon
+SAFE	Jobsy.Web/wwwroot/css/app.css:15411-15413	.contact-icon:hover
+SAFE	Jobsy.Web/wwwroot/css/app.css:15415-15418	.contact-icon svg
+SAFE	Jobsy.Web/wwwroot/css/app.css:15478-15481	.users-table
+SAFE	Jobsy.Web/wwwroot/css/app.css:15483-15489	.users-table th, .users-table td
+SAFE	Jobsy.Web/wwwroot/css/app.css:15491-15496	.users-table__person
+SAFE	Jobsy.Web/wwwroot/css/app.css:15831-15834	.token-pack-options--vertical
+SAFE	Jobsy.Web/wwwroot/css/app.css:15836-15841	.token-pack-options--vertical .scope-option.is-selected::after
+SAFE	Jobsy.Web/wwwroot/css/app.css:15960-15962	.users-table thead
+SAFE	Jobsy.Web/wwwroot/css/app.css:15964-15971	.users-table,     .users-table tbody,     .users-table tr,     .users-table th,     .users-table td
+SAFE	Jobsy.Web/wwwroot/css/app.css:15973-15979	.users-table tr
+SAFE	Jobsy.Web/wwwroot/css/app.css:15988-15995	.users-table td::before
+SAFE	Jobsy.Web/wwwroot/css/app.css:16046-16050	.applicants-grid__expand-cell,     .applicants-grid__details-row td
+SAFE	Jobsy.Web/wwwroot/css/app.css:16052-16054	.applicants-grid__details-row td::before
+SAFE	Jobsy.Web/wwwroot/css/app.css:16056-16059	.applicants-grid__col--expand
+SAFE	Jobsy.Web/wwwroot/css/app.css:16165-16168	.profile-page--candidate .profile-accordion__item
+SAFE	Jobsy.Web/wwwroot/css/app.css:16170-16186	.profile-accordion__toggle
+SAFE	Jobsy.Web/wwwroot/css/app.css:16188-16192	.profile-accordion__toggle.is-open
+SAFE	Jobsy.Web/wwwroot/css/app.css:16911-16916	.competency-radar
+SAFE	Jobsy.Web/wwwroot/css/app.css:16978-16983	.score-radar__value
+SAFE	Jobsy.Web/wwwroot/css/app.css:17124-17129	.competency-radar__grid, .competency-radar__axis
+SAFE	Jobsy.Web/wwwroot/css/app.css:17131-17135	.competency-radar__fill
+SAFE	Jobsy.Web/wwwroot/css/app.css:17214-17218	.deep-analysis-chrome__progress
+SAFE	Jobsy.Web/wwwroot/css/app.css:17275-17280	.competency-question__head
+SAFE	Jobsy.Web/wwwroot/css/app.css:17282-17285	.competency-question__head .competency-question__text
+SAFE	Jobsy.Web/wwwroot/css/app.css:17287-17290	.deep-analysis-info
+SAFE	Jobsy.Web/wwwroot/css/app.css:17524-17528	.kompas__toolbar
+SAFE	Jobsy.Web/wwwroot/css/app.css:17530-17535	.kompas-grid
+SAFE	Jobsy.Web/wwwroot/css/app.css:17582-17584	.kompas__toolbar
+SAFE	Jobsy.Web/wwwroot/css/app.css:17624-17628	.role-fit-result
+SAFE	Jobsy.Web/wwwroot/css/app.css:17640-17642	.role-fit-result h4
+SAFE	Jobsy.Web/wwwroot/css/app.css:17644-17648	.role-fit-result ul, .role-fit-result ol
+SAFE	Jobsy.Web/wwwroot/css/app.css:17938-17942	.kompas-status-stack
+SAFE	Jobsy.Web/wwwroot/css/app.css:17965-17972	.kompas-chip-list
+SAFE	Jobsy.Web/wwwroot/css/app.css:17974-17980	.kompas-chip
+SAFE	Jobsy.Web/wwwroot/css/app.css:18207-18211	.whoami-visuals
+SAFE	Jobsy.Web/wwwroot/css/app.css:18343-18349	.kompas-workstyle
+SAFE	Jobsy.Web/wwwroot/css/app.css:18352-18356	.whoami-disc
+SAFE	Jobsy.Web/wwwroot/css/app.css:18358-18365	.whoami-disc__cell
+SAFE	Jobsy.Web/wwwroot/css/app.css:18367-18370	.whoami-disc__pct
+SAFE	Jobsy.Web/wwwroot/css/app.css:18372-18375	.whoami-disc__name
+SAFE	Jobsy.Web/wwwroot/css/app.css:18377-18379	.whoami-disc__cell--dominant
+SAFE	Jobsy.Web/wwwroot/css/app.css:18381-18383	.whoami-disc__cell--invloed
+SAFE	Jobsy.Web/wwwroot/css/app.css:18385-18387	.whoami-disc__cell--stabiel
+SAFE	Jobsy.Web/wwwroot/css/app.css:18389-18391	.whoami-disc__cell--nauwkeurig
+SAFE	Jobsy.Web/wwwroot/css/app.css:18720-18722	.swipe-card__match-badge
+SAFE	Jobsy.Web/wwwroot/css/app.css:18724-18726	.swipe-card__logo-row
+SAFE	Jobsy.Web/wwwroot/css/app.css:18767-18770	.swipe-card__logo-text
+SAFE	Jobsy.Web/wwwroot/css/app.css:19720-19726	.horizon-course__chevron
+SAFE	Jobsy.Web/wwwroot/css/app.css:19920-19922	.profile-hub
+SAFE	Jobsy.Web/wwwroot/css/app.css:19924-19931	.profile-hub__header
+SAFE	Jobsy.Web/wwwroot/css/app.css:19933-19939	.profile-hub__intro h1
+SAFE	Jobsy.Web/wwwroot/css/app.css:19941-19946	.profile-hub__completeness
+SAFE	Jobsy.Web/wwwroot/css/app.css:19948-19954	.profile-hub__completeness-label
+SAFE	Jobsy.Web/wwwroot/css/app.css:19956-19959	.profile-hub__completeness strong
+SAFE	Jobsy.Web/wwwroot/css/app.css:19961-19966	.profile-hub__completeness-bar
+SAFE	Jobsy.Web/wwwroot/css/app.css:19968-19973	.profile-hub__completeness-bar span
+SAFE	Jobsy.Web/wwwroot/css/app.css:19975-19977	.profile-hub--gateway .profile-hub__header
+SAFE	Jobsy.Web/wwwroot/css/app.css:19979-19981	.profile-hub__header--gateway
+SAFE	Jobsy.Web/wwwroot/css/app.css:19983-19988	.profile-hub-gateway
+SAFE	Jobsy.Web/wwwroot/css/app.css:19990-20004	.profile-hub-kompas
+SAFE	Jobsy.Web/wwwroot/css/app.css:20006-20012	.profile-hub-kompas:hover, .profile-hub-kompas:focus-visible
+SAFE	Jobsy.Web/wwwroot/css/app.css:20014-20019	.profile-hub-kompas__eyebrow
+SAFE	Jobsy.Web/wwwroot/css/app.css:20021-20026	.profile-hub-kompas__title
+SAFE	Jobsy.Web/wwwroot/css/app.css:20028-20032	.profile-hub-kompas__lead
+SAFE	Jobsy.Web/wwwroot/css/app.css:20034-20038	.profile-hub-kompas__cta
+SAFE	Jobsy.Web/wwwroot/css/app.css:20040-20042	.profile-hub-gateway__meta
+SAFE	Jobsy.Web/wwwroot/css/app.css:20044-20048	.profile-hub-gateway__links
+SAFE	Jobsy.Web/wwwroot/css/app.css:20050-20053	.profile-hub__grid
+SAFE	Jobsy.Web/wwwroot/css/app.css:20056-20060	.profile-hub__grid
+SAFE	Jobsy.Web/wwwroot/css/app.css:20063-20067	.profile-hub__col
+SAFE	Jobsy.Web/wwwroot/css/app.css:20069-20075	.profile-hub-card
+SAFE	Jobsy.Web/wwwroot/css/app.css:20077-20090	.profile-hub-card__toggle, .profile-hub-card__head
+SAFE	Jobsy.Web/wwwroot/css/app.css:20092-20095	.profile-hub-card__toggle
+SAFE	Jobsy.Web/wwwroot/css/app.css:20097-20100	.profile-hub-card__toggle.is-open
+SAFE	Jobsy.Web/wwwroot/css/app.css:20102-20110	.profile-hub-card__eyebrow
+SAFE	Jobsy.Web/wwwroot/css/app.css:20112-20119	.profile-hub-card__title
+SAFE	Jobsy.Web/wwwroot/css/app.css:20121-20130	.profile-hub-card__chevron
+SAFE	Jobsy.Web/wwwroot/css/app.css:20132-20135	.profile-hub-card__toggle.is-open .profile-hub-card__chevron
+SAFE	Jobsy.Web/wwwroot/css/app.css:20137-20142	.profile-hub-card__body
+SAFE	Jobsy.Web/wwwroot/css/app.css:20144-20146	.profile-hub-card__lead
+SAFE	Jobsy.Web/wwwroot/css/app.css:20148-20150	.profile-hub-card__head .profile-hub-card__lead
+SAFE	Jobsy.Web/wwwroot/css/app.css:20152-20156	.profile-hub-meta
+SAFE	Jobsy.Web/wwwroot/css/app.css:20158-20161	.profile-hub-meta div
+SAFE	Jobsy.Web/wwwroot/css/app.css:20163-20169	.profile-hub-meta dt
+SAFE	Jobsy.Web/wwwroot/css/app.css:20171-20176	.profile-hub-meta dd
+SAFE	Jobsy.Web/wwwroot/css/app.css:20178-20182	.profile-hub-meta a
+SAFE	Jobsy.Web/wwwroot/css/app.css:20184-20196	.profile-hub-badge
+SAFE	Jobsy.Web/wwwroot/css/app.css:20198-20202	.profile-hub-badge.is-ok
+SAFE	Jobsy.Web/wwwroot/css/app.css:20204-20208	.profile-hub-badge.is-warn
+SAFE	Jobsy.Web/wwwroot/css/app.css:20210-20214	.profile-hub-badge.is-open
+SAFE	Jobsy.Web/wwwroot/css/app.css:20216-20221	.profile-hub-card__actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:20223-20226	.profile-hub-card__actions--stack
+SAFE	Jobsy.Web/wwwroot/css/app.css:20228-20233	.profile-hub-card__cta
+SAFE	Jobsy.Web/wwwroot/css/app.css:20235-20244	.profile-hub-switch
+SAFE	Jobsy.Web/wwwroot/css/app.css:20246-20252	.profile-hub-switch input
+SAFE	Jobsy.Web/wwwroot/css/app.css:20254-20261	.profile-hub-tests
+SAFE	Jobsy.Web/wwwroot/css/app.css:20263-20271	.profile-hub-tests__item
+SAFE	Jobsy.Web/wwwroot/css/app.css:20273-20278	.profile-hub-tests__main
+SAFE	Jobsy.Web/wwwroot/css/app.css:20280-20284	.profile-hub-tests__main strong
+SAFE	Jobsy.Web/wwwroot/css/app.css:20286-20291	.profile-hub-tests__main p
+SAFE	Jobsy.Web/wwwroot/css/app.css:20293-20296	.profile-hub-tests__item .engagement-btn
+SAFE	Jobsy.Web/wwwroot/css/app.css:20298-20302	.profile-hub-tests__actions
+SAFE	Jobsy.Web/wwwroot/css/app.css:20304-20309	.profile-hub-tests__actions .engagement-btn, .profile-hub-tests__actions .login-submit
+SAFE	Jobsy.Web/wwwroot/css/app.css:20311-20315	.profile-hub-dna-scores
+SAFE	Jobsy.Web/wwwroot/css/app.css:20317-20322	.profile-hub-dna-scores__title
+SAFE	Jobsy.Web/wwwroot/css/app.css:20324-20326	.profile-hub-dna-scores .profile-hub-scores
+SAFE	Jobsy.Web/wwwroot/css/app.css:20368-20375	.profile-hub-settings
+SAFE	Jobsy.Web/wwwroot/css/app.css:20377-20381	.profile-hub-saved
+SAFE	Jobsy.Web/wwwroot/css/app.css:20384-20387	.profile-hub
+SAFE	Jobsy.Web/wwwroot/css/app.css:20397-20402	.profile-hub-tests__actions .engagement-btn,     .profile-hub-tests__actions .login-submit,     .profile-hub-card__actio
+SAFE	Jobsy.Web/wwwroot/css/app.css:20576-20579	.profile-hub-push-hint
+SAFE	Jobsy.Web/wwwroot/css/app.css:20662-20669	.dna-empty
+SAFE	Jobsy.Web/wwwroot/css/app.css:20671-20674	.dna-empty__icon
+SAFE	Jobsy.Web/wwwroot/css/app.css:20676-20684	.dna-incomplete
+SAFE	Jobsy.Web/wwwroot/css/app.css:20686-20694	.dna-incomplete__badge
+DEFER(pending-PR area)	Jobsy.Web/wwwroot/css/app.css:21593-21596	.cookie-consent__mascot
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:243-245	.questionnaire--active .q-likert.is-answered:not(.is-current)
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:380-389	.q-likert__input
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:391-398	.q-likert__circle
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:400-403	.q-likert__opt--lg .q-likert__circle
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:405-408	.q-likert__opt--md .q-likert__circle
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:410-413	.q-likert__opt--sm .q-likert__circle
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:415-417	.q-likert__opt--coral-strong
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:419-421	.q-likert__opt--coral
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:423-425	.q-likert__opt--neutral
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:427-429	.q-likert__opt--green
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:431-433	.q-likert__opt--green-strong
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:435-439	.q-likert__opt.is-on .q-likert__circle
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:441-444	.q-likert__input:focus-visible + .q-likert__circle
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:446-453	.q-likert__end-label
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:470-477	.questionnaire__status-row
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:479-483	.questionnaire__count
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:485-492	.questionnaire__save
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:494-496	.questionnaire__save.is-saved
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:498-500	.questionnaire__save.is-saving
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:502-504	.questionnaire__save.is-failed
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:522-527	.questionnaire__finish-hint
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:571-576	.questionnaire__status-row
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:578-578	.questionnaire__count
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:579-579	.questionnaire__save
+SAFE	Jobsy.Web/wwwroot/css/features/questionnaire.css:580-584	.questionnaire__finish-hint
