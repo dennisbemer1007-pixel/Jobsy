@@ -1,10 +1,9 @@
 @using Microsoft.AspNetCore.Antiforgery
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime Js
-@inject CultureState Culture
-@implements IDisposable
 
 @if (IsOpen)
 {
@@ -130,7 +129,7 @@
 
     protected override void OnInitialized()
     {
-        Culture.Changed += OnCultureChanged;
+        base.OnInitialized();
         var http = HttpContextAccessor.HttpContext;
         if (http is not null)
         {
@@ -169,12 +168,6 @@
             ? reason.Label
             : translated;
     }
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
 
     private async Task LoadReasonsAsync()
     {

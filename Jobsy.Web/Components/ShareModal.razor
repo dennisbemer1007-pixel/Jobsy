@@ -1,9 +1,8 @@
 @using Jobsy.Web.Localization
+@inherits CultureAwareComponentBase
 @inject NavigationManager Navigation
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
-@inject CultureState Culture
-@implements IDisposable
 
 <LobsyFriendlyDialog IsOpen="@(IsOpen && Vacancy is not null)"
                      Title="@Culture["Share.Title"]"
@@ -78,15 +77,6 @@
     private string? _error;
     private string? _message;
     private bool _copied;
-
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
 
     private Task Close() => OnClose.InvokeAsync();
 

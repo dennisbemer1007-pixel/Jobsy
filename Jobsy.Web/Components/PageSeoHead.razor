@@ -1,8 +1,7 @@
+@inherits CultureAwareComponentBase
 @inject NavigationManager Navigation
 @inject PageSeoContext Seo
-@inject CultureState Culture
 @inject IConfiguration Config
-@implements IDisposable
 
 <PageTitle>@Model.Title</PageTitle>
 <HeadContent>
@@ -80,20 +79,20 @@
 
     protected override void OnInitialized()
     {
-        Seo.Changed += OnChanged;
+        base.OnInitialized();
+        Seo.Changed += OnSeoChanged;
         Navigation.LocationChanged += OnLocationChanged;
-        Culture.Changed += OnChanged;
     }
 
-    private void OnChanged() => InvokeAsync(StateHasChanged);
+    private void OnSeoChanged() => InvokeAsync(StateHasChanged);
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
         => InvokeAsync(StateHasChanged);
 
-    public void Dispose()
+    public override void Dispose()
     {
-        Seo.Changed -= OnChanged;
+        Seo.Changed -= OnSeoChanged;
         Navigation.LocationChanged -= OnLocationChanged;
-        Culture.Changed -= OnChanged;
+        base.Dispose();
     }
 }

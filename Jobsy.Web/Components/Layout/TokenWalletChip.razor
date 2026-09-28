@@ -2,11 +2,10 @@
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Components.Authorization
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
 @inject TokenBalanceCache TokenBalances
-@inject CultureState Culture
-@implements IDisposable
 
 <AuthorizeView Roles="@string.Join(',', JobsyRoles.EmployerRoles)">
     <Authorized>
@@ -28,7 +27,7 @@
 
     protected override void OnInitialized()
     {
-        Culture.Changed += OnCultureChanged;
+        base.OnInitialized();
         TokenBalances.Changed += OnTokenCacheChanged;
     }
 
@@ -68,12 +67,9 @@
     private void OnTokenCacheChanged()
         => InvokeAsync(LoadBalanceAsync);
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
+    public override void Dispose()
     {
-        Culture.Changed -= OnCultureChanged;
         TokenBalances.Changed -= OnTokenCacheChanged;
+        base.Dispose();
     }
 }

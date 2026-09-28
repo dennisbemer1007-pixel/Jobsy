@@ -2,11 +2,10 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 @inject NotificationUnreadStore UnreadStore
 @inject NavigationManager Navigation
-@inject CultureState Culture
-@implements IDisposable
 
 <AuthorizeView>
     <Authorized>
@@ -109,7 +108,7 @@
 
     protected override void OnInitialized()
     {
-        Culture.Changed += OnCultureChanged;
+        base.OnInitialized();
         UnreadStore.Changed += OnUnreadChanged;
         UnreadStore.EnsureStarted();
         _unread = UnreadStore.Unread;
@@ -227,11 +226,9 @@
         return local.ToString("dd MMM, HH:mm");
     }
 
-    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
+    public override void Dispose()
     {
-        Culture.Changed -= OnCultureChanged;
         UnreadStore.Changed -= OnUnreadChanged;
+        base.Dispose();
     }
 }

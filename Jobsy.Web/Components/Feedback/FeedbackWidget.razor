@@ -2,13 +2,12 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using Jobsy.Web.Navigation
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @inject AuthenticationStateProvider AuthState
 @inject FeedbackHost FeedbackHost
-@implements IDisposable
 
 <div class="feedback-widget feedback-widget--tab @(_hasBottomNav ? "has-bottom-nav" : null) @(_capturing ? "is-capturing" : null) @(_open ? "is-open" : null)">
     <button type="button"
@@ -98,17 +97,14 @@
 
     protected override void OnInitialized()
     {
-        Culture.Changed += OnCultureChanged;
+        base.OnInitialized();
         FeedbackHost.OpenRequested += OpenAsync;
     }
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
+    public override void Dispose()
     {
-        Culture.Changed -= OnCultureChanged;
         FeedbackHost.OpenRequested -= OpenAsync;
+        base.Dispose();
     }
 
     private string PageUrlForSubmit

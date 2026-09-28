@@ -4,20 +4,8 @@
    loads the three scripts in parallel, boots from page data, and fetches pins over
    HTTP — first pins do not wait on the Blazor circuit. *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
-@inject CultureState Culture
-@implements IDisposable
+@inherits CultureAwareComponentBase
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
 
 <VacancyDiscovery />
-
-@code {
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
-}

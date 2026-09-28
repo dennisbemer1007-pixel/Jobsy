@@ -1,7 +1,6 @@
 @using Jobsy.Core.Localization
 @using Jobsy.Web.Localization
-@inject CultureState Culture
-@implements IDisposable
+@inherits CultureAwareComponentBase
 
 <div class="language-selector" @onfocusout="OnFocusOut">
     <button type="button"
@@ -37,12 +36,6 @@
 @code {
     private bool _open;
 
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
     private void Toggle()
         => _open = !_open;
 
@@ -57,7 +50,4 @@
         _open = false;
         await Culture.SetLanguageAsync(code);
     }
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
 }
