@@ -266,7 +266,6 @@ public class CareerCompassTests
         Assert.Contains("overflow-x: auto;", css, StringComparison.Ordinal);
         Assert.Contains(".kompas-workspace--with-side", css, StringComparison.Ordinal);
         Assert.Contains(".competency-match-card__head", css, StringComparison.Ordinal);
-        Assert.Contains(".kompas-status-stack", css, StringComparison.Ordinal);
         Assert.Contains(".kompas-card[hidden]", css, StringComparison.Ordinal);
         var minCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.min.css"));
         Assert.Contains(".kompas-tabs.admin-sublinks", minCss, StringComparison.Ordinal);

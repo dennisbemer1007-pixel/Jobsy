@@ -69,6 +69,24 @@ jobs:
             fi
           fi
 
+
+      - name: Setup Node (CSS minifier)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: tools/css/package-lock.json
+
+      - name: Verify app.min.css is built from app.css
+        run: |
+          set -euo pipefail
+          chmod +x tools/css/build.sh
+          tools/css/build.sh
+          if ! git diff --exit-code -- Jobsy.Web/wwwroot/css/app.min.css; then
+            echo "::error::Jobsy.Web/wwwroot/css/app.min.css is out of date. Run tools/css/build.sh and commit the result."
+            exit 1
+          fi
+
       - name: Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
