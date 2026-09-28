@@ -20,6 +20,7 @@
                       Class="job-card__photo"
                       Width="400"
                       Height="267"
+                      Eager="Eager"
                       Sizes="(max-width: 700px) 50vw, 360px" />
         @if (IsHighlighted)
         {
@@ -78,6 +79,8 @@
     [Parameter, EditorRequired] public VacancyListItem Vacancy { get; set; } = new();
     [Parameter] public bool IsHighlighted { get; set; }
     [Parameter] public bool IsPressed { get; set; }
+    /// <summary>First visible desktop list card: prerender with fetchpriority=high (not lazy).</summary>
+    [Parameter] public bool Eager { get; set; }
     [Parameter] public string TravelText { get; set; } = "";
     [Parameter] public string? WageText { get; set; }
     [Parameter] public EventCallback<Guid> OnSelect { get; set; }
@@ -87,6 +90,7 @@
     private Guid _renderVacancyId;
     private bool _renderHighlighted;
     private bool _renderPressed;
+    private bool _renderEager;
     private string _renderTravel = "";
     private string? _renderWage;
     private string _renderTitle = "";
@@ -104,6 +108,7 @@
         if (_renderVacancyId == Vacancy.Id
             && _renderHighlighted == IsHighlighted
             && _renderPressed == IsPressed
+            && _renderEager == Eager
             && string.Equals(_renderTravel, TravelText, StringComparison.Ordinal)
             && string.Equals(_renderWage, WageText, StringComparison.Ordinal)
             && string.Equals(_renderTitle, Vacancy.Title, StringComparison.Ordinal)
@@ -118,6 +123,7 @@
         _renderVacancyId = Vacancy.Id;
         _renderHighlighted = IsHighlighted;
         _renderPressed = IsPressed;
+        _renderEager = Eager;
         _renderTravel = TravelText;
         _renderWage = WageText;
         _renderTitle = Vacancy.Title;

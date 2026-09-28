@@ -484,17 +484,22 @@
                                           OnHover="OnHover"
                                           OnSelect="OnCarouselSelect" />
                 <div class="vacancy-list vacancy-list--cards">
+                    @{
+                        var cardIndex = 0;
+                    }
                     @foreach (var vacancy in VisibleVacancies)
                     {
                         <VacancyCard @key="vacancy.Id"
                                      Vacancy="vacancy"
                                      IsHighlighted="vacancy.IsHighlighted"
                                      IsPressed="_pressedVacancyId == vacancy.Id"
+                                     Eager="cardIndex == 0"
                                      WageText="@FormatWage(vacancy)"
                                      TravelText="@FormatCardTravel(vacancy)"
                                      OnSelect="OnSelect"
                                      OnOpen="OnOpenVacancy"
                                      OnExplainMatch="OpenMatchExplain" />
+                        cardIndex++;
                     }
                     @if (HasMoreVacancyCards)
                     {
