@@ -1,5 +1,6 @@
 using System.Text;
 using Jobsy.Api.Authorization;
+using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -16,15 +17,21 @@ public sealed class TokenFinanceController : ControllerBase
     private readonly ITokenFinanceQueryService _finance;
     private readonly ITokenPurchaseInvoiceService _invoices;
     private readonly IVatBufferTransferService _vatBuffer;
+    private readonly IUserLookupService _users;
+    private readonly IPersonalDataAccessLogger _accessLog;
 
     public TokenFinanceController(
         ITokenFinanceQueryService finance,
         ITokenPurchaseInvoiceService invoices,
-        IVatBufferTransferService vatBuffer)
+        IVatBufferTransferService vatBuffer,
+        IUserLookupService users,
+        IPersonalDataAccessLogger accessLog)
     {
         _finance = finance;
         _invoices = invoices;
         _vatBuffer = vatBuffer;
+        _users = users;
+        _accessLog = accessLog;
     }
 
     [HttpGet("finance/purchases")]
@@ -85,6 +92,7 @@ public sealed class TokenFinanceController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var csv = await _finance.ExportPurchasesCsvAsync(year, quarter, cancellationToken);
+        await LogFinanceExportAsync("finance.purchases.export", year, quarter, cancellationToken);
         var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv)).ToArray();
         var name = $"token-aankopen-{(year?.ToString() ?? "all")}-Q{(quarter?.ToString() ?? "all")}.csv";
         return File(bytes, "text/csv; charset=utf-8", name);
@@ -97,9 +105,32 @@ public sealed class TokenFinanceController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var csv = await _finance.ExportGoodwillCsvAsync(year, quarter, cancellationToken);
+        await LogFinanceExportAsync("finance.goodwill.export", year, quarter, cancellationToken);
         var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv)).ToArray();
         var name = $"token-goodwill-{(year?.ToString() ?? "all")}-Q{(quarter?.ToString() ?? "all")}.csv";
         return File(bytes, "text/csv; charset=utf-8", name);
+    }
+
+    private async Task LogFinanceExportAsync(
+        string resource,
+        int? year,
+        int? quarter,
+        CancellationToken cancellationToken)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return;
+        }
+
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            actor.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            resource,
+            "export",
+            reason: $"year={year};quarter={quarter}",
+            cancellationToken: cancellationToken);
     }
 
     [HttpGet("invoices/{invoiceId:guid}/pdf")]

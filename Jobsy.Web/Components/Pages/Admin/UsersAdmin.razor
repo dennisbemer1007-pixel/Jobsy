@@ -19,8 +19,18 @@
     {
         <p class="state-message error">@_error</p>
     }
-    else
+    else if (_page is not null)
     {
+        <div class="filter-bar">
+            <div class="muted">
+                Actief @_page.Aggregates.ActiveCount · Inactief @_page.Aggregates.InactiveCount
+            </div>
+            @foreach (var role in _page.Aggregates.ByRole.OrderByDescending(kv => kv.Value).Take(8))
+            {
+                <span class="muted">@role.Key: @role.Value</span>
+            }
+        </div>
+
         <div class="filter-bar">
             <label>
                 @Culture["Common.Search"]
@@ -30,7 +40,7 @@
                 Rol
                 <select @bind="_roleFilter">
                     <option value="">Alle</option>
-                    @foreach (var role in _roles)
+                    @foreach (var role in _page.Aggregates.ByRole.Keys.OrderBy(r => r))
                     {
                         <option value="@role">@role</option>
                     }
@@ -49,10 +59,18 @@
                 <input type="checkbox" @bind="_earlyOnly" />
                 Alleen early adapters
             </label>
-            <span class="muted">@_filtered.Count van @_users.Count</span>
+            <button class="provider-btn" type="button" disabled="@_loading" @onclick="ReloadAsync">Filter</button>
+            <span class="muted">@_page.TotalCount gebruikers · pagina @_page.Page</span>
         </div>
 
-        @if (_filtered.Count == 0)
+        <p class="muted">
+            @Culture["Admin.UsersMaskedHint"]
+            <button class="provider-btn" type="button" disabled title="@Culture["Admin.SupportAccessSoon"]">
+                @Culture["Admin.WhySeeThis"]
+            </button>
+        </p>
+
+        @if (_page.Items.Count == 0)
         {
             <p class="state-message">Geen gebruikers gevonden.</p>
         }
@@ -70,7 +88,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var u in _filtered)
+                        @foreach (var u in _page.Items)
                         {
                             <tr>
                                 <td><strong>@u.FullName</strong></td>
@@ -92,24 +110,29 @@
                     </tbody>
                 </table>
             </div>
+
+            <div class="filter-bar">
+                <button class="provider-btn" type="button" disabled="@(_page.Page <= 1 || _loading)" @onclick="() => GoPageAsync(_page.Page - 1)">Vorige</button>
+                <button class="provider-btn" type="button" disabled="@(!HasNext || _loading)" @onclick="() => GoPageAsync(_page.Page + 1)">Volgende</button>
+            </div>
         }
     }
 </AdminPageShell>
 
 @code {
-    private List<AdminUserItem> _users = [];
+    private AdminUsersPage? _page;
     private string _query = "";
     private string _roleFilter = "";
     private string _typeFilter = "";
     private bool _earlyOnly;
     private bool _loading = true;
     private string? _error;
+    private Guid? _companyIdFilter;
+    private int _pageNumber = 1;
+    private const int PageSize = 50;
 
-    private IEnumerable<string> _roles =>
-        _users.Select(u => u.Role).Distinct().OrderBy(r => r);
-
-    private List<AdminUserItem> _filtered => Filter().ToList();
-
+    private bool HasNext =>
+        _page is not null && (_page.Page * _page.PageSize) < _page.TotalCount;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -129,60 +152,38 @@
             _companyIdFilter = companyId;
         }
 
+        await ReloadAsync();
+    }
+
+    private async Task GoPageAsync(int page)
+    {
+        _pageNumber = Math.Max(1, page);
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
         try
         {
-            _users = (await Api.GetAdminUsersAsync()).ToList();
+            _page = await Api.GetAdminUsersPageAsync(
+                page: _pageNumber,
+                pageSize: PageSize,
+                q: _query,
+                role: _roleFilter,
+                companyType: _typeFilter,
+                companyId: _companyIdFilter,
+                earlyOnly: _earlyOnly);
         }
         catch (Exception ex)
         {
             _error = ex.Message;
+            _page = null;
         }
         finally
         {
             _loading = false;
         }
     }
-
-    private Guid? _companyIdFilter;
-
-    private IEnumerable<AdminUserItem> Filter()
-    {
-        IEnumerable<AdminUserItem> q = _users;
-        if (_companyIdFilter is Guid cid)
-        {
-            q = q.Where(u => u.CompanyId == cid || u.MembershipCompanyIds.Contains(cid));
-        }
-
-        if (_earlyOnly)
-        {
-            q = q.Where(u => u.IsEarlyAdapter);
-        }
-
-        if (!string.IsNullOrWhiteSpace(_roleFilter))
-        {
-            q = q.Where(u => u.Role.Equals(_roleFilter, StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (_typeFilter == "none")
-        {
-            q = q.Where(u => u.CompanyId is null);
-        }
-        else if (!string.IsNullOrWhiteSpace(_typeFilter))
-        {
-            q = q.Where(u => string.Equals(u.CompanyType, _typeFilter, StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (!string.IsNullOrWhiteSpace(_query))
-        {
-            var terms = _query.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            q = q.Where(u => terms.All(t =>
-                Contains(u.FullName, t) || Contains(u.Email, t) || Contains(u.Role, t)
-                || Contains(u.CompanyName, t) || Contains(u.CompanyType, t)));
-        }
-
-        return q;
-    }
-
-    private static bool Contains(string? value, string term) =>
-        !string.IsNullOrEmpty(value) && value.Contains(term, StringComparison.OrdinalIgnoreCase);
 }

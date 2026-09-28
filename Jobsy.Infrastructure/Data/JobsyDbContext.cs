@@ -1,6 +1,8 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Rules;
+using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Jobsy.Infrastructure.Data;
 
@@ -82,6 +84,7 @@ public class JobsyDbContext : DbContext
     public DbSet<AboutPageSettings> AboutPageSettings => Set<AboutPageSettings>();
     public DbSet<MarketingFlyerSettings> MarketingFlyerSettings => Set<MarketingFlyerSettings>();
     public DbSet<PlatformLog> PlatformLogs => Set<PlatformLog>();
+    public DbSet<PersonalDataAccessLog> PersonalDataAccessLogs => Set<PersonalDataAccessLog>();
     public DbSet<TokenPurchaseCheckout> TokenPurchaseCheckouts => Set<TokenPurchaseCheckout>();
     public DbSet<PendingTokenAction> PendingTokenActions => Set<PendingTokenAction>();
     public DbSet<TokenPurchaseInvoice> TokenPurchaseInvoices => Set<TokenPurchaseInvoice>();
@@ -1399,7 +1402,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PostalCode).HasMaxLength(16);
             entity.Property(e => e.City).HasMaxLength(128);
             entity.Property(e => e.Country).HasMaxLength(64);
-            entity.Property(e => e.Iban).HasMaxLength(34);
+            entity.Property(e => e.Iban).HasMaxLength(512).HasConversion(IbanValueConverter);
             entity.Property(e => e.TrackingCode).HasMaxLength(32);
             entity.Property(e => e.AgreementVersion).HasMaxLength(64);
             entity.HasIndex(e => e.UserId).IsUnique();
@@ -1427,7 +1430,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PostalCode).HasMaxLength(16);
             entity.Property(e => e.City).HasMaxLength(128);
             entity.Property(e => e.Country).HasMaxLength(64);
-            entity.Property(e => e.Iban).HasMaxLength(34);
+            entity.Property(e => e.Iban).HasMaxLength(512).HasConversion(IbanValueConverter);
             entity.Property(e => e.TrackingCode).HasMaxLength(32);
             entity.Property(e => e.AgreementVersion).HasMaxLength(64);
             entity.Property(e => e.BaseCommissionPercentage).HasPrecision(5, 2);
@@ -1452,7 +1455,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PostalCode).HasMaxLength(16);
             entity.Property(e => e.City).HasMaxLength(128);
             entity.Property(e => e.Country).HasMaxLength(64);
-            entity.Property(e => e.Iban).HasMaxLength(34);
+            entity.Property(e => e.Iban).HasMaxLength(512).HasConversion(IbanValueConverter);
             entity.Property(e => e.TrackingCode).HasMaxLength(32).IsRequired();
             entity.Property(e => e.AgreementVersion).HasMaxLength(64);
             entity.HasIndex(e => e.UserId).IsUnique();
@@ -1461,6 +1464,21 @@ public class JobsyDbContext : DbContext
                 .WithOne()
                 .HasForeignKey<PartnerAffiliateProfile>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PersonalDataAccessLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ActorRole).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Resource).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Action).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.Reason).HasMaxLength(512);
+            entity.Property(e => e.CorrelationId).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.IpHash).HasMaxLength(64);
+            entity.HasIndex(e => e.OccurredAt);
+            entity.HasIndex(e => e.ActorUserId);
+            entity.HasIndex(e => e.SubjectUserId);
+            entity.HasIndex(e => new { e.Resource, e.OccurredAt });
         });
 
         modelBuilder.Entity<AmbassadeurSettings>(entity =>
@@ -1724,4 +1742,12 @@ public class JobsyDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
+
+    /// <summary>
+    /// Encrypts IBAN at rest (Data Protection purpose Jobsy.Iban.v1).
+    /// Configure <see cref="IbanEfProtection"/> at DI startup before first DbContext use.
+    /// </summary>
+    private static readonly ValueConverter<string?, string?> IbanValueConverter = new(
+        v => IbanEfProtection.Protect(v),
+        v => IbanEfProtection.Unprotect(v));
 }

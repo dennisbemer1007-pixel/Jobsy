@@ -524,6 +524,61 @@ public class AdminUserItem
     public List<Guid> MembershipCompanyIds { get; set; } = [];
 }
 
+public class AdminUsersPage
+{
+    public AdminUsersAggregates Aggregates { get; set; } = new();
+    public List<AdminUserItem> Items { get; set; } = [];
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalCount { get; set; }
+    public bool Masked { get; set; } = true;
+}
+
+public class AdminUsersAggregates
+{
+    public Dictionary<string, int> ByRole { get; set; } = new();
+    public List<AdminUsersCompanyCount> TopCompanies { get; set; } = [];
+    public int ActiveCount { get; set; }
+    public int InactiveCount { get; set; }
+    public List<AdminUsersWeekBucket> ByRegistrationWeek { get; set; } = [];
+}
+
+public class AdminUsersCompanyCount
+{
+    public Guid? CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public int Count { get; set; }
+}
+
+public class AdminUsersWeekBucket
+{
+    public string WeekStartUtc { get; set; } = string.Empty;
+    public int Count { get; set; }
+}
+
+public class PersonalDataAccessLogItem
+{
+    public Guid Id { get; set; }
+    public DateTime OccurredAt { get; set; }
+    public Guid ActorUserId { get; set; }
+    public string ActorRole { get; set; } = string.Empty;
+    public Guid? SubjectUserId { get; set; }
+    public Guid? SubjectCompanyId { get; set; }
+    public string Resource { get; set; } = string.Empty;
+    public string Action { get; set; } = string.Empty;
+    public string? Reason { get; set; }
+    public Guid? SupportAccessGrantId { get; set; }
+    public string CorrelationId { get; set; } = string.Empty;
+}
+
+public class PersonalDataAccessLogPage
+{
+    public List<PersonalDataAccessLogItem> Items { get; set; } = [];
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalCount { get; set; }
+}
+
 public class AdminVacancyItem
 {
     public Guid Id { get; set; }

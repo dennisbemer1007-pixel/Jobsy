@@ -4,6 +4,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,13 +18,16 @@ namespace Jobsy.Infrastructure.Jobs;
 public sealed class DataRetentionHostedService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<DataRetentionHostedService> _logger;
 
     public DataRetentionHostedService(
         IServiceScopeFactory scopeFactory,
+        IConfiguration configuration,
         ILogger<DataRetentionHostedService> logger)
     {
         _scopeFactory = scopeFactory;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -56,6 +60,19 @@ public sealed class DataRetentionHostedService : BackgroundService
         var logCutoff = now.AddDays(-PrivacyConstants.PlatformLogRetentionDays);
         var logsRemoved = await db.PlatformLogs
             .Where(l => l.CreatedAt < logCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        var accessLogDays = _configuration.GetValue(
+            "Privacy:PersonalDataAccessLogRetentionDays",
+            PrivacyConstants.PersonalDataAccessLogRetentionDays);
+        if (accessLogDays < 30)
+        {
+            accessLogDays = PrivacyConstants.PersonalDataAccessLogRetentionDays;
+        }
+
+        var accessLogCutoff = now.AddDays(-accessLogDays);
+        var accessLogsRemoved = await db.PersonalDataAccessLogs
+            .Where(l => l.OccurredAt < accessLogCutoff)
             .ExecuteDeleteAsync(cancellationToken);
 
         var regCutoff = now.AddDays(-PrivacyConstants.CancelledRegistrationRetentionDays);
@@ -140,13 +157,13 @@ public sealed class DataRetentionHostedService : BackgroundService
 
         var staleScreenshotCount = await PurgeStaleFeedbackScreenshotsAsync(db, now, cancellationToken);
 
-        if (logsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
+        if (logsRemoved + accessLogsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
             + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count
             + withdrawnWithSnapshots.Count + staleScreenshotCount > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}",
-                logsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
+                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}",
+                logsRemoved, accessLogsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
                 unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count,
                 withdrawnWithSnapshots.Count, staleScreenshotCount);
         }

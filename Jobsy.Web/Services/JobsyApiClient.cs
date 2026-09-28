@@ -3390,7 +3390,93 @@ public sealed class JobsyApiClient : IAsyncDisposable
     }
 
     public async Task<IReadOnlyList<AdminUserItem>> GetAdminUsersAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<AdminUserItem>>("api/admin/users", ct) ?? [];
+    {
+        var page = await GetAdminUsersPageAsync(page: 1, pageSize: 100, ct: ct);
+        return page.Items;
+    }
+
+    public async Task<AdminUsersPage> GetAdminUsersPageAsync(
+        int page = 1,
+        int pageSize = 50,
+        string? q = null,
+        string? role = null,
+        string? companyType = null,
+        Guid? companyId = null,
+        bool earlyOnly = false,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>
+        {
+            $"page={page}",
+            $"pageSize={Math.Clamp(pageSize, 1, 100)}"
+        };
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            qs.Add($"q={Uri.EscapeDataString(q)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            qs.Add($"role={Uri.EscapeDataString(role)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(companyType))
+        {
+            qs.Add($"companyType={Uri.EscapeDataString(companyType)}");
+        }
+
+        if (companyId is Guid cid)
+        {
+            qs.Add($"companyId={cid:D}");
+        }
+
+        if (earlyOnly)
+        {
+            qs.Add("earlyOnly=true");
+        }
+
+        return await _http.GetFromJsonAsync<AdminUsersPage>($"api/admin/users?{string.Join('&', qs)}", ct)
+               ?? new AdminUsersPage();
+    }
+
+    public async Task<PersonalDataAccessLogPage> GetPersonalDataAccessLogAsync(
+        int page = 1,
+        int pageSize = 50,
+        Guid? actorUserId = null,
+        Guid? subjectUserId = null,
+        DateTime? fromUtc = null,
+        DateTime? toUtc = null,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>
+        {
+            $"page={page}",
+            $"pageSize={Math.Clamp(pageSize, 1, 100)}"
+        };
+        if (actorUserId is Guid a)
+        {
+            qs.Add($"actorUserId={a:D}");
+        }
+
+        if (subjectUserId is Guid s)
+        {
+            qs.Add($"subjectUserId={s:D}");
+        }
+
+        if (fromUtc is DateTime from)
+        {
+            qs.Add($"fromUtc={Uri.EscapeDataString(from.ToUniversalTime().ToString("O"))}");
+        }
+
+        if (toUtc is DateTime to)
+        {
+            qs.Add($"toUtc={Uri.EscapeDataString(to.ToUniversalTime().ToString("O"))}");
+        }
+
+        return await _http.GetFromJsonAsync<PersonalDataAccessLogPage>(
+                   $"api/admin/personal-data-access-log?{string.Join('&', qs)}", ct)
+               ?? new PersonalDataAccessLogPage();
+    }
 
     public async Task<IReadOnlyList<AdminVacancyItem>> GetAdminVacanciesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<AdminVacancyItem>>("api/admin/vacancies", ct) ?? [];
