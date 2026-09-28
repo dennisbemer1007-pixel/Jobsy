@@ -1,0 +1,33 @@
+@inject CultureState Culture
+@inject AuthenticationStateProvider AuthState
+@using Microsoft.AspNetCore.Components.Authorization
+@using Jobsy.Core.Authorization
+
+<nav class="admin-sublinks pill-scroller insights-tabs" aria-label="@Culture["Insights.Tab.Insights"]">
+    <a class="admin-sublink @(Active == "talent" ? "is-active" : null)"
+       href="/employer/talent"
+       aria-current="@(Active == "talent" ? "page" : null)">
+        @Culture["Insights.Tab.Talent"]
+    </a>
+    @if (_showInsights)
+    {
+        <a class="admin-sublink @(Active == "insights" ? "is-active" : null)"
+           href="/employer/kandidaatinzichten"
+           aria-current="@(Active == "insights" ? "page" : null)">
+            @Culture["Insights.Tab.Insights"]
+        </a>
+    }
+</nav>
+
+@code {
+    [Parameter] public string Active { get; set; } = "talent";
+
+    private bool _showInsights = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var user = state.User;
+        _showInsights = !RoleClaimMatching.HasRole(user, JobsyRoles.Intermediary);
+    }
+}
