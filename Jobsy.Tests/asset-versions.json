@@ -1,11 +1,11 @@
 {
   "css/app.min.css": {
-    "sha256": "38c015c60981c2c202c6f7bc6284d81a8f9435712e980344d52b5bbefe113833",
-    "v": "20260927-banenkaart-v3b"
+    "sha256": "ffc8beb8a47a9d503ef2a3f011e89f350ccfa621bf0d6f46e0160a841055036f",
+    "v": "20260927-cookie-map"
   },
   "css/features/applications.css": {
-    "sha256": "b7f9d21b0fafd7c43721561af4b2992fcb08b05a7f1e78a3891256661d4dca45",
-    "v": "20260927-apps-b"
+    "sha256": "08e8ccce5618f81b8e728a073d7630c2e9c6759ae09a2552c936bad4910e713d",
+    "v": "20260927-apps-clamp"
   },
   "css/features/banenkaart.css": {
     "sha256": "5f6d5967ef32e2f8a98346aae3d729470b048d1c9310c79f750af1ec49138aa2",
@@ -50,6 +50,10 @@
   "js/blazor-boot.js": {
     "sha256": "1cd1288aaa4f934165384316b99437f051d0aafaeb2819bce37fb6231a05422c",
     "v": "20260928-perf"
+  },
+  "js/discoveryHover.js": {
+    "sha256": "f8da38e2ecdf91f6bd33e7de3b3dd9c0316344dfc603143d8de92f73a57ea164",
+    "v": "20260928-list-rerender"
   },
   "js/feedback.js": {
     "sha256": "3fa3c2d2ec7df009a97b292ef6ea89f0b1bc283f77c1e1cfe9b83c23a6ed6e7e",
