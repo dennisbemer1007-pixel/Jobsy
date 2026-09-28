@@ -1,0 +1,39 @@
+@inject CultureState Culture
+
+@{
+    var tips = Data?.Vacancies.FirstOrDefault()?.Tips;
+    var keys = tips?.TipKeys is { Count: > 0 } list ? list : ["Insights.Tip.Generic"];
+}
+<ul class="insights-list">
+    @foreach (var key in keys)
+    {
+        <li>@Culture[key]</li>
+    }
+</ul>
+@if (!IsRegional && tips?.Checklist is { } checklist)
+{
+    <h3 class="insights-panel__title" style="margin-block-start:0.75rem">@Culture["Insights.Checklist.Title"]</h3>
+    <ul class="insights-checklist">
+        <li class="insights-checklist__item">
+            <span>@Culture["Insights.Checklist.Salary"]</span>
+            <span>@(checklist.SalaryMentioned == true ? Culture["Insights.Checklist.Yes"] : Culture["Insights.Checklist.No"])</span>
+        </li>
+        <li class="insights-checklist__item">
+            <span>@Culture["Insights.Checklist.Flex"]</span>
+            <span>@(checklist.FlexibleHours == true ? Culture["Insights.Checklist.Yes"] : Culture["Insights.Checklist.No"])</span>
+        </li>
+        <li class="insights-checklist__item">
+            <span>@Culture["Insights.Checklist.Culture"]</span>
+            <span>@(checklist.AtmosphereAndTeam == true ? Culture["Insights.Checklist.Yes"] : Culture["Insights.Checklist.No"])</span>
+        </li>
+    </ul>
+    @if (Data?.Vacancies.FirstOrDefault() is { } top)
+    {
+        <p><a href="@($"/branch/vacancies/new?edit={top.VacancyId}")">@Culture["Insights.ImproveVacancy"]</a></p>
+    }
+}
+
+@code {
+    [Parameter] public CandidateInsightsDto? Data { get; set; }
+    [Parameter] public bool IsRegional { get; set; }
+}

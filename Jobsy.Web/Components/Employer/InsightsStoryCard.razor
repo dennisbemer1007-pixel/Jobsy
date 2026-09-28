@@ -1,0 +1,46 @@
+@inject CultureState Culture
+
+<article class="insights-story-card @(Index == Current ? "is-active" : null)"
+         role="group"
+         aria-label="@Title"
+         data-testid="@TestId">
+    <h2 class="insights-panel__title">@Title</h2>
+    @if (Locked)
+    {
+        <div class="insights-locked">
+            <div class="insights-locked__placeholder" aria-hidden="true">
+                <div class="insights-bars">
+                    @for (var i = 0; i < 3; i++)
+                    {
+                        <div class="insights-bar">
+                            <div class="insights-bar__meta"><span>————</span><span>—</span></div>
+                            <div class="insights-bar__track"><span class="insights-bar__fill" style="width:35%"></span></div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="insights-locked__overlay">
+                <span class="status-pill">@Culture["Insights.Locked.BlurHint"]</span>
+                @if (ShowCta || Index == 9)
+                {
+                    <a class="btn-compact login-submit" href="@TokensHref" data-testid="insights-story-full-cta">@Culture["Insights.Cta.Full"]</a>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        @ChildContent
+    }
+</article>
+
+@code {
+    [Parameter] public int Index { get; set; }
+    [Parameter] public int Current { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public bool Locked { get; set; }
+    [Parameter] public string TokensHref { get; set; } = "/employer/tokens";
+    [Parameter] public string? TestId { get; set; }
+    [Parameter] public bool ShowCta { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

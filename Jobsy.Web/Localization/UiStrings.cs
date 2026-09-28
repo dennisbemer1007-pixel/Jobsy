@@ -3381,6 +3381,7 @@ public static class UiStrings
         UiStringsHowLobsyRoles.MergeAll(nl, en, pl, ro, ar);
         UiStringsOnboardingV2.MergeAll(nl, en, pl, ro, ar);
         UiStringsGratisDna.MergeAll(nl, en, pl, ro, ar);
+        UiStringsCandidateInsights.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

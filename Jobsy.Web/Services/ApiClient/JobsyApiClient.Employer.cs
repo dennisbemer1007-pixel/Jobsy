@@ -514,4 +514,41 @@ public sealed partial class JobsyApiClient
 
         return await response.Content.ReadFromJsonAsync<CompanyUserItem>(cancellationToken: ct);
     }
+
+    public async Task<CandidateInsightsDto?> GetCandidateInsightsAsync(
+        Guid? branchId,
+        int radiusKm = 20,
+        int period = 90,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var qs = $"radiusKm={radiusKm}&period={period}";
+            if (branchId is Guid id)
+            {
+                qs += $"&branchId={id:D}";
+            }
+
+            return await _http.GetFromJsonAsync<CandidateInsightsDto>($"api/employer/candidate-insights?{qs}", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<CandidateInsightsBranchDto>> GetCandidateInsightsBranchesAsync(
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<CandidateInsightsBranchDto>>(
+                       "api/employer/candidate-insights/branches", ct)
+                   ?? [];
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            return [];
+        }
+    }
 }

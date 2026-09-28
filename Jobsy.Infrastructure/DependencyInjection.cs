@@ -362,6 +362,7 @@ public static class DependencyInjection
         services.AddScoped<ICompetenceDeepReportService, CompetenceDeepReportService>();
         services.AddScoped<IAssessmentReportPdfService, AssessmentReportPdfService>();
         services.AddScoped<ITalentPoolService, TalentPoolService>();
+        services.AddScoped<ICandidateInsightsService, CandidateInsightsService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();
         services.AddScoped<ICandidateMapImageService, OsmTileMapImageService>();
         services.AddHttpClient("OsmTiles", OsmTileMapImageService.ConfigureHttpClient);

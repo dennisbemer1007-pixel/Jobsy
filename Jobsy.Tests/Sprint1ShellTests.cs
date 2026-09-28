@@ -292,6 +292,26 @@ public class RoleNavCatalogTests
         Assert.DoesNotContain(items, i => i.Href == "/intermediary/batch");
         Assert.DoesNotContain(items, i => i.TitleKey == "Nav.BatchTool");
     }
+
+    [Fact]
+    public void Talent_nav_extra_paths_include_kandidaatinzichten_except_intermediary()
+    {
+        var enterpriseTalent = RoleNavCatalog.Enterprise.First(i => i.TitleKey == "Nav.Talent");
+        Assert.Contains("/employer/kandidaatinzichten", enterpriseTalent.ExtraActivePaths ?? []);
+        var branchTalent = RoleNavCatalog.Branch.First(i => i.TitleKey == "Nav.Talent");
+        Assert.Contains("/employer/kandidaatinzichten", branchTalent.ExtraActivePaths ?? []);
+        var intermediaryTalent = RoleNavCatalog.Intermediary.First(i => i.TitleKey == "Nav.Talent");
+        Assert.DoesNotContain("/employer/kandidaatinzichten", intermediaryTalent.ExtraActivePaths ?? []);
+    }
+
+    [Fact]
+    public void Regional_nav_includes_candidate_insights()
+    {
+        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.RegionalManager)], "test");
+        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
+        Assert.Contains(items, i => i.Href == "/employer/kandidaatinzichten" && i.TitleKey == "Nav.CandidateInsights");
+        Assert.Equal(5, RoleNavCatalog.Regional.Length);
+    }
 }
 
 public class RoleClaimMatchingTests
