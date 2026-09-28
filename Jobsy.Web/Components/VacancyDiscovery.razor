@@ -2827,9 +2827,6 @@
     private void CloseMatchExplain()
         => _matchExplain = null;
 
-    private static bool IsActiveOpenManagedVacancy(VacancyListItem vacancy) =>
-        ManagedVacancyMapFilter.IsPublishedOpen(vacancy.Status, vacancy.FulfilledByApplicationId);
-
     private async Task OnTransportChanged(ChangeEventArgs e)
     {
         _selectedTransport = e.Value?.ToString() ?? "Fiets";
