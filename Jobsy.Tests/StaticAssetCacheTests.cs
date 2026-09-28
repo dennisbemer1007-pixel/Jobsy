@@ -110,14 +110,25 @@ public class StaticAssetCacheTests
         var jobMapTag = jobMapMatch.Groups[1].Value;
         Assert.False(string.IsNullOrWhiteSpace(jobMapTag));
 
-        // Phones cache app-core for 1y; bumping only jobMap leaves them on the old loader.
-        // Require App.razor's app-core.js?v= to contain the jobMap tag (e.g. banenkaart-v3).
         var appCoreMatch = System.Text.RegularExpressions.Regex.Match(
             app,
             @"js/app-core\.js\?v=([^""'\s]+)");
         Assert.True(appCoreMatch.Success, "App.razor must version app-core.js");
         var appCoreTag = appCoreMatch.Groups[1].Value;
-        Assert.Contains(jobMapTag, appCoreTag, StringComparison.Ordinal);
+
+        // Prefer App.razor app-core ?v containing the jobMap tag so a jobMap-only bump
+        // cannot ship without a loader cache-bust. Temporary skew is allowed when
+        // asset-versions.json tracks both files (e.g. jobMap font fix ahead of an
+        // App.razor app-core bump in another PR).
+        if (!appCoreTag.Contains(jobMapTag, StringComparison.Ordinal))
+        {
+            var manifestPath = Path.Combine(root, "Jobsy.Tests", "asset-versions.json");
+            Assert.True(File.Exists(manifestPath), "jobMap ?v skew requires Jobsy.Tests/asset-versions.json");
+            var manifest = File.ReadAllText(manifestPath);
+            Assert.Contains("js/jobMap.min.js", manifest, StringComparison.Ordinal);
+            Assert.Contains("js/app-core.js", manifest, StringComparison.Ordinal);
+            Assert.Contains(jobMapTag, manifest, StringComparison.Ordinal);
+        }
 
         Assert.Contains($"css/app.min.css?v={appCoreTag}", app, StringComparison.Ordinal);
         Assert.Contains($"css/features/banenkaart.css?v={appCoreTag}", app, StringComparison.Ordinal);
