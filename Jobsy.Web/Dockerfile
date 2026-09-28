@@ -2,6 +2,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
+# Central props / SDK pin must be present before restore (CPM + shared TFM).
+COPY Directory.Build.props Directory.Packages.props global.json .editorconfig ./
+
 COPY Jobsy.Core/Jobsy.Core.csproj Jobsy.Core/
 COPY Jobsy.Web/Jobsy.Web.csproj Jobsy.Web/
 RUN dotnet restore Jobsy.Web/Jobsy.Web.csproj

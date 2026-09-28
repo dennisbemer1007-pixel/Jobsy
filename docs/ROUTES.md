@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (121 routes)
+## Table (122 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -104,6 +104,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/employer/company` | `Pages/Employer/CompanyDetails.razor` | BranchManager, EnterpriseManager, Admin, Intermediary |
 | `/employer/csv-import` | `Pages/Employer/CsvImport.razor` | EnterpriseManager, Admin |
 | `/employer/culture` | `Pages/Employer/CultureScan.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/employer/kandidaatinzichten` | `Pages/Employer/CandidateInsights.razor` | BranchManager, RegionalManager, EnterpriseManager |
 | `/employer/onboarding-checkout` | `Pages/Employer/OnboardingCheckout.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/employer/organization` | `Pages/Employer/Organization.razor` | EnterpriseManager |
 | `/employer/regions` | `Pages/Employer/Regions.razor` | EnterpriseManager, Admin |

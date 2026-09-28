@@ -10,8 +10,11 @@ TMP="$(mktemp)"
 trap 'rm -f "${TMP}"' EXIT
 
 cd "${SCRIPT_DIR}"
-if [[ ! -x "${SCRIPT_DIR}/node_modules/.bin/lightningcss" ]]; then
-  npm ci --ignore-scripts
+# lightningcss-cli postinstall copies the platform binary over the Windows stub.
+# --ignore-scripts leaves a text stub that bash executes as "This: command not found" (exit 127).
+if [[ ! -x "${SCRIPT_DIR}/node_modules/.bin/lightningcss" ]] \
+  || ! "${SCRIPT_DIR}/node_modules/.bin/lightningcss" --help >/dev/null 2>&1; then
+  npm ci
 fi
 
 "${SCRIPT_DIR}/node_modules/.bin/lightningcss" --minify "${SRC}" -o "${TMP}"
