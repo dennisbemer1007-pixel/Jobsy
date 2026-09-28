@@ -78,15 +78,18 @@ public sealed class JobsyApiTransientRetryHandler : DelegatingHandler
             || ((int)status >= 500 && (int)status <= 599);
 
     /// <summary>
-    /// 401 is only retried when the attempt went out without credentials
-    /// (circuit still settling). An authenticated 401 is a real denial.
-    /// 429 / 5xx: one retry for GET (loop capped by <see cref="MaxAttempts"/>).
+    /// Anonymous / unauthenticated 401s are never retried — they used to burn
+    /// <see cref="MaxAttempts"/> with 200 ms×attempt delays on every MainLayout page.
+    /// Authenticated 401s stay a real denial (AuthHandler already did its silent refresh).
+    /// 429 / 5xx: retry for GET/HEAD (loop capped by <see cref="MaxAttempts"/>).
     /// </summary>
     public static bool ShouldRetry(HttpStatusCode status, HttpRequestMessage sent)
     {
         if (status == HttpStatusCode.Unauthorized)
         {
-            return !HasAttachedAuth(sent);
+            // No Authorization / Jobsy.Auth cookie → do not retry.
+            // With auth attached → also do not retry (same as before).
+            return false;
         }
 
         return IsTransient(status);
@@ -143,9 +146,29 @@ public sealed class JobsyApiTransientRetryHandler : DelegatingHandler
         return TimeSpan.FromMilliseconds(400);
     }
 
-    private static bool HasAttachedAuth(HttpRequestMessage request)
-        => request.Headers.Contains("X-Jobsy-Email")
-           || request.Headers.Authorization is not null;
+    public static bool HasAttachedAuth(HttpRequestMessage request)
+    {
+        if (request.Headers.Authorization is not null
+            || request.Headers.Contains("X-Jobsy-Email"))
+        {
+            return true;
+        }
+
+        if (!request.Headers.TryGetValues("Cookie", out var cookies))
+        {
+            return false;
+        }
+
+        foreach (var cookie in cookies)
+        {
+            if (cookie.Contains("Jobsy.Auth", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// Fresh request so <see cref="JobsyApiAuthHandler"/> can attach the identity
