@@ -421,7 +421,14 @@
 }
 
 @media (max-width: 639px) {
-    .test-result-premium .btn-gold__meta {
+    /* Question count moves to fine print; price stays in the button. */
+    .test-result-premium .btn-gold__meta small {
+        display: none;
+    }
+}
+
+@media (min-width: 640px) {
+    .test-result-premium__fine .mq {
         display: none;
     }
 }
