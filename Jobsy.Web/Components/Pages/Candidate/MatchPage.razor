@@ -54,7 +54,7 @@
                 </p>
                 <div class="match-page__empty-actions">
                     <a class="match-page__cta" href="/">@Culture["Discovery.BackToSearch"]</a>
-                    <button type="button" class="match-page__cta match-page__cta--ghost" @onclick="ReloadDeckAsync">Opnieuw laden</button>
+                    <button type="button" class="match-page__cta match-page__cta--ghost" @onclick="() => ReloadDeckAsync()">Opnieuw laden</button>
                 </div>
             </div>
         }
@@ -95,8 +95,11 @@
     private readonly List<SwipeViewModel> _deck = [];
     private MatchProfileGateViewModel _gate = new();
     private int _index;
+    private int _restoredIndex;
+    private List<Guid> _restoredVacancyIds = [];
     private bool _loading = true;
     private bool _restored;
+    private bool _heavyLoadStarted;
     private string? _toast;
     private CancellationTokenSource? _toastCts;
     private PersistingComponentStateSubscription _persistSubscription;
@@ -115,11 +118,13 @@
         _persistSubscription = Persist.RegisterOnPersisting(PersistState);
         if (Persist.TryTakeFromJson<MatchPagePersistState>(PersistKey, out var saved) && saved is not null)
         {
+            // Slim DTO: gate flags + vacancy ids + index. Never persist the swipe stack.
             _gate = saved.Gate ?? new();
+            _restoredVacancyIds = saved.VacancyIds ?? [];
+            _restoredIndex = Math.Max(0, saved.Index);
+            _index = 0;
             _deck.Clear();
-            _deck.AddRange(saved.Deck ?? []);
-            _index = Math.Clamp(saved.Index, 0, Math.Max(0, _deck.Count));
-            _loading = false;
+            _loading = true;
             _restored = true;
         }
     }
@@ -128,31 +133,58 @@
     {
         Persist.PersistAsJson(PersistKey, new MatchPagePersistState
         {
-            Gate = _gate,
-            Deck = _deck.ToList(),
+            Gate = SlimGate(_gate),
+            VacancyIds = _deck.Select(v => v.VacancyId).Where(id => id is Guid).Select(id => id!.Value).ToList(),
             Index = _index
         });
         return Task.CompletedTask;
     }
 
-    protected override async Task OnInitializedAsync()
+    private static MatchProfileGateViewModel SlimGate(MatchProfileGateViewModel gate) => new()
     {
-        if (_restored)
+        IsAuthenticated = gate.IsAuthenticated,
+        ProfileBasicsFilled = gate.ProfileBasicsFilled,
+        HasEducationLevel = gate.HasEducationLevel,
+        WizardCompleted = gate.WizardCompleted,
+        CompetencyCompleted = gate.CompetencyCompleted,
+        CareerCompleted = gate.CareerCompleted,
+        CultureCompleted = gate.CultureCompleted,
+        HasProvisionalScores = gate.HasProvisionalScores,
+        IsProfileComplete = gate.IsProfileComplete,
+        CompletedCount = gate.CompletedCount,
+        RequiredCount = gate.RequiredCount,
+        PreferredTransport = gate.PreferredTransport,
+        MaxTravelMinutes = gate.MaxTravelMinutes
+        // Educations / home coords reload with the deck — keep persist tiny.
+    };
+
+    protected override Task OnInitializedAsync()
+        // Deck/report payloads load after the circuit is interactive (OnAfterRenderAsync).
+        => Task.CompletedTask;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _heavyLoadStarted || !RendererInfo.IsInteractive)
         {
             return;
         }
 
-        await ReloadDeckAsync();
+        _heavyLoadStarted = true;
+        await ReloadDeckAsync(preserveProgress: _restored);
     }
 
     public void Dispose()
         => _persistSubscription.Dispose();
 
-    private async Task ReloadDeckAsync()
+    private async Task ReloadDeckAsync(bool preserveProgress = false)
     {
         _loading = true;
         _deck.Clear();
-        _index = 0;
+        if (!preserveProgress)
+        {
+            _index = 0;
+        }
+
         await InvokeAsync(StateHasChanged);
 
         _gate = await MatchProfile.RefreshAsync();
@@ -164,16 +196,35 @@
             {
                 _deck.Add(SwipeViewModel.FromVacancy(item, showMatchPercentage: true));
             }
+
+            if (preserveProgress && _restoredVacancyIds.Count > 0)
+            {
+                // Resume at the first still-present card at/after the saved index.
+                var resumeId = _restoredIndex < _restoredVacancyIds.Count
+                    ? _restoredVacancyIds[_restoredIndex]
+                    : _restoredVacancyIds[^1];
+                var found = _deck.FindIndex(v => v.VacancyId == resumeId);
+                _index = found >= 0 ? found : 0;
+            }
+            else
+            {
+                _index = 0;
+            }
+        }
+        else
+        {
+            _index = 0;
         }
 
-        _index = 0;
         _loading = false;
+        await InvokeAsync(StateHasChanged);
     }
 
-    private sealed class MatchPagePersistState
+    /// <summary>Circuit-persist payload — flags + vacancy ids only (no swipe card bodies).</summary>
+    internal sealed class MatchPagePersistState
     {
         public MatchProfileGateViewModel? Gate { get; set; }
-        public List<SwipeViewModel>? Deck { get; set; }
+        public List<Guid>? VacancyIds { get; set; }
         public int Index { get; set; }
     }
 

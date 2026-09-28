@@ -193,6 +193,8 @@
                                       VacancyId="_vacancy.Id"
                                       WorkType="@(_vacancy.WorkTypes.FirstOrDefault())"
                                       Class="detail-card__image vacancy-media__photo"
+                                      Width="720"
+                                      Height="480"
                                       Eager="true"
                                       Sizes="@(HasLocation ? "(max-width: 640px) 100vw, 55vw" : "(max-width: 700px) 100vw, 720px")" />
                     }

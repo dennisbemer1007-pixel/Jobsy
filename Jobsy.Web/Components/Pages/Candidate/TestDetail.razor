@@ -236,7 +236,6 @@
 
     private const string PersistKeyPrefix = "candidateTestDetail:";
     private bool _loading = true;
-    private bool _restored;
     private bool _busy;
     private AssessmentTestDefinition? _def;
     private bool _freeDone;
@@ -254,6 +253,7 @@
     private CompetencyScoreSet? _competencyScores;
     private DeepAnalysisState? _deepState;
     private CompetenceDeepReport? _competenceReport;
+    private bool _heavyLoadStarted;
     private PersistingComponentStateSubscription _persistSubscription;
 
     protected override void OnInitialized()
@@ -264,24 +264,13 @@
             && saved is not null
             && string.Equals(saved.TestKey, TestKey, StringComparison.OrdinalIgnoreCase))
         {
+            // Slim DTO only — never restore CareerCompass / DeepState / reports
+            // (those blew past 100 KB HTML + hundreds of KB on the SignalR uplink).
             _freeDone = saved.FreeDone;
             _deepUnlocked = saved.DeepUnlocked;
             _deepCompleted = saved.DeepCompleted;
-            _priceEuro = saved.PriceEuro;
-            _headline = saved.Headline;
-            _headlineLead = saved.HeadlineLead;
-            _completedMeta = saved.CompletedMeta;
-            _scoreBars.Clear();
-            _scoreBars.AddRange(saved.ScoreBars ?? []);
-            _personalityBars.Clear();
-            _personalityBars.AddRange(saved.PersonalityBars ?? []);
-            _careerCompass = saved.CareerCompass;
-            _riasecScores = saved.RiasecScores;
-            _competencyScores = saved.CompetencyScores;
-            _deepState = saved.DeepState;
-            _competenceReport = saved.CompetenceReport;
-            _restored = true;
-            _loading = false;
+            _priceEuro = saved.PriceEuro > 0 ? saved.PriceEuro : _priceEuro;
+            _loading = true;
         }
     }
 
@@ -298,17 +287,7 @@
             FreeDone = _freeDone,
             DeepUnlocked = _deepUnlocked,
             DeepCompleted = _deepCompleted,
-            PriceEuro = _priceEuro,
-            Headline = _headline,
-            HeadlineLead = _headlineLead,
-            CompletedMeta = _completedMeta,
-            ScoreBars = _scoreBars.ToList(),
-            PersonalityBars = _personalityBars.ToList(),
-            CareerCompass = _careerCompass,
-            RiasecScores = _riasecScores,
-            CompetencyScores = _competencyScores,
-            DeepState = _deepState,
-            CompetenceReport = _competenceReport
+            PriceEuro = _priceEuro
         });
         return Task.CompletedTask;
     }
@@ -316,7 +295,7 @@
     public void Dispose()
         => _persistSubscription.Dispose();
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         if (!string.IsNullOrWhiteSpace(PaymentError))
         {
@@ -327,22 +306,46 @@
         if (_def is null)
         {
             _loading = false;
-            return;
         }
 
-        if (_restored)
+        // Heavy report/career payloads load after the circuit is interactive
+        // (see OnAfterRenderAsync) so prerender HTML and StartCircuit stay small.
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _heavyLoadStarted || _def is null || !RendererInfo.IsInteractive)
         {
             return;
         }
+
+        _heavyLoadStarted = true;
+        await LoadHeavyStateAsync();
+    }
+
+    private async Task LoadHeavyStateAsync()
+    {
+        _loading = true;
+        await InvokeAsync(StateHasChanged);
 
         try
         {
-            var deep = await Api.GetDeepAnalysisAsync(_def.Key);
+            var deep = await Api.GetDeepAnalysisAsync(_def!.Key);
             _deepState = deep;
             _deepUnlocked = deep?.IsUnlocked == true;
             _deepCompleted = deep?.IsCompleted == true;
             _priceEuro = deep?.PriceEuro > 0 ? deep.PriceEuro : 2.99m;
             _competenceReport = deep?.CompetenceReport;
+
+            _headline = null;
+            _headlineLead = null;
+            _completedMeta = null;
+            _scoreBars.Clear();
+            _personalityBars.Clear();
+            _careerCompass = null;
+            _riasecScores = null;
+            _competencyScores = null;
 
             switch (_def.Kind)
             {
@@ -368,26 +371,20 @@
         finally
         {
             _loading = false;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
-    private sealed class TestDetailPersistState
+    /// <summary>
+    /// Circuit-persist payload — flags only (&lt; 1 KB). Heavy models reload after interactivity.
+    /// </summary>
+    internal sealed class TestDetailPersistState
     {
         public string? TestKey { get; set; }
         public bool FreeDone { get; set; }
         public bool DeepUnlocked { get; set; }
         public bool DeepCompleted { get; set; }
         public decimal PriceEuro { get; set; }
-        public string? Headline { get; set; }
-        public string? HeadlineLead { get; set; }
-        public string? CompletedMeta { get; set; }
-        public List<ScoreBar>? ScoreBars { get; set; }
-        public List<ScoreBar>? PersonalityBars { get; set; }
-        public CareerCompassModel? CareerCompass { get; set; }
-        public RiasecScoreSet? RiasecScores { get; set; }
-        public CompetencyScoreSet? CompetencyScores { get; set; }
-        public DeepAnalysisState? DeepState { get; set; }
-        public CompetenceDeepReport? CompetenceReport { get; set; }
     }
 
     private async Task LoadCompetenceAsync()
