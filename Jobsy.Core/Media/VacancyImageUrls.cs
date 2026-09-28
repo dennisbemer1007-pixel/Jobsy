@@ -400,9 +400,6 @@ public static class VacancyImageUrls
            && imageUrl.StartsWith(LocalPrefix, StringComparison.OrdinalIgnoreCase)
            && imageUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
 
-    public static bool IsThirdPartyPlaceholder(string? imageUrl)
-        => IsBrokenUnsplash(imageUrl);
-
     public static string FirstSlug(WorkType workTypes)
     {
         foreach (var flag in new[]

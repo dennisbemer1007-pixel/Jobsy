@@ -250,13 +250,6 @@ internal static class DemoUsersSeeder
         return 1;
     }
 
-    /// <summary>
-    /// Creates or resets the local-login hash so demo accounts always accept the given password.
-    /// Production web login uses <c>POST api/auth/local-login</c> (demo-store is Development-only unless allowed).
-    /// </summary>
-    private static Task EnsureDemoPasswordAsync(JobsyDbContext db, User user)
-        => EnsurePasswordAsync(db, user, DemoPassword);
-
     private static async Task EnsurePasswordAsync(JobsyDbContext db, User user, string password)
     {
         var email = user.Email.Trim().ToLowerInvariant();

@@ -1,8 +1,5 @@
-@using Microsoft.AspNetCore.Antiforgery
 @inject JobsyApiClient Api
-@inject IAntiforgery Antiforgery
-@inject IHttpContextAccessor HttpContextAccessor
-@inject IJSRuntime Js
+@inject NavigationManager Navigation
 @inject CultureState Culture
 @implements IDisposable
 
@@ -19,9 +16,6 @@
         @if (_completed)
         {
             <p class="share-modal__lead lobsy-dialog__lead">@Culture["Unsubscribe.Completed"]</p>
-            <form id="unsubscribe-logout" method="post" action="/account/logout">
-                <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
-            </form>
         }
         else if (_awaitingVerification)
         {
@@ -115,9 +109,7 @@
     private bool _awaitingVerification;
     private bool _busy;
     private bool _completed;
-    private bool _submitLogoutPending;
     private bool _reasonsLoaded;
-    private string _antiforgeryToken = "";
     private string? _error;
     private string? _info;
 
@@ -129,15 +121,7 @@
         && (!SelectedRequiresOther || !string.IsNullOrWhiteSpace(_reasonOther));
 
     protected override void OnInitialized()
-    {
-        Culture.Changed += OnCultureChanged;
-        var http = HttpContextAccessor.HttpContext;
-        if (http is not null)
-        {
-            var tokens = Antiforgery.GetAndStoreTokens(http);
-            _antiforgeryToken = tokens.RequestToken ?? "";
-        }
-    }
+        => Culture.Changed += OnCultureChanged;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -149,15 +133,6 @@
         if (!_reasonsLoaded)
         {
             await LoadReasonsAsync();
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (_submitLogoutPending)
-        {
-            _submitLogoutPending = false;
-            await Js.InvokeVoidAsync("eval", "document.getElementById('unsubscribe-logout')?.submit()");
         }
     }
 
@@ -247,8 +222,9 @@
         {
             await Api.ConfirmUnsubscribeAsync(_verificationCode.Trim());
             _completed = true;
-            _submitLogoutPending = true;
             await OnCompleted.InvokeAsync();
+            // GET /account/logout always signs out (same path as AuthHeader) — no eval/form submit.
+            Navigation.NavigateTo("/account/logout", forceLoad: true);
         }
         catch (Exception ex)
         {

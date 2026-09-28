@@ -2,11 +2,9 @@ using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
-using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
 
@@ -16,16 +14,13 @@ public sealed class DeviceSessionsController : ControllerBase
 {
     private readonly IDeviceSessionService _sessions;
     private readonly IUserLookupService _users;
-    private readonly JobsyDbContext _db;
 
     public DeviceSessionsController(
         IDeviceSessionService sessions,
-        IUserLookupService users,
-        JobsyDbContext db)
+        IUserLookupService users)
     {
         _sessions = sessions;
         _users = users;
-        _db = db;
     }
 
     [HttpPost]

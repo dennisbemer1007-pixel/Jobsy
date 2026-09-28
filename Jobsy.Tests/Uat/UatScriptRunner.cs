@@ -515,12 +515,14 @@ public static class UatScriptRunner
             Assert.Contains("Dna.TestsTitle", dna, StringComparison.Ordinal);
         }
 
-        if (Contains(blob, "Wie ben ik?", "persoonsprofiel", "Lobsy-CV-bijlage"))
+        if (Contains(blob, "Wie ben ik?", "persoonsprofiel", "Lobsy-CV-bijlage")
+            || Contains(blob, "Mijn DNA", "verhaal", "tests"))
         {
             var root = RepoRoot.Find();
-            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/WhoAmIPanel.razor"));
-            Assert.Contains("WhoAmI.AttachCv", panel, StringComparison.Ordinal);
-            Assert.Contains("CultureScorePanel", panel, StringComparison.Ordinal);
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor"));
+            Assert.Contains("Dna.StoryEmpty", panel, StringComparison.Ordinal);
+            Assert.Contains("Dna.TestsTitle", panel, StringComparison.Ordinal);
+            Assert.Contains("WhoAmIStoryStatuses", panel, StringComparison.Ordinal);
             Assert.False(WhoAmICompleteness.IsUnlocked(false, true, true, true));
             Assert.True(WhoAmICompleteness.IsUnlocked(true, true, true, true));
             Assert.DoesNotContain("@", WhoAmIPrompt.User(

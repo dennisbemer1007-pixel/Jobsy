@@ -114,19 +114,6 @@ public static class DnaSummarySentences
         };
     }
 
-    public static string CultureCombined(string firstCode, int firstPercent, string secondCode, int secondPercent)
-    {
-        var a = Culture(firstCode, firstPercent);
-        var b = Culture(secondCode, secondPercent);
-        if (string.Equals(a, b, StringComparison.Ordinal))
-        {
-            return a;
-        }
-
-        // Shorten second into a trailing clause when possible.
-        return $"{TrimSentence(a)}. Daarnaast: {LowerFirst(TrimSentence(b))}.";
-    }
-
     public static string Values(string valueCode)
         => valueCode switch
         {
@@ -187,9 +174,4 @@ public static class DnaSummarySentences
             _ => ("Dna.CulturePole.Generic.Low", "Dna.CulturePole.Generic.High")
         };
 
-    private static string TrimSentence(string s)
-        => s.Trim().TrimEnd('.', '!', '?');
-
-    private static string LowerFirst(string s)
-        => string.IsNullOrEmpty(s) ? s : char.ToLowerInvariant(s[0]) + s[1..];
 }

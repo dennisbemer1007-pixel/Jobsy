@@ -15,7 +15,7 @@ public class ContentSecurityPolicyTests
         Assert.NotNull(scriptSrc);
         Assert.Contains($"'nonce-{nonce}'", scriptSrc);
         Assert.DoesNotContain("unsafe-inline", scriptSrc);
-        Assert.Contains("'unsafe-eval'", scriptSrc);
+        Assert.DoesNotContain("unsafe-eval", scriptSrc);
 
         var imgSrc = JobsyContentSecurityPolicy.Directive(csp, "img-src");
         Assert.NotNull(imgSrc);

@@ -1360,12 +1360,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
             ct);
     }
 
-    public async Task<CandidateDnaSummary?> GetMyKompasDnaAsync(CancellationToken ct = default)
-    {
-        var result = await GetMyKompasDnaResultAsync(ct);
-        return result.Value;
-    }
-
     public Task<MeGetResult<CandidateDnaSummary>> GetMyKompasDnaResultAsync(CancellationToken ct = default)
     {
         if (_meCache is null)
@@ -1439,22 +1433,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
     public async Task<List<TrainingProviderAdmin>> GetTrainingProvidersAdminAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<TrainingProviderAdmin>>("api/admin/training/providers", ct) ?? [];
-
-    public async Task<TrainingProviderAdmin> UpsertTrainingProviderAsync(object payload, CancellationToken ct = default)
-    {
-        var response = await _http.PutAsJsonAsync("api/admin/training/providers", payload, ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Opleider opslaan mislukt.");
-        }
-
-        return await response.Content.ReadFromJsonAsync<TrainingProviderAdmin>(cancellationToken: ct)
-               ?? new TrainingProviderAdmin();
-    }
-
-    public Task DeleteTrainingProviderAsync(Guid id, CancellationToken ct = default)
-        => _http.DeleteAsync($"api/admin/training/providers/{id:D}", ct);
 
     public async Task RecordTrainingConversionAsync(object payload, CancellationToken ct = default)
     {
@@ -2339,11 +2317,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
             new { endpoint, keys = new { p256dh, auth } },
             ct);
         return response.IsSuccessStatusCode;
-    }
-
-    public async Task UnsubscribeWebPushAsync(string? endpoint, CancellationToken ct = default)
-    {
-        await _http.PostAsJsonAsync("api/push/unsubscribe", new { endpoint }, ct);
     }
 
     public async Task<IReadOnlyList<DeviceSessionItem>> GetDeviceSessionsAsync(CancellationToken ct = default)
@@ -4015,9 +3988,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<PlatformCompanyItem>(cancellationToken: ct);
     }
 
-    public async Task<SiteBrandingItem?> GetPublicBrandingAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<SiteBrandingItem>("api/site/branding", ct);
-
     public async Task<AboutPageItem?> GetPublicAboutPageAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<AboutPageItem>("api/site/about", ct);
 
@@ -4341,18 +4311,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
     public async Task<List<SelfBillingInvoiceItem>> GetMySelfBillingInvoicesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<SelfBillingInvoiceItem>>("api/sales-managers/me/invoices", ct) ?? [];
-
-    public async Task<SelfBillingInvoiceItem?> CreateMySelfBillingInvoiceAsync(CancellationToken ct = default)
-    {
-        var response = await _http.PostAsync("api/sales-managers/me/invoices", null, ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Factuur aanmaken mislukt.");
-        }
-
-        return await response.Content.ReadFromJsonAsync<SelfBillingInvoiceItem>(cancellationToken: ct);
-    }
 
     public async Task<SalesManagerPayoutPreview?> GetMyPayoutPreviewAsync(
         decimal? amountExVat = null,

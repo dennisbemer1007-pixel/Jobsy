@@ -95,7 +95,7 @@ public class ProductionAuditTests
     [Fact]
     public void Cookie_consent_js_writes_first_party_cookie()
     {
-        var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "cookieConsent.js"));
+        var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("document.cookie", js);
         Assert.Contains("Jobsy.CookieConsent", js);
         Assert.Contains("; Secure", js);

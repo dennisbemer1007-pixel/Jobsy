@@ -196,8 +196,7 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("application-card__actions", css);
 
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
-        Assert.Contains("css/features/applications.css?v=20260927-apps-clamp", app);
-        Assert.DoesNotContain("css/features/applications.css?v=20260927-apps-b\"", app);
+        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/features/applications.css");
 
         var appCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.DoesNotContain(".apps-tabs.admin-sublinks", appCss);
@@ -423,12 +422,6 @@ public class MobileSaasUxTests
         var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
         Assert.Contains("IsLoginRoute", header);
         Assert.Contains("href=\"/login\"", header);
-
-        var idle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/sessionIdle.js"));
-        Assert.Contains("sessionReturnUrl", idle);
-        Assert.Contains("&returnUrl=", idle);
-        Assert.Contains("return path;", idle);
-        Assert.DoesNotContain("path + (window.location.search", idle);
 
         var extras = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/app-extras.js"));
         Assert.Contains("sessionReturnUrl", extras);

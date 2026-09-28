@@ -55,46 +55,7 @@ public class RegisterWizardUiTests
     public void Production_asset_query_is_cache_busted_and_commit_is_exposed()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
-        Assert.Contains("css/app.min.css?v=20260928-dead-css", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260927-cookie-map", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260927-filter-sheet", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260927-banenkaart-v3b", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260927-banenkaart-v3\"", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260927-dna-c", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260927-apps-b", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260927-acc-review", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260926-mapfix4", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260926-dna-landing", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260926-q-compact", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260926-career-progress", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260925-tests-dna2", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260925-horizonai", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260925-carriereai", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260925-cultuurfit", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260925-careercalm", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260925-carriere\"", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260925-appstabs", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260925-mobileux", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260924-pwa", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260924-profiel", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260923-ats-detail", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260923-top10-ats", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260923-ats-source", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260923-atsui", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260923-top10\"", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260923-matchstable", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260923-matchgate", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260923-matchswipe", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260923-kompasnav", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260923-fitpath", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260921-whoami", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260920-training", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260920-fitabs", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260920-fit\"", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260920-pdfprompt", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260920-beroep", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260904-ui", app);
-        Assert.DoesNotContain("css/app.min.css?v=20260916-prod", app);
+        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/app.min.css");
         Assert.Contains("name=\"lobsy-commit\"", app);
         Assert.Contains("RENDER_GIT_COMMIT", app);
 

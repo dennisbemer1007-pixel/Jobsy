@@ -5,7 +5,9 @@ namespace Jobsy.Web.Security;
 /// <c>'unsafe-inline'</c>). Style attributes stay <c>'unsafe-inline'</c> because
 /// Razor/MapLibre set CSS variables inline; <c>&lt;style&gt;</c> elements use the nonce.
 /// Image and connect hosts are allow-listed (no <c>https:</c> / <c>ws:</c> / <c>wss:</c>
-/// scheme wildcards). Blazor Server still needs <c>'unsafe-eval'</c> for the circuit.
+/// scheme wildcards). App code no longer calls <c>eval</c> via JS interop (prompt 07).
+/// Playwright CSP smoke on public surfaces reported no <c>securitypolicyviolation</c> events
+/// without <c>'unsafe-eval'</c>, so it is omitted (see <c>docs/csp-smoke-prompt07.log</c>).
 /// </summary>
 public static class JobsyContentSecurityPolicy
 {
@@ -27,7 +29,7 @@ public static class JobsyContentSecurityPolicy
             $"font-src 'self' data: {OpenFreeMap};",
             $"style-src-elem 'self' {n};",
             "style-src-attr 'unsafe-inline';",
-            $"script-src 'self' {n} 'unsafe-eval';",
+            $"script-src 'self' {n};",
             "script-src-attr 'none';",
             "form-action 'self';",
             $"connect-src 'self' {OpenFreeMap};",

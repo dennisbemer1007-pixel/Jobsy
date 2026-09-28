@@ -29,24 +29,6 @@ public static class TrainingTracking
         return HmacHex(normalized, secret);
     }
 
-    public static bool EmailHashMatches(string? email, string? storedHash, string secret)
-    {
-        if (string.IsNullOrWhiteSpace(storedHash))
-        {
-            return false;
-        }
-
-        var computed = EmailHash(email, secret);
-        if (computed.Length != storedHash.Length)
-        {
-            return false;
-        }
-
-        return CryptographicOperations.FixedTimeEquals(
-            Encoding.ASCII.GetBytes(computed),
-            Encoding.ASCII.GetBytes(storedHash));
-    }
-
     public static string AppendParameters(
         string baseUrl,
         string candidateHash,

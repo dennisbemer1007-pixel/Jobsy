@@ -12,7 +12,7 @@ public class BanenkaartMapPerfGuardTests
         var root = FindRepoRoot();
         var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
         var discovery = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
-        var maps = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
+        var maps = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-core.js"));
 
         Assert.Contains("function pinsFilterKey", js, StringComparison.Ordinal);
         Assert.Contains("searchParams.delete(\"transport\")", js, StringComparison.Ordinal);
@@ -34,7 +34,7 @@ public class BanenkaartMapPerfGuardTests
         Assert.Contains("requestIdleCallback", maps, StringComparison.Ordinal);
         Assert.Contains("timeout: 1500", maps, StringComparison.Ordinal);
         Assert.Contains("script.defer = true", maps, StringComparison.Ordinal);
-        Assert.Contains("jobMap.min.js?v=20260928-mapperf", maps, StringComparison.Ordinal);
+        AssetVersions.AssertVersionedRefMatchesManifest(maps, "js/jobMap.min.js");
 
         Assert.Contains("function afterFirstPaint", js, StringComparison.Ordinal);
         Assert.Contains("skeletonPopupHtml", js, StringComparison.Ordinal);

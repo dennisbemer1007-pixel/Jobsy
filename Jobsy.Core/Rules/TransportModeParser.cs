@@ -5,16 +5,6 @@ namespace Jobsy.Core.Rules;
 /// <summary>Parse one or more transport labels into a flags enum (CSV / API helpers).</summary>
 public static class TransportModeParser
 {
-    public static TransportMode ParseMany(string? raw)
-    {
-        if (!TryParseMany(raw, out var mode, out _))
-        {
-            return TransportMode.Bike | TransportMode.PublicTransport;
-        }
-
-        return mode;
-    }
-
     public static bool TryParseMany(string? raw, out TransportMode mode, out string? error)
     {
         error = null;
