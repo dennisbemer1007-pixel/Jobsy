@@ -36,7 +36,7 @@
    - Een stuk OpenAI-code staat 11 keer gekopieerd.
 4. **Grote bestanden.** Een paar bestanden zijn te groot om veilig in te werken: `app.css` (21.659 regels), de API-client (5.212), `jobMap.js` (3.836) en `VacancyDiscovery.razor` (3.466). De README beschrijft nog "Jobsy met Leaflet".
 
-**Advies:** begin met vangrails (prompt 01–02), los dan direct de rol- en privacypunten op (03–06, hoge prioriteit), en ruim daarna in kleine, veilige stappen op (07–15). De code-namespace "Jobsy" laten we staan; dat leggen we vast in een ADR. Hernoemen kost veel en levert niets op.
+**Advies:** los eerst de rol- en privacypunten op (03–06, hoge prioriteit). Zet parallel de vangrails neer (01, ongevaarlijk; 02 na de SalesWalletChip-PR). Ruim daarna in kleine, veilige stappen op (07–15; volgorde in `docs/prompts/cleanup/README.md`). De code-namespace "Jobsy" laten we staan; dat leggen we vast in een ADR. Hernoemen kost veel en levert niets op.
 
 ---
 
