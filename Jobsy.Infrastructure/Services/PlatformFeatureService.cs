@@ -57,6 +57,16 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         {
             row.MinimumSessionVersion = Math.Max(0, minSession);
         }
+
+        if (update.SupportAccessNotifyAdmins is bool notifyAdmins)
+        {
+            row.SupportAccessNotifyAdmins = notifyAdmins;
+        }
+
+        if (update.SupportAccessNotifySubject is bool notifySubject)
+        {
+            row.SupportAccessNotifySubject = notifySubject;
+        }
         // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
         // so session-timeout-only PUTs do not silently disable the free-publish promo.
         if (update.ClearFreePublishUntil)
@@ -158,6 +168,8 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
                 row?.SessionInactivityTimeoutMinutes
                 ?? SessionSecurityRules.DefaultInactivityTimeoutMinutes),
             freeUntil,
-            row?.MinimumSessionVersion ?? 0);
+            row?.MinimumSessionVersion ?? 0,
+            row?.SupportAccessNotifyAdmins ?? false,
+            row?.SupportAccessNotifySubject ?? false);
     }
 }

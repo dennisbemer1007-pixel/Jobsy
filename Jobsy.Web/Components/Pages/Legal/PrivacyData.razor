@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject JobsyApiClient Api
+@inject CultureState Culture
 
 <PageTitle>Mijn gegevens · Lobsy</PageTitle>
 
@@ -11,6 +12,16 @@
         Exporteer je persoonsgegevens of verwijder je account. Verwijderen vereist een reden en een verificatiecode per e-mail;
         daarna wordt je account geblokkeerd en worden je gegevens opgeschoond.
     </p>
+
+    @if (_supportNotes.Count > 0)
+    {
+        <section class="panel-section" style="margin-top:1rem">
+            @foreach (var note in _supportNotes)
+            {
+                <p class="muted">@string.Format(Culture["Admin.SupportAccessNotifySubjectNote"], note.ToString("yyyy-MM-dd HH:mm"))</p>
+            }
+        </section>
+    }
 
     <div class="inline-actions" style="margin-top:1.5rem">
         <button class="login-submit" type="button" disabled="@_busyExport" @onclick="ExportAsync">
@@ -42,6 +53,19 @@
     private bool _unsubscribeOpen;
     private string? _message;
     private string? _exportJson;
+    private List<DateTime> _supportNotes = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _supportNotes = (await Api.GetSupportAccessNotesAsync()).ToList();
+        }
+        catch
+        {
+            _supportNotes = [];
+        }
+    }
 
     private void OpenUnsubscribe()
     {

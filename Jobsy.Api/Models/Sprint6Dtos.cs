@@ -77,6 +77,14 @@ public record PersonalDataAccessLogPageDto(
     int PageSize,
     int TotalCount);
 
+public record SupportAccessRequestBody(
+    Guid? SubjectUserId,
+    Guid? SubjectCompanyId,
+    SupportAccessScope Scope,
+    string? Reason,
+    string? TicketReference,
+    int DurationMinutes = 60);
+
 public record AdminVacancyDetailDto(
     Guid Id,
     string Title,
@@ -168,7 +176,9 @@ public record UpdatePlatformFeatureRequest(
     int InactiveCompanyDays = 120,
     int SessionInactivityTimeoutMinutes = 30,
     DateOnly? FreePublishUntil = null,
-    bool ClearFreePublishUntil = false);
+    bool ClearFreePublishUntil = false,
+    bool? SupportAccessNotifyAdmins = null,
+    bool? SupportAccessNotifySubject = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -178,7 +188,9 @@ public record PlatformFeatureDto(
     DateTime? UpdatedAtUtc,
     int InactiveCompanyDays = 120,
     int SessionInactivityTimeoutMinutes = 30,
-    DateOnly? FreePublishUntil = null);
+    DateOnly? FreePublishUntil = null,
+    bool SupportAccessNotifyAdmins = false,
+    bool SupportAccessNotifySubject = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

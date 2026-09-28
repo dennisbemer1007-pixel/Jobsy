@@ -1,6 +1,7 @@
 @page "/admin/ambassadeurs"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject CultureState Culture
 
@@ -14,6 +15,18 @@
     @if (!string.IsNullOrEmpty(_message))
     {
         <p class="state-message">@_message</p>
+    }
+    @if (_activeGrant is not null)
+    {
+        <p class="state-message">
+            @string.Format(Culture["Admin.SupportAccessBanner"],
+                _activeGrant.SubjectUserId?.ToString("D")[..8] + "…" ?? "—",
+                _activeGrant.ExpiresAt.ToLocalTime().ToString("HH:mm"),
+                _activeGrant.Reason)
+            <button class="provider-btn" type="button" disabled="@_busy" @onclick="RevokeActiveAsync">
+                @Culture["Admin.SupportAccessRevoke"]
+            </button>
+        </p>
     }
 
     <section class="panel-section">
@@ -66,6 +79,8 @@
                             </div>
                         </div>
                         <div class="inline-actions">
+                            <button class="btn-compact" type="button"
+                                    @onclick="() => OpenSupport(am.UserId)">@Culture["Admin.WhySeeThis"]</button>
                             <input style="width:5rem" type="number" step="0.1" placeholder="override %"
                                    @bind="_overrideInputs[am.UserId]" />
                             <button class="btn-compact" type="button" disabled="@_busy"
@@ -78,6 +93,11 @@
             </div>
         }
     </section>
+
+    <SupportAccessDialog IsOpen="_supportOpen"
+                         SubjectUserId="_supportSubjectId"
+                         OnClose="CloseSupport"
+                         OnGranted="OnGrantedAsync" />
 </AdminPageShell>
 
 @code {
@@ -86,6 +106,9 @@
     private readonly Dictionary<Guid, decimal?> _overrideInputs = new();
     private bool _loading = true;
     private bool _busy;
+    private bool _supportOpen;
+    private Guid? _supportSubjectId;
+    private SupportAccessGrantItem? _activeGrant;
     private string? _error;
     private string? _message;
     private string _inviteEmail = "";
@@ -115,6 +138,10 @@
             {
                 _overrideInputs.TryAdd(am.UserId, null);
             }
+
+            var grants = await Api.ListSupportAccessAsync(activeOnly: true, take: 20);
+            _activeGrant = grants.FirstOrDefault(g => g.IsActive && g.SubjectUserId is not null
+                && _list.Any(am => am.UserId == g.SubjectUserId));
         }
         catch (Exception ex)
         {
@@ -123,6 +150,44 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private void OpenSupport(Guid userId)
+    {
+        _supportSubjectId = userId;
+        _supportOpen = true;
+    }
+
+    private Task CloseSupport()
+    {
+        _supportOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnGrantedAsync(SupportAccessGrantItem grant)
+    {
+        _activeGrant = grant;
+        await ReloadAsync();
+    }
+
+    private async Task RevokeActiveAsync()
+    {
+        if (_activeGrant is null) return;
+        _busy = true;
+        try
+        {
+            await Api.RevokeSupportAccessAsync(_activeGrant.Id);
+            _activeGrant = null;
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

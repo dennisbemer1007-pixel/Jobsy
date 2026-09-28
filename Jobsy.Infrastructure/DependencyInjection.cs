@@ -66,6 +66,8 @@ public static class DependencyInjection
             return protector;
         });
         services.AddScoped<IPersonalDataAccessLogger, PersonalDataAccessLogger>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<ISupportAccessService, SupportAccessService>();
         services.AddSingleton<ICandidateInsightsQueue, CandidateInsightsQueue>();
         services.AddSingleton<ICultureFitRefineQueue, CultureFitRefineQueue>();
         services.AddScoped<ICandidateMatchSnapshotService, CandidateMatchSnapshotService>();

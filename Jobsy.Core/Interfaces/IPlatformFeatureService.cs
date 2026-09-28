@@ -19,7 +19,9 @@ public sealed record PlatformFeatureSnapshot(
     int SessionInactivityTimeoutMinutes = 30,
     /// <summary>Inclusive last day publish is free; null = promo off.</summary>
     DateOnly? FreePublishUntil = null,
-    int MinimumSessionVersion = 0);
+    int MinimumSessionVersion = 0,
+    bool SupportAccessNotifyAdmins = false,
+    bool SupportAccessNotifySubject = false);
 
 public sealed record PlatformFeatureUpdate(
     bool VacancyContentModerationEnabled,
@@ -35,4 +37,6 @@ public sealed record PlatformFeatureUpdate(
     /// platform-feature updates do not silently disable the launch promo.
     /// </summary>
     bool ClearFreePublishUntil = false,
-    int? MinimumSessionVersion = null);
+    int? MinimumSessionVersion = null,
+    bool? SupportAccessNotifyAdmins = null,
+    bool? SupportAccessNotifySubject = null);

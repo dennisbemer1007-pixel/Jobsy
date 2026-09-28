@@ -1,6 +1,9 @@
 using Jobsy.Api.Models;
+using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +23,8 @@ public class SalesManagersController : ControllerBase
     private readonly IUserLookupService _users;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IHostEnvironment _environment;
+    private readonly ISupportAccessService _supportAccess;
+    private readonly IPersonalDataAccessLogger _accessLog;
 
     public SalesManagersController(
         ISalesManagerInviteService invite,
@@ -30,7 +35,9 @@ public class SalesManagersController : ControllerBase
         ISalesManagerPayoutService payouts,
         IUserLookupService users,
         ICompanyAuthorizationService companyAuth,
-        IHostEnvironment environment)
+        IHostEnvironment environment,
+        ISupportAccessService supportAccess,
+        IPersonalDataAccessLogger accessLog)
     {
         _invite = invite;
         _applications = applications;
@@ -41,6 +48,8 @@ public class SalesManagersController : ControllerBase
         _users = users;
         _companyAuth = companyAuth;
         _environment = environment;
+        _supportAccess = supportAccess;
+        _accessLog = accessLog;
     }
 
     [HttpPost("invite")]
@@ -79,13 +88,40 @@ public class SalesManagersController : ControllerBase
     public async Task<ActionResult<IEnumerable<SalesManagerListItemDto>>> List(CancellationToken cancellationToken)
     {
         var rows = await _dashboard.ListSalesManagersAsync(cancellationToken);
-        // Admin list: mask personal data by default (prompt 05).
-        var masked = rows.Select(r => r with
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var result = new List<SalesManagerListItemDto>(rows.Count);
+        foreach (var r in rows)
         {
-            Email = Jobsy.Core.Privacy.PersonalDataMasker.MaskEmail(r.Email),
-            FullName = Jobsy.Core.Privacy.PersonalDataMasker.MaskName(r.FullName)
-        }).ToList();
-        return Ok(masked);
+            Guid? grantId = null;
+            if (actor is not null)
+            {
+                grantId = await _supportAccess.FindActiveGrantIdAsync(
+                    actor.Id, r.UserId, null, SupportAccessScope.Contact, cancellationToken);
+            }
+
+            var reveal = grantId is not null;
+            if (reveal && actor is not null)
+            {
+                await this.LogPersonalDataAccessAsync(
+                    _accessLog,
+                    actor.Id,
+                    PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                    "salesmanager.contact.reveal",
+                    "reveal",
+                    subjectUserId: r.UserId,
+                    reason: "support-access",
+                    supportAccessGrantId: grantId,
+                    cancellationToken: cancellationToken);
+            }
+
+            result.Add(r with
+            {
+                Email = reveal ? r.Email : PersonalDataMasker.MaskEmail(r.Email),
+                FullName = reveal ? r.FullName : PersonalDataMasker.MaskName(r.FullName)
+            });
+        }
+
+        return Ok(result);
     }
 
     [HttpPost("me/applications")]

@@ -25,6 +25,7 @@ public class AdminController : ControllerBase
     private readonly IUserLookupService _users;
     private readonly ICompanyApiKeyService _apiKeys;
     private readonly IPersonalDataAccessLogger _accessLog;
+    private readonly ISupportAccessService _supportAccess;
 
     public AdminController(
         JobsyDbContext db,
@@ -32,7 +33,8 @@ public class AdminController : ControllerBase
         IVacancyProductService products,
         IUserLookupService users,
         ICompanyApiKeyService apiKeys,
-        IPersonalDataAccessLogger accessLog)
+        IPersonalDataAccessLogger accessLog,
+        ISupportAccessService supportAccess)
     {
         _db = db;
         _kvk = kvk;
@@ -40,6 +42,7 @@ public class AdminController : ControllerBase
         _users = users;
         _apiKeys = apiKeys;
         _accessLog = accessLog;
+        _supportAccess = supportAccess;
     }
 
     [HttpGet("companies")]
@@ -337,22 +340,49 @@ public class AdminController : ControllerBase
             })
             .ToListAsync(cancellationToken);
 
-        var items = pageRows.Select(u =>
+        var revealedAny = false;
+        var items = new List<AdminUserDetailDto>(pageRows.Count);
+        foreach (var u in pageRows)
         {
-            // Own admin record may stay unmasked; everyone else is masked by default.
+            // Own admin record may stay unmasked; others need an active Contact grant.
             var self = u.Id == actor.Id;
-            return new AdminUserDetailDto(
+            Guid? grantId = null;
+            var reveal = self;
+            if (!self)
+            {
+                grantId = await _supportAccess.FindActiveGrantIdAsync(
+                    actor.Id, u.Id, null, SupportAccessScope.Contact, cancellationToken);
+                reveal = grantId is not null;
+            }
+
+            if (reveal && !self)
+            {
+                revealedAny = true;
+                await this.LogPersonalDataAccessAsync(
+                    _accessLog,
+                    actor.Id,
+                    PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                    "admin.users.reveal",
+                    "reveal",
+                    subjectUserId: u.Id,
+                    subjectCompanyId: u.CompanyId,
+                    reason: "support-access",
+                    supportAccessGrantId: grantId,
+                    cancellationToken: cancellationToken);
+            }
+
+            items.Add(new AdminUserDetailDto(
                 u.Id,
-                self ? u.Email : PersonalDataMasker.MaskEmail(u.Email),
-                self ? u.FullName : PersonalDataMasker.MaskName(u.FullName),
+                reveal ? u.Email : PersonalDataMasker.MaskEmail(u.Email),
+                reveal ? u.FullName : PersonalDataMasker.MaskName(u.FullName),
                 u.Role,
                 u.CompanyId,
                 u.CompanyName,
                 u.CompanyType,
                 u.IsEarlyAdapter,
                 u.IsActive,
-                u.MembershipCompanyIds);
-        }).ToList();
+                u.MembershipCompanyIds));
+        }
 
         await this.LogPersonalDataAccessAsync(
             _accessLog,
@@ -360,7 +390,7 @@ public class AdminController : ControllerBase
             PersonalDataAccessLogExtensions.ResolveActorRole(User),
             "admin.users.list",
             "list",
-            reason: $"page={page};pageSize={pageSize};q={(q ?? "")};role={(role ?? "")};companyId={companyId};earlyOnly={earlyOnly}",
+            reason: $"page={page};pageSize={pageSize};q={(q ?? "")};role={(role ?? "")};companyId={companyId};earlyOnly={earlyOnly};revealed={revealedAny}",
             cancellationToken: cancellationToken);
 
         return Ok(new AdminUsersPageDto(
@@ -369,7 +399,7 @@ public class AdminController : ControllerBase
             page,
             pageSize,
             total,
-            Masked: true));
+            Masked: !revealedAny));
     }
 
     [HttpGet("personal-data-access-log")]
@@ -441,6 +471,87 @@ public class AdminController : ControllerBase
             cancellationToken: cancellationToken);
 
         return Ok(new PersonalDataAccessLogPageDto(items, page, pageSize, total));
+    }
+
+    [HttpPost("support-access")]
+    public async Task<ActionResult<SupportAccessGrantDto>> RequestSupportAccess(
+        [FromBody] SupportAccessRequestBody body,
+        CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var grant = await _supportAccess.RequestAsync(
+                actor.Id,
+                new SupportAccessRequest(
+                    body.SubjectUserId,
+                    body.SubjectCompanyId,
+                    body.Scope,
+                    body.Reason ?? "",
+                    body.TicketReference,
+                    body.DurationMinutes),
+                PersonalDataAccessLogExtensions.IsMfaVerifiedInSession(User),
+                cancellationToken);
+
+            await this.LogPersonalDataAccessAsync(
+                _accessLog,
+                actor.Id,
+                PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                "admin.support_access.grant",
+                "reveal",
+                subjectUserId: grant.SubjectUserId,
+                subjectCompanyId: grant.SubjectCompanyId,
+                reason: grant.Reason,
+                supportAccessGrantId: grant.Id,
+                cancellationToken: cancellationToken);
+
+            return Ok(grant);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("support-access/{grantId:guid}/revoke")]
+    public async Task<IActionResult> RevokeSupportAccess(Guid grantId, CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await _supportAccess.RevokeAsync(grantId, actor.Id, cancellationToken);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpGet("support-access")]
+    public async Task<ActionResult<IReadOnlyList<SupportAccessGrantDto>>> ListSupportAccess(
+        [FromQuery] bool activeOnly = false,
+        [FromQuery] int take = 50,
+        CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var rows = await _supportAccess.ListRecentAsync(take, activeOnly, cancellationToken);
+        return Ok(rows);
     }
 
     [HttpGet("vacancies")]

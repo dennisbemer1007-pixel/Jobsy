@@ -579,6 +579,23 @@ public class PersonalDataAccessLogPage
     public int TotalCount { get; set; }
 }
 
+public class SupportAccessGrantItem
+{
+    public Guid Id { get; set; }
+    public Guid AdminUserId { get; set; }
+    public Guid? SubjectUserId { get; set; }
+    public Guid? SubjectCompanyId { get; set; }
+    /// <summary>Flags enum serialized as string by the API (JsonStringEnumConverter).</summary>
+    public string Scope { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    public string? TicketReference { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+    public DateTime? RevokedAt { get; set; }
+    public Guid? RevokedByUserId { get; set; }
+    public bool IsActive { get; set; }
+}
+
 public class AdminVacancyItem
 {
     public Guid Id { get; set; }
