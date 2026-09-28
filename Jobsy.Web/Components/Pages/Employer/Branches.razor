@@ -4,9 +4,11 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager")]
 @using Jobsy.Web.Components.Employer
 @using Jobsy.Web.Components.Shared
+@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IHostEnvironment Env
+@inject AuthenticationStateProvider AuthState
 @implements IDisposable
 
 <PageTitle>@Culture["Employer.Branches"] · Lobsy</PageTitle>
@@ -22,6 +24,10 @@
         <div>
             <h1>@Culture["Employer.Branches"]</h1>
             <p class="login-lead">Vestigingen beheren en managers uitnodigen.</p>
+            @if (_isRegionalReadOnly)
+            {
+                <p class="profile-address__hint">@Culture["Employer.RegionalReadOnlyNotice"]</p>
+            }
         </div>
     </header>
 
@@ -176,6 +182,7 @@
     private List<KvkEstablishmentItem> _establishments = [];
     private bool _loading = true;
     private bool _busy;
+    private bool _isRegionalReadOnly;
     private string? _error;
     private string? _message;
     private string _kvkNumber = "11223344";
@@ -201,6 +208,9 @@
     {
         try
         {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var user = auth.User;
+            _isRegionalReadOnly = user.IsInRole("RegionalManager") && !user.IsInRole("EnterpriseManager");
             await ReloadCompaniesAsync();
         }
         catch (Exception ex)

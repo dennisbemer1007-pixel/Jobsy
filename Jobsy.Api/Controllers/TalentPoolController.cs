@@ -68,6 +68,7 @@ public sealed class TalentPoolController : ControllerBase
     }
 
     [HttpPost("unlock")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<TalentContactRequestDto>> Unlock(
         [FromBody] TalentUnlockRequest body,
@@ -95,6 +96,7 @@ public sealed class TalentPoolController : ControllerBase
     }
 
     [HttpPost("{requestId:guid}/withdraw")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<TalentContactRequestDto>> Withdraw(
         Guid requestId,

@@ -4,7 +4,11 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
+@using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>@Culture["Talent.Title"] · Lobsy</PageTitle>
 
@@ -13,6 +17,10 @@
         <h1>@Culture["Talent.Title"]</h1>
         <p class="login-lead">@Culture["Talent.Lead"]</p>
         <p class="profile-address__hint">@Culture["Talent.NoAge"]</p>
+        @if (!_canMutate)
+        {
+            <p class="profile-address__hint">@Culture["Employer.RegionalReadOnlyNotice"]</p>
+        }
         <p><a href="/employer/talent-contacts">@Culture["Talent.EmployerContactsTitle"]</a></p>
     </header>
 
@@ -86,9 +94,12 @@
                             @(card.CareerDeepCompleted ? " Beroepen-diepte-analyse voltooid" : "")
                         </p>
                     }
-                    <button class="login-submit" type="button" @onclick="() => UnlockAsync(card.CandidateUserId)">
-                        @Culture["Talent.Unlock"]
-                    </button>
+                    @if (_canMutate)
+                    {
+                        <button class="login-submit" type="button" @onclick="() => UnlockAsync(card.CandidateUserId)">
+                            @Culture["Talent.Unlock"]
+                        </button>
+                    }
                 </div>
             }
         </div>
@@ -97,6 +108,7 @@
 
 @code {
     private bool _loading;
+    private bool _canMutate = true;
     private string? _message;
     private string _tags = "";
     private int? _maxTravel = 45;
@@ -105,7 +117,25 @@
     private string _transport = TransportLabels.Bike;
     private List<AnonymousTalentCard> _results = [];
 
-    protected override async Task OnInitializedAsync() => await SearchAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _canMutate = ResolveCanMutate(auth.User);
+        await SearchAsync();
+    }
+
+    private static bool ResolveCanMutate(System.Security.Claims.ClaimsPrincipal user)
+    {
+        foreach (UserRole role in Enum.GetValues<UserRole>())
+        {
+            if (RoleClaimMatching.HasRole(user, role.ToString()) && JobsyRoles.CanMutateEmployerData(role))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private async Task SearchAsync()
     {

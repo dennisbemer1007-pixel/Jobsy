@@ -17,6 +17,10 @@
         <div>
             <h1>@(_hasSalesReferral ? Culture["Nav.BalanceAndTracking"] : Culture["Employer.MyTokens"])</h1>
             <p class="login-lead">@_lead</p>
+            @if (_isRegionalReadOnly)
+            {
+                <p class="profile-address__hint">@Culture["Employer.RegionalReadOnlyNotice"]</p>
+            }
         </div>
         @if (_canAllocate && !_isPartnerAffiliate)
         {
@@ -434,6 +438,7 @@
     private bool _canPurchaseOwn;
     private bool _canManageTokenFlags;
     private bool _isBranchManager;
+    private bool _isRegionalReadOnly;
     private bool _hasOrgHierarchy;
     private bool _hasSalesReferral;
     private bool _isPartnerAffiliate;
@@ -487,6 +492,11 @@
             var state = await AuthState.GetAuthenticationStateAsync();
             var user = state.User;
             _isBranchManager = user.IsInRole("BranchManager");
+            _isRegionalReadOnly = user.IsInRole("RegionalManager")
+                && !user.IsInRole("EnterpriseManager")
+                && !user.IsInRole("BranchManager")
+                && !user.IsInRole("Intermediary")
+                && !user.IsInRole("Admin");
             _hasSalesReferral = user.HasClaim(Jobsy.Core.Authorization.JobsyClaimTypes.HasSalesReferral, "1");
             _canAllocate = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
             _canManageTokenFlags = _canAllocate;

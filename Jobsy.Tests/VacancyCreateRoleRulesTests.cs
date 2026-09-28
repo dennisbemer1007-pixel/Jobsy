@@ -41,4 +41,13 @@ public class VacancyCreateRoleRulesTests
     [InlineData(UserRole.BranchManager, false)]
     public void CanAllocateTokens_is_enterprise_or_admin(UserRole role, bool expected)
         => Assert.Equal(expected, JobsyRoles.CanAllocateTokens(role));
+
+    [Theory]
+    [InlineData(UserRole.BranchManager, true)]
+    [InlineData(UserRole.EnterpriseManager, true)]
+    [InlineData(UserRole.Intermediary, true)]
+    [InlineData(UserRole.Admin, true)]
+    [InlineData(UserRole.RegionalManager, false)]
+    public void CanMutateEmployerData_blocks_regional_manager(UserRole role, bool expected)
+        => Assert.Equal(expected, JobsyRoles.CanMutateEmployerData(role));
 }

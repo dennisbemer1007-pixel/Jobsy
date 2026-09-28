@@ -2,11 +2,15 @@
 @page "/branch/culture"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>@Culture["CultureScan.EmployerTitle"] · Lobsy</PageTitle>
 
@@ -14,6 +18,10 @@
     <header class="saved-gate__header profile-page__header">
         <h1>@Culture["CultureScan.EmployerTitle"]</h1>
         <p class="login-lead">@Culture["CultureScan.EmployerLead"]</p>
+        @if (!_canMutate)
+        {
+            <p class="profile-address__hint">@Culture["Employer.RegionalReadOnlyNotice"]</p>
+        }
     </header>
 
     <article class="detail-card">
@@ -57,6 +65,7 @@
                                                name="@($"eq{question.Id}")"
                                                id="@id"
                                                value="@current"
+                                               disabled="@(!_canMutate)"
                                                checked="@(_answers.TryGetValue(question.Id, out var v) && v == current)"
                                                @onchange="() => SetAnswer(question.Id, current)" />
                                         <span>@Culture[$"Competency.Likert.{current}"]</span>
@@ -68,18 +77,25 @@
                 </fieldset>
             }
 
-            <div class="profile-save-bar">
-                <button class="engagement-btn" type="button" disabled="@_saving" @onclick="SaveDraftAsync">
-                    @Culture["Competency.SaveDraft"]
-                </button>
-                <button class="login-submit" type="button" disabled="@(_saving || AnsweredCultureCount < 12)" @onclick="CompleteAsync">
-                    @Culture["Competency.Complete"]
-                </button>
-                @if (!string.IsNullOrEmpty(_message))
-                {
-                    <p class="state-message profile-save-bar__message">@_message</p>
-                }
-            </div>
+            @if (_canMutate)
+            {
+                <div class="profile-save-bar">
+                    <button class="engagement-btn" type="button" disabled="@_saving" @onclick="SaveDraftAsync">
+                        @Culture["Competency.SaveDraft"]
+                    </button>
+                    <button class="login-submit" type="button" disabled="@(_saving || AnsweredCultureCount < 12)" @onclick="CompleteAsync">
+                        @Culture["Competency.Complete"]
+                    </button>
+                    @if (!string.IsNullOrEmpty(_message))
+                    {
+                        <p class="state-message profile-save-bar__message">@_message</p>
+                    }
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
 
             @if (_scores is { } scores)
             {
@@ -94,6 +110,7 @@
     private bool _loading = true;
     private bool _saving;
     private bool _loadFailed;
+    private bool _canMutate = true;
     private string? _message;
     private readonly Dictionary<int, int> _answers = [];
     private CulturePersonalityScoreSet? _scores;
@@ -102,6 +119,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _canMutate = ResolveCanMutate(auth.User);
         try
         {
             var state = await Api.GetCompanyCultureAsync();
@@ -130,8 +149,26 @@
         }
     }
 
+    private static bool ResolveCanMutate(System.Security.Claims.ClaimsPrincipal user)
+    {
+        foreach (UserRole role in Enum.GetValues<UserRole>())
+        {
+            if (RoleClaimMatching.HasRole(user, role.ToString()) && JobsyRoles.CanMutateEmployerData(role))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void SetAnswer(int id, int value)
     {
+        if (!_canMutate)
+        {
+            return;
+        }
+
         _answers[id] = value;
         _message = null;
     }
@@ -141,6 +178,11 @@
 
     private async Task PersistAsync(bool complete)
     {
+        if (!_canMutate)
+        {
+            return;
+        }
+
         _saving = true;
         _message = null;
         try

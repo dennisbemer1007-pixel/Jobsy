@@ -75,5 +75,26 @@ public static class JobsyRoles
     public const string TokenAllocateRoles =
         $"{EnterpriseManager},{Admin}";
 
+    /// <summary>
+    /// Employer roles that may mutate talent unlocks, culture, onboarding checkout, etc.
+    /// RegionalManager is read-only.
+    /// </summary>
+    public const string EmployerMutateRoles =
+        $"{BranchManager},{EnterpriseManager},{Intermediary}";
+
+    /// <summary>
+    /// Same as <see cref="EmployerMutateRoles"/> plus Admin (e.g. supplier onboarding).
+    /// RegionalManager is read-only.
+    /// </summary>
+    public const string EmployerMutateRolesWithAdmin =
+        $"{BranchManager},{EnterpriseManager},{Intermediary},{Admin}";
+
+    /// <summary>RegionalManager is read-only for employer data mutations.</summary>
+    public static bool CanMutateEmployerData(UserRole role) =>
+        role is UserRole.BranchManager
+            or UserRole.EnterpriseManager
+            or UserRole.Intermediary
+            or UserRole.Admin;
+
     public static bool RequiresCompanyLink(UserRole role) => IsEmployer(role);
 }

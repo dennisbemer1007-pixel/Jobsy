@@ -4,6 +4,7 @@ using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -135,7 +136,22 @@ public class SalaryTablesController : ControllerBase
             .Where(t => t.Id == id)
             .Select(t => new { t.Id, t.CompanyId })
             .FirstOrDefaultAsync(cancellationToken);
-        if (existing is not null)
+        if (existing is null)
+        {
+            return NotFound();
+        }
+
+        try
+        {
+            await EnsureCanManageOrganizationTablesAsync(existing.CompanyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        // RegionalManager is read-only — do not trigger FillEmpty DB writes on GET.
+        if (_companyAuth.GetPrimaryRole(User) != UserRole.RegionalManager)
         {
             var organizationId = await WmlSalaryTableService.ResolveOrganizationIdAsync(
                 _db, existing.CompanyId, cancellationToken);
@@ -157,15 +173,6 @@ public class SalaryTablesController : ControllerBase
         if (table is null)
         {
             return NotFound();
-        }
-
-        try
-        {
-            await EnsureCanManageOrganizationTablesAsync(table.CompanyId, cancellationToken);
-        }
-        catch (Core.Exceptions.ForbiddenCompanyAccessException)
-        {
-            return Forbid();
         }
 
         var count = await _db.Vacancies.CountAsync(v => v.SalaryTableId == id, cancellationToken);

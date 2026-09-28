@@ -1,6 +1,6 @@
 @page "/employer/onboarding-checkout"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@attribute [Authorize(Roles = "BranchManager,EnterpriseManager,Intermediary,Admin")]
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthState

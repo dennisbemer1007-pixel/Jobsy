@@ -41,6 +41,7 @@ public sealed class CompanyCultureController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<CompanyCultureStateDto>> Save(
         [FromQuery] Guid? companyId,

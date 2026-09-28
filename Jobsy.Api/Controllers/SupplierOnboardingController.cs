@@ -25,6 +25,7 @@ public class SupplierOnboardingController : ControllerBase
     }
 
     [HttpPost("checkout")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRolesWithAdmin)]
     public async Task<ActionResult<SupplierOnboardingCheckoutResult>> CreateCheckout(
         Guid companyId,
         CancellationToken cancellationToken)
@@ -54,6 +55,7 @@ public class SupplierOnboardingController : ControllerBase
     }
 
     [HttpPost("complete")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRolesWithAdmin)]
     public async Task<ActionResult<SupplierOnboardingCompleteResult>> Complete(
         Guid companyId,
         [FromBody] CompleteOnboardingCheckoutRequest request,

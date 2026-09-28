@@ -1,10 +1,13 @@
 @page "/employer/talent-contacts"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Authorization
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
+@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>@Culture["Talent.Title"] · Lobsy</PageTitle>
 
@@ -12,6 +15,10 @@
     <header class="saved-gate__header">
         <h1>@Culture["Talent.EmployerContactsTitle"]</h1>
         <p class="login-lead">@Culture["Talent.EmployerContactsLead"]</p>
+        @if (!_canMutate)
+        {
+            <p class="profile-address__hint">@Culture["Employer.RegionalReadOnlyNotice"]</p>
+        }
         <p><a href="/employer/talent">← @Culture["Talent.Title"]</a></p>
     </header>
 
@@ -38,13 +45,13 @@
             else
             {
                 <p class="profile-address__hint">@Culture["Talent.StillAnonymous"]</p>
-                @if (CanWithdraw(row))
+                @if (_canMutate && CanWithdraw(row))
                 {
                     <button class="engagement-btn" type="button" @onclick="() => WithdrawAsync(row.Id)">
                         @Culture["Talent.Withdraw"]
                     </button>
                 }
-                else
+                else if (_canMutate)
                 {
                     <p class="profile-address__hint">@Culture["Talent.WithdrawWait"]</p>
                 }
@@ -56,10 +63,26 @@
 @code {
     private List<TalentContactRequestModel> _rows = [];
     private string? _message;
+    private bool _canMutate = true;
 
     protected override async Task OnInitializedAsync()
     {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _canMutate = ResolveCanMutate(auth.User);
         _rows = await Api.ListEmployerTalentContactsAsync() ?? [];
+    }
+
+    private static bool ResolveCanMutate(System.Security.Claims.ClaimsPrincipal user)
+    {
+        foreach (UserRole role in Enum.GetValues<UserRole>())
+        {
+            if (RoleClaimMatching.HasRole(user, role.ToString()) && JobsyRoles.CanMutateEmployerData(role))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool CanWithdraw(TalentContactRequestModel row)
