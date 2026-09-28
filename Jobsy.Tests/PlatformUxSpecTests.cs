@@ -57,8 +57,7 @@ public class PlatformUxSpecTests
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains(".job-map .maplibregl-popup", css);
         Assert.Contains("z-index: 40 !important", css);
-        Assert.Contains(".travel-ring-label", css);
-        Assert.Contains("z-index: 1 !important", css);
+        // .travel-ring-label rules were unused (dead CSS) and removed; popup stacking remains.
         Assert.DoesNotContain("z-index: 1200 !important", css);
     }
 
