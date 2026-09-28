@@ -129,24 +129,26 @@
                         <p class="application-card__company">@a.CompanyName</p>
                         <span class="visually-hidden">@string.Format(Culture["Apps.StatusNow"], StatusPillLabel(a.Status))</span>
                         <div class="application-card__footer">
-                            <span class="application-card__pill application-card__pill--@PillModifier(a.Status)">
-                                <span class="application-card__pill-dot" aria-hidden="true"></span>
-                                @StatusPillLabel(a.Status)
-                            </span>
-                            <span class="application-card__progress" aria-hidden="true">
-                                @if (rejectedTrack)
-                                {
-                                    <span class="application-card__seg"></span>
-                                    <span class="application-card__seg"></span>
-                                }
-                                else
-                                {
-                                    @for (var i = 0; i < 4; i++)
+                            <div class="application-card__status">
+                                <span class="application-card__pill application-card__pill--@PillModifier(a.Status)">
+                                    <span class="application-card__pill-dot" aria-hidden="true"></span>
+                                    @StatusPillLabel(a.Status)
+                                </span>
+                                <span class="application-card__progress" aria-hidden="true">
+                                    @if (rejectedTrack)
                                     {
-                                        <span class="application-card__seg @(i <= current ? "is-done" : null)"></span>
+                                        <span class="application-card__seg"></span>
+                                        <span class="application-card__seg"></span>
                                     }
-                                }
-                            </span>
+                                    else
+                                    {
+                                        @for (var i = 0; i < 4; i++)
+                                        {
+                                            <span class="application-card__seg @(i <= current ? "is-done" : null)"></span>
+                                        }
+                                    }
+                                </span>
+                            </div>
                             <time class="application-card__date"
                                   datetime="@a.CreatedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")"
                                   title="@AppliedOnFullLabel(a.CreatedAt)"
