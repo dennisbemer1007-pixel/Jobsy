@@ -11671,19 +11671,6 @@ button.linkish:hover {
     }
 }
 
-.profile-entry-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.45rem;
-    align-items: center;
-    margin-bottom: 0.45rem;
-}
-
-.profile-entry-row input {
-    min-width: 0;
-    width: 100%;
-}
-
 .profile-employers {
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -11831,23 +11818,6 @@ button.linkish:hover {
 
 .profile-employers > .icon-btn--add {
     align-self: flex-start;
-}
-
-.profile-address-cv {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.55rem;
-    margin: 0.65rem 0 0;
-    font-size: 0.92rem;
-    font-weight: 500;
-    line-height: 1.35;
-    text-transform: none;
-    letter-spacing: normal;
-}
-
-.profile-address-cv input {
-    margin-top: 0.2rem;
-    flex-shrink: 0;
 }
 
 .profile-certificates {
@@ -12777,10 +12747,6 @@ a.apply-flow__secondary {
     pointer-events: auto;
 }
 
-.lobsy-assistant__fab {
-    display: none !important;
-}
-
 .lobsy-assistant__panel {
     width: min(380px, calc(100vw - 1.5rem));
     max-height: min(70vh, 560px);
@@ -13228,26 +13194,6 @@ html.cookie-consent-known .cookie-consent {
     gap: 0.35rem 0.75rem;
 }
 
-.category-filter {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.category-filter--desktop {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.45rem 0.85rem;
-    margin: 0.35rem 0 0.65rem;
-}
-
-.category-filter__option {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
 .map-legend {
     position: absolute;
     top: 0.55rem;
@@ -13365,10 +13311,6 @@ html.cookie-consent-known .cookie-consent {
         top: 0.4rem;
         right: 0.4rem;
     }
-
-    .category-filter--desktop {
-        display: none;
-    }
 }
 
 /* Geschikt voor 65+ label */
@@ -13397,20 +13339,9 @@ html.cookie-consent-known .cookie-consent {
     font-size: 0.88rem;
 }
 
-.suitable65-inline {
-    color: #f3e8ff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
 .job-card__badge--senior65 {
     background: var(--senior65-color, #5B21B6);
     color: #fff;
-}
-
-.suitable65-filter {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
 }
 
 .vacancy-detail-category {
@@ -14659,34 +14590,6 @@ html.cookie-consent-known .cookie-consent {
     text-decoration: underline;
 }
 
-.contact-icons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.45rem;
-}
-
-.contact-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.4rem;
-    height: 2.4rem;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--brand);
-    text-decoration: none;
-}
-
-.contact-icon:hover {
-    background: color-mix(in srgb, var(--brand) 10%, var(--surface));
-}
-
-.contact-icon svg {
-    width: 1.15rem;
-    height: 1.15rem;
-}
-
 .users-page {
     min-width: 0;
     max-width: 100%;
@@ -14743,26 +14646,6 @@ html.cookie-consent-known .cookie-consent {
         flex: 0 1 22rem;
         width: min(22rem, 100%);
     }
-}
-
-.users-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.users-table th,
-.users-table td {
-    padding: 0.65rem 0.55rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-}
-
-.users-table__person {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    min-width: 0;
 }
 
 .user-avatar {
@@ -15098,11 +14981,6 @@ html.cookie-consent-known .cookie-consent {
     text-transform: uppercase;
 }
 
-.token-pack-options--vertical {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: none;
-}
-
 .token-pack-options--vertical .scope-option.is-selected::after {
     content: "✓";
     margin-left: auto;
@@ -15227,41 +15105,11 @@ html.cookie-consent-known .cookie-consent {
         white-space: normal;
     }
 
-    .users-table thead {
-        display: none;
-    }
-
-    .users-table,
-    .users-table tbody,
-    .users-table tr,
-    .users-table th,
-    .users-table td {
-        display: block;
-        width: 100%;
-    }
-
-    .users-table tr {
-        margin-bottom: 0.65rem;
-        padding: 0.7rem;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: var(--surface);
-    }
-
     .users-toolbar input,
     .users-toolbar select,
     .login-submit,
     .btn-compact {
         min-height: 2.6rem;
-    }
-
-    .users-table td::before {
-        content: attr(data-label);
-        font-weight: 650;
-        color: var(--muted);
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
     }
 
     .data-table thead,
