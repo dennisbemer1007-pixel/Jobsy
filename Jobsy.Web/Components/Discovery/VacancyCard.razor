@@ -1,0 +1,136 @@
+@namespace Jobsy.Web.Components.Discovery
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<article class="job-card @(IsHighlighted ? "job-card--highlight" : null) @(IsPressed ? "is-pressed" : null)"
+         data-vacancy-id="@Vacancy.Id"
+         @onclick="HandleSelect">
+    <a class="job-card__stretch-link"
+       href="@($"/vacancies/{Vacancy.Id}")"
+       aria-label="@Vacancy.Title"
+       @onclick="HandleOpen"
+       @onclick:stopPropagation="true"></a>
+    <a class="job-card__media" href="@($"/vacancies/{Vacancy.Id}")" @onclick="HandleOpen" @onclick:stopPropagation="true">
+        <VacancyPhoto Src="@Vacancy.ImageUrl"
+                      FallbackSrc="@Vacancy.CompanyLogoUrl"
+                      VacancyId="Vacancy.Id"
+                      WorkType="@(Vacancy.WorkTypes.FirstOrDefault())"
+                      Class="job-card__photo"
+                      Width="400"
+                      Height="267"
+                      Sizes="(max-width: 700px) 50vw, 360px" />
+        @if (IsHighlighted)
+        {
+            <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
+        }
+        else if (!string.IsNullOrWhiteSpace(Vacancy.ExclusivityName)
+                 && string.Equals(Vacancy.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
+                 && !Vacancy.ExclusivityIsOpen)
+        {
+            <span class="job-card__badge job-card__badge--soft">@Vacancy.ExclusivityName</span>
+        }
+        else if (ShowsSuitableFor65Plus)
+        {
+            <span class="job-card__badge job-card__badge--senior65">@VacancyCategoryDefaults.SuitableFor65PlusLabel</span>
+        }
+        else if (Vacancy.WorkTypes.Length > 0)
+        {
+            <span class="job-card__badge job-card__badge--soft">@UiLabels.WorkType(Culture, Vacancy.WorkTypes[0])</span>
+        }
+        <div class="job-card__overlay">
+            <h2>@Vacancy.Title</h2>
+            @if (Vacancy.MatchPercent is int matchPct)
+            {
+                <p class="job-card__match">
+                    <span class="match-score match-score--@(Vacancy.MatchColorBand ?? "orange")">@Culture.Format("Discovery.MatchPercent", matchPct)</span>
+                    <button type="button"
+                            class="competency-help job-card__match-help"
+                            title="@Culture["Discovery.MatchWhy"]"
+                            aria-label="@Culture["Discovery.MatchWhy"]"
+                            @onclick="HandleExplain"
+                            @onclick:stopPropagation="true"
+                            @onclick:preventDefault="true">?</button>
+                </p>
+                @if (!string.IsNullOrWhiteSpace(Vacancy.CultureFitLabel))
+                {
+                    <span class="culture-fit culture-fit--@(Vacancy.CultureFitBand ?? "mid")">@Vacancy.CultureFitLabel</span>
+                }
+            }
+            <p class="job-card__travel">
+                <LobsyMark Compact="true" />
+                <span>@TravelText</span>
+            </p>
+            @if (!string.IsNullOrEmpty(WageText))
+            {
+                <p class="job-card__wage">@WageText</p>
+            }
+        </div>
+    </a>
+    <div class="job-card__footer">
+        <p class="job-card__company">@(string.IsNullOrWhiteSpace(Vacancy.OfferedByLabel) ? Vacancy.CompanyName : Vacancy.OfferedByLabel)</p>
+        <p class="job-card__location">@Vacancy.CompanyAddress</p>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public VacancyListItem Vacancy { get; set; } = new();
+    [Parameter] public bool IsHighlighted { get; set; }
+    [Parameter] public bool IsPressed { get; set; }
+    [Parameter] public string TravelText { get; set; } = "";
+    [Parameter] public string? WageText { get; set; }
+    [Parameter] public EventCallback<Guid> OnSelect { get; set; }
+    [Parameter] public EventCallback<Guid> OnOpen { get; set; }
+    [Parameter] public EventCallback<VacancyListItem> OnExplainMatch { get; set; }
+
+    private Guid _renderVacancyId;
+    private bool _renderHighlighted;
+    private bool _renderPressed;
+    private string _renderTravel = "";
+    private string? _renderWage;
+    private string _renderTitle = "";
+    private int? _renderMatch;
+    private string? _renderCultureFit;
+    private string? _renderCompany;
+    private string? _renderImage;
+
+    private bool ShowsSuitableFor65Plus
+        => VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(Vacancy.CategoryId, Vacancy.SuitableFor65Plus);
+
+    protected override bool ShouldRender()
+    {
+        var company = string.IsNullOrWhiteSpace(Vacancy.OfferedByLabel) ? Vacancy.CompanyName : Vacancy.OfferedByLabel;
+        if (_renderVacancyId == Vacancy.Id
+            && _renderHighlighted == IsHighlighted
+            && _renderPressed == IsPressed
+            && string.Equals(_renderTravel, TravelText, StringComparison.Ordinal)
+            && string.Equals(_renderWage, WageText, StringComparison.Ordinal)
+            && string.Equals(_renderTitle, Vacancy.Title, StringComparison.Ordinal)
+            && _renderMatch == Vacancy.MatchPercent
+            && string.Equals(_renderCultureFit, Vacancy.CultureFitLabel, StringComparison.Ordinal)
+            && string.Equals(_renderCompany, company, StringComparison.Ordinal)
+            && string.Equals(_renderImage, Vacancy.ImageUrl, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        _renderVacancyId = Vacancy.Id;
+        _renderHighlighted = IsHighlighted;
+        _renderPressed = IsPressed;
+        _renderTravel = TravelText;
+        _renderWage = WageText;
+        _renderTitle = Vacancy.Title;
+        _renderMatch = Vacancy.MatchPercent;
+        _renderCultureFit = Vacancy.CultureFitLabel;
+        _renderCompany = company;
+        _renderImage = Vacancy.ImageUrl;
+        return true;
+    }
+
+    private Task HandleSelect() => OnSelect.InvokeAsync(Vacancy.Id);
+
+    private Task HandleOpen() => OnOpen.InvokeAsync(Vacancy.Id);
+
+    private Task HandleExplain() => OnExplainMatch.InvokeAsync(Vacancy);
+}
