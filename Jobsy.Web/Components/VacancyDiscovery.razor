@@ -6,12 +6,17 @@
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
 @inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
+@inject MatchVacancyService MatchVacancies
+@inject CandidateMatchProfileService MatchProfile
 @implements IAsyncDisposable
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Discovery
+@using Jobsy.Web.Components.Match
 @using Jobsy.Web.Hosting
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @using System.Text.Json
@@ -519,15 +524,19 @@
     </aside>
 
     <section class="map-pane" aria-label="@Culture["Page.JobMapTitle"]">
-        @if (RendererInfo.IsInteractive && _mapPainted && _vacancies.Count > 0)
+        @if (RendererInfo.IsInteractive && _mapPainted && (_vacancies.Count > 0 || ShowTopMatchTile))
         {
             <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
                                       ActiveId="_hoveredId"
                                       ModifierClass="highlight-carousel--map"
                                       FormatTravel="FormatCarouselTravel"
                                       OnHover="OnHover"
-                                      OnSelect="OnCarouselSelect" />
+                                      OnSelect="OnCarouselSelect"
+                                      LeadingItem="@(ShowTopMatchTile ? TopMatchLeadingFragment : null)" />
         }
+        <MatchDeckDialog Deck="_matchDeck"
+                         IsOpen="_matchDialogOpen"
+                         OnClose="CloseMatchDialogAsync" />
         <div class="map-stage @(_mapPainted ? "is-live" : null)">
             <script type="application/json" id="jobsy-map-boot">@((MarkupString)MapBootPinsJson())</script>
             <div class="job-map-placeholder" aria-hidden="true"></div>
@@ -965,6 +974,19 @@
     private decimal? _minHourlyWage;
     private decimal? _maxHourlyWage;
     private bool _isCandidate;
+    private readonly MatchDeck _matchDeck = new();
+    private bool _matchDeckLoadStarted;
+    private bool _matchDialogOpen;
+    private TopMatchTile? _topMatchTile;
+    private bool ShowTopMatchTile =>
+        TopMatchTileVisibility.ShouldShow(
+            _wideViewport,
+            _isCandidate,
+            _matchDeck.Gate.IsProfileComplete,
+            _matchDeck.Count)
+        && _matchDeck.IsLoaded
+        && !_matchDeck.LoadFailed
+        && _matchDeck.Current is not null;
     private bool _canShowMyVacancies;
     private bool _myVacanciesOnly;
     private bool _myVacanciesLoading;
@@ -1169,6 +1191,77 @@
             minutes,
             UiLabels.TransportVerb(Culture, _selectedTransport));
     }
+
+    private string FormatTopMatchTravel(SwipeViewModel? model)
+    {
+        if (model?.TravelTimeMinutes is not int minutes || minutes <= 0)
+        {
+            return string.Empty;
+        }
+
+        return Culture.Format(
+            "Discovery.TravelModeMinutes",
+            minutes,
+            UiLabels.TransportVerb(Culture, _selectedTransport));
+    }
+
+    private async Task EnsureDesktopMatchDeckAsync()
+    {
+        if (_matchDeckLoadStarted || !_wideViewport || !_isCandidate || !_mapPainted)
+        {
+            return;
+        }
+
+        _matchDeckLoadStarted = true;
+        try
+        {
+            await _matchDeck.LoadAsync(MatchProfile, MatchVacancies, take: 24, orderByMatch: true);
+        }
+        catch
+        {
+            // Tile stays hidden on failure.
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private Task OpenMatchDialogAsync()
+    {
+        if (!ShowTopMatchTile)
+        {
+            return Task.CompletedTask;
+        }
+
+        _matchDialogOpen = true;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CloseMatchDialogAsync()
+    {
+        _matchDialogOpen = false;
+        await InvokeAsync(StateHasChanged);
+        if (_topMatchTile is not null)
+        {
+            try
+            {
+                await _topMatchTile.FocusAsync();
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    private RenderFragment TopMatchLeadingFragment => builder =>
+    {
+        builder.OpenComponent<TopMatchTile>(0);
+        builder.AddComponentReferenceCapture(1, inst => _topMatchTile = (TopMatchTile)inst);
+        builder.AddAttribute(2, "Model", _matchDeck.Current);
+        builder.AddAttribute(3, "TravelText", FormatTopMatchTravel(_matchDeck.Current));
+        builder.AddAttribute(4, "IsOpen", _matchDialogOpen);
+        builder.AddAttribute(5, "OnOpen", EventCallback.Factory.Create(this, OpenMatchDialogAsync));
+        builder.CloseComponent();
+    };
 
     private string EffectiveSortMode =>
         _sortMode == "distance" && _origin is null
@@ -1844,6 +1937,10 @@
             {
                 _wideViewport = wide;
                 await InvokeAsync(StateHasChanged);
+                if (_wideViewport)
+                {
+                    _ = EnsureDesktopMatchDeckAsync();
+                }
             }
         }
         catch (JSException)
@@ -2147,6 +2244,7 @@
 
                 _mapPainted = true;
                 await InvokeAsync(StateHasChanged);
+                _ = EnsureDesktopMatchDeckAsync();
                 _ = RefreshMapSizeAsync();
                 _ = TryFocusCompanyOnMapAsync();
             }

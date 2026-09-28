@@ -5,7 +5,7 @@
 @if (_visible && Model is not null)
 {
     <div class="swipe-card-stage @(IsBackdrop ? "swipe-card-stage--backdrop" : null)">
-        <article class="swipe-card @_animClass @(_dragging ? "is-dragging" : null) @(IsBackdrop ? "swipe-card--backdrop" : "swipe-card--enter") @(_lifting ? "is-lifting" : null)"
+        <article class="swipe-card @_animClass @(_dragging ? "is-dragging" : null) @(IsBackdrop ? "swipe-card--backdrop" : "swipe-card--enter") @(_lifting ? "is-lifting" : null) @(Variant == SwipeCardVariant.Dialog ? "swipe-card--dialog" : null)"
                  style="@CardStyle"
                  @ontouchstart="OnPointerDown"
                  @ontouchmove="OnTouchMove"
@@ -18,7 +18,7 @@
                  @onpointerleave="OnMouseLeave">
             @if (Model.ShowMatchPercentage && Model.MatchPercentage is int pct)
             {
-                <div class="swipe-card__match-hero" title="Matchpercentage">
+                <div class="swipe-card__match-hero" title="@Culture["Match.Percentage"]">
                     <span class="swipe-card__match-hero-label">Match</span>
                     <span class="swipe-card__match-hero-value">@pct%</span>
                 </div>
@@ -60,7 +60,7 @@
                 }
             </div>
 
-            <div class="swipe-card__stats" role="group" aria-label="Kerngegevens">
+            <div class="swipe-card__stats" role="group" aria-label="@Culture["Match.KeyFacts"]">
                 <div class="swipe-card__stat">
                     <span class="swipe-card__stat-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -111,7 +111,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.WhyYouFit))
                 {
                     <p class="swipe-card__why">
-                        <span class="swipe-card__why-label">Waarom jij past</span>
+                        <span class="swipe-card__why-label">@Culture["Match.WhyYouFit"]</span>
                         @Model.WhyYouFit
                     </p>
                 }
@@ -128,14 +128,14 @@
                         <path d="M4 6h10M4 12h10M4 18h7"/>
                         <path d="m14 9 5 3-5 3"/>
                     </svg>
-                    Meer info
+                    @Culture["Match.MoreInfo"]
                 </button>
             }
         </article>
 
         @if (!IsBackdrop)
         {
-            <div class="swipe-actions" role="group" aria-label="Match-acties">
+            <div class="swipe-actions @(Variant == SwipeCardVariant.Dialog ? "swipe-actions--dialog" : null)" role="group" aria-label="@Culture["Match.Actions"]">
                 <button type="button"
                         class="swipe-actions__btn swipe-actions__btn--reject @(_pressedReject ? "is-pressed" : null)"
                         disabled="@_animating"
@@ -145,7 +145,7 @@
                             <path d="M7 7l10 10M17 7 7 17"/>
                         </svg>
                     </span>
-                    <span class="swipe-actions__label">Laten schieten</span>
+                    <span class="swipe-actions__label">@Culture["Match.Reject"]</span>
                 </button>
                 <button type="button"
                         class="swipe-actions__btn swipe-actions__btn--interest @(_pressedInterest ? "is-pressed" : null)"
@@ -159,7 +159,7 @@
                             <path d="M10 4.5c.4-1.2 1.2-2 2-2s1.6.8 2 2"/>
                         </svg>
                     </span>
-                    <span class="swipe-actions__label">Snel kennismaken</span>
+                    <span class="swipe-actions__label">@Culture["Match.Interest"]</span>
                 </button>
             </div>
         }
@@ -187,6 +187,9 @@
     /// <summary>When true, card sits under the active card (no gestures / actions).</summary>
     [Parameter] public bool IsBackdrop { get; set; }
 
+    /// <summary>Mobile keeps current markup; Dialog adds BEM modifiers for the desktop match dialog.</summary>
+    [Parameter] public SwipeCardVariant Variant { get; set; } = SwipeCardVariant.Mobile;
+
     /// <summary>Swipe animation duration in milliseconds (default 280).</summary>
     [Parameter] public int AnimationDurationMs { get; set; } = 280;
 
@@ -205,12 +208,15 @@
             var name = Model?.CompanyName?.Trim() ?? "";
             if (name.Length == 0)
             {
-                return "Bedrijf";
+                return Culture["Match.CompanyFallback"];
             }
 
             return name.Length <= 22 ? name : name[..19] + "…";
         }
     }
+
+    /// <summary>Public entry for keyboard / dialog triggers (same animation as click/drag).</summary>
+    public Task SwipeAsync(SwipeDirection direction) => SwipeInternalAsync(direction);
 
     private string CardStyle
     {
@@ -270,7 +276,9 @@
         await OnMoreInfo.InvokeAsync(Model);
     }
 
-    private async Task SwipeAsync(SwipeDirection direction)
+    private Task SwipeInternalAsync(SwipeDirection direction) => SwipeCoreAsync(direction);
+
+    private async Task SwipeCoreAsync(SwipeDirection direction)
     {
         if (IsBackdrop || _animating || Model is null)
         {

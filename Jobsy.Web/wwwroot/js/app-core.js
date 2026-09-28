@@ -879,6 +879,84 @@ window.jobsyQuestionnaire = {
     }
 };
 
+window.jobsyDialog = (function () {
+    var active = null;
+    var previouslyFocused = null;
+
+    function focusables(root) {
+        if (!root || !root.querySelectorAll) {
+            return [];
+        }
+        var nodes = root.querySelectorAll(
+            'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        return Array.prototype.filter.call(nodes, function (el) {
+            return el.offsetParent !== null || el === document.activeElement;
+        });
+    }
+
+    function onKeyDown(ev) {
+        if (!active || ev.key !== "Tab") {
+            return;
+        }
+        var list = focusables(active);
+        if (list.length === 0) {
+            ev.preventDefault();
+            return;
+        }
+        var first = list[0];
+        var last = list[list.length - 1];
+        if (ev.shiftKey && document.activeElement === first) {
+            ev.preventDefault();
+            last.focus();
+        } else if (!ev.shiftKey && document.activeElement === last) {
+            ev.preventDefault();
+            first.focus();
+        }
+    }
+
+    function trap(el) {
+        release();
+        if (!el) {
+            return;
+        }
+        previouslyFocused = document.activeElement;
+        active = el;
+        document.addEventListener("keydown", onKeyDown, true);
+        var list = focusables(el);
+        var target = list[0] || el;
+        try {
+            target.focus();
+        } catch (e) { }
+        try {
+            if (document.body) {
+                document.body.setAttribute("data-jobsy-dialog-open", "1");
+            }
+        } catch (e2) { }
+    }
+
+    function release() {
+        if (!active) {
+            return;
+        }
+        document.removeEventListener("keydown", onKeyDown, true);
+        active = null;
+        try {
+            if (document.body) {
+                document.body.removeAttribute("data-jobsy-dialog-open");
+            }
+        } catch (e) { }
+        if (previouslyFocused && typeof previouslyFocused.focus === "function") {
+            try {
+                previouslyFocused.focus();
+            } catch (e2) { }
+        }
+        previouslyFocused = null;
+    }
+
+    return { trap: trap, release: release };
+})();
+
 (function registerLobsyServiceWorker() {
     if (!("serviceWorker" in navigator)) {
         return;
