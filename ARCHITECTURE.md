@@ -1,19 +1,11 @@
-# Technische Architectuur: Jobsy
+# Technische Architectuur
 
-## 1. Clean Architecture Principes
-De applicatie is opgesplitst in strikte lagen om afhankelijkheden te isoleren:
-- **Jobsy.Core (Domain):** Bevat alle entiteiten, enums, business logica en interfaces (`IRoutingService`, `ISalaryService`). Deze laag heeft geen enkele externe afhankelijkheid.
-- **Jobsy.Infrastructure (Data & Services):** Bevat de `JobsyDbContext`, EF Core configuraties, migraties, de database seeder en externe API-clients (OSRM, live KVK Handelsregister met stub-fallback, Mollie).
-- **Jobsy.Api (Backend / Web API):** De ASP.NET Core Web API die endpoints exposed voor de frontend, beveiligd met Microsoft Entra ID.
-- **Jobsy.Web (Frontend):** Blazor Web applicatie voor de gebruikersinterface (Funda-stijl dashboard en kaartweergave).
+The living architecture doc is **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** (projects, auth, assets, jobs, mermaid diagrams).
 
-## 2. Geografische Data & Routing
-- **PostGIS:** PostgreSQL wordt gebruikt met de PostGIS extensie en NetTopologySuite. Coördinaten worden opgeslagen als `Point` met een spatial index voor snelle straal-filters (`ST_Distance`).
-- **OSRM (Open Source Routing Machine):** Self-hosted routing-engine in een Docker-container voor het berekenen van exacte reistijden en afstanden per vervoersmiddel (fiets, auto, OV), ter voorkoming van externe API-kosten.
+Historical notes below are superseded; kept only so old links do not 404.
 
-## 3. Cloud & Deployment (T/A/P Strategie)
-- **Infrastructuur:** Azure App Service (of AWS App Runner) met ondersteuning voor Docker-containers.
-- **Omgevingen (Deployment Slots):**
-  - **Dev / Test:** Automatische deployment vanuit de development-branch voor directe validatie.
-  - **Staging / Acceptatie:** Exacte kopie van productie voor eindvalidatie van features.
-  - **Production:** De stabiele, live omgeving voor demo's en gebruikers.
+---
+
+## Legacy summary (stale)
+
+Prefer `docs/ARCHITECTURE.md`. Stack today: .NET 9 Blazor Server + ASP.NET Core API + PostgreSQL/PostGIS + **MapLibre** on Render. Product brand **Lobsy**; code name **Jobsy**.
