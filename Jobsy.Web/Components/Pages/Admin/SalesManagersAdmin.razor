@@ -99,6 +99,26 @@
             <section class="panel-section">
                 <h2>@_selected.FullName</h2>
                 <p class="muted">Code: @(_selected.TrackingCode ?? "—") · Onboarding: @(_selected.IsOnboardingComplete ? "ja" : "nee")</p>
+                @if (_activeGrant is not null && _activeGrant.SubjectUserId == _selected.UserId)
+                {
+                    <p class="state-message">
+                        @string.Format(Culture["Admin.SupportAccessBanner"],
+                            _activeGrant.SubjectUserId.Value.ToString("D")[..8] + "…",
+                            _activeGrant.ExpiresAt.ToLocalTime().ToString("HH:mm"),
+                            _activeGrant.Reason)
+                        <button class="provider-btn" type="button" disabled="@_busy" @onclick="RevokeActiveAsync">
+                            @Culture["Admin.SupportAccessRevoke"]
+                        </button>
+                    </p>
+                }
+                else
+                {
+                    <button class="provider-btn" type="button" @onclick="OpenSupport">@Culture["Admin.WhySeeThis"]</button>
+                }
+                <SupportAccessDialog IsOpen="_supportOpen"
+                                     SubjectUserId="_selected.UserId"
+                                     OnClose="CloseSupport"
+                                     OnGranted="OnGrantedAsync" />
                 <div class="stat-grid">
                     <div class="stat-card">
                         <span class="stat-card__label">Saldo excl. BTW</span>
@@ -159,7 +179,8 @@
     private string? _error;
     private bool _loading = true;
     private bool _busy;
-
+    private bool _supportOpen;
+    private SupportAccessGrantItem? _activeGrant;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -269,10 +290,54 @@
         try
         {
             _selected = await Api.GetSalesManagerDashboardAsync(userId);
+            var grants = await Api.ListSupportAccessAsync(activeOnly: true, take: 20);
+            _activeGrant = grants.FirstOrDefault(g => g.IsActive && g.SubjectUserId == userId);
         }
         catch (Exception ex)
         {
             _error = ex.Message;
+        }
+    }
+
+    private void OpenSupport() => _supportOpen = true;
+
+    private Task CloseSupport()
+    {
+        _supportOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnGrantedAsync(SupportAccessGrantItem grant)
+    {
+        _activeGrant = grant;
+        if (_selected is not null)
+        {
+            await SelectAsync(_selected.UserId);
+            await ReloadListAsync();
+        }
+    }
+
+    private async Task RevokeActiveAsync()
+    {
+        if (_activeGrant is null) return;
+        _busy = true;
+        try
+        {
+            await Api.RevokeSupportAccessAsync(_activeGrant.Id);
+            _activeGrant = null;
+            if (_selected is not null)
+            {
+                await SelectAsync(_selected.UserId);
+                await ReloadListAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

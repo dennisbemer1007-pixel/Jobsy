@@ -41,5 +41,13 @@ public class PlatformFeatureSettings
     /// </summary>
     public DateOnly? FreePublishUntil { get; set; }
 
+    /// <summary>When true, other admins receive e-mail when support access is granted (default off).</summary>
+    public bool SupportAccessNotifyAdmins { get; set; }
+
+    /// <summary>
+    /// When true, the subject's privacy/data page notes that support accessed their data (default off).
+    /// </summary>
+    public bool SupportAccessNotifySubject { get; set; }
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

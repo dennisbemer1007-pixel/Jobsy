@@ -99,6 +99,15 @@
                     cookie-middleware én browser idle-timer lezen deze waarde dynamisch. Bij time-out wordt de sessie beëindigd en moet opnieuw worden ingelogd.
                 </p>
 
+                <label class="filter-check">
+                    <input type="checkbox" @bind="_features.SupportAccessNotifyAdmins" />
+                    @Culture["Admin.SupportAccessNotifyAdmins"]
+                </label>
+                <label class="filter-check">
+                    <input type="checkbox" @bind="_features.SupportAccessNotifySubject" />
+                    @Culture["Admin.SupportAccessNotifySubject"]
+                </label>
+
                 <label>
                     Gratis publiceren t/m (datum)
                     <input type="date" @bind="_freePublishUntilInput" @bind:format="yyyy-MM-dd" />

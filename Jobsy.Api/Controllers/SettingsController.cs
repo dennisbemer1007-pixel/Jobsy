@@ -331,7 +331,9 @@ public class SettingsController : ControllerBase
                     request.InactiveCompanyDays,
                     request.SessionInactivityTimeoutMinutes,
                     request.FreePublishUntil,
-                    request.ClearFreePublishUntil),
+                    request.ClearFreePublishUntil,
+                    SupportAccessNotifyAdmins: request.SupportAccessNotifyAdmins,
+                    SupportAccessNotifySubject: request.SupportAccessNotifySubject),
                 cancellationToken);
             return Ok(ToFeatureDto(snap));
         }
@@ -537,7 +539,9 @@ public class SettingsController : ControllerBase
             snap.UpdatedAtUtc,
             snap.InactiveCompanyDays,
             snap.SessionInactivityTimeoutMinutes,
-            snap.FreePublishUntil);
+            snap.FreePublishUntil,
+            snap.SupportAccessNotifyAdmins,
+            snap.SupportAccessNotifySubject);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

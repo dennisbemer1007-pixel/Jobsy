@@ -9,6 +9,61 @@
 <PageTitle>@Culture["Admin.PersonalDataAccessLog"] · Lobsy</PageTitle>
 
 <AdminPageShell Title="@Culture["Admin.PersonalDataAccessLog"]" Lead="@Culture["Admin.PersonalDataAccessLogLead"]" ShowSettingsNav="true">
+    <section class="panel-section">
+        <h2>@Culture["Admin.SupportAccessGrants"]</h2>
+        <p class="muted">Vier-ogen: alle admins zien actieve en recente break-glass toegang.</p>
+        @if (_grantsLoading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_grants.Count == 0)
+        {
+            <p class="muted">Geen support-toegang gevonden.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Admin</th>
+                            <th>Subject</th>
+                            <th>Scope</th>
+                            <th>Reden</th>
+                            <th>Tot</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var g in _grants)
+                        {
+                            <tr>
+                                <td>@(g.IsActive ? "Actief" : (g.RevokedAt is not null ? "Ingetrokken" : "Verlopen"))</td>
+                                <td class="muted">@Short(g.AdminUserId)</td>
+                                <td class="muted">
+                                    @(g.SubjectUserId is Guid su ? Short(su) : g.SubjectCompanyId is Guid sc ? "co:" + Short(sc) : "—")
+                                </td>
+                                <td>@g.Scope</td>
+                                <td class="muted">@g.Reason</td>
+                                <td>@g.ExpiresAt.ToLocalTime().ToString("dd-MM HH:mm")</td>
+                                <td>
+                                    @if (g.IsActive)
+                                    {
+                                        <button class="provider-btn" type="button" disabled="@_busy"
+                                                @onclick="() => RevokeGrantAsync(g.Id)">
+                                            @Culture["Admin.SupportAccessRevoke"]
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
     <div class="filter-bar">
         <label>
             Actor user id
@@ -55,6 +110,7 @@
                         <th>Resource</th>
                         <th>Action</th>
                         <th>Reason</th>
+                        <th>Grant</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -68,6 +124,7 @@
                             <td>@log.Resource</td>
                             <td>@log.Action</td>
                             <td class="muted">@(log.Reason ?? "—")</td>
+                            <td class="muted">@(log.SupportAccessGrantId is Guid gid ? Short(gid) : "—")</td>
                         </tr>
                     }
                 </tbody>
@@ -82,11 +139,14 @@
 
 @code {
     private PersonalDataAccessLogPage? _page;
+    private List<SupportAccessGrantItem> _grants = [];
     private string _actorIdText = "";
     private string _subjectIdText = "";
     private DateTime? _fromDate;
     private DateTime? _toDate;
     private bool _loading = true;
+    private bool _grantsLoading = true;
+    private bool _busy;
     private string? _error;
     private int _pageNumber = 1;
 
@@ -113,9 +173,11 @@
     private async Task ReloadAsync()
     {
         _loading = true;
+        _grantsLoading = true;
         _error = null;
         try
         {
+            _grants = (await Api.ListSupportAccessAsync(activeOnly: false, take: 50)).ToList();
             Guid? actor = Guid.TryParse(_actorIdText, out var a) ? a : null;
             Guid? subject = Guid.TryParse(_subjectIdText, out var s) ? s : null;
             DateTime? from = _fromDate?.ToUniversalTime();
@@ -136,6 +198,25 @@
         finally
         {
             _loading = false;
+            _grantsLoading = false;
+        }
+    }
+
+    private async Task RevokeGrantAsync(Guid grantId)
+    {
+        _busy = true;
+        try
+        {
+            await Api.RevokeSupportAccessAsync(grantId);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

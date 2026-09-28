@@ -1,0 +1,121 @@
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@using Jobsy.Core.Enums
+
+<LobsyFriendlyDialog IsOpen="IsOpen"
+                     Title="@Culture["Admin.SupportAccessTitle"]"
+                     TitleId="support-access-title"
+                     Lead="@Culture["Admin.SupportAccessLead"]"
+                     CloseDisabled="_busy"
+                     OnClose="Close">
+    <form class="login-form" @onsubmit="ConfirmAsync" @onsubmit:preventDefault>
+        <label>
+            @Culture["Admin.SupportAccessReason"]
+            <textarea @bind="_reason" rows="3" maxlength="512" required
+                      placeholder="@Culture["Admin.SupportAccessReasonPlaceholder"]"></textarea>
+        </label>
+        <label>
+            @Culture["Admin.SupportAccessTicket"]
+            <input type="text" @bind="_ticket" maxlength="128" placeholder="FB-123 / ticket…" />
+        </label>
+        <fieldset class="filter-bar" style="border:0;padding:0;margin:0 0 0.75rem">
+            <legend class="muted">@Culture["Admin.SupportAccessScope"]</legend>
+            <label class="filter-check"><input type="checkbox" @bind="_scopeContact" /> Contact</label>
+            <label class="filter-check"><input type="checkbox" @bind="_scopeCv" /> CV</label>
+            <label class="filter-check"><input type="checkbox" @bind="_scopeIban" /> IBAN</label>
+            <label class="filter-check"><input type="checkbox" @bind="_scopeApps" /> Applications</label>
+            <label class="filter-check"><input type="checkbox" @bind="_scopeFeedback" /> Feedback</label>
+        </fieldset>
+        <label>
+            @Culture["Admin.SupportAccessDuration"]
+            <select @bind="_duration">
+                <option value="15">15 min</option>
+                <option value="60">60 min</option>
+                <option value="240">240 min (4 u)</option>
+            </select>
+        </label>
+        <div class="inline-actions" style="margin-top:1rem">
+            <button type="submit" class="btn-compact btn-compact--primary" disabled="@_busy">
+                @(_busy ? Culture["Common.Busy"] : Culture["Admin.SupportAccessConfirm"])
+            </button>
+            <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
+        </div>
+    </form>
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+</LobsyFriendlyDialog>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public Guid? SubjectUserId { get; set; }
+    [Parameter] public Guid? SubjectCompanyId { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<SupportAccessGrantItem> OnGranted { get; set; }
+
+    private string _reason = "";
+    private string _ticket = "";
+    private bool _scopeContact = true;
+    private bool _scopeCv;
+    private bool _scopeIban;
+    private bool _scopeApps = true;
+    private bool _scopeFeedback;
+    private string _duration = "60";
+    private bool _busy;
+    private string? _error;
+
+    protected override void OnParametersSet()
+    {
+        if (!IsOpen)
+        {
+            return;
+        }
+
+        _error = null;
+    }
+
+    private async Task Close()
+    {
+        if (_busy) return;
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task ConfirmAsync()
+    {
+        _error = null;
+        var scope = SupportAccessScope.None;
+        if (_scopeContact) scope |= SupportAccessScope.Contact;
+        if (_scopeCv) scope |= SupportAccessScope.Cv;
+        if (_scopeIban) scope |= SupportAccessScope.Iban;
+        if (_scopeApps) scope |= SupportAccessScope.Applications;
+        if (_scopeFeedback) scope |= SupportAccessScope.Feedback;
+        if (scope == SupportAccessScope.None)
+        {
+            _error = Culture["Admin.SupportAccessScopeRequired"];
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var grant = await Api.RequestSupportAccessAsync(
+                SubjectUserId,
+                SubjectCompanyId,
+                scope,
+                _reason,
+                string.IsNullOrWhiteSpace(_ticket) ? null : _ticket,
+                int.Parse(_duration));
+            await OnGranted.InvokeAsync(grant);
+            await OnClose.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

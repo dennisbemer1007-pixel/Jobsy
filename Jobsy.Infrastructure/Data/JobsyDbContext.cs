@@ -85,6 +85,7 @@ public class JobsyDbContext : DbContext
     public DbSet<MarketingFlyerSettings> MarketingFlyerSettings => Set<MarketingFlyerSettings>();
     public DbSet<PlatformLog> PlatformLogs => Set<PlatformLog>();
     public DbSet<PersonalDataAccessLog> PersonalDataAccessLogs => Set<PersonalDataAccessLog>();
+    public DbSet<SupportAccessGrant> SupportAccessGrants => Set<SupportAccessGrant>();
     public DbSet<TokenPurchaseCheckout> TokenPurchaseCheckouts => Set<TokenPurchaseCheckout>();
     public DbSet<PendingTokenAction> PendingTokenActions => Set<PendingTokenAction>();
     public DbSet<TokenPurchaseInvoice> TokenPurchaseInvoices => Set<TokenPurchaseInvoice>();
@@ -1479,6 +1480,17 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.ActorUserId);
             entity.HasIndex(e => e.SubjectUserId);
             entity.HasIndex(e => new { e.Resource, e.OccurredAt });
+        });
+
+        modelBuilder.Entity<SupportAccessGrant>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Reason).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.TicketReference).HasMaxLength(128);
+            entity.Property(e => e.Scope).HasConversion<int>();
+            entity.HasIndex(e => new { e.AdminUserId, e.ExpiresAt });
+            entity.HasIndex(e => e.SubjectUserId);
+            entity.HasIndex(e => e.SubjectCompanyId);
         });
 
         modelBuilder.Entity<AmbassadeurSettings>(entity =>

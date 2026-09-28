@@ -37,6 +37,7 @@ public class ApplicationsController : ControllerBase
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
     private readonly IWhoAmIService _whoAmI;
     private readonly IPersonalDataAccessLogger _accessLog;
+    private readonly ISupportAccessService _supportAccess;
 
     public ApplicationsController(
         JobsyDbContext db,
@@ -50,7 +51,8 @@ public class ApplicationsController : ControllerBase
         ICandidateActionTokenService actionTokens,
         IVacancyDiscoveryIndex discoveryIndex,
         IWhoAmIService whoAmI,
-        IPersonalDataAccessLogger accessLog)
+        IPersonalDataAccessLogger accessLog,
+        ISupportAccessService supportAccess)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -64,6 +66,7 @@ public class ApplicationsController : ControllerBase
         _discoveryIndex = discoveryIndex;
         _whoAmI = whoAmI;
         _accessLog = accessLog;
+        _supportAccess = supportAccess;
     }
 
     [HttpGet]
@@ -214,31 +217,98 @@ public class ApplicationsController : ControllerBase
             }
         }
 
-        return Ok(rows.Select(a =>
+        if (!isAdmin)
         {
-            var revealed = ApplicationRules.IsPiiRevealed(a.Status);
-            var contact = ApplicationRules.IsDirectContactRevealed(a.Status);
-            var availability = LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson);
-
-            // Admin sees masked PII by default even when status would reveal to employers.
-            var name = revealed ? a.CandidateName : null;
-            var email = contact ? a.CandidateEmail : null;
-            var address = revealed ? a.CandidateAddress : null;
-            var phone = contact ? a.SnapshotPhoneNumber : null;
-            var city = revealed ? a.CandidateCity : null;
-            int? age = a.CandidateAgeYears;
-
-            if (isAdmin)
+            return Ok(rows.Select(a =>
             {
-                name = name is null ? null : PersonalDataMasker.MaskName(name);
-                email = email is null ? null : PersonalDataMasker.MaskEmail(email);
-                phone = phone is null ? null : PersonalDataMasker.MaskPhone(phone);
-                address = PersonalDataMasker.MaskAddressToCity(address, city);
-                // Age band only for admin surfaces.
-                age = null; // EmployerApplicationDto uses int? CandidateAgeYears — keep numeric for employers
+                var revealed = ApplicationRules.IsPiiRevealed(a.Status);
+                var contact = ApplicationRules.IsDirectContactRevealed(a.Status);
+                var availability = LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson);
+                return new EmployerApplicationDto(
+                    a.Id,
+                    a.VacancyId,
+                    a.VacancyTitle,
+                    a.CompanyName,
+                    a.PreferredTransport,
+                    a.EstimatedTravelMinutes,
+                    a.CreatedAt,
+                    a.Status.ToString(),
+                    a.RespondedAt,
+                    revealed ? a.CandidateCity : null,
+                    a.DistanceKm,
+                    ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed),
+                    revealed ? a.CandidateName : null,
+                    contact ? a.CandidateEmail : null,
+                    revealed ? a.CandidateAddress : null,
+                    revealed,
+                    revealed && a.WorkPermitConfirmed,
+                    a.SnapshotAvailabilityJson,
+                    revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotDrivingLicenses) : null,
+                    revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
+                    revealed ? a.SnapshotAboutMe : null,
+                    revealed ? a.CandidateEmployerCount : 0,
+                    a.MatchPercent,
+                    MatchBreakdownJson: null,
+                    a.ViaSafetyNet,
+                    a.Motivation,
+                    LegalEligible: true,
+                    revealed ? a.StudentNumber : null,
+                    contact ? a.SchoolEmail : null,
+                    revealed ? a.StudyProgram : null,
+                    revealed ? a.StudyYear : null,
+                    revealed ? a.ExclusivityValidationStatus : null,
+                    CvPdfAvailable: revealed,
+                    CandidatePhone: contact ? a.SnapshotPhoneNumber : null,
+                    WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed,
+                    CandidateAgeYears: a.CandidateAgeYears,
+                    AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
+                        availability.Slots,
+                        availability.FlexibleTimes),
+                    UploadedCvAvailable: revealed && a.HasUploadedCv,
+                    CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0);
+            }));
+        }
+
+        var adminActor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var mapped = new List<EmployerApplicationDto>(rows.Count);
+        foreach (var a in rows)
+        {
+            Guid? grantId = null;
+            if (adminActor is not null)
+            {
+                grantId = await _supportAccess.FindActiveGrantIdAsync(
+                    adminActor.Id,
+                    a.CandidateUserId,
+                    null,
+                    SupportAccessScope.Applications,
+                    cancellationToken);
             }
 
-            return new EmployerApplicationDto(
+            var unmask = grantId is not null;
+            if (unmask && adminActor is not null)
+            {
+                await this.LogPersonalDataAccessAsync(
+                    _accessLog,
+                    adminActor.Id,
+                    PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                    "admin.applications.reveal",
+                    "reveal",
+                    subjectUserId: a.CandidateUserId,
+                    subjectCompanyId: a.CompanyId,
+                    reason: "support-access",
+                    supportAccessGrantId: grantId,
+                    cancellationToken: cancellationToken);
+            }
+
+            var name = unmask ? a.CandidateName : PersonalDataMasker.MaskName(a.CandidateName);
+            var email = unmask ? a.CandidateEmail : PersonalDataMasker.MaskEmail(a.CandidateEmail);
+            var phone = unmask ? a.SnapshotPhoneNumber : PersonalDataMasker.MaskPhone(a.SnapshotPhoneNumber);
+            var city = a.CandidateCity;
+            var address = unmask
+                ? a.CandidateAddress
+                : PersonalDataMasker.MaskAddressToCity(a.CandidateAddress, city);
+
+            mapped.Add(new EmployerApplicationDto(
                 a.Id,
                 a.VacancyId,
                 a.VacancyTitle,
@@ -248,44 +318,43 @@ public class ApplicationsController : ControllerBase
                 a.CreatedAt,
                 a.Status.ToString(),
                 a.RespondedAt,
-                isAdmin ? city : (revealed ? a.CandidateCity : null),
-                // Distance without address/city is allowed pre-accept for screening.
+                city,
                 a.DistanceKm,
-                ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed && !isAdmin),
+                ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, unmask),
                 name,
                 email,
-                isAdmin ? address : (revealed ? a.CandidateAddress : null),
-                revealed,
-                revealed && a.WorkPermitConfirmed && !isAdmin,
-                // Availability is screening data (not identity PII) — same matrix before and after Accept.
-                isAdmin ? null : a.SnapshotAvailabilityJson,
-                revealed && !isAdmin ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotDrivingLicenses) : null,
-                revealed && !isAdmin ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
-                revealed && !isAdmin ? a.SnapshotAboutMe : null,
-                revealed && !isAdmin ? a.CandidateEmployerCount : 0,
+                address,
+                unmask,
+                unmask && a.WorkPermitConfirmed,
+                unmask ? a.SnapshotAvailabilityJson : null,
+                unmask ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotDrivingLicenses) : null,
+                unmask ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
+                unmask ? a.SnapshotAboutMe : null,
+                unmask ? a.CandidateEmployerCount : 0,
                 a.MatchPercent,
                 MatchBreakdownJson: null,
                 a.ViaSafetyNet,
-                // Motivation is candidate-authored for the employer — show after verified apply (pre-accept OK).
-                isAdmin ? null : a.Motivation,
+                unmask ? a.Motivation : null,
                 LegalEligible: true,
-                revealed && !isAdmin ? a.StudentNumber : null,
-                contact && !isAdmin ? a.SchoolEmail : null,
-                revealed && !isAdmin ? a.StudyProgram : null,
-                revealed && !isAdmin ? a.StudyYear : null,
-                revealed && !isAdmin ? a.ExclusivityValidationStatus : null,
-                CvPdfAvailable: revealed,
+                unmask ? a.StudentNumber : null,
+                unmask ? a.SchoolEmail : null,
+                unmask ? a.StudyProgram : null,
+                unmask ? a.StudyYear : null,
+                unmask ? a.ExclusivityValidationStatus : null,
+                CvPdfAvailable: unmask,
                 CandidatePhone: phone,
-                WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed && !isAdmin,
-                CandidateAgeYears: isAdmin ? null : age,
-                AvailabilitySummary: isAdmin
-                    ? null
-                    : LobsyCvModelFactory.FormatAvailability(
-                        availability.Slots,
-                        availability.FlexibleTimes),
-                UploadedCvAvailable: revealed && a.HasUploadedCv,
-                CandidateReferenceCount: revealed && !isAdmin ? a.CandidateReferenceCount : 0);
-        }));
+                WhatsAppContactAllowed: unmask && a.SnapshotWhatsAppAllowed,
+                CandidateAgeYears: unmask ? a.CandidateAgeYears : null,
+                AvailabilitySummary: unmask
+                    ? LobsyCvModelFactory.FormatAvailability(
+                        LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson).Slots,
+                        LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson).FlexibleTimes)
+                    : null,
+                UploadedCvAvailable: unmask && a.HasUploadedCv,
+                CandidateReferenceCount: unmask ? a.CandidateReferenceCount : 0));
+        }
+
+        return Ok(mapped);
     }
 
     /// <summary>

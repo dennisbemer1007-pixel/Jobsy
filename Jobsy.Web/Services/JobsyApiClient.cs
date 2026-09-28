@@ -3249,6 +3249,10 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadAsStringAsync(ct);
     }
 
+    public async Task<IReadOnlyList<DateTime>> GetSupportAccessNotesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<DateTime>>("api/privacy/support-access-notes", ct)
+           ?? [];
+
     public async Task<IReadOnlyList<UnsubscribeReasonOption>> GetUnsubscribeReasonsAsync(CancellationToken ct = default)
     {
         var response = await _http.GetAsync("api/privacy/unsubscribe-reasons", ct);
@@ -3438,6 +3442,55 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await _http.GetFromJsonAsync<AdminUsersPage>($"api/admin/users?{string.Join('&', qs)}", ct)
                ?? new AdminUsersPage();
     }
+
+    public async Task<SupportAccessGrantItem> RequestSupportAccessAsync(
+        Guid? subjectUserId,
+        Guid? subjectCompanyId,
+        Jobsy.Core.Enums.SupportAccessScope scope,
+        string reason,
+        string? ticketReference,
+        int durationMinutes,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/admin/support-access",
+            new
+            {
+                subjectUserId,
+                subjectCompanyId,
+                scope,
+                reason,
+                ticketReference,
+                durationMinutes
+            },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<SupportAccessGrantItem>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Lege support-access response.");
+    }
+
+    public async Task RevokeSupportAccessAsync(Guid grantId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/support-access/{grantId:D}/revoke", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
+    public async Task<IReadOnlyList<SupportAccessGrantItem>> ListSupportAccessAsync(
+        bool activeOnly = false,
+        int take = 50,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<SupportAccessGrantItem>>(
+               $"api/admin/support-access?activeOnly={activeOnly}&take={take}", ct)
+           ?? [];
 
     public async Task<PersonalDataAccessLogPage> GetPersonalDataAccessLogAsync(
         int page = 1,
@@ -4668,6 +4721,8 @@ public sealed class PlatformFeatureItem
     public DateOnly? FreePublishUntil { get; set; }
     /// <summary>When true with null FreePublishUntil, admin turned the launch promo off.</summary>
     public bool ClearFreePublishUntil { get; set; }
+    public bool SupportAccessNotifyAdmins { get; set; }
+    public bool SupportAccessNotifySubject { get; set; }
 }
 
 public sealed class PlatformCompanyItem

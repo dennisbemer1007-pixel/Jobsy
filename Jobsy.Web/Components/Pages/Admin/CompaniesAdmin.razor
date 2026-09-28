@@ -51,6 +51,7 @@
                         <th>Sollicitaties</th>
                         <th>Tokens</th>
                         <th>Salesmanager</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -83,11 +84,29 @@
                                     <span class="muted">—</span>
                                 }
                             </td>
+                            <td>
+                                <button class="btn-compact" type="button" @onclick="() => OpenSupport(c)">
+                                    @Culture["Admin.WhySeeThis"]
+                                </button>
+                            </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
+
+        @if (_activeSupportGrant is not null)
+        {
+            <p class="state-message">
+                @string.Format(Culture["Admin.SupportAccessBanner"],
+                    _activeSupportGrant.SubjectCompanyId?.ToString("D")[..8] + "…" ?? "—",
+                    _activeSupportGrant.ExpiresAt.ToLocalTime().ToString("HH:mm"),
+                    _activeSupportGrant.Reason)
+                <button class="provider-btn" type="button" disabled="@_busy" @onclick="RevokeSupportAsync">
+                    @Culture["Admin.SupportAccessRevoke"]
+                </button>
+            </p>
+        }
 
         <section class="panel-section">
             <h2>Nieuw bedrijf / intermediair (KVK)</h2>
@@ -150,6 +169,11 @@
                    OnClose="CloseGrant"
                    OnGranted="OnGrantedAsync" />
 
+<SupportAccessDialog IsOpen="_supportOpen"
+                     SubjectCompanyId="_supportCompanyId"
+                     OnClose="CloseSupport"
+                     OnGranted="OnSupportGrantedAsync" />
+
 @code {
     private List<AdminCompanyItem> _companies = [];
     private List<KvkEstablishmentItem> _establishments = [];
@@ -163,6 +187,9 @@
     private string? _message;
     private bool _grantOpen;
     private AdminCompanyItem? _grantCompany;
+    private bool _supportOpen;
+    private Guid? _supportCompanyId;
+    private SupportAccessGrantItem? _activeSupportGrant;
 
     private List<AdminCompanyItem> _filtered => Filter().ToList();
 
@@ -187,6 +214,8 @@
         try
         {
             _companies = (await Api.GetAdminCompaniesAsync()).ToList();
+            var grants = await Api.ListSupportAccessAsync(activeOnly: true, take: 20);
+            _activeSupportGrant = grants.FirstOrDefault(g => g.IsActive && g.SubjectCompanyId is not null);
         }
         catch (Exception ex)
         {
@@ -280,5 +309,42 @@
     {
         _companies = (await Api.GetAdminCompaniesAsync()).ToList();
         _message = "Tokens toegekend. Zie tokenlog voor de reden.";
+    }
+
+    private void OpenSupport(AdminCompanyItem company)
+    {
+        _supportCompanyId = company.Id;
+        _supportOpen = true;
+    }
+
+    private Task CloseSupport()
+    {
+        _supportOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnSupportGrantedAsync(SupportAccessGrantItem grant)
+    {
+        _activeSupportGrant = grant;
+        await Task.CompletedTask;
+    }
+
+    private async Task RevokeSupportAsync()
+    {
+        if (_activeSupportGrant is null) return;
+        _busy = true;
+        try
+        {
+            await Api.RevokeSupportAccessAsync(_activeSupportGrant.Id);
+            _activeSupportGrant = null;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 }

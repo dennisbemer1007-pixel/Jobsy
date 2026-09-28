@@ -13,10 +13,20 @@ namespace Jobsy.Api.Controllers;
 public sealed class PrivacyController : ControllerBase
 {
     private readonly IPrivacyDataService _privacy;
+    private readonly IPlatformFeatureService _features;
+    private readonly ISupportAccessService _supportAccess;
+    private readonly IUserLookupService _users;
 
-    public PrivacyController(IPrivacyDataService privacy)
+    public PrivacyController(
+        IPrivacyDataService privacy,
+        IPlatformFeatureService features,
+        ISupportAccessService supportAccess,
+        IUserLookupService users)
     {
         _privacy = privacy;
+        _features = features;
+        _supportAccess = supportAccess;
+        _users = users;
     }
 
     /// <summary>AVG Art. 15 / 20 — export personal data as JSON.</summary>
@@ -32,6 +42,29 @@ public sealed class PrivacyController : ControllerBase
         {
             return Unauthorized(new { message = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Optional (admin setting, default off): UTC dates when support temporarily accessed this subject's data.
+    /// </summary>
+    [HttpGet("support-access-notes")]
+    public async Task<ActionResult<IReadOnlyList<DateTime>>> GetSupportAccessNotes(
+        CancellationToken cancellationToken)
+    {
+        var features = await _features.GetAsync(cancellationToken);
+        if (!features.SupportAccessNotifySubject)
+        {
+            return Ok(Array.Empty<DateTime>());
+        }
+
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        var dates = await _supportAccess.ListAccessDatesForSubjectAsync(user.Id, 10, cancellationToken);
+        return Ok(dates);
     }
 
     /// <summary>Fixed unsubscribe / account-deletion reason options.</summary>
