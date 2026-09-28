@@ -11,6 +11,12 @@ public sealed class QuestionnaireFocus
     public int? ScrollToId { get; private set; }
     public bool SmoothScroll { get; private set; }
 
+    /// <summary>
+    /// Bumped on each scroll request so the shell re-scrolls even when the target id is unchanged
+    /// (e.g. Volgende while already on the first unanswered question).
+    /// </summary>
+    public int ScrollRequestVersion { get; private set; }
+
     public void Initialize(
         IReadOnlyList<int> orderedIds,
         IReadOnlyDictionary<int, int> answers)
@@ -20,6 +26,7 @@ public sealed class QuestionnaireFocus
         ExpandedId = null;
         ScrollToId = CurrentId;
         SmoothScroll = false;
+        ScrollRequestVersion++;
     }
 
     public void AfterAnswer(
@@ -32,6 +39,7 @@ public sealed class QuestionnaireFocus
         DimmedId = CurrentId is int cur ? NextUnansweredAfter(orderedIds, answers, cur) : null;
         ScrollToId = CurrentId;
         SmoothScroll = true;
+        ScrollRequestVersion++;
     }
 
     public void Expand(
@@ -44,6 +52,7 @@ public sealed class QuestionnaireFocus
         DimmedId = NextUnansweredAfter(orderedIds, answers, id);
         ScrollToId = id;
         SmoothScroll = true;
+        ScrollRequestVersion++;
     }
 
     public void GoNext(
@@ -54,6 +63,7 @@ public sealed class QuestionnaireFocus
         DimmedId = CurrentId is int cur ? NextUnansweredAfter(orderedIds, answers, cur) : null;
         ScrollToId = CurrentId;
         SmoothScroll = true;
+        ScrollRequestVersion++;
     }
 
     public static int? FirstUnanswered(

@@ -27,6 +27,7 @@
                     Completing="_completing"
                     ScrollToQuestionId="_scrollToId"
                     SmoothScroll="_smoothScroll"
+                    ScrollRequestVersion="_scrollRequestVersion"
                     OnComplete="CompleteAsync"
                     OnNext="GoNextAsync"
                     OnRetrySave="RetrySaveAsync">
@@ -75,6 +76,7 @@
     private int? _dimmedId;
     private int? _expandedId;
     private int? _scrollToId;
+    private int _scrollRequestVersion;
     private readonly Dictionary<int, int> _answers = [];
     private List<CompetencyQuestionItem> _questions = [];
     private QuestionnaireAutosave? _autosave;
@@ -248,6 +250,7 @@
         _dimmedId = _currentId is int cur ? NextUnansweredAfter(cur) : null;
         _scrollToId = _currentId;
         _smoothScroll = true;
+        _scrollRequestVersion++;
         return Task.CompletedTask;
     }
 

@@ -342,13 +342,15 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             row.ReportGeneratedAtUtc = now;
             await MergeTagsIntoQuickScanAsync(userId, kind, answers, tags, now, cancellationToken);
         }
-        else
+        else if (!CandidateDeepAnalysisStatuses.IsCompleted(row.Status))
         {
             row.Status = CandidateDeepAnalysisStatuses.Draft;
             row.CompletedAtUtc = null;
             row.ReportGeneratedAtUtc = null;
             row.TagsJson = "[]";
         }
+        // Completed + autosave: keep status/tags/report timestamps; AnswersJson above is the
+        // pending edit until the candidate finishes again with complete:true (rescore).
 
         await _db.SaveChangesAsync(cancellationToken);
         CompetenceDeepReport? competenceReport = null;

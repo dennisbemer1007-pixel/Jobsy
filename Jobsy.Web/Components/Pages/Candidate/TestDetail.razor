@@ -46,15 +46,18 @@
                     class="btn-gold"
                     disabled="@_busy"
                     @onclick="StartExtendedAsync">
-                @Culture["Tests.StartExtended"]
+                @Culture[_deepUnlocked ? "Tests.ContinueExtended" : "Tests.StartExtended"]
             </button>
-            <p class="test-detail__price muted">
-                @Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))
-                @if (_def.Kind == AssessmentKind.Career)
-                {
-                    <span> · @Culture["Tests.WithPdf"]</span>
-                }
-            </p>
+            @if (!_deepUnlocked)
+            {
+                <p class="test-detail__price muted">
+                    @Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))
+                    @if (_def.Kind == AssessmentKind.Career)
+                    {
+                        <span> · @Culture["Tests.WithPdf"]</span>
+                    }
+                </p>
+            }
         }
 
         <header class="test-detail__header">
