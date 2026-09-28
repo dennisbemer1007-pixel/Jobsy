@@ -28,6 +28,7 @@ internal static class UiStringsTestResults
     private static Dictionary<string, string> Nl() => new(StringComparer.OrdinalIgnoreCase)
     {
         ["TestResult.Back"] = "Terug naar mijn tests",
+        ["TestResult.ScoresCount"] = "{0} scores",
         ["TestResult.EditAnswers"] = "Antwoorden wijzigen",
         ["TestResult.Retake"] = "Test opnieuw doen",
         ["TestResult.Quota.Line"] = "Je kunt deze test nog {0} van de {1} keer aanpassen.",
@@ -92,6 +93,7 @@ internal static class UiStringsTestResults
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
     {
         ["TestResult.Back"] = "Back to my tests",
+        ["TestResult.ScoresCount"] = "{0} scores",
         ["TestResult.EditAnswers"] = "Edit answers",
         ["TestResult.Retake"] = "Retake test",
         ["TestResult.Quota.Line"] = "You can adjust this test {0} more times (out of {1}).",

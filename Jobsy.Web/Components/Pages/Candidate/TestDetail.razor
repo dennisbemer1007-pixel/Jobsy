@@ -54,7 +54,7 @@
                     </span>
                     @if (!string.IsNullOrWhiteSpace(_completedMeta))
                     {
-                        <span class="muted">@_completedMeta · @_scoreBars.Count @Culture["Tests.ScoresLabel"]</span>
+                        <span class="muted">@_completedMeta · @Culture.Format("TestResult.ScoresCount", _scoreBars.Count)</span>
                     }
                 </p>
             </div>
