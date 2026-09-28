@@ -45,7 +45,8 @@ public class MijnDnaLoadSpeedTests
         Assert.Contains("HttpGet(\"dna\")", controller, StringComparison.Ordinal);
         Assert.Contains("GetDnaAsync", controller, StringComparison.Ordinal);
 
-        var client = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Services/ApiClient/JobsyApiClient.cs"));
+        var clientDir = Path.Combine(root, "Jobsy.Web/Services/ApiClient");
+        var client = string.Concat(Directory.EnumerateFiles(clientDir, "JobsyApiClient*.cs").Select(File.ReadAllText));
         Assert.Contains("KompasDnaCacheKey", client, StringComparison.Ordinal);
         Assert.Contains("api/me/kompas/dna", client, StringComparison.Ordinal);
 
