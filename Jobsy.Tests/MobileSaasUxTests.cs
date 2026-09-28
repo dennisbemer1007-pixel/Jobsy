@@ -204,6 +204,24 @@ public class MobileSaasUxTests
     }
 
     [Fact]
+    public void Match_mobile_card_fills_height_and_clears_bottom_nav()
+    {
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        // Beat has-bottom-nav 7rem so actions sit ~14px above the nav on mobile only.
+        Assert.Contains(
+            ".app-shell--match.has-bottom-nav .app-main,\n    .app-shell--match:has(.bottom-nav) .app-main {\n        padding-bottom: calc(4.75rem + 14px + env(safe-area-inset-bottom, 0px));",
+            css);
+        Assert.Contains(".swipe-card__why {\n        flex: 1 1 auto;", css);
+        Assert.Contains(".swipe-card__more {\n        position: static;", css);
+        Assert.Contains(".swipe-card__match-hero {\n        width: 100%;", css);
+        Assert.Contains("-webkit-line-clamp: 2;", css);
+        // Desktop clearance unchanged.
+        Assert.Contains(
+            ".app-shell--match.has-bottom-nav .app-main,\n    .app-shell--match:has(.bottom-nav) .app-main {\n        padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));",
+            css);
+    }
+
+    [Fact]
     public void Candidate_profile_uses_accordions_compact_availability_and_sticky_save()
     {
         var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));

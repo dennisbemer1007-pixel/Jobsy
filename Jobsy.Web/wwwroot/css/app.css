@@ -17341,6 +17341,15 @@ html.cookie-consent-known .cookie-consent {
     flex-direction: column;
 }
 
+/* Mobile Match: beat .has-bottom-nav’s 7rem clearance so like/dislike sit
+   ~12–16px above the bottom nav (nav height ≈ 4.75rem + safe-area). */
+@media (max-width: 768px) {
+    .app-shell--match.has-bottom-nav .app-main,
+    .app-shell--match:has(.bottom-nav) .app-main {
+        padding-bottom: calc(4.75rem + 14px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
 .app-shell--match .app-footer,
 .app-shell--match .lobsy-assistant,
 .app-shell--match .lobsy-assistant-tab,
@@ -18005,6 +18014,93 @@ html.cookie-consent-known .cookie-consent {
     }
 }
 
+/* Mobile Match card: fill available height; chips equal; Meer info at bottom. */
+@media (max-width: 768px) {
+    .swipe-stack {
+        padding-bottom: 0;
+        --swipe-actions-h: 5.25rem;
+    }
+
+    .swipe-card-stage {
+        gap: 0.3rem;
+    }
+
+    .swipe-card-stage--backdrop {
+        height: calc(100% - var(--swipe-actions-h) - 0.3rem);
+    }
+
+    .swipe-card__match-hero {
+        width: 100%;
+        align-self: stretch;
+        box-sizing: border-box;
+        border-radius: 0.85rem;
+        justify-content: center;
+    }
+
+    .swipe-card__stats {
+        align-items: stretch;
+    }
+
+    .swipe-card__stat {
+        justify-content: center;
+        min-height: 100%;
+        height: 100%;
+        padding: 0.35rem 0.3rem;
+    }
+
+    .swipe-card__stat strong,
+    .swipe-card__stat span:last-child {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+        text-align: center;
+        text-overflow: ellipsis;
+        width: 100%;
+    }
+
+    .swipe-card__tags {
+        margin-right: 0;
+    }
+
+    .swipe-card__copy {
+        flex: 1 1 auto;
+        min-height: 0;
+        margin-bottom: 0.25rem;
+    }
+
+    .swipe-card__blurb {
+        flex-shrink: 0;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .swipe-card__why {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .swipe-card__more {
+        position: static;
+        align-self: flex-end;
+        margin-top: 0.15rem;
+        flex-shrink: 0;
+        box-shadow: 0 1px 4px rgba(18, 32, 51, 0.1);
+    }
+
+    .swipe-actions {
+        justify-content: center;
+        align-items: center;
+        gap: 2.75rem;
+        padding: 0.05rem 0.25rem 0;
+        min-height: var(--swipe-actions-h, 5.25rem);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .swipe-card--enter,
     .swipe-actions__btn.is-pressed .swipe-actions__circle,
@@ -18021,7 +18117,9 @@ html.cookie-consent-known .cookie-consent {
 }
 
 @media (min-width: 769px) {
-    .app-shell--match .app-main {
+    .app-shell--match .app-main,
+    .app-shell--match.has-bottom-nav .app-main,
+    .app-shell--match:has(.bottom-nav) .app-main {
         padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
     }
 }
