@@ -259,13 +259,16 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("pending[kind] = null", maps);
         Assert.Contains("discovery", maps);
         Assert.Contains("fetchpriority", maps);
-        Assert.DoesNotContain("requestIdleCallback", maps);
+        // MapLibre boot waits for Blazor circuit or idle (Safari: 1500 ms fallback).
+        Assert.Contains("whenCircuitOrIdle", maps);
+        Assert.Contains("requestIdleCallback", maps);
         Assert.DoesNotContain("ensureAfterPaint", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("pending[kind] = null", bundle);
         Assert.Contains("maplibre-gl-csp.js", bundle);
         Assert.Contains("fetchpriority", bundle);
-        Assert.DoesNotContain("requestIdleCallback", bundle);
+        Assert.Contains("whenCircuitOrIdle", bundle);
+        Assert.Contains("requestIdleCallback", bundle);
         Assert.DoesNotContain("ensureAfterPaint", bundle);
     }
 

@@ -13,7 +13,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20260926-mapfix9"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260928-perf"
+        "/js/jobMap.min.js?v=20260928-mapperf"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20260928-perf"
@@ -116,9 +116,13 @@ window.jobsyMaps = (function () {
         return new Promise(function (resolve, reject) {
             var script = document.createElement("script");
             script.src = src;
-            script.async = true;
+            // Prefer defer so MapLibre parse does not contend with the Blazor circuit.
+            // (Dynamically inserted defer scripts still run after document parse.)
+            script.defer = true;
             script.setAttribute("data-jobsy-map", src);
-            script.setAttribute("fetchpriority", "high");
+            if (!isMapLibreMain(src)) {
+                script.setAttribute("fetchpriority", "high");
+            }
             script.onload = function () {
                 if (isMapLibreMain(src)) {
                     configureMapLibreWorker();
@@ -192,12 +196,36 @@ window.jobsyMaps = (function () {
         return pending[kind];
     }
 
+    function pinsFilterKey(url) {
+        if (!url) {
+            return "";
+        }
+        try {
+            var u = new URL(url, window.location.origin);
+            u.searchParams.delete("transport");
+            var keys = Array.prototype.slice.call(u.searchParams.keys()).sort();
+            var parts = [];
+            for (var i = 0; i < keys.length; i++) {
+                var k = keys[i];
+                var vals = u.searchParams.getAll(k).slice().sort();
+                for (var j = 0; j < vals.length; j++) {
+                    parts.push(k + "=" + vals[j]);
+                }
+            }
+            return u.pathname + "?" + parts.join("&");
+        } catch (e) {
+            return String(url).replace(/([?&])transport=[^&]*/gi, "$1").replace(/[?&]$/, "");
+        }
+    }
+
     /** Start pins HTTP before MapLibre finishes loading (first pins &lt; 1.5s target). */
     function prefetchPins(url) {
         if (!url || typeof fetch !== "function") {
             return Promise.resolve(null);
         }
-        if (window.__jobsyPinsPrefetch && window.__jobsyPinsPrefetchUrl === url) {
+        var key = pinsFilterKey(url);
+        if (window.__jobsyPinsPrefetch
+            && pinsFilterKey(window.__jobsyPinsPrefetchUrl) === key) {
             return window.__jobsyPinsPrefetch;
         }
         window.__jobsyPinsPrefetchUrl = url;
@@ -231,7 +259,50 @@ window.jobsyMaps = (function () {
         }
     }
 
-    // Kick off pins fetch + map scripts as soon as boot JSON is in the DOM (no circuit).
+    /**
+     * Defer MapLibre parse/style until the Blazor circuit is up OR the browser
+     * is idle (Safari fallback: 1500 ms). Pins HTTP still starts immediately.
+     */
+    function whenCircuitOrIdle(cb) {
+        var done = false;
+        function run() {
+            if (done) {
+                return;
+            }
+            done = true;
+            try { cb(); } catch (e) { }
+        }
+        function circuitReady() {
+            try {
+                return !!(window.Blazor && window.Blazor._internal);
+            } catch (e) {
+                return false;
+            }
+        }
+        if (circuitReady()) {
+            run();
+            return;
+        }
+        var iv = setInterval(function () {
+            if (circuitReady()) {
+                clearInterval(iv);
+                run();
+            }
+        }, 50);
+        if (typeof requestIdleCallback === "function") {
+            requestIdleCallback(function () {
+                clearInterval(iv);
+                run();
+            }, { timeout: 1500 });
+        } else {
+            setTimeout(function () {
+                clearInterval(iv);
+                run();
+            }, 1500);
+        }
+    }
+
+    // Kick off pins fetch immediately; defer MapLibre + boot to idle/circuit.
     function warmBootPins() {
         try {
             var node = document.getElementById("jobsy-map-boot");
@@ -243,11 +314,13 @@ window.jobsyMaps = (function () {
                 prefetchPins(String(parsed.pinsUrl));
             }
             if (isDiscoveryPath()) {
-                ensure("discovery").then(function () {
-                    if (window.jobMap && typeof window.jobMap.boot === "function") {
-                        window.jobMap.boot("job-map");
-                    }
-                }).catch(function () { });
+                whenCircuitOrIdle(function () {
+                    ensure("discovery").then(function () {
+                        if (window.jobMap && typeof window.jobMap.boot === "function") {
+                            window.jobMap.boot("job-map");
+                        }
+                    }).catch(function () { });
+                });
             }
         } catch (e) { }
     }

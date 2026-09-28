@@ -141,7 +141,9 @@ public class HomepagePerformanceGuardTests
         Assert.DoesNotContain("warmDiscovery", maps);
         Assert.DoesNotContain("jobsyMapsAfterFirstPaint", maps);
         Assert.DoesNotContain("IntersectionObserver", maps);
-        Assert.DoesNotContain("requestIdleCallback", maps);
+        // Pins HTTP still starts immediately; MapLibre create/style waits for circuit/idle.
+        Assert.Contains("whenCircuitOrIdle", maps);
+        Assert.Contains("requestIdleCallback", maps);
         Assert.Contains("fetchpriority", maps);
         Assert.Contains("loadScriptsParallel", maps);
         Assert.Contains("first pins do not wait on the Blazor circuit", maps);
@@ -150,7 +152,8 @@ public class HomepagePerformanceGuardTests
         Assert.DoesNotContain("ensureAfterPaint", bundle);
         Assert.DoesNotContain("warmDiscovery", bundle);
         Assert.DoesNotContain("jobsyMapsAfterFirstPaint", bundle);
-        Assert.DoesNotContain("requestIdleCallback", bundle);
+        Assert.Contains("whenCircuitOrIdle", bundle);
+        Assert.Contains("requestIdleCallback", bundle);
         Assert.Contains("fetchpriority", bundle);
         Assert.Contains("loadScriptsParallel", bundle);
         Assert.Contains("first pins do not wait on the Blazor circuit", bundle);

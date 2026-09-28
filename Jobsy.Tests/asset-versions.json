@@ -40,7 +40,7 @@
     "v": "20260925-coral"
   },
   "js/app-core.js": {
-    "sha256": "6f708e473304033d32b6ffa3728752d39af1e1e5f625b196951c73fe21ce9a83",
+    "sha256": "feaf19b92ca54d96d4c350199153b5a7c8803628637a963cae53acbf724d6e67",
     "v": "20260927-banenkaart-v3b"
   },
   "js/app-extras.js": {
@@ -64,8 +64,8 @@
     "v": "20260927-gratis-dna"
   },
   "js/jobMap.min.js": {
-    "sha256": "03e33d90e3b9378d651fbe9434e9c094bbb9b933e725872f5f3f39920302996f",
-    "v": "20260928-perf"
+    "sha256": "dfd24869872790406a6a4044aa377e6b81b9ff7e84e767538699117f113bb990",
+    "v": "20260928-mapperf"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "0bd8f0e24e1af41385fcfac63ae64147cc660fc50dea151b0e6cae7a06bd6ff5",
