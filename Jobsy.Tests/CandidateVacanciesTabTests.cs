@@ -6,17 +6,13 @@ public class CandidateVacanciesTabTests
     public void Recently_viewed_is_local_guid_storage_not_email()
     {
         var root = FindRepoRoot();
-        var geo = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/geo.js"));
-        var core = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/app-core.js"));
-        foreach (var js in new[] { geo, core })
-        {
-            Assert.Contains("jobsy.recentlyViewedVacancies", js);
-            Assert.Contains("rememberViewedVacancy", js);
-            Assert.Contains("listRecentlyViewed", js);
-            Assert.Contains("UUID_RE", js);
-            Assert.Contains("RECENT_MAX = 20", js);
-            Assert.DoesNotContain("FindFirst(ClaimTypes.Email)", js);
-        }
+        var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/app-core.js"));
+        Assert.Contains("jobsy.recentlyViewedVacancies", js);
+        Assert.Contains("rememberViewedVacancy", js);
+        Assert.Contains("listRecentlyViewed", js);
+        Assert.Contains("UUID_RE", js);
+        Assert.Contains("RECENT_MAX = 20", js);
+        Assert.DoesNotContain("FindFirst(ClaimTypes.Email)", js);
 
         var helper = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/RecentlyViewedVacancies.cs"));
         Assert.Contains("Stores GUIDs, never emails", helper);

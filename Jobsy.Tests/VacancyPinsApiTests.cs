@@ -74,7 +74,7 @@ public class VacancyPinsApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Contains("function normalizePin", js);
         Assert.Contains("reloadPins", js);
 
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
+        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("/login", maps);
         Assert.Contains("Never pull MapLibre", maps);
     }
