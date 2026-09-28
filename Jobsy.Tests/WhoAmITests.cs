@@ -72,7 +72,7 @@ public class WhoAmITests
     public void Kompas_surfaces_dna_and_tests_tabs()
     {
         var root = RepoRoot.Find();
-        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
         Assert.Contains("Kompas.TabDna", kompas, StringComparison.Ordinal);
         Assert.Contains("DnaPanel", kompas, StringComparison.Ordinal);
         Assert.Contains("TestsOverviewPanel", kompas, StringComparison.Ordinal);
@@ -80,13 +80,13 @@ public class WhoAmITests
         Assert.Equal(CandidateKompasTabs.Dna, CandidateKompasTabs.All[0]);
         Assert.Equal(CandidateKompasTabs.Dna, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Fit, 1));
         Assert.Equal(4, CandidateKompasTabs.All.Length);
-        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor"));
+        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/DnaPanel.razor"));
         Assert.Contains("Dna.StoryEmpty", panel, StringComparison.Ordinal);
         Assert.Contains("Dna.TestsTitle", panel, StringComparison.Ordinal);
         Assert.Contains("GetMyKompasDnaResultAsync", panel, StringComparison.Ordinal);
         Assert.Contains("OnParametersSetAsync", panel, StringComparison.Ordinal);
         Assert.Contains("WhoAmIStoryStatuses", panel, StringComparison.Ordinal);
-        Assert.Contains("Active=", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor")), StringComparison.Ordinal);
+        Assert.Contains("Active=", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor")), StringComparison.Ordinal);
     }
 
     [Fact]

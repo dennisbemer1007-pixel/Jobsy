@@ -20,7 +20,7 @@ public class CandidateTabStabilityGuardTests
     [Fact]
     public void Heavy_candidate_panels_are_wrapped_in_PanelErrorBoundary()
     {
-        var kompas = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+        var kompas = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
         var profile = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         Assert.Contains("PanelErrorBoundary Name=\"dna\"", kompas);
         Assert.Contains("PanelErrorBoundary Name=\"tests-overview\"", kompas);

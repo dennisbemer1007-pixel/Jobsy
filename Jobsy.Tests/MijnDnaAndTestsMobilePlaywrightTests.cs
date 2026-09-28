@@ -36,7 +36,7 @@ public class MijnDnaAndTestsMobilePlaywrightTests
     public void Structure_covers_dna_c_and_questionnaire_guards()
     {
         var root = FindRepoRoot();
-        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor"));
+        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/DnaPanel.razor"));
         Assert.Contains("dna-carousel", panel, StringComparison.Ordinal);
         Assert.Contains("dna-tiles__grid", panel, StringComparison.Ordinal);
         Assert.Contains("Dna.HighlightsTitle", panel, StringComparison.Ordinal);

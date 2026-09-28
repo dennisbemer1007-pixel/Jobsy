@@ -81,7 +81,7 @@ public class VacancyCultureFitTranslationTests
     public void Training_offers_fetch_only_when_inputs_change()
     {
         var root = RepoRoot.Find();
-        var block = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/TrainingOffersBlock.razor"));
+        var block = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/TrainingOffersBlock.razor"));
         Assert.Contains("_lastFetchKey", block, StringComparison.Ordinal);
         Assert.Contains("string.Equals(key, _lastFetchKey", block, StringComparison.Ordinal);
     }

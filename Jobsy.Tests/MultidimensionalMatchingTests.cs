@@ -126,7 +126,7 @@ public class MultidimensionalMatchingTests
     [Fact]
     public void Training_ui_is_subtle_in_context_without_shouting_cta()
     {
-        var block = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Pages/Candidate/TrainingOffersBlock.razor"));
+        var block = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Candidate/TrainingOffersBlock.razor"));
         Assert.Contains("training-offers--subtle", block, StringComparison.Ordinal);
         Assert.Contains("training-offers__link", block, StringComparison.Ordinal);
         Assert.DoesNotContain("login-submit", block, StringComparison.Ordinal);

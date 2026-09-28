@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
@@ -51,6 +52,10 @@ public class SalesWalletChipTests : TestContext
 
     private CountingHandler Arrange(ClaimsPrincipal user, bool dashboardOk = false)
     {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+        CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
+        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+        CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
         JSInterop.Mode = JSRuntimeMode.Loose;
 
         var auth = new FakeAuthStateProvider(user);

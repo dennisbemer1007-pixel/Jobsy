@@ -364,7 +364,7 @@ public class MobileSaasUxTests
         Assert.Contains("notification-bell__toggle--unread", bell);
         Assert.Contains(".notification-bell__toggle--unread {\n    color: #c9a227;", css);
 
-        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/EmployerHomePanel.razor"));
+        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Home/EmployerHomePanel.razor"));
         Assert.DoesNotContain("Download Raamflyer", home);
         Assert.DoesNotContain("Per vestiging", home);
         Assert.DoesNotContain("raamflyer-scope", home);

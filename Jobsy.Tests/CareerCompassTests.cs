@@ -226,14 +226,14 @@ public class CareerCompassTests
     public void Kompas_panel_and_pages_wire_career_compass()
     {
         var root = RepoRoot.Find();
-        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor"));
+        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CareerCompassPanel.razor"));
         Assert.Contains("Kompas.BandSuper", panel, StringComparison.Ordinal);
         Assert.Contains("Kompas.PracticalTitle", panel, StringComparison.Ordinal);
         Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
         Assert.Contains("kompas-occupation__details", panel, StringComparison.Ordinal);
         Assert.Contains("CareerOccupationDetail", panel, StringComparison.Ordinal);
 
-        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
         Assert.DoesNotContain("Talent.CandidateTitle", home, StringComparison.Ordinal);
         var profilePage = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         Assert.Contains("ProfileTab", profilePage, StringComparison.Ordinal);
@@ -246,9 +246,9 @@ public class CareerCompassTests
         Assert.Contains("Kompas.TabFit", home, StringComparison.Ordinal);
         Assert.Contains("DnaPanel", home, StringComparison.Ordinal);
         Assert.Contains("TestsOverviewPanel", home, StringComparison.Ordinal);
-        Assert.Contains("ScoreRadarChart", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor")), StringComparison.Ordinal);
+        Assert.Contains("ScoreRadarChart", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CompetencyScorePanel.razor")), StringComparison.Ordinal);
         Assert.Contains("score-radar", File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css")), StringComparison.Ordinal);
-        var competencyPanel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor"));
+        var competencyPanel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CompetencyScorePanel.razor"));
         Assert.Contains("competency-skill__details", competencyPanel, StringComparison.Ordinal);
         Assert.Contains("TrainingOffersBlock", competencyPanel, StringComparison.Ordinal);
         Assert.Contains("CampaignCompetence", competencyPanel, StringComparison.Ordinal);
@@ -258,7 +258,7 @@ public class CareerCompassTests
         Assert.Contains("kompas-panel-tests", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-dna", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-fit", home, StringComparison.Ordinal);
-        Assert.Contains("Kompas.PracticalTitle", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor")), StringComparison.Ordinal);
+        Assert.Contains("Kompas.PracticalTitle", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CareerCompassPanel.razor")), StringComparison.Ordinal);
         Assert.DoesNotContain("kompas-grid", home, StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
@@ -275,7 +275,7 @@ public class CareerCompassTests
         Assert.Contains(".kompas-card[hidden]", minCss, StringComparison.Ordinal);
         Assert.Contains("kompas-workspace", home, StringComparison.Ordinal);
         Assert.DoesNotContain("pill-scroller", home, StringComparison.Ordinal);
-        var matches = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyMatchPanel.razor"));
+        var matches = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CompetencyMatchPanel.razor"));
         Assert.Contains("competency-match-card__head", matches, StringComparison.Ordinal);
         Assert.Contains(".competency-skill-list", css, StringComparison.Ordinal);
         Assert.Contains(".competency-skill-list", minCss, StringComparison.Ordinal);

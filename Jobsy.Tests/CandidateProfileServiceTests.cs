@@ -70,7 +70,7 @@ public class CandidateProfileServiceTests
         Assert.DoesNotContain("profile-hub-kompas", page);
         Assert.DoesNotContain("CandidateProfileService", page);
 
-        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
         Assert.Contains("Kompas.TabTests", kompas);
         Assert.Contains("TestsOverviewPanel", kompas);
         Assert.Contains("DnaPanel", kompas);
