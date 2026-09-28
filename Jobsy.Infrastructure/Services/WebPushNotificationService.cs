@@ -107,7 +107,7 @@ public sealed class WebPushNotificationService : IPushNotificationService
             try
             {
                 var pushSub = new PushSubscription(sub.Endpoint, sub.P256dh, sub.Auth);
-                await client.SendNotificationAsync(pushSub, payload, new VapidDetails(subject, publicKey, privateKey));
+                await client.SendNotificationAsync(pushSub, payload, new VapidDetails(subject, publicKey, privateKey), cancellationToken);
                 sub.LastUsedAtUtc = DateTime.UtcNow;
                 sub.UpdatedAtUtc = DateTime.UtcNow;
             }
