@@ -3005,28 +3005,6 @@ html[dir="rtl"] .account-menu__panel {
     gap: 0.35rem 0.45rem;
 }
 
-.travel-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    margin-top: 0.45rem;
-    padding: 0.28rem 0.7rem;
-    border-radius: 999px;
-    background: var(--accent);
-    color: #fff;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    line-height: 1.2;
-    width: fit-content;
-}
-
-.travel-badge--soft {
-    background: var(--accent-soft);
-    color: var(--brand);
-    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-}
-
 .travel-hint .travel-badge {
     margin-top: 0.15rem;
 }
@@ -3121,13 +3099,6 @@ html[dir="rtl"] .account-menu__panel {
     font-size: 0.76rem;
     font-weight: 700;
     line-height: 1.2;
-}
-
-.lobsy-proximity__chip--soft {
-    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
-    color: var(--secondary);
-    border: 1px solid color-mix(in srgb, var(--brand) 16%, var(--border));
-    font-weight: 600;
 }
 
 .vacancy-location {
@@ -3411,34 +3382,6 @@ html[dir="rtl"] .account-menu__panel {
     border-radius: 4px;
     background: var(--hover);
     color: var(--muted);
-}
-
-.badge--worktype {
-    background: color-mix(in srgb, var(--accent) 18%, white);
-    color: var(--brand);
-    font-weight: 600;
-}
-
-.worktype-fieldset {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.65rem 0.75rem 0.75rem;
-    margin: 0;
-}
-
-.worktype-fieldset legend {
-    padding: 0 0.25rem;
-    font-size: 0.75rem;
-    color: var(--muted);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
-.worktype-options {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.35rem 0.75rem;
 }
 
 .checkbox-row.is-disabled {
@@ -3875,15 +3818,6 @@ html[dir="rtl"] .account-menu__panel {
     padding: 0.2rem;
 }
 
-.highlight-carousel__media--placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    color: var(--brand);
-    font-size: 0.95rem;
-}
-
 .highlight-carousel__body {
     min-width: 0;
     display: flex;
@@ -3915,21 +3849,6 @@ html[dir="rtl"] .account-menu__panel {
 .highlight-carousel__travel {
     color: color-mix(in srgb, #a87008 55%, var(--muted));
     font-weight: 600;
-}
-
-.job-marker__pin {
-    display: block;
-    width: 22px;
-    height: 22px;
-    margin: 0 auto;
-    border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg);
-    background: var(--map-pin);
-    border: 3px solid #fff;
-    box-shadow:
-        0 0 0 3px color-mix(in srgb, var(--map-pin) 22%, transparent),
-        0 4px 14px var(--map-pin-glow);
-    transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 
 .job-marker__glyph {
@@ -4061,27 +3980,6 @@ html[dir="rtl"] .account-menu__panel {
     .vacancy-detail-marker__img {
         transition: none;
     }
-}
-
-.travel-ring-label {
-    background: transparent !important;
-    border: none !important;
-    pointer-events: none;
-    z-index: 1 !important;
-}
-
-.travel-ring-label span {
-    display: inline-block;
-    padding: 0.18rem 0.55rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface) 92%, transparent);
-    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-    color: var(--brand);
-    font-size: 0.68rem;
-    font-weight: 700;
-    font-family: var(--font);
-    white-space: nowrap;
-    box-shadow: var(--shadow);
 }
 
 .job-map-popup {
@@ -4701,10 +4599,6 @@ a.map-popup__apply.map-popup__cta:visited {
     color: var(--danger);
 }
 
-.mobile-toggle {
-    display: none;
-}
-
 @media (max-width: 768px) {
     .job-map-popup {
         width: min(340px, calc(100vw - 1.5rem));
@@ -5219,10 +5113,6 @@ a.map-popup__apply.map-popup__cta:visited {
 
     .address-field {
         grid-template-columns: 1fr;
-    }
-
-    .mobile-toggle {
-        display: none;
     }
 
     .bottom-nav {
@@ -5781,14 +5671,6 @@ html[dir="rtl"] .language-selector__menu {
 .stat-card--link:hover {
     border-color: var(--accent);
     box-shadow: var(--shadow);
-}
-
-.placeholder-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.25rem 1.35rem;
-    color: var(--muted);
 }
 
 .panel-header__actions {
