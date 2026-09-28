@@ -77,27 +77,27 @@ public sealed class KindDeepReportService : IKindDeepReportService
         switch (kind)
         {
             case AssessmentKind.Career:
-            {
-                var compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, ct);
-                var report = CareerDeepReportBuilder.Build(domainScores, compass, means, now);
-                row.ReportJson = CareerDeepReportJson.Serialize(report);
-                row.ReportVersion = report.ReportVersion;
-                break;
-            }
+                {
+                    var compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, ct);
+                    var report = CareerDeepReportBuilder.Build(domainScores, compass, means, now);
+                    row.ReportJson = CareerDeepReportJson.Serialize(report);
+                    row.ReportVersion = report.ReportVersion;
+                    break;
+                }
             case AssessmentKind.Culture:
-            {
-                var report = CultureDeepReportBuilder.Build(domainScores, means, now);
-                row.ReportJson = CultureDeepReportJson.Serialize(report);
-                row.ReportVersion = report.ReportVersion;
-                break;
-            }
+                {
+                    var report = CultureDeepReportBuilder.Build(domainScores, means, now);
+                    row.ReportJson = CultureDeepReportJson.Serialize(report);
+                    row.ReportVersion = report.ReportVersion;
+                    break;
+                }
             case AssessmentKind.Values:
-            {
-                var report = ValuesDeepReportBuilder.Build(domainScores, means, now);
-                row.ReportJson = ValuesDeepReportJson.Serialize(report);
-                row.ReportVersion = report.ReportVersion;
-                break;
-            }
+                {
+                    var report = ValuesDeepReportBuilder.Build(domainScores, means, now);
+                    row.ReportJson = ValuesDeepReportJson.Serialize(report);
+                    row.ReportVersion = report.ReportVersion;
+                    break;
+                }
         }
 
         row.ReportGeneratedAtUtc = now;

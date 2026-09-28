@@ -10,6 +10,8 @@ export DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
 export Seed__Enabled=true
 export JobsyAuth__AllowDevelopmentAuth=true
 export JobsyAuth__AllowStubPayments=true
+# Playwright WaitForFunctionAsync needs eval; Acc/prod CSP stays without unsafe-eval.
+export JOBSY_CSP_ALLOW_UNSAFE_EVAL=1
 export VerificationCodes__Pepper="${VerificationCodes__Pepper:-ci-verification-otp-pepper-32chars}"
 export ConnectionStrings__JobsyDb="${ConnectionStrings__JobsyDb:-Host=127.0.0.1;Port=5432;Database=JobsyCi;Username=postgres;Password=postgres}"
 export Cors__AllowedOrigins__0=http://localhost:5201

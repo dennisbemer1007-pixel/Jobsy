@@ -105,30 +105,30 @@ public class AccountUnsubscribeTests
             ActionUrl = "/candidate/actions/set-unavailable?token=secret",
             CreatedAtUtc = DateTime.UtcNow
         });
-            db.CandidateActionTokens.Add(new CandidateActionToken
-            {
-                Id = Guid.NewGuid(),
-                UserId = candidateId,
-                Purpose = "SetUnavailable",
-                TokenHash = VerificationCodes.Hash("abcdef"),
-                ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
-                CreatedAtUtc = DateTime.UtcNow
-            });
-            db.CandidateCompetencies.Add(new CandidateCompetency
-            {
-                Id = Guid.NewGuid(),
-                UserId = candidateId,
-                Status = CandidateCompetencyStatuses.Completed,
-                AnswersJson = """{"1":5,"2":4}""",
-                SamenwerkenPercent = 72,
-                ResultaatgerichtheidPercent = 68,
-                StressbestendigheidPercent = 55,
-                InnovatiePercent = 60,
-                CreatedAtUtc = DateTime.UtcNow,
-                UpdatedAtUtc = DateTime.UtcNow,
-                CompletedAtUtc = DateTime.UtcNow
-            });
-            await db.SaveChangesAsync();
+        db.CandidateActionTokens.Add(new CandidateActionToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = candidateId,
+            Purpose = "SetUnavailable",
+            TokenHash = VerificationCodes.Hash("abcdef"),
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        db.CandidateCompetencies.Add(new CandidateCompetency
+        {
+            Id = Guid.NewGuid(),
+            UserId = candidateId,
+            Status = CandidateCompetencyStatuses.Completed,
+            AnswersJson = """{"1":5,"2":4}""",
+            SamenwerkenPercent = 72,
+            ResultaatgerichtheidPercent = 68,
+            StressbestendigheidPercent = 55,
+            InnovatiePercent = 60,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+            CompletedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
 
         var privacy = CreatePrivacy(db, out var mail);
         var principal = CreatePrincipal(email);
