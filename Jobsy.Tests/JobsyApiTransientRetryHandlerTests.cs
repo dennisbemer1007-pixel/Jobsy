@@ -6,7 +6,7 @@ namespace Jobsy.Tests;
 public class JobsyApiTransientRetryHandlerTests
 {
     [Fact]
-    public async Task Get_retries_unauthorized_then_succeeds()
+    public async Task Get_does_not_retry_unauthorized_when_anonymous()
     {
         var inner = new SequenceHandler(
             new HttpResponseMessage(HttpStatusCode.Unauthorized),
@@ -14,10 +14,10 @@ public class JobsyApiTransientRetryHandlerTests
         var sut = new JobsyApiTransientRetryHandler { InnerHandler = inner };
 
         using var client = new HttpClient(sut);
-        var response = await client.GetAsync("http://retry.test/api/metrics/summary");
+        var response = await client.GetAsync("http://retry.test/api/sales-managers/me/dashboard");
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(2, inner.Calls);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal(1, inner.Calls);
     }
 
     [Fact]
@@ -93,11 +93,20 @@ public class JobsyApiTransientRetryHandlerTests
         Assert.False(JobsyApiTransientRetryHandler.IsTransient(HttpStatusCode.NotFound));
 
         using var anonymous = new HttpRequestMessage(HttpMethod.Get, "http://retry.test/api/me");
-        Assert.True(JobsyApiTransientRetryHandler.ShouldRetry(HttpStatusCode.Unauthorized, anonymous));
+        Assert.False(JobsyApiTransientRetryHandler.ShouldRetry(HttpStatusCode.Unauthorized, anonymous));
 
         using var authed = new HttpRequestMessage(HttpMethod.Get, "http://retry.test/api/me");
         authed.Headers.TryAddWithoutValidation("Authorization", "Bearer valid-token");
         Assert.False(JobsyApiTransientRetryHandler.ShouldRetry(HttpStatusCode.Unauthorized, authed));
+
+        using var cookieOnly = new HttpRequestMessage(HttpMethod.Get, "http://retry.test/api/me");
+        cookieOnly.Headers.TryAddWithoutValidation("Cookie", "Jobsy.Auth=abc; path=/");
+        Assert.True(JobsyApiTransientRetryHandler.HasAttachedAuth(cookieOnly));
+        Assert.False(JobsyApiTransientRetryHandler.ShouldRetry(HttpStatusCode.Unauthorized, cookieOnly));
+
+        using var okGet = new HttpRequestMessage(HttpMethod.Get, "http://retry.test/api/me");
+        Assert.True(JobsyApiTransientRetryHandler.ShouldRetry(HttpStatusCode.ServiceUnavailable, okGet));
+        Assert.True(JobsyApiTransientRetryHandler.ShouldRetry(HttpStatusCode.TooManyRequests, okGet));
     }
 
     [Fact]

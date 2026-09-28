@@ -16,6 +16,9 @@
 </AuthorizeView>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
     private decimal _balance;
     private bool _loaded;
 
@@ -26,6 +29,18 @@
     {
         try
         {
+            if (AuthStateTask is null)
+            {
+                return;
+            }
+
+            var auth = await AuthStateTask;
+            var user = auth.User;
+            if (user.Identity?.IsAuthenticated != true || !user.IsInRole("SalesManager"))
+            {
+                return;
+            }
+
             var dash = await Api.GetMySalesManagerDashboardAsync();
             _balance = dash?.UninvoicedExVat ?? dash?.BalanceExVat ?? 0m;
         }
