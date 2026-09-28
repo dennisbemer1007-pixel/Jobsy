@@ -6,12 +6,16 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
+@using Jobsy.Core.Options
+@using Jobsy.Web.Components.Candidate.TestResult
 @using Jobsy.Web.Components.Shared
+@using Microsoft.Extensions.Options
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
+@inject IOptionsSnapshot<JobsyFeatureOptions> FeatureOptions
 @implements IDisposable
 
 <PageTitle>@(_def is null ? Culture["Kompas.TabTests"] : Culture[_def.TitleKey]) · Lobsy</PageTitle>
@@ -40,35 +44,62 @@
             </div>
         }
 
-        @if (!_deepCompleted && _def.Kind != AssessmentKind.Competence)
-        {
-            <button type="button"
-                    class="btn-gold"
-                    disabled="@_busy"
-                    @onclick="StartExtendedAsync">
-                @Culture["Tests.StartExtended"]
-            </button>
-            <p class="test-detail__price muted">
-                @Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))
-                @if (_def.Kind == AssessmentKind.Career)
+        <header class="test-result-header">
+            <div class="test-result-header__main">
+                <h1>@Culture[_def.TitleKey]</h1>
+                <p class="test-detail__status-row">
+                    <span class="test-status-badge test-status-badge--@(_deepCompleted ? "gold" : "success")">
+                        <span aria-hidden="true">@(_deepCompleted ? "★" : "✓")</span>
+                        @Culture[_deepCompleted ? "Test.Status.Extended" : "Test.Status.FreeDone"]
+                    </span>
+                    @if (!string.IsNullOrWhiteSpace(_completedMeta))
+                    {
+                        <span class="muted">@_completedMeta · @_scoreBars.Count @Culture["Tests.ScoresLabel"]</span>
+                    }
+                </p>
+            </div>
+            <div class="test-result-actions">
+                <div class="test-result-actions__btns">
+                    @if (_editModeEnabled)
+                    {
+                        <button type="button"
+                                class="btn-outline-brand"
+                                disabled="@(_busy || _adjustments.Remaining <= 0)"
+                                aria-describedby="test-result-quota"
+                                @onclick="BeginEditAsync">
+                            ✎ @Culture["TestResult.EditAnswers"]
+                        </button>
+                    }
+                    <button type="button"
+                            class="test-result-actions__ghost"
+                            disabled="@(_busy || _adjustments.Remaining <= 0)"
+                            aria-describedby="test-result-quota"
+                            @onclick="() => _redoOpen = true">
+                        ↻ @Culture["TestResult.Retake"]
+                    </button>
+                </div>
+                @if (_adjustments.Remaining <= 0)
                 {
-                    <span> · @Culture["Tests.WithPdf"]</span>
+                    <p id="test-result-quota" class="test-result-quota test-result-quota--zero" role="status">
+                        <span class="test-result-quota__icon" aria-hidden="true">ⓘ</span>
+                        @Culture.Format("TestResult.Quota.Zero", _adjustments.Max)
+                    </p>
                 }
-            </p>
-        }
-
-        <header class="test-detail__header">
-            <h1>@Culture[_def.TitleKey]</h1>
-            <p class="test-detail__status-row">
-                <span class="test-status-badge test-status-badge--@(_deepCompleted ? "gold" : "success")">
-                    <span aria-hidden="true">@(_deepCompleted ? "★" : "✓")</span>
-                    @Culture[_deepCompleted ? "Test.Status.Extended" : "Test.Status.FreeDone"]
-                </span>
-                @if (!string.IsNullOrWhiteSpace(_completedMeta))
+                else
                 {
-                    <span class="muted">@_completedMeta</span>
+                    <p id="test-result-quota" class="test-result-quota" role="status">
+                        <span aria-hidden="true">ⓘ</span>
+                        @if (_adjustments.Remaining == 1)
+                        {
+                            @Culture.Format("TestResult.Quota.LineOne", _adjustments.Max)
+                        }
+                        else
+                        {
+                            @Culture.Format("TestResult.Quota.Line", _adjustments.Remaining, _adjustments.Max)
+                        }
+                    </p>
                 }
-            </p>
+            </div>
         </header>
 
         @if (!string.IsNullOrWhiteSpace(_headline))
@@ -140,9 +171,9 @@
             </p>
         </details>
 
-        @if (_def.Kind == AssessmentKind.Competence)
+        @if (_deepCompleted)
         {
-            @if (_deepCompleted && _competenceReport is not null)
+            @if (_def.Kind == AssessmentKind.Competence && _competenceReport is not null)
             {
                 <CompetenceDeepReportView Report="_competenceReport"
                                           CompletedAtUtc="@_deepState?.CompletedAtUtc"
@@ -150,25 +181,55 @@
                                           Busy="_busy"
                                           OnDownloadPdf="DownloadPdfAsync" />
             }
-            else if (_freeDone)
+            else
             {
-                <CompetenceDeepTeaser PriceEuro="_priceEuro"
-                                      IsUnlockedNotCompleted="_deepUnlocked && !_deepCompleted"
-                                      Busy="_busy"
-                                      OnUnlock="StartExtendedAsync"
-                                      OnContinueTest="StartExtendedAsync" />
+                <button type="button" class="engagement-btn" disabled="@_busy" @onclick="DownloadPdfAsync">
+                    @Culture["Deep.DownloadPdf"]
+                </button>
             }
         }
-        else if (_deepUnlocked && !_deepCompleted)
+        else
         {
-            <a class="login-submit" href="@_def.DeepStartHref">@Culture["Tests.ContinueExtended"]</a>
+            <LockedDeepReportSection Kind="_def.Kind" QuestionCount="_def.DeepQuestionCount" />
+            <TestResultPremiumBlock Kind="_def.Kind"
+                                    TestTitle="@Culture[_def.TitleKey]"
+                                    PriceEuro="_priceEuro"
+                                    QuestionCount="_def.DeepQuestionCount"
+                                    MinutesApprox="@(_def.Kind == AssessmentKind.Career ? 25 : 20)"
+                                    Busy="_busy"
+                                    IsUnlockedNotCompleted="_deepUnlocked && !_deepCompleted"
+                                    DeepStartHref="@_def.DeepStartHref"
+                                    ProgressCurrent="@(_deepState?.AnsweredCount ?? 0)"
+                                    ProgressTotal="@_def.DeepQuestionCount"
+                                    ShowSamplePdf="_samplePdfEnabled"
+                                    OnStart="StartExtendedAsync" />
         }
-        else if (_deepCompleted)
+
+        @if (_history.Count > 0)
         {
-            <button type="button" class="engagement-btn" disabled="@_busy" @onclick="DownloadPdfAsync">
-                @Culture["Deep.DownloadPdf"]
-            </button>
+            <section class="test-result-history" aria-labelledby="test-result-history-title">
+                <h2 id="test-result-history-title">@Culture["TestResult.History.Title"]</h2>
+                <ul>
+                    @foreach (var item in _history)
+                    {
+                        <li>
+                            <span>
+                                @(item.CompletedAtUtc?.ToLocalTime().ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL"))
+                                  ?? item.StartedAtUtc.ToLocalTime().ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL")))
+                            </span>
+                        </li>
+                    }
+                </ul>
+            </section>
         }
+
+        <TestResultRedoDialog Open="_redoOpen"
+                              Busy="_busy"
+                              EditEnabled="_editModeEnabled"
+                              RemainingAfter="@(Math.Max(0, _adjustments.Remaining - 1))"
+                              OnConfirm="ConfirmRetakeAsync"
+                              OnPreferEdit="BeginEditAsync"
+                              OnCancel="() => _redoOpen = false" />
     }
     else
     {
@@ -255,6 +316,11 @@
     private CompetenceDeepReport? _competenceReport;
     private bool _heavyLoadStarted;
     private PersistingComponentStateSubscription _persistSubscription;
+    private AssessmentAdjustmentState _adjustments = new() { Remaining = AssessmentAdjustmentRules.MaxAdjustments, Max = AssessmentAdjustmentRules.MaxAdjustments };
+    private List<AssessmentHistoryItem> _history = [];
+    private bool _redoOpen;
+    private bool _editModeEnabled;
+    private bool _samplePdfEnabled;
 
     protected override void OnInitialized()
     {
@@ -337,6 +403,17 @@
             _deepCompleted = deep?.IsCompleted == true;
             _priceEuro = deep?.PriceEuro > 0 ? deep.PriceEuro : 2.99m;
             _competenceReport = deep?.CompetenceReport;
+            _editModeEnabled = FeatureOptions.Value.TestEditMode;
+            _samplePdfEnabled = FeatureOptions.Value.SamplePdf;
+
+            var variant = _deepCompleted ? "deep" : "quick";
+            _adjustments = await Api.GetAssessmentAdjustmentsAsync(_def.Key, variant)
+                           ?? new AssessmentAdjustmentState
+                           {
+                               Remaining = AssessmentAdjustmentRules.MaxAdjustments,
+                               Max = AssessmentAdjustmentRules.MaxAdjustments
+                           };
+            _history = (await Api.GetAssessmentHistoryAsync(_def.Key, variant)).ToList();
 
             _headline = null;
             _headlineLead = null;
@@ -553,6 +630,60 @@
         => euro.ToString("0.00", CultureInfo.GetCultureInfo("nl-NL"));
 
     private void ClearPayError() => _payError = null;
+
+    private Task BeginEditAsync()
+    {
+        _redoOpen = false;
+        if (!_editModeEnabled || _def is null)
+        {
+            _payError = Culture["TestResult.Edit.FlagOff"];
+            return Task.CompletedTask;
+        }
+
+        if (_adjustments.Remaining <= 0)
+        {
+            _payError = Culture["TestResult.Limit.Dialog"];
+            return Task.CompletedTask;
+        }
+
+        var href = _deepCompleted
+            ? $"/candidate/deep-analysis/{_def.Key}?mode=edit"
+            : $"{_def.FreeStartHref}?mode=edit";
+        Navigation.NavigateTo(href);
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmRetakeAsync()
+    {
+        if (_def is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _payError = null;
+        try
+        {
+            var variant = _deepCompleted ? "deep" : "quick";
+            await Api.StartAssessmentRetakeAsync(_def.Key, variant);
+            _redoOpen = false;
+            Navigation.NavigateTo(_deepCompleted ? _def.DeepStartHref : _def.FreeStartHref);
+        }
+        catch (AssessmentAdjustmentLimitClientException)
+        {
+            _payError = Culture["TestResult.Limit.Dialog"];
+            _adjustments = new AssessmentAdjustmentState { Used = AssessmentAdjustmentRules.MaxAdjustments, Remaining = 0, Max = AssessmentAdjustmentRules.MaxAdjustments };
+            _redoOpen = false;
+        }
+        catch (Exception ex)
+        {
+            _payError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
 
     private async Task StartExtendedAsync()
     {

@@ -3375,6 +3375,7 @@ public static class UiStrings
 
         UiStringsExtras.MergeAll(nl, en, pl, ro, ar);
         UiStringsCompetencies.MergeAll(nl, en, pl, ro, ar);
+        UiStringsTestResults.MergeAll(nl, en, pl, ro, ar);
         UiStringsCulture.MergeAll(nl, en, pl, ro, ar);
         UiStringsValues.MergeAll(nl, en, pl, ro, ar);
         UiStringsWhoAmI.MergeAll(nl, en, pl, ro, ar);

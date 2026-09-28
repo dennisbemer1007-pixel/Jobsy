@@ -370,6 +370,67 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    public async Task<AssessmentAdjustmentState?> GetAssessmentAdjustmentsAsync(
+        string kind,
+        string variant = "quick",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<AssessmentAdjustmentState>(
+                $"api/assessments/{Uri.EscapeDataString(kind)}/adjustments?variant={Uri.EscapeDataString(variant)}",
+                ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<AssessmentRetakeStartResult> StartAssessmentRetakeAsync(
+        string kind,
+        string variant = "quick",
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/assessments/{Uri.EscapeDataString(kind)}/retake?variant={Uri.EscapeDataString(variant)}",
+            null,
+            ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            throw new AssessmentAdjustmentLimitClientException(body);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Opnieuw doen starten mislukt.");
+        }
+
+        return System.Text.Json.JsonSerializer.Deserialize<AssessmentRetakeStartResult>(
+                   body,
+                   new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+               ?? new AssessmentRetakeStartResult();
+    }
+
+    public async Task<IReadOnlyList<AssessmentHistoryItem>> GetAssessmentHistoryAsync(
+        string kind,
+        string variant = "quick",
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<AssessmentHistoryItem>>(
+                       $"api/assessments/{Uri.EscapeDataString(kind)}/history?variant={Uri.EscapeDataString(variant)}",
+                       ct)
+                   ?? [];
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
     public async Task<DeepAnalysisCheckout> StartDeepAnalysisCheckoutAsync(string kind, CancellationToken ct = default)
     {
         var response = await _http.PostAsync(

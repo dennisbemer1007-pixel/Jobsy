@@ -320,6 +320,8 @@ public static class DependencyInjection
         services.AddScoped<ICandidateCompetencyService, CandidateCompetencyService>();
         services.AddScoped<ICandidateCulturePersonalityService, CandidateCulturePersonalityService>();
         services.AddScoped<ICandidateValuesService, CandidateValuesService>();
+        services.AddScoped<IAssessmentAdjustmentService, AssessmentAdjustmentService>();
+        services.AddScoped<IAssessmentRetakeService, AssessmentRetakeService>();
         services.AddScoped<ICompanyCultureService, CompanyCultureService>();
         services.AddScoped<ICandidateCareerInterestService, CandidateCareerInterestService>();
         services.AddHttpClient(CareerCompassGenerationService.HttpClientName, client =>

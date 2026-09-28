@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "813bef16c0b4695c00b1d90c5474a207af93e2e1a8bbe2b08666debd76fd7154",
-    "v": "20260928-dead-css"
+    "sha256": "4e4cbc64e820af2654396b5a3b2e344029b701f7f86b62e38e9cda079ad4e694",
+    "v": "20260929-btn-gold"
   },
   "css/features/applications.css": {
     "sha256": "08e8ccce5618f81b8e728a073d7630c2e9c6759ae09a2552c936bad4910e713d",
@@ -35,6 +35,10 @@
     "sha256": "15586b612fe0b26daad7427e168300f8f9193f51a5dd6d424322617359d007d9",
     "v": "20260928-dead-css"
   },
+  "css/features/testresultaten.css": {
+    "sha256": "77cc63b0d35b4efc1b25e190dc86fe56e510a4b40443185c588872bdae458054",
+    "v": "20260929-testresultaten"
+  },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
     "v": "20260925-coral"
@@ -63,6 +67,10 @@
     "sha256": "f8da38e2ecdf91f6bd33e7de3b3dd9c0316344dfc603143d8de92f73a57ea164",
     "v": "20260928-list-rerender"
   },
+  "js/features/kandidaatinzichten-map.js": {
+    "sha256": "54ad7d6c5ef51bb5ddcfff758509d7e96a597ad11d897c2454badaf2944a6a5b",
+    "v": "20260928-insights"
+  },
   "js/feedback.js": {
     "sha256": "3fa3c2d2ec7df009a97b292ef6ea89f0b1bc283f77c1e1cfe9b83c23a6ed6e7e",
     "v": "20260831-ux2"
@@ -70,10 +78,6 @@
   "js/gratis-dna.js": {
     "sha256": "cfda89b97737942663ce7c82ba0cdff016e4afddc7b10a5a82d82f9a70843c3b",
     "v": "20260927-gratis-dna"
-  },
-  "js/features/kandidaatinzichten-map.js": {
-    "sha256": "54ad7d6c5ef51bb5ddcfff758509d7e96a597ad11d897c2454badaf2944a6a5b",
-    "v": "20260928-insights"
   },
   "js/jobMap.min.js": {
     "sha256": "dfd24869872790406a6a4044aa377e6b81b9ff7e84e767538699117f113bb990",

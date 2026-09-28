@@ -1,0 +1,83 @@
+@namespace Jobsy.Web.Components.Candidate.TestResult
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Reports
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (_cards.Count > 0)
+{
+    <section class="test-result-locked" aria-labelledby="@_titleId">
+        <div class="test-result-locked__head">
+            <div>
+                <h2 id="@_titleId">
+                    <span aria-hidden="true">🔒</span>
+                    @Culture["TestResult.Locked.Title"]
+                </h2>
+                <p class="test-result-locked__lead">
+                    @Culture.Format("TestResult.Locked.Lead", QuestionCount, PageCount)
+                </p>
+            </div>
+            <span class="test-result-sample-pill">
+                <span aria-hidden="true">👁</span>
+                @Culture["TestResult.Locked.SamplePill"]
+            </span>
+        </div>
+
+        <div class="test-result-locked__grid">
+            @foreach (var card in _cards)
+            {
+                <article class="test-result-card-locked">
+                    <div class="test-result-card-locked__head">
+                        <div>
+                            <h3>@Culture[card.TitleKey]</h3>
+                            <small>@Culture[card.SubtitleKey]</small>
+                        </div>
+                        <span class="test-result-lock-chip">
+                            <span aria-hidden="true">🔒</span>
+                            @Culture["TestResult.Locked.Chip"]
+                        </span>
+                    </div>
+                    <div class="test-result-card-locked__body" aria-hidden="true">
+                        <ul class="test-result-dummy-bars">
+                            <li>
+                                <div class="row"><span>@Culture["TestResult.Sample.LabelA"]</span><strong>72%</strong></div>
+                                <div class="trk"><span style="width:72%"></span></div>
+                            </li>
+                            <li>
+                                <div class="row"><span>@Culture["TestResult.Sample.LabelB"]</span><strong>48%</strong></div>
+                                <div class="trk"><span style="width:48%"></span></div>
+                            </li>
+                            <li>
+                                <div class="row"><span>@Culture["TestResult.Sample.LabelC"]</span><strong>81%</strong></div>
+                                <div class="trk"><span style="width:81%"></span></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <span class="test-result-stamp" aria-hidden="true">@Culture["TestResult.Stamp"]</span>
+                    <div class="test-result-card-locked__fade" aria-hidden="true"></div>
+                    <span class="visually-hidden">@Culture.Format("TestResult.Locked.VisuallyHidden", Culture[card.TitleKey])</span>
+                </article>
+            }
+        </div>
+
+        <div class="test-result-locked__foot">
+            <span><span class="ok" aria-hidden="true">✓</span> @Culture.Format("TestResult.Locked.Foot.Pages", PageCount)</span>
+            <span><span class="ok" aria-hidden="true">✓</span> @Culture["TestResult.Locked.Foot.Apps"]</span>
+            <span><span class="ok" aria-hidden="true">✓</span> @Culture["TestResult.Locked.Foot.Matches"]</span>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public AssessmentKind Kind { get; set; }
+    [Parameter] public int QuestionCount { get; set; } = 150;
+
+    private readonly string _titleId = "test-result-locked-" + Guid.NewGuid().ToString("N")[..8];
+    private IReadOnlyList<DeepReportCapabilities.CardSpec> _cards = [];
+    private int PageCount => DeepReportCapabilities.For(Kind).PdfPageCount;
+
+    protected override void OnParametersSet()
+    {
+        _cards = DeepReportCapabilities.For(Kind).Cards;
+    }
+}
