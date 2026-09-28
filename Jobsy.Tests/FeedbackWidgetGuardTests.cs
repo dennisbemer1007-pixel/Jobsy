@@ -78,7 +78,7 @@ public class FeedbackWidgetGuardTests
         Assert.Contains("EnsureFeedbackAsync", widget);
         Assert.Contains("FeedbackWidget", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Layout", "MainLayout.razor")));
 
-        var loader = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "extras-loader.js"));
+        var loader = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("feedback.js", loader);
         Assert.Contains("lobsyFeedbackEnsure", loader);
     }

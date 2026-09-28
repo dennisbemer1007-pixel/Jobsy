@@ -32,7 +32,7 @@
 
 ## C. Security Headers & Error Handling (Middleware)
 De ASP.NET Core pipeline stuurt standaard:
-- `Content-Security-Policy` (API + Web). Web scripts use a **per-request nonce** (no `script-src 'unsafe-inline'`). One CSP header only (Blazor’s extra `frame-ancestors` is disabled). Style *attributes* remain `'unsafe-inline'` (Razor/MapLibre CSS variables); `<style>` elements use the same nonce. Blazor Server still needs `'unsafe-eval'`. `img-src` / `connect-src` are host-allowlisted (`'self'`, picsum, OpenFreeMap tiles) — no `https:` / `ws:` / `wss:` scheme wildcards. Same-origin SignalR uses `'self'` (CSP3 covers `wss` to the page origin).
+- `Content-Security-Policy` (API + Web). Web scripts use a **per-request nonce** (no `script-src 'unsafe-inline'`). One CSP header only (Blazor’s extra `frame-ancestors` is disabled). Style *attributes* remain `'unsafe-inline'` (Razor/MapLibre CSS variables); `<style>` elements use the same nonce. App JS no longer uses `eval` interop; Playwright CSP smoke found no violations without `'unsafe-eval'`, so it is omitted from `script-src`. `img-src` / `connect-src` are host-allowlisted (`'self'`, OpenFreeMap tiles) — no `https:` / `ws:` / `wss:` scheme wildcards. Same-origin SignalR uses `'self'` (CSP3 covers `wss` to the page origin).
 - `Strict-Transport-Security`: `max-age=63072000` (2 jaar) + `includeSubDomains` (Observatory-minimum is 6 maanden)
 - Cookies: `Secure` + `HttpOnly` + `SameSite` in productie (ook achter Render’s HTTP-proxy)
 - `X-Content-Type-Options: nosniff` (HTML via `SecurityHeadersMiddleware`, static files via `OnPrepareResponse`)

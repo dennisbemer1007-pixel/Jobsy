@@ -381,9 +381,6 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             "Zet Training__TrackingSecret op een lange willekeurige geheime waarde.");
     }
 
-    private static string CombineUrl(string baseUrl, string? path)
-        => TrainingDeepLinkRules.Combine(baseUrl, path);
-
     private static TrainingOfferCardDto ToCard(TrainingOffer offer, string? campaign = null)
     {
         var skill = string.Equals(campaign?.Trim(), TrainingTracking.CampaignCompetence, StringComparison.OrdinalIgnoreCase)

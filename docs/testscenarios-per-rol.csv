@@ -300,7 +300,7 @@ Kandidaat,Withdraw-others: ongeldige/verlopen token.,Fout; geen mass-withdraw.
 Kandidaat,"Deep-link `/candidate/actions/set-unavailable`: **Ja, zet op Niet beschikbaar**.",OpenForWork uit; naar profiel.
 Kandidaat,Set-unavailable: **Annuleren**.,Geen wijziging.
 Kandidaat,Set-unavailable: ongeldige token.,Fout.
-Kandidaat,Open `/hoe-werkt-lobsy` (employer-pad).,Authorize-fail of redirect `/home` (niet de employer-guide).
+Kandidaat,Open `/hoe-werkt-lobsy` (employer-pad).,AllowAnonymous + runtime redirect `/home` (niet de employer-guide; kandidaat-guide is `/candidate/hoe-werkt-lobsy`).
 Kandidaat,"Open `/employer/vacancies`, `/branch/applicants`, `/admin/users`, `/salesmanager`.",403 / access-denied / redirect home — geen werkgever-PII.
 Kandidaat,Open `/employer/tokens`.,Geen tokenwallet; 403.
 Kandidaat,Consent-reaccept dialog.,Niet getoond (kandidaat herbevestigt per sollicitatie).

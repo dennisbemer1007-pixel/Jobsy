@@ -267,8 +267,8 @@ public class CompactQuestionnaireContractTests
             wizard);
 
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/App.razor"));
-        Assert.Contains("css/features/questionnaire.css?v=20260927-dna-c", app);
-        Assert.Contains("css/features/onboarding-wizard.css?v=20260927-dna-c", app);
+        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/features/questionnaire.css");
+        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/features/onboarding-wizard.css");
     }
 
     private static string FindRepoRoot()

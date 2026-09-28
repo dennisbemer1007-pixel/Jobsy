@@ -136,10 +136,6 @@ public static class ProvisionalAssessmentScores
             : new ResolvedValues(preview, true);
     }
 
-    /// <summary>True when draft answers exist but the test is not fully completed.</summary>
-    public static bool HasProvisionalDraft(string? status, int answeredCount)
-        => !CandidateCompetencyStatuses.IsCompleted(status) && answeredCount > 0;
-
     private static CulturePersonalityScores PadCulture(CulturePersonalityScores s)
         => new(
             Autonomy: s.Autonomy ?? NeutralFillPercent,

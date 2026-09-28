@@ -85,13 +85,9 @@ public class StaticAssetCacheTests
         Assert.Contains("_framework/blazor.web.js?v=", app);
         Assert.Contains("js/app-core.js?v=", app);
 
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("/lib/maplibre/maplibre-gl.css?v=", maps);
-        Assert.Contains("/lib/maplibre/maplibre-gl-csp.js?v=", maps);
-        Assert.Contains("function pathOnly(url)", maps);
-
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("/lib/maplibre/maplibre-gl.css?v=", bundle);
+        Assert.Contains("/lib/maplibre/maplibre-gl-csp.js?v=", bundle);
         Assert.Contains("function pathOnly(url)", bundle);
         Assert.Contains("maplibre-gl-csp.js", bundle);
     }
@@ -155,7 +151,7 @@ public class StaticAssetCacheTests
             Assert.Contains(banenkaartMatch.Groups[1].Value, manifest, StringComparison.Ordinal);
         }
 
-        Assert.DoesNotContain("js/app-core.js?v=20260927-acc-review", app, StringComparison.Ordinal);
+        AssetVersions.AssertVersionedRefMatchesManifest(app, "js/app-core.js");
     }
 
     private static HttpResponse PrepareResponse(string fileName, string? query)

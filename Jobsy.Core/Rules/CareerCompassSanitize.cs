@@ -5,17 +5,6 @@ public static class CareerCompassSanitize
     public const int MaxPerBand = 8;
     public const int MaxNotes = 6;
 
-    public static CareerCompassSnapshot? FromJson(string? json, bool fromOpenAi)
-    {
-        var parsed = CareerCompassJson.TryDeserialize(json);
-        if (parsed is null)
-        {
-            return null;
-        }
-
-        return parsed with { FromOpenAi = fromOpenAi || parsed.FromOpenAi };
-    }
-
     internal static CareerCompassSnapshot? FromDto(CareerCompassJson.CompassDto dto, bool fromOpenAi)
     {
         var strengths = CleanTexts(dto.Strengths, 5);

@@ -1,4 +1,3 @@
-using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
 using Jobsy.Core.Contracts;
@@ -1336,5 +1335,4 @@ public sealed class PrivacyDataService : IPrivacyDataService
             : $"{prefix}: {label} (user {userId})";
     }
 
-    private static string Html(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
 }

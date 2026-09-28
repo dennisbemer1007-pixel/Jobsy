@@ -89,12 +89,6 @@ public static class FeedbackScreenshotCodec
         return true;
     }
 
-    public static string ToDataUrl(byte[] bytes, string? contentType)
-    {
-        var mime = string.IsNullOrWhiteSpace(contentType) ? "image/png" : contentType.Trim();
-        return $"data:{mime};base64,{Convert.ToBase64String(bytes)}";
-    }
-
     public static string ToBase64(byte[] bytes) => Convert.ToBase64String(bytes);
 
     public static string Truncate(string? value, int max)

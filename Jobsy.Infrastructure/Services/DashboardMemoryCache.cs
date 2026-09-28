@@ -119,7 +119,6 @@ public static class DashboardCacheKeys
 
     public static string Ambassadeur(Guid userId) => $"ambassadeur:{userId:D}";
 
-    public static string ScopePrefix(string scope) => $"{scope}:";
 
     public static string MetricsPrefix(string scope) => $"metrics:{scope}:";
 

@@ -50,16 +50,9 @@ public class BandwidthGuardTests
         var idle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/SessionIdleGuard.razor"));
         Assert.Contains("jobsyPageVisible", idle);
 
-        foreach (var relative in new[]
-                 {
-                     "Jobsy.Web/wwwroot/js/sessionIdle.js",
-                     "Jobsy.Web/wwwroot/js/app-extras.js"
-                 })
-        {
-            var js = File.ReadAllText(Path.Combine(FindRepoRoot(), relative));
-            Assert.Contains("document.visibilityState === \"hidden\"", js);
-            Assert.Contains("refreshTimeout();", js);
-        }
+        var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/app-extras.js"));
+        Assert.Contains("document.visibilityState === \"hidden\"", js);
+        Assert.Contains("refreshTimeout();", js);
     }
 
     [Fact]

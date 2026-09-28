@@ -60,23 +60,6 @@ public static class DreamJobCatalog
         new("bakker", "Bakker", "croissant", ["banketbakker"])
     ];
 
-    private static readonly Dictionary<string, DreamJob> ByKey =
-        All.ToDictionary(j => j.Key, StringComparer.OrdinalIgnoreCase);
-
-    public static DreamJob? FindByKey(string? key)
-        => !string.IsNullOrWhiteSpace(key) && ByKey.TryGetValue(key.Trim(), out var job) ? job : null;
-
-    public static DreamJob? FindByTitle(string? title)
-    {
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return null;
-        }
-
-        var needle = Normalize(title);
-        return All.FirstOrDefault(j => Normalize(j.TitleNl) == needle);
-    }
-
     /// <summary>
     /// Case- and diacritics-insensitive search: prefix on title first, then contains on title/synonyms.
     /// </summary>

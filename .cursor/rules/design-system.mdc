@@ -1,5 +1,7 @@
 # Lobsy design system (calm UI)
 
+**Docs:** [`README.md`](../../README.md) · [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) · [`docs/ONBOARDING.md`](../../docs/ONBOARDING.md) · [`CONTRIBUTING.md`](../../CONTRIBUTING.md) · [`docs/ROUTES.md`](../../docs/ROUTES.md) · [`docs/adr/`](../../docs/adr/) · [`docs/security/roles-matrix.md`](../../docs/security/roles-matrix.md) · [`Jobsy.Tests/README.md`](../../Jobsy.Tests/README.md).
+
 Mobile-first, calm UI for candidate and employer surfaces. Prefer clarity over decoration.
 
 ## Principles

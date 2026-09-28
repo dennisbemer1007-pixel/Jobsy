@@ -1835,6 +1835,4 @@ public class ApplicationsController : ControllerBase
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
         return CanAccessApplicationCompany(application, accessible);
     }
-
-    private static string Html(string? value) => EmailLayout.Escape(value);
 }

@@ -1134,8 +1134,21 @@
 
     private async void OnCultureChanged()
     {
-        await LoadAsync(origin: null);
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            await LoadAsync(origin: null);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"VacancyDetail.OnCultureChanged: {ex.GetType().Name}");
+        }
     }
 
     public async ValueTask DisposeAsync()

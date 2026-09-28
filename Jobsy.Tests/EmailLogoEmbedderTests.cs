@@ -16,7 +16,8 @@ public class EmailLogoEmbedderTests
             "Lobsy <noreply@lobsy.nl>");
 
         Assert.Contains("https://lobsy.nl/images/brand/lobsy-email.png", request.Html, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("v=20260904-mail", request.Html, StringComparison.Ordinal);
+        Assert.Contains(EmailLayout.LogoRelativePath.TrimStart('/'), request.Html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("?v=", request.Html, StringComparison.Ordinal);
         Assert.DoesNotContain("cid:", request.Html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/images/brand/lobsy.png?", request.Html, StringComparison.OrdinalIgnoreCase);
 

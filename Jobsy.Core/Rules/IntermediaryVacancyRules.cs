@@ -1,5 +1,4 @@
 using Jobsy.Core.Entities;
-using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Rules;
 
@@ -80,8 +79,6 @@ public static class IntermediaryVacancyRules
             workplaceLng ?? endClient?.Location?.Longitude ?? 0,
             offeredBy);
     }
-
-    public static bool IsIntermediaryRole(UserRole role) => role == UserRole.Intermediary;
 
     /// <summary>
     /// Intermediaries may only place vacancies as type Uitzendbureau.
