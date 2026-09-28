@@ -7,6 +7,7 @@
 @inject NavigationManager Navigation
 @inject CultureState Culture
 @inject IHostEnvironment HostEnvironment
+@inject GratisDnaStorage Storage
 @implements IDisposable
 
 <PageTitle>@Culture["Page.RegisterTitle"]</PageTitle>
@@ -23,6 +24,16 @@
             <LobsyLogo Class="login-brand__logo" Alt="Lobsy" Animate="false" />
             <span class="login-brand__name">Lobsy</span>
         </div>
+
+        <p class="login-lead muted">
+            @Culture["GratisDna.QuietLink.Lead"]
+            <a class="auth-link" href="/ontdek">@Culture["GratisDna.QuietLink.Cta"]</a>
+        </p>
+
+        @if (_showMergeBox)
+        {
+            <GratisDnaRegisterBox />
+        }
 
         @if (_step < 5)
         {
@@ -400,7 +411,9 @@
 
 @code {
     [SupplyParameterFromQuery(Name = "ref")] public string? RefCode { get; set; }
+    [SupplyParameterFromQuery(Name = "van")] public string? Van { get; set; }
 
+    private bool _showMergeBox;
     private int _step = 1;
     private bool _busy;
     private string? _error;
@@ -436,6 +449,7 @@
     protected override void OnInitialized()
     {
         Culture.Changed += OnCultureChanged;
+        _showMergeBox = string.Equals(Van, "ontdek", StringComparison.OrdinalIgnoreCase);
         if (HostEnvironment.IsDevelopment())
         {
             _kvkNumber = "12345678";
@@ -444,6 +458,28 @@
         if (!string.IsNullOrWhiteSpace(RefCode))
         {
             _salesManagerCode = RefCode.Trim().ToUpperInvariant();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _showMergeBox)
+        {
+            return;
+        }
+
+        try
+        {
+            var payload = await Storage.LoadAsync();
+            if (payload is not null && GratisDnaScoring.CountAnswers(payload.Answers) > 0)
+            {
+                _showMergeBox = true;
+                StateHasChanged();
+            }
+        }
+        catch
+        {
+            // Best effort — merge box is optional.
         }
     }
 

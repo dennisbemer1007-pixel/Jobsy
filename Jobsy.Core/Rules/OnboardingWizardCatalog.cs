@@ -91,10 +91,16 @@ public static class OnboardingWizardCatalog
     public static readonly int[] CompetencyQuestionIds = [1, 6, 11, 16, 21];
 
     /// <summary>
-    /// Beroepen mini: one item per RIASEC direction
-    /// (Q01 R, Q06 I, Q10 A, Q14 S, Q18 E, Q22 C).
+    /// Beroepen mini: five of six RIASEC directions (Q01 R, Q06 I, Q14 S, Q18 E, Q22 C).
+    /// Artistic is measured in the full test.
     /// </summary>
-    public static readonly int[] CareerQuestionIds = [1, 6, 10, 14, 18, 22];
+    public static readonly int[] CareerQuestionIds = [1, 6, 14, 18, 22];
+
+    public static int TotalMiniQuestionCount =>
+        CompetencyQuestionIds.Length
+        + CareerQuestionIds.Length
+        + CultureQuestionIds.Length
+        + ValuesQuestionIds.Length;
 
     /// <summary>
     /// Cultuur &amp; persoonlijkheid mini: five most discriminating culture dimensions

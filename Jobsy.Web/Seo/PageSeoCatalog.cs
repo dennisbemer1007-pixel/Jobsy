@@ -59,6 +59,8 @@ public static partial class PageSeoCatalog
         "/wie-zijn-wij",
         "/westland",
         "/lancering",
+        "/ontdek",
+        "/dna",
         "/partner"
     ];
 
@@ -105,6 +107,8 @@ public static partial class PageSeoCatalog
             ["/wie-zijn-wij"] = Public("Legal.About", "Seo.AboutDescription"),
             ["/westland"] = Public("Seo.WestlandTitle", "Seo.WestlandDescription"),
             ["/lancering"] = Public("Seo.WestlandTitle", "Seo.WestlandDescription"),
+            ["/ontdek"] = Public("GratisDna.Seo.Title", "GratisDna.Seo.Description"),
+            ["/dna"] = Public("GratisDna.Seo.Title", "GratisDna.Seo.Description"),
             ["/partner"] = Public("Partner.Title", "Seo.PartnerDescription"),
             ["/company"] = Public("BranchPage.Title", "Seo.CompanyFallbackDescription"),
             ["/access-denied"] = Private("Page.AccessDeniedTitle", "Seo.PrivateDescription"),
