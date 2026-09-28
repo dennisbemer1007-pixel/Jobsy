@@ -1,0 +1,57 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- Pin transitive PackageVersions (EF Relational, Newtonsoft via WebPush) across the graph. -->
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- HTML / parsing -->
+    <PackageVersion Include="AngleSharp" Version="1.5.0" />
+
+    <!-- AspNetCore / EF / Extensions (aligned 9.0.x patch) -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.20" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.20" />
+    <!-- Override WebPush → Newtonsoft.Json 10.0.3 (NU1903 / GHSA-5crp-9r3c-p9vr). -->
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+
+    <!-- Identity / JWT (8.x — bumped to satisfy OpenIdConnect 9.0.20 / Identity.Web under CPM pinning) -->
+    <PackageVersion Include="Microsoft.Identity.Web" Version="3.8.3" />
+    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.23.0" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
+
+    <!-- PostgreSQL (Npgsql 9.0.x aligned with EF Core 9) -->
+    <PackageVersion Include="Npgsql" Version="9.0.5" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="9.0.4" />
+
+    <!-- App libraries -->
+    <PackageVersion Include="MailKit" Version="4.17.0" />
+    <PackageVersion Include="QRCoder" Version="1.6.0" />
+    <PackageVersion Include="QuestPDF" Version="2025.7.1" />
+    <PackageVersion Include="Sentry.AspNetCore" Version="5.14.1" />
+    <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageVersion Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+    <PackageVersion Include="WebPush" Version="1.0.12" />
+
+    <!-- Test -->
+    <PackageVersion Include="bunit" Version="1.36.0" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="Microsoft.Playwright" Version="1.49.0" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+</Project>
