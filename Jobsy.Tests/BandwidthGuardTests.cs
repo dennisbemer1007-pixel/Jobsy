@@ -33,7 +33,7 @@ public class BandwidthGuardTests
         Assert.Contains("GetPublicImage", controller);
         Assert.Contains("{id:guid}/image", controller);
 
-        var client = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Services/JobsyApiClient.cs"));
+        var client = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Services/ApiClient/JobsyApiClient.cs"));
         Assert.Contains("int? take = null", client);
         Assert.Contains("&take={cap}", client);
         Assert.Contains("AutomaticDecompression", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Services/JobsyApiClientFactory.cs")));

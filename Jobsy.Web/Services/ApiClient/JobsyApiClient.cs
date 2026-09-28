@@ -11,7 +11,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Web.Services;
 
-public sealed class JobsyApiClient : IAsyncDisposable
+public sealed partial class JobsyApiClient : IAsyncDisposable
 {
     public const string KompasCacheKey = "me/kompas";
     public const string KompasDnaCacheKey = "me/kompas/dna";

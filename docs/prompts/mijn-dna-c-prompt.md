@@ -57,7 +57,7 @@ I measured it at 390px: `fieldset.q-likert` is **526px** wide. It shrinks to 363
 6. **Check the wizard (`/candidate/start`) still looks right**, including collapsed rows and the 4 test tabs. Update `Jobsy.Tests/QuestionnaireCompactTests.cs` and `OnboardingWizardV2PlaywrightTests.cs` where their assertions change.
 
 ## Step 2: Real test data for the first-impression state
-- **The charts are built but never shown.** `Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor:100-105`: when a test is provisional (`!card.Completed && card.IsProvisional`), only the "Volledige tests doen" button renders.
+- **The charts are built but never shown.** `Jobsy.Web/Components/Candidate/DnaPanel.razor:100-105`: when a test is provisional (`!card.Completed && card.IsProvisional`), only the "Volledige tests doen" button renders.
   - The bars, chips and poles that `BuildCompetence` / `BuildCareer` / `BuildCulture` / `BuildValues` (`DnaPanel.razor:314-486`) compute for provisional cards are thrown away. That's why Dennis sees 4 empty blocks.
   - Render the charts for provisional cards too, marked as a first impression.
 - **Culture and Values have no preview scores:**
