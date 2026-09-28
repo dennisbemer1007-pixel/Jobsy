@@ -1,8 +1,7 @@
 @using Jobsy.Web.Help
 @using Jobsy.Web.Localization
-@implements IDisposable
+@inherits CultureAwareComponentBase
 @inject NavigationManager Navigation
-@inject CultureState Culture
 
 @if (_doc is not null)
 {
@@ -51,8 +50,8 @@
 
     protected override void OnInitialized()
     {
+        base.OnInitialized();
         Navigation.LocationChanged += OnLocationChanged;
-        Culture.Changed += OnCultureChanged;
         RefreshFromUri();
     }
 
@@ -62,9 +61,6 @@
         RefreshFromUri();
         _ = InvokeAsync(StateHasChanged);
     }
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
 
     private void RefreshFromUri()
     {
@@ -76,9 +72,9 @@
 
     private void Close() => _open = false;
 
-    public void Dispose()
+    public override void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
-        Culture.Changed -= OnCultureChanged;
+        base.Dispose();
     }
 }

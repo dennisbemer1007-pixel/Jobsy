@@ -158,18 +158,61 @@ public class CompactQuestionnaireContractTests
             "DeepAnalysis.razor"
         ];
 
+        // Culture / values / career share Likert markup via QuestionnairePageBody.
+        string[] pageBodyPages =
+        [
+            "CareerTest.razor",
+            "CultureScan.razor",
+            "ValuesScan.razor"
+        ];
+
         foreach (var page in pages)
         {
             var text = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate", page));
             Assert.Contains("<QuestionnaireShell", text);
             Assert.Contains("QuestionnaireAutosave", text);
-            Assert.Contains("<LikertScaleQuestion", text);
-            Assert.Contains("Collapsed=", text);
             Assert.Contains("OnNext=", text);
             Assert.DoesNotContain("Competency.SaveDraft", text);
             Assert.DoesNotContain("profile-save-bar", text);
             Assert.DoesNotContain("competency-likert", text);
+
+            if (pageBodyPages.Contains(page, StringComparer.Ordinal))
+            {
+                Assert.Contains("<QuestionnairePageBody", text);
+                Assert.Contains("QuestionnaireFocus", text);
+            }
+            else
+            {
+                Assert.Contains("<LikertScaleQuestion", text);
+                Assert.Contains("Collapsed=", text);
+            }
         }
+
+        var pageBody = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/Questionnaire/QuestionnairePageBody.razor"));
+        Assert.Contains("<LikertScaleQuestion", pageBody);
+        Assert.Contains("Collapsed=", pageBody);
+    }
+
+    [Fact]
+    public void QuestionnaireFocus_advances_current_and_dimmed()
+    {
+        var ids = new[] { 1, 2, 3, 4 };
+        var answers = new Dictionary<int, int>();
+        var focus = new QuestionnaireFocus();
+        focus.Initialize(ids, answers);
+        Assert.Equal(1, focus.CurrentId);
+        Assert.Equal(2, focus.DimmedId);
+
+        answers[1] = 4;
+        focus.AfterAnswer(1, ids, answers);
+        Assert.Equal(2, focus.CurrentId);
+        Assert.Equal(3, focus.DimmedId);
+        Assert.True(focus.SmoothScroll);
+
+        focus.Expand(4, ids, answers);
+        Assert.Equal(4, focus.CurrentId);
+        Assert.Equal(4, focus.ExpandedId);
+        Assert.Equal(2, focus.DimmedId);
     }
 
     [Fact]

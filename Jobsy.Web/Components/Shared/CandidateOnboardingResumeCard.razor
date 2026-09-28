@@ -1,7 +1,6 @@
 @using Jobsy.Web.Localization
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject CultureState Culture
-@implements IDisposable
 
 @if (_visible)
 {
@@ -16,9 +15,6 @@
     private bool _visible;
     private bool _loadStarted;
     private int _remainingSteps = 1;
-
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
 
     protected override Task OnInitializedAsync()
         => LoadOnceAsync();
@@ -45,10 +41,4 @@
             _visible = false;
         }
     }
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
 }

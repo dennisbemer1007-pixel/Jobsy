@@ -1,6 +1,5 @@
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject CultureState Culture
-@implements IDisposable
 
 <LobsyFriendlyDialog IsOpen="@(IsOpen && Vacancy is not null)"
                      Title="@Culture["Employer.Publish"]"
@@ -152,15 +151,6 @@
             || _preview is null
             || _preview.CandidateCount == 0
             || !_preview.HasPricing));
-
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnParametersSetAsync()
     {

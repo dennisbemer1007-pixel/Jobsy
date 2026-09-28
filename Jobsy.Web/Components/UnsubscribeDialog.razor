@@ -1,7 +1,6 @@
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
-@inject CultureState Culture
-@implements IDisposable
 
 @if (IsOpen)
 {
@@ -120,9 +119,6 @@
         !string.IsNullOrWhiteSpace(_reasonCode)
         && (!SelectedRequiresOther || !string.IsNullOrWhiteSpace(_reasonOther));
 
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
     protected override async Task OnParametersSetAsync()
     {
         if (!IsOpen)
@@ -144,12 +140,6 @@
             ? reason.Label
             : translated;
     }
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
 
     private async Task LoadReasonsAsync()
     {

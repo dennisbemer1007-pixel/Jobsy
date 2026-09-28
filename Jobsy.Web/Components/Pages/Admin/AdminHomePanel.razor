@@ -1,8 +1,7 @@
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Dashboard
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject CultureState Culture
-@implements IDisposable
 
 <div class="panel-page panel-page--dashboard">
     <header class="panel-header panel-header--dashboard">
@@ -76,9 +75,6 @@
     private string SelectedLabel =>
         _metrics.FirstOrDefault(m => m.Key == _selectedKey)?.Label ?? _selectedKey ?? "";
 
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
     protected override Task OnInitializedAsync()
         => TryLoadAsync();
 
@@ -95,12 +91,6 @@
         await LoadSummaryAsync();
         await InvokeAsync(StateHasChanged);
     }
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
 
     private static string FormatValue(MetricCount metric)
     {

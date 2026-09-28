@@ -25,72 +25,46 @@
                     ReloadHref="/candidate/culture"
                     Message="@_banner"
                     Completing="_completing"
-                    ScrollToQuestionId="_scrollToId"
-                    SmoothScroll="_smoothScroll"
+                    ScrollToQuestionId="_focus.ScrollToId"
+                    SmoothScroll="_focus.SmoothScroll"
                     OnComplete="CompleteAsync"
                     OnNext="GoNextAsync"
                     OnRetrySave="RetrySaveAsync">
-    @foreach (var category in CulturePersonalityCatalog.CategoryCodes)
-    {
-        var questions = QuestionsFor(category);
-        if (questions.Count == 0)
-        {
-            continue;
-        }
-        <section class="questionnaire-section" aria-labelledby="@($"cat-{category}")">
-            <h2 class="questionnaire-section__label" id="@($"cat-{category}")">@Culture[$"CultureScan.Cat.{category}"]</h2>
-            @{
-                var catIndex = 0;
-            }
-            @foreach (var question in questions)
-            {
-                catIndex++;
-                var answered = _answers.ContainsKey(question.Id);
-                var isCurrent = _currentId == question.Id;
-                var isDimmed = _dimmedId == question.Id;
-                <LikertScaleQuestion QuestionId="question.Id"
-                                     Text="@($"{question.Id}. {Culture[question.TextKey]}")"
-                                     Value="@(answered ? _answers[question.Id] : null)"
-                                     IsAnswered="answered"
-                                     IsCurrent="isCurrent"
-                                     Collapsed="@(answered && !isCurrent && _expandedId != question.Id)"
-                                     Dimmed="isDimmed"
-                                     Index="catIndex"
-                                     Total="questions.Count"
-                                     InputPrefix="cu"
-                                     ValueChanged="value => OnAnswerAsync(question.Id, value)"
-                                     Expanded="() => ExpandQuestion(question.Id)" />
-            }
-        </section>
-    }
+    <QuestionnairePageBody Categories="@CategoryGroups"
+                           Answers="_answers"
+                           CurrentId="_focus.CurrentId"
+                           DimmedId="_focus.DimmedId"
+                           ExpandedId="_focus.ExpandedId"
+                           InputPrefix="cu"
+                           OnAnswer="OnAnswerAsync"
+                           OnExpand="ExpandQuestion" />
 </QuestionnaireShell>
 
 @code {
     private bool _loading = true;
     private bool _loadFailed;
     private bool _completing;
-    private bool _smoothScroll;
     private string? _message;
     private string? _banner;
-    private int? _currentId;
-    private int? _dimmedId;
-    private int? _expandedId;
-    private int? _scrollToId;
     private readonly Dictionary<int, int> _answers = [];
+    private readonly QuestionnaireFocus _focus = new();
     private QuestionnaireAutosave? _autosave;
 
     private int AnsweredCount => _answers.Count;
+
+    private IReadOnlyList<QuestionnaireCategoryGroup> CategoryGroups
+        => BuildCategoryGroups();
 
     private string? Subtitle
     {
         get
         {
-            if (_currentId is null)
+            if (_focus.CurrentId is null)
             {
                 return null;
             }
 
-            var cat = QuestionsFlat().FirstOrDefault(q => q.Id == _currentId)?.Category;
+            var cat = QuestionsFlat().FirstOrDefault(q => q.Id == _focus.CurrentId)?.Category;
             if (string.IsNullOrEmpty(cat))
             {
                 return null;
@@ -127,10 +101,7 @@
             }
 
             _autosave.ReplaceAll(_answers);
-            _currentId = FirstUnanswered() ?? QuestionsFlat().FirstOrDefault()?.Id;
-            _dimmedId = _currentId is int c0 ? NextUnansweredAfter(c0) : null;
-            _scrollToId = _currentId;
-            _smoothScroll = false;
+            _focus.Initialize(OrderedIds(), _answers);
         }
         catch (Exception ex)
         {
@@ -143,34 +114,43 @@
         }
     }
 
+    private IReadOnlyList<QuestionnaireCategoryGroup> BuildCategoryGroups()
+        => CulturePersonalityCatalog.CategoryCodes
+            .Select(category =>
+            {
+                var questions = QuestionsFor(category);
+                return new QuestionnaireCategoryGroup
+                {
+                    Key = category,
+                    Label = Culture[$"CultureScan.Cat.{category}"],
+                    Questions = questions
+                        .Select(q => new QuestionnaireQuestion
+                        {
+                            Id = q.Id,
+                            Text = $"{q.Id}. {Culture[q.TextKey]}",
+                            CategoryKey = category,
+                            CategoryLabel = Culture[$"CultureScan.Cat.{category}"]
+                        })
+                        .ToList()
+                };
+            })
+            .ToList();
+
     private static IReadOnlyList<CompetencyQuestion> QuestionsFor(string category)
         => CulturePersonalityCatalog.QuestionsFor(category);
 
     private static IEnumerable<CompetencyQuestion> QuestionsFlat()
         => CulturePersonalityCatalog.CategoryCodes.SelectMany(QuestionsFor);
 
-    private int? FirstUnanswered()
-    {
-        foreach (var q in QuestionsFlat())
-        {
-            if (!_answers.ContainsKey(q.Id))
-            {
-                return q.Id;
-            }
-        }
+    private IReadOnlyList<int> OrderedIds()
+        => QuestionsFlat().Select(q => q.Id).ToList();
 
-        return null;
-    }
-
-    private async Task OnAnswerAsync(int id, int value)
+    private async Task OnAnswerAsync((int Id, int Value) answer)
     {
+        var (id, value) = answer;
         _answers[id] = value;
         _banner = null;
-        _expandedId = null;
-        _currentId = NextUnansweredAfter(id) ?? id;
-        _dimmedId = _currentId is int cur ? NextUnansweredAfter(cur) : null;
-        _scrollToId = _currentId;
-        _smoothScroll = true;
+        _focus.AfterAnswer(id, OrderedIds(), _answers);
         try
         {
             if (_autosave is not null)
@@ -184,37 +164,12 @@
         }
     }
 
-    private int? NextUnansweredAfter(int answeredId)
-    {
-        var list = QuestionsFlat().ToList();
-        var index = list.FindIndex(q => q.Id == answeredId);
-        for (var i = index + 1; i < list.Count; i++)
-        {
-            if (!_answers.ContainsKey(list[i].Id))
-            {
-                return list[i].Id;
-            }
-        }
-
-        return FirstUnanswered();
-    }
-
-
     private void ExpandQuestion(int id)
-    {
-        _expandedId = id;
-        _currentId = id;
-        _dimmedId = NextUnansweredAfter(id);
-        _scrollToId = id;
-        _smoothScroll = true;
-    }
+        => _focus.Expand(id, OrderedIds(), _answers);
 
     private Task GoNextAsync()
     {
-        _currentId = FirstUnanswered() ?? _currentId;
-        _dimmedId = _currentId is int cur ? NextUnansweredAfter(cur) : null;
-        _scrollToId = _currentId;
-        _smoothScroll = true;
+        _focus.GoNext(OrderedIds(), _answers);
         return Task.CompletedTask;
     }
 

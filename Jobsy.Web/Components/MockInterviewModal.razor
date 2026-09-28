@@ -1,8 +1,7 @@
 @namespace Jobsy.Web.Components
 @using Jobsy.Core.Localization
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject CultureState Culture
-@implements IDisposable
 
 @if (IsOpen && Vacancy is not null)
 {
@@ -138,16 +137,6 @@
         _ => Culture["MockInterview.Hint3"]
     };
 
-    protected override void OnInitialized()
-    {
-        Culture.Changed += OnCultureChanged;
-    }
-
-    public void Dispose()
-    {
-        Culture.Changed -= OnCultureChanged;
-    }
-
     private async Task OnModalKeyDown(KeyboardEventArgs e)
     {
         if (e.Key is "Escape" or "Esc")
@@ -156,32 +145,29 @@
         }
     }
 
-    private void OnCultureChanged()
+    protected override async Task OnCultureChanged()
     {
-        _ = InvokeAsync(async () =>
+        if (!IsOpen || Vacancy is null)
         {
-            if (!IsOpen || Vacancy is null)
-            {
-                StateHasChanged();
-                return;
-            }
-
-            if (string.Equals(_sessionLanguage, Culture.Language, StringComparison.OrdinalIgnoreCase))
-            {
-                StateHasChanged();
-                return;
-            }
-
-            if (_busy)
-            {
-                _restartWhenIdle = true;
-                StateHasChanged();
-                return;
-            }
-
-            await StartSessionAsync();
             StateHasChanged();
-        });
+            return;
+        }
+
+        if (string.Equals(_sessionLanguage, Culture.Language, StringComparison.OrdinalIgnoreCase))
+        {
+            StateHasChanged();
+            return;
+        }
+
+        if (_busy)
+        {
+            _restartWhenIdle = true;
+            StateHasChanged();
+            return;
+        }
+
+        await StartSessionAsync();
+        StateHasChanged();
     }
 
     protected override async Task OnParametersSetAsync()

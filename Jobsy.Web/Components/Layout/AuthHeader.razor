@@ -2,11 +2,10 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Authorization
-@inject CultureState Culture
+@inherits CultureAwareComponentBase
 @inject NavigationManager Navigation
 @inject FeedbackHost FeedbackHost
 @inject IJSRuntime Js
-@implements IDisposable
 
 <div class="auth-header">
     <AuthorizeView>
@@ -91,12 +90,9 @@
 
     protected override void OnInitialized()
     {
-        Culture.Changed += OnCultureChanged;
+        base.OnInitialized();
         Navigation.LocationChanged += OnLocationChanged;
     }
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
         => InvokeAsync(StateHasChanged);
@@ -155,7 +151,7 @@
             var ios = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");
             if (ios)
             {
-                await Js.InvokeVoidAsync("alert", Culture["Pwa.IosHint"]);
+                await CircuitInterop.InvokeVoidIgnoredAsync(Js, "alert", Culture["Pwa.IosHint"]);
                 return;
             }
 
@@ -164,7 +160,7 @@
         }
         catch
         {
-            // Best-effort.
+            // Best-effort install prompt (script missing / unsupported browser / circuit gone).
         }
     }
 
@@ -177,14 +173,8 @@
 
         _loggingOut = true;
         _open = false;
-        try
-        {
-            await Js.InvokeVoidAsync("lobsyPush.dropSubscription");
-        }
-        catch
-        {
-            // Best-effort; server still revokes linked subscriptions by device session.
-        }
+        // Best-effort; server still revokes linked subscriptions by device session.
+        await CircuitInterop.InvokeVoidIgnoredAsync(Js, "lobsyPush.dropSubscription");
 
         // Full document navigation — GET /account/logout always signs out.
         // A form submit from inside the menu raced with focusout closing the panel.
@@ -237,9 +227,9 @@
         => user.FindFirst(ClaimTypes.Email)?.Value
            ?? user.FindFirst("email")?.Value;
 
-    public void Dispose()
+    public override void Dispose()
     {
-        Culture.Changed -= OnCultureChanged;
         Navigation.LocationChanged -= OnLocationChanged;
+        base.Dispose();
     }
 }

@@ -1,8 +1,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@inherits CultureAwareComponentBase
 @inject NavigationManager Navigation
-@inject CultureState Culture
-@implements IDisposable
 
 <nav class="admin-sublinks admin-sublinks--wrap" aria-label="@Culture["Admin.Vacancies"]">
     @foreach (var item in AdminNavItems.VacancyModules)
@@ -20,19 +19,16 @@
 @code {
     protected override void OnInitialized()
     {
+        base.OnInitialized();
         Navigation.LocationChanged += OnLocationChanged;
-        Culture.Changed += OnCultureChanged;
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
         => InvokeAsync(StateHasChanged);
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
+    public override void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
-        Culture.Changed -= OnCultureChanged;
+        base.Dispose();
     }
 }

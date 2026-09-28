@@ -1,12 +1,11 @@
 @namespace Jobsy.Web.Components
 @using Microsoft.AspNetCore.Components.Authorization
 @using Jobsy.Web.Navigation
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject CultureState Culture
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject AssistantChatHost ChatHost
-@implements IDisposable
 
 <AuthorizeView>
     <Authorized>
@@ -127,7 +126,7 @@
 
     protected override void OnInitialized()
     {
-        Culture.Changed += OnCultureChanged;
+        base.OnInitialized();
         ChatHost.ToggleRequested += OnToggleRequested;
     }
 
@@ -137,17 +136,16 @@
         await ResolveVisibilityAsync();
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        Culture.Changed -= OnCultureChanged;
         ChatHost.ToggleRequested -= OnToggleRequested;
         if (_open)
         {
             ChatHost.NotifyOpen(false);
         }
-    }
 
-    private void OnCultureChanged() => _ = InvokeAsync(StateHasChanged);
+        base.Dispose();
+    }
 
     private void OnToggleRequested()
         => _ = InvokeAsync(Toggle);

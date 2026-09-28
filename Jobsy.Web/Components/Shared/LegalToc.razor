@@ -1,6 +1,5 @@
+@inherits CultureAwareComponentBase
 @inject NavigationManager Navigation
-@inject CultureState Culture
-@implements IDisposable
 
 <nav class="legal-toc" aria-label="@Culture["Legal.Toc"]">
     <a href="/privacy"
@@ -26,15 +25,6 @@
 </nav>
 
 @code {
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
-
     private string CurrentPath
         => Navigation.ToBaseRelativePath(Navigation.Uri).TrimStart('/').Split('?', '#')[0];
 

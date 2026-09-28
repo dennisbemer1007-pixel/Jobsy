@@ -389,8 +389,7 @@
         _hoveredId = id;
         if (_mapReady)
         {
-            try { await Js.InvokeVoidAsync("jobMap.highlight", id?.ToString()); }
-            catch { /* ignore */ }
+            await CircuitInterop.InvokeVoidIgnoredAsync(Js, "jobMap.highlight", id?.ToString());
         }
     }
 
@@ -399,8 +398,7 @@
         _hoveredId = id;
         if (_mapReady)
         {
-            try { await Js.InvokeVoidAsync("jobMap.focus", id.ToString()); }
-            catch { /* ignore */ }
+            await CircuitInterop.InvokeVoidIgnoredAsync(Js, "jobMap.focus", id.ToString());
         }
     }
 
@@ -444,8 +442,7 @@
         _dotNetRef?.Dispose();
         if (_mapReady)
         {
-            try { await Js.InvokeVoidAsync("jobMap.dispose"); }
-            catch { /* ignore */ }
+            await CircuitInterop.InvokeVoidIgnoredAsync(Js, "jobMap.dispose");
         }
     }
 }
