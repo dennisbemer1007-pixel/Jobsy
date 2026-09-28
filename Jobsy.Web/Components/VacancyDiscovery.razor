@@ -10,12 +10,16 @@
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Discovery
 @using Jobsy.Web.Hosting
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @using System.Text.Json
 
 <PageSeo JsonLd="@JobListJsonLd" />
+<HeadContent>
+    <script src="js/discoveryHover.js?v=20260928-list-rerender" defer data-discovery-hover="true"></script>
+</HeadContent>
 <div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null)">
     <div class="jobsy-chrome">
         <header class="jobsy-chrome__header">
@@ -482,87 +486,25 @@
                 <div class="vacancy-list vacancy-list--cards">
                     @foreach (var vacancy in VisibleVacancies)
                     {
-                        var wageText = FormatWage(vacancy);
-                        var travelText = vacancy.TravelMinutes is not null
-                            ? $"± {vacancy.TravelMinutes} {Culture["Discovery.Minutes"]}"
-                            : Culture.Format("Discovery.MaxMinutes", _maxTravelMinutes);
-                        <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null) @(_pressedVacancyId == vacancy.Id ? "is-pressed" : null)"
-                                 @onmouseenter="() => OnHover(vacancy.Id)"
-                                 @onmouseleave="() => OnHover(null)"
-                                 @onclick="() => OnSelect(vacancy.Id)">
-                            <a class="job-card__stretch-link"
-                               href="@($"/vacancies/{vacancy.Id}")"
-                               aria-label="@vacancy.Title"
-                               @onclick="() => OnOpenVacancy(vacancy.Id)"
-                               @onclick:stopPropagation="true"></a>
-                            <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick="() => OnOpenVacancy(vacancy.Id)" @onclick:stopPropagation="true">
-                                <VacancyPhoto Src="@vacancy.ImageUrl"
-                                              FallbackSrc="@vacancy.CompanyLogoUrl"
-                                              VacancyId="vacancy.Id"
-                                              WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
-                                              Class="job-card__photo"
-                                              Width="400"
-                                              Height="267"
-                                              Sizes="(max-width: 700px) 50vw, 360px" />
-                                @if (vacancy.IsHighlighted)
-                                {
-                                    <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
-                                }
-                                else if (!string.IsNullOrWhiteSpace(vacancy.ExclusivityName)
-                                         && string.Equals(vacancy.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
-                                         && !vacancy.ExclusivityIsOpen)
-                                {
-                                    <span class="job-card__badge job-card__badge--soft">@vacancy.ExclusivityName</span>
-                                }
-                                else if (ShowsSuitableFor65Plus(vacancy))
-                                {
-                                    <span class="job-card__badge job-card__badge--senior65">@VacancyCategoryDefaults.SuitableFor65PlusLabel</span>
-                                }
-                                else if (vacancy.WorkTypes.Length > 0)
-                                {
-                                    <span class="job-card__badge job-card__badge--soft">@UiLabels.WorkType(Culture, vacancy.WorkTypes[0])</span>
-                                }
-                                <div class="job-card__overlay">
-                                    <h2>@vacancy.Title</h2>
-                                    @if (vacancy.MatchPercent is int matchPct)
-                                    {
-                                        <p class="job-card__match">
-                                            <span class="match-score match-score--@(vacancy.MatchColorBand ?? "orange")">@Culture.Format("Discovery.MatchPercent", matchPct)</span>
-                                            <button type="button"
-                                                    class="competency-help job-card__match-help"
-                                                    title="@Culture["Discovery.MatchWhy"]"
-                                                    aria-label="@Culture["Discovery.MatchWhy"]"
-                                                    @onclick="() => OpenMatchExplain(vacancy)"
-                                                    @onclick:stopPropagation="true"
-                                                    @onclick:preventDefault="true">?</button>
-                                        </p>
-                                        @if (!string.IsNullOrWhiteSpace(vacancy.CultureFitLabel))
-                                        {
-                                            <span class="culture-fit culture-fit--@(vacancy.CultureFitBand ?? "mid")">@vacancy.CultureFitLabel</span>
-                                        }
-                                    }
-                                    <p class="job-card__travel">
-                                        <LobsyMark Compact="true" />
-                                        <span>@travelText · @UiLabels.TransportVerb(Culture, _selectedTransport)</span>
-                                    </p>
-                                    @if (!string.IsNullOrEmpty(wageText))
-                                    {
-                                        <p class="job-card__wage">@wageText</p>
-                                    }
-                                </div>
-                            </a>
-                            <div class="job-card__footer">
-                                <p class="job-card__company">@(string.IsNullOrWhiteSpace(vacancy.OfferedByLabel) ? vacancy.CompanyName : vacancy.OfferedByLabel)</p>
-                                <p class="job-card__location">@vacancy.CompanyAddress</p>
-                            </div>
-                        </article>
+                        <VacancyCard @key="vacancy.Id"
+                                     Vacancy="vacancy"
+                                     IsHighlighted="vacancy.IsHighlighted"
+                                     IsPressed="_pressedVacancyId == vacancy.Id"
+                                     WageText="@FormatWage(vacancy)"
+                                     TravelText="@FormatCardTravel(vacancy)"
+                                     OnSelect="OnSelect"
+                                     OnOpen="OnOpenVacancy"
+                                     OnExplainMatch="OpenMatchExplain" />
+                    }
+                    @if (HasMoreVacancyCards)
+                    {
+                        <div class="vacancy-list__more-sentinel"
+                             @ref="_moreCardsSentinel"
+                             aria-hidden="true"></div>
                     }
                 </div>
                 @if (HasMoreVacancyCards)
                 {
-                    <div class="vacancy-list__more-sentinel"
-                         @ref="_moreCardsSentinel"
-                         aria-hidden="true"></div>
                     <button type="button" class="vacancy-list__more" @onclick="ShowMoreVacancyCards">
                         @Culture.Format("Discovery.ShowResults", RemainingVacancyCardCount)
                     </button>
@@ -1765,12 +1707,13 @@
             await TryInitJobMapAsync();
         }
 
-        if (HasMoreVacancyCards && _dotNetRef is not null && !_disposed)
+        await EnsureDiscoveryHoverAsync();
+        if (HasMoreVacancyCards && _dotNetRef is not null && !_disposed && ShouldRenderVacancyCards)
         {
             try
             {
                 await Js.InvokeVoidAsync(
-                    "jobsyList.observeMore",
+                    "jobsyDiscovery.observeMore",
                     _moreCardsSentinel,
                     _dotNetRef,
                     nameof(ShowMoreVacancyCardsFromJs));
@@ -1779,6 +1722,22 @@
             {
             }
             catch (ObjectDisposedException)
+            {
+            }
+            catch (JSException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+        else if (_dotNetRef is not null && !_disposed)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDiscovery.disconnect");
+            }
+            catch (JSDisconnectedException)
             {
             }
             catch (JSException)
@@ -1924,6 +1883,44 @@
         catch
         {
         }
+
+        await EnsureDiscoveryHoverAsync();
+    }
+
+    private async Task EnsureDiscoveryHoverAsync()
+    {
+        for (var attempt = 0; attempt < 25 && !_disposed; attempt++)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDiscovery.bindHover");
+                return;
+            }
+            catch (JSDisconnectedException)
+            {
+                return;
+            }
+            catch (ObjectDisposedException)
+            {
+                return;
+            }
+            catch (JSException)
+            {
+                await Task.Delay(40);
+            }
+            catch (InvalidOperationException)
+            {
+                await Task.Delay(40);
+            }
+        }
+    }
+
+    private string FormatCardTravel(VacancyListItem vacancy)
+    {
+        var travel = vacancy.TravelMinutes is not null
+            ? $"± {vacancy.TravelMinutes} {Culture["Discovery.Minutes"]}"
+            : Culture.Format("Discovery.MaxMinutes", _maxTravelMinutes);
+        return $"{travel} · {UiLabels.TransportVerb(Culture, _selectedTransport)}";
     }
 
     private async Task TryInitJobMapAsync()
@@ -3426,7 +3423,7 @@
         _searchDebounceCts?.Dispose();
         try
         {
-            await Js.InvokeVoidAsync("jobsyList.disconnect");
+            await Js.InvokeVoidAsync("jobsyDiscovery.disconnect");
         }
         catch (JSDisconnectedException)
         {
