@@ -3,8 +3,10 @@
 Branch from `acceptatie`. ONE PR into `acceptatie`. Do not merge, do not deploy, do not use rule 123. Never push to main/acceptatie.
 
 > **Size warning.** This is large. Split it into **two PRs** that each follow the rules above, and open them in this order:
-> - **PR A: result page.** Done-state template, locked cards (placeholder only), gold block, "Bekijk voorbeeld-PDF" button (wired to B's endpoint behind a flag until B lands), edit/redo. See §§2–5 and §7.
-> - **PR B: paid report and PDF content.** Everything the locked cards promise, for real, plus the sample PDF. See §6.
+> - **PR A: result page.** Done-state template, locked cards (placeholder only), gold block, "Bekijk voorbeeld-PDF" button (hidden behind a flag until B lands), "Antwoorden wijzigen" / "Test opnieuw doen", and the **3-adjustments limit** (API + UI). All UI strings are in nl/en/pl/ro/ar. See §§2–5, §7.1 and the A-marked tests in §7.4.
+> - **PR B: paid report and PDF content.** Everything the locked cards promise, for real, **in Dutch and polished English** (the report language follows the UI language), plus the sample PDF in both languages. See §6, §7.2 and the B-marked tests in §7.4.
+>
+> What goes where: the adjustment counter and its API enforcement are in **A**. Report and PDF localization (resource catalogs, EN texts, the "no NL leftovers" tests) are in **B**. A's own UI strings are localized in A.
 >
 > PR A must not show any card whose paid counterpart is not yet delivered (see §4.3, "card gating"). If you do it in one PR, the same rule applies.
 
@@ -21,6 +23,8 @@ Branch from `acceptatie`. ONE PR into `acceptatie`. Do not merge, do not deploy,
   - Sample PDF preview (pages 1–2): `tr-pdf-{competentie,beroepen,cultuur,waarden}-desktop.png` and `tr-pdf-competentie-mobiel.png`.
   - Edit mode: `tr-wijzigen-{desktop,mobiel}.png`.
   - Redo confirmation (bottom sheet): `tr-opnieuw-mobiel.png`.
+  - Adjustment limit reached (0 of 3 left, both buttons disabled with an explanation): `tr-limiet-{desktop,mobiel}.png`.
+  - The quota line "Je kunt deze test nog 2 van de 3 keer aanpassen" is under the action buttons on every `tr-*-{desktop,mobiel}.png` result page, in the edit banner and footer (`tr-wijzigen-*`), and in the redo sheet (`tr-opnieuw-mobiel`).
   - Question screen with the sticky bar fixed: `tr-vraag-{desktop,mobiel}.png`. This is a **reference only**. The bar/scroll fix itself belongs to the separate questionnaire fix PR (see §5.1).
   - The mockup HTML uses inline styles and raw hex values. Do **not** copy that. Rebuild with design-system tokens and classes.
   - All numbers, occupations and texts in the mockups are **example data**. The "Mockup · Voorbeelddata" watermark is mockup-only. The per-card "Voorbeelddata" stamp and the section label **are** part of the design (§4).
@@ -114,6 +118,7 @@ Order, top to bottom (see `tr-*-desktop.png` / `tr-*-mobiel.png`):
    - Actions on the **right** on desktop. On mobile they go below as a 2-column grid of equal-width buttons:
      - `btn-outline-brand` "Antwoorden wijzigen" (pencil icon)
      - ghost button "Test opnieuw doen" (redo icon)
+   - Directly under the buttons: the **quota line** (§5.3), e.g. "ⓘ Je kunt deze test nog **2 van de 3** keer aanpassen." At 0, both buttons are disabled and the line becomes a `--warn-soft` note (see `tr-limiet-*.png`).
    - When the extended test is completed, the badge is gold "★ Uitgebreid" (existing).
 3. **Result card + score bars.** Keep the current `test-result-card` and `test-score-bars`. Cultuur keeps its second bar group, "Persoonlijkheid op het werk".
 4. **"Wat betekent dit voor jou?"** accordion (existing).
@@ -183,7 +188,7 @@ Placeholder content comes from a static client-side sample. No real data.
   - For each kind, every capability key has a rendered section in the paid view **and** a PDF section. This is a unit test over the report model and a PDF text-extraction smoke test.
   - A card that isn't in capabilities is not rendered in the locked grid.
 
-## 5. Edit and redo (PR A)
+## 5. Edit, redo and the 3-adjustments limit (PR A)
 ### 5.1 "Antwoorden wijzigen" (edit mode)
 - **Depends on the separate questionnaire fix PR**, which does two things:
   - It adds the **non-destructive pending-edit save**: editing a completed test never downgrades it to Draft or clears scores until you explicitly re-complete. Today it does, in `CandidateCompetencyService.cs:98–109`, `CandidateCareerInterestService.cs:104`, `CandidateCulturePersonalityService.cs:97`, `CandidateValuesService.cs:98` and `DeepAnalysisService.cs:344–350`.
@@ -193,22 +198,24 @@ Placeholder content comes from a static client-side sample. No real data.
   - Title "Antwoorden wijzigen"; the subtitle is the test name.
   - Right of the header: a counter "{n} gewijzigd" in `--warn`.
   - Progress bar full, in `--success`.
-  - Info banner: "Je huidige resultaat blijft staan tot je op 'Opslaan en resultaat bijwerken' tikt…"
+  - Info banner: "Je huidige resultaat blijft staan tot je op 'Opslaan en resultaat bijwerken' tikt. Opslaan telt als 1 van je 3 aanpassingen."
+  - Under the save button: "Daarna kun je deze test nog {remaining-1} van de 3 keer aanpassen" (§5.3).
   - All questions show collapsed with their value and a pencil. Tap one to expand.
   - A changed question shows "was {old}" (pill) and the old value outlined on the scale.
   - Footer: primary "Opslaan en resultaat bijwerken" (disabled when 0 changes) and ghost "Annuleren – niets wijzigen". Leaving with unsaved changes opens a confirm dialog.
 - **Save** uses the pending-edit API from the fix PR. It rescores, updates tags and matching, and for the extended test regenerates the report and PDF (invalidating the PDF cache key). No new payment.
+- **A successful save consumes 1 adjustment** (§5.3). Opening edit mode or cancelling costs nothing. Edit mode can't be opened when 0 are left (the API returns 409).
 
 ### 5.2 "Test opnieuw doen"
 - Bottom sheet on mobile, dialog on desktop (see `tr-opnieuw-mobiel.png`):
   - Title "Test opnieuw doen?"
   - Text: "Je begint met lege antwoorden. Je huidige resultaat blijft zichtbaar tot je de nieuwe test afrondt…"
-  - A hint pointing to "Antwoorden wijzigen".
+  - Info box: "Opnieuw doen telt als 1 van je 3 aanpassingen. Daarna kun je deze test nog {remaining-1} van de 3 keer aanpassen."
+  - A hint pointing to "Antwoorden wijzigen" ("dat telt ook als 1 aanpassing").
   - Buttons: "Opnieuw beginnen" / "Liever antwoorden wijzigen" / "Annuleren".
-- **Once per 30 days per test and variant, enforced by the API.**
-  - Return 409 with `retakeAvailableAtUtc`.
-  - The UI shows "Opnieuw mogelijk vanaf {datum}" and disables the button. The server clock is the source of truth.
-  - Edit mode is **not** limited.
+- **The adjustment is consumed when the new attempt is completed**, not when it starts. Abandoning costs nothing.
+  - Starting requires ≥ 1 adjustment left.
+  - Only one open attempt per test and variant at a time.
 - **The old result is kept until the new attempt completes.**
   - Store the attempt separately: new entity `CandidateAssessmentAttempt` (`UserId`, `Kind`, `Variant` Quick|Deep, `AnswersJson`, `Status`, `StartedAtUtc`, `CompletedAtUtc`, `ScoresJson`, `ReportJson`, `ReportVersion`), with an EF migration.
   - On completion, snapshot the previous result into the history and promote the new one.
@@ -217,13 +224,47 @@ Placeholder content comes from a static client-side sample. No real data.
 - **Privacy:**
   - History is included in the AVG export (`PrivacyDataService`) and in deletion.
   - Employers only ever see the current result.
-- **Extended redo** does not charge again: the candidate bought the test, not one attempt. Mark this in the PR as a product decision for Dennis.
+- **Extended redo never charges again** (Dennis's decision): the candidate bought the test, not one attempt. No checkout is involved in redo or edit.
+
+### 5.3 The 3-adjustments limit (hard, API-enforced)
+- **Rule (Dennis):** each test can be **adjusted at most 3 times in total**.
+  - "Antwoorden wijzigen" (a saved edit) and "Test opnieuw doen" (a completed retake) each count as **1**.
+  - The first completion of a test is **not** an adjustment.
+  - This replaces any time-based rule. There is **no** 30-day limit.
+- **Scope:** one counter per candidate per test and variant: Competentie, Beroepen, Cultuur & persoonlijkheid, Waarden op werk, each as Quick-Scan **and** as extended test, so 8 counters.
+  - The extended counter covers edits and retakes of the paid 150/200-question test.
+  - Keep the maximum in one constant, `AssessmentAdjustmentRules.MaxAdjustments = 3` (Core).
+- **Storage:** new table `CandidateAssessmentAdjustment` (`Id`, `UserId`, `Kind`, `Variant` Quick|Deep, `Type` Edit|Retake, `AtUtc`, `AttemptId?`), with an EF migration.
+  - Used = row count per (`UserId`, `Kind`, `Variant`).
+  - Insert the row in the **same DB transaction** as the edit-save or the retake completion, so a failed save doesn't consume one.
+  - Guard against double submits with a unique `AttemptId` / an idempotency key.
+- **API:**
+  - Every done-state/test DTO returns `adjustments: { used, remaining, max }`.
+  - Edit-open, edit-save, retake-start and retake-complete all check `remaining > 0` on the server and otherwise return **409** `{ code: "assessment_adjustment_limit", remaining: 0, max: 3 }`.
+  - The UI never decides on its own.
+- **UI copy (quota line), with correct plurals per language:**
+  - NL: "Je kunt deze test nog {n} van de 3 keer aanpassen." When n=1: "…nog 1 van de 3 keer…"
+  - EN: "You can adjust this test {n} more time(s) (out of 3)." Use proper singular/plural: "1 more time" / "2 more times".
+  - pl/ro/ar: use the plural forms of the existing localization helper. Polish needs one/few/many.
+  - **At 0:** NL "Je hebt deze test al 3 van de 3 keer aangepast. Wijzigen en opnieuw doen kan niet meer; je huidige resultaat blijft staan." EN "You've already adjusted this test 3 times (the maximum). Editing and retaking are no longer possible; your current result stays as it is."
+  - Both buttons are `disabled` with `aria-describedby` pointing at that note.
+- **Where it shows:**
+  - result page under the action buttons
+  - edit-mode banner and footer
+  - redo sheet
+  - the 409 error state (friendly dialog with the same text)
+- **Privacy:** adjustment rows are included in the AVG export and in account deletion.
+- **Admin:** no UI in this PR. If support ever needs a reset, that is a later admin feature. Log it as a follow-up issue.
 
 ## 6. Paid report and PDF parity (PR B)
 ### 6.1 Report models
 - Generalise the stored report. `CandidateDeepAnalysis.ReportJson` / `ReportVersion` already exist per row, so no new column is needed.
   - Add `CareerDeepReport`, `CultureDeepReport` and `ValuesDeepReport` in `Jobsy.Core/Reports/{Career,Culture,Values}/`, modelled on `CompetenceDeepReport` (builder + JSON + texts, with an optional OpenAI summary/action plan and a template fallback, like `CompetenceDeepReportService`).
   - Build on completion and on edit-save. Render the in-app view and the PDF from the stored report only (no AI on download).
+  - **Language-neutral storage:** the stored report holds scores, levels and **text keys**, not rendered Dutch sentences. Texts are resolved at render time from the resource catalogs (§7.2).
+    - AI-generated parts (summary, action plan) are stored **per language** (`{ "nl": …, "en": … }`), generated lazily for a language on first request, then stored.
+    - The template fallback exists in both languages.
+    - Bump `ReportVersion` and migrate/rebuild existing Competence reports. Today they store Dutch prose in `Meaning`, `WorkQuote`, `Pitfall`, … (`CompetenceDeepReport.cs`).
 - **In-app views:** `CareerDeepReportView`, `CultureDeepReportView` and `ValuesDeepReportView`, in the style of `CompetenceDeepReportView`. They are shown in `TestDetail` and on `DeepAnalysis.razor`'s completed page.
 - **Per card, the minimum content:**
 
@@ -263,8 +304,8 @@ All 6 cards for all 4 tests are delivered. The comparison card remains runtime-g
 
 ### 6.4 Sample PDF, "Bekijk voorbeeld-PDF"
 - Generated by the **same** PDF renderers with a fixed sample candidate ("Voorbeeldkandidaat") and fixed sample answers per kind: a static JSON under `Jobsy.Core/Data/SampleReports/`. No AI.
-  - Every page carries a diagonal **"VOORBEELD"** watermark, and the cover says "Voorbeeld – niet jouw resultaat".
-  - Endpoint: `GET /api/assessments/{kind}/sample-report.pdf`. Available to any authenticated candidate, cached in memory by `kind` + `ReportVersion`.
+  - Every page carries a diagonal watermark: **"VOORBEELD"** in nl, **"SAMPLE"** in en. The cover says "Voorbeeld – niet jouw resultaat" / "Sample – not your result".
+  - Endpoint: `GET /api/assessments/{kind}/sample-report.pdf?lang={nl|en}`. Available to any authenticated candidate, cached in memory by `kind` + `lang` + `ReportVersion`.
 - **UI** (see `tr-pdf-*.png`):
   - Desktop: dialog with pages 1–2 side by side, header "Voorbeeld-PDF · {test}", "Pagina 1–2 van {pages}", "Download voorbeeld", and in the footer the gold CTA with the price inside.
   - Mobile: bottom sheet with pages stacked, then the gold CTA and "Download voorbeeld (PDF)".
@@ -272,32 +313,91 @@ All 6 cards for all 4 tests are delivered. The comparison card remains runtime-g
 - **Until PR B:** the button is hidden (flag `Features:SamplePdf`).
 
 ## 7. Localization, accessibility, tests
-- **Localization:** all new strings go in `UiStringsCompetencies.cs` (or a new `UiStringsTestResults.cs`) for **nl, en, pl, ro, ar**.
-  - No hard-coded Dutch in Razor.
-  - Report and PDF texts: nl is required. Other languages follow the existing report behaviour (`CompetenceDeepReport` is nl). State this explicitly in the PR, with a follow-up issue listing what is not yet translated.
-  - Update the `LocalizationParityReportTests` baseline only for genuinely identical strings.
-  - RTL check for `ar`: logical properties, mirrored chevrons.
-- **Accessibility:**
-  - Locked bodies are `aria-hidden` with visually hidden descriptions.
-  - Dialogs have focus trap, Esc and focus return.
-  - Buttons ≥ 44 px.
-  - Contrast AA for the gold block (add a unit test on the token pair if there's a contrast helper; otherwise document the ratios in the PR).
-- **Tests (xUnit):**
-  - Done-state DTO for an unpaid candidate contains no deep-report data.
-  - `DeepReportCapabilities` ↔ view ↔ PDF parity per kind (§4.3).
-  - Norm snapshot: hidden when N < 100, shown when ≥ 100, demo accounts excluded.
-  - Retake: 409 within 30 days with `retakeAvailableAtUtc`; the old result stays until completion; abandoning doesn't change the current result; history is in the AVG export and in deletion.
-  - Edit mode: save rescores without a Draft downgrade (via the fix PR's API); cancel changes nothing.
-  - PDF: the Values PDF title is "Jouw waardenrapport" (not competence); Culture/Values contain no "Werk dat bij je past".
-  - Sample PDF: every page contains "VOORBEELD"; the endpoint works without a paid row.
-  - `TestDetail`: an unlocked-but-not-completed candidate sees no price.
-- **PR screenshots** (Playwright against a local/dev build, demo candidate): for each of the 4 tests, the done state at 1280 and 390, full page. Also:
-  - the PDF dialog at 1280 and the sheet at 390
-  - edit mode at 390
-  - the redo sheet at 390, plus the 409 state
-  - one completed extended report per kind, plus pages 1–2 of each real PDF with a demo account
+### 7.1 UI strings (PR A)
+- All new UI strings (result page, locked cards, gold block, edit/redo, quota, dialogs) go in `UiStringsCompetencies.cs` or a new `UiStringsTestResults.cs`, for **nl, en, pl, ro, ar**.
+- No hard-coded text in Razor.
+- The locked-card placeholder sample content is localized too. At minimum nl and en; pl/ro/ar may fall back to en for the sample content only.
+- Update the `LocalizationParityReportTests` baseline only for genuinely identical strings.
+- RTL check for `ar`: logical properties, mirrored chevrons.
 
-  Compare side by side with the mockups.
+### 7.2 Paid report, PDF and sample PDF in Dutch **and** English (PR B)
+- **Language rule:** the report language follows the user's UI language (`CultureState` / language cookie; for the API, pass `lang`).
+  - `en` → English.
+  - Everything else (`nl`, `pl`, `ro`, `ar`) → Dutch for now.
+  - pl/ro/ar report texts are a **later follow-up**. Open an issue listing the catalogs to translate.
+  - The in-app report view, the paid PDF and the sample PDF all follow the same rule. The PDF cache key includes the language.
+  - File names are localized: `Lobsy-{slug}-rapport-{date}.pdf` / `Lobsy-{slug}-report-{date}.pdf`.
+- **All report strings live in resource catalogs:**
+  - section titles, trait/facet/domain/type/value labels, level bands, template sentences (meaning, strengths, pitfalls, tips, work fit, action-plan templates), organisation-type names and descriptions, occupation titles and reasons, the norm/source disclaimers (incl. an EN version of `Johnson2014NormProvider.SourceDisclaimerText`), PDF headers/footers, cover and watermark.
+  - Use `.resx`, or Core catalogs in the existing `UiStrings*` style, **one per report kind**.
+  - **No string literals** in builders, report services or PDF renderers. That includes today's Dutch literals in `AssessmentReportPdfService.cs` (e.g. "Jouw loopbaanrapport", "Toelichting", "Facetten") and in `CompetenceDeepReportTexts.cs` / `CareerCompassBuilder` labels used by the report.
+- **English quality: polished and natural, not machine-literal.** Write it the way a native UK-English careers adviser would.
+  - Short sentences, second person, warm and plain.
+  - No Dutch word order, no calques. For example, "Aanpakken met je handen" → "Hands-on work", not "Tackling with your hands"; "Netjes organiseren" → "Organising and order"; "Kalm onder druk" → "Calm under pressure"; "Waarden op werk" → "Work values".
+  - **Glossary** (use consistently):
+
+| Dutch | English |
+|---|---|
+| Quick-Scan | quick scan |
+| Uitgebreide test | extended test |
+| Uitgebreid rapport | full report |
+| Voorbeelddata – niet jouw resultaat | Sample data – not your result |
+| Antwoorden wijzigen | Edit answers |
+| Test opnieuw doen | Retake test |
+| Normgroep | comparison group |
+| indicatie | indication |
+| Holland-code | Holland code |
+| Beroepentest | Career test |
+| Competentietest | Competency test |
+| Cultuur & persoonlijkheid | Culture & personality |
+| Actieplan | Action plan |
+| Sterke punten & valkuilen | Strengths & pitfalls |
+
+  - Occupation titles need real English equivalents (a map per occupation key). Never output a Dutch occupation title in the EN report.
+  - Put all EN report copy in the PR description as a table (key → nl → en), so Dennis can review it.
+- **AI parts:** the OpenAI prompt receives the target language explicitly ("Write in natural UK English…"). Validate the output language with the leftover check below, and fall back to the EN template if it fails.
+
+### 7.3 Accessibility
+- Locked bodies are `aria-hidden` with visually hidden descriptions.
+- Dialogs have focus trap, Esc and focus return.
+- Buttons ≥ 44 px.
+- Contrast AA for the gold block (add a unit test on the token pair if there's a contrast helper; otherwise document the ratios in the PR).
+
+### 7.4 Tests (xUnit)
+- **(A)** Done-state DTO for an unpaid candidate contains no deep-report data.
+- **(A + B)** `DeepReportCapabilities` ↔ view ↔ PDF parity per kind (§4.3).
+- **(B)** Norm snapshot: hidden when N < 100, shown when ≥ 100, demo accounts excluded.
+- **Adjustment limit (A):**
+  - The first completion doesn't count.
+  - Edit-save and retake-complete each count 1 (3 total, per test and variant).
+  - The 4th attempt returns 409 `assessment_adjustment_limit` on edit-open, edit-save, retake-start and retake-complete.
+  - A cancelled edit or abandoned retake doesn't count.
+  - A failed save (exception) doesn't count (transaction).
+  - A double submit counts once.
+  - Quick-Scan and extended counters are independent.
+  - The DTO returns `used/remaining/max`.
+  - Rows are in the AVG export and in deletion.
+- **Retake (A):** the old result stays until completion; abandoning doesn't change the current result; the previous result is in history; the extended retake creates no checkout.
+- **Quota copy (A):** NL/EN singular and plural render correctly (n = 3, 2, 1, 0); Polish few/many forms exist.
+- **(A)** Edit mode: save rescores without a Draft downgrade (via the fix PR's API); cancel changes nothing.
+- **(B)** PDF: the Values PDF title is "Jouw waardenrapport" / EN "Your work values report" (not competence); Culture/Values contain no "Werk dat bij je past".
+- **(B)** Sample PDF: every page contains "VOORBEELD" (nl) / "SAMPLE" (en); the endpoint works without a paid row.
+- **English report (B):** for all 4 kinds, render the in-app report model **and** the paid PDF, plus the sample PDF, with `lang=en`. Use the sample answers and a few random answer sets. Then:
+  - **No Dutch leftovers:** extract the PDF text and the view text, and assert none of a Dutch stop-word/marker list appears as whole words: `je`, `jij`, `jouw`, `het`, `een`, `van`, `werk`, `niet`, `ook`, `bij`, `voor`, `rapport`, `vragen`, `pagina`, `Uitgebreid`, `Voorbeeld`, `Werk dat bij je past`, plus any `ij`-diphthong word from an allowlisted detector.
+  - **No raw codes:** assert none of the following appear: `Autonomy`, `Connection`, `Achievement`, `Stability`, `Impact` as bare domain codes, `Realistic`, `Investigative`, `Artistic`, `Social`, `Enterprising`, `Conventional` as codes, `Consciëntieusheid`, `EmotioneleStabiliteit`, `PeopleFirst`, facet codes like `C1`/`N6`, unresolved keys (`Deep.`, `Report.`, `{`, `}`).
+  - Where an English label legitimately equals a code (e.g. "Impact"), compare against the **label map**, not the raw code. The test asserts every rendered label came from the catalog.
+  - The same test with `lang=nl` asserts no English template leftovers and no raw codes.
+  - `pl`/`ro`/`ar` UI → the report is Dutch.
+- **(A)** `TestDetail`: an unlocked-but-not-completed candidate sees no price.
+### 7.5 PR screenshots
+Take them with Playwright against a local/dev build, as the demo candidate, and compare each side by side with the mockups:
+- done state for each of the 4 tests at 1280 and 390, full page
+- the PDF dialog at 1280 and the sheet at 390
+- edit mode at 390
+- the redo sheet at 390
+- the limit-reached state (0 of 3) at 1280 and 390, plus the 409 dialog
+- for an EN UI user: the result page, the in-app report and PDF pages 1–2 for one kind, plus the EN sample PDF
+- one completed extended report per kind, plus pages 1–2 of each real PDF, with a demo account
 
 ## 8. Done when
 - The 4 done pages match the mockups (tokens, not inline styles).
@@ -305,6 +405,9 @@ All 6 cards for all 4 tests are delivered. The comparison card remains runtime-g
 - The Values/Culture PDF bugs are fixed.
 - The norms are honest (§6.2).
 - The gold block passes AA with the price inside.
-- Edit mode depends on the fix PR (flagged if it isn't merged); redo is limited to once per 30 days by the API, with history.
-- All languages are present, all tests are green, and the screenshots are in the PR.
+- Edit mode depends on the fix PR (flagged if it isn't merged).
+- Each test and variant can be adjusted at most 3 times (edit or retake), enforced by the API. The quota is visible on the result page, in edit mode and in the redo sheet. Both buttons are disabled at 0. The extended retake is never charged again.
+- UI strings exist in all 5 languages.
+- The paid report, PDF and sample PDF exist in Dutch and polished English, following the UI language. All report texts come from catalogs, and the EN/NL leftover and raw-code tests are green.
+- All tests are green, and the screenshots are in the PR.
 - Nothing merged, nothing deployed.
