@@ -46,27 +46,27 @@ public sealed class FlexCommercialService : IFlexCommercialService
     {
         if (update.MarginPerHourEuro is < 0 or > 100)
         {
-            throw new ArgumentOutOfRangeException(nameof(update.MarginPerHourEuro), "Flex-marge moet tussen € 0 en € 100 liggen.");
+            throw new ArgumentOutOfRangeException(nameof(update), "Flex-marge moet tussen € 0 en € 100 liggen.");
         }
 
         if (update.DeepAnalysisPriceEuro is < 0 or > 500)
         {
-            throw new ArgumentOutOfRangeException(nameof(update.DeepAnalysisPriceEuro), "Diepte-analyse prijs moet tussen € 0 en € 500 liggen.");
+            throw new ArgumentOutOfRangeException(nameof(update), "Diepte-analyse prijs moet tussen € 0 en € 500 liggen.");
         }
 
         if (update.AgencyAnnualPriceEuro is < 0 or > 1_000_000)
         {
-            throw new ArgumentOutOfRangeException(nameof(update.AgencyAnnualPriceEuro), "Uitzend-jaarabonnement moet tussen € 0 en € 1.000.000 liggen.");
+            throw new ArgumentOutOfRangeException(nameof(update), "Uitzend-jaarabonnement moet tussen € 0 en € 1.000.000 liggen.");
         }
 
         if (update.ContactUnlockCostTokens is <= 0 or > 100)
         {
-            throw new ArgumentOutOfRangeException(nameof(update.ContactUnlockCostTokens), "ContactUnlock moet tussen 0,1 en 100 tokens liggen.");
+            throw new ArgumentOutOfRangeException(nameof(update), "ContactUnlock moet tussen 0,1 en 100 tokens liggen.");
         }
 
         if (string.IsNullOrWhiteSpace(update.BackofficePartnerName))
         {
-            throw new ArgumentException("Backoffice-partner is verplicht.");
+            throw new ArgumentException("Backoffice-partner is verplicht.", nameof(update));
         }
 
         var settings = await EnsureSettingsAsync(cancellationToken);
