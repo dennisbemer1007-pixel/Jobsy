@@ -491,10 +491,10 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20260926-mapfix9"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260927-banenkaart-v3"
+        "/js/jobMap.min.js?v=20260928-perf"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.min.js?v=20260822-r195"
+        "/js/vacancyDetailMap.min.js?v=20260928-perf"
     ];
 
     function pathOnly(url) {
@@ -819,8 +819,8 @@ window.jobsyQuestionnaire = {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20260925-coral"
-            : "/service-worker.js?v=20260925-coral";
+            ? "/service-worker.published.js?v=20260928-perf"
+            : "/service-worker.js?v=20260928-perf";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();

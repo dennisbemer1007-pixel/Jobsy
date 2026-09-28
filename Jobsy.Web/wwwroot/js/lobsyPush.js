@@ -49,8 +49,8 @@ window.lobsyPush = (function () {
         }
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20260925-coral"
-            : "/service-worker.js?v=20260925-coral";
+            ? "/service-worker.published.js?v=20260928-perf"
+            : "/service-worker.js?v=20260928-perf";
         return navigator.serviceWorker.register(swUrl, { scope: "/" });
     }
 

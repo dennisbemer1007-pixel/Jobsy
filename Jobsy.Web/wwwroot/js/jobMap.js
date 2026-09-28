@@ -1156,7 +1156,7 @@ window.jobMap = (function () {
                     layout: {
                         "text-field": ["get", "count"],
                         "text-size": 14,
-                        "text-font": ["Noto Sans Bold", "Arial Unicode MS Bold"],
+                        "text-font": ["Noto Sans Bold"],
                         "text-allow-overlap": true
                     },
                     paint: { "text-color": "#ffffff" }
@@ -2862,7 +2862,7 @@ window.jobMap = (function () {
                 layout: {
                     "text-field": ["get", "point_count_abbreviated"],
                     "text-size": 13,
-                    "text-font": ["Noto Sans Bold", "Arial Unicode MS Bold"],
+                    "text-font": ["Noto Sans Bold"],
                     "text-allow-overlap": true
                 },
                 paint: { "text-color": "#ffffff" }
