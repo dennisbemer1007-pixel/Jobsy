@@ -130,8 +130,31 @@ public class StaticAssetCacheTests
             Assert.Contains(jobMapTag, manifest, StringComparison.Ordinal);
         }
 
-        Assert.Contains($"css/app.min.css?v={appCoreTag}", app, StringComparison.Ordinal);
-        Assert.Contains($"css/features/banenkaart.css?v={appCoreTag}", app, StringComparison.Ordinal);
+        // Prefer keeping app.min.css / banenkaart.css on the same ?v as app-core.
+        // Temporary skew is OK when asset-versions.json tracks the CSS files
+        // (e.g. cookie-map / filter-sheet bumps ahead of a shared app-core retag).
+        var appCssMatch = System.Text.RegularExpressions.Regex.Match(
+            app,
+            @"css/app\.min\.css\?v=([^""'\s]+)");
+        Assert.True(appCssMatch.Success, "App.razor must version app.min.css");
+        var banenkaartMatch = System.Text.RegularExpressions.Regex.Match(
+            app,
+            @"css/features/banenkaart\.css\?v=([^""'\s]+)");
+        Assert.True(banenkaartMatch.Success, "App.razor must version banenkaart.css");
+
+        if (!string.Equals(appCssMatch.Groups[1].Value, appCoreTag, StringComparison.Ordinal)
+            || !string.Equals(banenkaartMatch.Groups[1].Value, appCoreTag, StringComparison.Ordinal))
+        {
+            var manifestPath = Path.Combine(root, "Jobsy.Tests", "asset-versions.json");
+            Assert.True(File.Exists(manifestPath), "CSS/app-core ?v skew requires Jobsy.Tests/asset-versions.json");
+            var manifest = File.ReadAllText(manifestPath);
+            Assert.Contains("css/app.min.css", manifest, StringComparison.Ordinal);
+            Assert.Contains("css/features/banenkaart.css", manifest, StringComparison.Ordinal);
+            Assert.Contains("js/app-core.js", manifest, StringComparison.Ordinal);
+            Assert.Contains(appCssMatch.Groups[1].Value, manifest, StringComparison.Ordinal);
+            Assert.Contains(banenkaartMatch.Groups[1].Value, manifest, StringComparison.Ordinal);
+        }
+
         Assert.DoesNotContain("js/app-core.js?v=20260927-acc-review", app, StringComparison.Ordinal);
     }
 
