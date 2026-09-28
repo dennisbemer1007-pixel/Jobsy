@@ -4,11 +4,9 @@ using System.Text;
 using System.Text.Json;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Options;
 using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -29,26 +27,24 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<OpenAiCompetenceDeepReportAiService> _logger;
 
     public OpenAiCompetenceDeepReportAiService(
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options,
+        IOpenAiEndpointResolver openAi,
         ILogger<OpenAiCompetenceDeepReportAiService> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
-        _options = options.Value;
+        _openAi = openAi;
         _logger = logger;
     }
 
     public async Task<(string Summary, IReadOnlyList<(string Title, string Body)> Steps)?> TryGenerateAsync(
         CompetenceDeepReport draftWithoutAi, string? jobTitle, CancellationToken ct)
     {
-        var apiKey = await ResolveApiKeyAsync(ct);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.CompetenceDeepReport, ct);
+        var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             return null;
@@ -60,8 +56,8 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
                 draftWithoutAi,
                 jobTitle,
                 apiKey,
-                await ResolveModelAsync(ct),
-                await ResolveBaseUrlAsync(ct),
+                endpoint.Model,
+                endpoint.BaseUrl,
                 ct);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -170,43 +166,8 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
         return (dto.Summary.Trim(), steps);
     }
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken ct)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, ct);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken ct)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, ct);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
-
-        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken ct)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, ct);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? "https://api.openai.com/v1/"
-            : _options.BaseUrl.Trim();
-        return fallback.EndsWith('/') ? fallback : fallback + "/";
-    }
 
     private sealed class ReportDto
     {

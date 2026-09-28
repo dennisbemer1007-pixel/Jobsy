@@ -4,10 +4,8 @@ using System.Text;
 using System.Text.Json;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -21,19 +19,16 @@ public sealed class CareerPathPlanGenerationService : ICareerPathPlanGenerationS
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<CareerPathPlanGenerationService> _logger;
 
     public CareerPathPlanGenerationService(
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options,
+        IOpenAiEndpointResolver openAi,
         ILogger<CareerPathPlanGenerationService> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
-        _options = options.Value;
+        _openAi = openAi;
         _logger = logger;
     }
 
@@ -43,7 +38,8 @@ public sealed class CareerPathPlanGenerationService : ICareerPathPlanGenerationS
         CancellationToken cancellationToken = default)
     {
         var local = HorizonCareerPathBuilder.BuildLocal(dreamTitle, profile);
-        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.CareerPathPlan, cancellationToken);
+        var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             return local;
@@ -55,8 +51,8 @@ public sealed class CareerPathPlanGenerationService : ICareerPathPlanGenerationS
                 dreamTitle,
                 profile,
                 apiKey,
-                await ResolveModelAsync(cancellationToken),
-                await ResolveBaseUrlAsync(cancellationToken),
+                endpoint.Model,
+                endpoint.BaseUrl,
                 cancellationToken);
             if (generated is not null && generated.Steps.Count > 0)
             {
@@ -196,43 +192,8 @@ public sealed class CareerPathPlanGenerationService : ICareerPathPlanGenerationS
             .Take(6)
             .ToList();
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
-
-        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? "https://api.openai.com/v1/"
-            : _options.BaseUrl.Trim();
-        return fallback.EndsWith('/') ? fallback : fallback + "/";
-    }
 
     private sealed class PlanDto
     {

@@ -8,6 +8,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Infrastructure.Services.OpenAi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -574,11 +575,12 @@ public class AssistantChatServiceTests
         => new(
             db,
             new StubHttpClientFactory(),
-            new StubIntegrationCredentials(),
             metrics ?? new StubMetrics(),
             new StubCandidateMetrics(),
             sales ?? new StubSalesDashboard(),
-            Options.Create(new OpenAiOptions()),
+            new OpenAiEndpointResolver(
+                new StubIntegrationCredentials(),
+                Options.Create(new OpenAiOptions())),
             NullLogger<AssistantChatService>.Instance);
 
     private sealed class StubHttpClientFactory : IHttpClientFactory

@@ -5,6 +5,7 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Infrastructure.Services.OpenAi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -82,6 +83,8 @@ public static class DependencyInjection
 
         services.AddOptions<OpenAiOptions>()
             .Bind(configuration.GetSection(OpenAiOptions.SectionName));
+
+        services.AddScoped<IOpenAiEndpointResolver, OpenAiEndpointResolver>();
 
         services.AddOptions<CursorCloudOptions>()
             .Bind(configuration.GetSection(CursorCloudOptions.SectionName))

@@ -6,6 +6,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Infrastructure.Services.OpenAi;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -85,8 +86,9 @@ public class CareerCompassGenerationServiceTests
     private static CareerCompassGenerationService CreateSut(HttpMessageHandler handler, string? apiKey)
         => new(
             new NamedHttpClientFactory(handler),
-            new StubCredentials(apiKey),
-            Options.Create(new OpenAiOptions { ApiKey = apiKey, Model = "gpt-4o-mini" }),
+            new OpenAiEndpointResolver(
+                new StubCredentials(apiKey),
+                Options.Create(new OpenAiOptions { ApiKey = apiKey, Model = "gpt-4o-mini" })),
             NullLogger<CareerCompassGenerationService>.Instance);
 
     private sealed class NamedHttpClientFactory(HttpMessageHandler handler) : IHttpClientFactory
