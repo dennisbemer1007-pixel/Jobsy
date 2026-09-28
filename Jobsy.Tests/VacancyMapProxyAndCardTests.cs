@@ -100,7 +100,7 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
             StringComparison.Ordinal);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("jobMap.min.js?v=20260928-perf", maps);
+        Assert.Contains("jobMap.min.js?v=20260928-mapperf", maps);
         Assert.Contains("photoIsWorkTypePlaceholder", js);
         Assert.Contains("/api/vacancies/{id:guid}/image",
             File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs")));

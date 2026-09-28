@@ -2028,7 +2028,7 @@
         }
     }
 
-    private async Task LoadVacanciesAsync(CancellationToken ct = default)
+    private async Task LoadVacanciesAsync(CancellationToken ct = default, bool reloadMapPins = true)
     {
         var generation = ++_loadGeneration;
         var hadResults = _vacancies.Count > 0;
@@ -2128,9 +2128,14 @@
 
             // Update map pins over HTTP (debounced AbortController inside jobMap.reloadPins)
             // instead of shipping a full marker set through the Blazor circuit.
+            // Transport-only reloads skip reloadPins — jobMap reuses the filter-keyed cache.
             if (_mapReady)
             {
-                await Js.InvokeVoidAsync("jobMap.reloadPins", BuildPinsApiUrl());
+                if (reloadMapPins)
+                {
+                    await Js.InvokeVoidAsync("jobMap.reloadPins", BuildPinsApiUrl());
+                }
+
                 if (_origin is not null && _companyFocusIds is null)
                 {
                     await Js.InvokeVoidAsync("jobMap.setOrigin", _origin.Latitude, _origin.Longitude, TravelMapOptions());
@@ -2828,7 +2833,14 @@
     private async Task OnTransportChanged(ChangeEventArgs e)
     {
         _selectedTransport = e.Value?.ToString() ?? "Fiets";
-        await ReloadFiltersIfAppliedAsync();
+        // Travel rings update client-side; pin HTTP is cached per filter (not per transport).
+        if (_mapReady)
+        {
+            try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
+            catch { /* ignore */ }
+        }
+
+        await LoadVacanciesAsync(reloadMapPins: false);
     }
 
     private void ToggleLegend()

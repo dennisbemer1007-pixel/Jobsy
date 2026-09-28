@@ -1760,11 +1760,63 @@ window.jobMap = (function () {
     let pinsReloadTimer = null;
     /** How many MapLibre instances this module created (boot + Blazor should stay at 1). */
     let mapCreateCount = 0;
+    /** In-memory pins by filter state (transport stripped — rings are client-side). */
+    const pinsByFilterKey = Object.create(null);
+    let pinsNetworkFetchCount = 0;
+
+    /** Filter cache key: everything in the pins URL except travel mode. */
+    function pinsFilterKey(url) {
+        if (!url) {
+            return "";
+        }
+        try {
+            const u = new URL(url, window.location.origin);
+            u.searchParams.delete("transport");
+            const keys = Array.prototype.slice.call(u.searchParams.keys()).sort();
+            const parts = [];
+            for (let i = 0; i < keys.length; i++) {
+                const k = keys[i];
+                const vals = u.searchParams.getAll(k).slice().sort();
+                for (let j = 0; j < vals.length; j++) {
+                    parts.push(k + "=" + vals[j]);
+                }
+            }
+            return u.pathname + "?" + parts.join("&");
+        } catch (e) {
+            return String(url).replace(/([?&])transport=[^&]*/gi, "$1").replace(/[?&]$/, "");
+        }
+    }
+
+    function rememberPinsFilter(url, payload, etag) {
+        const key = pinsFilterKey(url);
+        if (!key) {
+            return;
+        }
+        const pins = (Array.isArray(payload) ? payload : []).map(normalizePin).filter(Boolean);
+        pinsByFilterKey[key] = {
+            payload: payload,
+            pins: pins,
+            etag: etag || null
+        };
+    }
 
     function fetchPins(url) {
         if (!url) {
             return Promise.resolve([]);
         }
+        pinsUrl = String(url);
+        const filterKey = pinsFilterKey(pinsUrl);
+        const cached = filterKey ? pinsByFilterKey[filterKey] : null;
+        if (cached && cached.pins) {
+            // Transport-only changes reuse the same pin set; travel rings update separately.
+            pinsCachedPayload = cached.payload;
+            if (cached.etag) {
+                pinsEtag = cached.etag;
+            }
+            setVacancies(cached.pins);
+            return Promise.resolve(cached.pins);
+        }
+
         const gen = ++pinsFetchGen;
         if (pinsAbort) {
             try { pinsAbort.abort(); } catch (e) { }
@@ -1774,7 +1826,8 @@ window.jobMap = (function () {
         if (pinsEtag) {
             headers["If-None-Match"] = pinsEtag;
         }
-        return fetch(url, {
+        pinsNetworkFetchCount += 1;
+        return fetch(pinsUrl, {
             credentials: "same-origin",
             headers: headers,
             signal: pinsAbort ? pinsAbort.signal : undefined
@@ -1796,6 +1849,7 @@ window.jobMap = (function () {
                 }
                 return res.json().then(function (body) {
                     pinsCachedPayload = body;
+                    rememberPinsFilter(pinsUrl, body, etag);
                     return body;
                 });
             })
@@ -1804,6 +1858,9 @@ window.jobMap = (function () {
                     return;
                 }
                 const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
+                if (!pinsByFilterKey[filterKey]) {
+                    rememberPinsFilter(pinsUrl, data, pinsEtag);
+                }
                 setVacancies(pins);
             })
             .catch(function (err) {
@@ -1847,6 +1904,16 @@ window.jobMap = (function () {
 
     let recordForRetry = null;
 
+    function afterFirstPaint(fn) {
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(fn);
+            });
+        } else {
+            setTimeout(fn, 0);
+        }
+    }
+
     function openVacancyPopup(record) {
         if (!map || !record) {
             return;
@@ -1857,31 +1924,48 @@ window.jobMap = (function () {
         record.options.jobData = v;
         const opts = Object.assign({}, jobPopupOptions(isFeaturedVacancy(v)));
         const needsDetail = !v._detailLoaded || !v.title;
+        // Skeleton / chrome first (fixed size) so the tap feels instant.
         activeClusterPopup = popupFromOpts(
             opts,
             [record.lng, record.lat],
             needsDetail ? skeletonPopupHtml(v) : buildPopupHtml(v));
         syncFeaturedPopupClass(activeClusterPopup, v);
         if (needsDetail) {
+            // Pan after first paint; fill card body on the next frame once detail arrives.
+            afterFirstPaint(function () {
+                if (activeClusterPopup) {
+                    centerPopupInView(activeClusterPopup);
+                }
+            });
             fetchVacancyCard(v.id).then(function (card) {
                 if (!activeClusterPopup || !record) {
                     return;
                 }
-                if (card) {
-                    const full = mapCardToPopup(card, v);
-                    record.options.jobData = full;
-                    activeClusterPopup.setHTML(buildPopupHtml(full));
-                    syncFeaturedPopupClass(activeClusterPopup, full);
-                    bindSinglePopupEl(activeClusterPopup, full);
-                } else {
-                    activeClusterPopup.setHTML(unavailablePopupHtml(v.id));
-                    bindSinglePopupEl(activeClusterPopup, v);
-                }
+                afterFirstPaint(function () {
+                    if (!activeClusterPopup || !record) {
+                        return;
+                    }
+                    if (card) {
+                        const full = mapCardToPopup(card, v);
+                        record.options.jobData = full;
+                        activeClusterPopup.setHTML(buildPopupHtml(full));
+                        syncFeaturedPopupClass(activeClusterPopup, full);
+                        bindSinglePopupEl(activeClusterPopup, full);
+                    } else {
+                        activeClusterPopup.setHTML(unavailablePopupHtml(v.id));
+                        bindSinglePopupEl(activeClusterPopup, v);
+                    }
+                });
             });
             return;
         }
-        bindSinglePopupEl(activeClusterPopup, v);
-        notifyOpen(v.id);
+        afterFirstPaint(function () {
+            if (!activeClusterPopup) {
+                return;
+            }
+            bindSinglePopupEl(activeClusterPopup, v);
+            notifyOpen(v.id);
+        });
     }
 
     function openClusterList(childMarkers, lngLat) {
@@ -1895,21 +1979,25 @@ window.jobMap = (function () {
         const pageCount = Math.max(1, jobs.length);
         const firstJob = jobs[0];
         const ll = lngLat || [childMarkers[0].lng, childMarkers[0].lat];
+        // Fixed-size chrome + skeleton card so the sheet appears on the same tap frame.
         const chromeHtml = buildClusterChromeHtml(pageCount, clusterPlaceLabel(jobs));
+        const skeletonCard = skeletonPopupHtml(firstJob || {});
+        const sheetHtml = chromeHtml.replace(
+            "data-cluster-viewport\"></div>",
+            "data-cluster-viewport\">" + skeletonCard + "</div>");
         const docked = isNarrowViewport();
         const visibleCount = Object.keys(markersById).length;
 
         setSelectedCluster(ll, pageCount);
         setClusterOpenChrome(true, visibleCount);
         bindClusterEscape();
-        panClusterAboveSheet(ll);
 
         if (docked) {
-            activeClusterPopup = createDockedClusterController(chromeHtml);
+            activeClusterPopup = createDockedClusterController(sheetHtml);
         } else {
             const opts = Object.assign({}, clusterPopupOptions(isFeaturedVacancy(firstJob)));
             opts.closeButton = false;
-            activeClusterPopup = popupFromOpts(opts, ll, chromeHtml);
+            activeClusterPopup = popupFromOpts(opts, ll, sheetHtml);
             syncFeaturedPopupClass(activeClusterPopup, firstJob);
         }
 
@@ -1926,43 +2014,45 @@ window.jobMap = (function () {
             lngLat: ll
         };
 
-        bindClusterPopupInteractions(activeClusterPopup, childMarkers);
-        updateClusterChrome(clusterUiState);
-
-        // Prefetch whole cluster (batches of 25). Show page 1 as soon as its card arrives.
         const gen = ++clusterPageGen;
-        renderClusterPage(activeClusterPopup, childMarkers, 1, 0, true);
-        prefetchClusterCards(jobs).then(function () {
-            if (gen !== clusterPageGen && clusterPageGen > gen) {
-                // Later navigation may have bumped gen — still refresh current page from cache.
-            }
+
+        // Fill content + start fly/ease only after the skeleton has painted.
+        afterFirstPaint(function () {
             if (!clusterUiState || clusterUiState.childMarkers !== childMarkers) {
                 return;
             }
-            // Refresh title place + current page from cache without height change.
+            bindClusterPopupInteractions(activeClusterPopup, childMarkers);
             updateClusterChrome(clusterUiState);
-            renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page, 0, true);
-        });
+            renderClusterPage(activeClusterPopup, childMarkers, 1, 0, true);
+            panClusterAboveSheet(ll);
 
-        // Ensure first page card is prioritised.
-        if (firstJob && firstJob.id) {
-            fetchVacancyCard(firstJob.id).then(function (card) {
+            prefetchClusterCards(jobs).then(function () {
                 if (!clusterUiState || clusterUiState.childMarkers !== childMarkers) {
                     return;
                 }
-                if (card && clusterUiState.page === 1) {
-                    const full = mapCardToPopup(card, firstJob);
-                    jobs[0] = full;
-                    childMarkers.forEach(function (marker) {
-                        if (marker.options && marker.options.jobData &&
-                            String(marker.options.jobData.id) === String(firstJob.id)) {
-                            marker.options.jobData = full;
-                        }
-                    });
-                    renderClusterPage(activeClusterPopup, childMarkers, 1, 0, true);
-                }
+                updateClusterChrome(clusterUiState);
+                renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page, 0, true);
             });
-        }
+
+            if (firstJob && firstJob.id) {
+                fetchVacancyCard(firstJob.id).then(function (card) {
+                    if (!clusterUiState || clusterUiState.childMarkers !== childMarkers) {
+                        return;
+                    }
+                    if (card && clusterUiState.page === 1) {
+                        const full = mapCardToPopup(card, firstJob);
+                        jobs[0] = full;
+                        childMarkers.forEach(function (marker) {
+                            if (marker.options && marker.options.jobData &&
+                                String(marker.options.jobData.id) === String(firstJob.id)) {
+                                marker.options.jobData = full;
+                            }
+                        });
+                        renderClusterPage(activeClusterPopup, childMarkers, 1, 0, true);
+                    }
+                });
+            }
+        });
     }
 
     function ringMinutes(maxMinutes) {
@@ -3336,7 +3426,9 @@ window.jobMap = (function () {
                 }
             }
             // Apply early prefetch (started from maps-loader / boot JSON) before a new fetch.
-            if (pinsUrl && window.__jobsyPinsPrefetch && window.__jobsyPinsPrefetchUrl === pinsUrl) {
+            // Match by filter key so Fiets/Auto prefetch URLs share one body.
+            if (pinsUrl && window.__jobsyPinsPrefetch
+                && pinsFilterKey(window.__jobsyPinsPrefetchUrl) === pinsFilterKey(pinsUrl)) {
                 const gen = ++pinsFetchGen;
                 Promise.resolve(window.__jobsyPinsPrefetch).then(function (data) {
                     if (gen !== pinsFetchGen || !data) {
@@ -3345,6 +3437,7 @@ window.jobMap = (function () {
                         }
                         return;
                     }
+                    rememberPinsFilter(pinsUrl, data, window.__jobsyPinsEtag || null);
                     const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
                     if (pins.length) {
                         setVacancies(pins);
@@ -3795,6 +3888,14 @@ window.jobMap = (function () {
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },
         __testGetMapCreateCount: function () { return mapCreateCount; },
+        __testGetPinsNetworkFetchCount: function () { return pinsNetworkFetchCount; },
+        __testPinsFilterKey: pinsFilterKey,
+        __testClearPinsFilterCache: function () {
+            Object.keys(pinsByFilterKey).forEach(function (k) { delete pinsByFilterKey[k]; });
+            pinsNetworkFetchCount = 0;
+            pinsCachedPayload = null;
+            pinsEtag = null;
+        },
         /** @internal Open the densest visible cluster for v3 popup tests. */
         debugOpenLargestCluster: async function () {
             if (!map || typeof map.queryRenderedFeatures !== "function") {
