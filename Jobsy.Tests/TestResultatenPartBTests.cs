@@ -1,5 +1,4 @@
 using Jobsy.Core.Enums;
-using Jobsy.Core.Interfaces;
 using Jobsy.Core.Reports;
 using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Reports.Culture;
@@ -50,7 +49,7 @@ public class TestResultatenPartBTests
     public async Task Sample_pdf_renders_without_paid_row_and_localizes_filename()
     {
         var cache = new MemoryCache(new MemoryCacheOptions());
-        var sut = new SampleAssessmentReportPdfService(cache, new FakeCompanySettings());
+        var sut = new SampleAssessmentReportPdfService(cache);
 
         var nl = await sut.RenderSampleAsync(AssessmentKind.Values, "nl");
         var en = await sut.RenderSampleAsync(AssessmentKind.Values, "en");
@@ -59,15 +58,15 @@ public class TestResultatenPartBTests
         Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString(nl.Content.AsSpan(0, 4)));
         Assert.Contains("voorbeeld", nl.FileName, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("report", en.FileName, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(DeepReportCatalog.Get("pdf.watermark", "nl"), "VOORBEELD");
-        Assert.Equal(DeepReportCatalog.Get("pdf.watermark", "en"), "SAMPLE");
+        Assert.Equal("VOORBEELD", DeepReportCatalog.Get("pdf.watermark", "nl"));
+        Assert.Equal("SAMPLE", DeepReportCatalog.Get("pdf.watermark", "en"));
     }
 
     [Fact]
     public async Task Sample_preview_returns_two_png_pages_and_total_count()
     {
         var cache = new MemoryCache(new MemoryCacheOptions());
-        var sut = new SampleAssessmentReportPdfService(cache, new FakeCompanySettings());
+        var sut = new SampleAssessmentReportPdfService(cache);
 
         var preview = await sut.RenderSamplePreviewAsync(AssessmentKind.Career, "nl");
         Assert.Equal(2, preview.PagePngBase64.Count);
@@ -169,21 +168,5 @@ public class TestResultatenPartBTests
         }
 
         return DeepAnalysisCatalog.ScoreDomains(answers, kind).ToList();
-    }
-
-    private sealed class FakeCompanySettings : IPlatformCompanySettingsService
-    {
-        public Task<PlatformCompanySnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformCompanySnapshot(
-                "Lobsy", "Test", null, null, null, null, null, null, null, null, null, null));
-
-        public Task<PlatformCompanySnapshot> UpdateAsync(
-            PlatformCompanyUpdate update,
-            CancellationToken cancellationToken = default)
-            => GetAsync(cancellationToken);
-
-        public byte[] GetBrandLogoPng() => [];
-
-        public byte[] GetBrandWatermarkPng() => [];
     }
 }

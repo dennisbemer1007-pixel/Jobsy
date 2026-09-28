@@ -118,7 +118,7 @@ public sealed class AssessmentNormService : IAssessmentNormService
         await _db.SaveChangesAsync(ct);
     }
 
-    private static double Percentile(IReadOnlyList<int> ordered, double p)
+    private static double Percentile(List<int> ordered, double p)
     {
         if (ordered.Count == 0)
         {

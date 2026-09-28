@@ -1140,14 +1140,6 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         _ => domain
     };
 
-    private static string LabelCulture(string domain)
-        => CulturePersonalityCatalog.EverydayLabel(domain) switch
-        {
-            var label when !string.IsNullOrWhiteSpace(label) && label != "hoe jij graag werkt"
-                => char.ToUpperInvariant(label[0]) + label[1..],
-            _ => domain
-        };
-
     private static string FriendlyTag(string tag)
     {
         if (CareerTestCatalog.RiasecCodes.Contains(tag, StringComparer.OrdinalIgnoreCase))

@@ -39,9 +39,11 @@ public sealed class AssessmentAdjustmentLimitException : Exception
         : base("Assessment adjustment limit reached.")
     {
         Max = max;
+        Remaining = 0;
+        Code = Rules.AssessmentAdjustmentRules.LimitErrorCode;
     }
 
     public int Max { get; }
-    public int Remaining => 0;
-    public string Code => Rules.AssessmentAdjustmentRules.LimitErrorCode;
+    public int Remaining { get; }
+    public string Code { get; }
 }

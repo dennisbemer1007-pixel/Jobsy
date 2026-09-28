@@ -136,6 +136,7 @@ public sealed class AssessmentAdjustmentsController : ControllerBase
         Guid attemptId,
         CancellationToken cancellationToken = default)
     {
+        _ = kind; // route segment retained for URL symmetry with other retake endpoints
         var user = await CurrentUserAsync(cancellationToken);
         if (user is null)
         {

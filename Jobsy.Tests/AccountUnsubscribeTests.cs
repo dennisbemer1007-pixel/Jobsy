@@ -489,6 +489,8 @@ public class AccountUnsubscribeTests
             typeof(AmbassadeurProfile),
             typeof(Application),
             typeof(CandidateActionToken),
+            typeof(CandidateAssessmentAdjustment),
+            typeof(CandidateAssessmentAttempt),
             typeof(CandidateCareerInterest),
             typeof(CandidateCareerPlan),
             typeof(CandidateCareerStepProgress),

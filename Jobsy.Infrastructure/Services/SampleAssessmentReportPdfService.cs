@@ -24,19 +24,15 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
     private static readonly Color Watermark = Color.FromHex("#c9a227");
 
     private readonly IMemoryCache _cache;
-    private readonly IPlatformCompanySettingsService _companySettings;
 
     static SampleAssessmentReportPdfService()
     {
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
-    public SampleAssessmentReportPdfService(
-        IMemoryCache cache,
-        IPlatformCompanySettingsService companySettings)
+    public SampleAssessmentReportPdfService(IMemoryCache cache)
     {
         _cache = cache;
-        _companySettings = companySettings;
     }
 
     public Task<AssessmentReportPdf> RenderSampleAsync(
@@ -44,7 +40,7 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
         string? lang,
         CancellationToken ct = default)
     {
-        var (reportLang, version, cacheKey) = CacheParts(kind, lang, "pdf");
+        var (reportLang, cacheKey) = CacheParts(kind, lang, "pdf");
         if (!_cache.TryGetValue(cacheKey, out byte[]? bytes) || bytes is null)
         {
             bytes = BuildDocument(kind, reportLang).GeneratePdf();
@@ -59,7 +55,7 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
         string? lang,
         CancellationToken ct = default)
     {
-        var (reportLang, version, cacheKey) = CacheParts(kind, lang, "preview");
+        var (reportLang, cacheKey) = CacheParts(kind, lang, "preview");
         if (!_cache.TryGetValue(cacheKey, out SampleAssessmentReportPreview? preview) || preview is null)
         {
             var doc = BuildDocument(kind, reportLang);
@@ -79,7 +75,7 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
         return Task.FromResult(preview);
     }
 
-    private static (string Lang, int Version, string CacheKey) CacheParts(
+    private static (string Lang, string CacheKey) CacheParts(
         AssessmentKind kind, string? lang, string kindTag)
     {
         var reportLang = ReportLanguage.FromUi(lang);
@@ -90,7 +86,7 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
             AssessmentKind.Values => ValuesDeepReportJson.CurrentReportVersion,
             _ => 1
         };
-        return (reportLang, version, $"sample-{kindTag}:{kind}:{reportLang}:{version}");
+        return (reportLang, $"sample-{kindTag}:{kind}:{reportLang}:{version}");
     }
 
     private static string FileName(AssessmentKind kind, string reportLang)
@@ -100,7 +96,7 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
             new AssessmentKindSlug($"voorbeeld-{slug}"), reportLang, DateTime.UtcNow);
     }
 
-    private Document BuildDocument(AssessmentKind kind, string lang)
+    private static Document BuildDocument(AssessmentKind kind, string lang)
     {
         var brand = "Lobsy";
         var fullName = ReportLanguage.IsEnglish(lang) ? "Sample candidate" : "Voorbeeldkandidaat";
@@ -193,7 +189,7 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
         });
     }
 
-    private static IReadOnlyDictionary<int, int> LoadSampleAnswers(AssessmentKind kind)
+    private static Dictionary<int, int> LoadSampleAnswers(AssessmentKind kind)
     {
         var name = kind switch
         {
@@ -218,7 +214,7 @@ public sealed class SampleAssessmentReportPdfService : ISampleAssessmentReportPd
         return dict.ToDictionary(kv => int.Parse(kv.Key), kv => kv.Value);
     }
 
-    private static IReadOnlyDictionary<int, int> SyntheticAnswers(AssessmentKind kind)
+    private static Dictionary<int, int> SyntheticAnswers(AssessmentKind kind)
     {
         var questions = DeepAnalysisCatalog.QuestionsFor(kind);
         var map = new Dictionary<int, int>();
