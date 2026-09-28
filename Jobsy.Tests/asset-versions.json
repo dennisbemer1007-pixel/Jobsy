@@ -20,8 +20,8 @@
     "v": "20260928-insights"
   },
   "css/features/match-desktop.css": {
-    "sha256": "8f92fa23e849ef3069bfbf566682276b3895c0b351efd301d443f2cb6b98a1b4",
-    "v": "20260929-match-desktop"
+    "sha256": "765bd9ae5c01bb124d2bf13fd9ed4149a242bbdd51a7132eb501ca38a2726ea3",
+    "v": "20260928-match-desktop-ci"
   },
   "css/features/mijn-dna.css": {
     "sha256": "039f2fead93a7aff58df1e7882497e248dad9193ebc37e7ed06de76ba0d97954",

@@ -76,9 +76,5 @@ public static class UiStringsMatch
         Add("Match.DialogClose",
             "Sluiten", "Close",
             "Zamknij", "Închide", "إغلاق");
-        Add("Match.RejectHint",
-            "←", "←", "←", "←", "←");
-        Add("Match.InterestHint",
-            "→", "→", "→", "→", "→");
     }
 }
