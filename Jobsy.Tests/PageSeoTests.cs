@@ -20,6 +20,7 @@ public class PageSeoCatalogTests
     [InlineData("/lancering", true)]
     [InlineData("/partner", true)]
     [InlineData("/partner/SM-ABCDEF", true)]
+    [InlineData("/hoe-werkt-lobsy", true)]
     [InlineData("/vacancies/c1000000-0000-0000-0000-000000000010", true)]
     [InlineData("/12345678", true)]
     [InlineData("/12345678/0001", true)]

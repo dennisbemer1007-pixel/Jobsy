@@ -19,6 +19,10 @@
     "sha256": "039f2fead93a7aff58df1e7882497e248dad9193ebc37e7ed06de76ba0d97954",
     "v": "20260927-dna-c"
   },
+  "css/features/nav-feedback.css": {
+    "sha256": "bcca67f50643f55b0d169df00fb48e97b6aa468af59443acb8de732fa409fd55",
+    "v": "20260928-nav-fb"
+  },
   "css/features/onboarding-wizard.css": {
     "sha256": "5ee04db60aae5c26eaadf67dc9333bca45ddfac643be966643445c55f88becad",
     "v": "20260927-dna-c"
@@ -74,6 +78,10 @@
   "js/lobsyPush.js": {
     "sha256": "8784b68ede39d40c60bdc370eecc5a461b61a6e7eea787415b3d0d6e064fd01a",
     "v": "20260928-perf"
+  },
+  "js/navFeedback.js": {
+    "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
+    "v": "20260928-nav-fb"
   },
   "js/vacancyDetailMap.min.js": {
     "sha256": "53ad527a71634e6130223d64fc8243a51f66f4f22b05f3c32fb28e9b06bfb1d2",

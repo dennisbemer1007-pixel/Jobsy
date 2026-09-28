@@ -114,7 +114,7 @@ public static partial class PageSeoCatalog
             ["/access-denied"] = Private("Page.AccessDeniedTitle", "Seo.PrivateDescription"),
             ["/error"] = Private("Seo.ErrorTitle", "Seo.PrivateDescription"),
             ["/home"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),
-            ["/hoe-werkt-lobsy"] = Private("Nav.HowLobsyWorks", "Seo.PrivateDescription"),
+            ["/hoe-werkt-lobsy"] = Public("HowLobsy.Guest.Title", "HowLobsy.Guest.Lead"),
             ["/candidate/hoe-werkt-lobsy"] = Private("Nav.HowLobsyWorks", "Seo.PrivateDescription"),
             ["/candidate/liked"] = Private("Saved.Title", "Seo.PrivateDescription"),
             ["/candidate/shared"] = Private("Saved.TabShared", "Seo.PrivateDescription"),

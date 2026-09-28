@@ -1,6 +1,6 @@
 @page "/hoe-werkt-lobsy"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,SalesManager,Ambassadeur")]
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using Jobsy.Core.Authorization
 @using Jobsy.Web.Help
 @using Microsoft.AspNetCore.Components.Authorization
@@ -29,6 +29,13 @@ else
     {
         var state = await AuthState.GetAuthenticationStateAsync();
         var user = state.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            // Public explanation for new visitors — no authenticated APIs.
+            _guide = HowLobsyRoleGuides.Guest;
+            return;
+        }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))
         {

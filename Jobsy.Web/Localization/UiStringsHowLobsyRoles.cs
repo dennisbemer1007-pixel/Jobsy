@@ -31,6 +31,21 @@ internal static class UiStringsHowLobsyRoles
 
     private static Dictionary<string, string> Nl() => new(StringComparer.OrdinalIgnoreCase)
     {
+        // —— Anonymous / guest (public /hoe-werkt-lobsy) ——
+        ["HowLobsy.Guest.Title"] = "Hoe werkt Lobsy?",
+        ["HowLobsy.Guest.Lead"] = "Vacatures op reistijd, een gratis werk-DNA en solliciteren wanneer jij er klaar voor bent — zonder account te hoeven starten.",
+        ["HowLobsy.Guest.Step1Title"] = "1. Verken de banenkaart",
+        ["HowLobsy.Guest.Step1Body"] = "Open {0}. Je ziet vacatures op een kaart rondom jouw regio. Sleep of zoom, tik op pins of clusters, en gebruik filters om banen te vinden die bij je passen.",
+        ["HowLobsy.Guest.Step2Title"] = "2. Ontdek je werk-DNA",
+        ["HowLobsy.Guest.Step2Body"] = "Doe de gratis test via {0}: korte vragen, geen account nodig. Je ziet meteen hoe jij werkt en wat bij je past.",
+        ["HowLobsy.Guest.DnaLabel"] = "Ontdek je werk-DNA",
+        ["HowLobsy.Guest.Step3Title"] = "3. Maak een account als je wilt solliciteren",
+        ["HowLobsy.Guest.Step3Body"] = "Klaar om te solliciteren? {0} duurt een minuut. Je werk-DNA en voorkeuren gaan mee.",
+        ["HowLobsy.Guest.Step4Title"] = "4. Solliciteer op jouw tempo",
+        ["HowLobsy.Guest.Step4Body"] = "Bewaar vacatures, vul je profiel aan en solliciteer wanneer het past. Werkgevers zien je contactgegevens pas als jij matcht of zij contact opnemen.",
+        ["HowLobsy.Guest.PrimaryCta"] = "Ontdek je gratis werk-DNA",
+        ["HowLobsy.Guest.SecondaryCta"] = "Account maken →",
+
         // —— Branch manager ——
         ["HowLobsy.Branch.Title"] = "Hoe werkt Lobsy voor jouw vestiging?",
         ["HowLobsy.Branch.Lead"] = "Van dashboard tot sollicitant — zo werf je lokaal met tokens.",
@@ -136,6 +151,20 @@ internal static class UiStringsHowLobsyRoles
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
     {
+        ["HowLobsy.Guest.Title"] = "How does Lobsy work?",
+        ["HowLobsy.Guest.Lead"] = "Jobs by travel time, a free work DNA, and apply when you are ready — no account required to start exploring.",
+        ["HowLobsy.Guest.Step1Title"] = "1. Explore the job map",
+        ["HowLobsy.Guest.Step1Body"] = "Open {0}. You see vacancies on a map around your area. Pan or zoom, tap pins or clusters, and use filters to find jobs that fit.",
+        ["HowLobsy.Guest.Step2Title"] = "2. Discover your work DNA",
+        ["HowLobsy.Guest.Step2Body"] = "Take the free test via {0}: short questions, no account needed. See right away how you work and what fits you.",
+        ["HowLobsy.Guest.DnaLabel"] = "Discover your work DNA",
+        ["HowLobsy.Guest.Step3Title"] = "3. Create an account when you want to apply",
+        ["HowLobsy.Guest.Step3Body"] = "Ready to apply? {0} takes a minute. Your work DNA and preferences come along.",
+        ["HowLobsy.Guest.Step4Title"] = "4. Apply at your own pace",
+        ["HowLobsy.Guest.Step4Body"] = "Save vacancies, complete your profile and apply when it suits you. Employers only see your contact details after a match or when they reach out.",
+        ["HowLobsy.Guest.PrimaryCta"] = "Discover your free work DNA",
+        ["HowLobsy.Guest.SecondaryCta"] = "Create an account →",
+
         ["HowLobsy.Branch.Title"] = "How does Lobsy work for your branch?",
         ["HowLobsy.Branch.Lead"] = "From dashboard to applicants — hire locally with tokens.",
         ["HowLobsy.Branch.Step1Title"] = "1. Start on your dashboard",

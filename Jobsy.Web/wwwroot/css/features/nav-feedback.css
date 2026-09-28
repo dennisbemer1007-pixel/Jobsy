@@ -1,0 +1,67 @@
+/* Bottom-nav instant press + thin top route progress (tab switches). */
+
+.bottom-nav__item:active {
+    background: var(--accent-soft);
+    color: var(--brand);
+    transform: scale(0.97);
+    opacity: 0.92;
+}
+
+.bottom-nav__item.is-active {
+    background: var(--accent-soft);
+    color: var(--brand);
+}
+
+/* Thin top progress — appears on tab tap, cleared on enhancedload / location change. */
+.nav-route-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    overflow: hidden;
+    background: transparent;
+}
+
+.nav-route-progress.is-active {
+    opacity: 1;
+}
+
+.nav-route-progress.is-active::after {
+    content: "";
+    display: block;
+    height: 100%;
+    width: 35%;
+    border-radius: var(--radius-sm, 8px);
+    background: var(--brand);
+    transform: translate3d(-100%, 0, 0);
+    animation: nav-route-progress-slide 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+@keyframes nav-route-progress-slide {
+    0% {
+        transform: translate3d(-100%, 0, 0);
+    }
+    50% {
+        transform: translate3d(180%, 0, 0);
+    }
+    100% {
+        transform: translate3d(320%, 0, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bottom-nav__item:active {
+        transform: none;
+    }
+
+    .nav-route-progress.is-active::after {
+        animation: none;
+        width: 100%;
+        transform: none;
+        opacity: 0.85;
+    }
+}
