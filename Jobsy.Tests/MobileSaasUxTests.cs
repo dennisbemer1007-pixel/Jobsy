@@ -306,19 +306,19 @@ public class MobileSaasUxTests
     }
 
     [Fact]
-    public void Employer_vacancies_use_mgmt_cards_with_stat_mini_grid()
+    public void Employer_vacancies_use_ent_data_table_with_density()
     {
         var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Vacancies.razor"));
-        Assert.Contains("vacancy-card-list", razor);
-        Assert.Contains("vacancy-mgmt-card", razor);
-        Assert.Contains("vacancy-mgmt-card__stats", razor);
-        Assert.Contains("vacancy-mgmt-card__status", razor);
-        Assert.DoesNotContain("table-scroll vacancy-grid", razor);
-        Assert.DoesNotContain("<table class=\"data-table\">", razor);
+        Assert.Contains("EntDataTable", razor);
+        Assert.Contains("wg-vac--dense", razor);
+        Assert.Contains("EntBulkBar", razor);
+        Assert.Contains("EntTabs", razor);
+        Assert.DoesNotContain("vacancy-card-list", razor);
+        Assert.DoesNotContain("vacancy-mgmt-card", razor);
 
-        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".vacancy-mgmt-card__stats {\n    display: grid;\n    grid-template-columns: repeat(3, minmax(0, 1fr));", css);
-        Assert.Contains(".bento-cell--category {\n        background: transparent;\n        border: none;", css);
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/werkgever.css"));
+        Assert.Contains(".wg-vac--dense", css);
+        Assert.Contains("height: 44px", css);
     }
 
     [Fact]
