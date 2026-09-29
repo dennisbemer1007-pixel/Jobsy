@@ -22,15 +22,15 @@ A referral is counted reliably and fairly: a click on a salesmanager's link is r
 
 ## 03.1 Today (verify first)
 - `/partner/{TrackingCode?}` = `Components/Pages/Partner/PartnerSales.razor` (public; L123 builds `/register?ref={code}`); it serves salesmanager **and** BM/IM partner codes.
-- `/werven/{code}` + `/ambassadeur/ref/{code}` = `Components/Pages/Ambassadeur/Landing.razor`: sets the 30-day cookie `lobsy_ambassadeur_ref` (also read in `Login.razor` and `Auth/AuthServiceCollectionExtensions.cs`).
-- `Register.razor` prefills the code field from `?ref=`; L782–783 pass `salesManagerTrackingCode` / `partnerTrackingCode` from the same field. `CompanyRegistrationService` (~L1530–1600) resolves SM, then ambassadeur (`ApplyAmbassadeurReferralAsync`) codes.
+- `/werven/{code}` + `/ambassadeur/ref/{code}` = `Components/Pages/Ambassadeur/Landing.razor`: sets the 30-day cookie `lobsy_ambassadeur_ref` (also read in `Login.razor` and `Auth/AuthServiceCollectionExtensions.cs`). Since 01.10 these redirect to `/` without a cookie while the role is parked; leave that gate as it is.
+- `Register.razor` prefills the code field from `?ref=`; L782–783 pass `salesManagerTrackingCode` / `partnerTrackingCode` from the same field. `CompanyRegistrationService` (~L1530–1600) resolves SM, then ambassadeur (`ApplyAmbassadeurReferralAsync`, skipped while parked since 01.10) codes.
 - No cookie for salesmanager links; attribution is lost when the employer registers later or via external login; no self-referral check; no click tracking.
 
 ## 03.2 Cookie + short link
-- `SalesReferralCookie` (Web): name `lobsy_sales_ref`, value = normalized code only, `Max-Age = AttributionCookieDays` (setting, default 30), `HttpOnly`, `Secure`, `SameSite=Lax`, path `/`. **First click wins:** don't overwrite an existing cookie that holds a still-valid code. The ambassadeur cookie `lobsy_ambassadeur_ref` keeps working; reading goes through one `SalesReferralCookie.TryRead(HttpContext)` that checks both (salesmanager/partner cookie first, then ambassadeur).
-- Set it on `/partner/{code}` (salesmanager **and** partner codes, D2 default), `/p/{code}`, `/werven/{code}`, `/ambassadeur/ref/{code}`, only when the code is well-formed **and** belongs to an active beneficiary (onboarding complete / active partner). Invalid codes: page renders as today, no cookie.
-- `/p/{code}`: minimal endpoint (no page) → count the click (03.7) → 302 to the right landing (`/partner/{code}` for SM/BM/IM, `/werven/{code}` for AM), preserving `?b=` (channel). Rate-limited (`public-write` policy or a new `public-redirect` policy with the same limits).
-- Cookie list: add `lobsy_sales_ref` to the cookie documentation the privacy/cookie page reads from (same category as `lobsy_ambassadeur_ref`); don't touch the cookie banner. Flag the category choice for Dennis in the PR.
+- `SalesReferralCookie` (Web): name `lobsy_sales_ref`, value = normalized code only, `Max-Age = AttributionCookieDays` (setting, default 30), `HttpOnly`, `Secure`, `SameSite=Lax`, path `/`. **First click wins:** don't overwrite an existing cookie that holds a still-valid code. Reading goes through one `SalesReferralCookie.TryRead(HttpContext)`; it ignores `lobsy_ambassadeur_ref` and `AM-` values while the role is parked (01.10) and never writes that cookie. Keep the read behind the gate check rather than deleting it, so re-enabling is one switch.
+- Set it on `/partner/{code}` (salesmanager **and** partner codes, D2 default) and `/p/{code}`, only when the code is well-formed **and** belongs to an active beneficiary (onboarding complete / active partner). Invalid codes: page renders as today, no cookie.
+- `/p/{code}`: minimal endpoint (no page) → count the click (03.7) → 302 to `/partner/{code}` for SM/BM/IM codes, preserving `?b=` (channel). `AM-` codes: 404 while parked (no click counted), like an unknown code. Rate-limited (`public-write` policy or a new `public-redirect` policy with the same limits).
+- Cookie list: add `lobsy_sales_ref` to the cookie documentation the privacy/cookie page reads from (same category as the existing `lobsy_ambassadeur_ref` entry, which stays listed while that cookie can still exist in browsers); don't touch the cookie banner. Flag the category choice for Dennis in the PR.
 
 ## 03.3 Resolution at registration
 - One `SalesAttributionResolver` (Infrastructure) used by **every** employer registration path (form, KvK flow, external login completion, invite-less org creation). Order: **typed code** (the registration field, if well-formed and active) → **cookie** → none. Record `SalesAttributionSource = TypedCode | LinkCookie` and `SalesAttributedAtUtc` on the root (02.3).
@@ -54,14 +54,14 @@ A referral is counted reliably and fairly: a click on a salesmanager's link is r
 - If the KvK lookup (`KvkHandelsregisterService`) response contains the legal form (`rechtsvorm` / `uitgebreideRechtsvorm`), map it to `CompanyLegalForm` at registration and on KvK re-verification (`KvkVerificationRetryHostedService`). If the client doesn't expose it, add the field to its DTO when the API returns it; if the API doesn't return it at all, leave `LegalForm` null and say so in the PR (the portal then shows name only, D4).
 
 ## 03.7 Click counters (funnel)
-- On `/p/{code}`, `/partner/{code}` and `/werven/{code}` (valid active codes only): increment `SalesLinkClickDaily(beneficiary, SalesClock.Today(), channel)` with an upsert. Channel from `?b=` (`qr`, `flyer`, `link`, else `Other`); the QR and flyer URLs built in 05 carry `?b=qr` / `?b=flyer`.
+- On `/p/{code}` and `/partner/{code}` (valid active codes only): increment `SalesLinkClickDaily(beneficiary, SalesClock.Today(), channel)` with an upsert. Channel from `?b=` (`qr`, `flyer`, `link`, else `Other`); the QR and flyer URLs built in 05 carry `?b=qr` / `?b=flyer`.
 - Not counted: requests with a bot user agent (reuse an existing bot check if the repo has one, else a small `BotUserAgents` list), `HEAD` requests, a second visit from the same browser on the same day (skip when the attribution cookie already holds this code and was set today; store nothing extra).
 - **Stored:** beneficiary, date, channel, count. **Never stored:** IP, user agent, referrer, cookie id.
 - Retention: delete rows older than 25 months in `DataRetentionHostedService` (§P).
 - `ISalesFunnelReadService.GetAsync(beneficiary, period)` → `Visits`, `Registered` (attributed roots, `SalesAttributedAtUtc` in period), `FirstPurchase` (activated in period), `ActiveNow` (a credited purchase in the last 90 days). Used by 04.
 
 ## Tests
-- Cookie: set on valid active code, not on invalid/inactive; first click wins; typed code beats cookie; cookie deleted after registration; ambassadeur cookie still read.
+- Cookie: set on valid active code, not on invalid/inactive; first click wins; typed code beats cookie; cookie deleted after registration; with `AmbassadorsEnabled` off an `AM-` code (typed, `/p/AM-…` or an old `lobsy_ambassadeur_ref` cookie) gives no attribution, no cookie and no click.
 - `/p/{code}` 302 targets per code type; `?b=` preserved; rate limit.
 - External login (Entra + Google stubs) keeps the attribution.
 - Partner BM/IM codes: registration result identical to before (regression test using the existing partner tests).

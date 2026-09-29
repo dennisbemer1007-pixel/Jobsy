@@ -18,19 +18,19 @@ Read `00-README.md` first (§0, §IA, §R, §D, §P, D5, D6, Dependencies D). Br
 | Split seam | **06a** = `SalesPayoutProfileService` + IBAN rules + step-up + consent + API (06.2–06.5). **06b** = Profiel page + `/sales/start` + Hulp & afspraken (06.6–06.8) |
 
 ## Goal
-The data that ends up on invoices is correct and safe: the beneficiary chooses 21 % btw or KOR, gives a separate, recorded self-billing consent, and can change their payout IBAN only with a second factor, after which they get a mail and payouts to the new account wait 3 days. New salesmanagers and ambassadeurs go through one clear onboarding.
+The data that ends up on invoices is correct and safe: the beneficiary chooses 21 % btw or KOR, gives a separate, recorded self-billing consent, and can change their payout IBAN only with a second factor, after which they get a mail and payouts to the new account wait 3 days. New salesmanagers go through one clear onboarding.
 
 ## 06.1 Today (verify first)
 - `SalesManagerOnboardingService` + `Components/Pages/SalesManager/Onboarding.razor` (now at `/sales/start`): company name, KvK (8 digits), VAT number (NL regex, **mandatory**), address, IBAN (no mod-97). Signing the agreement (`me/sign-agreement`, version `2026-08-28-sm-mediation`) generates the `SM-XXXXXX` code. The agreement text only *mentions* self-billing; there's no separate consent.
 - `PUT api/sales-managers/me/profile` changes the IBAN **without re-auth, 2FA or notification**. IBAN is encrypted by `IbanValueConverter` / `IbanProtector` and masked in the UI.
-- Ambassadeur twins: `AmbassadeurOnboardingService`, `api/ambassadeurs/me/profile|sign-agreement`, agreement `2026-08-03-ambassadeur-mediation`.
+- Ambassadeur twins: `AmbassadeurOnboardingService`, `api/ambassadeurs/me/profile|sign-agreement`, agreement `2026-08-03-ambassadeur-mediation`. Parked since 01.10: leave them untouched (no redesign, no removal).
 - TOTP: `Jobsy.Core/Security/TotpAuthenticator.cs`; fresh-code verification pattern in `AdminController` (`mfa/reset`, ~L555).
 
-## 06.2 SalesPayoutProfileService (one code path for both roles)
-- Works on `ISalesPayoutProfile` (01.3). Methods: `GetAsync`, `UpdateCompanyAsync` (name, KvK 8 digits, address, postal code, city, country), `SetVatTreatmentAsync` (`Standard21` needs a valid btw-nummer; `SmallBusinessScheme` needs the confirmation "Ik ben aangemeld voor de KOR bij de Belastingdienst." and makes the btw-nummer optional; sets `VatTreatmentChangedAtUtc`), `BeginIbanChangeAsync` / `ConfirmIbanChangeAsync` (06.3), `GiveConsentAsync` / `RevokeConsentAsync` (06.4), `SetEmailPrefsAsync`.
+## 06.2 SalesPayoutProfileService (role-agnostic, one code path)
+- Works on `ISalesPayoutProfile` (01.3), never on a concrete profile type or role, so a re-enabled ambassadeur can use it unchanged. Methods: `GetAsync`, `UpdateCompanyAsync` (name, KvK 8 digits, address, postal code, city, country), `SetVatTreatmentAsync` (`Standard21` needs a valid btw-nummer; `SmallBusinessScheme` needs the confirmation "Ik ben aangemeld voor de KOR bij de Belastingdienst." and makes the btw-nummer optional; sets `VatTreatmentChangedAtUtc`), `BeginIbanChangeAsync` / `ConfirmIbanChangeAsync` (06.3), `GiveConsentAsync` / `RevokeConsentAsync` (06.4), `SetEmailPrefsAsync`.
 - A VAT treatment change recalculates an open request in `Requested` (07); requests already in a run keep their snapshot.
 - Company data changes apply to **future** invoices only (issued invoices keep their snapshot fields).
-- The old `me/profile` PUT endpoints on both controllers are switched to this service; their IBAN field is **ignored** (use the IBAN endpoints) and the response says so in `warnings`.
+- The old `me/profile` PUT endpoint on `api/sales-managers` is switched to this service; their IBAN field is **ignored** (use the IBAN endpoints) and the response says so in `warnings`.
 
 ## 06.3 IBAN: validation, step-up, notification, hold (D6)
 - `Jobsy.Core/Sales/Iban.cs`: `Normalize` (strip spaces, upper-case), `IsValid` (SEPA country list with lengths, mod-97 = 1), `Mask` → `NL•• •••• •••• 4821`, `Last4`. Unit tests with valid/invalid NL, BE, DE numbers and typos.
@@ -58,15 +58,14 @@ The data that ends up on invoices is correct and safe: the beneficiary chooses 2
   - **Bedrijf** ("Staat op elke factuur die Lobsy voor je maakt."): Bedrijfsnaam, KvK-nummer, Land, Adres (postcode, plaats). Save button per section.
   - **Btw** ("Bepaalt of er btw op je factuur komt."): two radio cards "Ik ben btw-plichtig" (21 % btw op de factuur; btw-nummer field) and "Ik gebruik de KOR" (Kleineondernemersregeling: geen btw op de factuur; confirmation checkbox).
   - **Uitbetaalrekening** ("Hier maakt Lobsy je geld naartoe over."): IBAN masked, Op naam van, "Wijzigen" (drawer with IBAN + name → step-up). Warning note "Veilig wijzigen: voor een nieuwe IBAN vragen we je 2FA-code. Je krijgt een mail. De eerste uitbetaling naar een nieuwe rekening wacht {n} dagen." When a hold is active: "Uitbetalingen naar deze rekening kunnen vanaf {datum}."
-  - **Afspraken** ("Wat je met Lobsy hebt afgesproken."): Samenwerking (agreement name + version + PDF), Self-billing ("Akkoord op {datum}" + PDF, or primary "Toestemming geven" when missing; "Intrekken" as a quiet link), Commissie ("25 % · 10 % · 5 % over 3 jaar per werkgever" or the ambassadeur tier line).
+  - **Afspraken** ("Wat je met Lobsy hebt afgesproken."): Samenwerking (agreement name + version + PDF), Self-billing ("Akkoord op {datum}" + PDF, or primary "Toestemming geven" when missing; "Intrekken" as a quiet link), Commissie ("25 % · 10 % · 5 % over 3 jaar per werkgever", or 20 % in year 1 for a recommended salesmanager).
   - **Beveiliging** ("Je ziet geld en een rekeningnummer. Daarom is 2FA verplicht."): Tweestapsverificatie status pill + "Beheren" (existing 2FA page), Meldingen per mail (three switches: nieuwe werkgever, commissie beschikbaar, uitbetaling) + save.
 - Mobile: rows stack; radio cards full width.
 
 ## 06.7 Onboarding `/sales/start`
 - 3 steps with a stepper (desktop left rail, mobile top): **1 Gegevens** (company, KvK, address, btw choice + number) → **2 Uitbetaalrekening** (IBAN + holder, validated) → **3 Afspraken** (agreement text scroll + checkbox "Ik ga akkoord met de samenwerking", **separate** consent block + checkbox "Ik geef toestemming voor self-billing") → **Klaar** ("Je code is {code}. Deel je link." + buttons to `/sales/link` and `/sales`).
-- The code is generated on finishing step 3, as today (6 chars from the existing alphabet; keep `SM-`/`AM-` formats). Both agreement signature and consent are stored separately.
+- The code is generated on finishing step 3, as today (6 chars from the existing alphabet; keep the `SM-` format). Both agreement signature and consent are stored separately.
 - Private persons: the KvK field is required; help text "Lobsy werkt samen met ondernemers. Je hebt een KvK-nummer nodig." (D5).
-- Ambassadeur: same steps with the ambassadeur agreement.
 
 ## 06.8 Hulp & afspraken `/sales/hulp`
 - FAQ (accordion, `Sales.Help.*`): Hoe tel je een aanmelding voor mij? · Wanneer is mijn commissie beschikbaar? · Hoe en wanneer krijg ik geld? · Wat is self-billing? · Ik gebruik de KOR, wat nu? · Wat zie ik van werkgevers (en wat niet)? · Een klant vraagt geld terug, wat gebeurt er? · Mijn IBAN wijzigen.
@@ -76,7 +75,7 @@ The data that ends up on invoices is correct and safe: the beneficiary chooses 2
 - IBAN rules; step-up TOTP (valid, wrong ×5, replay), e-mail link (expiry, single use); rate limit; hold date; notification mail always sent; no full IBAN in any API response (JSON scan test on every `api/sales/me/*` response).
 - VAT: 21 % requires a valid btw-nummer; KOR requires the confirmation; change recalculates a `Requested` request.
 - Consent: version + hash stored; revoke blocks; older version = missing.
-- Onboarding: three steps, code generated once, KvK required, ambassadeur variant.
+- Onboarding: three steps, code generated once, KvK required.
 - bUnit: profile sections, radio cards, IBAN drawer states, consent flow; `SalesPortalNoInlineStyleTests` allow-list shrinks by the moved onboarding page.
 
 ## Success criteria

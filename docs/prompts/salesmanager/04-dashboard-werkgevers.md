@@ -30,7 +30,7 @@ A salesmanager opens Lobsy Partner and sees at a glance what they earned, what's
 - `SalesEmployerDto` (Core contracts, guarded by 01.9): `CompanyId` (root), `DisplayName`, `Place?` (D4 rule), `BranchCount`, `AttributedOn`, `Source` (label), `Status` (`NoPurchase` "Nog geen aankoop" / `Active` "Actief" (credited purchase ≤ 90 days) / `Quiet` "Stil · {n} dagen" / `Ended` "Afgelopen" (after the window)), `CommissionYear?` + `CurrentRate?`, `YearProgress` (0–1 within the current commission year), `CommissionThisYear`, `LastPurchaseOn?`.
 - `SalesEmployerDetailDto`: the row + `CommissionTotal`, `PurchaseCount`, `Years[3]` (start, end, rate), `Timeline[]` (Aangemeld (source) · start-highlight received (if `PendingStartHighlightBonus` was consumed) · Eerste aankoop (package label) · Jaar 2 begint · Jaar 3 begint · Commissie stopt; future items muted), `Lines[]` (date, `PackageLabel`, purchase amount ex VAT, own commission, state label). `PackageLabel` = the `SalesPackage` name when the checkout came from a sales package, else "{n} tokens" from the checkout pack size; never free-text notes.
 - Place: the city part of the root's `Address` via an existing address parser if present (`git grep -n "ParseCity\|City(" -- Jobsy.Core`), else the text after the postal code; omitted when `LegalForm` is null or `Eenmanszaak` (D4).
-- Ambassadeur: the same endpoints work for companies attributed to the ambassadeur (their rate line shows the tier %); candidate numbers come in 09.
+- The endpoints resolve the beneficiary through `SalesBeneficiary` only (no role branches), so they stay role-agnostic; a parked ambassadeur never reaches them (01.10).
 
 ## 04.3 Dashboard `/sales` (`sm-d1`, `sm-m1`)
 - Header: `h1` "Goedemorgen/Goedemiddag/Goedenavond, {voornaam}" (Europe/Amsterdam), lead "Zo gaat het met je verkoop. Bedragen zijn excl. btw." Right: segmented period (Maand · Dit jaar · Alles, URL `?periode=`), secondary "Kopieer mijn link" (copies `/p/{code}`, toast "Link gekopieerd").
@@ -63,7 +63,7 @@ A salesmanager opens Lobsy Partner and sees at a glance what they earned, what's
 - Footer: secondary "Vraag Lobsy om hulp" (opens the existing support/contact flow prefilled with "Vraag over werkgever {naam}"; if there's no contact flow, a `mailto:` to the configured support address with that subject), and **no** "Bekijk openbare vacatures" button (D4: no vacancy details in the portal; this is a spec-wins difference with the mockup).
 
 ## 04.6 Top-bar search
-- The search field in `SalesLayout` searches **own** employers only (`GET api/sales/me/employers?q=&page=1`, max 8 results, debounce 250 ms), keyboard: Ctrl K focuses, ↑/↓, Enter opens the drawer on `/sales/werkgevers?open=`. Placeholder "Zoek een werkgever…". Hidden for ambassadeurs without attributed companies.
+- The search field in `SalesLayout` searches **own** employers only (`GET api/sales/me/employers?q=&page=1`, max 8 results, debounce 250 ms), keyboard: Ctrl K focuses, ↑/↓, Enter opens the drawer on `/sales/werkgevers?open=`. Placeholder "Zoek een werkgever…".
 
 ## Tests
 - Services: dashboard numbers on a fixed data set (earned/pending/available, 12 months ending at the current month, deltas hidden without data, next run date on 29-09-2026 = 1 oktober 2026); funnel percentages; todos rules and ordering; top 5.

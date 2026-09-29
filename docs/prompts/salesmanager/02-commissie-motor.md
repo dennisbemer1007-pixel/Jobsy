@@ -35,11 +35,11 @@ Commission is computed the way Dennis approved (D1) and is safe against refunds 
 - Keep the old method signatures as thin wrappers until nothing calls them, then delete them (same PR). Unit tests for boundaries: day 0, day 364/365, day 729/730, day 1094/1095, purchase before start (never happens after 02.3, but guarded).
 
 ## 02.3 Activation + snapshots (D1)
-- **Registration** only records attribution (`ReferredBySalesManagerUserId` / `…Ambassadeur…`, `SalesAttributedAtUtc`, `SalesAttributionSource`) on the **root** company (and, for backwards compatibility with code that reads the vestiging row, on the vestiging as today). It **no longer** snapshots terms and no longer sets `FirstYearStartedAt` for commission (founder-slot logic keeps using `FirstYearStartedAt` as today; don't change the founder slot or start-highlight behaviour).
+- **Registration** only records attribution (`ReferredBySalesManagerUserId`, `SalesAttributedAtUtc`, `SalesAttributionSource`; no ambassadeur attribution while parked, 01.10) on the **root** company (and, for backwards compatibility with code that reads the vestiging row, on the vestiging as today). It **no longer** snapshots terms and no longer sets `FirstYearStartedAt` for commission (founder-slot logic keeps using `FirstYearStartedAt` as today; don't change the founder slot or start-highlight behaviour).
 - **Activation** happens in the fulfilment path on the first credited token purchase of any company in the organisation: in one transaction, on the root, set `CommissionStartsAtUtc = purchase paid time` and snapshot all terms (`CommissionDirectRateSnapshot`, `CommissionYear2RateSnapshot`, `CommissionYear3RateSnapshot`, `CommissionIndirectRateSnapshot`, `CommissionIndirectSalesManagerUserId`, `CommissionDurationDaysSnapshot`, `CommissionTermsSnapshottedAtUtc`). If a registration-time snapshot already exists (legacy), keep its direct/indirect/duration values and only fill year 2/3.
 - Guard against races: activation uses a conditional update (`WHERE CommissionStartsAtUtc IS NULL`) and re-reads.
 - `ResolveCommissionTermsAsync` reads **only** the root's snapshot (no live settings). Delete the live `year2`/`year3` reads.
-- Ambassadeur terms: the ambassadeur rate stays `CommissionAmbassadeurRateSnapshot` / `AmbassadeurCommissionRules` (tier), but the window and bonus-token rule use the same `CommissionStartsAtUtc`.
+- Ambassadeur (parked, D8): while `AmbassadorsEnabled` is off, the ambassadeur credit path books nothing (01.10 gate; keep that gate intact when you rework `ApplyTokenPurchaseShareAsync`). Don't add ambassadeur-specific rules here. The new `SalesCommissionTerms` / hold / correction code works on a beneficiary line regardless of role, so a later ambassadeur stack can plug its own rate in without touching it. `CommissionAmbassadeurRateSnapshot` and `AmbassadeurCommissionRules` stay as they are.
 
 ## 02.4 Per-organisation unit + derived state
 - `SalesCommercialUnit.RootOf(Company)` = `ParentCompanyId ?? Id` (verify there is only one parent level; if deeper trees exist, walk up with a depth limit of 5 and say so in the PR). Attribution, window, snapshots and **counting** use the root. A vestiging's purchase is commissionable when its root is attributed.
@@ -58,9 +58,9 @@ Commission is computed the way Dennis approved (D1) and is safe against refunds 
 - Dashboard/list counting is fixed in 04 on top of `SalesCommercialUnit`; 02 adds `ISalesEmployerReadService.ListUnitsAsync(beneficiary)` returning one row per **root** with `BranchCount`, used by 04 and by a test that proves an org + 1 vestiging counts once.
 
 ## 02.6 Hold + refunds + chargebacks (D3)
-- Every commission-kind credit (`TokenCommission`, `IndirectTokenCommission`, ambassadeur commission, `FounderBonus`) sets `AvailableFromUtc = SalesClock.EndOfLocalDayUtc(paidAt + CommissionHoldDays)` (setting, default 14).
+- Every commission-kind credit (`TokenCommission`, `IndirectTokenCommission`, `FounderBonus`; the ambassadeur credit too, once re-enabled) sets `AvailableFromUtc = SalesClock.EndOfLocalDayUtc(paidAt + CommissionHoldDays)` (setting, default 14).
 - Payment status (Dependencies E): `PaymentStatusResult` gains `AmountRefundedEuro`, `AmountChargedBackEuro` (and `AmountEuro` if not already available). The webhook handler no longer ignores a **paid** payment that later reports refunds/chargebacks: after the existing (idempotent) fulfilment, it calls `ISalesCorrectionService.ApplyPaymentReversalsAsync(checkoutId, amountPaid, refunded, chargedBack)`.
-- `ApplyPaymentReversalsAsync`, per beneficiary line of that checkout (direct, indirect, ambassadeur):
+- `ApplyPaymentReversalsAsync`, per beneficiary line of that checkout (direct, indirect, and legacy ambassadeur lines booked before parking; corrections still apply to those, D8):
   - target correction = `–round(originalCommission × reversed / amountPaid)` for refunds and chargebacks separately;
   - book **only the delta** between the target and the corrections already booked for that checkout/beneficiary/kind (`RefundCorrection` / `ChargebackCorrection`), with `SourceRefundKey = "{kind}:{cumulative cents}"`, `CorrectsEntryId` = the original line, `AvailableFromUtc = now`, `Note` = label key only (no amounts in free text);
   - the unique index (§D) makes replays no-ops. Partial refunds work; a later full refund books the remainder.
@@ -83,7 +83,7 @@ Commission is computed the way Dennis approved (D1) and is safe against refunds 
 - Activation: first purchase sets start + all snapshots once (parallel purchases → one activation); a settings change afterwards doesn't change a snapshotted unit; a legacy registration snapshot is kept.
 - Per-organisation: org + vestiging registration → one unit; vestiging purchase uses the root window; count = 1.
 - Hold: credit on 29-09 16:00 CEST with 14 days → available after 13-10 23:59:59 CEST (`SalesClock`); state transitions Pending → Available.
-- Refunds: full refund → one correction = –commission; partial 40 % then full → two corrections summing to –commission; webhook replay → no extra rows; chargeback separate kind; indirect + ambassadeur lines corrected; `PlatformLog` warning written.
+- Refunds: full refund → one correction = –commission; partial 40 % then full → two corrections summing to –commission; webhook replay → no extra rows; chargeback separate kind; indirect + legacy ambassadeur lines corrected (switch off); `PlatformLog` warning written.
 - Manual correction: validation, MFA session required (403 without), audit row.
 - Existing tests updated only where the window start moved; add a note per changed expectation in the PR.
 

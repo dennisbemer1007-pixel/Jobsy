@@ -24,7 +24,7 @@ A salesmanager has everything to sell on one page: their link, code and QR, read
 - `SalesToolkit.razor` (moved to `/sales/link` in 01): code, flyer PDF via `api/sales-commercial/flyer.pdf?trackingCode=` (`JobsyApiClient.Sales.cs` L101), WhatsApp/mail share, partner link `/partner/{code}` (L99), "Actuele tarieven" from `SalesCommercialSettings.BaseTokenValueEuro` (€ 25).
 - Prices: `TokenPricing` packs (1/5/10/50/100; about € 5 → € 3 per token), `SalesPackage` (≈ € 17,50–20 per token), `BaseTokenValueEuro` (€ 25), used by `SalesCommercialService` L73/82/104/114 for the public catalog and `PartnerSales.razor`. Three different "token prices" (admin redesign D10).
 - `SalesCommercialController.GetFlyerPdf` (L35): `[AllowAnonymous]`, renders **any** well-formed code (SM-, BM-, IM-) without checking it exists.
-- Ambassadeur toolkit: `Components/Pages/Ambassadeur/Toolkit.razor` + `AmbassadeurFlyerPdfService` (`api/ambassadeurs/me/flyers/{kind}`).
+- Ambassadeur toolkit: `Components/Pages/Ambassadeur/Toolkit.razor` + `AmbassadeurFlyerPdfService` (`api/ambassadeurs/me/flyers/{kind}`). Parked since 01.10; don't touch or reuse it here.
 
 ## 05.2 SalesPriceQuote (D14)
 - `ISalesPriceQuote` (Infrastructure): from **active** `TokenPricing` packs → `MinPricePerToken`, `MaxPricePerToken`, `Packs[]` (size, price ex VAT, € per token), and for the common actions (publish a vacancy, highlight, from `TokenSpendCost` / `VacancyTypeTokenCost` as the werkgever "Wat kost wat?" panel reads them) the token cost and "vanaf € x" (= tokens × `MinPricePerToken`).
@@ -44,7 +44,6 @@ A salesmanager has everything to sell on one page: their link, code and QR, read
   6. WhatsApp-bericht · Tekst · Delen
 - Right column: "Pitch in 60 seconden" (4 numbered steps: Het probleem · Wat Lobsy doet · Wat het kost (from the quote) · Zo start u; plus a tip line), "Wat krijgt de werkgever?" (checklist: "Gratis start-highlight op de eerste vacature ({StartHighlightBonusTokens} tokens)", "Eén vast aanspreekpunt: jij", "Geen abonnement"), "Jouw commissie" (three tiles Jaar 1/2/3 with the **beneficiary's own** rates: 25/10/5, or 20/10/5 for a recommended salesmanager; sub-line "Over elke tokenaankoop van jouw werkgevers, excl. btw. Jaar 1 start bij de eerste aankoop.").
 - Mobile (`sm-m3`): QR first (large), code + short link, three buttons (WhatsApp, Mail, Kopieer), the employer-benefit line, "Materiaal" list (Flyer, Pitch; "Alles" opens the full list).
-- Ambassadeur: same page with the `/werven/{code}` link, the existing ambassadeur flyer kinds as the materials (`AmbassadeurFlyerPdfService`), no pitch for employers, and the tier card instead of the year tiles.
 
 ## 05.4 PDFs (QuestPDF, on demand, never stored)
 - `ISalesMaterialsPdfService`: `FlyerA4(code)`, `BusinessCards(code)` (10 per A4, crop marks), `PriceCard(code)`; all with the QR (`?b=flyer` for flyer/cards) and prices from `SalesPriceQuote`, strings from `SalesPdf.*`, Lobsy logo, tokens-based colours (the PDF palette the existing flyers use).
@@ -63,10 +62,10 @@ A salesmanager has everything to sell on one page: their link, code and QR, read
 
 ## Tests
 - `SalesPriceQuote`: min/max/per-pack from a seeded pack set; inactive packs ignored; the catalog and `/partner` landing show quote values (not € 25).
-- Materials endpoint: own code only; ambassadeur kinds; PDFs render (non-empty, contain the code and the `/p/{code}` URL text), no stored files.
+- Materials endpoint: own code only; `AM-` codes and ambassadeur accounts get nothing (404 / refused, 01.10); PDFs render (non-empty, contain the code and the `/p/{code}` URL text), no stored files.
 - Public flyer: no code → generic 200; active code → 200; unknown/inactive code → 404; BM/IM partner code → 200 (regression).
 - Preview link not counted as a click.
-- bUnit: copy/share buttons, QR download, commission tiles show 20 % for a recommended salesmanager, ambassadeur variant.
+- bUnit: copy/share buttons, QR download, commission tiles show 20 % for a recommended salesmanager.
 
 ## Success criteria
 - `dotnet build` + `dotnet test` green.

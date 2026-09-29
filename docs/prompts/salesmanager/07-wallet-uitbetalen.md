@@ -21,9 +21,9 @@ Read `00-README.md` first (§0, §IA, §R, §D, D3, D5). Branch `cursor/salesman
 The beneficiary understands their money: what's pending, available, requested and paid, and can request a payout that Lobsy approves in the monthly run (08). The self-completing stub goes away, and invoices say what the law requires, with the right VAT (21 % or KOR).
 
 ## 07.1 Today (verify first)
-- `SalesManagerPayoutService` (`me/payouts/preview|checkout|complete`, `api/sales-managers` L426–500; ambassadeur twins L295–360): `CreateCheckoutAsync` only works with stub payments (`AllowStubPayouts`, L626); in production it throws "Live uitbetaling (Mollie) is nog niet geconfigureerd". Completing the stub creates the invoice **and marks it paid instantly**. No minimum, no approval, no schedule.
+- `SalesManagerPayoutService` (`me/payouts/preview|checkout|complete`, `api/sales-managers` L426–500; ambassadeur twins L295–360, parked behind the 01.10 gate: leave them): `CreateCheckoutAsync` only works with stub payments (`AllowStubPayouts`, L626); in production it throws "Live uitbetaling (Mollie) is nog niet geconfigureerd". Completing the stub creates the invoice **and marks it paid instantly**. No minimum, no approval, no schedule.
 - `SelfBillingInvoiceService`: numbering `SB-{year}-{seq}` (L343–360), `VatTreatment` always `Standard21`, PDF says "SELF-BILLING" / "Self-billing factuur gegenereerd door Lobsy"; the text "factuur uitgereikt door afnemer" is missing.
-- `Invoices.razor` / ambassadeur `Finance.razor` (moved to `/sales/wallet` in 01).
+- `Invoices.razor` (moved to `/sales/wallet` in 01). The ambassadeur `Finance.razor` stays at its old route behind the 01.10 gate (404 while parked).
 - Admin: `POST api/sales-managers/{userId}/invoices` (create for an SM) and `invoices/{id}/mark-paid`.
 
 ## 07.2 Payout request service
@@ -37,7 +37,7 @@ The beneficiary understands their money: what's pending, available, requested an
 
 ## 07.3 API + stub removal
 - `GET api/sales/me/wallet` (balances by state, next run date, last 3 invoices), `GET api/sales/me/wallet/entries?period=&kind=&state=&page=` (lines with labels, company display name via the same D4 rule, `AvailableOn` for pending), `GET api/sales/me/payouts` (requests with status timeline), `GET api/sales/me/invoices` (+ `/{id}/pdf`), `GET api/sales/me/payouts/preview`, `POST api/sales/me/payouts` (request), `POST api/sales/me/payouts/{id}/cancel`, `GET api/sales/me/jaaroverzicht/{year}.pdf`.
-- Remove the self-complete flow: `me/payouts/checkout` and `me/payouts/complete` on both controllers return **410 Gone** with "Uitbetalen gaat nu via een aanvraag." (keep the routes one release so old tabs fail gracefully; 09 deletes them). Delete `PayoutCheckoutStubView` usage from the portal; `/sales/wallet/uitbetalen` now opens the request drawer. Existing `SalesManagerPayoutCheckout` rows stay read-only and appear in the Uitbetalingen tab as "Eerdere uitbetaling".
+- Remove the self-complete flow: `me/payouts/checkout` and `me/payouts/complete` on `api/sales-managers` return **410 Gone** with "Uitbetalen gaat nu via een aanvraag." (keep the routes one release so old tabs fail gracefully; 09 deletes them). Delete `PayoutCheckoutStubView` usage from the portal; `/sales/wallet/uitbetalen` now opens the request drawer. Existing `SalesManagerPayoutCheckout` rows stay read-only and appear in the Uitbetalingen tab as "Eerdere uitbetaling".
 - `PartnerSalesPayoutCheckoutStub` (werkgever partner programme) is **not** touched.
 
 ## 07.4 Wallet page `/sales/wallet` (`sm-d4`, `sm-m2`)

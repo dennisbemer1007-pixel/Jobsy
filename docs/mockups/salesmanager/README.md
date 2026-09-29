@@ -1,4 +1,4 @@
-# Mockups: Lobsy Partner (Salesmanager · shared with Ambassadeur)
+# Mockups: Lobsy Partner (Salesmanager)
 
 A layout and copy reference for the stack in `docs/prompts/salesmanager/`. **Where a mockup and the spec differ, the spec wins** (the differences are listed in `docs/prompts/salesmanager/00-README.md` §0). The persona (Tom Hendriks, Hendriks Sales & Advies), employers, amounts and dates are **Voorbeelddata**; the "Voorbeelddata" pill is mockup-only. "Nieuw" tags mark features that don't exist in the code today; they are not rendered in the product.
 
@@ -15,7 +15,7 @@ A layout and copy reference for the stack in `docs/prompts/salesmanager/`. **Whe
 | `sm-m2-wallet.png` | mobile 390×844 @2x | Wallet: hero, "Zo werkt het" strip, tabs, entries with state pills |
 | `sm-m3-link-qr.png` | mobile 390×844 @2x | Mijn link: large QR, code, WhatsApp / Mail / Kopieer, materials |
 
-The ambassadeur uses the same screens with the differences listed in the spec (§IA "Ambassadeur"); there are no separate ambassadeur mockups.
+The Ambassadeur role is parked (spec D8, `AmbassadorsEnabled` off); there are no ambassadeur mockups.
 
 ## Rebuild
 ```bash
