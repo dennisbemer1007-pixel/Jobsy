@@ -127,6 +127,7 @@
             if (!stateResponse.IsSuccessStatusCode)
             {
                 _error = Culture["Mfa.ErrorGeneric"];
+                _expired = true;
                 return;
             }
 
@@ -137,15 +138,18 @@
                 var dest = string.IsNullOrWhiteSpace(returnUrl)
                     ? "/account/mfa/setup"
                     : "/account/mfa/setup?returnUrl=" + Uri.EscapeDataString(returnUrl);
-                Nav.NavigateTo(dest, forceLoad: true);
+                // Static SSR: use Response.Redirect. NavigationManager redirects throw and a
+                // bare catch turned that into ErrorGeneric (empty page on Acc).
+                http.Response.Redirect(dest);
                 return;
             }
 
             _ready = true;
         }
-        catch
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _error = Culture["Mfa.ErrorGeneric"];
+            _expired = true;
         }
     }
 

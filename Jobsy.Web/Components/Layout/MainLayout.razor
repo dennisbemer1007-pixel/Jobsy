@@ -298,7 +298,9 @@
                || path.Equals("candidate/values", StringComparison.OrdinalIgnoreCase)
                || path.Equals("candidate/start", StringComparison.OrdinalIgnoreCase)
                || path.Equals("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith("candidate/deep-analysis/", StringComparison.OrdinalIgnoreCase);
+               || path.StartsWith("candidate/deep-analysis/", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("account/mfa", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("account/mfa/", StringComparison.OrdinalIgnoreCase);
     }
 
     private string HeaderTagline => Branding.ResolveTagline(RegionHost.Current?.Slogan, Culture["Brand.Tagline"]);

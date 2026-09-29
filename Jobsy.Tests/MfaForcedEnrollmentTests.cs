@@ -333,7 +333,25 @@ public class MfaForcedEnrollmentTests : IClassFixture<RoleFunctionalWebAppFactor
             Assert.DoesNotContain("style=\"", text, StringComparison.Ordinal);
             Assert.Contains("ExcludeFromInteractiveRouting", text, StringComparison.Ordinal);
             Assert.Contains("Culture[\"Mfa.", text, StringComparison.Ordinal);
+            // Static SSR: Nav.NavigateTo throws NavigationException; a bare catch made Acc show
+            // the empty "Er ging iets mis" page instead of redirecting to setup.
+            Assert.DoesNotContain("Nav.NavigateTo", text, StringComparison.Ordinal);
         }
+
+        foreach (var rel in new[]
+                 {
+                     "Jobsy.Web/Components/Pages/Account/MfaSetup.razor",
+                     "Jobsy.Web/Components/Pages/Account/MfaPrompt.razor"
+                 })
+        {
+            Assert.Contains(
+                "Response.Redirect",
+                File.ReadAllText(Path.Combine(root, rel)),
+                StringComparison.Ordinal);
+        }
+
+        var auth = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Auth/AuthServiceCollectionExtensions.cs"));
+        Assert.Contains("apiProfile.MfaEnrolled ? \"/account/mfa\" : \"/account/mfa/setup\"", auth, StringComparison.Ordinal);
 
         Assert.Equal("Beveilig je account", UiStrings.Get("Mfa.SetupTitle", "nl"));
         Assert.Equal("Secure your account", UiStrings.Get("Mfa.SetupTitle", "en"));

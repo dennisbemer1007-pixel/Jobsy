@@ -297,7 +297,9 @@ public static class AuthServiceCollectionExtensions
                     && !string.IsNullOrWhiteSpace(apiProfile.MfaChallengeToken))
                 {
                     SetMfaChallengeCookies(http, apiProfile.MfaChallengeToken, safeReturn);
-                    return Results.Redirect("/account/mfa");
+                    // Not enrolled yet → setup (QR). Already enrolled → code prompt.
+                    var mfaPath = apiProfile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup";
+                    return Results.Redirect(mfaPath);
                 }
 
                 if (apiProfile is not null)
