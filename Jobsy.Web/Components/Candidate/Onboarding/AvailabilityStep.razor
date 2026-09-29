@@ -1,0 +1,135 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<h1 tabindex="-1">@Culture["Onboarding.Step2.Title"]</h1>
+<p class="ob-wizard__lead">@Culture["Onboarding.Step2.Lead"]</p>
+<fieldset>
+    <legend class="visually-hidden">@Culture["Onboarding.Step2.Title"]</legend>
+    <div class="ob-wizard__presets">
+        @foreach (var preset in Presets)
+        {
+            var isSelected = Draft.Presets.Contains(preset.Code);
+            <button type="button" aria-pressed="@isSelected"
+                    class="@(isSelected ? "is-selected" : null)"
+                    @onclick="() => TogglePreset.InvokeAsync(preset.Code)">
+                <span>@(isSelected ? "✓" : "")</span>
+                <b>@Culture[preset.Title]</b>
+                <small>@Culture[preset.Lead]</small>
+            </button>
+        }
+    </div>
+</fieldset>
+<div class="ob-wizard__availability-summary">
+    <strong>@Culture["Onboarding.AvailabilitySummary"]</strong>
+    <button type="button" aria-expanded="@Draft.FineTune" @onclick="ToggleFineTune">
+        @Culture["Onboarding.Adjust"]
+    </button>
+    <dl>
+        <div>
+            <dt>@Culture["Vacancy.HoursPerWeek"]</dt>
+            <dd>@HoursLabel</dd>
+        </div>
+        <div>
+            <dt>@Culture["Profile.Availability"]</dt>
+            <dd>@DaysSummary</dd>
+        </div>
+        <div>
+            <dt>@Culture["Onboarding.AvailableFrom"]</dt>
+            <dd>@AvailableFromLabel</dd>
+        </div>
+    </dl>
+</div>
+@if (!Draft.Immediate)
+{
+    <label>
+        @Culture["Onboarding.AvailableFrom"]
+        <input type="date" @bind="Draft.AvailableFrom" @bind:after="NotifyAsync" />
+    </label>
+}
+@if (Draft.FineTune)
+{
+    <div class="ob-wizard__fine-tune">
+        <HoursRangeSlider CssClass="hours-range--compact"
+                          Min="1"
+                          Max="60"
+                          Low="@MinHoursSlider"
+                          High="@MaxHoursSlider"
+                          LowChanged="SetMinHours"
+                          HighChanged="SetMaxHours"
+                          RangeCommitted="ManualAvailability"
+                          MinLabel="@Culture["Onboarding.MinHours"]"
+                          MaxLabel="@Culture["Onboarding.MaxHours"]"
+                          UnitLabel="@Culture["Onboarding.Hours"]" />
+        <fieldset>
+            <legend>@Culture["Profile.Availability"]</legend>
+            <div class="ob-wizard__matrix">
+                @foreach (var day in Days)
+                {
+                    <span>@UiLabels.Weekday(Culture, day)</span>
+                    @foreach (var slot in WorkingSlots)
+                    {
+                        var key = $"{day}:{slot}";
+                        var isAvailable = Draft.Availability.Contains(key);
+                        <button type="button"
+                                aria-pressed="@isAvailable"
+                                aria-label="@AvailabilityLabel(day, slot)"
+                                class="@(isAvailable ? "is-on" : null)"
+                                @onclick="() => ToggleAvailability.InvokeAsync(key)">
+                            @UiLabels.AvailabilitySlot(Culture, slot)
+                        </button>
+                    }
+                }
+            </div>
+        </fieldset>
+        @if (Draft.PresetsOverridden)
+        {
+            <p class="ob-wizard__hint">
+                @Culture["Onboarding.ManualOverride"]
+                <button type="button" class="ob-wizard__inline-link" @onclick="ResetPresets">
+                    @Culture["Onboarding.Refill"]
+                </button>
+            </p>
+        }
+    </div>
+}
+@if (!AvailabilityValid)
+{
+    <p class="ob-wizard__hint error">@Culture["Onboarding.AvailabilityRequired"]</p>
+}
+
+@code {
+    public sealed record Preset(string Code, string Title, string Lead);
+
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public IReadOnlyList<Preset> Presets { get; set; } = [];
+    [Parameter] public EventCallback<string> TogglePreset { get; set; }
+    [Parameter] public EventCallback ToggleFineTune { get; set; }
+    [Parameter] public EventCallback<int> SetMinHours { get; set; }
+    [Parameter] public EventCallback<int> SetMaxHours { get; set; }
+    [Parameter] public EventCallback ManualAvailability { get; set; }
+    [Parameter] public EventCallback<string> ToggleAvailability { get; set; }
+    [Parameter] public EventCallback ResetPresets { get; set; }
+
+    private static readonly string[] Days = DayPartMatrix.DayCodes;
+    private static readonly string[] WorkingSlots = ["Ochtend", "Middag", "Avond"];
+
+    private int MinHoursSlider => decimal.ToInt32(Draft.MinHours ?? 1);
+    private int MaxHoursSlider => decimal.ToInt32(Draft.MaxHours ?? 60);
+    private bool AvailabilityValid => Draft.MinHours is > 0
+                                      && Draft.MaxHours >= Draft.MinHours
+                                      && Draft.Availability.Count > 0;
+
+    private string HoursLabel => Draft.MinHours is not null && Draft.MaxHours is not null
+        ? $"{Draft.MinHours:0} – {Draft.MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";
+    private string DaysSummary => Draft.Availability.Count == 0
+        ? "–" : Culture.Format("Onboarding.DayPartsCount", Draft.Availability.Count);
+    private string AvailableFromLabel => Draft.Immediate
+        ? Culture["Onboarding.AvailableImmediate"] : Draft.AvailableFrom?.ToString() ?? "";
+
+    private string AvailabilityLabel(string day, string slot)
+        => $"{UiLabels.Weekday(Culture, day)} {UiLabels.AvailabilitySlot(Culture, slot)}";
+
+    private Task NotifyAsync() => Draft.NotifyChangedAsync();
+}

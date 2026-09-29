@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -13,17 +14,20 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
     private readonly ICandidateMatchSnapshotService _matches;
     private readonly ICandidateInsightsQueue _insightsQueue;
     private readonly ICandidateCareerPlanService _careerPlans;
+    private readonly IFeatureFlags _featureFlags;
 
     public CandidateOnboardingService(
         JobsyDbContext db,
         ICandidateMatchSnapshotService matches,
         ICandidateInsightsQueue insightsQueue,
-        ICandidateCareerPlanService careerPlans)
+        ICandidateCareerPlanService careerPlans,
+        IFeatureFlags featureFlags)
     {
         _db = db;
         _matches = matches;
         _insightsQueue = insightsQueue;
         _careerPlans = careerPlans;
+        _featureFlags = featureFlags;
     }
 
     public async Task<CandidateOnboardingStateDto> GetAsync(
@@ -31,11 +35,11 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         CancellationToken cancellationToken = default)
     {
         var row = await EnsureRowAsync(userId, cancellationToken);
-        await MigrateV1RowIfNeededAsync(row, cancellationToken);
+        await AlignWizardVersionOnReadAsync(row, persist: true, cancellationToken);
         var shouldShow = await ShouldShowWizardAsync(userId, cancellationToken);
         CandidateOnboardingImpressionDto? impression = null;
         if (row.FinishReached
-            || row.CurrentStep >= OnboardingWizardCatalog.StepCount
+            || row.CurrentStep >= ActiveStepCount(row.WizardVersion)
             || row.CompletedAtUtc is not null)
         {
             impression = await BuildImpressionAsync(userId, cancellationToken);
@@ -50,23 +54,24 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         CancellationToken cancellationToken = default)
     {
         var row = await EnsureRowAsync(userId, cancellationToken);
-        await MigrateV1RowIfNeededAsync(row, cancellationToken);
+        await AlignWizardVersionOnReadAsync(row, persist: true, cancellationToken);
         var now = DateTime.UtcNow;
-        var step = Math.Clamp(request.CurrentStep, 1, OnboardingWizardCatalog.StepCount);
+        var version = row.WizardVersion;
+        var maxStep = ActiveStepCount(version);
+        var step = Math.Clamp(request.CurrentStep, 1, maxStep);
 
-        row.StepsJson = OnboardingStepAnalytics.MarkStarted(row.StepsJson, step, now);
+        row.StepsJson = OnboardingStepAnalytics.MarkStarted(row.StepsJson, step, now, version);
         if (request.StepCompleted == true)
         {
-            row.StepsJson = OnboardingStepAnalytics.MarkCompleted(row.StepsJson, step, now);
+            row.StepsJson = OnboardingStepAnalytics.MarkCompleted(row.StepsJson, step, now, version);
         }
 
         if (request.StepSkipped == true)
         {
-            row.StepsJson = OnboardingStepAnalytics.MarkSkipped(row.StepsJson, step, now);
+            row.StepsJson = OnboardingStepAnalytics.MarkSkipped(row.StepsJson, step, now, version);
         }
 
         row.CurrentStep = step;
-        row.WizardVersion = OnboardingWizardCatalog.WizardVersionV2;
         if (request.FinishReached == true)
         {
             row.FinishReached = true;
@@ -97,12 +102,14 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         CancellationToken cancellationToken = default)
     {
         var row = await EnsureRowAsync(userId, cancellationToken);
+        await AlignWizardVersionOnReadAsync(row, persist: true, cancellationToken);
         var now = DateTime.UtcNow;
+        var version = row.WizardVersion;
+        var lastStep = ActiveStepCount(version);
         row.StepsJson = OnboardingStepAnalytics.MarkCompleted(
-            row.StepsJson, OnboardingWizardCatalog.StepCount, now);
-        row.CurrentStep = OnboardingWizardCatalog.StepCount;
+            row.StepsJson, lastStep, now, version);
+        row.CurrentStep = lastStep;
         row.FinishReached = true;
-        row.WizardVersion = OnboardingWizardCatalog.WizardVersionV2;
         row.CompletedAtUtc ??= now;
         row.UpdatedAtUtc = now;
 
@@ -167,24 +174,105 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         }
 
         var now = DateTime.UtcNow;
+        var passportOn = await IsPassportEnabledAsync(cancellationToken);
+        var version = passportOn
+            ? OnboardingWizardCatalog.WizardVersionV3
+            : OnboardingWizardCatalog.WizardVersionV2;
         row = new CandidateOnboarding
         {
             Id = Guid.NewGuid(),
             UserId = userId,
             CurrentStep = 1,
-            WizardVersion = OnboardingWizardCatalog.WizardVersionV2,
+            WizardVersion = version,
             FinishReached = false,
             StartedAtUtc = now,
             UpdatedAtUtc = now,
-            StepsJson = OnboardingStepAnalytics.MarkStarted("[]", 1, now)
+            StepsJson = OnboardingStepAnalytics.MarkStarted("[]", 1, now, version)
         };
         _db.CandidateOnboardings.Add(row);
         await _db.SaveChangesAsync(cancellationToken);
         return row;
     }
 
-    private async Task MigrateV1RowIfNeededAsync(
+    /// <summary>
+    /// Flag ON: incomplete v1/v2 → v3 on read (answers untouched; only step pointer moves).
+    /// Flag OFF: incomplete v3 → v2 on read via <see cref="OnboardingWizardCatalog.MapV3ToV2"/>.
+    /// Completed rows are never reopened or remapped.
+    /// </summary>
+    private async Task AlignWizardVersionOnReadAsync(
         CandidateOnboarding row,
+        bool persist,
+        CancellationToken cancellationToken)
+    {
+        if (row.CompletedAtUtc is not null)
+        {
+            return;
+        }
+
+        var passportOn = await IsPassportEnabledAsync(cancellationToken);
+        var targetVersion = passportOn
+            ? OnboardingWizardCatalog.WizardVersionV3
+            : OnboardingWizardCatalog.WizardVersionV2;
+
+        if (row.WizardVersion == targetVersion)
+        {
+            // Still migrate raw v1 leftovers when flag is OFF (legacy path).
+            if (!passportOn && row.WizardVersion < OnboardingWizardCatalog.WizardVersionV2)
+            {
+                await MigrateV1ToV2Async(row, persist, cancellationToken);
+            }
+
+            return;
+        }
+
+        if (passportOn)
+        {
+            // v1 → v2 map first, then v2 → v3.
+            var fromVersion = row.WizardVersion;
+            if (fromVersion < OnboardingWizardCatalog.WizardVersionV2)
+            {
+                var v1Step = row.CurrentStep;
+                row.CurrentStep = OnboardingWizardCatalog.MapV1Step(v1Step);
+                if (OnboardingWizardCatalog.MapV1ShowsFinish(v1Step))
+                {
+                    row.FinishReached = true;
+                }
+
+                fromVersion = OnboardingWizardCatalog.WizardVersionV2;
+            }
+
+            if (fromVersion < OnboardingWizardCatalog.WizardVersionV3)
+            {
+                row.CurrentStep = OnboardingWizardCatalog.MapV2ToV3(row.CurrentStep);
+            }
+
+            row.WizardVersion = OnboardingWizardCatalog.WizardVersionV3;
+        }
+        else
+        {
+            // Flag OFF: map v3 back to v2 so the classic wizard never sees v3 pointers.
+            if (row.WizardVersion >= OnboardingWizardCatalog.WizardVersionV3)
+            {
+                row.CurrentStep = OnboardingWizardCatalog.MapV3ToV2(row.CurrentStep);
+                row.WizardVersion = OnboardingWizardCatalog.WizardVersionV2;
+            }
+            else if (row.WizardVersion < OnboardingWizardCatalog.WizardVersionV2)
+            {
+                await MigrateV1ToV2Async(row, persist, cancellationToken);
+                return;
+            }
+        }
+
+        row.UpdatedAtUtc = DateTime.UtcNow;
+        if (persist)
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private async Task MigrateV1ToV2Async(
+        CandidateOnboarding row,
+        bool persist,
         CancellationToken cancellationToken)
     {
         if (row.WizardVersion >= OnboardingWizardCatalog.WizardVersionV2
@@ -202,8 +290,28 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
 
         row.WizardVersion = OnboardingWizardCatalog.WizardVersionV2;
         row.UpdatedAtUtc = DateTime.UtcNow;
-        await _db.SaveChangesAsync(cancellationToken);
+        if (persist)
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
     }
+
+    private async Task<bool> IsPassportEnabledAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _featureFlags.IsEnabledAsync(PlatformFeature.CandidatePassport, cancellationToken);
+        }
+        catch
+        {
+            return FeatureFlagSnapshot.Defaults.CandidatePassportEnabled;
+        }
+    }
+
+    private static int ActiveStepCount(int wizardVersion)
+        => wizardVersion >= OnboardingWizardCatalog.WizardVersionV3
+            ? OnboardingWizardCatalog.V3StepCount
+            : OnboardingWizardCatalog.StepCount;
 
     private async Task<CandidateOnboardingImpressionDto> BuildImpressionAsync(
         Guid userId,

@@ -1,0 +1,42 @@
+@namespace Jobsy.Web.Components.Candidate.Discovery
+
+<div class="journey-scene journey-scene--depth-@Depth @(IsMobile ? "journey-scene--mobile" : "journey-scene--desktop")"
+     style="@GradientStyle"
+     aria-hidden="true">
+    @((MarkupString)_svg)
+</div>
+
+@code {
+    private string _svg = "";
+    private int _renderedDepth = -1;
+    private bool _renderedMobile;
+
+    [Parameter] public int Depth { get; set; }
+    [Parameter] public bool IsMobile { get; set; }
+
+    private string GradientStyle
+    {
+        get
+        {
+            var grad = JourneyCatalog.Gradients.TryGetValue(Depth, out var g)
+                ? g
+                : JourneyCatalog.Gradients[0];
+            return $"background:linear-gradient(180deg,{grad})";
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_renderedDepth == Depth && _renderedMobile == IsMobile && _svg.Length > 0)
+        {
+            return;
+        }
+
+        _renderedDepth = Depth;
+        _renderedMobile = IsMobile;
+        var w = IsMobile ? 390 : 1440;
+        var h = IsMobile ? 170 : 772;
+        var lobX = IsMobile ? 60.0 : 1180.0;
+        _svg = JourneySceneBuilder.BuildSvg(Depth, w, h, lobX);
+    }
+}

@@ -9,6 +9,13 @@ public static class OnboardingWizardCatalog
     public const int StepCount = 10;
     public const int TotalMinutesEstimate = 6;
     public const int WizardVersionV2 = 2;
+    public const int WizardVersionV3 = 3;
+
+    /// <summary>Counted steps in ontdekkingsreis (v3).</summary>
+    public const int V3StepCount = 10;
+
+    /// <summary>Total minutes estimate for the journey (mockup: "10 stappen · ± 12 minuten").</summary>
+    public const int V3TotalMinutesEstimate = 12;
 
     /// <summary>Minutes remaining estimate by current step (1-based), inclusive of current step.</summary>
     public static readonly int[] RemainingMinutesByStep =
@@ -17,8 +24,18 @@ public static class OnboardingWizardCatalog
         6, 5, 4, 4, 3, 3, 2, 2, 1, 1
     ];
 
+    /// <summary>V3 remaining minutes by counted step (1-based), ≈12 min total.</summary>
+    public static readonly int[] V3RemainingMinutesByStep =
+    [
+        0, // unused
+        12, 11, 9, 7, 5, 4, 3, 2, 1, 1
+    ];
+
     public static int RemainingMinutes(int step)
         => step is >= 1 and <= StepCount ? RemainingMinutesByStep[step] : 1;
+
+    public static int V3RemainingMinutes(int step)
+        => step is >= 1 and <= V3StepCount ? V3RemainingMinutesByStep[step] : 1;
 
     public sealed record PhaseInfo(string Code, string NameKey, int FirstStep, int LastStep)
     {
@@ -83,6 +100,51 @@ public static class OnboardingWizardCatalog
 
     /// <summary>True when a v1 in-progress row was on the old result step.</summary>
     public static bool MapV1ShowsFinish(int v1Step) => v1Step == 10;
+
+    /// <summary>
+    /// Map an in-progress v2 wizard step to v3 (ontdekkingsreis) numbering.
+    /// v2 transport (3) folds into v3 step 2; education (5) and dream (6) fold into v3 4.
+    /// </summary>
+    public static int MapV2ToV3(int v2Step) => v2Step switch
+    {
+        1 => 1,
+        2 => 2,
+        3 => 2,
+        4 => 3,
+        5 => 4,
+        6 => 4,
+        7 => 7,
+        8 => 8,
+        9 => 9,
+        10 => 10,
+        _ => Math.Clamp(v2Step, 1, V3StepCount)
+    };
+
+    /// <summary>
+    /// Map an in-progress v3 journey step back to v2 numbering (flag OFF mid-journey).
+    /// </summary>
+    public static int MapV3ToV2(int v3Step) => v3Step switch
+    {
+        1 => 1,
+        2 => 2,
+        3 => 4,
+        4 => 5,
+        5 => 6,
+        6 => 6,
+        7 => 7,
+        8 => 8,
+        9 => 9,
+        10 => 10,
+        _ => Math.Clamp(v3Step, 1, StepCount)
+    };
+
+    /// <summary>Map any prior version step to v3 (v1 goes through <see cref="MapV1Step"/> first).</summary>
+    public static int MapToV3(int step, int fromVersion) => fromVersion switch
+    {
+        >= WizardVersionV3 => Math.Clamp(step, 1, V3StepCount),
+        WizardVersionV2 => MapV2ToV3(step),
+        _ => MapV2ToV3(MapV1Step(step))
+    };
 
     /// <summary>
     /// Competentie mini: one item per Big Five workplace dimension

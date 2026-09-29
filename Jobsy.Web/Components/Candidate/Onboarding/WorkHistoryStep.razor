@@ -1,0 +1,60 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
+<h1 tabindex="-1">@Culture["Onboarding.Step4.Title"]</h1>
+<p class="ob-wizard__lead">@Culture["Onboarding.Step4.Lead"]</p>
+<label class="ob-wizard__check">
+    <input type="checkbox" @bind="Draft.NoWork" @bind:after="NotifyAsync" />
+    @Culture["Onboarding.NoWorkExperience"]
+</label>
+@if (!Draft.NoWork)
+{
+    @foreach (var job in Draft.Jobs)
+    {
+        var item = job;
+        <article class="ob-wizard__job">
+            <button type="button" class="icon-btn"
+                    aria-label="@Culture.Format("Onboarding.DeleteJob", item.Role ?? "")"
+                    @onclick="() => RemoveJob.InvokeAsync(item)">×</button>
+            <label>
+                @Culture["Profile.Role"]
+                <input @bind="item.Role" @bind:event="oninput" @bind:after="NotifyAsync" />
+            </label>
+            <label>
+                @Culture["Profile.Employer"]
+                <input @bind="item.EmployerName" @bind:event="oninput" @bind:after="NotifyAsync" />
+            </label>
+            <div class="ob-wizard__field-row">
+                <label>
+                    @Culture["Profile.EmployerFrom"]
+                    <input type="month" value="@item.StartMonth"
+                           @onchange="e => SetJobStart.InvokeAsync((item, e.Value?.ToString()))" />
+                </label>
+                <label>
+                    @Culture["Profile.EmployerTo"]
+                    <input type="month" value="@item.EndMonth"
+                           @onchange="e => SetJobEnd.InvokeAsync((item, e.Value?.ToString()))" />
+                </label>
+            </div>
+        </article>
+    }
+    @if (Draft.Jobs.Count < 3)
+    {
+        <button type="button" class="ob-wizard__add-job" @onclick="AddJob">
+            @Culture["Onboarding.AddJob"]
+        </button>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public EventCallback AddJob { get; set; }
+    [Parameter] public EventCallback<CandidateEmployerHistory> RemoveJob { get; set; }
+    [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobStart { get; set; }
+    [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobEnd { get; set; }
+
+    private Task NotifyAsync() => Draft.NotifyChangedAsync();
+}

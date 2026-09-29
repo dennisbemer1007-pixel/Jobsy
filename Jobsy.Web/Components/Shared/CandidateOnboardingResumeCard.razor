@@ -1,13 +1,15 @@
 @using Jobsy.Web.Localization
+@using Jobsy.Core.Features
 @inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
+@inject IFeatureFlags FeatureFlags
 
 @if (_visible)
 {
     <aside class="ob-resume-card" aria-labelledby="ob-resume-title">
         <p id="ob-resume-title" class="ob-resume-card__title">@Culture["Onboarding.Resume.Title"]</p>
         <p class="ob-resume-card__lead">@Culture.Format("Onboarding.Resume.Lead", _remainingSteps)</p>
-        <a class="ob-resume-card__link" href="/candidate/start">@Culture["Onboarding.Resume.Cta"]</a>
+        <a class="ob-resume-card__link" href="@ResumeHref">@Culture["Onboarding.Resume.Cta"]</a>
     </aside>
 }
 
@@ -15,6 +17,7 @@
     private bool _visible;
     private bool _loadStarted;
     private int _remainingSteps = 1;
+    private string ResumeHref = "/candidate/start";
 
     protected override Task OnInitializedAsync()
         => LoadOnceAsync();
@@ -29,6 +32,18 @@
         _loadStarted = true;
         try
         {
+            try
+            {
+                if (await FeatureFlags.IsEnabledAsync(Jobsy.Core.Features.PlatformFeature.CandidatePassport))
+                {
+                    ResumeHref = "/candidate/ontdekkingsreis";
+                }
+            }
+            catch
+            {
+                ResumeHref = "/candidate/start";
+            }
+
             var state = await Api.GetMyOnboardingAsync();
             _visible = state is not null && !state.IsComplete;
             if (_visible)

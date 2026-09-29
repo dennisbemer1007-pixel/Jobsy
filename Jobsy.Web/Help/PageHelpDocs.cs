@@ -135,6 +135,12 @@ public static class PageHelpDocs
             "Bekijk wie je bent onder de schaal, vul lagen aan en open tests of je gegevens.",
             "Zelfinzicht en profielcompleetheid op één plek."),
 
+        ["/candidate/ontdekkingsreis"] = new(
+            "De ontdekkingsreis",
+            "Stap voor stap ontdekken wie je bent, laag voor laag tot je paspoort.",
+            "Begin bij het strand, beantwoord vragen over jou en wanneer je kunt werken, en stop wanneer je wilt — alles wordt bewaard.",
+            "Profiel en zelfinzicht opbouwen zonder haast."),
+
         ["/candidate/profile"] = new(
             "Mijn profiel",
             "Jouw kandidaatgegevens voor matching en solliciteren.",

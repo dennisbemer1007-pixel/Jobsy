@@ -1,0 +1,74 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Components.Shared.Questionnaire
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="ob-wizard__test-tabs">
+    @foreach (var tab in TestTabs)
+    {
+        var isCurrent = tab.Step == Step;
+        var isDone = tab.Step < Step;
+        <span class="@(isCurrent ? "is-current" : isDone ? "is-done" : null)">
+            @Culture[tab.Title]
+        </span>
+    }
+</div>
+<h1 tabindex="-1">@Culture[$"Onboarding.Step{Step}.Title"]</h1>
+<p class="ob-wizard__lead">@Culture["Onboarding.Test.Lead"]</p>
+@if (Questions.Count == 0)
+{
+    <p>@Culture["Onboarding.MiniAllDone"]</p>
+}
+else
+{
+    @foreach (var question in Questions.Take(CurrentQuestion + 2))
+    {
+        var index = IndexOf(question);
+        var answered = Answers.ContainsKey(question.Id);
+        <LikertScaleQuestion QuestionId="question.Id"
+                             Text="@QuestionText(question)"
+                             Value="@(answered ? Answers[question.Id] : null)"
+                             Collapsed="@(answered && index != CurrentQuestion)"
+                             Dimmed="@(index > CurrentQuestion)"
+                             Interactive="@(index <= CurrentQuestion)"
+                             IsCurrent="@(index == CurrentQuestion)"
+                             Index="@(index + 1)"
+                             Total="@Questions.Count"
+                             InputPrefix="@InputPrefix"
+                             HighLabel="@Culture["Onboarding.Likert.High"]"
+                             LowLabel="@Culture["Onboarding.Likert.Low"]"
+                             ValueChanged="value => Answer.InvokeAsync((question.Id, value))"
+                             Expanded="() => ExpandQuestion.InvokeAsync(index)" />
+    }
+}
+
+@code {
+    public sealed record TestTab(int Step, string Title, string Lead);
+    public sealed record MiniQuestion(int Id, string TextKey);
+
+    [Parameter] public int Step { get; set; }
+    [Parameter] public int CurrentQuestion { get; set; }
+    [Parameter] public IReadOnlyList<TestTab> TestTabs { get; set; } = [];
+    [Parameter] public IReadOnlyList<MiniQuestion> Questions { get; set; } = [];
+    [Parameter] public IReadOnlyDictionary<int, int> Answers { get; set; } = new Dictionary<int, int>();
+    [Parameter] public string InputPrefix { get; set; } = "obv2-";
+    [Parameter] public EventCallback<(int Id, int Value)> Answer { get; set; }
+    [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
+    [Parameter] public Func<MiniQuestion, string>? ResolveQuestionText { get; set; }
+
+    private string QuestionText(MiniQuestion question)
+        => ResolveQuestionText?.Invoke(question) ?? Culture[question.TextKey];
+
+    private int IndexOf(MiniQuestion question)
+    {
+        for (var i = 0; i < Questions.Count; i++)
+        {
+            if (ReferenceEquals(Questions[i], question) || Questions[i].Id == question.Id)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+}

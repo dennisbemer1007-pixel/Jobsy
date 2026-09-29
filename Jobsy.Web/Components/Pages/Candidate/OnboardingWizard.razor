@@ -11,6 +11,8 @@
 @inject IGeocodingClient Geocoder
 @inject IJSRuntime Js
 @inject GratisDnaMergeService GratisDnaMerge
+@inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
+@using Jobsy.Web.Components.Candidate.Onboarding
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
@@ -54,7 +56,7 @@
         <section class="ob-wizard__finish">
             <div class="ob-wizard__compass" aria-hidden="true">⌾</div>
             <span class="ob-wizard__badge">@Culture["Onboarding.Finish.Badge"]</span>
-            <h1>@Culture.Format("Onboarding.Finish.Title", _firstName)</h1>
+            <h1>@Culture.Format("Onboarding.Finish.Title", Draft.FirstName)</h1>
             <p class="ob-wizard__lead">@Culture["Onboarding.Finish.Lead"]</p>
             @if (_state?.Impression is { } impression)
             {
@@ -100,7 +102,7 @@
             <div class="lobsy-logo">
                 <img class="lobsy-logo__img" src="/images/brand/lobsy-128.png" alt="" />
             </div>
-            <h1>@Culture.Format("Onboarding.Welcome.Title", _firstName)</h1>
+            <h1>@Culture.Format("Onboarding.Welcome.Title", Draft.FirstName)</h1>
             <p class="ob-wizard__lead">@Culture["Onboarding.Welcome.Lead"]</p>
             <div class="ob-wizard__phase-cards">
                 @foreach (var item in WelcomePhases)
@@ -186,411 +188,65 @@
                     @switch (_step)
                     {
                         case 1:
-                            <h1 tabindex="-1">@Culture["Onboarding.Step1.Title"]</h1>
-                            <p class="ob-wizard__lead">@Culture["Onboarding.Step1.Lead"]</p>
-                            <div class="ob-wizard__field-row">
-                                <label>
-                                    @Culture["Profile.FirstName"]
-                                    <input autocomplete="given-name" maxlength="128"
-                                           @bind="_firstName" @bind:event="oninput" @bind:after="ScheduleProfileSave" />
-                                </label>
-                                <label>
-                                    @Culture["Profile.LastName"]
-                                    <input autocomplete="family-name" maxlength="128"
-                                           @bind="_lastName" @bind:event="oninput" @bind:after="ScheduleProfileSave" />
-                                </label>
-                            </div>
-                            <label>
-                                @Culture["Onboarding.Postcode"]
-                                <input inputmode="text" autocomplete="postal-code" maxlength="7"
-                                       @bind="_postcode" @bind:event="oninput" @bind:after="AddressChanged" />
-                            </label>
-                            @if (_postcodeResolved)
-                            {
-                                <p class="ob-wizard__hint">✓ @Culture.Format("Onboarding.PostcodeResolved", _city)</p>
-                            }
-                            @if (_postcodeMissing)
-                            {
-                                <p class="error">
-                                    @Culture["Onboarding.PostcodeNotFound"]
-                                    <button type="button" class="ob-wizard__inline-link" @onclick="ShowCity">
-                                        @Culture["Onboarding.EnterCity"]
-                                    </button>
-                                </p>
-                            }
-                            @if (_showCity)
-                            {
-                                <label>
-                                    @Culture["Onboarding.City"]
-                                    <input autocomplete="address-level2"
-                                           @bind="_city" @bind:event="oninput" @bind:after="AddressChanged" />
-                                </label>
-                            }
-                            @if (_suggestions.Count > 0)
-                            {
-                                <ul class="ob-wizard__suggestions">
-                                    @foreach (var suggestion in _suggestions)
-                                    {
-                                        <li>
-                                            <button type="button" @onclick="() => SelectAddress(suggestion)">
-                                                @suggestion.Label
-                                            </button>
-                                        </li>
-                                    }
-                                </ul>
-                            }
-                            <fieldset>
-                                <legend>@Culture["Onboarding.BirthDate"]</legend>
-                                <div class="ob-wizard__birth">
-                                    <label>
-                                        @Culture["Onboarding.Day"]
-                                        <input inputmode="numeric" maxlength="2"
-                                               @bind="_birthDay" @bind:event="oninput" @bind:after="BirthDateChanged" />
-                                    </label>
-                                    <label>
-                                        @Culture["Onboarding.Month"]
-                                        <input inputmode="numeric" maxlength="2"
-                                               @bind="_birthMonth" @bind:event="oninput" @bind:after="BirthDateChanged" />
-                                    </label>
-                                    <label>
-                                        @Culture["Onboarding.Year"]
-                                        <input inputmode="numeric" maxlength="4"
-                                               @bind="_birthYear" @bind:event="oninput" @bind:after="BirthDateChanged" />
-                                    </label>
-                                </div>
-                                <small>@Culture["Onboarding.BirthHint"]</small>
-                            </fieldset>
-                            <label>
-                                @Culture["Profile.Phone"] <small>@Culture["Onboarding.Optional"]</small>
-                                <input type="tel" autocomplete="tel"
-                                       @bind="_phone" @bind:event="oninput" @bind:after="ScheduleProfileSave" />
-                            </label>
+                            <PersonalStep Draft="Draft"
+                                          AddressChanged="AddressChanged"
+                                          BirthDateChanged="BirthDateChanged"
+                                          ShowCity="ShowCity"
+                                          SelectAddress="SelectAddress" />
                             break;
 
                         case 2:
-                            <h1 tabindex="-1">@Culture["Onboarding.Step2.Title"]</h1>
-                            <p class="ob-wizard__lead">@Culture["Onboarding.Step2.Lead"]</p>
-                            <fieldset>
-                                <legend class="visually-hidden">@Culture["Onboarding.Step2.Title"]</legend>
-                                <div class="ob-wizard__presets">
-                                    @foreach (var preset in Presets)
-                                    {
-                                        var isSelected = _presets.Contains(preset.Code);
-                                        <button type="button" aria-pressed="@isSelected"
-                                                class="@(isSelected ? "is-selected" : null)"
-                                                @onclick="() => TogglePreset(preset.Code)">
-                                            <span>@(isSelected ? "✓" : "")</span>
-                                            <b>@Culture[preset.Title]</b>
-                                            <small>@Culture[preset.Lead]</small>
-                                        </button>
-                                    }
-                                </div>
-                            </fieldset>
-                            <div class="ob-wizard__availability-summary">
-                                <strong>@Culture["Onboarding.AvailabilitySummary"]</strong>
-                                <button type="button" aria-expanded="@_fineTune" @onclick="ToggleFineTune">
-                                    @Culture["Onboarding.Adjust"]
-                                </button>
-                                <dl>
-                                    <div>
-                                        <dt>@Culture["Vacancy.HoursPerWeek"]</dt>
-                                        <dd>@HoursLabel</dd>
-                                    </div>
-                                    <div>
-                                        <dt>@Culture["Profile.Availability"]</dt>
-                                        <dd>@DaysSummary</dd>
-                                    </div>
-                                    <div>
-                                        <dt>@Culture["Onboarding.AvailableFrom"]</dt>
-                                        <dd>@AvailableFromLabel</dd>
-                                    </div>
-                                </dl>
-                            </div>
-                            @if (!_immediate)
-                            {
-                                <label>
-                                    @Culture["Onboarding.AvailableFrom"]
-                                    <input type="date" @bind="_availableFrom" @bind:after="ScheduleProfileSave" />
-                                </label>
-                            }
-                            @if (_fineTune)
-                            {
-                                <div class="ob-wizard__fine-tune">
-                                    <HoursRangeSlider CssClass="hours-range--compact"
-                                                      Min="1"
-                                                      Max="60"
-                                                      Low="@MinHoursSlider"
-                                                      High="@MaxHoursSlider"
-                                                      LowChanged="SetMinHoursAsync"
-                                                      HighChanged="SetMaxHoursAsync"
-                                                      RangeCommitted="ManualAvailabilityAsync"
-                                                      MinLabel="@Culture["Onboarding.MinHours"]"
-                                                      MaxLabel="@Culture["Onboarding.MaxHours"]"
-                                                      UnitLabel="@Culture["Onboarding.Hours"]" />
-                                    <fieldset>
-                                        <legend>@Culture["Profile.Availability"]</legend>
-                                        <div class="ob-wizard__matrix">
-                                            @foreach (var day in Days)
-                                            {
-                                                <span>@UiLabels.Weekday(Culture, day)</span>
-                                                @foreach (var slot in WorkingSlots)
-                                                {
-                                                    var key = $"{day}:{slot}";
-                                                    var isAvailable = _availability.Contains(key);
-                                                    <button type="button"
-                                                            aria-pressed="@isAvailable"
-                                                            aria-label="@AvailabilityLabel(day, slot)"
-                                                            class="@(isAvailable ? "is-on" : null)"
-                                                            @onclick="() => ToggleAvailability(key)">
-                                                        @UiLabels.AvailabilitySlot(Culture, slot)
-                                                    </button>
-                                                }
-                                            }
-                                        </div>
-                                    </fieldset>
-                                    @if (_presetsOverridden)
-                                    {
-                                        <p class="ob-wizard__hint">
-                                            @Culture["Onboarding.ManualOverride"]
-                                            <button type="button" class="ob-wizard__inline-link" @onclick="ResetPresets">
-                                                @Culture["Onboarding.Refill"]
-                                            </button>
-                                        </p>
-                                    }
-                                </div>
-                            }
-                            @if (!AvailabilityValid)
-                            {
-                                <p class="ob-wizard__hint error">@Culture["Onboarding.AvailabilityRequired"]</p>
-                            }
+                            <AvailabilityStep Draft="Draft"
+                                              Presets="PresetItems"
+                                              TogglePreset="TogglePreset"
+                                              ToggleFineTune="ToggleFineTune"
+                                              SetMinHours="SetMinHoursAsync"
+                                              SetMaxHours="SetMaxHoursAsync"
+                                              ManualAvailability="ManualAvailabilityAsync"
+                                              ToggleAvailability="ToggleAvailability"
+                                              ResetPresets="ResetPresets" />
                             break;
 
                         case 3:
-                            <h1 tabindex="-1">@Culture["Onboarding.Step3.Title"]</h1>
-                            <p class="ob-wizard__lead">@Culture["Onboarding.Step3.Lead"]</p>
-                            <fieldset>
-                                <legend>@Culture["Onboarding.Transport"]</legend>
-                                <div class="ob-wizard__transport">
-                                    @foreach (var transport in TransportOptions)
-                                    {
-                                        var isSelected = _transport == transport;
-                                        <button type="button" aria-pressed="@isSelected"
-                                                class="@(isSelected ? "is-selected" : null)"
-                                                @onclick="() => SelectTransport(transport)">
-                                            @TransportLabel(transport)
-                                        </button>
-                                    }
-                                </div>
-                            </fieldset>
-                            <fieldset>
-                                <legend>@Culture["Onboarding.MaxTravel"] <strong>@_maxTravel @Culture["Onboarding.Minutes"]</strong></legend>
-                                <div class="ob-wizard__transport">
-                                    @foreach (var minutes in TravelChoices)
-                                    {
-                                        <button type="button" aria-pressed="@(_maxTravel == minutes)"
-                                                @onclick="() => SelectTravelTime(minutes)">
-                                            @minutes
-                                        </button>
-                                    }
-                                </div>
-                                <button type="button" class="ob-wizard__inline-link" @onclick="ShowCustomTravel">
-                                    @Culture["Onboarding.Other"]
-                                </button>
-                                @if (_customTravel)
-                                {
-                                    <input type="number" min="1" max="180"
-                                           @bind="_maxTravel" @bind:after="ScheduleProfileSave" />
-                                }
-                            </fieldset>
+                            <TransportStep Draft="Draft"
+                                           SelectTransport="SelectTransport"
+                                           SelectTravelTime="SelectTravelTime"
+                                           ShowCustomTravel="ShowCustomTravel" />
                             break;
 
                         case 4:
-                            <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
-                            <h1 tabindex="-1">@Culture["Onboarding.Step4.Title"]</h1>
-                            <p class="ob-wizard__lead">@Culture["Onboarding.Step4.Lead"]</p>
-                            <label class="ob-wizard__check">
-                                <input type="checkbox" @bind="_noWork" @bind:after="ScheduleProfileSave" />
-                                @Culture["Onboarding.NoWorkExperience"]
-                            </label>
-                            @if (!_noWork)
-                            {
-                                @foreach (var job in _jobs)
-                                {
-                                    var item = job;
-                                    <article class="ob-wizard__job">
-                                        <button type="button" class="icon-btn"
-                                                aria-label="@Culture.Format("Onboarding.DeleteJob", item.Role ?? "")"
-                                                @onclick="() => RemoveJob(item)">×</button>
-                                        <label>
-                                            @Culture["Profile.Role"]
-                                            <input @bind="item.Role" @bind:event="oninput" @bind:after="ScheduleProfileSave" />
-                                        </label>
-                                        <label>
-                                            @Culture["Profile.Employer"]
-                                            <input @bind="item.EmployerName" @bind:event="oninput" @bind:after="ScheduleProfileSave" />
-                                        </label>
-                                        <div class="ob-wizard__field-row">
-                                            <label>
-                                                @Culture["Profile.EmployerFrom"]
-                                                <input type="month" value="@item.StartMonth"
-                                                       @onchange="e => SetJobStart(item, e.Value?.ToString())" />
-                                            </label>
-                                            <label>
-                                                @Culture["Profile.EmployerTo"]
-                                                <input type="month" value="@item.EndMonth"
-                                                       @onchange="e => SetJobEnd(item, e.Value?.ToString())" />
-                                            </label>
-                                        </div>
-                                    </article>
-                                }
-                                @if (_jobs.Count < 3)
-                                {
-                                    <button type="button" class="ob-wizard__add-job" @onclick="AddJob">
-                                        @Culture["Onboarding.AddJob"]
-                                    </button>
-                                }
-                            }
+                            <WorkHistoryStep Draft="Draft"
+                                             AddJob="AddJob"
+                                             RemoveJob="RemoveJob"
+                                             SetJobStart="OnSetJobStart"
+                                             SetJobEnd="OnSetJobEnd" />
                             break;
 
                         case 5:
-                            <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
-                            <h1 tabindex="-1">@Culture["Onboarding.Step5.Title"]</h1>
-                            <p class="ob-wizard__lead">@Culture["Onboarding.Step5.Lead"]</p>
-                            <fieldset>
-                                <legend class="visually-hidden">@Culture["Profile.Education"]</legend>
-                                @foreach (var level in OnboardingWizardCatalog.EducationRadioLevels)
-                                {
-                                    var isSelected = EducationSelected(level);
-                                    <label class="ob-wizard__radio @(isSelected ? "is-selected" : null)">
-                                        <input type="radio" name="education" checked="@isSelected"
-                                               @onchange="() => SelectEducation(level)" />
-                                        @EducationLabel(level)
-                                    </label>
-                                }
-                                @if (_education.StartsWith("MBO", StringComparison.Ordinal))
-                                {
-                                    <div class="ob-wizard__transport">
-                                        @foreach (var mboLevel in MboLevels)
-                                        {
-                                            var isSelected = MboLevelSelected(mboLevel);
-                                            <button type="button" aria-pressed="@isSelected"
-                                                    @onclick="() => SelectEducation(MboEducation(mboLevel))">
-                                                @mboLevel
-                                            </button>
-                                        }
-                                    </div>
-                                }
-                            </fieldset>
-                            <label>
-                                @Culture["Onboarding.EducationDirection"]
-                                <input maxlength="128" @bind="_educationDirection"
-                                       @bind:event="oninput" @bind:after="ScheduleProfileSave" />
-                            </label>
+                            <EducationStep Draft="Draft" SelectEducation="SelectEducation" />
                             break;
 
                         case 6:
-                            <h1 tabindex="-1">@Culture["Onboarding.Step6.Title"]</h1>
-                            <p class="ob-wizard__lead">@Culture["Onboarding.Step6.Lead"]</p>
-                            <div class="ob-wizard__dream-search">
-                                <input role="combobox"
-                                       aria-expanded="@(_dreamSearch.Length > 0)"
-                                       aria-autocomplete="list"
-                                       placeholder="@Culture["Onboarding.DreamSearch"]"
-                                       @bind="_dreamSearch"
-                                       @bind:event="oninput"
-                                       @onkeydown="DreamKeyDown" />
-                                @if (_dreamSearch.Length > 0)
-                                {
-                                    <div role="listbox">
-                                        @foreach (var dreamJob in DreamJobCatalog.Search(_dreamSearch))
-                                        {
-                                            <button type="button" role="option" @onclick="() => ChooseDream(dreamJob)">
-                                                @((MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""))
-                                                <span>@Culture[$"DreamJob.{dreamJob.Key}"]</span>
-                                            </button>
-                                        }
-                                        <button type="button" @onclick="ChooseOwnDream">
-                                            ＋ @Culture.Format("Onboarding.DreamOwn", _dreamSearch.Trim())
-                                        </button>
-                                    </div>
-                                }
-                            </div>
-                            <div class="ob-wizard__dream-grid">
-                                @foreach (var dreamJob in DreamJobCatalog.All)
-                                {
-                                    var isSelected = _dream == dreamJob.TitleNl;
-                                    <button type="button" aria-pressed="@isSelected"
-                                            class="@(isSelected ? "is-selected" : null)"
-                                            @onclick="() => ChooseDream(dreamJob)">
-                                        <span>@((MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""))</span>
-                                        <small>@Culture[$"DreamJob.{dreamJob.Key}"]</small>
-                                    </button>
-                                }
-                            </div>
+                            <DreamJobStep Draft="Draft"
+                                          ChooseDream="ChooseDream"
+                                          ChooseOwnDream="ChooseOwnDream"
+                                          DreamKeyDown="DreamKeyDown" />
                             break;
 
-                        case 7 when !_hasConsent:
-                            <h1 tabindex="-1">@Culture["Onboarding.Consent.Title"]</h1>
-                            <p class="ob-wizard__lead">@Culture["Onboarding.Consent.Lead"]</p>
-                            <ol class="ob-wizard__test-list">
-                                @foreach (var tab in TestTabs)
-                                {
-                                    <li>
-                                        <strong>@Culture[tab.Title]</strong>
-                                        <small>@Culture[tab.Lead]</small>
-                                    </li>
-                                }
-                            </ol>
-                            <label class="ob-wizard__consent" role="switch" aria-checked="@_consentRequested">
-                                <input type="checkbox" @bind="_consentRequested" />
-                                @Culture["Onboarding.Consent.Check"]
-                            </label>
-                            <details>
-                                <summary>@Culture["Onboarding.Consent.More"]</summary>
-                                <p>@Culture["Onboarding.Consent.MoreText"]</p>
-                            </details>
-                            <p class="ob-wizard__hint">🔒 @Culture["Onboarding.Consent.Private"]</p>
+                        case 7 when !Draft.HasConsent:
+                            <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" />
                             break;
 
                         case >= 7 and <= 10:
-                            <div class="ob-wizard__test-tabs">
-                                @foreach (var tab in TestTabs)
-                                {
-                                    var isCurrent = tab.Step == _step;
-                                    var isDone = tab.Step < _step;
-                                    <span class="@(isCurrent ? "is-current" : isDone ? "is-done" : null)">
-                                        @Culture[tab.Title]
-                                    </span>
-                                }
-                            </div>
-                            <h1 tabindex="-1">@Culture[$"Onboarding.Step{_step}.Title"]</h1>
-                            <p class="ob-wizard__lead">@Culture["Onboarding.Test.Lead"]</p>
-                            @if (_miniQuestions.Count == 0)
-                            {
-                                <p>@Culture["Onboarding.MiniAllDone"]</p>
-                            }
-                            else
-                            {
-                                @foreach (var question in _miniQuestions.Take(_currentQuestion + 2))
-                                {
-                                    var index = _miniQuestions.IndexOf(question);
-                                    var answered = _miniAnswers.ContainsKey(question.Id);
-                                    <LikertScaleQuestion QuestionId="question.Id"
-                                                         Text="@QuestionText(question)"
-                                                         Value="@(answered ? _miniAnswers[question.Id] : null)"
-                                                         Collapsed="@(answered && index != _currentQuestion)"
-                                                         Dimmed="@(index > _currentQuestion)"
-                                                         Interactive="@(index <= _currentQuestion)"
-                                                         IsCurrent="@(index == _currentQuestion)"
-                                                         Index="@(index + 1)"
-                                                         Total="@_miniQuestions.Count"
-                                                         InputPrefix="@MiniPrefix"
-                                                         HighLabel="@Culture["Onboarding.Likert.High"]"
-                                                         LowLabel="@Culture["Onboarding.Likert.Low"]"
-                                                         ValueChanged="value => AnswerAsync(question.Id, value)"
-                                                         Expanded="() => ExpandQuestion(index)" />
-                                }
-                            }
+                            <OnboardingMiniTest Step="_step"
+                                                CurrentQuestion="_currentQuestion"
+                                                TestTabs="MiniTestTabs"
+                                                Questions="_miniQuestions"
+                                                Answers="_miniAnswers"
+                                                InputPrefix="@MiniPrefix"
+                                                Answer="OnMiniAnswer"
+                                                ExpandQuestion="ExpandQuestion"
+                                                ResolveQuestionText="QuestionText" />
                             break;
                     }
                 </section>
@@ -620,77 +276,36 @@
 
 @code {
     private enum WizardPhase { Wizard, Install }
-    private sealed record Preset(string Code, string Title, string Lead);
     private sealed record SidebarItem(int Number, int First, int Last, string Title, string Lead);
-    private sealed record TestTab(int Step, string Title, string Lead);
     private sealed record WelcomePhase(int Number, string Title, string Lead, string Time);
-    private sealed record MiniQuestion(int Id, string TextKey);
+    
 
     private bool _loading = true;
     private bool _busy;
     private bool _welcome;
     private bool _finish;
-    private bool _fineTune;
-    private bool _presetsOverridden;
-    private bool _immediate = true;
-    private bool _noWork;
-    private bool _hasConsent;
-    private bool _consentRequested;
+    private readonly OnboardingProfileDraft Draft = new();
     private bool _miniArrivedViaBack;
     private bool _installIos;
     private bool _installCanPrompt;
-    private bool _customTravel;
-    private bool _showCity;
-    private bool _postcodeMissing;
-    private bool _postcodeResolved;
     private bool _saving;
     private bool _savedVisible;
     private bool _saveError;
     private int _step = 1;
     private int _currentQuestion;
-    private int _maxTravel = 30;
-    private decimal? _minHours = 8;
-    private decimal? _maxHours = 24;
-    private string _firstName = "";
-    private string _lastName = "";
-    private string _phone = "";
-    private string _postcode = "";
-    private string _city = "";
-    private string _transport = "";
-    private string _dream = "";
-    private string _dreamSearch = "";
-    private string _birthDay = "";
-    private string _birthMonth = "";
-    private string _birthYear = "";
-    private string _education = "";
-    private string _educationDirection = "";
     private string _installMessage = "";
     private string? _error;
-    private DateOnly? _birthDate;
-    private DateOnly? _availableFrom;
-    private double? _homeLat;
-    private double? _homeLng;
     private WizardPhase _phase;
     private OnboardingState? _state;
-    private readonly HashSet<string> _availability = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _presets = new(StringComparer.OrdinalIgnoreCase);
-    private readonly List<CandidateEmployerHistory> _jobs = [];
-    private readonly List<AddressSuggestion> _suggestions = [];
     private readonly Dictionary<int, int> _miniAnswers = new();
     private readonly Dictionary<int, int> _serverAnswers = new();
     private readonly HashSet<int> _lockedIds = [];
-    private List<MiniQuestion> _miniQuestions = [];
-    private QuestionnaireAutosave? _autosave;
+    private List<OnboardingMiniTest.MiniQuestion> _miniQuestions = [];
     private CancellationTokenSource? _saveCts;
     private CancellationTokenSource? _geocodeCts;
     private CancellationTokenSource? _dreamCts;
 
-    private static readonly string[] Days = DayPartMatrix.DayCodes;
-    private static readonly string[] WorkingSlots = ["Ochtend", "Middag", "Avond"];
-    private static readonly string[] TransportOptions = TransportLabels.Selectable;
-    private static readonly int[] TravelChoices = [10, 20, 30, 45];
-    private static readonly string[] MboLevels = ["1", "2", "3", "4"];
-    private static readonly Preset[] Presets =
+    private static readonly AvailabilityStep.Preset[] PresetItems =
     [
         new("direct", "Onboarding.Preset.Direct", "Onboarding.Preset.Direct.Lead"),
         new("school", "Onboarding.Preset.School", "Onboarding.Preset.School.Lead"),
@@ -701,6 +316,22 @@
         new("parttime", "Onboarding.Preset.Parttime", "Onboarding.Preset.Parttime.Lead"),
         new("fulltime", "Onboarding.Preset.Fulltime", "Onboarding.Preset.Fulltime.Lead")
     ];
+    private static readonly TestConsentStep.TestTab[] ConsentTabs =
+    [
+        new(7, "Onboarding.Test.Competency", "Onboarding.Test.Competency.Lead"),
+        new(8, "Onboarding.Test.Career", "Onboarding.Test.Career.Lead"),
+        new(9, "Onboarding.Test.Culture", "Onboarding.Test.Culture.Lead"),
+        new(10, "Onboarding.Test.Values", "Onboarding.Test.Values.Lead")
+    ];
+    private static readonly OnboardingMiniTest.TestTab[] MiniTestTabs = ConsentTabs
+        .Select(t => new OnboardingMiniTest.TestTab(t.Step, t.Title, t.Lead)).ToArray();
+    private QuestionnaireAutosave? _autosave;
+
+    private static readonly string[] Days = DayPartMatrix.DayCodes;
+    private static readonly string[] WorkingSlots = ["Ochtend", "Middag", "Avond"];
+    private static readonly string[] TransportOptions = TransportLabels.Selectable;
+    private static readonly int[] TravelChoices = [10, 20, 30, 45];
+    private static readonly string[] MboLevels = ["1", "2", "3", "4"];
     private static readonly SidebarItem[] Sidebar =
     [
         new(1, 1, 3, "Onboarding.Phase.OverJou", "Onboarding.Side.OverJou"),
@@ -708,13 +339,6 @@
         new(3, 6, 6, "Onboarding.Phase.Droom", "Onboarding.Side.Droom"),
         new(4, 7, 10, "Onboarding.Phase.WieBenJij", "Onboarding.Side.WieBenJij"),
         new(5, 11, 11, "Onboarding.Side.Kompas", "Onboarding.Side.KompasLead")
-    ];
-    private static readonly TestTab[] TestTabs =
-    [
-        new(7, "Onboarding.Test.Competency", "Onboarding.Test.Competency.Lead"),
-        new(8, "Onboarding.Test.Career", "Onboarding.Test.Career.Lead"),
-        new(9, "Onboarding.Test.Culture", "Onboarding.Test.Culture.Lead"),
-        new(10, "Onboarding.Test.Values", "Onboarding.Test.Values.Lead")
     ];
     private static readonly WelcomePhase[] WelcomePhases =
     [
@@ -727,33 +351,33 @@
     private string SaveText => _saveError ? Culture["Onboarding.NotSaved"]
         : _saving ? Culture["Onboarding.Saving"]
         : _savedVisible ? $"✓ {Culture["Onboarding.Saved"]}" : "";
-    private string HoursLabel => _minHours is not null && _maxHours is not null
-        ? $"{_minHours:0} – {_maxHours:0} {Culture["Onboarding.Hours"]}" : "–";
-    private string DaysSummary => _availability.Count == 0
-        ? "–" : Culture.Format("Onboarding.DayPartsCount", _availability.Count);
-    private string AvailableFromLabel => _immediate
-        ? Culture["Onboarding.AvailableImmediate"] : _availableFrom?.ToString() ?? "";
+    private string HoursLabel => Draft.MinHours is not null && Draft.MaxHours is not null
+        ? $"{Draft.MinHours:0} – {Draft.MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";
+    private string DaysSummary => Draft.Availability.Count == 0
+        ? "–" : Culture.Format("Onboarding.DayPartsCount", Draft.Availability.Count);
+    private string AvailableFromLabel => Draft.Immediate
+        ? Culture["Onboarding.AvailableImmediate"] : Draft.AvailableFrom?.ToString() ?? "";
     private string AndSeparator => $" {Culture["Onboarding.And"]} ";
     private string MiniPrefix => $"obv2-{_step}-";
-    private int MinHoursSlider => decimal.ToInt32(_minHours ?? 1);
-    private int MaxHoursSlider => decimal.ToInt32(_maxHours ?? 60);
-    private bool AvailabilityValid => _minHours is > 0 && _maxHours >= _minHours && _availability.Count > 0;
-    private string NextLabel => _step == 7 && !_hasConsent
+    private int MinHoursSlider => decimal.ToInt32(Draft.MinHours ?? 1);
+    private int MaxHoursSlider => decimal.ToInt32(Draft.MaxHours ?? 60);
+    private bool AvailabilityValid => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0;
+    private string NextLabel => _step == 7 && !Draft.HasConsent
         ? Culture["Onboarding.Consent.Cta"]
         : _step == 10 ? Culture["Onboarding.ViewKompas"]
         : _step is >= 7 ? Culture["Onboarding.NextTest"]
-        : _fineTune && _step == 2 ? Culture["Onboarding.Done"]
+        : Draft.FineTune && _step == 2 ? Culture["Onboarding.Done"]
         : Culture["Onboarding.Next"];
     private bool CanNext => _step switch
     {
-        1 => !string.IsNullOrWhiteSpace(_firstName)
-             && !string.IsNullOrWhiteSpace(_lastName)
-             && _birthDate is not null
-             && ((_homeLat is not null && _homeLng is not null) || !string.IsNullOrWhiteSpace(_city)),
+        1 => !string.IsNullOrWhiteSpace(Draft.FirstName)
+             && !string.IsNullOrWhiteSpace(Draft.LastName)
+             && Draft.BirthDate is not null
+             && ((Draft.HomeLat is not null && Draft.HomeLng is not null) || !string.IsNullOrWhiteSpace(Draft.City)),
         2 => AvailabilityValid,
-        3 => !string.IsNullOrWhiteSpace(_transport) && _maxTravel > 0,
-        6 => !string.IsNullOrWhiteSpace(_dream),
-        7 when !_hasConsent => _consentRequested,
+        3 => !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
+        6 => !string.IsNullOrWhiteSpace(Draft.Dream),
+        7 when !Draft.HasConsent => Draft.ConsentRequested,
         >= 7 => _miniQuestions.All(question => _miniAnswers.ContainsKey(question.Id)),
         _ => true
     };
@@ -762,6 +386,23 @@
     {
         Culture.Changed += CultureChanged;
         GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
+        Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
+
+        try
+        {
+            if (await FeatureFlags.IsEnabledAsync(Jobsy.Core.Features.PlatformFeature.CandidatePassport))
+            {
+                var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+                var target = "/candidate/ontdekkingsreis" + uri.Query;
+                Navigation.NavigateTo(target, replace: true);
+                return;
+            }
+        }
+        catch
+        {
+            // Fall through to classic wizard on flag lookup failure.
+        }
+
         await LoadAsync();
     }
 
@@ -814,45 +455,46 @@
     private void ApplyProfile(MeProfile? profile)
     {
         if (profile is null) return;
-        _firstName = profile.FirstName ?? "";
-        _lastName = profile.LastName ?? "";
-        _phone = profile.PhoneNumber ?? "";
-        _birthDate = profile.DateOfBirth;
-        if (_birthDate is { } date)
+        Draft.FirstName = profile.FirstName ?? "";
+        Draft.LastName = profile.LastName ?? "";
+        Draft.Phone = profile.PhoneNumber ?? "";
+        Draft.BirthDate = profile.DateOfBirth;
+        if (Draft.BirthDate is { } date)
         {
-            _birthDay = date.Day.ToString();
-            _birthMonth = date.Month.ToString();
-            _birthYear = date.Year.ToString();
+            Draft.BirthDay = date.Day.ToString();
+            Draft.BirthMonth = date.Month.ToString();
+            Draft.BirthYear = date.Year.ToString();
         }
 
-        _hasConsent = profile.TestAiConsentAt is not null;
-        _homeLat = profile.HomeLatitude;
-        _homeLng = profile.HomeLongitude;
+        Draft.HasConsent = profile.TestAiConsentAt is not null;
+        Draft.HomeLat = profile.HomeLatitude;
+        Draft.HomeLng = profile.HomeLongitude;
         var preferences = profile.Preferences ?? new();
         SplitAddress(preferences.HomeAddress);
-        _minHours = preferences.MinHoursPerWeek ?? 8;
-        _maxHours = preferences.MaxHoursPerWeek ?? 24;
-        _maxTravel = preferences.MaxTravelMinutes ?? 30;
-        _transport = preferences.PreferredTransport is null ? "" : TransportLabels.Canonical(preferences.PreferredTransport);
-        _immediate = profile.AvailableFromDate is null;
-        _availableFrom = profile.AvailableFromDate;
+        Draft.MinHours = preferences.MinHoursPerWeek ?? 8;
+        Draft.MaxHours = preferences.MaxHoursPerWeek ?? 24;
+        Draft.MaxTravel = preferences.MaxTravelMinutes ?? 30;
+        Draft.Transport = preferences.PreferredTransport is null ? "" : TransportLabels.Canonical(preferences.PreferredTransport);
+        Draft.Immediate = profile.AvailableFromDate is null;
+        Draft.AvailableFrom = profile.AvailableFromDate;
         foreach (var preset in preferences.AvailabilityPresets.Where(AvailabilityPresetRules.IsKnown))
         {
-            _presets.Add(preset);
+            Draft.Presets.Add(preset);
         }
-        _presetsOverridden = preferences.AvailabilityPresetsOverridden == true;
+        Draft.PresetsOverridden = preferences.AvailabilityPresetsOverridden == true;
         foreach (var (day, parts) in preferences.Availability)
         {
-            foreach (var part in parts) _availability.Add($"{day}:{part}");
+            foreach (var part in parts) Draft.Availability.Add($"{day}:{part}");
         }
-        _noWork = preferences.NoWorkExperience == true;
-        _jobs.AddRange(preferences.Employers.Take(3));
+        Draft.NoWork = preferences.NoWorkExperience == true;
+        Draft.Jobs.Clear();
+        Draft.Jobs.AddRange(preferences.Employers.Take(3));
         var education = preferences.Educations.FirstOrDefault();
         if (!string.IsNullOrWhiteSpace(education))
         {
             var parts = education.Split('–', 2, StringSplitOptions.TrimEntries);
-            _education = parts[0];
-            _educationDirection = parts.Length > 1 ? parts[1] : preferences.EducationDirection ?? "";
+            Draft.Education = parts[0];
+            Draft.EducationDirection = parts.Length > 1 ? parts[1] : preferences.EducationDirection ?? "";
         }
     }
 
@@ -886,7 +528,7 @@
         _miniArrivedViaBack = false;
         try
         {
-            if (_step == 7 && !_hasConsent)
+            if (_step == 7 && !Draft.HasConsent)
             {
                 await AcceptConsentAsync();
                 return;
@@ -943,17 +585,17 @@
         Navigation.NavigateTo("/home");
     }
 
-    private void ShowCity() => _showCity = true;
+    private void ShowCity() => Draft.ShowCity = true;
 
     private void SplitAddress(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return;
         var index = value.Trim().IndexOf(' ');
-        _postcode = index > 0 ? value[..index].Trim() : value.Trim();
-        _city = index > 0 ? value[(index + 1)..].Trim() : "";
+        Draft.Postcode = index > 0 ? value[..index].Trim() : value.Trim();
+        Draft.City = index > 0 ? value[(index + 1)..].Trim() : "";
     }
 
-    private string HomeAddress() => $"{NormalizePostcode(_postcode)} {_city.Trim()}".Trim();
+    private string HomeAddress() => $"{NormalizePostcode(Draft.Postcode)} {Draft.City.Trim()}".Trim();
 
     private static string NormalizePostcode(string value)
     {
@@ -963,8 +605,8 @@
 
     private void AddressChanged()
     {
-        _homeLat = _homeLng = null;
-        _postcodeResolved = false;
+        Draft.HomeLat = Draft.HomeLng = null;
+        Draft.PostcodeResolved = false;
         ScheduleProfileSave();
         _geocodeCts?.Cancel();
         _geocodeCts = new();
@@ -976,14 +618,14 @@
         try
         {
             await Task.Delay(350, cancellationToken);
-            var postcode = NormalizePostcode(_postcode);
+            var postcode = NormalizePostcode(Draft.Postcode);
             if (!System.Text.RegularExpressions.Regex.IsMatch(postcode, "^[1-9][0-9]{3} [A-Z]{2}$")) return;
             var result = (await Geocoder.SuggestAsync(postcode, cancellationToken))
                 .FirstOrDefault(item => item.Label.Replace(" ", "")
                     .StartsWith(postcode.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
             if (result is null)
             {
-                _postcodeMissing = true;
+                Draft.PostcodeMissing = true;
                 await InvokeAsync(StateHasChanged);
                 return;
             }
@@ -994,67 +636,67 @@
         }
         catch
         {
-            _postcodeMissing = true;
+            Draft.PostcodeMissing = true;
         }
     }
 
     private void SelectAddress(AddressSuggestion item)
     {
-        _homeLat = item.Latitude;
-        _homeLng = item.Longitude;
+        Draft.HomeLat = item.Latitude;
+        Draft.HomeLng = item.Longitude;
         SplitAddress(item.Label);
-        _postcode = NormalizePostcode(_postcode);
-        _postcodeResolved = true;
-        _postcodeMissing = false;
+        Draft.Postcode = NormalizePostcode(Draft.Postcode);
+        Draft.PostcodeResolved = true;
+        Draft.PostcodeMissing = false;
         ScheduleProfileSave();
     }
 
     private void BirthDateChanged()
     {
-        _birthDate = int.TryParse(_birthDay, out var day)
-            && int.TryParse(_birthMonth, out var month)
-            && int.TryParse(_birthYear, out var year)
+        Draft.BirthDate = int.TryParse(Draft.BirthDay, out var day)
+            && int.TryParse(Draft.BirthMonth, out var month)
+            && int.TryParse(Draft.BirthYear, out var year)
             && DateOnly.TryParse($"{year:D4}-{month:D2}-{day:D2}", out var date)
                 ? date : null;
         ScheduleProfileSave();
     }
 
-    private void ToggleFineTune() => _fineTune = !_fineTune;
+    private void ToggleFineTune() => Draft.FineTune = !Draft.FineTune;
 
     private void TogglePreset(string code)
     {
-        if (!_presets.Add(code)) _presets.Remove(code);
-        if (!_presetsOverridden) ApplyPresets();
+        if (!Draft.Presets.Add(code)) Draft.Presets.Remove(code);
+        if (!Draft.PresetsOverridden) ApplyPresets();
         ScheduleProfileSave();
     }
 
     private void ApplyPresets()
     {
-        var result = AvailabilityPresetRules.Compute(_presets, _minHours, _maxHours);
-        _minHours = result.MinHours;
-        _maxHours = result.MaxHours;
-        _availability.Clear();
-        foreach (var dayPart in result.DayParts) _availability.Add(dayPart);
-        _immediate = result.Immediate;
-        if (_immediate) _availableFrom = null;
+        var result = AvailabilityPresetRules.Compute(Draft.Presets, Draft.MinHours, Draft.MaxHours);
+        Draft.MinHours = result.MinHours;
+        Draft.MaxHours = result.MaxHours;
+        Draft.Availability.Clear();
+        foreach (var dayPart in result.DayParts) Draft.Availability.Add(dayPart);
+        Draft.Immediate = result.Immediate;
+        if (Draft.Immediate) Draft.AvailableFrom = null;
     }
 
     private void ResetPresets()
     {
-        _presetsOverridden = false;
+        Draft.PresetsOverridden = false;
         ApplyPresets();
         ScheduleProfileSave();
     }
 
     private Task SetMinHoursAsync(int value)
     {
-        _minHours = value;
+        Draft.MinHours = value;
         return Task.CompletedTask;
     }
 
     private Task SetMaxHoursAsync(int value)
     {
-        _maxHours = value;
+        Draft.MaxHours = value;
         return Task.CompletedTask;
     }
 
@@ -1066,7 +708,7 @@
 
     private void ManualAvailability()
     {
-        _presetsOverridden = true;
+        Draft.PresetsOverridden = true;
         ScheduleProfileSave();
     }
 
@@ -1075,13 +717,13 @@
 
     private void ToggleAvailability(string key)
     {
-        if (!_availability.Add(key)) _availability.Remove(key);
+        if (!Draft.Availability.Add(key)) Draft.Availability.Remove(key);
         ManualAvailability();
     }
 
     private void SelectTransport(string transport)
     {
-        _transport = transport;
+        Draft.Transport = transport;
         ScheduleProfileSave();
     }
 
@@ -1097,18 +739,18 @@
 
     private void SelectTravelTime(int minutes)
     {
-        _maxTravel = minutes;
-        _customTravel = false;
+        Draft.MaxTravel = minutes;
+        Draft.CustomTravel = false;
         ScheduleProfileSave();
     }
 
-    private void ShowCustomTravel() => _customTravel = true;
+    private void ShowCustomTravel() => Draft.CustomTravel = true;
 
-    private void AddJob() => _jobs.Add(new CandidateEmployerHistory());
+    private void AddJob() => Draft.Jobs.Add(new CandidateEmployerHistory());
 
     private void RemoveJob(CandidateEmployerHistory job)
     {
-        _jobs.Remove(job);
+        Draft.Jobs.Remove(job);
         ScheduleProfileSave();
     }
 
@@ -1125,47 +767,47 @@
     }
 
     private bool EducationSelected(string level)
-        => _education == level || level == "MBO" && _education.StartsWith("MBO", StringComparison.Ordinal);
+        => Draft.Education == level || level == "MBO" && Draft.Education.StartsWith("MBO", StringComparison.Ordinal);
 
     private string EducationLabel(string level)
         => level == EducationLevelLabels.None ? Culture["Education.None"] : level;
 
     private static string MboEducation(string level) => $"MBO {level}";
 
-    private bool MboLevelSelected(string level) => _education == MboEducation(level);
+    private bool MboLevelSelected(string level) => Draft.Education == MboEducation(level);
 
     private void SelectEducation(string level)
     {
-        _education = level == "MBO" ? MboEducation("1") : level;
-        if (level == EducationLevelLabels.None) _educationDirection = "";
+        Draft.Education = level == "MBO" ? MboEducation("1") : level;
+        if (level == EducationLevelLabels.None) Draft.EducationDirection = "";
         ScheduleProfileSave();
     }
 
     private void ChooseDream(DreamJob job)
     {
-        _dream = job.TitleNl;
-        _dreamSearch = "";
+        Draft.Dream = job.TitleNl;
+        Draft.DreamSearch = "";
         ScheduleDreamSave();
     }
 
     private void ChooseOwnDream()
     {
-        var dream = _dreamSearch.Trim();
-        _dream = dream[..Math.Min(128, dream.Length)];
-        _dreamSearch = "";
+        var dream = Draft.DreamSearch.Trim();
+        Draft.Dream = dream[..Math.Min(128, dream.Length)];
+        Draft.DreamSearch = "";
         ScheduleDreamSave();
     }
 
     private Task DreamKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key == "Escape") _dreamSearch = "";
-        else if (e.Key == "Enter" && _dreamSearch.Length > 0) ChooseOwnDream();
+        if (e.Key == "Escape") Draft.DreamSearch = "";
+        else if (e.Key == "Enter" && Draft.DreamSearch.Length > 0) ChooseOwnDream();
         return Task.CompletedTask;
     }
 
     private async Task DreamUnknownAsync()
     {
-        _dream = "";
+        Draft.Dream = "";
         await SaveDreamAsync();
         _miniArrivedViaBack = false;
         _step = 7;
@@ -1195,7 +837,7 @@
     }
 
     private Task SaveDreamAsync()
-        => Api.SaveOnboardingDreamJobAsync(string.IsNullOrWhiteSpace(_dream) ? null : _dream.Trim());
+        => Api.SaveOnboardingDreamJobAsync(string.IsNullOrWhiteSpace(Draft.Dream) ? null : Draft.Dream.Trim());
 
     private async Task PrepareMiniAsync()
     {
@@ -1209,7 +851,7 @@
         _lockedIds.Clear();
         _miniQuestions = [];
         _currentQuestion = 0;
-        if (_step is < 7 or > 10 || !_hasConsent) return;
+        if (_step is < 7 or > 10 || !Draft.HasConsent) return;
 
         Dictionary<string, int>? answers;
         IEnumerable<(int Id, string Key)> catalog;
@@ -1256,7 +898,7 @@
 
         _miniQuestions = catalog
             .Where(item => questionIds.Contains(item.Id) && !_lockedIds.Contains(item.Id))
-            .Select(item => new MiniQuestion(item.Id, item.Key))
+            .Select(item => new OnboardingMiniTest.MiniQuestion(item.Id, item.Key))
             .ToList();
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {
@@ -1292,7 +934,7 @@
             return;
         }
 
-        if (_step == 7 && !_hasConsent)
+        if (_step == 7 && !Draft.HasConsent)
         {
             return;
         }
@@ -1330,7 +972,7 @@
         }
     }
 
-    private string QuestionText(MiniQuestion question) => Culture[question.TextKey];
+    private string QuestionText(OnboardingMiniTest.MiniQuestion question) => Culture[question.TextKey];
 
     private async Task AnswerAsync(int id, int value)
     {
@@ -1345,8 +987,8 @@
     private async Task AcceptConsentAsync()
     {
         var profile = await Api.AcceptTestAiConsentAsync();
-        _hasConsent = profile?.TestAiConsentAt is not null;
-        if (_hasConsent)
+        Draft.HasConsent = profile?.TestAiConsentAt is not null;
+        if (Draft.HasConsent)
         {
             await PrepareMiniAsync();
             await TryAutoAdvanceEmptyMiniStepAsync();
@@ -1363,7 +1005,7 @@
                 var profile = await Api.GetMyProfileAsync();
                 if (profile is not null)
                 {
-                    _hasConsent = profile.TestAiConsentAt is not null;
+                    Draft.HasConsent = profile.TestAiConsentAt is not null;
                 }
 
                 if (!_loading && !_welcome && !_finish && _step is >= 7 and <= 10)
@@ -1421,38 +1063,38 @@
     }
 
     private Task SaveProfileAsync(CancellationToken cancellationToken) => Api.UpdateMyProfileAsync(
-        dateOfBirth: _birthDate,
+        dateOfBirth: Draft.BirthDate,
         preferences: new CandidatePreferences
         {
-            MinHoursPerWeek = _minHours,
-            MaxHoursPerWeek = _maxHours,
-            MaxTravelMinutes = _maxTravel,
-            PreferredTransport = string.IsNullOrWhiteSpace(_transport) ? null : _transport,
+            MinHoursPerWeek = Draft.MinHours,
+            MaxHoursPerWeek = Draft.MaxHours,
+            MaxTravelMinutes = Draft.MaxTravel,
+            PreferredTransport = string.IsNullOrWhiteSpace(Draft.Transport) ? null : Draft.Transport,
             Availability = BuildAvailability(),
-            AvailabilityPresets = _presets.ToList(),
-            AvailabilityPresetsOverridden = _presetsOverridden,
-            Employers = _jobs,
-            NoWorkExperience = _noWork,
-            Educations = string.IsNullOrWhiteSpace(_education)
+            AvailabilityPresets = Draft.Presets.ToList(),
+            AvailabilityPresetsOverridden = Draft.PresetsOverridden,
+            Employers = Draft.Jobs,
+            NoWorkExperience = Draft.NoWork,
+            Educations = string.IsNullOrWhiteSpace(Draft.Education)
                 ? []
-                : [OnboardingWizardCatalog.FormatEducationLine(_education, _educationDirection)],
-            EducationDirection = _educationDirection,
+                : [OnboardingWizardCatalog.FormatEducationLine(Draft.Education, Draft.EducationDirection)],
+            EducationDirection = Draft.EducationDirection,
             HomeAddress = HomeAddress()
         },
-        homeLatitude: _homeLat,
-        homeLongitude: _homeLng,
+        homeLatitude: Draft.HomeLat,
+        homeLongitude: Draft.HomeLng,
         clearHomeLocation: string.IsNullOrWhiteSpace(HomeAddress()),
-        firstName: _firstName.Trim(),
-        lastName: _lastName.Trim(),
-        phoneNumber: string.IsNullOrWhiteSpace(_phone) ? null : _phone.Trim(),
-        availableFromDate: _immediate ? null : _availableFrom,
-        clearAvailableFromDate: _immediate,
+        firstName: Draft.FirstName.Trim(),
+        lastName: Draft.LastName.Trim(),
+        phoneNumber: string.IsNullOrWhiteSpace(Draft.Phone) ? null : Draft.Phone.Trim(),
+        availableFromDate: Draft.Immediate ? null : Draft.AvailableFrom,
+        clearAvailableFromDate: Draft.Immediate,
         ct: cancellationToken);
 
     private Dictionary<string, List<string>> BuildAvailability()
     {
         var result = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var key in _availability)
+        foreach (var key in Draft.Availability)
         {
             var pair = key.Split(':', 2);
             if (pair.Length != 2) continue;
@@ -1548,6 +1190,20 @@
     }
 
     private void CultureChanged() => InvokeAsync(StateHasChanged);
+
+    private Task OnSetJobStart((CandidateEmployerHistory Job, string? Value) args)
+    {
+        SetJobStart(args.Job, args.Value);
+        return Task.CompletedTask;
+    }
+
+    private Task OnSetJobEnd((CandidateEmployerHistory Job, string? Value) args)
+    {
+        SetJobEnd(args.Job, args.Value);
+        return Task.CompletedTask;
+    }
+
+    private Task OnMiniAnswer((int Id, int Value) args) => AnswerAsync(args.Id, args.Value);
 
     public async ValueTask DisposeAsync()
     {

@@ -39,6 +39,10 @@
     "sha256": "5ee04db60aae5c26eaadf67dc9333bca45ddfac643be966643445c55f88becad",
     "v": "20260927-dna-c"
   },
+  "css/features/ontdekkingsreis.css": {
+    "sha256": "f0c625f3bcbeca2e2cfa1356c5a3fc9a10220de9363e65c8f7b5d8ac80a547fb",
+    "v": "20260929-or-a"
+  },
   "css/features/questionnaire.css": {
     "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",
     "v": "20260928-q-scroll"

@@ -1,0 +1,726 @@
+@page "/candidate/ontdekkingsreis"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.CandidatePassport, FallbackPath = "/candidate/start")]
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Discovery
+@using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject IGeocodingClient Geocoder
+@inject IFeatureFlags FeatureFlags
+@inject GratisDnaMergeService GratisDnaMerge
+@implements IAsyncDisposable
+
+<PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
+
+<div class="journey">
+    @if (_loading)
+    {
+        <p class="journey__loading" aria-busy="true">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <JourneyScene Depth="_depth" IsMobile="false" />
+        <JourneyScene Depth="_depth" IsMobile="true" />
+
+        <div class="journey-mprog journey-only-mobile" role="group" aria-label="@MobileProgressAria">
+            <p class="journey-mprog__t">
+                <b>@MobileProgressLabel</b>
+                @if (_screen is not "start")
+                {
+                    <span class="muted">· @CurrentStepTitle</span>
+                }
+                <span class="journey-mprog__sp"></span>
+                @if (_saveStatus == "saved" && _screen is not "start")
+                {
+                    <span class="journey-mprog__ok">✓ @Culture["Discovery.Saved.Short"]</span>
+                }
+            </p>
+            <div class="journey-mtrack">
+                @for (var k = 0; k < 10; k++)
+                {
+                    <i class="@(SegmentClass(k))"></i>
+                }
+                <span class="journey-mtrack__mk" style="left:@MarkerLeft%">
+                    <JourneyLobster PlatesShed="@_platesShed" Size="28" Mobile="true" Label="@Culture["Discovery.Lobster.Aria"]" />
+                </span>
+            </div>
+        </div>
+
+        <div class="journey-stage">
+            <div class="journey-only-desktop">
+                <JourneyProgressRail CurrentStep="@_countedStep" SaveStatus="@_saveStatus" />
+            </div>
+
+            <section class="journey-step card" aria-live="polite">
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <p class="state-message error">@_error</p>
+                }
+
+                @if (_screen == "start")
+                {
+                    <p class="journey-step__eyebrow">@Culture["Discovery.Eyebrow"]</p>
+                    <h1 tabindex="-1" @ref="_heading">@Culture.Format("Discovery.Start.Title", Draft.FirstName)</h1>
+                    <p class="journey-step__lead">@_startLead</p>
+                    <ul class="journey-zones">
+                        <li>
+                            <div>
+                                <b>@Culture["Discovery.Zone.Coast"]</b>
+                                <small>@Culture["Discovery.Start.CoastLead"]</small>
+                            </div>
+                            <span>@Culture["Discovery.Start.CoastTime"]</span>
+                        </li>
+                        <li>
+                            <div>
+                                <b>@Culture["Discovery.Zone.Rocks"]</b>
+                                <small>@Culture["Discovery.Start.RocksLead"]</small>
+                            </div>
+                            <span>@Culture["Discovery.Start.RocksTime"]</span>
+                        </li>
+                        <li>
+                            <div>
+                                <b>@Culture["Discovery.Zone.Deep"]</b>
+                                <small>@Culture["Discovery.Start.DeepLead"]</small>
+                            </div>
+                            <span>@Culture["Discovery.Start.DeepTime"]</span>
+                        </li>
+                    </ul>
+                    <p class="journey-hint">@Culture["Discovery.Start.HintAnswers"]</p>
+                    <p class="journey-hint">@Culture["Discovery.Start.HintSaved"]</p>
+                    <p class="journey-hint">@Culture["Discovery.Start.HintLanguage"]</p>
+                    <div class="journey-step__foot">
+                        <span class="journey-step__sp"></span>
+                        <button type="button" class="btn-compact btn-compact--primary" @onclick="BeginAsync">
+                            @Culture["Discovery.Start.Cta"]
+                        </button>
+                    </div>
+                }
+                else if (_countedStep == 1)
+                {
+                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 1)</p>
+                    <PersonalStep Draft="Draft"
+                                  AddressChanged="AddressChanged"
+                                  BirthDateChanged="BirthDateChanged"
+                                  ShowCity="ShowCity"
+                                  SelectAddress="SelectAddress"
+                                  ShowWhatsApp="_employersEnabled"
+                                  EmployersEnabled="_employersEnabled"
+                                  UseDiscoveryPostcodeHint="true" />
+                    <div class="journey-step__foot">
+                        <span class="journey-step__sp"></span>
+                        <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
+                        <button type="button" class="btn-compact btn-compact--primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
+                            @Culture["Onboarding.Next"]
+                        </button>
+                    </div>
+                }
+                else if (_countedStep == 2)
+                {
+                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 2)</p>
+                    <AvailabilityStep Draft="Draft"
+                                      Presets="PresetItems"
+                                      TogglePreset="TogglePreset"
+                                      ToggleFineTune="ToggleFineTune"
+                                      SetMinHours="SetMinHoursAsync"
+                                      SetMaxHours="SetMaxHoursAsync"
+                                      ManualAvailability="ManualAvailabilityAsync"
+                                      ToggleAvailability="ToggleAvailability"
+                                      ResetPresets="ResetPresets" />
+                    <TransportStep Draft="Draft"
+                                   ShowHeading="false"
+                                   ShowDrivingLicenses="true"
+                                   SelectTransport="SelectTransport"
+                                   SelectTravelTime="SelectTravelTime"
+                                   ShowCustomTravel="ShowCustomTravel"
+                                   ToggleLicense="ToggleLicense" />
+                    <div class="journey-step__foot">
+                        <button type="button" class="btn-compact" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                        <span class="journey-step__sp"></span>
+                        <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
+                        <button type="button" class="btn-compact btn-compact--primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
+                            @Culture["Onboarding.Next"]
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    @* 07b: steps 3–6, consent, transitional 7–10 *@
+                    <p class="journey-step__eyebrow">@Culture[JourneyCatalog.ZoneEyebrowKey(_depth)]</p>
+                    <h1 tabindex="-1" @ref="_heading">@CurrentStepTitle</h1>
+                    <p class="journey-step__lead">@Culture["Discovery.Todo.LaterSteps"]</p>
+                    <div class="journey-step__foot">
+                        <button type="button" class="btn-compact" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                        <span class="journey-step__sp"></span>
+                        <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
+                    </div>
+                }
+            </section>
+
+            <div class="journey-lz journey-only-desktop">
+                <p class="journey-bubble">@Culture[JourneyCatalog.SayKey(_depth)]</p>
+                <JourneyLobster PlatesShed="@_platesShed" Label="@Culture["Discovery.Lobster.Aria"]" />
+                <span class="journey-lz__shadow" aria-hidden="true"></span>
+            </div>
+            <div class="journey-mlob journey-only-mobile">
+                <JourneyLobster PlatesShed="@_platesShed" Mobile="true" Label="@Culture["Discovery.Lobster.Aria"]" />
+                <p class="journey-bubble">@Culture[JourneyCatalog.SayKey(_depth)]</p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly OnboardingProfileDraft Draft = new();
+    private static readonly AvailabilityStep.Preset[] PresetItems =
+    [
+        new("direct", "Onboarding.Preset.Direct", "Onboarding.Preset.Direct.Lead"),
+        new("school", "Onboarding.Preset.School", "Onboarding.Preset.School.Lead"),
+        new("weekend", "Onboarding.Preset.Weekend", "Onboarding.Preset.Weekend.Lead"),
+        new("evening", "Onboarding.Preset.Evening", "Onboarding.Preset.Evening.Lead"),
+        new("office", "Onboarding.Preset.Office", "Onboarding.Preset.Office.Lead"),
+        new("holiday", "Onboarding.Preset.Holiday", "Onboarding.Preset.Holiday.Lead"),
+        new("parttime", "Onboarding.Preset.Parttime", "Onboarding.Preset.Parttime.Lead"),
+        new("fulltime", "Onboarding.Preset.Fulltime", "Onboarding.Preset.Fulltime.Lead")
+    ];
+
+    private bool _loading = true;
+    private bool _busy;
+    private bool _employersEnabled = true;
+    private string _screen = "start";
+    private int _countedStep;
+    private int _depth;
+    private string _saveStatus = "idle";
+    private string? _error;
+    private string _startLead = "";
+    private OnboardingState? _state;
+    private ElementReference _heading;
+    private CancellationTokenSource? _saveCts;
+    private CancellationTokenSource? _geocodeCts;
+
+    private int _platesShed => Math.Max(_countedStep - 1, 0);
+
+    private string CurrentStepTitle => _countedStep is >= 1 and <= 10
+        ? Culture[JourneyCatalog.Steps[_countedStep - 1].TitleKey]
+        : Culture["Discovery.Eyebrow"];
+
+    private string MobileProgressLabel => _screen == "start"
+        ? Culture["Discovery.Rail.StartCountShort"]
+        : Culture.Format("Discovery.Rail.StepCount", _countedStep);
+
+    private string MobileProgressAria => $"{MobileProgressLabel}, {_platesShed} lagen eraf";
+    private string MarkerLeft => _screen == "start" ? "2%" : $"{(_countedStep - 0.5) / 10 * 100:0.0}%";
+
+    private bool CanNext => _countedStep switch
+    {
+        1 => !string.IsNullOrWhiteSpace(Draft.FirstName)
+             && !string.IsNullOrWhiteSpace(Draft.LastName)
+             && Draft.BirthDate is not null
+             && ((Draft.HomeLat is not null && Draft.HomeLng is not null) || !string.IsNullOrWhiteSpace(Draft.City)),
+        2 => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0
+             && !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
+        _ => true
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
+        try
+        {
+            var flags = await FeatureFlags.GetAsync();
+            _employersEnabled = flags.EmployersEnabled;
+        }
+        catch
+        {
+            _employersEnabled = true;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            await GratisDnaMerge.TryMergeAsync();
+            var onboardingTask = Api.GetMyOnboardingAsync();
+            var profileTask = Api.GetMyProfileAsync();
+            await Task.WhenAll(onboardingTask, profileTask);
+            _state = await onboardingTask ?? new OnboardingState { CurrentStep = 1, ShouldShow = true };
+            ApplyProfile(await profileTask);
+            _startLead = _employersEnabled
+                ? Culture["Discovery.Start.Lead"]
+                : Culture["Discovery.Start.LeadEmployersOff"];
+
+            if (_state.IsComplete)
+            {
+                Navigation.NavigateTo("/candidate/paspoort", true);
+                return;
+            }
+
+            ParseQueryOrState();
+            if (_screen != "start")
+            {
+                await MarkStartedAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ParseQueryOrState()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("stap", out var stapVals))
+        {
+            ApplyScreen(stapVals.FirstOrDefault() ?? "start");
+            return;
+        }
+
+        var step = Math.Clamp(_state?.CurrentStep ?? 1, 1, 10);
+        var showStart = step == 1
+            && (_state?.Steps.Count == 0
+                || _state!.Steps.All(item => item.Step == 1 && item.CompletedAtUtc is null));
+        ApplyScreen(showStart ? "start" : step.ToString());
+    }
+
+    private void ApplyScreen(string stap)
+    {
+        _screen = string.IsNullOrWhiteSpace(stap) ? "start" : stap.Trim().ToLowerInvariant();
+        if (_screen == "start")
+        {
+            _countedStep = 0;
+        }
+        else if (int.TryParse(_screen, out var n))
+        {
+            _countedStep = Math.Clamp(n, 1, 10);
+            _screen = _countedStep.ToString();
+        }
+        else
+        {
+            // toestemming / klaar / unknown → park at step 2 for 07a
+            _countedStep = 2;
+            _screen = "2";
+        }
+
+        _depth = JourneyCatalog.DepthForScreen(_screen == "start" ? "start" : _countedStep.ToString());
+    }
+
+    private void ApplyProfile(MeProfile? profile)
+    {
+        if (profile is null) return;
+        Draft.FirstName = profile.FirstName ?? "";
+        Draft.LastName = profile.LastName ?? "";
+        Draft.Phone = profile.PhoneNumber ?? "";
+        Draft.WhatsAppAllowed = profile.WhatsAppContactAllowed;
+        Draft.BirthDate = profile.DateOfBirth;
+        if (Draft.BirthDate is { } date)
+        {
+            Draft.BirthDay = date.Day.ToString();
+            Draft.BirthMonth = date.Month.ToString();
+            Draft.BirthYear = date.Year.ToString();
+        }
+
+        Draft.HasConsent = profile.TestAiConsentAt is not null;
+        Draft.HomeLat = profile.HomeLatitude;
+        Draft.HomeLng = profile.HomeLongitude;
+        var preferences = profile.Preferences ?? new();
+        SplitAddress(preferences.HomeAddress);
+        Draft.MinHours = preferences.MinHoursPerWeek ?? 8;
+        Draft.MaxHours = preferences.MaxHoursPerWeek ?? 24;
+        Draft.MaxTravel = preferences.MaxTravelMinutes ?? 30;
+        Draft.Transport = preferences.PreferredTransport is null
+            ? ""
+            : TransportLabels.Canonical(preferences.PreferredTransport);
+        Draft.Immediate = profile.AvailableFromDate is null;
+        Draft.AvailableFrom = profile.AvailableFromDate;
+        Draft.Presets.Clear();
+        foreach (var preset in preferences.AvailabilityPresets.Where(AvailabilityPresetRules.IsKnown))
+        {
+            Draft.Presets.Add(preset);
+        }
+
+        Draft.PresetsOverridden = preferences.AvailabilityPresetsOverridden == true;
+        Draft.Availability.Clear();
+        foreach (var (day, parts) in preferences.Availability)
+        {
+            foreach (var part in parts) Draft.Availability.Add($"{day}:{part}");
+        }
+
+        Draft.DrivingLicenses.Clear();
+        foreach (var license in preferences.DrivingLicenses ?? [])
+        {
+            foreach (var code in DrivingLicenseLabels.Split(license))
+            {
+                Draft.DrivingLicenses.Add(code);
+            }
+        }
+
+        Draft.NoWork = preferences.NoWorkExperience == true;
+        Draft.Jobs.Clear();
+        Draft.Jobs.AddRange(preferences.Employers.Take(3));
+        var education = preferences.Educations.FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(education))
+        {
+            var parts = education.Split('–', 2, StringSplitOptions.TrimEntries);
+            Draft.Education = parts[0];
+            Draft.EducationDirection = parts.Length > 1 ? parts[1] : preferences.EducationDirection ?? "";
+        }
+    }
+
+    private async Task BeginAsync()
+    {
+        _countedStep = 1;
+        _screen = "1";
+        _depth = 1;
+        NavigateStep("1");
+        await MarkStartedAsync();
+    }
+
+    private async Task MarkStartedAsync()
+    {
+        if (_countedStep < 1) return;
+        try
+        {
+            _saveStatus = "saving";
+            _state = await Api.SaveMyOnboardingProgressAsync(_countedStep);
+            _saveStatus = "saved";
+        }
+        catch
+        {
+            _saveStatus = "error";
+        }
+    }
+
+    private async Task NextAsync()
+    {
+        if (!CanNext || _busy) return;
+        _busy = true;
+        try
+        {
+            await FlushAsync();
+            var next = Math.Min(10, _countedStep + 1);
+            _countedStep = next;
+            _screen = next.ToString();
+            _depth = next;
+            _state = await Api.SaveMyOnboardingProgressAsync(next, stepCompleted: true);
+            _saveStatus = "saved";
+            NavigateStep(_screen);
+            // 07a: stop clearly after step 2
+            if (next > 2)
+            {
+                // placeholder screen for steps 3+ until 07b
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _saveStatus = "error";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task BackAsync()
+    {
+        if (_countedStep <= 1)
+        {
+            _screen = "start";
+            _countedStep = 0;
+            _depth = 0;
+            NavigateStep("start");
+            return;
+        }
+
+        await FlushAsync();
+        _countedStep--;
+        _screen = _countedStep.ToString();
+        _depth = _countedStep;
+        await MarkStartedAsync();
+        NavigateStep(_screen);
+    }
+
+    private async Task LaterAsync()
+    {
+        try
+        {
+            await FlushAsync();
+            if (_countedStep >= 1)
+            {
+                await Api.SaveMyOnboardingProgressAsync(_countedStep);
+            }
+        }
+        catch
+        {
+            // best effort
+        }
+
+        Navigation.NavigateTo("/candidate/paspoort");
+    }
+
+    private void NavigateStep(string stap)
+    {
+        var uri = Navigation.GetUriWithQueryParameter("stap", stap);
+        Navigation.NavigateTo(uri, replace: true);
+    }
+
+    private string SegmentClass(int index)
+    {
+        if (_countedStep <= 0) return "";
+        if (index < _countedStep - 1) return "is-done";
+        if (index == _countedStep - 1) return "is-now";
+        return "";
+    }
+
+    private void ShowCity() => Draft.ShowCity = true;
+
+    private void SplitAddress(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return;
+        var index = value.Trim().IndexOf(' ');
+        Draft.Postcode = index > 0 ? value[..index].Trim() : value.Trim();
+        Draft.City = index > 0 ? value[(index + 1)..].Trim() : "";
+    }
+
+    private string HomeAddress() => $"{NormalizePostcode(Draft.Postcode)} {Draft.City.Trim()}".Trim();
+
+    private static string NormalizePostcode(string value)
+    {
+        var raw = value.Replace(" ", "").ToUpperInvariant();
+        return raw.Length == 6 ? raw[..4] + " " + raw[4..] : value.Trim().ToUpperInvariant();
+    }
+
+    private void AddressChanged()
+    {
+        Draft.HomeLat = Draft.HomeLng = null;
+        Draft.PostcodeResolved = false;
+        ScheduleProfileSave();
+        _geocodeCts?.Cancel();
+        _geocodeCts = new();
+        _ = GeocodeAsync(_geocodeCts.Token);
+    }
+
+    private async Task GeocodeAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(350, cancellationToken);
+            var postcode = NormalizePostcode(Draft.Postcode);
+            if (!System.Text.RegularExpressions.Regex.IsMatch(postcode, "^[1-9][0-9]{3} [A-Z]{2}$")) return;
+            var result = (await Geocoder.SuggestAsync(postcode, cancellationToken))
+                .FirstOrDefault(item => item.Label.Replace(" ", "")
+                    .StartsWith(postcode.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
+            if (result is null)
+            {
+                Draft.PostcodeMissing = true;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            SelectAddress(result);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch
+        {
+            Draft.PostcodeMissing = true;
+        }
+    }
+
+    private void SelectAddress(AddressSuggestion item)
+    {
+        Draft.HomeLat = item.Latitude;
+        Draft.HomeLng = item.Longitude;
+        SplitAddress(item.Label);
+        Draft.Postcode = NormalizePostcode(Draft.Postcode);
+        Draft.PostcodeResolved = true;
+        Draft.PostcodeMissing = false;
+        ScheduleProfileSave();
+    }
+
+    private void BirthDateChanged()
+    {
+        Draft.BirthDate = int.TryParse(Draft.BirthDay, out var day)
+            && int.TryParse(Draft.BirthMonth, out var month)
+            && int.TryParse(Draft.BirthYear, out var year)
+            && DateOnly.TryParse($"{year:D4}-{month:D2}-{day:D2}", out var date)
+                ? date : null;
+        ScheduleProfileSave();
+    }
+
+    private void ToggleFineTune() => Draft.FineTune = !Draft.FineTune;
+
+    private void TogglePreset(string code)
+    {
+        if (!Draft.Presets.Add(code)) Draft.Presets.Remove(code);
+        if (!Draft.PresetsOverridden) ApplyPresets();
+        ScheduleProfileSave();
+    }
+
+    private void ApplyPresets()
+    {
+        var result = AvailabilityPresetRules.Compute(Draft.Presets, Draft.MinHours, Draft.MaxHours);
+        Draft.MinHours = result.MinHours;
+        Draft.MaxHours = result.MaxHours;
+        Draft.Availability.Clear();
+        foreach (var dayPart in result.DayParts) Draft.Availability.Add(dayPart);
+        Draft.Immediate = result.Immediate;
+        if (Draft.Immediate) Draft.AvailableFrom = null;
+    }
+
+    private void ResetPresets()
+    {
+        Draft.PresetsOverridden = false;
+        ApplyPresets();
+        ScheduleProfileSave();
+    }
+
+    private Task SetMinHoursAsync(int value)
+    {
+        Draft.MinHours = value;
+        return Task.CompletedTask;
+    }
+
+    private Task SetMaxHoursAsync(int value)
+    {
+        Draft.MaxHours = value;
+        return Task.CompletedTask;
+    }
+
+    private Task ManualAvailabilityAsync()
+    {
+        Draft.PresetsOverridden = true;
+        ScheduleProfileSave();
+        return Task.CompletedTask;
+    }
+
+    private void ToggleAvailability(string key)
+    {
+        if (!Draft.Availability.Add(key)) Draft.Availability.Remove(key);
+        Draft.PresetsOverridden = true;
+        ScheduleProfileSave();
+    }
+
+    private void SelectTransport(string transport)
+    {
+        Draft.Transport = transport;
+        ScheduleProfileSave();
+    }
+
+    private void SelectTravelTime(int minutes)
+    {
+        Draft.MaxTravel = minutes;
+        Draft.CustomTravel = false;
+        ScheduleProfileSave();
+    }
+
+    private void ShowCustomTravel() => Draft.CustomTravel = true;
+
+    private void ToggleLicense(string license)
+    {
+        if (!Draft.DrivingLicenses.Add(license)) Draft.DrivingLicenses.Remove(license);
+        ScheduleProfileSave();
+    }
+
+    private void ScheduleProfileSave()
+    {
+        _saveCts?.Cancel();
+        _saveCts = new();
+        _ = SaveDebounceAsync(_saveCts.Token);
+    }
+
+    private async Task SaveDebounceAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(400, cancellationToken);
+            await FlushAsync();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private async Task FlushAsync()
+    {
+        _saveStatus = "saving";
+        try
+        {
+            await Api.UpdateMyProfileAsync(
+                firstName: Draft.FirstName.Trim(),
+                lastName: Draft.LastName.Trim(),
+                phoneNumber: string.IsNullOrWhiteSpace(Draft.Phone) ? null : Draft.Phone.Trim(),
+                whatsAppContactAllowed: Draft.WhatsAppAllowed && !string.IsNullOrWhiteSpace(Draft.Phone),
+                dateOfBirth: Draft.BirthDate,
+                homeLatitude: Draft.HomeLat,
+                homeLongitude: Draft.HomeLng,
+                preferences: new CandidatePreferences
+                {
+                    HomeAddress = HomeAddress(),
+                    MinHoursPerWeek = Draft.MinHours,
+                    MaxHoursPerWeek = Draft.MaxHours,
+                    MaxTravelMinutes = Draft.MaxTravel,
+                    PreferredTransport = string.IsNullOrWhiteSpace(Draft.Transport) ? null : Draft.Transport,
+                    AvailabilityPresets = Draft.Presets.ToList(),
+                    AvailabilityPresetsOverridden = Draft.PresetsOverridden,
+                    Availability = BuildAvailability(),
+                    NoWorkExperience = Draft.NoWork,
+                    Employers = Draft.Jobs.ToList(),
+                    Educations = string.IsNullOrWhiteSpace(Draft.Education)
+                        ? []
+                        : [OnboardingWizardCatalog.FormatEducationLine(Draft.Education, Draft.EducationDirection)],
+                    EducationDirection = Draft.EducationDirection,
+                    DrivingLicenses = Draft.DrivingLicenses.OrderBy(x => x).ToList()
+                },
+                availableFromDate: Draft.Immediate ? null : Draft.AvailableFrom,
+                clearAvailableFromDate: Draft.Immediate);
+            _saveStatus = "saved";
+        }
+        catch
+        {
+            _saveStatus = "error";
+            throw;
+        }
+    }
+
+    private Dictionary<string, List<string>> BuildAvailability()
+    {
+        var result = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var key in Draft.Availability)
+        {
+            var pair = key.Split(':', 2);
+            if (pair.Length != 2) continue;
+            if (!result.TryGetValue(pair[0], out var values)) result[pair[0]] = values = [];
+            values.Add(pair[1]);
+        }
+
+        return result;
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public ValueTask DisposeAsync()
+    {
+        Culture.Changed -= OnCultureChanged;
+        _saveCts?.Cancel();
+        _geocodeCts?.Cancel();
+        return ValueTask.CompletedTask;
+    }
+}

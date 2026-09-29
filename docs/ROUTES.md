@@ -92,6 +92,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/hoe-werkt-lobsy` | `Pages/Candidate/HowLobsyWorks.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/candidate/liked` | `Pages/Candidate/Liked.razor` | anonymous |
 | `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
+| `/candidate/ontdekkingsreis` | `Pages/Candidate/DiscoveryJourney.razor` | Candidate |
 | `/candidate/paspoort` | `Pages/Candidate/Passport.razor` | Candidate |
 | `/candidate/profile` | `Pages/Candidate/Profile.razor` | Candidate |
 | `/candidate/shared` | `Pages/Candidate/Shared.razor` | Candidate |
