@@ -294,6 +294,12 @@ public class AuthorizationMatrixReflectionTests : IClassFixture<RoleFunctionalWe
 
         private static HashSet<string>? ExpandAuthorize(AuthorizeAttribute attr)
         {
+            // PupilSession is scheme+claims only — never admits staff/RegionalManager.
+            if (string.Equals(attr.Policy, JobsyPolicies.PupilSession, StringComparison.Ordinal))
+            {
+                return new HashSet<string>(StringComparer.Ordinal);
+            }
+
             var roles = new HashSet<string>(StringComparer.Ordinal);
             if (!string.IsNullOrWhiteSpace(attr.Roles))
             {

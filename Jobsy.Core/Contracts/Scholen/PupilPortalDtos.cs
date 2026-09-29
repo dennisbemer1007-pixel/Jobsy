@@ -2,12 +2,12 @@ using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Contracts.Scholen;
 
-public sealed record PupilSchoolOptionDto(Guid Id, string Name, string City, bool ReadOnly);
+public sealed record PupilSchoolOptionDto(Guid Id, string SchoolName, string City, bool ReadOnly);
 
 public sealed record PupilClassOptionDto(
     Guid Id,
     string Label,
-    string Name,
+    string ClassName,
     SchoolLevel Level,
     int Year,
     bool ReadOnly);

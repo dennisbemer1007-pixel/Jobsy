@@ -46,7 +46,7 @@
                         <option value="">@Culture["Leerling.Login.SchoolPlaceholder"]</option>
                         @foreach (var s in _schools)
                         {
-                            <option value="@s.Id" selected="@(s.Id == SchoolId)">@s.Name · @s.City</option>
+                            <option value="@s.Id" selected="@(s.Id == SchoolId)">@s.SchoolName · @s.City</option>
                         }
                     </select>
                 </label>

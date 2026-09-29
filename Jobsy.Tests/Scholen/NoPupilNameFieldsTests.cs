@@ -61,6 +61,9 @@ public class NoPupilNameFieldsTests
         "TeacherAssignedClassDto.ClassName",
         "TeacherClassOverviewDto.ClassName",
         "TeacherCodeDetailDto.ClassName",
+        // Pupil login dropdowns — school/class labels only.
+        "PupilSchoolOptionDto.SchoolName",
+        "PupilClassOptionDto.ClassName",
     };
 
     [Fact]

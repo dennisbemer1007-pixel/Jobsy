@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (143 routes)
+## Table (148 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -130,6 +130,11 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/intermediary` | `Pages/Intermediary/IntermediaryDashboard.razor` | Intermediary |
 | `/intermediary/team` | `Pages/Intermediary/Team.razor` | Intermediary |
 | `/lancering` | `Pages/WestlandTeaser.razor` | anonymous |
+| `/leerling` | `Pages/Leerling/LeerlingLogin.razor` | anonymous |
+| `/leerling/dit-ben-jij` | `Pages/Leerling/LeerlingDitBenJij.razor` | authenticated |
+| `/leerling/reis` | `Pages/Leerling/LeerlingReis.razor` | authenticated |
+| `/leerling/start` | `Pages/Leerling/LeerlingStart.razor` | authenticated |
+| `/leerling/stop` | `Pages/Leerling/LeerlingStop.razor` | anonymous |
 | `/leraar` | `Pages/Leraar/LeraarDashboard.razor` | Teacher, SchoolAdmin |
 | `/leraar/klas/{ClassId:guid}` | `Pages/Leraar/LeraarKlasOverview.razor` | Teacher, SchoolAdmin |
 | `/leraar/klas/{ClassId:guid}/code/{CodeId:guid}` | `Pages/Leraar/LeraarCodeDetail.razor` | Teacher, SchoolAdmin |
@@ -166,11 +171,6 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/school/privacy` | `Pages/School/SchoolPrivacy.razor` | SchoolAdmin |
 | `/school/resultaten` | `Pages/School/SchoolResults.razor` | SchoolAdmin |
 | `/school/te-doen` | `Pages/School/SchoolTodos.razor` | SchoolAdmin |
-| `/leerling` | `Pages/Leerling/LeerlingLogin.razor` | anonymous (Pupil login) |
-| `/leerling/start` | `Pages/Leerling/LeerlingStart.razor` | PupilSession |
-| `/leerling/reis` | `Pages/Leerling/LeerlingReis.razor` | PupilSession |
-| `/leerling/stop` | `Pages/Leerling/LeerlingStop.razor` | anonymous |
-| `/leerling/dit-ben-jij` | `Pages/Leerling/LeerlingDitBenJij.razor` | PupilSession |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |
