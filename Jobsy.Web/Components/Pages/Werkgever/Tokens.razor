@@ -1,546 +1,494 @@
 @page "/werkgever/tokens"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Interfaces
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Components.Werkgever.Tokens
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Tokens
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject Jobsy.Web.Services.TokenBalanceCache TokenBalances
-@inject IJSRuntime Js
 @inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
 @implements IDisposable
 
-<PageTitle>@(_hasSalesReferral ? Culture["Nav.BalanceAndTracking"] : Culture["Employer.MyTokens"]) · Lobsy</PageTitle>
+<PageTitle>@PageTitleText · Lobsy</PageTitle>
 
-<div class="panel-page @(_isPartnerAffiliate ? "panel-page--wide" : null) max-w-full overflow-x-hidden pb-28">
-    <header class="panel-header">
-        <div>
-            <h1>@(_hasSalesReferral ? Culture["Nav.BalanceAndTracking"] : Culture["Employer.MyTokens"])</h1>
-            <p class="login-lead">@_lead</p>
-            @if (_isRegionalReadOnly)
-            {
-                <p class="profile-address__hint">@Culture["Employer.RegionalReadOnlyNotice"]</p>
-            }
-        </div>
-        @if (_canAllocate && !_isPartnerAffiliate)
+<WgPageShell Title="@PageTitleText" Lead="@LeadText" ReadOnlyHint="@(Role == EmployerRole.Regiomanager)">
+    <Actions>
+        @if (Role != EmployerRole.Vestigingsmanager)
         {
-            <a class="auth-link" href="/werkgever/tokens">Uitgebreid tokenbeheer</a>
+            <a class="btn-compact" href="/werkgever/tokens/mutaties">@Culture["WgTok.AllMutations"]</a>
         }
-    </header>
+        @if (_canPurchase)
+        {
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="() => _buyOpen = true">
+                @Culture["WgTok.BuyTokens"]
+            </button>
+        }
+        else if (Role == EmployerRole.Vestigingsmanager)
+        {
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="OpenRequestDrawer">
+                @Culture["WgTok.RequestTokens"]
+            </button>
+        }
+    </Actions>
 
-    @if (_isPartnerAffiliate && !_loading)
-    {
-        <div class="admin-sublinks pill-scroller token-tabs" role="tablist" aria-label="Tokens onderdelen">
-            <button type="button" class="admin-sublink @ActiveTabClass("balance")" role="tab" aria-selected="@(_tab == "balance")" @onclick='() => SetTab("balance")'>
-                Saldo
-            </button>
-            <button type="button" class="admin-sublink @ActiveTabClass("logging")" role="tab" aria-selected="@(_tab == "logging")" @onclick='() => SetTab("logging")'>
-                Logging
-            </button>
-            <button type="button" class="admin-sublink @ActiveTabClass("toolkit")" role="tab" aria-selected="@(_tab == "toolkit")" @onclick='() => SetTab("toolkit")'>
-                Trackingcode &amp; flyer
-            </button>
-            <button type="button" class="admin-sublink @ActiveTabClass("referrals")" role="tab" aria-selected="@(_tab == "referrals")" @onclick='() => SetTab("referrals")'>
-                Referral-overzicht
-            </button>
-            <button type="button" class="admin-sublink @ActiveTabClass("explain")" role="tab" aria-selected="@(_tab == "explain")" @onclick='() => SetTab("explain")'>
-                Uitleg
-            </button>
-        </div>
-    }
+    
+    <ChildContent>
+<WgTokensSubNav ActiveKey="overview" />
 
-    @if (!string.IsNullOrEmpty(_message) && ShowMessageForCurrentTab)
+    @if (!string.IsNullOrEmpty(_message))
     {
         <p class="state-message">@_message</p>
+    }
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
     }
 
     @if (_loading)
     {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else if (!string.IsNullOrEmpty(_error))
-    {
-        <p class="state-message error">@_error</p>
-    }
-    else if (_tab == "toolkit" && _isPartnerAffiliate)
-    {
-        <section class="panel-section">
-            <h2>Trackingcode &amp; flyer</h2>
-            <p class="muted">Deel je unieke code. Nieuwe bedrijven die via jouw link registreren worden aan jouw salesprofiel gekoppeld. Bij inzet van hun welkomsttoken ontvang jij 0,5 token.</p>
-
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <span class="stat-card__label">Trackingcode</span>
-                    <strong class="stat-card__value">@TrackingCode</strong>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-card__label">Aangedragen</span>
-                    <strong class="stat-card__value">@(_partnerMe?.ReferredCompanyCount ?? 0)</strong>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-card__label">Verdiende referraltokens</span>
-                    <strong class="stat-card__value">@((_partnerMe?.ReferralTokensEarned ?? 0m).ToString("0.##"))</strong>
-                </div>
-            </div>
-        </section>
-
-        <section class="panel-section">
-            <h2>Links en flyer</h2>
-            <div class="table-list">
-                <div class="table-row">
-                    <div>
-                        <strong>Partnerlink</strong>
-                        <div class="muted" style="word-break:break-all">@PartnerUrl</div>
-                    </div>
-                    <div class="inline-actions" style="gap:0.35rem">
-                        <button class="btn-compact" type="button" @onclick="() => CopyAsync(PartnerUrl)">Kopieer</button>
-                        <a class="btn-compact" href="@PartnerUrl" target="_blank" rel="noopener">Open</a>
-                    </div>
-                </div>
-                <div class="table-row">
-                    <div>
-                        <strong>Registratie-URL</strong>
-                        <div class="muted" style="word-break:break-all">@RegisterUrl</div>
-                    </div>
-                    <div class="inline-actions" style="gap:0.35rem">
-                        <button class="btn-compact" type="button" @onclick="() => CopyAsync(RegisterUrl)">Kopieer</button>
-                        <a class="btn-compact" href="@RegisterUrl" target="_blank" rel="noopener">Open</a>
-                    </div>
-                </div>
-                <div class="table-row">
-                    <div>
-                        <strong>Trackingcode</strong>
-                        <div class="muted">@TrackingCode</div>
-                    </div>
-                    <button class="btn-compact" type="button" @onclick="() => CopyAsync(TrackingCode)">Kopieer</button>
-                </div>
-            </div>
-
-            <div class="inline-actions" style="flex-wrap:wrap;gap:0.5rem;margin-top:1rem">
-                @if (!string.IsNullOrWhiteSpace(_toolkit?.FlyerUrl))
-                {
-                    <a class="btn-compact btn-compact--primary" href="@_toolkit.FlyerUrl" target="_blank" rel="noopener">
-                        Download flyer
-                    </a>
-                }
-                <button class="btn-compact" type="button" @onclick="ShareWhatsApp">Deel via WhatsApp</button>
-                <button class="btn-compact" type="button" @onclick="ShareMail">Deel via mail</button>
-            </div>
-        </section>
-    }
-    else if (_tab == "logging" && _isPartnerAffiliate)
-    {
-        @RenderTokenLogs()
-    }
-    else if (_tab == "referrals" && _isPartnerAffiliate)
-    {
-        <section class="panel-section">
-            <h2>Referral-overzicht</h2>
-            <p class="muted">Bedrijven die via jouw trackingcode zijn aangemeld. Bonus (0,5 token) wordt automatisch toegekend zodra hun welkomsttoken wordt ingezet.</p>
-
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <span class="stat-card__label">Verdiende referraltokens</span>
-                    <strong class="stat-card__value">@FormatTokens(_partnerMe?.ReferralTokensEarned ?? 0m)</strong>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-card__label">Aangedragen bedrijven</span>
-                    <strong class="stat-card__value">@(_partnerMe?.ReferredCompanyCount ?? 0)</strong>
-                </div>
-            </div>
-        </section>
-
-        <section class="panel-section">
-            <h2>Aangedragen bedrijven</h2>
-            @if (_referrals.Count == 0)
-            {
-                <p class="muted">Nog geen bedrijven via jouw code. Deel je trackingcode of flyer om te starten.</p>
-            }
-            else
-            {
-                <div class="table-scroll">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Bedrijf</th>
-                                <th>Status</th>
-                                <th>Aangedragen</th>
-                                <th>Bonus toegekend</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var row in _referrals)
-                            {
-                                <tr>
-                                    <td>@row.CompanyName</td>
-                                    <td>@row.StatusLabel</td>
-                                    <td>@(row.ReferredAtUtc?.ToLocalTime().ToString("dd-MM-yyyy") ?? "—")</td>
-                                    <td>@(row.RewardedAtUtc?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </section>
-    }
-    else if (_tab == "explain" && _isPartnerAffiliate)
-    {
-        <section class="panel-section">
-            <h2>Hoe werkt het?</h2>
-            <ol class="muted" style="padding-left:1.25rem;line-height:1.6">
-                <li>Deel je unieke trackingcode, partnerlink of flyer.</li>
-                <li>Een nieuw bedrijf meldt zich aan via jouw code en wordt aan jou gekoppeld.</li>
-                <li>Het bedrijf krijgt standaard 1 welkomsttoken bij registratie.</li>
-                <li>Zodra dat welkomsttoken wordt ingezet (vacature, highlight of pushbom), ontvang jij automatisch <strong>0,5 token</strong> in je tokenwallet — eenmalig per bedrijf.</li>
-            </ol>
-        </section>
+        <PageContentSkeleton Variant="cards" CardCount="4" LoadingLabel="@Culture["EntUi.Loading"]" />
     }
     else
     {
-        <div class="stat-grid">
-            @if (_pot is not null)
-            {
-                <div class="stat-card">
-                    <span class="stat-card__label">Organisatiepot</span>
-                    <strong class="stat-card__value">@_pot.Balance.ToString("0.##")</strong>
-                </div>
-            }
-            <div class="stat-card">
-                <span class="stat-card__label">Totaal saldo</span>
-                <strong class="stat-card__value">@_balances.Sum(b => b.Balance).ToString("0.##")</strong>
-            </div>
-        </div>
-
-        @if (_hasSalesReferral)
+        @if (Role == EmployerRole.Bedrijfsmanager || Role == EmployerRole.Intermediair)
         {
-            <section class="panel-section">
-                <h2>Tracking &amp; revenue-share</h2>
-                <p class="muted">
-                    Je bedrijf is gekoppeld via een salesmanager-trackingcode.
-                    Bij tokenaankopen geldt de verdeling: 15% ambassadeur-tegoed, 15% directe salesmanager-commissie, 3% upline (indien van toepassing), rest platform — binnen het 1-jaars commissievenster.
-                    Ambassadeur-tegoed wordt automatisch bijgeschreven op dit saldo.
-                </p>
-            </section>
-        }
+            <div class="wg-kpi-row">
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Central"]"
+                            Value="@Fmt(_summary?.CentralBalance ?? _central)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.CentralSub"], Fmt(_summary?.Unallocated ?? _central))" />
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Allocated"]"
+                            Value="@Fmt(_summary?.AllocatedToBranches ?? 0)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.AllocatedSub"], _summary?.BranchCountWithAllocation ?? 0)" />
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Used"]"
+                            Value="@Fmt(_summary?.UsedLast30Days ?? 0)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.UsedSub"], Fmt(_summary?.UsedPrevious30Days ?? 0))" />
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Reserved"]"
+                            Value="@Fmt(_summary?.ReservedForRequests ?? 0)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.ReservedSub"], _summary?.OpenPublishRequestCount ?? 0)" />
+            </div>
 
-        <section class="panel-section">
-            <h2>Saldo per vestiging</h2>
-            <div class="table-list">
-                @foreach (var b in _balances)
-                {
-                    <div class="table-row">
-                        <div>
-                            <strong>@b.CompanyName</strong>
-                            @if (b.ParentCompanyId is null && _hasOrgHierarchy)
-                            {
-                                <span class="muted"> · pot</span>
-                            }
-                            else if (b.TokensManagedByEnterprise)
-                            {
-                                <span class="muted"> · tokenbeheer bedrijfsmanager</span>
-                            }
-                        </div>
-                        <strong>@b.Balance.ToString("0.##") tokens</strong>
+            <div class="wg-tok-overview-grid">
+                <WgTokenUsageTable Rows="@BranchRows" Take="5" ShowFullLink="true"
+                                   CanAllocate="_canAllocate" OnAllocate="OpenAllocate" />
+                <section class="wg-card wg-tok-buy" aria-labelledby="wg-tok-buy-title">
+                    <div class="wg-card__head">
+                        <h2 id="wg-tok-buy-title">@Culture["WgTok.BuyTitle"]</h2>
+                        <button type="button" class="auth-link" @onclick="() => _costsOpen = !_costsOpen">@Culture["WgTok.WhatCosts"]</button>
                     </div>
-                }
+                    @if (_costsOpen)
+                    {
+                        <WgTokenCostsPanel Costs="_costs" StartOpen="true" />
+                    }
+                    <div class="wg-tok-packs" role="radiogroup" aria-label="@Culture["WgTok.BuyTitle"]">
+                        @foreach (var p in RelevantPacks)
+                        {
+                            <label class="wg-tok-pack @(_packSize == p.PackSize ? "is-selected" : null)">
+                                <input type="radio" name="tok-pack" checked="@(_packSize == p.PackSize)"
+                                       @onchange="() => _packSize = p.PackSize" />
+                                <strong>@p.PackSize tokens</strong>
+                                <span>€ @p.PriceEuro.ToString("0.##")</span>
+                                <small>@string.Format(Culture["WgTok.PerToken"], (p.PriceEuro / Math.Max(1, p.PackSize)).ToString("0.00"))</small>
+                            </label>
+                        }
+                    </div>
+                    <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"
+                                         @bind-RememberPreference="_rememberPaymentMethod"
+                                         ShowRememberPreference="true"
+                                         Disabled="_busy"
+                                         Lead="Kies iDEAL of creditcard. Prepaid — geen automatische incasso." />
+                    <label class="token-agree">
+                        <input type="checkbox" @bind="_purchaseAgreed" />
+                        <span>Ik ga akkoord met de aankoop. Prepaid, geen automatische verlenging.</span>
+                    </label>
+                    <button type="button" class="btn-compact btn-compact--primary wg-tok-buy__cta"
+                            disabled="@(_busy || !_purchaseAgreed || SelectedPack is null || string.IsNullOrWhiteSpace(_paymentMethod))"
+                            @onclick="CheckoutAsync">
+                        @BuyButtonLabel
+                    </button>
+                </section>
             </div>
-        </section>
 
-        @if (_canManageTokenFlags)
-        {
-            <section class="panel-section">
-                <h2>Tokenbeheer per vestiging</h2>
-                <p class="muted">Vink aan voor welke vestigingen jij als bedrijfsmanager het tokenbeheer doet. Alleen die vestigingen kunnen tokens uit de pot ontvangen.</p>
-                <div class="table-list">
-                    @foreach (var branch in _managedBranches)
-                    {
-                        <label class="table-row checkbox-row" style="cursor:pointer">
-                            <div>
-                                <strong>@branch.CompanyName</strong>
-                                <span class="muted">@branch.Balance.ToString("0.##") tokens</span>
-                            </div>
-                            <input type="checkbox"
-                                   checked="@branch.TokensManagedByEnterprise"
-                                   disabled="@_busy"
-                                   @onchange="e => ToggleTokenManagementAsync(branch, e)" />
-                        </label>
-                    }
+            <section class="wg-card" aria-labelledby="wg-tok-inv-title">
+                <div class="wg-card__head">
+                    <h2 id="wg-tok-inv-title">@Culture["WgTok.RecentInvoices"]</h2>
+                    <a class="auth-link" href="/werkgever/tokens/facturen">@Culture["WgTok.AllInvoices"]</a>
                 </div>
-            </section>
-        }
-
-        @if (_canPurchaseIntoPot)
-        {
-            <section class="panel-section">
-                <h2>Tokens kopen</h2>
-                <p class="muted">Kies een pakket en betaal met iDEAL of creditcard. Tokens staan daarna op de organisatiopot.</p>
-                <form class="login-form token-buy" @onsubmit="CheckoutIntoPotAsync" @onsubmit:preventDefault>
-                    <fieldset class="scope-fieldset">
-                        <legend>Pakket</legend>
-                        <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
-                            @if (_packs.Count == 0)
-                            {
-                                <p class="muted">Geen tokenpakketten beschikbaar. Probeer het later opnieuw of neem contact op met support.</p>
-                            }
-                            else
-                            {
-                                @foreach (var p in _packs)
-                                {
-                                    <label class="scope-option token-pack-option @(_packSize == p.PackSize ? "is-selected" : null)">
-                                        <input type="radio"
-                                               name="token-pack"
-                                               checked="@(_packSize == p.PackSize)"
-                                               @onchange="() => _packSize = p.PackSize" />
-                                        <span>
-                                            <strong>@p.PackSize tokens</strong>
-                                            <span class="muted">€ @p.PriceEuro.ToString("0.00")</span>
-                                            <small>@PricePerToken(p)</small>
-                                        </span>
-                                    </label>
-                                }
-                            }
-                        </div>
-                    </fieldset>
-                    <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"
-                                         @bind-RememberPreference="_rememberPaymentMethod"
-                                         ShowRememberPreference="true"
-                                         Disabled="_busy"
-                                         Lead="Kies iDEAL of creditcard. Prepaid — geen automatische incasso." />
-                    <label class="token-agree">
-                        <input type="checkbox" @bind="_purchaseAgreed" />
-                        <span>Ik ga akkoord met de aankoop. Prepaid, geen automatische verlenging.</span>
-                    </label>
-                    <button class="login-submit" type="submit" disabled="@(_busy || _pot is null || _packs.Count == 0 || string.IsNullOrWhiteSpace(_paymentMethod) || !_purchaseAgreed)">
-                        @CheckoutButtonLabel
-                    </button>
-                </form>
-            </section>
-        }
-        else if (_canPurchaseOwn)
-        {
-            <section class="panel-section">
-                <h2>Tokens kopen</h2>
-                <form class="login-form token-buy" @onsubmit="CheckoutOwnAsync" @onsubmit:preventDefault>
-                    @if (_balances.Count > 1)
-                    {
-                        <label>
-                            Vestiging
-                            <select @bind="_checkoutCompanyId" @bind:after="OnCheckoutCompanyChangedAsync">
-                                @foreach (var b in _balances.Where(x => !x.TokensManagedByEnterprise))
-                                {
-                                    <option value="@b.CompanyId">@b.CompanyName</option>
-                                }
-                            </select>
-                        </label>
-                    }
-                    <fieldset class="scope-fieldset">
-                        <legend>Pakket</legend>
-                        <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
-                            @if (_packs.Count == 0)
-                            {
-                                <p class="muted">Geen tokenpakketten beschikbaar. Probeer het later opnieuw of neem contact op met support.</p>
-                            }
-                            else
-                            {
-                                @foreach (var p in _packs)
-                                {
-                                    <label class="scope-option token-pack-option @(_packSize == p.PackSize ? "is-selected" : null)">
-                                        <input type="radio"
-                                               name="token-pack-own"
-                                               checked="@(_packSize == p.PackSize)"
-                                               @onchange="() => _packSize = p.PackSize" />
-                                        <span>
-                                            <strong>@p.PackSize tokens</strong>
-                                            <span class="muted">€ @p.PriceEuro.ToString("0.00")</span>
-                                            <small>@PricePerToken(p)</small>
-                                        </span>
-                                    </label>
-                                }
-                            }
-                        </div>
-                    </fieldset>
-                    <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"
-                                         @bind-RememberPreference="_rememberPaymentMethod"
-                                         ShowRememberPreference="true"
-                                         Disabled="_busy"
-                                         Lead="Kies iDEAL of creditcard. Prepaid — geen automatische incasso." />
-                    <label class="token-agree">
-                        <input type="checkbox" @bind="_purchaseAgreed" />
-                        <span>Ik ga akkoord met de aankoop. Prepaid, geen automatische verlenging.</span>
-                    </label>
-                    <button class="login-submit" type="submit" disabled="@(_busy || _checkoutCompanyId == Guid.Empty || _packs.Count == 0 || string.IsNullOrWhiteSpace(_paymentMethod) || !_purchaseAgreed)">
-                        @CheckoutButtonLabel
-                    </button>
-                </form>
-            </section>
-        }
-        else if (_isBranchManager)
-        {
-            <section class="panel-section">
-                <h2>@Culture["WgNav.BalanceRequest"]</h2>
-                <p class="muted">@Culture["WgShell.TokensAskBm"]</p>
-            </section>
-        }
-
-        @if (_canAllocate)
-        {
-            <section class="panel-section">
-                <h2>Tokens uitgeven</h2>
-                <p class="muted">Geef tokens uit de organisatiopot aan een aangevinkte vestiging.</p>
-                @if (_issueTargets.Count == 0)
+                @if (_invoices.Count == 0)
                 {
-                    <p class="muted">Geen vestigingen aangevinkt voor tokenbeheer. Vink hierboven eerst een vestiging aan.</p>
+                    <p class="muted">@Culture["WgTok.EmptyInvoices"]</p>
                 }
                 else
                 {
-                    <form class="login-form" style="max-width:420px" @onsubmit="IssueAsync" @onsubmit:preventDefault>
-                        <label>
-                            Vestiging
-                            <select @bind="_toCompanyId">
-                                @foreach (var b in _issueTargets)
+                    <EntDataTable Empty="false">
+                        <Header>
+                            <th>@Culture["WgTok.Col.Invoice"]</th>
+                            <th>@Culture["WgTok.Col.Description"]</th>
+                            <th class="ent-data-table__num">@Culture["WgTok.Col.AmountIncl"]</th>
+                            <th>@Culture["WgTok.Col.Status"]</th>
+                            <th></th>
+                        </Header>
+                        <Rows>
+                            @foreach (var inv in _invoices.Take(3))
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@inv.InvoiceNumber</strong>
+                                        <div class="muted">@TokenLogPresentation.FormatDateShort(inv.IssuedAt)</div>
+                                    </td>
+                                    <td>@string.Format(Culture["WgTok.InvoicePack"], inv.PackSize)</td>
+                                    <td class="ent-data-table__num">€ @inv.TotalAmountEuro.ToString("0.00")</td>
+                                    <td><span class="status-pill status-pill--success">@inv.Status</span></td>
+                                    <td>
+                                        <button type="button" class="btn-compact" @onclick="() => DownloadInvoiceAsync(inv)">
+                                            @Culture["WgTok.Download"]
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </Rows>
+                    </EntDataTable>
+                }
+            </section>
+
+            @if (_openRequests.Count > 0)
+            {
+                <section class="wg-card" aria-labelledby="wg-tok-req-title">
+                    <div class="wg-card__head">
+                        <h2 id="wg-tok-req-title">@Culture["WgTok.OpenRequests"]</h2>
+                    </div>
+                    <ul class="wg-todo-list">
+                        @foreach (var r in _openRequests)
+                        {
+                            <li class="wg-tok-request-row">
+                                <div>
+                                    <strong>@r.BranchName</strong>
+                                    <span class="muted"> · @r.Amount tokens · @Culture[$"WgTok.Reason.{r.Reason}"]</span>
+                                </div>
+                                <div class="inline-actions">
+                                    <button type="button" class="btn-compact btn-compact--primary" @onclick="() => OpenApprove(r)">@Culture["WgTok.Approve"]</button>
+                                    <button type="button" class="btn-compact" @onclick="() => RejectAsync(r)">@Culture["WgTok.Reject"]</button>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+        }
+        else if (Role == EmployerRole.Vestigingsmanager)
+        {
+            <div class="wg-kpi-row">
+                <EntKpiCard Label="@string.Format(Culture["WgTok.Kpi.BranchBalance"], _branchName)"
+                            Value="@Fmt(_branchBalance)"
+                            Delta="@Culture["WgTok.Kpi.BranchBalanceSub"]" />
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Used"]"
+                            Value="@Fmt(_summary?.UsedLast30Days ?? 0)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.UsedSub"], Fmt(_summary?.UsedPrevious30Days ?? 0))" />
+            </div>
+            <WgTokenCostsPanel Costs="_costs" StartOpen="true" />
+            <section class="wg-card" aria-labelledby="wg-tok-myreq">
+                <div class="wg-card__head">
+                    <h2 id="wg-tok-myreq">@Culture["WgTok.MyRequests"]</h2>
+                    <button type="button" class="btn-compact btn-compact--primary" @onclick="OpenRequestDrawer">@Culture["WgTok.RequestTokens"]</button>
+                </div>
+                @if (_myRequests.Count == 0)
+                {
+                    <p class="muted">@Culture["WgTok.EmptyMutations"]</p>
+                }
+                else
+                {
+                    <ul class="wg-todo-list">
+                        @foreach (var r in _myRequests)
+                        {
+                            <li class="wg-tok-request-row">
+                                <div>
+                                    <strong>@r.Amount tokens</strong>
+                                    <span class="muted"> · @Culture[$"WgTok.Reason.{r.Reason}"] · @Culture[$"WgTok.Status.{r.Status}"]</span>
+                                </div>
+                                @if (r.Status == "Open")
                                 {
-                                    <option value="@b.CompanyId">@b.CompanyName (@b.Balance.ToString("0.##"))</option>
+                                    <button type="button" class="btn-compact" @onclick="() => WithdrawAsync(r)">@Culture["WgTok.Withdraw"]</button>
                                 }
-                            </select>
-                        </label>
-                        <label>
-                            Aantal
-                            <input type="number" min="0.5" step="0.5" @bind="_allocateAmount" />
-                        </label>
-                        <p class="muted" style="margin:0">
-                            Beschikbaar in pot: @(_pot?.Balance.ToString("0.##") ?? "0")
-                        </p>
-                        <button class="login-submit" type="submit" disabled="@(_busy || _pot is null)">Uitgeven</button>
-                    </form>
+                            </li>
+                        }
+                    </ul>
                 }
             </section>
         }
-
-        @* Non-partner roles keep logs on the single-page saldo view; partners use the Logging tab. *@
-        @if (!_isPartnerAffiliate)
+        else
         {
-            @RenderTokenLogs()
+            <div class="wg-kpi-row">
+                <EntKpiCard Label="@Culture["WgTok.Kpi.RegionUsage"]"
+                            Value="@Fmt(_summary?.UsedLast30Days ?? 0)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.AllocatedSub"], _summary?.BranchCountWithAllocation ?? 0)" />
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Allocated"]"
+                            Value="@Fmt(_summary?.AllocatedToBranches ?? 0)" />
+            </div>
+            <WgTokenUsageTable Rows="@BranchRows" Take="0" CanAllocate="false" />
         }
     }
-</div>
+    </ChildContent>
+</WgPageShell>
+
+<EntDrawer @bind-Open="_allocateOpen" Title="@Culture["WgTok.AllocateTitle"]">
+    <ChildContent>
+@if (_allocateTarget is not null)
+    {
+        <p><strong>@_allocateTarget.Name</strong></p>
+        <label>
+            @Culture["WgTok.AllocateAmount"]
+            <input type="number" min="1" step="1" @bind="_allocateAmount" />
+        </label>
+        <EntImpactNote>
+            @string.Format(Culture["WgTok.AllocateImpact"], Fmt((_summary?.Unallocated ?? _central) - _allocateAmount))
+        </EntImpactNote>
+    }
+    </ChildContent>
+    <Footer>
+        <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="AllocateAsync">
+            @Culture["WgTok.AllocateSubmit"]
+        </button>
+    </Footer>
+</EntDrawer>
+
+<EntDrawer @bind-Open="_requestOpen" Title="@Culture["WgTok.RequestTitle"]">
+    <ChildContent>
+<label>
+        @Culture["WgTok.AllocateAmount"]
+        <input type="number" min="1" max="500" step="1" @bind="_requestAmount" />
+    </label>
+    <label>
+        @Culture["WgTok.RequestReason"]
+        <select @bind="_requestReason">
+            <option value="Publiceren">@Culture["WgTok.Reason.Publiceren"]</option>
+            <option value="Verlengen">@Culture["WgTok.Reason.Verlengen"]</option>
+            <option value="Uitlichten">@Culture["WgTok.Reason.Uitlichten"]</option>
+            <option value="Kandidaatinzichten">@Culture["WgTok.Reason.Kandidaatinzichten"]</option>
+            <option value="Overig">@Culture["WgTok.Reason.Overig"]</option>
+        </select>
+    </label>
+    <label>
+        @Culture["WgTok.RequestNote"]
+        <textarea maxlength="280" @bind="_requestNote" rows="3"></textarea>
+    </label>
+    <EntImpactNote>@Culture["WgTok.RequestImpact"]</EntImpactNote>
+    </ChildContent>
+    <Footer>
+        <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="SubmitRequestAsync">
+            @Culture["WgTok.RequestSubmit"]
+        </button>
+    </Footer>
+</EntDrawer>
+
+<EntDrawer @bind-Open="_approveOpen" Title="@Culture["WgTok.Approve"]">
+    <ChildContent>
+@if (_approveTarget is not null)
+    {
+        <p><strong>@_approveTarget.BranchName</strong> · @_approveTarget.Amount tokens</p>
+        <EntImpactNote>
+            @string.Format(Culture["WgTok.AllocateImpact"], Fmt((_summary?.Unallocated ?? _central) - _approveTarget.Amount))
+        </EntImpactNote>
+    }
+    </ChildContent>
+    <Footer>
+        <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="ApproveAsync">
+            @Culture["WgTok.Approve"]
+        </button>
+    </Footer>
+</EntDrawer>
 
 @code {
-    private List<TokenBalance> _balances = [];
-    private List<TokenPackItem> _packs = [];
-    private List<TokenLogItem> _logs = [];
-    private List<PartnerAffiliateReferralRowModel> _referrals = [];
     private bool _loading = true;
     private bool _busy;
-    private bool _purchaseAgreed;
+    private bool _started;
+    private bool _canPurchase;
     private bool _canAllocate;
-    private bool _canPurchaseIntoPot;
-    private bool _canPurchaseOwn;
-    private bool _canManageTokenFlags;
-    private bool _isBranchManager;
-    private bool _isRegionalReadOnly;
-    private bool _hasOrgHierarchy;
-    private bool _hasSalesReferral;
-    private bool _isPartnerAffiliate;
-    private string _tab = "balance";
+    private bool _purchaseAgreed;
+    private bool _rememberPaymentMethod;
+    private bool _buyOpen;
+    private bool _costsOpen;
+    private bool _allocateOpen;
+    private bool _requestOpen;
+    private bool _approveOpen;
     private string? _error;
     private string? _message;
-    private string _lead = "Token-saldo en logs.";
-    private Guid _checkoutCompanyId;
-    private int _packSize = 5;
     private string _paymentMethod = "ideal";
-    private bool _rememberPaymentMethod;
-    private Guid _toCompanyId;
-    private PartnerAffiliateMeModel? _partnerMe;
-    private PartnerAffiliateToolkitModel? _toolkit;
+    private string _branchName = "";
+    private string _requestReason = "Publiceren";
+    private string? _requestNote;
+    private int _packSize;
+    private int _requestAmount = 10;
+    private decimal _allocateAmount = 10;
+    private decimal _central;
+    private decimal _branchBalance;
+    private Guid _checkoutCompanyId;
+    private Guid _branchCompanyId;
+    private List<TokenPackItem> _packs = [];
+    private List<TokenSpendCostItem> _costs = [];
+    private List<CompanyBillingHistoryItem> _invoices = [];
+    private List<TokenRequestDto> _openRequests = [];
+    private List<TokenRequestDto> _myRequests = [];
+    private WerkgeverTokenSummaryDto? _summary;
+    private WerkgeverTokenBranchUsageDto? _allocateTarget;
+    private TokenRequestDto? _approveTarget;
+    [Inject] private IJSRuntime Js { get; set; } = default!;
 
-    private string TrackingCode => FirstNonEmpty(_toolkit?.TrackingCode, _partnerMe?.TrackingCode) ?? "—";
-    private string PartnerUrl => FirstNonEmpty(_toolkit?.PartnerPageUrl, BuildPartnerUrl())!;
-    private string RegisterUrl => FirstNonEmpty(_toolkit?.RegisterUrl, BuildRegisterUrl())!;
-
-    private bool ShowMessageForCurrentTab =>
-        !_isPartnerAffiliate
-        || _tab is "balance" or "logging" or "toolkit" or "referrals";
-
-    private string CheckoutButtonLabel =>
-        _paymentMethod == "creditcard" ? "Doorgaan met creditcard" : "Doorgaan met iDEAL";
-
-    private static string PricePerToken(TokenPackItem pack) =>
-        pack.PackSize <= 0
-            ? "Prijs per token onbekend"
-            : $"€ {(pack.PriceEuro / pack.PackSize):0.00} per token";
-    private decimal _allocateAmount = 1;
-    private string _logFilter = "";
-
-    private TokenBalance? _pot;
-    private List<TokenBalance> _managedBranches = [];
-    private List<TokenBalance> _issueTargets = [];
-
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
-
-    protected override async Task OnInitializedAsync()
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private string PageTitleText => Role switch
     {
+        EmployerRole.Regiomanager => Culture["WgNav.TokenUsage"],
+        EmployerRole.Vestigingsmanager => Culture["WgNav.BalanceRequest"],
+        _ => Culture["WgTok.Title"]
+    };
+    private string LeadText => Role switch
+    {
+        EmployerRole.Regiomanager => Culture["WgTok.LeadRm"],
+        EmployerRole.Vestigingsmanager => Culture["WgTok.LeadVm"],
+        _ => Culture["WgTok.Lead"]
+    };
+
+    private IReadOnlyList<WerkgeverTokenBranchUsageDto> BranchRows =>
+        _summary?.BranchUsage ?? [];
+
+    private IReadOnlyList<TokenPackItem> RelevantPacks
+    {
+        get
+        {
+            if (_packs.Count == 0) return [];
+            var ordered = _packs.OrderBy(p => p.PackSize).ToList();
+            if (ordered.Count <= 3) return ordered;
+            // Prefer mid-range packs (e.g. 10/50/100).
+            var mid = ordered.Count / 2;
+            return new[]
+            {
+                ordered[Math.Max(0, mid - 1)],
+                ordered[mid],
+                ordered[Math.Min(ordered.Count - 1, mid + 1)]
+            }.DistinctBy(p => p.PackSize).ToList();
+        }
+    }
+
+    private TokenPackItem? SelectedPack =>
+        RelevantPacks.FirstOrDefault(p => p.PackSize == _packSize) ?? RelevantPacks.FirstOrDefault();
+
+    private string BuyButtonLabel
+    {
+        get
+        {
+            var p = SelectedPack;
+            if (p is null) return Culture["WgTok.BuyTokens"];
+            return string.Format(Culture["WgTok.BuyButton"], p.PackSize, p.PriceEuro.ToString("0.##"));
+        }
+    }
+
+    private static string Fmt(decimal n) => n.ToString("0.##");
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started) return;
+        _started = true;
+        await ScopeBootstrap.EnsureLoadedAsync();
+        await LoadAsync();
+        MaybeOpenFromQuery();
+        StateHasChanged();
+    }
+
+    private void MaybeOpenFromQuery()
+    {
+        var qs = QueryHelpers.ParseQuery(Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+        if (qs.ContainsKey("aanvragen") && Role == EmployerRole.Vestigingsmanager)
+        {
+            _requestOpen = true;
+        }
+
+        if (qs.TryGetValue("request", out var rid)
+            && Guid.TryParse(rid, out var id)
+            && _openRequests.FirstOrDefault(r => r.Id == id) is { } match)
+        {
+            OpenApprove(match);
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
         try
         {
             var state = await AuthState.GetAuthenticationStateAsync();
             var user = state.User;
-            _isBranchManager = user.IsInRole("BranchManager");
-            _isRegionalReadOnly = user.IsInRole("RegionalManager")
-                && !user.IsInRole("EnterpriseManager")
-                && !user.IsInRole("BranchManager")
-                && !user.IsInRole("Intermediary")
-                && !user.IsInRole("Admin");
-            _hasSalesReferral = user.HasClaim(Jobsy.Core.Authorization.JobsyClaimTypes.HasSalesReferral, "1");
             _canAllocate = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
-            _canManageTokenFlags = _canAllocate;
-            _canPurchaseIntoPot = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
-            var isIntermediary = user.IsInRole("Intermediary");
-            _isPartnerAffiliate = user.IsInRole("EnterpriseManager") || isIntermediary;
+            _canPurchase = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin") || user.IsInRole("Intermediary");
 
-            var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(
-                Navigation.ToAbsoluteUri(Navigation.Uri).Query);
-            if (qs.TryGetValue("tab", out var tab) && _isPartnerAffiliate && IsKnownPartnerTab(tab.ToString()))
+            var ids = Scope.CompanyIds.ToList();
+            if (ids.Count == 0)
             {
-                _tab = tab.ToString();
+                var companies = await Api.GetMyCompaniesAsync();
+                ids = companies.Select(c => c.Id).ToList();
             }
 
-            await ReloadBalancesAsync();
             _packs = (await Api.GetTokenPacksAsync()).ToList();
-            if (_packs.Count > 0)
+            var mid = RelevantPacks.Skip(RelevantPacks.Count / 2).FirstOrDefault() ?? RelevantPacks.FirstOrDefault();
+            if (mid is not null) _packSize = mid.PackSize;
+
+            _costs = (await Api.GetTokenCostsAsync()).Where(c => c.CostTokens > 0).ToList();
+            _summary = await Api.GetWerkgeverTokenSummaryAsync(ids, 30);
+            _central = _summary?.Unallocated ?? 0;
+
+            var balances = (await Api.GetTokenBalancesAsync()).ToList();
+            TokenBalances.Invalidate();
+            var pot = balances.FirstOrDefault(b => b.ParentCompanyId is null);
+            if (pot is not null)
             {
-                _packSize = _packs[0].PackSize;
+                _checkoutCompanyId = pot.CompanyId;
+                _central = pot.Balance;
             }
 
-            // D5: BranchManager cannot purchase; Intermediary may still buy for self-managed clients.
-            if (!_canPurchaseIntoPot && isIntermediary)
+            if (Role == EmployerRole.Vestigingsmanager)
             {
-                var selfManaged = _balances.Where(b => !b.TokensManagedByEnterprise).ToList();
-                _canPurchaseOwn = selfManaged.Count > 0;
-                if (_canPurchaseOwn)
+                var branch = balances.FirstOrDefault(b => b.ParentCompanyId is not null) ?? balances.FirstOrDefault();
+                if (branch is not null)
                 {
-                    _checkoutCompanyId = selfManaged[0].CompanyId;
+                    _branchCompanyId = branch.CompanyId;
+                    _branchName = branch.CompanyName;
+                    _branchBalance = branch.Balance;
+                }
+
+                _myRequests = (await Api.GetTokenRequestsAsync()).ToList();
+            }
+            else if (_canAllocate)
+            {
+                _openRequests = (await Api.GetTokenRequestsAsync("Open", ids)).ToList();
+                if (_checkoutCompanyId != Guid.Empty)
+                {
+                    try
+                    {
+                        _invoices = (await Api.GetCompanyBillingHistoryAsync(_checkoutCompanyId)).ToList();
+                    }
+                    catch { _invoices = []; }
                 }
             }
-            // BranchManager: purchase UI hidden until token request flow (06).
-            if (_isBranchManager)
-            {
-                _canPurchaseOwn = false;
-            }
 
-            await LoadPreferredPaymentMethodAsync();
-            _lead = ResolveLead();
-            _logs = (await Api.GetTokenLogsAsync()).ToList();
-
-            if (_isPartnerAffiliate)
+            try
             {
-                await LoadPartnerToolkitAsync();
+                var companies = await Api.GetMyCompaniesAsync();
+                var company = companies.FirstOrDefault(c => c.Id == _checkoutCompanyId) ?? companies.FirstOrDefault();
+                _paymentMethod = string.Equals(company?.PreferredPaymentMethod, "creditcard", StringComparison.OrdinalIgnoreCase)
+                    ? "creditcard" : "ideal";
             }
+            catch { _paymentMethod = "ideal"; }
         }
         catch (Exception ex)
         {
@@ -552,267 +500,56 @@
         }
     }
 
-    private async Task LoadPartnerToolkitAsync()
+    private void OpenAllocate(WerkgeverTokenBranchUsageDto row)
     {
-        try
-        {
-            _partnerMe = await Api.GetPartnerAffiliateMeAsync();
-            _toolkit = await Api.GetPartnerAffiliateToolkitAsync();
-            _referrals = (await Api.GetPartnerAffiliateReferralsAsync()).ToList();
-            if (_partnerMe?.Referrals is { Count: > 0 } && _referrals.Count == 0)
-            {
-                _referrals = _partnerMe.Referrals;
-            }
-        }
-        catch (Exception ex)
-        {
-            // Toolkit is optional on Tokens; keep saldo usable if partner API fails.
-            _message = $"Trackingcode laden mislukt: {ex.Message}";
-        }
+        _allocateTarget = row;
+        _allocateAmount = 10;
+        _allocateOpen = true;
     }
 
-    private void SetTab(string tab)
+    private void OpenRequestDrawer()
     {
-        if (!_isPartnerAffiliate || !IsKnownPartnerTab(tab))
-        {
-            return;
-        }
-
-        _tab = tab;
-        _message = null;
+        _requestAmount = 10;
+        _requestReason = "Publiceren";
+        _requestNote = null;
+        _requestOpen = true;
     }
 
-    private string ActiveTabClass(string tab) => _tab == tab ? "admin-sublink--active" : "";
-
-    private static bool IsKnownPartnerTab(string? tab)
-        => tab is "balance" or "logging" or "toolkit" or "referrals" or "explain";
-
-    private RenderFragment RenderTokenLogs() => __builder =>
+    private void OpenApprove(TokenRequestDto r)
     {
-        <section class="panel-section">
-            <h2>Token-logs</h2>
-            <form class="login-form" style="max-width:420px;margin-bottom:1rem" @onsubmit="LoadLogsAsync" @onsubmit:preventDefault>
-                <label>
-                    Filter bedrijfsnaam
-                    <input @bind="_logFilter" placeholder="bijv. Fred" />
-                </label>
-                <button class="provider-btn" type="submit" disabled="@_busy">Filter</button>
-            </form>
-            <div class="token-log-list">
-                @if (_logs.Count == 0)
-                {
-                    <p class="muted">Geen tokenlogs gevonden@(string.IsNullOrWhiteSpace(_logFilter) ? "." : " voor dit filter.")</p>
-                }
-                else
-                {
-                    @foreach (var log in _logs)
-                    {
-                        <article class="token-log">
-                            <div class="token-log__main">
-                                <strong class="token-log__company">@log.CompanyName</strong>
-                                <time class="token-log__when" datetime="@log.CreatedAt.ToUniversalTime().ToString("o")">@TokenLogPresentation.FormatWhen(log.CreatedAt)</time>
-                                <p class="token-log__note">@TokenLogPresentation.Describe(log)</p>
-                            </div>
-                            <span class="token-log__amount @TokenLogPresentation.AmountToneClass(log.Amount)">@TokenLogPresentation.FormatAmount(log.Amount)</span>
-                        </article>
-                    }
-                }
-            </div>
-        </section>
-    };
-
-    private async Task CopyAsync(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value) || value == "—")
-        {
-            return;
-        }
-
-        try
-        {
-            await Js.InvokeVoidAsync("navigator.clipboard.writeText", value);
-            _message = "Gekopieerd naar klembord.";
-        }
-        catch
-        {
-            _message = value;
-        }
+        _approveTarget = r;
+        _approveOpen = true;
     }
 
-    private void ShareWhatsApp()
+    private async Task AllocateAsync()
     {
-        var text = Uri.EscapeDataString(
-            $"Meld je aan bij Lobsy met mijn code {TrackingCode}: {RegisterUrl}");
-        Navigation.NavigateTo($"https://wa.me/?text={text}", forceLoad: true);
-    }
-
-    private void ShareMail()
-    {
-        var subject = Uri.EscapeDataString("Lobsy - aanmelden via mijn partnercode");
-        var body = Uri.EscapeDataString(
-            $"Hoi,%0A%0AHier is mijn Lobsy-partnerlink met code {TrackingCode}:%0A{PartnerUrl}%0A%0ARegistreren kan direct via:%0A{RegisterUrl}%0A%0A");
-        Navigation.NavigateTo($"mailto:?subject={subject}&body={body}", forceLoad: true);
-    }
-
-    private string BuildPartnerUrl()
-    {
-        var baseUri = Navigation.BaseUri.TrimEnd('/');
-        return TrackingCode == "—"
-            ? $"{baseUri}/partner"
-            : $"{baseUri}/partner/{Uri.EscapeDataString(TrackingCode)}";
-    }
-
-    private string BuildRegisterUrl()
-    {
-        var baseUri = Navigation.BaseUri.TrimEnd('/');
-        return TrackingCode == "—"
-            ? $"{baseUri}/register"
-            : $"{baseUri}/register?ref={Uri.EscapeDataString(TrackingCode)}";
-    }
-
-    private static string? FirstNonEmpty(params string?[] values)
-    {
-        foreach (var value in values)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                return value;
-            }
-        }
-
-        return null;
-    }
-
-    private static string FormatTokens(decimal amount)
-        => amount.ToString("0.##", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
-
-    private string ResolveLead()
-    {
-        if (_isPartnerAffiliate)
-        {
-            return "Token-saldo, logging, referral-overzicht en je partner-trackingcode / flyer.";
-        }
-
-        if (_canPurchaseIntoPot || _canAllocate)
-        {
-            return "Koop tokens in de organisatiopot en geef ze uit aan vestigingen waar jij tokenbeheer doet.";
-        }
-
-        if (_canPurchaseOwn)
-        {
-            return "Saldo, aankoop via Mollie en logs voor jouw vestiging.";
-        }
-
-        if (_isBranchManager)
-        {
-            return "Alleen-lezen: tokenbeheer voor jouw vestiging ligt bij de bedrijfsmanager.";
-        }
-
-        return "Alleen-lezen: token-saldo en logs in jouw regio.";
-    }
-
-    private async Task ReloadBalancesAsync()
-    {
-        _balances = (await Api.GetTokenBalancesAsync()).ToList();
-        TokenBalances.Invalidate();
-        _hasOrgHierarchy = _balances.Any(b => b.ParentCompanyId is not null);
-        _pot = _balances.FirstOrDefault(b => b.ParentCompanyId is null && _hasOrgHierarchy)
-            ?? _balances.FirstOrDefault(b => b.ParentCompanyId is null);
-        _managedBranches = _balances.Where(b => b.ParentCompanyId is not null).OrderBy(b => b.CompanyName).ToList();
-        _issueTargets = _managedBranches.Where(b => b.TokensManagedByEnterprise).ToList();
-        if (_issueTargets.Count > 0
-            && (_toCompanyId == Guid.Empty || _issueTargets.All(b => b.CompanyId != _toCompanyId)))
-        {
-            _toCompanyId = _issueTargets[0].CompanyId;
-        }
-    }
-
-    private async Task ToggleTokenManagementAsync(TokenBalance branch, ChangeEventArgs e)
-    {
-        var enabled = e.Value is bool b && b || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (_allocateTarget is null || _checkoutCompanyId == Guid.Empty) return;
         _busy = true;
         _message = null;
         try
         {
-            await Api.UpdateTokenManagementAsync(branch.CompanyId, enabled);
-            await ReloadBalancesAsync();
-            _message = enabled
-                ? $"Tokenbeheer voor {branch.CompanyName} staat aan."
-                : $"Tokenbeheer voor {branch.CompanyName} staat uit — de vestiging beheert tokens zelf.";
+            await Api.AllocateTokensAsync(_checkoutCompanyId, _allocateTarget.CompanyId, _allocateAmount, "Verdeling");
+            _allocateOpen = false;
+            await LoadAsync();
+            _message = Culture["WgTok.AllocateSubmit"];
         }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-            await ReloadBalancesAsync();
-        }
-        finally
-        {
-            _busy = false;
-        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
     }
 
-    private async Task LoadPreferredPaymentMethodAsync()
+    private async Task CheckoutAsync()
     {
-        try
-        {
-            var companies = await Api.GetMyCompaniesAsync();
-            Guid? targetId = _canPurchaseIntoPot ? _pot?.CompanyId : _checkoutCompanyId;
-            var company = targetId is Guid id
-                ? companies.FirstOrDefault(c => c.Id == id)
-                : companies.FirstOrDefault();
-            if (string.Equals(company?.PreferredPaymentMethod, "creditcard", StringComparison.OrdinalIgnoreCase))
-            {
-                _paymentMethod = "creditcard";
-            }
-            else
-            {
-                _paymentMethod = "ideal";
-            }
-        }
-        catch
-        {
-            _paymentMethod = "ideal";
-        }
-    }
-
-    private Task OnCheckoutCompanyChangedAsync() => LoadPreferredPaymentMethodAsync();
-
-    private async Task CheckoutIntoPotAsync()
-    {
-        if (_pot is null)
-        {
-            _message = "Geen organisatiopot gevonden.";
-            return;
-        }
-
-        await StartCheckoutAsync(_pot.CompanyId);
-    }
-
-    private async Task CheckoutOwnAsync()
-        => await StartCheckoutAsync(_checkoutCompanyId);
-
-    private async Task StartCheckoutAsync(Guid companyId)
-    {
-        if (_paymentMethod is not ("ideal" or "creditcard"))
-        {
-            _message = "Kies eerst iDEAL of creditcard.";
-            return;
-        }
-
+        if (SelectedPack is null || _checkoutCompanyId == Guid.Empty) return;
         _busy = true;
-        _message = null;
         try
         {
             if (_rememberPaymentMethod)
             {
-                await Api.UpdateBillingPreferenceAsync(companyId, _paymentMethod);
+                await Api.UpdateBillingPreferenceAsync(_checkoutCompanyId, _paymentMethod);
             }
 
             var result = await Api.CreateTokenCheckoutAsync(
-                companyId,
-                _packSize,
-                pendingAction: null,
-                paymentMethod: _paymentMethod);
+                _checkoutCompanyId, SelectedPack.PackSize, null, _paymentMethod);
             if (result is null)
             {
                 _message = "Checkout mislukt.";
@@ -821,57 +558,69 @@
 
             Navigation.NavigateTo(result.CheckoutUrl, forceLoad: true);
         }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
     }
 
-    private async Task IssueAsync()
+    private async Task DownloadInvoiceAsync(CompanyBillingHistoryItem inv)
     {
-        if (_pot is null)
-        {
-            _message = "Geen organisatiopot gevonden.";
-            return;
-        }
-
-        _busy = true;
-        _message = null;
         try
         {
-            await Api.AllocateTokensAsync(_pot.CompanyId, _toCompanyId, _allocateAmount, "Uitgifte uit organisatiopot");
-            await ReloadBalancesAsync();
-            _logs = (await Api.GetTokenLogsAsync(_logFilter)).ToList();
-            _message = "Tokens uitgegeven aan vestiging.";
+            await Api.DownloadCompanyBillingInvoicePdfAsync(_checkoutCompanyId, inv.InvoiceId, inv.InvoiceNumber, Js);
         }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
+        catch (Exception ex) { _message = ex.Message; }
     }
 
-    private async Task LoadLogsAsync()
+    private async Task SubmitRequestAsync()
     {
+        if (_branchCompanyId == Guid.Empty) return;
         _busy = true;
         try
         {
-            _logs = (await Api.GetTokenLogsAsync(string.IsNullOrWhiteSpace(_logFilter) ? null : _logFilter)).ToList();
+            await Api.CreateTokenRequestAsync(_branchCompanyId, _requestAmount, _requestReason, _requestNote);
+            _requestOpen = false;
+            await LoadAsync();
+            _message = Culture["WgTok.RequestSent"];
         }
-        catch (Exception ex)
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task ApproveAsync()
+    {
+        if (_approveTarget is null) return;
+        _busy = true;
+        try
         {
-            _message = ex.Message;
+            await Api.ApproveTokenRequestAsync(_approveTarget.Id);
+            _approveOpen = false;
+            await LoadAsync();
         }
-        finally
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task RejectAsync(TokenRequestDto r)
+    {
+        _busy = true;
+        try
         {
-            _busy = false;
+            await Api.RejectTokenRequestAsync(r.Id);
+            await LoadAsync();
         }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task WithdrawAsync(TokenRequestDto r)
+    {
+        _busy = true;
+        try
+        {
+            await Api.WithdrawTokenRequestAsync(r.Id);
+            await LoadAsync();
+        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
     }
 }

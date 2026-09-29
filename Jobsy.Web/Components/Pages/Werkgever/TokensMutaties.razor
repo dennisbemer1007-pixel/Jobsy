@@ -1,0 +1,150 @@
+@page "/werkgever/tokens/mutaties"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Components.Werkgever.Tokens
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Tokens
+@using Jobsy.Web.Werkgever
+@inject JobsyApiClient Api
+@inject IJSRuntime Js
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+@inject AuthenticationStateProvider AuthState
+
+<PageTitle>@Culture["WgTok.Tab.Mutations"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgTok.Tab.Mutations"]" Lead="@Culture["WgTok.Lead"]"
+             ReadOnlyHint="@(Role == EmployerRole.Regiomanager)">
+    <Actions>
+        <button type="button" class="btn-compact" @onclick="ExportCsvAsync">@Culture["WgTok.ExportCsv"]</button>
+    </Actions>
+    
+    <ChildContent>
+<WgTokensSubNav ActiveKey="mutations" />
+
+    <div class="filter-bar wg-tok-filters">
+        <label>
+            @Culture["WgTok.Col.Branch"]
+            <input @bind="_filterBranch" @bind:event="oninput" placeholder="…" />
+        </label>
+        <label>
+            Type
+            <select @bind="_filterKind">
+                <option value="">—</option>
+                <option value="Spend">Spend</option>
+                <option value="Purchase">Purchase</option>
+                <option value="Allocation">Allocation</option>
+                <option value="Grant">Grant</option>
+                <option value="Goodwill">Goodwill</option>
+            </select>
+        </label>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <EntDataTable Empty="@(Filtered.Count == 0)" EmptyText="@Culture["WgTok.EmptyMutations"]">
+            <Header>
+                <th>@Culture["WgTok.Col.Date"]</th>
+                <th>@Culture["WgTok.Col.Description"]</th>
+                <th>@Culture["WgTok.Col.Branch"]</th>
+                <th>@Culture["WgTok.Col.By"]</th>
+                <th class="ent-data-table__num">@Culture["WgTok.Col.Mutation"]</th>
+                <th class="ent-data-table__num">@Culture["WgTok.Col.BalanceAfter"]</th>
+            </Header>
+            <Rows>
+                @foreach (var log in Filtered)
+                {
+                    <tr>
+                        <td>@TokenLogPresentation.FormatDateShort(log.CreatedAt)</td>
+                        <td>@TokenLogPresentation.Describe(log)</td>
+                        <td>@log.CompanyName</td>
+                        <td>@(log.ActorName ?? "—")</td>
+                        <td class="ent-data-table__num @TokenLogPresentation.AmountToneClass(log.Amount)">
+                            @TokenLogPresentation.FormatAmount(log.Amount)
+                        </td>
+                        <td class="ent-data-table__num">@log.NewBalance.ToString("0.##")</td>
+                    </tr>
+                }
+            </Rows>
+        </EntDataTable>
+    }
+    </ChildContent>
+</WgPageShell>
+
+@code {
+    private bool _loading = true;
+    private bool _started;
+    private string _filterBranch = "";
+    private string _filterKind = "";
+    private List<TokenLogItem> _logs = [];
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+
+    private IReadOnlyList<TokenLogItem> Filtered
+    {
+        get
+        {
+            IEnumerable<TokenLogItem> q = _logs;
+            if (!string.IsNullOrWhiteSpace(_filterBranch))
+            {
+                q = q.Where(l => l.CompanyName.Contains(_filterBranch, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_filterKind))
+            {
+                q = q.Where(l => string.Equals(l.Kind, _filterKind, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return q.ToList();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started) return;
+        _started = true;
+        await ScopeBootstrap.EnsureLoadedAsync();
+        try
+        {
+            _logs = (await Api.GetTokenLogsAsync()).ToList();
+        }
+        catch
+        {
+            _logs = [];
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExportCsvAsync()
+    {
+        var lines = new List<string> { "Datum;Omschrijving;Vestiging;Door;Mutatie;SaldoNa" };
+        foreach (var log in Filtered)
+        {
+            lines.Add(string.Join(';',
+                TokenLogPresentation.FormatDateShort(log.CreatedAt),
+                Csv(TokenLogPresentation.Describe(log)),
+                Csv(log.CompanyName),
+                Csv(log.ActorName ?? ""),
+                log.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                log.NewBalance.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        }
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(string.Join('\n', lines));
+        var b64 = Convert.ToBase64String(bytes);
+        await Js.InvokeVoidAsync("eval",
+            $"{{const a=document.createElement('a');a.href='data:text/csv;base64,{b64}';a.download='token-mutaties.csv';a.click();}}");
+    }
+
+    private static string Csv(string s) => "\"" + s.Replace("\"", "\"\"") + "\"";
+}

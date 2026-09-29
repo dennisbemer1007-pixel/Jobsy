@@ -165,6 +165,119 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    public async Task<Jobsy.Core.Interfaces.WerkgeverTokenSummaryDto?> GetWerkgeverTokenSummaryAsync(
+        IReadOnlyList<Guid> companyIds,
+        int periodDays = 30,
+        CancellationToken ct = default)
+    {
+        var qs = $"periodDays={periodDays}";
+        foreach (var id in companyIds)
+        {
+            qs += $"&companyIds={id:D}";
+        }
+
+        try
+        {
+            return await _http.GetFromJsonAsync<Jobsy.Core.Interfaces.WerkgeverTokenSummaryDto>(
+                $"api/werkgever/tokens/summary?{qs}", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized)
+        {
+            return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<Jobsy.Core.Interfaces.TokenRequestDto>> GetTokenRequestsAsync(
+        string? status = null,
+        IReadOnlyList<Guid>? companyIds = null,
+        CancellationToken ct = default)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            parts.Add($"status={Uri.EscapeDataString(status)}");
+        }
+
+        if (companyIds is not null)
+        {
+            foreach (var id in companyIds)
+            {
+                parts.Add($"companyIds={id:D}");
+            }
+        }
+
+        var url = parts.Count == 0
+            ? "api/werkgever/token-requests"
+            : $"api/werkgever/token-requests?{string.Join('&', parts)}";
+        return await _http.GetFromJsonAsync<List<Jobsy.Core.Interfaces.TokenRequestDto>>(url, ct) ?? [];
+    }
+
+    public async Task<Jobsy.Core.Interfaces.TokenRequestDto?> CreateTokenRequestAsync(
+        Guid branchCompanyId,
+        int amount,
+        string reason,
+        string? note = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/werkgever/token-requests",
+            new { branchCompanyId, amount, reason, note },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Interfaces.TokenRequestDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Interfaces.TokenRequestDto?> ApproveTokenRequestAsync(
+        Guid id,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/werkgever/token-requests/{id:D}/approve", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Interfaces.TokenRequestDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Interfaces.TokenRequestDto?> RejectTokenRequestAsync(
+        Guid id,
+        string? reason = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/werkgever/token-requests/{id:D}/reject",
+            new { reason },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Interfaces.TokenRequestDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Interfaces.TokenRequestDto?> WithdrawTokenRequestAsync(
+        Guid id,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/werkgever/token-requests/{id:D}/withdraw", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Interfaces.TokenRequestDto>(cancellationToken: ct);
+    }
+
     public async Task<IReadOnlyList<CompanyApiKeyItem>> GetCompanyApiKeysAsync(
         Guid companyId,
         CancellationToken ct = default)

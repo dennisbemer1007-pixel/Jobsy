@@ -1779,3 +1779,156 @@
 }
 
 .wg-org-kvk-results { margin-top: var(--space-4); }
+
+/* Tokens & facturen (06) */
+.wg-tok-overview-grid {
+    display: grid;
+    gap: var(--space-4);
+    margin-block: var(--space-4);
+}
+
+@media (min-width: 1024px) {
+    .wg-tok-overview-grid {
+        grid-template-columns: 1.4fr 1fr;
+        align-items: start;
+    }
+}
+
+.wg-tok-packs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+    margin-block: var(--space-3);
+}
+
+.wg-tok-pack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    cursor: pointer;
+}
+
+.wg-tok-pack input { position: absolute; opacity: 0; pointer-events: none; }
+
+.wg-tok-pack.is-selected {
+    border-color: var(--brand-deep, var(--brand));
+    box-shadow: inset 0 0 0 1px var(--brand-deep, var(--brand));
+}
+
+.wg-tok-pack strong { font-size: var(--text-sm); }
+.wg-tok-pack small { color: var(--text-muted); font-size: var(--text-xs); }
+
+.wg-tok-buy__cta { width: 100%; margin-top: var(--space-3); }
+
+.wg-tok-bar {
+    height: 6px;
+    width: 4.5rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--border) 80%, transparent);
+    overflow: hidden;
+}
+
+.wg-tok-bar > span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--brand-deep, var(--brand));
+    border-radius: inherit;
+}
+
+.wg-tok-bar.is-warn > span { background: var(--warning, #c47a00); }
+
+.wg-tok-bar--p10 > span { width: 10%; }
+.wg-tok-bar--p20 > span { width: 20%; }
+.wg-tok-bar--p30 > span { width: 30%; }
+.wg-tok-bar--p40 > span { width: 40%; }
+.wg-tok-bar--p50 > span { width: 50%; }
+.wg-tok-bar--p60 > span { width: 60%; }
+.wg-tok-bar--p70 > span { width: 70%; }
+.wg-tok-bar--p80 > span { width: 80%; }
+.wg-tok-bar--p90 > span { width: 90%; }
+.wg-tok-bar--p100 > span { width: 100%; }
+
+.wg-tok-costs__toggle {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    color: var(--brand-deep, var(--brand));
+}
+
+.wg-tok-costs__list {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+}
+
+.wg-tok-costs__list li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-block: var(--space-2);
+    border-bottom: 1px solid var(--border);
+    font-size: var(--text-sm);
+}
+
+.wg-tok-request-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    padding-block: var(--space-2);
+}
+
+.wg-tok-mgmt__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.wg-tok-period {
+    display: flex;
+    gap: var(--space-2);
+    margin-block: var(--space-3);
+}
+
+.wg-tok-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-block: var(--space-3);
+}
+
+.wg-tok-confirm {
+    position: fixed;
+    inset-block-start: 30%;
+    inset-inline: 50%;
+    transform: translateX(-50%);
+    z-index: var(--z-modal, 40);
+    max-width: 28rem;
+    width: calc(100% - 2rem);
+    padding: var(--space-4);
+}
+
+.wg-tok-partner-actions {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+}
+
+@media (min-width: 1024px) {
+    .wg-tok-overview-grid .ent-data-table tbody tr,
+    .wg-tok-filters + .ent-data-table-wrap .ent-data-table tbody tr {
+        height: 44px;
+    }
+}

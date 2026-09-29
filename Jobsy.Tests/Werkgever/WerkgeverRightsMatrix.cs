@@ -27,6 +27,9 @@ public static class WerkgeverRightsMatrix
         new("/werkgever/organisatie/profiel", "BranchManager,EnterpriseManager,Admin,Intermediary", true, false, true),
         new("/werkgever/organisatie/salaristabellen", "BranchManager,EnterpriseManager,Admin", true, false, true),
         new("/werkgever/tokens", "BranchManager,RegionalManager,EnterpriseManager,Intermediary", true, true, true),
+        new("/werkgever/tokens/verbruik", "RegionalManager,EnterpriseManager,Intermediary", true, true, false),
+        new("/werkgever/tokens/mutaties", "BranchManager,RegionalManager,EnterpriseManager,Intermediary", true, true, true),
+        new("/werkgever/tokens/facturen", "EnterpriseManager,Intermediary,Admin", true, false, false),
         new("/werkgever/koppelingen", "EnterpriseManager,Admin", true, false, false),
         new("/werkgever/overnames", "BranchManager,EnterpriseManager,Admin", true, false, true),
         new("/werkgever/partner", "EnterpriseManager,Intermediary", true, false, false),
@@ -36,6 +39,7 @@ public static class WerkgeverRightsMatrix
     [
         new("api/werkgever/dashboard", true, true, true),
         new("api/werkgever/te-doen", true, true, true),
+        new("api/werkgever/tokens/summary", true, true, true),
         new("api/vacancies/manage", true, true, true),
         // Mutating vacancy lifecycle: RM forbidden; VM scoped; BM allowed (matrix exercised in VacanciesManageApiTests).
         new("api/vacancies/{id}/approve-publish", true, false, false),
@@ -52,6 +56,13 @@ public static class WerkgeverRightsMatrix
         new("api/company-users/{id}", true, false, false),
         new("api/regions", true, true, false),
         new("api/companies/from-kvk", true, false, false),
+        // Tokens (06)
+        new("api/tokens/checkout", true, false, false),
+        new("api/tokens/top-up-quote", true, false, false),
+        new("api/tokens/allocate", true, false, false),
+        new("api/companies/{id}/billing-history", true, false, false),
+        new("api/werkgever/token-requests", true, false, true),
+        new("api/werkgever/token-requests/{id}/approve", true, false, false),
     ];
 
     public static bool RoleAllowed(PageRow row, EmployerRole role) => role switch

@@ -18,7 +18,7 @@ public class PageHelpDocsTests
     [InlineData("/login", "Inloggen")]
     [InlineData("/home", "Home / dashboard")]
     [InlineData("/candidate/applications", "Mijn sollicitaties")]
-    [InlineData("/werkgever/tokens", "Tokens")]
+    [InlineData("/werkgever/tokens", "Tokens & facturen")]
     [InlineData("/werkgever/organisatie/profiel", "Bedrijfsgegevens")]
     [InlineData("/werkgever/organisatie/vestigingen", "Vestigingen")]
     [InlineData("/admin/integrations", "Beheer · Integraties")]

@@ -1,0 +1,93 @@
+@namespace Jobsy.Web.Components.Werkgever.Tokens
+@using Jobsy.Core.Interfaces
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject CultureState Culture
+
+<section class="wg-card" aria-labelledby="wg-tok-usage-title">
+    <div class="wg-card__head">
+        <h2 id="wg-tok-usage-title">@Culture["WgTok.UsageTitle"]</h2>
+        @if (ShowFullLink)
+        {
+            <a class="auth-link" href="/werkgever/tokens/verbruik">@Culture["WgTok.UsageFull"]</a>
+        }
+    </div>
+    @if (Rows.Count == 0)
+    {
+        <p class="muted">@Culture["WgTok.EmptyUsage"]</p>
+    }
+    else
+    {
+        <EntDataTable Empty="false">
+            <Header>
+                <th>@Culture["WgTok.Col.Branch"]</th>
+                <th class="ent-data-table__num">@Culture["WgTok.Col.Allocated"]</th>
+                <th class="ent-data-table__num">@Culture["WgTok.Col.Used"]</th>
+                <th class="ent-data-table__num">@Culture["WgTok.Col.Remaining"]</th>
+                <th><span class="visually-hidden">%</span></th>
+                @if (CanAllocate)
+                {
+                    <th><span class="visually-hidden">@Culture["EntUi.Actions"]</span></th>
+                }
+            </Header>
+            <Rows>
+                @foreach (var row in Visible)
+                {
+                    var pct = row.Allocated <= 0 ? 0 : (int)Math.Clamp(Math.Round(100m * row.Used / row.Allocated), 0, 100);
+                    var bucket = (pct / 10) * 10;
+                    var warn = row.Remaining <= 5;
+                    <tr>
+                        <td>
+                            <strong>@row.Name</strong>
+                            @if (!string.IsNullOrWhiteSpace(row.RegionName))
+                            {
+                                <span class="muted"> · @row.RegionName</span>
+                            }
+                        </td>
+                        <td class="ent-data-table__num">@row.Allocated.ToString("0.##")</td>
+                        <td class="ent-data-table__num">@row.Used.ToString("0.##")</td>
+                        <td class="ent-data-table__num">@row.Remaining.ToString("0.##")</td>
+                        <td>
+                            <div class="wg-tok-bar @(warn ? "is-warn" : null) wg-tok-bar--p@(bucket)" role="presentation">
+                                <span></span>
+                            </div>
+                        </td>
+                        @if (CanAllocate)
+                        {
+                            <td>
+                                <button type="button" class="btn-compact" @onclick="() => OnAllocate.InvokeAsync(row)">
+                                    @Culture["WgTok.Allocate"]
+                                </button>
+                            </td>
+                        }
+                    </tr>
+                }
+                @if (HiddenCount > 0)
+                {
+                    <tr>
+                        <td colspan="@(CanAllocate ? 6 : 5)" class="muted">
+                            @string.Format(Culture["WgTok.UsageOther"], HiddenCount)
+                            @if (ShowFullLink)
+                            {
+                                <text> · </text>
+                                <a class="auth-link" href="/werkgever/tokens/verbruik">@Culture["WgTok.UsageFull"]</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </Rows>
+        </EntDataTable>
+    }
+</section>
+
+@code {
+    [Parameter] public IReadOnlyList<WerkgeverTokenBranchUsageDto> Rows { get; set; } = [];
+    [Parameter] public int Take { get; set; } = 5;
+    [Parameter] public bool ShowFullLink { get; set; }
+    [Parameter] public bool CanAllocate { get; set; }
+    [Parameter] public EventCallback<WerkgeverTokenBranchUsageDto> OnAllocate { get; set; }
+
+    private IReadOnlyList<WerkgeverTokenBranchUsageDto> Visible =>
+        Take <= 0 ? Rows : Rows.Take(Take).ToList();
+
+    private int HiddenCount => Take <= 0 ? 0 : Math.Max(0, Rows.Count - Take);
+}

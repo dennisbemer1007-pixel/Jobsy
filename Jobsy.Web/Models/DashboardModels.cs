@@ -242,6 +242,7 @@ public class TokenLogItem
     public Guid? VacancyId { get; set; }
     public Guid? BranchCompanyId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string? ActorName { get; set; }
 }
 
 public class CheckoutResult

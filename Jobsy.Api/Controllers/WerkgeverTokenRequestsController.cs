@@ -35,19 +35,13 @@ public sealed class WerkgeverTokenRequestsController : ControllerBase
     public sealed record RejectTokenRequestBody(string? Reason);
 
     [HttpPost]
+    [Authorize(Roles = $"{JobsyRoles.BranchManager},{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
     [ProducesResponseType(typeof(TokenRequestDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<TokenRequestDto>> Create(
         [FromBody] CreateTokenRequestBody body,
         CancellationToken cancellationToken)
     {
-        if (User.IsInRole(JobsyRoles.RegionalManager)
-            && !User.IsInRole(JobsyRoles.EnterpriseManager)
-            && !User.IsInRole(JobsyRoles.Admin))
-        {
-            return StatusCode(StatusCodes.Status403Forbidden,
-                new { code = "rm_forbidden", message = "Regiomanagers kunnen geen tokens aanvragen." });
-        }
-
+        // BM may not request — they allocate themselves (400, not 403).
         if (User.IsInRole(JobsyRoles.EnterpriseManager)
             && !User.IsInRole(JobsyRoles.BranchManager)
             && !User.IsInRole(JobsyRoles.Admin))

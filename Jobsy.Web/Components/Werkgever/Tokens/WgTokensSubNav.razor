@@ -1,0 +1,32 @@
+@namespace Jobsy.Web.Components.Werkgever.Tokens
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+
+<EntTabs Tabs="_tabs" ActiveKey="@ActiveKey" BasePath="/werkgever/tokens" />
+
+@code {
+    [Parameter] public string ActiveKey { get; set; } = "overview";
+
+    private readonly List<EntTabs.Tab> _tabs = [];
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+
+    protected override void OnParametersSet()
+    {
+        _tabs.Clear();
+        _tabs.Add(new("overview", Culture["WgTok.Tab.Overview"], "/werkgever/tokens"));
+        if (Role is EmployerRole.Bedrijfsmanager or EmployerRole.Regiomanager or EmployerRole.Intermediair)
+        {
+            _tabs.Add(new("usage", Culture["WgTok.Tab.Usage"], "/werkgever/tokens/verbruik"));
+        }
+
+        _tabs.Add(new("mutations", Culture["WgTok.Tab.Mutations"], "/werkgever/tokens/mutaties"));
+        if (Role is EmployerRole.Bedrijfsmanager or EmployerRole.Intermediair)
+        {
+            _tabs.Add(new("invoices", Culture["WgTok.Tab.Invoices"], "/werkgever/tokens/facturen"));
+        }
+    }
+}

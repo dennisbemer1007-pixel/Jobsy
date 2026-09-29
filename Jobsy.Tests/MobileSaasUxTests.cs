@@ -75,16 +75,16 @@ public class MobileSaasUxTests
     }
 
     [Fact]
-    public void Token_purchase_uses_a_two_column_pack_grid()
+    public void Token_purchase_uses_pack_grid_on_overview()
     {
         var tokens = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Tokens.razor"));
-        Assert.Contains("class=\"token-pack-options\"", tokens);
+        Assert.Contains("wg-tok-packs", tokens);
+        Assert.Contains("WgTok.BuyButton", tokens);
         Assert.DoesNotContain("token-pack-options--vertical", tokens);
-        Assert.DoesNotContain("max-width:32rem", tokens);
 
-        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".token-pack-options {\n    display: grid;\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
-        Assert.Contains(".token-buy .login-submit {\n    width: 100%;", css);
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/werkgever.css"));
+        Assert.Contains(".wg-tok-packs", css);
+        Assert.Contains("grid-template-columns: repeat(3, minmax(0, 1fr))", css);
     }
 
     [Fact]
@@ -343,15 +343,16 @@ public class MobileSaasUxTests
     [Fact]
     public void Token_logs_hide_technical_ids_and_show_explicit_token_amounts()
     {
-        var tokens = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Tokens.razor"));
-        Assert.Contains("token-log-list", tokens);
-        Assert.Contains("TokenLogPresentation.FormatAmount", tokens);
-        Assert.Contains("TokenLogPresentation.FormatWhen", tokens);
-        Assert.Contains("TokenLogPresentation.Describe", tokens);
-        Assert.DoesNotContain("@log.Kind / @log.Reason", tokens);
-        Assert.DoesNotContain("dd-MM HH:mm", tokens);
-        Assert.Contains("pill-scroller token-tabs", tokens);
-        Assert.Contains("pb-28", tokens);
+        var mutaties = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/TokensMutaties.razor"));
+        Assert.Contains("TokenLogPresentation.FormatAmount", mutaties);
+        Assert.Contains("TokenLogPresentation.FormatDateShort", mutaties);
+        Assert.Contains("TokenLogPresentation.Describe", mutaties);
+        Assert.DoesNotContain("@log.Kind / @log.Reason", mutaties);
+
+        var presentation = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Tokens/TokenLogPresentation.cs"));
+        Assert.Contains("AmountToneClass", presentation);
+        Assert.Contains("token-log__amount--in", presentation);
+        Assert.Contains("token-log__amount--out", presentation);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".token-log__amount--in {\n    color: var(--success);", css);

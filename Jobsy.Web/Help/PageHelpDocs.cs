@@ -208,10 +208,28 @@ public static class PageHelpDocs
             "Openstaande banen beheren, importeren afronden en opvolgen."),
 
         ["/werkgever/tokens"] = new(
-            "Tokens",
-            "Token-saldo, aankoop en allocatie binnen de organisatie.",
-            "Bekijk wallet/saldo, koop een pakket via Mollie, of wijs tokens toe aan vestigingen. Logs tonen mutaties.",
+            "Tokens & facturen",
+            "Saldo, verdeling over vestigingen, aankopen en facturen op één plek.",
+            "Bekijk KPI's, koop pakketten (bedrijfsmanager), vraag tokens aan (vestigingsmanager) of bekijk verbruik (regiomanager).",
             "Vacaturepublicatie en andere token-acties bekostigen."),
+
+        ["/werkgever/tokens/verbruik"] = new(
+            "Verbruik per vestiging",
+            "Toegewezen, verbruikt en resterend saldo per vestiging.",
+            "Verdeel tokens vanuit de organisatiopot. Regiomanagers kijken alleen mee.",
+            "Saldo over vestigingen verdelen."),
+
+        ["/werkgever/tokens/mutaties"] = new(
+            "Tokenmutaties",
+            "Alle tokenbewegingen met filters en CSV-export.",
+            "Filter op vestiging of type; exporteer voor administratie.",
+            "Inzicht in aankopen, uitgaven en toewijzingen."),
+
+        ["/werkgever/tokens/facturen"] = new(
+            "Facturen",
+            "Tokenaankoopfacturen en factuurgegevens.",
+            "Download PDF's en stel de voorkeursbetaalmethode in.",
+            "Administratie van prepaid tokenaankopen."),
 
         ["/werkgever/organisatie/vestigingen"] = new(
             "Vestigingen",

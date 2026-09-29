@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (143 routes)
+## Table (146 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -167,6 +167,9 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werkgever/talentpool` | `Pages/Werkgever/TalentPool.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/werkgever/te-doen` | `Pages/Werkgever/TeDoen.razor` | BranchManager, RegionalManager, EnterpriseManager |
 | `/werkgever/tokens` | `Pages/Werkgever/Tokens.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/tokens/facturen` | `Pages/Werkgever/TokensFacturen.razor` | EnterpriseManager, Intermediary, Admin |
+| `/werkgever/tokens/mutaties` | `Pages/Werkgever/TokensMutaties.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/tokens/verbruik` | `Pages/Werkgever/TokensVerbruik.razor` | RegionalManager, EnterpriseManager, Intermediary |
 | `/werkgever/vacatures` | `Pages/Werkgever/Vacancies.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/vacatures/nieuw` | `Pages/Werkgever/CreateVacancy.razor` | BranchManager, EnterpriseManager, Intermediary |
 | `/werkgever/wervingsmateriaal` | `Pages/Werkgever/Wervingsmateriaal.razor` | BranchManager, RegionalManager, EnterpriseManager, Admin |

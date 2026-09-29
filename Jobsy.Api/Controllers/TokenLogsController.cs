@@ -60,7 +60,8 @@ public class TokenLogsController : ControllerBase
                 t.Note,
                 t.VacancyId,
                 t.BranchCompanyId,
-                t.CreatedAt))
+                t.CreatedAt,
+                t.ActorUser != null ? t.ActorUser.FullName : null))
             .Take(500)
             .ToListAsync(cancellationToken);
 

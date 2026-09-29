@@ -1,0 +1,212 @@
+@page "/werkgever/tokens/verbruik"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Interfaces
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Components.Werkgever.Tokens
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+
+<PageTitle>@Culture["WgTok.UsageTitle"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgTok.UsageTitle"]" Lead="@Culture["WgTok.Lead"]"
+             ReadOnlyHint="@(Role == EmployerRole.Regiomanager)">
+    <WgTokensSubNav ActiveKey="usage" />
+
+    @if (_canManage)
+    {
+        <section class="wg-card wg-tok-mgmt">
+            <h2>@Culture["WgTok.Management"]</h2>
+            <div class="wg-tok-mgmt__options" role="group">
+                <label class="wg-tok-pack @(_centralMode ? "is-selected" : null)">
+                    <input type="radio" name="tok-mgmt" checked="@_centralMode" @onchange="() => PromptMode(true)" />
+                    @Culture["WgTok.ManagementCentral"]
+                </label>
+                <label class="wg-tok-pack @(!_centralMode ? "is-selected" : null)">
+                    <input type="radio" name="tok-mgmt" checked="@(!_centralMode)" @onchange="() => PromptMode(false)" />
+                    @Culture["WgTok.ManagementPerBranch"]
+                </label>
+            </div>
+        </section>
+    }
+
+    <div class="wg-tok-period" role="group" aria-label="Periode">
+        <button type="button" class="wg-chip @(_periodDays == 30 ? "is-active" : null)" @onclick="() => SetPeriod(30)">@Culture["WgTok.Period30"]</button>
+        <button type="button" class="wg-chip @(_periodDays == 90 ? "is-active" : null)" @onclick="() => SetPeriod(90)">@Culture["WgTok.Period90"]</button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <WgTokenUsageTable Rows="@(_summary?.BranchUsage ?? [])" Take="0"
+                           CanAllocate="_canAllocate" OnAllocate="OpenAllocate" />
+    }
+</WgPageShell>
+
+<EntDrawer @bind-Open="_allocateOpen" Title="@Culture["WgTok.AllocateTitle"]">
+    <ChildContent>
+        @if (_allocateTarget is not null)
+        {
+            <p><strong>@_allocateTarget.Name</strong></p>
+            <label>
+                @Culture["WgTok.AllocateAmount"]
+                <input type="number" min="1" step="1" @bind="_allocateAmount" />
+            </label>
+            <EntImpactNote>
+                @string.Format(Culture["WgTok.AllocateImpact"], ((_summary?.Unallocated ?? 0) - _allocateAmount).ToString("0.##"))
+            </EntImpactNote>
+        }
+    </ChildContent>
+    <Footer>
+        <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="AllocateAsync">
+            @Culture["WgTok.AllocateSubmit"]
+        </button>
+    </Footer>
+</EntDrawer>
+
+@if (_confirmOpen)
+{
+    <div class="ent-drawer-backdrop" @onclick="() => _confirmOpen = false"></div>
+    <div class="wg-card wg-tok-confirm" role="dialog" aria-modal="true">
+        <h2>@Culture["WgTok.Management"]</h2>
+        <p>@Culture["WgTok.ManagementConfirm"]</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" @onclick="() => _confirmOpen = false">Annuleren</button>
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="ApplyModeAsync">Opslaan</button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private bool _started;
+    private bool _canAllocate;
+    private bool _canManage;
+    private bool _centralMode = true;
+    private bool _pendingCentral = true;
+    private bool _confirmOpen;
+    private bool _allocateOpen;
+    private int _periodDays = 30;
+    private string? _message;
+    private decimal _allocateAmount = 10;
+    private Guid _potId;
+    private List<TokenBalance> _branches = [];
+    private WerkgeverTokenSummaryDto? _summary;
+    private WerkgeverTokenBranchUsageDto? _allocateTarget;
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started) return;
+        _started = true;
+        await ScopeBootstrap.EnsureLoadedAsync();
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _canAllocate = state.User.IsInRole("EnterpriseManager") || state.User.IsInRole("Admin");
+        _canManage = _canAllocate;
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private async Task SetPeriod(int days)
+    {
+        _periodDays = days;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var ids = Scope.CompanyIds.ToList();
+            if (ids.Count == 0)
+            {
+                ids = (await Api.GetMyCompaniesAsync()).Select(c => c.Id).ToList();
+            }
+
+            var qs = QueryHelpers.ParseQuery(Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+            // ?node= from vestigingen tree — filter is soft (summary already scoped).
+            _ = qs.TryGetValue("node", out _);
+
+            _summary = await Api.GetWerkgeverTokenSummaryAsync(ids, _periodDays);
+            var balances = (await Api.GetTokenBalancesAsync()).ToList();
+            _potId = balances.FirstOrDefault(b => b.ParentCompanyId is null)?.CompanyId ?? Guid.Empty;
+            _branches = balances.Where(b => b.ParentCompanyId is not null).ToList();
+            _centralMode = _branches.Count == 0 || _branches.All(b => b.TokensManagedByEnterprise);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void PromptMode(bool central)
+    {
+        _pendingCentral = central;
+        _confirmOpen = true;
+    }
+
+    private async Task ApplyModeAsync()
+    {
+        _confirmOpen = false;
+        _busy = true;
+        try
+        {
+            foreach (var b in _branches)
+            {
+                if (b.TokensManagedByEnterprise != _pendingCentral)
+                {
+                    await Api.UpdateTokenManagementAsync(b.CompanyId, _pendingCentral);
+                }
+            }
+
+            _centralMode = _pendingCentral;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private void OpenAllocate(WerkgeverTokenBranchUsageDto row)
+    {
+        _allocateTarget = row;
+        _allocateAmount = 10;
+        _allocateOpen = true;
+    }
+
+    private async Task AllocateAsync()
+    {
+        if (_allocateTarget is null || _potId == Guid.Empty) return;
+        _busy = true;
+        try
+        {
+            await Api.AllocateTokensAsync(_potId, _allocateTarget.CompanyId, _allocateAmount, "Verdeling");
+            _allocateOpen = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+}

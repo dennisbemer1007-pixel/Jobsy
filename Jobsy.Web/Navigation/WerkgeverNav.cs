@@ -157,11 +157,11 @@ public static class WerkgeverNav
                     [EmployerRole.Regiomanager] = "WgNav.TokenUsage"
                 }),
             new("usage", "WgNav.UsagePerBranch", "/werkgever/tokens/verbruik", NavIcons.Tokens,
-                [], BmRm, IsAvailable: false),
+                [], BmRm),
             new("mutations", "WgNav.Mutations", "/werkgever/tokens/mutaties", NavIcons.Logging,
-                [], BmRmVm, IsAvailable: false),
+                [], BmRmVm),
             new("invoices", "WgNav.Invoices", "/werkgever/tokens/facturen", NavIcons.Finance,
-                [], BmOnly, IsAvailable: false),
+                [], BmOnly),
         ],
         LabelOverrides: new Dictionary<EmployerRole, string>
         {

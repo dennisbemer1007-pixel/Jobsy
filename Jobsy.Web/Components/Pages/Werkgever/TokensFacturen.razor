@@ -1,0 +1,144 @@
+@page "/werkgever/tokens/facturen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Components.Werkgever.Tokens
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Tokens
+@using Jobsy.Web.Werkgever
+@inject JobsyApiClient Api
+@inject IJSRuntime Js
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+
+<PageTitle>@Culture["WgTok.Tab.Invoices"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgTok.Tab.Invoices"]" Lead="@Culture["WgTok.Lead"]">
+    
+    <ChildContent>
+<WgTokensSubNav ActiveKey="invoices" />
+
+    <section class="wg-card" aria-labelledby="wg-tok-bill-title">
+        <h2 id="wg-tok-bill-title">@Culture["WgTok.BillingPrefs"]</h2>
+        <p class="muted">@Culture["WgTok.BillingPrefsLead"]</p>
+        @if (_companyId != Guid.Empty)
+        {
+            <label>
+                @Culture["WgTok.PaymentMethod"]
+                <select @bind="_paymentMethod" @bind:after="SaveBillingAsync">
+                    <option value="ideal">iDEAL</option>
+                    <option value="creditcard">Creditcard</option>
+                </select>
+            </label>
+            @if (!string.IsNullOrEmpty(_billingMessage))
+            {
+                <p class="state-message">@_billingMessage</p>
+            }
+        }
+    </section>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_invoices.Count == 0)
+    {
+        <p class="muted">@Culture["WgTok.EmptyInvoices"]</p>
+    }
+    else
+    {
+        <EntDataTable Empty="false">
+            <Header>
+                <th>@Culture["WgTok.Col.Invoice"]</th>
+                <th>@Culture["WgTok.Col.Date"]</th>
+                <th>@Culture["WgTok.Col.Description"]</th>
+                <th class="ent-data-table__num">@Culture["WgTok.Col.AmountIncl"]</th>
+                <th>@Culture["WgTok.Col.Status"]</th>
+                <th></th>
+            </Header>
+            <Rows>
+                @foreach (var inv in _invoices)
+                {
+                    <tr>
+                        <td><strong>@inv.InvoiceNumber</strong></td>
+                        <td>@TokenLogPresentation.FormatDateShort(inv.IssuedAt)</td>
+                        <td>@string.Format(Culture["WgTok.InvoicePack"], inv.PackSize)</td>
+                        <td class="ent-data-table__num">€ @inv.TotalAmountEuro.ToString("0.00")</td>
+                        <td><span class="status-pill status-pill--success">@inv.Status</span></td>
+                        <td>
+                            <button type="button" class="btn-compact" @onclick="() => DownloadAsync(inv)">
+                                @Culture["WgTok.Download"]
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </Rows>
+        </EntDataTable>
+    }
+    </ChildContent>
+</WgPageShell>
+
+@code {
+    private bool _loading = true;
+    private bool _started;
+    private Guid _companyId;
+    private string _paymentMethod = "ideal";
+    private string? _billingMessage;
+    private List<CompanyBillingHistoryItem> _invoices = [];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started) return;
+        _started = true;
+        await ScopeBootstrap.EnsureLoadedAsync();
+        try
+        {
+            var companies = await Api.GetMyCompaniesAsync();
+            var pot = companies.FirstOrDefault(c => c.ParentCompanyId is null) ?? companies.FirstOrDefault();
+            if (pot is not null)
+            {
+                _companyId = pot.Id;
+                _paymentMethod = string.Equals(pot.PreferredPaymentMethod, "creditcard", StringComparison.OrdinalIgnoreCase)
+                    ? "creditcard" : "ideal";
+                _invoices = (await Api.GetCompanyBillingHistoryAsync(_companyId)).ToList();
+            }
+        }
+        catch
+        {
+            _invoices = [];
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveBillingAsync()
+    {
+        if (_companyId == Guid.Empty) return;
+        try
+        {
+            await Api.UpdateBillingPreferenceAsync(_companyId, _paymentMethod);
+            _billingMessage = "Opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _billingMessage = ex.Message;
+        }
+    }
+
+    private async Task DownloadAsync(CompanyBillingHistoryItem inv)
+    {
+        try
+        {
+            await Api.DownloadCompanyBillingInvoicePdfAsync(_companyId, inv.InvoiceId, inv.InvoiceNumber, Js);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+}
