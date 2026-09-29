@@ -34,9 +34,10 @@ public class Ontdekkingsreis07bSourceTests
         Assert.Contains("Discovery.Skip", src, StringComparison.Ordinal);
         Assert.Contains("toestemming", src, StringComparison.Ordinal);
         Assert.Contains("TestConsentStep", src, StringComparison.Ordinal);
-        Assert.Contains("OnboardingMiniTest", src, StringComparison.Ordinal);
-        Assert.Contains("CompleteJourneyTransitionalAsync", src, StringComparison.Ordinal);
         Assert.Contains("CompleteMyOnboardingAsync", src, StringComparison.Ordinal);
+        Assert.Contains("ShowEndAsync", src, StringComparison.Ordinal);
+        Assert.Contains("JourneyShedMoment", src, StringComparison.Ordinal);
+        Assert.Contains("OnboardingMiniTest", src, StringComparison.Ordinal);
         Assert.Contains("/candidate/paspoort", src, StringComparison.Ordinal);
         Assert.Contains("FeatureVisible", src, StringComparison.Ordinal);
         Assert.Contains("PlatformFeature.Employers", src, StringComparison.Ordinal);
@@ -59,7 +60,7 @@ public class Ontdekkingsreis07bSourceTests
     public void Mini_test_skip_logic_uses_locked_ids_from_catalog()
     {
         var src = JourneySource;
-        Assert.Contains("OnboardingWizardCatalog.CompetencyQuestionIds", src, StringComparison.Ordinal);
+        Assert.Contains("QuestionIdsUpTo", src, StringComparison.Ordinal);
         Assert.Contains("_lockedIds", src, StringComparison.Ordinal);
         Assert.Contains("!_lockedIds.Contains(item.Id)", src, StringComparison.Ordinal);
     }

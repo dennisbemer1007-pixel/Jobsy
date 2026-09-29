@@ -87,12 +87,13 @@ public class PassportBunitTests : TestContext
     }
 
     [Fact]
-    public void CandidateItems_passport_on_first_item_is_passport()
+    public void CandidateItems_passport_on_first_item_is_discovery()
     {
         var flags = new FeatureFlagSnapshot(true, true);
         var items = RoleNavCatalog.CandidateItems(flags);
-        Assert.Equal("Nav.Passport", items[0].TitleKey);
-        Assert.Equal("/candidate/paspoort", items[0].Href);
+        Assert.Equal("Nav.Discovery", items[0].TitleKey);
+        Assert.Equal("/candidate/ontdekkingsreis", items[0].Href);
+        Assert.Equal("Nav.Passport", items[1].TitleKey);
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider
