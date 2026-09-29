@@ -37,11 +37,20 @@ sequenceDiagram
     Browser->>Web: Login (local / Entra / Google)
     Web->>Api: Credential / external provision
     Api->>Db: Validate user + roles
-    alt MFA required
-        Api-->>Web: MfaChallengeToken
-        Web->>Browser: /account/mfa
+    alt Local password + MFA required / enrolled
+        Api-->>Web: MfaChallengeToken (LocalPassword)
+        alt Not enrolled
+            Web->>Browser: /account/mfa/setup (QR + TOTP)
+        else Enrolled
+            Web->>Browser: /account/mfa (TOTP / recovery)
+        end
         Browser->>Web: MFA code
         Web->>Api: MFA verify
+        opt First enrollment
+            Web->>Browser: /account/mfa/recovery-codes (once)
+        end
+    else External IdP (entra/google/…)
+        Note over Api,Web: Skip Lobsy MFA; auth_method=external:{provider}
     end
     Api-->>Web: Access profile + JWT claims material
     Web->>Browser: Auth cookie (Jobsy cookie scheme)
@@ -50,8 +59,9 @@ sequenceDiagram
     Api-->>Web: JSON (scoped by role + company)
 ```
 
-- **Web:** cookie authentication (`CookieAuthenticationDefaults`), optional demo-login only in Development, MFA cookies `Jobsy.MfaChallenge` / `Jobsy.MfaReturnUrl`, enforcement middleware.
-- **API:** JWT Bearer (`JobsyJwtScheme`), API-key policy for selected integrations, FallbackPolicy deny-by-default on API.
+- **Web:** cookie authentication (`CookieAuthenticationDefaults`), optional demo-login only in Development, MFA cookies `Jobsy.MfaChallenge` / `Jobsy.MfaReturnUrl` / one-time `Jobsy.MfaRecoveryCodes`, enforcement middleware for privileged **local** sessions (`auth_method` not `external*`). Pages under `/account/mfa*` are static SSR (`[ExcludeFromInteractiveRouting]`).
+- **API:** JWT Bearer (`JobsyJwtScheme`) may carry `mfa_verified` and `auth_method` from the Web cookie session; API-key policy for selected integrations; FallbackPolicy deny-by-default on API.
+- **Mixed-account rule:** Lobsy 2FA applies only to the sign-in method used — password → TOTP (enroll if needed); IdP → skip. See [ADR 0005](adr/0005-mfa-local-only.md).
 - **Roles:** claim values from `JobsyRoles` / `UserRole` ([ADR 0004](adr/0004-roles-and-scope.md)).
 
 ## Authorization
