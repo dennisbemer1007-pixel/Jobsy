@@ -1,0 +1,78 @@
+@namespace Jobsy.Web.Components.Candidate.TestResult
+@using System.Globalization
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Reports
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (IsUnlockedNotCompleted)
+{
+    <div class="test-result-continue">
+        <a class="login-submit" href="@DeepStartHref">
+            @Culture.Format("TestResult.Gold.Continue", ProgressCurrent, ProgressTotal)
+        </a>
+    </div>
+}
+else
+{
+    var caps = DeepReportCapabilities.For(Kind);
+    var titleId = "test-result-premium-title";
+    <section class="test-result-premium" aria-labelledby="@titleId">
+        <div>
+            <span class="test-result-premium__tag">
+                <span aria-hidden="true">★</span>
+                @Culture["TestResult.Gold.Tag"]
+            </span>
+            <h3 id="@titleId">@Culture.Format("TestResult.Gold.Title", TestTitle)</h3>
+            <p class="test-result-premium__lead">@Culture["TestResult.Gold.Lead"]</p>
+            <ul class="test-result-premium__checks">
+                <li><span class="ok" aria-hidden="true">✓</span> @Culture.Format("TestResult.Gold.Check.Pages", caps.PdfPageCount)</li>
+                <li><span class="ok" aria-hidden="true">✓</span> @Culture["TestResult.Gold.Check.Applications"]</li>
+                <li><span class="ok" aria-hidden="true">✓</span> @Culture["TestResult.Gold.Check.Matches"]</li>
+            </ul>
+        </div>
+        <div class="test-result-premium__cta">
+            <button type="button"
+                    class="btn-gold"
+                    disabled="@Busy"
+                    aria-label="@Culture.Format("TestResult.Gold.StartAria", FormattedPrice)"
+                    @onclick="OnStart">
+                <span>@Culture["TestResult.Gold.Start"]</span>
+                <span class="btn-gold__meta">
+                    <span class="btn-gold__price">€ @FormattedPrice</span>
+                    <small>@Culture.Format("TestResult.Gold.Meta", QuestionCount, MinutesApprox)</small>
+                </span>
+            </button>
+            <p class="test-result-premium__fine">
+                <span aria-hidden="true">🛡</span>
+                @Culture["TestResult.Gold.Fine"]
+                <span class="mq"> · @Culture.Format("TestResult.Gold.Meta", QuestionCount, MinutesApprox)</span>
+            </p>
+            @if (ShowSamplePdf)
+            {
+                <button type="button" class="btn-outline-brand test-result-premium__sample" disabled="@Busy" @onclick="OnSamplePdf">
+                    @Culture["TestResult.Gold.SamplePdf"]
+                </button>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public AssessmentKind Kind { get; set; }
+    [Parameter] public string TestTitle { get; set; } = "";
+    [Parameter] public decimal PriceEuro { get; set; } = 2.99m;
+    [Parameter] public int QuestionCount { get; set; } = 150;
+    [Parameter] public int MinutesApprox { get; set; } = 20;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool IsUnlockedNotCompleted { get; set; }
+    [Parameter] public string DeepStartHref { get; set; } = "#";
+    [Parameter] public int ProgressCurrent { get; set; }
+    [Parameter] public int ProgressTotal { get; set; } = 150;
+    [Parameter] public bool ShowSamplePdf { get; set; }
+    [Parameter] public EventCallback OnStart { get; set; }
+    [Parameter] public EventCallback OnSamplePdf { get; set; }
+
+    private string FormattedPrice =>
+        PriceEuro.ToString("0.00", CultureInfo.CurrentUICulture);
+}

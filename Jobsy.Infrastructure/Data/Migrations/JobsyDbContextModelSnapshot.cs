@@ -18,7 +18,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.20")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
@@ -459,6 +459,45 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("ApplicationUploadedCvs", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.AssessmentNormSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ComputedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("Mean")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("N")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("P25")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("P50")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("P75")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Kind", "Domain", "ComputedAtUtc");
+
+                    b.ToTable("AssessmentNormSnapshots", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.AtsScrapeSource", b =>
                 {
                     b.Property<Guid>("Id")
@@ -674,6 +713,98 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("UserId", "Purpose", "ExpiresAtUtc");
 
                     b.ToTable("CandidateActionTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateAssessmentAdjustment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AttemptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("IdempotencyKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Variant")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttemptId")
+                        .IsUnique()
+                        .HasFilter("\"AttemptId\" IS NOT NULL");
+
+                    b.HasIndex("UserId", "Kind", "Variant");
+
+                    b.HasIndex("UserId", "Kind", "Variant", "IdempotencyKey")
+                        .IsUnique()
+                        .HasFilter("\"IdempotencyKey\" IS NOT NULL");
+
+                    b.ToTable("CandidateAssessmentAdjustments", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateAssessmentAttempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AnswersJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PreviousSnapshotJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReportJson")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ReportVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ScoresJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("StartedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Variant")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Kind", "Variant", "Status");
+
+                    b.ToTable("CandidateAssessmentAttempts", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateCareerInterest", b =>
@@ -5238,6 +5369,28 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateActionToken", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateAssessmentAdjustment", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateAssessmentAttempt", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
                         .WithMany()

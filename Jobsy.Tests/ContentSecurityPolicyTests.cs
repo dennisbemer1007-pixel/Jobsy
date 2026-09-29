@@ -17,6 +17,9 @@ public class ContentSecurityPolicyTests
         Assert.DoesNotContain("unsafe-inline", scriptSrc);
         Assert.DoesNotContain("unsafe-eval", scriptSrc);
 
+        var cspCi = JobsyContentSecurityPolicy.ForWeb(nonce, allowUnsafeEval: true);
+        Assert.Contains("'unsafe-eval'", JobsyContentSecurityPolicy.ScriptSrc(cspCi)!);
+
         var imgSrc = JobsyContentSecurityPolicy.Directive(csp, "img-src");
         Assert.NotNull(imgSrc);
         var imgWithoutHosts = imgSrc

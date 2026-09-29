@@ -15,10 +15,17 @@ public static class JobsyContentSecurityPolicy
     /// <summary>YouTube hqdefault thumbnails for click-to-load video posters only.</summary>
     public const string YouTubeThumbnail = "https://i.ytimg.com";
 
-    public static string ForWeb(string nonce)
+    /// <param name="allowUnsafeEval">
+    /// CI/Playwright only: <c>WaitForFunctionAsync</c> evaluates predicates via <c>eval</c>.
+    /// Production and Acceptatie keep this false.
+    /// </param>
+    public static string ForWeb(string nonce, bool allowUnsafeEval = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(nonce);
         var n = $"'nonce-{nonce}'";
+        var scriptSrc = allowUnsafeEval
+            ? $"script-src 'self' {n} 'unsafe-eval';"
+            : $"script-src 'self' {n};";
         return string.Join(' ',
             "default-src 'self';",
             "base-uri 'self';",
@@ -29,7 +36,7 @@ public static class JobsyContentSecurityPolicy
             $"font-src 'self' data: {OpenFreeMap};",
             $"style-src-elem 'self' {n};",
             "style-src-attr 'unsafe-inline';",
-            $"script-src 'self' {n};",
+            scriptSrc,
             "script-src-attr 'none';",
             "form-action 'self';",
             $"connect-src 'self' {OpenFreeMap};",

@@ -521,6 +521,36 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     d.UpdatedAtUtc
                 })
                 .ToListAsync(cancellationToken),
+            AssessmentAdjustments = await _db.CandidateAssessmentAdjustments.AsNoTracking()
+                .Where(a => a.UserId == user.Id)
+                .OrderByDescending(a => a.AtUtc)
+                .Select(a => new
+                {
+                    Kind = a.Kind.ToString(),
+                    Variant = a.Variant.ToString(),
+                    Type = a.Type.ToString(),
+                    a.AtUtc,
+                    a.AttemptId
+                })
+                .ToListAsync(cancellationToken),
+            AssessmentAttempts = await _db.CandidateAssessmentAttempts.AsNoTracking()
+                .Where(a => a.UserId == user.Id)
+                .OrderByDescending(a => a.StartedAtUtc)
+                .Select(a => new
+                {
+                    a.Id,
+                    Kind = a.Kind.ToString(),
+                    Variant = a.Variant.ToString(),
+                    a.Status,
+                    a.AnswersJson,
+                    a.ScoresJson,
+                    a.ReportJson,
+                    a.ReportVersion,
+                    a.PreviousSnapshotJson,
+                    a.StartedAtUtc,
+                    a.CompletedAtUtc
+                })
+                .ToListAsync(cancellationToken),
             DeepAnalysisCheckouts = await _db.DeepAnalysisCheckouts.AsNoTracking()
                 .Where(c => c.UserId == user.Id)
                 .OrderByDescending(c => c.CreatedAtUtc)
@@ -1241,6 +1271,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (deepAnalyses.Count > 0)
         {
             _db.CandidateDeepAnalyses.RemoveRange(deepAnalyses);
+        }
+
+        var adjustments = await _db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (adjustments.Count > 0)
+        {
+            _db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        var attempts = await _db.CandidateAssessmentAttempts
+            .Where(a => a.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (attempts.Count > 0)
+        {
+            _db.CandidateAssessmentAttempts.RemoveRange(attempts);
         }
 
         var deepCheckouts = await _db.DeepAnalysisCheckouts

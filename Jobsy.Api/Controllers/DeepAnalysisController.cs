@@ -145,6 +145,7 @@ public sealed class DeepAnalysisController : ControllerBase
     [EnableRateLimiting("public-read")]
     public async Task<IActionResult> Report(
         [FromQuery] string? kind,
+        [FromQuery] string? lang,
         CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -153,7 +154,7 @@ public sealed class DeepAnalysisController : ControllerBase
             return NotFound();
         }
 
-        var pdf = await _reports.TryRenderAsync(user.Id, ParseKind(kind), cancellationToken);
+        var pdf = await _reports.TryRenderAsync(user.Id, ParseKind(kind), lang, cancellationToken);
         if (pdf is null)
         {
             return NotFound(new { message = "Rapport is nog niet beschikbaar. Rond de diepte-analyse eerst af." });

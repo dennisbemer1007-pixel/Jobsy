@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Data\Norms\big-five-norms.json" />
+    <EmbeddedResource Include="Data\SampleReports\*.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,6 +5,7 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Pages.Candidate.DeepReport
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
@@ -68,6 +69,18 @@ else if (_state is { IsCompleted: true } completedState)
                                           QuestionCount="@completedState.QuestionCount"
                                           Busy="_saving"
                                           OnDownloadPdf="DownloadPdfAsync" />
+            }
+            else if (_slug == "career" && completedState.CareerReport is not null)
+            {
+                <CareerDeepReportView Report="completedState.CareerReport" Busy="_saving" OnDownloadPdf="DownloadPdfAsync" />
+            }
+            else if (_slug == "culture" && completedState.CultureReport is not null)
+            {
+                <CultureDeepReportView Report="completedState.CultureReport" Busy="_saving" OnDownloadPdf="DownloadPdfAsync" />
+            }
+            else if (_slug == "values" && completedState.ValuesReport is not null)
+            {
+                <ValuesDeepReportView Report="completedState.ValuesReport" Busy="_saving" OnDownloadPdf="DownloadPdfAsync" />
             }
             else
             {

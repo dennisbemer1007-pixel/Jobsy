@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "d8fa4246ebc927940b44081ec163500644cf7f8b73f3e401f5007ad0bbad48f1",
+    "sha256": "ebb735ce83b7c581c4eda87bc229dc6058fef5284b06a104d2e3fa7920084d47",
     "v": "20260929-acc"
   },
   "css/features/applications.css": {
@@ -38,6 +38,10 @@
   "css/features/questionnaire.css": {
     "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",
     "v": "20260928-q-scroll"
+  },
+  "css/features/testresultaten.css": {
+    "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
+    "v": "20260929-testresultaten-b2"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",

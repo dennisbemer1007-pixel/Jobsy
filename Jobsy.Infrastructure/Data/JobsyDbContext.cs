@@ -49,6 +49,9 @@ public class JobsyDbContext : DbContext
     public DbSet<TrainingClick> TrainingClicks => Set<TrainingClick>();
     public DbSet<TrainingConversion> TrainingConversions => Set<TrainingConversion>();
     public DbSet<CandidateDeepAnalysis> CandidateDeepAnalyses => Set<CandidateDeepAnalysis>();
+    public DbSet<CandidateAssessmentAdjustment> CandidateAssessmentAdjustments => Set<CandidateAssessmentAdjustment>();
+    public DbSet<CandidateAssessmentAttempt> CandidateAssessmentAttempts => Set<CandidateAssessmentAttempt>();
+    public DbSet<AssessmentNormSnapshot> AssessmentNormSnapshots => Set<AssessmentNormSnapshot>();
     public DbSet<DeepAnalysisCheckout> DeepAnalysisCheckouts => Set<DeepAnalysisCheckout>();
     public DbSet<TalentContactRequest> TalentContactRequests => Set<TalentContactRequest>();
     public DbSet<FlexCommercialSettings> FlexCommercialSettings => Set<FlexCommercialSettings>();
@@ -753,6 +756,48 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateAssessmentAdjustment>(entity =>
+        {
+            entity.ToTable("CandidateAssessmentAdjustments");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.IdempotencyKey).HasMaxLength(128);
+            entity.HasIndex(e => new { e.UserId, e.Kind, e.Variant });
+            entity.HasIndex(e => new { e.UserId, e.Kind, e.Variant, e.IdempotencyKey })
+                .IsUnique()
+                .HasFilter("\"IdempotencyKey\" IS NOT NULL");
+            entity.HasIndex(e => e.AttemptId)
+                .IsUnique()
+                .HasFilter("\"AttemptId\" IS NOT NULL");
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateAssessmentAttempt>(entity =>
+        {
+            entity.ToTable("CandidateAssessmentAttempts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.AnswersJson).HasColumnType("text").IsRequired();
+            entity.Property(e => e.ScoresJson).HasColumnType("text");
+            entity.Property(e => e.ReportJson).HasColumnType("text");
+            entity.Property(e => e.PreviousSnapshotJson).HasColumnType("text");
+            entity.HasIndex(e => new { e.UserId, e.Kind, e.Variant, e.Status });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AssessmentNormSnapshot>(entity =>
+        {
+            entity.ToTable("AssessmentNormSnapshots");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Domain).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => new { e.Kind, e.Domain, e.ComputedAtUtc });
         });
 
         modelBuilder.Entity<DeepAnalysisCheckout>(entity =>
