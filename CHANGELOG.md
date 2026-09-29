@@ -16,7 +16,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ### Added
 - **Admin redesign (02 · dashboard):** `/admin` met 5 KPI-kaarten, Te doen, systeemstatus en platform-modus; `/admin/te-doen`; moderatiefilter op vacatures (`/admin/vacatures/moderatie`); `GET api/admin/todo` + `GET api/admin/finance/summary`; sidebar count-pills.
 - **Admin redesign (01 · shell):** eigen `AdminLayout` met gegroepeerde sidebar, top bar (globale zoek Ctrl/Cmd+K), environment badge, breadcrumbs; Nederlandse admin-URL’s met 301 vanaf oude paden; gedeelde admin UI-primitives; `GET api/admin/search`.
-- **Admin redesign (03a · gebruikers):** `/admin/gebruikers` met rol-tabs, filters (mfa/active), bulkacties, detail drawer (sessies, 2FA-reset via `MfaResetDialog`, support-toegang 15 min default); sessie-/block-/bulk-API’s; aggregates zonder full-table load; `MfaResetByAdmin` mail.
+- **Admin redesign (03 · gebruikers):** `/admin/gebruikers` met rol-tabs, filters (mfa/active), bulkacties, detail drawer (sessies, 2FA-reset via `MfaResetDialog`, support-toegang 15 min default); `/admin/gebruikers/rollen`, `/admin/kandidaten`; Sales-tab lead + uitbetalingen-link; sessie-/block-/bulk-API’s; aggregates zonder full-table load; `MfaResetByAdmin` mail.
 
 ### Fixed
 - **Render `jobsy-api` deploys:** `WebPushSubscriptions` ontbrak in `JobsyDbContextModelSnapshot`. EF Core 9 behandelt dat als `PendingModelChangesWarning` → harde fout in `MigrateAsync` → API-host stopt (Auto-Deploy Failed sinds PWA-commit). Snapshot + regressietest herstellen de deploy.

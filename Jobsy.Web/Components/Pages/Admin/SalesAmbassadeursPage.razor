@@ -9,7 +9,10 @@
 
 <PageTitle>@Culture["AdminNav.SalesAmbassadors"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["AdminNav.SalesAmbassadors"]">
+<AdminPageShell Title="@Culture["AdminNav.SalesAmbassadors"]" Lead="@Culture["AdminUsers.SalesLead"]">
+    <p class="muted admin-cross-link">
+        <a href="/admin/financien/uitbetalingen">@Culture["AdminUsers.SalesPayoutsLink"]</a>
+    </p>
     <AdminTabs BasePath="/admin/gebruikers/sales" ActiveKey="@_tab" Tabs="_tabs" />
     @if (_tab == "ambassadeurs")
     {

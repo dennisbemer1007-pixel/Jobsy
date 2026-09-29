@@ -38,7 +38,7 @@ public static class AdminNav
             new("all-users", "AdminNav.AllUsers", "/admin/gebruikers", NavIcons.Users,
                 ["/admin/users"], IsAvailable: true),
             new("roles", "AdminNav.Roles", "/admin/gebruikers/rollen", NavIcons.Settings,
-                [], IsAvailable: false),
+                [], IsAvailable: true),
             new("sales", "AdminNav.SalesAmbassadors", "/admin/gebruikers/sales", NavIcons.Shared,
                 ["/admin/sales-managers", "/admin/ambassadeurs"], IsAvailable: true),
         ]),
@@ -54,7 +54,7 @@ public static class AdminNav
         new("candidates", "AdminNav.Group.Candidates",
         [
             new("candidates", "AdminNav.Candidates", "/admin/kandidaten", NavIcons.Users,
-                [], IsAvailable: false),
+                [], IsAvailable: true),
             // Tests & normen — deferred slot (comment only; no nav item).
         ]),
         new("vacancies", "AdminNav.Group.Vacancies",

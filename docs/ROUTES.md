@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (146 routes)
+## Table (148 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -60,11 +60,13 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/financien/prijzen` | `Pages/Admin/SalesCommercialPage.razor` | Admin |
 | `/admin/financien/uitbetalingen` | `Pages/Admin/TokenFinanceAdmin.razor` | Admin |
 | `/admin/gebruikers` | `Pages/Admin/UsersAdmin.razor` | Admin |
+| `/admin/gebruikers/rollen` | `Pages/Admin/RolesAdmin.razor` | Admin |
 | `/admin/gebruikers/sales` | `Pages/Admin/SalesAmbassadeursPage.razor` | Admin |
 | `/admin/instellingen` | `Pages/Admin/SettingsAdmin.razor` | Admin |
 | `/admin/instellingen/algemeen` | `Pages/Admin/CompanySettingsAdmin.razor` | Admin |
 | `/admin/instellingen/integraties` | `Pages/Admin/IntegratiesApiPage.razor` | Admin |
 | `/admin/integrations` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
+| `/admin/kandidaten` | `Pages/Admin/CandidatesAdmin.razor` | Admin |
 | `/admin/logging` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/mail-test` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/marketing-flyer` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
