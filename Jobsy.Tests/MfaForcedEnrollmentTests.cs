@@ -355,8 +355,16 @@ public class MfaForcedEnrollmentTests : IClassFixture<RoleFunctionalWebAppFactor
 
         Assert.Equal("Beveilig je account", UiStrings.Get("Mfa.SetupTitle", "nl"));
         Assert.Equal("Secure your account", UiStrings.Get("Mfa.SetupTitle", "en"));
-        Assert.Contains("Authenticator bij sollicitatie (stub)",
-            File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Admin/SettingsAdmin.razor")),
+        Assert.Equal(
+            "Authenticator bij sollicitatie (stub)",
+            UiStrings.Get("AdminSettings.AuthenticatorStub.Title", "nl"));
+        Assert.Contains(
+            "AuthenticatorStub",
+            File.ReadAllText(Path.Combine(root, "Jobsy.Web/Admin/PlatformSettingsCatalog.cs")),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "GroupDemo",
+            File.ReadAllText(Path.Combine(root, "Jobsy.Web/Admin/PlatformSettingsCatalog.cs")),
             StringComparison.Ordinal);
     }
 

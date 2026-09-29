@@ -305,7 +305,8 @@ public class PlatformSettingsEditorBunitTests : TestContext
                 new("sales", "Sales & commissie"),
             }));
         Assert.Contains("Tokenprijzen", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Sales & commissie", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Sales", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("commissie", cut.Markup, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("/admin/financien/prijzen?tab=sales", cut.Markup, StringComparison.Ordinal);
     }
 

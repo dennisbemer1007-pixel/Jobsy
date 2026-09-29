@@ -398,7 +398,7 @@ public static class UiStringsAdmin
         Add("AdminSettings.Group.Vacancies.Desc", "Controle en prijsacties rond vacatures.", "Controls and price actions around vacancies.", "Kontrola i akcje cenowe wokół ofert.", "Controale și acțiuni de preț pentru joburi.", "التحكم وعروض الأسعار حول الوظائف.");
         Add("AdminSettings.Group.Security", "Beveiliging", "Security", "Bezpieczeństwo", "Securitate", "الأمن");
         Add("AdminSettings.Group.Security.Desc", "Inloggen, sessies en toegang tot persoonsgegevens.", "Sign-in, sessions and access to personal data.", "Logowanie, sesje i dostęp do danych osobowych.", "Autentificare, sesiuni și acces la date personale.", "تسجيل الدخول والجلسات والوصول إلى البيانات الشخصية.");
-        Add("AdminSettings.Group.Demo", "Demo & test", "Demo & test", "Demo i test", "Demo și test", "تجريبي واختبار");
+        Add("AdminSettings.Group.Demo", "Demo & test", "Demo and test", "Demo i test", "Demo și test", "تجريبي واختبار");
         Add("AdminSettings.Group.Demo.Desc", "Hulpmiddelen die nooit in Productie aan mogen staan.", "Tools that must never be on in Production.", "Narzędzia, które nigdy nie mogą być włączone na produkcji.", "Instrumente care nu trebuie pornite niciodată în producție.", "أدوات يجب ألا تُفعَّل أبداً في الإنتاج.");
         Add("AdminSettings.Group.General", "Algemeen", "General", "Ogólne", "General", "عام");
         Add("AdminSettings.Group.General.Desc", "Publieke URL en herinneringen voor werkgevers.", "Public URL and employer reminders.", "Publiczny URL i przypomnienia dla pracodawców.", "URL public și memento-uri pentru angajatori.", "الرابط العام وتذكيرات أصحاب العمل.");
@@ -427,7 +427,7 @@ public static class UiStringsAdmin
         Add("AdminSettings.PublicUrl.Desc", "Basis-URL van de publieke webapp (links in e-mails).", "Base URL of the public web app (links in e-mails).", "Bazowy URL publicznej aplikacji (linki w e-mailach).", "URL de bază al aplicației publice (linkuri în e-mail).", "عنوان أساس تطبيق الويب العام (روابط البريد).");
         Add("AdminSettings.InactiveDays.Title", "Werkgevers opnieuw benaderen", "Re-engage employers", "Ponowne podejście do pracodawców", "Reangajare angajatori", "إعادة التواصل مع أصحاب العمل");
         Add("AdminSettings.InactiveDays.Desc", "Na hoeveel dagen zonder activiteit krijgt een werkgever één herinneringsmail?", "After how many days without activity does an employer get one reminder e-mail?", "Po ilu dniach bez aktywności pracodawca dostaje jeden e-mail przypominający?", "După câte zile fără activitate primește un angajator un e-mail de reamintire?", "بعد كم يوماً دون نشاط يحصل صاحب العمل على تذكير واحد؟");
-        Add("AdminSettings.Unit.Min", "min", "min", "min", "min", "د");
+        Add("AdminSettings.Unit.Min", "min", "mins", "minut", "minute", "د");
         Add("AdminSettings.Unit.Days", "dagen", "days", "dni", "zile", "أيام");
         Add("AdminSettings.DirtyMeta", "Gewijzigd, nog niet opgeslagen · was: {0}", "Changed, not saved yet · was: {0}", "Zmieniono, jeszcze nie zapisano · było: {0}", "Modificat, încă nesalvat · era: {0}", "تم التغيير ولم يُحفظ بعد · كان: {0}");
         Add("AdminSettings.SaveSummary", "{0} wijziging(en): {1}", "{0} change(s): {1}", "{0} zmian(y): {1}", "{0} modificare(ări): {1}", "{0} تغيير(ات): {1}");
@@ -436,9 +436,9 @@ public static class UiStringsAdmin
         Add("AdminSettings.LobsyCompany.Title", "Lobsy bedrijfsgegevens", "Lobsy company details", "Dane firmy Lobsy", "Datele firmei Lobsy", "بيانات شركة Lobsy");
         Add("AdminSettings.LobsyCompany.Hint", "Deze gegevens verschijnen onderaan factuur-PDF’s. De slogan staat ook in de header onder het Lobsy-logo. Het Knab BTW-IBAN wordt gebruikt voor de geautomatiseerde BTW-buffer.", "These details appear at the bottom of invoice PDFs. The slogan also shows in the header under the Lobsy logo. The Knab VAT IBAN is used for the automated VAT buffer.", "Te dane pojawiają się na dole PDF-ów faktur.", "Aceste date apar jos pe PDF-urile de factură.", "تظهر هذه البيانات أسفل ملفات فواتير PDF.");
         Add("AdminSettings.LobsyCompany.Name", "Bedrijfsnaam", "Company name", "Nazwa firmy", "Numele firmei", "اسم الشركة");
-        Add("AdminSettings.LobsyCompany.Slogan", "Slogan", "Slogan", "Slogan", "Slogan", "الشعار");
+        Add("AdminSettings.LobsyCompany.Slogan", "Slogan", "Tagline", "Hasło reklamowe", "Motto", "الشعار");
         Add("AdminSettings.LobsyCompany.SloganHint", "Zichtbaar in de header onder het Lobsy-logo. Leeg laten herstelt de standaardslogan.", "Visible in the header under the Lobsy logo. Leave empty to restore the default slogan.", "Widoczny w nagłówku pod logo Lobsy.", "Vizibil în antet sub logo-ul Lobsy.", "ظاهر في الترويسة تحت شعار Lobsy.");
-        Add("AdminSettings.LobsyCompany.Address", "Adres", "Address", "Adres", "Adresă", "العنوان");
+        Add("AdminSettings.LobsyCompany.Address", "Adres", "Address", "Adres firmy", "Adresă", "العنوان");
         Add("AdminSettings.LobsyCompany.PostalCode", "Postcode", "Postal code", "Kod pocztowy", "Cod poștal", "الرمز البريدي");
         Add("AdminSettings.LobsyCompany.City", "Plaats", "City", "Miasto", "Oraș", "المدينة");
         Add("AdminSettings.LobsyCompany.Country", "Land", "Country", "Kraj", "Țară", "البلد");
@@ -448,12 +448,12 @@ public static class UiStringsAdmin
         Add("AdminSettings.LobsyCompany.IbanHint", "GET toont alleen een gemaskeerd IBAN. Laat het veld ongewijzigd om de huidige rekening te behouden; vul een volledig IBAN in om te wijzigen.", "GET only shows a masked IBAN. Leave unchanged to keep the current account; enter a full IBAN to change it.", "GET pokazuje tylko zamaskowany IBAN.", "GET arată doar un IBAN mascat.", "يعرض GET رقم IBAN مقنّعاً فقط.");
         Add("AdminSettings.LobsyCompany.IbanVatHint", "Na elke succesvolle Mollie token-aankoop wordt het BTW-bedrag (21%) als overboeking-opdracht gelogd naar dit IBAN, met het unieke factuurnummer als omschrijving/kenmerk.", "After each successful Mollie token purchase, the VAT amount (21%) is logged as a transfer to this IBAN, with the unique invoice number as reference.", "Po każdym udanym zakupie tokenów Mollie kwota VAT (21%) jest logowana jako przelew na ten IBAN.", "După fiecare achiziție reușită de tokenuri Mollie, TVA (21%) este înregistrat ca transfer pe acest IBAN.", "بعد كل شراء رموز Mollie ناجح يُسجَّل مبلغ الضريبة (21٪) كتحويل إلى هذا IBAN.");
         Add("AdminSettings.LobsyCompany.Phone", "Telefoon", "Phone", "Telefon", "Telefon", "الهاتف");
-        Add("AdminSettings.LobsyCompany.Email", "E-mail", "E-mail", "E-mail", "E-mail", "البريد");
+        Add("AdminSettings.LobsyCompany.Email", "E-mail", "Email", "Adres e-mail", "Adresă de e-mail", "البريد");
         Add("AdminSettings.LobsyCompany.Saved", "Bedrijfsgegevens opgeslagen.", "Company details saved.", "Dane firmy zapisane.", "Datele firmei salvate.", "تم حفظ بيانات الشركة.");
         Add("AdminTabs.TokenPrices", "Tokenprijzen", "Token prices", "Ceny tokenów", "Prețuri token", "أسعار الرموز");
-        Add("AdminTabs.PushBom", "PushBom", "PushBom", "PushBom", "PushBom", "PushBom");
-        Add("AdminTabs.FlexTalent", "Flex & talent", "Flex & talent", "Flex i talent", "Flex și talent", "مرن ومواهب");
-        Add("AdminTabs.EarlyAdapters", "Early adapters", "Early adapters", "Early adapters", "Early adapters", "المبادرون الأوائل");
+        Add("AdminTabs.PushBom", "PushBom", "PushBom pricing", "Ceny PushBom", "Prețuri PushBom", "تسعير PushBom");
+        Add("AdminTabs.FlexTalent", "Flex & talent", "Flex and talent", "Flex i talent", "Flex și talent", "مرن ومواهب");
+        Add("AdminTabs.EarlyAdapters", "Early adapters", "Early-adopter rules", "Reguły early adapter", "Reguli early adapter", "المبادرون الأوائل");
         Add("AdminTabs.SalesCommission", "Sales & commissie", "Sales & commission", "Sprzedaż i prowizja", "Sales și comision", "المبيعات والعمولة");
     }
 }
