@@ -178,3 +178,42 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/wie-zijn-wij` | `Pages/Legal/WieZijnWij.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
+
+## Werkgever legacy redirects (D2)
+
+Old `/employer`, `/branch` and `/regional` URLs answer **301** to `/werkgever/…`
+for at least one release. Source: `WerkgeverLegacyRoutes.Table`.
+// Remove after {release}
+
+| Old | New |
+|-----|-----|
+| `/employer/vacancies` | `/werkgever/vacatures` |
+| `/branch/vacancies` | `/werkgever/vacatures` |
+| `/branch/vacancies/new` | `/werkgever/vacatures/nieuw` |
+| `/branch/applicants` | `/werkgever/sollicitaties` |
+| `/employer/talent` | `/werkgever/talentpool` |
+| `/employer/talent-contacts` | `/werkgever/talentpool?tab=contact` |
+| `/employer/kandidaatinzichten` | `/werkgever/kandidaatinzichten` |
+| `/employer/branches` | `/werkgever/organisatie/vestigingen` |
+| `/regional/branches` | `/werkgever/organisatie/vestigingen` |
+| `/employer/regions` | `/werkgever/organisatie/vestigingen?tab=regios` |
+| `/employer/organization` | `/werkgever/organisatie/vestigingen` |
+| `/employer/users` | `/werkgever/organisatie/team` |
+| `/employer/company` | `/werkgever/organisatie/profiel` |
+| `/employer/culture` | `/werkgever/organisatie/profiel?tab=cultuur` |
+| `/branch/culture` | `/werkgever/organisatie/profiel?tab=cultuur` |
+| `/employer/salary-tables` | `/werkgever/organisatie/salaristabellen` |
+| `/employer/tokens` | `/werkgever/tokens` |
+| `/branch/tokens` | `/werkgever/tokens` |
+| `/regional/tokens` | `/werkgever/tokens` |
+| `/employer/csv-import` | `/werkgever/koppelingen?tab=csv` |
+| `/employer/takeovers` | `/werkgever/overnames` |
+| `/employer/sales` | `/werkgever/partner` |
+| `/employer/sales/payout-checkout` | `/werkgever/partner/uitbetalen` |
+| `/branch` | `/werkgever` |
+| `/regional` | `/werkgever` |
+
+| Special | Behaviour |
+|---------|------------|
+| `/home` (employer roles only) | 301 → `/werkgever` |
+| `/employer/onboarding-checkout`, `/tokens/checkout-return`, `/tokens/checkout-stub` | **unchanged** (payment return URLs) |

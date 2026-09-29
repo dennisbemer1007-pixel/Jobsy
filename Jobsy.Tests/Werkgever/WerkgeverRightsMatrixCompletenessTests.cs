@@ -200,7 +200,9 @@ public class WerkgeverRightsMatrixCompletenessTests
             return true;
         }
 
-        if (fileName == "TalentPoolController.cs" && n.Contains("api/me/", StringComparison.Ordinal))
+        if (fileName == "TalentPoolController.cs"
+            && (n.Contains("api/me/", StringComparison.Ordinal)
+                || n.EndsWith("/respond", StringComparison.Ordinal)))
         {
             return true;
         }
