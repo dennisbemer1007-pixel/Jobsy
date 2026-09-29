@@ -86,4 +86,4 @@
 - The PR body has: stacked-on line, what and why, screenshots (where there is UI), test list, "Out of scope / deferred".
 
 ## Done → next
-Push, open the PR, note its number. Then continue with **the final report (00-README step 4)**. If anything above is red, stop and report (see 00-README "How to run" step 3).
+Push, open the PR, note its number. Then continue with **`06-ontdekkingsreis-data.md`** (it branches from this file's last branch). If anything above is red, stop and report (see 00-README "How to run" step 3).

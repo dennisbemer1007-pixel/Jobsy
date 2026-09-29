@@ -12,8 +12,21 @@ Cursor: **read this file completely**, then **execute the files below strictly i
 | 03 | `03-mijn-tests.md`: tab Mijn tests + course data model + "Groei verder" | `cursor/mijn-paspoort-2` | `cursor/mijn-paspoort-1` | `acceptatie` |
 | 04 | `04-past-deze-baan-carriere.md`: tabs Past deze baan? + Carrière | `cursor/mijn-paspoort-3` | `cursor/mijn-paspoort-2` | `acceptatie` |
 | 05 | `05-bewijzen-mijn-gegevens.md`: tabs Bewijzen + Mijn gegevens (all profile forms) | `cursor/mijn-paspoort-4` | `cursor/mijn-paspoort-3` | `acceptatie` |
+| 06 | `06-ontdekkingsreis-data.md`: new profile fields (languages, Dutch level, employer preferences, learning goals, hobbies), private dislikes table, shown in the paspoort | `cursor/ontdekkingsreis-1` | `cursor/mijn-paspoort-4` | `acceptatie` |
+| 07 | `07-ontdekkingsreis-wizard-stappen-1-6.md`: De ontdekkingsreis shell (zones, scene, lobster plates, progress, "Later verder"), wizard v3 state migration, Start + steps 1–6 + consent | `cursor/ontdekkingsreis-2` | `cursor/ontdekkingsreis-1` | `acceptatie` |
+| 08 | `08-ontdekkingsreis-tests-einde-nav.md`: tests 7–10, "Weer een laag eraf" + going deeper, end screen, nav slot, "Verder ontdekken", old onboarding redirect | `cursor/ontdekkingsreis-3` | `cursor/ontdekkingsreis-2` | `acceptatie` |
 
-06 and up come later and are **not** in this run (for example the "De ontdekkingsreis" nav item). §N reserves its slot.
+Files 05 and 07 may each split into a/b (see their size notes). The next file then branches from the **last** sub-branch (for example `cursor/mijn-paspoort-4b`). Mockups for 06–08 are in `docs/mockups/ontdekkingsreis/` on this branch.
+
+## Pointer prompt (the only prompt needed; it runs 01 … 08)
+```
+Run the Mijn Paspoort + Ontdekkingsreis stack. First: git fetch origin && git show origin/docs/mijn-paspoort:docs/prompts/mijn-paspoort/00-README.md — read it completely.
+Then read and execute each file in docs/prompts/mijn-paspoort/ on that branch strictly in the order the README's table lists (01, 01b, 02 … 08; a/b splits where a file says so), one file = one PR.
+File 01 branches from origin/acceptatie; every later file branches from the previous file's branch (stacked). Each opens ONE PR into acceptatie whose body starts with "Stacked on #<prev PR>".
+Build and test after each file; if tests fail or a success criterion can't be met, push, open that PR as draft, stop and report — don't start the next file.
+Never merge, never deploy, never use rule 123, never push to main or acceptatie, no force-pushes.
+At the end report: file → branch → PR number → status, plus anything deferred.
+```
 
 ## How to run
 1. `git fetch origin`. Read `00-README.md` (this file) and the design rules `.cursor/rules/design-system.mdc`.
@@ -188,22 +201,22 @@ Admin toggles live in the singleton row `Jobsy.Core/Entities/PlatformFeatureSett
 ## §N. Candidate nav: order and slots (refactor in 01, new order in 02)
 There is one `BottomNav`; on desktop it is the main nav too, so this covers desktop and mobile. The design system allows **at most 5 items**.
 
-**Slots, left to right:** `Discovery` (De ontdekkingsreis, **reserved**, filled in 06) · `Passport` (Mijn Paspoort, or Profiel with the classic profile) · `Search` (Zoeken `/`) · `Applications` (Sollicitaties `/candidate/applications`) · `Career` (Carrière `/carriere`, **always last**).
+**Slots, left to right:** `Discovery` (De ontdekkingsreis, **reserved**, filled in **08**) · `Passport` (Mijn Paspoort, or Profiel with the classic profile) · `Search` (Zoeken `/`) · `Applications` (Sollicitaties `/candidate/applications`) · `Career` (Carrière `/carriere`, **always last**).
 
 | Paspoort flag | Werkgevers actief | Candidate nav (left → right) | Count |
 |---|---|---|---|
 | OFF | ON (default) | Zoeken · Bewaard · Sollicitaties · Carrière · Profiel: **exactly today** (D1) | 5 |
 | OFF | OFF | Carrière · Profiel | 2 |
-| ON | ON | [Ontdekkingsreis] · Mijn Paspoort · Zoeken · Sollicitaties · Carrière | 4 (5 after 06) |
-| ON | OFF | [Ontdekkingsreis] · Mijn Paspoort · Carrière | 2 (3 after 06) |
+| ON | ON | [Ontdekkingsreis] · Mijn Paspoort · Zoeken · Sollicitaties · Carrière | 4 (5 after 08) |
+| ON | OFF | [Ontdekkingsreis] · Mijn Paspoort · Carrière | 2 (3 after 08) |
 
-[ ] = the reserved slot, **empty until 06 lands**. Nothing is rendered for it and it leaves no gap.
+[ ] = the reserved slot, **empty until file 08 lands**. Nothing is rendered for it and it leaves no gap.
 
 - **Bewaard in the new order (D8).** Bewaard is no longer a nav item. It moves **inside Sollicitaties** as a tab: a small shared component `CandidateJobListTabs` with "Sollicitaties · Bewaard" at the top of `Applications.razor`, `Liked.razor` and `Shared.razor`.
   - The URLs stay the same (`/candidate/liked`, `/candidate/shared`). The Sollicitaties nav item is active on them (aliases). Any count badge the Bewaard item had moves to its tab.
   - The tab bar renders only when `RoleNavCatalog.ShowsSavedInNav(flags)` is false. That's one helper, no scattered checks, so the legacy order (paspoort OFF) is exactly today.
 - **Implementation:**
-  - `RoleNavCatalog.Candidate` becomes a **pure function** `RoleNavCatalog.CandidateItems(FeatureFlagSnapshot flags)` with an ordered slot list. It has a legacy branch (paspoort OFF) and the slot branch (paspoort ON), plus a named `CandidateNavSlot.Discovery` with no item, so 06 only adds one entry.
+  - `RoleNavCatalog.Candidate` becomes a **pure function** `RoleNavCatalog.CandidateItems(FeatureFlagSnapshot flags)` with an ordered slot list. It has a legacy branch (paspoort OFF) and the slot branch (paspoort ON), plus a named `CandidateNavSlot.Discovery` with no item, so file 08 only adds one entry.
   - `ForUser(user, flags)` passes the flags on. `BottomNav.razor` reads them from `IFeatureFlags`: on init and on `NavRefreshRequested`, **not** on every location change.
   - The Paspoort item keeps the active aliases `/candidate/profile`, `/profiel` and `/home`.
   - **File 01** does the pure-function refactor with today's order and hides the employer items. **File 02** adds the paspoort-ON order and the Bewaard tab.
@@ -217,7 +230,10 @@ There is one `BottomNav`; on desktop it is the main nav too, so this covers desk
 | Profile photo upload | **Deferred.** Initials avatar, no edit badge. |
 | "Deel mijn paspoort" (sharing) | **Deferred.** Not rendered. Needs a public link + privacy design. |
 | Stamps ("Mijn schalen") | **Built in 02, derived** from existing data (no storage, no dates). |
-| Spoken languages | **Deferred.** Not shown (no field in the model). |
+| Spoken languages + Dutch level | **Built in 06** (new fields), shown in the passport column; collected in the journey (07). |
+| Hobbies, learning goals, employer preferences, dislikes | **Built in 06**, collected in 07. Dislikes are private (own table, never shown to employers). |
+| Real lobster artwork | **Deferred.** 07/08 use the current mascot plus SVG shell plates behind a swappable component. |
+| Removing the old onboarding wizard | **Deferred** until the paspoort flag is permanently ON (D13). |
 | Real course / affiliate data | **Model + admin in 03.** The list ships empty; admin curates (`ShowInPassport`). No fake providers anywhere; the mockup providers live only in test fixtures. |
 | Member number | Built in 02 as a non-PII display hash. |
 | "Nog {x} vragen tot je volgende schaal" | Built in 02 from existing answered/total counts. |
@@ -228,7 +244,13 @@ There is one `BottomNav`; on desktop it is the main nav too, so this covers desk
 - **D3 (O3).** Werkgevers OFF: `ExternalVacanciesController` (the API-key vacancy import for integrators) returns **404** `feature_disabled`, like every gated endpoint.
 - **D4 (O4).** Paspoort ON: candidate `/home` redirects to `/candidate/paspoort`.
 - **D5 (O5).** A course block with no curated free option is **hidden**. It never shows only a paid partner link.
-- **D6 (O6).** Werkgevers OFF: the candidate nav is Mijn Paspoort (or Profiel) + Carrière until 06 adds De ontdekkingsreis. Accepted.
+- **D6 (O6).** Werkgevers OFF: the candidate nav is Mijn Paspoort (or Profiel) + Carrière until 08 adds De ontdekkingsreis. Accepted.
 - **D7 (O7).** The seeded course providers are cleaned up in the small file **01b**.
 - **D8 (O8).** Max 5 nav items. With Werkgevers ON: Ontdekkingsreis · Mijn Paspoort · Zoeken · Sollicitaties · Carrière, and Bewaard becomes a tab inside Sollicitaties. With Werkgevers OFF: Ontdekkingsreis · Mijn Paspoort · Carrière.
   - Override option: Bewaard as a filter in Zoeken instead.
+- **D9.** The new fields (06) and the journey (07/08) exist only when the paspoort flag is ON. With the flag OFF, the classic profile and the old onboarding stay exactly as they are and show none of the new fields. The stored data is kept either way.
+- **D10.** Employer preferences are self-knowledge only for now. They are not shown as a fit result, because there is no employer-side data to compare against.
+- **D11.** De ontdekkingsreis uses the **same paspoort flag**. ON: it replaces the onboarding (`/candidate/start` redirects to `/candidate/ontdekkingsreis`, and wizard state migrates to v3). OFF: the old onboarding stays exactly as it is, and v3 state maps back to v2 on read. No separate flag.
+- **D12.** Design exception: the journey's scene layer (the background illustration) may use gradients built from `color-mix()` of existing tokens. All UI (cards, buttons, text) stays flat. Override option: stepped flat bands.
+- **D13.** The old `OnboardingWizard.razor` is redirected, not deleted, in this stack. It is removed in a later cleanup once the paspoort flag is permanently ON.
+- **D14.** Dislikes only down-rank candidate-side vacancy lists where real vacancy data exists (today only night shifts, `LegalNightShift23To06`). They never hide vacancies, and never change any score employers see.

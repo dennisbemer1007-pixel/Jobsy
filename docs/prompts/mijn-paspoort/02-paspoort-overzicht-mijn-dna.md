@@ -64,7 +64,7 @@ Data comes from the same sources as `Profile.razor` / `CandidateKompas` (`MeProf
   - **"Deel mijn paspoort" is deferred.** Sharing needs a public link and a privacy review, so don't render it.
 - **Tagline** at the bottom (desktop only): shell icon (`--coral`, the only coral on the screen) + "Lobsy: ontdek wie je bent onder de schaal".
 - **Mobile card:** avatar, name, one line "{stad} · {vervoer} {min} min · {uren} u", 2 pills, shell stamp, shell layers. No facts grid; the facts live in the `data` tab.
-- **Spoken languages don't exist** in the model, so they're **deferred**. Don't show a languages row.
+- **Spoken languages don't exist** in the model yet, so don't show a languages row here. File 06 adds the field and the "Talen" fact.
 
 ## 02.4 Overview: "Dit ben jij" (always on top)
 - **DNA ring** (new `Components/Candidate/Passport/DnaRing.razor`, pure SVG, `aria-label`):
