@@ -8,7 +8,6 @@ using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components.Admin;
-using Jobsy.Web.Components.Employer;
 using Jobsy.Web.Help;
 using Jobsy.Web.Navigation;
 
@@ -206,9 +205,17 @@ public static class UatScriptRunner
             Assert.Contains(
                 WerkgeverNav.For(EmployerRole.Bedrijfsmanager, new WerkgeverNavContext()).SelectMany(g => g.Items),
                 i => i.Href == "/werkgever/organisatie/vestigingen");
-            foreach (var module in EnterpriseNavItems.OrganizationModules)
+            foreach (var href in new[]
+                     {
+                         "/werkgever/organisatie/profiel",
+                         "/werkgever/organisatie/vestigingen",
+                         "/werkgever/organisatie/vestigingen?tab=regios",
+                         "/werkgever/organisatie/salaristabellen",
+                         "/werkgever/koppelingen?tab=csv",
+                         "/werkgever/overnames"
+                     })
             {
-                AssertRouteExistsOrAuthEndpoint(module.Href, $"{scenario.Id}: org module {module.Href}");
+                AssertRouteExistsOrAuthEndpoint(href, $"{scenario.Id}: org module {href}");
             }
         }
 

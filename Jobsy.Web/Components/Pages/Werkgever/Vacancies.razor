@@ -313,7 +313,7 @@
                          TitleId="contact-pref-title"
                          Lead="@_contactVacancy.Title"
                          OnClose="CloseContactPref">
-        <p class="muted">Contactgegevens komen uit het bedrijfsprofiel.</p>
+        <p class="muted">@Culture["WgVac.ContactFromProfile"]</p>
         <label class="checkbox-row" style="margin-top:0.5rem">
             <input type="checkbox" @bind="_contactDirect" @bind:after="OnContactDirectChanged" disabled="@_contactBusy" />
             Direct contact gewenst (WhatsApp / Telefoon / Mail)
@@ -697,23 +697,9 @@
     }
 
     private string StatusLabel(VacancyListItem v)
-    {
-        if (string.Equals(v.Status, "PendingApproval", StringComparison.OrdinalIgnoreCase)
-            && Role == EmployerRole.Vestigingsmanager)
-        {
-            return Culture["WgVac.Status.PendingVm"];
-        }
-
-        return v.Status switch
-        {
-            "Active" => Culture["WgVac.Status.Active"],
-            "PendingApproval" => Culture["WgVac.Status.Pending"],
-            "Draft" => Culture["WgVac.Status.Draft"],
-            "Archived" => Culture["WgVac.Status.Archived"],
-            "Fulfilled" => Culture["WgVac.Status.Fulfilled"],
-            _ => v.Status
-        };
-    }
+        => Culture[WerkgeverStatusLabels.VacancyKey(
+            v.Status,
+            pendingAsVmWaiting: Role == EmployerRole.Vestigingsmanager)];
 
     private string VacancySubLine(VacancyListItem v)
     {

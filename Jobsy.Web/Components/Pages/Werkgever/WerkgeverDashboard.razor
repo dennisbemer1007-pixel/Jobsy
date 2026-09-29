@@ -539,12 +539,8 @@ else
         return up ? "up" : "down";
     }
 
-    private string StatusLabel(string status) => status switch
-    {
-        "Achterstand" => Culture["WgDash.Status.Achterstand"],
-        "Aandacht" => Culture["WgDash.Status.Aandacht"],
-        _ => Culture["WgDash.Status.OpSchema"]
-    };
+    private string StatusLabel(string status)
+        => Culture[WerkgeverStatusLabels.DashboardBranchKey(status)];
 
     private string PeriodLabel(string key) => key switch
     {

@@ -319,6 +319,24 @@ public static class PageHelpDocs
             "Acties per fase: accepteren, uitnodigen, aannemen. Contactgegevens pas na aanname.",
             "Mobiele opvolging van een sollicitatie."),
 
+        ["/werkgever/kandidaatinzichten"] = new(
+            "Kandidaatinzichten",
+            "Geaggregeerde trends over kandidaten in je bereik (gratis KPI’s + optioneel premium).",
+            "Bekijk gratis overzicht. Ontgrendel trends en CSV-export met tokens (bedrijfsmanager; vestigingsmanager alleen bij per-vestiging scope). Regiomanager kijkt mee, zonder te kopen.",
+            "Werving sturen met anonieme inzichten zonder PII."),
+
+        ["/werkgever/partner"] = new(
+            "Partnerprogramma",
+            "Tracking, referrals en overzicht voor partnerbedrijven.",
+            "Deel je link, bekijk referrals en commissie-status.",
+            "Partnerschap en referrals beheren."),
+
+        ["/werkgever/partner/uitbetalen"] = new(
+            "Partner uitbetalen",
+            "Selfbilling-uitbetaling is vervangen door automatische referraltokens.",
+            "Ga terug naar het partneroverzicht voor je actuele saldo.",
+            "Legacy checkout-stub na redirect."),
+
 
 
         ["/intermediary"] = new(

@@ -107,7 +107,7 @@
                                          Lead="Kies iDEAL of creditcard. Prepaid — geen automatische incasso." />
                     <label class="token-agree">
                         <input type="checkbox" @bind="_purchaseAgreed" />
-                        <span>Ik ga akkoord met de aankoop. Prepaid, geen automatische verlenging.</span>
+                        <span>@Culture["WgTok.PurchaseAgree"]</span>
                     </label>
                     <button type="button" class="btn-compact btn-compact--primary wg-tok-buy__cta"
                             disabled="@(_busy || !_purchaseAgreed || SelectedPack is null || string.IsNullOrWhiteSpace(_paymentMethod))"

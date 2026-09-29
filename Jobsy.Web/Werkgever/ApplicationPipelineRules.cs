@@ -199,17 +199,8 @@ public static class ApplicationPipelineRules
         return ranked?.Id;
     }
 
-    public static string StatusLabelKey(string status) => status switch
-    {
-        "Pending" => "WgApp.Status.Pending",
-        "Accepted" => "WgApp.Status.Accepted",
-        "EmployerContacting" => "WgApp.Status.Invited",
-        "Hired" => "WgApp.Status.Hired",
-        "Rejected" => "WgApp.Status.Rejected",
-        "FilledElsewhere" => "WgApp.Status.FilledElsewhere",
-        "Withdrawn" => "WgApp.Status.Withdrawn",
-        _ => "WgApp.Status.Pending"
-    };
+    public static string StatusLabelKey(string status)
+        => WerkgeverStatusLabels.ApplicationKey(status);
 
     public static string StatusCss(string status) => status.ToLowerInvariant() switch
     {

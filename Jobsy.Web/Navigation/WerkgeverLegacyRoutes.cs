@@ -2,6 +2,8 @@ namespace Jobsy.Web.Navigation;
 
 /// <summary>
 /// Old employer URLs → new /werkgever URLs (D2). Query is preserved; optional tab= is merged.
+/// Keep for at least one release after the werkgever redesign ships.
+/// // Remove after {release} — drop table + middleware + in-circuit redirect once analytics show negligible legacy hits.
 /// </summary>
 public static class WerkgeverLegacyRoutes
 {

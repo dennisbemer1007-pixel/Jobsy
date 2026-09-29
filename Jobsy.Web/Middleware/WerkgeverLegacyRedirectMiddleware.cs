@@ -7,6 +7,7 @@ namespace Jobsy.Web.Middleware;
 /// <summary>
 /// 301 redirects from legacy /employer|/branch|/regional URLs to /werkgever (GET/HEAD only).
 /// /home → /werkgever only for authenticated employer roles.
+/// Keep for at least one release (D2). // Remove after {release}
 /// </summary>
 public sealed class WerkgeverLegacyRedirectMiddleware
 {

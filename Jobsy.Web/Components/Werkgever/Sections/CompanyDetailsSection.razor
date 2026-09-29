@@ -1,5 +1,4 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@using Jobsy.Web.Components.Employer
 @using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
@@ -14,7 +13,6 @@
     <AuthorizeView Roles="EnterpriseManager">
         <Authorized>
             <DesktopPreferredNotice />
-            <EnterpriseOrgSubnav />
         </Authorized>
     </AuthorizeView>
     <header class="panel-header">

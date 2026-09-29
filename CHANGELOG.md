@@ -14,6 +14,8 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Werkgever redesign 08:** terminologieguards (geen jargon in NL), statuslabels op één plek, dode employer-nav opgeruimd, rechtenmatrix compleet + docs, Playwright-rooktest per rol. Legacy `/employer`‑redirects blijven tot na de release.
+- **Werkgever redesign 07:** Kandidaatinzichten als betaalde ontgrendeling met tokens, server-side free/locked split, admin settings.
 - **Werkgever redesign 06:** Tokens & facturen overview (BM/VM/RM), verbruik per vestiging with allocate drawer, mutaties, facturen (moved from Bedrijfsprofiel), VM tokenaanvraag + Te doen `TokenRequests`, Partnerprogramma with referrals; `Regional/TokenControl` removed (legacy URL 301s).
 - **Werkgever redesign 04:** Sollicitaties pipeline (Nieuw → Aangenomen) + list view, candidate drawer with privacy stages (`LobsyCvAccessRules`), mobile candidate page `/werkgever/sollicitaties/{id}`; API filters `status` / `overdueHours` / `branchIds`. Terminology: Uitgenodigd / Aangenomen. Interne notitie deferred (no employer note field).
 - **Werkgever redesign 03:** Vacatures table with status tabs, filters, inline approval, bulk with token cost, plain-Dutch actions, VM/RM variants.

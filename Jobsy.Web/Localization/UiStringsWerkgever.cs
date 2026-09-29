@@ -16,6 +16,12 @@ public static class UiStringsWerkgever
             ar[key] = arText;
         }
 
+        // Terminology overrides (D11) — replace jargon left in UiStringsExtras
+        Add("Partner.Usp2", "Funda-model: banenkaart + uitlicht-carrousel", "Funda-style job map + feature carousel", "Model Funda: mapa ofert + karuzela wyróżnień", "Model Funda: hartă joburi + carusel evidențieri", "نموذج Funda: خريطة وظائف + دوّارة التمييز");
+        Add("Employer.FilterMatched", "Aangenomen", "Hired", "Zatrudniony", "Angajat", "مُعيَّن");
+        Add("Employer.ApplicantsReadOnly", "Je kunt sollicitaties inzien; reageren doet de vestigings- of bedrijfsmanager.", "You can view applications; the branch or company manager responds.", "Możesz przeglądać aplikacje; reaguje menedżer placówki lub firmy.", "Poți vedea aplicațiile; răspunde managerul de filială sau de firmă.", "يمكنك عرض الطلبات؛ يرد مدير الفرع أو الشركة.");
+        Add("Register.RoleBranch", "Vestigingsmanager", "Branch manager", "Menedżer placówki", "Manager de filială", "مدير الفرع");
+
         // Enterprise UI primitives
         Add("EntUi.Loading", "Laden…", "Loading…", "Ładowanie…", "Se încarcă…", "جارٍ التحميل…");
         Add("EntUi.Empty", "Niets gevonden.", "Nothing found.", "Nic nie znaleziono.", "Nimic găsit.", "لم يُعثر على شيء.");
@@ -184,11 +190,11 @@ public static class UiStringsWerkgever
         Add("WgTodo.Takeovers.Meta", "Aangevraagd op {0}", "Requested on {0}", "Złożono {0}", "Solicitat pe {0}", "طُلب في {0}");
 
         // Vacatures (03) — terminology overrides + page copy
-        Add("Employer.Highlight", "Uitlichten", "Highlight", "Wyróżnienie", "Evidențiere", "تمييز");
-        Add("Employer.PushBom", "Pushbericht naar kandidaten", "Push to candidates", "Powiadomienie do kandydatów", "Notificare către candidați", "إشعار للمرشحين");
+        Add("Employer.Highlight", "Uitlichten", "Feature", "Wyróżnienie", "Evidențiere", "تمييز");
+        Add("Employer.PushBom", "Pushbericht naar kandidaten", "Push message", "Powiadomienie do kandydatów", "Notificare către candidați", "إشعار للمرشحين");
         Add("Employer.Extend", "Verlengen", "Extend", "Przedłuż", "Prelungește", "تمديد");
-        Add("VacancyAction.Highlight", "Uitlichten", "Highlight", "Wyróżnij", "Evidențiază", "تمييز");
-        Add("VacancyAction.PushBom", "Pushbericht naar kandidaten", "Push to candidates", "Powiadomienie do kandydatów", "Notificare către candidați", "إشعار للمرشحين");
+        Add("VacancyAction.Highlight", "Uitlichten", "Feature", "Wyróżnij", "Evidențiază", "تمييز");
+        Add("VacancyAction.PushBom", "Pushbericht naar kandidaten", "Push message", "Powiadomienie do kandydatów", "Notificare către candidați", "إشعار للمرشحين");
         Add("VacancyAction.Extend", "Verlengen", "Extend", "Przedłuż", "Prelungește", "تمديد");
         Add("VacancyAction.Deactivate", "Deactiveren", "Deactivate", "Dezaktywuj", "Dezactivează", "إلغاء التفعيل");
         Add("VacancyAction.Duplicate", "Dupliceren", "Duplicate", "Duplikuj", "Duplică", "تكرار");
@@ -197,7 +203,7 @@ public static class UiStringsWerkgever
         Add("VacancyAction.Finish", "Afmaken", "Finish", "Dokończ", "Finalizează", "إكمال");
         Add("VacancyAction.Visibility", "Zichtbaarheid & kosten", "Visibility & costs", "Widoczność i koszty", "Vizibilitate și costuri", "الظهور والتكاليف");
         Add("VacancyAction.Applications", "Sollicitaties", "Applications", "Aplikacje", "Aplicații", "الطلبات");
-        Add("PushBom.Title", "Pushbericht naar kandidaten versturen?", "Send push to candidates?", "Wysłać powiadomienie do kandydatów?", "Trimiți notificare către candidați?", "إرسال إشعار للمرشحين؟");
+        Add("PushBom.Title", "Pushbericht naar kandidaten versturen?", "Send push message?", "Wysłać powiadomienie do kandydatów?", "Trimiți notificare către candidați?", "إرسال إشعار للمرشحين؟");
         Add("PushBom.Confirm", "Versturen", "Send", "Wyślij", "Trimite", "إرسال");
         Add("Employer.PublishOptionsTitle", "Zichtbaarheid & kosten", "Visibility & costs", "Widoczność i koszty", "Vizibilitate și costuri", "الظهور والتكاليف");
 
@@ -242,7 +248,7 @@ public static class UiStringsWerkgever
         Add("WgVac.DraftIncomplete", "Nog {0} velden invullen", "{0} fields left", "Jeszcze {0} pól", "Mai {0} câmpuri", "متبقي {0} حقول");
         Add("WgVac.DraftReady", "Klaar om te publiceren", "Ready to publish", "Gotowe do publikacji", "Gata de publicare", "جاهز للنشر");
         Add("WgVac.Bulk.Extend", "Verlengen · {0} tokens", "Extend · {0} tokens", "Przedłuż · {0} tokenów", "Prelungește · {0} tokenuri", "تمديد · {0} رموز");
-        Add("WgVac.Bulk.Highlight", "Uitlichten · {0} tokens", "Highlight · {0} tokens", "Wyróżnij · {0} tokenów", "Evidențiază · {0} tokenuri", "تمييز · {0} رموز");
+        Add("WgVac.Bulk.Highlight", "Uitlichten · {0} tokens", "Feature · {0} tokens", "Wyróżnij · {0} tokenów", "Evidențiază · {0} tokenuri", "تمييز · {0} رموز");
         Add("WgVac.Bulk.Duplicate", "Dupliceren", "Duplicate", "Duplikuj", "Duplică", "تكرار");
         Add("WgVac.Bulk.Deactivate", "Deactiveren", "Deactivate", "Dezaktywuj", "Dezactivează", "إلغاء التفعيل");
         Add("WgVac.Bulk.Summary", "{0} gelukt, {1} niet gelukt", "{0} succeeded, {1} failed", "{0} udało się, {1} nie", "{0} reușite, {1} eșuate", "{0} نجحت، {1} فشلت");
@@ -251,9 +257,9 @@ public static class UiStringsWerkgever
         Add("WgVac.Confirm.BulkTitle", "Bulkactie bevestigen?", "Confirm bulk action?", "Potwierdzić akcję zbiorczą?", "Confirmi acțiunea în masă?", "تأكيد الإجراء الجماعي؟");
         Add("WgVac.Confirm.BulkBody", "Totaal {0} tokens. Saldo nu: {1}. Saldo na: {2}.", "Total {0} tokens. Balance now: {1}. Balance after: {2}.", "Razem {0} tokenów. Saldo teraz: {1}. Po: {2}.", "Total {0} tokenuri. Sold acum: {1}. După: {2}.", "المجموع {0} رمزاً. الرصيد الآن: {1}. بعده: {2}.");
         Add("WgVac.Confirm.AskTokens", "Vraag tokens aan bij je bedrijfsmanager", "Ask your company manager for tokens", "Poproś menedżera firmy o tokeny", "Cere tokenuri managerului de firmă", "اطلب الرموز من مدير شركتك");
-        Add("WgVac.Cost.Highlight", "Uitlichten · {0} tokens", "Highlight · {0} tokens", "Wyróżnij · {0} tokenów", "Evidențiază · {0} tokenuri", "تمييز · {0} رموز");
+        Add("WgVac.Cost.Highlight", "Uitlichten · {0} tokens", "Feature · {0} tokens", "Wyróżnij · {0} tokenów", "Evidențiază · {0} tokenuri", "تمييز · {0} رموز");
         Add("WgVac.Cost.Extend", "Verlengen · {0} tokens", "Extend · {0} tokens", "Przedłuż · {0} tokenów", "Prelungește · {0} tokenuri", "تمديد · {0} رموز");
-        Add("WgVac.Cost.Push", "Pushbericht naar kandidaten · {0} tokens", "Push to candidates · {0} tokens", "Powiadomienie · {0} tokenów", "Notificare · {0} tokenuri", "إشعار · {0} رموز");
+        Add("WgVac.Cost.Push", "Pushbericht naar kandidaten · {0} tokens", "Push message · {0} tokens", "Powiadomienie · {0} tokenów", "Notificare · {0} tokenuri", "إشعار · {0} رموز");
         Add("WgVac.Pager", "{0} van {1} vacatures", "{0} of {1} vacancies", "{0} z {1} ofert", "{0} din {1} posturi", "{0} من {1} وظائف");
         Add("WgVac.Empty", "Nog geen vacatures.", "No vacancies yet.", "Brak ofert.", "Niciun post încă.", "لا وظائف بعد.");
         Add("WgVac.EmptyFilter", "Geen vacatures gevonden voor deze zoekopdracht of filter.", "No vacancies match this search or filter.", "Brak ofert dla tego wyszukiwania lub filtra.", "Niciun post pentru această căutare sau filtru.", "لا وظائف لهذا البحث أو التصفية.");
@@ -261,8 +267,8 @@ public static class UiStringsWerkgever
         Add("WgVac.Deactivated", "gedeactiveerd", "deactivated", "dezaktywowana", "dezactivat", "مُلغى");
         Add("WgVac.Create.VmPublishNote", "Je vestiging heeft {0} tokens. Publiceren kost {1}. Is je saldo te laag, dan gaat de vacature als publicatieaanvraag naar de bedrijfsmanager.", "Your branch has {0} tokens. Publishing costs {1}. If your balance is too low, the vacancy becomes a publication request to the company manager.", "Twoja placówka ma {0} tokenów. Publikacja kosztuje {1}. Przy zbyt niskim saldzie oferta trafia jako wniosek do menedżera firmy.", "Filiala ta are {0} tokenuri. Publicarea costă {1}. Dacă soldul e prea mic, postul devine cerere de publicare către managerul de firmă.", "فرعك لديه {0} رمزاً. النشر يكلف {1}. إذا كان الرصيد منخفضاً تصبح الوظيفة طلب نشر لمدير الشركة.");
         Add("WgVac.Paid.Publish", "Betaling gelukt — vacature is gepubliceerd.", "Payment succeeded — vacancy published.", "Płatność OK — oferta opublikowana.", "Plată reușită — post publicat.", "تم الدفع — نُشرت الوظيفة.");
-        Add("WgVac.Paid.Highlight", "Betaling gelukt — vacature is uitgelicht.", "Payment succeeded — vacancy highlighted.", "Płatność OK — oferta wyróżniona.", "Plată reușită — post evidențiat.", "تم الدفع — مُيِّزت الوظيفة.");
-        Add("WgVac.Paid.PushBom", "Betaling gelukt — pushbericht is verstuurd.", "Payment succeeded — push sent.", "Płatność OK — powiadomienie wysłane.", "Plată reușită — notificare trimisă.", "تم الدفع — أُرسل الإشعار.");
+        Add("WgVac.Paid.Highlight", "Betaling gelukt — vacature is uitgelicht.", "Payment succeeded — vacancy featured.", "Płatność OK — oferta wyróżniona.", "Plată reușită — post evidențiat.", "تم الدفع — مُيِّزت الوظيفة.");
+        Add("WgVac.Paid.PushBom", "Betaling gelukt — pushbericht is verstuurd.", "Payment succeeded — push message sent.", "Płatność OK — powiadomienie wysłane.", "Plată reușită — notificare trimisă.", "تم الدفع — أُرسل الإشعار.");
         Add("WgVac.Paid.Extend", "Betaling gelukt — vacature is verlengd.", "Payment succeeded — vacancy extended.", "Płatność OK — oferta przedłużona.", "Plată reușită — post prelungit.", "تم الدفع — مُدِّدت الوظيفة.");
 
         // Sollicitaties (04)
@@ -542,7 +548,7 @@ public static class UiStringsWerkgever
         Add("WgTok.Withdraw", "Intrekken", "Withdraw", "Wycofaj", "Retrage", "سحب");
         Add("WgTok.Reason.Publiceren", "Publiceren", "Publish", "Publikacja", "Publicare", "نشر");
         Add("WgTok.Reason.Verlengen", "Verlengen", "Extend", "Przedłużenie", "Prelungire", "تمديد");
-        Add("WgTok.Reason.Uitlichten", "Uitlichten", "Highlight", "Wyróżnienie", "Evidențiere", "إبراز");
+        Add("WgTok.Reason.Uitlichten", "Uitlichten", "Feature", "Wyróżnienie", "Evidențiere", "إبراز");
         Add("WgTok.Reason.Kandidaatinzichten", "Kandidaatinzichten", "Candidate insights", "Wnioski o kandydatach", "Perspective candidați", "رؤى المرشحين");
         Add("WgTok.Reason.Overig", "Overig", "Other", "Inne", "Altele", "أخرى");
         Add("WgTok.Status.Open", "Open", "Open", "Otwarty", "Deschis", "مفتوح");
@@ -561,5 +567,8 @@ public static class UiStringsWerkgever
         Add("WgTodo.InsightsRequests.TitleOne", "{0} vraagt Kandidaatinzichten aan", "{0} requests Candidate insights", "{0} prosi o wglądy w kandydatów", "{0} cere perspective candidați", "{0} يطلب رؤى المرشحين");
         Add("WgTodo.InsightsRequests.TitleMany", "{0} openstaande inzichten-aanvragen", "{0} open insights requests", "{0} otwartych wniosków o wglądy", "{0} cereri de perspective deschise", "{0} طلبات رؤى مفتوحة");
         Add("WgTodo.InsightsRequests.Meta", "Ontgrendel of wijs de aanvraag af.", "Unlock or reject the request.", "Odblokuj lub odrzuć wniosek.", "Deblochează sau respinge cererea.", "افتح أو ارفض الطلب.");
+
+        Add("WgVac.ContactFromProfile", "Contactgegevens komen uit het bedrijfsprofiel.", "Contact details come from the company profile.", "Dane kontaktowe pochodzą z profilu firmy.", "Datele de contact vin din profilul firmei.", "بيانات التواصل من ملف الشركة.");
+        Add("WgTok.PurchaseAgree", "Ik ga akkoord met de aankoop. Prepaid, geen automatische verlenging.", "I agree to the purchase. Prepaid, no automatic renewal.", "Akceptuję zakup. Prepaid, bez automatycznego odnawiania.", "Sunt de acord cu cumpărarea. Prepaid, fără reînnoire automată.", "أوافق على الشراء. مسبق الدفع، بلا تجديد تلقائي.");
     }
 }
