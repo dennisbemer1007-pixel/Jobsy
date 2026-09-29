@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using Jobsy.Api.Admin;
 using Jobsy.Api.Models;
 using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -14,6 +16,7 @@ using Jobsy.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Api.Controllers;
 
@@ -31,6 +34,9 @@ public class AdminController : ControllerBase
     private readonly ISupportAccessService _supportAccess;
     private readonly ISecretProtector _secrets;
     private readonly IDeviceSessionService _deviceSessions;
+    private readonly IEmailService _email;
+    private readonly IPlatformFeatureService _features;
+    private readonly ILogger<AdminController> _logger;
 
     public AdminController(
         JobsyDbContext db,
@@ -41,7 +47,10 @@ public class AdminController : ControllerBase
         IPersonalDataAccessLogger accessLog,
         ISupportAccessService supportAccess,
         ISecretProtector secrets,
-        IDeviceSessionService deviceSessions)
+        IDeviceSessionService deviceSessions,
+        IEmailService email,
+        IPlatformFeatureService features,
+        ILogger<AdminController> logger)
     {
         _db = db;
         _kvk = kvk;
@@ -52,6 +61,9 @@ public class AdminController : ControllerBase
         _supportAccess = supportAccess;
         _secrets = secrets;
         _deviceSessions = deviceSessions;
+        _email = email;
+        _features = features;
+        _logger = logger;
     }
 
     [HttpGet("companies")]
@@ -242,6 +254,9 @@ public class AdminController : ControllerBase
         [FromQuery] string? companyType = null,
         [FromQuery] Guid? companyId = null,
         [FromQuery] bool earlyOnly = false,
+        [FromQuery] string? mfa = null,
+        [FromQuery] string? active = null,
+        [FromQuery] string? tab = null,
         CancellationToken cancellationToken = default)
     {
         page = Math.Max(1, page);
@@ -253,45 +268,9 @@ public class AdminController : ControllerBase
             return Unauthorized();
         }
 
+        var aggregates = await AdminUsersAggregatesQuery.QueryAsync(_db, cancellationToken);
+
         var baseQuery = _db.Users.AsNoTracking().AsQueryable();
-
-        // Aggregates over the full (unfiltered) set for overview cards.
-        var allRows = await _db.Users.AsNoTracking()
-            .Select(u => new
-            {
-                u.Id,
-                u.Role,
-                u.CompanyId,
-                CompanyName = u.Company != null ? u.Company.Name : null,
-                u.IsActive,
-                u.TermsAcceptedAt
-            })
-            .ToListAsync(cancellationToken);
-
-        var byRole = allRows
-            .GroupBy(u => u.Role.ToString())
-            .ToDictionary(g => g.Key, g => g.Count());
-        var activeCount = allRows.Count(u => u.IsActive);
-        var inactiveCount = allRows.Count - activeCount;
-        var topCompanies = allRows
-            .Where(u => u.CompanyId != null)
-            .GroupBy(u => new { u.CompanyId, Name = u.CompanyName ?? "—" })
-            .Select(g => new AdminUsersCompanyCountDto(g.Key.CompanyId, g.Key.Name, g.Count()))
-            .OrderByDescending(x => x.Count)
-            .Take(20)
-            .ToList();
-        var byWeek = allRows
-            .Select(u =>
-            {
-                var stamp = u.TermsAcceptedAt ?? DateTime.UnixEpoch;
-                var weekStart = stamp.Date.AddDays(-(int)stamp.DayOfWeek);
-                return weekStart;
-            })
-            .GroupBy(d => d)
-            .OrderByDescending(g => g.Key)
-            .Take(12)
-            .Select(g => new AdminUsersWeekBucketDto(g.Key.ToString("yyyy-MM-dd"), g.Count()))
-            .ToList();
 
         if (companyId is Guid cid)
         {
@@ -303,6 +282,8 @@ public class AdminController : ControllerBase
         {
             baseQuery = baseQuery.Where(u => u.IsEarlyAdapter);
         }
+
+        ApplyTabFilter(ref baseQuery, tab);
 
         if (!string.IsNullOrWhiteSpace(role)
             && Enum.TryParse<UserRole>(role, ignoreCase: true, out var roleEnum))
@@ -323,10 +304,44 @@ public class AdminController : ControllerBase
         if (!string.IsNullOrWhiteSpace(q))
         {
             var term = q.Trim();
-            baseQuery = baseQuery.Where(u =>
-                u.Email.Contains(term)
-                || u.FullName.Contains(term)
-                || (u.Company != null && u.Company.Name.Contains(term)));
+            if (Guid.TryParse(term, out var idTerm))
+            {
+                baseQuery = baseQuery.Where(u =>
+                    u.Id == idTerm
+                    || u.Email.Contains(term)
+                    || u.FullName.Contains(term)
+                    || (u.Company != null && u.Company.Name.Contains(term)));
+            }
+            else
+            {
+                baseQuery = baseQuery.Where(u =>
+                    u.Email.Contains(term)
+                    || u.FullName.Contains(term)
+                    || (u.Company != null && u.Company.Name.Contains(term)));
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(mfa))
+        {
+            baseQuery = mfa.Trim().ToLowerInvariant() switch
+            {
+                "enrolled" or "aan" => baseQuery.Where(u => u.AuthenticatorEnabled),
+                "not-enrolled" or "niet" => baseQuery.Where(u =>
+                    !u.AuthenticatorEnabled && !u.ExternalLogins.Any()),
+                "external" or "external-only" => baseQuery.Where(u =>
+                    !u.AuthenticatorEnabled && u.ExternalLogins.Any()),
+                _ => baseQuery
+            };
+        }
+
+        if (!string.IsNullOrWhiteSpace(active))
+        {
+            baseQuery = active.Trim().ToLowerInvariant() switch
+            {
+                "true" or "1" or "actief" => baseQuery.Where(u => u.IsActive),
+                "false" or "0" or "geblokkeerd" => baseQuery.Where(u => !u.IsActive),
+                _ => baseQuery
+            };
         }
 
         var total = await baseQuery.CountAsync(cancellationToken);
@@ -347,15 +362,39 @@ public class AdminController : ControllerBase
                 u.IsActive,
                 MembershipCompanyIds = u.CompanyMemberships.Select(m => m.CompanyId).ToList(),
                 u.AuthenticatorEnabled,
-                HasExternalLogin = u.ExternalLogins.Any()
+                HasExternalLogin = u.ExternalLogins.Any(),
+                u.PhoneNumber,
+                u.TermsAcceptedAt,
+                u.AuthenticatorEnrolledAtUtc
             })
             .ToListAsync(cancellationToken);
+
+        var pageIds = pageRows.Select(u => u.Id).ToList();
+        var now = DateTime.UtcNow;
+        var sessionRows = await _db.UserDeviceSessions.AsNoTracking()
+            .Where(s => pageIds.Contains(s.UserId) && s.RevokedAtUtc == null)
+            .Select(s => new { s.UserId, s.LastUsedAtUtc, s.ExpiresAtUtc })
+            .ToListAsync(cancellationToken);
+        var sessionByUser = sessionRows
+            .GroupBy(s => s.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => (
+                    LastActiveAtUtc: g.Max(s => s.LastUsedAtUtc),
+                    ActiveSessionCount: g.Count(s => s.ExpiresAtUtc > now)));
+
+        var membershipNames = await _db.UserCompanies.AsNoTracking()
+            .Where(m => pageIds.Contains(m.UserId))
+            .Select(m => new { m.UserId, Name = m.Company != null ? m.Company.Name : "—" })
+            .ToListAsync(cancellationToken);
+        var namesByUser = membershipNames
+            .GroupBy(m => m.UserId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.Select(x => x.Name).ToList());
 
         var revealedAny = false;
         var items = new List<AdminUserDetailDto>(pageRows.Count);
         foreach (var u in pageRows)
         {
-            // Own admin record may stay unmasked; others need an active Contact grant.
             var self = u.Id == actor.Id;
             Guid? grantId = null;
             var reveal = self;
@@ -382,6 +421,10 @@ public class AdminController : ControllerBase
                     cancellationToken: cancellationToken);
             }
 
+            sessionByUser.TryGetValue(u.Id, out var sess);
+            namesByUser.TryGetValue(u.Id, out var names);
+            DateTime? lastActive = sessionByUser.ContainsKey(u.Id) ? sess.LastActiveAtUtc : null;
+            var activeSessions = sessionByUser.ContainsKey(u.Id) ? sess.ActiveSessionCount : 0;
             items.Add(new AdminUserDetailDto(
                 u.Id,
                 reveal ? u.Email : PersonalDataMasker.MaskEmail(u.Email),
@@ -393,7 +436,15 @@ public class AdminController : ControllerBase
                 u.IsEarlyAdapter,
                 u.IsActive,
                 u.MembershipCompanyIds,
-                ResolveMfaStatus(u.AuthenticatorEnabled, u.HasExternalLogin)));
+                ResolveMfaStatus(u.AuthenticatorEnabled, u.HasExternalLogin),
+                reveal
+                    ? u.PhoneNumber
+                    : PersonalDataMasker.MaskPhone(u.PhoneNumber),
+                u.TermsAcceptedAt,
+                lastActive,
+                u.AuthenticatorEnrolledAtUtc,
+                activeSessions,
+                names));
         }
 
         await this.LogPersonalDataAccessAsync(
@@ -402,16 +453,49 @@ public class AdminController : ControllerBase
             PersonalDataAccessLogExtensions.ResolveActorRole(User),
             "admin.users.list",
             "list",
-            reason: $"page={page};pageSize={pageSize};q={(q ?? "")};role={(role ?? "")};companyId={companyId};earlyOnly={earlyOnly};revealed={revealedAny}",
+            reason: $"page={page};pageSize={pageSize};q=;role={(role ?? "")};companyId={companyId};earlyOnly={earlyOnly};mfa={(mfa ?? "")};active={(active ?? "")};tab={(tab ?? "")};revealed={revealedAny}",
             cancellationToken: cancellationToken);
 
         return Ok(new AdminUsersPageDto(
-            new AdminUsersAggregateDto(byRole, topCompanies, activeCount, inactiveCount, byWeek),
+            aggregates,
             items,
             page,
             pageSize,
             total,
             Masked: !revealedAny));
+    }
+
+    private static void ApplyTabFilter(ref IQueryable<User> query, string? tab)
+    {
+        if (string.IsNullOrWhiteSpace(tab))
+        {
+            return;
+        }
+
+        switch (tab.Trim().ToLowerInvariant())
+        {
+            case "kandidaten":
+            case "candidates":
+                query = query.Where(u => u.Role == UserRole.Candidate);
+                break;
+            case "werkgevers":
+            case "employers":
+                query = query.Where(u =>
+                    u.Role == UserRole.BranchManager
+                    || u.Role == UserRole.RegionalManager
+                    || u.Role == UserRole.EnterpriseManager
+                    || u.Role == UserRole.Intermediary);
+                break;
+            case "sales":
+            case "partners":
+                query = query.Where(u =>
+                    u.Role == UserRole.SalesManager || u.Role == UserRole.Ambassadeur);
+                break;
+            case "beheerders":
+            case "admins":
+                query = query.Where(u => u.Role == UserRole.Admin);
+                break;
+        }
     }
 
     [HttpGet("personal-data-access-log")]
@@ -622,7 +706,367 @@ public class AdminController : ControllerBase
             reason: reason,
             cancellationToken: cancellationToken);
 
+        try
+        {
+            var baseUrl = (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl;
+            var mail = TransactionalEmails.MfaResetByAdmin(baseUrl, target.FullName);
+            await _email.SendAsync(
+                new EmailMessage(target.Email, mail.Subject, mail.Html, mail.Category),
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "MFA reset mail failed for user {UserId}", userId);
+        }
+
         return NoContent();
+    }
+
+    [HttpGet("users/{userId:guid}/sessions")]
+    public async Task<ActionResult<IReadOnlyList<AdminUserSessionDto>>> ListUserSessions(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        if (!await _db.Users.AnyAsync(u => u.Id == userId, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        Guid? currentId = null;
+        if (userId == actor.Id
+            && Guid.TryParse(User.FindFirstValue(JobsyClaimTypes.DeviceSessionId), out var parsed))
+        {
+            currentId = parsed;
+        }
+
+        var rows = await _deviceSessions.ListAsync(userId, cancellationToken);
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            actor.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "user.sessions",
+            "list",
+            subjectUserId: userId,
+            cancellationToken: cancellationToken);
+
+        return Ok(rows.Select(r => new AdminUserSessionDto(
+            r.Id,
+            r.DeviceName,
+            r.LastUsedAtUtc,
+            r.CreatedAtUtc,
+            r.ExpiresAtUtc,
+            currentId == r.Id)).ToList());
+    }
+
+    [HttpPost("users/{userId:guid}/sessions/{sessionId:guid}/revoke")]
+    public async Task<IActionResult> RevokeUserSession(
+        Guid userId,
+        Guid sessionId,
+        [FromBody] AdminReasonRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var reason = (request.Reason ?? string.Empty).Trim();
+        if (reason.Length < 5 || reason.Length > 500)
+        {
+            return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
+        }
+
+        if (userId == actor.Id
+            && Guid.TryParse(User.FindFirstValue(JobsyClaimTypes.DeviceSessionId), out var current)
+            && current == sessionId)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Je kunt je huidige sessie niet via beheer beëindigen." });
+        }
+
+        var ok = await _deviceSessions.RevokeAsync(
+            userId, sessionId, "admin:" + reason, cancellationToken);
+        if (!ok)
+        {
+            return NotFound();
+        }
+
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            actor.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "user.sessions",
+            "revoke",
+            subjectUserId: userId,
+            reason: reason,
+            cancellationToken: cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpPost("users/{userId:guid}/sessions/revoke-all")]
+    public async Task<IActionResult> RevokeAllUserSessions(
+        Guid userId,
+        [FromBody] AdminReasonRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var reason = (request.Reason ?? string.Empty).Trim();
+        if (reason.Length < 5 || reason.Length > 500)
+        {
+            return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
+        }
+
+        if (!await _db.Users.AnyAsync(u => u.Id == userId, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        // Refuse wiping your own current session via revoke-all: revoke each except current.
+        if (userId == actor.Id
+            && Guid.TryParse(User.FindFirstValue(JobsyClaimTypes.DeviceSessionId), out var current))
+        {
+            var sessions = await _deviceSessions.ListAsync(userId, cancellationToken);
+            foreach (var s in sessions.Where(s => s.Id != current))
+            {
+                await _deviceSessions.RevokeAsync(userId, s.Id, "admin:" + reason, cancellationToken);
+            }
+        }
+        else
+        {
+            await _deviceSessions.RevokeAllAsync(
+                userId, "admin:" + reason, bumpSessionVersion: true, cancellationToken);
+        }
+
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            actor.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "user.sessions",
+            "revoke",
+            subjectUserId: userId,
+            reason: reason,
+            cancellationToken: cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpPost("users/{userId:guid}/block")]
+    public async Task<IActionResult> BlockUser(
+        Guid userId,
+        [FromBody] AdminReasonRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var reason = (request.Reason ?? string.Empty).Trim();
+        if (reason.Length < 5 || reason.Length > 500)
+        {
+            return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
+        }
+
+        if (userId == actor.Id)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Je kunt jezelf niet blokkeren." });
+        }
+
+        var target = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (target is null)
+        {
+            return NotFound();
+        }
+
+        if (target.Role == UserRole.Admin && target.IsActive)
+        {
+            var otherActiveAdmins = await _db.Users.CountAsync(
+                u => u.Role == UserRole.Admin && u.IsActive && u.Id != userId,
+                cancellationToken);
+            if (otherActiveAdmins == 0)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new { message = "Je kunt de laatste actieve beheerder niet blokkeren." });
+            }
+        }
+
+        target.IsActive = false;
+        target.SessionVersion++;
+        await _db.SaveChangesAsync(cancellationToken);
+        await _deviceSessions.RevokeAllAsync(
+            userId, "admin:block:" + reason, bumpSessionVersion: false, cancellationToken);
+
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            actor.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "user.status",
+            "block",
+            subjectUserId: userId,
+            reason: reason,
+            cancellationToken: cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpPost("users/{userId:guid}/unblock")]
+    public async Task<IActionResult> UnblockUser(
+        Guid userId,
+        [FromBody] AdminReasonRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var reason = (request.Reason ?? string.Empty).Trim();
+        if (reason.Length < 5 || reason.Length > 500)
+        {
+            return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
+        }
+
+        var target = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (target is null)
+        {
+            return NotFound();
+        }
+
+        target.IsActive = true;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            actor.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "user.status",
+            "unblock",
+            subjectUserId: userId,
+            reason: reason,
+            cancellationToken: cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpPost("users/bulk/{bulkAction}")]
+    public async Task<ActionResult<AdminBulkUsersResponseDto>> BulkUsers(
+        string bulkAction,
+        [FromBody] AdminBulkUsersRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var reason = (request.Reason ?? string.Empty).Trim();
+        if (reason.Length < 5 || reason.Length > 500)
+        {
+            return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
+        }
+
+        var ids = (request.UserIds ?? []).Distinct().Take(100).ToList();
+        if (ids.Count == 0)
+        {
+            return BadRequest(new { message = "Selecteer minstens één gebruiker." });
+        }
+
+        if (ids.Count > 100 || (request.UserIds?.Count ?? 0) > 100)
+        {
+            return BadRequest(new { message = "Maximaal 100 gebruikers per bulkactie." });
+        }
+
+        var results = new List<AdminBulkUserResultDto>();
+        var succeeded = 0;
+        var skipped = 0;
+        var normalized = bulkAction.Trim().ToLowerInvariant();
+
+        foreach (var id in ids)
+        {
+            if (id == actor.Id)
+            {
+                results.Add(new AdminBulkUserResultDto(id, false, "jezelf"));
+                skipped++;
+                continue;
+            }
+
+            if (normalized is "block" or "blokkeren")
+            {
+                var target = await _db.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+                if (target is null)
+                {
+                    results.Add(new AdminBulkUserResultDto(id, false, "niet gevonden"));
+                    skipped++;
+                    continue;
+                }
+
+                if (target.Role == UserRole.Admin && target.IsActive)
+                {
+                    var otherActiveAdmins = await _db.Users.CountAsync(
+                        u => u.Role == UserRole.Admin && u.IsActive && u.Id != id,
+                        cancellationToken);
+                    if (otherActiveAdmins == 0)
+                    {
+                        results.Add(new AdminBulkUserResultDto(id, false, "laatste beheerder"));
+                        skipped++;
+                        continue;
+                    }
+                }
+
+                target.IsActive = false;
+                target.SessionVersion++;
+                await _db.SaveChangesAsync(cancellationToken);
+                await _deviceSessions.RevokeAllAsync(
+                    id, "admin:bulk-block:" + reason, bumpSessionVersion: false, cancellationToken);
+                await this.LogPersonalDataAccessAsync(
+                    _accessLog, actor.Id, PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                    "user.status", "block", subjectUserId: id, reason: reason,
+                    cancellationToken: cancellationToken);
+                results.Add(new AdminBulkUserResultDto(id, true));
+                succeeded++;
+            }
+            else if (normalized is "revoke-sessions" or "sessies" or "sessions")
+            {
+                if (!await _db.Users.AnyAsync(u => u.Id == id, cancellationToken))
+                {
+                    results.Add(new AdminBulkUserResultDto(id, false, "niet gevonden"));
+                    skipped++;
+                    continue;
+                }
+
+                await _deviceSessions.RevokeAllAsync(
+                    id, "admin:bulk-sessions:" + reason, bumpSessionVersion: true, cancellationToken);
+                await this.LogPersonalDataAccessAsync(
+                    _accessLog, actor.Id, PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                    "user.sessions", "revoke", subjectUserId: id, reason: reason,
+                    cancellationToken: cancellationToken);
+                results.Add(new AdminBulkUserResultDto(id, true));
+                succeeded++;
+            }
+            else
+            {
+                return BadRequest(new { message = "Onbekende bulkactie." });
+            }
+        }
+
+        return Ok(new AdminBulkUsersResponseDto(succeeded, skipped, results));
     }
 
     private static string ResolveMfaStatus(bool authenticatorEnabled, bool hasExternalLogin)

@@ -1,0 +1,12 @@
+@page "/admin/kandidaten"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@inject CultureState Culture
+
+<PageTitle>@Culture["AdminNav.Candidates"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.Candidates"]" Lead="@Culture["AdminUsers.CandidatesLead"]">
+    <UsersAdminSection BasePath="/admin/kandidaten" PresetTab="kandidaten" HideRoleTabs="true" />
+</AdminPageShell>

@@ -29,7 +29,13 @@ public record AdminUserDetailDto(
     bool IsEarlyAdapter,
     bool IsActive,
     IReadOnlyList<Guid> MembershipCompanyIds,
-    string MfaStatus = "not-enrolled");
+    string MfaStatus = "not-enrolled",
+    string? PhoneNumber = null,
+    DateTime? TermsAcceptedAt = null,
+    DateTime? LastActiveAtUtc = null,
+    DateTime? AuthenticatorEnrolledAtUtc = null,
+    int ActiveSessionCount = 0,
+    IReadOnlyList<string>? MembershipCompanyNames = null);
 
 /// <summary>Paginated, masked admin users overview (prompt 05).</summary>
 public record AdminUsersPageDto(
@@ -50,6 +56,25 @@ public record AdminUsersAggregateDto(
 public record AdminUsersCompanyCountDto(Guid? CompanyId, string CompanyName, int Count);
 
 public record AdminUsersWeekBucketDto(string WeekStartUtc, int Count);
+
+public record AdminUserSessionDto(
+    Guid Id,
+    string DeviceName,
+    DateTime LastUsedAtUtc,
+    DateTime CreatedAtUtc,
+    DateTime ExpiresAtUtc,
+    bool IsCurrent);
+
+public record AdminReasonRequest(string Reason);
+
+public record AdminBulkUsersRequest(IReadOnlyList<Guid> UserIds, string Reason);
+
+public record AdminBulkUserResultDto(Guid UserId, bool Ok, string? SkipReason = null);
+
+public record AdminBulkUsersResponseDto(
+    int Succeeded,
+    int Skipped,
+    IReadOnlyList<AdminBulkUserResultDto> Results);
 
 public record AdminSearchHitDto(string Id, string Label, string? Sublabel, string Href);
 

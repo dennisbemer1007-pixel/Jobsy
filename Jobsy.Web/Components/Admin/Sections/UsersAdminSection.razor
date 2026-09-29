@@ -1,0 +1,967 @@
+@*
+  Shared admin users list + detail drawer (03 Gebruikers).
+  Used by /admin/gebruikers and /admin/kandidaten (preset tab).
+*@
+@namespace Jobsy.Web.Components.Admin.Sections
+@using System.Security.Claims
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject CultureState Culture
+@inject AuthenticationStateProvider AuthState
+@implements IDisposable
+
+@if (_loading && _page is null)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_error) && _page is null)
+{
+    <p class="state-message error">@_error</p>
+}
+else if (_page is not null)
+{
+    @if (!string.IsNullOrEmpty(_toast))
+    {
+        <p class="state-message" role="status">@_toast</p>
+    }
+
+    @if (!HideRoleTabs)
+    {
+        <AdminTabs BasePath="@BasePath" ActiveKey="@_tab" Tabs="_tabs" />
+    }
+
+    <AdminFilterBar Query="@_query" QueryChanged="OnQueryChanged" Placeholder="@Culture["AdminUsers.SearchPlaceholder"]">
+        <Chips>
+            <label class="admin-filter-chip">
+                <span>@Culture["AdminUsers.FilterRole"]</span>
+                <select @bind="_roleFilter" @bind:after="ReloadFromStartAsync">
+                    <option value="">@Culture["AdminUi.All"]</option>
+                    @foreach (var role in (_page.Aggregates.ByRole.Keys.OrderBy(r => r)))
+                    {
+                        <option value="@role">@RoleLabel(role)</option>
+                    }
+                </select>
+            </label>
+            <label class="admin-filter-chip">
+                <span>@Culture["AdminUsers.FilterMfa"]</span>
+                <select @bind="_mfaFilter" @bind:after="ReloadFromStartAsync">
+                    <option value="">@Culture["AdminUi.All"]</option>
+                    <option value="enrolled">@Culture["AdminUsers.MfaOn"]</option>
+                    <option value="not-enrolled">@Culture["AdminUsers.MfaOff"]</option>
+                    <option value="external">@Culture["AdminUsers.MfaExternal"]</option>
+                </select>
+            </label>
+            <label class="admin-filter-chip">
+                <span>@Culture["AdminUsers.FilterStatus"]</span>
+                <select @bind="_activeFilter" @bind:after="ReloadFromStartAsync">
+                    <option value="">@Culture["AdminUi.All"]</option>
+                    <option value="actief">@Culture["AdminUsers.StatusActive"]</option>
+                    <option value="geblokkeerd">@Culture["AdminUsers.StatusBlocked"]</option>
+                </select>
+            </label>
+            @if (_page.Aggregates.TopCompanies.Count > 0)
+            {
+                <label class="admin-filter-chip">
+                    <span>@Culture["AdminUsers.FilterOrg"]</span>
+                    <select @bind="_companyFilter" @bind:after="OnCompanyFilterAsync">
+                        <option value="">@Culture["AdminUi.All"]</option>
+                        @foreach (var c in _page.Aggregates.TopCompanies)
+                        {
+                            <option value="@(c.CompanyId?.ToString("D") ?? "")">@c.CompanyName</option>
+                        }
+                    </select>
+                </label>
+            }
+        </Chips>
+    </AdminFilterBar>
+
+    <AdminBulkBar SelectedCount="_selected.Count" OnClear="ClearSelection">
+        <button type="button" class="btn-compact" disabled="@_busy" @onclick="@(() => OpenBulkConfirm("sessions"))">
+            @Culture["AdminUsers.BulkEndSessions"]
+        </button>
+        <button type="button" class="btn-compact btn-compact--danger-outline" disabled="@_busy" @onclick="@(() => OpenBulkConfirm("block"))">
+            @Culture["AdminUsers.BulkBlock"]
+        </button>
+    </AdminBulkBar>
+
+    <AdminDataTable Loading="_loading"
+                    Empty="_page.Items.Count == 0"
+                    EmptyText="@Culture["AdminUsers.Empty"]"
+                    ShowCheckbox="true"
+                    AllSelected="@(_page.Items.Count > 0 && _page.Items.All(u => _selected.Contains(u.Id)))"
+                    AllSelectedChanged="OnToggleAll"
+                    ShowRowActions="true">
+        <Header>
+            <th scope="col">@Culture["AdminUsers.ColUser"]</th>
+            <th scope="col">@Culture["AdminUsers.ColRole"]</th>
+            <th scope="col" class="admin-col-desktop">@Culture["AdminUsers.ColOrg"]</th>
+            <th scope="col">@Culture["AdminUsers.ColMfa"]</th>
+            <th scope="col" class="admin-col-desktop">@Culture["AdminUsers.ColLastActive"]</th>
+            <th scope="col">@Culture["AdminUsers.ColStatus"]</th>
+        </Header>
+        <Rows>
+            @foreach (var u in _page.Items)
+            {
+                var selected = _selected.Contains(u.Id);
+                <tr class="admin-user-row @(selected ? "is-selected" : null)"
+                    tabindex="0"
+                    @onclick="() => OpenDrawer(u)"
+                    @onkeydown="e => OnRowKey(e, u)">
+                    <td class="admin-data-table__check admin-col-desktop" @onclick:stopPropagation="true">
+                        <input type="checkbox"
+                               checked="@selected"
+                               @onchange="e => ToggleSelect(u.Id, e)"
+                               aria-label="@u.FullName" />
+                    </td>
+                    <td>
+                        <div class="admin-user-cell">
+                            <span class="admin-avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                            <span class="admin-user-cell__text">
+                                <strong>@u.FullName</strong>
+                                <span class="muted">@u.Email</span>
+                            </span>
+                        </div>
+                    </td>
+                    <td>@RoleLabel(u.Role)</td>
+                    <td class="admin-col-desktop">@(u.CompanyName ?? "—")</td>
+                    <td>
+                        <span class="status-pill @(u.MfaStatus == "enrolled" ? "status-pill--accepted" : "status-pill--warn")">
+                            <span aria-hidden="true">@((MarkupString)NavIcons.Lock)</span>
+                            @MfaStatusLabel(u.MfaStatus)
+                        </span>
+                    </td>
+                    <td class="admin-col-desktop">@FormatLastActive(u.LastActiveAtUtc)</td>
+                    <td>
+                        <span class="admin-status-dot @(u.IsActive ? "is-active" : "is-blocked")">
+                            @(u.IsActive ? Culture["AdminUsers.StatusActive"] : Culture["AdminUsers.StatusBlocked"])
+                        </span>
+                    </td>
+                    <td class="data-table__col--actions" @onclick:stopPropagation="true">
+                        <RowActionsMenu>
+                            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenSupport(u)">
+                                @Culture["Admin.WhySeeThis"]
+                            </button>
+                            @if (u.MfaStatus == "enrolled" && u.Id != _currentAdminId)
+                            {
+                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenMfaReset(u)">
+                                    @Culture["Mfa.AdminReset"]
+                                </button>
+                            }
+                        </RowActionsMenu>
+                    </td>
+                </tr>
+            }
+        </Rows>
+    </AdminDataTable>
+
+    <AdminPager Page="_pageNumber"
+                PageSize="_pageSize"
+                TotalCount="_page.TotalCount"
+                TotalPages="@Math.Max(1, (int)Math.Ceiling(_page.TotalCount / (double)_pageSize))"
+                PageChanged="GoPageAsync"
+                PageSizeChanged="OnPageSizeAsync"
+                PageSizeOptions="@(new[] { 25, 50, 100 })" />
+
+    <SupportAccessDialog IsOpen="_supportOpen"
+                         SubjectUserId="_supportSubjectId"
+                         OnClose="CloseSupport"
+                         OnGranted="OnGrantedAsync" />
+
+    <MfaResetDialog IsOpen="_mfaResetOpen"
+                    UserId="_mfaResetUserId"
+                    MaskedName="@(_mfaResetName ?? "")"
+                    SessionCount="_mfaResetSessions"
+                    RequireConfirmCode="_localPasswordAdmin"
+                    OnClose="CloseMfaReset"
+                    OnReset="OnMfaResetDoneAsync" />
+
+    @if (_bulkOpen)
+    {
+        <LobsyFriendlyDialog IsOpen="_bulkOpen"
+                             Title="@_bulkTitle"
+                             TitleId="bulk-users-title"
+                             Lead="@Culture["AdminUsers.BulkLead"]"
+                             OnClose="() => { _bulkOpen = false; return Task.CompletedTask; }">
+            <label class="feedback-dialog__field">
+                <span>@Culture["AdminUsers.MfaResetReason"]</span>
+                <textarea rows="3" maxlength="500" @bind="_bulkReason" @bind:event="oninput"></textarea>
+            </label>
+            @if (!string.IsNullOrEmpty(_bulkError))
+            {
+                <p class="state-message error">@_bulkError</p>
+            }
+            <div class="inline-actions">
+                <button type="button" class="btn-compact" @onclick="() => _bulkOpen = false">@Culture["Common.Cancel"]</button>
+                <button type="button" class="btn-compact btn-compact--danger" disabled="@(_busy || _bulkReason.Trim().Length < 5)" @onclick="ConfirmBulkAsync">
+                    @Culture["Common.Confirm"]
+                </button>
+            </div>
+        </LobsyFriendlyDialog>
+    }
+
+    <AdminDrawer Open="_drawerOpen"
+                 OpenChanged="OnDrawerOpenChanged"
+                 Title="@(_drawerUser?.FullName ?? "")"
+                 FullSheet="_drawerSheet">
+        <ChildContent>
+        @if (_drawerUser is not null)
+        {
+            <div class="admin-user-drawer">
+                <div class="admin-user-drawer__hero">
+                    <span class="admin-avatar admin-avatar--lg" aria-hidden="true">@Initials(_drawerUser.FullName)</span>
+                    <p class="muted">@RoleLabel(_drawerUser.Role) · @(_drawerUser.CompanyName ?? "—")</p>
+                    <div class="admin-user-drawer__pills">
+                        <span class="status-pill">@(_drawerUser.IsActive ? Culture["AdminUsers.StatusActive"] : Culture["AdminUsers.StatusBlocked"])</span>
+                        <span class="status-pill @(_drawerUser.MfaStatus == "enrolled" ? "status-pill--accepted" : null)">
+                            @MfaStatusLabel(_drawerUser.MfaStatus)
+                        </span>
+                        <span class="muted">ID @_drawerUser.Id.ToString("D")[..8]</span>
+                    </div>
+                </div>
+
+                <div class="admin-tabs admin-tabs--drawer" role="tablist">
+                    @foreach (var t in _drawerTabs)
+                    {
+                        <button type="button"
+                                class="admin-tabs__tab @(_drawerTab == t.Key ? "is-active" : null)"
+                                role="tab"
+                                @onclick="() => SetDrawerTab(t.Key)">@t.Label</button>
+                    }
+                </div>
+
+                @if (_drawerTab == "overzicht")
+                {
+                    <dl class="admin-kv">
+                        <div><dt>@Culture["AdminUsers.FieldEmail"]</dt><dd>@_drawerUser.Email</dd></div>
+                        @if (!string.IsNullOrWhiteSpace(_drawerUser.PhoneNumber))
+                        {
+                            <div><dt>@Culture["AdminUsers.FieldPhone"]</dt><dd>@_drawerUser.PhoneNumber</dd></div>
+                        }
+                        <div><dt>@Culture["AdminUsers.ColRole"]</dt><dd>@RoleLabel(_drawerUser.Role)</dd></div>
+                        <div><dt>@Culture["AdminUsers.ColOrg"]</dt><dd>@(_drawerUser.CompanyName ?? "—")</dd></div>
+                        <div><dt>@Culture["AdminUsers.FieldCreated"]</dt><dd>@FormatDate(_drawerUser.TermsAcceptedAt)</dd></div>
+                        <div><dt>@Culture["AdminUsers.ColLastActive"]</dt><dd>@FormatLastActive(_drawerUser.LastActiveAtUtc)</dd></div>
+                        <div><dt>@Culture["AdminUsers.FieldEarly"]</dt><dd>@(_drawerUser.IsEarlyAdapter ? Culture["Common.Yes"] : Culture["Common.No"])</dd></div>
+                    </dl>
+                    @if (_drawerUser.CompanyId is Guid orgId)
+                    {
+                        <a class="btn-compact" href="@($"/admin/organisaties?open={orgId:D}")">@Culture["AdminUsers.OpenOrg"]</a>
+                    }
+                }
+                else if (_drawerTab == "rollen")
+                {
+                    <p><strong>@RoleLabel(_drawerUser.Role)</strong></p>
+                    <ul class="admin-kv">
+                        @if (_drawerUser.MembershipCompanyNames.Count == 0)
+                        {
+                            <li class="muted">@Culture["AdminUsers.NoMemberships"]</li>
+                        }
+                        else
+                        {
+                            @foreach (var name in _drawerUser.MembershipCompanyNames)
+                            {
+                                <li>@name</li>
+                            }
+                        }
+                    </ul>
+                    @if (IsEmployerRole(_drawerUser.Role))
+                    {
+                        <p class="muted">@Culture["AdminUsers.RoleChangeHint"]</p>
+                    }
+                }
+                else if (_drawerTab == "beveiliging")
+                {
+                    <section class="admin-sec-box">
+                        <h3>@Culture["AdminUsers.MfaBoxTitle"]</h3>
+                        <p>@MfaDetailText(_drawerUser)</p>
+                        @if (_drawerUser.MfaStatus == "enrolled" && _drawerUser.Id != _currentAdminId)
+                        {
+                            <button type="button" class="btn-compact btn-compact--danger-outline" @onclick="() => OpenMfaReset(_drawerUser)">
+                                <span aria-hidden="true">@((MarkupString)NavIcons.MfaReset)</span>
+                                @Culture["Mfa.AdminReset"]
+                            </button>
+                            <p class="muted">@Culture["AdminUsers.MfaResetHelp"]</p>
+                        }
+                    </section>
+
+                    <section class="admin-sec-box">
+                        <header class="admin-sec-box__head">
+                            <h3>@Culture["AdminUsers.SessionsTitle"] <span class="muted">(@_sessions.Count)</span></h3>
+                            @if (_sessions.Count > 0 && _drawerUser.Id != _currentAdminId)
+                            {
+                                <button type="button" class="btn-compact" disabled="@_busy" @onclick="RevokeAllSessionsAsync">
+                                    @Culture["AdminUsers.EndAllSessions"]
+                                </button>
+                            }
+                        </header>
+                        @if (_sessionsLoading)
+                        {
+                            <p class="muted">@Culture["Common.Loading"]</p>
+                        }
+                        else if (_sessions.Count == 0)
+                        {
+                            <p class="muted">@Culture["AdminUsers.NoSessions"]</p>
+                        }
+                        else
+                        {
+                            <ul class="admin-session-list">
+                                @foreach (var s in _sessions)
+                                {
+                                    <li>
+                                        <div>
+                                            <strong>@s.DeviceName</strong>
+                                            <span class="muted">@(s.IsCurrent ? Culture["AdminUsers.SessionCurrent"] : FormatLastActive(s.LastUsedAtUtc))</span>
+                                        </div>
+                                        @if (!s.IsCurrent)
+                                        {
+                                            <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => RevokeSessionAsync(s.Id)">
+                                                @Culture["AdminUsers.EndSession"]
+                                            </button>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </section>
+
+                    <section class="admin-sec-box">
+                        <h3>@Culture["AdminUsers.PiiTitle"]</h3>
+                        <dl class="admin-kv">
+                            <div><dt>@Culture["AdminUsers.FieldEmail"]</dt><dd>@_drawerUser.Email</dd></div>
+                            @if (!string.IsNullOrWhiteSpace(_drawerUser.PhoneNumber))
+                            {
+                                <div><dt>@Culture["AdminUsers.FieldPhone"]</dt><dd>@_drawerUser.PhoneNumber</dd></div>
+                            }
+                        </dl>
+                        @if (_activeGrantForDrawer is null)
+                        {
+                            <div class="admin-impact-note admin-impact-note--warn">@Culture["AdminUsers.PiiMaskedNote"]</div>
+                            <button type="button" class="btn-compact" @onclick="() => OpenSupport(_drawerUser)">
+                                <span aria-hidden="true">@((MarkupString)NavIcons.Eye)</span>
+                                @Culture["AdminUsers.RequestSupport"]
+                            </button>
+                        }
+                        else
+                        {
+                            <p class="state-message">
+                                @string.Format(Culture["AdminUsers.GrantRemaining"], RemainingMinutes(_activeGrantForDrawer.ExpiresAt))
+                                <button type="button" class="btn-compact" disabled="@_busy" @onclick="RevokeDrawerGrantAsync">
+                                    @Culture["Admin.SupportAccessRevoke"]
+                                </button>
+                            </p>
+                        }
+                    </section>
+                }
+            </div>
+        }
+        </ChildContent>
+        <Footer>
+            @if (_drawerUser is not null)
+            {
+                @if (_drawerUser.IsActive && _drawerUser.Id != _currentAdminId)
+                {
+                    <button type="button" class="btn-compact btn-compact--danger-outline" disabled="@_busy" @onclick="BlockDrawerUserAsync">
+                        @Culture["AdminUsers.Block"]
+                    </button>
+                }
+                else if (!_drawerUser.IsActive)
+                {
+                    <button type="button" class="btn-compact" disabled="@_busy" @onclick="UnblockDrawerUserAsync">
+                        @Culture["AdminUsers.Unblock"]
+                    </button>
+                }
+                <button type="button" class="btn-compact" @onclick="CloseDrawer">@Culture["AdminUi.CloseDrawer"]</button>
+            }
+        </Footer>
+    </AdminDrawer>
+}
+
+@code {
+    [Parameter] public string BasePath { get; set; } = "/admin/gebruikers";
+    [Parameter] public string? PresetTab { get; set; }
+    [Parameter] public bool HideRoleTabs { get; set; }
+
+    private AdminUsersPage? _page;
+    private string _query = "";
+    private string _roleFilter = "";
+    private string _mfaFilter = "";
+    private string _activeFilter = "";
+    private string _companyFilter = "";
+    private string _tab = "alle";
+    private bool _loading = true;
+    private string? _error;
+    private string? _toast;
+    private Guid? _companyIdFilter;
+    private int _pageNumber = 1;
+    private int _pageSize = 25;
+    private bool _supportOpen;
+    private Guid? _supportSubjectId;
+    private bool _busy;
+    private Guid _currentAdminId;
+    private bool _localPasswordAdmin = true;
+    private bool _mfaResetOpen;
+    private Guid? _mfaResetUserId;
+    private string? _mfaResetName;
+    private int _mfaResetSessions;
+    private readonly HashSet<Guid> _selected = [];
+    private List<AdminTabs.Tab> _tabs = [];
+    private bool _drawerOpen;
+    private bool _drawerSheet;
+    private AdminUserItem? _drawerUser;
+    private string _drawerTab = "overzicht";
+    private List<AdminTabs.Tab> _drawerTabs = [];
+    private List<AdminUserSessionItem> _sessions = [];
+    private bool _sessionsLoading;
+    private ActiveGrantBanner? _activeGrantForDrawer;
+    private bool _bulkOpen;
+    private string _bulkAction = "";
+    private string _bulkTitle = "";
+    private string _bulkReason = "";
+    private string? _bulkError;
+    private System.Threading.Timer? _searchDebounce;
+
+    protected override void OnInitialized()
+    {
+        Culture.Changed += OnCultureChanged;
+        BuildTabs();
+        _drawerTabs =
+        [
+            new("overzicht", Culture["AdminUsers.TabOverview"]),
+            new("rollen", Culture["AdminUsers.TabRoles"]),
+            new("beveiliging", Culture["AdminUsers.TabSecurity"]),
+        ];
+    }
+
+    private void OnCultureChanged()
+    {
+        BuildTabs();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+        _searchDebounce?.Dispose();
+    }
+
+    private void BuildTabs()
+    {
+        var agg = _page?.Aggregates;
+        int CountRoles(params string[] roles)
+            => roles.Sum(r => agg?.ByRole.GetValueOrDefault(r) ?? 0);
+
+        var all = agg is null ? 0 : agg.ActiveCount + agg.InactiveCount;
+        _tabs =
+        [
+            new("alle", $"{Culture["AdminUsers.TabAll"]} ({all:N0})"),
+            new("kandidaten", $"{Culture["AdminUsers.TabCandidates"]} ({CountRoles("Candidate"):N0})"),
+            new("werkgevers", $"{Culture["AdminUsers.TabEmployers"]} ({CountRoles("BranchManager", "RegionalManager", "EnterpriseManager", "Intermediary"):N0})"),
+            new("sales", $"{Culture["AdminUsers.TabSales"]} ({CountRoles("SalesManager", "Ambassadeur"):N0})"),
+            new("beheerders", $"{Culture["AdminUsers.TabAdmins"]} ({CountRoles("Admin"):N0})"),
+        ];
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (Guid.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out var id))
+        {
+            _currentAdminId = id;
+        }
+
+        var authMethod = user.FindFirstValue("auth_method") ?? "";
+        _localPasswordAdmin = !authMethod.StartsWith("external", StringComparison.OrdinalIgnoreCase);
+
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var q = QueryHelpers.ParseQuery(uri.Query);
+        if (q.TryGetValue("companyId", out var companyRaw) && Guid.TryParse(companyRaw, out var companyId))
+        {
+            _companyIdFilter = companyId;
+            _companyFilter = companyId.ToString("D");
+        }
+
+        if (!string.IsNullOrWhiteSpace(PresetTab))
+        {
+            _tab = PresetTab!;
+        }
+        else if (q.TryGetValue("tab", out var tabRaw) && !string.IsNullOrWhiteSpace(tabRaw))
+        {
+            _tab = tabRaw.ToString()!;
+        }
+
+        Guid? openId = null;
+        if (q.TryGetValue("open", out var openRaw) && Guid.TryParse(openRaw, out var oid))
+        {
+            openId = oid;
+        }
+
+        await ReloadAsync();
+
+        if (openId is Guid open)
+        {
+            var match = _page?.Items.FirstOrDefault(u => u.Id == open);
+            if (match is not null)
+            {
+                await OpenDrawer(match);
+            }
+            else
+            {
+                // Deep-link: fetch page filtered by id via q
+                _query = open.ToString("D");
+                await ReloadAsync();
+                match = _page?.Items.FirstOrDefault(u => u.Id == open);
+                if (match is not null)
+                {
+                    await OpenDrawer(match);
+                }
+            }
+        }
+    }
+
+    private string RoleLabel(string role) => role switch
+    {
+        "Candidate" => Culture["AdminUsers.Role.Candidate"],
+        "BranchManager" => Culture["AdminUsers.Role.BranchManager"],
+        "RegionalManager" => Culture["AdminUsers.Role.RegionalManager"],
+        "EnterpriseManager" => Culture["AdminUsers.Role.EnterpriseManager"],
+        "Intermediary" => Culture["AdminUsers.Role.Intermediary"],
+        "Admin" => Culture["AdminUsers.Role.Admin"],
+        "SalesManager" => Culture["AdminUsers.Role.SalesManager"],
+        "Ambassadeur" => Culture["AdminUsers.Role.Ambassadeur"],
+        _ => role
+    };
+
+    private string MfaStatusLabel(string status) => status switch
+    {
+        "enrolled" => Culture["AdminUsers.MfaOn"],
+        "external-only" => Culture["AdminUsers.MfaExternalShort"],
+        _ => Culture["AdminUsers.MfaOff"]
+    };
+
+    private string MfaDetailText(AdminUserItem u) => u.MfaStatus switch
+    {
+        "enrolled" => string.Format(
+            Culture["AdminUsers.MfaDetailOn"],
+            FormatDate(u.AuthenticatorEnrolledAtUtc)),
+        "external-only" => Culture["AdminUsers.MfaDetailExternal"],
+        _ => Culture["AdminUsers.MfaDetailOff"]
+    };
+
+    private static bool IsEmployerRole(string role)
+        => role is "BranchManager" or "RegionalManager" or "EnterpriseManager" or "Intermediary";
+
+    private static string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 0) return "?";
+        if (parts.Length == 1) return parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant();
+        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+
+    private string FormatLastActive(DateTime? utc)
+    {
+        if (utc is null) return "—";
+        var local = utc.Value.ToLocalTime();
+        var age = DateTime.Now - local;
+        if (age.TotalMinutes < 5) return Culture["AdminUsers.ActiveNow"];
+        return local.ToString("dd-MM-yyyy HH:mm");
+    }
+
+    private static string FormatDate(DateTime? utc)
+        => utc is null ? "—" : utc.Value.ToLocalTime().ToString("dd-MM-yyyy");
+
+    private static int RemainingMinutes(DateTime expiresAt)
+        => Math.Max(0, (int)Math.Ceiling((expiresAt - DateTime.UtcNow).TotalMinutes));
+
+    private Task OnQueryChanged(string q)
+    {
+        _query = q;
+        _searchDebounce?.Dispose();
+        _searchDebounce = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                _pageNumber = 1;
+                await ReloadAsync();
+            });
+        }, null, 300, Timeout.Infinite);
+        return Task.CompletedTask;
+    }
+
+    private async Task OnCompanyFilterAsync()
+    {
+        _companyIdFilter = Guid.TryParse(_companyFilter, out var id) ? id : null;
+        await ReloadFromStartAsync();
+    }
+
+    private async Task ReloadFromStartAsync()
+    {
+        _pageNumber = 1;
+        await ReloadAsync();
+    }
+
+    private async Task GoPageAsync(int page)
+    {
+        _pageNumber = Math.Max(1, page);
+        await ReloadAsync();
+    }
+
+    private async Task OnPageSizeAsync(int size)
+    {
+        _pageSize = size;
+        _pageNumber = 1;
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            // Sync tab from URL when not preset
+            if (string.IsNullOrWhiteSpace(PresetTab))
+            {
+                var uri = Nav.ToAbsoluteUri(Nav.Uri);
+                var q = QueryHelpers.ParseQuery(uri.Query);
+                if (q.TryGetValue("tab", out var tabRaw) && !string.IsNullOrWhiteSpace(tabRaw))
+                {
+                    _tab = tabRaw.ToString()!;
+                }
+                else
+                {
+                    _tab = "alle";
+                }
+            }
+
+            var apiTab = _tab is "alle" or "" ? null : _tab;
+            _page = await Api.GetAdminUsersPageAsync(
+                page: _pageNumber,
+                pageSize: _pageSize,
+                q: _query,
+                role: _roleFilter,
+                companyId: _companyIdFilter,
+                mfa: string.IsNullOrWhiteSpace(_mfaFilter) ? null : _mfaFilter,
+                active: string.IsNullOrWhiteSpace(_activeFilter) ? null : _activeFilter,
+                tab: apiTab);
+            BuildTabs();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _page = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ClearSelection() => _selected.Clear();
+
+    private void OnToggleAll(bool value)
+    {
+        if (_page is null) return;
+        if (value)
+        {
+            foreach (var u in _page.Items) _selected.Add(u.Id);
+        }
+        else
+        {
+            foreach (var u in _page.Items) _selected.Remove(u.Id);
+        }
+    }
+
+    private void ToggleSelect(Guid id, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on) _selected.Add(id);
+        else _selected.Remove(id);
+    }
+
+    private async Task OnRowKey(KeyboardEventArgs e, AdminUserItem u)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            await OpenDrawer(u);
+        }
+    }
+
+    private async Task OpenDrawer(AdminUserItem user)
+    {
+        _drawerUser = user;
+        _drawerTab = "overzicht";
+        _drawerOpen = true;
+        _drawerSheet = false; // CSS handles <900 sheet; flag available for tests
+        await LoadSessionsIfNeededAsync();
+        await RefreshDrawerGrantAsync();
+        // Deep-link URL without full navigation reload
+        var path = BasePath.Split('?', 2)[0];
+        var tabQs = string.IsNullOrWhiteSpace(PresetTab) && _tab != "alle" ? $"&tab={Uri.EscapeDataString(_tab)}" : "";
+        Nav.NavigateTo($"{path}?open={user.Id:D}{tabQs}", forceLoad: false);
+    }
+
+    private Task CloseDrawer()
+    {
+        _drawerOpen = false;
+        _drawerUser = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnDrawerOpenChanged(bool open)
+    {
+        _drawerOpen = open;
+        if (!open)
+        {
+            _drawerUser = null;
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task SetDrawerTab(string key)
+    {
+        _drawerTab = key;
+        if (key == "beveiliging")
+        {
+            await LoadSessionsIfNeededAsync();
+        }
+    }
+
+    private async Task LoadSessionsIfNeededAsync()
+    {
+        if (_drawerUser is null) return;
+        _sessionsLoading = true;
+        try
+        {
+            _sessions = (await Api.GetAdminUserSessionsAsync(_drawerUser.Id)).ToList();
+        }
+        catch
+        {
+            _sessions = [];
+        }
+        finally
+        {
+            _sessionsLoading = false;
+        }
+    }
+
+    private async Task RefreshDrawerGrantAsync()
+    {
+        if (_drawerUser is null)
+        {
+            _activeGrantForDrawer = null;
+            return;
+        }
+
+        try
+        {
+            var grants = await Api.ListSupportAccessAsync(activeOnly: true, take: 20);
+            var mine = grants.FirstOrDefault(g =>
+                g.IsActive && g.SubjectUserId == _drawerUser.Id);
+            _activeGrantForDrawer = mine is null
+                ? null
+                : new ActiveGrantBanner(mine.Id, mine.ExpiresAt, mine.Reason);
+        }
+        catch
+        {
+            _activeGrantForDrawer = null;
+        }
+    }
+
+    private void OpenSupport(AdminUserItem user)
+    {
+        _supportSubjectId = user.Id;
+        _supportOpen = true;
+    }
+
+    private Task CloseSupport()
+    {
+        _supportOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnGrantedAsync(SupportAccessGrantItem grant)
+    {
+        await ReloadAsync();
+        if (_drawerUser is not null && grant.SubjectUserId == _drawerUser.Id)
+        {
+            _drawerUser = _page?.Items.FirstOrDefault(u => u.Id == _drawerUser.Id) ?? _drawerUser;
+            await RefreshDrawerGrantAsync();
+        }
+    }
+
+    private async Task RevokeDrawerGrantAsync()
+    {
+        if (_activeGrantForDrawer is null) return;
+        _busy = true;
+        try
+        {
+            await Api.RevokeSupportAccessAsync(_activeGrantForDrawer.Id);
+            _activeGrantForDrawer = null;
+            await ReloadAsync();
+            if (_drawerUser is not null)
+            {
+                _drawerUser = _page?.Items.FirstOrDefault(u => u.Id == _drawerUser.Id) ?? _drawerUser;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void OpenMfaReset(AdminUserItem user)
+    {
+        _mfaResetUserId = user.Id;
+        _mfaResetName = user.FullName;
+        _mfaResetSessions = user.ActiveSessionCount > 0 ? user.ActiveSessionCount : _sessions.Count;
+        _mfaResetOpen = true;
+    }
+
+    private Task CloseMfaReset()
+    {
+        _mfaResetOpen = false;
+        _mfaResetUserId = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnMfaResetDoneAsync()
+    {
+        _toast = Culture["Mfa.AdminResetSuccess"];
+        await ReloadAsync();
+        if (_drawerUser is not null)
+        {
+            _drawerUser = _page?.Items.FirstOrDefault(u => u.Id == _drawerUser.Id);
+            await LoadSessionsIfNeededAsync();
+        }
+    }
+
+    private async Task RevokeSessionAsync(Guid sessionId)
+    {
+        if (_drawerUser is null) return;
+        _busy = true;
+        try
+        {
+            await Api.RevokeAdminUserSessionAsync(_drawerUser.Id, sessionId, "Beheer: sessie beëindigd");
+            await LoadSessionsIfNeededAsync();
+        }
+        catch (Exception ex)
+        {
+            _toast = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RevokeAllSessionsAsync()
+    {
+        if (_drawerUser is null) return;
+        _busy = true;
+        try
+        {
+            await Api.RevokeAllAdminUserSessionsAsync(_drawerUser.Id, "Beheer: alle sessies beëindigd");
+            await LoadSessionsIfNeededAsync();
+        }
+        catch (Exception ex)
+        {
+            _toast = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task BlockDrawerUserAsync()
+    {
+        if (_drawerUser is null) return;
+        _busy = true;
+        try
+        {
+            await Api.BlockAdminUserAsync(_drawerUser.Id, "Beheer: account geblokkeerd");
+            _toast = Culture["AdminUsers.BlockedToast"];
+            await ReloadAsync();
+            _drawerUser = _page?.Items.FirstOrDefault(u => u.Id == _drawerUser.Id);
+        }
+        catch (Exception ex)
+        {
+            _toast = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task UnblockDrawerUserAsync()
+    {
+        if (_drawerUser is null) return;
+        _busy = true;
+        try
+        {
+            await Api.UnblockAdminUserAsync(_drawerUser.Id, "Beheer: account gedeblokkeerd");
+            _toast = Culture["AdminUsers.UnblockedToast"];
+            await ReloadAsync();
+            _drawerUser = _page?.Items.FirstOrDefault(u => u.Id == _drawerUser.Id);
+        }
+        catch (Exception ex)
+        {
+            _toast = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void OpenBulkConfirm(string action)
+    {
+        _bulkAction = action;
+        _bulkTitle = action == "block"
+            ? Culture["AdminUsers.BulkBlock"]
+            : Culture["AdminUsers.BulkEndSessions"];
+        _bulkReason = "";
+        _bulkError = null;
+        _bulkOpen = true;
+    }
+
+    private async Task ConfirmBulkAsync()
+    {
+        if (_selected.Count == 0 || _bulkReason.Trim().Length < 5) return;
+        _busy = true;
+        _bulkError = null;
+        try
+        {
+            var result = await Api.BulkAdminUsersAsync(
+                _bulkAction == "block" ? "block" : "revoke-sessions",
+                _selected.ToList(),
+                _bulkReason.Trim());
+            _toast = string.Format(Culture["AdminUsers.BulkResult"], result.Succeeded, result.Skipped);
+            _bulkOpen = false;
+            _selected.Clear();
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _bulkError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private sealed record ActiveGrantBanner(Guid Id, DateTime ExpiresAt, string Reason);
+}

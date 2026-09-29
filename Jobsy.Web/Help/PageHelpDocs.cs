@@ -377,9 +377,21 @@ public static class PageHelpDocs
 
         ["/admin/gebruikers"] = new(
             "Beheer · Alle gebruikers",
-            "Accounts van kandidaten en managers.",
-            "Zoek gebruikers, bekijk rollen en beheer toegang waar nodig.",
+            "Accounts van kandidaten en managers; persoonsgegevens standaard gemaskeerd.",
+            "Filter op rol/2FA/status, open de detail drawer voor sessies en 2FA-reset, of vraag support-toegang.",
             "Support en beheer van inloggerechtigde personen."),
+
+        ["/admin/gebruikers/rollen"] = new(
+            "Beheer · Rollen & rechten",
+            "Read-only overzicht van platformrollen, aantallen en 2FA-beleid.",
+            "Bekijk welke rol wat mag via de samenvattende matrix.",
+            "Geen nieuw rechtenmodel — alleen inzicht."),
+
+        ["/admin/kandidaten"] = new(
+            "Beheer · Kandidaten",
+            "Kandidatenlijst (zelfde gemaskeerde gebruikerslijst, tab kandidaten).",
+            "Zoek en open kandidaten; support-toegang voor volledige gegevens.",
+            "Kandidaten & tests › Kandidaten."),
 
         ["/admin/vacatures"] = new(
             "Beheer · Vacatures",

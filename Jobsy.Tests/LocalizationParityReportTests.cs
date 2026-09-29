@@ -172,7 +172,7 @@ internal static class LocalizationParityAllowList
         "Lobsy", "OK", "Match", "match", "Admin", "Sales", "Coach", "Bug", "Tip", "Status",
         "Email", "E-mail", "Model", "Tests", "Trends", "Open", "Later", "Nu", "Doel", "Basis", "min",
         "KVK", "SBI", "Arts", "Kok", "Meer", "Eens", "Samen", "Adres", "E-bike", "CV", "PDF",
-        "WhatsApp", "IBAN", "BTW", "ID", "URL", "API", "OTP", "SMS", "GPS", "AI"
+        "WhatsApp", "IBAN", "BTW", "ID", "URL", "API", "OTP", "SMS", "GPS", "AI", "2FA"
     };
 
     public static bool IsExemptIdenticalValue(string value)

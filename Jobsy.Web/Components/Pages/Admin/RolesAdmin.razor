@@ -1,0 +1,129 @@
+@page "/admin/gebruikers/rollen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Security
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Ui
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<PageTitle>@Culture["AdminNav.Roles"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.Roles"]" Lead="@Culture["AdminUsers.RolesLead"]">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <AdminDataTable Loading="false" Empty="_rows.Count == 0" ShowCheckbox="false" ShowRowActions="false">
+            <Header>
+                <th scope="col">@Culture["AdminUsers.ColRole"]</th>
+                <th scope="col">@Culture["AdminUsers.RolesCount"]</th>
+                <th scope="col">@Culture["AdminUsers.RolesMfaRequired"]</th>
+                <th scope="col">@Culture["AdminUsers.RolesDescription"]</th>
+                <th scope="col">@Culture["AdminUsers.RolesWhat"]</th>
+            </Header>
+            <Rows>
+                @foreach (var row in _rows)
+                {
+                    <tr>
+                        <td><strong>@row.Label</strong></td>
+                        <td>@row.Count.ToString("N0")</td>
+                        <td>@(row.MfaRequired ? Culture["Common.Yes"] : Culture["Common.No"])</td>
+                        <td>@row.Description</td>
+                        <td>
+                            <a href="#roles-matrix-title">@Culture["AdminUsers.RolesMatrixLink"]</a>
+                        </td>
+                    </tr>
+                }
+            </Rows>
+        </AdminDataTable>
+
+        <section class="admin-roles-matrix detail-card" aria-labelledby="roles-matrix-title">
+            <h2 id="roles-matrix-title">@Culture["AdminUsers.RolesMatrixTitle"]</h2>
+            <p class="muted">@Culture["AdminUsers.RolesMatrixLead"]</p>
+            <div class="table-scroll">
+                <table class="data-table admin-data-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">@Culture["AdminUsers.RolesCapability"]</th>
+                            @foreach (var role in _matrixRoles)
+                            {
+                                <th scope="col">@role.Label</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cap in _capabilities)
+                        {
+                            <tr>
+                                <th scope="row">@cap.Label</th>
+                                @foreach (var cell in cap.Cells)
+                                {
+                                    <td>@cell</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+</AdminPageShell>
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private List<RoleRow> _rows = [];
+    private List<RoleCol> _matrixRoles = [];
+    private List<CapabilityRow> _capabilities = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var page = await Api.GetAdminUsersPageAsync(page: 1, pageSize: 1);
+            var byRole = page.Aggregates.ByRole;
+            _rows = Enum.GetValues<UserRole>()
+                .Select(r => new RoleRow(
+                    r.ToString(),
+                    Culture[$"AdminUsers.Role.{r}"],
+                    byRole.GetValueOrDefault(r.ToString()),
+                    MfaPolicy.IsRequired(r),
+                    Culture[$"AdminUsers.RoleDesc.{r}"],
+                    r.ToString().ToLowerInvariant()))
+                .OrderByDescending(r => r.Count)
+                .ToList();
+
+            _matrixRoles = _rows.Select(r => new RoleCol(r.Key, r.Label)).ToList();
+            _capabilities =
+            [
+                Cap("AdminUsers.Cap.OwnProfile", "own", "branch+", "branch+", "branch+", "branch+", "sales", "amb", "all"),
+                Cap("AdminUsers.Cap.Vacancies", "—", "branch", "region", "org", "clients", "—", "—", "all"),
+                Cap("AdminUsers.Cap.Applications", "own", "branch", "region", "org", "clients", "—", "—", "all"),
+                Cap("AdminUsers.Cap.AdminScreens", "—", "—", "—", "—", "—", "—", "—", "all"),
+            ];
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private CapabilityRow Cap(string labelKey, params string[] cells)
+        => new(Culture[labelKey], cells);
+
+    private sealed record RoleRow(string Key, string Label, int Count, bool MfaRequired, string Description, string Anchor);
+    private sealed record RoleCol(string Key, string Label);
+    private sealed record CapabilityRow(string Label, string[] Cells);
+}
