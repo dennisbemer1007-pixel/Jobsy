@@ -18,6 +18,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - **Lobsy voor scholen (02 school portal):** dashboard + te doen, klassen & codes (CRUD, codelijst PDF/CSV met lege naamkolom), ouderbevestiging, testvenster (409 zonder overeenkomst/ouders), leraren uitnodigen (2FA verplicht), resultaten (per code server-gated via D4), schoolgegevens/privacy/materiaal.
 - **Lobsy voor scholen (03 leraar portal):** klasoverzicht met KPIs, leerlingcodes, groepsresultaten (k≥5), droombanen, codedetail (verhaal/PDF stubs), class switcher, testvenster en codelijst voor eigen klassen. Onbekende klas → 404.
 - **Lobsy voor scholen (04 leerling login + wizard shell):** aparte `Pupil`-cookie (`Lobsy.Leerling`, niet-persistent, 20/90 min), login school/klas/code met rate limits/lockout, `LeerlingLayout` + Scene/lobster (10 plates), wizard shell met placeholder-vragen en voortgang na elk antwoord. Geen namen/AI/partners.
+- **Lobsy voor scholen (05 vragenbank):** 60 B1/A2-items op de 4 bestaande scoringsmodellen (`LikertCategoryScorer`), pauze-eiland hobby/niet-leuk chips, `PupilResultBuilder`, gegenereerde review-doc.
 
 ### Fixed
 - **Render `jobsy-api` deploys:** `WebPushSubscriptions` ontbrak in `JobsyDbContextModelSnapshot`. EF Core 9 behandelt dat als `PendingModelChangesWarning` → harde fout in `MigrateAsync` → API-host stopt (Auto-Deploy Failed sinds PWA-commit). Snapshot + regressietest herstellen de deploy.

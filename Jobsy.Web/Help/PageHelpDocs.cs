@@ -531,6 +531,12 @@ public static class PageHelpDocs
             "Kies een antwoord met de knoppen of toetsen 1–5. Pauze mag altijd.",
             "Vragen beantwoorden in de leerlingwizard."),
 
+        ["/leerling/eiland"] = new(
+            "Leerling · Pauze-eiland",
+            "Kies hobby’s en wat je niet leuk vindt (chips).",
+            "Tik op knoppen; typ geen namen. Klaar, verder! mag ook leeg.",
+            "Hobby-chips halverwege de reis."),
+
         ["/leerling/stop"] = new(
             "Leerling · Pauze",
             "Je sessie is beëindigd; antwoorden blijven bewaard.",

@@ -817,9 +817,84 @@
     margin-bottom: var(--space-3);
     position: relative;
 }
+.ll-info:not(.is-open),
+.ll-info[hidden] { display: none; }
 .ll-info__close {
     position: absolute; top: var(--space-2); inset-inline-end: var(--space-2);
     border: none; background: transparent; font-size: 1.25rem; cursor: pointer;
+}
+.ll-chips {
+    border: none;
+    margin: 0 0 var(--space-4);
+    padding: 0;
+}
+.ll-chips legend {
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+.ll-chips__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+.ll-chip {
+    min-height: 44px;
+    padding: var(--space-2) var(--space-3);
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font: inherit;
+    cursor: pointer;
+}
+.ll-chip.is-on.is-like {
+    background: var(--brand);
+    color: #fff;
+    border-color: transparent;
+}
+.ll-chip.is-on.is-dislike {
+    background: color-mix(in srgb, var(--gold, var(--gold-light)) 55%, var(--surface));
+    border-color: color-mix(in srgb, var(--gold-deep, var(--brand)) 40%, var(--border));
+}
+.ll-chip--other {
+    border-style: dashed;
+}
+.ll-other {
+    display: block;
+    margin-top: var(--space-2);
+}
+.ll-other input {
+    width: min(100%, 280px);
+    min-height: 44px;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font: inherit;
+}
+.ll-island__warn {
+    display: flex;
+    gap: var(--space-2);
+    align-items: flex-start;
+    font-size: var(--text-sm);
+    color: var(--muted);
+    margin: 0 0 var(--space-3);
+}
+.ll-island__warn span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--gold, var(--gold-light)) 50%, var(--surface));
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.ll-question__nav {
+    margin-top: var(--space-4);
+    display: flex;
+    gap: var(--space-3);
+    justify-content: space-between;
+    align-items: center;
 }
 .ll-answers {
     display: grid;
@@ -849,7 +924,6 @@
     background: color-mix(in srgb, var(--gold, var(--gold-light)) 80%, transparent);
 }
 .ll-answer.is-selected .ll-answer__dot { background: var(--gold, var(--gold-light)); width: 10px; height: 10px; }
-.ll-question__nav { margin-top: var(--space-4); }
 .ll-lob-zone { display: none; }
 .ll-lob-zone--mobile { display: flex; justify-content: center; margin-bottom: var(--space-3); }
 .ll-plates { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: var(--space-3); }

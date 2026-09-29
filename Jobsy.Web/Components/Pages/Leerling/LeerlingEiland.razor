@@ -1,0 +1,288 @@
+@page "/leerling/eiland"
+@layout LeerlingLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>@Culture["Leerling.Island.Title"] · Lobsy</PageTitle>
+
+@if (_windowClosed)
+{
+    <section class="ll-card">
+        <h1>@Culture["Leerling.WindowClosed.Title"]</h1>
+        <p>@Culture["Leerling.WindowClosed.Body"]</p>
+    </section>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_state is null)
+{
+    <p class="state-message error">@Culture["Leerling.Session.Lost"]</p>
+}
+else
+{
+    <div class="ll-reis ll-island">
+        <section class="ll-card ll-island-card">
+            <p class="ll-question__meta">
+                @string.Format(Culture["Leerling.Island.Progress"], _state.AnsweredCount, _state.TotalItems)
+                · @string.Format(Culture["Leerling.Reis.WorldOf"], 2, 4)
+            </p>
+            <p class="ll-question__world">@Culture["Leerling.World.Island.Title"]</p>
+            <h1 class="ll-question__text">@Culture["Leerling.Island.Lead"]</h1>
+
+            <fieldset class="ll-chips">
+                <legend>@Culture["Leerling.Island.Likes"]</legend>
+                <div class="ll-chips__row" role="group">
+                    @foreach (var chip in PupilInterestChipCatalog.LikeChips)
+                    {
+                        var on = _likes.Contains(chip.Key);
+                        <button type="button"
+                                class="ll-chip @(on ? "is-on is-like" : null)"
+                                aria-pressed="@on"
+                                @onclick="() => ToggleLike(chip.Key)">
+                            @Culture[chip.LabelKey]
+                        </button>
+                    }
+                    <button type="button"
+                            class="ll-chip ll-chip--other @(_likeOtherOpen ? "is-on" : null)"
+                            aria-expanded="@_likeOtherOpen"
+                            @onclick="() => _likeOtherOpen = !_likeOtherOpen">
+                        + @Culture["Leerling.Island.Other"]
+                    </button>
+                </div>
+                @if (_likeOtherOpen)
+                {
+                    <label class="ll-other">
+                        <span class="visually-hidden">@Culture["Leerling.Island.Other"]</span>
+                        <input maxlength="24"
+                               @bind="_likeOther"
+                               @bind:event="oninput"
+                               placeholder="@Culture["Leerling.Island.OtherPlaceholder"]"
+                               autocomplete="off" />
+                    </label>
+                }
+            </fieldset>
+
+            <fieldset class="ll-chips">
+                <legend>@Culture["Leerling.Island.Dislikes"]</legend>
+                <div class="ll-chips__row" role="group">
+                    @foreach (var chip in PupilInterestChipCatalog.DislikeChips)
+                    {
+                        var on = _dislikes.Contains(chip.Key);
+                        <button type="button"
+                                class="ll-chip @(on ? "is-on is-dislike" : null)"
+                                aria-pressed="@on"
+                                @onclick="() => ToggleDislike(chip.Key)">
+                            @Culture[chip.LabelKey]
+                        </button>
+                    }
+                    <button type="button"
+                            class="ll-chip ll-chip--other @(_dislikeOtherOpen ? "is-on" : null)"
+                            aria-expanded="@_dislikeOtherOpen"
+                            @onclick="() => _dislikeOtherOpen = !_dislikeOtherOpen">
+                        + @Culture["Leerling.Island.Other"]
+                    </button>
+                </div>
+                @if (_dislikeOtherOpen)
+                {
+                    <label class="ll-other">
+                        <span class="visually-hidden">@Culture["Leerling.Island.Other"]</span>
+                        <input maxlength="24"
+                               @bind="_dislikeOther"
+                               @bind:event="oninput"
+                               placeholder="@Culture["Leerling.Island.OtherPlaceholder"]"
+                               autocomplete="off" />
+                    </label>
+                }
+            </fieldset>
+
+            <p class="ll-island__warn" role="note">
+                <span aria-hidden="true">!</span>
+                @Culture["Leerling.Island.OtherHint"]
+            </p>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="ll-error" role="alert">@_error</p>
+            }
+
+            <div class="ll-question__nav">
+                <a class="btn-secondary" href="/leerling/reis">@Culture["Leerling.Reis.Prev"]</a>
+                <button type="button" class="btn-primary" disabled="@_busy" @onclick="Save">
+                    @Culture["Leerling.Island.Continue"]
+                </button>
+            </div>
+        </section>
+
+        <div class="ll-lob-zone">
+            <p class="ll-bubble">@Culture["Leerling.Island.Bubble"]</p>
+            <LeerlingLobster PlatesShed="@_state.PlatesShed" NewShell="@_state.NewShell" Mobile="false" />
+        </div>
+        <div class="ll-lob-zone ll-lob-zone--mobile">
+            <LeerlingLobster PlatesShed="@_state.PlatesShed" NewShell="@_state.NewShell" Mobile="true" Size="72" />
+        </div>
+        <LeerlingScene Depth="@PupilWorldCatalog.SceneDepth(_state.AnsweredCount)" IsMobile="false" />
+    </div>
+}
+
+@code {
+    private PupilProgressStateDto? _state;
+    private bool _loading = true;
+    private bool _windowClosed;
+    private bool _busy;
+    private string? _error;
+    private readonly HashSet<string> _likes = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _dislikes = new(StringComparer.Ordinal);
+    private bool _likeOtherOpen;
+    private bool _dislikeOtherOpen;
+    private string _likeOther = "";
+    private string _dislikeOther = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        _loading = true;
+        try
+        {
+            _state = await Api.GetPupilProgressAsync();
+            if (_state is null)
+            {
+                return;
+            }
+
+            if (_state.Completed)
+            {
+                Nav.NavigateTo("/leerling/dit-ben-jij");
+                return;
+            }
+
+            if (!_state.WindowOpen)
+            {
+                _windowClosed = true;
+                return;
+            }
+
+            if (_state.AnsweredCount < 30)
+            {
+                Nav.NavigateTo("/leerling/reis");
+                return;
+            }
+
+            if (_state.IslandDone && !_state.NeedsIsland)
+            {
+                Nav.NavigateTo("/leerling/reis");
+                return;
+            }
+
+            _likes.Clear();
+            foreach (var k in _state.Likes)
+            {
+                _likes.Add(k);
+            }
+
+            _dislikes.Clear();
+            foreach (var k in _state.Dislikes)
+            {
+                _dislikes.Add(k);
+            }
+
+            _likeOther = _state.LikeOtherWord ?? "";
+            _dislikeOther = _state.DislikeOtherWord ?? "";
+            _likeOtherOpen = !string.IsNullOrEmpty(_likeOther);
+            _dislikeOtherOpen = !string.IsNullOrEmpty(_dislikeOther);
+        }
+        catch
+        {
+            _state = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleLike(string key)
+    {
+        if (_likes.Contains(key))
+        {
+            _likes.Remove(key);
+        }
+        else
+        {
+            _likes.Add(key);
+            _dislikes.Remove(key);
+        }
+    }
+
+    private void ToggleDislike(string key)
+    {
+        if (_dislikes.Contains(key))
+        {
+            _dislikes.Remove(key);
+        }
+        else
+        {
+            _dislikes.Add(key);
+            _likes.Remove(key);
+        }
+    }
+
+    private async Task Save()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.SavePupilChipsAsync(new PupilChipsRequest(
+                _likes.ToList(),
+                _dislikes.ToList(),
+                string.IsNullOrWhiteSpace(_likeOther) ? null : _likeOther.Trim(),
+                string.IsNullOrWhiteSpace(_dislikeOther) ? null : _dislikeOther.Trim()));
+            if (result is null)
+            {
+                _error = Culture["Leerling.Reis.SaveFailed"];
+                return;
+            }
+
+            Nav.NavigateTo("/leerling/reis");
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        {
+            var body = ex.Message;
+            _error = body.Contains("name_rejected", StringComparison.Ordinal)
+                ? Culture["Leerling.Island.NameRejected"]
+                : Culture["Leerling.Island.InvalidOther"];
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            _windowClosed = true;
+        }
+        catch
+        {
+            _error = Culture["Leerling.Reis.SaveFailed"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

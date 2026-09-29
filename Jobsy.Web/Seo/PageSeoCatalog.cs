@@ -216,6 +216,7 @@ public static partial class PageSeoCatalog
             ["/leerling"] = Private("Leerling.LoginTitle", "Seo.PrivateDescription"),
             ["/leerling/start"] = Private("Leerling.Start.Title", "Seo.PrivateDescription"),
             ["/leerling/reis"] = Private("Leerling.Reis.Title", "Seo.PrivateDescription"),
+            ["/leerling/eiland"] = Private("Leerling.Island.Title", "Seo.PrivateDescription"),
             ["/leerling/stop"] = Private("Leerling.Stop.Title", "Seo.PrivateDescription"),
             ["/leerling/dit-ben-jij"] = Private("Leerling.Result.Title", "Seo.PrivateDescription"),
             ["/branch"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),

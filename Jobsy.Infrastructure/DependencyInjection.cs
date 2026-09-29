@@ -295,8 +295,8 @@ public static class DependencyInjection
         services.AddScoped<ISchoolPortalService, SchoolPortalService>();
         services.AddScoped<ITeacherPortalService, TeacherPortalService>();
         services.AddSingleton<IPupilStoryRenderer, StubPupilStoryRenderer>();
-        services.AddSingleton<IPupilQuestionBank, PlaceholderPupilQuestionBank>();
-        services.AddSingleton<IPupilResultBuilder, StubPupilResultBuilder>();
+        services.AddSingleton<IPupilQuestionBank, PupilQuestionBank>();
+        services.AddScoped<IPupilResultBuilder, PupilResultBuilder>();
         services.AddSingleton<IPupilLoginProtection>(_ => new PupilLoginProtection());
         services.AddScoped<IPupilPortalService, PupilPortalService>();
         services.AddSingleton<IAuthorizationHandler, PupilSessionAuthorizationHandler>();

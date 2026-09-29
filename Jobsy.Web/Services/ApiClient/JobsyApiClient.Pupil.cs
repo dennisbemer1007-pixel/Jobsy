@@ -30,6 +30,20 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<PupilAnswerResponse>(cancellationToken: ct);
     }
 
+    public async Task<PupilChipsResponse?> SavePupilChipsAsync(
+        PupilChipsRequest request,
+        CancellationToken ct = default)
+    {
+        using var response = await _http.PutAsJsonAsync("api/pupil/progress/chips", request, ct);
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<PupilChipsResponse>(cancellationToken: ct);
+        }
+
+        var body = await response.Content.ReadAsStringAsync(ct);
+        throw new HttpRequestException(body, null, response.StatusCode);
+    }
+
     public async Task ClearTeacherLoginPauseAsync(Guid classId, CancellationToken ct = default)
     {
         using var response = await _http.PostAsync(

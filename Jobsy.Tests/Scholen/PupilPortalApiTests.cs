@@ -63,7 +63,7 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.NotNull(progress);
         Assert.Equal(0, progress!.CurrentIndex);
 
-        var bank = new PlaceholderPupilQuestionBank();
+        var bank = new PupilQuestionBank();
         var item0 = bank.AllItems[0];
         var save = await client.PutAsJsonAsync(
             $"api/pupil/progress/answers/{item0.Id}",
@@ -104,7 +104,7 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
             await db.SaveChangesAsync();
         }
 
-        var bank = new PlaceholderPupilQuestionBank();
+        var bank = new PupilQuestionBank();
         var save = await client.PutAsJsonAsync(
             $"api/pupil/progress/answers/{bank.AllItems[0].Id}",
             new PupilAnswerRequest(3));
@@ -221,28 +221,120 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
-    public async Task Completing_placeholder_items_marks_completed_and_redirect_path()
+    public async Task Completing_60_items_with_island_writes_result_and_redirect_path()
     {
         await EnableSchoolsAsync(true);
         var seed = await SeedOpenClassAsync();
         using var client = await LoginPupilAsync(seed);
-        var bank = new PlaceholderPupilQuestionBank();
-        foreach (var item in bank.AllItems)
+        var bank = new PupilQuestionBank();
+
+        // First 30 → needs island
+        for (var i = 0; i < 30; i++)
         {
+            var item = bank.AllItems[i];
             var r = await client.PutAsJsonAsync(
                 $"api/pupil/progress/answers/{item.Id}",
                 new PupilAnswerRequest(5));
+            Assert.Equal(HttpStatusCode.OK, r.StatusCode);
+            if (i == 29)
+            {
+                var body = await r.Content.ReadFromJsonAsync<PupilAnswerResponse>(Json);
+                Assert.True(body!.NeedsIsland);
+            }
+        }
+
+        var mid = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
+        Assert.True(mid!.NeedsIsland);
+        Assert.False(mid.IslandDone);
+
+        var chips = await client.PutAsJsonAsync("api/pupil/progress/chips", new PupilChipsRequest(
+            ["tekenen", "dieren"],
+            ["voor-de-klas"],
+            null,
+            null));
+        Assert.Equal(HttpStatusCode.OK, chips.StatusCode);
+
+        // Remaining 30
+        for (var i = 30; i < 60; i++)
+        {
+            var item = bank.AllItems[i];
+            var r = await client.PutAsJsonAsync(
+                $"api/pupil/progress/answers/{item.Id}",
+                new PupilAnswerRequest(3));
             Assert.Equal(HttpStatusCode.OK, r.StatusCode);
         }
 
         var state = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
         Assert.True(state!.Completed);
 
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var result = await db.PupilResults.AsNoTracking().FirstOrDefaultAsync(r => r.PupilCodeId == seed.CodeId);
+            Assert.NotNull(result);
+            Assert.Equal("1", result!.ScoringVersion);
+            Assert.False(string.IsNullOrWhiteSpace(result.CompetenceScoresJson));
+            Assert.False(string.IsNullOrWhiteSpace(result.HollandCode));
+            Assert.False(string.IsNullOrWhiteSpace(result.TopValue));
+            Assert.False(string.IsNullOrWhiteSpace(result.TopCulture));
+
+            // No adult assessment tables touched
+            Assert.Equal(0, await db.CandidateCompetencies.CountAsync());
+            Assert.Equal(0, await db.CandidateCareerInterests.CountAsync());
+            Assert.Equal(0, await db.CandidateValuesProfiles.CountAsync());
+            Assert.Equal(0, await db.CandidateCulturePersonalityProfiles.CountAsync());
+        }
+
         using var again = _factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
         var login = await again.PostAsJsonAsync("api/pupil/login", new PupilLoginRequest(
             seed.SchoolId, seed.ClassId, seed.PlainCode));
-        var body = await login.Content.ReadFromJsonAsync<PupilLoginResponse>(Json);
-        Assert.Equal("/leerling/dit-ben-jij", body!.RedirectPath);
+        var bodyLogin = await login.Content.ReadFromJsonAsync<PupilLoginResponse>(Json);
+        Assert.Equal("/leerling/dit-ben-jij", bodyLogin!.RedirectPath);
+    }
+
+    [Fact]
+    public async Task Chips_reject_digits_at_and_first_names_and_enforce_exclusivity()
+    {
+        await EnableSchoolsAsync(true);
+        var seed = await SeedOpenClassAsync();
+        using var client = await LoginPupilAsync(seed);
+        var bank = new PupilQuestionBank();
+        for (var i = 0; i < 30; i++)
+        {
+            var r = await client.PutAsJsonAsync(
+                $"api/pupil/progress/answers/{bank.AllItems[i].Id}",
+                new PupilAnswerRequest(4));
+            Assert.Equal(HttpStatusCode.OK, r.StatusCode);
+        }
+
+        var digits = await client.PutAsJsonAsync("api/pupil/progress/chips", new PupilChipsRequest(
+            [], [], "test123", null));
+        Assert.Equal(HttpStatusCode.BadRequest, digits.StatusCode);
+
+        var at = await client.PutAsJsonAsync("api/pupil/progress/chips", new PupilChipsRequest(
+            [], [], "a@b", null));
+        Assert.Equal(HttpStatusCode.BadRequest, at.StatusCode);
+
+        var name = await client.PutAsJsonAsync("api/pupil/progress/chips", new PupilChipsRequest(
+            [], [], "Emma", null));
+        Assert.Equal(HttpStatusCode.BadRequest, name.StatusCode);
+        var nameBody = await name.Content.ReadAsStringAsync();
+        Assert.Contains("naam", nameBody, StringComparison.OrdinalIgnoreCase);
+
+        var ok = await client.PutAsJsonAsync("api/pupil/progress/chips", new PupilChipsRequest(
+            ["sport", "gamen"],
+            ["sport", "lang-stilzitten"], // sport overlap → dropped from dislikes
+            "paardrijden",
+            null));
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var progress = await db.PupilProgresses.AsNoTracking().FirstAsync(p => p.PupilCodeId == seed.CodeId);
+        Assert.NotNull(progress.ChipsSavedAtUtc);
+        Assert.Contains("sport", progress.LikesJson, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"sport\"", progress.DislikesJson, StringComparison.Ordinal);
+        Assert.Equal("paardrijden", progress.LikeOtherWord);
     }
 
     private static void AssertSetCookieIsSessionOnly(HttpResponseMessage response)

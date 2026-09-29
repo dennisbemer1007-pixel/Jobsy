@@ -88,6 +88,17 @@ public sealed class PupilController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
+    [HttpPut("progress/chips")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> SaveChips(
+        [FromBody] PupilChipsRequest request,
+        CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.SaveChipsAsync(User, request, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
     [HttpPost("logout")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
     public async Task<IActionResult> Logout()

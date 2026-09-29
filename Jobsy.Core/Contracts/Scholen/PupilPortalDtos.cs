@@ -40,7 +40,13 @@ public sealed record PupilProgressStateDto(
     string? CurrentWorldKey,
     IReadOnlyDictionary<string, int> Answers,
     bool WindowOpen,
-    bool Completed);
+    bool Completed,
+    bool NeedsIsland,
+    bool IslandDone,
+    IReadOnlyList<string> Likes,
+    IReadOnlyList<string> Dislikes,
+    string? LikeOtherWord,
+    string? DislikeOtherWord);
 
 public sealed record PupilAnswerRequest(int Value);
 
@@ -49,6 +55,19 @@ public sealed record PupilAnswerResponse(
     int AnsweredCount,
     int PlatesShed,
     bool Completed,
+    string? NextItemId,
+    string? NextWorldKey,
+    bool NeedsIsland);
+
+public sealed record PupilChipsRequest(
+    IReadOnlyList<string>? Likes,
+    IReadOnlyList<string>? Dislikes,
+    string? LikeOtherWord,
+    string? DislikeOtherWord);
+
+public sealed record PupilChipsResponse(
+    bool Ok,
+    int CurrentIndex,
     string? NextItemId,
     string? NextWorldKey);
 

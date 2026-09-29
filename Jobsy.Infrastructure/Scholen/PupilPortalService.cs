@@ -37,6 +37,11 @@ public interface IPupilPortalService
         int value,
         CancellationToken cancellationToken = default);
 
+    Task<(PupilChipsResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveChipsAsync(
+        ClaimsPrincipal pupil,
+        PupilChipsRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<(bool Ok, PupilErrorDto? Error, int StatusCode)> ClearLoginPauseAsync(
         ClaimsPrincipal staff,
         Guid classId,
@@ -332,8 +337,12 @@ public sealed class PupilPortalService : IPupilPortalService
         var completed = code.Status == PupilCodeStatus.Completed
                         || code.Progress?.CompletedAtUtc is not null;
         var windowOpen = schoolClass.TestWindow == TestWindowState.Open;
-        var item = completed ? null : _bank.GetByGlobalIndex(currentIndex);
+        var islandDone = code.Progress?.ChipsSavedAtUtc is not null;
+        var needsIsland = !completed && answered >= 30 && !islandDone;
+        var item = completed || needsIsland ? null : _bank.GetByGlobalIndex(currentIndex);
         var plates = PupilWorldCatalog.PlatesShed(answered);
+        var likes = ParseTagList(code.Progress?.LikesJson);
+        var dislikes = ParseTagList(code.Progress?.DislikesJson);
 
         return (new PupilProgressStateDto(
             code.Id,
@@ -346,10 +355,16 @@ public sealed class PupilPortalService : IPupilPortalService
             plates,
             answered >= PupilWorldCatalog.TotalTestItems || plates >= PupilWorldCatalog.PlateCount,
             item?.Id,
-            item?.WorldKey,
+            needsIsland ? "pauze-eiland" : item?.WorldKey,
             answers,
             windowOpen,
-            completed), null, 200);
+            completed,
+            needsIsland,
+            islandDone,
+            likes,
+            dislikes,
+            code.Progress?.LikeOtherWord,
+            code.Progress?.DislikeOtherWord), null, 200);
     }
 
     public async Task<(PupilAnswerResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveAnswerAsync(
@@ -420,6 +435,8 @@ public sealed class PupilPortalService : IPupilPortalService
         progress.CurrentIndex = nextIndex;
         var completed = answers.Count >= total
                         && _bank.AllItems.All(i => answers.ContainsKey(i.Id));
+        var islandDone = progress.ChipsSavedAtUtc is not null;
+        var needsIsland = !completed && answers.Count >= 30 && !islandDone;
 
         string? nextId = null;
         string? nextWorld = null;
@@ -440,9 +457,16 @@ public sealed class PupilPortalService : IPupilPortalService
         else
         {
             await _db.SaveChangesAsync(cancellationToken);
-            var next = _bank.GetByGlobalIndex(nextIndex);
-            nextId = next?.Id;
-            nextWorld = next?.WorldKey;
+            if (needsIsland)
+            {
+                nextWorld = "pauze-eiland";
+            }
+            else
+            {
+                var next = _bank.GetByGlobalIndex(nextIndex);
+                nextId = next?.Id;
+                nextWorld = next?.WorldKey;
+            }
         }
 
         return (new PupilAnswerResponse(
@@ -451,7 +475,146 @@ public sealed class PupilPortalService : IPupilPortalService
             PupilWorldCatalog.PlatesShed(answers.Count),
             completed,
             nextId,
-            nextWorld), null, 200);
+            nextWorld,
+            needsIsland), null, 200);
+    }
+
+    public async Task<(PupilChipsResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveChipsAsync(
+        ClaimsPrincipal pupil,
+        PupilChipsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var code = ctx.Code!;
+        var schoolClass = ctx.Class!;
+        var now = _clock.GetUtcNow().UtcDateTime;
+
+        if (code.Status == PupilCodeStatus.Completed || code.Progress?.CompletedAtUtc is not null)
+        {
+            return (null, new PupilErrorDto("already_completed", "Je reis is al klaar."), 409);
+        }
+
+        if (schoolClass.TestWindow != TestWindowState.Open)
+        {
+            return (null, new PupilErrorDto(WindowClosedError,
+                "Je antwoorden zijn bewaard. Je leraar zet de test weer open."), 409);
+        }
+
+        var (likes, dislikes, likeOther, dislikeOther, error) = ValidateChips(request);
+        if (error is not null)
+        {
+            return (null, error, 400);
+        }
+
+        var progress = code.Progress;
+        if (progress is null)
+        {
+            progress = new PupilProgress
+            {
+                PupilCodeId = code.Id,
+                AnswersJson = "{}",
+                CurrentIndex = 0,
+                StartedAtUtc = now,
+                UpdatedAtUtc = now
+            };
+            _db.PupilProgresses.Add(progress);
+            code.Progress = progress;
+        }
+
+        progress.LikesJson = JsonSerializer.Serialize(likes);
+        progress.DislikesJson = JsonSerializer.Serialize(dislikes);
+        progress.LikeOtherWord = likeOther;
+        progress.DislikeOtherWord = dislikeOther;
+        progress.ChipsSavedAtUtc = now;
+        progress.UpdatedAtUtc = now;
+        code.LastSeenAtUtc = now;
+
+        var total = _bank.AllItems.Count;
+        var nextIndex = FirstUnansweredIndex(progress.AnswersJson, total);
+        progress.CurrentIndex = nextIndex;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var next = _bank.GetByGlobalIndex(nextIndex);
+        return (new PupilChipsResponse(true, nextIndex, next?.Id, next?.WorldKey), null, 200);
+    }
+
+    private static (List<string> Likes, List<string> Dislikes, string? LikeOther, string? DislikeOther, PupilErrorDto? Error)
+        ValidateChips(PupilChipsRequest request)
+    {
+        var allowedLike = PupilInterestChipCatalog.LikeChips.Select(c => c.Key).ToHashSet(StringComparer.Ordinal);
+        var allowedDislike = PupilInterestChipCatalog.DislikeChips.Select(c => c.Key).ToHashSet(StringComparer.Ordinal);
+
+        var likes = (request.Likes ?? [])
+            .Where(k => !string.IsNullOrWhiteSpace(k) && allowedLike.Contains(k.Trim()))
+            .Select(k => k.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        var dislikes = (request.Dislikes ?? [])
+            .Where(k => !string.IsNullOrWhiteSpace(k) && allowedDislike.Contains(k.Trim()))
+            .Select(k => k.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        // Exclusivity: a chip can't be in both groups.
+        var overlap = likes.Intersect(dislikes, StringComparer.Ordinal).ToList();
+        if (overlap.Count > 0)
+        {
+            foreach (var key in overlap)
+            {
+                dislikes.Remove(key);
+            }
+        }
+
+        var likeOther = NormalizeOther(request.LikeOtherWord, out var likeErr);
+        if (likeErr is not null)
+        {
+            return ([], [], null, null, likeErr);
+        }
+
+        var dislikeOther = NormalizeOther(request.DislikeOtherWord, out var dislikeErr);
+        if (dislikeErr is not null)
+        {
+            return ([], [], null, null, dislikeErr);
+        }
+
+        return (likes, dislikes, likeOther, dislikeOther, null);
+    }
+
+    private static string? NormalizeOther(string? raw, out PupilErrorDto? error)
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        var trimmed = raw.Trim();
+        if (trimmed.Any(char.IsDigit) || trimmed.Contains('@', StringComparison.Ordinal))
+        {
+            error = new PupilErrorDto("invalid_other", "Gebruik alleen letters, spaties of een streepje (max. 24).");
+            return null;
+        }
+
+        if (!PupilInterestChipCatalog.OtherWordPattern.IsMatch(trimmed))
+        {
+            error = new PupilErrorDto("invalid_other", "Gebruik alleen letters, spaties of een streepje (max. 24).");
+            return null;
+        }
+
+        if (PupilNameGuard.LooksLikeName(trimmed))
+        {
+            error = new PupilErrorDto("name_rejected", "Dat lijkt op een naam. Kies liever een knop.");
+            return null;
+        }
+
+        return trimmed.Length > PupilInterestChipCatalog.OtherWordMaxLength
+            ? trimmed[..PupilInterestChipCatalog.OtherWordMaxLength]
+            : trimmed;
     }
 
     public async Task<(bool Ok, PupilErrorDto? Error, int StatusCode)> ClearLoginPauseAsync(
@@ -551,6 +714,23 @@ public sealed class PupilPortalService : IPupilPortalService
         catch
         {
             return new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    private static IReadOnlyList<string> ParseTagList(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch
+        {
+            return [];
         }
     }
 

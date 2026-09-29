@@ -14,6 +14,8 @@ public class PupilProgress
     public string DislikesJson { get; set; } = "[]";
     public string? LikeOtherWord { get; set; }
     public string? DislikeOtherWord { get; set; }
+    /// <summary>Set when the pupil confirms pauze-eiland chips (even if empty).</summary>
+    public DateTime? ChipsSavedAtUtc { get; set; }
     public string? DreamJobKey { get; set; }
     public DateTime StartedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }

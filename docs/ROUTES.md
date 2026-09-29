@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (148 routes)
+## Table (149 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -132,6 +132,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/lancering` | `Pages/WestlandTeaser.razor` | anonymous |
 | `/leerling` | `Pages/Leerling/LeerlingLogin.razor` | anonymous |
 | `/leerling/dit-ben-jij` | `Pages/Leerling/LeerlingDitBenJij.razor` | authenticated |
+| `/leerling/eiland` | `Pages/Leerling/LeerlingEiland.razor` | authenticated |
 | `/leerling/reis` | `Pages/Leerling/LeerlingReis.razor` | authenticated |
 | `/leerling/start` | `Pages/Leerling/LeerlingStart.razor` | authenticated |
 | `/leerling/stop` | `Pages/Leerling/LeerlingStop.razor` | anonymous |

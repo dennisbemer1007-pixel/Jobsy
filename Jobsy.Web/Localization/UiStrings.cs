@@ -3388,6 +3388,7 @@ public static class UiStrings
         UiStringsEnterprise.MergeAll(nl, en, pl, ro, ar);
         // D12: Scholen strings are nl-only; other languages fall back via UiStrings.Get.
         UiStringsScholen.MergeNl(nl);
+        UiStringsLeerlingVragen.MergeNl(nl);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
