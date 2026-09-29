@@ -10,7 +10,6 @@
 @inject IConfiguration Configuration
 @inject IAntiforgery Antiforgery
 @inject CultureState Culture
-@inject NavigationManager Nav
 
 <PageTitle>@Culture["Mfa.SetupTitle"] · Lobsy</PageTitle>
 
@@ -132,7 +131,7 @@
                     var dest = string.IsNullOrWhiteSpace(returnUrl)
                         ? "/account/mfa"
                         : "/account/mfa?returnUrl=" + Uri.EscapeDataString(returnUrl);
-                    Nav.NavigateTo(dest, forceLoad: true);
+                    http.Response.Redirect(dest);
                     return;
                 }
             }
@@ -142,7 +141,7 @@
                 new { challengeToken = challenge });
             if (enrollResponse.StatusCode == HttpStatusCode.Conflict)
             {
-                Nav.NavigateTo("/account/mfa", forceLoad: true);
+                http.Response.Redirect("/account/mfa");
                 return;
             }
 
@@ -162,6 +161,7 @@
             if (!enrollResponse.IsSuccessStatusCode)
             {
                 _error = Culture["Mfa.ErrorGeneric"];
+                _expired = true;
                 return;
             }
 
@@ -171,11 +171,13 @@
             if (string.IsNullOrWhiteSpace(_qrSvgDataUri) || string.IsNullOrWhiteSpace(_secretGrouped))
             {
                 _error = Culture["Mfa.ErrorGeneric"];
+                _expired = true;
             }
         }
-        catch
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _error = Culture["Mfa.ErrorGeneric"];
+            _expired = true;
         }
     }
 
