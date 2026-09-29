@@ -2,10 +2,12 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@using System.Security.Claims
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @using Microsoft.AspNetCore.WebUtilities
 @inject CultureState Culture
+@inject AuthenticationStateProvider AuthState
 @implements IDisposable
 
 <PageTitle>@Culture["Admin.Users"] · Lobsy</PageTitle>
@@ -21,6 +23,11 @@
     }
     else if (_page is not null)
     {
+        @if (!string.IsNullOrEmpty(_toast))
+        {
+            <p class="state-message" role="status">@_toast</p>
+        }
+
         <div class="filter-bar">
             <div class="muted">
                 Actief @_page.Aggregates.ActiveCount · Inactief @_page.Aggregates.InactiveCount
@@ -89,7 +96,7 @@
                             <th>E-mail</th>
                             <th>Rol</th>
                             <th>Bedrijf / type</th>
-                            <th>Early adapter</th>
+                            <th>Status</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -110,11 +117,27 @@
                                         <span class="muted">—</span>
                                     }
                                 </td>
-                                <td>@(u.IsEarlyAdapter ? "Ja" : "Nee")</td>
                                 <td>
-                                    <button class="provider-btn" type="button" @onclick="() => OpenSupport(u)">
-                                        @Culture["Admin.WhySeeThis"]
-                                    </button>
+                                    @if (u.IsEarlyAdapter)
+                                    {
+                                        <span class="status-pill">Early</span>
+                                    }
+                                    <span class="status-pill @(u.MfaStatus == "enrolled" ? "status-pill--accepted" : null)">
+                                        @MfaStatusLabel(u.MfaStatus)
+                                    </span>
+                                </td>
+                                <td class="data-table__col--actions">
+                                    <RowActionsMenu>
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenSupport(u)">
+                                            @Culture["Admin.WhySeeThis"]
+                                        </button>
+                                        @if (u.MfaStatus == "enrolled" && u.Id != _currentAdminId)
+                                        {
+                                            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenMfaReset(u)">
+                                                @Culture["Mfa.AdminReset"]
+                                            </button>
+                                        }
+                                    </RowActionsMenu>
                                 </td>
                             </tr>
                         }
@@ -126,6 +149,41 @@
                                  SubjectUserId="_supportSubjectId"
                                  OnClose="CloseSupport"
                                  OnGranted="OnGrantedAsync" />
+
+            <LobsyFriendlyDialog IsOpen="_mfaResetOpen"
+                                 Title="@Culture["Mfa.AdminReset"]"
+                                 TitleId="mfa-reset-title"
+                                 Lead="@Culture["Mfa.AdminResetLead"]"
+                                 OnClose="CloseMfaReset">
+                <label class="feedback-dialog__field">
+                    <span>@Culture["Mfa.AdminResetReason"]</span>
+                    <textarea rows="3" maxlength="500" @bind="_mfaResetReason" @bind:event="oninput" required></textarea>
+                </label>
+                @if (_localPasswordAdmin)
+                {
+                    <label class="feedback-dialog__field">
+                        <span>@Culture["Mfa.AdminResetConfirm"]</span>
+                        <input type="text"
+                               inputmode="numeric"
+                               autocomplete="one-time-code"
+                               maxlength="6"
+                               @bind="_mfaResetConfirmCode"
+                               @bind:event="oninput" />
+                    </label>
+                }
+                @if (!string.IsNullOrEmpty(_mfaResetError))
+                {
+                    <p class="state-message error">@_mfaResetError</p>
+                }
+                <div class="inline-actions">
+                    <button type="button" class="provider-btn" disabled="@_busy" @onclick="ConfirmMfaResetAsync">
+                        @Culture["Mfa.AdminReset"]
+                    </button>
+                    <button type="button" class="provider-btn provider-btn--ghost" disabled="@_busy" @onclick="CloseMfaReset">
+                        @Culture["Common.Close"]
+                    </button>
+                </div>
+            </LobsyFriendlyDialog>
 
             <div class="filter-bar">
                 <button class="provider-btn" type="button" disabled="@(_page.Page <= 1 || _loading)" @onclick="() => GoPageAsync(_page.Page - 1)">Vorige</button>
@@ -143,6 +201,7 @@
     private bool _earlyOnly;
     private bool _loading = true;
     private string? _error;
+    private string? _toast;
     private Guid? _companyIdFilter;
     private int _pageNumber = 1;
     private const int PageSize = 50;
@@ -150,6 +209,13 @@
     private Guid? _supportSubjectId;
     private bool _busy;
     private ActiveGrantBanner? _activeGrant;
+    private Guid _currentAdminId;
+    private bool _localPasswordAdmin = true;
+    private bool _mfaResetOpen;
+    private Guid? _mfaResetUserId;
+    private string _mfaResetReason = "";
+    private string _mfaResetConfirmCode = "";
+    private string? _mfaResetError;
 
     private bool HasNext =>
         _page is not null && (_page.Page * _page.PageSize) < _page.TotalCount;
@@ -165,6 +231,16 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (Guid.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out var id))
+        {
+            _currentAdminId = id;
+        }
+
+        var authMethod = user.FindFirstValue("auth_method") ?? "";
+        _localPasswordAdmin = !authMethod.StartsWith("external", StringComparison.OrdinalIgnoreCase);
+
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("companyId", out var companyRaw)
             && Guid.TryParse(companyRaw, out var companyId))
@@ -174,6 +250,13 @@
 
         await ReloadAsync();
     }
+
+    private string MfaStatusLabel(string status) => status switch
+    {
+        "enrolled" => Culture["Mfa.StatusEnrolled"],
+        "external-only" => Culture["Mfa.StatusExternal"],
+        _ => Culture["Mfa.StatusNotEnrolled"]
+    };
 
     private async Task GoPageAsync(int page)
     {
@@ -218,6 +301,58 @@
     {
         _supportOpen = false;
         return Task.CompletedTask;
+    }
+
+    private void OpenMfaReset(AdminUserItem user)
+    {
+        _mfaResetUserId = user.Id;
+        _mfaResetReason = "";
+        _mfaResetConfirmCode = "";
+        _mfaResetError = null;
+        _mfaResetOpen = true;
+    }
+
+    private Task CloseMfaReset()
+    {
+        _mfaResetOpen = false;
+        _mfaResetUserId = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmMfaResetAsync()
+    {
+        if (_mfaResetUserId is not Guid userId)
+        {
+            return;
+        }
+
+        var reason = _mfaResetReason.Trim();
+        if (reason.Length < 5)
+        {
+            _mfaResetError = Culture["Mfa.AdminResetReason"];
+            return;
+        }
+
+        _busy = true;
+        _mfaResetError = null;
+        try
+        {
+            await Api.ResetUserMfaAsync(
+                userId,
+                reason,
+                _localPasswordAdmin ? _mfaResetConfirmCode : null);
+            _toast = Culture["Mfa.AdminResetSuccess"];
+            await CloseMfaReset();
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _mfaResetError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private async Task OnGrantedAsync(SupportAccessGrantItem grant)
