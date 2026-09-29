@@ -1013,6 +1013,11 @@ public sealed class CandidateProfileEditor : IDisposable
         return map;
     }
 
+    public void Dispose()
+    {
+        DisposeSuggest();
+    }
+
     public void DisposeSuggest()
     {
         _suggestCts?.Cancel();
