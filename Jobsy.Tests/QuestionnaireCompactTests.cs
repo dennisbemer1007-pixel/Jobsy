@@ -141,6 +141,7 @@ public class CompactQuestionnaireContractTests
         Assert.Contains("Questionnaire.PrivacyMore", shell);
         Assert.Contains("@(\" \")", shell);
         Assert.Contains("jobsyQuestionnaire.scrollToQuestion", shell);
+        Assert.Contains("ScrollRequestVersion", shell);
         Assert.DoesNotContain("Competency.SaveDraft", shell);
         Assert.DoesNotContain("<text> </text>", shell);
     }
@@ -213,6 +214,22 @@ public class CompactQuestionnaireContractTests
         Assert.Equal(4, focus.CurrentId);
         Assert.Equal(4, focus.ExpandedId);
         Assert.Equal(2, focus.DimmedId);
+    }
+
+    [Fact]
+    public void QuestionnaireFocus_GoNext_bumps_scroll_version_when_already_on_current()
+    {
+        var ids = new[] { 1, 2, 3 };
+        var answers = new Dictionary<int, int> { [1] = 4 };
+        var focus = new QuestionnaireFocus();
+        focus.Initialize(ids, answers);
+        Assert.Equal(2, focus.CurrentId);
+        var version = focus.ScrollRequestVersion;
+
+        focus.GoNext(ids, answers);
+        Assert.Equal(2, focus.CurrentId);
+        Assert.Equal(2, focus.ScrollToId);
+        Assert.True(focus.ScrollRequestVersion > version);
     }
 
     [Fact]

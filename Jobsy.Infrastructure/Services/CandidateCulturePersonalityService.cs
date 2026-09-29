@@ -91,13 +91,15 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
                 CulturePersonalityCatalog.DeriveMatchTags(preview));
             row.CompletedAtUtc = now;
         }
-        else
+        else if (!CandidateCompetencyStatuses.IsCompleted(row.Status))
         {
             ClearScores(row);
             row.Status = CandidateCompetencyStatuses.Draft;
             row.MatchTagsJson = "[]";
             row.CompletedAtUtc = null;
         }
+        // Completed + autosave: keep status/scores; AnswersJson above is the pending edit
+        // until the candidate finishes again with complete:true (rescore).
 
         await _db.SaveChangesAsync(cancellationToken);
         await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);

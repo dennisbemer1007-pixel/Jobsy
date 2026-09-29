@@ -184,8 +184,14 @@
     [Parameter] public EventCallback OnRetrySave { get; set; }
     [Parameter] public int? ScrollToQuestionId { get; set; }
     [Parameter] public bool SmoothScroll { get; set; } = true;
+    /// <summary>
+    /// Increment to force a re-scroll when <see cref="ScrollToQuestionId"/> is unchanged
+    /// (Volgende while already on the current unanswered question).
+    /// </summary>
+    [Parameter] public int ScrollRequestVersion { get; set; }
 
     private int? _lastScrolledId;
+    private int _lastScrollRequestVersion = int.MinValue;
     private bool _privacyOpen;
 
     private bool IsComplete => TotalCount > 0 && AnsweredCount >= TotalCount;
@@ -214,9 +220,11 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (ScrollToQuestionId is int id && id != _lastScrolledId)
+        var force = ScrollRequestVersion != _lastScrollRequestVersion;
+        if (ScrollToQuestionId is int id && (id != _lastScrolledId || force))
         {
             _lastScrolledId = id;
+            _lastScrollRequestVersion = ScrollRequestVersion;
             try
             {
                 await Js.InvokeVoidAsync(

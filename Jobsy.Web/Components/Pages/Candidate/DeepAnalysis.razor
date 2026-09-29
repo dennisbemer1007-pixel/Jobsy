@@ -93,6 +93,7 @@ else
                         Completing="_completing"
                         ScrollToQuestionId="_scrollToId"
                         SmoothScroll="_smoothScroll"
+                        ScrollRequestVersion="_scrollRequestVersion"
                         CssClass="questionnaire--deep"
                         OnComplete="CompleteAsync"
                         OnNext="GoNextAsync"
@@ -140,10 +141,11 @@ else
                 {
                     var answered = _answers.ContainsKey(question.Id);
                     var q = question;
+                    var screenNumber = ScreenNumber(question.Id);
                     var isCurrent = _currentId == question.Id;
                     var isDimmed = _dimmedId == question.Id;
                     <LikertScaleQuestion QuestionId="question.Id"
-                                         Text="@($"{question.Id}. {question.PromptNl}")"
+                                         Text="@($"{screenNumber}. {question.PromptNl}")"
                                          Value="@(answered ? _answers[question.Id] : null)"
                                          IsAnswered="answered"
                                          IsCurrent="isCurrent"
@@ -155,7 +157,7 @@ else
                         <Extra>
                             <button type="button"
                                     class="q-likert__example"
-                                    aria-label="@Culture.Format("Deep.InfoAria", question.Id)"
+                                    aria-label="@Culture.Format("Deep.InfoAria", screenNumber)"
                                     @onclick="() => OpenExample(q)">
                                 @Culture["Questionnaire.ExampleLink"]
                             </button>
@@ -173,7 +175,7 @@ else
     <LobsyFriendlyDialog IsOpen="true"
                          Title="@Culture["Deep.InfoTitle"]"
                          TitleId="deep-example-title"
-                         Lead="@Culture.Format("Deep.InfoLead", _exampleQuestion.Id)"
+                         Lead="@Culture.Format("Deep.InfoLead", ScreenNumber(_exampleQuestion.Id))"
                          OnClose="CloseExample">
         <p>@_exampleQuestion.ExampleNl</p>
         <button class="login-submit" type="button" @onclick="CloseExample">@Culture["Common.Close"]</button>
@@ -214,10 +216,19 @@ else
     private int? _dimmedId;
     private int? _expandedId;
     private int? _scrollToId;
+    private int _scrollRequestVersion;
     private QuestionnaireAutosave? _autosave;
 
     private int AnsweredCount => _answers.Count;
     private int QuestionCount => _state?.QuestionCount ?? DeepAnalysisCatalog.QuestionCount;
+
+    private IReadOnlyList<int> OrderedScreenIds =>
+        DeepAnalysisScreenOrder.Grouped(_state?.Questions ?? [], q => q.Domain)
+            .Select(q => q.Id)
+            .ToList();
+
+    private int ScreenNumber(int questionId)
+        => DeepAnalysisScreenOrder.NumberOf(OrderedScreenIds, questionId);
 
     private string? Subtitle
     {
@@ -353,32 +364,10 @@ else
     }
 
     private int? FirstUnanswered()
-    {
-        foreach (var q in _state?.Questions ?? [])
-        {
-            if (!_answers.ContainsKey(q.Id))
-            {
-                return q.Id;
-            }
-        }
-
-        return null;
-    }
+        => DeepAnalysisScreenOrder.FirstUnanswered(OrderedScreenIds, _answers);
 
     private int? NextUnansweredAfter(int answeredId)
-    {
-        var list = (_state?.Questions ?? []).ToList();
-        var index = list.FindIndex(q => q.Id == answeredId);
-        for (var i = index + 1; i < list.Count; i++)
-        {
-            if (!_answers.ContainsKey(list[i].Id))
-            {
-                return list[i].Id;
-            }
-        }
-
-        return FirstUnanswered();
-    }
+        => DeepAnalysisScreenOrder.NextUnansweredAfter(OrderedScreenIds, _answers, answeredId);
 
     private async Task OnAnswerAsync(int id, int value)
     {
@@ -490,8 +479,10 @@ else
 
     private Task GoNextAsync()
     {
+        _currentId = FirstUnanswered() ?? _currentId;
         _scrollToId = _currentId;
         _smoothScroll = true;
+        _scrollRequestVersion++;
         return Task.CompletedTask;
     }
 

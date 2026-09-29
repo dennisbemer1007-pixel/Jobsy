@@ -99,7 +99,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             row.MatchTagsJson = CareerTestCatalog.SerializeTags(tags);
             row.CompletedAtUtc = now;
         }
-        else
+        else if (!CandidateCompetencyStatuses.IsCompleted(row.Status))
         {
             row.Status = CandidateCompetencyStatuses.Draft;
             row.RealisticPercent = null;
@@ -113,6 +113,8 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             row.MatchTagsJson = "[]";
             row.CompletedAtUtc = null;
         }
+        // Completed + autosave: keep status/scores; AnswersJson above is the pending edit
+        // until the candidate finishes again with complete:true (rescore).
 
         await _db.SaveChangesAsync(cancellationToken);
         await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);
