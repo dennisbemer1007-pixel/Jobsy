@@ -224,7 +224,11 @@ public class MobileSaasUxTests
     [Fact]
     public void Candidate_profile_uses_accordions_compact_availability_and_sticky_save()
     {
-        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
+        var root = FindRepoRoot();
+        var razor = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
+        var sectionsDir = Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections");
+        var sections = string.Concat(Directory.EnumerateFiles(sectionsDir, "*.razor").Select(File.ReadAllText));
+        var blob = razor + sections;
         Assert.Contains("profile-page--candidate", razor);
         Assert.Contains("profile-accordion", razor);
         Assert.Contains("ToggleSection(\"personal\")", razor);
@@ -235,16 +239,16 @@ public class MobileSaasUxTests
         Assert.Contains("CandidateKompas", razor);
         Assert.Contains("profile-layout__matches", razor);
         Assert.DoesNotContain("competency.Scores ?? competency.PreviewScores", razor);
-        Assert.Contains("profile-check-grid", razor);
-        Assert.Contains("availability-matrix", razor);
-        Assert.Contains("availability-presets", razor);
-        Assert.Contains("profile-save-bar", razor);
+        Assert.Contains("profile-check-grid", blob);
+        Assert.Contains("availability-matrix", blob);
+        Assert.Contains("availability-presets", blob);
+        Assert.Contains("profile-save-bar", blob);
         Assert.Contains("Profile.ReturnHint", razor);
         Assert.Contains("profile-return-hint", razor);
         Assert.Contains("aria-expanded=\"@(IsSectionOpen(\"personal\") ? \"true\" : \"false\")\"", razor);
         Assert.DoesNotContain("vacancy-schedule__table", razor);
 
-        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".profile-accordion {\n    display: flex;\n    flex-direction: column;", css);
         Assert.Contains(".profile-page--candidate .profile-check-grid,\n.profile-page--candidate .profile-roles.profile-check-grid {\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
         Assert.Contains(".availability-matrix {\n    display: grid;\n    grid-template-columns: 2.35rem repeat(4, minmax(0, 1fr));", css);

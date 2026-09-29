@@ -27,6 +27,8 @@ public class CandidateTabStabilityGuardTests
         Assert.Contains("PanelErrorBoundary Name=\"role-fit\"", kompas);
         Assert.Contains("PanelErrorBoundary Name=\"onboarding-resume\"", kompas);
         Assert.Contains("PanelErrorBoundary Name=\"matched-vacancies\"", profile);
+        var passport = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/Passport.razor"));
+        Assert.Contains("PanelErrorBoundary Name=\"passport-proof\"", passport);
     }
 
     [Fact]
