@@ -1,0 +1,186 @@
+@page "/admin/scholen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Nav
+
+<PageTitle>@Culture["AdminScholen.ListTitle"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminScholen.ListTitle"]" Lead="@Culture["AdminScholen.ListLead"]">
+    <div class="sch-admin-toolbar">
+        <button type="button" class="btn-primary" @onclick="() => _drawerOpen = true">@Culture["AdminScholen.Add"]</button>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <EntDataTable Loading="false" Empty="@(_rows.Count == 0)" EmptyText="@Culture["AdminScholen.Empty"]">
+            <Header>
+                <th scope="col">@Culture["AdminScholen.Col.Name"]</th>
+                <th scope="col">@Culture["AdminScholen.Col.City"]</th>
+                <th scope="col">@Culture["AdminScholen.Col.Brin"]</th>
+                <th scope="col">@Culture["AdminScholen.Col.Status"]</th>
+                <th scope="col">@Culture["AdminScholen.Col.Agreement"]</th>
+                <th scope="col">@Culture["AdminScholen.Col.Classes"]</th>
+                <th scope="col">@Culture["AdminScholen.Col.Teachers"]</th>
+            </Header>
+            <Rows>
+                @foreach (var row in _rows)
+                {
+                    <tr class="ent-data-table__row" @onclick="(() => OpenSchool(row.Id))" style="cursor:pointer">
+                        <td>@row.Name</td>
+                        <td>@row.City</td>
+                        <td>@(row.BrinCode ?? "—")</td>
+                        <td>
+                            @if (row.IsActive)
+                            {
+                                <span class="sch-pill sch-pill--ok">@Culture["AdminScholen.Status.Active"]</span>
+                            }
+                            else
+                            {
+                                <span class="sch-pill sch-pill--muted">@Culture["AdminScholen.Status.Inactive"]</span>
+                            }
+                        </td>
+                        <td>
+                            @if (row.ProcessorAgreementSignedOn is DateOnly d)
+                            {
+                                <span class="sch-pill sch-pill--ok">@d.ToString("dd-MM-yyyy")</span>
+                            }
+                            else
+                            {
+                                <span class="sch-pill sch-pill--warn">@Culture["AdminScholen.Agreement.Missing"]</span>
+                            }
+                        </td>
+                        <td class="tabular">@row.ClassCount</td>
+                        <td class="tabular">@row.TeacherCount</td>
+                    </tr>
+                }
+            </Rows>
+        </EntDataTable>
+    }
+</AdminPageShell>
+
+<EntDrawer @bind-Open="_drawerOpen" Title="@Culture["AdminScholen.Drawer.Title"]">
+    <EditForm Model="_create" OnValidSubmit="CreateAsync">
+        <label>
+            @Culture["AdminScholen.Field.Name"]
+            <InputText class="input" @bind-Value="_create.Name" />
+        </label>
+        <label>
+            @Culture["AdminScholen.Field.City"]
+            <InputText class="input" @bind-Value="_create.City" />
+        </label>
+        <label>
+            @Culture["AdminScholen.Field.Brin"]
+            <InputText class="input" @bind-Value="_create.BrinCode" />
+        </label>
+        <label>
+            @Culture["AdminScholen.Field.Domains"]
+            <InputText class="input" @bind-Value="_domainsText" />
+        </label>
+        <p class="muted">@Culture["AdminScholen.Field.DomainsHelp"]</p>
+        <label class="filter-check">
+            <InputCheckbox @bind-Value="_create.IsActive" />
+            @Culture["AdminScholen.Field.Active"]
+        </label>
+        @if (!string.IsNullOrEmpty(_drawerError))
+        {
+            <p class="state-message error">@_drawerError</p>
+        }
+        <div class="sch-drawer-actions">
+            <button type="button" class="btn-compact" @onclick="() => _drawerOpen = false">@Culture["AdminScholen.Cancel"]</button>
+            <button type="submit" class="btn-primary" disabled="@_busy">@Culture["AdminScholen.Save"]</button>
+        </div>
+    </EditForm>
+</EntDrawer>
+
+@code {
+    private readonly List<SchoolListItemDto> _rows = [];
+    private bool _loading = true;
+    private bool _busy;
+    private bool _drawerOpen;
+    private string? _error;
+    private string? _drawerError;
+    private string _domainsText = "";
+    private CreateSchoolForm _create = new();
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private void OpenSchool(Guid id) => Nav.NavigateTo($"/admin/scholen/{id}");
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var list = await Api.GetAdminSchoolsAsync();
+            _rows.Clear();
+            if (list is not null)
+            {
+                _rows.AddRange(list);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        _busy = true;
+        _drawerError = null;
+        try
+        {
+            var domains = _domainsText.Split([',', ';', ' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var created = await Api.CreateAdminSchoolAsync(new CreateSchoolRequest(
+                _create.Name,
+                _create.City,
+                string.IsNullOrWhiteSpace(_create.BrinCode) ? null : _create.BrinCode,
+                domains,
+                _create.IsActive));
+            if (created is null)
+            {
+                _drawerError = "Opslaan mislukt.";
+                return;
+            }
+
+            _drawerOpen = false;
+            _create = new();
+            _domainsText = "";
+            Nav.NavigateTo($"/admin/scholen/{created.Id}");
+        }
+        catch (Exception ex)
+        {
+            _drawerError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private sealed class CreateSchoolForm
+    {
+        public string Name { get; set; } = "";
+        public string City { get; set; } = "";
+        public string? BrinCode { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+}

@@ -21,7 +21,11 @@ public sealed record PlatformFeatureSnapshot(
     DateOnly? FreePublishUntil = null,
     int MinimumSessionVersion = 0,
     bool SupportAccessNotifyAdmins = false,
-    bool SupportAccessNotifySubject = false);
+    bool SupportAccessNotifySubject = false,
+    bool SchoolsEnabled = false,
+    bool SchoolPerCodeResultsEnabled = true,
+    int SchoolRetentionCutoffMonth = 7,
+    int SchoolRetentionCutoffDay = 31);
 
 public sealed record PlatformFeatureUpdate(
     bool VacancyContentModerationEnabled,
@@ -39,4 +43,12 @@ public sealed record PlatformFeatureUpdate(
     bool ClearFreePublishUntil = false,
     int? MinimumSessionVersion = null,
     bool? SupportAccessNotifyAdmins = null,
-    bool? SupportAccessNotifySubject = null);
+    bool? SupportAccessNotifySubject = null,
+    /// <summary>Null = keep existing.</summary>
+    bool? SchoolsEnabled = null,
+    /// <summary>Null = keep existing.</summary>
+    bool? SchoolPerCodeResultsEnabled = null,
+    /// <summary>Null = keep existing.</summary>
+    int? SchoolRetentionCutoffMonth = null,
+    /// <summary>Null = keep existing.</summary>
+    int? SchoolRetentionCutoffDay = null);

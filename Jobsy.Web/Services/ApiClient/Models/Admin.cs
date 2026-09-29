@@ -150,6 +150,11 @@ public sealed class PlatformFeatureItem
     public bool ClearFreePublishUntil { get; set; }
     public bool SupportAccessNotifyAdmins { get; set; }
     public bool SupportAccessNotifySubject { get; set; }
+    // moves into PlatformSettingsCatalog group "Scholen"
+    public bool SchoolsEnabled { get; set; }
+    public bool SchoolPerCodeResultsEnabled { get; set; } = true;
+    public int SchoolRetentionCutoffMonth { get; set; } = 7;
+    public int SchoolRetentionCutoffDay { get; set; } = 31;
 }
 
 public sealed class PlatformCompanyItem

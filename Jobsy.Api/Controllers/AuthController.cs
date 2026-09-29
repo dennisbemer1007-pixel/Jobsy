@@ -142,7 +142,8 @@ public class AuthController : ControllerBase
                 RequiresMfa: true,
                 MfaEnrolled: user.AuthenticatorEnabled,
                 MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice, localPassword: true),
-                UserId: user.Id));
+                UserId: user.Id,
+                SchoolId: user.SchoolId));
         }
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
@@ -178,7 +179,8 @@ public class AuthController : ControllerBase
             deviceSessionId,
             deviceRefresh,
             deviceExpires,
-            user.Id));
+            user.Id,
+            SchoolId: user.SchoolId));
     }
 
     /// <summary>

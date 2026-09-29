@@ -10,6 +10,9 @@ public static class JobsyPolicies
     public const string RequireAdminOrSalesManager = "RequireAdminOrSalesManager";
     public const string RequireAmbassadeur = "RequireAmbassadeur";
     public const string RequireAdminOrAmbassadeur = "RequireAdminOrAmbassadeur";
+    public const string RequireSchoolAdmin = "RequireSchoolAdmin";
+    public const string RequireTeacher = "RequireTeacher";
+    public const string RequireSchoolStaff = "RequireSchoolStaff";
     public const string RequireApiKey = "RequireApiKey";
 
     /// <summary>Admin, employer, sales manager and ambassadeur dashboards (manual cache refresh).</summary>

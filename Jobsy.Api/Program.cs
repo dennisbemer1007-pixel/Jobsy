@@ -270,6 +270,7 @@ app.UseAuthentication();
 app.UseRateLimiter();
 app.UseLoginProtection();
 app.UseAuthorization();
+app.UseMiddleware<Jobsy.Api.Security.SchoolsFeatureMiddleware>();
 
 app.MapGet("/health", () => Results.Ok(new
     {

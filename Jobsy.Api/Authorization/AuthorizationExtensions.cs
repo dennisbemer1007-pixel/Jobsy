@@ -194,6 +194,18 @@ public static class AuthorizationExtensions
                 policy.RequireAuthenticatedUser()
                     .RequireRole(JobsyRoles.Admin, JobsyRoles.Ambassadeur));
 
+            options.AddPolicy(JobsyPolicies.RequireSchoolAdmin, policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(JobsyRoles.SchoolAdmin));
+
+            options.AddPolicy(JobsyPolicies.RequireTeacher, policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(JobsyRoles.Teacher));
+
+            options.AddPolicy(JobsyPolicies.RequireSchoolStaff, policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(JobsyRoles.SchoolAdmin, JobsyRoles.Teacher));
+
             options.AddPolicy(JobsyPolicies.RequireDashboardAccess, policy =>
                 policy.RequireAuthenticatedUser()
                     .RequireRole(

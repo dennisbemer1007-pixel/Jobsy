@@ -1,0 +1,228 @@
+/* Lobsy voor scholen — school/leraar (sch-*) and leerling (ll-*) */
+
+.sch-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.sch-topbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    min-height: 56px;
+    padding: 0 var(--space-4);
+    background: var(--brand-deep, var(--brand));
+    color: #fff;
+}
+
+.sch-topbar__brand {
+    font-weight: 700;
+    font-size: var(--text-md, 1rem);
+    color: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.sch-topbar__scope {
+    flex: 1;
+    min-width: 0;
+}
+
+.sch-topbar__account {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.sch-topbar__role {
+    font-size: var(--text-sm);
+    opacity: 0.9;
+}
+
+.sch-topbar__link {
+    color: inherit;
+    font-size: var(--text-sm);
+}
+
+.sch-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+.sch-sidebar {
+    width: 248px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-inline-end: 1px solid var(--border);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.sch-sidebar__group {
+    margin: var(--space-3) 0 var(--space-1);
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.sch-sidebar__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sch-sidebar__link {
+    display: block;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm, 6px);
+    color: var(--text);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    min-height: 44px;
+    line-height: 1.3;
+}
+
+.sch-sidebar__link.is-active,
+.sch-sidebar__link:hover {
+    background: var(--accent-soft, color-mix(in srgb, var(--accent) 12%, transparent));
+    color: var(--accent-deep, var(--brand));
+}
+
+.sch-sidebar__footer {
+    margin-top: auto;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+}
+
+.sch-sidebar__help {
+    font-weight: 600;
+    font-size: var(--text-sm);
+    margin: 0 0 var(--space-2);
+}
+
+.sch-sidebar__note {
+    margin: 0;
+    font-size: var(--text-xs, 0.75rem);
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.sch-main {
+    flex: 1;
+    padding: var(--space-5) var(--space-6);
+    min-width: 0;
+}
+
+.sch-page-header h1 {
+    margin: 0 0 var(--space-2);
+    font-weight: 700;
+}
+
+.sch-empty-state {
+    padding: var(--space-6);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm, 6px);
+}
+
+.sch-bottom-nav {
+    display: none;
+}
+
+.sch-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.5rem;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-sm, 6px);
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: 600;
+}
+
+.sch-pill--ok {
+    background: var(--success-soft, color-mix(in srgb, var(--success) 16%, transparent));
+    color: var(--success);
+}
+
+.sch-pill--warn {
+    background: color-mix(in srgb, var(--warn) 16%, transparent);
+    color: var(--warn);
+}
+
+.sch-pill--muted {
+    background: color-mix(in srgb, var(--muted) 16%, transparent);
+    color: var(--muted);
+}
+
+.sch-admin-toolbar {
+    margin-bottom: var(--space-4);
+}
+
+.sch-drawer-actions {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: flex-end;
+    margin-top: var(--space-4);
+}
+
+.sch-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: var(--space-4);
+}
+
+.tabular {
+    font-variant-numeric: tabular-nums;
+}
+
+.btn-outline-danger {
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    background: transparent;
+}
+
+@media (max-width: 1023px) {
+    .sch-sidebar {
+        display: none;
+    }
+
+    .sch-bottom-nav {
+        display: flex;
+        position: sticky;
+        bottom: 0;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        padding: var(--space-2);
+        gap: var(--space-1);
+        justify-content: space-around;
+        z-index: 20;
+    }
+
+    .sch-bottom-nav__item {
+        flex: 1;
+        text-align: center;
+        padding: var(--space-2);
+        font-size: var(--text-sm);
+        color: var(--muted);
+        text-decoration: none;
+        min-height: 44px;
+    }
+
+    .sch-bottom-nav__item.is-active {
+        color: var(--brand);
+        font-weight: 600;
+    }
+
+    .sch-main {
+        padding: var(--space-4);
+        padding-bottom: calc(var(--space-4) + var(--bottom-nav-clearance, 4rem));
+    }
+}

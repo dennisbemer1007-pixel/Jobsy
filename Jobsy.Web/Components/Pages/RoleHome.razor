@@ -73,3 +73,15 @@
         <AmbassadeurHomePanel />
     </Authorized>
 </AuthorizeView>
+
+<AuthorizeView Roles="@JobsyRoles.SchoolAdmin">
+    <Authorized>
+        <RedirectToPath Path="/school" />
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="@JobsyRoles.Teacher">
+    <Authorized>
+        <RedirectToPath Path="/leraar" />
+    </Authorized>
+</AuthorizeView>

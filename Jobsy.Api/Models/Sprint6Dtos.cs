@@ -179,7 +179,11 @@ public record UpdatePlatformFeatureRequest(
     DateOnly? FreePublishUntil = null,
     bool ClearFreePublishUntil = false,
     bool? SupportAccessNotifyAdmins = null,
-    bool? SupportAccessNotifySubject = null);
+    bool? SupportAccessNotifySubject = null,
+    bool? SchoolsEnabled = null,
+    bool? SchoolPerCodeResultsEnabled = null,
+    int? SchoolRetentionCutoffMonth = null,
+    int? SchoolRetentionCutoffDay = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -191,7 +195,11 @@ public record PlatformFeatureDto(
     int SessionInactivityTimeoutMinutes = 30,
     DateOnly? FreePublishUntil = null,
     bool SupportAccessNotifyAdmins = false,
-    bool SupportAccessNotifySubject = false);
+    bool SupportAccessNotifySubject = false,
+    bool SchoolsEnabled = false,
+    bool SchoolPerCodeResultsEnabled = true,
+    int SchoolRetentionCutoffMonth = 7,
+    int SchoolRetentionCutoffDay = 31);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

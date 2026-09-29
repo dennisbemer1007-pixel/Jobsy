@@ -211,6 +211,8 @@ public static partial class PageSeoCatalog
             ["/admin/vacancy-categories"] = Private("Admin.VacancyCategories", "Seo.PrivateDescription"),
             ["/admin/training"] = Private("Admin.Training", "Seo.PrivateDescription"),
             ["/admin/wages"] = Private("Admin.Wages", "Seo.PrivateDescription"),
+            ["/school"] = Private("School.DashboardTitle", "Seo.PrivateDescription"),
+            ["/leraar"] = Private("Leraar.DashboardTitle", "Seo.PrivateDescription"),
             ["/branch"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),
         };
 
@@ -229,6 +231,9 @@ public static partial class PageSeoCatalog
         ("/candidate/", Private("Seo.DashboardTitle", "Seo.PrivateDescription")),
         ("/salesmanager/", Private("Sales.Dashboard", "Seo.PrivateDescription")),
         ("/ambassadeur/", Private("Ambassadeur.Dashboard", "Seo.PrivateDescription")),
+        ("/school/", Private("School.DashboardTitle", "Seo.PrivateDescription")),
+        ("/leraar/", Private("Leraar.DashboardTitle", "Seo.PrivateDescription")),
+        ("/leerling/", Private("Leerling.LoginTitle", "Seo.PrivateDescription")),
         ("/intermediary/", Private("Seo.DashboardTitle", "Seo.PrivateDescription")),
         ("/regional/", Private("Seo.DashboardTitle", "Seo.PrivateDescription")),
         ("/tokens/", Private("Seo.SiteName", "Seo.PrivateDescription")),

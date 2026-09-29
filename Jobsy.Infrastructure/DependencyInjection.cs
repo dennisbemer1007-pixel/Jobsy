@@ -1,8 +1,10 @@
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Scholen;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
+using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Jobsy.Infrastructure.Services.OpenAi;
@@ -285,6 +287,9 @@ public static class DependencyInjection
         services.AddScoped<ISalesManagerApplicationService, SalesManagerApplicationService>();
         services.AddScoped<ISalesManagerOnboardingService, SalesManagerOnboardingService>();
         services.AddScoped<IAmbassadeurInviteService, AmbassadeurInviteService>();
+        services.AddScoped<ISchoolStaffInviteService, SchoolStaffInviteService>();
+        services.AddScoped<IPupilCodeService, PupilCodeService>();
+        services.AddScoped<ISchoolScopeService, SchoolScopeService>();
         services.AddScoped<IAmbassadeurOnboardingService, AmbassadeurOnboardingService>();
         services.AddScoped<IAmbassadeurSettingsService, AmbassadeurSettingsService>();
         services.AddScoped<IAmbassadeurAttributionService, AmbassadeurAttributionService>();

@@ -128,6 +128,40 @@
             </article>
         </section>
 
+        @* moves into PlatformSettingsCatalog group "Scholen" *@
+        <section class="panel-section">
+            <h2>@Culture["AdminScholen.Settings.Group"]</h2>
+            <article class="company-card platform-features-card">
+                <label class="filter-check">
+                    <input type="checkbox" @bind="_features.SchoolsEnabled" />
+                    @Culture["AdminScholen.Settings.Enabled"]
+                </label>
+                <p class="muted">@Culture["AdminScholen.Settings.EnabledHelp"]</p>
+
+                <label class="filter-check">
+                    <input type="checkbox" @bind="_features.SchoolPerCodeResultsEnabled" />
+                    @Culture["AdminScholen.Settings.PerCode"]
+                </label>
+                <p class="muted">@Culture["AdminScholen.Settings.PerCodeHelp"]</p>
+
+                <div class="inline-actions" style="flex-wrap:wrap;gap:0.75rem;align-items:end">
+                    <label>
+                        @Culture["AdminScholen.Settings.Month"]
+                        <input type="number" min="1" max="12" @bind="_features.SchoolRetentionCutoffMonth" style="width:4rem" />
+                    </label>
+                    <label>
+                        @Culture["AdminScholen.Settings.Day"]
+                        <input type="number" min="1" max="31" @bind="_features.SchoolRetentionCutoffDay" style="width:4rem" />
+                    </label>
+                </div>
+                <p class="muted">@Culture["AdminScholen.Settings.RetentionHelp"]</p>
+
+                <div class="inline-actions" style="margin-top:0.75rem">
+                    <button class="btn-compact btn-compact--primary" type="button" disabled="@_featureBusy" @onclick="SaveFeaturesAsync">@Culture["Common.Save"]</button>
+                </div>
+            </article>
+        </section>
+
         <section class="panel-section">
             <h2>Token pricing — pakketten voor werkgevers</h2>
             <p class="muted">

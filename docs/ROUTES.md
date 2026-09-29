@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (124 routes)
+## Table (128 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -59,6 +59,8 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/personal-data-access-log` | `Pages/Admin/PersonalDataAccessLogAdmin.razor` | Admin |
 | `/admin/sales` | `Pages/Admin/SalesCommercialPage.razor` | Admin |
 | `/admin/sales-managers` | `Pages/Admin/SalesManagersAdmin.razor` | Admin |
+| `/admin/scholen` | `Pages/Admin/Scholen/ScholenList.razor` | Admin |
+| `/admin/scholen/{SchoolId:guid}` | `Pages/Admin/Scholen/ScholenDetail.razor` | Admin |
 | `/admin/settings` | `Pages/Admin/SettingsAdmin.razor` | Admin |
 | `/admin/token-finance` | `Pages/Admin/TokenFinanceAdmin.razor` | Admin |
 | `/admin/tokens` | `Pages/Admin/TokenAdmin.razor` | Admin |
@@ -128,6 +130,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/intermediary` | `Pages/Intermediary/IntermediaryDashboard.razor` | Intermediary |
 | `/intermediary/team` | `Pages/Intermediary/Team.razor` | Intermediary |
 | `/lancering` | `Pages/WestlandTeaser.razor` | anonymous |
+| `/leraar` | `Pages/Leraar/LeraarDashboard.razor` | Teacher |
 | `/login` | `Pages/Login.razor` | anonymous |
 | `/ontdek` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/partner` | `Pages/Partner/PartnerSales.razor` | anonymous |
@@ -147,6 +150,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/salesmanager/payout-checkout` | `Pages/SalesManager/PayoutCheckoutStub.razor` | SalesManager |
 | `/salesmanager/referrals` | `Pages/SalesManager/Referrals.razor` | SalesManager |
 | `/salesmanager/toolkit` | `Pages/SalesManager/SalesToolkit.razor` | SalesManager |
+| `/school` | `Pages/School/SchoolDashboard.razor` | SchoolAdmin |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |

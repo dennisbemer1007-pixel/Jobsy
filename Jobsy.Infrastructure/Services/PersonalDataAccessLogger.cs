@@ -39,6 +39,7 @@ public sealed class PersonalDataAccessLogger : IPersonalDataAccessLogger
                 ActorRole = string.IsNullOrWhiteSpace(entry.ActorRole) ? "Unknown" : entry.ActorRole.Trim(),
                 SubjectUserId = entry.SubjectUserId,
                 SubjectCompanyId = entry.SubjectCompanyId,
+                SubjectPupilCodeId = entry.SubjectPupilCodeId,
                 Resource = entry.Resource.Trim(),
                 Action = entry.Action.Trim(),
                 Reason = string.IsNullOrWhiteSpace(entry.Reason) ? null : entry.Reason.Trim(),

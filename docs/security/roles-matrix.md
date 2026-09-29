@@ -13,7 +13,8 @@ API `[Authorize]` attributes remain authoritative; this document is the human-re
 | Filiaalmanager | `BranchManager` | Enterprise-like rights, but **own branch only** |
 | Salesmanager | `SalesManager` | Wallet payout, sales toolkit, tracking code + % of referred employers |
 | Ambassadeur | `Ambassadeur` | Like salesmanager (product unfinished) |
-| Decaan | — | Not built |
+| Schoolbeheerder | `SchoolAdmin` | Own school; mandatory 2FA; invites teachers, manages classes/codes |
+| Leraar | `Teacher` | Assigned classes only (`TeacherClassAssignment`); mandatory 2FA |
 | Admin | `Admin` | Everything |
 | Intermediary | `Intermediary` | **Exists in code, not in Dennis’s list** — see open question below |
 

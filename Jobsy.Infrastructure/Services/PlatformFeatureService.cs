@@ -67,6 +67,26 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         {
             row.SupportAccessNotifySubject = notifySubject;
         }
+
+        if (update.SchoolsEnabled is bool schoolsEnabled)
+        {
+            row.SchoolsEnabled = schoolsEnabled;
+        }
+
+        if (update.SchoolPerCodeResultsEnabled is bool perCode)
+        {
+            row.SchoolPerCodeResultsEnabled = perCode;
+        }
+
+        if (update.SchoolRetentionCutoffMonth is int || update.SchoolRetentionCutoffDay is int)
+        {
+            var month = update.SchoolRetentionCutoffMonth ?? row.SchoolRetentionCutoffMonth;
+            var day = update.SchoolRetentionCutoffDay ?? row.SchoolRetentionCutoffDay;
+            Jobsy.Core.Scholen.SchoolYear.ValidateCutoff(month, day);
+            row.SchoolRetentionCutoffMonth = month;
+            row.SchoolRetentionCutoffDay = day;
+        }
+
         // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
         // so session-timeout-only PUTs do not silently disable the free-publish promo.
         if (update.ClearFreePublishUntil)
@@ -170,6 +190,14 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             freeUntil,
             row?.MinimumSessionVersion ?? 0,
             row?.SupportAccessNotifyAdmins ?? false,
-            row?.SupportAccessNotifySubject ?? false);
+            row?.SupportAccessNotifySubject ?? false,
+            row?.SchoolsEnabled ?? false,
+            row?.SchoolPerCodeResultsEnabled ?? true,
+            row?.SchoolRetentionCutoffMonth is >= 1 and <= 12
+                ? row.SchoolRetentionCutoffMonth
+                : 7,
+            row?.SchoolRetentionCutoffDay is >= 1 and <= 31
+                ? row.SchoolRetentionCutoffDay
+                : 31);
     }
 }

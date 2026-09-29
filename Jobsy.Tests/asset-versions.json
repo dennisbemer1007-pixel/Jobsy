@@ -118,5 +118,13 @@
   "service-worker.published.js": {
     "sha256": "7fbbfcf8dc3ff118e4432c1ed2f84d2808f00464a350529fc334a2ee92b5b687",
     "v": "20260928-perf"
+  },
+  "css/features/enterprise-ui.css": {
+    "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
+    "v": "20260929-scholen"
+  },
+  "css/features/scholen.css": {
+    "sha256": "533055f880d4e3e38294de35e5b2859fa49e38a22e5da04d9f17def8799326d3",
+    "v": "20260929-scholen"
   }
 }

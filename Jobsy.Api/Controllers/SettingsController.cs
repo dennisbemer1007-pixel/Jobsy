@@ -333,7 +333,11 @@ public class SettingsController : ControllerBase
                     request.FreePublishUntil,
                     request.ClearFreePublishUntil,
                     SupportAccessNotifyAdmins: request.SupportAccessNotifyAdmins,
-                    SupportAccessNotifySubject: request.SupportAccessNotifySubject),
+                    SupportAccessNotifySubject: request.SupportAccessNotifySubject,
+                    SchoolsEnabled: request.SchoolsEnabled,
+                    SchoolPerCodeResultsEnabled: request.SchoolPerCodeResultsEnabled,
+                    SchoolRetentionCutoffMonth: request.SchoolRetentionCutoffMonth,
+                    SchoolRetentionCutoffDay: request.SchoolRetentionCutoffDay),
                 cancellationToken);
             return Ok(ToFeatureDto(snap));
         }
@@ -541,7 +545,11 @@ public class SettingsController : ControllerBase
             snap.SessionInactivityTimeoutMinutes,
             snap.FreePublishUntil,
             snap.SupportAccessNotifyAdmins,
-            snap.SupportAccessNotifySubject);
+            snap.SupportAccessNotifySubject,
+            snap.SchoolsEnabled,
+            snap.SchoolPerCodeResultsEnabled,
+            snap.SchoolRetentionCutoffMonth,
+            snap.SchoolRetentionCutoffDay);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

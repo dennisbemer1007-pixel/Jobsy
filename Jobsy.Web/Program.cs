@@ -189,6 +189,7 @@ app.UseLoginProtection();
 app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();
 app.UseAuthorization();
+app.UseMiddleware<SchoolsFeatureMiddleware>();
 app.UseMfaEnforcement();
 app.UseAntiforgery();
 

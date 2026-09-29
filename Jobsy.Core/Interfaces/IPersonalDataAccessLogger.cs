@@ -10,7 +10,8 @@ public sealed record PersonalDataAccessEntry(
     string? Reason = null,
     Guid? SupportAccessGrantId = null,
     string? CorrelationId = null,
-    string? IpAddress = null);
+    string? IpAddress = null,
+    Guid? SubjectPupilCodeId = null);
 
 public interface IPersonalDataAccessLogger
 {

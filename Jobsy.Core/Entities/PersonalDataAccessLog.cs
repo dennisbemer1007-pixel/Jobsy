@@ -12,6 +12,11 @@ public class PersonalDataAccessLog
     public string ActorRole { get; set; } = string.Empty;
     public Guid? SubjectUserId { get; set; }
     public Guid? SubjectCompanyId { get; set; }
+    /// <summary>
+    /// Pseudonymous pupil code id when staff views per-code detail / PDF (no FK — survives retention).
+    /// Resource key: <c>school.pupil-code</c>.
+    /// </summary>
+    public Guid? SubjectPupilCodeId { get; set; }
     /// <summary>Stable resource key, e.g. admin.users.list, application.cv.download.</summary>
     public string Resource { get; set; } = string.Empty;
     /// <summary>list | view | export | download | reveal</summary>

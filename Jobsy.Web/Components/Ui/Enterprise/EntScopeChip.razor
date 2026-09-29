@@ -1,0 +1,124 @@
+@namespace Jobsy.Web.Components.Ui.Enterprise
+@inject CultureState Culture
+
+<div class="ent-scope-chip @(ShowReadOnlyPill ? "ent-scope-chip--readonly" : null)">
+    <button type="button"
+            class="ent-scope-chip__btn"
+            aria-haspopup="listbox"
+            aria-expanded="@_open"
+            aria-label="@Culture["EntUi.ScopeChip"]"
+            disabled="@(!CanSwitch)"
+            @onclick="Toggle">
+        @if (!string.IsNullOrEmpty(IconSvg))
+        {
+            <span class="ent-scope-chip__icon" aria-hidden="true">@((MarkupString)IconSvg)</span>
+        }
+        <span class="ent-scope-chip__text">
+            <span class="ent-scope-chip__label">@Label</span>
+            @if (!string.IsNullOrWhiteSpace(SubLabel))
+            {
+                <span class="ent-scope-chip__sub">@SubLabel</span>
+            }
+        </span>
+        @if (CanSwitch)
+        {
+            <span class="ent-scope-chip__chevron" aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+        }
+    </button>
+    @if (ShowReadOnlyPill)
+    {
+        <span class="ent-scope-chip__ro" title="@Culture["EntUi.ReadOnly"]">
+            <span class="ent-scope-chip__ro-icon" aria-hidden="true">@((MarkupString)EyeSvg)</span>
+            @Culture["EntUi.ReadOnly"]
+        </span>
+    }
+    @if (_open && CanSwitch)
+    {
+        <div class="ent-scope-chip__popover" role="listbox" aria-label="@Culture["EntUi.ScopeChip"]">
+            @if (ShowSearch)
+            {
+                <label class="ent-scope-chip__search">
+                    <span class="visually-hidden">@Culture["EntUi.FilterSearch"]</span>
+                    <input type="search" value="@_query" @oninput="OnSearch" placeholder="@Culture["EntUi.FilterSearch"]" />
+                </label>
+            }
+            <ul class="ent-scope-chip__list">
+                @foreach (var opt in FilteredOptions)
+                {
+                    <li>
+                        <button type="button"
+                                class="ent-scope-chip__option @(string.Equals(opt.Key, SelectedKey, StringComparison.Ordinal) ? "is-selected" : null)"
+                                role="option"
+                                aria-selected="@(string.Equals(opt.Key, SelectedKey, StringComparison.Ordinal))"
+                                @onclick="() => SelectAsync(opt)">
+                            @opt.Label
+                            @if (!string.IsNullOrWhiteSpace(opt.SubLabel))
+                            {
+                                <span class="ent-scope-chip__option-sub">@opt.SubLabel</span>
+                            }
+                        </button>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+@code {
+    public sealed record ScopeOption(string Key, string Label, string? SubLabel = null);
+
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string? SubLabel { get; set; }
+    [Parameter] public string? IconSvg { get; set; }
+    [Parameter] public string? SelectedKey { get; set; }
+    [Parameter] public IReadOnlyList<ScopeOption> Options { get; set; } = [];
+    [Parameter] public EventCallback<ScopeOption> OnSelected { get; set; }
+    [Parameter] public bool ShowReadOnlyPill { get; set; }
+
+    private bool _open;
+    private string _query = "";
+
+    private bool CanSwitch => Options.Count > 1;
+    private bool ShowSearch => Options.Count > 8;
+
+    private IEnumerable<ScopeOption> FilteredOptions
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_query))
+            {
+                return Options;
+            }
+
+            return Options.Where(o =>
+                o.Label.Contains(_query, StringComparison.OrdinalIgnoreCase)
+                || (o.SubLabel?.Contains(_query, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+    }
+
+    private const string EyeSvg =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg>";
+
+    private void Toggle()
+    {
+        if (!CanSwitch)
+        {
+            return;
+        }
+
+        _open = !_open;
+        if (!_open)
+        {
+            _query = "";
+        }
+    }
+
+    private void OnSearch(ChangeEventArgs e) => _query = e.Value?.ToString() ?? "";
+
+    private async Task SelectAsync(ScopeOption opt)
+    {
+        _open = false;
+        _query = "";
+        await OnSelected.InvokeAsync(opt);
+    }
+}

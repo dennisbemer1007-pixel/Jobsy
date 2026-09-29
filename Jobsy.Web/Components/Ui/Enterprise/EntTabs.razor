@@ -1,0 +1,34 @@
+@namespace Jobsy.Web.Components.Ui.Enterprise
+
+<div class="ent-tabs" role="tablist">
+    @foreach (var tab in Tabs)
+    {
+        var active = string.Equals(ActiveKey, tab.Key, StringComparison.OrdinalIgnoreCase);
+        <a class="ent-tabs__tab @(active ? "is-active" : null)"
+           role="tab"
+           aria-selected="@active"
+           href="@HrefFor(tab.Key)">@tab.Label</a>
+    }
+</div>
+
+@code {
+    public sealed record Tab(string Key, string Label);
+
+    [Parameter, EditorRequired] public IReadOnlyList<Tab> Tabs { get; set; } = [];
+    [Parameter] public string ActiveKey { get; set; } = "";
+    [Parameter] public string BasePath { get; set; } = "";
+    [Parameter] public string QueryParam { get; set; } = "tab";
+
+    private string HrefFor(string key)
+    {
+        var basePath = BasePath.Split('?', 2)[0];
+        // Default (first) tab omits the query param for a clean URL.
+        if (Tabs.Count > 0 && string.Equals(Tabs[0].Key, key, StringComparison.OrdinalIgnoreCase))
+        {
+            return basePath;
+        }
+
+        var sep = "?";
+        return $"{basePath}{sep}{QueryParam}={Uri.EscapeDataString(key)}";
+    }
+}

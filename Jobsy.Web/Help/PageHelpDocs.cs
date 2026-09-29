@@ -441,6 +441,30 @@ public static class PageHelpDocs
             "Zet features aan/uit (moderatie, authenticator, …), stel de inactieve periode in voor de eenmalige “We missen je”-mail (standaard 120 dagen), en beheer integraties.",
             "Gedrag van Lobsy afstemmen zonder code-deploys."),
 
+        ["/admin/scholen"] = new(
+            "Beheer · Scholen",
+            "Scholen aanmaken, verwerkersovereenkomst en schoolbeheerders.",
+            "Maak een school aan, registreer de verwerkersovereenkomst en nodig de eerste schoolbeheerder uit. Leerlingnamen worden niet opgeslagen.",
+            "Scholen veilig onboarding geven zonder leerling-PII."),
+
+        ["/admin/scholen/{schoolId}"] = new(
+            "Beheer · School",
+            "Schoolgegevens, overeenkomst, schoolbeheerders en totalen.",
+            "Bewerk schoolgegevens, registreer de verwerkersovereenkomst, nodig schoolbeheerders uit of bekijk totalen (geen per-code data).",
+            "Eén school beheren als Lobsy-admin."),
+
+        ["/school"] = new(
+            "School · Dashboard",
+            "Leeg dashboard voor de schoolbeheerder.",
+            "Hier verschijnen klassen, codes en resultaten in een volgende release. Lobsy kent geen leerlingnamen.",
+            "Startpunt voor schoolbeheer."),
+
+        ["/leraar"] = new(
+            "Leraar · Dashboard",
+            "Leeg dashboard voor de leraar.",
+            "Hier verschijnen je toegewezen klassen. Vraag je schoolbeheerder om je aan een klas te koppelen.",
+            "Startpunt voor leraren."),
+
         ["/admin/company"] = new(
             "Beheer · Bedrijfsgegevens",
             "NAW, KvK en BTW van Lobsy.",

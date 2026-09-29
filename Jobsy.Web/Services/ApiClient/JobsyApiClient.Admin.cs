@@ -1043,4 +1043,90 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
     }
+
+    public async Task<IReadOnlyList<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>> GetAdminSchoolsAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>>(
+            "api/admin/schools", ct) ?? [];
+
+    public async Task<Jobsy.Core.Contracts.Scholen.SchoolDetailDto?> GetAdminSchoolAsync(
+        Guid schoolId,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolDetailDto>(
+            $"api/admin/schools/{schoolId}", ct);
+
+    public async Task<Jobsy.Core.Contracts.Scholen.SchoolDetailDto?> CreateAdminSchoolAsync(
+        Jobsy.Core.Contracts.Scholen.CreateSchoolRequest request,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/admin/schools", request, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolDetailDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Contracts.Scholen.SchoolDetailDto?> UpdateAdminSchoolAsync(
+        Guid schoolId,
+        Jobsy.Core.Contracts.Scholen.UpdateSchoolRequest request,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync($"api/admin/schools/{schoolId}", request, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolDetailDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Contracts.Scholen.SchoolDetailDto?> DeactivateAdminSchoolAsync(
+        Guid schoolId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/schools/{schoolId}/deactivate", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolDetailDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Contracts.Scholen.SchoolDetailDto?> RecordAdminSchoolAgreementAsync(
+        Guid schoolId,
+        Jobsy.Core.Contracts.Scholen.RecordProcessorAgreementRequest request,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/admin/schools/{schoolId}/processor-agreement", request, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolDetailDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Contracts.Scholen.SchoolStaffInviteResultDto?> InviteAdminSchoolAdminAsync(
+        Guid schoolId,
+        Jobsy.Core.Contracts.Scholen.InviteSchoolAdminRequest request,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/schools/{schoolId}/invite-admin", request, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolStaffInviteResultDto>(cancellationToken: ct);
+    }
 }

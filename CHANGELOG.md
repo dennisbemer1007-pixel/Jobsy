@@ -13,6 +13,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ## [Unreleased]
 
+### Added
+- **Lobsy voor scholen (01 foundation):** rollen `SchoolAdmin` / `Teacher` (verplichte 2FA), datamodel (School, klassen, codes, progress/resultaten, aggregaten), codegenerator, rights-matrix scaffold, admin Scholen-pagina’s + 3 settings, `SchoolLayout` shell. Feature-switch `SchoolsEnabled` (default uit). Geen leerlingnamen.
+
 ### Fixed
 - **Render `jobsy-api` deploys:** `WebPushSubscriptions` ontbrak in `JobsyDbContextModelSnapshot`. EF Core 9 behandelt dat als `PendingModelChangesWarning` → harde fout in `MigrateAsync` → API-host stopt (Auto-Deploy Failed sinds PWA-commit). Snapshot + regressietest herstellen de deploy.
 

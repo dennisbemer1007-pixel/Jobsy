@@ -1276,6 +1276,11 @@ public static class AuthServiceCollectionExtensions
             identity.RemoveClaim(existing);
         }
 
+        foreach (var existing in identity.FindAll(JobsyClaimTypes.SchoolId).ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
         foreach (var existing in identity.FindAll(JobsyClaimTypes.HasCandidateApplications).ToList())
         {
             identity.RemoveClaim(existing);
@@ -1306,6 +1311,11 @@ public static class AuthServiceCollectionExtensions
             identity.AddClaim(new Claim(
                 JobsyClaimTypes.CompanyIds,
                 string.Join(',', profile.CompanyIds)));
+        }
+
+        if (profile.SchoolId is Guid schoolId)
+        {
+            identity.AddClaim(new Claim(JobsyClaimTypes.SchoolId, schoolId.ToString()));
         }
 
         if (profile.HasCandidateApplications)
@@ -1376,6 +1386,7 @@ public static class AuthServiceCollectionExtensions
         public string Role { get; set; } = "Candidate";
         public Guid? CompanyId { get; set; }
         public List<Guid>? CompanyIds { get; set; }
+        public Guid? SchoolId { get; set; }
         public bool ShowCandidateHowTo { get; set; }
         public bool HasCandidateApplications { get; set; }
         public bool HasSalesReferral { get; set; }
@@ -1403,6 +1414,8 @@ public static class AuthServiceCollectionExtensions
         "admin" or "administrator" => "Admin",
         "salesmanager" or "sales" => "SalesManager",
         "ambassadeur" or "ambassador" => "Ambassadeur",
+        "schooladmin" or "schoolbeheerder" => "SchoolAdmin",
+        "teacher" or "leraar" => "Teacher",
         _ => "Candidate"
     };
 }

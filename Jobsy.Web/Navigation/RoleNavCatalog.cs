@@ -16,7 +16,8 @@ public static class RoleNavCatalog
         new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/token-finance", "/admin/sales-managers", "/admin/ambassadeurs", "/admin/sales"]),
         new("Nav.Companies", "/admin/companies", NavIcons.Companies),
         new("Nav.Settings", "/admin/settings", NavIcons.Settings,
-            ["/admin/integrations", "/admin/users", "/admin/personal-data-access-log", "/admin/logging", "/admin/feedback", "/admin/wages", "/admin/masterdata", "/admin/exclusivity", "/admin/notifications", "/admin/company", "/admin/about", "/admin/marketing-flyer", "/admin/api-keys", "/admin/cnames", "/admin/vacancy-categories", "/admin/training", "/admin/mail-test"])
+            ["/admin/integrations", "/admin/users", "/admin/personal-data-access-log", "/admin/logging", "/admin/feedback", "/admin/wages", "/admin/masterdata", "/admin/exclusivity", "/admin/notifications", "/admin/company", "/admin/about", "/admin/marketing-flyer", "/admin/api-keys", "/admin/cnames", "/admin/vacancy-categories", "/admin/training", "/admin/mail-test", "/admin/scholen"]),
+        new("Nav.Scholen", "/admin/scholen", NavIcons.Companies),
     ];
 
     public static readonly NavItem[] Candidate =
@@ -125,6 +126,10 @@ public static class RoleNavCatalog
         new("Nav.Onboarding", "/ambassadeur/onboarding", NavIcons.Users)
     ];
 
+    public static readonly NavItem[] SchoolAdmin = [];
+
+    public static readonly NavItem[] Teacher = [];
+
     public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user)
     {
         if (user?.Identity?.IsAuthenticated != true)
@@ -135,6 +140,15 @@ public static class RoleNavCatalog
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Admin))
         {
             return Admin;
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin)
+            || RoleClaimMatching.HasRole(user, JobsyRoles.Teacher))
+        {
+            // School/teacher chrome comes from ScholenNav + SchoolLayout (not bottom-nav catalog).
+            return RoleClaimMatching.HasRole(user, JobsyRoles.Teacher) && !RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin)
+                ? Teacher
+                : SchoolAdmin;
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))

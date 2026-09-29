@@ -1,0 +1,266 @@
+@page "/admin/scholen/{SchoolId:guid}"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Nav
+
+<PageTitle>@(_school?.Name ?? Culture["AdminScholen.Detail.Title"]) · Lobsy</PageTitle>
+
+<AdminPageShell Title="@(_school?.Name ?? Culture["AdminScholen.Detail.Title"])" Lead="@Culture["AdminScholen.ListLead"]">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_school is null)
+    {
+        <p class="state-message error">@(_error ?? "Niet gevonden")</p>
+    }
+    else
+    {
+        <EntTabs Tabs="_tabs" ActiveKey="@_tab" BasePath="@($"/admin/scholen/{SchoolId}")" />
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+
+        @if (_tab == "gegevens")
+        {
+            <section class="panel-section">
+                <label>@Culture["AdminScholen.Field.Name"]
+                    <input class="input" @bind="_editName" />
+                </label>
+                <label>@Culture["AdminScholen.Field.City"]
+                    <input class="input" @bind="_editCity" />
+                </label>
+                <label>@Culture["AdminScholen.Field.Brin"]
+                    <input class="input" @bind="_editBrin" />
+                </label>
+                <label>@Culture["AdminScholen.Field.Domains"]
+                    <input class="input" @bind="_editDomains" />
+                </label>
+                <label class="filter-check">
+                    <input type="checkbox" @bind="_editActive" />
+                    @Culture["AdminScholen.Field.Active"]
+                </label>
+                <button type="button" class="btn-primary" disabled="@_busy" @onclick="SaveDetailsAsync">@Culture["AdminScholen.Save"]</button>
+                @if (_school.IsActive)
+                {
+                    <button type="button" class="btn-compact btn-outline-danger" disabled="@_busy" @onclick="DeactivateAsync">@Culture["AdminScholen.Deactivate"]</button>
+                }
+            </section>
+        }
+        else if (_tab == "overeenkomst")
+        {
+            <section class="panel-section">
+                <EntImpactNote><p>@Culture["AdminScholen.Agreement.Note"]</p></EntImpactNote>
+                <label>@Culture["AdminScholen.Agreement.Date"]
+                    <InputDate class="input" @bind-Value="_agreementDate" />
+                </label>
+                <label>@Culture["AdminScholen.Agreement.Version"]
+                    <input class="input" @bind="_agreementVersion" />
+                </label>
+                <button type="button" class="btn-primary" disabled="@_busy" @onclick="SaveAgreementAsync">@Culture["AdminScholen.Agreement.Save"]</button>
+            </section>
+        }
+        else if (_tab == "beheerders")
+        {
+            <section class="panel-section">
+                <h2>@Culture["AdminScholen.Invite.Title"]</h2>
+                <label>@Culture["AdminScholen.Invite.Name"]
+                    <input class="input" @bind="_inviteName" />
+                </label>
+                <label>@Culture["AdminScholen.Invite.Email"]
+                    <input class="input" @bind="_inviteEmail" />
+                </label>
+                <button type="button" class="btn-primary" disabled="@_busy" @onclick="InviteAsync">@Culture["AdminScholen.Invite.Send"]</button>
+                <EntDataTable Empty="@(_school.SchoolAdmins.Count == 0)">
+                    <Header>
+                        <th>@Culture["AdminScholen.Invite.Name"]</th>
+                        <th>@Culture["AdminScholen.Invite.Email"]</th>
+                        <th>2FA</th>
+                    </Header>
+                    <Rows>
+                        @foreach (var admin in _school.SchoolAdmins)
+                        {
+                            <tr>
+                                <td>@admin.TeacherDisplayName</td>
+                                <td>@admin.Email</td>
+                                <td>
+                                    @(admin.AuthenticatorEnabled
+                                        ? Culture["AdminScholen.Invite.MfaOn"]
+                                        : Culture["AdminScholen.Invite.MfaOff"])
+                                </td>
+                            </tr>
+                        }
+                    </Rows>
+                </EntDataTable>
+            </section>
+        }
+        else
+        {
+            <section class="panel-section sch-kpi-row">
+                <EntKpiCard Label="@Culture["AdminScholen.Overview.Classes"]" Value="@_school.ClassCount.ToString()" />
+                <EntKpiCard Label="@Culture["AdminScholen.Overview.Codes"]" Value="@_school.CodeCount.ToString()" />
+                <EntKpiCard Label="@Culture["AdminScholen.Overview.Completed"]" Value="@_school.CompletedCount.ToString()" />
+            </section>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    [Parameter] public Guid SchoolId { get; set; }
+    [SupplyParameterFromQuery(Name = "tab")] public string? TabQuery { get; set; }
+
+    private readonly IReadOnlyList<EntTabs.Tab> _tabs =
+    [
+        new("gegevens", "Gegevens"),
+        new("overeenkomst", "Verwerkersovereenkomst"),
+        new("beheerders", "Schoolbeheerders"),
+        new("overzicht", "Overzicht"),
+    ];
+
+    private SchoolDetailDto? _school;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string _tab = "gegevens";
+    private string _editName = "";
+    private string _editCity = "";
+    private string? _editBrin;
+    private string _editDomains = "";
+    private bool _editActive = true;
+    private DateTime? _agreementDate = DateTime.Today;
+    private string _agreementVersion = "1.0";
+    private string _inviteName = "";
+    private string _inviteEmail = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _tab = string.IsNullOrWhiteSpace(TabQuery) ? "gegevens" : TabQuery.Trim().ToLowerInvariant();
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _school = await Api.GetAdminSchoolAsync(SchoolId);
+            if (_school is not null)
+            {
+                _editName = _school.Name;
+                _editCity = _school.City;
+                _editBrin = _school.BrinCode;
+                _editDomains = string.Join(", ", _school.AllowedEmailDomains);
+                _editActive = _school.IsActive;
+                if (_school.ProcessorAgreementSignedOn is DateOnly d)
+                {
+                    _agreementDate = d.ToDateTime(TimeOnly.MinValue);
+                }
+
+                _agreementVersion = _school.ProcessorAgreementVersion ?? "1.0";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveDetailsAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var domains = _editDomains.Split([',', ';', ' ', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            _school = await Api.UpdateAdminSchoolAsync(SchoolId, new UpdateSchoolRequest(
+                _editName, _editCity, _editBrin, domains, _editActive));
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeactivateAsync()
+    {
+        if (!await Task.FromResult(true))
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            _school = await Api.DeactivateAdminSchoolAsync(SchoolId);
+            _editActive = false;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SaveAgreementAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var date = DateOnly.FromDateTime(_agreementDate ?? DateTime.Today);
+            _school = await Api.RecordAdminSchoolAgreementAsync(
+                SchoolId,
+                new RecordProcessorAgreementRequest(date, _agreementVersion));
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task InviteAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.InviteAdminSchoolAdminAsync(
+                SchoolId,
+                new InviteSchoolAdminRequest(_inviteName, _inviteEmail));
+            _inviteName = "";
+            _inviteEmail = "";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -1,0 +1,35 @@
+@page "/school"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SchoolAdmin")]
+@inject CultureState Culture
+@inject IPlatformFeatureService Features
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+
+<PageTitle>@Culture["School.DashboardTitle"] · Lobsy</PageTitle>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else
+{
+    <header class="sch-page-header">
+        <h1>@Culture["School.DashboardTitle"]</h1>
+        <p class="muted">@Culture["School.DashboardLead"]</p>
+    </header>
+    <div class="sch-empty-state panel-section">
+        <p>@Culture["School.DashboardEmpty"]</p>
+    </div>
+}
+
+@code {
+    private bool _disabled;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+    }
+}

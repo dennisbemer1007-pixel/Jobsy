@@ -197,7 +197,8 @@ public sealed class MfaController : ControllerBase
             deviceExpires,
             user.Id,
             MfaVerified: true,
-            RecoveryCodes: recoveryCodes));
+            RecoveryCodes: recoveryCodes,
+            SchoolId: user.SchoolId));
     }
 
     private string? CreateLocalSessionToken(string email, Guid userId)
