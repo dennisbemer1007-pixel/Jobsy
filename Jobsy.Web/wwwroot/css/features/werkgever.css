@@ -673,6 +673,13 @@
     justify-content: center;
 }
 
+.wg-sidebar__lock {
+    margin-inline-start: 0.35rem;
+    color: var(--gold);
+    display: inline-flex;
+    align-items: center;
+}
+
 .wg-sidebar__link.is-active .wg-sidebar__count {
     background: var(--brand-deep);
 }

@@ -26,17 +26,146 @@ public static class UiStringsCandidateInsights
             "Kandidaatinzichten", "Candidate insights",
             "Wglądy w kandydatów", "Perspective candidați", "رؤى المرشحين");
         Add("Insights.Title",
-            "Wat beweegt kandidaten in jouw regio", "What moves candidates in your region",
-            "Co motywuje kandydatów w Twoim regionie", "Ce îi motivează pe candidați în regiunea ta", "ما الذي يحرك المرشحين في منطقتك");
+            "Kandidaatinzichten", "Candidate insights",
+            "Wglądy w kandydatów", "Perspective candidați", "رؤى المرشحين");
         Add("Insights.Lead",
-            "Anonieme inzichten over kandidaten rondom je vestiging.", "Anonymous insights about candidates around your branch.",
-            "Anonimowe wglądy o kandydatach wokół Twojej placówki.", "Perspective anonime despre candidații din jurul filialei tale.", "رؤى مجهولة عن المرشحين حول فرعك.");
+            "Wie zoekt werk rond je vestigingen. Anoniem en opgeteld: je ziet nooit individuele kandidaten.",
+            "Who is looking for work around your branches. Anonymous and aggregated: you never see individuals.",
+            "Kto szuka pracy wokół Twoich placówek. Anonimowo i łącznie: nigdy nie widzisz osób.",
+            "Cine caută de lucru în jurul filialelor tale. Anonim și agregat: nu vezi niciodată persoane.",
+            "من يبحث عن عمل حول فروعك. مجهول ومُجمَّع: لا ترى أفراداً أبداً.");
         Add("Insights.FreeBadge",
             "Gratis versie", "Free version",
             "Wersja darmowa", "Versiune gratuită", "النسخة المجانية");
-        Add("Insights.Cta.Full",
+        Add("Insights.Cta.Talentpool",
+            "Naar talentpool", "To talent pool",
+            "Do puli talentów", "Către piscina de talente", "إلى مجموعة المواهب");
+        Add("Insights.Cta.Export",
+            "Exporteren", "Export",
+            "Eksportuj", "Exportă", "تصدير");
+        Add("Insights.Export.Locked",
+            "Export is onderdeel van volledige inzichten", "Export is part of full insights",
+            "Eksport jest częścią pełnych wglądów", "Exportul face parte din perspectivele complete", "التصدير جزء من الرؤى الكاملة");
+        Add("Insights.FullUntil",
+            "Volledig t/m {0}", "Full until {0}",
+            "Pełne do {0}", "Complet până la {0}", "كامل حتى {0}");
+        Add("Insights.UnlockedLine",
+            "Ontgrendeld t/m {0} · {1}", "Unlocked until {0} · {1}",
+            "Odblokowane do {0} · {1}", "Deblocat până la {0} · {1}", "مفتوح حتى {0} · {1}");
+        Add("Insights.PartialCoverage",
+            "{0} van {1} vestigingen ontgrendeld", "{0} of {1} branches unlocked",
+            "{0} z {1} placówek odblokowanych", "{0} din {1} filiale deblocate", "{0} من {1} فروع مفتوحة");
+        Add("Insights.Scope.Organisation",
+            "alle vestigingen", "all branches",
+            "wszystkie placówki", "toate filialele", "جميع الفروع");
+        Add("Insights.Kpi.Free",
+            "Gratis", "Free",
+            "Gratis", "Gratuit", "مجاني");
+        Add("Insights.Kpi.Premium",
+            "Premium", "Premium",
+            "Premium", "Premium", "مميز");
+        Add("Insights.Kpi.MatchingQ",
+            "Hoeveel passen bij je {0} vacatures?", "How many match your {0} vacancies?",
+            "Ilu pasuje do Twoich {0} ofert?", "Câți se potrivesc cu {0} posturi?", "كم يتوافق مع {0} وظائف؟");
+        Add("Insights.Kpi.Hours32Q",
+            "Hoeveel willen 32+ uur werken?", "How many want 32+ hours?",
+            "Ilu chce pracować 32+ godzin?", "Câți vor 32+ ore?", "كم يريدون العمل 32+ ساعة؟");
+        Add("Insights.Kpi.HoursFmt",
+            "{0} u", "{0} h",
+            "{0} godz.", "{0} ore", "{0} س");
+        Add("Insights.Locked.Chip",
+            "Vergrendeld", "Locked",
+            "Zablokowane", "Blocat", "مقفل");
+        Add("Insights.Map.DensityChip",
+            "Dichtheid", "Density",
+            "Gęstość", "Densitate", "الكثافة");
+        Add("Insights.Map.DensityLock",
+            "Waar wonen ze precies?", "Where exactly do they live?",
+            "Gdzie dokładnie mieszkają?", "Unde locuiesc exact?", "أين يعيشون بالضبط؟");
+        Add("Insights.Map.DensitySub",
+            "Gratis: straal en totaal · < 10 kandidaten blijft leeg",
+            "Free: radius and total · < 10 candidates stays empty",
+            "Gratis: promień i suma · < 10 kandydatów pozostaje puste",
+            "Gratuit: rază și total · < 10 candidați rămâne gol",
+            "مجاني: النطاق والمجموع · أقل من 10 مرشحين يبقى فارغاً");
+        Add("Insights.Premium.Tag",
             "Volledige inzichten", "Full insights",
             "Pełne wglądy", "Perspective complete", "رؤى كاملة");
+        Add("Insights.Premium.Title",
+            "Weet precies wie er rond je vestigingen zoekt",
+            "Know exactly who is looking around your branches",
+            "Wiedz dokładnie, kto szuka wokół Twoich placówek",
+            "Știi exact cine caută în jurul filialelor tale",
+            "اعرف بدقة من يبحث حول فروعك");
+        Add("Insights.Premium.Lead",
+            "Ontgrendel alles hierboven met echte cijfers voor {0}. Altijd anoniem.",
+            "Unlock everything above with real numbers for {0}. Always anonymous.",
+            "Odblokuj wszystko powyżej prawdziwymi liczbami dla {0}. Zawsze anonimowo.",
+            "Deblochează tot ce e mai sus cu cifre reale pentru {0}. Întotdeauna anonim.",
+            "افتح كل ما أعلاه بأرقام حقيقية لـ {0}. دائماً مجهول.");
+        Add("Insights.Premium.Check.Density",
+            "Dichtheid per wijk en reistijd", "Density per neighbourhood and travel time",
+            "Gęstość w dzielnicach i czas dojazdu", "Densitate pe cartier și timp de deplasare", "الكثافة لكل حي ووقت التنقل");
+        Add("Insights.Premium.Check.Match",
+            "Match met je vacatures", "Match with your vacancies",
+            "Dopasowanie do ofert", "Potrivire cu posturile tale", "تطابق مع وظائفك");
+        Add("Insights.Premium.Check.Fields",
+            "Werkvelden, prioriteiten, droombanen", "Work fields, priorities, dream jobs",
+            "Obszary, priorytety, wymarzone prace", "Domenii, priorități, joburi de vis", "مجالات وأولويات ووظائف الأحلام");
+        Add("Insights.Premium.Check.Trends",
+            "Trends en export (CSV)", "Trends and export (CSV)",
+            "Trendy i eksport (CSV)", "Tendințe și export (CSV)", "الاتجاهات والتصدير (CSV)");
+        Add("Insights.Premium.Cta",
+            "Ontgrendel volledige inzichten", "Unlock full insights",
+            "Odblokuj pełne wglądy", "Deblochează perspectivele complete", "افتح الرؤى الكاملة");
+        Add("Insights.Premium.Days",
+            "dagen", "days",
+            "dni", "zile", "أيام");
+        Add("Insights.Premium.Fine",
+            "Afrekenen met je tokensaldo · geen abonnement",
+            "Pay from your token balance · no subscription",
+            "Zapłata z salda tokenów · bez abonamentu",
+            "Plată din soldul de tokenuri · fără abonament",
+            "الدفع من رصيد الرموز · بدون اشتراك");
+        Add("Insights.Premium.AskBm",
+            "Vraag je bedrijfsmanager om de volledige inzichten te ontgrendelen.",
+            "Ask your company manager to unlock full insights.",
+            "Poproś menedżera firmy o odblokowanie pełnych wglądów.",
+            "Cere managerului firmei să deblocheze perspectivele complete.",
+            "اطلب من مدير الشركة فتح الرؤى الكاملة.");
+        Add("Insights.Premium.AskBmButton",
+            "Vraag aan bedrijfsmanager", "Ask company manager",
+            "Poproś menedżera firmy", "Cere managerului firmei", "اطلب من مدير الشركة");
+        Add("Insights.Premium.RequestedOn",
+            "Aangevraagd op {0}", "Requested on {0}",
+            "Złożono {0}", "Cerut pe {0}", "طُلب في {0}");
+        Add("Insights.Premium.UnlockBranch",
+            "Ontgrendel voor {0}", "Unlock for {0}",
+            "Odblokuj dla {0}", "Deblochează pentru {0}", "افتح لـ {0}");
+        Add("Insights.Premium.Renew",
+            "Verlengen", "Renew",
+            "Przedłuż", "Reînnoiește", "تمديد");
+        Add("Insights.Premium.RenewWithPrice",
+            "Verlengen · {0} tokens", "Renew · {0} tokens",
+            "Przedłuż · {0} tokenów", "Reînnoiește · {0} tokenuri", "تمديد · {0} رموز");
+        Add("Insights.Confirm.Title",
+            "Kandidaatinzichten ontgrendelen", "Unlock candidate insights",
+            "Odblokuj wglądy w kandydatów", "Deblochează perspectivele candidați", "فتح رؤى المرشحين");
+        Add("Insights.Confirm.Ok",
+            "Ontgrendelen", "Unlock",
+            "Odblokuj", "Deblochează", "فتح");
+        Add("Insights.Confirm.Body",
+            "Kandidaatinzichten ontgrendelen voor {0}? Dit kost {1} tokens. Je saldo wordt {2}. Geldig t/m {3}.",
+            "Unlock candidate insights for {0}? This costs {1} tokens. Your balance becomes {2}. Valid until {3}.",
+            "Odblokować wglądy dla {0}? Koszt: {1} tokenów. Saldo będzie {2}. Ważne do {3}.",
+            "Deblochezi perspectivele pentru {0}? Costă {1} tokenuri. Soldul devine {2}. Valabil până la {3}.",
+            "فتح رؤى المرشحين لـ {0}؟ التكلفة {1} رمزاً. يصبح رصيدك {2}. صالح حتى {3}.");
+        Add("Insights.Toast.Unlocked",
+            "Ontgrendeld t/m {0}", "Unlocked until {0}",
+            "Odblokowane do {0}", "Deblocat până la {0}", "مفتوح حتى {0}");
+        Add("Insights.Toast.Requested",
+            "Aanvraag verstuurd naar je bedrijfsmanager.", "Request sent to your company manager.",
+            "Wniosek wysłano do menedżera firmy.", "Cererea a fost trimisă managerului firmei.", "أُرسل الطلب إلى مدير شركتك.");
         Add("Insights.Cta.Story",
             "Bekijk als story", "View as story",
             "Zobacz jako relację", "Vezi ca story", "عرض كقصة");
@@ -68,11 +197,11 @@ public static class UiStringsCandidateInsights
             "{0} km", "{0} km",
             "{0} km", "{0} km", "{0} كم");
         Add("Insights.Anonymity",
-            "Anoniem, minimaal 10 kandidaten per groep. Kleinere groepen tonen we als 'te weinig data'.",
-            "Anonymous, at least 10 candidates per group. Smaller groups show as 'too little data'.",
-            "Anonimowo, minimum 10 kandydatów w grupie. Mniejsze grupy pokazujemy jako 'za mało danych'.",
-            "Anonim, minim 10 candidați pe grup. Grupurile mai mici apar ca 'date insuficiente'.",
-            "مجهول، 10 مرشحين على الأقل لكل مجموعة. المجموعات الأصغر تظهر كـ 'بيانات غير كافية'.");
+            "Altijd anoniem · groepen onder 10 kandidaten tonen we niet",
+            "Always anonymous · we don't show groups under 10 candidates",
+            "Zawsze anonimowo · grup poniżej 10 kandydatów nie pokazujemy",
+            "Întotdeauna anonim · nu afișăm grupuri sub 10 candidați",
+            "دائماً مجهول · لا نعرض مجموعات أقل من 10 مرشحين");
         Add("Insights.Insufficient",
             "Te weinig data", "Too little data",
             "Za mało danych", "Date insuficiente", "بيانات غير كافية");
@@ -227,8 +356,8 @@ public static class UiStringsCandidateInsights
             "Dostępne, gdy będzie wystarczająco danych", "Disponibil când există suficiente date", "متاح عند توفر بيانات كافية");
 
         Add("Insights.Locked.BlurHint",
-            "Volledige inzichten met tokens", "Full insights with tokens",
-            "Pełne wglądy za tokeny", "Perspective complete cu tokenuri", "رؤى كاملة بالرموز");
+            "Vergrendeld", "Locked",
+            "Zablokowane", "Blocat", "مقفل");
         Add("Insights.MatchingCount",
             "{0} passende kandidaten", "{0} matching candidates",
             "{0} pasujących kandydatów", "{0} candidați potriviți", "{0} مرشحون متطابقون");

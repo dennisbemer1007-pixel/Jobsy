@@ -558,5 +558,8 @@ public static class UiStringsWerkgever
         Add("WgTodo.TokenRequests.TitleOne", "{0} vraagt {1} tokens aan", "{0} requests {1} tokens", "{0} prosi o {1} tokenów", "{0} cere {1} tokenuri", "{0} يطلب {1} رمزاً");
         Add("WgTodo.TokenRequests.TitleMany", "{0} openstaande tokenaanvragen", "{0} open token requests", "{0} otwartych wniosków o tokeny", "{0} cereri de tokenuri deschise", "{0} طلبات رموز مفتوحة");
         Add("WgTodo.TokenRequests.Meta", "Wijs tokens toe of wijs de aanvraag af.", "Allocate tokens or reject the request.", "Przydziel tokeny lub odrzuć wniosek.", "Alocă tokenuri sau respinge cererea.", "خصّص الرموز أو ارفض الطلب.");
+        Add("WgTodo.InsightsRequests.TitleOne", "{0} vraagt Kandidaatinzichten aan", "{0} requests Candidate insights", "{0} prosi o wglądy w kandydatów", "{0} cere perspective candidați", "{0} يطلب رؤى المرشحين");
+        Add("WgTodo.InsightsRequests.TitleMany", "{0} openstaande inzichten-aanvragen", "{0} open insights requests", "{0} otwartych wniosków o wglądy", "{0} cereri de perspective deschise", "{0} طلبات رؤى مفتوحة");
+        Add("WgTodo.InsightsRequests.Meta", "Ontgrendel of wijs de aanvraag af.", "Unlock or reject the request.", "Odblokuj lub odrzuć wniosek.", "Deblochează sau respinge cererea.", "افتح أو ارفض الطلب.");
     }
 }

@@ -4,6 +4,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -59,6 +60,7 @@ public class CandidateInsightsServiceTests
         await db.SaveChangesAsync();
         var svc = CreateService(db, out var tokens);
         tokens.Balance = 5;
+        SeedUnlock(db, company);
         var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 20, 90);
 
         Assert.Equal(CandidateInsightsPrivacy.StatusOk, dto.Kpis.CandidatesInRadius.Status);
@@ -79,6 +81,7 @@ public class CandidateInsightsServiceTests
 
         var svc = CreateService(db, out var tokens);
         tokens.Balance = 1;
+        SeedUnlock(db, company);
         var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 20, 90);
         Assert.NotEmpty(dto.Density);
         Assert.All(dto.Density, c => Assert.InRange(c.Band, 1, 3));
@@ -126,7 +129,7 @@ public class CandidateInsightsServiceTests
     }
 
     [Fact]
-    public async Task Gate_balance_zero_locks_sections()
+    public async Task Gate_without_unlock_locks_sections()
     {
         await using var db = CreateDb();
         var company = SeedCompany(db);
@@ -147,20 +150,21 @@ public class CandidateInsightsServiceTests
 
         await db.SaveChangesAsync();
         var svc = CreateService(db, out var tokens);
-        tokens.Balance = 0;
+        tokens.Balance = 100; // balance alone no longer unlocks
         var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 20, 90);
 
         Assert.False(dto.Scope.IsFullAccess);
-        Assert.Contains(CandidateInsightsService.LockedDreamJobs4To10, dto.LockedSections);
-        Assert.Contains(CandidateInsightsService.LockedDna, dto.LockedSections);
-        Assert.Contains(CandidateInsightsService.LockedStory5To10, dto.LockedSections);
+        Assert.Equal(Jobsy.Core.Contracts.InsightsLockedKeys.All.Count, dto.LockedSections.Count);
         Assert.Null(dto.DnaRiasec);
         Assert.Null(dto.Competences);
-        Assert.True(dto.DreamJobsTop.Count <= 3);
+        Assert.Null(dto.WorkFields);
+        Assert.Null(dto.Kpis.MatchingYourVacancies);
+        Assert.Empty(dto.DreamJobsTop);
+        Assert.Empty(dto.Density);
     }
 
     [Fact]
-    public async Task Gate_enterprise_managed_wallet_uses_parent()
+    public async Task Gate_company_unlock_covers_enterprise_managed_branch()
     {
         await using var db = CreateDb();
         var parent = new Company
@@ -192,6 +196,7 @@ public class CandidateInsightsServiceTests
             CompanyId = branch.Id
         });
         SeedCandidates(db, BranchLoc, 12, true);
+        SeedUnlock(db, parent, scopeCompanyId: parent.Id);
         await db.SaveChangesAsync();
 
         var svc = CreateService(db, out var tokens);
@@ -207,6 +212,7 @@ public class CandidateInsightsServiceTests
         await using var db = CreateDb();
         var company = SeedCompany(db);
         SeedCandidates(db, company.Location!, 12, true);
+        SeedUnlock(db, company);
         await db.SaveChangesAsync();
 
         var svc = CreateService(db, out var tokens);
@@ -235,6 +241,7 @@ public class CandidateInsightsServiceTests
         await using var db10 = CreateDb();
         var c10 = SeedCompany(db10);
         SeedCandidates(db10, c10.Location!, 10, true);
+        SeedUnlock(db10, c10);
         await db10.SaveChangesAsync();
         var s10 = CreateService(db10, out var t10);
         t10.Balance = 1;
@@ -244,6 +251,7 @@ public class CandidateInsightsServiceTests
         await using var db200 = CreateDb();
         var c200 = SeedCompany(db200);
         SeedCandidates(db200, c200.Location!, 200, true);
+        SeedUnlock(db200, c200);
         await db200.SaveChangesAsync();
         var s200 = CreateService(db200, out var t200);
         t200.Balance = 1;
@@ -259,7 +267,44 @@ public class CandidateInsightsServiceTests
         var users = new UserLookupService(db);
         var cache = new MemoryCache(new MemoryCacheOptions());
         return new CandidateInsightsService(
-            db, authz, users, tokens, cache, NullLogger<CandidateInsightsService>.Instance);
+            db,
+            authz,
+            users,
+            tokens,
+            new StubFeatures(),
+            new StubNotifications(),
+            TimeProvider.System,
+            cache,
+            NullLogger<CandidateInsightsService>.Instance);
+    }
+
+    private sealed class StubFeatures : IPlatformFeatureService
+    {
+        public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new PlatformFeatureSnapshot(
+                true, true, false, "http://localhost:5201", DateTime.UtcNow,
+                CandidateInsightsEnabled: true,
+                CandidateInsightsUnlockDays: 90,
+                CandidateInsightsUnlockPerBranch: false));
+
+        public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
+            => GetAsync(cancellationToken);
+    }
+
+    private sealed class StubNotifications : IUserNotificationService
+    {
+        public Task<UserNotification> CreateAsync(NotificationCreateRequest request, CancellationToken cancellationToken = default)
+            => Task.FromResult(new UserNotification { Id = Guid.NewGuid(), UserId = request.UserId, Title = request.Title, Body = request.Body, Category = request.Category, CreatedAtUtc = DateTime.UtcNow });
+
+        public Task CreateForEmailAsync(string userEmail, string title, string body, string category, string? deepLink = null, string? actionLabel = null, string? actionUrl = null, string? relatedEntityType = null, Guid? relatedEntityId = null, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<UserNotification>> ListForUserAsync(Guid userId, int take = 50, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<UserNotification>>([]);
+
+        public Task<int> CountUnreadAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(0);
+        public Task<UserNotification?> MarkReadAsync(Guid userId, Guid notificationId, CancellationToken cancellationToken = default) => Task.FromResult<UserNotification?>(null);
+        public Task<int> MarkAllReadAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(0);
     }
 
     private static ClaimsPrincipal Principal(string role, Guid companyId)
@@ -300,6 +345,54 @@ public class CandidateInsightsServiceTests
             CompanyId = company.Id
         });
         return company;
+    }
+
+    private static void SeedUnlock(JobsyDbContext db, Company company, Guid? scopeCompanyId = null)
+    {
+        var walletId = CandidateInsightsAccess.ResolveWalletCompanyId(company);
+        var actor = db.Users.Local.FirstOrDefault(u => u.CompanyId == company.Id)
+                    ?? db.Users.Local.FirstOrDefault()
+                    ?? new User
+                    {
+                        Id = Guid.NewGuid(),
+                        Email = "actor@t.local",
+                        FullName = "Actor",
+                        Role = UserRole.EnterpriseManager,
+                        IsActive = true,
+                        CompanyId = walletId
+                    };
+        if (db.Users.Local.All(u => u.Id != actor.Id) && db.Users.Find(actor.Id) is null)
+        {
+            db.Users.Add(actor);
+        }
+
+        var tx = new TokenTransaction
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = walletId,
+            Amount = -12m,
+            Kind = TokenTransactionKind.Spend,
+            Reason = TokenSpendReason.InsightsUnlock,
+            OldBalance = 100,
+            NewBalance = 88,
+            ActorUserId = actor.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.TokenTransactions.Add(tx);
+        db.CandidateInsightsUnlocks.Add(new CandidateInsightsUnlock
+        {
+            Id = Guid.NewGuid(),
+            WalletCompanyId = walletId,
+            ScopeKind = CandidateInsightsUnlockScopeKind.Company,
+            ScopeCompanyId = scopeCompanyId ?? walletId,
+            UnlockedAtUtc = DateTime.UtcNow.AddDays(-1),
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(89),
+            PriceTokens = 12m,
+            DurationDays = 90,
+            ActorUserId = actor.Id,
+            TokenTransactionId = tx.Id,
+            IdempotencyKey = "test-" + Guid.NewGuid().ToString("N")
+        });
     }
 
     private static List<User> SeedCandidates(

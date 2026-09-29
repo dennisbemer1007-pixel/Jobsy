@@ -73,6 +73,7 @@ public sealed record WerkgeverNavContext(
     bool HasTakeovers = false,
     bool HasSalesReferral = false,
     bool CandidateInsightsEnabled = true,
+    bool InsightsLocked = false,
     bool HasCandidateApplications = false,
     bool HasMultipleBranches = false,
     IReadOnlyDictionary<string, int>? Counts = null);

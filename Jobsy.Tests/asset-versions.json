@@ -24,8 +24,8 @@
     "v": "20260927-gratis-dna"
   },
   "css/features/kandidaatinzichten.css": {
-    "sha256": "1693816b0b407c89dc96ccf53cf8ab37f4c38794b75c9b411bc986be5e17bd11",
-    "v": "20260928-insights"
+    "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
+    "v": "20260929-insights-7"
   },
   "css/features/match-desktop.css": {
     "sha256": "765bd9ae5c01bb124d2bf13fd9ed4149a242bbdd51a7132eb501ca38a2726ea3",
@@ -52,8 +52,8 @@
     "v": "20260929-testresultaten-b2"
   },
   "css/features/werkgever.css": {
-    "sha256": "76cf51250163af7f70e19675da126f6fb2d4edfd40c6c7b9d8cb8db7ce872c6e",
-    "v": "20260929-werkgever-d6"
+    "sha256": "a6d1e1997735bcbe82a8aa21fabbd3bead7df94afa86bb66bdb7985123f19074",
+    "v": "20260929-wg-insights"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",

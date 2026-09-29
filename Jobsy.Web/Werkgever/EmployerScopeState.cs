@@ -74,6 +74,8 @@ public sealed class EmployerScopeState
     public IReadOnlyList<Guid> CompanyIds { get; private set; } = [];
     public bool ScopeDeniedToast { get; private set; }
     public bool IsReadOnly => Role == EmployerRole.Regiomanager;
+    /// <summary>D20: gold lock on Kandidaatinzichten nav while current scope is not full.</summary>
+    public bool InsightsLocked { get; private set; } = true;
 
     public event Action? Changed;
 
@@ -127,6 +129,17 @@ public sealed class EmployerScopeState
         }
 
         SetCurrent(option);
+    }
+
+    public void SetInsightsLocked(bool locked)
+    {
+        if (InsightsLocked == locked)
+        {
+            return;
+        }
+
+        InsightsLocked = locked;
+        Changed?.Invoke();
     }
 
     public void ClearDeniedToast() => ScopeDeniedToast = false;

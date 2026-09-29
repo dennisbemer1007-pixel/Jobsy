@@ -78,6 +78,8 @@ public class JobsyDbContext : DbContext
     public DbSet<TokenPricing> TokenPricings => Set<TokenPricing>();
     public DbSet<TokenSpendCost> TokenSpendCosts => Set<TokenSpendCost>();
     public DbSet<TokenRequest> TokenRequests => Set<TokenRequest>();
+    public DbSet<CandidateInsightsUnlock> CandidateInsightsUnlocks => Set<CandidateInsightsUnlock>();
+    public DbSet<CandidateInsightsUnlockRequest> CandidateInsightsUnlockRequests => Set<CandidateInsightsUnlockRequest>();
     public DbSet<PushBomSettings> PushBomSettings => Set<PushBomSettings>();
     public DbSet<PushBomPricingTier> PushBomPricingTiers => Set<PushBomPricingTier>();
     public DbSet<EarlyAdapterRule> EarlyAdapterRules => Set<EarlyAdapterRule>();
@@ -1155,6 +1157,57 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.OrganisationCompany)
                 .WithMany()
                 .HasForeignKey(e => e.OrganisationCompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.BranchCompany)
+                .WithMany()
+                .HasForeignKey(e => e.BranchCompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.RequestedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.RequestedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.HandledByUser)
+                .WithMany()
+                .HasForeignKey(e => e.HandledByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CandidateInsightsUnlock>(entity =>
+        {
+            entity.ToTable("CandidateInsightsUnlocks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PriceTokens).HasPrecision(10, 2);
+            entity.Property(e => e.IdempotencyKey).HasMaxLength(128).IsRequired();
+            entity.HasIndex(e => e.IdempotencyKey).IsUnique();
+            entity.HasIndex(e => new { e.ScopeCompanyId, e.ExpiresAtUtc });
+            entity.HasIndex(e => new { e.WalletCompanyId, e.ScopeKind, e.ScopeCompanyId });
+            entity.HasOne(e => e.WalletCompany)
+                .WithMany()
+                .HasForeignKey(e => e.WalletCompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.ScopeCompany)
+                .WithMany()
+                .HasForeignKey(e => e.ScopeCompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.ActorUser)
+                .WithMany()
+                .HasForeignKey(e => e.ActorUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.TokenTransaction)
+                .WithMany()
+                .HasForeignKey(e => e.TokenTransactionId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CandidateInsightsUnlockRequest>(entity =>
+        {
+            entity.ToTable("CandidateInsightsUnlockRequests");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.BranchCompanyId, e.Status });
+            entity.HasIndex(e => new { e.WalletCompanyId, e.Status });
+            entity.HasOne(e => e.WalletCompany)
+                .WithMany()
+                .HasForeignKey(e => e.WalletCompanyId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.BranchCompany)
                 .WithMany()

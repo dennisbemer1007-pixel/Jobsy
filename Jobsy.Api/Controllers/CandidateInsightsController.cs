@@ -55,6 +55,10 @@ public sealed class CandidateInsightsController : ControllerBase
             var dto = await _insights.GetInsightsAsync(User, branchId, radiusKm, period, cancellationToken);
             return Ok(dto);
         }
+        catch (CandidateInsightsException ex) when (ex.Code == "feature_disabled")
+        {
+            return NotFound(new { code = "feature_disabled", message = ex.Message });
+        }
         catch (ForbiddenCompanyAccessException)
         {
             return Forbid();
@@ -79,6 +83,127 @@ public sealed class CandidateInsightsController : ControllerBase
         {
             return Ok(await _insights.GetBranchesAsync(User, cancellationToken));
         }
+        catch (CandidateInsightsException ex) when (ex.Code == "feature_disabled")
+        {
+            return NotFound(new { code = "feature_disabled", message = ex.Message });
+        }
+        catch (ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [HttpPost("unlock")]
+    [EnableRateLimiting("public-write")]
+    public async Task<ActionResult<CandidateInsightsUnlockResultDto>> Unlock(
+        [FromBody] UnlockInsightsRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsInsightsRole())
+        {
+            return Forbid();
+        }
+
+        if (!Request.Headers.TryGetValue("Idempotency-Key", out var keyValues)
+            || string.IsNullOrWhiteSpace(keyValues.FirstOrDefault()))
+        {
+            return BadRequest(new { code = "missing_idempotency_key", message = "Idempotency-Key header is verplicht." });
+        }
+
+        try
+        {
+            var result = await _insights.UnlockAsync(
+                User,
+                body.Scope ?? "company",
+                body.BranchId,
+                keyValues.ToString()!,
+                body.UnlockRequestId,
+                cancellationToken);
+            return Ok(result);
+        }
+        catch (CandidateInsightsException ex)
+        {
+            return StatusCode(ex.StatusCode, new { code = ex.Code, message = ex.Message });
+        }
+        catch (ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [HttpPost("unlock-request")]
+    [EnableRateLimiting("public-write")]
+    public async Task<ActionResult<CandidateInsightsUnlockRequestDto>> UnlockRequest(
+        [FromBody] UnlockInsightsRequestBody body,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsInsightsRole())
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            var result = await _insights.CreateUnlockRequestAsync(User, body.BranchId, cancellationToken);
+            return Ok(result);
+        }
+        catch (CandidateInsightsException ex)
+        {
+            return StatusCode(ex.StatusCode, new { code = ex.Code, message = ex.Message });
+        }
+        catch (ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [HttpPost("unlock-request/{id:guid}/reject")]
+    [EnableRateLimiting("public-write")]
+    public async Task<ActionResult<CandidateInsightsUnlockRequestDto>> RejectUnlockRequest(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsInsightsRole())
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            return Ok(await _insights.RejectUnlockRequestAsync(User, id, cancellationToken));
+        }
+        catch (CandidateInsightsException ex)
+        {
+            return StatusCode(ex.StatusCode, new { code = ex.Code, message = ex.Message });
+        }
+        catch (ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [HttpGet("export.csv")]
+    [EnableRateLimiting("public-read")]
+    public async Task<IActionResult> ExportCsv(
+        [FromQuery] Guid? branchId,
+        [FromQuery] int radiusKm = 20,
+        [FromQuery] int period = 90,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsInsightsRole())
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            var (fileName, csv) = await _insights.ExportCsvAsync(User, branchId, radiusKm, period, cancellationToken);
+            return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", fileName);
+        }
+        catch (CandidateInsightsException ex)
+        {
+            return StatusCode(ex.StatusCode, new { code = ex.Code, message = ex.Message });
+        }
         catch (ForbiddenCompanyAccessException)
         {
             return Forbid();
@@ -96,3 +221,7 @@ public sealed class CandidateInsightsController : ControllerBase
     private bool HasForbiddenIdentityQuery()
         => Request.Query.Keys.Any(k => ForbiddenIdentityParams.Contains(k));
 }
+
+public sealed record UnlockInsightsRequest(string? Scope, Guid? BranchId, Guid? UnlockRequestId = null);
+
+public sealed record UnlockInsightsRequestBody(Guid BranchId);

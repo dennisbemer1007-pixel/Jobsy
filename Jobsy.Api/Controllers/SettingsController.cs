@@ -156,8 +156,28 @@ public class SettingsController : ControllerBase
             return BadRequest(new { message = "Kosten mogen niet negatief zijn." });
         }
 
+        var before = new { cost.Reason, cost.CostTokens, cost.IsActive };
         cost.CostTokens = request.CostTokens;
         cost.IsActive = request.IsActive;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        // TODO(admin-07): migrate to IAdminAuditLog when admin-redesign 07 lands.
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "AdminSettings",
+            Message = "settings.pricing.update",
+            DetailsJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                actorUserId = User.FindFirst("sub")?.Value
+                              ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+                key = cost.Reason.ToString(),
+                before,
+                after = new { cost.Reason, cost.CostTokens, cost.IsActive }
+            }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
@@ -322,6 +342,7 @@ public class SettingsController : ControllerBase
     {
         try
         {
+            var before = await _features.GetAsync(cancellationToken);
             var snap = await _features.UpdateAsync(
                 new PlatformFeatureUpdate(
                     request.VacancyContentModerationEnabled,
@@ -333,8 +354,18 @@ public class SettingsController : ControllerBase
                     request.FreePublishUntil,
                     request.ClearFreePublishUntil,
                     SupportAccessNotifyAdmins: request.SupportAccessNotifyAdmins,
-                    SupportAccessNotifySubject: request.SupportAccessNotifySubject),
+                    SupportAccessNotifySubject: request.SupportAccessNotifySubject,
+                    CandidateInsightsEnabled: request.CandidateInsightsEnabled,
+                    CandidateInsightsUnlockDays: request.CandidateInsightsUnlockDays,
+                    CandidateInsightsUnlockPerBranch: request.CandidateInsightsUnlockPerBranch),
                 cancellationToken);
+
+            await WriteAdminSettingsAuditAsync(
+                "settings.platform.update",
+                before,
+                snap,
+                cancellationToken);
+
             return Ok(ToFeatureDto(snap));
         }
         catch (ArgumentException ex)
@@ -530,6 +561,52 @@ public class SettingsController : ControllerBase
         }
     }
 
+    private async Task WriteAdminSettingsAuditAsync(
+        string action,
+        PlatformFeatureSnapshot before,
+        PlatformFeatureSnapshot after,
+        CancellationToken cancellationToken)
+    {
+        // TODO(admin-07): migrate to IAdminAuditLog when admin-redesign 07 lands.
+        // Interim: structured PlatformLog (never PersonalDataAccessLog).
+        var changes = new List<object>();
+        void Diff(string key, object? a, object? b)
+        {
+            if (!Equals(a, b))
+            {
+                changes.Add(new { key, before = a, after = b });
+            }
+        }
+
+        Diff(nameof(after.CandidateInsightsEnabled), before.CandidateInsightsEnabled, after.CandidateInsightsEnabled);
+        Diff(nameof(after.CandidateInsightsUnlockDays), before.CandidateInsightsUnlockDays, after.CandidateInsightsUnlockDays);
+        Diff(nameof(after.CandidateInsightsUnlockPerBranch), before.CandidateInsightsUnlockPerBranch, after.CandidateInsightsUnlockPerBranch);
+        Diff(nameof(after.VacancyContentModerationEnabled), before.VacancyContentModerationEnabled, after.VacancyContentModerationEnabled);
+        Diff(nameof(after.AuthenticatorEnabled), before.AuthenticatorEnabled, after.AuthenticatorEnabled);
+        Diff(nameof(after.FreePublishUntil), before.FreePublishUntil, after.FreePublishUntil);
+
+        if (changes.Count == 0)
+        {
+            return;
+        }
+
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "AdminSettings",
+            Message = action,
+            DetailsJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                actorUserId = User.FindFirst("sub")?.Value
+                              ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+                changes
+            }),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
     private static PlatformFeatureDto ToFeatureDto(PlatformFeatureSnapshot snap) =>
         new(
             snap.VacancyContentModerationEnabled,
@@ -541,7 +618,10 @@ public class SettingsController : ControllerBase
             snap.SessionInactivityTimeoutMinutes,
             snap.FreePublishUntil,
             snap.SupportAccessNotifyAdmins,
-            snap.SupportAccessNotifySubject);
+            snap.SupportAccessNotifySubject,
+            snap.CandidateInsightsEnabled,
+            snap.CandidateInsightsUnlockDays,
+            snap.CandidateInsightsUnlockPerBranch);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

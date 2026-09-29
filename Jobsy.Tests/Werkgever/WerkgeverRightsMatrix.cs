@@ -63,6 +63,10 @@ public static class WerkgeverRightsMatrix
         new("api/companies/{id}/billing-history", true, false, false),
         new("api/werkgever/token-requests", true, false, true),
         new("api/werkgever/token-requests/{id}/approve", true, false, false),
+        // Kandidaatinzichten unlock (07)
+        new("api/employer/candidate-insights/unlock", true, false, true),
+        new("api/employer/candidate-insights/unlock-request", false, false, true),
+        new("api/employer/candidate-insights/export.csv", true, true, true),
     ];
 
     public static bool RoleAllowed(PageRow row, EmployerRole role) => role switch

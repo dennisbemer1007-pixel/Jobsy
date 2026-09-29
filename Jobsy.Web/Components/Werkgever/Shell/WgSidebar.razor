@@ -38,6 +38,12 @@
                                    aria-current="@(active ? "page" : null)">
                                     <span class="wg-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
                                     <span>@Culture[item.LabelKeyFor(Role)]</span>
+                                    @if (item.Key == "insights" && Ctx.InsightsLocked)
+                                    {
+                                        <span class="wg-sidebar__lock" title="@Culture["Insights.Kpi.Premium"]" aria-hidden="true">
+                                            <svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+                                        </span>
+                                    }
                                     @if (count > 0)
                                     {
                                         <span class="wg-sidebar__count">@count</span>
@@ -67,6 +73,7 @@
     private WerkgeverNavContext Ctx => new(
         HasTakeovers: true,
         CandidateInsightsEnabled: true,
+        InsightsLocked: Scope.InsightsLocked,
         Counts: Counts.Counts);
     private IReadOnlyList<WerkgeverNavGroup> Groups => WerkgeverNav.For(Role, Ctx);
 

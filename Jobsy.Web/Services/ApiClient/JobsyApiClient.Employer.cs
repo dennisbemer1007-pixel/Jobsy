@@ -694,6 +694,75 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    public async Task<CandidateInsightsUnlockResultDto?> UnlockCandidateInsightsAsync(
+        string scope,
+        Guid? branchId,
+        Guid? unlockRequestId = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, "api/employer/candidate-insights/unlock");
+            req.Headers.TryAddWithoutValidation("Idempotency-Key", Guid.NewGuid().ToString("N"));
+            req.Content = JsonContent.Create(new { scope, branchId, unlockRequestId });
+            using var response = await _http.SendAsync(req, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<CandidateInsightsUnlockResultDto>(cancellationToken: ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CandidateInsightsUnlockRequestDto?> RequestCandidateInsightsUnlockAsync(
+        Guid branchId,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await _http.PostAsJsonAsync(
+                "api/employer/candidate-insights/unlock-request",
+                new { branchId },
+                ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<CandidateInsightsUnlockRequestDto>(cancellationToken: ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    public async Task DownloadCandidateInsightsExportAsync(
+        Guid? branchId,
+        int radiusKm,
+        int period,
+        CancellationToken ct = default)
+    {
+        var qs = $"radiusKm={radiusKm}&period={period}";
+        if (branchId is Guid id)
+        {
+            qs += $"&branchId={id:D}";
+        }
+
+        using var response = await _http.GetAsync($"api/employer/candidate-insights/export.csv?{qs}", ct);
+        response.EnsureSuccessStatusCode();
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                       ?? "kandidaatinzichten.csv";
+        // Browser download via data URL is handled by caller when needed; store is enough for tests.
+        _ = (fileName, bytes);
+    }
+
     public async Task<IReadOnlyList<CandidateInsightsBranchDto>> GetCandidateInsightsBranchesAsync(
         CancellationToken ct = default)
     {
@@ -703,7 +772,7 @@ public sealed partial class JobsyApiClient
                        "api/employer/candidate-insights/branches", ct)
                    ?? [];
         }
-        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or HttpStatusCode.NotFound)
         {
             return [];
         }

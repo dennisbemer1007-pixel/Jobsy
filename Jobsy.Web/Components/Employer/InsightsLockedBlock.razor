@@ -1,22 +1,7 @@
+@* Replaced by WgLockedCard (gold locked pattern). Kept as thin wrapper for existing probes. *@
 @inject CultureState Culture
 
-<div class="insights-locked" data-testid="@TestId">
-    <div class="insights-locked__placeholder" aria-hidden="true">
-        <div class="insights-bars">
-            @for (var i = 0; i < 4; i++)
-            {
-                <div class="insights-bar">
-                    <div class="insights-bar__meta"><span>————</span><span>—</span></div>
-                    <div class="insights-bar__track"><span class="insights-bar__fill" style="width:40%"></span></div>
-                </div>
-            }
-        </div>
-    </div>
-    <div class="insights-locked__overlay">
-        <span class="status-pill">@Culture["Insights.Locked.BlurHint"]</span>
-        <a class="btn-compact login-submit" href="@TokensHref">@Culture["Insights.Cta.Full"]</a>
-    </div>
-</div>
+<WgLockedCard Title="@Culture["Insights.Locked.Chip"]" TestId="@TestId" />
 
 @code {
     [Parameter] public string TokensHref { get; set; } = "/werkgever/tokens";

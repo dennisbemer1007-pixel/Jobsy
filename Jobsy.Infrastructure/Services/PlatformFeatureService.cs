@@ -67,6 +67,26 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         {
             row.SupportAccessNotifySubject = notifySubject;
         }
+
+        if (update.CandidateInsightsEnabled is bool insightsEnabled)
+        {
+            row.CandidateInsightsEnabled = insightsEnabled;
+        }
+
+        if (update.CandidateInsightsUnlockDays is int unlockDays)
+        {
+            row.CandidateInsightsUnlockDays = CandidateInsightsAccess.ClampUnlockDays(unlockDays);
+        }
+        else if (isNew)
+        {
+            row.CandidateInsightsUnlockDays = CandidateInsightsAccess.DefaultUnlockDays;
+        }
+
+        if (update.CandidateInsightsUnlockPerBranch is bool perBranch)
+        {
+            row.CandidateInsightsUnlockPerBranch = perBranch;
+        }
+
         // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
         // so session-timeout-only PUTs do not silently disable the free-publish promo.
         if (update.ClearFreePublishUntil)
@@ -170,6 +190,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             freeUntil,
             row?.MinimumSessionVersion ?? 0,
             row?.SupportAccessNotifyAdmins ?? false,
-            row?.SupportAccessNotifySubject ?? false);
+            row?.SupportAccessNotifySubject ?? false,
+            row?.CandidateInsightsEnabled ?? true,
+            row is null
+                ? CandidateInsightsAccess.DefaultUnlockDays
+                : CandidateInsightsAccess.ClampUnlockDays(row.CandidateInsightsUnlockDays),
+            row?.CandidateInsightsUnlockPerBranch ?? false);
     }
 }

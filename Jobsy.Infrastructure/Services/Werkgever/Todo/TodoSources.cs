@@ -400,3 +400,50 @@ public sealed class TokenRequestsTodoSource : ITodoSource
             rows.Select(r => r.BranchCompanyId).Distinct().ToList());
     }
 }
+
+public sealed class InsightsRequestsTodoSource : ITodoSource
+{
+    private readonly JobsyDbContext _db;
+    public InsightsRequestsTodoSource(JobsyDbContext db) => _db = db;
+    public WerkgeverTodoKind Kind => WerkgeverTodoKind.InsightsRequests;
+
+    public async Task<WerkgeverTodoItemDto?> BuildAsync(
+        IReadOnlyList<Guid> companyIds,
+        WerkgeverDashboardRole role,
+        DateTime utcNow,
+        CancellationToken cancellationToken = default)
+    {
+        if (role is not WerkgeverDashboardRole.Bedrijfsmanager)
+        {
+            return null;
+        }
+
+        var ids = companyIds.ToHashSet();
+        var rows = await _db.CandidateInsightsUnlockRequests.AsNoTracking()
+            .Where(r => r.Status == CandidateInsightsUnlockRequestStatus.Open
+                        && (ids.Contains(r.BranchCompanyId) || ids.Contains(r.WalletCompanyId)))
+            .Select(r => new { r.Id, r.BranchCompanyId, BranchName = r.BranchCompany.Name })
+            .ToListAsync(cancellationToken);
+        if (rows.Count == 0)
+        {
+            return null;
+        }
+
+        var first = rows[0];
+        var titleArgs = rows.Count == 1
+            ? new[] { first.BranchName }
+            : new[] { rows.Count.ToString() };
+
+        return TodoDtoFactory.Create(
+            Kind,
+            WerkgeverTodoSeverity.Warning,
+            rows.Count == 1 ? "WgTodo.InsightsRequests.TitleOne" : "WgTodo.InsightsRequests.TitleMany",
+            titleArgs,
+            "WgTodo.InsightsRequests.Meta",
+            null,
+            WerkgeverTodoActionKind.Beoordelen,
+            $"/werkgever/kandidaatinzichten?request={first.Id:D}",
+            rows.Count,
+            rows.Select(r => r.BranchCompanyId).Distinct().ToList());
+    }
+}
