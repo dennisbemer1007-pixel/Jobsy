@@ -129,6 +129,12 @@ public static class PageHelpDocs
             "Filter op tabbladen, open een sollicitatie of trek in waar dat mag.",
             "Voortgang volgen van openstaande en afgeronde sollicitaties."),
 
+        ["/candidate/paspoort"] = new(
+            "Mijn Lobsy-paspoort",
+            "Jouw DNA, tests, schalen en gegevens in één overzicht.",
+            "Bekijk wie je bent onder de schaal, vul lagen aan en open tests of je gegevens.",
+            "Zelfinzicht en profielcompleetheid op één plek."),
+
         ["/candidate/profile"] = new(
             "Mijn profiel",
             "Jouw kandidaatgegevens voor matching en solliciteren.",

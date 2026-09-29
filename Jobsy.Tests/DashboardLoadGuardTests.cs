@@ -33,7 +33,10 @@ public class DashboardLoadGuardTests
         Assert.Contains("HomeDashboardLoad.TryBegin", text);
         Assert.Contains("OnAfterRenderAsync(bool firstRender)", text);
         Assert.Contains("TryLoadAsync()", text);
-        Assert.Contains("firstRender ? TryLoadAsync()", text);
+        Assert.True(
+            text.Contains("firstRender ? TryLoadAsync()", StringComparison.Ordinal)
+            || text.Contains("firstRender && !_redirecting ? TryLoadAsync()", StringComparison.Ordinal),
+            "Expected OnAfterRenderAsync to call TryLoadAsync on firstRender (optionally gated by !_redirecting).");
         Assert.DoesNotContain(
             """
                     if (!RendererInfo.IsInteractive)

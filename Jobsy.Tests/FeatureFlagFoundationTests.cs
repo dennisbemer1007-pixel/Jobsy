@@ -143,6 +143,11 @@ public class FeatureFlagFoundationTests
         Assert.Equal("/", FeatureRoutes.HomeFor(candidate, on));
         Assert.Equal(FeatureRoutes.CandidateProfilePath, FeatureRoutes.HomeFor(candidate, off));
 
+        var passportOn = new FeatureFlagSnapshot(true, true);
+        Assert.Equal(FeatureRoutes.CandidatePassportPath, FeatureRoutes.HomeFor(candidate, passportOn));
+        var passportEmployersOff = new FeatureFlagSnapshot(false, true);
+        Assert.Equal(FeatureRoutes.CandidatePassportPath, FeatureRoutes.HomeFor(candidate, passportEmployersOff));
+
         var employer = Principal(JobsyRoles.BranchManager);
         Assert.Equal(FeatureRoutes.EmployersOffAccessDeniedPath, FeatureRoutes.HomeFor(employer, off));
 
@@ -196,12 +201,10 @@ public class FeatureFlagFoundationTests
 
 public class RoleNavCatalogFeatureFlagTests
 {
-    [Theory]
-    [InlineData(false, true)]
-    [InlineData(true, true)]
-    public void CandidateItems_employers_on_matches_today_order(bool passport, bool _)
+    [Fact]
+    public void CandidateItems_passport_off_employers_on_matches_today_order()
     {
-        var flags = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: passport);
+        var flags = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: false);
         var items = RoleNavCatalog.CandidateItems(flags);
         Assert.Equal(5, items.Count);
         Assert.Equal(["/", "/candidate/liked", "/candidate/applications", "/carriere", "/candidate/profile"],
@@ -209,16 +212,38 @@ public class RoleNavCatalogFeatureFlagTests
         Assert.True(RoleNavCatalog.ShowsSavedInNav(flags));
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void CandidateItems_employers_off_hides_search_saved_applications(bool passport)
+    [Fact]
+    public void CandidateItems_passport_on_employers_on_uses_slot_order()
     {
-        var flags = new FeatureFlagSnapshot(EmployersEnabled: false, CandidatePassportEnabled: passport);
+        var flags = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true);
+        var items = RoleNavCatalog.CandidateItems(flags);
+        Assert.Equal(4, items.Count);
+        Assert.True(items.Count <= 5);
+        Assert.Equal(
+            ["/candidate/paspoort", "/", "/candidate/applications", "/carriere"],
+            items.Select(i => i.Href).ToArray());
+        Assert.Equal("Nav.Passport", items[0].TitleKey);
+        Assert.Contains("/candidate/liked", items[2].ExtraActivePaths ?? []);
+        Assert.False(RoleNavCatalog.ShowsSavedInNav(flags));
+    }
+
+    [Fact]
+    public void CandidateItems_passport_off_employers_off_hides_search_saved_applications()
+    {
+        var flags = new FeatureFlagSnapshot(EmployersEnabled: false, CandidatePassportEnabled: false);
         var items = RoleNavCatalog.CandidateItems(flags);
         Assert.Equal(2, items.Count);
-        Assert.DoesNotContain(items, i => i.Href is "/" or "/candidate/liked" or "/candidate/applications");
         Assert.Equal(["/carriere", "/candidate/profile"], items.Select(i => i.Href).ToArray());
+        Assert.False(RoleNavCatalog.ShowsSavedInNav(flags));
+    }
+
+    [Fact]
+    public void CandidateItems_passport_on_employers_off_is_passport_and_career()
+    {
+        var flags = new FeatureFlagSnapshot(EmployersEnabled: false, CandidatePassportEnabled: true);
+        var items = RoleNavCatalog.CandidateItems(flags);
+        Assert.Equal(2, items.Count);
+        Assert.Equal(["/candidate/paspoort", "/carriere"], items.Select(i => i.Href).ToArray());
         Assert.False(RoleNavCatalog.ShowsSavedInNav(flags));
     }
 

@@ -5,7 +5,7 @@ Admin toggles live in the singleton `PlatformFeatureSettings` row and are read t
 | Flag | Default | Meaning |
 |---|---|---|
 | `EmployersEnabled` | **true** | ON = today’s product. OFF = self-discovery only; employer/vacancy surfaces are hidden and return 404 `feature_disabled`. Data is never deleted. |
-| `CandidatePassportEnabled` | **false** | Reserved for file 02 (Mijn Paspoort nav/order). Field exists; passport-ON nav order is **not** applied in this PR. |
+| `CandidatePassportEnabled` | **false** | When ON: candidates see Mijn Paspoort (`/candidate/paspoort`) instead of Profiel; nav order per §N; `/home` redirects to the passport. |
 
 Gate with `[RequiresFeature(PlatformFeature.Employers)]` (pages, controllers, actions) or `<FeatureVisible Feature="PlatformFeature.Employers">` (sections). Minimal APIs: `.RequireFeature(PlatformFeature.Employers)`.
 

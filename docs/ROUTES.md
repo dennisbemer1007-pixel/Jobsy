@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (122 routes)
+## Table (123 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -92,6 +92,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/hoe-werkt-lobsy` | `Pages/Candidate/HowLobsyWorks.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/candidate/liked` | `Pages/Candidate/Liked.razor` | anonymous |
 | `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
+| `/candidate/paspoort` | `Pages/Candidate/Passport.razor` | Candidate |
 | `/candidate/profile` | `Pages/Candidate/Profile.razor` | Candidate |
 | `/candidate/shared` | `Pages/Candidate/Shared.razor` | Candidate |
 | `/candidate/start` | `Pages/Candidate/OnboardingWizard.razor` | Candidate |

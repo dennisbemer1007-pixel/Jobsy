@@ -144,6 +144,7 @@ public static partial class PageSeoCatalog
             ["/candidate/shared"] = Private("Saved.TabShared", "Seo.PrivateDescription"),
             ["/candidate/vacancies"] = Private("Nav.Vacancies", "Seo.PrivateDescription"),
             ["/candidate/applications"] = Private("Nav.MyApplications", "Seo.PrivateDescription"),
+            ["/candidate/paspoort"] = Private("Passport.Title", "Seo.PrivateDescription"),
             ["/candidate/profile"] = Private("Profile.Title", "Seo.PrivateDescription"),
             ["/profiel"] = Private("ProfileHub.Title", "Seo.PrivateDescription"),
             ["/carriere"] = Private("CareerDash.Title", "Seo.PrivateDescription"),
