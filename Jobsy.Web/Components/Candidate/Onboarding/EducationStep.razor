@@ -3,9 +3,12 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
-<h1 tabindex="-1">@Culture["Onboarding.Step5.Title"]</h1>
-<p class="ob-wizard__lead">@Culture["Onboarding.Step5.Lead"]</p>
+@if (ShowHeading)
+{
+    <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
+    <h1 tabindex="-1">@Culture["Onboarding.Step5.Title"]</h1>
+    <p class="ob-wizard__lead">@Culture["Onboarding.Step5.Lead"]</p>
+}
 <fieldset>
     <legend class="visually-hidden">@Culture["Profile.Education"]</legend>
     @foreach (var level in OnboardingWizardCatalog.EducationRadioLevels)
@@ -39,6 +42,7 @@
 
 @code {
     [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public bool ShowHeading { get; set; } = true;
     [Parameter] public EventCallback<string> SelectEducation { get; set; }
 
     private static readonly string[] MboLevels = ["1", "2", "3", "4"];

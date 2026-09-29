@@ -248,12 +248,114 @@ public static class UiStringsDiscovery
         Add("Discovery.Step2.Sub", "Beschikbaarheid en reizen", "Availability and travel", "Dostępność i dojazd", "Disponibilitate și deplasare", "التوفر والتنقل");
         Add("Discovery.Step3.Title", "Werk", "Work", "Praca", "Muncă", "العمل");
         Add("Discovery.Step3.Sub", "Waar ik werkte en wat ik zoek", "Where I worked and what I seek", "Gdzie pracowałem i czego szukam", "Unde am lucrat și ce caut", "أين عملت وما أبحث عنه");
+        Add("Discovery.Step3.Heading",
+            "Jouw werk", "Your work", "Twoja praca", "Munca ta", "عملك");
+        Add("Discovery.Step3.Lead",
+            "Waar heb je gewerkt, en wat voor werkgever zoek je?",
+            "Where have you worked, and what kind of employer are you looking for?",
+            "Gdzie pracowałeś i jakiego pracodawcy szukasz?",
+            "Unde ai lucrat și ce fel de angajator cauți?",
+            "أين عملت، وأي نوع من أصحاب العمل تبحث عنه؟");
+        Add("Discovery.Step3.Worked",
+            "Waar heb ik gewerkt?", "Where have I worked?", "Gdzie pracowałem?", "Unde am lucrat?", "أين عملت؟");
+        Add("Discovery.Step3.WorkedHint",
+            "Bijbaan, vrijwilligerswerk, stage of zorgen voor familie telt ook mee.",
+            "Side jobs, volunteering, internships or caring for family count too.",
+            "Dorywcza praca, wolontariat, staż czy opieka nad rodziną też się liczą.",
+            "Jobul ocazional, voluntariatul, stagiul sau grija de familie contează și ele.",
+            "العمل الجزئي والتطوع والتدريب ورعاية العائلة تُحسب أيضاً.");
+        Add("Discovery.Step3.EmployerWant",
+            "Wat voor werkgever zoek ik?", "What kind of employer am I looking for?", "Jakiego pracodawcy szukam?", "Ce fel de angajator caut?", "أي نوع من أصحاب العمل أبحث عنه؟");
+        Add("Discovery.Step3.EmployerWantHint",
+            "Kies wat voor jou belangrijk is. Meer kiezen mag.",
+            "Choose what matters to you. Picking more is fine.",
+            "Wybierz, co jest dla Ciebie ważne. Możesz wybrać więcej.",
+            "Alege ce contează pentru tine. Poți alege mai multe.",
+            "اختر ما يهمك. يمكنك اختيار أكثر من خيار.");
+        Add("Discovery.Step3.Field",
+            "In welk werkveld wil ik werken?", "Which field do I want to work in?", "W jakiej branży chcę pracować?", "În ce domeniu vreau să lucrez?", "في أي مجال أريد العمل؟");
         Add("Discovery.Step4.Title", "Leren", "Learning", "Nauka", "Învățare", "التعلم");
         Add("Discovery.Step4.Sub", "Wat ik deed en nog wil leren", "What I did and still want to learn", "Czego się uczyłem i chcę się nauczyć", "Ce am făcut și vreau să învăț", "ما فعلته وما أريد تعلمه");
+        Add("Discovery.Step4.Heading",
+            "Leren", "Learning", "Nauka", "Învățare", "التعلم");
+        Add("Discovery.Step4.Lead",
+            "Wat heb je geleerd, en wat wil je nog leren?",
+            "What have you learned, and what do you still want to learn?",
+            "Czego się nauczyłeś i czego jeszcze chcesz się nauczyć?",
+            "Ce ai învățat și ce mai vrei să înveți?",
+            "ماذا تعلمت، وماذا تريد أن تتعلم بعد؟");
+        Add("Discovery.Step4.DreamTitle",
+            "Waar wil ik naartoe?", "Where do I want to go?", "Dokąd chcę dojść?", "Unde vreau să ajung?", "إلى أين أريد أن أصل؟");
+        Add("Discovery.Step4.LearnWant",
+            "Wat wil ik nog leren?", "What do I still want to learn?", "Czego jeszcze chcę się nauczyć?", "Ce mai vreau să învăț?", "ماذا أريد أن أتعلم بعد؟");
+        Add("Discovery.Step4.CertificatesSummary",
+            "Certificaten", "Certificates", "Certyfikaty", "Certificate", "الشهادات");
+        Add("Discovery.Step4.LanguagesSummary",
+            "Talen die ik spreek", "Languages I speak", "Języki, które znam", "Limbile pe care le vorbesc", "اللغات التي أتحدثها");
         Add("Discovery.Step5.Title", "Wat ik leuk vind", "What I like", "Co lubię", "Ce-mi place", "ما أحبه");
         Add("Discovery.Step5.Sub", "Interesses en hobby’s", "Interests and hobbies", "Zainteresowania i hobby", "Interese și hobby-uri", "اهتمامات وهوايات");
+        Add("Discovery.Step5.Heading",
+            "Wat ik leuk vind", "What I like", "Co lubię", "Ce-mi place", "ما أحبه");
+        Add("Discovery.Step5.Lead",
+            "Hobby’s en wat je blij maakt. Daar zit vaak je kracht.",
+            "Hobbies and what makes you happy. That’s often where your strength is.",
+            "Hobby i to, co Cię cieszy. Tam często jest Twoja siła.",
+            "Hobby-uri și ce te bucură. Acolo e adesea puterea ta.",
+            "هوايات وما يسعدك. هناك غالباً تكون قوتك.");
+        Add("Discovery.Step5.Hobbies",
+            "Hobby’s", "Hobbies", "Hobby", "Hobby-uri", "هوايات");
+        Add("Discovery.Step5.HobbiesHint",
+            "Kies wat bij je past. Meer mag.",
+            "Pick what fits you. More is fine.",
+            "Wybierz, co do Ciebie pasuje. Możesz więcej.",
+            "Alege ce ți se potrivește. Poți mai multe.",
+            "اختر ما يناسبك. يمكنك المزيد.");
+        Add("Discovery.Step5.AboutMe",
+            "Over mij", "About me", "O mnie", "Despre mine", "عني");
+        Add("Discovery.Step5.AboutMeHint",
+            "Optioneel — een paar zinnen over jezelf.",
+            "Optional — a few sentences about yourself.",
+            "Opcjonalnie — kilka zdań o sobie.",
+            "Opțional — câteva propoziții despre tine.",
+            "اختياري — بضع جمل عن نفسك.");
+        Add("Discovery.Step5.AboutMeCount",
+            "{0} / 500", "{0} of 500", "{0} z 500", "{0} din 500", "{0} / ٥٠٠");
         Add("Discovery.Step6.Title", "Waar houd ik niet van", "What I don’t like", "Czego nie lubię", "Ce nu-mi place", "ما لا أحبه");
         Add("Discovery.Step6.Sub", "Overslaan mag", "Skipping is fine", "Można pominąć", "Poți sări", "يمكن التخطي");
+        Add("Discovery.Step6.Heading",
+            "Waar houd ik niet van?", "What don’t I like?", "Czego nie lubię?", "Ce nu-mi place?", "ما لا أحبه؟");
+        Add("Discovery.Step6.Lead",
+            "Ook dat is goed om te weten. Dan laten we minder werk zien dat niet bij je past.",
+            "That’s useful to know too. Then we show less work that doesn’t fit you.",
+            "To też warto wiedzieć. Pokażemy mniej pracy, która do Ciebie nie pasuje.",
+            "Și asta e bine de știut. Atunci arătăm mai puțină muncă care nu ți se potrivește.",
+            "هذا أيضاً مفيد معرفته. عندها نعرض عملاً أقل لا يناسبك.");
+        Add("Discovery.Step6.LeadEmployersOff",
+            "Ook dat is goed om te weten. Dan weten we beter wat bij je past.",
+            "That’s useful to know too. Then we better understand what fits you.",
+            "To też warto wiedzieć. Lepiej zrozumiemy, co do Ciebie pasuje.",
+            "Și asta e bine de știut. Înțelegem mai bine ce ți se potrivește.",
+            "هذا أيضاً مفيد معرفته. عندها نفهم أفضل ما يناسبك.");
+        Add("Discovery.Step6.Question",
+            "Wat liever niet?", "What would you rather avoid?", "Czego wolisz unikać?", "Ce ai prefera să eviți?", "ماذا تفضّل تجنّبه؟");
+        Add("Discovery.Step6.QuestionHint",
+            "Kies wat je wilt. Niets kiezen is ook goed.",
+            "Choose what you want. Choosing nothing is fine too.",
+            "Wybierz, co chcesz. Nic nie wybierać też jest w porządku.",
+            "Alege ce vrei. Să nu alegi nimic e în regulă.",
+            "اختر ما تريد. عدم الاختيار أيضاً جيد.");
+        Add("Discovery.Step6.SkipBadge",
+            "Overslaan mag", "Skipping is fine", "Można pominąć", "Poți sări", "يمكن التخطي");
+        Add("Discovery.Skip",
+            "Overslaan", "Skip", "Pomiń", "Sari", "تخطي");
+        Add("Discovery.Consent.Eyebrow",
+            "Toestemming", "Consent", "Zgoda", "Consimțământ", "موافقة");
+        Add("Discovery.Dislike.PrivateNoteEmployersOff",
+            "Alleen voor jou en je matches.",
+            "Only for you and your matches.",
+            "Tylko dla Ciebie i Twoich dopasowań.",
+            "Doar pentru tine și potrivirile tale.",
+            "لك ولمطابقاتك فقط.");
         Add("Discovery.Step7.Title", "Competenties", "Competencies", "Kompetencje", "Competențe", "الكفاءات");
         Add("Discovery.Step7.Sub", "Test · 5 vragen", "Test · 5 questions", "Test · 5 pytań", "Test · 5 întrebări", "اختبار · ٥ أسئلة");
         Add("Discovery.Step8.Title", "Beroepen", "Careers", "Zawody", "Meserii", "المهن");
@@ -262,12 +364,6 @@ public static class UiStringsDiscovery
         Add("Discovery.Step9.Sub", "Test · 5 vragen", "Test · 5 questions", "Test · 5 pytań", "Test · 5 întrebări", "اختبار · ٥ أسئلة");
         Add("Discovery.Step10.Title", "Waarden", "Values", "Wartości", "Valori", "القيم");
         Add("Discovery.Step10.Sub", "Test · 5 vragen", "Test · 5 questions", "Test · 5 pytań", "Test · 5 întrebări", "اختبار · ٥ أسئلة");
-        Add("Discovery.Todo.LaterSteps",
-            "Stappen 3–10 komen in het volgende deel. Je voortgang is bewaard — kom later terug of ga verder via Later verder.",
-            "Steps 3–10 come in the next part. Your progress is saved — come back later or use Continue later.",
-            "Kroki 3–10 w następnej części. Postęp zapisany — wróć później.",
-            "Pașii 3–10 vin în partea următoare. Progresul e salvat — revino mai târziu.",
-            "الخطوات ٣–١٠ في الجزء التالي. تقدّمك محفوظ — عُد لاحقاً.");
         Add("Discovery.Say.0",
             "Mijn oude schaal zit wat krap. Zullen we samen kijken wie eronder zit?",
             "My old shell feels a bit tight. Shall we look together at who’s underneath?",

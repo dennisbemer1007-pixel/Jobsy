@@ -41,11 +41,22 @@ public sealed class OnboardingProfileDraft
     public string EducationDirection { get; set; } = "";
     public double? HomeLat { get; set; }
     public double? HomeLng { get; set; }
+    public string? AboutMe { get; set; }
+    public string? DutchLevel { get; set; }
 
     public HashSet<string> Availability { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> Presets { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> DrivingLicenses { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> EmployerPreferences { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> Roles { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> Hobbies { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> Dislikes { get; } = new(StringComparer.OrdinalIgnoreCase);
     public List<CandidateEmployerHistory> Jobs { get; } = [];
+    public List<CandidateCertificate> Certificates { get; } = [];
+    public List<string> LearningGoals { get; } = [];
+    public List<string> HobbyFreeText { get; } = [];
+    public List<CandidateLanguage> SpokenLanguages { get; } = [];
+    public List<string> CustomDislikes { get; } = [];
     public List<AddressSuggestion> Suggestions { get; } = [];
 
     public EventCallback Changed { get; set; }

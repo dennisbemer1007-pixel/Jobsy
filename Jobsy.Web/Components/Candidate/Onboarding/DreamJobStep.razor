@@ -3,8 +3,21 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<h1 tabindex="-1">@(TitleKey is null ? Culture["Onboarding.Step6.Title"] : Culture[TitleKey])</h1>
-<p class="ob-wizard__lead">@Culture["Onboarding.Step6.Lead"]</p>
+@if (ShowHeading)
+{
+    @if (AsSubsection)
+    {
+        <h2 class="ob-wizard__subhead">@(TitleKey is null ? Culture["Onboarding.Step6.Title"] : Culture[TitleKey])</h2>
+    }
+    else
+    {
+        <h1 tabindex="-1">@(TitleKey is null ? Culture["Onboarding.Step6.Title"] : Culture[TitleKey])</h1>
+    }
+    @if (ShowLead)
+    {
+        <p class="ob-wizard__lead">@Culture["Onboarding.Step6.Lead"]</p>
+    }
+}
 <div class="ob-wizard__dream-search">
     <input role="combobox"
            aria-expanded="@(Draft.DreamSearch.Length > 0)"
@@ -49,4 +62,7 @@
     [Parameter] public EventCallback<KeyboardEventArgs> DreamKeyDown { get; set; }
     /// <summary>Optional override title key (journey: Discovery.Step4.DreamTitle).</summary>
     [Parameter] public string? TitleKey { get; set; }
+    [Parameter] public bool ShowHeading { get; set; } = true;
+    [Parameter] public bool ShowLead { get; set; } = true;
+    [Parameter] public bool AsSubsection { get; set; }
 }
