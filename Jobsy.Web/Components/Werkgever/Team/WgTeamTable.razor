@@ -1,0 +1,137 @@
+@namespace Jobsy.Web.Components.Werkgever.Team
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Models
+@using Jobsy.Web.Werkgever
+@inject CultureState Culture
+
+<EntDataTable Loading="Loading"
+              Empty="@(Rows.Count == 0)"
+              EmptyText="@Culture["WgTeam.Empty"]"
+              ShowRowActions="@CanManage">
+    <Header>
+        <th scope="col">@Culture["WgTeam.Col.Name"]</th>
+        <th scope="col">@Culture["WgTeam.Col.Role"]</th>
+        <th scope="col">@Culture["WgTeam.Col.Scope"]</th>
+        <th scope="col">@Culture["WgTeam.Col.Status"]</th>
+        <th scope="col">@Culture["WgTeam.Col.Active"]</th>
+    </Header>
+    <Rows>
+        @foreach (var u in Rows)
+        {
+            <tr>
+                <td>
+                    <div class="wg-team-user">
+                        <span class="wg-team-user__avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                        <span class="wg-team-user__meta">
+                            <strong>@u.FullName</strong>
+                            <span class="muted">@u.Email</span>
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <span class="status-pill @TeamRoleCopy.RolePillClass(u.Role)">
+                        @Culture[TeamRoleCopy.RoleLabelKey(u.Role)]
+                    </span>
+                </td>
+                <td>@ScopeFor(u)</td>
+                <td>
+                    <span class="status-pill @(u.IsActive ? "status-pill--ok" : "status-pill--neutral")">
+                        @(u.IsActive ? Culture["WgTeam.Status.Active"] : Culture["WgTeam.Status.Inactive"])
+                    </span>
+                </td>
+                <td class="tabular">@FormatLastActive(u.LastLoginAtUtc)</td>
+                @if (CanManage)
+                {
+                    <td>
+                        <RowActionsMenu>
+                            <button type="button" class="row-actions-menu__item" role="menuitem"
+                                    @onclick="() => OnEdit.InvokeAsync(u)">
+                                @Culture["WgTeam.Action.EditRoleScope"]
+                            </button>
+                            @if (u.IsActive)
+                            {
+                                <button type="button" class="row-actions-menu__item" role="menuitem"
+                                        @onclick="() => OnDeactivate.InvokeAsync(u)">
+                                    @Culture["WgTeam.Action.Deactivate"]
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="row-actions-menu__item" role="menuitem"
+                                        @onclick="() => OnActivate.InvokeAsync(u)">
+                                    @Culture["WgTeam.Action.Activate"]
+                                </button>
+                            }
+                        </RowActionsMenu>
+                    </td>
+                }
+            </tr>
+        }
+    </Rows>
+</EntDataTable>
+
+@code {
+    [Parameter] public IReadOnlyList<CompanyUserItem> Rows { get; set; } = [];
+    [Parameter] public IReadOnlyList<CompanySummary> Companies { get; set; } = [];
+    [Parameter] public IReadOnlyList<RegionItem> Regions { get; set; } = [];
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool CanManage { get; set; }
+    [Parameter] public EventCallback<CompanyUserItem> OnEdit { get; set; }
+    [Parameter] public EventCallback<CompanyUserItem> OnDeactivate { get; set; }
+    [Parameter] public EventCallback<CompanyUserItem> OnActivate { get; set; }
+
+    private string ScopeFor(CompanyUserItem u)
+    {
+        string? regionName = null;
+        if (string.Equals(u.Role, TeamRoleCopy.RegiomanagerKey, StringComparison.Ordinal))
+        {
+            regionName = Regions.FirstOrDefault(r =>
+                    u.MembershipCompanyIds.Any(id => r.Companies.Any(c => c.CompanyId == id))
+                    || (u.CompanyId is Guid cid && r.OrganizationCompanyId == cid))
+                ?.Name;
+        }
+
+        return TeamRoleCopy.ScopeLabel(u.Role, u.CompanyName, regionName, k => Culture[k]);
+    }
+
+    private string FormatLastActive(DateTime? utc)
+    {
+        if (utc is null)
+        {
+            return Culture["WgTeam.Active.Never"];
+        }
+
+        var local = utc.Value.ToLocalTime();
+        var age = DateTime.Now - local;
+        if (age.TotalMinutes < 60)
+        {
+            return string.Format(Culture["WgTeam.Active.Minutes"], Math.Max(1, (int)age.TotalMinutes));
+        }
+
+        if (age.TotalHours < 48)
+        {
+            return string.Format(Culture["WgTeam.Active.Hours"], Math.Max(1, (int)age.TotalHours));
+        }
+
+        if (age.TotalDays < 30)
+        {
+            return string.Format(Culture["WgTeam.Active.Days"], (int)age.TotalDays);
+        }
+
+        return local.ToString("dd-MM-yyyy");
+    }
+
+    private static string Initials(string name)
+    {
+        var parts = (name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+        {
+            return "?";
+        }
+
+        return parts.Length == 1
+            ? parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant()
+            : $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+}

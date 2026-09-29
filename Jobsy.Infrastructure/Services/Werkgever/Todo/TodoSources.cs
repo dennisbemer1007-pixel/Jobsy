@@ -303,7 +303,7 @@ public sealed class NoManagerTodoSource : ITodoSource
             "WgTodo.NoManager.Meta",
             null,
             action,
-            $"/werkgever/organisatie/team?invite={first.Id:D}",
+            $"/werkgever/organisatie/team?invite=vestiging:{first.Id:D}",
             missing.Count,
             missing.Select(m => m.Id).ToList());
     }

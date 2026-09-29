@@ -47,6 +47,11 @@ public static class WerkgeverRightsMatrix
         new("api/applications/{id}/react", true, false, true),
         new("api/applications/{id}/contact", true, false, true),
         new("api/applications/vacancies/{vacancyId}/fulfill/{applicationId}", true, false, true),
+        // Organisatie / team (05)
+        new("api/company-users/invite", true, false, false),
+        new("api/company-users/{id}", true, false, false),
+        new("api/regions", true, true, false),
+        new("api/companies/from-kvk", true, false, false),
     ];
 
     public static bool RoleAllowed(PageRow row, EmployerRole role) => role switch

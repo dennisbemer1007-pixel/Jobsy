@@ -1,0 +1,310 @@
+@namespace Jobsy.Web.Components.Werkgever.Team
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Models
+@using Jobsy.Web.Werkgever
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<EntDrawer Open="Open" OpenChanged="OnOpenChanged" Title="@Culture["WgInvite.Title"]" Placement="end">
+    <ChildContent>
+        <p class="wg-invite__lead">@Culture["WgInvite.Lead"]</p>
+
+        @if (_mode == InviteMode.Intermediary)
+        {
+            <label class="wg-invite__field">
+                <span>@Culture["WgInvite.Email"]</span>
+                <input type="email" @bind="_email" @bind:event="oninput" autocomplete="email" required />
+            </label>
+            <label class="wg-invite__field">
+                <span>@Culture["WgInvite.Name"]</span>
+                <input @bind="_fullName" @bind:event="oninput" required />
+            </label>
+            <p class="muted">@Culture["WgInvite.IntermediaryNote"]</p>
+        }
+        else
+        {
+            <label class="wg-invite__field">
+                <span>@Culture["WgInvite.Email"]</span>
+                <input type="email" @bind="_email" @bind:event="oninput" autocomplete="email" required />
+            </label>
+
+            <fieldset class="wg-invite__roles">
+                <legend>@Culture["WgInvite.Role"]</legend>
+                @foreach (var card in TeamRoleCopy.Cards)
+                {
+                    var selected = string.Equals(_role, card.Role, StringComparison.Ordinal);
+                    <label class="wg-invite__role-card @(selected ? "is-selected" : null)">
+                        <input type="radio"
+                               name="wg-invite-role"
+                               checked="@selected"
+                               @onchange="() => SelectRole(card.Role)" />
+                        <span class="wg-invite__role-card__body">
+                            <strong>@Culture[card.TitleKey]</strong>
+                            <span class="muted">@Culture[card.BodyKey]</span>
+                        </span>
+                    </label>
+                }
+            </fieldset>
+
+            @if (string.Equals(_role, TeamRoleCopy.RegiomanagerKey, StringComparison.Ordinal))
+            {
+                <label class="wg-invite__field">
+                    <span>@Culture["WgInvite.Region"]</span>
+                    <select @bind="_regionId">
+                        <option value="">@Culture["WgInvite.SelectRegion"]</option>
+                        @foreach (var r in Regions)
+                        {
+                            <option value="@r.Id">@r.Name</option>
+                        }
+                    </select>
+                </label>
+            }
+            else if (string.Equals(_role, TeamRoleCopy.VestigingsmanagerKey, StringComparison.Ordinal))
+            {
+                <label class="wg-invite__field">
+                    <span>@Culture["WgInvite.Branch"]</span>
+                    <select @bind="_branchId">
+                        <option value="">@Culture["WgInvite.SelectBranch"]</option>
+                        @foreach (var c in BranchChoices)
+                        {
+                            <option value="@c.Id">@BranchLabel(c)</option>
+                        }
+                    </select>
+                </label>
+            }
+
+            <p class="wg-invite__privacy" role="note">@Culture["WgInvite.Privacy"]</p>
+        }
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error" role="alert">@_error</p>
+        }
+    </ChildContent>
+    <Footer>
+        <button type="button"
+                class="btn-compact btn-compact--primary"
+                disabled="@_busy"
+                @onclick="SubmitAsync">
+            @Culture["WgInvite.Submit"]
+        </button>
+        <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseAsync">
+            @Culture["Common.Cancel"]
+        </button>
+    </Footer>
+</EntDrawer>
+
+@code {
+    public enum InviteMode { Employer, Intermediary }
+
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public InviteMode Mode { get; set; } = InviteMode.Employer;
+    [Parameter] public IReadOnlyList<CompanySummary> Companies { get; set; } = [];
+    [Parameter] public IReadOnlyList<RegionItem> Regions { get; set; } = [];
+    [Parameter] public string? PrefillInvite { get; set; }
+    [Parameter] public EventCallback<CompanyUserItem> OnInvited { get; set; }
+
+    private InviteMode _mode;
+    private string _email = "";
+    private string _fullName = "";
+    private string _role = TeamRoleCopy.VestigingsmanagerKey;
+    private string _branchId = "";
+    private string _regionId = "";
+    private bool _busy;
+    private string? _error;
+
+    private IReadOnlyList<CompanySummary> BranchChoices =>
+        Companies.Where(c => c.ParentCompanyId is not null).OrderBy(c => c.Name).ToList();
+
+    private IReadOnlyList<CompanySummary> OrgChoices =>
+        Companies.Where(c => c.ParentCompanyId is null).OrderBy(c => c.Name).ToList();
+
+    protected override void OnParametersSet()
+    {
+        _mode = Mode;
+        if (!Open)
+        {
+            return;
+        }
+
+        ApplyPrefill(PrefillInvite);
+    }
+
+    private void ApplyPrefill(string? invite)
+    {
+        if (string.IsNullOrWhiteSpace(invite))
+        {
+            return;
+        }
+
+        var value = invite.Trim();
+        if (value.StartsWith("vestiging:", StringComparison.OrdinalIgnoreCase))
+        {
+            value = value["vestiging:".Length..];
+        }
+
+        if (Guid.TryParse(value, out var branchId)
+            && BranchChoices.Any(c => c.Id == branchId))
+        {
+            _role = TeamRoleCopy.VestigingsmanagerKey;
+            _branchId = branchId.ToString("D");
+        }
+        else if (value.StartsWith("region:", StringComparison.OrdinalIgnoreCase)
+                 && Guid.TryParse(value["region:".Length..], out var regionId)
+                 && Regions.Any(r => r.Id == regionId))
+        {
+            _role = TeamRoleCopy.RegiomanagerKey;
+            _regionId = regionId.ToString("D");
+        }
+    }
+
+    private void SelectRole(string role)
+    {
+        _role = role;
+        _error = null;
+    }
+
+    private async Task OnOpenChanged(bool open)
+    {
+        Open = open;
+        if (!open)
+        {
+            ResetForm();
+        }
+
+        await OpenChanged.InvokeAsync(open);
+    }
+
+    private async Task CloseAsync()
+    {
+        Open = false;
+        ResetForm();
+        await OpenChanged.InvokeAsync(false);
+    }
+
+    private void ResetForm()
+    {
+        _email = "";
+        _fullName = "";
+        _error = null;
+        _busy = false;
+        if (_mode != InviteMode.Intermediary)
+        {
+            _role = TeamRoleCopy.VestigingsmanagerKey;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        _error = null;
+        if (string.IsNullOrWhiteSpace(_email) || !_email.Contains('@'))
+        {
+            _error = Culture["WgInvite.Validation.Email"];
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            CompanyUserItem? result;
+            if (_mode == InviteMode.Intermediary)
+            {
+                if (string.IsNullOrWhiteSpace(_fullName))
+                {
+                    _error = Culture["WgInvite.Validation.Name"];
+                    return;
+                }
+
+                result = await Api.InviteCompanyUserAsync(new InviteUserForm(
+                    _email.Trim(),
+                    _fullName.Trim(),
+                    "Intermediary",
+                    PrimaryCompanyId: null));
+            }
+            else
+            {
+                result = await InviteEmployerAsync();
+            }
+
+            if (result is not null)
+            {
+                await OnInvited.InvokeAsync(result);
+                await CloseAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task<CompanyUserItem?> InviteEmployerAsync()
+    {
+        Guid? primary = null;
+        Guid[]? memberships = null;
+        Guid? regionId = null;
+
+        if (string.Equals(_role, TeamRoleCopy.BedrijfsmanagerKey, StringComparison.Ordinal))
+        {
+            var org = OrgChoices.FirstOrDefault();
+            if (org is null)
+            {
+                _error = Culture["WgInvite.Validation.Org"];
+                return null;
+            }
+
+            primary = org.Id;
+        }
+        else if (string.Equals(_role, TeamRoleCopy.RegiomanagerKey, StringComparison.Ordinal))
+        {
+            if (!Guid.TryParse(_regionId, out var rid))
+            {
+                _error = Culture["WgInvite.Validation.Region"];
+                return null;
+            }
+
+            var region = Regions.FirstOrDefault(r => r.Id == rid);
+            if (region is null)
+            {
+                _error = Culture["WgInvite.Validation.Region"];
+                return null;
+            }
+
+            regionId = rid;
+            primary = region.OrganizationCompanyId;
+            memberships = region.Companies.Select(c => c.CompanyId).ToArray();
+        }
+        else
+        {
+            if (!Guid.TryParse(_branchId, out var bid))
+            {
+                _error = Culture["WgInvite.Validation.Branch"];
+                return null;
+            }
+
+            primary = bid;
+            memberships = [bid];
+        }
+
+        var name = TeamRoleCopy.FullNameFromEmail(_email);
+        return await Api.InviteCompanyUserAsync(new InviteUserForm(
+            _email.Trim(),
+            name,
+            _role,
+            primary,
+            memberships,
+            regionId));
+    }
+
+    private string BranchLabel(CompanySummary c)
+    {
+        var region = Regions.FirstOrDefault(r => r.Companies.Any(x => x.CompanyId == c.Id))?.Name;
+        return string.IsNullOrWhiteSpace(region) ? c.Name : $"{c.Name} · {region}";
+    }
+}

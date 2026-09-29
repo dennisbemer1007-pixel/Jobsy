@@ -466,6 +466,7 @@ public class CompanyUserItem
     public bool IsActive { get; set; } = true;
     public string? TemporaryPassword { get; set; }
     public string? LoginUrl { get; set; }
+    public DateTime? LastLoginAtUtc { get; set; }
 }
 
 public record InviteUserForm(

@@ -2,38 +2,629 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager,Admin")]
 @using Jobsy.Web.Components.Ui.Enterprise
-@using Jobsy.Web.Components.Werkgever.Sections
+@using Jobsy.Web.Components.Werkgever.Org
+@using Jobsy.Web.Components.Werkgever.Team
+@using Jobsy.Web.Models
+@using Jobsy.Web.Werkgever
 @using Microsoft.AspNetCore.WebUtilities
-@inject NavigationManager Navigation
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
 @inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject IHostEnvironment Env
+@implements IDisposable
 
 <PageTitle>@Culture["WgNav.BranchesRegions"] · Lobsy</PageTitle>
 
-<WgPageShell>
-    <EntTabs Tabs="_tabs" ActiveKey="@_tab" BasePath="/werkgever/organisatie/vestigingen" />
-    @if (_tab == "regios")
-    {
-        <RegionsSection />
-    }
-    else
-    {
-        <BranchesSection />
-    }
+<WgPageShell Title="@Culture["WgNav.BranchesRegions"]"
+             Lead="@Culture["WgOrg.Lead"]"
+             ReadOnlyHint="@(Role == EmployerRole.Regiomanager)">
+    <Actions>
+        @if (CanManage)
+        {
+            <button type="button" class="btn-compact" @onclick="ExportCsv">@Culture["WgOrg.Export"]</button>
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="OpenInvite">
+                @Culture["WgInvite.Title"]
+            </button>
+        }
+    </Actions>
+    <ChildContent>
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        else
+        {
+            <WgOrgTree @ref="_tree"
+                       Roots="_roots"
+                       SelectedKey="_selectedKey"
+                       SelectedKeyChanged="OnNodeSelected"
+                       CanManage="CanManage"
+                       ShowAddRegion="ShowAddRegion"
+                       OnAddRegion="OpenAddRegion"
+                       OnAddBranch="OpenAddBranch"
+                       OnEditSelected="OpenEditSelected">
+                <DetailContent>
+                    <EntTabs Tabs="DetailTabs" ActiveKey="@_detailTab" BasePath="/werkgever/organisatie/vestigingen"
+                             ExtraQuery="@DetailExtraQuery" />
+                    @if (_detailTab == "team")
+                    {
+                        <WgTeamTable Rows="DetailTeam"
+                                     Companies="_companies"
+                                     Regions="_regions"
+                                     CanManage="CanManage"
+                                     OnEdit="EditFromTree"
+                                     OnDeactivate="ConfirmDeactivate"
+                                     OnActivate="ActivateAsync" />
+                    }
+                    else if (_detailTab == "tokens")
+                    {
+                        <p class="muted">@Culture["WgOrg.TokensLinkLead"]</p>
+                        <a class="btn-compact btn-compact--primary" href="@TokensHref">
+                            @Culture["WgOrg.TokensLink"]
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="table-list">
+                            @foreach (var child in DetailBranches)
+                            {
+                                <div class="table-row">
+                                    <div>
+                                        <strong>@child.Name</strong>
+                                        @if (child.MissingManager)
+                                        {
+                                            <span class="status-pill status-pill--warning">@Culture["WgOrg.NoManager"]</span>
+                                        }
+                                        <span class="muted">
+                                            @string.Format(Culture["WgOrg.BranchMeta"], child.LiveVacancies, child.TokenBalance.ToString("0.##"))
+                                        </span>
+                                    </div>
+                                    <button type="button" class="btn-compact" @onclick="() => OnNodeSelected(child.Key)">
+                                        @Culture["Common.Details"]
+                                    </button>
+                                </div>
+                            }
+                            @if (DetailBranches.Count == 0)
+                            {
+                                <p class="muted">@Culture["WgOrg.NoChildBranches"]</p>
+                            }
+                        </div>
+                    }
+                </DetailContent>
+            </WgOrgTree>
+        }
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message @(_messageIsError ? "error" : null)" role="status">@_message</p>
+        }
+    </ChildContent>
 </WgPageShell>
 
+@if (CanManage)
+{
+    <WgInviteDrawer Open="_inviteOpen"
+                    OpenChanged="OnInviteOpenChanged"
+                    Companies="_companies"
+                    Regions="_regions"
+                    PrefillInvite="_invitePrefill"
+                    OnInvited="OnInvited" />
+}
+
+@if (_kvkOpen)
+{
+    <EntDrawer Open="true" OpenChanged="OnKvkOpenChanged" Title="@Culture["WgOrg.AddBranchKvk"]">
+        <ChildContent>
+            <form class="login-form" @onsubmit="LookupKvkAsync" @onsubmit:preventDefault>
+                <label>
+                    @Culture["WgOrg.KvkNumber"]
+                    <input @bind="_kvkNumber" required />
+                </label>
+                @if (Env.IsDevelopment())
+                {
+                    <p class="muted">@Culture["WgOrg.KvkDemoHint"]</p>
+                }
+                <button class="btn-compact btn-compact--primary" type="submit" disabled="@_busy">
+                    @Culture["WgOrg.KvkSearch"]
+                </button>
+            </form>
+            @if (_establishments.Count > 0)
+            {
+                <div class="table-list wg-org-kvk-results">
+                    @foreach (var e in _establishments)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@e.Name</strong>
+                                <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
+                            </div>
+                            @if (e.IsInUse)
+                            {
+                                <span class="muted">@Culture["WgOrg.KvkInUse"]</span>
+                            }
+                            else
+                            {
+                                <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => RegisterKvkAsync(e)">
+                                    @Culture["Common.Add"]
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(_kvkMessage))
+            {
+                <p class="state-message">@_kvkMessage</p>
+            }
+        </ChildContent>
+    </EntDrawer>
+}
+
+@if (_regionDialogOpen)
+{
+    <EntDrawer Open="true" OpenChanged="OnRegionDialogChanged" Title="@RegionDialogTitle">
+        <ChildContent>
+            <label class="wg-invite__field">
+                <span>@Culture["Common.Name"]</span>
+                <input @bind="_regionName" required />
+            </label>
+            <fieldset class="wg-invite__field">
+                <legend>@Culture["WgOrg.RegionBranches"]</legend>
+                @foreach (var b in _companies.Where(c => c.ParentCompanyId is not null))
+                {
+                    <label class="scope-option">
+                        <input type="checkbox"
+                               checked="@_regionBranchIds.Contains(b.Id)"
+                               @onchange="e => ToggleRegionBranch(b.Id, e)" />
+                        <span>@b.Name</span>
+                    </label>
+                }
+            </fieldset>
+            @if (!string.IsNullOrEmpty(_regionError))
+            {
+                <p class="state-message error">@_regionError</p>
+            }
+        </ChildContent>
+        <Footer>
+            <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="SaveRegionAsync">
+                @Culture["Common.Save"]
+            </button>
+            @if (_editRegionId is not null)
+            {
+                <button type="button" class="btn-compact btn-compact--danger" disabled="@_busy" @onclick="DeleteRegionAsync">
+                    @Culture["Common.Delete"]
+                </button>
+            }
+            <button type="button" class="btn-compact" @onclick="CloseRegionDialog">@Culture["Common.Cancel"]</button>
+        </Footer>
+    </EntDrawer>
+}
+
 @code {
-    private readonly List<EntTabs.Tab> _tabs = [];
-    private string _tab = "vestigingen";
+    private WgOrgTree? _tree;
+    private List<CompanySummary> _companies = [];
+    private List<RegionItem> _regions = [];
+    private List<CompanyUserItem> _users = [];
+    private IReadOnlyList<OrgTreeNode> _roots = [];
+    private string? _selectedKey;
+    private string _detailTab = "vestigingen";
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private bool _messageIsError;
+    private bool _inviteOpen;
+    private string? _invitePrefill;
+    private bool _kvkOpen;
+    private string _kvkNumber = "11223344";
+    private List<KvkEstablishmentItem> _establishments = [];
+    private string? _kvkMessage;
+    private bool _regionDialogOpen;
+    private Guid? _editRegionId;
+    private string _regionName = "";
+    private HashSet<Guid> _regionBranchIds = [];
+    private string? _regionError;
+    private bool _expandRegionsOnLoad;
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private bool CanManage => Role == EmployerRole.Bedrijfsmanager;
+    private bool ShowAddRegion => CanManage && _companies.Count(c => c.ParentCompanyId is not null) >= 2;
+
+    private OrgTreeNode? Selected => OrgTreeBuilder.Find(_roots, _selectedKey);
+
+    private string DetailExtraQuery => string.IsNullOrWhiteSpace(_selectedKey)
+        ? ""
+        : $"node={Uri.EscapeDataString(_selectedKey)}";
+
+    private string TokensHref =>
+        $"/werkgever/tokens/verbruik?node={Uri.EscapeDataString(_selectedKey ?? "")}";
+
+    private string RegionDialogTitle => _editRegionId is null
+        ? Culture["WgOrg.AddRegion"]
+        : Culture["WgOrg.EditRegion"];
+
+    private List<EntTabs.Tab> DetailTabs =>
+    [
+        new("vestigingen", Culture["WgOrg.Tab.Branches"]),
+        new("team", string.Format(Culture["WgOrg.Tab.Team"], DetailTeam.Count)),
+        new("tokens", Culture["WgOrg.Tab.Tokens"])
+    ];
+
+    private IReadOnlyList<OrgTreeNode> DetailBranches
+    {
+        get
+        {
+            if (Selected is null)
+            {
+                return [];
+            }
+
+            if (Selected.Kind == OrgTreeNodeKind.Vestiging)
+            {
+                return [Selected];
+            }
+
+            return OrgTreeBuilder.Flatten(Selected.Children ?? [])
+                .Where(n => n.Kind == OrgTreeNodeKind.Vestiging)
+                .ToList();
+        }
+    }
+
+    private IReadOnlyList<CompanyUserItem> DetailTeam
+    {
+        get
+        {
+            if (Selected is null)
+            {
+                return [];
+            }
+
+            var branchIds = DetailBranches.Select(b => b.Id).ToHashSet();
+            if (Selected.Kind == OrgTreeNodeKind.Org)
+            {
+                return _users.Where(u =>
+                        u.CompanyId == Selected.Id
+                        || (u.CompanyId is Guid cid && branchIds.Contains(cid))
+                        || u.MembershipCompanyIds.Any(branchIds.Contains)
+                        || u.MembershipCompanyIds.Contains(Selected.Id))
+                    .ToList();
+            }
+
+            if (Selected.Kind == OrgTreeNodeKind.Region)
+            {
+                return _users.Where(u =>
+                        (u.CompanyId is Guid cid && branchIds.Contains(cid))
+                        || u.MembershipCompanyIds.Any(branchIds.Contains))
+                    .ToList();
+            }
+
+            return _users.Where(u =>
+                    u.CompanyId == Selected.Id || u.MembershipCompanyIds.Contains(Selected.Id))
+                .ToList();
+        }
+    }
 
     protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
     {
-        _tabs.Add(new("vestigingen", Culture["WgNav.BranchesRegions"]));
-        _tabs.Add(new("regios", Culture["WgTabs.Regions"]));
-        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("tab", out var tab)
-            && string.Equals(tab.ToString(), "regios", StringComparison.OrdinalIgnoreCase))
+        ParseQuery();
+        try
         {
-            _tab = "regios";
+            await ReloadAsync();
+            if (_expandRegionsOnLoad)
+            {
+                await InvokeAsync(() => _tree?.ExpandRegions());
+            }
         }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ParseQuery()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var q = QueryHelpers.ParseQuery(uri.Query);
+        if (q.TryGetValue("node", out var node))
+        {
+            _selectedKey = node.ToString();
+        }
+
+        if (q.TryGetValue("tab", out var tab))
+        {
+            var t = tab.ToString();
+            if (string.Equals(t, "regios", StringComparison.OrdinalIgnoreCase))
+            {
+                _detailTab = "vestigingen";
+                _selectedKey ??= "org";
+                _expandRegionsOnLoad = true;
+            }
+            else if (string.Equals(t, "team", StringComparison.OrdinalIgnoreCase)
+                     || string.Equals(t, "tokens", StringComparison.OrdinalIgnoreCase)
+                     || string.Equals(t, "vestigingen", StringComparison.OrdinalIgnoreCase))
+            {
+                _detailTab = t.ToLowerInvariant();
+            }
+        }
+
+        if (q.TryGetValue("invite", out var invite) && CanManage)
+        {
+            _invitePrefill = invite.ToString();
+            _inviteOpen = true;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _companies = (await Api.GetMyCompaniesAsync()).ToList();
+        try { _regions = (await Api.GetRegionsAsync()).ToList(); }
+        catch { _regions = []; }
+
+        try { _users = (await Api.GetCompanyUsersAsync()).ToList(); }
+        catch { _users = []; }
+
+        var managed = _users
+            .Where(u => u.IsActive
+                        && string.Equals(u.Role, "BranchManager", StringComparison.Ordinal)
+                        && u.CompanyId is not null)
+            .Select(u => u.CompanyId!.Value)
+            .ToHashSet();
+        _roots = OrgTreeBuilder.Build(_companies, _regions, managed);
+        _selectedKey ??= _roots.FirstOrDefault()?.Key;
+    }
+
+    private Task OnNodeSelected(string key)
+    {
+        _selectedKey = key;
+        var qs = $"node={Uri.EscapeDataString(key)}";
+        if (!string.Equals(_detailTab, "vestigingen", StringComparison.OrdinalIgnoreCase))
+        {
+            qs += $"&tab={Uri.EscapeDataString(_detailTab)}";
+        }
+
+        Nav.NavigateTo($"/werkgever/organisatie/vestigingen?{qs}", replace: true);
+        return Task.CompletedTask;
+    }
+
+    private void OpenInvite()
+    {
+        _invitePrefill = Selected?.Kind == OrgTreeNodeKind.Vestiging
+            ? $"vestiging:{Selected.Id:D}"
+            : null;
+        _inviteOpen = true;
+    }
+
+    private Task OnInviteOpenChanged(bool open)
+    {
+        _inviteOpen = open;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnInvited(CompanyUserItem _)
+    {
+        await ReloadAsync();
+        _message = Culture["WgInvite.Success"];
+        _messageIsError = false;
+    }
+
+    private void OpenAddBranch() => _kvkOpen = true;
+
+    private Task OnKvkOpenChanged(bool open)
+    {
+        _kvkOpen = open;
+        if (!open)
+        {
+            _establishments = [];
+            _kvkMessage = null;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task LookupKvkAsync()
+    {
+        _busy = true;
+        _kvkMessage = null;
+        try
+        {
+            _establishments = (await Api.GetKvkEstablishmentsAsync(_kvkNumber.Trim())).ToList();
+            if (_establishments.Count == 0)
+            {
+                _kvkMessage = Culture["WgOrg.KvkEmpty"];
+            }
+        }
+        catch (Exception ex)
+        {
+            _kvkMessage = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RegisterKvkAsync(KvkEstablishmentItem e)
+    {
+        _busy = true;
+        try
+        {
+            var org = _companies.FirstOrDefault(c => c.ParentCompanyId is null);
+            await Api.RegisterEstablishmentAsync(_kvkNumber.Trim(), e.KvkEstablishmentId, org?.Id);
+            await ReloadAsync();
+            _kvkOpen = false;
+            _message = Culture["WgOrg.BranchAdded"];
+            _messageIsError = false;
+        }
+        catch (Exception ex)
+        {
+            _kvkMessage = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void OpenAddRegion()
+    {
+        _editRegionId = null;
+        _regionName = "";
+        _regionBranchIds = [];
+        _regionError = null;
+        _regionDialogOpen = true;
+    }
+
+    private void OpenEditSelected()
+    {
+        if (Selected?.Kind != OrgTreeNodeKind.Region || Selected.Id == Guid.Empty)
+        {
+            return;
+        }
+
+        var region = _regions.FirstOrDefault(r => r.Id == Selected.Id);
+        if (region is null)
+        {
+            return;
+        }
+
+        _editRegionId = region.Id;
+        _regionName = region.Name;
+        _regionBranchIds = region.Companies.Select(c => c.CompanyId).ToHashSet();
+        _regionError = null;
+        _regionDialogOpen = true;
+    }
+
+    private Task OnRegionDialogChanged(bool open)
+    {
+        _regionDialogOpen = open;
+        return Task.CompletedTask;
+    }
+
+    private void CloseRegionDialog() => _regionDialogOpen = false;
+
+    private void ToggleRegionBranch(Guid id, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b
+                 || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on)
+        {
+            _regionBranchIds.Add(id);
+        }
+        else
+        {
+            _regionBranchIds.Remove(id);
+        }
+    }
+
+    private async Task SaveRegionAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_regionName))
+        {
+            _regionError = Culture["WgOrg.RegionNameRequired"];
+            return;
+        }
+
+        _busy = true;
+        _regionError = null;
+        try
+        {
+            var org = _companies.FirstOrDefault(c => c.ParentCompanyId is null);
+            if (org is null)
+            {
+                _regionError = Culture["WgInvite.Validation.Org"];
+                return;
+            }
+
+            if (_editRegionId is Guid id)
+            {
+                await Api.UpdateRegionAsync(id, _regionName.Trim(), _regionBranchIds.ToArray());
+            }
+            else
+            {
+                await Api.CreateRegionAsync(_regionName.Trim(), org.Id, _regionBranchIds.ToArray());
+            }
+
+            await ReloadAsync();
+            _regionDialogOpen = false;
+            _message = Culture["WgOrg.RegionSaved"];
+            _messageIsError = false;
+        }
+        catch (Exception ex)
+        {
+            _regionError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeleteRegionAsync()
+    {
+        if (_editRegionId is not Guid id)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Api.DeleteRegionAsync(id);
+            await ReloadAsync();
+            _regionDialogOpen = false;
+            _message = Culture["WgOrg.RegionDeleted"];
+            _messageIsError = false;
+        }
+        catch (Exception ex)
+        {
+            _regionError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void EditFromTree(CompanyUserItem _)
+        => Nav.NavigateTo("/werkgever/organisatie/team");
+
+    private void ConfirmDeactivate(CompanyUserItem _) { /* confirm on team page */ }
+
+    private async Task ActivateAsync(CompanyUserItem user)
+    {
+        try
+        {
+            await Api.UpdateCompanyUserAsync(user.Id, new UpdateCompanyUserForm(
+                user.FullName, user.Role, user.CompanyId, user.MembershipCompanyIds.ToArray(), true));
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _messageIsError = true;
+        }
+    }
+
+    private void ExportCsv()
+    {
+        var count = OrgTreeBuilder.Flatten(_roots).Count(x => x.Kind == OrgTreeNodeKind.Vestiging);
+        _message = string.Format(Culture["WgOrg.ExportCount"], count);
+        _messageIsError = false;
     }
 }

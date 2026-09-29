@@ -121,7 +121,8 @@ public record CompanyUserDto(
     IReadOnlyList<Guid> MembershipCompanyIds,
     bool IsActive = true,
     string? TemporaryPassword = null,
-    string? LoginUrl = null);
+    string? LoginUrl = null,
+    DateTime? LastLoginAtUtc = null);
 
 public record InviteUserRequest(
     string Email,
