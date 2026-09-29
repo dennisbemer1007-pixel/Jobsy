@@ -5,7 +5,7 @@ namespace Jobsy.Infrastructure.Data;
 
 /// <summary>
 /// Shared mock media + copy helpers for vacancy seeders and backfill.
-/// Uses local vacancy illustrations so demo listings do not contact an image provider.
+/// Uses local category fallback photos so demo listings do not contact an image provider.
 /// </summary>
 internal static class MockVacancyMedia
 {
@@ -40,7 +40,8 @@ internal static class MockVacancyMedia
 
     /// <summary>
     /// True when the stored image is missing, a third-party placeholder (Unsplash/picsum),
-    /// or otherwise not a local/upload URL. Local illustrations, uploads and data-URIs are kept.
+    /// an old local work-type SVG, or otherwise not a usable local/upload URL.
+    /// Current category WebP fallbacks, uploads and data-URIs are kept.
     /// </summary>
     public static bool NeedsImageBackfill(string? imageUrl)
     {
@@ -52,6 +53,17 @@ internal static class MockVacancyMedia
         if (VacancyImageUrls.IsBrokenUnsplash(imageUrl) || VacancyImageUrls.IsPicsum(imageUrl))
         {
             return true;
+        }
+
+        // One-time migration: replace mug/leaf/briefcase SVGs with category WebP photos.
+        if (VacancyImageUrls.IsLocalVacancySvg(imageUrl))
+        {
+            return true;
+        }
+
+        if (VacancyImageUrls.IsLocalVacancyFallbackPhoto(imageUrl))
+        {
+            return false;
         }
 
         if (imageUrl.StartsWith("/images/", StringComparison.OrdinalIgnoreCase)

@@ -107,7 +107,7 @@
                 var vacancyHref = $"/vacancies/{a.VacancyId}";
                 var pictureKind = a.PictureKind ?? "placeholder";
                 var pictureUrl = string.IsNullOrWhiteSpace(a.PictureUrl)
-                    ? "/images/vacancies/flex-0.svg"
+                    ? Jobsy.Core.Media.VacancyImageUrls.Placeholder(Guid.Empty, "flex")
                     : a.PictureUrl;
                 <article class="application-card @(hired ? "application-card--hired" : "") @(rejectedTrack ? "application-card--closed" : "") @(menuOpen ? "is-menu-open" : "")">
                     <a class="application-card__img-link"

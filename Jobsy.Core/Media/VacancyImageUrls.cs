@@ -5,17 +5,18 @@ namespace Jobsy.Core.Media;
 /// <summary>
 /// Resolves vacancy photos for list/detail/map. Stored http(s), <c>/images/…</c> and
 /// data-URI values are kept after path cleanup. Empty or junk values fall through to
-/// a company logo, then a local work-type SVG — never to the Lobsy brand mark.
-/// Broken Unsplash / picsum URLs map to a local work-type SVG when a vacancy id is known.
+/// a company logo, then a local work-type fallback photo — never to the Lobsy brand mark.
+/// Broken Unsplash / picsum URLs map to a local work-type photo when a vacancy id is known.
 /// </summary>
 public static class VacancyImageUrls
 {
-    public const int IntrinsicWidth = 600;
-    public const int IntrinsicHeight = 400;
+    public const int IntrinsicWidth = 800;
+    public const int IntrinsicHeight = 533;
     public const int ListCardWidth = 400;
     public const string LocalPrefix = "/images/vacancies/";
     public const string ImagesPrefix = "/images/";
-    public const int VariantCount = 2;
+    public const string FallbackExtension = ".webp";
+    public const string FallbackSrcSetWidth = "400";
 
     private static readonly string[] ImageExtensions =
     [
@@ -40,11 +41,27 @@ public static class VacancyImageUrls
     public static string Placeholder(Guid vacancyId, WorkType workTypes = WorkType.None)
         => Placeholder(vacancyId, FirstSlug(workTypes));
 
+    /// <summary>
+    /// Category fallback photo (~800px WebP). <paramref name="vacancyId"/> is kept for
+    /// call-site compatibility; one photo is used per work-type slug.
+    /// </summary>
     public static string Placeholder(Guid vacancyId, string? workType)
     {
+        _ = vacancyId;
         var slug = NormalizeSlug(workType);
-        var variant = (int)(StableHash(vacancyId) % VariantCount);
-        return $"{LocalPrefix}{slug}-{variant}.svg";
+        return $"{LocalPrefix}{slug}{FallbackExtension}";
+    }
+
+    /// <summary>400px companion for a primary fallback photo returned by <see cref="Placeholder"/>.</summary>
+    public static string PlaceholderSrcSetCompanion(string placeholderUrl)
+    {
+        if (!IsLocalVacancyFallbackPhoto(placeholderUrl))
+        {
+            return placeholderUrl;
+        }
+
+        var slug = FallbackSlugFromUrl(placeholderUrl);
+        return $"{LocalPrefix}{slug}-{FallbackSrcSetWidth}{FallbackExtension}";
     }
 
     /// <summary>Same-origin bytes endpoint so list JSON never embeds data-URIs.</summary>
@@ -57,7 +74,7 @@ public static class VacancyImageUrls
 
     /// <summary>
     /// List/map JSON: never ship Base64. Inline photos and third-party placeholders
-    /// become a local work-type SVG (or company logo via <see cref="Resolve"/>).
+    /// become a local work-type photo (or company logo via <see cref="Resolve"/>).
     /// Prefer <see cref="ForCard"/> for card/list/popup so inline photos and logos match detail.
     /// </summary>
     public static string? ForPublicList(string? imageUrl, Guid? vacancyId = null, string? workType = null)
@@ -67,7 +84,8 @@ public static class VacancyImageUrls
             || normalized.StartsWith("blob:", StringComparison.OrdinalIgnoreCase)
             || IsInlineDataUri(normalized)
             || IsPicsum(normalized)
-            || IsBrokenUnsplash(normalized))
+            || IsBrokenUnsplash(normalized)
+            || IsLocalVacancySvg(normalized))
         {
             return vacancyId is Guid id && id != Guid.Empty
                 ? Placeholder(id, workType)
@@ -82,10 +100,10 @@ public static class VacancyImageUrls
     /// inline data URI → same-origin <see cref="PublicImagePath"/>;
     /// usable same-origin <c>/images/…</c> photo → itself;
     /// else company logo (same-origin);
-    /// else work-type SVG placeholder.
+    /// else work-type fallback photo.
     /// <para>
     /// CSP choice: external absolute http(s) photo URLs are <b>not</b> returned
-    /// (web <c>img-src 'self'</c>). They fall through to logo → SVG instead of
+    /// (web <c>img-src 'self'</c>). They fall through to logo → photo instead of
     /// widening CSP to <c>https:</c>. Inline uploads stay available via
     /// <c>/api/vacancies/{id}/image</c>.
     /// </para>
@@ -130,7 +148,8 @@ public static class VacancyImageUrls
             return "logo";
         }
 
-        if (IsLocalVacancySvg(pictureUrl)
+        if (IsLocalVacancyFallbackPhoto(pictureUrl)
+            || IsLocalVacancySvg(pictureUrl)
             || (!string.IsNullOrWhiteSpace(pictureUrl)
                 && pictureUrl.StartsWith(LocalPrefix, StringComparison.OrdinalIgnoreCase)))
         {
@@ -146,6 +165,7 @@ public static class VacancyImageUrls
            && !IsInlineDataUri(normalized)
            && !IsPicsum(normalized)
            && !IsBrokenUnsplash(normalized)
+           && !IsLocalVacancySvg(normalized) // legacy category icons → Placeholder WebP
            && IsSafeSameOriginPath(normalized);
 
     /// <summary>Decode a stored <c>data:image/…;base64,</c> photo for the public image endpoint.</summary>
@@ -316,8 +336,10 @@ public static class VacancyImageUrls
         var resolved = Resolve(imageUrl, fallbackUrl, vacancyId, workType);
         if (string.IsNullOrWhiteSpace(resolved)
             || resolved.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            || resolved.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
+            || resolved.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)
+            || IsLocalVacancyFallbackPhoto(resolved))
         {
+            // Local category WebPs ship with their own 400/800 srcset; skip CF wrap.
             return resolved;
         }
 
@@ -348,18 +370,28 @@ public static class VacancyImageUrls
 
     public static string? SrcSet(string displayUrl, bool cloudflareResizing)
     {
-        if (!cloudflareResizing
-            || string.IsNullOrWhiteSpace(displayUrl)
+        if (string.IsNullOrWhiteSpace(displayUrl)
             || displayUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            || displayUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)
+            || displayUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (IsLocalVacancyFallbackPhoto(displayUrl))
+        {
+            var at400 = PlaceholderSrcSetCompanion(displayUrl);
+            return $"{at400} 400w, {displayUrl} 800w";
+        }
+
+        if (!cloudflareResizing
             || !displayUrl.Contains("/cdn-cgi/image/", StringComparison.Ordinal))
         {
             return null;
         }
 
-        var at400 = ReplaceWidth(displayUrl, 400);
-        var at800 = ReplaceWidth(displayUrl, 800);
-        return $"{at400} 400w, {at800} 800w";
+        var at400Cdn = ReplaceWidth(displayUrl, 400);
+        var at800Cdn = ReplaceWidth(displayUrl, 800);
+        return $"{at400Cdn} 400w, {at800Cdn} 800w";
     }
 
     /// <summary>
@@ -400,6 +432,12 @@ public static class VacancyImageUrls
            && imageUrl.StartsWith(LocalPrefix, StringComparison.OrdinalIgnoreCase)
            && imageUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Local category fallback WebP under <see cref="LocalPrefix"/> (primary or -400).</summary>
+    public static bool IsLocalVacancyFallbackPhoto(string? imageUrl)
+        => !string.IsNullOrWhiteSpace(imageUrl)
+           && imageUrl.StartsWith(LocalPrefix, StringComparison.OrdinalIgnoreCase)
+           && imageUrl.EndsWith(FallbackExtension, StringComparison.OrdinalIgnoreCase);
+
     public static string FirstSlug(WorkType workTypes)
     {
         foreach (var flag in new[]
@@ -426,8 +464,8 @@ public static class VacancyImageUrls
             return null;
         }
 
-        // Third-party placeholders are discarded so Resolve can pick a local SVG with work type.
-        if (IsBrokenUnsplash(normalized) || IsPicsum(normalized))
+        // Third-party / legacy SVG placeholders are discarded so Resolve can pick a local WebP.
+        if (IsBrokenUnsplash(normalized) || IsPicsum(normalized) || IsLocalVacancySvg(normalized))
         {
             return null;
         }
@@ -575,29 +613,42 @@ public static class VacancyImageUrls
         if (t.Contains("horeca", StringComparison.Ordinal)) return "horeca";
         if (t.Contains("winkel", StringComparison.Ordinal) || t.Contains("retail", StringComparison.Ordinal)) return "winkel";
         if (t.Contains("logistiek", StringComparison.Ordinal)) return "logistiek";
-        if (t.Contains("tuinbouw", StringComparison.Ordinal)) return "tuinbouw";
+        if (t.Contains("tuinbouw", StringComparison.Ordinal)
+            || t.Contains("groen", StringComparison.Ordinal)) return "tuinbouw";
         if (t.Contains("zorg", StringComparison.Ordinal)) return "zorg";
-        if (t.Contains("kantoor", StringComparison.Ordinal)) return "kantoor";
-        if (t.Contains("bouw", StringComparison.Ordinal)) return "bouw";
+        if (t.Contains("kantoor", StringComparison.Ordinal)
+            || t.Contains("administratie", StringComparison.Ordinal)) return "kantoor";
+        if (t.Contains("bouw", StringComparison.Ordinal)
+            || t.Contains("techniek", StringComparison.Ordinal)) return "bouw";
         if (t.Contains("schoonmaak", StringComparison.Ordinal)) return "schoonmaak";
+        if (t.Contains("onderwijs", StringComparison.Ordinal)
+            || t.Contains("education", StringComparison.Ordinal)) return "onderwijs";
         if (t.Contains("productie", StringComparison.Ordinal)) return "productie";
+        if (t.Contains("overig", StringComparison.Ordinal)) return "flex";
         return "flex";
     }
 
-    private static uint StableHash(Guid id)
+    private static string FallbackSlugFromUrl(string url)
     {
-        var bytes = id.ToByteArray();
-        unchecked
+        var file = url[LocalPrefix.Length..];
+        var q = file.IndexOfAny(['?', '#']);
+        if (q >= 0)
         {
-            var hash = 2166136261;
-            foreach (var b in bytes)
-            {
-                hash ^= b;
-                hash *= 16777619;
-            }
-
-            return hash;
+            file = file[..q];
         }
+
+        if (file.EndsWith(FallbackExtension, StringComparison.OrdinalIgnoreCase))
+        {
+            file = file[..^FallbackExtension.Length];
+        }
+
+        const string suffix400 = "-400";
+        if (file.EndsWith(suffix400, StringComparison.OrdinalIgnoreCase))
+        {
+            file = file[..^suffix400.Length];
+        }
+
+        return string.IsNullOrWhiteSpace(file) ? "flex" : file;
     }
 
     private static string ReplaceWidth(string cdnUrl, int width)
