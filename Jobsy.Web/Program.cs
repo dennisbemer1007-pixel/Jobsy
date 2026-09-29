@@ -145,6 +145,15 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    options.AddPolicy("pupil-login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 var app = builder.Build();
@@ -194,6 +203,7 @@ app.UseMfaEnforcement();
 app.UseAntiforgery();
 
 app.MapJobsyAuthEndpoints();
+app.MapPupilAuthEndpoints();
 app.MapSeoEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.
 app.MapGet("/healthz", () => Results.Text("ok"));

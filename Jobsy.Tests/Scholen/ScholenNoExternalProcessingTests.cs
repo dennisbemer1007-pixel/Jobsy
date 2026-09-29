@@ -25,12 +25,17 @@ public class ScholenNoExternalProcessingTests
         var asm = typeof(PupilCodeService).Assembly;
         var types = asm.GetTypes()
             .Where(t => t.Namespace is not null
-                        && t.Namespace.Contains("Scholen.Pupil", StringComparison.Ordinal)
+                        && (t.Namespace.Contains("Scholen.Pupil", StringComparison.Ordinal)
+                            || t.Name.Contains("PupilPortal", StringComparison.Ordinal)
+                            || t.Name.Contains("PupilLogin", StringComparison.Ordinal)
+                            || t.Name.Contains("PupilResult", StringComparison.Ordinal)
+                            || t.Name.Contains("PupilQuestion", StringComparison.Ordinal))
                         && !t.IsAbstract
                         && t.IsClass)
             .ToList();
 
-        // 01: no Pupil* services yet — vacuous pass when empty.
+        Assert.NotEmpty(types);
+
         var offenders = new List<string>();
         foreach (var type in types)
         {
@@ -48,5 +53,25 @@ public class ScholenNoExternalProcessingTests
         }
 
         Assert.True(offenders.Count == 0, string.Join("\n", offenders));
+    }
+
+    [Fact]
+    public void Pupil_razor_pages_do_not_reference_forbidden_components()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var dir = Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Leerling");
+        Assert.True(Directory.Exists(dir), dir);
+        string[] forbidden =
+        [
+            "BottomNav", "TrainingOffersBlock", "RoleFitCheck", "VacancyMap", "banenkaart", "Partner"
+        ];
+        foreach (var file in Directory.EnumerateFiles(dir, "*.razor"))
+        {
+            var text = File.ReadAllText(file);
+            foreach (var f in forbidden)
+            {
+                Assert.DoesNotContain(f, text, StringComparison.OrdinalIgnoreCase);
+            }
+        }
     }
 }

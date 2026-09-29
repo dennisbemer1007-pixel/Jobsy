@@ -1,0 +1,16 @@
+@page "/leerling/dit-ben-jij"
+@layout LeerlingLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@inject CultureState Culture
+
+<PageTitle>@Culture["Leerling.Result.Title"] · Lobsy</PageTitle>
+
+<section class="ll-card">
+    <h1>@Culture["Leerling.Result.Title"]</h1>
+    <p class="muted">@Culture["Leerling.Result.Placeholder"]</p>
+</section>
+
+@code {
+    protected override async Task OnInitializedAsync() => await Culture.SetLanguageAsync("nl");
+}

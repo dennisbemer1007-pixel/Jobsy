@@ -1,0 +1,65 @@
+@namespace Jobsy.Web.Components.Leerling.Scene
+
+@{
+    var gone = Math.Clamp(PlatesShed, 0, 10);
+    var maskId = $"ll-mask-{_uid}";
+    var size = Size > 0 ? Size : LeerlingLobsterPlates.SizeForStep(PlatesShed, Mobile);
+    var plates = LeerlingLobsterPlates.PlateMarkup(gone, maskId);
+    var showCracks = gone < 6;
+}
+
+<svg class="ll-lob @(NewShell ? "ll-lob--new" : null)"
+     width="@size"
+     height="@size"
+     viewBox="0 0 256 256"
+     role="img"
+     aria-label="@Label"
+     style="overflow:visible">
+    <defs>
+        <mask id="@maskId" maskUnits="userSpaceOnUse" x="0" y="0" width="256" height="256">
+            <path d="@LeerlingLobsterPlates.BodyPath" fill="#fff" />
+            <circle cx="130" cy="178" r="16" fill="#000" />
+        </mask>
+        <linearGradient id="ll-og-@_uid" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" style="stop-color:color-mix(in srgb,var(--shell-old) 70%,var(--surface))" />
+            <stop offset="1" style="stop-color:color-mix(in srgb,var(--shell-old) 80%,var(--brand-deep))" />
+        </linearGradient>
+    </defs>
+    <image href="/images/brand/mascot-256.webp" width="256" height="256" />
+    @if (NewShell)
+    {
+        <g class="ll-lob__nshell">
+            <path d="@LeerlingLobsterPlates.BodyPath" />
+            <path d="M101 172C120 178 140 178 159 172M106 200C121 205 135 205 150 200" />
+            <rect x="93" y="136" width="74" height="13" rx="6.5" />
+            <rect x="97" y="121" width="66" height="13" rx="6.5" />
+        </g>
+    }
+    <g class="ll-lob__old" style="fill:url(#ll-og-@_uid)">
+        @((MarkupString)plates)
+    </g>
+    @if (showCracks)
+    {
+        <g class="ll-lob__cracks">
+            <path d="@LeerlingLobsterPlates.CracksPath" />
+        </g>
+    }
+    @if (FallingPlate is int fallIdx && fallIdx >= 0 && fallIdx < LeerlingLobsterPlates.Plates.Length)
+    {
+        <g class="ll-lob__fall" aria-hidden="true">
+            @((MarkupString)string.Format(LeerlingLobsterPlates.Plates[fallIdx], maskId))
+        </g>
+    }
+</svg>
+
+@code {
+    private static int _nextUid;
+    private readonly int _uid = Interlocked.Increment(ref _nextUid);
+
+    [Parameter] public int PlatesShed { get; set; }
+    [Parameter] public bool NewShell { get; set; }
+    [Parameter] public int? FallingPlate { get; set; }
+    [Parameter] public int Size { get; set; }
+    [Parameter] public bool Mobile { get; set; }
+    [Parameter] public string Label { get; set; } = "Lobsy de kreeft";
+}

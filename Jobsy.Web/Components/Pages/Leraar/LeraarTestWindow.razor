@@ -46,6 +46,18 @@ else
         {
             <p class="state-message error">@Culture["Leraar.TestWindow.ParentsMissing"]</p>
         }
+        @if (_overview.LoginPausedUntilUtc is DateTime paused && paused > DateTime.UtcNow)
+        {
+            <div class="sch-card sch-card--nested">
+                <h2>@Culture["Leraar.LoginPause.Title"]</h2>
+                <p>@Culture["Leraar.LoginPause.Body"]</p>
+                <button type="button" class="btn-secondary" disabled="@_busy" @onclick="ClearPause">@Culture["Leraar.LoginPause.Clear"]</button>
+                @if (!string.IsNullOrEmpty(_pauseError))
+                {
+                    <p class="state-message error">@_pauseError</p>
+                }
+            </div>
+        }
         <button type="button" class="btn-primary" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
     </section>
 }
@@ -65,6 +77,7 @@ else
     private bool _busy;
     private bool _windowOpen;
     private string? _windowError;
+    private string? _pauseError;
     private TeacherClassOverviewDto? _overview;
 
     private string StatusLabel => (_overview?.TestWindow ?? TestWindowState.NotOpen) switch
@@ -122,6 +135,25 @@ else
         catch (Exception ex)
         {
             _windowError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ClearPause()
+    {
+        _busy = true;
+        _pauseError = null;
+        try
+        {
+            await Api.ClearTeacherLoginPauseAsync(ClassId);
+            await Reload();
+        }
+        catch (Exception ex)
+        {
+            _pauseError = ex.Message;
         }
         finally
         {

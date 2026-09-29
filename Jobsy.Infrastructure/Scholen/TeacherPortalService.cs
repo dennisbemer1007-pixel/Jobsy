@@ -197,6 +197,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
             TestWindow: schoolClass.TestWindow,
             TestWindowClosesOn: schoolClass.TestWindowClosesOn,
             ParentalInfoConfirmed: schoolClass.ParentalInfoConfirmedAtUtc is not null,
+            LoginPausedUntilUtc: schoolClass.LoginPausedUntilUtc,
             CodesPreview: preview,
             GroupInsights: group);
     }

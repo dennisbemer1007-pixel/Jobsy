@@ -76,7 +76,7 @@ public static class SchoolTodoBuilder
             {
                 items.Add(new SchoolTodoItem(
                     SchoolTodoKind.PupilLoginPaused,
-                    $"Inloggen voor klas {c.ClassName} is tijdelijk gepauzeerd.",
+                    $"Veel foute codes bij klas {c.ClassName}. Inloggen staat 30 minuten op pauze.",
                     $"/school/klassen/{c.ClassId}",
                     ClassId: c.ClassId));
             }

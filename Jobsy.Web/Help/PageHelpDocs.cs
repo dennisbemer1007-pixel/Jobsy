@@ -513,6 +513,36 @@ public static class PageHelpDocs
             "Als je klassen hebt, ga je naar het klasoverzicht. Anders vraag je je schoolbeheerder om je te koppelen.",
             "Startpunt voor leraren."),
 
+        ["/leerling"] = new(
+            "Leerling · Inloggen",
+            "Log in met school, klas en code van je kaartje. Geen naam nodig.",
+            "Kies je school en klas, typ de code en start je reis.",
+            "Leerlingen starten de ontdekkingsreis zonder account."),
+
+        ["/leerling/start"] = new(
+            "Leerling · Zo werkt het",
+            "Korte uitleg over de 4 werelden voordat je begint.",
+            "Lees hoe de reis werkt en klik op Beginnen.",
+            "Introductiescherm voor de leerlingwizard."),
+
+        ["/leerling/reis"] = new(
+            "Leerling · Reis",
+            "Beantwoord vragen; Lobsy bewaart elk antwoord.",
+            "Kies een antwoord met de knoppen of toetsen 1–5. Pauze mag altijd.",
+            "Vragen beantwoorden in de leerlingwizard."),
+
+        ["/leerling/stop"] = new(
+            "Leerling · Pauze",
+            "Je sessie is beëindigd; antwoorden blijven bewaard.",
+            "Log later opnieuw in met dezelfde code om verder te gaan.",
+            "Sessie afsluiten op een gedeelde Chromebook."),
+
+        ["/leerling/dit-ben-jij"] = new(
+            "Leerling · Dit ben jij",
+            "Jouw resultaat (komt in een volgende stap).",
+            "Bekijk je verhaal wanneer het beschikbaar is.",
+            "Resultaatscherm na afronden."),
+
         ["/admin/company"] = new(
             "Beheer · Bedrijfsgegevens",
             "NAW, KvK en BTW van Lobsy.",

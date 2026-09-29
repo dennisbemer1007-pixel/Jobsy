@@ -27,6 +27,7 @@ public sealed record TeacherClassOverviewDto(
     TestWindowState TestWindow,
     DateOnly? TestWindowClosesOn,
     bool ParentalInfoConfirmed,
+    DateTime? LoginPausedUntilUtc,
     IReadOnlyList<TeacherCodeRowDto> CodesPreview,
     TeacherGroupInsightsDto GroupInsights);
 

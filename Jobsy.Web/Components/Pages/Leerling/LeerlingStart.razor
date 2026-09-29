@@ -1,0 +1,41 @@
+@page "/leerling/start"
+@layout LeerlingLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Leerling.Scene
+@inject CultureState Culture
+@inject NavigationManager Nav
+
+<PageTitle>@Culture["Leerling.Start.Title"] · Lobsy</PageTitle>
+
+<div class="ll-start">
+    <LeerlingScene Depth="0" IsMobile="true" />
+    <section class="ll-card">
+        <h1>@Culture["Leerling.Start.Title"]</h1>
+        <p class="muted">@Culture["Leerling.Start.Lead"]</p>
+        <ol class="ll-worlds">
+            @foreach (var w in PupilWorldCatalog.Worlds.Where(x => x.IsTestWorld))
+            {
+                var n = PupilWorldCatalog.TestWorldNumber(w.Key);
+                <li>
+                    <span class="ll-worlds__n">@n</span>
+                    <div>
+                        <strong>@Culture[w.TitleKey]</strong>
+                        <small>@Culture[w.SubtitleKey]</small>
+                    </div>
+                </li>
+            }
+        </ol>
+        <ul class="ll-start__notes">
+            <li>@Culture["Leerling.Start.NoteTime"]</li>
+            <li>@Culture["Leerling.Start.NoteNoWrong"]</li>
+            <li>@Culture["Leerling.Start.NotePause"]</li>
+        </ul>
+        <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Start.Begin"]</a>
+    </section>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync() => await Culture.SetLanguageAsync("nl");
+}

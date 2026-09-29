@@ -186,6 +186,16 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Global pupil API partition: 60 req/min per IP (HMAC partition in production).
+    options.AddPolicy("pupil", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 builder.Services.AddHsts(options =>

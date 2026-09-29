@@ -144,4 +144,20 @@ public sealed class TeacherClassesController : ControllerBase
         Response.Headers.CacheControl = "no-store";
         return File(bytes, "text/csv; charset=utf-8", fileName);
     }
+
+    [HttpPost("{classId:guid}/login-pause/clear")]
+    public async Task<IActionResult> ClearLoginPause(
+        Guid classId,
+        [FromServices] IPupilPortalService pupilPortal,
+        CancellationToken cancellationToken)
+    {
+        var (ok, error, status) = await pupilPortal.ClearLoginPauseAsync(User, classId, cancellationToken);
+        if (!ok)
+        {
+            return StatusCode(status, error);
+        }
+
+        Response.Headers.CacheControl = "no-store";
+        return Ok(new { ok = true });
+    }
 }

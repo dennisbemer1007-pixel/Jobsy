@@ -166,6 +166,11 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/school/privacy` | `Pages/School/SchoolPrivacy.razor` | SchoolAdmin |
 | `/school/resultaten` | `Pages/School/SchoolResults.razor` | SchoolAdmin |
 | `/school/te-doen` | `Pages/School/SchoolTodos.razor` | SchoolAdmin |
+| `/leerling` | `Pages/Leerling/LeerlingLogin.razor` | anonymous (Pupil login) |
+| `/leerling/start` | `Pages/Leerling/LeerlingStart.razor` | PupilSession |
+| `/leerling/reis` | `Pages/Leerling/LeerlingReis.razor` | PupilSession |
+| `/leerling/stop` | `Pages/Leerling/LeerlingStop.razor` | anonymous |
+| `/leerling/dit-ben-jij` | `Pages/Leerling/LeerlingDitBenJij.razor` | PupilSession |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |
