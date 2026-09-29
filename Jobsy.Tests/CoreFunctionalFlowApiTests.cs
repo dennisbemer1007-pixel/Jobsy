@@ -339,7 +339,7 @@ public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program
                 Id = EmployerId,
                 Email = EmployerEmail,
                 FullName = "Flow Manager",
-                Role = UserRole.BranchManager,
+                Role = UserRole.EnterpriseManager,
                 IsActive = true,
                 CompanyId = CompanyId
             },

@@ -159,7 +159,7 @@ public static class PageHelpDocs
             "Rond af voor je cultuur- en persoonlijkheidsprofiel. Geen deep analysis — de Quick-Scan is genoeg voor matching.",
             "Cultuurvoorkeur mee laten wegen in Functie-Fit en cultuurfit."),
 
-        ["/employer/culture"] = new(
+        ["/werkgever/organisatie/profiel?tab=cultuur"] = new(
             "Bedrijfscultuur",
             "Twaalf stellingen over hoe jullie team écht werkt.",
             "Vul in zodat kandidaten beter matchen op sfeer, niet alleen op functietitel.",
@@ -189,85 +189,67 @@ public static class PageHelpDocs
             "Reageer binnen 48 uur. Bij akkoord worden contactgegevens gedeeld. Als je al voorzien bent, kan de werkgever het token terugkrijgen.",
             "Contact leggen zonder dat je 06 of e-mail publiek staat."),
 
-        ["/employer/talent"] = new(
+        ["/werkgever/talentpool"] = new(
             "Anonieme talentpool",
             "Zoek kandidaten op competenties, RIASEC, reistijd, beschikbaarheid en rijbewijs — zonder leeftijdsfilter.",
             "Profielen blijven anoniem tot je 1 token inzet. Reageert de kandidaat niet binnen 48 uur, dan kun je intrekken en het token terugkrijgen.",
             "Omgekeerd werven: gericht zoeken in de talentenpool."),
 
-        ["/employer/talent-contacts"] = new(
+        ["/werkgever/talentpool?tab=contact"] = new(
             "Talentpool-contactverzoeken",
             "Openstaande ontgrendelingen en 48-uurs refund.",
             "Na 48 uur zonder reactie, of als de kandidaat al voorzien is, trek je in en wordt het token teruggestort. Na gedeeld contact geen refund.",
             "No-risk ContactUnlock bewaken."),
 
-        ["/employer/vacancies"] = new(
+        ["/werkgever/vacatures"] = new(
             "Vacatures (werkgever)",
             "Beheer van vacatures van jouw organisatie of vestiging, inclusief concepten uit CSV-import of API.",
             "Bekijk status en herkomst (Handmatig, CSV of API). Concepten publiceer je hier — daar wordt het tokenverbruik verwerkt. Afhankelijk van rol kun je publiceren, pauzeren of nieuwe vacatures plaatsen.",
             "Openstaande banen beheren, importeren afronden en opvolgen."),
 
-        ["/branch/vacancies"] = new(
-            "Vacatures (vestiging)",
-            "Beheer van vacatures van jouw vestiging, inclusief concepten.",
-            "Bekijk status, publiceer of pauzeer. Bij publiceren kies je tokenproducten (basis, highlight, PushBom, verlengen).",
-            "Lokale banen beheren en opvolgen."),
-
-        ["/employer/tokens"] = new(
+        ["/werkgever/tokens"] = new(
             "Tokens",
             "Token-saldo, aankoop en allocatie binnen de organisatie.",
             "Bekijk wallet/saldo, koop een pakket via Mollie, of wijs tokens toe aan vestigingen. Logs tonen mutaties.",
             "Vacaturepublicatie en andere token-acties bekostigen."),
 
-        ["/branch/tokens"] = new(
-            "Tokens (vestiging)",
-            "Token-saldo en aankoop voor jouw vestiging.",
-            "Zelfde tokenflow als bij werkgever, gericht op branch-niveau.",
-            "Zorgen dat er saldo is om vacatures te plaatsen."),
-
-        ["/employer/branches"] = new(
+        ["/werkgever/organisatie/vestigingen"] = new(
             "Vestigingen",
             "Vestigingen onder jouw organisatie beheren.",
             "Bekijk vestigingen, zoek via KVK nieuwe vestigingen en registreer ze. Overnames lopen via een apart scherm.",
             "Organisatiestructuur opbouwen zodat managers per vestiging kunnen werken."),
 
-        ["/regional/branches"] = new(
-            "Mijn vestigingen (regio)",
-            "Vestigingen binnen jouw regiobereik.",
-            "Inzicht in gekoppelde vestigingen; beheer hangt af van rechten.",
-            "Regionale sturing over meerdere locaties."),
-
-        ["/employer/regions"] = new(
+        ["/werkgever/organisatie/vestigingen?tab=regios"] = new(
             "Regio’s",
             "Regio-indeling van de enterprise-organisatie.",
             "Bekijk of bewerk regio’s en koppelingen die regiomanagers gebruiken.",
             "Schaalbare structuur voor meerdere vestigingen."),
 
-        ["/employer/users"] = new(
+        ["/werkgever/organisatie/team"] = new(
             "Gebruikers (organisatie)",
             "Managers en uitnodigingen binnen het bedrijf.",
             "Nodig gebruikers uit per e-mail, bekijk rollen en beheer toegang tot vestigingen/regio’s.",
             "Het juiste team toegang geven tot vacatures en tokens."),
 
-        ["/employer/company"] = new(
+        ["/werkgever/organisatie/profiel"] = new(
             "Bedrijfsgegevens",
             "Beheer hier de kerninstellingen van je organisatie of vestiging: contactvoorkeur voor kandidaten, CSV Batch Import en de externe API-koppeling.",
             "Kies bovenaan de juiste organisatie/vestiging. Onder Overzicht zie je adres, KVK, tokens en actieve vacatures. Bij Contactvoorkeur geef je aan of kandidaten na sollicitatie mail, telefoon of WhatsApp mogen gebruiken (niet zichtbaar op de openbare vacaturepagina) en sla je de gegevens op. Schakel CSV Batch Import in om de tab CSV Import te tonen — vacatures komen binnen als concept. Bij API-koppeling zie je endpoint, X-API-Key-header en een link naar Swagger (request/response). Genereer of e-mail een API-key; de volledige sleutel is één keer zichtbaar. Publiceren (en tokens) doe je daarna onder Vacatures.",
             "Organisatie veilig bereikbaar maken voor kandidaten, batch-CSV en ATS/partners."),
 
-        ["/employer/csv-import"] = new(
+        ["/werkgever/koppelingen?tab=csv"] = new(
             "CSV Import",
             "Veilige batch-import van vacatures via een CSV-bestand voor jouw organisatie.",
             "Lees de How-to voor verplichte kolommen (titel, omschrijving, data’s, branches, salaristabel-id). Upload een .csv (komma of puntkomma) via slepen of bladeren. Afbeeldingen mag je als URL of Base64 in de kolom afbeelding zetten. Elke rij wordt strikt gevalideerd: geldige rijen worden concept-vacatures, ongeldige blijven staan met een foutmelding. Corrigeer mislukte rijen inline en klik Opnieuw aanbieden. Publiceer geslaagde concepten daarna via Vacatures (tokenverwerking).",
             "Snel en controleerbaar veel vacatures aanmaken zonder blind foute data in te lezen."),
 
-        ["/employer/salary-tables"] = new(
+        ["/werkgever/organisatie/salaristabellen"] = new(
             "Salaristabellen / CAO",
             "Loontabellen die aan vacatures of vestigingen gekoppeld kunnen worden.",
             "Maak of open tabellen, beheer schalen/bedragen en koppel waar nodig aan branches.",
             "Consistente beloning tonen en WML-/CAO-afspraken ondersteunen."),
 
-        ["/employer/takeovers"] = new(
+        ["/werkgever/overnames"] = new(
             "Overnameverzoeken",
             "Conflicten wanneer een vestiging al geregistreerd is.",
             "Bekijk openstaande overnames en keur goed of af. Goedkeuring kan org-structuur samenvoegen.",
@@ -279,29 +261,19 @@ public static class PageHelpDocs
             "Rond de stub-betaling af zodat onboarding verder kan.",
             "Account/organisatie activeren voor productiegebruik."),
 
-        ["/branch/vacancies/new"] = new(
+        ["/werkgever/vacatures/nieuw"] = new(
             "Vacature plaatsen",
             "Nieuwe vacature aanmaken voor een vestiging.",
             "Vul titel, eisen, loon, locatie, uren/week, roosters/dagdelen en de wettelijke taakvinkjes (i-knoppen) in. Die vinkjes sturen automatisch of 15–17-jarigen mogen solliciteren. Publiceren kan tokens kosten en kan door moderatie gaan.",
             "Banen zichtbaar maken op de banenkaart voor kandidaten."),
 
-        ["/branch/applicants"] = new(
+        ["/werkgever/sollicitaties"] = new(
             "Sollicitanten",
             "Binnenkomende sollicitaties op jouw vacatures.",
             "Filter en open kandidaten, bekijk matchscore/status en vervolgstappen. Naam en cv na acceptatie; e-mail en telefoon pas na aanname.",
             "Selectie en opvolging van sollicitaties door managers."),
 
-        ["/employer/organization"] = new(
-            "Organisatie",
-            "Desktop-hub voor zwaar organisatiebeheer.",
-            "Bedrijfsgegevens is de landingspagina. Vestigingen, salaristabellen en CSV-import zitten in de subnav. De tab Regio’s verschijnt bij 2+ vestigingen; Overnames alleen bij openstaande verzoeken.",
-            "Structuur en masterdata van de organisatie beheren zonder de mobiele ops-nav te overbelasten."),
 
-        ["/regional/tokens"] = new(
-            "Tokencontrole (regio)",
-            "Centrale controle op tokens en vacatures in de regio.",
-            "Bekijk saldo’s/gebruik over vestigingen heen (vaak meer inzicht dan bewerken).",
-            "Regionale sturing zonder per vestiging te hoeven inloggen."),
 
         ["/intermediary"] = new(
             "Bedrijvenoverzicht",
@@ -554,6 +526,6 @@ public static class PageHelpDocs
 
         ("/partner/", Exact["/partner"]),
 
-        ("/employer/salary-tables/", Exact["/employer/salary-tables"])
+        ("/werkgever/organisatie/salaristabellen/", Exact["/werkgever/organisatie/salaristabellen"])
     ];
 }

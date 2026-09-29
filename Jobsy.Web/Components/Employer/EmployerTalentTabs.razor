@@ -5,14 +5,14 @@
 
 <nav class="admin-sublinks pill-scroller insights-tabs" aria-label="@Culture["Insights.Tab.Insights"]">
     <a class="admin-sublink @(Active == "talent" ? "is-active" : null)"
-       href="/employer/talent"
+       href="/werkgever/talentpool"
        aria-current="@(Active == "talent" ? "page" : null)">
         @Culture["Insights.Tab.Talent"]
     </a>
     @if (_showInsights)
     {
         <a class="admin-sublink @(Active == "insights" ? "is-active" : null)"
-           href="/employer/kandidaatinzichten"
+           href="/werkgever/kandidaatinzichten"
            aria-current="@(Active == "insights" ? "page" : null)">
             @Culture["Insights.Tab.Insights"]
         </a>

@@ -1,0 +1,29 @@
+@page "/werkgever/partner/uitbetalen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "EnterpriseManager,Intermediary")]
+@inject NavigationManager Nav
+
+<PageTitle>Sales · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Uitbetalingen beëindigd</h1>
+            <p class="login-lead">
+                Partnercommissie via selfbilling is vervangen door automatische referraltokens.
+                Ga naar Sales voor je overzicht.
+            </p>
+        </div>
+    </header>
+    <p>
+        <a class="btn-compact btn-compact--primary" href="/werkgever/partner">Naar Sales</a>
+    </p>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Soft-redirect legacy payout deep-links to the token referral overview.
+        Nav.NavigateTo("/werkgever/partner", replace: true);
+    }
+}

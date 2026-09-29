@@ -31,82 +31,22 @@ public static class RoleNavCatalog
     public static readonly NavItem MyApplicationsReadOnly =
         new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications);
 
-    /// <summary>
-    /// Bedrijfsmanager: mobile/PWA keeps daily ops (home, vacancies, tokens, users).
-    /// Heavy org administration lives under the desktop-only Organization hub.
-    /// </summary>
-    public static readonly NavItem[] Enterprise =
-    [
-        new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new"]),
-        new("Nav.Applications", "/branch/applicants", NavIcons.Applications),
-        new("Nav.Talent", "/employer/talent", NavIcons.Users, ["/employer/talent-contacts", "/employer/kandidaatinzichten"]),
-        new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens, ["/regional/tokens", "/admin/tokens", "/branch/tokens"]),
-        new("Nav.Users", "/employer/users", NavIcons.Users),
-        new("Nav.Organization", "/employer/organization", NavIcons.Settings,
-            [
-                "/employer/salary-tables",
-                "/employer/branches",
-                "/employer/takeovers",
-                "/employer/regions",
-                "/employer/company",
-                "/employer/csv-import"
-            ],
-            DesktopOnly: true)
-    ];
+    /// <summary>Employer roles use <see cref="WerkgeverNav"/> + <c>WerkgeverLayout</c> (D1).</summary>
+    public static readonly NavItem[] Enterprise = [];
 
+    public static readonly NavItem[] Regional = [];
+
+    public static readonly NavItem[] Branch = [];
+
+    public static readonly NavItem[] Intermediary = [];
+
+    /// <summary>Legacy filter target for CSV import (href only; not shown in RoleNavCatalog employer lists).</summary>
     public static readonly NavItem CsvImport =
-        new("Nav.CsvImport", "/employer/csv-import", NavIcons.Batch);
+        new("Nav.CsvImport", "/werkgever/koppelingen", NavIcons.Batch);
 
-    public static readonly NavItem Organization =
-        new("Nav.Organization", "/employer/organization", NavIcons.Settings,
-            [
-                "/employer/salary-tables",
-                "/employer/branches",
-                "/employer/takeovers",
-                "/employer/regions",
-                "/employer/company",
-                "/employer/csv-import"
-            ],
-            DesktopOnly: true);
-
-    public static readonly NavItem[] Regional =
-    [
-        new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/regional", "/branch/applicants"]),
-        new("Nav.MyBranches", "/regional/branches", NavIcons.Branches, ["/employer/takeovers"]),
-        new("Nav.CandidateInsights", "/employer/kandidaatinzichten", NavIcons.Users)
-    ];
-
-    public static readonly NavItem[] Branch =
-    [
-        new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/branch/vacancies", NavIcons.Vacancies, ["/employer/vacancies", "/branch/vacancies/new"]),
-        new("Nav.Applications", "/branch/applicants", NavIcons.Applications),
-        new("Nav.Talent", "/employer/talent", NavIcons.Users, ["/employer/talent-contacts", "/employer/kandidaatinzichten"]),
-        new("Nav.MyTokens", "/branch/tokens", NavIcons.Tokens),
-        new("Nav.CompanyDetails", "/employer/company", NavIcons.Companies),
-        new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches)
-    ];
-
-    public static readonly NavItem Takeovers = new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches);
-
-    public static readonly NavItem[] Intermediary =
-    [
-        new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
-        new("Nav.Talent", "/employer/talent", NavIcons.Users, ["/employer/talent-contacts"]),
-        new("Nav.Clients", "/intermediary", NavIcons.Companies),
-        new("Nav.Team", "/intermediary/team", NavIcons.Users),
-        new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens)
-    ];
-
-    public static readonly NavItem BalanceAndTracking =
-        new("Nav.BalanceAndTracking", "/employer/tokens", NavIcons.Tokens, ["/branch/tokens"]);
+    /// <summary>Legacy filter target for takeovers (href only).</summary>
+    public static readonly NavItem Takeovers =
+        new("Nav.Takeovers", "/werkgever/overnames", NavIcons.Branches);
 
     public static readonly NavItem[] SalesManager =
     [
@@ -152,24 +92,25 @@ public static class RoleNavCatalog
             return Candidate;
         }
 
+        // Employer roles: empty — WerkgeverLayout owns navigation (D1).
         if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager))
         {
-            return WithSalesReferralNav(WithOptionalCandidateApplications(Enterprise, user), user);
+            return Enterprise;
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.RegionalManager))
         {
-            return WithOptionalCandidateApplications(Regional, user);
+            return Regional;
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.BranchManager))
         {
-            return WithSalesReferralNav(WithOptionalCandidateApplications(Branch, user), user);
+            return Branch;
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Intermediary))
         {
-            return WithOptionalCandidateApplications(Intermediary, user);
+            return Intermediary;
         }
 
         return Anonymous;
@@ -201,40 +142,6 @@ public static class RoleNavCatalog
         return null;
     }
 
-    private static IReadOnlyList<NavItem> WithSalesReferralNav(
-        IReadOnlyList<NavItem> baseItems,
-        ClaimsPrincipal user)
-    {
-        if (!user.HasClaim(JobsyClaimTypes.HasSalesReferral, "1"))
-        {
-            return baseItems;
-        }
-
-        // Replace Tokens / Mijn tokens with "Mijn Saldo & Tracking" for referred entrepreneurs.
-        return baseItems
-            .Select(item => item.Href is "/employer/tokens" or "/branch/tokens"
-                ? BalanceAndTracking with { Href = item.Href, ExtraActivePaths = item.ExtraActivePaths }
-                : item)
-            .ToList();
-    }
-
-    private static IReadOnlyList<NavItem> WithOptionalCandidateApplications(
-        NavItem[] baseItems,
-        ClaimsPrincipal user)
-    {
-        if (!user.HasClaim(JobsyClaimTypes.HasCandidateApplications, "1"))
-        {
-            return baseItems;
-        }
-
-        if (baseItems.Any(i => i.Href == MyApplicationsReadOnly.Href))
-        {
-            return baseItems;
-        }
-
-        return [.. baseItems, MyApplicationsReadOnly];
-    }
-
     public static bool IsActive(NavItem item, string relativePath, IReadOnlyList<NavItem>? siblings = null)
     {
         var path = NormalizePath(relativePath);
@@ -245,7 +152,6 @@ public static class RoleNavCatalog
             return true;
         }
 
-        // Another nav item owns this path exactly (e.g. /branch/tokens vs Vacatures ExtraActivePaths /branch).
         if (siblings is not null
             && siblings.Any(other =>
                 !ReferenceEquals(other, item)
@@ -264,16 +170,9 @@ public static class RoleNavCatalog
 
     public static string TokensHrefFor(ClaimsPrincipal user)
     {
-        if (RoleClaimMatching.HasRole(user, JobsyRoles.BranchManager))
+        if (RoleClaimMatching.HasAnyRole(user, JobsyRoles.EmployerRoles))
         {
-            return "/branch/tokens";
-        }
-
-        if (RoleClaimMatching.HasRole(user, JobsyRoles.RegionalManager)
-            || RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager)
-            || RoleClaimMatching.HasRole(user, JobsyRoles.Intermediary))
-        {
-            return "/employer/tokens";
+            return "/werkgever/tokens";
         }
 
         return "/home";
@@ -292,7 +191,6 @@ public static class RoleNavCatalog
             return true;
         }
 
-        // Avoid treating "/" as a prefix of every path.
         if (candidate is "/" or "")
         {
             return false;

@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "ebb735ce83b7c581c4eda87bc229dc6058fef5284b06a104d2e3fa7920084d47",
-    "v": "20260929-acc"
+    "sha256": "1b0415fcea8c9a66c46a2beb480ae0030e7990c9cf536c38bd8a56fe41e05c54",
+    "v": "20260929-wg"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -14,6 +14,10 @@
   "css/features/banenkaart.css": {
     "sha256": "5f6d5967ef32e2f8a98346aae3d729470b048d1c9310c79f750af1ec49138aa2",
     "v": "20260927-banenkaart-v3b"
+  },
+  "css/features/enterprise-ui.css": {
+    "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
+    "v": "20260929-ent-ui"
   },
   "css/features/gratis-dna.css": {
     "sha256": "3ffb5af664b48f4edb1a38bfae8917a65f2e123844638d9d1d599e04532260a7",
@@ -46,6 +50,10 @@
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
     "v": "20260929-testresultaten-b2"
+  },
+  "css/features/werkgever.css": {
+    "sha256": "eac2ac1693b5b5f6fdcbecfe2ff5b31b9e79728e58ae442f24321ae3de19381d",
+    "v": "20260929-werkgever"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",

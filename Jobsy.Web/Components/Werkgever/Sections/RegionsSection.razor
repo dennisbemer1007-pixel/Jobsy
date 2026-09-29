@@ -1,0 +1,328 @@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Web.Components.Employer
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Employer.Regions"] · Lobsy</PageTitle>
+
+<div class="panel-page panel-page--desktop-preferred">
+    <AuthorizeView Roles="EnterpriseManager">
+        <Authorized>
+            <DesktopPreferredNotice />
+            <EnterpriseOrgSubnav />
+        </Authorized>
+    </AuthorizeView>
+    <header class="panel-header">
+        <div>
+            <h1>@Culture["Employer.Regions"]</h1>
+            <p class="login-lead">Groepeer vestigingen en nodig per regio een regiomanager uit.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var r in _regions)
+            {
+                <div class="table-row" style="flex-wrap:wrap;gap:0.75rem">
+                    <div style="flex:1;min-width:12rem">
+                        <strong>@r.Name</strong>
+                        <span class="muted">
+                            @r.OrganizationCompanyName ·
+                            @string.Join(", ", r.Companies.Select(c => c.CompanyName))
+                        </span>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="provider-btn" type="button" @onclick="() => StartInvite(r)">Regiomanager uitnodigen</button>
+                        <button type="button" class="icon-btn" title="Bewerken" aria-label="Regio bewerken" @onclick="() => StartEdit(r)">
+                            @((MarkupString)ActionIcons.Edit)
+                        </button>
+                        <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" aria-label="Regio verwijderen" @onclick="() => DeleteAsync(r.Id)">
+                            @((MarkupString)ActionIcons.Trash)
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (_inviteRegion is not null)
+        {
+            <section class="panel-section">
+                <h2>Regiomanager · @_inviteRegion.Name</h2>
+                <p class="muted">Krijgt toegang tot de vestigingen in deze regio.</p>
+                <form class="login-form" style="max-width:480px" @onsubmit="InviteRegionalAsync" @onsubmit:preventDefault>
+                    <label>
+                        E-mail
+                        <input type="email" @bind="_rmEmail" required />
+                    </label>
+                    <label>
+                        Naam
+                        <input @bind="_rmName" required />
+                    </label>
+                    <div class="inline-actions">
+                        <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+                        <button class="provider-btn" type="button" @onclick="CloseInvite">@Culture["Common.Cancel"]</button>
+                    </div>
+                </form>
+            </section>
+        }
+
+        <section class="panel-section">
+            <h2>@(_editId is null ? "Nieuwe regio" : "Regio bewerken")</h2>
+            <form class="login-form" style="max-width:520px" @onsubmit="SaveAsync" @onsubmit:preventDefault>
+                <label>
+                    Naam
+                    <input @bind="_name" required />
+                </label>
+                @if (_editId is null)
+                {
+                    <label>
+                        Organisatie
+                        <select @bind="_orgCompanyId">
+                            @foreach (var c in _organizations)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                    </label>
+                }
+                <fieldset class="profile-roles profile-roles--wide">
+                    <legend>Vestigingen</legend>
+                    @foreach (var c in _companies)
+                    {
+                        <label>
+                            <input type="checkbox"
+                                   checked="@_selectedCompanies.Contains(c.Id)"
+                                   @onchange="e => ToggleCompany(c.Id, (bool)(e.Value ?? false))" />
+                            @c.Name
+                        </label>
+                    }
+                </fieldset>
+                <div class="inline-actions">
+                    <button class="login-submit" type="submit" disabled="@_busy">@Culture["Common.Save"]</button>
+                    @if (_editId is not null)
+                    {
+                        <button class="provider-btn" type="button" @onclick="ResetForm">@Culture["Common.Cancel"]</button>
+                    }
+                </div>
+            </form>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private List<RegionItem> _regions = [];
+    private List<CompanySummary> _companies = [];
+    private List<CompanySummary> _organizations = [];
+    private HashSet<Guid> _selectedCompanies = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private string _name = "";
+    private Guid _orgCompanyId;
+    private Guid? _editId;
+
+    private RegionItem? _inviteRegion;
+    private string _rmEmail = "";
+    private string _rmName = "";
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            _organizations = _companies.Where(c => c.ParentCompanyId is null).OrderBy(c => c.Name).ToList();
+            if (_organizations.Count == 0)
+            {
+                _organizations = _companies;
+            }
+
+            if (_organizations.Count > 0)
+            {
+                _orgCompanyId = _organizations[0].Id;
+            }
+
+            _regions = (await Api.GetRegionsAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleCompany(Guid id, bool selected)
+    {
+        if (selected)
+        {
+            _selectedCompanies.Add(id);
+        }
+        else
+        {
+            _selectedCompanies.Remove(id);
+        }
+    }
+
+    private void StartEdit(RegionItem region)
+    {
+        _inviteRegion = null;
+        _editId = region.Id;
+        _name = region.Name;
+        _orgCompanyId = region.OrganizationCompanyId;
+        _selectedCompanies = region.Companies.Select(c => c.CompanyId).ToHashSet();
+    }
+
+    private void ResetForm()
+    {
+        _editId = null;
+        _name = "";
+        _selectedCompanies = [];
+    }
+
+    private void StartInvite(RegionItem region)
+    {
+        _editId = null;
+        _inviteRegion = region;
+        _rmEmail = "";
+        _rmName = "";
+        _message = null;
+    }
+
+    private void CloseInvite()
+    {
+        _inviteRegion = null;
+        _rmEmail = "";
+        _rmName = "";
+    }
+
+    private async Task InviteRegionalAsync()
+    {
+        if (_inviteRegion is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.InviteCompanyUserAsync(new InviteUserForm(
+                _rmEmail,
+                _rmName,
+                "RegionalManager",
+                _inviteRegion.OrganizationCompanyId,
+                null,
+                _inviteRegion.Id));
+            CloseInvite();
+            var parts = new List<string> { $"Regiomanager uitgenodigd ({result?.Email})." };
+            if (!string.IsNullOrWhiteSpace(result?.LoginUrl))
+            {
+                parts.Add($"Inloggen: {result.LoginUrl}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(result?.TemporaryPassword))
+            {
+                parts.Add($"Tijdelijk wachtwoord: {result.TemporaryPassword}");
+            }
+
+            _message = string.Join(" ", parts);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var ids = _selectedCompanies.ToArray();
+            if (_editId is Guid id)
+            {
+                await Api.UpdateRegionAsync(id, _name, ids);
+                _message = "Regio bijgewerkt.";
+            }
+            else
+            {
+                await Api.CreateRegionAsync(_name, _orgCompanyId, ids);
+                _message = "Regio aangemaakt.";
+            }
+
+            _regions = (await Api.GetRegionsAsync()).ToList();
+            ResetForm();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        _busy = true;
+        try
+        {
+            await Api.DeleteRegionAsync(id);
+            _regions = (await Api.GetRegionsAsync()).ToList();
+            if (_editId == id)
+            {
+                ResetForm();
+            }
+
+            if (_inviteRegion?.Id == id)
+            {
+                CloseInvite();
+            }
+
+            _message = "Regio verwijderd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

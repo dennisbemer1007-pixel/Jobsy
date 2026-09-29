@@ -1,0 +1,732 @@
+@page "/werkgever/vacatures"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Employer.VacanciesTitle"] · Lobsy</PageTitle>
+
+<div class="panel-page panel-page--wide">
+    <header class="panel-header">
+        <div>
+            <h1>@Culture["Employer.VacanciesTitle"]</h1>
+            <p class="login-lead">
+                @(_canManageVacancy ? Culture["Employer.VacanciesLeadManage"] : Culture["Employer.VacanciesLeadRead"])
+            </p>
+        </div>
+        @if (_canManageVacancy)
+        {
+            <a class="login-submit" href="/werkgever/vacatures/nieuw" style="text-decoration:none;display:inline-flex;align-items:center;">@Culture["Employer.NewVacancy"]</a>
+        }
+    </header>
+
+    <div class="employer-search filter-bar">
+        @if (_salaryTableFilter is not null)
+        {
+            <p class="muted" style="grid-column:1/-1;margin:0">
+                @Culture["Employer.SalaryTableFilter"]@(string.IsNullOrWhiteSpace(_salaryTableFilterName) ? "" : $": {_salaryTableFilterName}")
+                · <button type="button" class="auth-link" style="border:none;background:none;padding:0;cursor:pointer" @onclick="ClearSalaryTableFilter">@Culture["Employer.ClearFilter"]</button>
+            </p>
+        }
+        <label class="filter-bar__query">
+            @Culture["Common.Search"]
+            <input type="search"
+                   @bind="_searchQuery"
+                   @bind:event="oninput"
+                   @bind:after="ApplyFilters"
+                   placeholder="@Culture["Vacancy.SearchCompanyOrTitlePlaceholder"]" />
+        </label>
+        <span class="muted">@_filtered.Count van @_vacancies.Count</span>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_filtered.Count == 0)
+    {
+        @if (_vacancies.Count == 0)
+        {
+            <p class="state-message">
+                Nog geen vacatures.
+                @if (_canManageVacancy)
+                {
+                    <a class="auth-link" href="/werkgever/vacatures/nieuw">@Culture["Employer.NewVacancy"]</a>
+                }
+            </p>
+        }
+        else
+        {
+            <p class="state-message">Geen vacatures gevonden voor deze zoekopdracht of filter.</p>
+        }
+    }
+    else
+    {
+        <div class="vacancy-card-list">
+            @foreach (var v in _filtered)
+            {
+                <article class="vacancy-mgmt-card">
+                    <header class="vacancy-mgmt-card__header">
+                        <div class="vacancy-mgmt-card__identity">
+                            <a class="vacancy-mgmt-card__title" href="@($"/vacancies/{v.Id}")">@v.Title</a>
+                            <p class="vacancy-mgmt-card__branch">@v.CompanyName</p>
+                            @if (v.IsHighlighted)
+                            {
+                                <p class="vacancy-mgmt-card__highlight muted">highlight</p>
+                            }
+                        </div>
+                        <span class="vacancy-mgmt-card__status">@StatusLabel(v)</span>
+                    </header>
+                    <div class="vacancy-mgmt-card__meta">
+                        <span>@v.StartDate.ToString("dd-MM-yyyy") – @v.EndDate.ToString("dd-MM-yyyy")</span>
+                        <span class="source-badge source-badge--@VacancySourceDisplay.CssModifier(v.CreatedVia)">
+                            @VacancySourceDisplay.Label(v.CreatedVia)
+                        </span>
+                    </div>
+                    <div class="vacancy-mgmt-card__stats" role="group" aria-label="Statistieken">
+                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "impressions")">
+                            <span class="vacancy-mgmt-card__stat-label">Getoond</span>
+                            <span class="vacancy-mgmt-card__stat-value">@v.ImpressionCount</span>
+                        </a>
+                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "clicks")">
+                            <span class="vacancy-mgmt-card__stat-label">Clicks</span>
+                            <span class="vacancy-mgmt-card__stat-value">@v.ClickCount</span>
+                        </a>
+                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "shares")">
+                            <span class="vacancy-mgmt-card__stat-label">Gedeeld</span>
+                            <span class="vacancy-mgmt-card__stat-value">@v.ShareCount</span>
+                        </a>
+                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "applications")">
+                            <span class="vacancy-mgmt-card__stat-label">Gesolliciteerd</span>
+                            <span class="vacancy-mgmt-card__stat-value">@v.ApplicationCount</span>
+                        </a>
+                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "extensions")">
+                            <span class="vacancy-mgmt-card__stat-label">Verlengd</span>
+                            <span class="vacancy-mgmt-card__stat-value">@v.ExtensionCount</span>
+                        </a>
+                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "likes")">
+                            <span class="vacancy-mgmt-card__stat-label">Bewaard</span>
+                            <span class="vacancy-mgmt-card__stat-value">@v.LikeCount</span>
+                        </a>
+                    </div>
+                    <div class="vacancy-mgmt-card__actions">
+                        <RowActionsMenu>
+                            <a class="row-actions-menu__item" role="menuitem" href="@($"/vacancies/{v.Id}")">
+                                @Culture["VacancyAction.View"]
+                            </a>
+                            @if (_canManageVacancy)
+                            {
+                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenContactPref(v)">
+                                    @Culture["VacancyAction.Contact"]
+                                </button>
+                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ToggleEmailVerificationAsync(v)">
+                                    @(v.RequireEmailVerification ? "E-mailcheck uitzetten" : "E-mailcheck aanzetten")
+                                </button>
+                                @if (!IsIncompleteDraft(v))
+                                {
+                                    <a class="row-actions-menu__item" role="menuitem" href="@($"/werkgever/vacatures/nieuw?from={v.Id}")">
+                                        @Culture["VacancyAction.Duplicate"]
+                                    </a>
+                                }
+                            }
+                            @if (_canManageVacancy && (v.Status == "Draft" || v.Status == "Active"))
+                            {
+                                <a class="row-actions-menu__item" role="menuitem" href="@($"/werkgever/vacatures/nieuw?edit={v.Id}")">
+                                    Bewerken
+                                </a>
+                            }
+                            @if (_canManageVacancy && v.Status == "Draft")
+                            {
+                                @if (!IsIncompleteDraft(v))
+                                {
+                                    <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
+                                        @Culture["VacancyAction.Publish"]
+                                    </button>
+                                }
+                            }
+                            @if (v.Status == "PendingApproval" && _canApprovePublish)
+                            {
+                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ApproveAsync(v.Id)">
+                                    @Culture["VacancyAction.Approve"]
+                                </button>
+                            }
+                            @if (_canManageVacancy && v.Status == "Active")
+                            {
+                                @if (!v.IsHighlighted)
+                                {
+                                    <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => HighlightAsync(v.Id)">
+                                        @Culture["VacancyAction.Highlight"]
+                                    </button>
+                                }
+                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPushBom(v)">
+                                    @Culture["VacancyAction.PushBom"]
+                                </button>
+                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ExtendAsync(v.Id)">
+                                    @Culture["VacancyAction.Extend"]
+                                </button>
+                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => DeactivateAsync(v.Id)">
+                                    @Culture["VacancyAction.Deactivate"]
+                                </button>
+                            }
+                            @if (_canManageVacancy && v.Status == "Archived")
+                            {
+                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ExtendAsync(v.Id)">
+                                    @Culture["VacancyAction.Reactivate"]
+                                </button>
+                            }
+                        </RowActionsMenu>
+                    </div>
+                </article>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+<PublishOptionsDialog IsOpen="_publishOpen"
+                      Vacancy="_publishVacancy"
+                      OnClose="ClosePublish"
+                      OnPublished="OnPublished" />
+
+<PushBomConfirmDialog IsOpen="_pushBomOpen"
+                      Vacancy="_pushBomVacancy"
+                      OnClose="ClosePushBom"
+                      OnConfirmed="OnPushBomConfirmed" />
+
+<TokenTopUpDialog IsOpen="_topUpOpen" Info="_topUpInfo" OnClose="CloseTopUp" />
+
+@if (_contactOpen && _contactVacancy is not null)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="Voorkeur voor contact"
+                         TitleId="contact-pref-title"
+                         Lead="@_contactVacancy.Title"
+                         OnClose="CloseContactPref">
+        <p class="muted">Contactgegevens komen uit het bedrijfsprofiel.</p>
+        <label class="checkbox-row" style="margin-top:0.5rem">
+            <input type="checkbox" @bind="_contactDirect" @bind:after="OnContactDirectChanged" disabled="@_contactBusy" />
+            Direct contact gewenst (WhatsApp / Telefoon / Mail)
+        </label>
+        @if (_contactDirect)
+        {
+            <div style="margin-top:0.5rem;display:grid;gap:0.35rem">
+                <label class="checkbox-row">
+                    <input type="checkbox" @bind="_contactMail" disabled="@_contactBusy" />
+                    Mail
+                </label>
+                <label class="checkbox-row">
+                    <input type="checkbox" @bind="_contactPhone" disabled="@_contactBusy" />
+                    Telefoon
+                </label>
+                <label class="checkbox-row">
+                    <input type="checkbox" @bind="_contactWhatsApp" disabled="@_contactBusy" />
+                    WhatsApp
+                </label>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(_contactError))
+        {
+            <p class="state-message error">@_contactError</p>
+        }
+<div class="inline-actions">
+                <button type="button" class="login-submit" disabled="@_contactBusy" @onclick="SaveContactPrefAsync">Opslaan</button>
+                <button type="button" class="btn-compact" disabled="@_contactBusy" @onclick="CloseContactPref">Annuleren</button>
+            </div>
+</LobsyFriendlyDialog>
+}
+
+@code {
+    private List<VacancyListItem> _vacancies = [];
+    private List<VacancyListItem> _filtered = [];
+    private bool _loading = true;
+    private bool _canApprovePublish;
+    private bool _canManageVacancy;
+    private string? _error;
+    private string? _message;
+    private bool _publishOpen;
+    private VacancyListItem? _publishVacancy;
+    private bool _pushBomOpen;
+    private VacancyListItem? _pushBomVacancy;
+    private bool _topUpOpen;
+    private InsufficientTokensInfo? _topUpInfo;
+    private bool _contactOpen;
+    private VacancyListItem? _contactVacancy;
+    private bool _contactBusy;
+    private string? _contactError;
+    private bool _contactDirect;
+    private bool _contactMail;
+    private bool _contactPhone;
+    private bool _contactWhatsApp;
+    private string _searchQuery = "";
+    private string _sortColumn = "start";
+    private bool _sortAscending;
+    private Guid? _salaryTableFilter;
+    private string? _salaryTableFilterName;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var query = QueryHelpers.ParseQuery(uri.Query);
+            if (query.TryGetValue("salaryTableId", out var raw)
+                && Guid.TryParse(raw, out var tableId))
+            {
+                _salaryTableFilter = tableId;
+            }
+
+            if (query.TryGetValue("q", out var q) && !string.IsNullOrWhiteSpace(q))
+            {
+                _searchQuery = q.ToString().Trim();
+            }
+
+            if (query.TryGetValue("paidAction", out var paidAction) && !string.IsNullOrWhiteSpace(paidAction))
+            {
+                _message = paidAction.ToString() switch
+                {
+                    "Publish" => "Betaling gelukt — vacature is gepubliceerd.",
+                    "Highlight" => "Betaling gelukt — vacature is gehighlight.",
+                    "PushBom" => "Betaling gelukt — PushBom is verstuurd.",
+                    "Extend" => "Betaling gelukt — vacature is verlengd.",
+                    _ => "Betaling gelukt — actie uitgevoerd."
+                };
+            }
+            else if (query.TryGetValue("paidActionError", out var paidErr) && !string.IsNullOrWhiteSpace(paidErr))
+            {
+                _message = $"Tokens bijgeschreven, maar actie mislukt: {paidErr}";
+            }
+            else if (query.TryGetValue("moderationWarning", out var moderationWarning)
+                     && !string.IsNullOrWhiteSpace(moderationWarning))
+            {
+                _message = "Concept opgeslagen. De vacaturetekst moet nog worden aangepast voordat je kunt publiceren.";
+            }
+
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var user = state.User;
+            _canApprovePublish = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
+            _canManageVacancy = user.IsInRole("BranchManager")
+                || user.IsInRole("EnterpriseManager")
+                || user.IsInRole("Intermediary")
+                || user.IsInRole("Admin");
+
+            _vacancies = (await Api.GetManagedVacanciesAsync()).Select(NormalizeVacancy).ToList();
+
+            if (_salaryTableFilter is Guid tid)
+            {
+                try
+                {
+                    var table = await Api.GetSalaryTableAsync(tid);
+                    _salaryTableFilterName = table?.Name;
+                }
+                catch
+                {
+                    _salaryTableFilterName = null;
+                }
+            }
+
+            ApplyFilters();
+            await TryOpenBoostFromQueryAsync(query);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    /// <summary>
+    /// Deep-links from engagement e-mail: ?boost=highlight|pushbom&amp;id={vacancyId}
+    /// </summary>
+    private async Task TryOpenBoostFromQueryAsync(
+        Dictionary<string, Microsoft.Extensions.Primitives.StringValues> query)
+    {
+        if (!_canManageVacancy
+            || !query.TryGetValue("boost", out var boostRaw)
+            || !query.TryGetValue("id", out var idRaw)
+            || !Guid.TryParse(idRaw, out var boostId))
+        {
+            return;
+        }
+
+        var boost = boostRaw.ToString().Trim().ToLowerInvariant();
+        var target = _vacancies.FirstOrDefault(v => v.Id == boostId);
+        if (target is null)
+        {
+            _message = "De vacature uit de e-mail staat niet in jouw overzicht (of je hebt geen toegang).";
+            return;
+        }
+
+        if (boost is "pushbom")
+        {
+            OpenPushBom(target);
+            _message = $"PushBom voor «{target.Title}» — bevestig hieronder om te versturen.";
+            return;
+        }
+
+        if (boost is "highlight")
+        {
+            if (target.IsHighlighted)
+            {
+                _message = $"«{target.Title}» is al gehighlight.";
+                return;
+            }
+
+            await HighlightAsync(target.Id);
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<VacancyListItem> query = _vacancies;
+
+        if (_salaryTableFilter is Guid tableId)
+        {
+            query = query.Where(v => v.SalaryTableId == tableId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            query = query.Where(v =>
+                v.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)
+                || v.CompanyName.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+
+        query = ApplySort(query);
+        _filtered = query.ToList();
+    }
+
+    private void ToggleSort(string column)
+    {
+        if (string.Equals(_sortColumn, column, StringComparison.Ordinal))
+        {
+            _sortAscending = !_sortAscending;
+        }
+        else
+        {
+            _sortColumn = column;
+            _sortAscending = true;
+        }
+
+        ApplyFilters();
+    }
+
+    private string? SortAria(string column)
+        => string.Equals(_sortColumn, column, StringComparison.Ordinal)
+            ? (_sortAscending ? "ascending" : "descending")
+            : null;
+
+    private IEnumerable<VacancyListItem> ApplySort(IEnumerable<VacancyListItem> query)
+        => _sortColumn switch
+        {
+            "end" => _sortAscending
+                ? query.OrderBy(v => v.EndDate).ThenBy(v => v.Title)
+                : query.OrderByDescending(v => v.EndDate).ThenBy(v => v.Title),
+            _ => _sortAscending
+                ? query.OrderBy(v => v.StartDate).ThenBy(v => v.Title)
+                : query.OrderByDescending(v => v.StartDate).ThenBy(v => v.Title)
+        };
+
+    private void ClearSalaryTableFilter()
+    {
+        _salaryTableFilter = null;
+        _salaryTableFilterName = null;
+        Navigation.NavigateTo("/werkgever/vacatures", replace: true);
+        ApplyFilters();
+    }
+
+    private static string MetricHref(VacancyListItem v, string metric)
+        => $"/vacancies/{v.Id}?metric={metric}";
+
+    private async Task RefreshAsync()
+    {
+        try
+        {
+            _vacancies = (await Api.GetManagedVacanciesAsync()).Select(NormalizeVacancy).ToList();
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _vacancies = [];
+            _filtered = [];
+        }
+    }
+
+    private static VacancyListItem NormalizeVacancy(VacancyListItem vacancy)
+    {
+        vacancy.WorkTypes ??= Array.Empty<string>();
+        vacancy.RequiredTransport ??= Array.Empty<string>();
+        vacancy.WageByAge ??= new List<WageByAgeItem>();
+        vacancy.DisplayStatus ??= vacancy.IsIncomplete && string.Equals(vacancy.Status, "Draft", StringComparison.OrdinalIgnoreCase)
+            ? "DraftIncomplete"
+            : vacancy.Status;
+        return vacancy;
+    }
+
+    private string StatusLabel(VacancyListItem vacancy)
+    {
+        var key = string.IsNullOrWhiteSpace(vacancy.DisplayStatus)
+            ? vacancy.Status
+            : vacancy.DisplayStatus;
+        var localized = Culture[$"VacancyStatus.{key}"];
+        return string.Equals(localized, $"VacancyStatus.{key}", StringComparison.Ordinal)
+            ? key
+            : localized;
+    }
+
+    private static bool IsIncompleteDraft(VacancyListItem vacancy)
+        => string.Equals(vacancy.Status, "Draft", StringComparison.OrdinalIgnoreCase)
+            && vacancy.IsIncomplete;
+
+    private void OpenVacancyDetails(VacancyListItem vacancy)
+        => Navigation.NavigateTo($"/vacancies/{vacancy.Id}");
+
+    private void OpenPublish(VacancyListItem vacancy)
+    {
+        _publishVacancy = vacancy;
+        _publishOpen = true;
+    }
+
+    private Task ClosePublish()
+    {
+        _publishOpen = false;
+        _publishVacancy = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnPublished(VacancyProductActionResult? result)
+    {
+        await RefreshAsync();
+        _message = result?.PendingApproval == true
+            ? (result.Message ?? "Wacht op goedkeuring (onvoldoende tokens).")
+            : "Vacature gepubliceerd.";
+    }
+
+    private async Task ApproveAsync(Guid id)
+    {
+        try
+        {
+            await Api.ApprovePublishAsync(id);
+            await RefreshAsync();
+            _message = "Publicatie goedgekeurd.";
+        }
+        catch (InsufficientTokensException ex)
+        {
+            OpenTopUp(ex.Info);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task HighlightAsync(Guid id)
+    {
+        try
+        {
+            await Api.HighlightVacancyAsync(id);
+            await RefreshAsync();
+            _message = "Vacature gehighlight.";
+        }
+        catch (InsufficientTokensException ex)
+        {
+            OpenTopUp(ex.Info);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private void OpenPushBom(VacancyListItem vacancy)
+    {
+        _pushBomVacancy = vacancy;
+        _pushBomOpen = true;
+    }
+
+    private Task ClosePushBom()
+    {
+        _pushBomOpen = false;
+        _pushBomVacancy = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnPushBomConfirmed(VacancyProductActionResult? result)
+    {
+        await RefreshAsync();
+        _message = $"PushBom verstuurd naar {result?.PushBomRecipientCount ?? 0} kandidaten (stub).";
+    }
+
+    private async Task ExtendAsync(Guid id)
+    {
+        try
+        {
+            await Api.ExtendVacancyAsync(id);
+            await RefreshAsync();
+            _message = "Vacature verlengd (+14 dagen).";
+        }
+        catch (InsufficientTokensException ex)
+        {
+            OpenTopUp(ex.Info);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private void OpenTopUp(InsufficientTokensInfo info)
+    {
+        _topUpInfo = info;
+        _topUpOpen = true;
+        _message = info.Message;
+    }
+
+    private Task CloseTopUp()
+    {
+        _topUpOpen = false;
+        _topUpInfo = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task DeactivateAsync(Guid id)
+    {
+        try
+        {
+            await Api.DeactivateVacancyAsync(id);
+            await RefreshAsync();
+            _message = "Vacature inactief (gearchiveerd).";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task ToggleEmailVerificationAsync(VacancyListItem vacancy)
+    {
+        try
+        {
+            var updated = await Api.UpdateVacancyEmailVerificationAsync(
+                vacancy.Id,
+                !vacancy.RequireEmailVerification);
+            if (updated is not null)
+            {
+                vacancy.RequireEmailVerification = updated.RequireEmailVerification;
+                _message = updated.RequireEmailVerification
+                    ? $"E-mailcheck staat aan voor “{vacancy.Title}”. Kandidaten bevestigen hun sollicitatie met een code."
+                    : $"E-mailcheck staat uit voor “{vacancy.Title}”. Solliciteren gaat weer zonder code.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task OpenContactPref(VacancyListItem vacancy)
+    {
+        _contactVacancy = vacancy;
+        _contactError = null;
+        _contactBusy = true;
+        _contactOpen = true;
+        try
+        {
+            var pref = await Api.GetVacancyContactPreferenceAsync(vacancy.Id);
+            _contactDirect = pref?.DirectContactEnabled ?? false;
+            _contactMail = pref?.ContactPreferMail ?? false;
+            _contactPhone = pref?.ContactPreferPhone ?? false;
+            _contactWhatsApp = pref?.ContactPreferWhatsApp ?? false;
+        }
+        catch (Exception ex)
+        {
+            _contactError = ex.Message;
+        }
+        finally
+        {
+            _contactBusy = false;
+        }
+    }
+
+    private void CloseContactPref()
+    {
+        _contactOpen = false;
+        _contactVacancy = null;
+        _contactError = null;
+    }
+
+    private void OnContactDirectChanged()
+    {
+        if (!_contactDirect)
+        {
+            _contactMail = false;
+            _contactPhone = false;
+            _contactWhatsApp = false;
+        }
+    }
+
+    private async Task SaveContactPrefAsync()
+    {
+        if (_contactVacancy is null || _contactBusy)
+        {
+            return;
+        }
+
+        if (_contactDirect
+            && !_contactMail
+            && !_contactPhone
+            && !_contactWhatsApp)
+        {
+            _contactError = "Kies minstens één contactoptie (Mail, Telefoon of WhatsApp).";
+            return;
+        }
+
+        _contactBusy = true;
+        _contactError = null;
+        try
+        {
+            await Api.UpdateVacancyContactPreferenceAsync(
+                _contactVacancy.Id,
+                true,
+                _contactDirect,
+                _contactMail,
+                _contactPhone,
+                _contactWhatsApp);
+            _message = "Contactvoorkeur voor vacature opgeslagen.";
+            CloseContactPref();
+        }
+        catch (Exception ex)
+        {
+            _contactError = ex.Message;
+        }
+        finally
+        {
+            _contactBusy = false;
+        }
+    }
+}

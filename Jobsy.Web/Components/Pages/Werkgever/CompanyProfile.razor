@@ -1,0 +1,39 @@
+@page "/werkgever/organisatie/profiel"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin,Intermediary")]
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Sections
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+<PageTitle>@Culture["WgNav.CompanyProfile"] · Lobsy</PageTitle>
+
+<WgPageShell>
+    <EntTabs Tabs="_tabs" ActiveKey="@_tab" BasePath="/werkgever/organisatie/profiel" />
+    @if (_tab == "cultuur")
+    {
+        <CultureScanSection />
+    }
+    else
+    {
+        <CompanyDetailsSection />
+    }
+</WgPageShell>
+
+@code {
+    private readonly List<EntTabs.Tab> _tabs = [];
+    private string _tab = "profiel";
+
+    protected override void OnInitialized()
+    {
+        _tabs.Add(new("profiel", Culture["WgTabs.Profile"]));
+        _tabs.Add(new("cultuur", Culture["WgTabs.Culture"]));
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("tab", out var tab)
+            && string.Equals(tab.ToString(), "cultuur", StringComparison.OrdinalIgnoreCase))
+        {
+            _tab = "cultuur";
+        }
+    }
+}

@@ -69,6 +69,7 @@ builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddHttpClient("JobsySessionSecurity");
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddScoped<CultureState>();
+builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeState>();
 builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();
@@ -191,6 +192,9 @@ app.UseSessionInactivity();
 app.UseAuthorization();
 app.UseMfaEnforcement();
 app.UseAntiforgery();
+
+// Legacy /employer|/branch|/regional → /werkgever (GET/HEAD 301). Needs auth for /home.
+app.UseMiddleware<Jobsy.Web.Middleware.WerkgeverLegacyRedirectMiddleware>();
 
 app.MapJobsyAuthEndpoints();
 app.MapSeoEndpoints();

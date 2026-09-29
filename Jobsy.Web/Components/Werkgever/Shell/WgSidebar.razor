@@ -1,0 +1,99 @@
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject EmployerScopeState Scope
+@implements IDisposable
+
+<aside class="wg-sidebar" aria-label="@Culture["WgShell.MainNav"]">
+    <nav class="wg-sidebar__nav">
+        @foreach (var group in Groups)
+        {
+            var collapsed = group.Key == "more" && !_meerOpen && !group.Items.Any(IsActive);
+            <div class="wg-sidebar__group">
+                @if (group.Key == "more")
+                {
+                    <button type="button" class="wg-sidebar__group-toggle" aria-expanded="@(!collapsed)"
+                            @onclick="() => _meerOpen = !_meerOpen">
+                        <span class="wg-sidebar__group-label">@Culture[group.LabelKeyFor(Role)]</span>
+                        <span aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+                    </button>
+                }
+                else
+                {
+                    <span class="wg-sidebar__group-label">@Culture[group.LabelKeyFor(Role)]</span>
+                }
+                @if (!collapsed)
+                {
+                    <ul class="wg-sidebar__items">
+                        @foreach (var item in group.Items)
+                        {
+                            var active = IsActive(item);
+                            <li>
+                                <a class="wg-sidebar__link @(active ? "is-active" : null)"
+                                   href="@item.Href"
+                                   aria-current="@(active ? "page" : null)">
+                                    <span class="wg-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                                    <span>@Culture[item.LabelKeyFor(Role)]</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+    </nav>
+    <div class="wg-sidebar__footer">
+        <a class="wg-sidebar__footer-link" href="/">@Culture["WgShell.JobMap"]</a>
+        @if (Role == EmployerRole.Regiomanager)
+        {
+            <p class="wg-sidebar__rm-note">@Culture["WgShell.RmFooter"]</p>
+        }
+    </div>
+</aside>
+
+@code {
+    private bool _meerOpen;
+    private WerkgeverNavContext _ctx = new();
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private IReadOnlyList<WerkgeverNavGroup> Groups => WerkgeverNav.For(Role, _ctx);
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLoc;
+        Scope.Changed += OnScope;
+    }
+
+    private void OnLoc(object? s, LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
+    private void OnScope() => InvokeAsync(StateHasChanged);
+
+    private string CurrentPath()
+        => "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+
+    private bool IsActive(WerkgeverNavItem item)
+    {
+        var path = WerkgeverNav.Normalize(CurrentPath());
+        if (string.Equals(path, WerkgeverNav.Normalize(item.Href), StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        foreach (var alias in item.Aliases)
+        {
+            if (string.Equals(path, WerkgeverNav.Normalize(alias), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        var href = WerkgeverNav.Normalize(item.Href);
+        return href is not "/" && path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLoc;
+        Scope.Changed -= OnScope;
+    }
+}

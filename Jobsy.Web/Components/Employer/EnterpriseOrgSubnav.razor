@@ -36,7 +36,7 @@
             if (branchCount < 2)
             {
                 modules = modules.Where(m =>
-                    !string.Equals(m.Href, "/employer/regions", StringComparison.OrdinalIgnoreCase));
+                    !string.Equals(m.Href, "/werkgever/organisatie/vestigingen?tab=regios", StringComparison.OrdinalIgnoreCase));
             }
 
             if (!companies.Any(c => c.CsvBatchImportEnabled))

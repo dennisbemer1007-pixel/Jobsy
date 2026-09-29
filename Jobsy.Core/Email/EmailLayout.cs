@@ -59,16 +59,16 @@ public static class EmailLayout
         => Absolute(publicWebBaseUrl, "/candidate/applications");
 
     public static string EditVacancyUrl(string? publicWebBaseUrl, Guid vacancyId)
-        => Absolute(publicWebBaseUrl, $"/branch/vacancies/new?edit={vacancyId}");
+        => Absolute(publicWebBaseUrl, $"/werkgever/vacatures/nieuw?edit={vacancyId}");
 
     public static string HighlightVacancyUrl(string? publicWebBaseUrl, Guid vacancyId)
-        => Absolute(publicWebBaseUrl, $"/employer/vacancies?boost=highlight&id={vacancyId}");
+        => Absolute(publicWebBaseUrl, $"/werkgever/vacatures?boost=highlight&id={vacancyId}");
 
     public static string PushBomVacancyUrl(string? publicWebBaseUrl, Guid vacancyId)
-        => Absolute(publicWebBaseUrl, $"/employer/vacancies?boost=pushbom&id={vacancyId}");
+        => Absolute(publicWebBaseUrl, $"/werkgever/vacatures?boost=pushbom&id={vacancyId}");
 
     public static string BranchApplicantsUrl(string? publicWebBaseUrl)
-        => Absolute(publicWebBaseUrl, "/branch/applicants");
+        => Absolute(publicWebBaseUrl, "/werkgever/sollicitaties");
 
     public static string LoginUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, "/login");
@@ -83,10 +83,10 @@ public static class EmailLayout
         => Absolute(publicWebBaseUrl, "/privacy/data");
 
     public static string TakeoversUrl(string? publicWebBaseUrl)
-        => Absolute(publicWebBaseUrl, "/employer/takeovers");
+        => Absolute(publicWebBaseUrl, "/werkgever/overnames");
 
     public static string EmployerVacanciesUrl(string? publicWebBaseUrl)
-        => Absolute(publicWebBaseUrl, "/employer/vacancies");
+        => Absolute(publicWebBaseUrl, "/werkgever/vacatures");
 
     public static string JobMapUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, "/");
@@ -104,7 +104,7 @@ public static class EmailLayout
         => Absolute(publicWebBaseUrl, "/ambassadeur/onboarding");
 
     public static string EmployerApiKeysUrl(string? publicWebBaseUrl)
-        => Absolute(publicWebBaseUrl, "/employer/company");
+        => Absolute(publicWebBaseUrl, "/werkgever/organisatie/profiel");
 
     /// <summary>Full HTML document with logo header, content, and footer.</summary>
     public static string Wrap(

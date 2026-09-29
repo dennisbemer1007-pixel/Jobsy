@@ -13,6 +13,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ## [Unreleased]
 
+### Added
+- **Werkgever redesign 01:** shared `WerkgeverLayout` (sidebar, scope chip, mobile bottom nav), `WerkgeverNav` catalog, Dutch `/werkgever/…` URLs + 301 legacy redirects, Ent* UI primitives under `Components/Ui/Enterprise/` (admin stack should reuse these), rights matrix foundation, D5 BranchManager removed from token purchase.
+
 ### Fixed
 - **Render `jobsy-api` deploys:** `WebPushSubscriptions` ontbrak in `JobsyDbContextModelSnapshot`. EF Core 9 behandelt dat als `PendingModelChangesWarning` → harde fout in `MigrateAsync` → API-host stopt (Auto-Deploy Failed sinds PWA-commit). Snapshot + regressietest herstellen de deploy.
 

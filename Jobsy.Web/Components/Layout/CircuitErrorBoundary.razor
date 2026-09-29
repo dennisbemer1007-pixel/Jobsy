@@ -1,0 +1,108 @@
+@using System.Security.Claims
+@inject ILogger<CircuitErrorBoundary> Logger
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+@inject CultureState Culture
+@implements IDisposable
+
+<ErrorBoundary @ref="_errorBoundary">
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+    <ErrorContent Context="ex">
+        @{
+            LogCircuitError(ex);
+        }
+        <div class="panel-page circuit-error" role="alert">
+            <h1>@Culture["Circuit.ErrorTitle"]</h1>
+            <p class="login-lead">@Culture["Circuit.ErrorLead"]</p>
+            <button type="button" class="login-submit" @onclick="RecoverFromError">@Culture["Circuit.ErrorRetry"]</button>
+        </div>
+    </ErrorContent>
+</ErrorBoundary>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string BoundaryTag { get; set; } = "main";
+
+    private ErrorBoundary? _errorBoundary;
+    private Exception? _loggedCircuitError;
+
+    protected override void OnInitialized()
+        => Navigation.LocationChanged += OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        // An error on one tab must never follow the user to the next route.
+        _loggedCircuitError = null;
+        _errorBoundary?.Recover();
+    }
+
+    private void RecoverFromError()
+    {
+        _loggedCircuitError = null;
+        _errorBoundary?.Recover();
+    }
+
+    private void LogCircuitError(Exception ex)
+    {
+        if (ReferenceEquals(_loggedCircuitError, ex))
+        {
+            return;
+        }
+
+        _loggedCircuitError = ex;
+        var route = SafeRoute();
+        var userId = ResolveUserId();
+        Logger.LogError(
+            ex,
+            "Circuit error boundary at {Route} for user {UserId}: {ExceptionType}",
+            route,
+            userId,
+            ex.GetType().Name);
+        try
+        {
+            Sentry.SentrySdk.CaptureException(ex, scope =>
+            {
+                scope.SetTag("route", route);
+                scope.SetTag("boundary", BoundaryTag);
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    scope.User = new Sentry.SentryUser { Id = userId };
+                }
+            });
+        }
+        catch
+        {
+            // Sentry optional / not configured.
+        }
+    }
+
+    private string SafeRoute()
+    {
+        try
+        {
+            return "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+        }
+        catch
+        {
+            return "/";
+        }
+    }
+
+    private string? ResolveUserId()
+    {
+        try
+        {
+            return HttpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? HttpContextAccessor.HttpContext?.User?.FindFirstValue("sub");
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public void Dispose()
+        => Navigation.LocationChanged -= OnLocationChanged;
+}

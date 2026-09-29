@@ -143,26 +143,33 @@ public class RoleNavCatalogTests
     }
 
     [Fact]
-    public void ForUser_branch_and_enterprise_get_applications_nav()
+    public void ForUser_branch_and_enterprise_get_empty_catalog_werkgever_owns_nav()
     {
         foreach (var role in new[] { JobsyRoles.BranchManager, JobsyRoles.EnterpriseManager })
         {
             var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, role)], "test");
             var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-            Assert.Contains(items, i => i.Href == "/branch/applicants" && i.TitleKey == "Nav.Applications");
-            var vacancies = items.First(i => i.TitleKey == "Nav.Vacancies");
-            Assert.DoesNotContain("/branch/applicants", vacancies.ExtraActivePaths ?? []);
+            Assert.Empty(items);
         }
+
+        var ctx = new WerkgeverNavContext(CandidateInsightsEnabled: true);
+        var bm = WerkgeverNav.For(EmployerRole.Bedrijfsmanager, ctx).SelectMany(g => g.Items);
+        Assert.Contains(bm, i => i.Href == "/werkgever/sollicitaties");
     }
 
     [Fact]
-    public void ForUser_branch_manager_with_candidate_apps_gets_applications_nav()
+    public void ForUser_branch_manager_with_candidate_apps_uses_werkgever_nav()
     {
         var identity = new ClaimsIdentity("test");
         identity.AddClaim(new Claim(ClaimTypes.Role, JobsyRoles.BranchManager));
         identity.AddClaim(new Claim(JobsyClaimTypes.HasCandidateApplications, "1"));
-        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-        Assert.Contains(items, i => i.Href == "/branch/tokens");
+        Assert.Empty(RoleNavCatalog.ForUser(new ClaimsPrincipal(identity)));
+
+        var items = WerkgeverNav.For(
+            EmployerRole.Vestigingsmanager,
+            new WerkgeverNavContext(HasCandidateApplications: true, CandidateInsightsEnabled: true))
+            .SelectMany(g => g.Items);
+        Assert.Contains(items, i => i.Href == "/werkgever/tokens");
         Assert.Contains(items, i => i.Href == "/candidate/applications");
     }
 
@@ -186,16 +193,19 @@ public class RoleNavCatalogTests
     }
 
     [Fact]
-    public void ForUser_optional_applications_stay_in_bottom_nav_not_how_lobsy()
+    public void ForUser_optional_applications_stay_in_werkgever_nav_not_how_lobsy()
     {
         var identity = new ClaimsIdentity("test");
         identity.AddClaim(new Claim(ClaimTypes.Role, JobsyRoles.BranchManager));
         identity.AddClaim(new Claim(JobsyClaimTypes.HasCandidateApplications, "1"));
         var user = new ClaimsPrincipal(identity);
-        var items = RoleNavCatalog.ForUser(user);
+        Assert.Empty(RoleNavCatalog.ForUser(user));
+        var items = WerkgeverNav.For(
+            EmployerRole.Vestigingsmanager,
+            new WerkgeverNavContext(HasCandidateApplications: true))
+            .SelectMany(g => g.Items);
         Assert.Contains(items, i => i.Href == "/candidate/applications");
         Assert.DoesNotContain(items, i => i.Href == "/candidate/vacancies");
-        Assert.DoesNotContain(items, i => i.TitleKey == "Nav.HowLobsyWorks");
         Assert.Equal("/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(user));
     }
 
@@ -230,87 +240,78 @@ public class RoleNavCatalogTests
     [Fact]
     public void IsActive_matches_extra_path_prefix()
     {
-        var item = new NavItem("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch"]);
-        Assert.True(RoleNavCatalog.IsActive(item, "branch/applicants"));
-        Assert.True(RoleNavCatalog.IsActive(item, "employer/vacancies"));
+        var item = new NavItem("Nav.Vacancies", "/werkgever/vacatures", NavIcons.Vacancies, ["/werkgever/sollicitaties"]);
+        Assert.True(RoleNavCatalog.IsActive(item, "werkgever/sollicitaties"));
+        Assert.True(RoleNavCatalog.IsActive(item, "werkgever/vacatures"));
         Assert.False(RoleNavCatalog.IsActive(item, "admin/users"));
     }
 
     [Fact]
     public void IsActive_tokens_does_not_highlight_vacancies()
     {
-        var items = RoleNavCatalog.Branch;
-        var vacancies = items.First(i => i.Href == "/branch/vacancies");
-        var tokens = items.First(i => i.Href == "/branch/tokens");
+        var vacancies = new NavItem("WgNav.Vacancies", "/werkgever/vacatures", NavIcons.Vacancies, ["/werkgever/vacatures/nieuw"]);
+        var tokens = new NavItem("WgNav.BalanceBuy", "/werkgever/tokens", NavIcons.Tokens);
+        var items = new[] { vacancies, tokens };
 
-        Assert.True(RoleNavCatalog.IsActive(tokens, "branch/tokens", items));
-        Assert.False(RoleNavCatalog.IsActive(vacancies, "branch/tokens", items));
-        Assert.True(RoleNavCatalog.IsActive(vacancies, "branch/vacancies/new", items));
+        Assert.True(RoleNavCatalog.IsActive(tokens, "werkgever/tokens", items));
+        Assert.False(RoleNavCatalog.IsActive(vacancies, "werkgever/tokens", items));
+        Assert.True(RoleNavCatalog.IsActive(vacancies, "werkgever/vacatures/nieuw", items));
     }
 
     [Fact]
-    public void TokensHrefFor_branch_manager()
+    public void TokensHrefFor_employer_is_shared()
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.BranchManager)], "test");
-        Assert.Equal("/branch/tokens", RoleNavCatalog.TokensHrefFor(new ClaimsPrincipal(identity)));
+        Assert.Equal("/werkgever/tokens", RoleNavCatalog.TokensHrefFor(new ClaimsPrincipal(identity)));
     }
 
     [Fact]
-    public void ForUser_enterprise_keeps_ops_nav_and_desktop_organization_hub()
+    public void ForUser_enterprise_catalog_empty_werkgever_has_org_items()
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.EnterpriseManager)], "test");
-        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-
-        Assert.Contains(items, i => i.Href == "/home");
-        Assert.Contains(items, i => i.Href == "/employer/vacancies");
-        Assert.Contains(items, i => i.Href == "/employer/tokens");
-        Assert.Contains(items, i => i.Href == "/employer/users");
-        Assert.Contains(items, i => i.Href == "/employer/organization" && i.DesktopOnly);
-
-        Assert.DoesNotContain(items, i => i.Href == "/employer/salary-tables");
-        Assert.DoesNotContain(items, i => i.Href == "/employer/branches");
-        Assert.DoesNotContain(items, i => i.Href == "/employer/regions");
-        Assert.DoesNotContain(items, i => i.Href == "/employer/csv-import");
-        Assert.DoesNotContain(items, i => i.Href == "/employer/company");
-
-        var org = items.First(i => i.Href == "/employer/organization");
-        Assert.True(RoleNavCatalog.IsActive(org, "employer/salary-tables", items));
-        Assert.True(RoleNavCatalog.IsActive(org, "employer/csv-import", items));
-        Assert.True(RoleNavCatalog.IsActive(org, "employer/branches", items));
-        Assert.False(RoleNavCatalog.IsActive(org, "employer/users", items));
+        Assert.Empty(RoleNavCatalog.ForUser(new ClaimsPrincipal(identity)));
+        var items = WerkgeverNav.For(EmployerRole.Bedrijfsmanager, new WerkgeverNavContext(HasTakeovers: true, HasApiOrCsvImport: true))
+            .SelectMany(g => g.Items)
+            .ToList();
+        Assert.Contains(items, i => i.Href == "/werkgever");
+        Assert.Contains(items, i => i.Href == "/werkgever/vacatures");
+        Assert.Contains(items, i => i.Href == "/werkgever/tokens");
+        Assert.Contains(items, i => i.Href == "/werkgever/organisatie/team");
+        Assert.Contains(items, i => i.Href == "/werkgever/organisatie/vestigingen");
     }
 
     [Fact]
     public void ForUser_intermediary_has_no_batch_tool()
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Intermediary)], "test");
-        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-
+        Assert.Empty(RoleNavCatalog.ForUser(new ClaimsPrincipal(identity)));
+        var items = WerkgeverNav.For(EmployerRole.Intermediair, new WerkgeverNavContext())
+            .SelectMany(g => g.Items);
         Assert.Contains(items, i => i.Href == "/intermediary");
-        Assert.Contains(items, i => i.Href == "/employer/vacancies");
-        Assert.Contains(items, i => i.Href == "/employer/tokens");
+        Assert.Contains(items, i => i.Href == "/werkgever/vacatures");
+        Assert.Contains(items, i => i.Href == "/werkgever/tokens");
         Assert.DoesNotContain(items, i => i.Href == "/intermediary/batch");
-        Assert.DoesNotContain(items, i => i.TitleKey == "Nav.BatchTool");
     }
 
     [Fact]
-    public void Talent_nav_extra_paths_include_kandidaatinzichten_except_intermediary()
+    public void Talent_nav_extra_paths_live_on_werkgever_catalog()
     {
-        var enterpriseTalent = RoleNavCatalog.Enterprise.First(i => i.TitleKey == "Nav.Talent");
-        Assert.Contains("/employer/kandidaatinzichten", enterpriseTalent.ExtraActivePaths ?? []);
-        var branchTalent = RoleNavCatalog.Branch.First(i => i.TitleKey == "Nav.Talent");
-        Assert.Contains("/employer/kandidaatinzichten", branchTalent.ExtraActivePaths ?? []);
-        var intermediaryTalent = RoleNavCatalog.Intermediary.First(i => i.TitleKey == "Nav.Talent");
-        Assert.DoesNotContain("/employer/kandidaatinzichten", intermediaryTalent.ExtraActivePaths ?? []);
+        var talent = WerkgeverNav.Catalog.SelectMany(g => g.Items).First(i => i.Key == "talent");
+        Assert.Contains("/employer/talent-contacts", talent.Aliases);
+        var insights = WerkgeverNav.Catalog.SelectMany(g => g.Items).First(i => i.Key == "insights");
+        Assert.Contains("/employer/kandidaatinzichten", insights.Aliases);
+        var im = WerkgeverNav.For(EmployerRole.Intermediair, new WerkgeverNavContext(CandidateInsightsEnabled: true))
+            .SelectMany(g => g.Items);
+        Assert.DoesNotContain(im, i => i.Key == "insights");
     }
 
     [Fact]
-    public void Regional_nav_includes_candidate_insights()
+    public void Regional_nav_includes_candidate_insights_via_werkgever()
     {
-        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.RegionalManager)], "test");
-        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-        Assert.Contains(items, i => i.Href == "/employer/kandidaatinzichten" && i.TitleKey == "Nav.CandidateInsights");
-        Assert.Equal(5, RoleNavCatalog.Regional.Length);
+        Assert.Empty(RoleNavCatalog.Regional);
+        var items = WerkgeverNav.For(EmployerRole.Regiomanager, new WerkgeverNavContext(CandidateInsightsEnabled: true))
+            .SelectMany(g => g.Items);
+        Assert.Contains(items, i => i.Href == "/werkgever/kandidaatinzichten");
     }
 }
 

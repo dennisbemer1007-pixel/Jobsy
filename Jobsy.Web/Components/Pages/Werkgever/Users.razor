@@ -1,0 +1,625 @@
+@page "/werkgever/organisatie/team"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject AuthenticationStateProvider AuthState
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Employer.Users"] · Lobsy</PageTitle>
+
+<div class="panel-page users-page max-w-full overflow-x-hidden pb-28">
+    <header class="panel-header">
+        <div>
+            <h1>@Culture["Employer.Users"]</h1>
+            <p class="login-lead">Uitnodigen, bewerken en rollen toekennen binnen jouw organisatie.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        var pendingInvites = _users.Where(u => !u.IsActive).ToList();
+        var visibleUsers = FilteredUsers.ToList();
+        <div class="users-toolbar">
+            <input type="search" placeholder="Zoek op naam of e-mail" @bind="_search" @bind:event="oninput" />
+            <div class="users-toolbar__filters">
+                <select @bind="_roleFilter" aria-label="Filter op rol">
+                    <option value="">Alle rollen</option>
+                    @foreach (var option in RoleOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+                <select @bind="_branchFilter" aria-label="Filter op vestiging">
+                    <option value="">Alle vestigingen</option>
+                    @foreach (var c in CompanyOptions)
+                    {
+                        <option value="@c.Id">@EmployerInviteCompanyOptions.Label(c, CompanyOptions)</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        @if (pendingInvites.Count > 0)
+        {
+            <section class="invite-panel" aria-label="Openstaande uitnodigingen">
+                <h2 class="invite-panel__title">
+                    Openstaande uitnodigingen
+                    <span class="invite-count">@pendingInvites.Count</span>
+                </h2>
+                <div class="user-card-list">
+                    @foreach (var u in pendingInvites)
+                    {
+                        <article class="user-card user-card--pending">
+                            <div class="user-card__head">
+                                <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                                <div class="user-card__identity">
+                                    <strong>@u.FullName</strong>
+                                    <span class="user-card__email">@u.Email</span>
+                                </div>
+                            </div>
+                            <div class="user-card__meta">
+                                <span class="role-badge @RoleBadgeClass(u.Role)">@RoleLabel(u.Role)</span>
+                                <span class="user-card__branch">@(u.CompanyName ?? "—")</span>
+                                <span class="user-card__inactive">Openstaand</span>
+                            </div>
+                        </article>
+                    }
+                </div>
+            </section>
+        }
+
+        @if (visibleUsers.Count == 0)
+        {
+            <p class="muted">Nog geen gebruikers in deze organisatie. Verstuur hieronder de eerste uitnodiging.</p>
+        }
+        else
+        {
+            <div class="user-card-list">
+                @foreach (var u in visibleUsers)
+                {
+                    var menuOpen = _menuUserId == u.Id;
+                    <article class="user-card">
+                        <div class="user-card__head">
+                            <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                            <div class="user-card__identity">
+                                <strong>@u.FullName</strong>
+                                <span class="user-card__email">@u.Email</span>
+                            </div>
+                            <div class="user-card__menu" @onfocusout="OnMenuFocusOut">
+                                <button type="button"
+                                        class="icon-btn user-card__menu-toggle"
+                                        title="Acties"
+                                        aria-label="Acties voor @u.FullName"
+                                        aria-haspopup="menu"
+                                        aria-expanded="@(menuOpen ? "true" : "false")"
+                                        disabled="@_busy"
+                                        @onclick="() => ToggleMenu(u.Id)"
+                                        @onclick:stopPropagation="true">
+                                    @((MarkupString)ActionIcons.More)
+                                </button>
+                                @if (menuOpen)
+                                {
+                                    <div class="user-card__menu-panel" role="menu">
+                                        <button type="button" class="user-card__menu-item" role="menuitem" @onclick="() => StartEdit(u)">
+                                            Bewerken
+                                        </button>
+                                        <button type="button" class="user-card__menu-item" role="menuitem" @onclick="() => StartEdit(u)">
+                                            Rol wijzigen
+                                        </button>
+                                        <button type="button" class="user-card__menu-item user-card__menu-item--danger" role="menuitem" disabled="@_busy" @onclick="() => RequestDeactivate(u)">
+                                            Deactiveren
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="user-card__meta">
+                            <span class="role-badge @RoleBadgeClass(u.Role)">@RoleLabel(u.Role)</span>
+                            <span class="user-card__branch">@(u.CompanyName ?? "—")</span>
+                        </div>
+                        @if (_confirmDeactivateId == u.Id)
+                        {
+                            <div class="user-card__confirm" role="group" aria-label="Deactiveren bevestigen">
+                                <p>@u.FullName deactiveren?</p>
+                                <button type="button" class="btn-compact" disabled="@_busy" @onclick="CancelDeactivate">Annuleren</button>
+                                <button type="button" class="btn-compact user-card__confirm-yes" disabled="@_busy" @onclick="() => DeactivateAsync(u)">Bevestigen</button>
+                            </div>
+                        }
+                    </article>
+                }
+            </div>
+        }
+
+        @if (_editing is not null)
+        {
+            <section class="panel-section">
+                <h2>Gebruiker bewerken</h2>
+                <p class="muted">@_editing.Email</p>
+                <form class="login-form invite-form" @onsubmit="SaveEditAsync" @onsubmit:preventDefault>
+                    <label>
+                        Naam
+                        <input @bind="_editFullName" required />
+                    </label>
+                    <label>
+                        Rol
+                        <select @bind="_editRole" @bind:after="OnEditContextChanged">
+                            @foreach (var option in RoleOptions)
+                            {
+                                <option value="@option.Value">@option.Label</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Primaire vestiging
+                        <select @bind="_editPrimaryCompanyId" @bind:after="OnEditContextChanged">
+                            <option value="">— Geen —</option>
+                            @foreach (var c in EditPrimaryCompanies)
+                            {
+                                <option value="@c.Id">@EmployerInviteCompanyOptions.Label(c, CompanyOptions)</option>
+                            }
+                        </select>
+                    </label>
+                    @if (EditExtraCompanies.Count > 0)
+                    {
+                        <fieldset class="profile-roles profile-roles--wide membership-grid grid grid-cols-2 gap-2">
+                            <legend>Extra lidmaatschappen</legend>
+                            @foreach (var c in EditExtraCompanies)
+                            {
+                                <label>
+                                    <input type="checkbox"
+                                           checked="@_editMemberships.Contains(c.Id)"
+                                           @onchange="e => ToggleEditMembership(c.Id, (bool)(e.Value ?? false))" />
+                                    @EmployerInviteCompanyOptions.Label(c, CompanyOptions)
+                                </label>
+                            }
+                        </fieldset>
+                    }
+                    <label class="publish-option">
+                        <input type="checkbox" @bind="_editIsActive" />
+                        <span>Actief</span>
+                    </label>
+                    <div class="inline-actions invite-form__actions">
+                        <button class="login-submit" type="submit" disabled="@_busy">@Culture["Common.Save"]</button>
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelEdit">@Culture["Common.Cancel"]</button>
+                    </div>
+                </form>
+            </section>
+        }
+
+        <section class="panel-section">
+            <h2>Uitnodigen</h2>
+            <form class="login-form invite-form" @onsubmit="InviteAsync" @onsubmit:preventDefault>
+                <label>
+                    E-mail
+                    <input type="email" @bind="_email" required />
+                </label>
+                <label>
+                    Naam
+                    <input @bind="_fullName" required />
+                </label>
+                <div class="invite-form__row">
+                    <label>
+                        Rol
+                        <select @bind="_role" @bind:after="OnInviteContextChanged">
+                            @foreach (var option in RoleOptions)
+                            {
+                                <option value="@option.Value">@option.Label</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Primaire vestiging
+                        <select @bind="_primaryCompanyId" @bind:after="OnInviteContextChanged">
+                            <option value="">— Geen —</option>
+                            @foreach (var c in InvitePrimaryCompanies)
+                            {
+                                <option value="@c.Id">@EmployerInviteCompanyOptions.Label(c, CompanyOptions)</option>
+                            }
+                        </select>
+                    </label>
+                </div>
+                @if (InviteExtraCompanies.Count > 0)
+                {
+                    <fieldset class="profile-roles profile-roles--wide membership-grid grid grid-cols-2 gap-2">
+                        <legend>Extra lidmaatschappen</legend>
+                        @foreach (var c in InviteExtraCompanies)
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@_memberships.Contains(c.Id)"
+                                       @onchange="e => ToggleMembership(c.Id, (bool)(e.Value ?? false))" />
+                                @EmployerInviteCompanyOptions.Label(c, CompanyOptions)
+                            </label>
+                        }
+                    </fieldset>
+                }
+                <div class="invite-form__actions">
+                    <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+                </div>
+            </form>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private List<CompanyUserItem> _users = [];
+    private List<CompanySummary> _companies = [];
+    private HashSet<Guid> _memberships = [];
+    private HashSet<Guid> _editMemberships = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private string _email = "";
+    private string _fullName = "";
+    private string _role = "BranchManager";
+    private string _primaryCompanyId = "";
+    private string _search = "";
+    private string _roleFilter = "";
+    private string _branchFilter = "";
+    private bool _isAdmin;
+    private Guid? _menuUserId;
+    private Guid? _confirmDeactivateId;
+
+    private CompanyUserItem? _editing;
+    private string _editFullName = "";
+    private string _editRole = "BranchManager";
+    private string _editPrimaryCompanyId = "";
+    private bool _editIsActive = true;
+
+    private static readonly (string Value, string Label)[] AdminRoleOptions =
+    [
+        ("EnterpriseManager", "Bedrijfsmanager"),
+        ("RegionalManager", "Regiomanager"),
+        ("BranchManager", "Vestigingsmanager"),
+        ("Intermediary", "Intermediair")
+    ];
+
+    private static readonly (string Value, string Label)[] EnterpriseRoleOptions =
+    [
+        ("EnterpriseManager", "Bedrijfsmanager"),
+        ("RegionalManager", "Regiomanager"),
+        ("BranchManager", "Vestigingsmanager")
+    ];
+
+    private IReadOnlyList<(string Value, string Label)> RoleOptions =>
+        _isAdmin ? AdminRoleOptions : EnterpriseRoleOptions;
+
+    private IReadOnlyList<InviteCompanyOption> CompanyOptions =>
+        _companies.Select(ToOption).ToList();
+
+    private IReadOnlyList<InviteCompanyOption> InvitePrimaryCompanies =>
+        EmployerInviteCompanyOptions.PrimaryChoices(CompanyOptions, _role);
+
+    private IReadOnlyList<InviteCompanyOption> InviteExtraCompanies =>
+        EmployerInviteCompanyOptions.ExtraMembershipChoices(CompanyOptions, ParseGuid(_primaryCompanyId));
+
+    private IReadOnlyList<InviteCompanyOption> EditPrimaryCompanies =>
+        EmployerInviteCompanyOptions.PrimaryChoices(CompanyOptions, _editRole);
+
+    private IReadOnlyList<InviteCompanyOption> EditExtraCompanies =>
+        EmployerInviteCompanyOptions.ExtraMembershipChoices(CompanyOptions, ParseGuid(_editPrimaryCompanyId));
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            _isAdmin = state.User.IsInRole("Admin");
+            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+            EnsureInviteRoleAllowed();
+            OnInviteContextChanged();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleMenu(Guid userId)
+    {
+        _confirmDeactivateId = null;
+        _menuUserId = _menuUserId == userId ? null : userId;
+    }
+
+    private void RequestDeactivate(CompanyUserItem user)
+    {
+        _menuUserId = null;
+        _confirmDeactivateId = user.Id;
+    }
+
+    private void CancelDeactivate()
+        => _confirmDeactivateId = null;
+
+    private async Task OnMenuFocusOut(FocusEventArgs _)
+    {
+        await Task.Delay(150);
+        _menuUserId = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void StartEdit(CompanyUserItem user)
+    {
+        _menuUserId = null;
+        _confirmDeactivateId = null;
+        _editing = user;
+        _editFullName = user.FullName;
+        _editRole = IsRoleAllowed(user.Role) ? user.Role : RoleOptions[0].Value;
+        _editPrimaryCompanyId = user.CompanyId?.ToString() ?? "";
+        _editIsActive = user.IsActive;
+        _editMemberships = user.MembershipCompanyIds.ToHashSet();
+        _message = null;
+        OnEditContextChanged();
+    }
+
+    private void CancelEdit()
+    {
+        _editing = null;
+        _editMemberships = [];
+    }
+
+    private bool IsRoleAllowed(string role) =>
+        RoleOptions.Any(option => string.Equals(option.Value, role, StringComparison.Ordinal));
+
+    private void EnsureInviteRoleAllowed()
+    {
+        if (!IsRoleAllowed(_role))
+        {
+            _role = RoleOptions[0].Value;
+        }
+    }
+
+    private void OnInviteContextChanged()
+    {
+        EnsureInviteRoleAllowed();
+        var primary = EmployerInviteCompanyOptions.CoercePrimary(
+            InvitePrimaryCompanies,
+            ParseGuid(_primaryCompanyId));
+        _primaryCompanyId = primary?.ToString() ?? "";
+        DropCoveredMemberships(_memberships, primary);
+    }
+
+    private void OnEditContextChanged()
+    {
+        if (!IsRoleAllowed(_editRole) && RoleOptions.Count > 0)
+        {
+            _editRole = RoleOptions[0].Value;
+        }
+
+        var primary = EmployerInviteCompanyOptions.CoercePrimary(
+            EditPrimaryCompanies,
+            ParseGuid(_editPrimaryCompanyId));
+        _editPrimaryCompanyId = primary?.ToString() ?? "";
+        DropCoveredMemberships(_editMemberships, primary);
+    }
+
+    private void DropCoveredMemberships(HashSet<Guid> memberships, Guid? primary)
+    {
+        var allowed = EmployerInviteCompanyOptions
+            .ExtraMembershipChoices(CompanyOptions, primary)
+            .Select(c => c.Id)
+            .ToHashSet();
+        memberships.RemoveWhere(id => id == primary || !allowed.Contains(id));
+    }
+
+    private void ToggleMembership(Guid id, bool selected)
+    {
+        if (ParseGuid(_primaryCompanyId) == id)
+        {
+            return;
+        }
+
+        if (selected)
+        {
+            _memberships.Add(id);
+        }
+        else
+        {
+            _memberships.Remove(id);
+        }
+    }
+
+    private void ToggleEditMembership(Guid id, bool selected)
+    {
+        if (ParseGuid(_editPrimaryCompanyId) == id)
+        {
+            return;
+        }
+
+        if (selected)
+        {
+            _editMemberships.Add(id);
+        }
+        else
+        {
+            _editMemberships.Remove(id);
+        }
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (_editing is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            Guid? primary = Guid.TryParse(_editPrimaryCompanyId, out var pid) ? pid : null;
+            await Api.UpdateCompanyUserAsync(_editing.Id, new UpdateCompanyUserForm(
+                _editFullName,
+                _editRole,
+                primary,
+                _editMemberships.ToArray(),
+                _editIsActive));
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+            CancelEdit();
+            _message = "Gebruiker opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task InviteAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            Guid? primary = Guid.TryParse(_primaryCompanyId, out var pid) ? pid : null;
+            await Api.InviteCompanyUserAsync(new InviteUserForm(
+                _email,
+                _fullName,
+                _role,
+                primary,
+                _memberships.ToArray()));
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+            _email = "";
+            _fullName = "";
+            _memberships = [];
+            _message = "Uitnodiging verstuurd met inloglink en tijdelijk wachtwoord (stub e-mail).";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeactivateAsync(CompanyUserItem user)
+    {
+        _menuUserId = null;
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.UpdateCompanyUserAsync(user.Id, new UpdateCompanyUserForm(
+                user.FullName,
+                user.Role,
+                user.CompanyId,
+                user.MembershipCompanyIds.ToArray(),
+                IsActive: false));
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+            if (_editing?.Id == user.Id)
+            {
+                CancelEdit();
+            }
+
+            _message = $"{user.FullName} is gedeactiveerd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _confirmDeactivateId = null;
+            _busy = false;
+        }
+    }
+
+    private IEnumerable<CompanyUserItem> FilteredUsers
+    {
+        get
+        {
+            IEnumerable<CompanyUserItem> query = _users.Where(u => u.IsActive);
+            if (!string.IsNullOrWhiteSpace(_search))
+            {
+                query = query.Where(u =>
+                    u.FullName.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                    || u.Email.Contains(_search, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_roleFilter))
+            {
+                query = query.Where(u => string.Equals(u.Role, _roleFilter, StringComparison.Ordinal));
+            }
+
+            if (Guid.TryParse(_branchFilter, out var branchId))
+            {
+                query = query.Where(u =>
+                    u.CompanyId == branchId || u.MembershipCompanyIds.Contains(branchId));
+            }
+
+            return query;
+        }
+    }
+
+    private static string Initials(string name)
+    {
+        var parts = (name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+        {
+            return "?";
+        }
+
+        return parts.Length == 1
+            ? parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant()
+            : $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+
+    private static string RoleBadgeClass(string role) => role switch
+    {
+        "EnterpriseManager" => "role-badge--em",
+        "RegionalManager" => "role-badge--rm",
+        "BranchManager" => "role-badge--bm",
+        "Intermediary" => "role-badge--im",
+        _ => ""
+    };
+
+    private static string RoleLabel(string role) => role switch
+    {
+        "EnterpriseManager" => "Bedrijfsmanager",
+        "RegionalManager" => "Regiomanager",
+        "BranchManager" => "Vestigingsmanager",
+        "Intermediary" => "Intermediair",
+        _ => role
+    };
+
+    private static InviteCompanyOption ToOption(CompanySummary c) =>
+        new(c.Id, c.Name, c.Address ?? "", c.ParentCompanyId, c.KvkEstablishmentId);
+
+    private static Guid? ParseGuid(string? value) =>
+        Guid.TryParse(value, out var id) ? id : null;
+}

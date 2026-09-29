@@ -88,7 +88,7 @@ public sealed partial class JobsyApiClient
             qs.Add($"transport={Uri.EscapeDataString(transport)}");
         }
 
-        var url = "api/employer/talent/search" + (qs.Count == 0 ? "" : "?" + string.Join('&', qs));
+        var url = "api/werkgever/talentpool/search" + (qs.Count == 0 ? "" : "?" + string.Join('&', qs));
         try
         {
             return await _http.GetFromJsonAsync<List<AnonymousTalentCard>>(url, ct);
@@ -102,7 +102,7 @@ public sealed partial class JobsyApiClient
     public async Task UnlockTalentContactAsync(Guid candidateUserId, string message, CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync(
-            "api/employer/talent/unlock",
+            "api/werkgever/talentpool/unlock",
             new { candidateUserId, message },
             ct);
         if (!response.IsSuccessStatusCode)
@@ -116,7 +116,7 @@ public sealed partial class JobsyApiClient
     {
         try
         {
-            return await _http.GetFromJsonAsync<List<TalentContactRequestModel>>("api/employer/talent/requests", ct);
+            return await _http.GetFromJsonAsync<List<TalentContactRequestModel>>("api/werkgever/talentpool/requests", ct);
         }
         catch (HttpRequestException)
         {
@@ -126,7 +126,7 @@ public sealed partial class JobsyApiClient
 
     public async Task WithdrawTalentContactAsync(Guid requestId, CancellationToken ct = default)
     {
-        var response = await _http.PostAsync($"api/employer/talent/{requestId}/withdraw", null, ct);
+        var response = await _http.PostAsync($"api/werkgever/talentpool/{requestId}/withdraw", null, ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);

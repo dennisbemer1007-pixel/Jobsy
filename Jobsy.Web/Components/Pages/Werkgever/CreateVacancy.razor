@@ -1,0 +1,1800 @@
+@page "/werkgever/vacatures/nieuw"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Intermediary")]
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject AuthenticationStateProvider AuthState
+@inject CultureState Culture
+@implements IDisposable
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Media
+@using Jobsy.Core.Rules
+
+<PageTitle>@PageHeading · Lobsy</PageTitle>
+
+<div class="panel-page vacancy-editor">
+    <header class="panel-header">
+        <div>
+            <h1>@PageHeading</h1>
+            <p class="login-lead">
+                @if (_editVacancyId is not null)
+                {
+                    <text>Werk het concept bij. Publiceren kan zodra alle verplichte onderdelen compleet zijn.</text>
+                }
+                else if (_isDuplicate)
+                {
+                    <text>Gegevens zijn overgenomen uit de bronvacature. Pas aan waar nodig en sla op als concept — publiceren via de vacaturelijst.</text>
+                }
+                else
+                {
+                    <text>Rich text, media en salaristabel. Opslaan als concept — publiceren via de vacaturelijst.</text>
+                }
+            </p>
+        </div>
+    </header>
+
+    <div class="vacancy-editor__grid">
+        <form class="login-form" data-session-draft="true" @onsubmit="SaveAsync" @onsubmit:preventDefault>
+            @if (_isIntermediary)
+            {
+                <fieldset class="vacancy-intermediary">
+                    <legend>Inhuurend bedrijf (verplicht)</legend>
+                    <p class="muted vacancy-field-hint">
+                        Zoek op KVK-nummer en selecteer de vestiging van de opdrachtgever.
+                    </p>
+                    <div class="vacancy-intermediary__kvk-row">
+                        <label>
+                            KVK-nummer
+                            <input @bind="_clientKvkNumber"
+                                   @bind:event="oninput"
+                                   maxlength="20"
+                                   inputmode="numeric"
+                                   placeholder="12345678" />
+                        </label>
+                        <button type="button"
+                                class="provider-btn"
+                                disabled="@(_kvkBusy || string.IsNullOrWhiteSpace(_clientKvkNumber))"
+                                @onclick="LookupClientKvkAsync">
+                            @(_kvkBusy ? "Zoeken…" : "Zoek vestigingen")
+                        </button>
+                    </div>
+                    @if (_clientEstablishments.Count > 0)
+                    {
+                        <label>
+                            Vestiging
+                            <select @bind="_selectedEstablishmentId" @bind:after="OnClientEstablishmentChangedAsync">
+                                <option value="">— Kies vestiging —</option>
+                                @foreach (var e in _clientEstablishments)
+                                {
+                                    <option value="@e.KvkEstablishmentId">@e.Name · @e.Address</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    @if (_companies.Count > 0)
+                    {
+                        <label>
+                            Bekende opdrachtgever
+                            <select @bind="_companyId" @bind:after="LoadSalaryTablesAsync" required>
+                                @foreach (var c in _companies)
+                                {
+                                    <option value="@c.Id">@c.Name@(!string.IsNullOrWhiteSpace(c.KvkNumber) ? $" · KVK {c.KvkNumber}" : "")</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    @if (SelectedCompany is not null)
+                    {
+                        <p class="muted" style="margin:0;font-size:0.85rem">
+                            Geselecteerd: <strong>@SelectedCompany.Name</strong>
+                            · KVK @SelectedCompany.KvkNumber
+                            @if (!string.IsNullOrWhiteSpace(SelectedCompany.KvkEstablishmentId))
+                            {
+                                <text> · vestiging @SelectedCompany.KvkEstablishmentId</text>
+                            }
+                        </p>
+                    }
+                    <label class="vacancy-toggle-row">
+                        <input type="checkbox" @bind="_hideClientAddressOnMap" />
+                        <span>
+                            <strong>Vervang bedrijfsnaam en adres door die van het intermediair</strong>
+                            <span class="muted">Op de banenkaart en vacaturekaartjes; opdrachtgever blijft bekend voor admin/SROI</span>
+                        </span>
+                    </label>
+                </fieldset>
+            }
+            else if (_companies.Count > 1)
+            {
+                <label>
+                    Vestiging
+                    <select @bind="_companyId" @bind:after="LoadSalaryTablesAsync" required>
+                        @foreach (var c in _companies)
+                        {
+                            <option value="@c.Id">@c.Name@(!string.IsNullOrWhiteSpace(c.KvkNumber) ? $" · KVK {c.KvkNumber}" : "")</option>
+                        }
+                    </select>
+                </label>
+            }
+            <label>
+                Titel
+                <input @bind="_title" @bind:event="oninput" required />
+            </label>
+            @if (_isIntermediary)
+            {
+                <div class="vacancy-category-summary" aria-live="polite">
+                    <span class="vacancy-category-swatch" style="--category-color:@(SelectedCategory?.ColorHex ?? VacancyCategoryDefaults.UitzendbureauColorHex)" aria-hidden="true"></span>
+                    <div>
+                        <strong>@(SelectedCategory?.Name ?? VacancyCategoryDefaults.UitzendbureauLabel)</strong>
+                        <p class="muted">Vacaturetype voor intermediairs staat vast op Uitzendbureau.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <label>
+                    Categorie
+                    <select @bind="_categoryId" @bind:after="OnCategoryChanged" required>
+                        @if (_categories.Count == 0)
+                        {
+                            <option value="">Laden…</option>
+                        }
+                        else
+                        {
+                            @foreach (var cat in _categories)
+                            {
+                                <option value="@cat.Id.ToString()">@cat.Name</option>
+                            }
+                        }
+                    </select>
+                </label>
+            }
+            @if (!_isIntermediary && SelectedCategory?.PlacementKind == "Internship")
+            {
+                <label>
+                    Exclusiviteit
+                    <select @bind="_exclusivitySettingId">
+                        @foreach (var opt in _exclusivityOptions)
+                        {
+                            <option value="@opt.Id.ToString()">@opt.Name</option>
+                        }
+                    </select>
+                </label>
+                @if (SelectedExclusivity is { IsOpenOption: false } exclusive)
+                {
+                    <p class="muted">Deze stageplek wordt zichtbaar voor iedereen, maar alleen studenten van @exclusive.Name kunnen solliciteren.</p>
+                }
+            }
+            @if (!_isIntermediary && SelectedCategory?.ExtraFieldDefinitions is { Count: > 0 } fields)
+            {
+                <fieldset class="vacancy-category-extra">
+                    <legend>Extra gegevens voor @SelectedCategory.Name</legend>
+                    @foreach (var field in fields.Where(f => !IsLegalStyleCategoryField(f.Key)))
+                    {
+                        @if (field.InputType == "boolean")
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@(string.Equals(GetCategoryField(field.Key), "ja", StringComparison.OrdinalIgnoreCase))"
+                                       @onchange="e => SetCategoryBool(field.Key, e)" />
+                                @field.Label
+                            </label>
+                        }
+                        else if (field.InputType == "select" && field.Options is { Count: > 0 })
+                        {
+                            <label>
+                                @field.Label
+                                <select value="@GetCategoryField(field.Key)" @onchange="e => SetCategoryField(field.Key, e.Value?.ToString())">
+                                    <option value="">—</option>
+                                    @foreach (var opt in field.Options)
+                                    {
+                                        <option value="@opt">@opt</option>
+                                    }
+                                </select>
+                            </label>
+                        }
+                        else if (field.InputType == "textarea")
+                        {
+                            <label>
+                                @field.Label
+                                <textarea rows="3" value="@GetCategoryField(field.Key)" @oninput="e => SetCategoryField(field.Key, e.Value?.ToString())"></textarea>
+                            </label>
+                        }
+                        else
+                        {
+                            <label>
+                                @field.Label
+                                <input value="@GetCategoryField(field.Key)" @oninput="e => SetCategoryField(field.Key, e.Value?.ToString())" />
+                            </label>
+                        }
+                    }
+                </fieldset>
+            }
+                <label>
+                    Omschrijving
+                    <div class="richtext-toolbar" role="toolbar" aria-label="Opmaak">
+                        <div class="richtext-toolbar__group">
+                            <button type="button" class="richtext-btn" title="Vet" aria-label="Vet"
+                                    @onclick='() => FormatAsync("b")'><span aria-hidden="true">B</span></button>
+                            <button type="button" class="richtext-btn richtext-btn--italic" title="Cursief" aria-label="Cursief"
+                                    @onclick='() => FormatAsync("i")'><span aria-hidden="true">I</span></button>
+                            <button type="button" class="richtext-btn richtext-btn--underline" title="Onderstrepen" aria-label="Onderstrepen"
+                                    @onclick='() => FormatAsync("u")'><span aria-hidden="true">U</span></button>
+                        </div>
+                        <span class="richtext-toolbar__sep" aria-hidden="true"></span>
+                        <div class="richtext-toolbar__group">
+                            <button type="button" class="richtext-btn @(_align == "left" ? "is-active" : null)" title="Links uitlijnen" aria-label="Links uitlijnen"
+                                    @onclick='() => AlignAsync("left")'>
+                                @((MarkupString)AlignLeftSvg)
+                            </button>
+                            <button type="button" class="richtext-btn @(_align == "center" ? "is-active" : null)" title="Centreren" aria-label="Centreren"
+                                    @onclick='() => AlignAsync("center")'>
+                                @((MarkupString)AlignCenterSvg)
+                            </button>
+                            <button type="button" class="richtext-btn @(_align == "right" ? "is-active" : null)" title="Rechts uitlijnen" aria-label="Rechts uitlijnen"
+                                    @onclick='() => AlignAsync("right")'>
+                                @((MarkupString)AlignRightSvg)
+                            </button>
+                            <button type="button" class="richtext-btn @(_align == "justify" ? "is-active" : null)" title="Uitvullen" aria-label="Uitvullen"
+                                    @onclick='() => AlignAsync("justify")'>
+                                @((MarkupString)AlignJustifySvg)
+                            </button>
+                        </div>
+                        <span class="richtext-toolbar__sep" aria-hidden="true"></span>
+                        <div class="richtext-toolbar__group">
+                            <button type="button" class="richtext-btn" title="Lijst" aria-label="Lijst"
+                                    @onclick="InsertListAsync">
+                                @((MarkupString)ListSvg)
+                            </button>
+                            <button type="button" class="richtext-btn" title="Link invoegen" aria-label="Link invoegen"
+                                    @onclick="InsertLinkAsync">
+                                @((MarkupString)LinkSvg)
+                            </button>
+                        </div>
+                    </div>
+                    <textarea @ref="_descriptionRef" rows="8" @bind="_description" @bind:event="oninput" required></textarea>
+                </label>
+                <label>
+                    Afbeelding-URL
+                    <input @bind="_imageUrl" @bind:event="oninput" placeholder="https://…" />
+                </label>
+                <label>
+                    Video-URL
+                    <input @bind="_videoUrl" @bind:event="oninput" placeholder="https://… (YouTube/Vimeo)" />
+                </label>
+            <label>
+                Salaristabel
+                <select @bind="_salaryTableId" @bind:after="OnSalaryTableChanged" required>
+                    <option value="">— Kies een salaristabel —</option>
+                    @foreach (var t in _salaryTables)
+                    {
+                        <option value="@t.Id">@t.Name</option>
+                    }
+                </select>
+            </label>
+            @if (SelectedSalaryTable is not null)
+            {
+                <div class="salary-table-preview" aria-live="polite">
+                    <p class="salary-table-preview__title">Voorbeeld · @SelectedSalaryTable.Name</p>
+                    <table class="wage-table">
+                        <thead>
+                            <tr>
+                                <th>Leeftijd</th>
+                                <th>Uurloon</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rate in SelectedSalaryTable.Rates.OrderBy(r => r.AgeYears))
+                            {
+                                <tr>
+                                    <th>@rate.Label</th>
+                                    <td>€ @rate.HourlyRate.ToString("0.00")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <fieldset class="profile-roles">
+                <legend>Branche (max @WorkTypeLabels.MaxPerVacancy)</legend>
+                @foreach (var label in _branchOptions)
+                {
+                    var selected = _selectedWorkTypes.Contains(label);
+                    var disabled = !selected && _selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy;
+                    <label class="@(disabled ? "is-disabled" : null)">
+                        <input type="checkbox"
+                               checked="@selected"
+                               disabled="@disabled"
+                               @onchange="e => ToggleWorkType(label, e)" />
+                        @label
+                    </label>
+                }
+            </fieldset>
+            <fieldset class="profile-roles">
+                <legend>Vereist rijbewijs (optioneel)</legend>
+                @foreach (var license in _licenseOptions)
+                {
+                    <label>
+                        <input type="checkbox"
+                               checked="@_selectedLicenses.Contains(license)"
+                               @onchange="e => ToggleLicense(license, e)" />
+                        @license
+                    </label>
+                }
+            </fieldset>
+            <fieldset class="profile-roles">
+                <legend>Vereist opleidingsniveau (optioneel)</legend>
+                @foreach (var level in _educationOptions)
+                {
+                    <label>
+                        <input type="checkbox"
+                               checked="@_selectedEducationLevels.Contains(level)"
+                               @onchange="e => ToggleEducation(level, e)" />
+                        @level
+                    </label>
+                }
+            </fieldset>
+            <fieldset class="vacancy-barrier">
+                <legend>@Culture["Employer.Barrier.Legend"]</legend>
+                <p class="muted vacancy-field-hint">@Culture["Employer.Barrier.Hint"]</p>
+                <div class="profile-min-employers__options" role="radiogroup" aria-label="@Culture["Employer.Barrier.Legend"]">
+                    <label>
+                        <input type="radio" name="barrier" checked="@(!_barrierHigh)" @onchange="() => SetBarrierHigh(false)" />
+                        @Culture["Employer.Barrier.Low"]
+                    </label>
+                    <label>
+                        <input type="radio" name="barrier" checked="@_barrierHigh" @onchange="() => SetBarrierHigh(true)" />
+                        @Culture["Employer.Barrier.High"]
+                    </label>
+                </div>
+                @if (_barrierHigh)
+                {
+                    <label>
+                        @Culture["Employer.Barrier.Diplomas"]
+                        <textarea rows="3" @bind="_barrierDiplomas" @bind:event="oninput" placeholder="MBO Verpleegkunde"></textarea>
+                    </label>
+                    <p class="muted vacancy-field-hint">@Culture["Employer.Barrier.HardHint"]</p>
+                    <div class="profile-min-employers__options" role="group" aria-label="@Culture["Employer.Barrier.HardChecks"]">
+                        @foreach (var check in VacancyHardCheckCatalog.Suggested)
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@_barrierHardChecks.Contains(check.Kind)"
+                                       @onchange="e => ToggleHardCheck(check.Kind, e)" />
+                                @check.Label
+                            </label>
+                        }
+                    </div>
+                    <p class="muted vacancy-field-hint">@Culture["Employer.Barrier.Certs"]</p>
+                    <div class="profile-min-employers__options" role="group">
+                        @foreach (var cert in VacancyBarrierCatalog.SuggestedCertifications)
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@_barrierCerts.Contains(cert)"
+                                       @onchange="e => ToggleBarrierCert(cert, e)" />
+                                @cert
+                            </label>
+                        }
+                    </div>
+                    <label>
+                        Extra certificaten (komma)
+                        <input @bind="_barrierCertExtra" @bind:event="oninput" placeholder="VCA, BIG" />
+                    </label>
+                    <div class="vacancy-hours__row">
+                        <label>
+                            @Culture["Employer.Barrier.Years"]
+                            <input type="number" min="0" max="40" @bind="_barrierYears" @bind:event="oninput" />
+                        </label>
+                        <label>
+                            @Culture["Employer.Barrier.Hours"]
+                            <input type="number" min="0" max="80000" step="100" @bind="_barrierHours" @bind:event="oninput" />
+                        </label>
+                    </div>
+                }
+            </fieldset>
+            <fieldset class="profile-min-employers">
+                <legend>Minimaal aantal werkgevers</legend>
+                <div class="profile-min-employers__options" role="radiogroup" aria-label="Minimaal aantal werkgevers">
+                    <label>
+                        <input type="radio" name="min-employers" checked="@(_minimumEmployers is null)" @onchange="() => SetMinimumEmployers(null)" />
+                        Geen
+                    </label>
+                    @foreach (var n in _minEmployerOptions)
+                    {
+                        <label>
+                            <input type="radio" name="min-employers" checked="@(_minimumEmployers == n)" @onchange="() => SetMinimumEmployers(n)" />
+                            @n
+                        </label>
+                    }
+                </div>
+            </fieldset>
+            <fieldset class="profile-min-employers">
+                <legend>Minimaal aantal recensies</legend>
+                <p class="muted vacancy-field-hint">Standaard geen. Bij 1 of meer is dit een harde eis: solliciteren kan pas als het kandidaatprofiel zoveel complete recensies heeft.</p>
+                <div class="profile-min-employers__options" role="radiogroup" aria-label="Minimaal aantal recensies">
+                    <label>
+                        <input type="radio" name="min-references" checked="@(_minimumReferences is null)" @onchange="() => SetMinimumReferences(null)" />
+                        Geen
+                    </label>
+                    @foreach (var n in _minReferenceOptions)
+                    {
+                        <label>
+                            <input type="radio" name="min-references" checked="@(_minimumReferences == n)" @onchange="() => SetMinimumReferences(n)" />
+                            @n
+                        </label>
+                    }
+                </div>
+            </fieldset>
+            <fieldset class="profile-roles vacancy-culture">
+                <legend>@Culture["Employer.Culture.Legend"]</legend>
+                <p class="muted vacancy-field-hint">@Culture["Employer.Culture.Hint"]</p>
+                <div class="profile-min-employers__options" role="group" aria-label="@Culture["Employer.Culture.Legend"]">
+                    @foreach (var pillar in CulturePillarCatalog.All)
+                    {
+                        <label>
+                            <input type="checkbox"
+                                   checked="@_selectedCulturePillars.Contains(pillar.Id)"
+                                   @onchange="e => ToggleCulturePillar(pillar.Id, e)" />
+                            @Culture[pillar.LabelKey]
+                        </label>
+                    }
+                </div>
+                @if (_cultureError)
+                {
+                    <p class="state-message error">@Culture["Employer.Culture.Error"]</p>
+                }
+            </fieldset>
+
+            <fieldset class="vacancy-hours">
+                <legend class="visually-hidden">Uren per week</legend>
+                <div class="vacancy-hours__row">
+                    <span class="vacancy-hours__title">Uren per week</span>
+                    <label>
+                        Min
+                        <input type="number" min="1" max="60" step="0.5" @bind="_minHours" @bind:event="oninput" />
+                    </label>
+                    <span class="vacancy-hours__sep" aria-hidden="true">–</span>
+                    <label>
+                        Max
+                        <input type="number" min="1" max="60" step="0.5" @bind="_maxHours" @bind:event="oninput" />
+                    </label>
+                    @if (_minHours is decimal minH && _maxHours is decimal maxH && maxH >= minH)
+                    {
+                        <span class="vacancy-hours__meta muted">@HoursRangeRules.CategoryLabel(new HoursRange(minH, maxH).Category)</span>
+                    }
+                </div>
+            </fieldset>
+
+            <fieldset class="vacancy-schedule">
+                <legend>Dagdelen</legend>
+                <p class="muted vacancy-field-hint">Selecteer voor welke dagdelen de vacature bedoeld is, of kies tijden in overleg.</p>
+                <label class="vacancy-toggle-row">
+                    <input type="checkbox" checked="@_flexibleTimes" @onchange="OnFlexibleTimesChanged" />
+                    <span>
+                        <strong>Tijden in overleg / Variabele tijden</strong>
+                        <span class="muted">Geen vaste dagdelen; matching weegt dagdelen neutraal</span>
+                    </span>
+                </label>
+                <div class="vacancy-schedule__table-wrap @(_flexibleTimes ? "is-disabled" : null)">
+                    <table class="wage-table vacancy-schedule__table">
+                        <thead>
+                            <tr>
+                                <th>Dag</th>
+                                @foreach (var slot in DayPartMatrix.DayPartCodes)
+                                {
+                                    <th>
+                                        @slot
+                                        <div class="muted" style="font-weight:normal;font-size:0.75rem">@DayPartMatrix.DayPartWindows[slot]</div>
+                                    </th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var day in DayPartMatrix.DayCodes)
+                            {
+                                <tr>
+                                    <th>@day</th>
+                                    @foreach (var slot in DayPartMatrix.DayPartCodes)
+                                    {
+                                        var key = $"{day}:{slot}";
+                                        <td>
+                                            <input type="checkbox"
+                                                   checked="@_scheduleSlots.Contains(key)"
+                                                   disabled="@_flexibleTimes"
+                                                   @onchange="e => ToggleScheduleSlot(key, e)" />
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </fieldset>
+
+            <fieldset class="vacancy-legal">
+                <legend>Werkzaamheden &amp; wetgeving</legend>
+                <p class="muted vacancy-field-hint">Bepaalt automatisch of jongeren (15–17) mogen solliciteren.</p>
+                <ul class="vacancy-legal__list">
+                    @foreach (var flag in LegalTaskFlags.Catalog)
+                    {
+                        var isOn = GetLegalFlag(flag.Code);
+                        var tipOpen = _openLegalTip == flag.Code;
+                        <li class="vacancy-legal__item @(tipOpen ? "is-open" : null)">
+                            <input id="@($"legal-{flag.Code}")"
+                                   class="vacancy-legal__check"
+                                   type="checkbox"
+                                   checked="@isOn"
+                                   @onchange="e => SetLegalFlag(flag.Code, e)" />
+                            <label class="vacancy-legal__text" for="@($"legal-{flag.Code}")">@flag.Label</label>
+                            <button type="button"
+                                    class="vacancy-legal__info"
+                                    title="@flag.Tooltip"
+                                    aria-label="@($"Toelichting: {flag.Label}")"
+                                    aria-expanded="@tipOpen"
+                                    @onclick="() => ToggleLegalTip(flag.Code)">
+                                i
+                            </button>
+                            @if (tipOpen)
+                            {
+                                <span class="vacancy-legal__tip">@flag.Tooltip</span>
+                            }
+                        </li>
+                    }
+                    @if (ShowSuitableFor65PlusLegal)
+                    {
+                        <li class="vacancy-legal__item vacancy-legal__item--plain">
+                            <input id="legal-suitable-65"
+                                   class="vacancy-legal__check"
+                                   type="checkbox"
+                                   @bind="_suitableFor65Plus" />
+                            <label class="vacancy-legal__text" for="legal-suitable-65">
+                                Geschikt voor 65+
+                                <span class="muted">Vacature blijft regulier en krijgt de 65+ filter/badge.</span>
+                            </label>
+                        </li>
+                    }
+                    @if (ShowJobCoachLegal)
+                    {
+                        <li class="vacancy-legal__item vacancy-legal__item--plain">
+                            <input id="legal-jobcoach"
+                                   class="vacancy-legal__check"
+                                   type="checkbox"
+                                   checked="@(string.Equals(GetCategoryField(VacancyCategoryExtraFields.JobCoachAvailable), "ja", StringComparison.OrdinalIgnoreCase))"
+                                   @onchange="e => SetCategoryBool(VacancyCategoryExtraFields.JobCoachAvailable, e)" />
+                            <label class="vacancy-legal__text" for="legal-jobcoach">Jobcoach beschikbaar</label>
+                        </li>
+                    }
+                </ul>
+            </fieldset>
+
+            <fieldset class="vacancy-contact">
+                <legend>Voorkeur voor contact</legend>
+                <p class="muted vacancy-field-hint">
+                    Directe contactopties (WhatsApp/telefoon) verschijnen voor kandidaten pas na een succesvolle sollicitatie.
+                </p>
+                @if (SelectedCompany is not null)
+                {
+                    <p class="vacancy-contact__company">
+                        Bedrijf:
+                        @(SelectedCompany.DirectContactEnabled
+                            ? $"direct contact aan ({string.Join(", ", CompanyChannelLabels(SelectedCompany))})"
+                            : "direct contact uit")
+                    </p>
+                }
+                <ul class="vacancy-legal__list">
+                    <li class="vacancy-legal__item vacancy-legal__item--plain">
+                        <input id="vacancy-direct-contact"
+                               class="vacancy-legal__check"
+                               type="checkbox"
+                               @bind="_vacancyDirectContact"
+                               @bind:after="OnVacancyDirectContactChanged" />
+                        <label class="vacancy-legal__text" for="vacancy-direct-contact">
+                            Direct contact gewenst
+                            <span class="muted">Mail, telefoon of WhatsApp tonen na sollicitatie</span>
+                        </label>
+                    </li>
+                </ul>
+                @if (_vacancyDirectContact)
+                {
+                    <div class="vacancy-contact__channels" role="group" aria-label="Contactkanalen">
+                        <label class="vacancy-contact__channel">
+                            <input type="checkbox" @bind="_vacancyPreferMail" />
+                            Mail
+                        </label>
+                        <label class="vacancy-contact__channel">
+                            <input type="checkbox" @bind="_vacancyPreferPhone" />
+                            Telefoon
+                        </label>
+                        <label class="vacancy-contact__channel">
+                            <input type="checkbox" @bind="_vacancyPreferWhatsApp" />
+                            WhatsApp
+                        </label>
+                    </div>
+                }
+            </fieldset>
+
+            <fieldset class="vacancy-contact">
+                <legend>E-mailcheck bij solliciteren</legend>
+                <p class="muted vacancy-field-hint">
+                    Standaard uit, zodat kandidaten meteen kunnen solliciteren.
+                    Alleen aanzetten als je een extra bevestiging via e-mail wilt.
+                </p>
+                <ul class="vacancy-legal__list">
+                    <li class="vacancy-legal__item vacancy-legal__item--plain">
+                        <input id="vacancy-email-verification"
+                               class="vacancy-legal__check"
+                               type="checkbox"
+                               @bind="_requireEmailVerification" />
+                        <label class="vacancy-legal__text" for="vacancy-email-verification">
+                            Vraag e-mailbevestiging
+                            <span class="muted">Kandidaat krijgt een korte code per mail vóór de sollicitatie definitief is</span>
+                        </label>
+                    </li>
+                </ul>
+            </fieldset>
+
+            <button class="login-submit" type="submit" disabled="@_saving">
+                @(_saving ? "Opslaan…" : Culture["Employer.SaveDraft"])
+            </button>
+        </form>
+
+        <aside class="vacancy-preview" aria-label="Voorbeeldtegel">
+            <h2>Voorbeeld</h2>
+            <article class="vacancy-card vacancy-card--preview">
+                @if (SafeImageUrl is not null)
+                {
+                    <div class="vacancy-card-top" style="@($"background-image:url('{SafeImageUrl}')")"></div>
+                }
+                <h2>@(string.IsNullOrWhiteSpace(_title) ? "Titel…" : _title)</h2>
+                <p class="muted">@SelectedCompanyName</p>
+                <div class="vacancy-preview__body">@PreviewPlain</div>
+                @if (SelectedSalaryTable is not null)
+                {
+                    var adult = SelectedSalaryTable.Rates
+                        .OrderByDescending(r => r.AgeYears)
+                        .FirstOrDefault();
+                    if (adult is not null)
+                    {
+                        <p><strong>€ @adult.HourlyRate.ToString("0.00")</strong> / uur (@adult.Label)</p>
+                    }
+                    <p class="muted">Salaristabel: @SelectedSalaryTable.Name</p>
+                }
+                else
+                {
+                    <p class="muted">Kies een salaristabel</p>
+                }
+                @if (_minHours is decimal previewMin && _maxHours is decimal previewMax)
+                {
+                    <p class="muted">@previewMin–@previewMax uur/week</p>
+                }
+                @if (_flexibleTimes)
+                {
+                    <p class="muted">Dagdelen: tijden in overleg</p>
+                }
+                else if (_scheduleSlots.Count > 0)
+                {
+                    <p class="muted">Dagdelen: @_scheduleSlots.Count geselecteerd</p>
+                }
+                @if (_selectedWorkTypes.Count > 0)
+                {
+                    <p class="muted">Branche: @string.Join(", ", _selectedWorkTypes)</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(_videoUrl))
+                {
+                    <p class="muted">Video: @_videoUrl</p>
+                }
+            </article>
+        </aside>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message error">@_message</p>
+    }
+</div>
+
+@if (_moderationOpen)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="Even aanpassen"
+                         TitleId="moderation-title"
+                         Lead="We hebben de tekst bekeken voordat we opslaan."
+                         Class="moderation-modal"
+                         OnClose="CloseModeration">
+        <p class="moderation-modal__warning">@_moderationWarning</p>
+        @if (!string.IsNullOrWhiteSpace(_moderationSuggestion))
+        {
+            <div class="moderation-modal__suggestion">
+                <strong>Tip</strong>
+                <p>@_moderationSuggestion</p>
+            </div>
+        }
+<div class="inline-actions">
+                <button type="button" class="login-submit" @onclick="CloseModeration">Tekst aanpassen</button>
+            </div>
+</LobsyFriendlyDialog>
+}
+
+@code {
+    private const string AlignLeftSvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M2 3h12v1.2H2zm0 3h8v1.2H2zm0 3h12v1.2H2zm0 3h8v1.2H2z\"/></svg>";
+    private const string AlignCenterSvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M2 3h12v1.2H2zm2 3h8v1.2H4zm-2 3h12v1.2H2zm2 3h8v1.2H4z\"/></svg>";
+    private const string AlignRightSvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M2 3h12v1.2H2zm4 3h8v1.2H6zm-4 3h12v1.2H2zm4 3h8v1.2H6z\"/></svg>";
+    private const string AlignJustifySvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M2 3h12v1.2H2zm0 3h12v1.2H2zm0 3h12v1.2H2zm0 3h12v1.2H2z\"/></svg>";
+    private const string ListSvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><circle cx=\"3\" cy=\"4\" r=\"1.1\"/><circle cx=\"3\" cy=\"8\" r=\"1.1\"/><circle cx=\"3\" cy=\"12\" r=\"1.1\"/><path d=\"M6 3.4h8v1.2H6zm0 4h8v1.2H6zm0 4h8v1.2H6z\"/></svg>";
+    private const string LinkSvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M6.5 9.5 9.5 6.5\"/><path d=\"M7.2 11.2 5.5 12.9a2.4 2.4 0 0 1-3.4-3.4L3.8 8\"/><path d=\"M8.8 4.8 10.5 3.1a2.4 2.4 0 0 1 3.4 3.4L12.2 8\"/></svg>";
+
+    [SupplyParameterFromQuery(Name = "from")]
+    public Guid? From { get; set; }
+
+    [SupplyParameterFromQuery(Name = "edit")]
+    public Guid? Edit { get; set; }
+
+    private ElementReference _descriptionRef;
+    private string _title = "";
+    private string _categoryId = "";
+    private string _exclusivitySettingId = "";
+    private List<ExclusivitySettingItem> _exclusivityOptions = [];
+    private List<VacancyCategoryItem> _categories = [];
+    private Dictionary<string, string> _categoryFields = new(StringComparer.OrdinalIgnoreCase);
+    private bool _suitableFor65Plus;
+    private string _description = "";
+    private string _imageUrl = "";
+    private string _videoUrl = "";
+    private string _salaryTableId = "";
+    private int? _minimumEmployers;
+    private int? _minimumReferences;
+    private List<int> _minEmployerOptions = [1, 2, 3];
+    private List<int> _minReferenceOptions = [1, 2, 3];
+    private string? _align;
+    private bool _isIntermediary;
+    private string _clientKvkNumber = "";
+    private string _selectedEstablishmentId = "";
+    private bool _kvkBusy;
+    private bool _hideClientAddressOnMap = true;
+    private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _selectedLicenses = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _selectedEducationLevels = new(StringComparer.OrdinalIgnoreCase);
+    private bool _barrierHigh;
+    private string _barrierDiplomas = "";
+    private readonly HashSet<string> _barrierCerts = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _barrierHardChecks = new(StringComparer.Ordinal);
+    private string _barrierCertExtra = "";
+    private int? _barrierYears;
+    private int? _barrierHours;
+    private HashSet<string> _selectedCulturePillars = new(StringComparer.OrdinalIgnoreCase);
+    private bool _cultureError;
+    private List<string> _branchOptions = WorkTypeLabels.All.ToList();
+    private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
+    private List<string> _educationOptions = EducationLevelLabels.VacancyAll.ToList();
+    private bool _saving;
+    private bool _isDuplicate;
+    private string? _message;
+    private bool _moderationOpen;
+    private string? _moderationWarning;
+    private string? _moderationSuggestion;
+    private Guid? _editVacancyId;
+    private DateOnly? _draftStartDate;
+    private DateOnly? _draftEndDate;
+    private Guid _companyId;
+    private List<CompanySummary> _companies = [];
+    private List<KvkEstablishmentItem> _clientEstablishments = [];
+    private List<SalaryTableItem> _salaryTables = [];
+    private bool _vacancyDirectContact;
+    private bool _vacancyPreferMail;
+    private bool _vacancyPreferPhone;
+    private bool _vacancyPreferWhatsApp;
+    private bool _requireEmailVerification;
+    private decimal? _minHours = 8;
+    private decimal? _maxHours = 16;
+    private bool _flexibleTimes = true;
+    private HashSet<string> _scheduleSlots = new(StringComparer.OrdinalIgnoreCase);
+    private bool _legalWorksAfter19;
+    private bool _legalNightShift;
+    private bool _legalAdultSupervisor = true;
+    private bool _legalHandlesMoney;
+    private bool _legalHeavyWork;
+    private string? _openLegalTip;
+
+    private CompanySummary? SelectedCompany =>
+        _companies.FirstOrDefault(c => c.Id == _companyId);
+
+    private string SelectedCompanyName =>
+        SelectedCompany?.Name ?? "Vestiging";
+
+    private string PageHeading =>
+        _editVacancyId is not null
+            ? "Vacature bewerken"
+            : (_isDuplicate ? Culture["Employer.DuplicateVacancy"] : Culture["Employer.CreateVacancy"]);
+
+    private bool ShowSuitableFor65PlusLegal =>
+        !_isIntermediary && string.Equals(SelectedCategory?.Slug, "regulier", StringComparison.OrdinalIgnoreCase);
+
+    private bool ShowJobCoachLegal =>
+        !_isIntermediary && string.Equals(SelectedCategory?.Slug, "inclusief", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsLegalStyleCategoryField(string key)
+        => string.Equals(key, VacancyCategoryExtraFields.JobCoachAvailable, StringComparison.OrdinalIgnoreCase);
+
+    private static IEnumerable<string> CompanyChannelLabels(CompanySummary c)
+    {
+        if (c.ContactPreferMail) yield return "Mail";
+        if (c.ContactPreferPhone) yield return "Telefoon";
+        if (c.ContactPreferWhatsApp) yield return "WhatsApp";
+    }
+
+    private void OnVacancyDirectContactChanged()
+    {
+        if (!_vacancyDirectContact)
+        {
+            _vacancyPreferMail = false;
+            _vacancyPreferPhone = false;
+            _vacancyPreferWhatsApp = false;
+        }
+    }
+
+    /// <summary>
+    /// Only persist a vacancy-level override when the UI differs from company defaults.
+    /// Matching company settings keeps inheritance (and company contact validation) intact.
+    /// </summary>
+    private bool ShouldOverrideContactPreference()
+    {
+        if (SelectedCompany is not { } company)
+        {
+            return true;
+        }
+
+        var companyMail = company.DirectContactEnabled && company.ContactPreferMail;
+        var companyPhone = company.DirectContactEnabled && company.ContactPreferPhone;
+        var companyWhatsApp = company.DirectContactEnabled && company.ContactPreferWhatsApp;
+        return _vacancyDirectContact != company.DirectContactEnabled
+               || _vacancyPreferMail != companyMail
+               || _vacancyPreferPhone != companyPhone
+               || _vacancyPreferWhatsApp != companyWhatsApp;
+    }
+
+    private void ApplyCompanyContactDefaults()
+    {
+        if (_editVacancyId is not null || _isDuplicate || SelectedCompany is not { } company)
+        {
+            return;
+        }
+
+        _vacancyDirectContact = company.DirectContactEnabled;
+        _vacancyPreferMail = company.DirectContactEnabled && company.ContactPreferMail;
+        _vacancyPreferPhone = company.DirectContactEnabled && company.ContactPreferPhone;
+        _vacancyPreferWhatsApp = company.DirectContactEnabled && company.ContactPreferWhatsApp;
+        if (_editVacancyId is null && !_isDuplicate)
+        {
+            _requireEmailVerification = company.RequireEmailVerificationForApplications;
+        }
+    }
+
+    private SalaryTableItem? SelectedSalaryTable =>
+        Guid.TryParse(_salaryTableId, out var sid)
+            ? _salaryTables.FirstOrDefault(t => t.Id == sid)
+            : null;
+
+    private string PreviewPlain =>
+        string.IsNullOrWhiteSpace(_description)
+            ? "Omschrijving…"
+            : HtmlSanitize.ToPlainPreview(_description);
+
+    private string? SafeImageUrl
+    {
+        get
+        {
+            var url = VacancyImageUrls.Normalize(_imageUrl);
+            if (url is null)
+            {
+                return null;
+            }
+
+            // Prevent breaking out of CSS url('…')
+            return url.Replace("'", "%27", StringComparison.Ordinal).Replace("\"", "%22", StringComparison.Ordinal);
+        }
+    }
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var profile = await Api.GetMyProfileAsync();
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _isIntermediary = string.Equals(profile?.Role, nameof(UserRole.Intermediary), StringComparison.OrdinalIgnoreCase)
+            || auth.User.IsInRole("Intermediary");
+
+        _companies = (await Api.GetMyCompaniesAsync()).ToList();
+        if (_isIntermediary)
+        {
+            // End-client vestigingen only (KVK-backed employers), not the intermediary org itself.
+            _companies = _companies
+                .Where(c => !string.IsNullOrWhiteSpace(c.KvkNumber)
+                            && !string.IsNullOrWhiteSpace(c.KvkEstablishmentId))
+                .ToList();
+        }
+
+        if (_companies.Count > 0)
+        {
+            _companyId = _companies[0].Id;
+        }
+        else if (_isIntermediary)
+        {
+            _companyId = Guid.Empty;
+        }
+
+        await LoadMasterdataAsync();
+
+        if (Edit is Guid editId)
+        {
+            await PrefillFromAsync(editId, duplicate: false);
+        }
+        else if (From is Guid sourceId)
+        {
+            await PrefillFromAsync(sourceId, duplicate: true);
+        }
+
+        await LoadSalaryTablesAsync();
+    }
+
+    private async Task LookupClientKvkAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_clientKvkNumber))
+        {
+            return;
+        }
+
+        _kvkBusy = true;
+        _message = null;
+        try
+        {
+            _clientEstablishments = (await Api.GetKvkEstablishmentsAsync(_clientKvkNumber.Trim())).ToList();
+            _selectedEstablishmentId = "";
+            if (_clientEstablishments.Count == 0)
+            {
+                _message = "Geen vestigingen gevonden voor dit KVK-nummer.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _clientEstablishments = [];
+        }
+        finally
+        {
+            _kvkBusy = false;
+        }
+    }
+
+    private async Task OnClientEstablishmentChangedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedEstablishmentId))
+        {
+            return;
+        }
+
+        var selected = _clientEstablishments.FirstOrDefault(e =>
+            string.Equals(e.KvkEstablishmentId, _selectedEstablishmentId, StringComparison.OrdinalIgnoreCase));
+        if (selected is null)
+        {
+            return;
+        }
+
+        _kvkBusy = true;
+        _message = null;
+        try
+        {
+            var company = await Api.RegisterIntermediaryClientFromKvkAsync(
+                selected.KvkNumber,
+                selected.KvkEstablishmentId);
+            if (company is null)
+            {
+                _message = "Opdrachtgever kon niet worden gekoppeld.";
+                return;
+            }
+
+            var index = _companies.FindIndex(c => c.Id == company.Id);
+            if (index >= 0)
+            {
+                _companies[index] = company;
+            }
+            else
+            {
+                _companies.Add(company);
+            }
+
+            _companyId = company.Id;
+            _salaryTableId = "";
+            await LoadSalaryTablesAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _kvkBusy = false;
+        }
+    }
+
+    private ExclusivitySettingItem? SelectedExclusivity
+        => _exclusivityOptions.FirstOrDefault(o => o.Id.ToString() == _exclusivitySettingId);
+
+    private VacancyCategoryItem? SelectedCategory
+        => _categories.FirstOrDefault(c => c.Id.ToString() == _categoryId);
+
+    private void OnCategoryChanged()
+    {
+        var selected = SelectedCategory;
+        if (selected is null)
+        {
+            return;
+        }
+
+        var allowed = selected.ExtraFields.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var key in _categoryFields.Keys.ToList())
+        {
+            if (!allowed.Contains(key))
+            {
+                _categoryFields.Remove(key);
+            }
+        }
+
+        if (!string.Equals(selected.Slug, "regulier", StringComparison.OrdinalIgnoreCase))
+        {
+            _suitableFor65Plus = false;
+        }
+
+        if (selected.PlacementKind != "Internship")
+        {
+            _exclusivitySettingId = "";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_exclusivitySettingId)
+            || _exclusivityOptions.All(o => o.Id.ToString() != _exclusivitySettingId))
+        {
+            var open = _exclusivityOptions.FirstOrDefault(o => o.IsOpenOption)
+                       ?? _exclusivityOptions.FirstOrDefault();
+            _exclusivitySettingId = open?.Id.ToString() ?? "";
+        }
+    }
+
+    private string GetCategoryField(string key)
+        => _categoryFields.TryGetValue(key, out var value) ? value : "";
+
+    private void SetCategoryField(string key, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            _categoryFields.Remove(key);
+        }
+        else
+        {
+            _categoryFields[key] = value.Trim();
+        }
+    }
+
+    private void SetCategoryBool(string key, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b ? b : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        SetCategoryField(key, on ? "ja" : "nee");
+    }
+
+    private async Task LoadMasterdataAsync()
+    {
+        try
+        {
+            var options = await Api.GetMasterdataAsync(audience: "vacancy");
+            var branches = options.Where(o => o.Category == MasterdataCategories.Branch).Select(o => o.Label).ToList();
+            var licenses = options.Where(o => o.Category == MasterdataCategories.DrivingLicense).Select(o => o.Label).ToList();
+            var education = options.Where(o => o.Category == MasterdataCategories.EducationLevel).Select(o => o.Label).ToList();
+            var minEmployers = options
+                .Where(o => o.Category == MasterdataCategories.MinEmployers)
+                .Select(o => int.TryParse(o.Value, out var n) ? n : (int?)null)
+                .Where(n => n is >= 1)
+                .Select(n => n!.Value)
+                .Distinct()
+                .OrderBy(n => n)
+                .ToList();
+
+            if (branches.Count > 0) _branchOptions = branches;
+            if (licenses.Count > 0) _licenseOptions = licenses;
+            if (education.Count > 0) _educationOptions = education;
+            if (minEmployers.Count > 0) _minEmployerOptions = minEmployers;
+        }
+        catch
+        {
+            // keep built-in fallbacks
+        }
+
+        try
+        {
+            _exclusivityOptions = (await Api.GetExclusivitySettingsAsync()).ToList();
+        }
+        catch
+        {
+            _exclusivityOptions = [];
+        }
+
+        try
+        {
+            _categories = (await Api.GetVacancyCategoriesAsync()).ToList();
+            _categories = _categories
+                .Where(c => c.Id != VacancyCategoryDefaults.HighlightId
+                            && !string.Equals(c.Slug, "highlight", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (_isIntermediary)
+            {
+                ApplyIntermediaryCategory();
+            }
+            else if (string.IsNullOrWhiteSpace(_categoryId) || _categories.All(c => c.Id.ToString() != _categoryId))
+            {
+                var preferred = _categories.FirstOrDefault(c => c.Slug == "regulier")
+                    ?? _categories.FirstOrDefault();
+                _categoryId = preferred?.Id.ToString() ?? "";
+            }
+            OnCategoryChanged();
+        }
+        catch
+        {
+            _categories = [];
+            if (_isIntermediary)
+            {
+                ApplyIntermediaryCategory();
+            }
+        }
+    }
+
+    private void ApplyIntermediaryCategory()
+    {
+        var uitzend = _categories.FirstOrDefault(c => c.Id == VacancyCategoryDefaults.UitzendbureauId)
+            ?? _categories.FirstOrDefault(c => c.Slug == "uitzendbureau");
+        _categoryId = uitzend?.Id.ToString() ?? VacancyCategoryDefaults.UitzendbureauId.ToString("D");
+        _suitableFor65Plus = false;
+        _exclusivitySettingId = "";
+        _categoryFields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private async Task PrefillFromAsync(Guid sourceId, bool duplicate)
+    {
+        try
+        {
+            var source = await Api.GetVacancyAsync(sourceId);
+            if (source is null)
+            {
+                _message = "Bronvacature niet gevonden.";
+                return;
+            }
+
+            if (_companies.All(c => c.Id != source.CompanyId))
+            {
+                _message = "Je hebt geen toegang tot de bronvacature.";
+                return;
+            }
+
+            _editVacancyId = duplicate ? null : source.Id;
+            _isDuplicate = duplicate;
+            _companyId = source.CompanyId;
+            _title = duplicate ? AppendCopySuffix(source.Title) : source.Title;
+            _draftStartDate = duplicate ? null : source.StartDate;
+            _draftEndDate = duplicate ? null : source.EndDate;
+            if (_isIntermediary)
+            {
+                ApplyIntermediaryCategory();
+            }
+            else
+            {
+                _categoryId = source.CategoryId?.ToString()
+                    ?? _categories.FirstOrDefault(c => string.Equals(c.PlacementKind, source.Kind, StringComparison.OrdinalIgnoreCase))?.Id.ToString()
+                    ?? _categoryId;
+                _exclusivitySettingId = source.ExclusivitySettingId?.ToString() ?? "";
+                _categoryFields = source.CategoryFields is { Count: > 0 }
+                    ? new Dictionary<string, string>(source.CategoryFields, StringComparer.OrdinalIgnoreCase)
+                    : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                _suitableFor65Plus = source.SuitableFor65Plus;
+            }
+            OnCategoryChanged();
+            _description = source.Description;
+            _requireEmailVerification = source.RequireEmailVerification;
+            _imageUrl = source.ImageUrl ?? "";
+            _videoUrl = source.VideoUrl ?? "";
+            _salaryTableId = source.SalaryTableId?.ToString() ?? "";
+            _selectedWorkTypes = source.WorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            _selectedLicenses = DrivingLicenseLabels.Split(source.RequiredDrivingLicense)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            _selectedEducationLevels = EducationLevelLabels.Split(source.RequiredEducation)
+                .Where(x => EducationLevelLabels.VacancyAll.Contains(x, StringComparer.OrdinalIgnoreCase))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            _minimumEmployers = source.MinimumEmployers is int min && _minEmployerOptions.Contains(min)
+                ? min
+                : null;
+            _minimumReferences = source.MinimumReferences is int refs && _minReferenceOptions.Contains(refs)
+                ? refs
+                : null;
+            _selectedCulturePillars = CulturePillarCatalog.Normalize(source.CulturePillars)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            _barrierHigh = string.Equals(source.BarrierKind, "High", StringComparison.OrdinalIgnoreCase);
+            _barrierDiplomas = string.Join(Environment.NewLine, source.BarrierDiplomas ?? []);
+            _barrierCerts.Clear();
+            foreach (var cert in source.BarrierCertifications ?? [])
+            {
+                if (VacancyBarrierCatalog.SuggestedCertifications.Contains(cert, StringComparer.OrdinalIgnoreCase))
+                {
+                    _barrierCerts.Add(VacancyBarrierCatalog.SuggestedCertifications
+                        .First(c => string.Equals(c, cert, StringComparison.OrdinalIgnoreCase)));
+                }
+                else
+                {
+                    _barrierCertExtra = string.IsNullOrWhiteSpace(_barrierCertExtra) ? cert : _barrierCertExtra + ", " + cert;
+                }
+            }
+            _barrierYears = source.BarrierMinExperienceYears;
+            _barrierHours = source.BarrierMinExperienceHours;
+            _barrierHardChecks.Clear();
+            foreach (var kind in source.BarrierHardChecks ?? [])
+            {
+                var normalized = VacancyHardCheckCatalog.NormalizeKind(kind);
+                if (normalized is not null)
+                {
+                    _barrierHardChecks.Add(normalized);
+                }
+            }
+            _minHours = source.MinHoursPerWeek ?? 8;
+            _maxHours = source.MaxHoursPerWeek ?? 16;
+            _flexibleTimes = source.FlexibleTimes || string.IsNullOrWhiteSpace(source.ScheduleJson);
+            _scheduleSlots = ParseScheduleSlots(source.ScheduleJson);
+            if (_scheduleSlots.Count > 0)
+            {
+                _flexibleTimes = false;
+            }
+
+            _legalWorksAfter19 = source.LegalWorksAfter19 == true;
+            _legalNightShift = source.LegalNightShift23To06 == true;
+            _legalAdultSupervisor = source.LegalAdultSupervisorPresent != false;
+            _legalHandlesMoney = source.LegalHandlesMoneyOrClosing == true;
+            _legalHeavyWork = source.LegalHeavyOrHazardousWork == true;
+
+            var contact = await Api.GetVacancyContactPreferenceAsync(sourceId);
+            if (contact is not null)
+            {
+                if (contact.OverrideContactPreference)
+                {
+                    _vacancyDirectContact = contact.DirectContactEnabled;
+                    _vacancyPreferMail = contact.ContactPreferMail;
+                    _vacancyPreferPhone = contact.ContactPreferPhone;
+                    _vacancyPreferWhatsApp = contact.ContactPreferWhatsApp;
+                }
+                else if (SelectedCompany is { } company)
+                {
+                    // Inherited company defaults: show effective channels, not empty vacancy flags.
+                    _vacancyDirectContact = company.DirectContactEnabled;
+                    _vacancyPreferMail = company.DirectContactEnabled && company.ContactPreferMail;
+                    _vacancyPreferPhone = company.DirectContactEnabled && company.ContactPreferPhone;
+                    _vacancyPreferWhatsApp = company.DirectContactEnabled && company.ContactPreferWhatsApp;
+                }
+                else
+                {
+                    _vacancyDirectContact = contact.DirectContactEnabled;
+                    _vacancyPreferMail = contact.ContactPreferMail;
+                    _vacancyPreferPhone = contact.ContactPreferPhone;
+                    _vacancyPreferWhatsApp = contact.ContactPreferWhatsApp;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private static string AppendCopySuffix(string title)
+    {
+        const string suffix = " (kopie)";
+        return title.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
+            ? title
+            : title + suffix;
+    }
+
+    private void ToggleWorkType(string label, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (on)
+        {
+            if (_selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy && !_selectedWorkTypes.Contains(label))
+            {
+                return;
+            }
+
+            _selectedWorkTypes.Add(label);
+        }
+        else
+        {
+            _selectedWorkTypes.Remove(label);
+        }
+    }
+
+    private void ToggleLicense(string license, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (on)
+        {
+            _selectedLicenses.Add(license);
+        }
+        else
+        {
+            _selectedLicenses.Remove(license);
+        }
+    }
+
+    private void ToggleEducation(string level, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (on)
+        {
+            _selectedEducationLevels.Add(level);
+        }
+        else
+        {
+            _selectedEducationLevels.Remove(level);
+        }
+    }
+
+    private void SetMinimumEmployers(int? value) => _minimumEmployers = value;
+    private void SetMinimumReferences(int? value) => _minimumReferences = value;
+    private void SetBarrierHigh(bool value) => _barrierHigh = value;
+
+    private void ToggleHardCheck(string kind, ChangeEventArgs e)
+    {
+        if (e.Value is bool on && on)
+        {
+            _barrierHardChecks.Add(kind);
+        }
+        else
+        {
+            _barrierHardChecks.Remove(kind);
+        }
+    }
+
+    private void ToggleBarrierCert(string cert, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b ? b : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on)
+        {
+            _barrierCerts.Add(cert);
+        }
+        else
+        {
+            _barrierCerts.Remove(cert);
+        }
+    }
+
+    private static string[] SplitLines(string? raw)
+        => string.IsNullOrWhiteSpace(raw)
+            ? []
+            : raw.Split(['\r', '\n', ',', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+    private string[] BarrierCertList()
+        => _barrierCerts.Concat(SplitLines(_barrierCertExtra)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+
+    private void ToggleCulturePillar(string id, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b ? b : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on)
+        {
+            if (_selectedCulturePillars.Count >= CulturePillarCatalog.MaxSelected)
+            {
+                _cultureError = true;
+                return;
+            }
+
+            _selectedCulturePillars.Add(id);
+        }
+        else
+        {
+            _selectedCulturePillars.Remove(id);
+        }
+
+        _cultureError = _selectedCulturePillars.Count is < CulturePillarCatalog.MinSelected
+            or > CulturePillarCatalog.MaxSelected;
+    }
+
+    private void OnFlexibleTimesChanged(ChangeEventArgs e)
+    {
+        _flexibleTimes = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (_flexibleTimes)
+        {
+            _scheduleSlots.Clear();
+        }
+    }
+
+    private void ToggleScheduleSlot(string key, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (on)
+        {
+            _flexibleTimes = false;
+            _scheduleSlots.Add(key);
+        }
+        else
+        {
+            _scheduleSlots.Remove(key);
+        }
+    }
+
+    private bool GetLegalFlag(string code) => code switch
+    {
+        nameof(LegalTaskFlags.WorksAfter19) => _legalWorksAfter19,
+        nameof(LegalTaskFlags.NightShift23To06) => _legalNightShift,
+        nameof(LegalTaskFlags.AdultSupervisorPresent) => _legalAdultSupervisor,
+        nameof(LegalTaskFlags.HandlesMoneyOrClosing) => _legalHandlesMoney,
+        nameof(LegalTaskFlags.HeavyOrHazardousWork) => _legalHeavyWork,
+        _ => false
+    };
+
+    private void SetLegalFlag(string code, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        switch (code)
+        {
+            case nameof(LegalTaskFlags.WorksAfter19):
+                _legalWorksAfter19 = on;
+                break;
+            case nameof(LegalTaskFlags.NightShift23To06):
+                _legalNightShift = on;
+                break;
+            case nameof(LegalTaskFlags.AdultSupervisorPresent):
+                _legalAdultSupervisor = on;
+                break;
+            case nameof(LegalTaskFlags.HandlesMoneyOrClosing):
+                _legalHandlesMoney = on;
+                break;
+            case nameof(LegalTaskFlags.HeavyOrHazardousWork):
+                _legalHeavyWork = on;
+                break;
+        }
+    }
+
+    private void ToggleLegalTip(string code)
+        => _openLegalTip = string.Equals(_openLegalTip, code, StringComparison.Ordinal) ? null : code;
+
+    private static HashSet<string> ParseScheduleSlots(string? scheduleJson)
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(scheduleJson))
+        {
+            return set;
+        }
+
+        try
+        {
+            var payload = System.Text.Json.JsonSerializer.Deserialize<SchedulePayload>(
+                scheduleJson,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (payload?.Slots is null)
+            {
+                return set;
+            }
+
+            foreach (var (day, parts) in payload.Slots)
+            {
+                foreach (var part in parts)
+                {
+                    set.Add($"{day}:{part}");
+                }
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // ignore corrupt schedule on duplicate prefill
+        }
+
+        return set;
+    }
+
+    private Dictionary<string, string[]> BuildScheduleSlotsPayload()
+    {
+        var result = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+        if (_flexibleTimes)
+        {
+            return result;
+        }
+
+        foreach (var group in _scheduleSlots
+                     .Select(k => k.Split(':', 2))
+                     .Where(p => p.Length == 2)
+                     .GroupBy(p => p[0], StringComparer.OrdinalIgnoreCase))
+        {
+            result[group.Key] = group.Select(p => p[1]).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        }
+
+        return result;
+    }
+
+    private Task OnSalaryTableChanged() => Task.CompletedTask;
+
+    private async Task LoadSalaryTablesAsync()
+    {
+        if (_companyId == Guid.Empty)
+        {
+            _salaryTables = [];
+            return;
+        }
+
+        try
+        {
+            _salaryTables = (await Api.GetSalaryTablesAsync(_companyId))
+                .Where(t => t.IsActive && t.Rates.Count > 0)
+                .ToList();
+            if (string.IsNullOrWhiteSpace(_salaryTableId))
+            {
+                var wml = _salaryTables.FirstOrDefault(t => t.IsSystemWml)
+                          ?? _salaryTables.FirstOrDefault(t =>
+                              t.Name.Equals("Wettelijk Minimumloon", StringComparison.OrdinalIgnoreCase)
+                              || t.Name.Equals("WML", StringComparison.OrdinalIgnoreCase));
+                if (wml is not null)
+                {
+                    _salaryTableId = wml.Id.ToString();
+                }
+            }
+            else if (_salaryTables.All(t => t.Id.ToString() != _salaryTableId))
+            {
+                var wml = _salaryTables.FirstOrDefault(t => t.IsSystemWml)
+                          ?? _salaryTables.FirstOrDefault(t =>
+                              t.Name.Equals("Wettelijk Minimumloon", StringComparison.OrdinalIgnoreCase)
+                              || t.Name.Equals("WML", StringComparison.OrdinalIgnoreCase));
+                _salaryTableId = wml?.Id.ToString() ?? _salaryTables.FirstOrDefault()?.Id.ToString() ?? "";
+            }
+
+            ApplyCompanyContactDefaults();
+        }
+        catch
+        {
+            _salaryTables = [];
+        }
+    }
+
+    private async Task FormatAsync(string tag)
+    {
+        await JobsyJs.EnsureExtrasAsync(Js);
+        var next = await Js.InvokeAsync<string?>("jobsyRichtext.wrap", _descriptionRef, $"<{tag}>", $"</{tag}>", "tekst");
+        if (next is not null)
+        {
+            _description = next;
+        }
+    }
+
+    private async Task AlignAsync(string align)
+    {
+        _align = align;
+        await JobsyJs.EnsureExtrasAsync(Js);
+        var next = await Js.InvokeAsync<string?>(
+            "jobsyRichtext.wrap",
+            _descriptionRef,
+            $"<p style=\"text-align:{align}\">",
+            "</p>",
+            "tekst");
+        if (next is not null)
+        {
+            _description = next;
+        }
+    }
+
+    private async Task InsertListAsync()
+    {
+        await JobsyJs.EnsureExtrasAsync(Js);
+        var next = await Js.InvokeAsync<string?>(
+            "jobsyRichtext.wrap",
+            _descriptionRef,
+            "<ul>\n<li>",
+            "</li>\n</ul>",
+            "Punt");
+        if (next is not null)
+        {
+            _description = next;
+        }
+    }
+
+    private async Task InsertLinkAsync()
+    {
+        await JobsyJs.EnsureExtrasAsync(Js);
+        var next = await Js.InvokeAsync<string?>("jobsyRichtext.insertLink", _descriptionRef);
+        if (next is not null)
+        {
+            _description = next;
+        }
+    }
+
+    private void CloseModeration()
+    {
+        _moderationOpen = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_isIntermediary
+            && (SelectedCompany is null
+                || string.IsNullOrWhiteSpace(SelectedCompany.KvkNumber)
+                || string.IsNullOrWhiteSpace(SelectedCompany.KvkEstablishmentId)))
+        {
+            _message = "Zoek een KVK-nummer en selecteer een KVK-vestiging van het inhuurende bedrijf.";
+            return;
+        }
+
+        if (_companyId == Guid.Empty)
+        {
+            _message = _isIntermediary
+                ? "Selecteer eerst het inhuurende bedrijf via KVK + vestiging."
+                : "Geen vestiging gekoppeld aan dit account.";
+            return;
+        }
+
+        if (!Guid.TryParse(_salaryTableId, out var salaryTableId))
+        {
+            _message = "Kies een salaristabel.";
+            return;
+        }
+
+        var table = _salaryTables.FirstOrDefault(t => t.Id == salaryTableId);
+        if (table is null || table.Rates.Count == 0)
+        {
+            _message = "Geselecteerde salaristabel heeft geen tarieven.";
+            return;
+        }
+
+        var adultRate = table.Rates
+            .Where(r => r.AgeYears >= 21)
+            .OrderBy(r => r.AgeYears)
+            .FirstOrDefault()
+            ?? table.Rates.OrderByDescending(r => r.AgeYears).First();
+
+        var branchLabels = _selectedWorkTypes
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(WorkTypeLabels.MaxPerVacancy)
+            .ToArray();
+        if (branchLabels.Length is < 1 or > WorkTypeLabels.MaxPerVacancy)
+        {
+            _message = $"Kies 1 of {WorkTypeLabels.MaxPerVacancy} branches.";
+            return;
+        }
+
+        if (_vacancyDirectContact
+            && !_vacancyPreferMail
+            && !_vacancyPreferPhone
+            && !_vacancyPreferWhatsApp)
+        {
+            _message = "Kies minstens één contactoptie (Mail, Telefoon of WhatsApp).";
+            return;
+        }
+
+        if (ShowJobCoachLegal
+            && string.IsNullOrWhiteSpace(GetCategoryField(VacancyCategoryExtraFields.TargetGroup)))
+        {
+            _message = "Doelgroep is verplicht voor inclusieve vacatures.";
+            return;
+        }
+
+        if (_minHours is not decimal minHours || _maxHours is not decimal maxHours)
+        {
+            _message = "Vul minimum- en maximumuren per week in.";
+            return;
+        }
+
+        var hoursError = HoursRangeRules.Validate(minHours, maxHours);
+        if (hoursError is not null)
+        {
+            _message = hoursError;
+            return;
+        }
+
+        if (!_flexibleTimes && _scheduleSlots.Count == 0)
+        {
+            _message = "Selecteer dagdelen of kies ‘Tijden in overleg’.";
+            return;
+        }
+
+        if (!CulturePillarCatalog.HasProfile(_selectedCulturePillars))
+        {
+            _cultureError = true;
+            _message = Culture["Employer.Culture.Error"];
+            return;
+        }
+
+        _saving = true;
+        _message = null;
+        try
+        {
+            if (_isIntermediary)
+            {
+                ApplyIntermediaryCategory();
+            }
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var startDate = _editVacancyId is not null ? _draftStartDate ?? today : today;
+            var endDate = _editVacancyId is not null ? _draftEndDate ?? startDate.AddMonths(3) : today.AddMonths(3);
+            var form = new CreateVacancyForm(
+                _companyId,
+                _title,
+                _description,
+                adultRate.HourlyRate,
+                startDate,
+                endDate,
+                TransportMode.Bike,
+                branchLabels,
+                string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(),
+                string.IsNullOrWhiteSpace(_videoUrl) ? null : _videoUrl.Trim(),
+                salaryTableId,
+                DrivingLicenseLabels.Combine(_selectedLicenses),
+                EducationLevelLabels.Combine(_selectedEducationLevels, forVacancy: true),
+                _minimumEmployers is int min && _minEmployerOptions.Contains(min) ? min : null,
+                ShouldOverrideContactPreference(),
+                _vacancyDirectContact,
+                _vacancyPreferMail,
+                _vacancyPreferPhone,
+                _vacancyPreferWhatsApp,
+                minHours,
+                maxHours,
+                _flexibleTimes,
+                _flexibleTimes ? null : BuildScheduleSlotsPayload(),
+                _legalWorksAfter19,
+                _legalNightShift,
+                _legalAdultSupervisor,
+                _legalHandlesMoney,
+                _legalHeavyWork,
+                ShowClientAddressOnMap: _isIntermediary && !_hideClientAddressOnMap,
+                Kind: SelectedCategory?.PlacementKind ?? "Regular",
+                ExclusivitySettingId: SelectedCategory?.PlacementKind == "Internship"
+                    && Guid.TryParse(_exclusivitySettingId, out var exclId)
+                    ? exclId
+                    : null,
+                CategoryId: Guid.TryParse(_categoryId, out var catId) ? catId : null,
+                CategoryFields: _categoryFields.Count > 0 ? new Dictionary<string, string>(_categoryFields) : null,
+                SuitableFor65Plus: SelectedCategory?.Slug == "regulier" && _suitableFor65Plus,
+                RequireEmailVerification: _requireEmailVerification,
+                MinimumReferences: _minimumReferences is int refs && _minReferenceOptions.Contains(refs) ? refs : null,
+                CulturePillars: _selectedCulturePillars.ToArray(),
+                BarrierKind: _barrierHigh ? "High" : "Low",
+                BarrierDiplomas: SplitLines(_barrierDiplomas),
+                BarrierCertifications: BarrierCertList(),
+                BarrierMinExperienceYears: _barrierHigh ? _barrierYears : null,
+                BarrierMinExperienceHours: _barrierHigh ? _barrierHours : null,
+                BarrierHardChecks: _barrierHigh ? _barrierHardChecks.ToArray() : null);
+
+            var saved = _editVacancyId is Guid editId
+                ? await Api.UpdateVacancyAsync(editId, form)
+                : await Api.CreateVacancyAsync(form);
+
+            Navigation.NavigateTo(string.IsNullOrWhiteSpace(saved?.ModerationWarning)
+                ? "/werkgever/vacatures"
+                : "/werkgever/vacatures?moderationWarning=1");
+        }
+        catch (VacancyModerationException ex)
+        {
+            _moderationWarning = ex.Warning;
+            _moderationSuggestion = ex.Suggestion;
+            _moderationOpen = true;
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

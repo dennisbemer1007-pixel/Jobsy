@@ -64,7 +64,7 @@ public class EmployerInviteCompanyOptionsTests
     [Fact]
     public void Users_page_lists_extra_lidmaatschappen_from_helper()
     {
-        var users = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Users.razor"));
+        var users = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Users.razor"));
         Assert.Contains("InviteExtraCompanies", users);
         Assert.Contains("EditExtraCompanies", users);
         Assert.Contains("EmployerInviteCompanyOptions", users);

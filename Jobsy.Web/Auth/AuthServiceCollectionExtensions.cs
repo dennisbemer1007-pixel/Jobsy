@@ -649,6 +649,10 @@ public static class AuthServiceCollectionExtensions
                 dest = AuthRedirects.SafeLocalUrl(
                     AuthRedirects.ResolveCandidateReturnUrl(dest, profile.ShowCandidateHowTo));
             }
+            else if (IsEmployerRoleName(profile.Role))
+            {
+                dest = AuthRedirects.SafeLocalUrl(AuthRedirects.ResolveEmployerReturnUrl(dest));
+            }
 
             return Results.Redirect(dest);
         }).AllowAnonymous().DisableAntiforgery();
@@ -1091,6 +1095,20 @@ public static class AuthServiceCollectionExtensions
         public DateTime? DeviceExpiresAtUtc { get; set; }
     }
 
+    private static bool IsEmployerRoleName(string? role)
+    {
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            return false;
+        }
+
+        return role.Equals("BranchManager", StringComparison.OrdinalIgnoreCase)
+               || role.Equals("RegionalManager", StringComparison.OrdinalIgnoreCase)
+               || role.Equals("EnterpriseManager", StringComparison.OrdinalIgnoreCase)
+               || role.Equals("Intermediary", StringComparison.OrdinalIgnoreCase)
+               || NormalizeRole(role) is "branchmanager" or "regionalmanager" or "enterprisemanager" or "intermediary";
+    }
+
     private static bool IsEmailUnverified(ClaimsPrincipal? principal)
     {
         var value = principal?.FindFirst("email_verified")?.Value;
@@ -1215,6 +1233,10 @@ public static class AuthServiceCollectionExtensions
                         returnDest,
                         profile.ShowCandidateHowTo);
                 }
+                else if (IsEmployerRoleName(profile.Role))
+                {
+                    returnDest = AuthRedirects.ResolveEmployerReturnUrl(returnDest);
+                }
 
                 properties.RedirectUri =
                     $"/account/complete-login?code={Uri.EscapeDataString(profile.HandoffCode)}" +
@@ -1229,6 +1251,11 @@ public static class AuthServiceCollectionExtensions
                         AuthRedirects.ResolveCandidateReturnUrl(
                             properties.RedirectUri ?? "/home",
                             profile.ShowCandidateHowTo));
+                }
+                else if (IsEmployerRoleName(profile.Role))
+                {
+                    properties.RedirectUri = AuthRedirects.SafeLocalUrl(
+                        AuthRedirects.ResolveEmployerReturnUrl(properties.RedirectUri ?? "/home"));
                 }
             }
         }

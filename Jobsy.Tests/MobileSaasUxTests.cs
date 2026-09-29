@@ -60,7 +60,7 @@ public class MobileSaasUxTests
     [Fact]
     public void Applicants_page_uses_cards_and_never_renders_raw_json()
     {
-        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Branch/Applicants.razor"));
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Applicants.razor"));
         Assert.Contains("class=\"applicants-list\"", razor);
         Assert.Contains("class=\"applicant-card", razor);
         Assert.Contains("applicant-card__section", razor);
@@ -77,7 +77,7 @@ public class MobileSaasUxTests
     [Fact]
     public void Token_purchase_uses_a_two_column_pack_grid()
     {
-        var tokens = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Tokens.razor"));
+        var tokens = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Tokens.razor"));
         Assert.Contains("class=\"token-pack-options\"", tokens);
         Assert.DoesNotContain("token-pack-options--vertical", tokens);
         Assert.DoesNotContain("max-width:32rem", tokens);
@@ -114,7 +114,7 @@ public class MobileSaasUxTests
     [Fact]
     public void Users_and_team_pages_use_cards_not_tables()
     {
-        var users = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Users.razor"));
+        var users = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Users.razor"));
         Assert.Contains("class=\"user-card-list\"", users);
         Assert.Contains("class=\"user-card\"", users);
         Assert.Contains("user-card__menu-toggle", users);
@@ -308,7 +308,7 @@ public class MobileSaasUxTests
     [Fact]
     public void Employer_vacancies_use_mgmt_cards_with_stat_mini_grid()
     {
-        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Vacancies.razor"));
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Vacancies.razor"));
         Assert.Contains("vacancy-card-list", razor);
         Assert.Contains("vacancy-mgmt-card", razor);
         Assert.Contains("vacancy-mgmt-card__stats", razor);
@@ -324,7 +324,7 @@ public class MobileSaasUxTests
     [Fact]
     public void Applicants_availability_renders_a_readonly_matrix_not_raw_day_text()
     {
-        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Branch/Applicants.razor"));
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Applicants.razor"));
         Assert.Contains("availability-matrix--readonly", razor);
         Assert.Contains("ParseAvailabilityPayload(a.SnapshotAvailabilityJson)", razor);
         Assert.Contains("a.PiiRevealed", razor);
@@ -348,7 +348,7 @@ public class MobileSaasUxTests
     [Fact]
     public void Token_logs_hide_technical_ids_and_show_explicit_token_amounts()
     {
-        var tokens = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Tokens.razor"));
+        var tokens = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Tokens.razor"));
         Assert.Contains("token-log-list", tokens);
         Assert.Contains("TokenLogPresentation.FormatAmount", tokens);
         Assert.Contains("TokenLogPresentation.FormatWhen", tokens);
@@ -400,11 +400,11 @@ public class MobileSaasUxTests
         Assert.Contains("panel-header__title-row", home);
         Assert.Contains("DashboardRefreshButton", home);
 
-        var company = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/CompanyDetails.razor"));
+        var company = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Werkgever/Sections/CompanyDetailsSection.razor"));
         Assert.Contains("RaamflyerTools", company);
         Assert.Contains("Wervingsmateriaal", company);
 
-        var branches = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Branches.razor"));
+        var branches = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Werkgever/Sections/BranchesSection.razor"));
         Assert.Contains("RaamflyerTools", branches);
 
         var refresh = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Shared/DashboardRefreshButton.razor"));

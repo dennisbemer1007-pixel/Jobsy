@@ -1,0 +1,39 @@
+@page "/werkgever/organisatie/vestigingen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager,Admin")]
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Sections
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+<PageTitle>@Culture["WgNav.BranchesRegions"] · Lobsy</PageTitle>
+
+<WgPageShell>
+    <EntTabs Tabs="_tabs" ActiveKey="@_tab" BasePath="/werkgever/organisatie/vestigingen" />
+    @if (_tab == "regios")
+    {
+        <RegionsSection />
+    }
+    else
+    {
+        <BranchesSection />
+    }
+</WgPageShell>
+
+@code {
+    private readonly List<EntTabs.Tab> _tabs = [];
+    private string _tab = "vestigingen";
+
+    protected override void OnInitialized()
+    {
+        _tabs.Add(new("vestigingen", Culture["WgNav.BranchesRegions"]));
+        _tabs.Add(new("regios", Culture["WgTabs.Regions"]));
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("tab", out var tab)
+            && string.Equals(tab.ToString(), "regios", StringComparison.OrdinalIgnoreCase))
+        {
+            _tab = "regios";
+        }
+    }
+}

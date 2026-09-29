@@ -29,13 +29,13 @@ public class CandidateInsightsBunitTests : TestContext
         {
             builder.OpenComponent<InsightsLockedPanelProbe>(0);
             builder.AddAttribute(1, "Dto", dto);
-            builder.AddAttribute(2, "TokensHref", "/employer/tokens");
+            builder.AddAttribute(2, "TokensHref", "/werkgever/tokens");
             builder.CloseComponent();
         });
 
         var markup = cut.Markup;
         Assert.Contains("Volledige inzichten met tokens", markup, StringComparison.Ordinal);
-        Assert.Contains("href=\"/employer/tokens\"", markup, StringComparison.Ordinal);
+        Assert.Contains("href=\"/werkgever/tokens\"", markup, StringComparison.Ordinal);
         Assert.Contains("insights-locked__placeholder", markup, StringComparison.Ordinal);
         Assert.DoesNotContain("SECRET_LOCKED_DNA", markup, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"insights-insufficient\"", markup, StringComparison.Ordinal);
@@ -101,7 +101,7 @@ public class InsightsLockedPanelProbe : ComponentBase
 {
     [Inject] public CultureState Culture { get; set; } = default!;
     [Parameter] public CandidateInsightsDto Dto { get; set; } = new();
-    [Parameter] public string TokensHref { get; set; } = "/employer/tokens";
+    [Parameter] public string TokensHref { get; set; } = "/werkgever/tokens";
 
     protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder)
     {

@@ -1,0 +1,51 @@
+@page "/werkgever"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Authorization
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Microsoft.AspNetCore.Components.Authorization
+@inject CultureState Culture
+
+<PageTitle>@Culture["WgNav.Dashboard"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgNav.Dashboard"]">
+    <AuthorizeView Roles="@JobsyRoles.BranchManager">
+        <Authorized>
+            <EmployerHomePanel Title="@Culture["WgNav.Dashboard"]"
+                               Lead="Jouw vacatures en tokens in één oogopslag."
+                               VacanciesHref="/werkgever/vacatures"
+                               TokensHref="/werkgever/tokens"
+                               EnableRaamflyer="true" />
+        </Authorized>
+    </AuthorizeView>
+    <AuthorizeView Roles="@JobsyRoles.RegionalManager">
+        <Authorized>
+            <EmployerHomePanel Title="@Culture["WgNav.Dashboard"]"
+                               Lead="KPI’s en alleen-lezen inzicht in vacatures, sollicitaties, tokens en vestigingen."
+                               VacanciesHref="/werkgever/vacatures"
+                               TokensHref="/werkgever/tokens"
+                               ApplicationsHref="/werkgever/sollicitaties"
+                               EnableRaamflyer="true"
+                               AllowOverviewRaamflyer="true" />
+        </Authorized>
+    </AuthorizeView>
+    <AuthorizeView Roles="@JobsyRoles.EnterpriseManager">
+        <Authorized>
+            <EmployerHomePanel Title="@Culture["WgNav.Dashboard"]"
+                               Lead="Vacatures, tokens, vestigingen en regio’s."
+                               VacanciesHref="/werkgever/vacatures"
+                               TokensHref="/werkgever/tokens"
+                               EnableRaamflyer="true"
+                               AllowOverviewRaamflyer="true" />
+        </Authorized>
+    </AuthorizeView>
+    <AuthorizeView Roles="@JobsyRoles.Intermediary">
+        <Authorized>
+            <EmployerHomePanel Title="@Culture["WgNav.Dashboard"]"
+                               Lead="KPI’s over alle opdrachtgevers. Detail per bedrijf staat in Bedrijvenoverzicht."
+                               VacanciesHref="/werkgever/vacatures"
+                               TokensHref="/werkgever/tokens"
+                               ApplicationsHref="/werkgever/sollicitaties" />
+        </Authorized>
+    </AuthorizeView>
+</WgPageShell>

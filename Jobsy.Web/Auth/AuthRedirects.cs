@@ -10,10 +10,27 @@ public static partial class AuthRedirects
     /// <summary>Guide remains reachable from the (i) menu.</summary>
     public const string CandidateHowToGuidePath = "/candidate/hoe-werkt-lobsy";
     public const string BanenkaartPath = "/";
+    public const string EmployerLandingPath = "/werkgever";
 
     /// <summary>Post-login landing for a candidate based on first-login how-to flag.</summary>
     public static string CandidatePostLoginUrl(bool showCandidateHowTo)
         => showCandidateHowTo ? CandidateHowToPath : BanenkaartPath;
+
+    /// <summary>Default landing for employer roles (BM/RM/VM/Intermediary).</summary>
+    public static string EmployerPostLoginUrl() => EmployerLandingPath;
+
+    /// <summary>
+    /// Maps a generic landing to <see cref="EmployerLandingPath"/> for employers; keeps explicit deep links.
+    /// </summary>
+    public static string ResolveEmployerReturnUrl(string returnUrl)
+    {
+        if (!IsGenericPostLoginLanding(returnUrl))
+        {
+            return returnUrl;
+        }
+
+        return EmployerPostLoginUrl();
+    }
 
     /// <summary>
     /// Generic landings that may be replaced by the candidate how-to / banenkaart.

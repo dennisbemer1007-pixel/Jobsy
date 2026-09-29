@@ -1,0 +1,81 @@
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject EmployerScopeState Scope
+
+<nav class="wg-bottom-nav" aria-label="@Culture["WgShell.BottomNav"]">
+    <ul class="wg-bottom-nav__list">
+        @foreach (var item in Items)
+        {
+            var isMeer = item.Key == "meer";
+            var active = !isMeer && IsActive(item);
+            <li>
+                @if (isMeer)
+                {
+                    <button type="button" class="wg-bottom-nav__link @(_meerOpen ? "is-active" : null)"
+                            @onclick="() => _meerOpen = true">
+                        <span class="wg-bottom-nav__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                        <span>@Culture[item.LabelKeyFor(Role)]</span>
+                    </button>
+                }
+                else
+                {
+                    <a class="wg-bottom-nav__link @(active ? "is-active" : null)"
+                       href="@item.Href"
+                       aria-current="@(active ? "page" : null)">
+                        <span class="wg-bottom-nav__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                        <span>@Culture[item.LabelKeyFor(Role)]</span>
+                    </a>
+                }
+            </li>
+        }
+    </ul>
+</nav>
+
+<EntDrawer Open="_meerOpen" OpenChanged="OnMeerChanged" Title="@Culture["WgShell.MoreSheet"]" FullSheet="true" Placement="start">
+    @foreach (var group in SidebarGroups)
+    {
+        <p class="wg-sidebar__group-label">@Culture[group.LabelKeyFor(Role)]</p>
+        <ul class="wg-sidebar__items">
+            @foreach (var item in group.Items)
+            {
+                <li>
+                    <a class="wg-sidebar__link" href="@item.Href" @onclick="CloseMeer">
+                        <span class="wg-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                        @Culture[item.LabelKeyFor(Role)]
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+</EntDrawer>
+
+@code {
+    private bool _meerOpen;
+    private readonly WerkgeverNavContext _ctx = new();
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private IReadOnlyList<WerkgeverNavItem> Items => WerkgeverNav.MobileItems(Role, _ctx);
+    private IReadOnlyList<WerkgeverNavGroup> SidebarGroups => WerkgeverNav.For(Role, _ctx);
+
+    private string CurrentPath()
+        => "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+
+    private bool IsActive(WerkgeverNavItem item)
+    {
+        var path = WerkgeverNav.Normalize(CurrentPath());
+        return string.Equals(path, WerkgeverNav.Normalize(item.Href), StringComparison.OrdinalIgnoreCase)
+               || (WerkgeverNav.Normalize(item.Href) is not "/"
+                   && path.StartsWith(WerkgeverNav.Normalize(item.Href) + "/", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private Task OnMeerChanged(bool open)
+    {
+        _meerOpen = open;
+        return Task.CompletedTask;
+    }
+
+    private void CloseMeer() => _meerOpen = false;
+}

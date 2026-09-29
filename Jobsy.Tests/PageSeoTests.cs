@@ -28,7 +28,7 @@ public class PageSeoCatalogTests
     [InlineData("/admin", false)]
     [InlineData("/admin/users", false)]
     [InlineData("/candidate/profile", false)]
-    [InlineData("/employer/tokens", false)]
+    [InlineData("/werkgever/tokens", false)]
     [InlineData("/register/activate", false)]
     [InlineData("/privacy/data", false)]
     [InlineData("/banen", false)]

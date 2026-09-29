@@ -99,7 +99,7 @@ public class BlazorPageRoleAttributesTests
         }
 
         // Route heuristics
-        return text.Contains("@page \"/branch/vacancies/new\"", StringComparison.Ordinal)
+        return text.Contains("@page \"/werkgever/vacatures/nieuw\"", StringComparison.Ordinal)
                || text.Contains("@page \"/employer/onboarding-checkout\"", StringComparison.Ordinal)
                || text.Contains("vacancies/create", StringComparison.OrdinalIgnoreCase);
     }

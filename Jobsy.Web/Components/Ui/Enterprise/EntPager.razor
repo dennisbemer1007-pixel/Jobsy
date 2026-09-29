@@ -1,0 +1,24 @@
+@namespace Jobsy.Web.Components.Ui.Enterprise
+@inject CultureState Culture
+
+@if (TotalPages > 1)
+{
+    <nav class="ent-pager" aria-label="@Culture["EntUi.Pager"]">
+        <button type="button" class="btn-compact" disabled="@(Page <= 1)" @onclick="PrevAsync">
+            @Culture["EntUi.PrevPage"]
+        </button>
+        <span class="ent-pager__meta">@string.Format(Culture["EntUi.PageOf"], Page, TotalPages)</span>
+        <button type="button" class="btn-compact" disabled="@(Page >= TotalPages)" @onclick="NextAsync">
+            @Culture["EntUi.NextPage"]
+        </button>
+    </nav>
+}
+
+@code {
+    [Parameter] public int Page { get; set; } = 1;
+    [Parameter] public int TotalPages { get; set; } = 1;
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+
+    private Task PrevAsync() => PageChanged.InvokeAsync(Math.Max(1, Page - 1));
+    private Task NextAsync() => PageChanged.InvokeAsync(Math.Min(TotalPages, Page + 1));
+}

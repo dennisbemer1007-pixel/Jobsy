@@ -10,11 +10,11 @@ public static class EnterpriseNavItems
 {
     public static readonly NavItem[] OrganizationModules =
     [
-        new("Nav.CompanyDetails", "/employer/company", NavIcons.Companies),
-        new("Nav.Branches", "/employer/branches", NavIcons.Branches, ["/employer/takeovers"]),
-        new("Nav.Regions", "/employer/regions", NavIcons.Regions),
-        new("Nav.SalaryTables", "/employer/salary-tables", NavIcons.Wages),
-        new("Nav.CsvImport", "/employer/csv-import", NavIcons.Batch),
-        new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches)
+        new("Nav.CompanyDetails", "/werkgever/organisatie/profiel", NavIcons.Companies),
+        new("Nav.Branches", "/werkgever/organisatie/vestigingen", NavIcons.Branches, ["/werkgever/overnames"]),
+        new("Nav.Regions", "/werkgever/organisatie/vestigingen?tab=regios", NavIcons.Regions),
+        new("Nav.SalaryTables", "/werkgever/organisatie/salaristabellen", NavIcons.Wages),
+        new("Nav.CsvImport", "/werkgever/koppelingen?tab=csv", NavIcons.Batch),
+        new("Nav.Takeovers", "/werkgever/overnames", NavIcons.Branches)
     ];
 }
