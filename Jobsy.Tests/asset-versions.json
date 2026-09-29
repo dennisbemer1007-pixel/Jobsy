@@ -32,16 +32,16 @@
     "v": "20260929-discovery-1"
   },
   "css/features/nav-feedback.css": {
-    "sha256": "bcca67f50643f55b0d169df00fb48e97b6aa468af59443acb8de732fa409fd55",
-    "v": "20260928-nav-fb"
+    "sha256": "22d8301097be04b32de6e207d2cae2dbb615626e2baa1e2bf7020e549a7147ac",
+    "v": "20260929-nav-short"
   },
   "css/features/onboarding-wizard.css": {
     "sha256": "5ee04db60aae5c26eaadf67dc9333bca45ddfac643be966643445c55f88becad",
     "v": "20260927-dna-c"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "525f55456f60cb787dc74b441c13b320fe9418696bf2e2ba66b8615164c4ab1e",
-    "v": "20260929-or-b"
+    "sha256": "ae6b4e42acec649ea1465fe3f18c931d63881d4cf136d0a52b371944be286a46",
+    "v": "20260929-or-08"
   },
   "css/features/questionnaire.css": {
     "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",

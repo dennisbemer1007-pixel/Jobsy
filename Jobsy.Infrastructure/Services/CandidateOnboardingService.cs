@@ -385,21 +385,29 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         var cultureHighlight = core.CultureHighlight is { } ch ? ToImpressionItem(ch) : null;
         var topValue = core.TopValue is { } tv ? ToImpressionItem(tv) : null;
 
-        var liveMatches = await _matches.ComputeLiveAsync(userId, cancellationToken);
-        var topStrengthLabel = strengths.FirstOrDefault()?.Label;
-        var cards = liveMatches.Take(3).Select(m =>
+        // 01.2d / 08.4: when Werkgevers is OFF, never expose vacancy counts or match cards.
+        var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        IReadOnlyList<OnboardingMatchCardDto> cards = Array.Empty<OnboardingMatchCardDto>();
+        var matchCount = 0;
+        if (employersOn)
         {
-            var travelHint = TryParseTravelMinutes(m.Why);
-            return new OnboardingMatchCardDto(
-                m.Id,
-                m.Title,
-                m.CompanyName,
-                m.MatchPercent,
-                OnboardingImpressionLibrary.MatchWhyLine(topStrengthLabel, dream, travelHint),
-                IsProvisional: competency.IsProvisional
-                               || career.IsProvisional
-                               || culture.IsProvisional);
-        }).ToList();
+            var liveMatches = await _matches.ComputeLiveAsync(userId, cancellationToken);
+            var topStrengthLabel = strengths.FirstOrDefault()?.Label;
+            cards = liveMatches.Take(3).Select(m =>
+            {
+                var travelHint = TryParseTravelMinutes(m.Why);
+                return new OnboardingMatchCardDto(
+                    m.Id,
+                    m.Title,
+                    m.CompanyName,
+                    m.MatchPercent,
+                    OnboardingImpressionLibrary.MatchWhyLine(topStrengthLabel, dream, travelHint),
+                    IsProvisional: competency.IsProvisional
+                                   || career.IsProvisional
+                                   || culture.IsProvisional);
+            }).ToList();
+            matchCount = liveMatches.Count;
+        }
 
         return new CandidateOnboardingImpressionDto(
             OnboardingImpressionLibrary.ResultLabel,
@@ -407,7 +415,7 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
             riasecItems,
             cultureHighlight,
             topValue,
-            liveMatches.Count,
+            matchCount,
             cards,
             competency.IsProvisional,
             career.IsProvisional,

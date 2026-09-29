@@ -63,7 +63,14 @@ public static class RoleNavCatalog
 
     public static readonly NavItem PassportItem =
         new("Nav.Passport", "/candidate/paspoort", NavIcons.Profile,
-            ["/candidate/profile", "/profiel", "/home"]);
+            ["/candidate/profile", "/profiel", "/home"],
+            ShortTitleKey: "Nav.Passport.Short");
+
+    /// <summary>De ontdekkingsreis — filled in file 08 (§N Discovery slot).</summary>
+    public static readonly NavItem DiscoveryItem =
+        new("Nav.Discovery", "/candidate/ontdekkingsreis", NavIcons.Compass,
+            ["/candidate/start"],
+            ShortTitleKey: "Nav.Discovery.Short");
 
     /// <summary>Sollicitaties with Bewaard URLs as active aliases (passport-ON order).</summary>
     public static readonly NavItem ApplicationsWithSavedAliases =
@@ -169,23 +176,22 @@ public static class RoleNavCatalog
 
     /// <summary>
     /// Pure-function candidate nav. Passport OFF keeps today's order; passport ON uses §N slots
-    /// (Discovery reserved empty until file 08). Employers OFF hides Zoeken / Bewaard / Sollicitaties.
+    /// with Discovery first. Employers OFF hides Zoeken / Bewaard / Sollicitaties.
     /// </summary>
     public static IReadOnlyList<NavItem> CandidateItems(FeatureFlagSnapshot flags)
     {
-        // Discovery slot reserved (empty until file 08) — nothing rendered.
         _ = CandidateNavSlot.Discovery;
 
         if (flags.CandidatePassportEnabled)
         {
             if (!flags.EmployersEnabled)
             {
-                // [Ontdekkingsreis] · Mijn Paspoort · Carrière
-                return [PassportItem, CareerItem];
+                // De ontdekkingsreis · Mijn Paspoort · Carrière
+                return [DiscoveryItem, PassportItem, CareerItem];
             }
 
-            // [Ontdekkingsreis] · Mijn Paspoort · Zoeken · Sollicitaties · Carrière
-            return [PassportItem, SearchItem, ApplicationsWithSavedAliases, CareerItem];
+            // De ontdekkingsreis · Mijn Paspoort · Zoeken · Sollicitaties · Carrière
+            return [DiscoveryItem, PassportItem, SearchItem, ApplicationsWithSavedAliases, CareerItem];
         }
 
         if (!flags.EmployersEnabled)

@@ -16,6 +16,7 @@
 @inject CultureState Culture
 @inject GratisDnaStorage Storage
 @inject IJSRuntime Js
+@inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <PageTitle>@Culture["GratisDna.Seo.Title"] · Lobsy</PageTitle>
@@ -268,7 +269,15 @@
         var user = auth.User;
         if (user.Identity?.IsAuthenticated == true && user.IsInRole("Candidate"))
         {
-            Navigation.NavigateTo("/candidate/start", replace: true);
+            try
+            {
+                var flags = await FeatureFlags.GetAsync();
+                Navigation.NavigateTo(Jobsy.Web.Navigation.OnboardingRoutes.StartPath(flags), replace: true);
+            }
+            catch
+            {
+                Navigation.NavigateTo(Jobsy.Web.Navigation.OnboardingRoutes.ClassicStartPath, replace: true);
+            }
             return;
         }
 

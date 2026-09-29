@@ -1,7 +1,11 @@
 @namespace Jobsy.Web.Components.Match
+@using Jobsy.Core.Features
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Localization
 @inject NavigationManager Navigation
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
 <div class="match-gate" aria-label="Match ontgrendelen">
     @if (!Gate.IsAuthenticated)
@@ -33,7 +37,7 @@
                     <p>Naam, beschikbaarheid en reistijd/vervoer</p>
                     @if (!Gate.ProfileBasicsFilled)
                     {
-                        <a class="engagement-btn" href="/candidate/start">Verder met starten</a>
+                        <a class="engagement-btn" href="@_startPath">@Culture["MatchUnlock.ContinueStart"]</a>
                     }
                 </div>
             </li>
@@ -44,7 +48,7 @@
                     <p>Kies je niveau of <em>Geen</em></p>
                     @if (!Gate.HasEducationLevel)
                     {
-                        <a class="engagement-btn" href="/candidate/start">Verder met starten</a>
+                        <a class="engagement-btn" href="@_startPath">@Culture["MatchUnlock.ContinueStart"]</a>
                     }
                 </div>
             </li>
@@ -55,7 +59,7 @@
                     <p>Korte wizard met mini-tests voor je eerste indruk</p>
                     @if (!Gate.WizardCompleted)
                     {
-                        <a class="engagement-btn" href="/candidate/start">Start of hervat</a>
+                        <a class="engagement-btn" href="@_startPath">@Culture["MatchUnlock.StartOrResume"]</a>
                     }
                 </div>
             </li>
@@ -71,4 +75,19 @@
 @code {
     [Parameter, EditorRequired]
     public MatchProfileGateViewModel Gate { get; set; } = new();
+
+    private string _startPath = OnboardingRoutes.ClassicStartPath;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var flags = await FeatureFlags.GetAsync();
+            _startPath = OnboardingRoutes.StartPath(flags);
+        }
+        catch
+        {
+            _startPath = OnboardingRoutes.ClassicStartPath;
+        }
+    }
 }

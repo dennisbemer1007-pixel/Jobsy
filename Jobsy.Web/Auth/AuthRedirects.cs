@@ -1,12 +1,16 @@
 using System.Text.RegularExpressions;
 using Jobsy.Core.Features;
+using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Auth;
 
 public static partial class AuthRedirects
 {
-    /// <summary>First-login onboarding wizard (replaces hoe-werkt-lobsy redirect for new candidates).</summary>
-    public const string CandidateHowToPath = "/candidate/start";
+    /// <summary>
+    /// Classic first-login wizard path (flag OFF). Prefer
+    /// <see cref="OnboardingRoutes.StartPath"/> when flags are known.
+    /// </summary>
+    public const string CandidateHowToPath = OnboardingRoutes.ClassicStartPath;
 
     /// <summary>Guide remains reachable from the (i) menu.</summary>
     public const string CandidateHowToGuidePath = "/candidate/hoe-werkt-lobsy";
@@ -20,7 +24,7 @@ public static partial class AuthRedirects
     {
         if (showCandidateHowTo)
         {
-            return CandidateHowToPath;
+            return OnboardingRoutes.StartPath(flags);
         }
 
         return flags.EmployersEnabled ? BanenkaartPath : FeatureRoutes.CandidateProfilePath;

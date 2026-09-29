@@ -17,6 +17,9 @@
         @foreach (var item in _items)
         {
             var title = Culture[item.TitleKey];
+            var shortTitle = !string.IsNullOrWhiteSpace(item.ShortTitleKey)
+                ? Culture[item.ShortTitleKey!]
+                : title;
             var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
             <a class="bottom-nav__item @(active ? "is-active" : null) @(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)"
                href="@item.Href"
@@ -26,7 +29,8 @@
                 <span class="bottom-nav__icon" aria-hidden="true">
                     @((MarkupString)item.Svg)
                 </span>
-                <span class="bottom-nav__label">@title</span>
+                <span class="bottom-nav__label bottom-nav__label--full">@title</span>
+                <span class="bottom-nav__label bottom-nav__label--short">@shortTitle</span>
             </a>
         }
     </nav>

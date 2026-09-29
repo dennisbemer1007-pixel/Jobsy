@@ -5,7 +5,9 @@ public sealed record NavItem(
     string Href,
     string Svg,
     string[]? ExtraActivePaths = null,
-    bool DesktopOnly = false);
+    bool DesktopOnly = false,
+    /// <summary>Optional shorter label for widths below 640 px (e.g. Reis / Paspoort).</summary>
+    string? ShortTitleKey = null);
 
 public static class NavIcons
 {
@@ -120,6 +122,10 @@ public static class NavIcons
 
     public const string Wave =
         "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0\"/><path d=\"M3 17c2-3 4-3 6 0s4 3 6 0 4-3 6 0\"/></svg>";
+
+    /// <summary>Compass — De ontdekkingsreis nav slot.</summary>
+    public const string Compass =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m15.5 8.5-2 5-5 2 2-5z\"/></svg>";
 
     public const string DnaHelix =
         "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 4c4 4 8 4 12 0\"/><path d=\"M6 20c4-4 8-4 12 0\"/><path d=\"M6 4v16\"/><path d=\"M18 4v16\"/><path d=\"M6 12h12\"/></svg>";

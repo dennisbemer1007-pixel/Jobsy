@@ -1,5 +1,6 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Core.Features
+@using Jobsy.Web.Navigation
 @inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 @inject IFeatureFlags FeatureFlags
@@ -17,7 +18,7 @@
     private bool _visible;
     private bool _loadStarted;
     private int _remainingSteps = 1;
-    private string ResumeHref = "/candidate/start";
+    private string ResumeHref = OnboardingRoutes.ClassicStartPath;
 
     protected override Task OnInitializedAsync()
         => LoadOnceAsync();
@@ -34,14 +35,12 @@
         {
             try
             {
-                if (await FeatureFlags.IsEnabledAsync(Jobsy.Core.Features.PlatformFeature.CandidatePassport))
-                {
-                    ResumeHref = "/candidate/ontdekkingsreis";
-                }
+                var flags = await FeatureFlags.GetAsync();
+                ResumeHref = OnboardingRoutes.StartPath(flags);
             }
             catch
             {
-                ResumeHref = "/candidate/start";
+                ResumeHref = OnboardingRoutes.ClassicStartPath;
             }
 
             var state = await Api.GetMyOnboardingAsync();

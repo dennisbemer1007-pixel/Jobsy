@@ -65,3 +65,18 @@
         opacity: 0.85;
     }
 }
+
+/* Short nav labels below 640 px (Discovery / Passport). */
+.bottom-nav__label--short {
+    display: none;
+}
+
+@media (max-width: 639px) {
+    .bottom-nav__label--full {
+        display: none;
+    }
+
+    .bottom-nav__label--short {
+        display: block;
+    }
+}

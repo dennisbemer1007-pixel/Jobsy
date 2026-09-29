@@ -260,10 +260,10 @@
 
     private bool RefreshFocusedFlags()
     {
-        var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0]
-            .TrimStart('/');
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var path = relative.Split('?', '#')[0].TrimStart('/');
         var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase);
-        var questionnaire = IsQuestionnairePath(path);
+        var questionnaire = IsQuestionnairePath(path, relative);
         var changed = false;
         if (_isMatchPage != match)
         {
@@ -286,6 +286,13 @@
     }
 
     public static bool IsQuestionnairePath(string path)
+        => IsQuestionnairePath(path, path);
+
+    /// <summary>
+    /// Focus mode for questionnaires / classic start / journey-in-progress.
+    /// Overview (<c>/candidate/ontdekkingsreis</c> without <c>stap</c>) keeps the normal nav.
+    /// </summary>
+    public static bool IsQuestionnairePath(string path, string relativeUri)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -293,15 +300,44 @@
         }
 
         path = path.TrimStart('/');
-        return path.Equals("candidate/competencies", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/career", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/culture", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/disc", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/values", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/start", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith("candidate/deep-analysis/", StringComparison.OrdinalIgnoreCase);
+        if (path.Equals("candidate/competencies", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/career", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/culture", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/disc", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/values", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/start", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("candidate/deep-analysis/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (path.Equals("candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase))
+        {
+            // Focus only while a journey screen is active (?stap=…).
+            return HasJourneyStepQuery(relativeUri);
+        }
+
+        return false;
+    }
+
+    private static bool HasJourneyStepQuery(string relativeUri)
+    {
+        var qIdx = relativeUri.IndexOf('?', StringComparison.Ordinal);
+        if (qIdx < 0) return false;
+        var query = relativeUri[(qIdx + 1)..];
+        var hash = query.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0) query = query[..hash];
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=', StringComparison.Ordinal);
+            var key = eq < 0 ? part : part[..eq];
+            if (!key.Equals("stap", StringComparison.OrdinalIgnoreCase)) continue;
+            var value = eq < 0 ? "" : Uri.UnescapeDataString(part[(eq + 1)..]);
+            return !string.IsNullOrWhiteSpace(value);
+        }
+
+        return false;
     }
 
     private string HeaderTagline => Branding.ResolveTagline(RegionHost.Current?.Slogan, Culture["Brand.Tagline"]);

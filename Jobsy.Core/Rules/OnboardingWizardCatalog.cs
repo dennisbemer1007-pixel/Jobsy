@@ -146,6 +146,17 @@ public static class OnboardingWizardCatalog
         _ => MapV2ToV3(MapV1Step(step))
     };
 
+    public const int MiniLevelCount = 5;
+    public const int DeeperLevelCount = 10;
+
+    public enum OnboardingTestKind
+    {
+        Competency,
+        Career,
+        Culture,
+        Values
+    }
+
     /// <summary>
     /// Competentie mini: one item per Big Five workplace dimension
     /// (Q01 Samenwerken, Q06 Resultaat, Q11 Stress, Q16 Innovatie, Q21 Extraversie).
@@ -153,10 +164,23 @@ public static class OnboardingWizardCatalog
     public static readonly int[] CompetencyQuestionIds = [1, 6, 11, 16, 21];
 
     /// <summary>
+    /// Competentie deeper (5→10): next lowest id per Big Five dimension not in the mini set
+    /// (Q02, Q07, Q12, Q17, Q22).
+    /// </summary>
+    public static readonly int[] CompetencyDeeperQuestionIds = [2, 7, 12, 17, 22];
+
+    /// <summary>
     /// Beroepen mini: five of six RIASEC directions (Q01 R, Q06 I, Q14 S, Q18 E, Q22 C).
-    /// Artistic is measured in the full test.
+    /// Artistic is measured in the deeper / full test.
     /// </summary>
     public static readonly int[] CareerQuestionIds = [1, 6, 14, 18, 22];
+
+    /// <summary>
+    /// Beroepen deeper (5→10): next RIASEC item per mini dimension, with Artistic (Q10) included
+    /// instead of Conventional's next (Q23) so the set stays five and covers Artistic.
+    /// Ids: R2, I7, A10, S15, E19.
+    /// </summary>
+    public static readonly int[] CareerDeeperQuestionIds = [2, 7, 10, 15, 19];
 
     public static int TotalMiniQuestionCount =>
         CompetencyQuestionIds.Length
@@ -170,6 +194,13 @@ public static class OnboardingWizardCatalog
     /// Innovation omitted to keep the mini-test to five items.
     /// </summary>
     public static readonly int[] CultureQuestionIds = [1, 3, 5, 7, 11];
+
+    /// <summary>
+    /// Cultuur deeper (5→10): next id per mini culture dimension
+    /// (Q02 Autonomy, Q04 Informal, Q06 Collaboration, Q08 Flexibility, Q12 PeopleFirst).
+    /// Full depth is all 18 catalog items.
+    /// </summary>
+    public static readonly int[] CultureDeeperQuestionIds = [2, 4, 6, 8, 12];
 
     public static readonly string[] CultureDimensionCodes =
     [
@@ -185,6 +216,122 @@ public static class OnboardingWizardCatalog
     /// (Q01 Autonomy, Q06 Connection, Q11 Achievement, Q16 Stability, Q21 Impact).
     /// </summary>
     public static readonly int[] ValuesQuestionIds = [1, 6, 11, 16, 21];
+
+    /// <summary>
+    /// Waarden deeper (5→10): next lowest id per Schwartz driver not in the mini set
+    /// (Q02, Q07, Q12, Q17, Q22).
+    /// </summary>
+    public static readonly int[] ValuesDeeperQuestionIds = [2, 7, 12, 17, 22];
+
+    public static int FullLevelCount(OnboardingTestKind kind) => kind switch
+    {
+        OnboardingTestKind.Culture => CulturePersonalityCatalog.QuestionCount,
+        OnboardingTestKind.Competency => CompetencyTestCatalog.QuestionCount,
+        OnboardingTestKind.Career => CareerTestCatalog.QuestionCount,
+        OnboardingTestKind.Values => SchwartzValuesCatalog.QuestionCount,
+        _ => 25
+    };
+
+    public static int[] MiniIds(OnboardingTestKind kind) => kind switch
+    {
+        OnboardingTestKind.Competency => CompetencyQuestionIds,
+        OnboardingTestKind.Career => CareerQuestionIds,
+        OnboardingTestKind.Culture => CultureQuestionIds,
+        OnboardingTestKind.Values => ValuesQuestionIds,
+        _ => []
+    };
+
+    public static int[] DeeperIds(OnboardingTestKind kind) => kind switch
+    {
+        OnboardingTestKind.Competency => CompetencyDeeperQuestionIds,
+        OnboardingTestKind.Career => CareerDeeperQuestionIds,
+        OnboardingTestKind.Culture => CultureDeeperQuestionIds,
+        OnboardingTestKind.Values => ValuesDeeperQuestionIds,
+        _ => []
+    };
+
+    public static OnboardingTestKind? TestKindForStep(int step) => step switch
+    {
+        7 => OnboardingTestKind.Competency,
+        8 => OnboardingTestKind.Career,
+        9 => OnboardingTestKind.Culture,
+        10 => OnboardingTestKind.Values,
+        _ => null
+    };
+
+    /// <summary>
+    /// Highest completed depth band from answered count: 0, 5, 10, or full (18/25).
+    /// </summary>
+    public static int ReachedLevel(int answeredCount, OnboardingTestKind kind)
+    {
+        var full = FullLevelCount(kind);
+        if (answeredCount >= full) return full;
+        if (answeredCount >= DeeperLevelCount) return DeeperLevelCount;
+        if (answeredCount >= MiniLevelCount) return MiniLevelCount;
+        return 0;
+    }
+
+    public static bool IsLevelReached(int answeredCount, int level)
+        => answeredCount >= level;
+
+    /// <summary>
+    /// Ordered question ids up to <paramref name="targetCount"/> (5, 10, or full).
+    /// Mini, then deeper, then remaining catalog ids in ascending order.
+    /// </summary>
+    public static int[] QuestionIdsUpTo(OnboardingTestKind kind, int targetCount)
+    {
+        var full = FullLevelCount(kind);
+        var target = Math.Clamp(targetCount, MiniLevelCount, full);
+        if (target <= MiniLevelCount)
+        {
+            return MiniIds(kind).ToArray();
+        }
+
+        var ordered = new List<int>(MiniIds(kind));
+        foreach (var id in DeeperIds(kind))
+        {
+            if (!ordered.Contains(id)) ordered.Add(id);
+        }
+
+        if (target <= DeeperLevelCount)
+        {
+            return ordered.Take(DeeperLevelCount).ToArray();
+        }
+
+        foreach (var id in AllCatalogIds(kind))
+        {
+            if (!ordered.Contains(id)) ordered.Add(id);
+        }
+
+        return ordered.Take(full).ToArray();
+    }
+
+    public static IReadOnlyList<int> AllCatalogIds(OnboardingTestKind kind) => kind switch
+    {
+        OnboardingTestKind.Competency => CompetencyTestCatalog.Questions.Select(q => q.Id).ToArray(),
+        OnboardingTestKind.Career => CareerTestCatalog.Questions.Select(q => q.Id).ToArray(),
+        OnboardingTestKind.Culture => CulturePersonalityCatalog.Questions.Select(q => q.Id).ToArray(),
+        OnboardingTestKind.Values => SchwartzValuesCatalog.Questions.Select(q => q.Id).ToArray(),
+        _ => []
+    };
+
+    public static string TestTitleKey(OnboardingTestKind kind) => kind switch
+    {
+        OnboardingTestKind.Competency => "Discovery.Test.Competency.Title",
+        OnboardingTestKind.Career => "Discovery.Test.Career.Title",
+        OnboardingTestKind.Culture => "Discovery.Test.Culture.Title",
+        OnboardingTestKind.Values => "Discovery.Test.Values.Title",
+        _ => "Discovery.Test.Competency.Title"
+    };
+
+    public static string TestNameKey(OnboardingTestKind kind) => kind switch
+    {
+        OnboardingTestKind.Competency => "Onboarding.Test.Competency",
+        OnboardingTestKind.Career => "Onboarding.Test.Career",
+        OnboardingTestKind.Culture => "Onboarding.Test.Culture",
+        OnboardingTestKind.Values => "Onboarding.Test.Values",
+        _ => "Onboarding.Test.Competency"
+    };
 
     /// <summary>Education chips shown in the wizard (order = UI order).</summary>
     public static readonly string[] EducationChips =
