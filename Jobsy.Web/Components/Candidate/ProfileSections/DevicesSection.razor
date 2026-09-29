@@ -1,0 +1,64 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
+@inject CultureState Culture
+
+                            <section class="profile-devices" aria-labelledby="profile-devices-title">
+                                <h3 id="profile-devices-title">@Culture["Profile.Devices.Title"]</h3>
+                                <p class="login-lead">@Culture["Profile.Devices.Lead"]</p>
+                                @if (!Editor.DevicesLoadStarted && !Editor.DevicesLoading)
+                                {
+                                    <button type="button" class="btn-compact" @onclick="Editor.LoadDevicesAsync">
+                                        @Culture["Profile.Devices.Title"]
+                                    </button>
+                                }
+                                else if (Editor.DevicesLoading)
+                                {
+                                    <p class="state-message">@Culture["Common.Loading"]</p>
+                                }
+                                else if (Editor.Devices.Count == 0)
+                                {
+                                    <p class="state-message">@Culture["Profile.Devices.Empty"]</p>
+                                }
+                                else
+                                {
+                                    <ul class="profile-devices__list">
+                                        @foreach (var device in Editor.Devices)
+                                        {
+                                            <li class="profile-devices__item">
+                                                <div>
+                                                    <strong>@device.DeviceName</strong>
+                                                    @if (device.IsCurrent)
+                                                    {
+                                                        <span class="profile-devices__current"> · @Culture["Profile.Devices.Current"]</span>
+                                                    }
+                                                    <p class="profile-address__hint">
+                                                        @Culture["Profile.Devices.LastUsed"]: @device.LastUsedAtUtc.ToLocalTime().ToString("g")
+                                                    </p>
+                                                </div>
+                                                <button type="button"
+                                                        class="engagement-btn"
+                                                        disabled="@Editor.DevicesBusy"
+                                                        @onclick="() => Editor.RevokeDeviceAsync(device.Id)">
+                                                    @Culture["Profile.Devices.Logout"]
+                                                </button>
+                                            </li>
+                                        }
+                                    </ul>
+                                    <button type="button"
+                                            class="engagement-btn"
+                                            disabled="@Editor.DevicesBusy"
+                                            @onclick="Editor.RevokeAllDevicesAsync">
+                                        @Culture["Profile.Devices.LogoutAll"]
+                                    </button>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Editor.DevicesMessage))
+                                {
+                                    <p class="state-message" aria-live="polite">@Editor.DevicesMessage</p>
+                                }
+                            </section>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+}

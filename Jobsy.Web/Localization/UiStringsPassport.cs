@@ -429,5 +429,229 @@ public static class UiStringsPassport
             "Opslaan opleiding", "Save course", "Zapisz kurs", "Salvează cursul", "احفظ الدورة");
         Add("Admin.Training.EditOffer",
             "Bewerk opleiding", "Edit course", "Edytuj kurs", "Editează cursul", "عدّل الدورة");
+
+        // Profile consent (localized while extracting ProfileSections)
+        Add("Profile.HoursMin",
+            "Min.", "Min", "Od", "Min", "أدنى");
+        Add("Profile.HoursMax",
+            "Max.", "Max", "Do", "Max", "أقصى");
+        Add("Profile.Consent.Title",
+            "Privacy en toestemming", "Privacy and consent", "Prywatność i zgoda", "Confidențialitate și consimțământ", "الخصوصية والموافقة");
+        Add("Profile.Consent.Lead",
+            "Je kiest zelf of we je tests en AI-analyse gebruiken. De talentpool staat standaard uit.",
+            "You choose whether we use your tests and AI analysis. The talent pool is off by default.",
+            "Sam decydujesz, czy używamy Twoich testów i analizy AI. Pula talentów jest domyślnie wyłączona.",
+            "Tu alegi dacă folosim testele și analiza AI. Pool-ul de talente e dezactivat implicit.",
+            "أنت تختار إن كنا نستخدم اختباراتك وتحليل الذكاء الاصطناعي. مجموعة المواهب متوقفة افتراضياً.");
+        Add("Profile.Consent.TestAiTitle",
+            "Tests en AI-analyse", "Tests and AI analysis", "Testy i analiza AI", "Teste și analiză AI", "الاختبارات وتحليل الذكاء الاصطناعي");
+        Add("Profile.Consent.TestAiNone",
+            "Je hebt nog geen toestemming gegeven.",
+            "You have not given consent yet.",
+            "Nie wyraziłeś jeszcze zgody.",
+            "Nu ai dat încă consimțământul.",
+            "لم تمنح الموافقة بعد.");
+        Add("Profile.Consent.TestAiSince",
+            "Toestemming gegeven op {0}.",
+            "Consent given on {0}.",
+            "Zgoda udzielona {0}.",
+            "Consimțământ acordat la {0}.",
+            "تم منح الموافقة في {0}.");
+        Add("Profile.Consent.Accept",
+            "Toestemming geven", "Give consent", "Udziel zgody", "Acordă consimțământul", "امنح الموافقة");
+        Add("Profile.Consent.Withdraw",
+            "Toestemming intrekken", "Withdraw consent", "Cofnij zgodę", "Retrage consimțământul", "اسحب الموافقة");
+        Add("Profile.Consent.WithdrawDelete",
+            "Intrekken en testresultaten verwijderen",
+            "Withdraw and delete test results",
+            "Cofnij i usuń wyniki testów",
+            "Retrage și șterge rezultatele testelor",
+            "اسحب واحذف نتائج الاختبارات");
+        Add("Profile.Consent.TalentTitle",
+            "Anonieme talentpool", "Anonymous talent pool", "Anonimowa pula talentów", "Pool anonim de talente", "مجموعة مواهب مجهولة");
+        Add("Profile.Consent.TalentOff",
+            "Je profiel is niet zichtbaar in de talentpool.",
+            "Your profile is not visible in the talent pool.",
+            "Twój profil nie jest widoczny w puli talentów.",
+            "Profilul tău nu e vizibil în pool-ul de talente.",
+            "ملفك غير ظاهر في مجموعة المواهب.");
+        Add("Profile.Consent.TalentOn",
+            "Je profiel is anoniem zichtbaar in de talentpool.",
+            "Your profile is anonymously visible in the talent pool.",
+            "Twój profil jest anonimowo widoczny w puli talentów.",
+            "Profilul tău e vizibil anonim în pool-ul de talente.",
+            "ملفك ظاهر بشكل مجهول في مجموعة المواهب.");
+        Add("Profile.Consent.TalentAccept",
+            "Anoniem zichtbaar worden", "Become anonymously visible", "Uczyń widocznym anonimowo", "Devino vizibil anonim", "كن ظاهراً دون اسم");
+        Add("Profile.Consent.TalentWithdraw",
+            "Talentpooltoestemming intrekken",
+            "Withdraw talent-pool consent",
+            "Cofnij zgodę na pulę talentów",
+            "Retrage consimțământul pentru pool",
+            "اسحب موافقة مجموعة المواهب");
+        Add("Profile.Consent.ParentalTitle",
+            "Toestemming ouder of voogd",
+            "Parent or guardian consent",
+            "Zgoda rodzica lub opiekuna",
+            "Consimțământ părinte sau tutore",
+            "موافقة ولي الأمر");
+        Add("Profile.Consent.ParentalLead",
+            "Voor tests, AI en solliciteren hebben we eerst toestemming van je ouder of voogd nodig.",
+            "For tests, AI and applying we first need consent from your parent or guardian.",
+            "Do testów, AI i aplikacji potrzebujemy najpierw zgody rodzica lub opiekuna.",
+            "Pentru teste, AI și aplicări avem nevoie mai întâi de consimțământul părintelui sau tutorelui.",
+            "للاختبارات والذكاء الاصطناعي والتقديم نحتاج أولاً موافقة ولي أمرك.");
+        Add("Profile.Consent.ParentalEmail",
+            "E-mailadres van ouder of voogd",
+            "Parent or guardian email",
+            "E-mail rodzica lub opiekuna",
+            "E-mail părinte sau tutore",
+            "بريد ولي الأمر");
+        Add("Profile.Consent.ParentalSend",
+            "Bevestigingslink sturen", "Send confirmation link", "Wyślij link potwierdzający", "Trimite linkul de confirmare", "أرسل رابط التأكيد");
+        Add("Profile.Consent.Toast.TestAccepted",
+            "Toestemming voor tests en AI-analyse is opgeslagen.",
+            "Consent for tests and AI analysis has been saved.",
+            "Zgoda na testy i analizę AI została zapisana.",
+            "Consimțământul pentru teste și analiza AI a fost salvat.",
+            "تم حفظ موافقة الاختبارات وتحليل الذكاء الاصطناعي.");
+        Add("Profile.Consent.Toast.TestWithdrawn",
+            "Toestemming voor tests en AI-analyse is ingetrokken.",
+            "Consent for tests and AI analysis has been withdrawn.",
+            "Zgoda na testy i analizę AI została cofnięta.",
+            "Consimțământul pentru teste și analiza AI a fost retras.",
+            "تم سحب موافقة الاختبارات وتحليل الذكاء الاصطناعي.");
+        Add("Profile.Consent.Toast.TestWithdrawnDeleted",
+            "Toestemming ingetrokken en testresultaten verwijderd.",
+            "Consent withdrawn and test results deleted.",
+            "Zgoda cofnięta i wyniki testów usunięte.",
+            "Consimțământ retras și rezultatele testelor șterse.",
+            "سُحبت الموافقة وحُذفت نتائج الاختبارات.");
+        Add("Profile.Consent.Toast.TalentAccepted",
+            "Je profiel is nu anoniem zichtbaar in de talentpool.",
+            "Your profile is now anonymously visible in the talent pool.",
+            "Twój profil jest teraz anonimowo widoczny w puli talentów.",
+            "Profilul tău e acum vizibil anonim în pool-ul de talente.",
+            "ملفك ظاهر الآن بشكل مجهول في مجموعة المواهب.");
+        Add("Profile.Consent.Toast.TalentWithdrawn",
+            "Je profiel is direct uit de talentpool verwijderd.",
+            "Your profile was removed from the talent pool immediately.",
+            "Twój profil został od razu usunięty z puli talentów.",
+            "Profilul tău a fost scos imediat din pool-ul de talente.",
+            "أُزيل ملفك فوراً من مجموعة المواهب.");
+        Add("Profile.Consent.Toast.ParentalSent",
+            "De bevestigingslink is verstuurd.",
+            "The confirmation link has been sent.",
+            "Link potwierdzający został wysłany.",
+            "Linkul de confirmare a fost trimis.",
+            "تم إرسال رابط التأكيد.");
+
+        // Bewijzen tab
+        Add("Passport.Proof.ScaleTitle",
+            "Je nieuwe schaal", "Your new shell", "Twoja nowa skorupa", "Cochilia ta nouă", "صدفتك الجديدة");
+        Add("Passport.Proof.CountLabel",
+            "{0} bewijzen · steeds steviger",
+            "{0} proofs · getting stronger",
+            "{0} dowodów · coraz mocniej",
+            "{0} dovezi · tot mai solide",
+            "{0} إثباتات · تزداد صلابة");
+        Add("Passport.Proof.ScaleAria",
+            "{0} van {1} bewijzen",
+            "{0} of {1} proofs",
+            "{0} z {1} dowodów",
+            "{0} din {1} dovezi",
+            "{0} من {1} إثباتات");
+        Add("Passport.Proof.Soft",
+            "Zacht", "Soft", "Miękka", "Moale", "طرية");
+        Add("Passport.Proof.Hard",
+            "Hard", "Firm", "Twarda", "Tare", "صلبة");
+        Add("Passport.Proof.HintHard",
+            "Je schaal is hard. Mooi zo.",
+            "Your shell is hard. Well done.",
+            "Twoja skorupa jest twarda. Super.",
+            "Cochilia ta e tare. Bravo.",
+            "صدفتك صلبة. أحسنت.");
+        Add("Passport.Proof.HintOneReference",
+            "Nog {0} recensie, dan is je schaal hard.",
+            "{0} more review and your shell is hard.",
+            "Jeszcze {0} recenzja, a skorupa będzie twarda.",
+            "Încă {0} recenzie și cochilia e tare.",
+            "مراجعة واحدة أخرى ({0}) وتصير صدفتك صلبة.");
+        Add("Passport.Proof.HintOneCertificate",
+            "Nog {0} certificaat, dan is je schaal hard.",
+            "{0} more certificate and your shell is hard.",
+            "Jeszcze {0} certyfikat, a skorupa będzie twarda.",
+            "Încă {0} certificat și cochilia e tare.",
+            "شهادة واحدة أخرى ({0}) وتصير صدفتك صلبة.");
+        Add("Passport.Proof.HintOneEmployer",
+            "Nog {0} werkgever, dan is je schaal hard.",
+            "{0} more employer and your shell is hard.",
+            "Jeszcze {0} pracodawca, a skorupa będzie twarda.",
+            "Încă {0} angajator și cochilia e tare.",
+            "صاحب عمل آخر ({0}) وتصير صدفتك صلبة.");
+        Add("Passport.Proof.HintOneEducation",
+            "Nog {0} opleiding, dan is je schaal hard.",
+            "{0} more education and your shell is hard.",
+            "Jeszcze {0} wykształcenie, a skorupa będzie twarda.",
+            "Încă {0} studii și cochilia e tare.",
+            "مؤهل آخر ({0}) وتصير صدفتك صلبة.");
+        Add("Passport.Proof.HintOneCv",
+            "Nog je eigen CV, dan is je schaal hard.",
+            "Add your own CV and your shell is hard.",
+            "Dodaj własne CV, a skorupa będzie twarda.",
+            "Adaugă CV-ul tău și cochilia e tare.",
+            "أضف سيرتك الذاتية وتصير صدفتك صلبة.");
+        Add("Passport.Proof.HintTwo",
+            "Nog {0} {1} en {2} {3}, dan is je schaal hard.",
+            "{0} more {1} and {2} {3}, then your shell is hard.",
+            "Jeszcze {0} {1} i {2} {3}, a skorupa będzie twarda.",
+            "Încă {0} {1} și {2} {3}, și cochilia e tare.",
+            "ما زال {0} {1} و{2} {3}، ثم تصير صدفتك صلبة.");
+        Add("Passport.Proof.Noun.Reference",
+            "recensie", "review", "recenzja", "recenzie", "مراجعة");
+        Add("Passport.Proof.Noun.Certificate",
+            "certificaat", "certificate", "certyfikat", "certificat", "شهادة");
+        Add("Passport.Proof.Noun.Employer",
+            "werkgever", "employer", "pracodawca", "angajator", "صاحب عمل");
+        Add("Passport.Proof.Noun.Education",
+            "opleiding", "education", "wykształcenie", "studii", "مؤهل");
+        Add("Passport.Proof.Noun.Cv",
+            "cv", "CV", "CV", "CV", "سيرة");
+        Add("Passport.Proof.Experience",
+            "Ervaring", "Experience", "Doświadczenie", "Experiență", "الخبرة");
+        Add("Passport.Proof.ExperienceEmpty",
+            "Nog geen werkgevers. Alles telt, ook mantelzorg.",
+            "No employers yet. Everything counts, including care work.",
+            "Brak pracodawców. Wszystko się liczy, także opieka.",
+            "Niciun angajator încă. Totul contează, inclusiv îngrijirea.",
+            "لا أصحاب عمل بعد. كل شيء يحسب، بما فيه الرعاية.");
+        Add("Passport.Proof.AddEmployer",
+            "+ Werkgever toevoegen", "+ Add employer", "+ Dodaj pracodawcę", "+ Adaugă angajator", "+ أضف صاحب عمل");
+        Add("Passport.Proof.Education",
+            "Opleiding & certificaten", "Education & certificates", "Wykształcenie i certyfikaty", "Studii și certificate", "التعليم والشهادات");
+        Add("Passport.Proof.CertificatesEmpty",
+            "Nog geen certificaten.", "No certificates yet.", "Brak certyfikatów.", "Niciun certificat încă.", "لا شهادات بعد.");
+        Add("Passport.Proof.AddCertificate",
+            "+ Certificaat toevoegen", "+ Add certificate", "+ Dodaj certyfikat", "+ Adaugă certificat", "+ أضف شهادة");
+        Add("Passport.Proof.Reviews",
+            "Recensies & CV", "Reviews & CV", "Recenzje i CV", "Recenzii și CV", "المراجعات والسيرة");
+        Add("Passport.Proof.ReviewsEmpty",
+            "Nog geen recensies.", "No reviews yet.", "Brak recenzji.", "Nicio recenzie încă.", "لا مراجعات بعد.");
+        Add("Passport.Proof.AddReference",
+            "+ Recensie toevoegen (max 3)",
+            "+ Add review (max 3)",
+            "+ Dodaj recenzję (maks. 3)",
+            "+ Adaugă recenzie (max. 3)",
+            "+ أضف مراجعة (حد أقصى 3)");
+        Add("Passport.Proof.ReplaceCv",
+            "↑ Vervangen", "↑ Replace", "↑ Zastąp", "↑ Înlocuiește", "↑ استبدال");
+        Add("Passport.Proof.DownloadCv",
+            "↓ Download", "↓ Download file", "↓ Pobierz", "↓ Descarcă", "↓ تنزيل");
+        Add("Passport.Proof.LobsyCvNote",
+            "Je Lobsy-CV (PDF) maken we automatisch van je bewijzen en je tests.",
+            "We build your Lobsy CV (PDF) automatically from your proofs and tests.",
+            "Twoje CV Lobsy (PDF) tworzymy automatycznie z dowodów i testów.",
+            "CV-ul Lobsy (PDF) îl facem automat din dovezi și teste.",
+            "ننشئ سيرة Lobsy (PDF) تلقائياً من إثباتاتك واختباراتك.");
     }
 }

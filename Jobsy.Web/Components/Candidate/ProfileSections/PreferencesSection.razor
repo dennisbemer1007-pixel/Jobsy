@@ -1,0 +1,52 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
+@inject CultureState Culture
+
+                            <label>
+                                @Culture["Profile.MaxTravel"]
+                                <input type="number" min="1" max="180" @bind="Editor.MaxTravel" />
+                            </label>
+
+                            <label>
+                                @Culture["Profile.PreferredTransport"]
+                                <select @bind="Editor.PreferredTransport">
+                                    <option value="">—</option>
+                                    <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                    <option value="E-bike">@Culture["Transport.EBike"]</option>
+                                    <option value="Auto">@Culture["Transport.Car"]</option>
+                                    <option value="OV">@Culture["Transport.Transit"]</option>
+                                    <option value="Lopend">@Culture["Transport.Walk"]</option>
+                                </select>
+                            </label>
+
+                            <fieldset class="profile-roles profile-check-grid">
+                                <legend>@Culture["Profile.Interests"]</legend>
+                                @foreach (var role in Editor.BranchOptions)
+                                {
+                                    <label>
+                                        <input type="checkbox"
+                                               checked="@Editor.SelectedRoles.Contains(role)"
+                                               @onchange="e => Editor.ToggleRole(role, (bool)(e.Value ?? false))" />
+                                        @UiLabels.WorkType(Culture, role)
+                                    </label>
+                                }
+                            </fieldset>
+
+                            <fieldset class="profile-roles profile-check-grid">
+                                <legend>@Culture["Profile.Licenses"]</legend>
+                                @foreach (var license in Editor.LicenseOptions)
+                                {
+                                    <label>
+                                        <input type="checkbox"
+                                               checked="@Editor.SelectedLicenses.Contains(license)"
+                                               @onchange="e => Editor.ToggleLicense(license, (bool)(e.Value ?? false))" />
+                                        @UiLabels.License(Culture, license)
+                                    </label>
+                                }
+                            </fieldset>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+}

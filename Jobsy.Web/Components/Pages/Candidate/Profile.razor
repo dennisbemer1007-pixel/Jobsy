@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.ProfileSections
 @inject JobsyApiClient Api
 @inject IGeocodingClient Geocoder
 @inject NavigationManager Navigation
@@ -10,6 +11,7 @@
 @inject PersistentComponentState Persist
 @inject Jobsy.Web.Services.ApiCallTracker ApiCalls
 @inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
+@inject CandidateProfileEditor Editor
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Components.Shared
@@ -26,6 +28,7 @@
         }
     </header>
         <CascadingValue Value="_kompasState">
+        <CascadingValue Value="Editor">
         <CandidateKompas SharedKompas="_kompasState"
                          SharedDna="_dnaState"
                          TabChanged="OnKompasTabChangedAsync"
@@ -72,149 +75,8 @@
                     @if (IsSectionOpen("personal"))
                     {
                         <div class="profile-accordion__body" id="profile-section-personal" role="region" aria-labelledby="profile-section-personal-btn">
-                            <label class="profile-toggle">
-                                <input type="checkbox" @bind="_openForWork" />
-                                <span>@Culture["Profile.OpenForWork"]</span>
-                            </label>
-
-                            <fieldset class="profile-contact">
-                                <legend>@Culture["Profile.ContactDetails"]</legend>
-                                <div class="profile-contact__names">
-                                    <label>
-                                        @Culture["Profile.FirstName"]
-                                        <input type="text" maxlength="128" @bind="_firstName" autocomplete="given-name" />
-                                    </label>
-                                    <label>
-                                        @Culture["Profile.LastName"]
-                                        <input type="text" maxlength="128" @bind="_lastName" autocomplete="family-name" />
-                                    </label>
-                                </div>
-                                <label>
-                                    @Culture["Profile.Phone"]
-                                    <input type="tel"
-                                           maxlength="32"
-                                           placeholder="@Culture["Profile.PhonePlaceholder"]"
-                                           @bind="_phoneNumber"
-                                           autocomplete="tel" />
-                                </label>
-                                <label class="profile-toggle">
-                                    <input type="checkbox"
-                                           disabled="@string.IsNullOrWhiteSpace(_phoneNumber)"
-                                           @bind="_whatsAppAllowed" />
-                                    <span>@Culture["Profile.WhatsAppAllowed"]</span>
-                                </label>
-                                <p class="profile-address__hint">@Culture["Profile.ContactHint"]</p>
-                            </fieldset>
-
-                            <section class="profile-devices" aria-labelledby="profile-devices-title">
-                                <h3 id="profile-devices-title">@Culture["Profile.Devices.Title"]</h3>
-                                <p class="login-lead">@Culture["Profile.Devices.Lead"]</p>
-                                @if (!_devicesLoadStarted && !_devicesLoading)
-                                {
-                                    <button type="button" class="btn-compact" @onclick="LoadDevicesAsync">
-                                        @Culture["Profile.Devices.Title"]
-                                    </button>
-                                }
-                                else if (_devicesLoading)
-                                {
-                                    <p class="state-message">@Culture["Common.Loading"]</p>
-                                }
-                                else if (_devices.Count == 0)
-                                {
-                                    <p class="state-message">@Culture["Profile.Devices.Empty"]</p>
-                                }
-                                else
-                                {
-                                    <ul class="profile-devices__list">
-                                        @foreach (var device in _devices)
-                                        {
-                                            <li class="profile-devices__item">
-                                                <div>
-                                                    <strong>@device.DeviceName</strong>
-                                                    @if (device.IsCurrent)
-                                                    {
-                                                        <span class="profile-devices__current"> · @Culture["Profile.Devices.Current"]</span>
-                                                    }
-                                                    <p class="profile-address__hint">
-                                                        @Culture["Profile.Devices.LastUsed"]: @device.LastUsedAtUtc.ToLocalTime().ToString("g")
-                                                    </p>
-                                                </div>
-                                                <button type="button"
-                                                        class="engagement-btn"
-                                                        disabled="@_devicesBusy"
-                                                        @onclick="() => RevokeDeviceAsync(device.Id)">
-                                                    @Culture["Profile.Devices.Logout"]
-                                                </button>
-                                            </li>
-                                        }
-                                    </ul>
-                                    <button type="button"
-                                            class="engagement-btn"
-                                            disabled="@_devicesBusy"
-                                            @onclick="RevokeAllDevicesAsync">
-                                        @Culture["Profile.Devices.LogoutAll"]
-                                    </button>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(_devicesMessage))
-                                {
-                                    <p class="state-message" aria-live="polite">@_devicesMessage</p>
-                                }
-                            </section>
-
-                            <label>
-                                @Culture["Profile.DateOfBirth"]
-                                <input type="date" @bind="_dobInput" />
-                            </label>
-
-                            <div class="profile-address">
-                                <label for="profile-home-address">@Culture["Profile.HomeAddress"]</label>
-                                <div class="address-field">
-                                    <input id="profile-home-address"
-                                           type="text"
-                                           autocomplete="off"
-                                           placeholder="@Culture["Discovery.AddressPlaceholder"]"
-                                           value="@_homeAddress"
-                                           @oninput="OnAddressInputAsync"
-                                           @onfocus="OnAddressFocus"
-                                           @onkeydown="OnAddressKeyDown" />
-                                    @if (!string.IsNullOrWhiteSpace(_homeAddress) || _homeLat is not null)
-                                    {
-                                        <button type="button"
-                                                class="engagement-btn address-field__clear"
-                                                @onclick="ClearHomeAddress">
-                                            @Culture["Common.Clear"]
-                                        </button>
-                                    }
-                                </div>
-                                @if (_showSuggestions)
-                                {
-                                    <ul class="address-suggestions" role="listbox">
-                                        @if (_suggesting)
-                                        {
-                                            <li class="address-suggestions__status">@Culture["Common.Loading"]</li>
-                                        }
-                                        else if (_suggestions.Count == 0 && _homeAddress.Trim().Length >= 3)
-                                        {
-                                            <li class="address-suggestions__status">@Culture["Discovery.AddressNoResults"]</li>
-                                        }
-                                        else
-                                        {
-                                            @foreach (var suggestion in _suggestions)
-                                            {
-                                                <li>
-                                                    <button type="button"
-                                                            class="address-suggestions__item"
-                                                            @onclick="() => SelectSuggestion(suggestion)">
-                                                        @suggestion.Label
-                                                    </button>
-                                                </li>
-                                            }
-                                        }
-                                    </ul>
-                                }
-                                <p class="profile-address__hint">@Culture["Profile.AddressHint"]</p>
-                                <p class="profile-address__hint">@Culture["Profile.CvMapPrivacyHint"]</p>
-                            </div>
+                            <PersonalSection />
+                            <DevicesSection />
                         </div>
                     }
 
@@ -222,48 +84,7 @@
                     @if (IsSectionOpen("preferences"))
                     {
                         <div class="profile-accordion__body" id="profile-section-preferences" role="region" aria-labelledby="profile-section-preferences-btn">
-                            <label>
-                                @Culture["Profile.MaxTravel"]
-                                <input type="number" min="1" max="180" @bind="_maxTravel" />
-                            </label>
-
-                            <label>
-                                @Culture["Profile.PreferredTransport"]
-                                <select @bind="_preferredTransport">
-                                    <option value="">—</option>
-                                    <option value="Fiets">@Culture["Transport.Bike"]</option>
-                                    <option value="E-bike">@Culture["Transport.EBike"]</option>
-                                    <option value="Auto">@Culture["Transport.Car"]</option>
-                                    <option value="OV">@Culture["Transport.Transit"]</option>
-                                    <option value="Lopend">@Culture["Transport.Walk"]</option>
-                                </select>
-                            </label>
-
-                            <fieldset class="profile-roles profile-check-grid">
-                                <legend>@Culture["Profile.Interests"]</legend>
-                                @foreach (var role in _branchOptions)
-                                {
-                                    <label>
-                                        <input type="checkbox"
-                                               checked="@_selectedRoles.Contains(role)"
-                                               @onchange="e => ToggleRole(role, (bool)(e.Value ?? false))" />
-                                        @UiLabels.WorkType(Culture, role)
-                                    </label>
-                                }
-                            </fieldset>
-
-                            <fieldset class="profile-roles profile-check-grid">
-                                <legend>@Culture["Profile.Licenses"]</legend>
-                                @foreach (var license in _licenseOptions)
-                                {
-                                    <label>
-                                        <input type="checkbox"
-                                               checked="@_selectedLicenses.Contains(license)"
-                                               @onchange="e => ToggleLicense(license, (bool)(e.Value ?? false))" />
-                                        @UiLabels.License(Culture, license)
-                                    </label>
-                                }
-                            </fieldset>
+                            <PreferencesSection />
                         </div>
                     }
 
@@ -271,88 +92,7 @@
                     @if (IsSectionOpen("availability"))
                     {
                         <div class="profile-accordion__body" id="profile-section-availability" role="region" aria-labelledby="profile-section-availability-btn">
-                            <fieldset class="vacancy-hours profile-hours">
-                                <legend class="visually-hidden">@Culture["Vacancy.HoursPerWeek"]</legend>
-                                <div class="vacancy-hours__row">
-                                    <span class="vacancy-hours__title">@Culture["Vacancy.HoursPerWeek"]</span>
-                                    <label>
-                                        Min.
-                                        <input type="number" min="1" max="60" step="0.5" @bind="_minHours" />
-                                    </label>
-                                    <span class="vacancy-hours__sep" aria-hidden="true">–</span>
-                                    <label>
-                                        Max.
-                                        <input type="number" min="1" max="60" step="0.5" @bind="_maxHours" />
-                                    </label>
-                                    @if (_minHours is decimal minH && _maxHours is decimal maxH && maxH >= minH)
-                                    {
-                                        <span class="vacancy-hours__meta muted">@HoursRangeRules.CategoryLabel(new HoursRange(minH, maxH).Category)</span>
-                                    }
-                                </div>
-                            </fieldset>
-
-                            <fieldset class="profile-availability">
-                                <legend>@Culture["Profile.Availability"]</legend>
-                                <div class="availability-presets" role="group" aria-label="@Culture["Profile.Availability"]">
-                                    <button type="button"
-                                            class="availability-presets__btn @(_flexibleTimes && AvailabilityKind is null ? "is-active" : null)"
-                                            @onclick='() => ApplyAvailabilityPreset("flexible")'>
-                                        @Culture["Profile.PresetFlexible"]
-                                    </button>
-                                    <button type="button"
-                                            class="availability-presets__btn @(AvailabilityKind == CandidateAvailabilityPresets.Immediate ? "is-active" : null)"
-                                            @onclick='() => ApplyAvailabilityPreset("immediate")'>
-                                        @Culture["Profile.PresetImmediate"]
-                                    </button>
-                                    <button type="button"
-                                            class="availability-presets__btn @(AvailabilityKind == CandidateAvailabilityPresets.PartTime ? "is-active" : null)"
-                                            @onclick='() => ApplyAvailabilityPreset("parttime")'>
-                                        @Culture["Profile.PresetPartTime"]
-                                    </button>
-                                    <button type="button"
-                                            class="availability-presets__btn @(AvailabilityKind == CandidateAvailabilityPresets.Seasonal ? "is-active" : null)"
-                                            @onclick='() => ApplyAvailabilityPreset("seasonal")'>
-                                        @Culture["Profile.PresetSeasonal"]
-                                    </button>
-                                    <button type="button"
-                                            class="availability-presets__btn @(!_flexibleTimes && IsOfficeHoursPreset() ? "is-active" : null)"
-                                            @onclick='() => ApplyAvailabilityPreset("office")'>
-                                        @Culture["Profile.PresetOffice"]
-                                    </button>
-                                    <button type="button"
-                                            class="availability-presets__btn @(!_flexibleTimes && IsEveningsPreset() ? "is-active" : null)"
-                                            @onclick='() => ApplyAvailabilityPreset("evenings")'>
-                                        @Culture["Profile.PresetEvenings"]
-                                    </button>
-                                </div>
-                                @if (!_flexibleTimes)
-                                {
-                                    <div class="availability-matrix" role="grid" aria-label="@Culture["Profile.Availability"]">
-                                        <div class="availability-matrix__corner" role="columnheader"></div>
-                                        @foreach (var slot in AvailabilitySlots)
-                                        {
-                                            <div class="availability-matrix__slot" role="columnheader">
-                                                @UiLabels.AvailabilitySlot(Culture, slot)
-                                            </div>
-                                        }
-                                        @foreach (var day in AvailabilityDays)
-                                        {
-                                            <div class="availability-matrix__day" role="rowheader">@UiLabels.Weekday(Culture, day)</div>
-                                            @foreach (var slot in AvailabilitySlots)
-                                            {
-                                                var key = $"{day}:{slot}";
-                                                var on = _availability.Contains(key);
-                                                <label class="availability-matrix__cell @(on ? "is-on" : null)">
-                                                    <input type="checkbox"
-                                                           checked="@on"
-                                                           @onchange="e => ToggleAvailability(key, (bool)(e.Value ?? false))" />
-                                                    <span class="visually-hidden">@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot)</span>
-                                                </label>
-                                            }
-                                        }
-                                    </div>
-                                }
-                            </fieldset>
+                            <AvailabilitySection />
                         </div>
                     }
 
@@ -360,279 +100,23 @@
                     @if (IsSectionOpen("experience"))
                     {
                         <div class="profile-accordion__body" id="profile-section-experience" role="region" aria-labelledby="profile-section-experience-btn">
-                            <label>
-                                @Culture["Profile.AboutMe"]
-                                <textarea rows="4" @bind="_aboutMe"></textarea>
-                            </label>
-
-                            <label>
-                                @Culture["Profile.DefaultMotivation"]
-                                <textarea rows="4" maxlength="500" @bind="_defaultMotivation"></textarea>
-                                <span class="profile-address__hint">@Culture["Profile.DefaultMotivationHint"]</span>
-                            </label>
-
-                            <fieldset class="profile-employers">
-                                <legend>@Culture["Profile.OwnCv"]</legend>
-                                <p class="profile-employers__hint">@Culture["Profile.OwnCvLead"]</p>
-                                @if (_uploadedCv is not null)
-                                {
-                                    <p class="profile-cv__file">@Culture.Format("Profile.OwnCvPresent", _uploadedCv.FileName)</p>
-                                }
-                                <div class="profile-cv__actions">
-                                    <label class="engagement-btn">
-                                        @(_cvBusy ? Culture["Profile.CvUploading"] : _uploadedCv is null ? Culture["Profile.UploadCv"] : Culture["Profile.ReplaceCv"])
-                                        <InputFile OnChange="OnCvSelectedAsync" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
-                                    </label>
-                                    @if (_uploadedCv is not null)
-                                    {
-                                        <button class="engagement-btn" type="button" disabled="@_cvBusy" @onclick="DownloadOwnCvAsync">
-                                            @Culture["Profile.DownloadOwnCv"]
-                                        </button>
-                                        <button class="engagement-btn" type="button" disabled="@_cvBusy" @onclick="DeleteOwnCvAsync">
-                                            @Culture["Profile.RemoveOwnCv"]
-                                        </button>
-                                    }
-                                </div>
-                            </fieldset>
-
-                            <fieldset class="profile-employers">
-                                <legend>@Culture["Profile.Experience"]</legend>
-                                <p class="profile-employers__hint">@Culture["Profile.EmployerDatesHint"]</p>
-                                @for (var i = 0; i < _employers.Count; i++)
-                                {
-                                    var idx = i;
-                                    <div class="profile-employer-card">
-                                        <div class="profile-employer-card__top">
-                                            <label class="profile-employer-card__field profile-employer-card__field--employer">
-                                                <span>@Culture["Profile.Employer"]</span>
-                                                <input placeholder="@Culture["Profile.EmployerName"]" @bind="_employers[idx].EmployerName" />
-                                            </label>
-                                            <label class="profile-employer-card__field profile-employer-card__field--role">
-                                                <span>@Culture["Profile.Role"]</span>
-                                                <input placeholder="@Culture["Profile.RolePlaceholder"]" @bind="_employers[idx].Role" />
-                                            </label>
-                                            <button type="button"
-                                                    class="icon-btn icon-btn--danger"
-                                                    title="@Culture["Profile.RemoveEmployer"]"
-                                                    aria-label="@Culture["Profile.RemoveEmployer"]"
-                                                    @onclick="() => RemoveEmployer(idx)">
-                                                @((MarkupString)ActionIcons.Trash)
-                                            </button>
-                                        </div>
-                                        <div class="profile-employer-card__dates">
-                                            <label class="profile-employer-card__field profile-employer-card__field--start">
-                                                <span>@Culture["Profile.EmployerFrom"]</span>
-                                                <input type="month"
-                                                       min="1950-01"
-                                                       max="2100-12"
-                                                       value="@(_employers[idx].StartMonth ?? "")"
-                                                       @onchange="e => SetEmployerStartMonth(idx, e.Value?.ToString())" />
-                                            </label>
-                                            <label class="profile-employer-card__field profile-employer-card__field--end">
-                                                <span>@Culture["Profile.EmployerTo"]</span>
-                                                <input type="month"
-                                                       min="1950-01"
-                                                       max="2100-12"
-                                                       value="@(_employers[idx].EndMonth ?? "")"
-                                                       @onchange="e => SetEmployerEndMonth(idx, e.Value?.ToString())" />
-                                            </label>
-                                            <p class="profile-employer-card__dates-hint">@Culture["Profile.EmployerToHint"]</p>
-                                        </div>
-                                        <label class="profile-employer-card__field profile-employer-card__field--description">
-                                            <span>@Culture["Profile.WhatDidYouDo"]</span>
-                                            <textarea rows="3"
-                                                      maxlength="1000"
-                                                      placeholder="@Culture["Profile.DutiesPlaceholder"]"
-                                                      @bind="_employers[idx].Description"></textarea>
-                                        </label>
-                                    </div>
-                                }
-                                <button type="button" class="icon-btn icon-btn--add" title="@Culture["Profile.AddEmployer"]" aria-label="@Culture["Profile.AddEmployer"]" @onclick="AddEmployer">
-                                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                                        <path d="M12 5v14" /><path d="M5 12h14" />
-                                    </svg>
-                                </button>
-                            </fieldset>
-
-                            <fieldset class="profile-roles profile-check-grid">
-                                <legend>@Culture["Profile.Education"]</legend>
-                                @foreach (var level in _educationOptions)
-                                {
-                                    <label>
-                                        <input type="checkbox"
-                                               checked="@_selectedEducations.Contains(level)"
-                                               @onchange="e => ToggleEducation(level, (bool)(e.Value ?? false))" />
-                                        @UiLabels.Education(Culture, level)
-                                    </label>
-                                }
-                            </fieldset>
-
-                            <fieldset class="profile-certificates">
-                                <legend>@Culture["Profile.Certificates"]</legend>
-                                @for (var i = 0; i < _certificates.Count; i++)
-                                {
-                                    var idx = i;
-                                    <div class="profile-cert-row">
-                                        <label class="profile-cert-row__year">
-                                            <span class="visually-hidden">@Culture["Profile.CertificateYear"]</span>
-                                            <input type="number"
-                                                   min="1950"
-                                                   max="2100"
-                                                   placeholder="@Culture["Profile.CertificateYear"]"
-                                                   @bind="_certificates[idx].Year" />
-                                        </label>
-                                        <label class="profile-cert-row__name">
-                                            <span class="visually-hidden">@Culture["Profile.CertificateName"]</span>
-                                            <input type="text"
-                                                   maxlength="200"
-                                                   placeholder="@Culture["Profile.CertificateName"]"
-                                                   @bind="_certificates[idx].Name" />
-                                        </label>
-                                        <button type="button"
-                                                class="icon-btn icon-btn--danger"
-                                                title="@Culture["Profile.RemoveCertificate"]"
-                                                aria-label="@Culture["Profile.RemoveCertificate"]"
-                                                @onclick="() => RemoveCertificate(idx)">
-                                            @((MarkupString)ActionIcons.Trash)
-                                        </button>
-                                    </div>
-                                }
-                                <button type="button"
-                                        class="icon-btn icon-btn--add"
-                                        title="@Culture["Profile.AddCertificate"]"
-                                        aria-label="@Culture["Profile.AddCertificate"]"
-                                        @onclick="AddCertificate">
-                                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                                        <path d="M12 5v14" /><path d="M5 12h14" />
-                                    </svg>
-                                </button>
-                            </fieldset>
-
-                            <fieldset class="profile-employers">
-                                <legend>@Culture["Profile.References"]</legend>
-                                <p class="profile-employers__hint">@Culture["Profile.ReferencesLead"]</p>
-                                @for (var i = 0; i < _references.Count; i++)
-                                {
-                                    var idx = i;
-                                    <div class="profile-employer-card">
-                                        <div class="profile-employer-card__top">
-                                            <label class="profile-employer-card__field profile-employer-card__field--employer">
-                                                <span>@Culture["Profile.ReferenceEmployer"]</span>
-                                                <input @bind="_references[idx].EmployerName" />
-                                            </label>
-                                            <label class="profile-employer-card__field profile-employer-card__field--role">
-                                                <span>@Culture["Profile.ReferenceContact"]</span>
-                                                <input @bind="_references[idx].ContactName" />
-                                            </label>
-                                            <button type="button"
-                                                    class="icon-btn icon-btn--danger"
-                                                    title="@Culture["Profile.RemoveReference"]"
-                                                    aria-label="@Culture["Profile.RemoveReference"]"
-                                                    @onclick="() => RemoveReference(idx)">
-                                                @((MarkupString)ActionIcons.Trash)
-                                            </button>
-                                        </div>
-                                        <div class="profile-employer-card__dates">
-                                            <label class="profile-employer-card__field">
-                                                <span>@Culture["Profile.ReferenceEmail"]</span>
-                                                <input type="email" @bind="_references[idx].Email" />
-                                            </label>
-                                            <label class="profile-employer-card__field">
-                                                <span>@Culture["Profile.ReferencePhone"]</span>
-                                                <input type="tel" @bind="_references[idx].Phone" />
-                                            </label>
-                                        </div>
-                                    </div>
-                                }
-                                <button type="button"
-                                        class="icon-btn icon-btn--add"
-                                        title="@Culture["Profile.AddReference"]"
-                                        aria-label="@Culture["Profile.AddReference"]"
-                                        @onclick="AddReference"
-                                        disabled="@(_references.Count >= CandidateReferenceRules.MaxPerCandidate)">
-                                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                                        <path d="M12 5v14" /><path d="M5 12h14" />
-                                    </svg>
-                                </button>
-                            </fieldset>
-
-                            @if (_authenticatorEnabled)
-                            {
-                                <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
-                            }
-
-                            <button class="engagement-btn" type="button" disabled="@(_saving || _pdfBusy)" @onclick="DownloadLobsyCvAsync">
-                                @(_pdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
-                            </button>
-                            <p class="profile-address__hint">@Culture["Profile.LobsyCvHint"]</p>
+                            <MotivationSection />
+                            <CvSection />
+                            <ExperienceSection />
+                            <EducationSection />
+                            <CertificatesSection />
+                            <ReferencesSection />
                         </div>
                     }
                 </div>
 
-                <div class="profile-save-bar">
-                    <button class="login-submit" type="button" disabled="@_saving" @onclick="SaveAsync">
-                        @Culture["Common.Save"]
-                    </button>
-                    @if (!string.IsNullOrEmpty(_message))
-                    {
-                        <p class="state-message profile-save-bar__message">@_message</p>
-                    }
-                </div>
+                <ProfileSaveBar />
             </div>
         }
 
         @if (!_loading)
         {
-            <section class="profile-unsubscribe" aria-labelledby="profile-privacy-title">
-                <h2 id="profile-privacy-title" class="profile-page__title">Privacy en toestemming</h2>
-                <p class="login-lead">Je kiest zelf of we je tests en AI-analyse gebruiken. De talentpool staat standaard uit.</p>
-
-                <h3>Tests en AI-analyse</h3>
-                <p class="profile-address__hint">
-                    @(_testAiConsentAt is null
-                        ? "Je hebt nog geen toestemming gegeven."
-                        : $"Toestemming gegeven op {_testAiConsentAt.Value.ToLocalTime():dd-MM-yyyy}.")
-                </p>
-                @if (_testAiConsentAt is null)
-                {
-                    <button class="engagement-btn" type="button" disabled="@_consentBusy" @onclick="AcceptTestConsentAsync">Toestemming geven</button>
-                }
-                else
-                {
-                    <button class="engagement-btn" type="button" disabled="@_consentBusy" @onclick="() => WithdrawTestConsentAsync(false)">Toestemming intrekken</button>
-                    <button class="provider-btn provider-btn--danger" type="button" disabled="@_consentBusy" @onclick="() => WithdrawTestConsentAsync(true)">Intrekken en testresultaten verwijderen</button>
-                }
-
-                <h3>Anonieme talentpool</h3>
-                <p class="profile-address__hint">
-                    @(_talentPoolConsentAt is null
-                        ? "Je profiel is niet zichtbaar in de talentpool."
-                        : "Je profiel is anoniem zichtbaar in de talentpool.")
-                </p>
-                @if (_talentPoolConsentAt is null)
-                {
-                    <button class="engagement-btn" type="button" disabled="@_consentBusy" @onclick="AcceptTalentPoolConsentAsync">Anoniem zichtbaar worden</button>
-                }
-                else
-                {
-                    <button class="provider-btn provider-btn--danger" type="button" disabled="@_consentBusy" @onclick="WithdrawTalentPoolConsentAsync">Talentpooltoestemming intrekken</button>
-                }
-
-                @if (IsUnder16 && _parentalConsentAt is null)
-                {
-                    <h3>Toestemming ouder of voogd</h3>
-                    <p class="profile-address__hint">Voor tests, AI en solliciteren hebben we eerst toestemming van je ouder of voogd nodig.</p>
-                    <label>
-                        E-mailadres van ouder of voogd
-                        <input type="email" @bind="_parentalConsentEmail" autocomplete="email" />
-                    </label>
-                    <button class="engagement-btn" type="button" disabled="@_consentBusy" @onclick="RequestParentalConsentAsync">Bevestigingslink sturen</button>
-                }
-                @if (!string.IsNullOrWhiteSpace(_consentMessage))
-                {
-                    <p class="state-message" aria-live="polite">@_consentMessage</p>
-                }
-            </section>
+            <ConsentSection />
         }
 
         <section class="profile-contacts-mini" aria-labelledby="talent-contacts-title">
@@ -643,13 +127,7 @@
 
         @if (!_loading)
         {
-            <section class="profile-unsubscribe" aria-labelledby="profile-unsubscribe-title">
-                <h2 id="profile-unsubscribe-title" class="profile-page__title">@Culture["Profile.UnsubscribeTitle"]</h2>
-                <p class="login-lead">@Culture["Profile.UnsubscribeLead"]</p>
-                <button class="provider-btn provider-btn--danger" type="button" @onclick="OpenUnsubscribe">
-                    @Culture["Profile.Unsubscribe"]
-                </button>
-            </section>
+            <DeleteAccountSection />
         }
             </ProfileTab>
             <Side>
@@ -665,74 +143,21 @@
             </Side>
         </CandidateKompas>
         </CascadingValue>
+        </CascadingValue>
 </div>
 
-<UnsubscribeDialog IsOpen="_unsubscribeOpen"
-                   OnClose="CloseUnsubscribe"
-                   OnCompleted="OnUnsubscribeCompleted" />
+<UnsubscribeDialog IsOpen="Editor.UnsubscribeOpen"
+                   OnClose="Editor.CloseUnsubscribe"
+                   OnCompleted="Editor.OnUnsubscribeCompleted" />
+
 
 @code {
-    private static readonly string[] AvailabilityDays = DayPartMatrix.DayCodes;
-    private static readonly string[] AvailabilitySlots = DayPartMatrix.DayPartCodes;
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
 
     private bool _loading = true;
-    private bool _saving;
-    private bool _pdfBusy;
-    private bool _openForWork;
-    private bool _devicesLoading;
-    private bool _devicesBusy;
-    private string? _devicesMessage;
-    private List<JobsyApiClient.DeviceSessionItem> _devices = [];
-    private string _firstName = "";
-    private string _lastName = "";
-    private string _phoneNumber = "";
-    private bool _whatsAppAllowed;
-    private bool _authenticatorEnabled;
-    private bool _consentBusy;
-    private DateTime? _talentPoolConsentAt;
-    private DateTime? _testAiConsentAt;
-    private DateTime? _parentalConsentAt;
-    private string _parentalConsentEmail = "";
-    private string? _consentMessage;
-    private bool _unsubscribeOpen;
-    private DateOnly? _dobInput;
-    private string _homeAddress = string.Empty;
-    private double? _homeLat;
-    private double? _homeLng;
-    private bool _homeLocationDirty;
-    private int? _maxTravel = 30;
-    private string _preferredTransport = "";
-    private decimal? _minHours = 8;
-    private decimal? _maxHours = 24;
-    private bool _flexibleTimes;
-    private readonly HashSet<string> _selectedRoles = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _selectedLicenses = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _selectedEducations = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _availability = new(StringComparer.OrdinalIgnoreCase);
-    private readonly List<CandidateEmployerHistory> _employers = [];
-    private readonly List<CandidateCertificate> _certificates = [];
-    private readonly List<CandidateReferenceItem> _references = [];
-    private CandidateUploadedCvInfo? _uploadedCv;
-    private bool _cvBusy;
-    private List<string> _branchOptions = WorkTypeLabels.All.ToList();
-    private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
-    private List<string> _educationOptions = EducationLevelLabels.ProfileAll.ToList();
-    private string? _aboutMe;
-    private string? _defaultMotivation;
-    private string? _message;
     private string? _returnUrl;
-
-    private bool IsUnder16 => _dobInput is DateOnly dob
-                              && AgeRules.AgeYearsFromDateOfBirth(dob) is int age
-                              && age < 16;
-
-    private List<AddressSuggestion> _suggestions = [];
-    private bool _showSuggestions;
-    private bool _suggesting;
-    private CancellationTokenSource? _suggestCts;
-    private int _suggestGeneration;
     private string _openSection = "personal";
-    private static readonly string[] WeekdayCodes = ["Ma", "Di", "Wo", "Do", "Vr"];
     private bool _matchesLoading = true;
     private IReadOnlyList<CandidateMatchedVacancy> _matchedVacancies = [];
     private bool _isWideViewport;
@@ -742,7 +167,6 @@
     private int _insightsRefreshAttempts;
     private CancellationTokenSource? _insightsCts;
     private CancellationTokenSource? _geocodeCts;
-    private bool _devicesLoadStarted;
     private bool _kompasLoadStarted;
     private bool _pendingGeocode;
     private double? _pendingGeocodeLat;
@@ -751,19 +175,21 @@
     private bool _restored;
     private PersistingComponentStateSubscription _persistSubscription;
 
-    private string? AvailabilityKind =>
-        CandidateAvailabilityPresets.Detect(_minHours, _maxHours, _flexibleTimes);
+    private bool IsSectionOpen(string id)
+        => string.Equals(_openSection, id, StringComparison.Ordinal);
 
-    [SupplyParameterFromQuery(Name = "returnUrl")]
-    public string? ReturnUrl { get; set; }
+    private void ToggleSection(string id)
+        => _openSection = id;
 
     protected override void OnInitialized()
     {
         Culture.Changed += OnCultureChanged;
+        Editor.Changed += OnEditorChanged;
+        Editor.AfterSaveAsync = LoadMatchedVacanciesAsync;
         _persistSubscription = Persist.RegisterOnPersisting(PersistState);
-        if (Persist.TryTakeFromJson<CandidateDnaSummary>(DnaPersistKey, out var savedDna) && savedDna is not null)
+        if (Persist.TryTakeFromJson<CandidateDnaSummary>(DnaPersistKey, out var dna) && dna is not null)
         {
-            _dnaState = savedDna;
+            _dnaState = dna;
             _restored = true;
         }
     }
@@ -778,10 +204,14 @@
         return Task.CompletedTask;
     }
 
+    private void OnEditorChanged()
+        => InvokeAsync(StateHasChanged);
+
     protected override async Task OnInitializedAsync()
     {
         ApiCalls.SetPath("/candidate/profile");
         _returnUrl = SanitizeReturnUrl(ReturnUrl);
+        Editor.ReturnUrl = _returnUrl;
 
         try
         {
@@ -805,17 +235,17 @@
         {
             if (_restored && _dnaState is not null)
             {
-                await LoadMasterdataAsync();
+                await Editor.LoadMasterdataAsync();
                 return;
             }
 
-            var masterdataTask = LoadMasterdataAsync();
+            var masterdataTask = Editor.LoadMasterdataAsync();
             var dnaTask = Api.GetMyKompasDnaResultAsync();
             await Task.WhenAll(masterdataTask, dnaTask);
             var dnaResult = await dnaTask;
             if (dnaResult.TemporarilyUnavailable)
             {
-                _message = Culture["Panel.ErrorInline"];
+                Editor.Message = Culture["Panel.ErrorInline"];
                 _matchedVacancies = [];
                 return;
             }
@@ -828,8 +258,7 @@
         }
         catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
         {
-            // Never show technical exception text to the candidate.
-            _message = Culture["Panel.ErrorInline"];
+            Editor.Message = Culture["Panel.ErrorInline"];
             _matchedVacancies = [];
         }
         finally
@@ -845,25 +274,12 @@
         var profile = kompas?.Profile;
         if (profile is null)
         {
-            _message = Culture["Profile.NotFound"];
+            Editor.Message = Culture["Profile.NotFound"];
             _matchesLoading = false;
             return;
         }
 
-        var prefs = profile.Preferences ?? new CandidatePreferences();
-        _dobInput = profile.DateOfBirth;
-        _openForWork = profile.OpenForWork;
-        _firstName = profile.FirstName ?? "";
-        _lastName = profile.LastName ?? "";
-        _phoneNumber = profile.PhoneNumber ?? "";
-        _whatsAppAllowed = profile.WhatsAppContactAllowed;
-        _authenticatorEnabled = profile.AuthenticatorEnabled;
-        _talentPoolConsentAt = profile.TalentPoolConsentAt;
-        _testAiConsentAt = profile.TestAiConsentAt;
-        _parentalConsentAt = profile.ParentalConsentAt;
-        _parentalConsentEmail = profile.ParentalConsentEmail ?? "";
-        _homeLat = profile.HomeLatitude;
-        _homeLng = profile.HomeLongitude;
+        Editor.ApplyFromProfile(profile);
         _insightsStatus = kompas?.InsightsStatus ?? "Ready";
         if (_isWideViewport && kompas?.TopMatches is { Count: > 0 } matches)
         {
@@ -875,50 +291,7 @@
             _matchedVacancies = [];
             _matchesLoading = false;
         }
-        _maxTravel = prefs.MaxTravelMinutes ?? 30;
-        _preferredTransport = string.IsNullOrWhiteSpace(prefs.PreferredTransport)
-            ? ""
-            : TransportLabels.Canonical(prefs.PreferredTransport);
-        _selectedRoles.Clear();
-        foreach (var role in prefs.Roles ?? [])
-        {
-            var label = WorkTypeLabels.Expand(WorkTypeLabels.Parse(role)).FirstOrDefault()
-                ?? _branchOptions.FirstOrDefault(b => string.Equals(b, role, StringComparison.OrdinalIgnoreCase))
-                ?? role;
-            if (!string.IsNullOrWhiteSpace(label))
-            {
-                _selectedRoles.Add(label);
-            }
-        }
-        _selectedLicenses.Clear();
-        foreach (var license in prefs.DrivingLicenses ?? [])
-        {
-            foreach (var normalized in DrivingLicenseLabels.Split(license))
-            {
-                _selectedLicenses.Add(normalized);
-            }
-        }
-        _aboutMe = prefs.AboutMe;
-        _defaultMotivation = prefs.DefaultMotivation;
-        _availability.Clear();
-        foreach (var day in prefs.Availability ?? [])
-        {
-            foreach (var slot in day.Value ?? [])
-            {
-                _availability.Add($"{day.Key}:{slot}");
-            }
-        }
 
-        _minHours = prefs.MinHoursPerWeek ?? 8;
-        _maxHours = prefs.MaxHoursPerWeek ?? 24;
-        _flexibleTimes = prefs.FlexibleTimes == true;
-        _employers.Clear();
-        _employers.AddRange(prefs.Employers ?? []);
-        _certificates.Clear();
-        _certificates.AddRange(prefs.Certificates ?? []);
-        ApplyCvAndReferences(profile);
-
-        // Paint Top 10 from kompas snapshot on desktop only — skip the API call on mobile.
         if (_isWideViewport
             && _matchedVacancies.Count == 0
             && !string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase)
@@ -933,50 +306,28 @@
             _ = RefreshInsightsLaterAsync();
         }
 
-        _selectedEducations.Clear();
-        foreach (var education in prefs.Educations ?? [])
-        {
-            foreach (var level in EducationLevelLabels.Split(education))
-            {
-                _selectedEducations.Add(level);
-            }
-
-            // Legacy free-text: map if it clearly mentions a known level.
-            foreach (var level in EducationLevelLabels.ProfileAll)
-            {
-                if (string.Equals(level, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                if (education.Contains(level, StringComparison.OrdinalIgnoreCase))
-                {
-                    _selectedEducations.Add(level);
-                }
-            }
-        }
-
         // Reverse-geocode only when the stored address is missing (not every open).
-        if (_homeLat is not null && _homeLng is not null)
+        var prefs = profile.Preferences ?? new CandidatePreferences();
+        if (Editor.HomeLat is not null && Editor.HomeLng is not null)
         {
-            if (!string.IsNullOrWhiteSpace(prefs.HomeAddress) && !LooksLikeCoordinates(prefs.HomeAddress))
+            if (!string.IsNullOrWhiteSpace(prefs.HomeAddress) && !CandidateProfileEditor.LooksLikeCoordinates(prefs.HomeAddress))
             {
-                _homeAddress = prefs.HomeAddress!;
+                Editor.HomeAddress = prefs.HomeAddress!;
             }
             else if (string.IsNullOrWhiteSpace(prefs.HomeAddress) && allowGeocode)
             {
-                _homeAddress = FormatCoordinateFallback(_homeLat.Value, _homeLng.Value);
+                Editor.HomeAddress = CandidateProfileEditor.FormatCoordinateFallback(Editor.HomeLat.Value, Editor.HomeLng.Value);
                 _pendingGeocode = true;
-                _pendingGeocodeLat = _homeLat;
-                _pendingGeocodeLng = _homeLng;
+                _pendingGeocodeLat = Editor.HomeLat;
+                _pendingGeocodeLng = Editor.HomeLng;
             }
             else if (!string.IsNullOrWhiteSpace(prefs.HomeAddress))
             {
-                _homeAddress = prefs.HomeAddress!;
+                Editor.HomeAddress = prefs.HomeAddress!;
             }
             else
             {
-                _homeAddress = FormatCoordinateFallback(_homeLat.Value, _homeLng.Value);
+                Editor.HomeAddress = CandidateProfileEditor.FormatCoordinateFallback(Editor.HomeLat.Value, Editor.HomeLng.Value);
             }
         }
     }
@@ -1027,14 +378,14 @@
         var kompasResult = await Api.GetMyKompasResultAsync();
         if (kompasResult.TemporarilyUnavailable)
         {
-            _message = Culture["Panel.ErrorInline"];
+            Editor.Message = Culture["Panel.ErrorInline"];
             return;
         }
 
         var kompas = kompasResult.Value;
         if (kompas is null)
         {
-            _message = Culture["Profile.NotFound"];
+            Editor.Message = Culture["Profile.NotFound"];
             return;
         }
 
@@ -1044,11 +395,13 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!_pendingGeocode || _pendingGeocodeLat is not double lat || _pendingGeocodeLng is not double lng)
+        if (!_pendingGeocode || _pendingGeocodeLat is null || _pendingGeocodeLng is null)
         {
             return;
         }
 
+        var lat = _pendingGeocodeLat.Value;
+        var lng = _pendingGeocodeLng.Value;
         _pendingGeocode = false;
         _geocodeCts?.Cancel();
         _geocodeCts?.Dispose();
@@ -1070,7 +423,7 @@
                 return;
             }
 
-            _homeAddress = label;
+            Editor.HomeAddress = label;
             var prefs = new CandidatePreferences { HomeAddress = label };
             await Api.UpdateMyProfileAsync(preferences: prefs, ct: ct);
             await InvokeAsync(StateHasChanged);
@@ -1086,7 +439,6 @@
 
     private async Task RefreshInsightsLaterAsync()
     {
-        // Max one retry with backoff; cancelled when the page is disposed.
         if (_insightsRefreshAttempts >= 1
             || !string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
         {
@@ -1111,15 +463,12 @@
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
-            // navigated away
         }
         catch (Exception ex) when (Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
         {
-            // circuit gone
         }
         catch
         {
-            // leave last known insights
         }
     }
 
@@ -1154,667 +503,6 @@
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
 
-    private void OpenUnsubscribe() => _unsubscribeOpen = true;
-    private void CloseUnsubscribe() => _unsubscribeOpen = false;
-    private void OnUnsubscribeCompleted() => _unsubscribeOpen = true;
-
-    private async Task LoadMasterdataAsync()
-    {
-        try
-        {
-            var options = await Api.GetMasterdataAsync(audience: "candidate");
-            var branches = options.Where(o => o.Category == MasterdataCategories.Branch).Select(o => o.Label).ToList();
-            var licenses = options.Where(o => o.Category == MasterdataCategories.DrivingLicense).Select(o => o.Label).ToList();
-            var education = options.Where(o => o.Category == MasterdataCategories.EducationLevel).Select(o => o.Label).ToList();
-            if (branches.Count > 0) _branchOptions = branches;
-            if (licenses.Count > 0) _licenseOptions = licenses;
-            if (education.Count > 0) _educationOptions = education;
-        }
-        catch
-        {
-            // keep built-in fallbacks
-        }
-    }
-
-    private void ToggleRole(string role, bool selected)
-    {
-        if (selected)
-        {
-            _selectedRoles.Add(role);
-        }
-        else
-        {
-            _selectedRoles.Remove(role);
-        }
-    }
-
-    private void ToggleLicense(string license, bool selected)
-    {
-        if (selected)
-        {
-            _selectedLicenses.Add(license);
-        }
-        else
-        {
-            _selectedLicenses.Remove(license);
-        }
-    }
-
-    private void ToggleAvailability(string key, bool selected)
-    {
-        if (selected)
-        {
-            _flexibleTimes = false;
-            _availability.Add(key);
-        }
-        else
-        {
-            _availability.Remove(key);
-        }
-    }
-
-    private void OnFlexibleTimesChanged(ChangeEventArgs e)
-    {
-        _flexibleTimes = e.Value is bool b && b || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
-        if (_flexibleTimes)
-        {
-            _availability.Clear();
-        }
-    }
-
-    private bool IsSectionOpen(string id)
-        => string.Equals(_openSection, id, StringComparison.Ordinal);
-
-    private void ToggleSection(string id)
-        => _openSection = id;
-
-    private void ApplyAvailabilityPreset(string preset)
-    {
-        if (preset is CandidateAvailabilityPresets.Immediate
-            or CandidateAvailabilityPresets.PartTime
-            or CandidateAvailabilityPresets.Seasonal)
-        {
-            var patch = CandidateAvailabilityPresets.Apply(preset);
-            _flexibleTimes = patch.FlexibleTimes;
-            _minHours = patch.MinHoursPerWeek;
-            _maxHours = patch.MaxHoursPerWeek;
-            _availability.Clear();
-            foreach (var (day, slots) in patch.Availability)
-            {
-                foreach (var slot in slots)
-                {
-                    _availability.Add($"{day}:{slot}");
-                }
-            }
-
-            return;
-        }
-
-        if (preset == "flexible")
-        {
-            _flexibleTimes = true;
-            _availability.Clear();
-            return;
-        }
-
-        _flexibleTimes = false;
-        _availability.Clear();
-        var officeSlots = preset == "evenings" ? new[] { "Avond" } : new[] { "Ochtend", "Middag" };
-        foreach (var day in WeekdayCodes)
-        {
-            foreach (var slot in officeSlots)
-            {
-                _availability.Add($"{day}:{slot}");
-            }
-        }
-    }
-
-    private bool IsOfficeHoursPreset()
-        => MatchesPreset(["Ochtend", "Middag"]);
-
-    private bool IsEveningsPreset()
-        => MatchesPreset(["Avond"]);
-
-    private bool MatchesPreset(string[] slots)
-    {
-        if (_flexibleTimes || _availability.Count != WeekdayCodes.Length * slots.Length)
-        {
-            return false;
-        }
-
-        foreach (var day in WeekdayCodes)
-        {
-            foreach (var slot in slots)
-            {
-                if (!_availability.Contains($"{day}:{slot}"))
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    private void AddEmployer() => _employers.Add(new CandidateEmployerHistory());
-    private void RemoveEmployer(int index) => _employers.RemoveAt(index);
-
-    private void SetEmployerStartMonth(int index, string? value)
-    {
-        if (index < 0 || index >= _employers.Count)
-        {
-            return;
-        }
-
-        var normalized = NormalizeMonthInput(value);
-        _employers[index].StartMonth = normalized;
-        if (normalized is not null
-            && !string.IsNullOrWhiteSpace(_employers[index].EndMonth)
-            && string.CompareOrdinal(_employers[index].EndMonth, normalized) < 0)
-        {
-            _employers[index].EndMonth = null;
-        }
-    }
-
-    private void SetEmployerEndMonth(int index, string? value)
-    {
-        if (index < 0 || index >= _employers.Count)
-        {
-            return;
-        }
-
-        var normalized = NormalizeMonthInput(value);
-        if (normalized is not null
-            && !string.IsNullOrWhiteSpace(_employers[index].StartMonth)
-            && string.CompareOrdinal(normalized, _employers[index].StartMonth) < 0)
-        {
-            normalized = null;
-        }
-
-        _employers[index].EndMonth = normalized;
-    }
-
-    private static string? NormalizeMonthInput(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return null;
-        }
-
-        var trimmed = value.Trim();
-        return trimmed.Length >= 7 ? trimmed[..7] : trimmed;
-    }
-
-    private void AddCertificate() => _certificates.Add(new CandidateCertificate());
-    private void RemoveCertificate(int index) => _certificates.RemoveAt(index);
-
-    private void AddReference()
-    {
-        if (_references.Count >= CandidateReferenceRules.MaxPerCandidate)
-        {
-            return;
-        }
-
-        _references.Add(new CandidateReferenceItem());
-    }
-
-    private void RemoveReference(int index) => _references.RemoveAt(index);
-
-    private void ApplyCvAndReferences(MeProfile profile)
-    {
-        _uploadedCv = profile.UploadedCv;
-        _references.Clear();
-        _references.AddRange(profile.References ?? []);
-    }
-
-    private void ToggleEducation(string level, bool selected)
-    {
-        if (selected)
-        {
-            if (string.Equals(level, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase))
-            {
-                _selectedEducations.Clear();
-                _selectedEducations.Add(EducationLevelLabels.None);
-                return;
-            }
-
-            _selectedEducations.Remove(EducationLevelLabels.None);
-            _selectedEducations.Add(level);
-        }
-        else
-        {
-            _selectedEducations.Remove(level);
-        }
-    }
-
-    private async Task OnAddressInputAsync(ChangeEventArgs e)
-    {
-        _homeAddress = e.Value?.ToString() ?? string.Empty;
-        _homeLat = null;
-        _homeLng = null;
-        _homeLocationDirty = true;
-        _message = null;
-        await SuggestAddressesAsync(_homeAddress);
-    }
-
-    private void OnAddressFocus()
-    {
-        if (_suggestions.Count > 0 || (_homeAddress.Trim().Length >= 3 && _suggesting))
-        {
-            _showSuggestions = true;
-        }
-    }
-
-    private void OnAddressKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Escape")
-        {
-            _showSuggestions = false;
-        }
-    }
-
-    private async Task SuggestAddressesAsync(string query)
-    {
-        _suggestCts?.Cancel();
-        _suggestCts?.Dispose();
-        _suggestCts = new CancellationTokenSource();
-        var token = _suggestCts.Token;
-        var generation = ++_suggestGeneration;
-
-        var trimmed = query.Trim();
-        if (trimmed.Length < 3)
-        {
-            _suggestions = [];
-            _showSuggestions = false;
-            _suggesting = false;
-            return;
-        }
-
-        _showSuggestions = true;
-        _suggesting = true;
-
-        try
-        {
-            await Task.Delay(280, token);
-            var results = await Geocoder.SuggestAsync(trimmed, token);
-            if (generation != _suggestGeneration || token.IsCancellationRequested)
-            {
-                return;
-            }
-
-            _suggestions = results.ToList();
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-        catch
-        {
-            if (generation == _suggestGeneration)
-            {
-                _suggestions = [];
-            }
-        }
-        finally
-        {
-            if (generation == _suggestGeneration)
-            {
-                _suggesting = false;
-            }
-        }
-    }
-
-    private void SelectSuggestion(AddressSuggestion suggestion)
-    {
-        _showSuggestions = false;
-        _suggestions = [];
-        _homeAddress = suggestion.Label;
-        _homeLat = suggestion.Latitude;
-        _homeLng = suggestion.Longitude;
-        _homeLocationDirty = true;
-        _message = null;
-    }
-
-    private void ClearHomeAddress()
-    {
-        _homeAddress = string.Empty;
-        _homeLat = null;
-        _homeLng = null;
-        _homeLocationDirty = true;
-        _suggestions = [];
-        _showSuggestions = false;
-        _message = null;
-    }
-
-    private static bool LooksLikeCoordinates(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return false;
-        }
-
-        var parts = value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length == 2
-            && double.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _)
-            && double.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _);
-    }
-
-    private static string FormatCoordinateFallback(double lat, double lng) =>
-        $"{lat.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}, {lng.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}";
-
-    private async Task SaveAsync()
-    {
-        _saving = true;
-        _message = null;
-        try
-        {
-            if (_homeLocationDirty
-                && !string.IsNullOrWhiteSpace(_homeAddress)
-                && (_homeLat is null || _homeLng is null))
-            {
-                _message = Culture["Profile.PickAddress"];
-                return;
-            }
-
-            var clearHome = _homeLocationDirty && string.IsNullOrWhiteSpace(_homeAddress);
-            var homeAddressToSave = clearHome
-                ? null
-                : string.IsNullOrWhiteSpace(_homeAddress) || LooksLikeCoordinates(_homeAddress)
-                    ? null
-                    : _homeAddress.Trim();
-            await Api.UpdateMyProfileAsync(
-                openForWork: _openForWork,
-                dateOfBirth: _dobInput,
-                preferences: new CandidatePreferences
-                {
-                    Roles = _selectedRoles.OrderBy(r => r).ToList(),
-                    MaxTravelMinutes = _maxTravel,
-                    PreferredTransport = string.IsNullOrWhiteSpace(_preferredTransport) ? null : _preferredTransport,
-                    AboutMe = string.IsNullOrWhiteSpace(_aboutMe) ? null : _aboutMe.Trim(),
-                    DefaultMotivation = string.IsNullOrWhiteSpace(_defaultMotivation) ? null : _defaultMotivation.Trim(),
-                    DrivingLicenses = _selectedLicenses.OrderBy(x => x).ToList(),
-                    Availability = BuildAvailability(),
-                    Employers = _employers
-                        .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
-                        .Select(e => new CandidateEmployerHistory
-                        {
-                            EmployerName = e.EmployerName.Trim(),
-                            Role = string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
-                            Years = e.Years,
-                            StartMonth = string.IsNullOrWhiteSpace(e.StartMonth) ? null : e.StartMonth.Trim(),
-                            EndMonth = string.IsNullOrWhiteSpace(e.EndMonth) ? null : e.EndMonth.Trim(),
-                            Description = string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim()
-                        })
-                        .ToList(),
-                    Educations = _selectedEducations
-                        .OrderBy(x =>
-                        {
-                            var idx = _educationOptions.FindIndex(o => string.Equals(o, x, StringComparison.OrdinalIgnoreCase));
-                            return idx < 0 ? int.MaxValue : idx;
-                        })
-                        .ToList(),
-                    HomeAddress = homeAddressToSave,
-                    MinHoursPerWeek = _minHours,
-                    MaxHoursPerWeek = _maxHours,
-                    FlexibleTimes = _flexibleTimes,
-                    Certificates = _certificates
-                        .Where(c => !string.IsNullOrWhiteSpace(c.Name))
-                        .Select(c => new CandidateCertificate
-                        {
-                            Name = c.Name.Trim(),
-                            Year = c.Year is >= 1950 and <= 2100 ? c.Year : null
-                        })
-                        .Take(30)
-                        .ToList(),
-                    ShowAddressOnCv = false
-                },
-                homeLatitude: clearHome || !_homeLocationDirty ? null : _homeLat,
-                homeLongitude: clearHome || !_homeLocationDirty ? null : _homeLng,
-                clearHomeLocation: clearHome,
-                firstName: _firstName.Trim(),
-                lastName: _lastName.Trim(),
-                phoneNumber: string.IsNullOrWhiteSpace(_phoneNumber) ? "" : _phoneNumber.Trim(),
-                whatsAppContactAllowed: _whatsAppAllowed && !string.IsNullOrWhiteSpace(_phoneNumber),
-                references: _references
-                    .Where(r => !string.IsNullOrWhiteSpace(r.EmployerName)
-                                || !string.IsNullOrWhiteSpace(r.ContactName)
-                                || !string.IsNullOrWhiteSpace(r.Email)
-                                || !string.IsNullOrWhiteSpace(r.Phone))
-                    .Select(r => new CandidateReferenceItem
-                    {
-                        EmployerName = r.EmployerName.Trim(),
-                        ContactName = r.ContactName.Trim(),
-                        Email = r.Email.Trim(),
-                        Phone = r.Phone.Trim()
-                    })
-                    .ToList());
-            _homeLocationDirty = false;
-            _message = Culture["Profile.Saved"];
-            await LoadMatchedVacanciesAsync();
-            if (!string.IsNullOrWhiteSpace(_returnUrl))
-            {
-                Navigation.NavigateTo(_returnUrl);
-                return;
-            }
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _saving = false;
-        }
-    }
-
-    private async Task DownloadLobsyCvAsync()
-    {
-        _pdfBusy = true;
-        _message = null;
-        try
-        {
-            await Api.DownloadMyLobsyCvPdfAsync(Js);
-            _message = Culture["Profile.LobsyCvDownloaded"];
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _pdfBusy = false;
-        }
-    }
-
-    private async Task AcceptTestConsentAsync()
-    {
-        await UpdateConsentAsync(() => Api.AcceptTestAiConsentAsync(), "Toestemming voor tests en AI-analyse is opgeslagen.");
-    }
-
-    private async Task WithdrawTestConsentAsync(bool deleteResults)
-    {
-        await UpdateConsentAsync(
-            () => Api.WithdrawTestAiConsentAsync(deleteResults),
-            deleteResults ? "Toestemming ingetrokken en testresultaten verwijderd." : "Toestemming voor tests en AI-analyse is ingetrokken.");
-    }
-
-    private async Task AcceptTalentPoolConsentAsync()
-    {
-        await UpdateConsentAsync(() => Api.AcceptTalentPoolConsentAsync(), "Je profiel is nu anoniem zichtbaar in de talentpool.");
-    }
-
-    private async Task WithdrawTalentPoolConsentAsync()
-    {
-        await UpdateConsentAsync(() => Api.WithdrawTalentPoolConsentAsync(), "Je profiel is direct uit de talentpool verwijderd.");
-    }
-
-    private async Task RequestParentalConsentAsync()
-    {
-        _consentBusy = true;
-        _consentMessage = null;
-        try
-        {
-            await Api.RequestParentalConsentAsync(_parentalConsentEmail);
-            _consentMessage = "De bevestigingslink is verstuurd.";
-        }
-        catch (Exception ex)
-        {
-            _consentMessage = ex.Message;
-        }
-        finally
-        {
-            _consentBusy = false;
-        }
-    }
-
-    private async Task UpdateConsentAsync(Func<Task<MeProfile?>> action, string successMessage)
-    {
-        _consentBusy = true;
-        _consentMessage = null;
-        try
-        {
-            var updated = await action();
-            if (updated is not null)
-            {
-                _talentPoolConsentAt = updated.TalentPoolConsentAt;
-                _testAiConsentAt = updated.TestAiConsentAt;
-                _parentalConsentAt = updated.ParentalConsentAt;
-            }
-
-            _consentMessage = successMessage;
-        }
-        catch (Exception ex)
-        {
-            _consentMessage = ex.Message;
-        }
-        finally
-        {
-            _consentBusy = false;
-        }
-    }
-
-    private async Task OnCvSelectedAsync(InputFileChangeEventArgs e)
-    {
-        var file = e.File;
-        if (file is null)
-        {
-            return;
-        }
-
-        _cvBusy = true;
-        _message = null;
-        try
-        {
-            var updated = await Api.UploadMyCvAsync(file);
-            if (updated is not null)
-            {
-                ApplyExtractedProfile(updated);
-                if (updated.UploadedCv?.FilledFields is { Count: > 0 } filled)
-                {
-                    _message = Culture.Format("Profile.OwnCvFilled", string.Join(", ", filled));
-                }
-                else
-                {
-                    _message = Culture.Format("Profile.OwnCvPresent", updated.UploadedCv?.FileName ?? file.Name);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _cvBusy = false;
-        }
-    }
-
-    private void ApplyExtractedProfile(MeProfile profile)
-    {
-        var prefs = profile.Preferences ?? new CandidatePreferences();
-        _firstName = profile.FirstName ?? _firstName;
-        _lastName = profile.LastName ?? _lastName;
-        _phoneNumber = profile.PhoneNumber ?? _phoneNumber;
-        _aboutMe = prefs.AboutMe ?? _aboutMe;
-        _employers.Clear();
-        _employers.AddRange(prefs.Employers ?? []);
-        _certificates.Clear();
-        _certificates.AddRange(prefs.Certificates ?? []);
-        _selectedLicenses.Clear();
-        foreach (var license in prefs.DrivingLicenses ?? [])
-        {
-            foreach (var normalized in DrivingLicenseLabels.Split(license))
-            {
-                _selectedLicenses.Add(normalized);
-            }
-        }
-
-        _selectedEducations.Clear();
-        foreach (var education in prefs.Educations ?? [])
-        {
-            foreach (var level in EducationLevelLabels.Split(education))
-            {
-                _selectedEducations.Add(level);
-            }
-        }
-
-        foreach (var role in prefs.Roles ?? [])
-        {
-            var label = WorkTypeLabels.Expand(WorkTypeLabels.Parse(role)).FirstOrDefault()
-                ?? _branchOptions.FirstOrDefault(b => string.Equals(b, role, StringComparison.OrdinalIgnoreCase))
-                ?? role;
-            if (!string.IsNullOrWhiteSpace(label))
-            {
-                _selectedRoles.Add(label);
-            }
-        }
-
-        ApplyCvAndReferences(profile);
-    }
-
-    private async Task DownloadOwnCvAsync()
-    {
-        _cvBusy = true;
-        try
-        {
-            await Api.DownloadMyUploadedCvAsync(Js);
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _cvBusy = false;
-        }
-    }
-
-    private async Task DeleteOwnCvAsync()
-    {
-        _cvBusy = true;
-        _message = null;
-        try
-        {
-            var updated = await Api.DeleteMyCvAsync();
-            if (updated is not null)
-            {
-                ApplyCvAndReferences(updated);
-            }
-            else
-            {
-                _uploadedCv = null;
-            }
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _cvBusy = false;
-        }
-    }
-
     private static string? SanitizeReturnUrl(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
@@ -1822,7 +510,6 @@
             return null;
         }
 
-        // Only local relative paths such as /vacancies/{id}#apply
         if (!raw.StartsWith('/') || raw.StartsWith("//", StringComparison.Ordinal))
         {
             return null;
@@ -1837,107 +524,17 @@
         return raw;
     }
 
-    private async Task LoadDevicesAsync()
-    {
-        if (_devicesLoading)
-        {
-            return;
-        }
-
-        _devicesLoadStarted = true;
-        _devicesLoading = true;
-        try
-        {
-            var rows = await Api.GetDeviceSessionsAsync();
-            _devices = rows.ToList();
-        }
-        catch
-        {
-            _devices = [];
-        }
-        finally
-        {
-            _devicesLoading = false;
-            await InvokeAsync(StateHasChanged);
-        }
-    }
-
-    private async Task RevokeDeviceAsync(Guid id)
-    {
-        _devicesBusy = true;
-        _devicesMessage = null;
-        try
-        {
-            await Api.RevokeDeviceSessionAsync(id);
-            _devicesMessage = Culture["Profile.Devices.Done"];
-            _devicesLoadStarted = true;
-            await LoadDevicesAsync();
-        }
-        catch (Exception ex)
-        {
-            _devicesMessage = ex.Message;
-        }
-        finally
-        {
-            _devicesBusy = false;
-        }
-    }
-
-    private async Task RevokeAllDevicesAsync()
-    {
-        _devicesBusy = true;
-        _devicesMessage = null;
-        try
-        {
-            await Api.RevokeAllDeviceSessionsAsync();
-            _devicesMessage = Culture["Profile.Devices.Done"];
-            // Signing out everywhere invalidates this cookie too — send user to login.
-            Navigation.NavigateTo("/account/logout", forceLoad: true);
-        }
-        catch (Exception ex)
-        {
-            _devicesMessage = ex.Message;
-            _devicesBusy = false;
-        }
-    }
-
     public ValueTask DisposeAsync()
     {
         Culture.Changed -= OnCultureChanged;
+        Editor.Changed -= OnEditorChanged;
+        Editor.DisposeSuggest();
         _persistSubscription.Dispose();
-        _suggestCts?.Cancel();
-        _suggestCts?.Dispose();
         _insightsCts?.Cancel();
         _insightsCts?.Dispose();
         _geocodeCts?.Cancel();
         _geocodeCts?.Dispose();
         ApiCalls.Flush("/candidate/profile");
         return ValueTask.CompletedTask;
-    }
-
-    private Dictionary<string, List<string>> BuildAvailability()
-    {
-        var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var key in _availability)
-        {
-            var parts = key.Split(':', 2);
-            if (parts.Length != 2)
-            {
-                continue;
-            }
-
-            if (!map.TryGetValue(parts[0], out var slots))
-            {
-                slots = [];
-                map[parts[0]] = slots;
-            }
-
-            if (!slots.Contains(parts[1], StringComparer.OrdinalIgnoreCase))
-            {
-                slots.Add(parts[1]);
-            }
-        }
-
-        return map;
     }
 }

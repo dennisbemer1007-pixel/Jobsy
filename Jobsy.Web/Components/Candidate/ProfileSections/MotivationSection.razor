@@ -1,0 +1,20 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
+@inject CultureState Culture
+
+                            <label>
+                                @Culture["Profile.AboutMe"]
+                                <textarea rows="4" @bind="Editor.AboutMe"></textarea>
+                            </label>
+
+                            <label>
+                                @Culture["Profile.DefaultMotivation"]
+                                <textarea rows="4" maxlength="500" @bind="Editor.DefaultMotivation"></textarea>
+                                <span class="profile-address__hint">@Culture["Profile.DefaultMotivationHint"]</span>
+                            </label>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+}

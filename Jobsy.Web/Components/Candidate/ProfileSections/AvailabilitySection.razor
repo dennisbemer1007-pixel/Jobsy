@@ -1,0 +1,92 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
+@inject CultureState Culture
+
+                            <fieldset class="vacancy-hours profile-hours">
+                                <legend class="visually-hidden">@Culture["Vacancy.HoursPerWeek"]</legend>
+                                <div class="vacancy-hours__row">
+                                    <span class="vacancy-hours__title">@Culture["Vacancy.HoursPerWeek"]</span>
+                                    <label>
+                                        @Culture["Profile.HoursMin"]
+                                        <input type="number" min="1" max="60" step="0.5" @bind="Editor.MinHours" />
+                                    </label>
+                                    <span class="vacancy-hours__sep" aria-hidden="true">–</span>
+                                    <label>
+                                        @Culture["Profile.HoursMax"]
+                                        <input type="number" min="1" max="60" step="0.5" @bind="Editor.MaxHours" />
+                                    </label>
+                                    @if (Editor.MinHours is decimal minH && Editor.MaxHours is decimal maxH && maxH >= minH)
+                                    {
+                                        <span class="vacancy-hours__meta muted">@HoursRangeRules.CategoryLabel(new HoursRange(minH, maxH).Category)</span>
+                                    }
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="profile-availability">
+                                <legend>@Culture["Profile.Availability"]</legend>
+                                <div class="availability-presets" role="group" aria-label="@Culture["Profile.Availability"]">
+                                    <button type="button"
+                                            class="availability-presets__btn @(Editor.FlexibleTimes && Editor.AvailabilityKind is null ? "is-active" : null)"
+                                            @onclick='() => Editor.ApplyAvailabilityPreset("flexible")'>
+                                        @Culture["Profile.PresetFlexible"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(Editor.AvailabilityKind == CandidateAvailabilityPresets.Immediate ? "is-active" : null)"
+                                            @onclick='() => Editor.ApplyAvailabilityPreset("immediate")'>
+                                        @Culture["Profile.PresetImmediate"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(Editor.AvailabilityKind == CandidateAvailabilityPresets.PartTime ? "is-active" : null)"
+                                            @onclick='() => Editor.ApplyAvailabilityPreset("parttime")'>
+                                        @Culture["Profile.PresetPartTime"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(Editor.AvailabilityKind == CandidateAvailabilityPresets.Seasonal ? "is-active" : null)"
+                                            @onclick='() => Editor.ApplyAvailabilityPreset("seasonal")'>
+                                        @Culture["Profile.PresetSeasonal"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(!Editor.FlexibleTimes && Editor.IsOfficeHoursPreset() ? "is-active" : null)"
+                                            @onclick='() => Editor.ApplyAvailabilityPreset("office")'>
+                                        @Culture["Profile.PresetOffice"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(!Editor.FlexibleTimes && Editor.IsEveningsPreset() ? "is-active" : null)"
+                                            @onclick='() => Editor.ApplyAvailabilityPreset("evenings")'>
+                                        @Culture["Profile.PresetEvenings"]
+                                    </button>
+                                </div>
+                                @if (!Editor.FlexibleTimes)
+                                {
+                                    <div class="availability-matrix" role="grid" aria-label="@Culture["Profile.Availability"]">
+                                        <div class="availability-matrix__corner" role="columnheader"></div>
+                                        @foreach (var slot in CandidateProfileEditor.AvailabilitySlots)
+                                        {
+                                            <div class="availability-matrix__slot" role="columnheader">
+                                                @UiLabels.AvailabilitySlot(Culture, slot)
+                                            </div>
+                                        }
+                                        @foreach (var day in CandidateProfileEditor.AvailabilityDays)
+                                        {
+                                            <div class="availability-matrix__day" role="rowheader">@UiLabels.Weekday(Culture, day)</div>
+                                            @foreach (var slot in CandidateProfileEditor.AvailabilitySlots)
+                                            {
+                                                var key = $"{day}:{slot}";
+                                                var on = Editor.Availability.Contains(key);
+                                                <label class="availability-matrix__cell @(on ? "is-on" : null)">
+                                                    <input type="checkbox"
+                                                           checked="@on"
+                                                           @onchange="e => Editor.ToggleAvailability(key, (bool)(e.Value ?? false))" />
+                                                    <span class="visually-hidden">@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot)</span>
+                                                </label>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            </fieldset>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+}

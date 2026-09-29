@@ -84,6 +84,7 @@ builder.Services.AddScoped<Jobsy.Web.Services.CandidateMatchProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Services.MatchVacancyService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CareerPathService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateProfileService>();
+builder.Services.AddScoped<Jobsy.Web.Components.Candidate.ProfileSections.CandidateProfileEditor>();
 builder.Services.AddScoped<Jobsy.Web.Services.GratisDnaStorage>();
 builder.Services.AddScoped<Jobsy.Web.Services.GratisDnaMergeService>();
 builder.Services.AddHttpClient("JobsySeo", client =>
