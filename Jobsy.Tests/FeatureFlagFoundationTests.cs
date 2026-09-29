@@ -272,7 +272,7 @@ public class FeatureFlagReflectionTests
     {
         var assembly = typeof(Jobsy.Web.Navigation.RoleNavCatalog).Assembly;
         var pageTypes = assembly.GetTypes()
-            .Where(t => t.GetCustomAttributes(typeof(Microsoft.AspNetCore.Components.RouteAttribute), inherit: true).Any())
+            .Where(t => t.GetCustomAttributes(typeof(Microsoft.AspNetCore.Components.RouteAttribute), inherit: true).Length > 0)
             .ToList();
 
         var gated = pageTypes

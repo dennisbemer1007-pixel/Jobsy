@@ -59,6 +59,7 @@ public static class JourneyTestFlow
         Func<string, string> localize,
         string provisionalSuffix)
     {
+        _ = localize;
         if (impression is null) return [];
         var lines = new List<string>();
         switch (kind)

@@ -7338,6 +7338,21 @@ button.bottom-nav__item {
     .bottom-nav__label {
         display: block !important;
     }
+
+    /* Dual short/full labels: never show both (keeps nav height stable for banenkaart). */
+    .bottom-nav__label--short {
+        display: none !important;
+    }
+}
+
+@media (max-width: 639px) {
+    .bottom-nav__label--full {
+        display: none !important;
+    }
+
+    .bottom-nav__label--short {
+        display: block !important;
+    }
 }
 
 /* Bedrijfsmanager: hide desktop-only org admin from mobile/PWA bottom-nav */

@@ -102,7 +102,7 @@ public sealed class CandidatePrivatePreferencesController : ControllerBase
             row.UpdatedAtUtc);
     }
 
-    private static IReadOnlyList<string> ParseJsonArray(string? json)
+    private static List<string> ParseJsonArray(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {

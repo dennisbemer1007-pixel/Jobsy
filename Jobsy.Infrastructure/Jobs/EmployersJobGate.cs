@@ -36,11 +36,17 @@ public sealed class EmployersJobGate
         var enabled = await flags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
         if (_lastEnabled != enabled)
         {
-            _logger.LogInformation(
-                enabled
-                    ? "{Job} resumed: employers feature is ON."
-                    : "{Job} paused: employers feature is OFF (tick skipped, no catch-up).",
-                _jobName);
+            if (enabled)
+            {
+                _logger.LogInformation("{Job} resumed: employers feature is ON.", _jobName);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "{Job} paused: employers feature is OFF (tick skipped, no catch-up).",
+                    _jobName);
+            }
+
             _lastEnabled = enabled;
         }
 

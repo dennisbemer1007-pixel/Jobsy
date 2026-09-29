@@ -108,7 +108,7 @@ public class CourseSlotRulesTests
     {
         var offers = new[]
         {
-            Make("paid", isFree: false, isPartner: false, show: true, keys: "plannen", scoreBoost: true),
+            Make("paid", isFree: false, isPartner: false, show: true, keys: "plannen"),
             Make("free-b", isFree: true, isPartner: false, show: true, keys: "plannen", sort: 2),
             Make("free-a", isFree: true, isPartner: false, show: true, keys: "plannen", sort: 1),
             Make("partner", isFree: false, isPartner: true, show: true, keys: "plannen", affiliate: "ZORG1"),
@@ -186,8 +186,7 @@ public class CourseSlotRulesTests
         bool show,
         string keys,
         string? affiliate = "CODE",
-        int sort = 1,
-        bool scoreBoost = false)
+        int sort = 1)
     {
         var provider = new TrainingProvider
         {

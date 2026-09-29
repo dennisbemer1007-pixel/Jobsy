@@ -106,6 +106,8 @@ public static class CandidatePreferencesValidator
         IReadOnlyList<string>? raw,
         Action<string>? onDropped = null)
     {
+        // Catalog + free-text hobbies are kept (truncated); callback reserved for API parity with other sanitizers.
+        _ = onDropped;
         if (raw is null || raw.Count == 0)
         {
             return raw is null ? null : [];
@@ -153,7 +155,7 @@ public static class CandidatePreferencesValidator
         return result;
     }
 
-    private static IReadOnlyList<string>? SanitizeCodeList(
+    private static List<string>? SanitizeCodeList(
         IReadOnlyList<string>? raw,
         Func<string?, bool> isKnown,
         Func<string?, string?> canonical,
@@ -195,7 +197,7 @@ public static class CandidatePreferencesValidator
         return result;
     }
 
-    private static IReadOnlyList<string>? SanitizeFreeTextList(
+    private static List<string>? SanitizeFreeTextList(
         IReadOnlyList<string>? raw,
         int maxItems,
         int maxLength,

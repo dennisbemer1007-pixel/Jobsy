@@ -211,10 +211,7 @@ public sealed partial class JobsyApiClient
                 return null;
             }
 
-            return JsonSerializer.Deserialize<CareerPathPlanApiModel>(body, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            return JsonSerializer.Deserialize<CareerPathPlanApiModel>(body, CaseInsensitiveJson);
         }
         catch (HttpRequestException)
         {
@@ -483,7 +480,7 @@ public sealed partial class JobsyApiClient
 
         return System.Text.Json.JsonSerializer.Deserialize<AssessmentRetakeStartResult>(
                    body,
-                   new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                   CaseInsensitiveJson)
                ?? new AssessmentRetakeStartResult();
     }
 

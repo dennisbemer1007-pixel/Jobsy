@@ -105,7 +105,7 @@ public static class CareerPlanViewBuilder
 
         var active = model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)
                      ?? model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Open)
-                     ?? model.Steps.LastOrDefault();
+                     ?? (model.Steps.Count > 0 ? model.Steps[^1] : null);
 
         var shells = new List<ShellStep>(model.Steps.Count + 1);
         foreach (var step in model.Steps)

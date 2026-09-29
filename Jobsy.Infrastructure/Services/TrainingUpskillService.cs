@@ -16,6 +16,11 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
 {
     public const string DefaultTrackingSecret = "lobsy-training-tracking-dev";
 
+    private static readonly System.Text.Json.JsonSerializerOptions PreferencesJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly JobsyDbContext _db;
     private readonly IConfiguration _configuration;
     private readonly IHostEnvironment _environment;
@@ -137,7 +142,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         {
             var prefs = System.Text.Json.JsonSerializer.Deserialize<CandidatePreferencesDto>(
                 json,
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                PreferencesJsonOptions);
             return prefs?.LearningGoals?
                 .Where(g => !string.IsNullOrWhiteSpace(g))
                 .Select(g => g.Trim())

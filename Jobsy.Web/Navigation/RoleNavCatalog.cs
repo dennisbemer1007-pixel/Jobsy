@@ -323,7 +323,7 @@ public static class RoleNavCatalog
             .ToList();
     }
 
-    private static IReadOnlyList<NavItem> WithOptionalCandidateApplications(
+    private static NavItem[] WithOptionalCandidateApplications(
         NavItem[] baseItems,
         ClaimsPrincipal user)
     {
