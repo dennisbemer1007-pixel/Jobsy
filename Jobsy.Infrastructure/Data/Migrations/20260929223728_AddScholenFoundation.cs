@@ -134,7 +134,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     TestWindow = table.Column<int>(type: "integer", nullable: false),
                     TestWindowClosesOn = table.Column<DateOnly>(type: "date", nullable: true),
                     ParentalInfoConfirmedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ParentalInfoConfirmedByUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ParentalInfoConfirmedByInvitedUserId = table.Column<Guid>(type: "uuid", nullable: true),
                     ParentalInfoTextVersion = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     LoginPausedUntilUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -156,7 +156,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     SchoolId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    InvitedUserId = table.Column<Guid>(type: "uuid", nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     FullName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     Role = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),

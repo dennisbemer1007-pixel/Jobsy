@@ -3930,7 +3930,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<Guid?>("UserId")
+                    b.Property<Guid?>("InvitedUserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");

@@ -238,7 +238,7 @@ public sealed class SchoolStaffInviteService : ISchoolStaffInviteService
         {
             Id = Guid.NewGuid(),
             SchoolId = schoolId,
-            UserId = user.Id,
+            InvitedUserId = user.Id,
             Email = normalizedEmail,
             FullName = name,
             Role = role,

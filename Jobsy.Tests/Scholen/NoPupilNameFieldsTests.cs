@@ -15,14 +15,18 @@ public class NoPupilNameFieldsTests
     private static readonly HashSet<string> Allow = new(StringComparer.Ordinal)
     {
         "School.Name",
+        "School.AllowedEmailDomains",
         "SchoolClass.Name",
         "SchoolClassAggregate.ClassLabel",
         "SchoolClassSummaryDto.ClassName",
         "SchoolClassSummaryDto.SchoolName",
         "SchoolListItemDto.Name",
         "SchoolDetailDto.Name",
+        "SchoolDetailDto.AllowedEmailDomains",
         "CreateSchoolRequest.Name",
+        "CreateSchoolRequest.AllowedEmailDomains",
         "UpdateSchoolRequest.Name",
+        "UpdateSchoolRequest.AllowedEmailDomains",
         "SchoolAdminListItemDto.TeacherDisplayName",
         "SchoolAdminListItemDto.Email",
         "InviteSchoolAdminRequest.FullName",

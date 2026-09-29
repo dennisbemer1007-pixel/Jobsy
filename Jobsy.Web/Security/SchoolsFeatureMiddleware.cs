@@ -13,15 +13,21 @@ public sealed class SchoolsFeatureMiddleware
 
     public SchoolsFeatureMiddleware(RequestDelegate next) => _next = next;
 
-    public async Task InvokeAsync(HttpContext context, IPlatformFeatureService features)
+    public async Task InvokeAsync(HttpContext context)
     {
         var path = context.Request.Path.Value ?? "";
-        if (IsGated(path) && !await SchoolsFeatureGate.IsEnabledAsync(features, context.RequestAborted))
+        if (IsGated(path))
         {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync("""{"error":"feature_disabled"}""");
-            return;
+            var features = context.RequestServices.GetService(typeof(IPlatformFeatureService))
+                as IPlatformFeatureService;
+            if (features is not null
+                && !await SchoolsFeatureGate.IsEnabledAsync(features, context.RequestAborted))
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsync("""{"error":"feature_disabled"}""");
+                return;
+            }
         }
 
         await _next(context);

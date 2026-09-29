@@ -31,6 +31,6 @@ public class PupilCodeFormatTests
         Assert.DoesNotContain('O', PupilCodeFormat.Alphabet);
         Assert.DoesNotContain('0', PupilCodeFormat.Alphabet);
         Assert.DoesNotContain('1', PupilCodeFormat.Alphabet);
-        Assert.Equal(30, PupilCodeFormat.Alphabet.Length);
+        Assert.Equal(31, PupilCodeFormat.Alphabet.Length);
     }
 }

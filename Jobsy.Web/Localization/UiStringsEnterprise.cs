@@ -28,7 +28,7 @@ public static class UiStringsEnterprise
         Add("EntUi.Pager", "Paginering", "Pagination");
         Add("EntUi.CloseDrawer", "Sluiten", "Close");
         Add("EntUi.Actions", "Acties", "Actions");
-        Add("EntUi.ScopeChip", "Scope", "Scope");
+        Add("EntUi.ScopeChip", "Scopekiezer", "Scope selector");
         Add("EntUi.ReadOnly", "Alleen lezen", "Read only");
         Add("Nav.Scholen", "Scholen", "Schools");
     }
