@@ -1,0 +1,335 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject CandidateProfileEditor Editor
+@implements IDisposable
+
+<div class="passport-proof">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_loadFailed)
+    {
+        <div class="panel-inline-error" role="alert">
+            <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
+            <button type="button" class="btn-compact" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
+        </div>
+    }
+    else if (_strength is not null)
+    {
+        <section class="passport-proof__scale" aria-labelledby="passport-proof-scale-title">
+            <div class="passport-proof__scale-head">
+                <h3 id="passport-proof-scale-title" class="passport-proof__h">@Culture["Passport.Proof.ScaleTitle"]</h3>
+                <p class="passport-proof__count">@Culture.Format("Passport.Proof.CountLabel", _strength.Filled)</p>
+            </div>
+            <div class="passport-proof__track" role="img" aria-label="@Culture.Format("Passport.Proof.ScaleAria", _strength.Filled, _strength.Max)">
+                <span class="passport-proof__soft">@Culture["Passport.Proof.Soft"]</span>
+                <div class="passport-proof__segs" aria-hidden="true">
+                    @for (var i = 0; i < _strength.Max; i++)
+                    {
+                        var filled = i < _strength.Filled;
+                        var step = Math.Min(3, 1 + (i * 2 / Math.Max(1, _strength.Max - 1)));
+                        <span class="passport-proof__seg passport-proof__seg--@step @(filled ? "is-filled" : null)"></span>
+                    }
+                </div>
+                <span class="passport-proof__hard">@Culture["Passport.Proof.Hard"]</span>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_hintText))
+            {
+                <p class="passport-proof__hint">@_hintText</p>
+            }
+        </section>
+
+        <div class="passport-proof__grid">
+            <article class="detail-card passport-proof__card">
+                <h3 class="passport-proof__card-title">@Culture["Passport.Proof.Experience"]</h3>
+                @if (!Editor.Employers.Any(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role)))
+                {
+                    <p class="muted">@Culture["Passport.Proof.ExperienceEmpty"]</p>
+                }
+                else
+                {
+                    <ul class="passport-proof__list">
+                        @foreach (var emp in Editor.Employers.Where(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role)))
+                        {
+                            <li>
+                                <strong>@(string.IsNullOrWhiteSpace(emp.Role) ? emp.EmployerName : emp.Role)</strong>
+                                <span class="muted">
+                                    @emp.EmployerName
+                                    @if (!string.IsNullOrWhiteSpace(emp.StartMonth) || !string.IsNullOrWhiteSpace(emp.EndMonth))
+                                    {
+                                        <text> · @FormatRange(emp.StartMonth, emp.EndMonth)</text>
+                                    }
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                }
+                <button type="button" class="passport-card__fill-link" @onclick='() => OpenEditor("experience")'>
+                    @Culture["Passport.Proof.AddEmployer"]
+                </button>
+            </article>
+
+            <article class="detail-card passport-proof__card">
+                <h3 class="passport-proof__card-title">@Culture["Passport.Proof.Education"]</h3>
+                @if (Editor.SelectedEducations.Count > 0)
+                {
+                    <div class="passport-proof__pills" aria-label="@Culture["Profile.Education"]">
+                        @foreach (var level in Editor.SelectedEducations)
+                        {
+                            <span class="status-pill">@UiLabels.Education(Culture, level)</span>
+                        }
+                    </div>
+                }
+                @if (!Editor.Certificates.Any(c => !string.IsNullOrWhiteSpace(c.Name)))
+                {
+                    <p class="muted">@Culture["Passport.Proof.CertificatesEmpty"]</p>
+                }
+                else
+                {
+                    <ul class="passport-proof__list">
+                        @foreach (var cert in Editor.Certificates.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
+                        {
+                            <li>
+                                <strong>@cert.Name</strong>
+                                @if (cert.Year is int y)
+                                {
+                                    <span class="muted"> · @y</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+                <button type="button" class="passport-card__fill-link" @onclick='() => OpenEditor("certificates")'>
+                    @Culture["Passport.Proof.AddCertificate"]
+                </button>
+            </article>
+
+            <article class="detail-card passport-proof__card">
+                <h3 class="passport-proof__card-title">@Culture["Passport.Proof.Reviews"]</h3>
+                @if (Editor.References.Count == 0)
+                {
+                    <p class="muted">@Culture["Passport.Proof.ReviewsEmpty"]</p>
+                }
+                else
+                {
+                    <ul class="passport-proof__list">
+                        @foreach (var r in Editor.References)
+                        {
+                            <li>
+                                <strong>@(string.IsNullOrWhiteSpace(r.ContactName) ? r.EmployerName : r.ContactName)</strong>
+                                <span class="muted">@r.EmployerName</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                <button type="button"
+                        class="passport-card__fill-link"
+                        disabled="@(Editor.References.Count >= CandidateProfileEditor.MaxReferences)"
+                        @onclick='() => OpenEditor("references")'>
+                    @Culture["Passport.Proof.AddReference"]
+                </button>
+
+                <div class="passport-proof__cv">
+                    <h4 class="passport-proof__cv-title">@Culture["Profile.OwnCv"]</h4>
+                    @if (Editor.UploadedCv is not null)
+                    {
+                        <p class="passport-proof__cv-file">@Editor.UploadedCv.FileName</p>
+                        <div class="passport-proof__cv-actions">
+                            <button type="button" class="btn-compact" disabled="@Editor.CvBusy" @onclick='() => OpenEditor("cv")'>
+                                @Culture["Passport.Proof.ReplaceCv"]
+                            </button>
+                            <button type="button" class="btn-compact" disabled="@Editor.CvBusy" @onclick="Editor.DownloadOwnCvAsync">
+                                @Culture["Passport.Proof.DownloadCv"]
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <button type="button" class="passport-card__fill-link" @onclick='() => OpenEditor("cv")'>
+                            @Culture["Profile.UploadCv"]
+                        </button>
+                    }
+                </div>
+            </article>
+        </div>
+
+        <p class="passport-proof__note muted">@Culture["Passport.Proof.LobsyCvNote"]</p>
+        <button class="btn-compact" type="button" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">
+            @(Editor.PdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
+        </button>
+    }
+</div>
+
+@if (_sheetOpen)
+{
+    <div class="filter-sheet-backdrop" @onclick="CloseEditor"></div>
+    <div class="filter-sheet passport-proof__sheet" role="dialog" aria-modal="true" aria-labelledby="passport-proof-sheet-title">
+        <div class="filter-sheet__header">
+            <h2 id="passport-proof-sheet-title">@_sheetTitle</h2>
+            <button type="button" class="share-modal__close" @onclick="CloseEditor" aria-label="@Culture["Common.Close"]">×</button>
+        </div>
+        <div class="filter-sheet__body">
+            <CascadingValue Value="Editor">
+                @if (_sheetKind == "experience")
+                {
+                    <ExperienceSection />
+                }
+                else if (_sheetKind == "certificates")
+                {
+                    <EducationSection />
+                    <CertificatesSection />
+                }
+                else if (_sheetKind == "references")
+                {
+                    <ReferencesSection />
+                }
+                else if (_sheetKind == "cv")
+                {
+                    <CvSection />
+                }
+            </CascadingValue>
+        </div>
+        <div class="filter-sheet__footer">
+            <button type="button" class="filter-sheet__cancel" @onclick="CloseEditor">@Culture["Common.Cancel"]</button>
+            <button type="button" class="filter-sheet__apply" disabled="@Editor.Saving" @onclick="SaveSheetAsync">@Culture["Common.Save"]</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Active { get; set; }
+
+    private bool _loading = true;
+    private bool _loadFailed;
+    private bool _loaded;
+    private ProofStrengthRules.StrengthView? _strength;
+    private string? _hintText;
+    private bool _sheetOpen;
+    private string _sheetKind = "";
+    private string _sheetTitle = "";
+
+    protected override void OnInitialized()
+        => Editor.Changed += OnEditorChanged;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Active && !_loaded)
+        {
+            await LoadAsync();
+        }
+    }
+
+    public void Dispose() => Editor.Changed -= OnEditorChanged;
+
+    private void OnEditorChanged()
+    {
+        RefreshStrength();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private Task RetryLoadAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadFailed = false;
+        try
+        {
+            await Editor.LoadMasterdataAsync();
+            var me = await Api.GetMyProfileAsync();
+            if (me is null)
+            {
+                _loadFailed = true;
+                return;
+            }
+
+            Editor.ApplyFromProfile(me);
+            _loaded = true;
+            RefreshStrength();
+        }
+        catch
+        {
+            _loadFailed = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void RefreshStrength()
+    {
+        var snap = new ProofStrengthRules.ProofSnapshot(
+            Editor.Employers.Count(e => !string.IsNullOrWhiteSpace(e.EmployerName)),
+            Editor.SelectedEducations.Count(e => !string.Equals(e, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase)),
+            Editor.Certificates.Count(c => !string.IsNullOrWhiteSpace(c.Name)),
+            Editor.References.Count,
+            Editor.UploadedCv is not null);
+        _strength = ProofStrengthRules.Build(snap);
+        _hintText = FormatHint(_strength);
+    }
+
+    private string? FormatHint(ProofStrengthRules.StrengthView view)
+    {
+        var missing = view.Missing;
+        if (missing.Count == 0)
+        {
+            return view.Filled >= view.Max ? Culture["Passport.Proof.HintHard"] : null;
+        }
+
+        var key = ProofStrengthRules.HintKey(missing);
+        if (missing.Count == 1)
+        {
+            return missing[0].Kind == ProofStrengthRules.ProofKind.OwnCv
+                ? Culture[key]
+                : Culture.Format(key, missing[0].Count);
+        }
+
+        return Culture.Format(
+            key,
+            missing[0].Count,
+            Culture[ProofStrengthRules.NounKey(missing[0].Kind)],
+            missing[1].Count,
+            Culture[ProofStrengthRules.NounKey(missing[1].Kind)]);
+    }
+
+    private void OpenEditor(string kind)
+    {
+        _sheetKind = kind;
+        _sheetTitle = kind switch
+        {
+            "experience" => Culture["Passport.Proof.Experience"],
+            "certificates" => Culture["Passport.Proof.Education"],
+            "references" => Culture["Passport.Proof.Reviews"],
+            _ => Culture["Profile.OwnCv"]
+        };
+        _sheetOpen = true;
+    }
+
+    private void CloseEditor() => _sheetOpen = false;
+
+    private async Task SaveSheetAsync()
+    {
+        await Editor.SaveAsync();
+        RefreshStrength();
+        _sheetOpen = false;
+    }
+
+    private static string FormatRange(string? start, string? end)
+    {
+        static string Year(string? m)
+            => string.IsNullOrWhiteSpace(m) ? "" : m.Length >= 4 ? m[..4] : m;
+
+        var s = Year(start);
+        var e = string.IsNullOrWhiteSpace(end) ? "…" : Year(end);
+        return string.IsNullOrEmpty(s) ? e : $"{s} - {e}";
+    }
+}
