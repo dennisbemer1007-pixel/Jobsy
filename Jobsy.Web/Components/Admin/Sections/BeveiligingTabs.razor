@@ -1,0 +1,33 @@
+@namespace Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<nav class="admin-tabs" role="tablist" aria-label="@Culture["AdminNav.Group.Security"]">
+    @foreach (var tab in VisibleTabs)
+    {
+        var active = string.Equals(ActiveKey, tab.Key, StringComparison.OrdinalIgnoreCase);
+        <a class="admin-tabs__tab @(active ? "is-active" : null)"
+           role="tab"
+           aria-selected="@active"
+           href="@tab.Href">@Culture[tab.LabelKey]</a>
+    }
+</nav>
+
+@code {
+    public sealed record SecurityTab(string Key, string LabelKey, string Href);
+
+    [Parameter] public string ActiveKey { get; set; } = "audit";
+
+    private static readonly SecurityTab[] AllTabs =
+    [
+        new("audit", "AdminNav.AuditLog", "/admin/beveiliging"),
+        new("pii", "AdminNav.DataAccess", "/admin/beveiliging/gegevensinzage"),
+        new("mfa", "AdminNav.MfaSessions", "/admin/beveiliging/2fa"),
+        new("privacy", "AdminNav.Privacy", "/admin/beveiliging/privacy"),
+        new("logs", "AdminNav.SystemLogs", "/admin/beveiliging/systeemlogs"),
+    ];
+
+    private IEnumerable<SecurityTab> VisibleTabs =>
+        AllTabs.Where(t => AdminNav.AvailableItems().Any(i =>
+            string.Equals(i.Href, t.Href, StringComparison.OrdinalIgnoreCase)));
+}

@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 
@@ -28,6 +31,9 @@ public class SettingsController : ControllerBase
     private readonly IMarketingFlyerPdfService _marketingFlyerPdf;
     private readonly IFlexCommercialService _flexCommercial;
     private readonly DeploymentEnvironmentLabel _deploymentEnv;
+    private readonly IAdminAuditLog _audit;
+    private readonly IAdminAuditContext _auditContext;
+    private readonly IUserLookupService _users;
 
     public SettingsController(
         JobsyDbContext db,
@@ -38,7 +44,10 @@ public class SettingsController : ControllerBase
         IMarketingFlyerSettingsService marketingFlyer,
         IMarketingFlyerPdfService marketingFlyerPdf,
         IFlexCommercialService flexCommercial,
-        DeploymentEnvironmentLabel deploymentEnv)
+        DeploymentEnvironmentLabel deploymentEnv,
+        IAdminAuditLog audit,
+        IAdminAuditContext auditContext,
+        IUserLookupService users)
     {
         _db = db;
         _credentials = credentials;
@@ -49,6 +58,9 @@ public class SettingsController : ControllerBase
         _marketingFlyerPdf = marketingFlyerPdf;
         _flexCommercial = flexCommercial;
         _deploymentEnv = deploymentEnv;
+        _audit = audit;
+        _auditContext = auditContext;
+        _users = users;
     }
 
     [HttpGet("token-pricing")]
@@ -99,6 +111,7 @@ public class SettingsController : ControllerBase
         => Ok(await _flexCommercial.GetAsync(cancellationToken));
 
     [HttpPut("lobsy-commercial")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<FlexCommercialSettingsDto>> UpdateLobsyCommercial(
         [FromBody] UpdateLobsyCommercialRequest request,
         CancellationToken cancellationToken)
@@ -121,6 +134,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("token-pricing/packs/{id:guid}")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting, TargetRouteKey = "id")]
     public async Task<IActionResult> UpdatePack(
         Guid id,
         [FromBody] UpdateTokenPackRequest request,
@@ -144,6 +158,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("token-pricing/costs/{id:guid}")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting, TargetRouteKey = "id")]
     public async Task<IActionResult> UpdateCost(
         Guid id,
         [FromBody] UpdateTokenSpendCostRequest request,
@@ -167,6 +182,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("token-pricing/pushbom-settings")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<object>> UpdatePushBomSettings(
         [FromBody] UpdatePushBomSettingsRequest request,
         CancellationToken cancellationToken)
@@ -203,6 +219,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("token-pricing/pushbom-tiers")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<object>> UpsertPushBomPricingTier(
         [FromBody] UpsertPushBomPricingTierRequest request,
         CancellationToken cancellationToken)
@@ -256,6 +273,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpDelete("token-pricing/pushbom-tiers/{id:guid}")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingDelete, TargetType = AdminAuditKeys.TargetTypes.Setting, TargetRouteKey = "id")]
     public async Task<IActionResult> DeletePushBomPricingTier(Guid id, CancellationToken cancellationToken)
     {
         var tier = await _db.PushBomPricingTiers.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
@@ -270,6 +288,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("early-adapter-rules")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<object>> UpsertEarlyAdapterRule(
         [FromBody] UpsertEarlyAdapterRuleRequest request,
         CancellationToken cancellationToken)
@@ -320,6 +339,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("platform-features")]
+    [AdminAudit(AdminAuditKeys.SettingsPlatformUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<PlatformFeatureDto>> UpdatePlatformFeatures(
         [FromBody] UpdatePlatformFeatureRequest request,
         CancellationToken cancellationToken)
@@ -332,6 +352,7 @@ public class SettingsController : ControllerBase
 
         try
         {
+            var before = await _features.GetAsync(cancellationToken);
             var snap = await _features.UpdateAsync(
                 new PlatformFeatureUpdate(
                     request.VacancyContentModerationEnabled,
@@ -345,12 +366,66 @@ public class SettingsController : ControllerBase
                     SupportAccessNotifyAdmins: request.SupportAccessNotifyAdmins,
                     SupportAccessNotifySubject: request.SupportAccessNotifySubject),
                 cancellationToken);
+
+            var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+            var changes = CollectPlatformFeatureChanges(before, snap);
+            _auditContext.SuppressAutoWrite = true;
+            var correlation = HttpContext?.TraceIdentifier ?? Guid.NewGuid().ToString("N");
+            var ip = HttpContext?.Connection.RemoteIpAddress?.ToString();
+            foreach (var change in changes)
+            {
+                await _audit.WriteAsync(
+                    new AdminAuditEntry(
+                        Action: AdminAuditKeys.SettingsPlatformUpdate,
+                        TargetType: AdminAuditKeys.TargetTypes.Setting,
+                        TargetId: change.Field,
+                        TargetLabel: change.Field,
+                        Reason: request.Reason,
+                        DetailsJson: System.Text.Json.JsonSerializer.Serialize(new
+                        {
+                            field = change.Field,
+                            from = change.From,
+                            to = change.To
+                        }),
+                        Result: AdminAuditKeys.Results.Success,
+                        ActorUserId: actor?.Id,
+                        ActorRole: "Admin",
+                        CorrelationId: correlation,
+                        IpAddress: ip),
+                    cancellationToken);
+            }
+
             return Ok(ToFeatureDto(snap));
         }
         catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    private static List<(string Field, string? From, string? To)> CollectPlatformFeatureChanges(
+        PlatformFeatureSnapshot before,
+        PlatformFeatureSnapshot after)
+    {
+        var list = new List<(string, string?, string?)>();
+        void Add(string field, string? from, string? to)
+        {
+            if (!string.Equals(from, to, StringComparison.Ordinal))
+            {
+                list.Add((field, from, to));
+            }
+        }
+
+        Add("VacancyContentModerationEnabled", before.VacancyContentModerationEnabled.ToString(), after.VacancyContentModerationEnabled.ToString());
+        Add("AuthenticatorEnabled", before.AuthenticatorEnabled.ToString(), after.AuthenticatorEnabled.ToString());
+        Add("ExposeRegistrationActivationLinks", before.ExposeRegistrationActivationLinks.ToString(), after.ExposeRegistrationActivationLinks.ToString());
+        Add("PublicWebBaseUrl", before.PublicWebBaseUrl, after.PublicWebBaseUrl);
+        Add("InactiveCompanyDays", before.InactiveCompanyDays.ToString(), after.InactiveCompanyDays.ToString());
+        Add("SessionInactivityTimeoutMinutes", before.SessionInactivityTimeoutMinutes.ToString(), after.SessionInactivityTimeoutMinutes.ToString());
+        Add("FreePublishUntil", before.FreePublishUntil?.ToString("yyyy-MM-dd"), after.FreePublishUntil?.ToString("yyyy-MM-dd"));
+        Add("SupportAccessNotifyAdmins", before.SupportAccessNotifyAdmins.ToString(), after.SupportAccessNotifyAdmins.ToString());
+        Add("SupportAccessNotifySubject", before.SupportAccessNotifySubject.ToString(), after.SupportAccessNotifySubject.ToString());
+        return list;
     }
 
     /// <summary>
@@ -385,6 +460,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("company")]
+    [AdminAudit(AdminAuditKeys.SettingsCompanyUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<PlatformCompanyDto>> UpdateCompanySettings(
         [FromBody] UpdatePlatformCompanyRequest request,
         CancellationToken cancellationToken)
@@ -416,6 +492,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("about")]
+    [AdminAudit(AdminAuditKeys.SettingsAboutUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<AboutPageDto>> UpdateAboutPage(
         [FromBody] UpdateAboutPageRequest request,
         CancellationToken cancellationToken)
@@ -437,6 +514,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("marketing-flyer")]
+    [AdminAudit(AdminAuditKeys.SettingsFlyerUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<MarketingFlyerDto>> UpdateMarketingFlyer(
         [FromBody] UpdateMarketingFlyerRequest request,
         CancellationToken cancellationToken)
@@ -459,6 +537,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPost("marketing-flyer/reset")]
+    [AdminAudit(AdminAuditKeys.SettingsFlyerUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<MarketingFlyerDto>> ResetMarketingFlyer(CancellationToken cancellationToken)
     {
         var snap = await _marketingFlyer.ResetToDefaultsAsync(cancellationToken);
@@ -511,6 +590,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("integration-credentials/{key}")]
+    [AdminAudit(AdminAuditKeys.SettingsIntegrationUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting, TargetRouteKey = "key")]
     public async Task<ActionResult<IntegrationCredentialDto>> UpsertIntegrationCredential(
         IntegrationKey key,
         [FromBody] UpdateIntegrationCredentialRequest request,
@@ -518,6 +598,20 @@ public class SettingsController : ControllerBase
     {
         try
         {
+            // Field names only — never secret values in the audit log.
+            var fields = new List<string>();
+            if (request.ApiKey is not null || request.ClearApiKey) fields.Add("ApiKey");
+            if (request.Model is not null) fields.Add("Model");
+            if (request.ClientId is not null) fields.Add("ClientId");
+            if (request.ClientSecret is not null || request.ClearClientSecret) fields.Add("ClientSecret");
+            if (request.TenantId is not null) fields.Add("TenantId");
+            if (request.BaseUrl is not null) fields.Add("BaseUrl");
+            if (request.FromAddress is not null) fields.Add("FromAddress");
+            fields.Add("UseEnvironmentCredentials");
+            _auditContext.TargetId = key.ToString();
+            _auditContext.TargetLabel = key.ToString();
+            _auditContext.SetDetailsObject(new { fields });
+
             var saved = await _credentials.UpsertAsync(
                 key,
                 new IntegrationCredentialUpdate(

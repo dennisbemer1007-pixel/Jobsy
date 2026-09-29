@@ -102,7 +102,7 @@ public static class AdminNav
         new("security", "AdminNav.Group.Security",
         [
             new("audit", "AdminNav.AuditLog", "/admin/beveiliging", NavIcons.Logging,
-                [], IsAvailable: false),
+                [], IsAvailable: true),
             new("pii", "AdminNav.DataAccess", "/admin/beveiliging/gegevensinzage", NavIcons.Logging,
                 ["/admin/personal-data-access-log"], IsAvailable: true),
             new("mfa", "AdminNav.MfaSessions", "/admin/beveiliging/2fa", NavIcons.Settings,

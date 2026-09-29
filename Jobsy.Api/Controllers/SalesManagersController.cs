@@ -7,6 +7,8 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 
@@ -53,6 +55,7 @@ public class SalesManagersController : ControllerBase
     }
 
     [HttpPost("invite")]
+    [AdminAuditExempt("Sales invite; not in admin audit 07.4 list")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<SalesManagerInviteResponse>> Invite(
         [FromBody] InviteSalesManagerRequest request,
@@ -125,6 +128,7 @@ public class SalesManagersController : ControllerBase
     }
 
     [HttpPost("me/applications")]
+    [AdminAuditExempt("Self application submit")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
     public async Task<ActionResult<SalesManagerApplicationDto>> SubmitApplication(
         [FromBody] SubmitSalesManagerApplicationRequest request,
@@ -183,6 +187,7 @@ public class SalesManagersController : ControllerBase
     }
 
     [HttpPost("applications/{applicationId:guid}/approve")]
+    [AdminAuditExempt("Ambassadeur/sales application approve")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<SalesManagerApplicationDto>> ApproveApplication(
         Guid applicationId,
@@ -215,6 +220,7 @@ public class SalesManagersController : ControllerBase
     }
 
     [HttpPost("applications/{applicationId:guid}/reject")]
+    [AdminAuditExempt("Ambassadeur/sales application reject")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<SalesManagerApplicationDto>> RejectApplication(
         Guid applicationId,
@@ -282,6 +288,7 @@ public class SalesManagersController : ControllerBase
     }
 
     [HttpPut("me/profile")]
+    [AdminAuditExempt("Self profile update")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
     public async Task<ActionResult<SalesManagerProfileDto>> UpdateMyProfile(
         [FromBody] UpdateSalesManagerProfileRequest request,
@@ -320,6 +327,7 @@ public class SalesManagersController : ControllerBase
     }
 
     [HttpPost("me/sign-agreement")]
+    [AdminAuditExempt("Self agreement sign")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
     public async Task<ActionResult<SalesManagerProfileDto>> SignAgreement(
         [FromBody] SignSalesManagerAgreementRequest? request,
@@ -376,6 +384,7 @@ public class SalesManagersController : ControllerBase
     }
 
     [HttpPost("me/invoices")]
+    [AdminAuditExempt("Self invoice create")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
     public async Task<ActionResult<SelfBillingInvoiceDto>> CreateInvoice(CancellationToken cancellationToken)
     {
@@ -439,6 +448,7 @@ public class SalesManagersController : ControllerBase
     }
 
     [HttpPost("me/payouts/checkout")]
+    [AdminAuditExempt("Self payout checkout")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
     public async Task<ActionResult<SalesManagerPayoutCheckoutResult>> CreatePayoutCheckout(
         [FromBody] CreateSalesManagerPayoutCheckoutRequest? request,
@@ -466,6 +476,7 @@ public class SalesManagersController : ControllerBase
     }
 
     [HttpPost("me/payouts/complete")]
+    [AdminAuditExempt("Self payout complete")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
     public async Task<ActionResult<SalesManagerPayoutCompleteResult>> CompletePayoutCheckout(
         [FromBody] CompleteSalesManagerPayoutRequest request,
@@ -500,6 +511,7 @@ public class SalesManagersController : ControllerBase
     }
 
     [HttpPost("{userId:guid}/invoices")]
+    [AdminAuditExempt("Admin creates invoice; fiscal trail elsewhere")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<SelfBillingInvoiceDto>> CreateInvoiceFor(
         Guid userId,
@@ -517,6 +529,7 @@ public class SalesManagersController : ControllerBase
     }
 
     [HttpPost("invoices/{invoiceId:guid}/mark-paid")]
+    [AdminAudit(AdminAuditKeys.InvoiceMarkPaid, TargetType = AdminAuditKeys.TargetTypes.Invoice, TargetRouteKey = "invoiceId")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<SelfBillingInvoiceDto>> MarkPaid(
         Guid invoiceId,

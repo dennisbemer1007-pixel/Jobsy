@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using System.Text.Json;
 using Jobsy.Api.Admin;
 using Jobsy.Api.Models;
 using Jobsy.Api.Privacy;
+using Jobsy.Core.Admin;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
@@ -36,6 +38,8 @@ public class AdminController : ControllerBase
     private readonly IDeviceSessionService _deviceSessions;
     private readonly IEmailService _email;
     private readonly IPlatformFeatureService _features;
+    private readonly IAdminAuditLog _audit;
+    private readonly IAdminAuditContext _auditContext;
     private readonly ILogger<AdminController> _logger;
 
     public AdminController(
@@ -50,6 +54,8 @@ public class AdminController : ControllerBase
         IDeviceSessionService deviceSessions,
         IEmailService email,
         IPlatformFeatureService features,
+        IAdminAuditLog audit,
+        IAdminAuditContext auditContext,
         ILogger<AdminController> logger)
     {
         _db = db;
@@ -63,6 +69,8 @@ public class AdminController : ControllerBase
         _deviceSessions = deviceSessions;
         _email = email;
         _features = features;
+        _audit = audit;
+        _auditContext = auditContext;
         _logger = logger;
     }
 
@@ -103,6 +111,7 @@ public class AdminController : ControllerBase
         => Ok(await AdminCompaniesQuery.ListKvkIssuesAsync(_db, cancellationToken));
 
     [HttpPost("companies/{id:guid}/kvk-retry")]
+    [AdminAuditExempt("KvK retry is operational")]
     public async Task<ActionResult<object>> RetryKvkVerification(
         Guid id,
         [FromServices] IKvkVerificationRetryService kvkRetry,
@@ -118,6 +127,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("companies/from-kvk")]
+    [AdminAuditExempt("Company create from KvK")]
     public async Task<ActionResult<AdminCompanyDetailDto>> RegisterCompanyFromKvk(
         [FromBody] RegisterAdminCompanyRequest request,
         CancellationToken cancellationToken)
@@ -516,6 +526,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("support-access")]
+    [AdminAudit(AdminAuditKeys.SupportAccessGrant, TargetType = AdminAuditKeys.TargetTypes.Grant)]
     public async Task<ActionResult<SupportAccessGrantDto>> RequestSupportAccess(
         [FromBody] SupportAccessRequestBody body,
         CancellationToken cancellationToken = default)
@@ -562,6 +573,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("support-access/{grantId:guid}/revoke")]
+    [AdminAudit(AdminAuditKeys.SupportAccessRevoke, TargetType = AdminAuditKeys.TargetTypes.Grant, TargetRouteKey = "grantId")]
     public async Task<IActionResult> RevokeSupportAccess(Guid grantId, CancellationToken cancellationToken = default)
     {
         var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -583,6 +595,7 @@ public class AdminController : ControllerBase
 
     /// <summary>Clears another user's authenticator so they re-enroll on the next password login.</summary>
     [HttpPost("users/{userId:guid}/mfa/reset")]
+    [AdminAudit(AdminAuditKeys.UserMfaReset, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "userId")]
     public async Task<IActionResult> ResetUserMfa(
         Guid userId,
         [FromBody] AdminMfaResetRequest request,
@@ -613,6 +626,9 @@ public class AdminController : ControllerBase
             return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
         }
 
+        _auditContext.Reason = reason;
+        _auditContext.TargetId = userId.ToString("D");
+
         // Local-password admins must re-auth with a fresh TOTP from their own authenticator.
         if (!PersonalDataAccessLogExtensions.IsExternalAuthMethod(authMethod))
         {
@@ -624,6 +640,8 @@ public class AdminController : ControllerBase
             var adminSecret = _secrets.Unprotect(actor.AuthenticatorSecret);
             if (!TotpAuthenticator.VerifyCode(adminSecret, request.ConfirmCode.Trim(), DateTime.UtcNow))
             {
+                _auditContext.TargetLabel = "user";
+                // Filter maps 401 → denied.
                 return Unauthorized(new { message = "De authenticatorcode is onjuist." });
             }
         }
@@ -634,12 +652,39 @@ public class AdminController : ControllerBase
             return NotFound();
         }
 
+        var maskedLabel = PersonalDataMasker.MaskName(target.FullName);
+        _auditContext.TargetLabel = maskedLabel;
+
         target.AuthenticatorSecret = null;
         target.RecoveryCodesHash = null;
         target.AuthenticatorEnabled = false;
         target.AuthenticatorEnrolledAtUtc = null;
         target.SessionVersion++;
-        await _db.SaveChangesAsync(cancellationToken);
+
+        // Same transaction: audit row + MFA clear. Failure → 500, no reset.
+        try
+        {
+            _audit.Stage(new AdminAuditEntry(
+                Action: AdminAuditKeys.UserMfaReset,
+                TargetType: AdminAuditKeys.TargetTypes.User,
+                TargetId: userId.ToString("D"),
+                TargetLabel: maskedLabel,
+                Reason: reason,
+                Result: AdminAuditKeys.Results.Success,
+                ActorUserId: actor.Id,
+                ActorRole: PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                CorrelationId: HttpContext.TraceIdentifier,
+                IpAddress: HttpContext.Connection.RemoteIpAddress?.ToString()));
+            await _db.SaveChangesAsync(cancellationToken);
+            _auditContext.SuppressAutoWrite = true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Admin audit write failed during MFA reset for {UserId}", userId);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new { message = "Auditlog kon niet worden geschreven; 2FA is niet gereset." });
+        }
+
         await _deviceSessions.RevokeAllAsync(userId, "mfa-reset", bumpSessionVersion: false, cancellationToken);
 
         await this.LogPersonalDataAccessAsync(
@@ -711,6 +756,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("users/{userId:guid}/sessions/{sessionId:guid}/revoke")]
+    [AdminAudit(AdminAuditKeys.UserSessionsRevoke, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "userId")]
     public async Task<IActionResult> RevokeUserSession(
         Guid userId,
         Guid sessionId,
@@ -728,6 +774,10 @@ public class AdminController : ControllerBase
         {
             return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
         }
+
+        _auditContext.Reason = reason;
+        _auditContext.TargetLabel = "user";
+        _auditContext.SetDetailsObject(new { count = 1 });
 
         if (userId == actor.Id
             && Guid.TryParse(User.FindFirstValue(JobsyClaimTypes.DeviceSessionId), out var current)
@@ -758,6 +808,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("users/{userId:guid}/sessions/revoke-all")]
+    [AdminAudit(AdminAuditKeys.UserSessionsRevokeAll, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "userId")]
     public async Task<IActionResult> RevokeAllUserSessions(
         Guid userId,
         [FromBody] AdminReasonRequest request,
@@ -774,6 +825,9 @@ public class AdminController : ControllerBase
         {
             return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
         }
+
+        _auditContext.Reason = reason;
+        _auditContext.TargetLabel = "user";
 
         if (!await _db.Users.AnyAsync(u => u.Id == userId, cancellationToken))
         {
@@ -810,6 +864,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("users/{userId:guid}/block")]
+    [AdminAudit(AdminAuditKeys.UserBlock, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "userId")]
     public async Task<IActionResult> BlockUser(
         Guid userId,
         [FromBody] AdminReasonRequest request,
@@ -826,6 +881,9 @@ public class AdminController : ControllerBase
         {
             return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
         }
+
+        _auditContext.Reason = reason;
+        _auditContext.TargetLabel = "user";
 
         if (userId == actor.Id)
         {
@@ -871,6 +929,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("users/{userId:guid}/unblock")]
+    [AdminAudit(AdminAuditKeys.UserUnblock, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "userId")]
     public async Task<IActionResult> UnblockUser(
         Guid userId,
         [FromBody] AdminReasonRequest request,
@@ -887,6 +946,9 @@ public class AdminController : ControllerBase
         {
             return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
         }
+
+        _auditContext.Reason = reason;
+        _auditContext.TargetLabel = "user";
 
         var target = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         if (target is null)
@@ -911,6 +973,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("users/bulk/{bulkAction}")]
+    [AdminAuditExempt("Bulk wraps block/unblock which each write their own audit")]
     public async Task<ActionResult<AdminBulkUsersResponseDto>> BulkUsers(
         string bulkAction,
         [FromBody] AdminBulkUsersRequest request,
@@ -1127,6 +1190,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("api-keys/{id:guid}/deactivate")]
+    [AdminAudit(AdminAuditKeys.ApiKeyDeactivate, TargetType = AdminAuditKeys.TargetTypes.ApiKey, TargetRouteKey = "id")]
     public async Task<IActionResult> DeactivateApiKey(Guid id, CancellationToken cancellationToken)
     {
         var ok = await _apiKeys.DeactivateAsync(id, cancellationToken);
@@ -1139,6 +1203,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("vacancies/{id:guid}/extend")]
+    [AdminAudit(AdminAuditKeys.VacancyExtend, TargetType = AdminAuditKeys.TargetTypes.Vacancy, TargetRouteKey = "id")]
     public async Task<ActionResult<VacancyProductActionResultDto>> ExtendVacancy(
         Guid id,
         CancellationToken cancellationToken)
@@ -1162,6 +1227,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("vacancies/{id:guid}/inactive")]
+    [AdminAudit(AdminAuditKeys.VacancyInactive, TargetType = AdminAuditKeys.TargetTypes.Vacancy, TargetRouteKey = "id")]
     public async Task<ActionResult<VacancyProductActionResultDto>> DeactivateVacancy(
         Guid id,
         CancellationToken cancellationToken)

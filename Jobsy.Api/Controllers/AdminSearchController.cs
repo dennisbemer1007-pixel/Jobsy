@@ -50,6 +50,7 @@ public sealed class AdminSearchController : ControllerBase
         var orgs = await SearchOrgsAsync(term, cancellationToken);
         var vacancies = await SearchVacanciesAsync(term, cancellationToken);
         var invoices = await SearchInvoicesAsync(term, cancellationToken);
+        var correlations = await SearchCorrelationsAsync(term, cancellationToken);
 
         await this.LogPersonalDataAccessAsync(
             _accessLog,
@@ -59,7 +60,41 @@ public sealed class AdminSearchController : ControllerBase
             "list",
             cancellationToken: cancellationToken);
 
-        return Ok(new AdminSearchResultDto(users, orgs, vacancies, invoices));
+        return Ok(new AdminSearchResultDto(users, orgs, vacancies, invoices, correlations));
+    }
+
+    private async Task<IReadOnlyList<AdminSearchHitDto>> SearchCorrelationsAsync(
+        string term,
+        CancellationToken ct)
+    {
+        // Exact CorrelationId match in audit + access log (no partials — avoids leaking patterns).
+        var auditHits = await _db.AdminAuditEvents.AsNoTracking()
+            .Where(e => e.CorrelationId == term)
+            .OrderByDescending(e => e.OccurredAtUtc)
+            .Take(5)
+            .Select(e => new { e.Id, e.Action, e.CorrelationId, e.OccurredAtUtc })
+            .ToListAsync(ct);
+
+        var accessHits = await _db.PersonalDataAccessLogs.AsNoTracking()
+            .Where(l => l.CorrelationId == term)
+            .OrderByDescending(l => l.OccurredAt)
+            .Take(5)
+            .Select(l => new { l.Id, l.Resource, l.CorrelationId, l.OccurredAt })
+            .ToListAsync(ct);
+
+        return auditHits
+            .Select(e => new AdminSearchHitDto(
+                e.Id.ToString("D"),
+                e.CorrelationId,
+                $"{e.Action} · audit",
+                $"/admin/beveiliging?q={Uri.EscapeDataString(e.CorrelationId)}"))
+            .Concat(accessHits.Select(l => new AdminSearchHitDto(
+                l.Id.ToString("D"),
+                l.CorrelationId,
+                $"{l.Resource} · inzage",
+                $"/admin/beveiliging/gegevensinzage?q={Uri.EscapeDataString(l.CorrelationId)}")))
+            .Take(5)
+            .ToList();
     }
 
     private async Task<IReadOnlyList<AdminSearchHitDto>> SearchUsersAsync(

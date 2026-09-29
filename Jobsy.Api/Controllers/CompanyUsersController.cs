@@ -7,12 +7,15 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Privacy;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 
@@ -36,6 +39,8 @@ public class CompanyUsersController : ControllerBase
     private readonly IPlatformFeatureService _features;
     private readonly IPartnerAffiliateService _partnerAffiliates;
     private readonly IWebHostEnvironment _environment;
+    private readonly IAdminAuditLog _audit;
+    private readonly IAdminAuditContext _auditContext;
 
     public CompanyUsersController(
         JobsyDbContext db,
@@ -44,7 +49,9 @@ public class CompanyUsersController : ControllerBase
         IUserLookupService users,
         IPlatformFeatureService features,
         IPartnerAffiliateService partnerAffiliates,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        IAdminAuditLog audit,
+        IAdminAuditContext auditContext)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -53,6 +60,8 @@ public class CompanyUsersController : ControllerBase
         _features = features;
         _partnerAffiliates = partnerAffiliates;
         _environment = environment;
+        _audit = audit;
+        _auditContext = auditContext;
     }
 
     [HttpGet]
@@ -106,6 +115,7 @@ public class CompanyUsersController : ControllerBase
     }
 
     [HttpPost("invite")]
+    [AdminAudit(AdminAuditKeys.UserRoleChange, TargetType = AdminAuditKeys.TargetTypes.User)]
     public async Task<ActionResult<CompanyUserDto>> Invite(
         [FromBody] InviteUserRequest request,
         CancellationToken cancellationToken)
@@ -396,6 +406,7 @@ public class CompanyUsersController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [AdminAudit(AdminAuditKeys.UserRoleChange, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "id")]
     public async Task<ActionResult<CompanyUserDto>> Update(
         Guid id,
         [FromBody] UpdateCompanyUserRequest request,
@@ -522,10 +533,43 @@ public class CompanyUsersController : ControllerBase
             }
         }
 
+        var previousRole = user.Role;
         user.FullName = request.FullName.Trim();
         user.Role = request.Role;
         user.CompanyId = request.PrimaryCompanyId;
         user.IsActive = request.IsActive;
+
+        if (_companyAuth.IsAdmin(User) && previousRole != request.Role)
+        {
+            _auditContext.TargetLabel = PersonalDataMasker.MaskName(user.FullName);
+            _auditContext.SetDetailsObject(new { field = "Role", from = previousRole.ToString(), to = request.Role.ToString() });
+            try
+            {
+                _audit.Stage(new AdminAuditEntry(
+                    Action: AdminAuditKeys.UserRoleChange,
+                    TargetType: AdminAuditKeys.TargetTypes.User,
+                    TargetId: user.Id.ToString("D"),
+                    TargetLabel: _auditContext.TargetLabel,
+                    DetailsJson: _auditContext.DetailsJson,
+                    Result: AdminAuditKeys.Results.Success,
+                    ActorUserId: caller.Id,
+                    ActorRole: "Admin",
+                    CorrelationId: HttpContext.TraceIdentifier,
+                    IpAddress: HttpContext.Connection.RemoteIpAddress?.ToString()));
+                _auditContext.SuppressAutoWrite = true;
+            }
+            catch
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "Auditlog kon niet worden geschreven; rol is niet gewijzigd." });
+            }
+        }
+        else
+        {
+            // Non-admin callers are skipped by the filter; admin updates without a role change
+            // should not emit a spurious user.role.change event.
+            _auditContext.SuppressAutoWrite = true;
+        }
 
         var toRemove = user.CompanyMemberships
             .Where(m => !membershipIds.Contains(m.CompanyId))

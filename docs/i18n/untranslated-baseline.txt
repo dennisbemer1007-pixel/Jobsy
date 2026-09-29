@@ -3,5 +3,5 @@
 # LocalizationParityReportTests fails only if a language count increases.
 en=234
 pl=846
-ro=864
+ro=865
 ar=839

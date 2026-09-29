@@ -1240,4 +1240,59 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
     }
+
+    public async Task<AdminAuditPage> GetAdminAuditAsync(
+        DateTime? from = null,
+        DateTime? to = null,
+        string? action = null,
+        Guid? actor = null,
+        string? result = null,
+        string? targetType = null,
+        string? targetId = null,
+        string? q = null,
+        int page = 1,
+        int pageSize = 25,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>
+        {
+            $"page={page}",
+            $"pageSize={Math.Clamp(pageSize, 1, 100)}"
+        };
+        if (from is DateTime f) qs.Add($"from={Uri.EscapeDataString(f.ToUniversalTime().ToString("O"))}");
+        if (to is DateTime t) qs.Add($"to={Uri.EscapeDataString(t.ToUniversalTime().ToString("O"))}");
+        if (!string.IsNullOrWhiteSpace(action)) qs.Add($"action={Uri.EscapeDataString(action)}");
+        if (actor is Guid a) qs.Add($"actor={a:D}");
+        if (!string.IsNullOrWhiteSpace(result)) qs.Add($"result={Uri.EscapeDataString(result)}");
+        if (!string.IsNullOrWhiteSpace(targetType)) qs.Add($"targetType={Uri.EscapeDataString(targetType)}");
+        if (!string.IsNullOrWhiteSpace(targetId)) qs.Add($"targetId={Uri.EscapeDataString(targetId)}");
+        if (!string.IsNullOrWhiteSpace(q)) qs.Add($"q={Uri.EscapeDataString(q)}");
+
+        return await _http.GetFromJsonAsync<AdminAuditPage>($"api/admin/audit?{string.Join('&', qs)}", ct)
+               ?? new AdminAuditPage();
+    }
+
+    public async Task<byte[]> ExportAdminAuditCsvAsync(
+        DateTime? from = null,
+        DateTime? to = null,
+        string? action = null,
+        string? result = null,
+        string? q = null,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>();
+        if (from is DateTime f) qs.Add($"from={Uri.EscapeDataString(f.ToUniversalTime().ToString("O"))}");
+        if (to is DateTime t) qs.Add($"to={Uri.EscapeDataString(t.ToUniversalTime().ToString("O"))}");
+        if (!string.IsNullOrWhiteSpace(action)) qs.Add($"action={Uri.EscapeDataString(action)}");
+        if (!string.IsNullOrWhiteSpace(result)) qs.Add($"result={Uri.EscapeDataString(result)}");
+        if (!string.IsNullOrWhiteSpace(q)) qs.Add($"q={Uri.EscapeDataString(q)}");
+        var url = qs.Count == 0 ? "api/admin/audit/export" : "api/admin/audit/export?" + string.Join('&', qs);
+        return await _http.GetByteArrayAsync(url, ct);
+    }
+
+    public async Task<AdminAuditSummary?> GetAdminAuditSummaryAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<AdminAuditSummary>("api/admin/audit/summary", ct);
+
+    public async Task<AdminMfaOverview?> GetAdminMfaOverviewAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<AdminMfaOverview>("api/admin/audit/mfa-overview", ct);
 }

@@ -59,7 +59,12 @@ builder.Services.AddSingleton(sp =>
             config["Deployment:Label"]));
 });
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
-builder.Services.AddControllers()
+builder.Services.AddScoped<Jobsy.Api.Admin.IAdminAuditContext, Jobsy.Api.Admin.AdminAuditContext>();
+builder.Services.AddScoped<Jobsy.Api.Admin.AdminAuditFilter>();
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.AddService<Jobsy.Api.Admin.AdminAuditFilter>();
+    })
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(

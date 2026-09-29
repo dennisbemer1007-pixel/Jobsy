@@ -507,6 +507,12 @@ public static class PageHelpDocs
             "Filter op type en datum; uitschrijvingen staan onder Unsubscribe.",
             "Storingen en AVG-relevante events naslaan."),
 
+        ["/admin/beveiliging"] = new(
+            "Beheer · Auditlog",
+            "Onveranderbaar admin-auditlog (7 jaar).",
+            "Filter op actie, periode en resultaat; exporteer CSV; bekijk detail in de drawer.",
+            "Verantwoorden wie wat wanneer wijzigde."),
+
         ["/admin/beveiliging/gegevensinzage"] = new(
             "Beheer · Gegevensinzage",
             "Accesslog van persoonsgegevensinzage door support.",

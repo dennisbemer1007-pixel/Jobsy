@@ -88,6 +88,7 @@ public class JobsyDbContext : DbContext
     public DbSet<MarketingFlyerSettings> MarketingFlyerSettings => Set<MarketingFlyerSettings>();
     public DbSet<PlatformLog> PlatformLogs => Set<PlatformLog>();
     public DbSet<PersonalDataAccessLog> PersonalDataAccessLogs => Set<PersonalDataAccessLog>();
+    public DbSet<AdminAuditEvent> AdminAuditEvents => Set<AdminAuditEvent>();
     public DbSet<SupportAccessGrant> SupportAccessGrants => Set<SupportAccessGrant>();
     public DbSet<TokenPurchaseCheckout> TokenPurchaseCheckouts => Set<TokenPurchaseCheckout>();
     public DbSet<PendingTokenAction> PendingTokenActions => Set<PendingTokenAction>();
@@ -1525,6 +1526,26 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.ActorUserId);
             entity.HasIndex(e => e.SubjectUserId);
             entity.HasIndex(e => new { e.Resource, e.OccurredAt });
+        });
+
+        modelBuilder.Entity<AdminAuditEvent>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ActorRole).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.ActorKind).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.Action).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.TargetType).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.TargetId).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.TargetLabel).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.Property(e => e.DetailsJson).HasMaxLength(4096);
+            entity.Property(e => e.Result).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.CorrelationId).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.IpHash).HasMaxLength(64);
+            entity.HasIndex(e => e.OccurredAtUtc);
+            entity.HasIndex(e => new { e.TargetType, e.TargetId });
+            entity.HasIndex(e => e.ActorUserId);
+            entity.HasIndex(e => e.CorrelationId);
         });
 
         modelBuilder.Entity<SupportAccessGrant>(entity =>

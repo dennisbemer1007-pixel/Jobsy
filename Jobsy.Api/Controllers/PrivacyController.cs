@@ -4,6 +4,9 @@ using Jobsy.Core.Privacy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.DependencyInjection;
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 
@@ -81,6 +84,7 @@ public sealed class PrivacyController : ControllerBase
 
     /// <summary>Account deletion step 1 — store reason and e-mail verification code.</summary>
     [HttpPost("request-unsubscribe")]
+    [AdminAuditExempt("OTP request; no admin write")]
     [EnableRateLimiting("auth")]
     public async Task<IActionResult> RequestUnsubscribe(
         [FromBody] RequestUnsubscribeRequest request,
@@ -111,6 +115,7 @@ public sealed class PrivacyController : ControllerBase
 
     /// <summary>Account deletion step 2 — verify code, block account and clean data.</summary>
     [HttpPost("confirm-unsubscribe")]
+    [AdminAuditExempt("Self unsubscribe confirm; deletion covered by delete-account")]
     [EnableRateLimiting("otp-verify")]
     public async Task<IActionResult> ConfirmUnsubscribe(
         [FromBody] ConfirmUnsubscribeRequest request,
@@ -140,6 +145,7 @@ public sealed class PrivacyController : ControllerBase
     /// and the e-mail verification code (same as <c>confirm-unsubscribe</c>).
     /// </summary>
     [HttpPost("delete-account")]
+    [AdminAudit(AdminAuditKeys.PrivacyAccountDeleted, TargetType = AdminAuditKeys.TargetTypes.Account)]
     [EnableRateLimiting("otp-verify")]
     public async Task<IActionResult> DeleteAccount(
         [FromBody] ConfirmUnsubscribeRequest? request,
@@ -155,6 +161,18 @@ public sealed class PrivacyController : ControllerBase
 
         try
         {
+            var me = await _users.FindByPrincipalAsync(User, cancellationToken);
+            var auditContext = HttpContext.RequestServices.GetRequiredService<IAdminAuditContext>();
+            auditContext.ForceWrite = true;
+            if (me is not null)
+            {
+                var shortId = me.Id.ToString("N")[..8];
+                auditContext.TargetId = me.Id.ToString("D");
+                auditContext.TargetLabel = me.Role == Core.Enums.UserRole.Candidate
+                    ? $"Kandidaat #{shortId}"
+                    : $"Account #{shortId}";
+            }
+
             await _privacy.ConfirmUnsubscribeAsync(User, request.VerificationCode, cancellationToken);
             return Ok(new { message = "Accountgegevens zijn geanonimiseerd." });
         }

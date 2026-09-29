@@ -114,7 +114,8 @@ public record AdminSearchResultDto(
     IReadOnlyList<AdminSearchHitDto> Users,
     IReadOnlyList<AdminSearchHitDto> Organisations,
     IReadOnlyList<AdminSearchHitDto> Vacancies,
-    IReadOnlyList<AdminSearchHitDto> Invoices);
+    IReadOnlyList<AdminSearchHitDto> Invoices,
+    IReadOnlyList<AdminSearchHitDto>? Correlations = null);
 
 /// <summary>Admin applications without company/vacancy filter: aggregates only.</summary>
 public record AdminApplicationsAggregateDto(
@@ -246,7 +247,8 @@ public record UpdatePlatformFeatureRequest(
     DateOnly? FreePublishUntil = null,
     bool ClearFreePublishUntil = false,
     bool? SupportAccessNotifyAdmins = null,
-    bool? SupportAccessNotifySubject = null);
+    bool? SupportAccessNotifySubject = null,
+    string? Reason = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,

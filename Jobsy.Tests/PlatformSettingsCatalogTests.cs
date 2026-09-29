@@ -173,7 +173,10 @@ public class PlatformFeaturesEnvLockApiTests
                 new PlatformCompanySettingsService(db),
                 features),
             new FlexCommercialService(db),
-            new DeploymentEnvironmentLabel(env));
+            new DeploymentEnvironmentLabel(env),
+            new NoOpAdminAuditLog(),
+            new NoOpAdminAuditContext(),
+            new FakeUserLookup());
     }
 
     private static JobsyDbContext CreateDb()

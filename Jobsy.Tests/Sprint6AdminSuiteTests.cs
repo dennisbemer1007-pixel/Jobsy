@@ -281,7 +281,10 @@ public class Sprint6AdminSuiteTests
                     Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
                     new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build())),
             new FlexCommercialService(db),
-            new Jobsy.Core.Hosting.DeploymentEnvironmentLabel("Lokaal"));
+            new Jobsy.Core.Hosting.DeploymentEnvironmentLabel("Lokaal"),
+            new NoOpAdminAuditLog(),
+            new NoOpAdminAuditContext(),
+            new FakeUserLookup());
 
         var create = await controller.UpsertEarlyAdapterRule(
             new UpsertEarlyAdapterRuleRequest(null, "Pilot", 5, 10m, true),

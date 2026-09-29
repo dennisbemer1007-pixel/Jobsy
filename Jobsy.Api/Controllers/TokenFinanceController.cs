@@ -6,6 +6,8 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 
@@ -86,6 +88,7 @@ public sealed class TokenFinanceController : ControllerBase
     }
 
     [HttpGet("finance/purchases/export")]
+    [AdminAudit(AdminAuditKeys.ExportCreate, TargetType = AdminAuditKeys.TargetTypes.Export)]
     public async Task<IActionResult> ExportPurchases(
         [FromQuery] int? year = null,
         [FromQuery] int? quarter = null,
@@ -99,6 +102,7 @@ public sealed class TokenFinanceController : ControllerBase
     }
 
     [HttpGet("finance/goodwill/export")]
+    [AdminAudit(AdminAuditKeys.ExportCreate, TargetType = AdminAuditKeys.TargetTypes.Export)]
     public async Task<IActionResult> ExportGoodwill(
         [FromQuery] int? year = null,
         [FromQuery] int? quarter = null,

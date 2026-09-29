@@ -8,6 +8,8 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 
@@ -24,6 +26,7 @@ public class TokensController : ControllerBase
     private readonly IUserLookupService _users;
     private readonly ITokenPurchaseFulfillmentService _fulfillment;
     private readonly IPendingTokenActionService _pendingActions;
+    private readonly IAdminAuditContext _auditContext;
 
     public TokensController(
         JobsyDbContext db,
@@ -32,8 +35,10 @@ public class TokensController : ControllerBase
         IPaymentService payments,
         IUserLookupService users,
         ITokenPurchaseFulfillmentService fulfillment,
-        IPendingTokenActionService pendingActions)
+        IPendingTokenActionService pendingActions,
+        IAdminAuditContext auditContext)
     {
+        _auditContext = auditContext;
         _db = db;
         _companyAuth = companyAuth;
         _tokenLedger = tokenLedger;
@@ -159,6 +164,7 @@ public class TokensController : ControllerBase
     }
 
     [HttpPost("checkout")]
+    [AdminAuditExempt("Checkout is employer-facing, not an admin write")]
     [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
     [RequireCompanyAccess]
     public async Task<ActionResult<CheckoutResultDto>> CreateCheckout(
@@ -311,6 +317,7 @@ public class TokensController : ControllerBase
     /// Also generates the official invoice and queues the BTW-buffer transfer.
     /// </summary>
     [HttpPost("checkout/complete")]
+    [AdminAuditExempt("Checkout complete is employer-facing")]
     [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
     public async Task<ActionResult<CompleteCheckoutResultDto>> CompleteCheckout(
         [FromBody] CompleteCheckoutRequest request,
@@ -385,6 +392,7 @@ public class TokensController : ControllerBase
     }
 
     [HttpPost("allocate")]
+    [AdminAuditExempt("Allocate is employer token move")]
     [Authorize(Roles = JobsyRoles.TokenAllocateRoles)]
     public async Task<ActionResult<object>> Allocate(
         [FromBody] AllocateTokensRequest request,
@@ -469,6 +477,7 @@ public class TokensController : ControllerBase
     }
 
     [HttpPost("grant")]
+    [AdminAudit(AdminAuditKeys.TokensGoodwillGrant, TargetType = AdminAuditKeys.TargetTypes.Company)]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<TokenBalanceDto>> Grant([FromBody] GrantTokensRequest request, CancellationToken cancellationToken)
     {
@@ -498,6 +507,11 @@ public class TokensController : ControllerBase
         {
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
             // Admin grants via this endpoint are logged as Goodwill (€ 0,00 — no BTW/omzet).
+            _auditContext.TargetId = company.Id.ToString("D");
+            _auditContext.TargetLabel = company.Name;
+            _auditContext.Reason = note;
+            _auditContext.SetDetailsObject(new { amount = request.Amount, company = company.Name });
+
             var entry = await _tokenLedger.GrantGoodwillAsync(
                 request.CompanyId,
                 request.Amount,
@@ -521,6 +535,7 @@ public class TokensController : ControllerBase
     /// Explicit goodwill / compensatie endpoint (same behaviour as grant; clearer for admin tooling).
     /// </summary>
     [HttpPost("goodwill")]
+    [AdminAudit(AdminAuditKeys.TokensGoodwillGrant, TargetType = AdminAuditKeys.TargetTypes.Company)]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<TokenBalanceDto>> GrantGoodwill(
         [FromBody] GrantTokensRequest request,

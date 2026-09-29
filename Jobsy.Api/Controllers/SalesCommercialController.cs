@@ -6,6 +6,8 @@ using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 
@@ -56,6 +58,7 @@ public partial class SalesCommercialController : ControllerBase
         => Ok(await _sales.GetAdminAsync(cancellationToken));
 
     [HttpPut("admin/settings")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<object>> UpdateSettings(
         [FromBody] UpdateSalesCommercialSettingsRequest request,
@@ -102,6 +105,7 @@ public partial class SalesCommercialController : ControllerBase
     }
 
     [HttpPut("admin/vacancy-type-costs")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<object>> UpdateVacancyTypeCost(
         [FromBody] UpdateVacancyTypeCostRequest request,
@@ -133,6 +137,7 @@ public partial class SalesCommercialController : ControllerBase
     }
 
     [HttpPut("admin/packages")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<object>> UpsertPackage(
         [FromBody] UpsertSalesPackageRequest request,
@@ -178,6 +183,7 @@ public partial class SalesCommercialController : ControllerBase
     }
 
     [HttpDelete("admin/packages/{id:guid}")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingDelete, TargetType = AdminAuditKeys.TargetTypes.Setting, TargetRouteKey = "id")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<IActionResult> DeletePackage(Guid id, CancellationToken cancellationToken)
     {

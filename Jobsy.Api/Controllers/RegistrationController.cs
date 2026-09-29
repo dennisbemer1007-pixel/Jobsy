@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 
@@ -62,6 +64,7 @@ public class RegistrationController : ControllerBase
     }
 
     [HttpPost]
+    [AdminAuditExempt("Public/employer registration submit")]
     [AllowAnonymous]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<RegistrationSubmitResponse>> Submit(
@@ -119,6 +122,7 @@ public class RegistrationController : ControllerBase
     }
 
     [HttpPost("{id:guid}/confirm")]
+    [AdminAuditExempt("Registration confirm OTP")]
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
     public async Task<ActionResult<RegistrationActivationResponse>> Confirm(
@@ -150,6 +154,7 @@ public class RegistrationController : ControllerBase
     }
 
     [HttpPost("activate")]
+    [AdminAuditExempt("Registration activate")]
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
     public async Task<ActionResult<RegistrationActivationResponse>> Activate(
@@ -205,6 +210,7 @@ public class RegistrationController : ControllerBase
     }
 
     [HttpPost("takeovers/{id:guid}/approve")]
+    [AdminAudit(AdminAuditKeys.TakeoverApprove, TargetType = AdminAuditKeys.TargetTypes.Takeover, TargetRouteKey = "id")]
     [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.BranchManager},{JobsyRoles.Admin}")]
     public async Task<ActionResult<TakeoverDecisionResponse>> Approve(
         Guid id,
@@ -253,6 +259,7 @@ public class RegistrationController : ControllerBase
     }
 
     [HttpPost("takeovers/{id:guid}/reject")]
+    [AdminAudit(AdminAuditKeys.TakeoverReject, TargetType = AdminAuditKeys.TargetTypes.Takeover, TargetRouteKey = "id")]
     [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.BranchManager},{JobsyRoles.Admin}")]
     public async Task<ActionResult<TakeoverDecisionResponse>> Reject(
         Guid id,

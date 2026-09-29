@@ -18,6 +18,12 @@ public static class PrivacyConstants
     /// </summary>
     public const int PersonalDataAccessLogRetentionDays = 730;
 
+    /// <summary>
+    /// Admin audit log retention (fiscal bewaarplicht for token/payout actions). Configurable:
+    /// <c>Privacy:AdminAuditRetentionDays</c>. Default 7 years.
+    /// </summary>
+    public const int AdminAuditRetentionDays = 2555;
+
     public const int CancelledRegistrationRetentionDays = 30;
     public const int EngagementEventRetentionDays = 365;
 

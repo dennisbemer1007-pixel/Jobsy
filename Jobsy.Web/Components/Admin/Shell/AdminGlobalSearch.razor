@@ -41,6 +41,7 @@
                 @RenderGroup(Culture["AdminShell.SearchOrgs"], _result.Organisations, "orgs")
                 @RenderGroup(Culture["AdminShell.SearchVacancies"], _result.Vacancies, "vacancies")
                 @RenderGroup(Culture["AdminShell.SearchInvoices"], _result.Invoices, "invoices")
+                @RenderGroup(Culture["AdminShell.SearchCorrelations"], _result.Correlations, "correlations")
             }
         </div>
     }
@@ -233,7 +234,8 @@
     }
 
     private static bool IsEmpty(AdminSearchResultDto r)
-        => r.Users.Count == 0 && r.Organisations.Count == 0 && r.Vacancies.Count == 0 && r.Invoices.Count == 0;
+        => r.Users.Count == 0 && r.Organisations.Count == 0 && r.Vacancies.Count == 0
+           && r.Invoices.Count == 0 && r.Correlations.Count == 0;
 
     private static List<AdminSearchHitDto> Flatten(AdminSearchResultDto? r)
     {
@@ -242,7 +244,7 @@
             return [];
         }
 
-        return [.. r.Users, .. r.Organisations, .. r.Vacancies, .. r.Invoices];
+        return [.. r.Users, .. r.Organisations, .. r.Vacancies, .. r.Invoices, .. r.Correlations];
     }
 
     public async ValueTask DisposeAsync()

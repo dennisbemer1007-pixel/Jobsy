@@ -165,6 +165,7 @@ public sealed class PlatformFeaturePatch
     public bool ClearFreePublishUntil { get; set; }
     public bool? SupportAccessNotifyAdmins { get; set; }
     public bool? SupportAccessNotifySubject { get; set; }
+    public string? Reason { get; set; }
 }
 
 public sealed class AdminTodoItemView
@@ -297,4 +298,5 @@ public sealed class AdminSearchResultDto
     public List<AdminSearchHitDto> Organisations { get; set; } = [];
     public List<AdminSearchHitDto> Vacancies { get; set; } = [];
     public List<AdminSearchHitDto> Invoices { get; set; } = [];
+    public List<AdminSearchHitDto> Correlations { get; set; } = [];
 }

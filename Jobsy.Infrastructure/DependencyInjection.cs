@@ -68,6 +68,8 @@ public static class DependencyInjection
             return protector;
         });
         services.AddScoped<IPersonalDataAccessLogger, PersonalDataAccessLogger>();
+        services.AddScoped<IAdminAuditLog, AdminAuditLog>();
+        services.AddSingleton<AdminAuditAppendOnlyInterceptor>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<ISupportAccessService, SupportAccessService>();
         services.AddSingleton<ICandidateInsightsQueue, CandidateInsightsQueue>();
@@ -148,12 +150,15 @@ public static class DependencyInjection
                 }
             });
 
-        services.AddDbContext<JobsyDbContext>(options =>
+        services.AddDbContext<JobsyDbContext>((sp, options) =>
+        {
             options.UseNpgsql(connectionString, npgsql =>
             {
                 npgsql.UseNetTopologySuite();
                 npgsql.MigrationsAssembly(typeof(JobsyDbContext).Assembly.FullName);
-            }));
+            });
+            options.AddInterceptors(sp.GetRequiredService<AdminAuditAppendOnlyInterceptor>());
+        });
 
         var openAiBaseUrl = configuration.GetSection(OpenAiOptions.SectionName)["BaseUrl"]
             ?? "https://api.openai.com/v1/";

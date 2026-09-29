@@ -1,4 +1,6 @@
+using Jobsy.Core.Admin;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -73,6 +75,19 @@ public sealed class DataRetentionHostedService : BackgroundService
         var accessLogCutoff = now.AddDays(-accessLogDays);
         var accessLogsRemoved = await db.PersonalDataAccessLogs
             .Where(l => l.OccurredAt < accessLogCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        var auditDays = _configuration.GetValue(
+            "Privacy:AdminAuditRetentionDays",
+            PrivacyConstants.AdminAuditRetentionDays);
+        if (auditDays < 30)
+        {
+            auditDays = PrivacyConstants.AdminAuditRetentionDays;
+        }
+
+        var auditCutoff = now.AddDays(-auditDays);
+        var auditRemoved = await db.AdminAuditEvents
+            .Where(e => e.OccurredAtUtc < auditCutoff)
             .ExecuteDeleteAsync(cancellationToken);
 
         var regCutoff = now.AddDays(-PrivacyConstants.CancelledRegistrationRetentionDays);
@@ -157,15 +172,50 @@ public sealed class DataRetentionHostedService : BackgroundService
 
         var staleScreenshotCount = await PurgeStaleFeedbackScreenshotsAsync(db, now, cancellationToken);
 
-        if (logsRemoved + accessLogsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
+        if (logsRemoved + accessLogsRemoved + auditRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
             + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count
             + withdrawnWithSnapshots.Count + staleScreenshotCount > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}",
-                logsRemoved, accessLogsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
+                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, adminAudit={Audit}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}",
+                logsRemoved, accessLogsRemoved, auditRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
                 unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count,
                 withdrawnWithSnapshots.Count, staleScreenshotCount);
+        }
+
+        try
+        {
+            var audit = scope.ServiceProvider.GetRequiredService<IAdminAuditLog>();
+            await audit.WriteAsync(
+                new AdminAuditEntry(
+                    Action: AdminAuditKeys.PrivacyRetentionRun,
+                    TargetType: AdminAuditKeys.TargetTypes.Retention,
+                    TargetId: "data-retention",
+                    TargetLabel: "Data retention",
+                    DetailsJson: System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, int>
+                    {
+                        ["platformLogs"] = logsRemoved,
+                        ["personalDataAccessLogs"] = accessLogsRemoved,
+                        ["adminAuditEvents"] = auditRemoved,
+                        ["registrations"] = regsRemoved,
+                        ["clicks"] = clicksRemoved,
+                        ["shares"] = sharesRemoved,
+                        ["impressions"] = impressionsRemoved,
+                        ["visits"] = visitsRemoved,
+                        ["unverifiedApps"] = unverifiedAppsRemoved,
+                        ["notifications"] = notificationsRemoved,
+                        ["actionTokens"] = tokensRemoved,
+                        ["withdrawnScrubbed"] = withdrawnWithSnapshots.Count,
+                        ["feedbackScreenshots"] = staleScreenshotCount
+                    }),
+                    Result: AdminAuditKeys.Results.Success,
+                    ActorKind: AdminAuditKeys.ActorKinds.System,
+                    ActorRole: "system"),
+                cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Failed to write privacy.retention.run audit event.");
         }
     }
 
