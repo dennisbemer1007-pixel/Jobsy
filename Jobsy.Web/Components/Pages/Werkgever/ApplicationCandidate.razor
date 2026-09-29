@@ -1,0 +1,343 @@
+@page "/werkgever/sollicitaties/{ApplicationId:guid}"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Components.Werkgever.Applications
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.Components.Authorization
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+@inject IJSRuntime Js
+@implements IDisposable
+
+<PageTitle>@PageHeading · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_item is null)
+{
+    <p class="state-message error">@Culture["WgApp.EmptyFilter"]</p>
+    <a class="btn-compact" href="/werkgever/sollicitaties">@Culture["WgApp.Back"]</a>
+}
+else
+{
+    var a = _item;
+    var overdue = ApplicationPipelineRules.IsOverdue(a, DateTime.UtcNow);
+    var age = ApplicationPipelineRules.AgeDays(a, DateTime.UtcNow);
+    var initials = ApplicationPipelineRules.Initials(a);
+    <div class="wg-app-cand" data-testid="wg-app-mobile-cand">
+        <header class="wg-app-cand__top">
+            <a href="/werkgever/sollicitaties" aria-label="@Culture["WgApp.Back"]">
+                <span aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+            </a>
+            <div class="wg-app-cand__titles">
+                <strong>@DisplayName(a)</strong>
+                <span>@a.VacancyTitle · @a.CompanyName</span>
+            </div>
+        </header>
+
+        <div class="wg-app-cand__body">
+            <div class="wg-app-cand__summary">
+                <span class="wg-app-drawer__avatar" aria-hidden="true">
+                    @if (initials is not null)
+                    {
+                        @initials
+                    }
+                    else
+                    {
+                        @((MarkupString)NavIcons.User)
+                    }
+                </span>
+                <div>
+                    <p class="wg-app-cand__status">
+                        @(ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Pending
+                            ? Culture["WgApp.Mobile.NewTitle"]
+                            : Culture[ApplicationPipelineRules.StatusLabelKey(a.Status)])
+                    </p>
+                    @if (overdue)
+                    {
+                        <p class="wg-app-cand__late">@string.Format(Culture["WgApp.Mobile.NoResponse"], Math.Max(age, 2))</p>
+                    }
+                </div>
+                @if (a.MatchPercent is int pct)
+                {
+                    <span class="wg-app-cand__match">@string.Format(Culture["WgApp.MatchPill"], pct)</span>
+                }
+            </div>
+
+            <dl class="wg-app-cand__grid">
+                <div class="wg-app-cand__tile">
+                    <dt>@Culture["WgApp.Fact.Travel"]</dt>
+                    <dd>@FormatTravel(a)</dd>
+                </div>
+                <div class="wg-app-cand__tile">
+                    <dt>@Culture["WgApp.Fact.Available"]</dt>
+                    <dd>@FormatAvailability(a)</dd>
+                </div>
+                <div class="wg-app-cand__tile">
+                    <dt>@Culture["WgApp.Fact.Hours"]</dt>
+                    <dd>@(HoursFact(a) ?? "—")</dd>
+                </div>
+                <div class="wg-app-cand__tile">
+                    <dt>@Culture["WgApp.Fact.License"]</dt>
+                    <dd>@(ApplicationPipelineRules.IsPiiStage(a) && !string.IsNullOrWhiteSpace(a.SnapshotDrivingLicenses) ? a.SnapshotDrivingLicenses : "—")</dd>
+                </div>
+            </dl>
+
+            <section>
+                <h2>@Culture["WgApp.Tab.Motivation"]</h2>
+                <div class="wg-app-cand__block">
+                    <p>@(string.IsNullOrWhiteSpace(a.Motivation) ? "—" : a.Motivation)</p>
+                </div>
+            </section>
+
+            <section>
+                <h2>@Culture["WgApp.Fact.EducationExp"]</h2>
+                <div class="wg-app-cand__block">
+                    @if (ApplicationPipelineRules.IsPiiStage(a) && !string.IsNullOrWhiteSpace(a.SnapshotEducations))
+                    {
+                        <p><strong>@a.SnapshotEducations</strong></p>
+                        <p class="muted">@Culture["WgApp.Completed"]</p>
+                    }
+                    else
+                    {
+                        <p class="muted">—</p>
+                    }
+                    @if (ApplicationPipelineRules.IsPiiStage(a) && a.CandidateEmployerCount > 0)
+                    {
+                        <p><strong>@Culture["WgApp.Fact.Experience"]</strong></p>
+                        <p class="muted">@a.CandidateEmployerCount</p>
+                    }
+                </div>
+            </section>
+
+            <div class="wg-app-cand__privacy">
+                <span aria-hidden="true">@((MarkupString)NavIcons.Lock)</span>
+                <span>@Culture[ApplicationPipelineRules.PrivacyNoteKey(a)]</span>
+            </div>
+        </div>
+
+        @if (CanWrite || ApplicationPipelineRules.ShowCvDownload(a))
+        {
+            <div class="wg-app-cand__footer" data-testid="wg-app-mobile-footer">
+                <ApplicationCandidateActions Item="a"
+                                             CanWrite="CanWrite"
+                                             Busy="_busy"
+                                             OnPrimary="HandlePrimary"
+                                             OnReject="HandleReject"
+                                             OnDownloadCv="HandleDownloadCv" />
+            </div>
+        }
+        else if (Role == EmployerRole.Regiomanager)
+        {
+            <p class="wg-readonly-hint wg-app-cand__rm-hint">@Culture["WgApp.RmHint"]</p>
+        }
+    </div>
+}
+
+@if (_rejectOpen && _item is not null)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["WgApp.RejectConfirmTitle"]"
+                         TitleId="wg-app-m-reject"
+                         OnClose="() => _rejectOpen = false">
+        <p>@Culture["WgApp.RejectConfirmBody"]</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" @onclick="() => _rejectOpen = false">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact btn-compact--danger" disabled="@_busy" @onclick="ConfirmRejectAsync">
+                @Culture["WgApp.Action.Reject"]
+            </button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@if (_hireOpen && _item is not null)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["WgApp.HireConfirmTitle"]"
+                         TitleId="wg-app-m-hire"
+                         OnClose="() => _hireOpen = false">
+        <p>@string.Format(Culture["WgApp.HireConfirmBody"], DisplayName(_item), _item.VacancyTitle)</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" @onclick="() => _hireOpen = false">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="ConfirmHireAsync">
+                @Culture["WgApp.Action.Hire"]
+            </button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@if (!string.IsNullOrEmpty(_message))
+{
+    <p class="state-message" role="status">@_message</p>
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private EmployerApplicationItem? _item;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _rejectOpen;
+    private bool _hireOpen;
+    private string? _message;
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private bool CanWrite => ApplicationPipelineRules.CanAct(Role);
+    private string PageHeading => _item is null ? Culture["WgNav.Applications"] : DisplayName(_item);
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await ScopeBootstrap.EnsureLoadedAsync();
+            var items = await Api.GetApplicationsAsync();
+            _item = items.FirstOrDefault(a => a.Id == ApplicationId);
+        }
+        catch
+        {
+            _item = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string DisplayName(EmployerApplicationItem item)
+        => ApplicationPipelineRules.DisplayName(item, Culture["WgApp.Anonymous"]);
+
+    private string FormatTravel(EmployerApplicationItem item)
+        => string.Format(Culture["WgApp.TravelFmt"], item.EstimatedTravelMinutes, UiLabels.Transport(Culture, item.PreferredTransport));
+
+    private string FormatAvailability(EmployerApplicationItem item)
+    {
+        var availability = LobsyCvModelFactory.ParseAvailabilityPayload(item.SnapshotAvailabilityJson);
+        if (availability.FlexibleTimes)
+        {
+            return Culture["WgApp.Direct"];
+        }
+
+        return string.IsNullOrWhiteSpace(item.AvailabilitySummary) ? "—" : item.AvailabilitySummary;
+    }
+
+    private static string? HoursFact(EmployerApplicationItem item)
+    {
+        var prefs = ApplicationPreferenceRedaction.ToHumanReadable(item.PreferencesSummary);
+        return string.IsNullOrWhiteSpace(prefs) ? null : prefs;
+    }
+
+    private Task HandlePrimary()
+        => _item is null ? Task.CompletedTask : PrimaryAsync(_item);
+
+    private Task HandleReject()
+    {
+        _rejectOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleDownloadCv()
+        => _item is null ? Task.CompletedTask : DownloadCvAsync(_item.Id);
+
+    private async Task PrimaryAsync(EmployerApplicationItem a)
+    {
+        switch (ApplicationPipelineRules.StatusOf(a))
+        {
+            case ApplicationStatus.Pending:
+                await ReactAsync("Accepted");
+                break;
+            case ApplicationStatus.Accepted:
+                await MarkContactAsync();
+                break;
+            case ApplicationStatus.EmployerContacting:
+                _hireOpen = true;
+                break;
+        }
+    }
+
+    private async Task ConfirmRejectAsync()
+    {
+        _rejectOpen = false;
+        await ReactAsync("Rejected");
+    }
+
+    private async Task ConfirmHireAsync()
+    {
+        if (_item is null) return;
+        _hireOpen = false;
+        _busy = true;
+        try
+        {
+            await Api.FulfillVacancyAsync(_item.VacancyId, _item.Id, true, true);
+            await ReloadSelfAsync();
+            _message = Culture["WgApp.HiredToast"];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally { _busy = false; }
+    }
+
+    private async Task ReactAsync(string status)
+    {
+        if (_item is null || !CanWrite) return;
+        _busy = true;
+        try
+        {
+            await Api.ReactToApplicationAsync(_item.Id, status);
+            await ReloadSelfAsync();
+            _message = status == "Accepted" ? Culture["WgApp.AcceptedToast"] : Culture["WgApp.RejectedToast"];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally { _busy = false; }
+    }
+
+    private async Task MarkContactAsync()
+    {
+        if (_item is null) return;
+        _busy = true;
+        try
+        {
+            await Api.MarkEmployerContactAsync(_item.Id);
+            await ReloadSelfAsync();
+            _message = Culture["WgApp.InvitedToast"];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally { _busy = false; }
+    }
+
+    private async Task DownloadCvAsync(Guid id)
+    {
+        _busy = true;
+        try { await Api.DownloadApplicationLobsyCvPdfAsync(id, Js); }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task ReloadSelfAsync()
+    {
+        var items = await Api.GetApplicationsAsync();
+        _item = items.FirstOrDefault(a => a.Id == ApplicationId);
+    }
+}

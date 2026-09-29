@@ -236,8 +236,61 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<CandidateActionResultItem>(cancellationToken: ct);
     }
 
-    public async Task<IReadOnlyList<EmployerApplicationItem>> GetApplicationsAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<EmployerApplicationItem>>("api/applications", ct) ?? [];
+    public async Task<IReadOnlyList<EmployerApplicationItem>> GetApplicationsAsync(
+        Guid? companyId = null,
+        Guid? vacancyId = null,
+        IReadOnlyList<string>? statuses = null,
+        int? overdueHours = null,
+        IReadOnlyList<Guid>? branchIds = null,
+        int? page = null,
+        int? pageSize = null,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>();
+        if (companyId is Guid cid)
+        {
+            qs.Add($"companyId={cid:D}");
+        }
+
+        if (vacancyId is Guid vid)
+        {
+            qs.Add($"vacancyId={vid:D}");
+        }
+
+        if (statuses is { Count: > 0 })
+        {
+            foreach (var s in statuses)
+            {
+                qs.Add($"status={Uri.EscapeDataString(s)}");
+            }
+        }
+
+        if (overdueHours is int hours && hours > 0)
+        {
+            qs.Add($"overdueHours={hours}");
+        }
+
+        if (branchIds is { Count: > 0 })
+        {
+            foreach (var id in branchIds)
+            {
+                qs.Add($"branchIds={id:D}");
+            }
+        }
+
+        if (page is int p)
+        {
+            qs.Add($"page={p}");
+        }
+
+        if (pageSize is int ps)
+        {
+            qs.Add($"pageSize={ps}");
+        }
+
+        var url = "api/applications" + (qs.Count == 0 ? "" : "?" + string.Join('&', qs));
+        return await _http.GetFromJsonAsync<List<EmployerApplicationItem>>(url, ct) ?? [];
+    }
 
     public async Task<ApplyResultItem?> ApplyAsync(
         Guid vacancyId,

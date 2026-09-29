@@ -285,6 +285,12 @@ public static class PageHelpDocs
             "Filter en open kandidaten, bekijk matchscore/status en vervolgstappen. Naam en cv na acceptatie; e-mail en telefoon pas na aanname.",
             "Selectie en opvolging van sollicitaties door managers."),
 
+        ["/werkgever/sollicitaties/{ApplicationId:guid}"] = new(
+            "Sollicitatie",
+            "Kandidaatdetails en privacyfasen voor één sollicitatie.",
+            "Acties per fase: accepteren, uitnodigen, aannemen. Contactgegevens pas na aanname.",
+            "Mobiele opvolging van een sollicitatie."),
+
 
 
         ["/intermediary"] = new(
@@ -537,6 +543,8 @@ public static class PageHelpDocs
             "Dieper analyseren waarom een KPI zo staat.")),
 
         ("/partner/", Exact["/partner"]),
+
+        ("/werkgever/sollicitaties/", Exact["/werkgever/sollicitaties"]),
 
         ("/werkgever/organisatie/salaristabellen/", Exact["/werkgever/organisatie/salaristabellen"])
     ];

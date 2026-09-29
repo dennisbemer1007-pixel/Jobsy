@@ -19,6 +19,7 @@ public static class WerkgeverRightsMatrix
         new("/werkgever/vacatures", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
         new("/werkgever/vacatures/nieuw", "BranchManager,EnterpriseManager,Intermediary", true, false, true),
         new("/werkgever/sollicitaties", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
+        new("/werkgever/sollicitaties/{ApplicationId:guid}", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
         new("/werkgever/talentpool", "BranchManager,RegionalManager,EnterpriseManager,Intermediary", true, true, true),
         new("/werkgever/kandidaatinzichten", "BranchManager,RegionalManager,EnterpriseManager", true, true, true),
         new("/werkgever/organisatie/vestigingen", "RegionalManager,EnterpriseManager,Admin", true, true, false),
@@ -42,6 +43,10 @@ public static class WerkgeverRightsMatrix
         new("api/vacancies/{id}/pushbom", true, false, true),
         new("api/vacancies/{id}/extend", true, false, true),
         new("api/vacancies/{id}/inactive", true, false, true),
+        // Sollicitaties mutating (04): RM forbidden; VM scoped; BM allowed.
+        new("api/applications/{id}/react", true, false, true),
+        new("api/applications/{id}/contact", true, false, true),
+        new("api/applications/vacancies/{vacancyId}/fulfill/{applicationId}", true, false, true),
     ];
 
     public static bool RoleAllowed(PageRow row, EmployerRole role) => role switch

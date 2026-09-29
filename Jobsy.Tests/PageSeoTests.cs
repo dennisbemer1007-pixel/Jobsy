@@ -112,6 +112,8 @@ public class PageSeoCatalogTests
             .Replace("{Id:guid}", "c1000000-0000-0000-0000-000000000010", StringComparison.Ordinal)
             .Replace("{TableId:guid}", "c2000000-0000-0000-0000-000000000020", StringComparison.Ordinal)
             .Replace("{CompanyId:guid}", "c3000000-0000-0000-0000-000000000030", StringComparison.Ordinal)
+            .Replace("{ApplicationId:guid}", "c4000000-0000-0000-0000-000000000040", StringComparison.Ordinal)
+            .Replace("{applicationId:guid}", "c4000000-0000-0000-0000-000000000040", StringComparison.Ordinal)
             .Replace("{TrackingCode?}", "", StringComparison.Ordinal)
             .Replace("{TrackingCode}", "SM-ABCDEF", StringComparison.Ordinal)
             .Replace("{Key}", "clicks", StringComparison.Ordinal);

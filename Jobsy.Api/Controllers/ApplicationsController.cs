@@ -74,6 +74,9 @@ public class ApplicationsController : ControllerBase
     public async Task<ActionResult> GetForManagedCompanies(
         [FromQuery] Guid? companyId = null,
         [FromQuery] Guid? vacancyId = null,
+        [FromQuery] string[]? status = null,
+        [FromQuery] int? overdueHours = null,
+        [FromQuery] Guid[]? branchIds = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
@@ -140,6 +143,47 @@ public class ApplicationsController : ControllerBase
         if (vacancyId is Guid vid)
         {
             query = query.Where(a => a.VacancyId == vid);
+        }
+
+        if (branchIds is { Length: > 0 })
+        {
+            IEnumerable<Guid> allowedBranches = branchIds.Distinct();
+            if (accessible is not null)
+            {
+                allowedBranches = allowedBranches.Where(accessible.Contains);
+            }
+
+            var branchSet = allowedBranches.ToList();
+            if (branchSet.Count == 0)
+            {
+                return Ok(Array.Empty<EmployerApplicationDto>());
+            }
+
+            query = query.Where(a =>
+                branchSet.Contains(a.Vacancy.CompanyId)
+                || (a.Vacancy.IntermediaryCompanyId != null
+                    && branchSet.Contains(a.Vacancy.IntermediaryCompanyId.Value)));
+        }
+
+        if (status is { Length: > 0 })
+        {
+            var parsed = status
+                .Select(s => Enum.TryParse<ApplicationStatus>(s, ignoreCase: true, out var st) ? st : (ApplicationStatus?)null)
+                .Where(s => s.HasValue)
+                .Select(s => s!.Value)
+                .Distinct()
+                .ToList();
+            if (parsed.Count > 0)
+            {
+                query = query.Where(a => parsed.Contains(a.Status));
+            }
+        }
+
+        if (overdueHours is int hours && hours > 0)
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-hours);
+            query = query.Where(a =>
+                a.Status == ApplicationStatus.Pending && a.CreatedAt < cutoff);
         }
 
         query = query
