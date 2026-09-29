@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
@@ -64,9 +65,11 @@ public class PupilQuestionBankDocFreshnessTests
         sb.AppendLine();
         var report = DutchReadability.Analyze(bank.Questions.SelectMany(q =>
             new[] { strings.GetValueOrDefault(q.TextKey, ""), strings.GetValueOrDefault(q.ExampleKey, "") }));
-        sb.AppendLine(
+        // InvariantCulture: full-suite culture changes (nl-NL) must not rewrite the decimal.
+        sb.AppendLine(string.Create(
+            CultureInfo.InvariantCulture,
             $"Readability: gemiddelde zinslengte **{report.AverageWordsPerSentence:0.00}** woorden; " +
-            $"aandeel lange woorden (>3 lettergrepen) **{DutchReadability.FormatPercent(report.LongWordShare)}%**.");
+            $"aandeel lange woorden (>3 lettergrepen) **{DutchReadability.FormatPercent(report.LongWordShare)}%**."));
         sb.AppendLine();
         return sb.ToString();
     }
