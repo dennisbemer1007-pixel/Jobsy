@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using Jobsy.Core.Entities;
 using Microsoft.Extensions.Caching.Memory;
@@ -13,10 +12,10 @@ public sealed class MfaChallengeService
 
     public MfaChallengeService(IMemoryCache cache) => _cache = cache;
 
-    public string Create(User user, bool rememberDevice)
+    public string Create(User user, bool rememberDevice, bool localPassword = false)
     {
         var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
-        _cache.Set(Key(token), new MfaChallenge(user.Id, rememberDevice), Lifetime);
+        _cache.Set(Key(token), new MfaChallenge(user.Id, rememberDevice, localPassword), Lifetime);
         return token;
     }
 
@@ -38,4 +37,4 @@ public sealed class MfaChallengeService
     private static string Key(string token) => "mfa-challenge:" + token;
 }
 
-public sealed record MfaChallenge(Guid UserId, bool RememberDevice);
+public sealed record MfaChallenge(Guid UserId, bool RememberDevice, bool LocalPassword = false);

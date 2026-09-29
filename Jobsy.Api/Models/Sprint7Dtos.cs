@@ -99,12 +99,18 @@ public record LocalLoginResponse(
 
 public record MfaEnrollmentRequest(string ChallengeToken);
 
-public record MfaEnrollmentResponse(string Secret, string ProvisioningUri);
+public record MfaEnrollmentResponse(string Secret, string ProvisioningUri, string QrSvgDataUri);
+
+public record MfaStateRequest(string ChallengeToken);
+
+public record MfaStateResponse(bool Enrolled, string Email);
 
 public record MfaVerifyRequest(
     string ChallengeToken,
     string? Code = null,
     string? RecoveryCode = null);
+
+public record AdminMfaResetRequest(string Reason, string? ConfirmCode = null);
 
 public record EnsureExternalUserRequest(
     string Email,
@@ -136,7 +142,8 @@ public record EnsureExternalUserResponse(
     Guid? UserId = null,
     bool RequiresMfa = false,
     bool MfaEnrolled = false,
-    string? MfaChallengeToken = null);
+    string? MfaChallengeToken = null,
+    string? AuthMethod = null);
 
 public record ExternalProvidersStatusResponse(bool Entra, bool Google);
 

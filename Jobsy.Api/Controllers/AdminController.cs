@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Jobsy.Api.Models;
 using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
@@ -6,8 +7,10 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +29,8 @@ public class AdminController : ControllerBase
     private readonly ICompanyApiKeyService _apiKeys;
     private readonly IPersonalDataAccessLogger _accessLog;
     private readonly ISupportAccessService _supportAccess;
+    private readonly ISecretProtector _secrets;
+    private readonly IDeviceSessionService _deviceSessions;
 
     public AdminController(
         JobsyDbContext db,
@@ -34,7 +39,9 @@ public class AdminController : ControllerBase
         IUserLookupService users,
         ICompanyApiKeyService apiKeys,
         IPersonalDataAccessLogger accessLog,
-        ISupportAccessService supportAccess)
+        ISupportAccessService supportAccess,
+        ISecretProtector secrets,
+        IDeviceSessionService deviceSessions)
     {
         _db = db;
         _kvk = kvk;
@@ -43,6 +50,8 @@ public class AdminController : ControllerBase
         _apiKeys = apiKeys;
         _accessLog = accessLog;
         _supportAccess = supportAccess;
+        _secrets = secrets;
+        _deviceSessions = deviceSessions;
     }
 
     [HttpGet("companies")]
@@ -336,7 +345,9 @@ public class AdminController : ControllerBase
                 CompanyType = u.Company != null ? u.Company.Type.ToString() : null,
                 u.IsEarlyAdapter,
                 u.IsActive,
-                MembershipCompanyIds = u.CompanyMemberships.Select(m => m.CompanyId).ToList()
+                MembershipCompanyIds = u.CompanyMemberships.Select(m => m.CompanyId).ToList(),
+                u.AuthenticatorEnabled,
+                HasExternalLogin = u.ExternalLogins.Any()
             })
             .ToListAsync(cancellationToken);
 
@@ -381,7 +392,8 @@ public class AdminController : ControllerBase
                 u.CompanyType,
                 u.IsEarlyAdapter,
                 u.IsActive,
-                u.MembershipCompanyIds));
+                u.MembershipCompanyIds,
+                ResolveMfaStatus(u.AuthenticatorEnabled, u.HasExternalLogin)));
         }
 
         await this.LogPersonalDataAccessAsync(
@@ -496,7 +508,8 @@ public class AdminController : ControllerBase
                     body.TicketReference,
                     body.DurationMinutes),
                 PersonalDataAccessLogExtensions.IsMfaVerifiedInSession(User),
-                cancellationToken);
+                cancellationToken,
+                authMethod: User.FindFirstValue("auth_method"));
 
             await this.LogPersonalDataAccessAsync(
                 _accessLog,
@@ -536,6 +549,90 @@ public class AdminController : ControllerBase
         {
             return NotFound();
         }
+    }
+
+    /// <summary>Clears another user's authenticator so they re-enroll on the next password login.</summary>
+    [HttpPost("users/{userId:guid}/mfa/reset")]
+    public async Task<IActionResult> ResetUserMfa(
+        Guid userId,
+        [FromBody] AdminMfaResetRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var authMethod = User.FindFirstValue("auth_method");
+        var mfaOk = PersonalDataAccessLogExtensions.IsMfaVerifiedInSession(User)
+                    || PersonalDataAccessLogExtensions.IsExternalAuthMethod(authMethod);
+        if (!mfaOk)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Bevestig eerst je authenticator." });
+        }
+
+        if (userId == actor.Id)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Reset je eigen 2FA via je profiel" });
+        }
+
+        var reason = (request.Reason ?? string.Empty).Trim();
+        if (reason.Length < 5 || reason.Length > 500)
+        {
+            return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
+        }
+
+        // Local-password admins must re-auth with a fresh TOTP from their own authenticator.
+        if (!PersonalDataAccessLogExtensions.IsExternalAuthMethod(authMethod))
+        {
+            if (string.IsNullOrWhiteSpace(request.ConfirmCode))
+            {
+                return BadRequest(new { message = "Vul je authenticatorcode in om te bevestigen." });
+            }
+
+            var adminSecret = _secrets.Unprotect(actor.AuthenticatorSecret);
+            if (!TotpAuthenticator.VerifyCode(adminSecret, request.ConfirmCode.Trim(), DateTime.UtcNow))
+            {
+                return Unauthorized(new { message = "De authenticatorcode is onjuist." });
+            }
+        }
+
+        var target = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (target is null)
+        {
+            return NotFound();
+        }
+
+        target.AuthenticatorSecret = null;
+        target.RecoveryCodesHash = null;
+        target.AuthenticatorEnabled = false;
+        target.AuthenticatorEnrolledAtUtc = null;
+        target.SessionVersion++;
+        await _db.SaveChangesAsync(cancellationToken);
+        await _deviceSessions.RevokeAllAsync(userId, "mfa-reset", bumpSessionVersion: false, cancellationToken);
+
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            actor.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "user.mfa",
+            "reset",
+            subjectUserId: userId,
+            reason: reason,
+            cancellationToken: cancellationToken);
+
+        return NoContent();
+    }
+
+    private static string ResolveMfaStatus(bool authenticatorEnabled, bool hasExternalLogin)
+    {
+        if (authenticatorEnabled)
+        {
+            return "enrolled";
+        }
+
+        return hasExternalLogin ? "external-only" : "not-enrolled";
     }
 
     [HttpGet("support-access")]

@@ -14,6 +14,13 @@ public static class TotpAuthenticator
     public static string GenerateSecret()
         => ToBase32(RandomNumberGenerator.GetBytes(20));
 
+    public static string GenerateCode(string secret, DateTime utcNow)
+    {
+        var key = FromBase32(secret);
+        var counter = (long)Math.Floor((utcNow - DateTime.UnixEpoch).TotalSeconds / Period.TotalSeconds);
+        return ComputeCode(key, counter);
+    }
+
     public static bool VerifyCode(string? secret, string? code, DateTime utcNow)
     {
         if (string.IsNullOrWhiteSpace(secret)

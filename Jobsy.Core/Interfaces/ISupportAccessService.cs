@@ -30,7 +30,8 @@ public interface ISupportAccessService
         Guid adminUserId,
         SupportAccessRequest request,
         bool mfaVerifiedInSession,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string? authMethod = null);
 
     Task<bool> HasActiveGrantAsync(
         Guid adminUserId,

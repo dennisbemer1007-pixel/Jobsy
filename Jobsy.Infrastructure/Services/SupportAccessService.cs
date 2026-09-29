@@ -39,7 +39,8 @@ public sealed class SupportAccessService : ISupportAccessService
         Guid adminUserId,
         SupportAccessRequest request,
         bool mfaVerifiedInSession,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? authMethod = null)
     {
         if (request.SubjectUserId is null && request.SubjectCompanyId is null)
         {
@@ -66,8 +67,8 @@ public sealed class SupportAccessService : ISupportAccessService
             .FirstOrDefaultAsync(u => u.Id == adminUserId, cancellationToken)
             ?? throw new InvalidOperationException("Admin niet gevonden.");
 
-        // Require MFA step-up when the admin has TOTP enrolled; otherwise an active admin session is enough.
-        if (admin.AuthenticatorEnabled && !mfaVerifiedInSession)
+        // Require MFA step-up when the admin has TOTP enrolled, unless this session came from an IdP.
+        if (admin.AuthenticatorEnabled && !mfaVerifiedInSession && !IsExternalAuthMethod(authMethod))
         {
             throw new InvalidOperationException(
                 "Bevestig eerst MFA (stap-up) voordat je tijdelijke toegang aanvraagt.");
@@ -260,4 +261,8 @@ public sealed class SupportAccessService : ISupportAccessService
             g.RevokedAt,
             g.RevokedByUserId,
             IsActive: g.RevokedAt is null && g.ExpiresAt > nowUtc);
+
+    internal static bool IsExternalAuthMethod(string? authMethod)
+        => !string.IsNullOrWhiteSpace(authMethod)
+           && authMethod.StartsWith("external", StringComparison.OrdinalIgnoreCase);
 }
