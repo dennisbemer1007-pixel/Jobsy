@@ -158,7 +158,7 @@
                         {
                             <LobsyBubble Text="@BubbleFor(PassportTabs.Fit)" />
                             <PanelErrorBoundary Name="passport-fit">
-                                <RoleFitCheckPanel Active="@(_tab == PassportTabs.Fit)" />
+                                <PassportFitTab Active="@(_tab == PassportTabs.Fit)" Snapshot="_kompas" />
                             </PanelErrorBoundary>
                         }
                     </article>
@@ -171,11 +171,9 @@
                         @if (_visited.Contains(PassportTabs.Career))
                         {
                             <LobsyBubble Text="@BubbleFor(PassportTabs.Career)" />
-                            <div class="detail-card">
-                                <h3 class="passport-dna__h">@Culture["Passport.Tab.Career"]</h3>
-                                <p class="login-lead">@Culture["Passport.Career.Lead"]</p>
-                                <a class="btn-compact btn-compact--primary" href="/carriere">@Culture["Passport.Career.Open"]</a>
-                            </div>
+                            <PanelErrorBoundary Name="passport-career">
+                                <PassportCareerTab Active="@(_tab == PassportTabs.Career)" />
+                            </PanelErrorBoundary>
                         }
                     </article>
 

@@ -6,6 +6,59 @@ namespace Jobsy.Tests;
 public class MijnPaspoortPlaywrightTests
 {
     [Fact]
+    public void Passport_fit_and_career_tabs_replace_phase1_placeholders()
+    {
+        var page = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "Passport.razor"));
+        Assert.Contains("PassportFitTab", page, StringComparison.Ordinal);
+        Assert.Contains("PassportCareerTab", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("<RoleFitCheckPanel", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("Passport.Career.Lead", page, StringComparison.Ordinal);
+
+        var fit = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Candidate", "Passport", "PassportFitTab.razor"));
+        Assert.Contains("RoleFitCheckSession", fit, StringComparison.Ordinal);
+        Assert.Contains("RoleFitBandRules", fit, StringComparison.Ordinal);
+        Assert.Contains("CourseSuggestionBlock", fit, StringComparison.Ordinal);
+        Assert.Contains("FeatureVisible", fit, StringComparison.Ordinal);
+        Assert.Contains("PlatformFeature.Employers", fit, StringComparison.Ordinal);
+        Assert.DoesNotContain("MatchPercent%", fit, StringComparison.Ordinal);
+
+        var career = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Candidate", "Passport", "PassportCareerTab.razor"));
+        Assert.Contains("CareerPlanViewBuilder", career, StringComparison.Ordinal);
+        Assert.Contains("CourseSuggestionBlock", career, StringComparison.Ordinal);
+        Assert.Contains("FeatureVisible", career, StringComparison.Ordinal);
+        Assert.Contains("passport-career__shell", career, StringComparison.Ordinal);
+
+        var panel = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Candidate", "RoleFitCheckPanel.razor"));
+        Assert.Contains("RoleFitCheckSession", panel, StringComparison.Ordinal);
+        Assert.Contains("role-fit-funnel", panel, StringComparison.Ordinal);
+        Assert.Contains("fit-hero", panel, StringComparison.Ordinal);
+
+        var dash = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CareerDashboard.razor"));
+        Assert.Contains("CareerPaths.FromApi", dash, StringComparison.Ordinal);
+        Assert.Contains("horizon-stepper", dash, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Passport_fit_career_layout_fits_desktop_and_mobile_breakpoints()
+    {
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "mijn-paspoort.css"));
+        Assert.Contains("passport-fit__layout", css, StringComparison.Ordinal);
+        Assert.Contains("passport-fit__grid", css, StringComparison.Ordinal);
+        Assert.Contains("passport-career__shell", css, StringComparison.Ordinal);
+        Assert.Contains("passport-career__grid", css, StringComparison.Ordinal);
+        Assert.Contains("@media (min-width: 1024px)", css, StringComparison.Ordinal);
+        Assert.Contains("@media (min-width: 640px)", css, StringComparison.Ordinal);
+        Assert.Contains("@media (min-width: 900px)", css, StringComparison.Ordinal);
+        // Growing shells: size steps without invented gradients
+        Assert.Contains("passport-career__shell--sm", css, StringComparison.Ordinal);
+        Assert.Contains("passport-career__shell--md", css, StringComparison.Ordinal);
+        Assert.Contains("passport-career__shell--lg", css, StringComparison.Ordinal);
+        Assert.Contains("is-current", css, StringComparison.Ordinal);
+        Assert.Contains("--accent-soft", css, StringComparison.Ordinal);
+        Assert.Contains("--gold-soft", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Passport_css_keeps_sticky_tabs_and_compact_overview()
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "mijn-paspoort.css"));
@@ -17,6 +70,8 @@ public class MijnPaspoortPlaywrightTests
         Assert.Contains(".passport-course", css, StringComparison.Ordinal);
         Assert.Contains("passport-tests__depth-seg--1", css, StringComparison.Ordinal);
         Assert.Contains("--accent-soft", css, StringComparison.Ordinal);
+        Assert.Contains(".passport-fit__", css, StringComparison.Ordinal);
+        Assert.Contains(".passport-career__", css, StringComparison.Ordinal);
     }
 
     [Fact]

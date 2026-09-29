@@ -197,6 +197,138 @@ public static class UiStringsPassport
         Add("Passport.Career.Open",
             "Mijn loopbaanplan", "My career plan", "Mój plan kariery", "Planul meu de carieră", "خطة مساري");
 
+        Add("Passport.Fit.Title",
+            "Past deze baan bij mij?", "Does this job fit me?", "Czy ta praca do mnie pasuje?", "Mi se potrivește jobul?", "هل تناسبني هذه الوظيفة؟");
+        Add("Passport.Fit.Subtitle",
+            "Vind de omgeving waar jouw antennes tot rust komen.",
+            "Find the place where your antennae can settle.",
+            "Znajdź miejsce, w którym twoje czułki mogą odpocząć.",
+            "Găsește locul unde antenele tale se liniștesc.",
+            "اعثر على المكان الذي تهدأ فيه هوائياتك.");
+        Add("Passport.Fit.Placeholder",
+            "Bijv. verpleegkundige, juf, chauffeur…",
+            "E.g. nurse, teacher, driver…",
+            "Np. pielęgniarka, nauczycielka, kierowca…",
+            "Ex. asistent medical, învățătoare, șofer…",
+            "مثال: ممرض، معلمة، سائق…");
+        Add("Passport.Fit.Check",
+            "Check", "Check", "Sprawdź", "Verifică", "تحقق");
+        Add("Passport.Fit.FullResult",
+            "Hele uitslag ›", "Full result ›", "Pełny wynik ›", "Rezultat complet ›", "النتيجة الكاملة ›");
+        Add("Passport.Fit.LastCheck",
+            "Laatste check: {0}", "Last check: {0}", "Ostatni check: {0}", "Ultima verificare: {0}", "آخر فحص: {0}");
+        Add("Passport.Fit.Similar",
+            "Vergelijkbare functies ›", "Similar roles ›", "Podobne stanowiska ›", "Roluri similare ›", "وظائف مشابهة ›");
+        Add("Passport.Fit.Result.Antennas",
+            "Wat je antennes zeggen", "What your antennae say", "Co mówią czułki", "Ce spun antenele", "ماذا تقول هوائياتك");
+        Add("Passport.Fit.Result.Claws",
+            "Klauwen die je al hebt", "Claws you already have", "Szczypce, które już masz", "Cle pe care le ai deja", "مخالب لديك بالفعل");
+        Add("Passport.Fit.Result.Growing",
+            "Klauw die nog groeit", "Claw still growing", "Szczypce, które jeszcze rosną", "Clea care încă crește", "مخلب ما زال ينمو");
+        Add("Passport.Fit.Result.Action",
+            "Wat je kunt doen", "What you can do", "Co możesz zrobić", "Ce poți face", "ما يمكنك فعله");
+        Add("Passport.Fit.Band.Good",
+            "Past goed", "Fits well", "Pasuje dobrze", "Se potrivește bine", "يناسب جيداً");
+        Add("Passport.Fit.Band.Fair",
+            "Past redelijk", "Fits reasonably", "Pasuje w miarę", "Se potrivește rezonabil", "يناسب بشكل معقول");
+        Add("Passport.Fit.Band.NotYet",
+            "Past nog niet", "Doesn’t fit yet", "Jeszcze nie pasuje", "Încă nu se potrivește", "لا يناسب بعد");
+        Add("Passport.Fit.CourseEyebrow",
+            "Laat je klauw groeien", "Grow your claw", "Pozwól rosnąć szczypcom", "Lasă clea să crească", "دع مخلبك ينمو");
+        Add("Passport.Fit.CultureTitle",
+            "Cultuur: {0}", "Culture: {0}", "Kultura: {0}", "Cultură: {0}", "الثقافة: {0}");
+        Add("Passport.Fit.CultureSub",
+            "Hier komen jouw antennes tot rust",
+            "This is where your antennae settle",
+            "Tu twoje czułki odpoczywają",
+            "Aici antenele tale se liniștesc",
+            "هنا تهدأ هوائياتك");
+        Add("Passport.Fit.DoCultureScan",
+            "Doe de cultuurscan", "Take the culture scan", "Zrób skan kultury", "Fă scanarea de cultură", "أجرِ مسح الثقافة");
+        Add("Passport.Fit.VacanciesTitle",
+            "Vacatures die bij jou passen", "Vacancies that fit you", "Oferty dla ciebie", "Joburi care ți se potrivesc", "وظائف تناسبك");
+        Add("Passport.Fit.VacanciesSub",
+            "Niet de grootste steen, maar die bij jouw formaat past.",
+            "Not the biggest stone — the one that fits your size.",
+            "Nie największy kamień, lecz ten w twoim rozmiarze.",
+            "Nu cea mai mare piatră, ci cea pe măsura ta.",
+            "ليست أكبر صخرة، بل التي تناسب حجمك.");
+        Add("Passport.Fit.Top10",
+            "Top 10 ›", "Top 10 ›", "Top 10 ›", "Top 10 ›", "أفضل 10 ›");
+        Add("Passport.Fit.EmployersWant",
+            "Werkgevers die je willen spreken",
+            "Employers who want to talk",
+            "Pracodawcy, którzy chcą rozmawiać",
+            "Angajatori care vor să vorbească",
+            "أصحاب عمل يريدون التحدث");
+        Add("Passport.Fit.NewCount",
+            "{0} nieuw", "{0} new", "{0} nowych", "{0} noi", "{0} جديد");
+        Add("Passport.Fit.ViewContacts",
+            "Bekijk", "View", "Zobacz", "Vezi", "عرض");
+
+        Add("Passport.Career.DreamTitle",
+            "Mijn droombaan", "My dream job", "Moja wymarzona praca", "Jobul meu de vis", "وظيفيّتي الحلم");
+        Add("Passport.Career.OpenPlan",
+            "Open mijn hele plan ›", "Open my full plan ›", "Otwórz cały plan ›", "Deschide tot planul ›", "افتح خطتي كاملة ›");
+        Add("Passport.Career.ChangeDream",
+            "Droombaan wijzigen", "Change dream job", "Zmień wymarzoną pracę", "Schimbă jobul de vis", "غيّر وظيفة الحلم");
+        Add("Passport.Career.ShellNow",
+            "Nu", "Now", "Teraz", "Acum", "الآن");
+        Add("Passport.Career.ShellGrowing",
+            "Groeit nu", "Growing now", "Rośnie teraz", "Crește acum", "ينمو الآن");
+        Add("Passport.Career.ShellStep",
+            "Stap {0}", "Step {0}", "Krok {0}", "Pasul {0}", "الخطوة {0}");
+        Add("Passport.Career.GapsTitle",
+            "Wat je nog mist", "What you still need", "Czego jeszcze brakuje", "Ce îți mai lipsește", "ما ما زال ينقصك");
+        Add("Passport.Career.GapsSub",
+            "Welke klauwen je al hebt, en welke je nog laat groeien.",
+            "Which claws you already have, and which you still grow.",
+            "Które szczypce już masz, a które jeszcze rosną.",
+            "Ce cle ai deja și pe care le mai lași să crească.",
+            "أي مخالب لديك، وأيها ما زالت تنمو.");
+        Add("Passport.Career.AlreadyHave",
+            "heb je al", "you already have", "już masz", "le ai deja", "لديك بالفعل");
+        Add("Passport.Career.CourseTitle",
+            "Opleiding die past", "Matching education", "Pasujące szkolenie", "Formare potrivită", "تدريب مناسب");
+        Add("Passport.Career.CourseEmpty",
+            "Nog geen gratis opleiding die past. Kijk op je hele plan.",
+            "No matching free course yet. Check your full plan.",
+            "Brak darmowego kursu. Zobacz cały plan.",
+            "Niciun curs gratuit potrivit. Vezi tot planul.",
+            "لا دورة مجانية مناسبة بعد. راجع خطتك الكاملة.");
+        Add("Passport.Career.MatchTitle",
+            "Match op deze stap", "Match on this step", "Dopasowanie na tym kroku", "Potrivire pe acest pas", "تطابق في هذه الخطوة");
+        Add("Passport.Career.MatchEyebrow",
+            "Groei eerst. Match daarna.",
+            "Grow first. Match later.",
+            "Najpierw rośnij. Potem match.",
+            "Crește întâi. Potrivește după.",
+            "انم أولاً. ثم طابق.");
+        Add("Passport.Career.MatchStone",
+            "Deze steen past al bij jouw formaat.",
+            "This stone already fits your size.",
+            "Ten kamień już pasuje do twojego rozmiaru.",
+            "Această piatră e deja pe măsura ta.",
+            "هذه الصخرة تناسب حجمك بالفعل.");
+        Add("Passport.Career.MatchBand",
+            "{0} bij {1}. Met de volgende stap worden je matches sterker.",
+            "{0} for {1}. The next step makes your matches stronger.",
+            "{0} do {1}. Kolejny krok wzmocni dopasowania.",
+            "{0} cu {1}. Următorul pas îți întărește potrivirile.",
+            "{0} مع {1}. الخطوة التالية تقوّي تطابقاتك.");
+        Add("Passport.Career.VacanciesLink",
+            "Vacatures voor deze stap ›", "Vacancies for this step ›", "Oferty na ten krok ›", "Joburi pentru acest pas ›", "وظائف لهذه الخطوة ›");
+        Add("Passport.Career.EmptyTitle",
+            "Kies je droombaan", "Choose your dream job", "Wybierz wymarzoną pracę", "Alege jobul de vis", "اختر وظيفة حلمك");
+        Add("Passport.Career.EmptyLead",
+            "Op Mijn carrière zet je je stip op de horizon. Dan groeit hier je pad.",
+            "On My career you set your horizon. Your path will grow here.",
+            "W Moja kariera ustawiasz horyzont. Tu urośnie twoja ścieżka.",
+            "La Cariera mea îți setezi orizontul. Aici îți crește drumul.",
+            "في مساري المهني تضع أفقك. هنا ينمو مسارك.");
+        Add("Passport.Career.EmptyCta",
+            "Naar Mijn carrière", "Go to My career", "Do Moja kariera", "La Cariera mea", "إلى مساري المهني");
+
         Add("Passport.Tests.Surface",
             "Oppervlakte", "Surface", "Powierzchnia", "Suprafață", "السطح");
         Add("Passport.Tests.Deep",
