@@ -1,16 +1,10 @@
-@page "/admin/exclusivity"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Exclusivity"] · Lobsy</PageTitle>
-
-<AdminPageShell Title="@Culture["Admin.Exclusivity"]" Lead="@Culture["Admin.ExclusivityLead"]" ShowSettingsNav="true">
-    @if (_loading)
+@if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
@@ -101,8 +95,6 @@
             <p class="login-error">@_error</p>
         }
     }
-</AdminPageShell>
-
 @code {
     private List<ExclusivitySettingItem> _items = [];
     private readonly Dictionary<Guid, string> _educationDrafts = new();

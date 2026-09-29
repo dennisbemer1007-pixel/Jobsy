@@ -1,4 +1,4 @@
-@page "/admin/personal-data-access-log"
+@page "/admin/beveiliging/gegevensinzage"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -6,9 +6,9 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.PersonalDataAccessLog"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.DataAccess"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.PersonalDataAccessLog"]" Lead="@Culture["Admin.PersonalDataAccessLogLead"]" ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["AdminNav.DataAccess"]" Lead="@Culture["Admin.PersonalDataAccessLogLead"]">
     <section class="panel-section">
         <h2>@Culture["Admin.SupportAccessGrants"]</h2>
         <p class="muted">Vier-ogen: alle admins zien actieve en recente break-glass toegang.</p>

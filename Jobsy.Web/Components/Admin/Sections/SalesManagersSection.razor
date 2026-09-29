@@ -1,19 +1,13 @@
-@page "/admin/sales-managers"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.SalesManagers"] · Lobsy</PageTitle>
-
-<AdminPageShell Title="@Culture["Admin.SalesManagers"]" Lead="@Culture["Admin.SalesManagersLead"]">
-    <div class="admin-sublinks admin-sublinks--wrap">
-        <a class="admin-sublink" href="/admin/finance">← Financieel</a>
-        <a class="admin-sublink" href="/admin/token-finance">Token-administratie</a>
-        <a class="admin-sublink" href="/admin/tokens">Goodwill / Compensatie</a>
-        <a class="admin-sublink admin-sublink--active" href="/admin/sales-managers" aria-current="page">Salesmanagers</a>
+<div class="admin-sublinks admin-sublinks--wrap">
+        <a class="admin-sublink" href="/admin/financien">← Financieel</a>
+        <a class="admin-sublink" href="/admin/financien/uitbetalingen">Token-administratie</a>
+        <a class="admin-sublink" href="/admin/financien/goodwill">Goodwill / Compensatie</a>
+        <a class="admin-sublink admin-sublink--active" href="/admin/gebruikers/sales" aria-current="page">Salesmanagers</a>
     </div>
     <section class="panel-section">
         <h2>Direct uitnodigen (Admin)</h2>
@@ -166,8 +160,6 @@
             </section>
         }
     }
-</AdminPageShell>
-
 @code {
     private List<SalesManagerListItem> _list = [];
     private List<SalesManagerApplicationItem> _applications = [];

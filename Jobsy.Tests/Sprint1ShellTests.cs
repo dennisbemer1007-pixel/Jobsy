@@ -96,17 +96,11 @@ public class RoleNavCatalogTests
         var identity = new ClaimsIdentity("test");
         identity.AddClaim(new Claim("roles", JobsyRoles.Admin));
         var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-        Assert.Contains(items, i => i.Href == "/home");
-        Assert.Contains(items, i => i.Href == "/admin/settings");
-        Assert.True(RoleNavCatalog.IsActive(
-            items.First(i => i.Href == "/admin/settings"),
-            "admin/users"));
-        Assert.True(RoleNavCatalog.IsActive(
-            items.First(i => i.Href == "/admin/settings"),
-            "admin/notifications"));
-        Assert.True(RoleNavCatalog.IsActive(
-            items.First(i => i.Href == "/admin/finance"),
-            "admin/sales-managers"));
+        // Admin uses AdminLayout sidebar (AdminNav); bottom nav is empty (D1).
+        Assert.Empty(items);
+        Assert.Empty(RoleNavCatalog.Admin);
+        Assert.Contains(AdminNav.AvailableItems(), i => i.Href == "/admin");
+        Assert.Contains(AdminNav.AvailableItems(), i => i.Href == "/admin/instellingen");
     }
 
     [Fact]
@@ -203,15 +197,11 @@ public class RoleNavCatalogTests
     public void ForUser_admin_includes_dedicated_ats_vacancies_nav()
     {
         var admin = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Admin)], "test"));
-        var items = RoleNavCatalog.ForUser(admin);
-        Assert.Contains(items, i => i.Href == "/admin/ats-vacancies" && i.TitleKey == "Admin.AtsVacancies");
-        Assert.True(RoleNavCatalog.IsActive(
-            items.First(i => i.Href == "/admin/ats-vacancies"),
-            "admin/ats-vacancies",
-            items));
+        Assert.Empty(RoleNavCatalog.ForUser(admin));
+        Assert.Contains(AdminNav.AvailableItems(), i => i.Href == "/admin/vacatures/ats" && i.LabelKey == "AdminNav.Ats");
 
         var candidate = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test"));
-        Assert.DoesNotContain(RoleNavCatalog.ForUser(candidate), i => i.Href == "/admin/ats-vacancies");
+        Assert.DoesNotContain(RoleNavCatalog.ForUser(candidate), i => i.Href.Contains("/admin/", StringComparison.Ordinal));
     }
 
     [Fact]

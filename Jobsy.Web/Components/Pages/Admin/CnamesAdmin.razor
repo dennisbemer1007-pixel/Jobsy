@@ -1,4 +1,4 @@
-@page "/admin/cnames"
+@page "/admin/organisaties/regios"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -7,9 +7,9 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Cnames"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.Regions"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.Cnames"]" Lead="@Culture["Admin.CnamesLead"]" ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["AdminNav.Regions"]" Lead="@Culture["Admin.CnamesLead"]">
     <section class="panel-section cname-admin">
         <div class="panel-header cname-admin__header">
             <div class="cname-admin__title-row">

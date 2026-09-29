@@ -1,6 +1,3 @@
-@page "/admin/masterdata"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Navigation
@@ -8,10 +5,7 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Masterdata"] · Lobsy</PageTitle>
-
-<AdminPageShell Title="@Culture["Admin.Masterdata"]" Lead="@Culture["Admin.MasterdataLead"]" ShowSettingsNav="true">
-    @if (_loading)
+@if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
@@ -102,8 +96,6 @@
             <p class="state-message">@_message</p>
         }
     }
-</AdminPageShell>
-
 @code {
     private List<MasterdataOptionItem> _items = [];
     private string _activeCategory = MasterdataCategories.Branch;

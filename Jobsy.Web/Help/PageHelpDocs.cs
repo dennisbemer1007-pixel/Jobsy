@@ -369,143 +369,143 @@ public static class PageHelpDocs
             "Bevestig de aankoop in de stub; saldo wordt bijgeschreven alsof Mollie betaald heeft.",
             "Testen van token-aankoop zonder echte betaling."),
 
-        ["/admin/companies"] = new(
-            "Beheer · Bedrijven",
+        ["/admin/organisaties"] = new(
+            "Beheer · Bedrijven & vestigingen",
             "Alle werkgevers en intermediairs op het platform.",
             "Zoek/filter bedrijven, ken tokens toe, of voeg toe via KVK.",
             "Platformbeheer van organisatiestructuur en wallets."),
 
-        ["/admin/users"] = new(
-            "Beheer · Gebruikers",
+        ["/admin/gebruikers"] = new(
+            "Beheer · Alle gebruikers",
             "Accounts van kandidaten en managers.",
             "Zoek gebruikers, bekijk rollen en beheer toegang waar nodig.",
             "Support en beheer van inloggerechtigde personen."),
 
-        ["/admin/vacancies"] = new(
+        ["/admin/vacatures"] = new(
             "Beheer · Vacatures",
             "Platformbreed vacatureoverzicht.",
             "Zoek en open vacatures over alle bedrijven heen.",
             "Moderatie, support en kwaliteitscontrole."),
 
-        ["/admin/ats-vacancies"] = new(
+        ["/admin/vacatures/ats"] = new(
             "Beheer · ATS Vacatures",
             "Gescrapete vacatures van directe lokale werkgevers.",
             "Review completeness, keur goed voor Match/banenkaart, of keur af.",
             "Whitelist-domeinen, blacklist uitzend/recruitment, TTL 30 dagen."),
 
-        ["/admin/finance"] = new(
-            "Beheer · Financieel",
+        ["/admin/financien"] = new(
+            "Beheer · Omzet & transacties",
             "Financieel overzicht van het platform.",
             "Bekijk relevante geld-/tokenstromen en rapportages.",
             "Inzicht voor exploitatie en controle."),
 
-        ["/admin/token-finance"] = new(
-            "Beheer · Tokenfinance",
+        ["/admin/financien/uitbetalingen"] = new(
+            "Beheer · Uitbetalingen & btw",
             "Detail van tokenstromen en financiële mutaties.",
             "Analyseer aankopen, grants en correcties in samenhang met finance.",
             "Controle en reconciliatie van tokens versus betalingen."),
 
-        ["/admin/tokens"] = new(
-            "Beheer · Tokens",
+        ["/admin/financien/goodwill"] = new(
+            "Beheer · Goodwill & tokens",
             "Centrale tokenadministratie.",
             "Ken tokens toe aan bedrijven en bekijk saldi.",
             "Demo’s, credits of correcties uitvoeren."),
 
-        ["/admin/sales"] = new(
+        ["/admin/financien/prijzen"] = new(
             "Beheer · Sales commercieel",
             "Commerciële salesinstellingen en overzicht.",
             "Beheer sales-gerelateerde platforminstellingen en rapportages.",
             "Saleskanaal en commissiestructuur ondersteunen."),
 
-        ["/admin/sales-managers"] = new(
+        ["/admin/gebruikers/sales"] = new(
             "Beheer · Salesmanagers",
             "Salesmanager-accounts en status.",
             "Beheer onboarding, koppelingen en overzicht van salesmanagers.",
             "Het saleskanaal operationeel houden."),
 
         ["/admin"] = new(
-            "Beheer · Start",
-            "Ingang tot het admin-domein.",
-            "Ga via de navigatie naar vacatures, finance, bedrijven of settings.",
+            "Beheer · Dashboard",
+            "Platformdashboard met KPI’s en drilldowns.",
+            "Bekijk metrics en open modules via de sidebar.",
             "Platformbeheer starten."),
 
-        ["/admin/moderation"] = new(
-            "Beheer · Moderatie",
-            "Content- en vacaturemoderatie.",
-            "Bekijk gemarkeerde of te beoordelen vacatureteksten (o.a. via OpenAI-moderatie).",
-            "Ongewenste of risicovolle content tegenhouden."),
-
-        ["/admin/settings"] = new(
+        ["/admin/instellingen"] = new(
             "Beheer · Instellingen",
             "Systeeminstellingen, platformfeatures en inactiviteitsperiode.",
             "Zet features aan/uit (moderatie, authenticator, …), stel de inactieve periode in voor de eenmalige “We missen je”-mail (standaard 120 dagen), en beheer integraties.",
             "Gedrag van Lobsy afstemmen zonder code-deploys."),
 
-        ["/admin/company"] = new(
+        ["/admin/instellingen/algemeen"] = new(
             "Beheer · Bedrijfsgegevens",
             "NAW, KvK en BTW van Lobsy.",
             "Vul bedrijfsnaam, slogan, adres, KvK en BTW in. Deze gegevens staan onderaan self-billing factuur-PDF’s.",
             "Juridische platformgegevens op facturen houden."),
 
-        ["/admin/about"] = new(
+        ["/admin/content/paginas"] = new(
             "Beheer · Wie zijn wij",
             "Publieke ‘Wie zijn wij’-pagina bewerken.",
             "Pas titel, introregel en inhoud aan. Gebruik koppen voor secties. De pagina is zichtbaar via /wie-zijn-wij.",
             "Het verhaal achter Lobsy up-to-date houden zonder code-deploys."),
 
-        ["/admin/marketing-flyer"] = new(
+        ["/admin/content/paginas-flyer"] = new(
             "Beheer · Werkgeversflyer",
             "Professionele A4-flyer voor werkgevers bewerken en afdrukken.",
             "Pas koppen, USP’s, lanceringsteksten en QR-doel aan. Download de PDF om te printen of digitaal te delen.",
             "Werkgevers overtuigen met een logo-first flyer zonder designbureau."),
 
-        ["/admin/mail-test"] = new(
+        ["/admin/content/emails"] = new(
             "Beheer · Mailtest",
             "Elk transactioneel mailtype als test versturen naar een adres naar keuze.",
             "Vul een e-mailadres in en verstuur één type of alle types. De HTML is dezelfde als productie; knoppen linken naar echte Lobsy-pagina’s. OTP’s en wachtwoorden in testmails zijn voorbeelden en activeren geen accountactie.",
             "Visueel en functioneel nalopen van alle uitgaande mails zonder echte gebruikers te mailen."),
 
-        ["/admin/integrations"] = new(
+        ["/admin/instellingen/integraties"] = new(
             "Beheer · Integraties",
             "API-koppelingen (Mollie, KVK, Entra, Google, Mail, OpenAI).",
             "Vul credentials in, sla op en test de verbinding. Gebruik de i per tegel voor details.",
             "Externe diensten laten werken voor login, mail, betalen en moderatie."),
 
-        ["/admin/api-keys"] = new(
-            "Beheer · API Beheer",
-            "Overzicht van alle bedrijfs-API-keys (actief/inactief).",
-            "Bekijk prefix, laatste gebruik en deactiveer keys direct bij incidenten. Plaintext keys zijn nooit zichtbaar voor admins.",
-            "Platformbrede controle over externe vacature-API-toegang."),
-
-        ["/admin/masterdata"] = new(
-            "Beheer · Masterdata",
-            "Keuzelijsten zoals branches, rijbewijzen, opleidingen en minimum werkgevers.",
-            "Voeg opties toe, wijzig of deactiveer ze. Ze verschijnen in profiel- en vacatureformulieren.",
-            "Consistente keuzes in de hele app zonder hardcoding."),
-
-        ["/admin/wages"] = new(
-            "Beheer · Salaris / WML",
-            "Wettelijk minimumloon en loonreferenties.",
-            "Beheer WML-gegevens die vacatures en validatie ondersteunen.",
-            "Compliant lonen tonen en controleren."),
-
-        ["/admin/notifications"] = new(
-            "Beheer · Notificaties",
-            "Platformnotificaties en berichtenverkeer.",
-            "Bekijk of beheer notificatie-instellingen/-logs binnen het admin-domein.",
-            "Communicatie naar gebruikers volgen."),
-
-        ["/admin/logging"] = new(
-            "Beheer · Logging",
-            "Platformlogboek voor audits en fouten.",
-            "Filter en bekijk logregels (o.a. betalingen, overnames, systeemevents).",
-            "Problemen analyseren en acties nalopen."),
-
         ["/admin/feedback"] = new(
             "Beheer · Feedback",
-            "Binnengekomen bugs, errors en featurewensen met screenshot en metadata.",
-            "Bekijk het datagrid, maak een functionele prompt en start een Cursor-taak. De PR-link verschijnt automatisch zodra de agent klaar is.",
-            "Visuele/functionele feedback omzetten in een geautomatiseerde fix-PR."),
+            "Ingezonden gebruikersfeedback.",
+            "Bekijk, filter en beantwoord feedbackmeldingen van kandidaten en werkgevers.",
+            "Productfeedback verzamelen en opvolgen."),
+
+        ["/admin/beveiliging/systeemlogs"] = new(
+            "Beheer · Systeemlogs",
+            "Platformlogging voor incidenten en audits.",
+            "Filter op type en datum; uitschrijvingen staan onder Unsubscribe.",
+            "Storingen en AVG-relevante events naslaan."),
+
+        ["/admin/beveiliging/gegevensinzage"] = new(
+            "Beheer · Gegevensinzage",
+            "Accesslog van persoonsgegevensinzage door support.",
+            "Bekijk wie wanneer gemaskeerde of onthulde persoonsgegevens heeft gezien.",
+            "AVG-verantwoording van support-toegang."),
+
+        ["/admin/content/stamgegevens"] = new(
+            "Beheer · Stamgegevens",
+            "Keuzelijsten voor kandidaatprofiel en vacatures.",
+            "Beheer opties, exclusiviteit-stages en gerelateerde stamdata.",
+            "Consistente keuzelijsten over het platform."),
+
+        ["/admin/content/opleidingen"] = new(
+            "Beheer · Opleidingen",
+            "Opleidingsaanbod in Lobsy beheren.",
+            "Beheer opleidingen die kandidaten en werkgevers zien.",
+            "Opleidingscontent actueel houden."),
+
+        ["/admin/vacatures/categorieen"] = new(
+            "Beheer · Categorieën & salaris",
+            "Vacaturecategorieën en WML-tarieven.",
+            "Beheer categorieën (kleur, tokens) en platform WML-tarieven.",
+            "Prijs- en categorielogica van vacatures afstemmen."),
+
+        ["/admin/organisaties/regios"] = new(
+            "Beheer · Regio's & domeinen",
+            "CNAME / regio-hosts voor lokale Lobsy-domeinen.",
+            "Beheer hostnames, slogans en branding per regio.",
+            "Regionale landingspagina’s en hosts beheren."),
 
         ["/privacy"] = new(
             "Privacyverklaring",

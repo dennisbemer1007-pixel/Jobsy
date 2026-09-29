@@ -37,6 +37,11 @@
                                 <span class="account-menu__identity-email">@EmailOf(context.User)</span>
                             }
                         </div>
+                        @if (RoleClaimMatching.HasRole(context.User, JobsyRoles.Admin))
+                        {
+                            <a class="account-menu__link" href="/" role="menuitem">@Culture["AdminShell.ToLobsy"]</a>
+                            <a class="account-menu__link" href="/admin" role="menuitem">@Culture["AdminShell.ToAdmin"]</a>
+                        }
                         @if (RoleNavCatalog.HowLobsyHrefFor(context.User) is { } howHref)
                         {
                             <a class="account-menu__link" href="@howHref" role="menuitem">@Culture["Nav.HowLobsyWorks"]</a>

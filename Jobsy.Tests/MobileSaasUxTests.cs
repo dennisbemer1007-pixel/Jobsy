@@ -43,18 +43,16 @@ public class MobileSaasUxTests
     public void Tabs_scroll_horizontally_as_pills_with_brand_active_state()
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".admin-sublinks {\n    display: flex;\n    flex-direction: row;\n    flex-wrap: nowrap;", css);
-        Assert.Contains("overflow-x: auto", css);
-        Assert.Contains(".admin-sublink--active {\n    background: var(--accent);\n    color: #fff;", css);
         Assert.Contains(".applicants-filters__btn.is-active {\n    border-color: var(--accent);\n    background: var(--accent);\n    color: #fff;", css);
         Assert.Contains("min-height: 40px", css);
         Assert.Contains(".pill-scroller", css);
         Assert.Contains("scrollbar-width: none", css);
-        Assert.Contains(".admin-sublinks.admin-sublinks--wrap {\n    flex-wrap: wrap;\n    overflow: visible;", css);
 
-        var settingsNav = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Admin/AdminSettingsSubnav.razor"));
-        Assert.Contains("admin-sublinks--wrap", settingsNav);
-        Assert.DoesNotContain("pill-scroller", settingsNav);
+        // Admin uses grouped sidebar (AdminLayout) instead of pill settings subnav.
+        var adminCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/admin.css"));
+        Assert.Contains(".admin-sidebar__link.is-active", adminCss);
+        Assert.Contains("AdminSidebar", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AdminLayout.razor")));
+        Assert.False(File.Exists(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Admin/AdminSettingsSubnav.razor")));
     }
 
     [Fact]

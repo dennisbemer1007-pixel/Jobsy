@@ -1,16 +1,10 @@
-@page "/admin/marketing-flyer"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.MarketingFlyer"] · Lobsy</PageTitle>
-
-<AdminPageShell Title="@Culture["Admin.MarketingFlyer"]" Lead="@Culture["Admin.MarketingFlyerLead"]" ShowSettingsNav="true">
-    @if (_loading)
+@if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
@@ -100,8 +94,6 @@
             }
         </section>
     }
-</AdminPageShell>
-
 @code {
     private MarketingFlyerItem _form = new();
     private bool _loading = true;

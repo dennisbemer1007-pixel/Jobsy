@@ -1,0 +1,51 @@
+@namespace Jobsy.Web.Components.Admin.Ui
+@inject CultureState Culture
+
+@if (Open)
+{
+    <div class="admin-drawer-backdrop" @onclick="RequestClose"></div>
+    <aside class="admin-drawer admin-drawer--@Placement @(Open ? "is-open" : null) @(FullSheet ? "admin-drawer--sheet" : null)"
+           role="dialog"
+           aria-modal="true"
+           aria-label="@Title"
+           @onkeydown="OnKeyDown">
+        <header class="admin-drawer__header">
+            <h2 class="admin-drawer__title">@Title</h2>
+            <button type="button" class="admin-drawer__close" @onclick="RequestClose"
+                    aria-label="@Culture["AdminUi.CloseDrawer"]">
+                <span aria-hidden="true">@((MarkupString)NavIcons.Close)</span>
+            </button>
+        </header>
+        <div class="admin-drawer__body">
+            @ChildContent
+        </div>
+        @if (Footer is not null)
+        {
+            <footer class="admin-drawer__footer">@Footer</footer>
+        }
+    </aside>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Placement { get; set; } = "end";
+    [Parameter] public bool FullSheet { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+
+    private async Task RequestClose()
+    {
+        Open = false;
+        await OpenChanged.InvokeAsync(false);
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await RequestClose();
+        }
+    }
+}

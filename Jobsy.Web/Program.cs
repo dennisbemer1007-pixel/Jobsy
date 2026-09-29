@@ -79,6 +79,15 @@ builder.Services.AddScoped<Jobsy.Web.Services.NotificationUnreadStore>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.AssistantChatHost>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.FeedbackHost>();
+builder.Services.AddScoped<Jobsy.Web.Components.Admin.Shell.AdminSidebarState>();
+builder.Services.AddSingleton(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new Jobsy.Core.Hosting.DeploymentEnvironmentLabel(
+        Jobsy.Core.Hosting.DeploymentEnvironment.Resolve(
+            config["PublicWebBaseUrl"],
+            config["Deployment:Label"]));
+});
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateMatchProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Services.MatchVacancyService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CareerPathService>();
@@ -159,6 +168,7 @@ app.UseWebSockets(new WebSocketOptions
     KeepAliveInterval = TimeSpan.FromSeconds(15)
 });
 app.UseMiddleware<WwwCanonicalMiddleware>();
+app.UseAdminLegacyRedirects();
 app.UseResponseCompression();
 
 if (!app.Environment.IsDevelopment())

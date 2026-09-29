@@ -1,4 +1,4 @@
-@page "/admin/users"
+@page "/admin/gebruikers"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -10,9 +10,9 @@
 @inject AuthenticationStateProvider AuthState
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Users"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.AllUsers"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.Users"]" Lead="@Culture["Admin.UsersLead"]" ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["AdminNav.AllUsers"]" Lead="@Culture["Admin.UsersLead"]">
     @if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>

@@ -141,7 +141,7 @@ public class TrainingUpskillTests
         Assert.Contains("TrainingOffersBlock", competencyPanel, StringComparison.Ordinal);
         Assert.Contains("CampaignCompetence", competencyPanel, StringComparison.Ordinal);
         var admin = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Pages/Admin/TrainingAdmin.razor"));
-        Assert.Contains("/admin/training", admin, StringComparison.Ordinal);
+        Assert.Contains("/admin/content/opleidingen", admin, StringComparison.Ordinal);
         Assert.Equal("Passende cursus", Jobsy.Web.Localization.UiStrings.Get("Fit.TrainingTitle", "nl"));
         Assert.Contains(
             TrainingCopy.GapAdvice,

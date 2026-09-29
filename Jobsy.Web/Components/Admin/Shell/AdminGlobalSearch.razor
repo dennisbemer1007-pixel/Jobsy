@@ -1,0 +1,266 @@
+@using System.Threading
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+<div class="admin-search @(CompactTrigger ? "admin-search--compact" : null)" @ref="_root">
+    <div class="admin-search__field">
+        <span class="admin-search__icon" aria-hidden="true">@((MarkupString)NavIcons.Search)</span>
+        <input @ref="_input"
+               class="admin-search__input"
+               type="search"
+               role="combobox"
+               aria-expanded="@(_open ? "true" : "false")"
+               aria-controls="admin-search-listbox"
+               aria-autocomplete="list"
+               placeholder="@Culture["AdminShell.SearchPlaceholder"]"
+               value="@_query"
+               @oninput="OnInput"
+               @onkeydown="OnKeyDown"
+               @onfocus="OnFocus" />
+        <kbd class="admin-search__kbd">@Culture["AdminShell.SearchShortcut"]</kbd>
+    </div>
+
+    @if (_open)
+    {
+        <div id="admin-search-listbox" class="admin-search__popover" role="listbox">
+            @if (_loading)
+            {
+                <p class="admin-search__hint">@Culture["AdminUi.Loading"]</p>
+            }
+            else if (_result is null || IsEmpty(_result))
+            {
+                <p class="admin-search__hint">@Culture["AdminShell.SearchNoResults"]</p>
+            }
+            else
+            {
+                @RenderGroup(Culture["AdminShell.SearchUsers"], _result.Users, "users")
+                @RenderGroup(Culture["AdminShell.SearchOrgs"], _result.Organisations, "orgs")
+                @RenderGroup(Culture["AdminShell.SearchVacancies"], _result.Vacancies, "vacancies")
+                @RenderGroup(Culture["AdminShell.SearchInvoices"], _result.Invoices, "invoices")
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool CompactTrigger { get; set; }
+    [Parameter] public bool AutoFocus { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private ElementReference _root;
+    private ElementReference _input;
+    private string _query = "";
+    private bool _open;
+    private bool _loading;
+    private int _activeIndex = -1;
+    private AdminSearchResultDto? _result;
+    private CancellationTokenSource? _debounce;
+    private IJSObjectReference? _module;
+    private DotNetObjectReference<AdminGlobalSearch>? _dotNetRef;
+    private List<AdminSearchHitDto> _flat = [];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            try
+            {
+                _module = await Js.InvokeAsync<IJSObjectReference>("import", "./js/admin-shell.js?v=20260929-admin");
+                await _module.InvokeVoidAsync("bindAdminSearchShortcuts", _dotNetRef);
+            }
+            catch
+            {
+                // Module optional during SSR / tests.
+            }
+
+            if (AutoFocus)
+            {
+                await FocusAsync();
+            }
+        }
+    }
+
+    public async Task FocusAsync()
+    {
+        _open = true;
+        try
+        {
+            await _input.FocusAsync();
+        }
+        catch
+        {
+            // ignore
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public Task FocusFromShortcutAsync() => FocusAsync();
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        _query = e.Value?.ToString() ?? "";
+        _debounce?.Cancel();
+        _debounce?.Dispose();
+        _debounce = new CancellationTokenSource();
+        var token = _debounce.Token;
+        try
+        {
+            await Task.Delay(250, token);
+            await SearchAsync(token);
+        }
+        catch (TaskCanceledException)
+        {
+            // debounced
+        }
+    }
+
+    private void OnFocus() => _open = true;
+
+    private async Task SearchAsync(CancellationToken ct)
+    {
+        var q = _query.Trim();
+        if (q.Length < 2)
+        {
+            _result = null;
+            _flat = [];
+            _loading = false;
+            _open = true;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        _loading = true;
+        _open = true;
+        await InvokeAsync(StateHasChanged);
+        try
+        {
+            _result = await Api.AdminSearchAsync(q, ct);
+            _flat = Flatten(_result);
+            _activeIndex = _flat.Count > 0 ? 0 : -1;
+        }
+        catch
+        {
+            _result = null;
+            _flat = [];
+        }
+        finally
+        {
+            _loading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _open = false;
+            await OnClose.InvokeAsync();
+            return;
+        }
+
+        if (e.Key == "ArrowDown" && _flat.Count > 0)
+        {
+            _activeIndex = (_activeIndex + 1) % _flat.Count;
+            return;
+        }
+
+        if (e.Key == "ArrowUp" && _flat.Count > 0)
+        {
+            _activeIndex = (_activeIndex - 1 + _flat.Count) % _flat.Count;
+            return;
+        }
+
+        if (e.Key == "Enter" && _activeIndex >= 0 && _activeIndex < _flat.Count)
+        {
+            await OpenHitAsync(_flat[_activeIndex]);
+        }
+    }
+
+    private RenderFragment RenderGroup(string title, IReadOnlyList<AdminSearchHitDto> items, string key) => builder =>
+    {
+        if (items.Count == 0)
+        {
+            return;
+        }
+
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "admin-search__group");
+        builder.OpenElement(2, "p");
+        builder.AddAttribute(3, "class", "admin-search__group-title");
+        builder.AddContent(4, title);
+        builder.CloseElement();
+        foreach (var hit in items)
+        {
+            var index = _flat.IndexOf(hit);
+            var active = index == _activeIndex;
+            builder.OpenElement(10, "button");
+            builder.AddAttribute(11, "type", "button");
+            builder.AddAttribute(12, "class", "admin-search__option" + (active ? " is-active" : ""));
+            builder.AddAttribute(13, "role", "option");
+            builder.AddAttribute(14, "aria-selected", active);
+            builder.AddAttribute(15, "onclick", EventCallback.Factory.Create(this, () => OpenHitAsync(hit)));
+            builder.OpenElement(16, "span");
+            builder.AddAttribute(17, "class", "admin-search__option-label");
+            builder.AddContent(18, hit.Label);
+            builder.CloseElement();
+            if (!string.IsNullOrWhiteSpace(hit.Sublabel))
+            {
+                builder.OpenElement(19, "span");
+                builder.AddAttribute(20, "class", "admin-search__option-sub");
+                builder.AddContent(21, hit.Sublabel);
+                builder.CloseElement();
+            }
+
+            builder.CloseElement();
+        }
+
+        builder.CloseElement();
+    };
+
+    private async Task OpenHitAsync(AdminSearchHitDto hit)
+    {
+        _open = false;
+        await OnClose.InvokeAsync();
+        Navigation.NavigateTo(hit.Href);
+    }
+
+    private static bool IsEmpty(AdminSearchResultDto r)
+        => r.Users.Count == 0 && r.Organisations.Count == 0 && r.Vacancies.Count == 0 && r.Invoices.Count == 0;
+
+    private static List<AdminSearchHitDto> Flatten(AdminSearchResultDto? r)
+    {
+        if (r is null)
+        {
+            return [];
+        }
+
+        return [.. r.Users, .. r.Organisations, .. r.Vacancies, .. r.Invoices];
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _debounce?.Cancel();
+        _debounce?.Dispose();
+        _dotNetRef?.Dispose();
+        if (_module is not null)
+        {
+            try
+            {
+                await _module.InvokeVoidAsync("unbindAdminSearchShortcuts");
+                await _module.DisposeAsync();
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+    }
+}

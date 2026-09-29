@@ -169,11 +169,10 @@ public class TransactionalEmailCatalogTests
     public void Mail_test_page_is_wired_under_admin_settings()
     {
         var root = FindRepoRoot();
-        var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Admin", "AdminNavItems.cs"));
-        var roles = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Navigation", "RoleNavCatalog.cs"));
+        var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Navigation", "AdminNav.cs"));
         var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Admin", "MailTestAdmin.razor"));
+        Assert.Contains("/admin/content/emails", nav);
         Assert.Contains("/admin/mail-test", nav);
-        Assert.Contains("/admin/mail-test", roles);
         Assert.Contains("[Authorize(Roles = \"Admin\")]", page);
         Assert.Contains("SendAllEmailTemplatesAsync", page);
     }

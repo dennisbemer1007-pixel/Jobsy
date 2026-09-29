@@ -1,4 +1,4 @@
-@page "/admin/ats-vacancies"
+@page "/admin/vacatures/ats"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -7,9 +7,9 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.AtsVacancies"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.Ats"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.AtsVacancies"]" Lead="@Culture["Admin.AtsVacanciesLead"]" Wide="true" ShowVacanciesNav="true">
+<AdminPageShell Title="@Culture["AdminNav.Ats"]" Lead="@Culture["Admin.AtsVacanciesLead"]" Wide="true">
     <div class="ats-toolbar">
         <label class="ats-toolbar__search">
             <span class="visually-hidden">@Culture["Common.Search"]</span>

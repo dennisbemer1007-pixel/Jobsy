@@ -1,0 +1,14 @@
+@page "/admin"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@inject CultureState Culture
+
+<PageTitle>@Culture["AdminNav.Dashboard"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.Dashboard"]"
+                Lead="KPI’s over het hele platform — klik een tegel voor drilldown."
+                Wide="true">
+    <AdminHomePanel />
+</AdminPageShell>

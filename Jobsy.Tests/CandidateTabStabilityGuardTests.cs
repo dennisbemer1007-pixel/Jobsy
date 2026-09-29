@@ -8,13 +8,15 @@ public class CandidateTabStabilityGuardTests
     [Fact]
     public void MainLayout_recovers_error_boundary_on_location_change()
     {
-        var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/MainLayout.razor"));
+        var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/CircuitErrorBoundary.razor"));
         Assert.Contains("_errorBoundary?.Recover()", src);
         Assert.Contains("OnLocationChanged", src);
         Assert.Contains("LogCircuitError", src);
         Assert.Contains("SentrySdk.CaptureException", src);
         Assert.DoesNotContain("ex.Message", src);
         Assert.DoesNotContain("ex.ToString()", src);
+        var layout = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/MainLayout.razor"));
+        Assert.Contains("CircuitErrorBoundary", layout);
     }
 
     [Fact]

@@ -286,6 +286,13 @@ public sealed partial class JobsyApiClient
         return page.Items;
     }
 
+    public async Task<AdminSearchResultDto> AdminSearchAsync(string q, CancellationToken ct = default)
+    {
+        var url = $"api/admin/search?q={Uri.EscapeDataString(q)}";
+        return await _http.GetFromJsonAsync<AdminSearchResultDto>(url, ct)
+               ?? new AdminSearchResultDto();
+    }
+
     public async Task<AdminUsersPage> GetAdminUsersPageAsync(
         int page = 1,
         int pageSize = 50,

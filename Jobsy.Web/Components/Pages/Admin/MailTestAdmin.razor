@@ -1,4 +1,4 @@
-@page "/admin/mail-test"
+@page "/admin/content/emails"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -6,9 +6,9 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.MailTest"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.Emails"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.MailTest"]" Lead="@Culture["Admin.MailTestLead"]" ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["AdminNav.Emails"]" Lead="@Culture["Admin.MailTestLead"]">
     @if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>

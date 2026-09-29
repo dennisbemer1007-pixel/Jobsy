@@ -1,0 +1,99 @@
+@using Jobsy.Web.Navigation
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject AdminSidebarState SidebarState
+@implements IDisposable
+
+<aside class="admin-sidebar" aria-label="@Culture["AdminShell.Beheer"]">
+    <nav class="admin-sidebar__nav">
+        @foreach (var group in AdminNav.Groups)
+        {
+            var items = group.Items.Where(i => i.IsAvailable).ToList();
+            if (items.Count == 0)
+            {
+                continue;
+            }
+
+            var open = SidebarState.IsOpen(group.Key) || items.Any(IsActive);
+            <div class="admin-sidebar__group @(open ? "is-open" : null)">
+                <button type="button"
+                        class="admin-sidebar__group-toggle"
+                        aria-expanded="@(open ? "true" : "false")"
+                        @onclick="() => SidebarState.Toggle(group.Key)">
+                    <span>@Culture[group.LabelKey]</span>
+                    <span class="admin-sidebar__chevron" aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+                </button>
+                @if (open)
+                {
+                    <ul class="admin-sidebar__items">
+                        @foreach (var item in items)
+                        {
+                            var active = IsActive(item);
+                            <li>
+                                <a class="admin-sidebar__link @(active ? "is-active" : null)"
+                                   href="@item.Href"
+                                   aria-current="@(active ? "page" : null)">
+                                    <span class="admin-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                                    <span class="admin-sidebar__label">@Culture[item.LabelKey]</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+    </nav>
+</aside>
+
+@code {
+    protected override void OnInitialized()
+    {
+        SidebarState.Changed += OnStateChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        SyncActiveGroup();
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        SyncActiveGroup();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SyncActiveGroup()
+    {
+        var path = CurrentPath();
+        var resolved = AdminNav.Resolve(path);
+        SidebarState.EnsureActiveGroupOpen(resolved?.Group.Key);
+    }
+
+    private string CurrentPath()
+        => "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+
+    private bool IsActive(AdminNavItem item)
+    {
+        var path = AdminNav.Normalize(CurrentPath());
+        if (string.Equals(path, AdminNav.Normalize(item.Href), StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        foreach (var alias in item.Aliases)
+        {
+            if (string.Equals(path, AdminNav.Normalize(alias), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        var href = AdminNav.Normalize(item.Href);
+        return href is not "/" && path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void Dispose()
+    {
+        SidebarState.Changed -= OnStateChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

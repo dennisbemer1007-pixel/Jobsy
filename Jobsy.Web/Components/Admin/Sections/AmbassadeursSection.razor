@@ -1,14 +1,8 @@
-@page "/admin/ambassadeurs"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject CultureState Culture
 
-<PageTitle>@Culture["Admin.Ambassadeurs"] · Lobsy</PageTitle>
-
-<AdminPageShell Title="@Culture["Admin.Ambassadeurs"]" Lead="@Culture["Admin.AmbassadeursLead"]">
-    @if (!string.IsNullOrEmpty(_error))
+@if (!string.IsNullOrEmpty(_error))
     {
         <p class="state-message error">@_error</p>
     }
@@ -98,8 +92,6 @@
                          SubjectUserId="_supportSubjectId"
                          OnClose="CloseSupport"
                          OnGranted="OnGrantedAsync" />
-</AdminPageShell>
-
 @code {
     private List<AmbassadeurListItem> _list = [];
     private AmbassadeurSettingsDto? _settings;

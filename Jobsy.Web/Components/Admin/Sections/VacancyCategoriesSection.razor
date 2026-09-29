@@ -1,16 +1,10 @@
-@page "/admin/vacancy-categories"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.VacancyCategories"] · Lobsy</PageTitle>
-
-<AdminPageShell Title="@Culture["Admin.VacancyCategories"]" Lead="@Culture["Admin.VacancyCategoriesLead"]" ShowSettingsNav="true">
-    @if (_loading)
+@if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
@@ -128,8 +122,6 @@
             <p class="state-message @(_error ? "error" : null)">@_message</p>
         }
     }
-</AdminPageShell>
-
 @code {
     private bool _loading = true;
     private bool _creating;

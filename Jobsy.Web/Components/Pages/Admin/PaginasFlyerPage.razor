@@ -1,0 +1,52 @@
+@page "/admin/content/paginas"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["AdminNav.PagesFlyer"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.PagesFlyer"]">
+    <AdminTabs BasePath="/admin/content/paginas" ActiveKey="@_tab" Tabs="_tabs" />
+    @if (_tab == "flyer")
+    {
+        <MarketingFlyerSection />
+    }
+    else
+    {
+        <AboutPageSection />
+    }
+</AdminPageShell>
+
+@code {
+    private string _tab = "wie-zijn-wij";
+    private List<AdminTabs.Tab> _tabs = [];
+
+    protected override void OnInitialized()
+    {
+        _tabs =
+        [
+            new("wie-zijn-wij", Culture["AdminTabs.About"]),
+            new("flyer", Culture["AdminTabs.Flyer"]),
+        ];
+        _tab = ReadTab();
+    }
+
+    protected override void OnParametersSet() => _tab = ReadTab();
+
+    private string ReadTab()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (q.TryGetValue("tab", out var v)
+            && string.Equals(v.ToString(), "flyer", StringComparison.OrdinalIgnoreCase))
+        {
+            return "flyer";
+        }
+
+        return "wie-zijn-wij";
+    }
+}

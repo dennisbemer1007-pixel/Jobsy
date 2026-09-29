@@ -2,14 +2,13 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @using Jobsy.Core.Authorization
-@using Jobsy.Web.Components.Pages.Admin
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>Home · Lobsy</PageTitle>
 
 <AuthorizeView Roles="@JobsyRoles.Admin">
     <Authorized>
-        <AdminHomePanel />
+        <AdminHomeRedirect />
     </Authorized>
 </AuthorizeView>
 

@@ -1,15 +1,9 @@
-@page "/admin/integrations"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Integrations"] · Lobsy</PageTitle>
-
-<AdminPageShell Title="@Culture["Admin.Integrations"]" Lead="@Culture["Admin.IntegrationsLead"]" ShowSettingsNav="true">
-    @if (_loading)
+@if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
@@ -32,8 +26,6 @@
             <p class="state-message">@_message</p>
         }
     }
-</AdminPageShell>
-
 @code {
     private List<IntegrationHealthItem> _health = [];
     private List<IntegrationCredentialItem> _credentials = [];

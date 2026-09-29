@@ -1,15 +1,9 @@
-@page "/admin/wages"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Wages"] · Lobsy</PageTitle>
-
-<AdminPageShell Title="@Culture["Admin.Wages"]" Lead="@Culture["Admin.WagesLead"]" ShowSettingsNav="true">
-    @if (_loading)
+@if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
@@ -41,8 +35,6 @@
             <p class="state-message">@_message</p>
         }
     }
-</AdminPageShell>
-
 @code {
     private List<WageRateItem> _rates = [];
     private bool _loading = true;

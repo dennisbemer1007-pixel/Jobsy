@@ -1,4 +1,4 @@
-@page "/admin/finance"
+@page "/admin/financien"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -9,17 +9,17 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Finance"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.Revenue"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.Finance"]" Lead="@Culture["Admin.FinanceLead"]">
+<AdminPageShell Title="@Culture["AdminNav.Revenue"]" Lead="@Culture["Admin.FinanceLead"]">
     <div class="admin-sublinks admin-sublinks--wrap">
         <button type="button" class="admin-sublink @(_tab == "kpi" ? "admin-sublink--active" : null)" @onclick='() => SetTab("kpi")'>KPI’s</button>
         <button type="button" class="admin-sublink @(_tab == "tokenlog" ? "admin-sublink--active" : null)" @onclick='() => SetTab("tokenlog")'>Tokenlog</button>
-        <a class="admin-sublink" href="/admin/token-finance">Token-administratie</a>
-        <a class="admin-sublink" href="/admin/tokens">Goodwill / Compensatie</a>
-        <a class="admin-sublink" href="/admin/sales">Sales beheer</a>
-        <a class="admin-sublink" href="/admin/sales-managers">Salesmanagers</a>
-        <a class="admin-sublink" href="/admin/ambassadeurs">Ambassadeurs</a>
+        <a class="admin-sublink" href="/admin/financien/uitbetalingen">Token-administratie</a>
+        <a class="admin-sublink" href="/admin/financien/goodwill">Goodwill / Compensatie</a>
+        <a class="admin-sublink" href="/admin/financien/prijzen">Sales beheer</a>
+        <a class="admin-sublink" href="/admin/gebruikers/sales">Salesmanagers</a>
+        <a class="admin-sublink" href="/admin/gebruikers/sales?tab=ambassadeurs">Ambassadeurs</a>
     </div>
 
     @if (_tab == "kpi")

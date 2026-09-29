@@ -44,6 +44,12 @@ public sealed class UatScenarioTests
         foreach (var role in roles)
         {
             var items = RoleNavCatalog.ForUser(Principal(role));
+            if (role == JobsyRoles.Admin)
+            {
+                Assert.Empty(items);
+                continue;
+            }
+
             Assert.NotEmpty(items);
             foreach (var item in items)
             {

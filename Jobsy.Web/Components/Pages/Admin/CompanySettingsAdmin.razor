@@ -1,4 +1,4 @@
-@page "/admin/company"
+@page "/admin/instellingen/algemeen"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -7,9 +7,9 @@
 @inject Jobsy.Web.Branding.PlatformBrandingState Branding
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.CompanyDetails"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.General"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.CompanyDetails"]" Lead="@Culture["Admin.CompanyDetailsLead"]" ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["AdminNav.General"]" Lead="@Culture["AdminShell.CompanyLead"]">
     @if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>

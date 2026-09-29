@@ -175,10 +175,19 @@ public static class UatScriptRunner
 
         if (Contains(blob, "bottom-nav", "Bottom-nav", "Elke bottom-nav", "rondklikken"))
         {
-            Assert.NotEmpty(items);
-            foreach (var item in items)
+            // Admin uses AdminLayout sidebar; bottom nav is intentionally empty (D1).
+            if (string.Equals(jobsyRole, JobsyRoles.Admin, StringComparison.Ordinal))
             {
-                AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: nav {jobsyRole} → {item.Href}");
+                Assert.Empty(items);
+                Assert.NotEmpty(AdminNav.AvailableItems());
+            }
+            else
+            {
+                Assert.NotEmpty(items);
+                foreach (var item in items)
+                {
+                    AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: nav {jobsyRole} → {item.Href}");
+                }
             }
         }
 
@@ -211,21 +220,16 @@ public static class UatScriptRunner
         }
 
         if (string.Equals(jobsyRole, JobsyRoles.Admin, StringComparison.Ordinal)
-            && Contains(blob, "Settings-subnav", "settings-subnav", "16 modules"))
+            && Contains(blob, "Settings-subnav", "settings-subnav", "16 modules", "sidebar", "AdminNav"))
         {
-            Assert.Equal(18, AdminNavItems.SettingsModules.Length);
-            foreach (var module in AdminNavItems.SettingsModules)
+            var available = AdminNav.AvailableItems().ToList();
+            Assert.True(available.Count >= 10, $"{scenario.Id}: expected available admin nav items");
+            foreach (var item in available)
             {
-                AssertRouteExistsOrAuthEndpoint(module.Href, $"{scenario.Id}: admin settings {module.Href}");
+                AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: admin nav {item.Href}");
             }
 
-            var root = RepoRoot.Find();
-            var settingsNav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Admin/AdminSettingsSubnav.razor"));
-            Assert.Contains("admin-sublinks--wrap", settingsNav, StringComparison.Ordinal);
-            Assert.DoesNotContain("pill-scroller", settingsNav, StringComparison.Ordinal);
-            var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-            Assert.Contains(".admin-sublinks.admin-sublinks--wrap", css, StringComparison.Ordinal);
-            Assert.Contains("flex-wrap: wrap", css, StringComparison.Ordinal);
+            Assert.Empty(RoleNavCatalog.Admin);
         }
     }
 

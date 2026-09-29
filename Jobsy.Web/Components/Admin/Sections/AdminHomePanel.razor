@@ -1,16 +1,10 @@
-@namespace Jobsy.Web.Components.Pages.Admin
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Dashboard
 @inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 
-<div class="panel-page panel-page--dashboard">
-    <header class="panel-header panel-header--dashboard">
-        <div>
-            <h1>Platform dashboard</h1>
-            <p class="login-lead">KPI’s over het hele platform — klik een tegel voor drilldown. Modules via Settings of Financieel in de navigatie.</p>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;justify-content:flex-end">
+<div class="admin-dashboard">
+    <div class="admin-dashboard__toolbar" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;justify-content:flex-end;margin-block-end:1rem">
             <DashboardRefreshButton Period="_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
             <div class="period-tabs period-tabs--compact" role="tablist" aria-label="Periode">
             @foreach (var p in Periods)
@@ -25,8 +19,7 @@
                 </button>
             }
             </div>
-        </div>
-    </header>
+    </div>
 
     @if (_error is not null && _metrics.Count == 0 && !_loading)
     {
@@ -206,25 +199,25 @@
 
     private static string ListHrefFor(string key) => key.ToLowerInvariant() switch
     {
-        "errors" => "/admin/logging?level=Error",
-        "companies_employers" => "/admin/companies?type=Employer",
-        "companies_intermediaries" => "/admin/companies?type=Intermediary",
-        "companies_with_api" => "/admin/api-keys",
-        "companies_with_csv" or "reengagement_emails_sent" or "reengagement_reactivated" => "/admin/companies",
-        "users_open_for_work" or "users_active" => "/admin/users",
+        "errors" => "/admin/beveiliging/systeemlogs?level=Error",
+        "companies_employers" => "/admin/organisaties?type=Employer",
+        "companies_intermediaries" => "/admin/organisaties?type=Intermediary",
+        "companies_with_api" => "/admin/instellingen/integraties?tab=api",
+        "companies_with_csv" or "reengagement_emails_sent" or "reengagement_reactivated" => "/admin/organisaties",
+        "users_open_for_work" or "users_active" => "/admin/gebruikers",
         "tokens_purchased" or "tokens_spent" or "tokens_balance" or "pushboms" or "extensions"
-            => "/admin/finance?tab=tokenlog",
+            => "/admin/financien?tab=tokenlog",
         "active_vacancies" or "active_vacancies_employers" or "active_vacancies_intermediaries"
             or "active_vacancies_ats" or "active_vacancies_regular"
             or "active_boosts" or "applications" or "applications_pending" or "conversion_rate"
             or "impressions" or "clicks" or "shares" or "likes" or "unpublished_vacancies"
             or "avg_travel_minutes" or "top_transport_share" or "avg_vacancy_lead_time_days" => key.ToLowerInvariant() switch
             {
-                "active_vacancies_ats" => "/admin/vacancies?channel=ats&status=Active",
-                "active_vacancies_regular" => "/admin/vacancies?channel=regular&status=Active",
-                _ => "/admin/vacancies"
+                "active_vacancies_ats" => "/admin/vacatures?channel=ats&status=Active",
+                "active_vacancies_regular" => "/admin/vacatures?channel=regular&status=Active",
+                _ => "/admin/vacatures"
             },
-        "site_visits" or "site_visits_unique" => "/admin/vacancies",
-        _ => "/admin/vacancies"
+        "site_visits" or "site_visits_unique" => "/admin/vacatures",
+        _ => "/admin/vacatures"
     };
 }

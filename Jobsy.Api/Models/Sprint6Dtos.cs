@@ -51,6 +51,14 @@ public record AdminUsersCompanyCountDto(Guid? CompanyId, string CompanyName, int
 
 public record AdminUsersWeekBucketDto(string WeekStartUtc, int Count);
 
+public record AdminSearchHitDto(string Id, string Label, string? Sublabel, string Href);
+
+public record AdminSearchResultDto(
+    IReadOnlyList<AdminSearchHitDto> Users,
+    IReadOnlyList<AdminSearchHitDto> Organisations,
+    IReadOnlyList<AdminSearchHitDto> Vacancies,
+    IReadOnlyList<AdminSearchHitDto> Invoices);
+
 /// <summary>Admin applications without company/vacancy filter: aggregates only.</summary>
 public record AdminApplicationsAggregateDto(
     int TotalCount,

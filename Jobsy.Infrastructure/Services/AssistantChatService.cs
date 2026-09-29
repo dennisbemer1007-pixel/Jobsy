@@ -737,7 +737,7 @@ public sealed class AssistantChatService : IAssistantChatService
         return new AssistantChatResult(
             reply,
             false,
-            [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/admin/sales-managers", Label: "Salesmanagers")]);
+            [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/admin/gebruikers/sales", Label: "Salesmanagers")]);
     }
 
     private async Task<(Guid Id, string Title, string Company, int Clicks)?> RankVacanciesByClicksAsync(

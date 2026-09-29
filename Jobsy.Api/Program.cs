@@ -50,6 +50,14 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddJobsyApiPerformance();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<MfaChallengeService>();
+builder.Services.AddSingleton(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new Jobsy.Core.Hosting.DeploymentEnvironmentLabel(
+        Jobsy.Core.Hosting.DeploymentEnvironment.Resolve(
+            config["PublicWebBaseUrl"],
+            config["Deployment:Label"]));
+});
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

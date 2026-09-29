@@ -1,4 +1,4 @@
-@page "/admin/training"
+@page "/admin/content/opleidingen"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -7,9 +7,9 @@
 @inject IJSRuntime Js
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Training"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.Training"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.Training"]" Lead="@Culture["Admin.TrainingLead"]" ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["AdminNav.Training"]" Lead="@Culture["Admin.TrainingLead"]">
     @if (!string.IsNullOrWhiteSpace(_message))
     {
         <p class="state-message">@_message</p>

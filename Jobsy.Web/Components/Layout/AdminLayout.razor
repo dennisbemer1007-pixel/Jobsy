@@ -1,0 +1,80 @@
+@inherits LayoutComponentBase
+@using Jobsy.Core.Hosting
+@using Jobsy.Web.Components.Admin.Shell
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject DeploymentEnvironmentLabel Env
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<div class="admin-shell" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <PageSeoHead />
+    <AdminTopBar EnvLabel="@Env.Value" OnMenuClick="OpenDrawer" />
+
+    <div class="admin-shell__body">
+        <div class="admin-shell__sidebar admin-shell__sidebar--desktop">
+            <AdminSidebar />
+        </div>
+
+        @if (_drawerOpen)
+        {
+            <div class="admin-drawer-backdrop" @onclick="CloseDrawer"></div>
+            <div class="admin-drawer admin-drawer--start is-open"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-label="@Culture["AdminShell.Beheer"]">
+                <div class="admin-drawer__header">
+                    <strong>@Culture["AdminShell.Beheer"]</strong>
+                    <button type="button" class="admin-drawer__close" @onclick="CloseDrawer"
+                            aria-label="@Culture["AdminShell.CloseMenu"]">
+                        <span aria-hidden="true">@((MarkupString)NavIcons.Close)</span>
+                    </button>
+                </div>
+                <div class="admin-drawer__body" @onclick="CloseDrawer">
+                    <AdminSidebar />
+                </div>
+            </div>
+        }
+
+        <main class="admin-main">
+            <CircuitErrorBoundary BoundaryTag="admin">
+                @Body
+            </CircuitErrorBoundary>
+        </main>
+    </div>
+
+    @if (RendererInfo.IsInteractive)
+    {
+        <FeedbackWidget HasBottomNav="false" />
+        <ConsentReacceptDialog />
+    }
+    <CookieConsentBanner />
+    <SessionIdleGuard />
+</div>
+
+@code {
+    private bool _drawerOpen;
+
+    protected override void OnInitialized()
+    {
+        Culture.Changed += OnCultureChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _drawerOpen = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OpenDrawer() => _drawerOpen = true;
+    private void CloseDrawer() => _drawerOpen = false;
+
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

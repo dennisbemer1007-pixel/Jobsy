@@ -1,11 +1,15 @@
 {
   "css/app.min.css": {
-    "sha256": "ebb735ce83b7c581c4eda87bc229dc6058fef5284b06a104d2e3fa7920084d47",
-    "v": "20260929-acc"
+    "sha256": "84f2e1fe35e0df44b1095e688d65103f986a2feb291e33f75204739203a0d0f8",
+    "v": "20260929-admin"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
     "v": "20260929-mfa"
+  },
+  "css/features/admin.css": {
+    "sha256": "5bbb4492f095ebbaffdf713b2522f4ebf3f9d9a2096067caa75d2471a98d4251",
+    "v": "20260929-admin"
   },
   "css/features/applications.css": {
     "sha256": "08e8ccce5618f81b8e728a073d7630c2e9c6759ae09a2552c936bad4910e713d",

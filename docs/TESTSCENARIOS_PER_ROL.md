@@ -51,7 +51,7 @@ Elke grid-rij is een uitvoerbaar testscript `UAT-0001` … in `Jobsy.Tests/Uat/`
 ### Bekende gaps in product (geen testdefect als 404)
 
 - `/admin/launch` (lancerings-KPI) staat in de specs maar heeft **geen** Razor-pagina.
-- `/admin/moderation` en `/admin/notifications` zijn placeholders.
+- `/admin/vacatures` en `/admin/content/emails` zijn placeholders.
 
 ---
 
@@ -174,7 +174,7 @@ Start in een private window. Cookie-banner nog niet beantwoord. Geen bottom-navi
 | Gast | Assistent: API-fout. | Fout in paneel; rechterrand-tab blijft bruikbaar. |
 | Gast | Assistent sluiten. | Rechterrand-tab terug. |
 | Gast | Direct URL `/home`. | Login-challenge (FallbackPolicy). |
-| Gast | Direct `/candidate/profile`, `/employer/vacancies`, `/admin/settings`, `/salesmanager`, `/ambassadeur`. | Login-challenge; geen data-leak in HTML. |
+| Gast | Direct `/candidate/profile`, `/employer/vacancies`, `/admin/instellingen`, `/salesmanager`, `/ambassadeur`. | Login-challenge; geen data-leak in HTML. |
 | Gast | Direct `/candidate/applications`. | Login-challenge. |
 | Gast | Direct `/candidate/shared`. | Login-challenge. |
 | Gast | Open `/candidate/liked` als gast. | Gate: doorgaan via Google / Apple(→login) / e-mail-login met returnUrl; géén liked-data. |
@@ -383,7 +383,7 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Set-unavailable: **Annuleren**. | Geen wijziging. |
 | Kandidaat | Set-unavailable: ongeldige token. | Fout. |
 | Kandidaat | Open `/hoe-werkt-lobsy` (employer-pad). | AllowAnonymous + runtime redirect `/home` (niet de employer-guide; kandidaat-guide is `/candidate/hoe-werkt-lobsy`). |
-| Kandidaat | Open `/employer/vacancies`, `/branch/applicants`, `/admin/users`, `/salesmanager`. | 403 / access-denied / redirect home — geen werkgever-PII. |
+| Kandidaat | Open `/employer/vacancies`, `/branch/applicants`, `/admin/gebruikers`, `/salesmanager`. | 403 / access-denied / redirect home — geen werkgever-PII. |
 | Kandidaat | Open `/employer/tokens`. | Geen tokenwallet; 403. |
 | Kandidaat | Consent-reaccept dialog. | Niet getoond (kandidaat herbevestigt per sollicitatie). |
 | Kandidaat | Solliciteren zonder nieuwe consent-checkbox bij consent-bump. | Per-apply akkoord verplicht; oude sollicitaties blijven. |
@@ -680,7 +680,7 @@ Account: `sales@jobsy.local` (meestal tier-0 na seed). Bottom-nav: Home · Sales
 | Salesmanager | Payout-checkout stub `/salesmanager/payout-checkout` zonder paymentId. | Fout/terug; knoppen Uitbetalen stub / Cancel → invoices. |
 | Salesmanager | Payout-checkout met paymentId (Dev stub). | Complete of fout; AllowStubPayments buiten Dev uit. |
 | Salesmanager | UI toont full IBAN. | Nooit; alleen masked. |
-| Salesmanager | Open `/employer/vacancies`, `/admin/finance`, `/ambassadeur/finance`, `/candidate/profile`. | 403. |
+| Salesmanager | Open `/employer/vacancies`, `/admin/financien`, `/ambassadeur/finance`, `/candidate/profile`. | 403. |
 | Salesmanager | Open `/partner/{eigen-code}` ingelogd. | Publieke lander; register-CTA met ref. |
 | Salesmanager | Ondernemer registreert met SM-ref en koopt tokens. | CommissionLedger ~15% + upline 3% binnen 1 jaar FirstYearStartedAt; idempotent webhook. |
 | Salesmanager | Tokenaankoop referred ondernemer ná commissie-duur. | Geen extra SM-commissie. |
@@ -721,13 +721,13 @@ Account: `ambassadeur@jobsy.local`. Bottom-nav: Home · Toolkit · Financieel ·
 
 ## 10. Admin
 
-Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financieel · Bedrijven · Settings. Settings-subnav bevat extra modules. Tokenchip niet de employer-wallet (chip hidden of `/home`). `/admin` en `/admin/cockpit` → `/home`. `/admin/launch` is spec, **niet geïmplementeerd**.
+Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financieel · Bedrijven · Settings. Settings-subnav bevat extra modules. Tokenchip niet de employer-wallet (chip hidden of `/home`). `/admin` en `/admin` → `/home`. `/admin/launch` is spec, **niet geïmplementeerd**.
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
 | Admin | Login → `/home` AdminHomePanel. | Platform-KPI’s, periode-tabs, Top/Flop, drilldowns. |
-| Admin | `/admin` en `/admin/cockpit`. | Redirect `/home`. |
-| Admin | Elke bottom-nav: Home, `/`, `/admin/vacancies`, `/admin/ats-vacancies`, `/admin/finance`, `/admin/companies`, `/admin/settings`. | Juiste pagina; ATS alleen voor Admin; Settings extra paths actief houden Settings-tab. |
+| Admin | `/admin` en `/admin`. | Redirect `/home`. |
+| Admin | Elke bottom-nav: Home, `/`, `/admin/vacatures`, `/admin/vacatures/ats`, `/admin/financien`, `/admin/organisaties`, `/admin/instellingen`. | Juiste pagina; ATS alleen voor Admin; Settings extra paths actief houden Settings-tab. |
 | Admin | PageShell **← Beheer** op een admin-pagina. | `/home`. |
 | Admin | Home: elke metric-tegel + drilldown + overview-links (logging, companies, API keys, users, tokenlog, vacancies). | DrilldownGrid; overview landt op module. |
 | Admin | Home Top/Flop vacatureklik + load-fout + lege drilldown. | Detail of error/empty; KPI’s blijven. |
@@ -748,14 +748,14 @@ Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financie
 | Admin | Finance: periode-tabs + KPI-tegels drilldown. | tokens_balance/purchased/spent, pushboms, extensions. |
 | Admin | Finance tokenlog: zoek + Enter/zoekknop. | Gefilterd; **geen plaintext e-mail**; geen full IBAN. |
 | Admin | Finance KPI/log errors. | Error states. |
-| Admin | `/admin/tokens` Goodwill: zoek bedrijf + Grant dialog + sublinks. | Zelfde grant-rules. |
+| Admin | `/admin/financien/goodwill` Goodwill: zoek bedrijf + Grant dialog + sublinks. | Zelfde grant-rules. |
 | Admin | Token-finance tabs: Aankopen, Inkoop/SM, Goodwill, BTW-buffer, BTW-aangiftes. | Tabellen per tab. |
 | Admin | Token-finance: jaar/kwartaal filter + **Vernieuwen**. | Herlaadt. |
 | Admin | Export CSV aankopen/goodwill. | CSV-download; fail → melding. |
 | Admin | Per-rij PDF. | PDF of fout. |
 | Admin | BTW-aangifte wizard: periode, preview, **Genereer** / **Annuleren**. | Aangifte; Annuleren geen write. |
 | Admin | Wizard als periode al declared / geen open lines. | Genereer disabled. |
-| Admin | Sales `/admin/sales`: sublinks finance/sales/sales-managers/**Partnerpagina**. | Partner publieke pagina. |
+| Admin | Sales `/admin/financien/prijzen`: sublinks finance/sales/sales-managers/**Partnerpagina**. | Partner publieke pagina. |
 | Admin | Sales: €/token, carousel/pulse, dagen, start-highlight bonus **Opslaan**. | Settings persistent. |
 | Admin | Sales: SM direct%, indirect%, duur dagen Opslaan. | Commissie-rules wijzigen voor nieuwe settlements. |
 | Admin | Sales: per vacaturetype cost/active Opslaan. | Publish-kost volgt categorie/type. |
@@ -807,7 +807,7 @@ Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financie
 | Admin | Categorie slug highlight intern. | Niet als publieke filtercategorie ‘highlight’. |
 | Admin | Exclusivity: name/domain/regex/sort/educations/Active/Open-for-all Save/Delete/Add. | Delete geblokkeerd voor open-optie; apply-gate gebruikt domain/regex. |
 | Admin | Wages: per rate HourlyRate Save + **Halfjaarlijkse WML-update (stub)**. | Tarieven updated; stub-actie bevestigt/no-op volgens implementatie. |
-| Admin | `/admin/moderation` en `/admin/notifications`. | Placeholder ‘Nog niet beschikbaar’; geen crash. |
+| Admin | `/admin/vacatures` en `/admin/content/emails`. | Placeholder ‘Nog niet beschikbaar’; geen crash. |
 | Admin | `/admin/launch`. | 404 of niet in nav (spec ontbreekt in UI) — documenteer als known gap. |
 | Admin | Banenkaart als admin + Mijn vacatures indien getoond. | Platformbreed of verborgen volgens rol-check. |
 | Admin | Vacature lifecycle via employer-lijst `/employer/vacancies` (Authorize bevat Admin). | Manage+Approve mogelijk; tenant-scope admin-override volgens policy. |
@@ -835,13 +835,13 @@ Herhaal per actor. Verwacht overal: login-challenge (anoniem) of **403 / `/acces
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
-| Kandidaat | Open `/admin/settings`, `/admin/users`, `/admin/logging`, `/admin/token-finance`, `/employer/users`, `/employer/organization`, `/branch/applicants`, `/salesmanager/toolkit`, `/ambassadeur/toolkit`. | Geen toegang. |
-| Filiaalmanager | Open `/admin/companies`, `/employer/users`, `/employer/regions`, `/intermediary/team`, `/salesmanager/invoices`, `/ambassadeur/finance`, `/regional/tokens` allocate POST. | Geen toegang / geen allocate. |
-| Regiomanager | Open `/branch/vacancies/new`, `/employer/users`, `/admin/wages`, `/employer/csv-import`, applicants **Accept**-API, tokens **kopen**-API. | 403. |
-| Bedrijfsmanager | Open `/admin/sales`, `/admin/api-keys`, `/intermediary` (clients dashboard), `/salesmanager/referrals`. | 403. |
-| Intermediair | Open `/employer/organization`, `/admin/finance`, `/salesmanager/onboarding`, approve-publish. | 403. |
-| Salesmanager | Open `/employer/tokens`, `/branch/applicants`, `/admin/sales-managers`, `/candidate/liked` (authorize candidate liked mag AllowAnonymous gate — niet de data van anderen). | 403 op employer/admin; liked toont eigen/geen andermans likes. |
-| Ambassadeur | Open `/admin/ambassadeurs`, `/salesmanager/referrals`, `/employer/vacancies`. | 403. |
+| Kandidaat | Open `/admin/instellingen`, `/admin/gebruikers`, `/admin/beveiliging/systeemlogs`, `/admin/financien/uitbetalingen`, `/employer/users`, `/employer/organization`, `/branch/applicants`, `/salesmanager/toolkit`, `/ambassadeur/toolkit`. | Geen toegang. |
+| Filiaalmanager | Open `/admin/organisaties`, `/employer/users`, `/employer/regions`, `/intermediary/team`, `/salesmanager/invoices`, `/ambassadeur/finance`, `/regional/tokens` allocate POST. | Geen toegang / geen allocate. |
+| Regiomanager | Open `/branch/vacancies/new`, `/employer/users`, `/admin/vacatures/categorieen?tab=salaris`, `/employer/csv-import`, applicants **Accept**-API, tokens **kopen**-API. | 403. |
+| Bedrijfsmanager | Open `/admin/financien/prijzen`, `/admin/instellingen/integraties?tab=api`, `/intermediary` (clients dashboard), `/salesmanager/referrals`. | 403. |
+| Intermediair | Open `/employer/organization`, `/admin/financien`, `/salesmanager/onboarding`, approve-publish. | 403. |
+| Salesmanager | Open `/employer/tokens`, `/branch/applicants`, `/admin/gebruikers/sales`, `/candidate/liked` (authorize candidate liked mag AllowAnonymous gate — niet de data van anderen). | 403 op employer/admin; liked toont eigen/geen andermans likes. |
+| Ambassadeur | Open `/admin/gebruikers/sales?tab=ambassadeurs`, `/salesmanager/referrals`, `/employer/vacancies`. | 403. |
 | Admin | Als user A data van user B opvragen via gewijzigde IDs (vacancy/application/export). | Alleen platform-scope waar bedoeld; privacy-export blijft **eigen** data; application-PDF zonder PiiRevealed = 403. |
 | Gast | IDOR: `/api/applications/{id}/cv`, `/api/privacy/export`, `/api/tokens/grant`. | 401. |
 | Filiaalmanager | IDOR: applicants/CV van andere companyId. | 403; geen PII. |
@@ -918,7 +918,7 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Bedrijfsmanager | Users: open edit, wijzig niets, sluit/annuleer. | Geen write. |
 | Bedrijfsmanager | Regions: open create, Cancel. | Geen regio extra. |
 | Admin | CNAME Add, Cancel; Category Add, Cancel; Pack + Pakket, Cancel/Delete nieuw. | Geen weesrecords of netjes rollback. |
-| Admin | GrantTokensDialog openen vanaf Companies én vanaf `/admin/tokens`. | Zelfde validatie/gedrag. |
+| Admin | GrantTokensDialog openen vanaf Companies én vanaf `/admin/financien/goodwill`. | Zelfde validatie/gedrag. |
 | Admin | Integration tile **elke** integratie (KVK, Mollie, Mail, OpenAI, Entra, Google, Cursor webhook, …) Save+Test+Clear. | Ping per stuk; fail-closed zonder key. |
 | Filiaalmanager / Bedrijfsmanager | `/tokens/checkout-return` link **Terug naar tokens** na fout. | `/employer/tokens` (BM-wallet mag alias zijn; BM primair `/branch/tokens` — volg zichtbare href). |
 | Kandidaat | Notification action-url naar withdraw-others / set-unavailable. | Bevestigingspagina’s met Ja/Nee. |

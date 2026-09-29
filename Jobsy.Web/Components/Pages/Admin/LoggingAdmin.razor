@@ -1,4 +1,4 @@
-@page "/admin/logging"
+@page "/admin/beveiliging/systeemlogs"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -8,9 +8,9 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Logging"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.SystemLogs"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.Logging"]" Lead="@Culture["Admin.LoggingLead"]" ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["AdminNav.SystemLogs"]" Lead="@Culture["Admin.LoggingLead"]">
     <div class="filter-bar">
         <label>
             Level

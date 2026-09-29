@@ -222,3 +222,19 @@ public sealed record RegionHostUpsertPayload(
     double? Longitude,
     string? BackgroundImageUrl,
     bool IsActive = true);
+
+public sealed class AdminSearchHitDto
+{
+    public string Id { get; set; } = "";
+    public string Label { get; set; } = "";
+    public string? Sublabel { get; set; }
+    public string Href { get; set; } = "";
+}
+
+public sealed class AdminSearchResultDto
+{
+    public List<AdminSearchHitDto> Users { get; set; } = [];
+    public List<AdminSearchHitDto> Organisations { get; set; } = [];
+    public List<AdminSearchHitDto> Vacancies { get; set; } = [];
+    public List<AdminSearchHitDto> Invoices { get; set; } = [];
+}

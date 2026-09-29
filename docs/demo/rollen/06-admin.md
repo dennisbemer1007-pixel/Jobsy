@@ -14,13 +14,13 @@ Placeholders (later): moderatie, masterdata, notificaties.
 | Taak | Waar | Toelichting |
 |------|------|-------------|
 | Platform-KPI’s + modules | `/home` | Cockpit |
-| Bedrijven | `/admin/companies` | Organisaties op het platform |
-| Gebruikers | `/admin/users` | Platformusers |
-| Vacatures | `/admin/vacancies` | Cross-company |
-| Financieel / tokens | `/admin/finance`, `/admin/tokens` | KPI + grant |
-| Settings / integraties | `/admin/settings`, `/admin/integrations` | Pricing, PushBom, pings |
-| Logging | `/admin/logging` | Fouten / audit |
-| WML | `/admin/wages` | Minimumloon + semi-annual stub |
+| Bedrijven | `/admin/organisaties` | Organisaties op het platform |
+| Gebruikers | `/admin/gebruikers` | Platformusers |
+| Vacatures | `/admin/vacatures` | Cross-company |
+| Financieel / tokens | `/admin/financien`, `/admin/financien/goodwill` | KPI + grant |
+| Settings / integraties | `/admin/instellingen`, `/admin/instellingen/integraties` | Pricing, PushBom, pings |
+| Logging | `/admin/beveiliging/systeemlogs` | Fouten / audit |
+| WML | `/admin/vacatures/categorieen?tab=salaris` | Minimumloon + semi-annual stub |
 
 ### Bottom-navigatie
 

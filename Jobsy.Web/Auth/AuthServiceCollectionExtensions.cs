@@ -322,6 +322,8 @@ public static class AuthServiceCollectionExtensions
                 returnUrl = AuthRedirects.ResolveCandidateReturnUrl(returnUrl, showHowTo);
             }
 
+            returnUrl = AuthRedirects.ResolvePostLoginLanding(returnUrl, principal);
+
             if (principal.Identity is ClaimsIdentity identity)
             {
                 if (apiProfile?.DeviceSessionId is Guid deviceId
@@ -649,6 +651,8 @@ public static class AuthServiceCollectionExtensions
                 dest = AuthRedirects.SafeLocalUrl(
                     AuthRedirects.ResolveCandidateReturnUrl(dest, profile.ShowCandidateHowTo));
             }
+
+            dest = AuthRedirects.ResolvePostLoginLanding(dest, principal);
 
             return Results.Redirect(dest);
         }).AllowAnonymous().DisableAntiforgery();

@@ -1,13 +1,7 @@
-@page "/admin/api-keys"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 
-<PageTitle>API Beheer · Lobsy</PageTitle>
-
-<AdminPageShell Title="API Beheer" Lead="Alle bedrijfs-API-keys: status, laatste gebruik en deactiveren." Wide="true">
-    @if (_loading)
+@if (_loading)
     {
         <p class="state-message">Laden…</p>
     }
@@ -96,8 +90,6 @@
             </div>
         }
     }
-</AdminPageShell>
-
 @code {
     private List<AdminApiKeyItem> _keys = [];
     private string _query = "";

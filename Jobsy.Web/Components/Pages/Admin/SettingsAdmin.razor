@@ -1,4 +1,4 @@
-@page "/admin/settings"
+@page "/admin/instellingen"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -7,9 +7,9 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Settings"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.Features"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.Settings"]" Lead="@Culture["Admin.SettingsLead"]" ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["AdminNav.Features"]" Lead="@Culture["Admin.SettingsLead"]">
     @if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
@@ -33,13 +33,13 @@
                     <IntegrationSettingsTile @key="cred.Key" Credential="cred" Health="health" OnChanged="ReloadIntegrationsAsync" />
                 }
             </div>
-            <p class="muted"><a class="auth-link" href="/admin/integrations">Alleen integraties →</a></p>
+            <p class="muted"><a class="auth-link" href="/admin/instellingen/integraties">Alleen integraties →</a></p>
         </section>
 
         <section class="panel-section">
             <div class="panel-header">
                 <h2>@Culture["Admin.MailTest"]</h2>
-                <a class="btn-compact" href="/admin/mail-test">Beheren →</a>
+                <a class="btn-compact" href="/admin/content/emails">Beheren →</a>
             </div>
             <p class="muted">
                 Verstuur elk transactioneel mailtype naar een adres naar keuze om layout, knoppen en links na te lopen.
@@ -49,7 +49,7 @@
         <section class="panel-section">
             <div class="panel-header">
                 <h2>CNAME / regio-hosts</h2>
-                <a class="btn-compact" href="/admin/cnames">Beheren →</a>
+                <a class="btn-compact" href="/admin/organisaties/regios">Beheren →</a>
             </div>
             <p class="muted">
                 Koppel subdomeinen zoals <code>westland.lobsy.nl</code> aan branding en kaartfocus.
@@ -135,8 +135,8 @@
                 Pas hier prijzen aan; dit staat los van SalesPackage-campagnes.
             </p>
             <p class="muted">
-                Ambassadeur-commissiedrempels en overrides: <a class="auth-link" href="/admin/ambassadeurs">Ambassadeurs beheer</a>
-                · Salesmanager-tarieven: <a class="auth-link" href="/admin/sales">Sales beheer</a>.
+                Ambassadeur-commissiedrempels en overrides: <a class="auth-link" href="/admin/gebruikers/sales?tab=ambassadeurs">Ambassadeurs beheer</a>
+                · Salesmanager-tarieven: <a class="auth-link" href="/admin/financien/prijzen">Sales beheer</a>.
             </p>
             <div class="table-list">
                 @foreach (var pack in _settings?.Packs ?? [])

@@ -118,7 +118,7 @@ public sealed class HybridDashboardCacheTests
 
         string[] files =
         [
-            "Components/Admin/AdminHomePanel.razor",
+            "Components/Admin/Sections/AdminHomePanel.razor",
             "Components/Home/EmployerHomePanel.razor",
             "Components/Pages/Intermediary/IntermediaryDashboard.razor",
             "Components/Home/SalesManagerHomePanel.razor",

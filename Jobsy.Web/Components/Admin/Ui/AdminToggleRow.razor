@@ -1,0 +1,30 @@
+@namespace Jobsy.Web.Components.Admin.Ui
+
+<div class="admin-toggle-row">
+    <div class="admin-toggle-row__text">
+        <p class="admin-toggle-row__title">@Title</p>
+        @if (!string.IsNullOrWhiteSpace(Description))
+        {
+            <p class="admin-toggle-row__desc">@Description</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Meta))
+        {
+            <p class="admin-toggle-row__meta">@Meta</p>
+        }
+        @if (Impact is not null)
+        {
+            @Impact
+        }
+    </div>
+    <div class="admin-toggle-row__control">
+        @Control
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string? Meta { get; set; }
+    [Parameter] public RenderFragment? Control { get; set; }
+    [Parameter] public RenderFragment? Impact { get; set; }
+}

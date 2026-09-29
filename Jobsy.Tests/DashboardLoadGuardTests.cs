@@ -22,7 +22,7 @@ public class DashboardLoadGuardTests
     }
 
     [Theory]
-    [InlineData("Components/Admin/AdminHomePanel.razor")]
+    [InlineData("Components/Admin/Sections/AdminHomePanel.razor")]
     [InlineData("Components/Home/EmployerHomePanel.razor")]
     [InlineData("Components/Candidate/CandidateHomePanel.razor")]
     [InlineData("Components/Home/SalesManagerHomePanel.razor")]

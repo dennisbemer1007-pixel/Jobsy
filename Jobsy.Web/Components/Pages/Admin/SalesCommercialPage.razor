@@ -1,4 +1,4 @@
-@page "/admin/sales"
+@page "/admin/financien/prijzen"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -6,13 +6,13 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.SalesCommercial"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.Pricing"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.SalesCommercial"]" Lead="@Culture["Admin.SalesCommercialLead"]">
+<AdminPageShell Title="@Culture["AdminNav.Pricing"]" Lead="@Culture["Admin.SalesCommercialLead"]">
     <div class="admin-sublinks admin-sublinks--wrap">
-        <a class="admin-sublink" href="/admin/finance">Financieel</a>
-        <a class="admin-sublink admin-sublink--active" href="/admin/sales">Sales beheer</a>
-        <a class="admin-sublink" href="/admin/sales-managers">Salesmanagers</a>
+        <a class="admin-sublink" href="/admin/financien">Financieel</a>
+        <a class="admin-sublink admin-sublink--active" href="/admin/financien/prijzen">Sales beheer</a>
+        <a class="admin-sublink" href="/admin/gebruikers/sales">Salesmanagers</a>
         <a class="admin-sublink" href="/partner">Partnerpagina →</a>
     </div>
 

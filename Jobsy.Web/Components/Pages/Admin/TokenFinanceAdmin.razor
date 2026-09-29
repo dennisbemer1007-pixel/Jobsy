@@ -1,4 +1,4 @@
-@page "/admin/token-finance"
+@page "/admin/financien/uitbetalingen"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
@@ -9,11 +9,11 @@
 
 <PageTitle>Token-administratie · Lobsy</PageTitle>
 
-<AdminPageShell Title="Token-administratie" Lead="Omzet, inkoop (salesmanagers), BTW-aangifte en historie — filterbaar per kwartaal.">
+<AdminPageShell Title="@Culture["AdminNav.Payouts"]" Lead="Omzet, inkoop (salesmanagers), BTW-aangifte en historie — filterbaar per kwartaal.">
     <div class="admin-sublinks admin-sublinks--wrap">
-        <a class="admin-sublink" href="/admin/finance">← Financieel</a>
-        <a class="admin-sublink" href="/admin/tokens">Goodwill toekennen</a>
-        <a class="admin-sublink" href="/admin/company">Knab BTW-IBAN</a>
+        <a class="admin-sublink" href="/admin/financien">← Financieel</a>
+        <a class="admin-sublink" href="/admin/financien/goodwill">Goodwill toekennen</a>
+        <a class="admin-sublink" href="/admin/instellingen/algemeen">Knab BTW-IBAN</a>
         <button type="button" class="admin-sublink @(_tab == "purchases" ? "admin-sublink--active" : null)" @onclick='() => SetTab("purchases")'>Aankopen</button>
         <button type="button" class="admin-sublink @(_tab == "smcosts" ? "admin-sublink--active" : null)" @onclick='() => SetTab("smcosts")'>Inkoop / Salesmanagers</button>
         <button type="button" class="admin-sublink @(_tab == "goodwill" ? "admin-sublink--active" : null)" @onclick='() => SetTab("goodwill")'>Goodwill</button>

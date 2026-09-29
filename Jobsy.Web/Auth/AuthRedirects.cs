@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using System.Text.RegularExpressions;
+using Jobsy.Core.Authorization;
 
 namespace Jobsy.Web.Auth;
 
@@ -10,10 +12,39 @@ public static partial class AuthRedirects
     /// <summary>Guide remains reachable from the (i) menu.</summary>
     public const string CandidateHowToGuidePath = "/candidate/hoe-werkt-lobsy";
     public const string BanenkaartPath = "/";
+    public const string AdminLandingPath = "/admin";
+    public const string DefaultLandingPath = "/home";
 
     /// <summary>Post-login landing for a candidate based on first-login how-to flag.</summary>
     public static string CandidatePostLoginUrl(bool showCandidateHowTo)
         => showCandidateHowTo ? CandidateHowToPath : BanenkaartPath;
+
+    /// <summary>Default authenticated landing for a principal (D13: admin → /admin).</summary>
+    public static string DefaultLandingFor(ClaimsPrincipal? user)
+    {
+        if (user is not null && RoleClaimMatching.HasRole(user, JobsyRoles.Admin))
+        {
+            return AdminLandingPath;
+        }
+
+        return DefaultLandingPath;
+    }
+
+    /// <summary>
+    /// When an admin would land on a generic home path, send them to <see cref="AdminLandingPath"/> (D13).
+    /// </summary>
+    public static string ResolvePostLoginLanding(string? returnUrl, ClaimsPrincipal? user)
+    {
+        var safe = SafeLocalUrl(returnUrl);
+        if (user is not null
+            && RoleClaimMatching.HasRole(user, JobsyRoles.Admin)
+            && IsGenericPostLoginLanding(safe))
+        {
+            return AdminLandingPath;
+        }
+
+        return safe;
+    }
 
     /// <summary>
     /// Generic landings that may be replaced by the candidate how-to / banenkaart.

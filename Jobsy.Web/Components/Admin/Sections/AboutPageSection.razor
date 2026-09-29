@@ -1,16 +1,10 @@
-@page "/admin/about"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.About"] · Lobsy</PageTitle>
-
-<AdminPageShell Title="@Culture["Admin.About"]" Lead="@Culture["Admin.AboutLead"]" ShowSettingsNav="true">
-    @if (_loading)
+@if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
@@ -100,8 +94,6 @@
             </div>
         </section>
     }
-</AdminPageShell>
-
 @code {
     private AboutPageItem _form = new();
     private ElementReference _bodyRef;

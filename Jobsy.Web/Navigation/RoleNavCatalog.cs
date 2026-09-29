@@ -7,17 +7,10 @@ public static class RoleNavCatalog
 {
     public static readonly NavItem[] Anonymous = [];
 
-    public static readonly NavItem[] Admin =
-    [
-        new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/admin/vacancies", NavIcons.Vacancies, ["/admin/moderation"]),
-        new("Admin.AtsVacancies", "/admin/ats-vacancies", NavIcons.List),
-        new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/token-finance", "/admin/sales-managers", "/admin/ambassadeurs", "/admin/sales"]),
-        new("Nav.Companies", "/admin/companies", NavIcons.Companies),
-        new("Nav.Settings", "/admin/settings", NavIcons.Settings,
-            ["/admin/integrations", "/admin/users", "/admin/personal-data-access-log", "/admin/logging", "/admin/feedback", "/admin/wages", "/admin/masterdata", "/admin/exclusivity", "/admin/notifications", "/admin/company", "/admin/about", "/admin/marketing-flyer", "/admin/api-keys", "/admin/cnames", "/admin/vacancy-categories", "/admin/training", "/admin/mail-test"])
-    ];
+    /// <summary>
+    /// Admin uses <see cref="AdminNav"/> + <c>AdminLayout</c> sidebar; no bottom nav (D1).
+    /// </summary>
+    public static readonly NavItem[] Admin = [];
 
     public static readonly NavItem[] Candidate =
     [

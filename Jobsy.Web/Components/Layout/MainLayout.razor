@@ -7,8 +7,6 @@
 @inject Jobsy.Web.Branding.PlatformBrandingState Branding
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
-@inject ILogger<MainLayout> Logger
-@inject IHttpContextAccessor HttpContextAccessor
 @inject Jobsy.Web.Services.ApiCallTracker ApiCalls
 @implements IDisposable
 
@@ -39,21 +37,9 @@
     }
 
     <main class="app-main">
-        <ErrorBoundary @ref="_errorBoundary">
-            <ChildContent>
-                @Body
-            </ChildContent>
-            <ErrorContent Context="ex">
-                @{
-                    LogCircuitError(ex);
-                }
-                <div class="panel-page circuit-error" role="alert">
-                    <h1>@Culture["Circuit.ErrorTitle"]</h1>
-                    <p class="login-lead">@Culture["Circuit.ErrorLead"]</p>
-                    <button type="button" class="login-submit" @onclick="RecoverFromError">@Culture["Circuit.ErrorRetry"]</button>
-                </div>
-            </ErrorContent>
-        </ErrorBoundary>
+        <CircuitErrorBoundary BoundaryTag="main">
+            @Body
+        </CircuitErrorBoundary>
         @if (!_isMatchPage && !_isQuestionnairePage)
         {
             <AppFooter />
@@ -86,74 +72,6 @@
     private bool _hasBottomNav;
     private bool _isMatchPage;
     private bool _isQuestionnairePage;
-    private ErrorBoundary? _errorBoundary;
-    private Exception? _loggedCircuitError;
-
-    private void RecoverFromError()
-    {
-        _loggedCircuitError = null;
-        _errorBoundary?.Recover();
-    }
-
-    private void LogCircuitError(Exception ex)
-    {
-        if (ReferenceEquals(_loggedCircuitError, ex))
-        {
-            return;
-        }
-
-        _loggedCircuitError = ex;
-        var route = SafeRoute();
-        var userId = ResolveUserId();
-        // Never surface technical details in the UI — only log/Sentry.
-        Logger.LogError(
-            ex,
-            "Circuit error boundary at {Route} for user {UserId}: {ExceptionType}",
-            route,
-            userId,
-            ex.GetType().Name);
-        try
-        {
-            Sentry.SentrySdk.CaptureException(ex, scope =>
-            {
-                scope.SetTag("route", route);
-                scope.SetTag("boundary", "main");
-                if (!string.IsNullOrEmpty(userId))
-                {
-                    scope.User = new Sentry.SentryUser { Id = userId };
-                }
-            });
-        }
-        catch
-        {
-            // Sentry optional / not configured.
-        }
-    }
-
-    private string SafeRoute()
-    {
-        try
-        {
-            return new Uri(Navigation.Uri).PathAndQuery;
-        }
-        catch
-        {
-            return "/";
-        }
-    }
-
-    private string ResolveUserId()
-    {
-        var user = HttpContextAccessor.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated != true)
-        {
-            return "";
-        }
-
-        return user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-               ?? user.FindFirst("sub")?.Value
-               ?? "";
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -235,10 +153,6 @@
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        // An error on one tab must never follow the user to the next route.
-        _loggedCircuitError = null;
-        _errorBoundary?.Recover();
-
         try
         {
             var path = new Uri(e.Location).AbsolutePath;
