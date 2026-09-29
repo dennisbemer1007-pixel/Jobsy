@@ -58,7 +58,8 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (Offers is { Count: > 0 })
+        // Explicit Offers (including empty) = show that list; null = fetch from API.
+        if (Offers is not null)
         {
             _offers = Offers.ToList();
             _lastFetchKey = null;
