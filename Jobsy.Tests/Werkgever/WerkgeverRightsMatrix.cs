@@ -10,9 +10,12 @@ public static class WerkgeverRightsMatrix
 {
     public sealed record PageRow(string Route, string AuthorizeRoles, bool Bm, bool Rm, bool Vm);
 
+    public sealed record ApiRow(string Path, bool Bm, bool Rm, bool Vm, int AnonymousStatus = 401, int CandidateStatus = 403);
+
     public static readonly IReadOnlyList<PageRow> Pages =
     [
         new("/werkgever", "BranchManager,RegionalManager,EnterpriseManager,Intermediary", true, true, true),
+        new("/werkgever/te-doen", "BranchManager,RegionalManager,EnterpriseManager", true, true, true),
         new("/werkgever/vacatures", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
         new("/werkgever/vacatures/nieuw", "BranchManager,EnterpriseManager,Intermediary", true, false, true),
         new("/werkgever/sollicitaties", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
@@ -26,6 +29,12 @@ public static class WerkgeverRightsMatrix
         new("/werkgever/koppelingen", "EnterpriseManager,Admin", true, false, false),
         new("/werkgever/overnames", "BranchManager,EnterpriseManager,Admin", true, false, true),
         new("/werkgever/partner", "EnterpriseManager,Intermediary", true, false, false),
+    ];
+
+    public static readonly IReadOnlyList<ApiRow> Apis =
+    [
+        new("api/werkgever/dashboard", true, true, true),
+        new("api/werkgever/te-doen", true, true, true),
     ];
 
     public static bool RoleAllowed(PageRow row, EmployerRole role) => role switch

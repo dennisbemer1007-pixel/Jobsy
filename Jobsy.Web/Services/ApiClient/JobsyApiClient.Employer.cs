@@ -121,6 +121,50 @@ public sealed partial class JobsyApiClient
     public async Task<IReadOnlyList<CompanySummary>> GetMyCompaniesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<CompanySummary>>("api/companies/mine", ct) ?? [];
 
+    public async Task<Jobsy.Core.Interfaces.WerkgeverDashboardDto?> GetWerkgeverDashboardAsync(
+        string period,
+        IReadOnlyList<Guid> companyIds,
+        CancellationToken ct = default)
+    {
+        var qs = $"period={Uri.EscapeDataString(period)}";
+        foreach (var id in companyIds)
+        {
+            qs += $"&companyIds={id:D}";
+        }
+
+        try
+        {
+            return await _http.GetFromJsonAsync<Jobsy.Core.Interfaces.WerkgeverDashboardDto>(
+                $"api/werkgever/dashboard?{qs}", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized)
+        {
+            return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<Jobsy.Core.Interfaces.WerkgeverTodoItemDto>> GetWerkgeverTodoAsync(
+        IReadOnlyList<Guid> companyIds,
+        int take = 50,
+        CancellationToken ct = default)
+    {
+        var qs = $"take={take}";
+        foreach (var id in companyIds)
+        {
+            qs += $"&companyIds={id:D}";
+        }
+
+        try
+        {
+            return await _http.GetFromJsonAsync<List<Jobsy.Core.Interfaces.WerkgeverTodoItemDto>>(
+                $"api/werkgever/te-doen?{qs}", ct) ?? [];
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized)
+        {
+            return [];
+        }
+    }
+
     public async Task<IReadOnlyList<CompanyApiKeyItem>> GetCompanyApiKeysAsync(
         Guid companyId,
         CancellationToken ct = default)

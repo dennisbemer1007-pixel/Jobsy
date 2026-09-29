@@ -1,0 +1,153 @@
+@page "/werkgever/te-doen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager")]
+@using Jobsy.Core.Interfaces
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Components.Werkgever.Dashboard
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+@inject WerkgeverCountsState Counts
+@implements IDisposable
+
+<PageTitle>@PageTitle · Lobsy</PageTitle>
+
+<WgPageShell Title="@PageTitle" Lead="@Culture["WgTodo.Lead"]" ReadOnlyHint="@(Role == EmployerRole.Regiomanager)">
+    @if (_loading)
+    {
+        <PageContentSkeleton Variant="cards" CardCount="4" LoadingLabel="@Culture["EntUi.Loading"]" />
+    }
+    else
+    {
+        <div class="wg-todo-filters" role="group" aria-label="@Culture["WgTodo.Filters"]">
+            <button type="button"
+                    class="wg-chip @(_filter is null ? "is-active" : null)"
+                    @onclick="() => _filter = null">
+                @Culture["WgTodo.Filter.All"] <span class="wg-badge">@_items.Sum(i => i.Count)</span>
+            </button>
+            @foreach (var kind in KindOrder)
+            {
+                var count = _items.Where(i => i.Kind == kind).Sum(i => i.Count);
+                if (count == 0)
+                {
+                    continue;
+                }
+
+                <button type="button"
+                        class="wg-chip @(_filter == kind ? "is-active" : null)"
+                        @onclick="() => _filter = kind">
+                    @KindLabel(kind) <span class="wg-badge">@count</span>
+                </button>
+            }
+        </div>
+
+        @if (Filtered.Count == 0)
+        {
+            <p class="wg-empty">@Culture["WgDash.TodoEmpty"]</p>
+        }
+        else
+        {
+            @foreach (var severity in new[] { "Danger", "Warning", "Info" })
+            {
+                var group = Filtered.Where(i => string.Equals(i.Severity, severity, StringComparison.OrdinalIgnoreCase)).ToList();
+                if (group.Count == 0)
+                {
+                    continue;
+                }
+
+                <section class="wg-card" aria-labelledby="@($"sev-{severity}")">
+                    <div class="wg-card__head">
+                        <h2 id="@($"sev-{severity}")">@SeverityLabel(severity)</h2>
+                    </div>
+                    <ul class="wg-todo-list">
+                        @foreach (var item in group)
+                        {
+                            <li>
+                                <WgTodoItem Item="item"
+                                            ShowAction="@(Role != EmployerRole.Regiomanager || !string.IsNullOrEmpty(item.ActionKind))" />
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+        }
+    }
+</WgPageShell>
+
+@code {
+    private static readonly string[] KindOrder =
+    [
+        "PublishRequests", "ApplicationsOverdue", "VacanciesExpiring",
+        "LowTokens", "NoManager", "Takeovers"
+    ];
+
+    private List<WerkgeverTodoItemDto> _items = [];
+    private string? _filter;
+    private bool _loading = true;
+    private bool _started;
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private string PageTitle => Role == EmployerRole.Regiomanager
+        ? Culture["WgNav.Signals"]
+        : Culture["WgNav.Todo"];
+
+    private IReadOnlyList<WerkgeverTodoItemDto> Filtered =>
+        _filter is null ? _items : _items.Where(i => i.Kind == _filter).ToList();
+
+    protected override void OnInitialized() => Scope.Changed += OnScopeChanged;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started)
+        {
+            return;
+        }
+
+        _started = true;
+        await ScopeBootstrap.EnsureLoadedAsync();
+        await LoadAsync();
+    }
+
+    private async void OnScopeChanged() => await InvokeAsync(LoadAsync);
+
+    private async Task LoadAsync()
+    {
+        if (Scope.CompanyIds.Count == 0)
+        {
+            await ScopeBootstrap.EnsureLoadedAsync();
+        }
+
+        _loading = true;
+        StateHasChanged();
+        _items = Scope.CompanyIds.Count == 0
+            ? []
+            : (await Api.GetWerkgeverTodoAsync(Scope.CompanyIds)).ToList();
+        _loading = false;
+        await Counts.ForceRefreshAsync();
+        StateHasChanged();
+    }
+
+    private string KindLabel(string kind) => kind switch
+    {
+        "PublishRequests" => Culture["WgTodo.Kind.PublishRequests"],
+        "ApplicationsOverdue" => Culture["WgTodo.Kind.ApplicationsOverdue"],
+        "VacanciesExpiring" => Culture["WgTodo.Kind.VacanciesExpiring"],
+        "LowTokens" => Culture["WgTodo.Kind.LowTokens"],
+        "NoManager" => Culture["WgTodo.Kind.NoManager"],
+        "Takeovers" => Culture["WgTodo.Kind.Takeovers"],
+        _ => kind
+    };
+
+    private string SeverityLabel(string severity) => severity switch
+    {
+        "Danger" => Culture["WgTodo.Severity.Danger"],
+        "Warning" => Culture["WgTodo.Severity.Warning"],
+        _ => Culture["WgTodo.Severity.Info"]
+    };
+
+    public void Dispose() => Scope.Changed -= OnScopeChanged;
+}

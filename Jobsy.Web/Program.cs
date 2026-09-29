@@ -70,6 +70,8 @@ builder.Services.AddHttpClient("JobsySessionSecurity");
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddScoped<CultureState>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeState>();
+builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeBootstrap>();
+builder.Services.AddScoped<Jobsy.Web.Werkgever.WerkgeverCountsState>();
 builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();

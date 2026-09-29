@@ -205,6 +205,7 @@ public static partial class PageSeoCatalog
             ["/admin/training"] = Private("Admin.Training", "Seo.PrivateDescription"),
             ["/admin/wages"] = Private("Admin.Wages", "Seo.PrivateDescription"),
             ["/werkgever"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),
+            ["/werkgever/te-doen"] = Private("WgNav.Todo", "Seo.PrivateDescription"),
         };
 
     private static readonly (string Prefix, PageSeoEntry Entry)[] Prefixes =

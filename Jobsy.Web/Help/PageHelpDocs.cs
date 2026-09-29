@@ -255,6 +255,18 @@ public static class PageHelpDocs
             "Bekijk openstaande overnames en keur goed of af. Goedkeuring kan org-structuur samenvoegen.",
             "Dubbele KVK-vestigingen netjes laten claimen door de juiste partij."),
 
+        ["/werkgever/te-doen"] = new(
+            "Te doen",
+            "Openstaande acties en signalen in je bereik (regiomanager: Signalen).",
+            "Bekijk publicatieaanvragen, openstaande sollicitaties, lage tokensaldo’s en overnames. Regiomanagers zien alles alleen-lezen.",
+            "Snel zien wat aandacht vraagt zonder door menu’s te zoeken."),
+
+        ["/werkgever"] = new(
+            "Dashboard",
+            "KPI’s, te doen / signalen, wervingstrechter en vestigingen.",
+            "Kies een periode (7/30/90 dagen), bekijk wat openstaat en open vestigingen of te-doen items.",
+            "In één oogopslag zien wat managers moeten doen."),
+
         ["/employer/onboarding-checkout"] = new(
             "Onboarding-betaling",
             "Eerstejaars of onboarding-checkout voor werkgevers.",

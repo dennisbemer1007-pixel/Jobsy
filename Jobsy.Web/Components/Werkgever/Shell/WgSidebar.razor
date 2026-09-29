@@ -3,6 +3,8 @@
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+@inject WerkgeverCountsState Counts
 @implements IDisposable
 
 <aside class="wg-sidebar" aria-label="@Culture["WgShell.MainNav"]">
@@ -29,12 +31,17 @@
                         @foreach (var item in group.Items)
                         {
                             var active = IsActive(item);
+                            var count = CountFor(item);
                             <li>
                                 <a class="wg-sidebar__link @(active ? "is-active" : null)"
                                    href="@item.Href"
                                    aria-current="@(active ? "page" : null)">
                                     <span class="wg-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
                                     <span>@Culture[item.LabelKeyFor(Role)]</span>
+                                    @if (count > 0)
+                                    {
+                                        <span class="wg-sidebar__count">@count</span>
+                                    }
                                 </a>
                             </li>
                         }
@@ -54,19 +61,49 @@
 
 @code {
     private bool _meerOpen;
-    private WerkgeverNavContext _ctx = new();
+    private bool _bootstrapped;
 
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
-    private IReadOnlyList<WerkgeverNavGroup> Groups => WerkgeverNav.For(Role, _ctx);
+    private WerkgeverNavContext Ctx => new(
+        HasTakeovers: true,
+        CandidateInsightsEnabled: true,
+        Counts: Counts.Counts);
+    private IReadOnlyList<WerkgeverNavGroup> Groups => WerkgeverNav.For(Role, Ctx);
 
     protected override void OnInitialized()
     {
         Navigation.LocationChanged += OnLoc;
         Scope.Changed += OnScope;
+        Counts.Changed += OnCounts;
     }
 
-    private void OnLoc(object? s, LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
-    private void OnScope() => InvokeAsync(StateHasChanged);
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _bootstrapped)
+        {
+            return;
+        }
+
+        _bootstrapped = true;
+        await ScopeBootstrap.EnsureLoadedAsync();
+        await Counts.RefreshIfStaleAsync();
+        StateHasChanged();
+    }
+
+    private void OnLoc(object? s, LocationChangedEventArgs e)
+        => InvokeAsync(async () =>
+        {
+            await Counts.RefreshIfStaleAsync();
+            StateHasChanged();
+        });
+
+    private void OnScope() => InvokeAsync(async () =>
+    {
+        await Counts.ForceRefreshAsync();
+        StateHasChanged();
+    });
+
+    private void OnCounts() => InvokeAsync(StateHasChanged);
 
     private string CurrentPath()
         => "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
@@ -91,9 +128,20 @@
         return href is not "/" && path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
     }
 
+    private int CountFor(WerkgeverNavItem item)
+    {
+        if (string.IsNullOrEmpty(item.CountKey))
+        {
+            return 0;
+        }
+
+        return Counts.Counts.TryGetValue(item.CountKey, out var n) ? n : 0;
+    }
+
     public void Dispose()
     {
         Navigation.LocationChanged -= OnLoc;
         Scope.Changed -= OnScope;
+        Counts.Changed -= OnCounts;
     }
 }

@@ -14,6 +14,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Werkgever redesign 02:** dashboard with KPI's, Te doen / Signalen, wervingstrechter, vestigingen table; `/werkgever/te-doen`; `api/werkgever/dashboard` + `api/werkgever/te-doen`; sidebar counts from te-doen. Vacancy `EndDate` present → VacanciesExpiring included.
+
+### Added
 - **Werkgever redesign 01:** shared `WerkgeverLayout` (sidebar, scope chip, mobile bottom nav), `WerkgeverNav` catalog, Dutch `/werkgever/…` URLs + 301 legacy redirects, Ent* UI primitives under `Components/Ui/Enterprise/` (admin stack should reuse these), rights matrix foundation, D5 BranchManager removed from token purchase.
 
 ### Fixed

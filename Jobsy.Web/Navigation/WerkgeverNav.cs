@@ -112,7 +112,7 @@ public static class WerkgeverNav
                 {
                     [EmployerRole.Regiomanager] = "WgNav.Signals"
                 },
-                IsAvailable: false, CountKey: "todo"),
+                CountKey: "todo"),
         ]),
         new("recruitment", "WgNav.Group.Recruitment",
         [

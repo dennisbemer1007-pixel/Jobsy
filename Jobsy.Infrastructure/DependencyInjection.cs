@@ -231,6 +231,14 @@ public static class DependencyInjection
         services.AddScoped<ICandidateMetricsQueryService, CandidateMetricsQueryService>();
         services.AddScoped<IDashboardRefreshService, DashboardRefreshService>();
 
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.PublishRequestsTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.ApplicationsOverdueTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.VacanciesExpiringTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.LowTokensTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.NoManagerTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.TakeoversTodoSource>();
+        services.AddScoped<IWerkgeverDashboardService, Jobsy.Infrastructure.Services.Werkgever.WerkgeverDashboardService>();
+
         services.AddHttpClient(MolliePaymentService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
