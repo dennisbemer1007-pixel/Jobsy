@@ -237,7 +237,10 @@ public static class DependencyInjection
         services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.LowTokensTodoSource>();
         services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.NoManagerTodoSource>();
         services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.TakeoversTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.TokenRequestsTodoSource>();
         services.AddScoped<IWerkgeverDashboardService, Jobsy.Infrastructure.Services.Werkgever.WerkgeverDashboardService>();
+        services.AddScoped<ITokenRequestService, TokenRequestService>();
+        services.AddScoped<IWerkgeverTokenSummaryService, Jobsy.Infrastructure.Services.Werkgever.WerkgeverTokenSummaryService>();
 
         services.AddHttpClient(MolliePaymentService.HttpClientName, client =>
         {

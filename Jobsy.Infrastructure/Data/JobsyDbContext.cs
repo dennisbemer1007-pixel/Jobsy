@@ -77,6 +77,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CompanySalaryTableChangeLog> CompanySalaryTableChangeLogs => Set<CompanySalaryTableChangeLog>();
     public DbSet<TokenPricing> TokenPricings => Set<TokenPricing>();
     public DbSet<TokenSpendCost> TokenSpendCosts => Set<TokenSpendCost>();
+    public DbSet<TokenRequest> TokenRequests => Set<TokenRequest>();
     public DbSet<PushBomSettings> PushBomSettings => Set<PushBomSettings>();
     public DbSet<PushBomPricingTier> PushBomPricingTiers => Set<PushBomPricingTier>();
     public DbSet<EarlyAdapterRule> EarlyAdapterRules => Set<EarlyAdapterRule>();
@@ -1142,6 +1143,31 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.CostTokens).HasPrecision(10, 2);
             entity.HasIndex(e => e.Reason).IsUnique();
+        });
+
+        modelBuilder.Entity<TokenRequest>(entity =>
+        {
+            entity.ToTable("TokenRequests");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Note).HasMaxLength(TokenRequest.MaxNoteLength);
+            entity.HasIndex(e => new { e.OrganisationCompanyId, e.Status });
+            entity.HasIndex(e => new { e.BranchCompanyId, e.Status });
+            entity.HasOne(e => e.OrganisationCompany)
+                .WithMany()
+                .HasForeignKey(e => e.OrganisationCompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.BranchCompany)
+                .WithMany()
+                .HasForeignKey(e => e.BranchCompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.RequestedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.RequestedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.HandledByUser)
+                .WithMany()
+                .HasForeignKey(e => e.HandledByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<SalesCommercialSettings>(entity =>

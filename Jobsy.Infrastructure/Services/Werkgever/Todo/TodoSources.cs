@@ -227,7 +227,7 @@ public sealed class LowTokensTodoSource : ITodoSource
         var action = role switch
         {
             WerkgeverDashboardRole.Bedrijfsmanager => WerkgeverTodoActionKind.TokensVerdelen,
-            // 06 adds request flow; until then text only for VM.
+            WerkgeverDashboardRole.Vestigingsmanager => WerkgeverTodoActionKind.TokensAanvragen,
             _ => WerkgeverTodoActionKind.None
         };
         var metaKey = role == WerkgeverDashboardRole.Vestigingsmanager
@@ -241,7 +241,9 @@ public sealed class LowTokensTodoSource : ITodoSource
             metaKey,
             null,
             action,
-            "/werkgever/tokens/verbruik",
+            role == WerkgeverDashboardRole.Vestigingsmanager
+                ? "/werkgever/tokens?aanvragen=1"
+                : "/werkgever/tokens/verbruik",
             low.Count,
             low.Select(x => x.Id).ToList());
     }
@@ -348,5 +350,53 @@ public sealed class TakeoversTodoSource : ITodoSource
             "/werkgever/overnames",
             rows.Count,
             rows.Select(r => r.TargetCompanyId).Distinct().ToList());
+    }
+}
+
+public sealed class TokenRequestsTodoSource : ITodoSource
+{
+    private readonly JobsyDbContext _db;
+    public TokenRequestsTodoSource(JobsyDbContext db) => _db = db;
+    public WerkgeverTodoKind Kind => WerkgeverTodoKind.TokenRequests;
+
+    public async Task<WerkgeverTodoItemDto?> BuildAsync(
+        IReadOnlyList<Guid> companyIds,
+        WerkgeverDashboardRole role,
+        DateTime utcNow,
+        CancellationToken cancellationToken = default)
+    {
+        // BM only actionable; VM sees own open requests as info on tokens page.
+        if (role is not WerkgeverDashboardRole.Bedrijfsmanager)
+        {
+            return null;
+        }
+
+        var ids = companyIds.ToHashSet();
+        var rows = await _db.TokenRequests.AsNoTracking()
+            .Where(r => r.Status == TokenRequestStatus.Open
+                        && (ids.Contains(r.BranchCompanyId) || ids.Contains(r.OrganisationCompanyId)))
+            .Select(r => new { r.Id, r.BranchCompanyId, BranchName = r.BranchCompany.Name, r.Amount })
+            .ToListAsync(cancellationToken);
+        if (rows.Count == 0)
+        {
+            return null;
+        }
+
+        var first = rows[0];
+        var titleArgs = rows.Count == 1
+            ? new[] { first.BranchName, first.Amount.ToString() }
+            : new[] { rows.Count.ToString(), "" };
+
+        return TodoDtoFactory.Create(
+            Kind,
+            WerkgeverTodoSeverity.Warning,
+            rows.Count == 1 ? "WgTodo.TokenRequests.TitleOne" : "WgTodo.TokenRequests.TitleMany",
+            titleArgs,
+            "WgTodo.TokenRequests.Meta",
+            null,
+            WerkgeverTodoActionKind.TokensVerdelen,
+            $"/werkgever/tokens?request={first.Id:D}",
+            rows.Count,
+            rows.Select(r => r.BranchCompanyId).Distinct().ToList());
     }
 }

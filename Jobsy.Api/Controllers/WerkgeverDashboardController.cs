@@ -13,13 +13,16 @@ namespace Jobsy.Api.Controllers;
 public sealed class WerkgeverDashboardController : ControllerBase
 {
     private readonly IWerkgeverDashboardService _dashboard;
+    private readonly IWerkgeverTokenSummaryService _tokenSummary;
     private readonly ICompanyAuthorizationService _companyAuth;
 
     public WerkgeverDashboardController(
         IWerkgeverDashboardService dashboard,
+        IWerkgeverTokenSummaryService tokenSummary,
         ICompanyAuthorizationService companyAuth)
     {
         _dashboard = dashboard;
+        _tokenSummary = tokenSummary;
         _companyAuth = companyAuth;
     }
 
@@ -67,6 +70,27 @@ public sealed class WerkgeverDashboardController : ControllerBase
             take ?? WerkgeverDashboardRules.TodoDefaultTake,
             cancellationToken);
         return Ok(items);
+    }
+
+    [HttpGet("tokens/summary")]
+    [ProducesResponseType(typeof(WerkgeverTokenSummaryDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<WerkgeverTokenSummaryDto>> GetTokenSummary(
+        [FromQuery] List<Guid>? companyIds,
+        [FromQuery] int? periodDays,
+        CancellationToken cancellationToken)
+    {
+        var scoped = await ResolveScopeAsync(companyIds, cancellationToken);
+        if (scoped is null)
+        {
+            return Forbid();
+        }
+
+        var summary = await _tokenSummary.GetSummaryAsync(
+            scoped,
+            periodDays ?? 30,
+            cancellationToken);
+        return Ok(summary);
     }
 
     /// <summary>
