@@ -8,6 +8,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Scholen;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Scholen;
@@ -59,6 +60,7 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly IPupilQuestionBank _bank;
     private readonly IPupilResultBuilder _results;
     private readonly ISchoolScopeService _scope;
+    private readonly IMemoryCache _cache;
     private readonly TimeProvider _clock;
     private readonly ILogger<PupilPortalService> _logger;
 
@@ -69,6 +71,7 @@ public sealed class PupilPortalService : IPupilPortalService
         IPupilQuestionBank bank,
         IPupilResultBuilder results,
         ISchoolScopeService scope,
+        IMemoryCache cache,
         ILogger<PupilPortalService> logger,
         TimeProvider? clock = null)
     {
@@ -78,6 +81,7 @@ public sealed class PupilPortalService : IPupilPortalService
         _bank = bank;
         _results = results;
         _scope = scope;
+        _cache = cache;
         _logger = logger;
         _clock = clock ?? TimeProvider.System;
     }
@@ -256,6 +260,8 @@ public sealed class PupilPortalService : IPupilPortalService
         code.SessionVersion++;
         code.LastSeenAtUtc = now;
         await _db.SaveChangesAsync(cancellationToken);
+        _cache.Remove($"pupil-sv:{code.Id:D}");
+        _cache.Remove($"pupil-session:{code.Id:D}");
 
         var total = _bank.AllItems.Count;
         var currentIndex = code.Progress?.CurrentIndex ?? 0;

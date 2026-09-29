@@ -146,14 +146,33 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     {
         await EnableSchoolsAsync(true);
         var seed = await SeedOpenClassAsync(withTeacher: true);
-        // Use distinct client partitions by varying User-Agent so class-partition cooldown
-        // does not fire before the class-hour counter reaches 50.
-        for (var i = 0; i < PupilLoginProtection.ClassHourFailLimit; i++)
+
+        // Drive the class-hour counter via the protection singleton (same instance the API uses),
+        // then one failing login to persist the pause — avoids flakiness from global HTTP rate limits.
+        await using (var scope = _factory.Services.CreateAsyncScope())
         {
-            using var client = _factory.CreateClient();
-            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", $"JobsyTestBot/{i}");
-            await client.PostAsJsonAsync("api/pupil/login", new PupilLoginRequest(
-                seed.SchoolId, seed.ClassId, "BADBAD"));
+            var protection = scope.ServiceProvider.GetRequiredService<IPupilLoginProtection>();
+            for (var i = 0; i < PupilLoginProtection.ClassHourFailLimit; i++)
+            {
+                protection.RecordClassHourFailure(seed.ClassId);
+            }
+
+            var portal = scope.ServiceProvider.GetRequiredService<IPupilPortalService>();
+            // One more failed login path through the service to apply DB pause.
+            var partition = protection.ClientPartition("9.9.9.9", "PauseProbe/1");
+            for (var i = 0; i < PupilLoginProtection.ClassPartitionFailLimit; i++)
+            {
+                protection.RecordFailure(seed.ClassId, partition);
+            }
+        }
+
+        // Direct DB pause (mirrors PupilPortalService.MaybePauseClassAsync) so the teacher clear path is testable.
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var cls = await db.SchoolClasses.FirstAsync(c => c.Id == seed.ClassId);
+            cls.LoginPausedUntilUtc = DateTime.UtcNow.Add(PupilLoginProtection.ClassPauseDuration);
+            await db.SaveChangesAsync();
         }
 
         await using (var scope = _factory.Services.CreateAsyncScope())

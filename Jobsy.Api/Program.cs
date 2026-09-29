@@ -91,6 +91,8 @@ builder.Services.AddRateLimiter(options =>
         ?? (isProduction ? 30 : 10_000);
     var publicWriteLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicWritePermitLimit")
         ?? 60;
+    var pupilLimit = builder.Configuration.GetValue<int?>("RateLimiting:PupilPermitLimit")
+        ?? (isProduction ? 60 : 10_000);
     var internalClientIpSecret = builder.Configuration[RateLimitPartitioning.ConfigKey];
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -192,7 +194,7 @@ builder.Services.AddRateLimiter(options =>
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 60,
+                PermitLimit = pupilLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));

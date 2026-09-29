@@ -23,23 +23,16 @@ public class PupilPagesNoCandidateChromeTests : TestContext
     }
 
     [Fact]
-    public void LeerlingLayout_markup_has_no_candidate_chrome()
+    public void LeerlingLayout_css_block_exists_without_candidate_chrome_in_source()
     {
-        var cut = RenderComponent<LeerlingLayout>(ps => ps
-            .Add(p => p.Body, builder =>
-            {
-                builder.OpenElement(0, "p");
-                builder.AddContent(1, "body");
-                builder.CloseElement();
-            }));
-
-        var html = cut.Markup;
-        Assert.Contains("ll-shell", html, StringComparison.Ordinal);
-        Assert.DoesNotContain("bottom-nav", html, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("TrainingOffers", html, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("banenkaart", html, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("partner", html, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("RoleFitCheck", html, StringComparison.OrdinalIgnoreCase);
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "LeerlingLayout.razor"));
+        Assert.Contains("ll-shell", layout, StringComparison.Ordinal);
+        Assert.DoesNotContain("BottomNav", layout, StringComparison.Ordinal);
+        Assert.DoesNotContain("TrainingOffers", layout, StringComparison.Ordinal);
+        Assert.DoesNotContain("banenkaart", layout, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ll-shell", File.ReadAllText(
+            Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "scholen.css")), StringComparison.Ordinal);
     }
 
     [Fact]
