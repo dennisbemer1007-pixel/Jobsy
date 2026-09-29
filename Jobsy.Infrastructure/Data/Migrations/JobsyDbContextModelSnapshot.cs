@@ -2834,6 +2834,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("AuthenticatorEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("CandidatePassportEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmployersEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("ExposeRegistrationActivationLinks")
                         .HasColumnType("boolean");
 

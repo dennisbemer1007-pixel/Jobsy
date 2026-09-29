@@ -4,12 +4,14 @@ using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/company/culture")]
 [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public sealed class CompanyCultureController : ControllerBase
 {
     private readonly ICompanyCultureService _culture;

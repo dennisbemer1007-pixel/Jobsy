@@ -4,6 +4,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
@@ -120,6 +121,7 @@ public sealed class AdminAtsController : ControllerBase
     }
 
     [HttpPost("scrape")]
+    [RequiresFeature(PlatformFeature.Employers)]
     public async Task<ActionResult<AtsScrapeRunReportDto>> ScrapeNow(
         [FromQuery] Guid? sourceId = null,
         CancellationToken cancellationToken = default)
@@ -131,6 +133,7 @@ public sealed class AdminAtsController : ControllerBase
     }
 
     [HttpPost("health")]
+    [RequiresFeature(PlatformFeature.Employers)]
     public async Task<ActionResult<object>> HealthNow(CancellationToken cancellationToken)
     {
         var n = await _health.RunHealthPassAsync(cancellationToken);

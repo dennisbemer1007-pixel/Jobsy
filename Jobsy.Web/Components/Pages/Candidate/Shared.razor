@@ -1,6 +1,8 @@
 @page "/candidate/shared"
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api

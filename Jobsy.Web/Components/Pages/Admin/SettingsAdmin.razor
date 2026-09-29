@@ -1,10 +1,12 @@
 @page "/admin/settings"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Features
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <PageTitle>@Culture["Admin.Settings"] · Lobsy</PageTitle>
@@ -107,6 +109,20 @@
                     <input type="checkbox" @bind="_features.SupportAccessNotifySubject" />
                     @Culture["Admin.SupportAccessNotifySubject"]
                 </label>
+                <label class="filter-check">
+                    <input type="checkbox" @bind="_features.EmployersEnabled" />
+                    @Culture["Admin.EmployersEnabled"]
+                </label>
+                <p class="muted">@Culture["Admin.EmployersEnabledHelp"]</p>
+                @if (!_features.EmployersEnabled)
+                {
+                    <p><span class="status-pill">@Culture["Admin.EmployersOffPill"]</span></p>
+                }
+                <label class="filter-check">
+                    <input type="checkbox" @bind="_features.CandidatePassportEnabled" />
+                    @Culture["Admin.CandidatePassportEnabled"]
+                </label>
+                <p class="muted">@Culture["Admin.CandidatePassportEnabledHelp"]</p>
 
                 <label>
                     Gratis publiceren t/m (datum)
@@ -379,6 +395,7 @@
             _features = await Api.SavePlatformFeaturesAsync(_features) ?? _features;
             _features.ClearFreePublishUntil = false;
             SyncFreePublishInputFromFeatures();
+            FeatureFlags.Invalidate();
             _message = "Platform features opgeslagen.";
         }
         catch (Exception ex)

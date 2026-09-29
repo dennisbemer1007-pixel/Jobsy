@@ -51,7 +51,10 @@ builder.Services.AddJobsyApiPerformance();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<MfaChallengeService>();
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<Jobsy.Api.Filters.FeatureGateFilter>();
+    })
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(

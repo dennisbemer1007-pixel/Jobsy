@@ -8,11 +8,13 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/tokens")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class TokensController : ControllerBase
 {
     private const int MaxExactMatchTokens = 500;

@@ -333,7 +333,9 @@ public class SettingsController : ControllerBase
                     request.FreePublishUntil,
                     request.ClearFreePublishUntil,
                     SupportAccessNotifyAdmins: request.SupportAccessNotifyAdmins,
-                    SupportAccessNotifySubject: request.SupportAccessNotifySubject),
+                    SupportAccessNotifySubject: request.SupportAccessNotifySubject,
+                    EmployersEnabled: request.EmployersEnabled,
+                    CandidatePassportEnabled: request.CandidatePassportEnabled),
                 cancellationToken);
             return Ok(ToFeatureDto(snap));
         }
@@ -341,6 +343,21 @@ public class SettingsController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Public feature-flag snapshot for Web/UI bootstrap (not secrets).
+    /// </summary>
+    [HttpGet("feature-flags")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetFeatureFlags(CancellationToken cancellationToken)
+    {
+        var snap = await _features.GetAsync(cancellationToken);
+        return Ok(new
+        {
+            employersEnabled = snap.EmployersEnabled,
+            candidatePassportEnabled = snap.CandidatePassportEnabled
+        });
     }
 
     /// <summary>
@@ -541,7 +558,9 @@ public class SettingsController : ControllerBase
             snap.SessionInactivityTimeoutMinutes,
             snap.FreePublishUntil,
             snap.SupportAccessNotifyAdmins,
-            snap.SupportAccessNotifySubject);
+            snap.SupportAccessNotifySubject,
+            snap.EmployersEnabled,
+            snap.CandidatePassportEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

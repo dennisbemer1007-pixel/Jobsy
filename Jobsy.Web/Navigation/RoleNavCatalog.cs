@@ -1,7 +1,21 @@
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Web.Navigation;
+
+/// <summary>
+/// Ordered candidate nav slots. Discovery is reserved (empty until file 08).
+/// </summary>
+public enum CandidateNavSlot
+{
+    Discovery,
+    Passport,
+    Search,
+    Applications,
+    Career,
+    Saved
+}
 
 public static class RoleNavCatalog
 {
@@ -19,6 +33,10 @@ public static class RoleNavCatalog
             ["/admin/integrations", "/admin/users", "/admin/personal-data-access-log", "/admin/logging", "/admin/feedback", "/admin/wages", "/admin/masterdata", "/admin/exclusivity", "/admin/notifications", "/admin/company", "/admin/about", "/admin/marketing-flyer", "/admin/api-keys", "/admin/cnames", "/admin/vacancy-categories", "/admin/training", "/admin/mail-test"])
     ];
 
+    /// <summary>
+    /// Legacy candidate array (passport OFF + employers ON). Kept for callers that still
+    /// reference <see cref="Candidate"/>; prefer <see cref="CandidateItems"/>.
+    /// </summary>
     public static readonly NavItem[] Candidate =
     [
         new("Nav.Search", "/", NavIcons.Search),
@@ -27,6 +45,21 @@ public static class RoleNavCatalog
         new("Nav.CareerPath", "/carriere", NavIcons.Career),
         new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/profiel", "/home"])
     ];
+
+    public static readonly NavItem SearchItem =
+        new("Nav.Search", "/", NavIcons.Search);
+
+    public static readonly NavItem SavedItem =
+        new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]);
+
+    public static readonly NavItem ApplicationsItem =
+        new("Nav.Applications", "/candidate/applications", NavIcons.Applications);
+
+    public static readonly NavItem CareerItem =
+        new("Nav.CareerPath", "/carriere", NavIcons.Career);
+
+    public static readonly NavItem ProfileItem =
+        new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/profiel", "/home"]);
 
     public static readonly NavItem MyApplicationsReadOnly =
         new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications);
@@ -125,7 +158,36 @@ public static class RoleNavCatalog
         new("Nav.Onboarding", "/ambassadeur/onboarding", NavIcons.Users)
     ];
 
+    /// <summary>
+    /// Pure-function candidate nav. File 01 keeps today's order for all passport states;
+    /// employers OFF hides Zoeken / Bewaard / Sollicitaties. File 02 adds passport-ON order.
+    /// </summary>
+    public static IReadOnlyList<NavItem> CandidateItems(FeatureFlagSnapshot flags)
+    {
+        // Discovery slot reserved (empty until file 08) — nothing rendered.
+        _ = CandidateNavSlot.Discovery;
+
+        if (!flags.EmployersEnabled)
+        {
+            // Career · Profile (passport OFF and ON share this until file 02)
+            return [CareerItem, ProfileItem];
+        }
+
+        // Employers ON: exactly today's order (Search · Saved · Applications · Career · Profile)
+        return Candidate;
+    }
+
+    /// <summary>
+    /// True when Bewaard is its own bottom-nav item (legacy order).
+    /// File 02 returns false when passport is ON (Saved moves into Sollicitaties tabs).
+    /// </summary>
+    public static bool ShowsSavedInNav(FeatureFlagSnapshot flags)
+        => flags.EmployersEnabled;
+
     public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user)
+        => ForUser(user, FeatureFlagSnapshot.Defaults);
+
+    public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user, FeatureFlagSnapshot flags)
     {
         if (user?.Identity?.IsAuthenticated != true)
         {
@@ -135,6 +197,22 @@ public static class RoleNavCatalog
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Admin))
         {
             return Admin;
+        }
+
+        // Employer-side / acquisition catalogs empty when employers OFF (Admin already returned).
+        if (!flags.EmployersEnabled)
+        {
+            if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+            {
+                return CandidateItems(flags);
+            }
+
+            if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager)
+                || RoleClaimMatching.HasRole(user, JobsyRoles.Ambassadeur)
+                || RoleClaimMatching.HasAnyRole(user, JobsyRoles.EmployerRoles))
+            {
+                return Anonymous;
+            }
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))
@@ -149,7 +227,7 @@ public static class RoleNavCatalog
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
         {
-            return Candidate;
+            return CandidateItems(flags);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager))

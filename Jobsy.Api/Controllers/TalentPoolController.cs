@@ -6,12 +6,14 @@ using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/employer/talent")]
 [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public sealed class TalentPoolController : ControllerBase
 {
     private readonly ITalentPoolService _talent;

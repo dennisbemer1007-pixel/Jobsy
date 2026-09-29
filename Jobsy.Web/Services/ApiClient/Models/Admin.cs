@@ -150,6 +150,8 @@ public sealed class PlatformFeatureItem
     public bool ClearFreePublishUntil { get; set; }
     public bool SupportAccessNotifyAdmins { get; set; }
     public bool SupportAccessNotifySubject { get; set; }
+    public bool EmployersEnabled { get; set; } = true;
+    public bool CandidatePassportEnabled { get; set; }
 }
 
 public sealed class PlatformCompanyItem

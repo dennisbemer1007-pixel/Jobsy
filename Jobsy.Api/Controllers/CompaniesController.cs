@@ -10,12 +10,14 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/companies")]
 [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public class CompaniesController : ControllerBase
 {
     private readonly JobsyDbContext _db;

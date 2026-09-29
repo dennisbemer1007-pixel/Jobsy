@@ -1,6 +1,8 @@
 @page "/employer/talent-contacts"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules

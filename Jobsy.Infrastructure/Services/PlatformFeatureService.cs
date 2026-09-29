@@ -4,7 +4,9 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Features;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
@@ -17,15 +19,18 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     private readonly JobsyDbContext _db;
     private readonly JobsyFeatureOptions _options;
     private readonly IConfiguration _configuration;
+    private readonly IMemoryCache? _cache;
 
     public PlatformFeatureService(
         JobsyDbContext db,
         IOptions<JobsyFeatureOptions> options,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IMemoryCache? cache = null)
     {
         _db = db;
         _options = options.Value;
         _configuration = configuration;
+        _cache = cache;
     }
 
     public async Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
@@ -67,6 +72,17 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         {
             row.SupportAccessNotifySubject = notifySubject;
         }
+
+        if (update.EmployersEnabled is bool employersEnabled)
+        {
+            row.EmployersEnabled = employersEnabled;
+        }
+
+        if (update.CandidatePassportEnabled is bool passportEnabled)
+        {
+            row.CandidatePassportEnabled = passportEnabled;
+        }
+
         // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
         // so session-timeout-only PUTs do not silently disable the free-publish promo.
         if (update.ClearFreePublishUntil)
@@ -98,6 +114,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         }
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
+        _cache?.Remove(FeatureFlags.CacheKey);
         return ToSnapshot(row);
     }
 
@@ -170,6 +187,8 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             freeUntil,
             row?.MinimumSessionVersion ?? 0,
             row?.SupportAccessNotifyAdmins ?? false,
-            row?.SupportAccessNotifySubject ?? false);
+            row?.SupportAccessNotifySubject ?? false,
+            row?.EmployersEnabled ?? true,
+            row?.CandidatePassportEnabled ?? false);
     }
 }

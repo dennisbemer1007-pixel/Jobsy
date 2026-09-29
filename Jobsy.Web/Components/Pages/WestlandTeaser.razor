@@ -4,6 +4,8 @@
 @layout TeaserLayout
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Microsoft.Extensions.Configuration
 @inject IConfiguration Config
 

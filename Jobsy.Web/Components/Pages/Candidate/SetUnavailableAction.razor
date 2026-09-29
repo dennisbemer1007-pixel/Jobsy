@@ -1,5 +1,7 @@
 @page "/candidate/actions/set-unavailable"
 @rendermode InteractiveServer
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation

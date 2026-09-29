@@ -274,6 +274,7 @@ public static class DependencyInjection
             sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<KvkOptions>>(),
             sp.GetRequiredService<IMemoryCache>()));
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
+        services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Infrastructure.Features.FeatureFlags>();
         services.AddScoped<IPlatformCompanySettingsService, PlatformCompanySettingsService>();
         services.AddScoped<IAboutPageSettingsService, AboutPageSettingsService>();
         services.AddScoped<IMarketingFlyerSettingsService, MarketingFlyerSettingsService>();

@@ -7,11 +7,13 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/sales-managers")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class SalesManagersController : ControllerBase
 {
     private readonly ISalesManagerInviteService _invite;

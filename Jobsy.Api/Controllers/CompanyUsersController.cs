@@ -13,12 +13,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/company-users")]
 [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class CompanyUsersController : ControllerBase
 {
     private static readonly UserRole[] EmployerRoleFilter =

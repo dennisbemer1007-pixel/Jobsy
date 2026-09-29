@@ -1,4 +1,5 @@
 @using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Authorization
@@ -7,6 +8,7 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject BottomNavRefreshService NavRefresh
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 @if (_items.Count > 0)
@@ -32,6 +34,7 @@
 
 @code {
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
+    private FeatureFlagSnapshot _flags = FeatureFlagSnapshot.Defaults;
     private bool _hasTakeoverActions;
     private bool _salesOnboardingComplete;
     private bool _ambassadeurOnboardingComplete;
@@ -47,7 +50,20 @@
         Navigation.LocationChanged += OnLocationChanged;
         Culture.Changed += OnCultureChanged;
         NavRefresh.RefreshRequested += OnNavRefreshRequestedAsync;
+        await RefreshFlagsAsync();
         await RefreshItemsAsync(forceRoleApis: true);
+    }
+
+    private async Task RefreshFlagsAsync()
+    {
+        try
+        {
+            _flags = await FeatureFlags.GetAsync();
+        }
+        catch
+        {
+            _flags = FeatureFlagSnapshot.Defaults;
+        }
     }
 
     private void OnCultureChanged()
@@ -55,6 +71,7 @@
 
     private async Task OnNavRefreshRequestedAsync()
     {
+        await RefreshFlagsAsync();
         await RefreshItemsAsync(forceRoleApis: true);
         await InvokeAsync(StateHasChanged);
     }
@@ -64,6 +81,7 @@
         try
         {
             // Active styling is URI-based; avoid re-hitting takeover/sales APIs on every nav.
+            // Feature flags are refreshed on init + NavRefreshRequested only (not every location change).
             await RefreshItemsAsync(forceRoleApis: false);
             await InvokeAsync(StateHasChanged);
         }
@@ -86,7 +104,7 @@
             .Where(c => c.Type is System.Security.Claims.ClaimTypes.Role or "role")
             .Select(c => c.Value)
             .OrderBy(v => v, StringComparer.Ordinal));
-        var catalog = RoleNavCatalog.ForUser(state.User);
+        var catalog = RoleNavCatalog.ForUser(state.User, _flags);
 
         var rolesChanged = !string.Equals(_lastRoleFingerprint, fingerprint, StringComparison.Ordinal);
         _lastRoleFingerprint = fingerprint;

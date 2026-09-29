@@ -16,11 +16,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class VacanciesController : ControllerBase
 {
     /// <summary>Vacancy content is authored in Dutch unless a source language is stored later.</summary>

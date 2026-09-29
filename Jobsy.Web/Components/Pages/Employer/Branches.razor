@@ -2,6 +2,8 @@
 @page "/regional/branches"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Web.Components.Employer
 @using Jobsy.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Authorization

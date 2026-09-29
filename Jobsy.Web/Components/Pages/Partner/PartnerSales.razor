@@ -2,6 +2,8 @@
 @page "/partner/{TrackingCode?}"
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject IJSRuntime Js

@@ -1,6 +1,8 @@
 @page "/salesmanager"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "SalesManager")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject NavigationManager Navigation
 
 @code {

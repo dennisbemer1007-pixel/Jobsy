@@ -178,7 +178,9 @@ public record UpdatePlatformFeatureRequest(
     DateOnly? FreePublishUntil = null,
     bool ClearFreePublishUntil = false,
     bool? SupportAccessNotifyAdmins = null,
-    bool? SupportAccessNotifySubject = null);
+    bool? SupportAccessNotifySubject = null,
+    bool? EmployersEnabled = null,
+    bool? CandidatePassportEnabled = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -190,7 +192,9 @@ public record PlatformFeatureDto(
     int SessionInactivityTimeoutMinutes = 30,
     DateOnly? FreePublishUntil = null,
     bool SupportAccessNotifyAdmins = false,
-    bool SupportAccessNotifySubject = false);
+    bool SupportAccessNotifySubject = false,
+    bool EmployersEnabled = true,
+    bool CandidatePassportEnabled = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

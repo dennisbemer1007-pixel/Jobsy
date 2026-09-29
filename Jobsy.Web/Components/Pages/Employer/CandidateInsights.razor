@@ -1,6 +1,8 @@
 @page "/employer/kandidaatinzichten"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @implements IAsyncDisposable
 @inject JobsyApiClient Api
 @inject CultureState Culture

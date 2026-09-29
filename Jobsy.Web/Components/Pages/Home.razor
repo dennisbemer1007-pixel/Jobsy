@@ -1,5 +1,7 @@
 @page "/"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @* Map chrome prerenders with #jobsy-map-boot. jobsyMaps preloads maplibre+jobMap,
    loads the three scripts in parallel, boots from page data, and fetches pins over
    HTTP — first pins do not wait on the Blazor circuit. *@

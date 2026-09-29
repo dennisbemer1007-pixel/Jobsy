@@ -1,6 +1,8 @@
 @page "/banen"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject NavigationManager Navigation
 
 @code {

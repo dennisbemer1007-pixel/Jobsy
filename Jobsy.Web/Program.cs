@@ -68,6 +68,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddHttpClient("JobsySessionSecurity");
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
+builder.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Web.Features.WebFeatureFlags>();
 builder.Services.AddScoped<CultureState>();
 builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();

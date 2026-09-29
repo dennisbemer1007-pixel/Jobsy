@@ -1,6 +1,8 @@
 @page "/candidate/applications"
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using System.Security.Claims
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Rules
