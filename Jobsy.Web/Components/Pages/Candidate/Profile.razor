@@ -652,13 +652,15 @@
         }
             </ProfileTab>
             <Side>
-                <PanelErrorBoundary Name="matched-vacancies">
-                    <div class="profile-layout__matches">
-                        <div class="detail-card">
-                            <CompetencyMatchPanel Items="_matchedVacancies" Loading="_matchesLoading" />
+                <FeatureVisible Feature="PlatformFeature.Employers">
+                    <PanelErrorBoundary Name="matched-vacancies">
+                        <div class="profile-layout__matches">
+                            <div class="detail-card">
+                                <CompetencyMatchPanel Items="_matchedVacancies" Loading="_matchesLoading" />
+                            </div>
                         </div>
-                    </div>
-                </PanelErrorBoundary>
+                    </PanelErrorBoundary>
+                </FeatureVisible>
             </Side>
         </CandidateKompas>
         </CascadingValue>

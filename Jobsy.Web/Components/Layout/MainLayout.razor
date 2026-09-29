@@ -30,8 +30,10 @@
             <div class="app-header__actions">
                 <PageHelp />
                 <NotificationBell />
-                <TokenWalletChip />
-                <SalesWalletChip />
+                <FeatureVisible Feature="PlatformFeature.Employers">
+                    <TokenWalletChip />
+                    <SalesWalletChip />
+                </FeatureVisible>
                 <LanguageSelector />
                 <AuthHeader />
             </div>

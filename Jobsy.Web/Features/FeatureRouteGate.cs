@@ -15,7 +15,7 @@ public sealed class FeatureRouteGate : ComponentBase
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthState { get; set; } = default!;
 
-    [Parameter] public RouteData RouteData { get; set; } = default!;
+    [Parameter] public Microsoft.AspNetCore.Components.RouteData RouteData { get; set; } = default!;
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private bool _checked;

@@ -1,11 +1,14 @@
 using System;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Jobsy.Infrastructure.Data;
 
 #nullable disable
 
 namespace Jobsy.Infrastructure.Data.Migrations
 {
-    /// <inheritdoc />
+    [DbContext(typeof(JobsyDbContext))]
+    [Migration("20260929120000_AddEmployersAndPassportFeatureFlags")]
     public partial class AddEmployersAndPassportFeatureFlags : Migration
     {
         /// <inheritdoc />

@@ -51,13 +51,12 @@ public sealed class DraftVacancyCleanupHostedService : BackgroundService
 
     private async Task RunAsync(CancellationToken cancellationToken)
     {
-        if (!await _employersGate.ShouldRunAsync(_scopeFactory, stoppingToken))
-                {
-                    await Task.Delay(TimeSpan.FromMinutes(15), stoppingToken);
-                    continue;
-                }
+        if (!await _employersGate.ShouldRunAsync(_scopeFactory, cancellationToken))
+        {
+            return;
+        }
 
-                await using var scope = _scopeFactory.CreateAsyncScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
         var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
