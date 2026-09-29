@@ -48,7 +48,8 @@ public class LoginProtectionTests
         context.Request.Path = "/admin/users";
         context.User = new ClaimsPrincipal(new ClaimsIdentity(
         [
-            new Claim(ClaimTypes.Role, "Admin")
+            new Claim(ClaimTypes.Role, "Admin"),
+            new Claim("auth_method", "password")
         ], "test"));
         var reachedNext = false;
         var middleware = new MfaEnforcementMiddleware(_ =>
@@ -59,6 +60,26 @@ public class LoginProtectionTests
 
         await middleware.InvokeAsync(context);
 
+        Assert.False(reachedNext);
+        Assert.StartsWith("/account/mfa?returnUrl=", context.Response.Headers.Location.ToString());
+    }
+
+    [Fact]
+    public async Task Branch_manager_local_without_mfa_is_redirected()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/branch";
+        context.User = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(ClaimTypes.Role, "BranchManager"),
+            new Claim("auth_method", "local-registration")
+        ], "test"));
+        var reachedNext = false;
+        await new MfaEnforcementMiddleware(_ =>
+        {
+            reachedNext = true;
+            return Task.CompletedTask;
+        }).InvokeAsync(context);
         Assert.False(reachedNext);
         Assert.StartsWith("/account/mfa?returnUrl=", context.Response.Headers.Location.ToString());
     }
