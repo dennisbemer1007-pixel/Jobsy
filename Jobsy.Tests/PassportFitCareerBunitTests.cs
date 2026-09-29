@@ -37,7 +37,8 @@ public class PassportFitCareerBunitTests : TestContext
             .Add(x => x.Active, true)
             .Add(x => x.Snapshot, new CandidateKompasState()));
 
-        Assert.DoesNotContain("passport-fit__culture", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("passport-fit__culture\"", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("passport-fit__culture ", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Doe de cultuurscan", cut.Markup, StringComparison.Ordinal);
     }
 

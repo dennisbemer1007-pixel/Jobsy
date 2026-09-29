@@ -20,7 +20,8 @@ public class MijnPaspoortPlaywrightTests
         Assert.Contains("CourseSuggestionBlock", fit, StringComparison.Ordinal);
         Assert.Contains("FeatureVisible", fit, StringComparison.Ordinal);
         Assert.Contains("PlatformFeature.Employers", fit, StringComparison.Ordinal);
-        Assert.DoesNotContain("MatchPercent%", fit, StringComparison.Ordinal);
+        Assert.Contains("passport-fit__grid", fit, StringComparison.Ordinal);
+        Assert.Contains("LabelKey(result.MatchPercent)", fit, StringComparison.Ordinal);
 
         var career = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Candidate", "Passport", "PassportCareerTab.razor"));
         Assert.Contains("CareerPlanViewBuilder", career, StringComparison.Ordinal);

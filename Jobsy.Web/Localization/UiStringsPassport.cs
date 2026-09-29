@@ -212,7 +212,7 @@ public static class UiStringsPassport
             "Ex. asistent medical, învățătoare, șofer…",
             "مثال: ممرض، معلمة، سائق…");
         Add("Passport.Fit.Check",
-            "Check", "Check", "Sprawdź", "Verifică", "تحقق");
+            "Check", "Check fit", "Sprawdź", "Verifică", "تحقق");
         Add("Passport.Fit.FullResult",
             "Hele uitslag ›", "Full result ›", "Pełny wynik ›", "Rezultat complet ›", "النتيجة الكاملة ›");
         Add("Passport.Fit.LastCheck",
@@ -254,7 +254,7 @@ public static class UiStringsPassport
             "Nu cea mai mare piatră, ci cea pe măsura ta.",
             "ليست أكبر صخرة، بل التي تناسب حجمك.");
         Add("Passport.Fit.Top10",
-            "Top 10 ›", "Top 10 ›", "Top 10 ›", "Top 10 ›", "أفضل 10 ›");
+            "Top 10 ›", "See top 10 ›", "Zobacz top 10 ›", "Vezi top 10 ›", "أفضل 10 ›");
         Add("Passport.Fit.EmployersWant",
             "Werkgevers die je willen spreken",
             "Employers who want to talk",
