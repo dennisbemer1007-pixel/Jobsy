@@ -522,6 +522,8 @@ public class AdminUserItem
     public bool IsEarlyAdapter { get; set; }
     public bool IsActive { get; set; } = true;
     public List<Guid> MembershipCompanyIds { get; set; } = [];
+    /// <summary><c>enrolled</c> | <c>not-enrolled</c> | <c>external-only</c></summary>
+    public string MfaStatus { get; set; } = "not-enrolled";
 }
 
 public class AdminUsersPage

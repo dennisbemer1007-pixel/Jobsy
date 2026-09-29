@@ -141,7 +141,7 @@ public class AuthController : ControllerBase
                 [],
                 RequiresMfa: true,
                 MfaEnrolled: user.AuthenticatorEnabled,
-                MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice),
+                MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice, localPassword: true),
                 UserId: user.Id));
         }
 
@@ -296,7 +296,8 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync(cancellationToken);
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
-        if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
+        // IdP (Entra/Google/…) already enforced MFA — never challenge again in Lobsy.
+        if (provider is null && (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role)))
         {
             return Ok(new EnsureExternalUserResponse(
                 user.Email,
@@ -328,6 +329,7 @@ public class AuthController : ControllerBase
         user.LastLoginAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
 
+        var authMethod = provider is null ? null : $"external:{provider}";
         return Ok(new EnsureExternalUserResponse(
             user.Email,
             user.FullName,
@@ -341,7 +343,8 @@ public class AuthController : ControllerBase
             sessionToken,
             user.SessionVersion,
             handoffCode,
-            user.Id));
+            user.Id,
+            AuthMethod: authMethod));
     }
 
     private string? CreateLocalSessionToken(string email, Guid userId)

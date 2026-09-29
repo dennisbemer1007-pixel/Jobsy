@@ -62,6 +62,8 @@ public sealed class JobsyAccessTokenIssuer
             _privatePem,
             _issuer,
             _audience,
-            clientIp: clientIp);
+            clientIp: clientIp,
+            mfaVerified: user.HasClaim(JobsyClaimTypes.MfaVerified, "1"),
+            authMethod: user.FindFirst("auth_method")?.Value);
     }
 }

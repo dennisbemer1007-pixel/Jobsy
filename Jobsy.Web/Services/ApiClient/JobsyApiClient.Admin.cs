@@ -330,6 +330,25 @@ public sealed partial class JobsyApiClient
                ?? new AdminUsersPage();
     }
 
+    public async Task ResetUserMfaAsync(
+        Guid userId,
+        string reason,
+        string? confirmCode = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/users/{userId:D}/mfa/reset",
+            new { reason, confirmCode },
+            ct);
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        var body = await response.Content.ReadAsStringAsync(ct);
+        throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+    }
+
     public async Task<SupportAccessGrantItem> RequestSupportAccessAsync(
         Guid? subjectUserId,
         Guid? subjectCompanyId,

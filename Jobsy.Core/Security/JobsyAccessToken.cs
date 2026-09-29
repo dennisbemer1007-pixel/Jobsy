@@ -25,7 +25,9 @@ public static class JobsyAccessToken
         string? issuer = null,
         string? audience = null,
         TimeSpan? lifetime = null,
-        string? clientIp = null)
+        string? clientIp = null,
+        bool mfaVerified = false,
+        string? authMethod = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(privateKeyPem);
         var ecdsa = ECDsa.Create();
@@ -46,6 +48,16 @@ public static class JobsyAccessToken
             if (!string.IsNullOrWhiteSpace(clientIp))
             {
                 claims.Add(new Claim(ClientIpClaim, clientIp.Trim()));
+            }
+
+            if (mfaVerified)
+            {
+                claims.Add(new Claim(Jobsy.Core.Authorization.JobsyClaimTypes.MfaVerified, "1"));
+            }
+
+            if (!string.IsNullOrWhiteSpace(authMethod))
+            {
+                claims.Add(new Claim("auth_method", authMethod.Trim()));
             }
 
             var now = DateTime.UtcNow;

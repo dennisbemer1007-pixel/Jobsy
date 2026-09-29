@@ -130,6 +130,18 @@ public static class AuthorizationExtensions
                         claims.Add(new Claim(JobsyAccessToken.ClientIpClaim, clientIp));
                     }
 
+                    var mfaVerified = context.Principal?.FindFirst(JobsyClaimTypes.MfaVerified)?.Value;
+                    if (string.Equals(mfaVerified, "1", StringComparison.Ordinal))
+                    {
+                        claims.Add(new Claim(JobsyClaimTypes.MfaVerified, "1"));
+                    }
+
+                    var authMethod = context.Principal?.FindFirst("auth_method")?.Value;
+                    if (!string.IsNullOrWhiteSpace(authMethod))
+                    {
+                        claims.Add(new Claim("auth_method", authMethod));
+                    }
+
                     context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, JobsyJwtScheme));
                 }
             };

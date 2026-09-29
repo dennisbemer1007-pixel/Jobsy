@@ -28,7 +28,8 @@ public record AdminUserDetailDto(
     string? CompanyType,
     bool IsEarlyAdapter,
     bool IsActive,
-    IReadOnlyList<Guid> MembershipCompanyIds);
+    IReadOnlyList<Guid> MembershipCompanyIds,
+    string MfaStatus = "not-enrolled");
 
 /// <summary>Paginated, masked admin users overview (prompt 05).</summary>
 public record AdminUsersPageDto(

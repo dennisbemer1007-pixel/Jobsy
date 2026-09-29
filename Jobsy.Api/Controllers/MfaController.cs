@@ -23,7 +23,6 @@ public sealed class MfaController : ControllerBase
     private readonly JobsyDbContext _db;
     private readonly ISecretProtector _secrets;
     private readonly IDeviceSessionService _deviceSessions;
-    private readonly IPlatformFeatureService _features;
     private readonly IConfiguration _configuration;
     private readonly MfaChallengeService _challenges;
 
@@ -31,16 +30,36 @@ public sealed class MfaController : ControllerBase
         JobsyDbContext db,
         ISecretProtector secrets,
         IDeviceSessionService deviceSessions,
-        IPlatformFeatureService features,
         IConfiguration configuration,
         MfaChallengeService challenges)
     {
         _db = db;
         _secrets = secrets;
         _deviceSessions = deviceSessions;
-        _features = features;
         _configuration = configuration;
         _challenges = challenges;
+    }
+
+    [HttpPost("state")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<MfaStateResponse>> State(
+        [FromBody] MfaStateRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!_challenges.TryGet(request.ChallengeToken, out var challenge))
+        {
+            return Unauthorized(new { message = "De inlogcontrole is verlopen. Log opnieuw in." });
+        }
+
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == challenge.UserId, cancellationToken);
+        if (user is null || !user.IsActive)
+        {
+            return Unauthorized(new { message = "De inlogcontrole is verlopen. Log opnieuw in." });
+        }
+
+        return Ok(new MfaStateResponse(user.AuthenticatorEnabled, user.Email));
     }
 
     [HttpPost("enroll")]
@@ -55,16 +74,15 @@ public sealed class MfaController : ControllerBase
             return Unauthorized(new { message = "De inlogcontrole is verlopen. Log opnieuw in." });
         }
 
-        var features = await _features.GetAsync(cancellationToken);
-        if (!features.AuthenticatorEnabled)
-        {
-            return BadRequest(new { message = "Authenticator is tijdelijk niet beschikbaar." });
-        }
-
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == challenge.UserId, cancellationToken);
         if (user is null || !user.IsActive)
         {
             return Unauthorized(new { message = "De inlogcontrole is verlopen. Log opnieuw in." });
+        }
+
+        if (user.AuthenticatorEnabled)
+        {
+            return Conflict(new { enrolled = true, message = "Authenticator is al ingesteld." });
         }
 
         var secret = _secrets.Unprotect(user.AuthenticatorSecret);
@@ -77,7 +95,11 @@ public sealed class MfaController : ControllerBase
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        return Ok(new MfaEnrollmentResponse(secret, TotpAuthenticator.BuildProvisioningUri(user.Email, secret)));
+        var provisioningUri = TotpAuthenticator.BuildProvisioningUri(user.Email, secret);
+        return Ok(new MfaEnrollmentResponse(
+            secret,
+            provisioningUri,
+            TotpQrCode.ToSvgDataUri(provisioningUri)));
     }
 
     [HttpPost("verify")]
@@ -101,24 +123,29 @@ public sealed class MfaController : ControllerBase
         }
 
         var secret = _secrets.Unprotect(user.AuthenticatorSecret);
-        var usedRecovery = TryUseRecoveryCode(user, request.RecoveryCode);
-        if (!usedRecovery && !TotpAuthenticator.VerifyCode(secret, request.Code?.Trim(), DateTime.UtcNow))
-        {
-            return Unauthorized(new { message = "De authenticatorcode is onjuist." });
-        }
-
         string[] recoveryCodes = [];
+
         if (!user.AuthenticatorEnabled)
         {
-            if (string.IsNullOrWhiteSpace(secret))
+            // First enrollment: only accept a live TOTP (recovery codes do not exist yet).
+            if (string.IsNullOrWhiteSpace(secret)
+                || !TotpAuthenticator.VerifyCode(secret, request.Code?.Trim(), DateTime.UtcNow))
             {
-                return BadRequest(new { message = "Start eerst met het instellen van je authenticator." });
+                return Unauthorized(new { message = "De authenticatorcode is onjuist." });
             }
 
             recoveryCodes = GenerateRecoveryCodes();
             user.RecoveryCodesHash = JsonSerializer.Serialize(recoveryCodes.Select(HashRecoveryCode));
             user.AuthenticatorEnabled = true;
             user.AuthenticatorEnrolledAtUtc = DateTime.UtcNow;
+        }
+        else
+        {
+            var usedRecovery = TryUseRecoveryCode(user, request.RecoveryCode);
+            if (!usedRecovery && !TotpAuthenticator.VerifyCode(secret, request.Code?.Trim(), DateTime.UtcNow))
+            {
+                return Unauthorized(new { message = "De authenticatorcode is onjuist." });
+            }
         }
 
         var sessionToken = CreateLocalSessionToken(user.Email, user.Id);

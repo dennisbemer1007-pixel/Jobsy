@@ -44,4 +44,12 @@ public static class PersonalDataAccessLogExtensions
             user.FindFirstValue(JobsyClaimTypes.MfaVerified),
             "1",
             StringComparison.Ordinal);
+
+    public static bool IsExternalAuthMethod(string? authMethod)
+        => !string.IsNullOrWhiteSpace(authMethod)
+           && authMethod.StartsWith("external", StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsMfaSatisfiedInSession(ClaimsPrincipal user)
+        => IsMfaVerifiedInSession(user)
+           || IsExternalAuthMethod(user.FindFirstValue("auth_method"));
 }

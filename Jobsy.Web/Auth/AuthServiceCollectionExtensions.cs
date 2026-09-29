@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Rules;
@@ -14,6 +15,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Hosting;
@@ -349,7 +351,8 @@ public static class AuthServiceCollectionExtensions
         app.MapPost("/account/mfa/verify", async (
             HttpContext http,
             IConfiguration configuration,
-            IAntiforgery antiforgery) =>
+            IAntiforgery antiforgery,
+            IDataProtectionProvider dataProtection) =>
         {
             if (!await antiforgery.IsRequestValidAsync(http)
                 || !http.Request.Cookies.TryGetValue("Jobsy.MfaChallenge", out var challenge)
@@ -369,7 +372,7 @@ public static class AuthServiceCollectionExtensions
                 return Results.Redirect("/account/mfa?error=invalid");
             }
 
-            var principal = CreatePrincipalFromProfile(profile, "totp");
+            var principal = CreatePrincipalFromProfile(profile, "password+totp");
             if (principal.Identity is ClaimsIdentity identity)
             {
                 if (profile.DeviceSessionId is Guid deviceId
@@ -387,8 +390,18 @@ public static class AuthServiceCollectionExtensions
                 CreateSessionAuthProperties());
             ClearMfaChallengeCookies(http);
             StampLastActivity(http);
-            return Results.Redirect(AuthRedirects.SafeLocalUrl(
-                http.Request.Cookies["Jobsy.MfaReturnUrl"] ?? "/home"));
+
+            var returnUrl = AuthRedirects.SafeLocalUrl(
+                http.Request.Cookies["Jobsy.MfaReturnUrl"] ?? "/home");
+
+            if (profile.RecoveryCodes is { Count: > 0 })
+            {
+                SetRecoveryCodesCookie(http, dataProtection, profile.RecoveryCodes);
+                return Results.Redirect(
+                    "/account/mfa/recovery-codes?returnUrl=" + Uri.EscapeDataString(returnUrl));
+            }
+
+            return Results.Redirect(returnUrl);
         }).RequireRateLimiting("auth");
 
         // Demo one-click login resolves password server-side so credentials stay out of HTML.
@@ -862,6 +875,26 @@ public static class AuthServiceCollectionExtensions
         http.Response.Cookies.Delete("Jobsy.MfaReturnUrl", new CookieOptions { Path = "/" });
     }
 
+    private static void SetRecoveryCodesCookie(
+        HttpContext http,
+        IDataProtectionProvider dataProtection,
+        IReadOnlyList<string> codes)
+    {
+        var protector = dataProtection.CreateProtector(MfaRecoveryCodesCookie.ProtectorPurpose);
+        var payload = protector.Protect(JsonSerializer.Serialize(codes));
+        http.Response.Cookies.Append(
+            MfaRecoveryCodesCookie.Name,
+            payload,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Lax,
+                MaxAge = TimeSpan.FromMinutes(5),
+                Path = "/"
+            });
+    }
+
     private static async Task TryAttachProvisionedDeviceSessionAsync(
         HttpContext http,
         IConfiguration configuration,
@@ -1167,7 +1200,7 @@ public static class AuthServiceCollectionExtensions
                 return;
             }
 
-            ApplyProfileClaims(identity, profile, "external");
+            ApplyProfileClaims(identity, profile, $"external:{provider}");
 
             if (properties is not null && !string.IsNullOrWhiteSpace(profile.HandoffCode))
             {

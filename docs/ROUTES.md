@@ -28,13 +28,15 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (122 routes)
+## Table (124 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
 | `/` | `Pages/Home.razor` | anonymous |
 | `/access-denied` | `Pages/AccessDenied.razor` | anonymous |
-| `/account/mfa` | `Pages/Mfa.razor` | anonymous |
+| `/account/mfa` | `Pages/Account/MfaPrompt.razor` | anonymous |
+| `/account/mfa/recovery-codes` | `Pages/Account/MfaRecoveryCodes.razor` | anonymous |
+| `/account/mfa/setup` | `Pages/Account/MfaSetup.razor` | anonymous |
 | `/admin` | `Pages/Admin/AdminIndex.razor` | Admin |
 | `/admin/about` | `Pages/Admin/AboutPageAdmin.razor` | Admin |
 | `/admin/ambassadeurs` | `Pages/Admin/AmbassadeursAdmin.razor` | Admin |
