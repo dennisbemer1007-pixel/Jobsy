@@ -1,0 +1,83 @@
+@namespace Jobsy.Web.Components.Candidate.Discovery
+@using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<div class="journey-end">
+    <p class="journey-step__eyebrow">@Eyebrow</p>
+    <h1 tabindex="-1">@Title</h1>
+    <p class="journey-step__lead">@Lead</p>
+
+    @if (!PartialEnd)
+    {
+        <div class="journey-ppc" aria-label="@Culture["Discovery.End.PassportAria"]">
+            <div class="journey-ppc__banner">
+                <p class="journey-ppc__t">
+                    @Culture["Passport.Banner"]
+                    <span class="journey-ppc__no">@MemberNumber</span>
+                </p>
+                <div class="journey-ppc__stamp" aria-hidden="true">✓</div>
+            </div>
+            <div class="journey-ppc__who">
+                <span class="journey-ppc__av" aria-hidden="true">@Initials</span>
+                <h3>@DisplayName</h3>
+            </div>
+            <div class="journey-ppc__facts">
+                @Fact("Discovery.End.Fact.Strength", StrengthFact)
+                @Fact("Discovery.End.Fact.Work", WorkFact)
+                @Fact("Discovery.End.Fact.Value", ValueFact)
+            </div>
+        </div>
+
+        <p class="journey-hint journey-end__hint">
+            <span aria-hidden="true">✓</span>
+            @Hint
+        </p>
+    }
+
+    <div class="journey-step__foot">
+        @if (!PartialEnd)
+        {
+            <button type="button" class="journey-later" @onclick="Deepen">@Culture["Discovery.End.Deepen"]</button>
+            <span class="journey-step__sp"></span>
+        }
+        else
+        {
+            <span class="journey-step__sp"></span>
+        }
+        <button type="button" class="btn-compact btn-compact--primary" @onclick="ViewPassport">
+            @Culture["Discovery.End.ViewPassport"]
+        </button>
+    </div>
+
+    <OnboardingInstallPrompt />
+</div>
+
+@code {
+    [Parameter] public bool PartialEnd { get; set; }
+    [Parameter] public string Eyebrow { get; set; } = "";
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Lead { get; set; } = "";
+    [Parameter] public string Hint { get; set; } = "";
+    [Parameter] public string DisplayName { get; set; } = "";
+    [Parameter] public string Initials { get; set; } = "";
+    [Parameter] public string MemberNumber { get; set; } = "";
+    [Parameter] public string? StrengthFact { get; set; }
+    [Parameter] public string? WorkFact { get; set; }
+    [Parameter] public string? ValueFact { get; set; }
+    [Parameter] public EventCallback Deepen { get; set; }
+    [Parameter] public EventCallback ViewPassport { get; set; }
+
+    private RenderFragment Fact(string labelKey, string? value) => __builder =>
+    {
+        <div class="journey-ppc__fact">
+            <small>@Culture[labelKey]</small>
+            <b>@(string.IsNullOrWhiteSpace(value) ? Culture["Discovery.End.NotDiscovered"] : value)</b>
+            @if (!string.IsNullOrWhiteSpace(value))
+            {
+                <span class="journey-ppc__pv">@Culture["Discovery.End.FirstImpression"]</span>
+            }
+        </div>
+    };
+}

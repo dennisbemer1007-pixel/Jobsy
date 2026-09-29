@@ -138,7 +138,7 @@ public static class PageHelpDocs
         ["/candidate/ontdekkingsreis"] = new(
             "De ontdekkingsreis",
             "Stap voor stap ontdekken wie je bent, laag voor laag tot je paspoort.",
-            "Begin bij het strand, beantwoord vragen over jou en wanneer je kunt werken, en stop wanneer je wilt — alles wordt bewaard.",
+            "Begin bij het strand, doorloop stappen en tests, kies hoe diep je duikt bij ‘Weer een laag eraf’, en bekijk je eerste indruk. Na afronden blijf je hier voor ‘Verder ontdekken’.",
             "Profiel en zelfinzicht opbouwen zonder haast."),
 
         ["/candidate/profile"] = new(

@@ -9,18 +9,34 @@
         var isCurrent = tab.Step == Step;
         var isDone = tab.Step < Step;
         <span class="@(isCurrent ? "is-current" : isDone ? "is-done" : null)">
+            @if (isDone)
+            {
+                <span aria-hidden="true">✓ </span>
+            }
             @Culture[tab.Title]
         </span>
     }
 </div>
-<h1 tabindex="-1">@Culture[$"Onboarding.Step{Step}.Title"]</h1>
-<p class="ob-wizard__lead">@Culture["Onboarding.Test.Lead"]</p>
+<h1 tabindex="-1">@(string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey])</h1>
+<p class="ob-wizard__lead">@(string.IsNullOrWhiteSpace(LeadKey) ? Culture["Onboarding.Test.Lead"] : Culture[LeadKey])</p>
 @if (Questions.Count == 0)
 {
     <p>@Culture["Onboarding.MiniAllDone"]</p>
 }
 else
 {
+    @if (ShowQuestionCounter)
+    {
+        <p class="journey-qn">
+            @Culture.Format("Discovery.Test.Counter", CurrentQuestion + 1, Questions.Count)
+            <span class="journey-qn__bar" aria-hidden="true">
+                @for (var i = 0; i < Questions.Count; i++)
+                {
+                    <i class="@(i <= CurrentQuestion ? "is-on" : null)"></i>
+                }
+            </span>
+        </p>
+    }
     @foreach (var question in Questions.Take(CurrentQuestion + 2))
     {
         var index = IndexOf(question);
@@ -32,14 +48,18 @@ else
                              Dimmed="@(index > CurrentQuestion)"
                              Interactive="@(index <= CurrentQuestion)"
                              IsCurrent="@(index == CurrentQuestion)"
-                             Index="@(index + 1)"
-                             Total="@Questions.Count"
+                             Index="@(ShowQuestionCounter ? null : index + 1)"
+                             Total="@(ShowQuestionCounter ? null : Questions.Count)"
                              InputPrefix="@InputPrefix"
                              HighLabel="@Culture["Onboarding.Likert.High"]"
                              LowLabel="@Culture["Onboarding.Likert.Low"]"
                              ValueChanged="value => Answer.InvokeAsync((question.Id, value))"
                              Expanded="() => ExpandQuestion.InvokeAsync(index)" />
     }
+}
+@if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint)
+{
+    <p class="journey-deeper-hint">@Culture[HintKey]</p>
 }
 
 @code {
@@ -52,6 +72,11 @@ else
     [Parameter] public IReadOnlyList<MiniQuestion> Questions { get; set; } = [];
     [Parameter] public IReadOnlyDictionary<int, int> Answers { get; set; } = new Dictionary<int, int>();
     [Parameter] public string InputPrefix { get; set; } = "obv2-";
+    [Parameter] public string? TitleKey { get; set; }
+    [Parameter] public string? LeadKey { get; set; }
+    [Parameter] public string? HintKey { get; set; }
+    [Parameter] public bool ShowHint { get; set; }
+    [Parameter] public bool ShowQuestionCounter { get; set; }
     [Parameter] public EventCallback<(int Id, int Value)> Answer { get; set; }
     [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
     [Parameter] public Func<MiniQuestion, string>? ResolveQuestionText { get; set; }

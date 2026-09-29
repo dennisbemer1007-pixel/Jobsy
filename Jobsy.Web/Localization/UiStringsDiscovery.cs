@@ -436,5 +436,217 @@ public static class UiStringsDiscovery
             "Zobacz, jak urosłeś. To Twoja nowa skorupa.",
             "Uite cum ai crescut. Aceasta e noua ta carapace.",
             "انظر كيف كبرت. هذه صدفتك الجديدة.");
+
+        // 08 — tests, shed, end, overview
+        Add("Discovery.Test.Competency.Title",
+            "Hoe werk jij?", "How do you work?", "Jak pracujesz?", "Cum lucrezi?", "كيف تعمل؟");
+        Add("Discovery.Test.Career.Title",
+            "Wat vind je leuk?", "What do you enjoy?", "Co lubisz?", "Ce-ți place?", "ماذا تحب؟");
+        Add("Discovery.Test.Culture.Title",
+            "Waar voel je je thuis?", "Where do you feel at home?", "Gdzie czujesz się jak w domu?", "Unde te simți acasă?", "أين تشعر بأنك في بيتك؟");
+        Add("Discovery.Test.Values.Title",
+            "Wat vind je belangrijk?", "What matters to you?", "Co jest dla Ciebie ważne?", "Ce este important pentru tine?", "ما المهم بالنسبة لك؟");
+        Add("Discovery.Test.Lead",
+            "Hoe goed past deze zin bij jou? Er zijn geen foute antwoorden.",
+            "How well does this sentence fit you? There are no wrong answers.",
+            "Jak bardzo pasuje do Ciebie to zdanie? Nie ma złych odpowiedzi.",
+            "Cât de bine ți se potrivește această propoziție? Nu există răspunsuri greșite.",
+            "ما مدى ملاءمة هذه الجملة لك؟ لا إجابات خاطئة.");
+        Add("Discovery.Test.Hint",
+            "Na 5 vragen kun je kiezen: klaar, of dieper met 10 of 25 vragen.",
+            "After 5 questions you can choose: done, or go deeper with 10 or 25 questions.",
+            "Po 5 pytaniach możesz wybrać: gotowe, albo głębiej z 10 lub 25 pytaniami.",
+            "După 5 întrebări poți alege: gata, sau mai profund cu 10 sau 25 de întrebări.",
+            "بعد 5 أسئلة يمكنك الاختيار: انتهيت، أو أعمق بـ 10 أو 25 سؤالاً.");
+        Add("Discovery.Test.HintCulture",
+            "Na 5 vragen kun je kiezen: klaar, of dieper met 10 of alle 18.",
+            "After 5 questions you can choose: done, or go deeper with 10 or all 18.",
+            "Po 5 pytaniach możesz wybrać: gotowe, albo głębiej z 10 lub wszystkimi 18.",
+            "După 5 întrebări poți alege: gata, sau mai profund cu 10 sau toate cele 18.",
+            "بعد 5 أسئلة يمكنك الاختيار: انتهيت، أو أعمق بـ 10 أو كل الـ 18.");
+        Add("Discovery.Test.Counter",
+            "Vraag {0} van {1}", "Question {0} of {1}", "Pytanie {0} z {1}", "Întrebarea {0} din {1}", "سؤال {0} من {1}");
+        Add("Discovery.TestOf",
+            "test {0} van 4", "test {0} of 4", "test {0} z 4", "testul {0} din 4", "اختبار {0} من 4");
+
+        Add("Discovery.Shed.EyebrowDone",
+            "stap {0} van 10 klaar", "step {0} of 10 done", "krok {0} z 10 gotowy", "pasul {0} din 10 gata", "الخطوة {0} من 10 جاهزة");
+        Add("Discovery.Shed.LayerLabel",
+            "Laag {0} van 10", "Layer {0} of 10", "Warstwa {0} z 10", "Strat {0} din 10", "طبقة {0} من 10");
+        Add("Discovery.Shed.Title",
+            "Weer een laag eraf", "Another layer off", "Znowu warstwa mniej", "Încă un strat jos", "طبقة أخرى سقطت");
+        Add("Discovery.Shed.Lead",
+            "{0} is klaar. Dit staat nu in je paspoort:",
+            "{0} is done. This is now in your passport:",
+            "{0} gotowe. To jest teraz w Twoim paszporcie:",
+            "{0} e gata. Asta e acum în pașaportul tău:",
+            "{0} جاهز. هذا الآن في جوازك:");
+        Add("Discovery.Shed.Provisional",
+            "(voorlopig)", "(provisional)", "(tymczasowo)", "(provizoriu)", "(مؤقت)");
+        Add("Discovery.Shed.DeeperLegend",
+            "Wil je dieper in deze test?",
+            "Want to go deeper in this test?",
+            "Chcesz wejść głębiej w ten test?",
+            "Vrei să mergi mai adânc în acest test?",
+            "هل تريد التعمق أكثر في هذا الاختبار؟");
+        Add("Discovery.Shed.DeeperSub",
+            "Meer vragen geeft een scherper beeld. Het mag, het hoeft niet. Je kunt dit later ook nog doen.",
+            "More questions give a sharper picture. You may, you don’t have to. You can still do this later.",
+            "Więcej pytań daje ostrzejszy obraz. Możesz, nie musisz. Możesz to zrobić później.",
+            "Mai multe întrebări dau o imagine mai clară. Poți, nu trebuie. Poți face asta și mai târziu.",
+            "المزيد من الأسئلة يعطي صورة أوضح. يمكنك، ولست مضطراً. يمكنك فعل ذلك لاحقاً أيضاً.");
+        Add("Discovery.Shed.Keep",
+            "Zo laten", "Leave it", "Zostaw tak", "Lasă așa", "اتركه هكذا");
+        Add("Discovery.Shed.KeepSub",
+            "5 vragen · klaar", "5 questions · done", "5 pytań · gotowe", "5 întrebări · gata", "5 أسئلة · جاهز");
+        Add("Discovery.Shed.Deeper",
+            "Iets dieper", "A bit deeper", "Trochę głębiej", "Un pic mai adânc", "أعمق قليلاً");
+        Add("Discovery.Shed.DeeperSub10",
+            "10 vragen · + 2 min", "10 questions · + 2 min", "10 pytań · + 2 min", "10 întrebări · + 2 min", "10 أسئلة · + 2 دقائق");
+        Add("Discovery.Shed.Deepest",
+            "Heel diep", "Very deep", "Bardzo głęboko", "Foarte adânc", "عميق جداً");
+        Add("Discovery.Shed.DeepestSub",
+            "25 vragen · + 6 min", "25 questions · + 6 min", "25 pytań · + 6 min", "25 întrebări · + 6 min", "25 سؤالاً · + 6 دقائق");
+        Add("Discovery.Shed.DeepestSubCulture",
+            "alle 18 · + 4 min", "all 18 · + 4 min", "wszystkie 18 · + 4 min", "toate 18 · + 4 min", "كل الـ 18 · + 4 دقائق");
+        Add("Discovery.Shed.FullyDone",
+            "Deze test heb je helemaal gedaan.",
+            "You’ve fully completed this test.",
+            "Ten test masz całkowicie zrobiony.",
+            "Ai terminat complet acest test.",
+            "لقد أكملت هذا الاختبار بالكامل.");
+        Add("Discovery.Shed.DiveDeeper",
+            "Duik dieper", "Dive deeper", "Zanurz się głębiej", "Scufundă-te mai adânc", "اغص أعمق");
+        Add("Discovery.Shed.NextTest",
+            "Verder naar {0}", "Continue to {0}", "Dalej do {0}", "Mai departe la {0}", "متابعة إلى {0}");
+        Add("Discovery.Shed.ToLight",
+            "Naar het licht", "To the light", "Ku światłu", "Spre lumină", "نحو الضوء");
+        Add("Discovery.Shed.Lobster",
+            "Voel je dat? Weer een laag eraf. Je wordt groter.",
+            "Feel that? Another layer off. You’re growing.",
+            "Czujesz to? Znowu warstwa mniej. Rośniesz.",
+            "Simți asta? Încă un strat jos. Crești.",
+            "هل تشعر بذلك؟ طبقة أخرى سقطت. أنت تكبر.");
+        Add("Discovery.Shed.AriaLive",
+            "Laag {0} van 10 eraf",
+            "Layer {0} of 10 off",
+            "Warstwa {0} z 10 spadła",
+            "Stratul {0} din 10 jos",
+            "سقطت الطبقة {0} من 10");
+
+        Add("Discovery.End.Eyebrow",
+            "Klaar · 10 van 10 lagen eraf",
+            "Done · 10 of 10 layers off",
+            "Gotowe · 10 z 10 warstw mniej",
+            "Gata · 10 din 10 straturi jos",
+            "جاهز · 10 من 10 طبقات سقطت");
+        Add("Discovery.End.PartialEyebrow",
+            "Tot hier: 6 van 10 lagen eraf",
+            "This far: 6 of 10 layers off",
+            "Dotąd: 6 z 10 warstw mniej",
+            "Până aici: 6 din 10 straturi jos",
+            "حتى هنا: 6 من 10 طبقات سقطت");
+        Add("Discovery.End.Title",
+            "Dit ben jij, {0}", "This is you, {0}", "To Ty, {0}", "Acesta ești tu, {0}", "هذا أنت، {0}");
+        Add("Discovery.End.PartialTitle",
+            "Tot hier, {0}", "This far, {0}", "Dotąd, {0}", "Până aici, {0}", "حتى هنا، {0}");
+        Add("Discovery.End.Lead",
+            "Je oude schaal is eraf. Alles wat je vertelde staat nu in je paspoort. Werkgevers zien pas iets als jij dat wilt.",
+            "Your old shell is off. Everything you shared is now in your passport. Employers only see something when you want that.",
+            "Twoja stara skorupa spadła. Wszystko, co powiedziałeś, jest teraz w paszporcie. Pracodawcy zobaczą coś dopiero, gdy Ty chcesz.",
+            "Vechea ta carapace e jos. Tot ce ai spus e acum în pașaport. Angajatorii văd ceva doar când vrei tu.",
+            "صدفتك القديمة سقطت. كل ما قلته موجود الآن في جوازك. أصحاب العمل لا يرون شيئاً إلا عندما تريد أنت.");
+        Add("Discovery.End.LeadEmployersOff",
+            "Je oude schaal is eraf. Alles wat je vertelde staat nu in je paspoort.",
+            "Your old shell is off. Everything you shared is now in your passport.",
+            "Twoja stara skorupa spadła. Wszystko, co powiedziałeś, jest teraz w paszporcie.",
+            "Vechea ta carapace e jos. Tot ce ai spus e acum în pașaport.",
+            "صدفتك القديمة سقطت. كل ما قلته موجود الآن في جوازك.");
+        Add("Discovery.End.PartialLead",
+            "De tests doe je later, via De ontdekkingsreis.",
+            "You can do the tests later via The discovery journey.",
+            "Testy zrobisz później przez Odkrywczą podróż.",
+            "Testele le faci mai târziu prin Călătoria de descoperire.",
+            "يمكنك إجراء الاختبارات لاحقاً عبر رحلة الاكتشاف.");
+        Add("Discovery.End.Fact.Strength",
+            "Je sterkste punt", "Your strongest point", "Twój najmocniejszy punkt", "Punctul tău forte", "أقوى نقطة لديك");
+        Add("Discovery.End.Fact.Work",
+            "Werk dat bij je past", "Work that fits you", "Praca, która do Ciebie pasuje", "Muncă care ți se potrivește", "عمل يناسبك");
+        Add("Discovery.End.Fact.Value",
+            "Belangrijk voor jou", "Important to you", "Ważne dla Ciebie", "Important pentru tine", "مهم لك");
+        Add("Discovery.End.FirstImpression",
+            "Eerste indruk", "First impression", "Pierwsze wrażenie", "Prima impresie", "انطباع أول");
+        Add("Discovery.End.NotDiscovered",
+            "Nog niet ontdekt", "Not discovered yet", "Jeszcze nieodkryte", "Încă nedescoperit", "لم يُكتشف بعد");
+        Add("Discovery.End.HintMatches",
+            "{0} vacatures passen al bij je. Hoe dieper je duikt, hoe scherper je matches.",
+            "{0} vacancies already fit you. The deeper you dive, the sharper your matches.",
+            "{0} ofert już do Ciebie pasuje. Im głębiej nurkujesz, tym ostrzejsze dopasowania.",
+            "{0} joburi ți se potrivesc deja. Cu cât te scufunzi mai adânc, cu atât potrivirile sunt mai clare.",
+            "{0} وظائف تناسبك بالفعل. كلما غصت أعمق، صارت مطابقاتك أدق.");
+        Add("Discovery.End.HintFirst",
+            "Eerste indruk. Hoe dieper je duikt, hoe scherper het beeld.",
+            "First impression. The deeper you dive, the sharper the picture.",
+            "Pierwsze wrażenie. Im głębiej nurkujesz, tym ostrzejszy obraz.",
+            "Prima impresie. Cu cât te scufunzi mai adânc, cu atât imaginea e mai clară.",
+            "انطباع أول. كلما غصت أعمق، صارت الصورة أوضح.");
+        Add("Discovery.End.Deepen",
+            "Een test verdiepen", "Deepen a test", "Pogłęb test", "Aprofundează un test", "تعميق اختبار");
+        Add("Discovery.End.ViewPassport",
+            "Bekijk je paspoort", "View your passport", "Zobacz swój paszport", "Vezi pașaportul", "اعرض جوازك");
+        Add("Discovery.End.PassportAria",
+            "Voorbeeld van je paspoort", "Preview of your passport", "Podgląd paszportu", "Previzualizare pașaport", "معاينة جوازك");
+
+        Add("Discovery.Overview.Title",
+            "Verder ontdekken", "Keep exploring", "Odkrywaj dalej", "Descoperă mai departe", "واصل الاكتشاف");
+        Add("Discovery.Overview.Lead",
+            "Kijk terug op je reis, of duik dieper.",
+            "Look back on your journey, or dive deeper.",
+            "Spójrz wstecz na podróż albo zanurz się głębiej.",
+            "Privește înapoi la călătorie, sau scufundă-te mai adânc.",
+            "انظر إلى رحلتك، أو اغص أعمق.");
+        Add("Discovery.Overview.TestsHeading",
+            "Je tests", "Your tests", "Twoje testy", "Testele tale", "اختباراتك");
+        Add("Discovery.Overview.Done",
+            "Klaar", "Done", "Gotowe", "Gata", "جاهز");
+        Add("Discovery.Overview.Skipped",
+            "Overgeslagen", "Skipped", "Pominięte", "Omise", "تم التخطي");
+        Add("Discovery.Overview.New",
+            "Nieuw · 1 min", "New · 1 min", "Nowe · 1 min", "Nou · 1 min", "جديد · دقيقة");
+        Add("Discovery.Overview.View",
+            "Bekijken", "View", "Zobacz", "Vezi", "عرض");
+        Add("Discovery.Overview.Save",
+            "Opslaan", "Save", "Zapisz", "Salvează", "حفظ");
+        Add("Discovery.Overview.Back",
+            "Terug naar overzicht", "Back to overview", "Wróć do przeglądu", "Înapoi la prezentare", "العودة إلى النظرة العامة");
+        Add("Discovery.Overview.FullyDone",
+            "Helemaal gedaan", "Fully done", "Całkowicie zrobione", "Complet terminat", "مكتمل بالكامل");
+        Add("Discovery.Overview.FullReport",
+            "Uitgebreid rapport", "Full report", "Pełny raport", "Raport complet", "تقرير مفصل");
+        Add("Discovery.Overview.Depth",
+            "{0} van {1} vragen", "{0} of {1} questions", "{0} z {1} pytań", "{0} din {1} întrebări", "{0} من {1} أسئلة");
+        Add("Discovery.Overview.All18",
+            "Alle 18", "All 18", "Wszystkie 18", "Toate 18", "كل الـ 18");
+        Add("Discovery.Overview.Consent",
+            "Toestemming voor de tests",
+            "Consent for the tests",
+            "Zgoda na testy",
+            "Consimțământ pentru teste",
+            "الموافقة على الاختبارات");
+        Add("Discovery.Overview.GiveConsent",
+            "Nu geven", "Give now", "Daj teraz", "Acordă acum", "قدّم الآن");
+        Add("Discovery.Consent.Decline",
+            "Zonder tests afronden",
+            "Finish without tests",
+            "Zakończ bez testów",
+            "Finalizează fără teste",
+            "إنهاء بدون اختبارات");
+        Add("Discovery.Rail.DoneCountShort",
+            "Klaar · 10 van 10", "Done · 10 of 10", "Gotowe · 10 z 10", "Gata · 10 din 10", "جاهز · 10 من 10");
+
+        Add("MatchUnlock.ContinueStart",
+            "Verder met starten", "Continue starting", "Kontynuuj start", "Continuă pornirea", "متابعة البدء");
+        Add("MatchUnlock.StartOrResume",
+            "Start of hervat", "Start or resume", "Start lub wznów", "Pornește sau reia", "ابدأ أو استأنف");
     }
 }

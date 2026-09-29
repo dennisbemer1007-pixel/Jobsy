@@ -1,0 +1,109 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject IJSRuntime Js
+@inject JobsyApiClient Api
+
+@if (_visible)
+{
+    <section class="journey-install card" aria-labelledby="journey-install-title">
+        <h2 id="journey-install-title" class="journey-install__title">@Culture["Onboarding.Install.Title"]</h2>
+        <p class="journey-install__lead">@Culture["Onboarding.Install.Lead"]</p>
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <p class="journey-install__msg">@_message</p>
+        }
+        <div class="journey-install__actions">
+            @if (_canPrompt)
+            {
+                <button type="button" class="btn-compact btn-compact--primary" @onclick="InstallAsync">
+                    @Culture["Onboarding.Install.AddApp"]
+                </button>
+            }
+            <button type="button" class="btn-compact" @onclick="EnablePushAsync">
+                @Culture["Onboarding.Install.EnablePush"]
+            </button>
+            <button type="button" class="journey-later" @onclick="DismissAsync">
+                @Culture["Onboarding.Install.Later"]
+            </button>
+        </div>
+    </section>
+}
+
+@code {
+    private bool _visible;
+    private bool _canPrompt;
+    private string? _message;
+
+    private sealed class PushResult
+    {
+        public bool Ok { get; set; }
+        public string? Endpoint { get; set; }
+        public string? P256dh { get; set; }
+        public string? Auth { get; set; }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            if (await Js.InvokeAsync<bool>("lobsyPwaInstall.isStandalone")) return;
+            var ios = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");
+            _canPrompt = await Js.InvokeAsync<bool>("lobsyPwaInstall.canPrompt");
+            _visible = ios || _canPrompt;
+            if (_visible) await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            _visible = false;
+        }
+    }
+
+    private async Task InstallAsync()
+    {
+        try
+        {
+            await Js.InvokeAsync<object>("lobsyPwaInstall.prompt");
+        }
+        catch
+        {
+            _message = Culture["Onboarding.Install.Failed"];
+        }
+    }
+
+    private async Task EnablePushAsync()
+    {
+        try
+        {
+            var key = await Api.GetWebPushVapidPublicKeyAsync();
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                _message = Culture["Onboarding.Install.Failed"];
+                return;
+            }
+
+            var result = await Js.InvokeAsync<PushResult>("lobsyPush.createSubscription", key);
+            if (result.Ok && !string.IsNullOrWhiteSpace(result.Endpoint)
+                && !string.IsNullOrWhiteSpace(result.P256dh) && !string.IsNullOrWhiteSpace(result.Auth))
+            {
+                await Api.SubscribeWebPushAsync(result.Endpoint, result.P256dh, result.Auth);
+                _message = Culture["Onboarding.Install.PushOk"];
+            }
+            else
+            {
+                _message = Culture["Onboarding.Install.Failed"];
+            }
+        }
+        catch
+        {
+            _message = Culture["Onboarding.Install.Failed"];
+        }
+    }
+
+    private Task DismissAsync()
+    {
+        _visible = false;
+        return Task.CompletedTask;
+    }
+}

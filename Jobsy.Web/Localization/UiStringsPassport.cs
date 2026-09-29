@@ -18,6 +18,12 @@ public static class UiStringsPassport
 
         Add("Nav.Passport",
             "Mijn Paspoort", "My Passport", "Mój Paszport", "Pașaportul meu", "جواز سفري");
+        Add("Nav.Passport.Short",
+            "Paspoort", "Passport", "Paszport", "Pașaport", "الجواز");
+        Add("Nav.Discovery",
+            "De ontdekkingsreis", "The discovery journey", "Podróż odkrywcza", "Călătoria de descoperire", "رحلة الاكتشاف");
+        Add("Nav.Discovery.Short",
+            "Reis", "Journey", "Podróż", "Călătorie", "الرحلة");
         Add("Nav.ApplicationsTab",
             "Sollicitaties", "Applications", "Aplikacje", "Candidaturi", "الطلبات");
         Add("Nav.SavedTab",

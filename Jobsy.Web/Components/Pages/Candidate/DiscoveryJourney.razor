@@ -17,6 +17,7 @@
 @inject IGeocodingClient Geocoder
 @inject IFeatureFlags FeatureFlags
 @inject GratisDnaMergeService GratisDnaMerge
+@inject IJSRuntime Js
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
@@ -57,7 +58,7 @@
 
         <div class="journey-stage">
             <div class="journey-only-desktop">
-                <JourneyProgressRail CurrentStep="@RailStep" SaveStatus="@_saveStatus" />
+                <JourneyProgressRail CurrentStep="@RailStep" IsEnd="@IsLightScreen" SaveStatus="@_saveStatus" />
             </div>
 
             <section class="journey-step card" aria-live="polite">
@@ -111,7 +112,7 @@
                     <div class="journey-step__foot">
                         <button type="button" class="btn-compact" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
                         <span class="journey-step__sp"></span>
-                        <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
+                        <button type="button" class="journey-later" @onclick="DeclineConsentAndFinishAsync">@Culture["Discovery.Consent.Decline"]</button>
                         <button type="button" class="btn-compact btn-compact--primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
                             @Culture["Onboarding.Consent.Cta"]
                         </button>
@@ -438,30 +439,86 @@
                     </div>
                     @RenderFooter(showSkip: true)
                 }
+                else if (_screen == "overview")
+                {
+                    <JourneyOverview Rows="_overviewRows"
+                                     Tests="_overviewTests"
+                                     OnRowAction="OnOverviewRowAsync"
+                                     OnDeepen="OnOverviewDeepenAsync" />
+                }
+                else if (_screen == "klaar")
+                {
+                    <JourneyEndScreen PartialEnd="_partialEnd"
+                                      Eyebrow="@EndEyebrow"
+                                      Title="@EndTitle"
+                                      Lead="@EndLead"
+                                      Hint="@EndHint"
+                                      DisplayName="@($"{Draft.FirstName} {Draft.LastName}".Trim())"
+                                      Initials="@EndInitials"
+                                      MemberNumber="@_memberNumber"
+                                      StrengthFact="_endStrength"
+                                      WorkFact="_endWork"
+                                      ValueFact="_endValue"
+                                      Deepen="GoToOverviewAsync"
+                                      ViewPassport="GoToPassportAsync" />
+                }
+                else if (_screen == "shed")
+                {
+                    <JourneyShedMoment Step="_shedStep"
+                                       TestName="@ShedTestName"
+                                       ImpressionLines="_shedLines"
+                                       TestTabs="ShedTabs"
+                                       Options="_shedOptions"
+                                       SelectedLevel="_shedSelectedLevel"
+                                       FullyDone="_shedFullyDone"
+                                       PreferReducedMotion="_preferReducedMotion"
+                                       PrimaryLabel="@ShedPrimaryLabel"
+                                       SelectLevel="OnShedSelectLevel"
+                                       Continue="OnShedContinueAsync"
+                                       Later="LaterAsync" />
+                }
                 else if (_countedStep is >= 7 and <= 10)
                 {
-                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Deep"] · @Culture.Format("Discovery.StepOf", _countedStep)</p>
+                    <p class="journey-step__eyebrow">
+                        @Culture["Discovery.Zone.Deep"] ·
+                        <span class="journey-only-desktop">@Culture.Format("Discovery.StepOf", _countedStep)</span>
+                        <span class="journey-only-mobile">@Culture.Format("Discovery.TestOf", _countedStep - 6)</span>
+                    </p>
                     <OnboardingMiniTest Step="_countedStep"
                                         CurrentQuestion="_currentQuestion"
                                         TestTabs="MiniTestTabs"
                                         Questions="_miniQuestions"
                                         Answers="_miniAnswers"
                                         InputPrefix="@($"journey-{_countedStep}-")"
+                                        TitleKey="@JourneyTestFlow.TestTitleKey(_countedStep)"
+                                        LeadKey="Discovery.Test.Lead"
+                                        HintKey="@JourneyTestFlow.TestHintKey(_countedStep)"
+                                        ShowHint="@(_targetLevel <= OnboardingWizardCatalog.MiniLevelCount)"
+                                        ShowQuestionCounter="true"
                                         Answer="OnMiniAnswer"
                                         ExpandQuestion="ExpandQuestion"
                                         ResolveQuestionText="QuestionText" />
-                    @RenderFooter()
+                    @RenderFooter(showBack: !_reviewMode)
                 }
             </section>
 
-            <div class="journey-lz journey-only-desktop">
-                <p class="journey-bubble">@Culture[JourneyCatalog.SayKey(_depth)]</p>
-                <JourneyLobster PlatesShed="@_platesShed" Label="@Culture["Discovery.Lobster.Aria"]" />
-                <span class="journey-lz__shadow" aria-hidden="true"></span>
+            <div class="journey-lz journey-only-desktop @(IsLightScreen ? "is-rising" : null)">
+                <p class="journey-bubble">@LobsterSay</p>
+                <JourneyLobster PlatesShed="@_platesShed"
+                                NewShell="@IsLightScreen"
+                                FallingPlate="@(_screen == "shed" && !_preferReducedMotion ? _shedStep - 1 : null)"
+                                Label="@Culture["Discovery.Lobster.Aria"]" />
+                @if (!IsLightScreen)
+                {
+                    <span class="journey-lz__shadow" aria-hidden="true"></span>
+                }
             </div>
             <div class="journey-mlob journey-only-mobile">
-                <JourneyLobster PlatesShed="@_platesShed" Mobile="true" Label="@Culture["Discovery.Lobster.Aria"]" />
-                <p class="journey-bubble">@Culture[JourneyCatalog.SayKey(_depth)]</p>
+                <JourneyLobster PlatesShed="@_platesShed"
+                                NewShell="@IsLightScreen"
+                                Mobile="true"
+                                Label="@Culture["Discovery.Lobster.Aria"]" />
+                <p class="journey-bubble">@LobsterSay</p>
             </div>
         </div>
     }
@@ -512,22 +569,131 @@
     private readonly Dictionary<int, int> _serverAnswers = new();
     private readonly HashSet<int> _lockedIds = [];
     private List<OnboardingMiniTest.MiniQuestion> _miniQuestions = [];
+    private int _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
+    private bool _reviewMode;
+    private bool _partialEnd;
+    private bool _preferReducedMotion;
+    private bool _shedFullyDone;
+    private int _shedStep = 7;
+    private int _shedSelectedLevel = OnboardingWizardCatalog.MiniLevelCount;
+    private int _answeredCount;
+    private string _memberNumber = "";
+    private string? _endStrength;
+    private string? _endWork;
+    private string? _endValue;
+    private List<string> _shedLines = [];
+    private List<JourneyShedMoment.DepthOption> _shedOptions = [];
+    private List<JourneyOverview.OverviewRow> _overviewRows = [];
+    private List<JourneyOverview.TestRow> _overviewTests = [];
+    private static readonly JourneyShedMoment.TestTab[] ShedTabs =
+    [
+        new(7, "Onboarding.Test.Competency"),
+        new(8, "Onboarding.Test.Career"),
+        new(9, "Onboarding.Test.Culture"),
+        new(10, "Onboarding.Test.Values")
+    ];
 
-    private int _platesShed => Math.Max(RailStep - 1, 0);
-    private int RailStep => _screen == "toestemming" ? 6 : _countedStep;
+    private bool IsLightScreen => _screen is "klaar" or "overview";
 
-    private string CurrentStepTitle => _screen == "toestemming"
-        ? Culture["Discovery.Consent.Eyebrow"]
-        : _countedStep is >= 1 and <= 10
-            ? Culture[JourneyCatalog.Steps[_countedStep - 1].TitleKey]
-            : Culture["Discovery.Eyebrow"];
+    private int _platesShed => IsLightScreen
+        ? 10
+        : _screen == "shed"
+            ? _shedStep
+            : Math.Max(RailStep - 1, 0);
+    private int RailStep => _screen switch
+    {
+        "toestemming" => 6,
+        "shed" => _shedStep + 1,
+        "klaar" or "overview" => 11,
+        _ => _countedStep
+    };
 
-    private string MobileProgressLabel => _screen == "start"
-        ? Culture["Discovery.Rail.StartCountShort"]
-        : Culture.Format("Discovery.Rail.StepCount", Math.Max(RailStep, 1));
+    private string CurrentStepTitle => _screen switch
+    {
+        "toestemming" => Culture["Discovery.Consent.Eyebrow"],
+        "shed" => Culture["Discovery.Shed.Title"],
+        "klaar" => Culture["Discovery.End.Eyebrow"],
+        "overview" => Culture["Discovery.Overview.Title"],
+        _ when _countedStep is >= 1 and <= 10 => Culture[JourneyCatalog.Steps[_countedStep - 1].TitleKey],
+        _ => Culture["Discovery.Eyebrow"]
+    };
+
+    private string LobsterSay => _screen == "shed"
+        ? Culture["Discovery.Shed.Lobster"]
+        : Culture[JourneyCatalog.SayKey(_depth)];
+
+    private string ShedTestName => Culture[OnboardingWizardCatalog.TestNameKey(
+        OnboardingWizardCatalog.TestKindForStep(_shedStep) ?? OnboardingWizardCatalog.OnboardingTestKind.Competency)];
+
+    private string ShedPrimaryLabel
+    {
+        get
+        {
+            if (_shedFullyDone || _shedSelectedLevel <= OnboardingWizardCatalog.ReachedLevel(_answeredCount,
+                    OnboardingWizardCatalog.TestKindForStep(_shedStep)!.Value))
+            {
+                return _shedStep >= 10
+                    ? Culture["Discovery.Shed.ToLight"]
+                    : Culture.Format("Discovery.Shed.NextTest", Culture[OnboardingWizardCatalog.TestNameKey(
+                        OnboardingWizardCatalog.TestKindForStep(_shedStep + 1) ?? OnboardingWizardCatalog.OnboardingTestKind.Career)]);
+            }
+
+            return Culture["Discovery.Shed.DiveDeeper"];
+        }
+    }
+
+    private string EndEyebrow => _partialEnd
+        ? Culture["Discovery.End.PartialEyebrow"]
+        : Culture["Discovery.End.Eyebrow"];
+
+    private string EndTitle => _partialEnd
+        ? Culture.Format("Discovery.End.PartialTitle", Draft.FirstName)
+        : Culture.Format("Discovery.End.Title", Draft.FirstName);
+
+    private string EndLead => _partialEnd
+        ? Culture["Discovery.End.PartialLead"]
+        : _employersEnabled
+            ? Culture["Discovery.End.Lead"]
+            : Culture["Discovery.End.LeadEmployersOff"];
+
+    private string EndHint
+    {
+        get
+        {
+            var count = _state?.Impression?.MatchingVacancyCount ?? 0;
+            if (_employersEnabled && count > 0)
+            {
+                return Culture.Format("Discovery.End.HintMatches", count);
+            }
+
+            return Culture["Discovery.End.HintFirst"];
+        }
+    }
+
+    private string EndInitials
+    {
+        get
+        {
+            var a = string.IsNullOrWhiteSpace(Draft.FirstName) ? "" : Draft.FirstName.Trim()[0].ToString().ToUpperInvariant();
+            var b = string.IsNullOrWhiteSpace(Draft.LastName) ? "" : Draft.LastName.Trim()[0].ToString().ToUpperInvariant();
+            return string.IsNullOrWhiteSpace(a + b) ? "?" : a + b;
+        }
+    }
+
+    private string MobileProgressLabel => _screen switch
+    {
+        "start" => Culture["Discovery.Rail.StartCountShort"],
+        "klaar" or "overview" => Culture["Discovery.Rail.DoneCountShort"],
+        _ => Culture.Format("Discovery.Rail.StepCount", Math.Max(Math.Min(RailStep, 10), 1))
+    };
 
     private string MobileProgressAria => $"{MobileProgressLabel}, {_platesShed} lagen eraf";
-    private string MarkerLeft => _screen == "start" ? "2%" : $"{(Math.Max(RailStep, 1) - 0.5) / 10 * 100:0.0}%";
+    private string MarkerLeft => _screen switch
+    {
+        "start" => "2%",
+        "klaar" or "overview" => "95%",
+        _ => $"{(Math.Max(Math.Min(RailStep, 10), 1) - 0.5) / 10 * 100:0.0}%"
+    };
 
     private string RolesSummary => Draft.Roles.Count == 0
         ? ""
@@ -583,12 +749,32 @@
             {
                 <button type="button" class="journey-later" @onclick="SkipAsync">@Culture["Discovery.Skip"]</button>
             }
-            <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
-            <button type="button" class="btn-compact btn-compact--primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
-                @Culture["Onboarding.Next"]
-            </button>
+            @if (_reviewMode)
+            {
+                <button type="button" class="journey-later" @onclick="ShowOverviewAsync">@Culture["Discovery.Overview.Back"]</button>
+                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="NextAsync">
+                    @Culture["Discovery.Overview.Save"]
+                </button>
+            }
+            else
+            {
+                <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
+                <button type="button" class="btn-compact btn-compact--primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
+                    @Culture["Onboarding.Next"]
+                </button>
+            }
         </div>
     };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            _preferReducedMotion = await Js.InvokeAsync<bool>("eval", "window.matchMedia('(prefers-reduced-motion: reduce)').matches");
+        }
+        catch { /* optional */ }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -630,13 +816,17 @@
                 ? Culture["Discovery.Start.Lead"]
                 : Culture["Discovery.Start.LeadEmployersOff"];
 
-            if (_state.IsComplete)
-            {
-                Navigation.NavigateTo("/candidate/paspoort", true);
-                return;
-            }
-
             ParseQueryOrState();
+            if (_state.IsComplete && !IsLightScreen)
+            {
+                var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(
+                    Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+                if (!q.ContainsKey("stap"))
+                {
+                    await ShowOverviewAsync();
+                    return;
+                }
+            }
             if (_screen != "start")
             {
                 await MarkStartedAsync();
@@ -677,6 +867,7 @@
     private void ApplyScreen(string stap)
     {
         _screen = string.IsNullOrWhiteSpace(stap) ? "start" : stap.Trim().ToLowerInvariant();
+        _reviewMode = false;
         if (_screen == "start")
         {
             _countedStep = 0;
@@ -688,6 +879,26 @@
         {
             _countedStep = 6;
             _depth = 6;
+            return;
+        }
+
+        if (_screen == "klaar")
+        {
+            _countedStep = 10;
+            _depth = 11;
+            return;
+        }
+
+        if (_screen == "shed")
+        {
+            _depth = Math.Clamp(_shedStep, 7, 10);
+            return;
+        }
+
+        if (_screen == "overview")
+        {
+            _countedStep = 10;
+            _depth = 11;
             return;
         }
 
@@ -707,6 +918,10 @@
     private void ApplyProfile(MeProfile? profile)
     {
         if (profile is null) return;
+        if (profile.Id != Guid.Empty)
+        {
+            _memberNumber = PassportMemberNumber.Format(profile.Id);
+        }
         Draft.FirstName = profile.FirstName ?? "";
         Draft.LastName = profile.LastName ?? "";
         Draft.Phone = profile.PhoneNumber ?? "";
@@ -889,9 +1104,17 @@
                 return;
             }
 
-            if (_countedStep == 10)
+            if (_countedStep is >= 7 and <= 10)
             {
-                await CompleteJourneyTransitionalAsync();
+                if (_reviewMode)
+                {
+                    await FlushTestSaveAsync(completed: false);
+                    await ShowOverviewAsync();
+                    return;
+                }
+
+                await FlushTestSaveAsync(completed: false);
+                await ShowShedAsync(_countedStep);
                 return;
             }
 
@@ -959,19 +1182,293 @@
         NavigateStep(_screen);
         if (step is >= 7 and <= 10)
         {
+            if (!_reviewMode && _targetLevel < OnboardingWizardCatalog.MiniLevelCount)
+            {
+                _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
+            }
+
+            // Fresh step from previous: start at mini unless already deeper from shed.
+            if (markPreviousCompleted)
+            {
+                _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
+            }
+
             await PrepareMiniAsync();
             await TryAutoAdvanceEmptyMiniStepAsync();
         }
     }
 
-    /// <summary>
-    /// Transitional end until 08 (deeper choice, shed moment, end screen). Keep in one method so 08 can swap cleanly.
-    /// </summary>
-    private async Task CompleteJourneyTransitionalAsync()
+    private async Task ShowShedAsync(int step)
     {
-        _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
+        _shedStep = step;
+        _screen = "shed";
+        _depth = step;
+        var kind = OnboardingWizardCatalog.TestKindForStep(step)!.Value;
+        _answeredCount = await CountAnsweredAsync(kind);
+        _shedFullyDone = JourneyTestFlow.IsFullyDone(_answeredCount, kind);
+        _shedSelectedLevel = JourneyTestFlow.DefaultSelectedLevel(_answeredCount, kind);
+        _shedOptions = JourneyTestFlow.BuildDepthOptions(kind, _answeredCount)
+            .Select(o => new JourneyShedMoment.DepthOption(o.Level, o.TitleKey, o.SubKey, o.Dots, o.Disabled))
+            .ToList();
+        await RefreshImpressionAsync();
+        _shedLines = JourneyTestFlow.ImpressionLinesForTest(
+            kind, _state?.Impression, k => Culture[k], " " + Culture["Discovery.Shed.Provisional"]).ToList();
+        NavigateStep("shed");
+        StateHasChanged();
+    }
+
+    private Task OnShedSelectLevel(int level)
+    {
+        _shedSelectedLevel = level;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnShedContinueAsync()
+    {
+        if (_busy) return;
+        _busy = true;
+        try
+        {
+            var kind = OnboardingWizardCatalog.TestKindForStep(_shedStep)!.Value;
+            var reached = OnboardingWizardCatalog.ReachedLevel(_answeredCount, kind);
+            if (!_shedFullyDone && _shedSelectedLevel > reached)
+            {
+                _targetLevel = _shedSelectedLevel;
+                _countedStep = _shedStep;
+                _screen = _shedStep.ToString();
+                _depth = _shedStep;
+                NavigateStep(_screen);
+                await PrepareMiniAsync();
+                return;
+            }
+
+            // Persist completion flag for full depth; partial stays incomplete.
+            await FlushTestSaveAsync(completed: _answeredCount >= OnboardingWizardCatalog.FullLevelCount(kind));
+            _state = await Api.SaveMyOnboardingProgressAsync(_shedStep, stepCompleted: true);
+            if (_shedStep >= 10)
+            {
+                await ShowEndAsync(partial: false);
+                return;
+            }
+
+            await GoToCountedStepAsync(_shedStep + 1);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _saveStatus = "error";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ShowEndAsync(bool partial)
+    {
+        _partialEnd = partial;
+        _screen = "klaar";
+        _depth = 11;
+        _countedStep = partial ? 6 : 10;
+        NavigateStep("klaar");
+        _state = await Api.SaveMyOnboardingProgressAsync(partial ? 6 : 10, stepCompleted: true, finishReached: true);
         _state = await Api.CompleteMyOnboardingAsync();
-        Navigation.NavigateTo("/candidate/paspoort");
+        await RefreshImpressionAsync();
+        var facts = JourneyTestFlow.EndFacts(_state?.Impression);
+        _endStrength = facts.Strength;
+        _endWork = facts.Work;
+        _endValue = facts.Value;
+        StateHasChanged();
+    }
+
+    private async Task DeclineConsentAndFinishAsync()
+    {
+        if (_busy) return;
+        _busy = true;
+        try
+        {
+            await ShowEndAsync(partial: true);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ShowOverviewAsync()
+    {
+        _screen = "overview";
+        _depth = 11;
+        _countedStep = 10;
+        await BuildOverviewAsync();
+        // Overview has no stap — clear query for focus-mode off
+        var uri = Navigation.Uri.Split('?', '#')[0];
+        Navigation.NavigateTo(uri, replace: true);
+        StateHasChanged();
+    }
+
+    private Task GoToOverviewAsync() => ShowOverviewAsync();
+
+    private Task GoToPassportAsync()
+    {
+        Navigation.NavigateTo("/candidate/paspoort?tab=dna");
+        return Task.CompletedTask;
+    }
+
+    private async Task RefreshImpressionAsync()
+    {
+        try
+        {
+            _state = await Api.GetMyOnboardingAsync() ?? _state;
+        }
+        catch { /* keep */ }
+    }
+
+    private async Task<int> CountAnsweredAsync(OnboardingWizardCatalog.OnboardingTestKind kind)
+    {
+        Dictionary<string, int>? answers = kind switch
+        {
+            OnboardingWizardCatalog.OnboardingTestKind.Competency => (await Api.GetMyCompetenciesAsync())?.Answers,
+            OnboardingWizardCatalog.OnboardingTestKind.Career => (await Api.GetMyCareerInterestsAsync())?.Answers,
+            OnboardingWizardCatalog.OnboardingTestKind.Culture => (await Api.GetMyCultureAsync())?.Answers,
+            _ => (await Api.GetMyValuesAsync())?.Answers
+        };
+        return answers?.Count(a => a.Value is >= 1 and <= 5) ?? 0;
+    }
+
+    private async Task FlushTestSaveAsync(bool completed)
+    {
+        if (_autosave is not null) await _autosave.FlushAsync();
+        var merged = new Dictionary<int, int>(_serverAnswers);
+        foreach (var a in _miniAnswers) merged[a.Key] = a.Value;
+        switch (_countedStep)
+        {
+            case 7: await Api.SaveMyCompetenciesAsync(merged, completed); break;
+            case 8: await Api.SaveMyCareerInterestsAsync(merged, completed); break;
+            case 9: await Api.SaveMyCultureAsync(merged, completed); break;
+            case 10: await Api.SaveMyValuesAsync(merged, completed); break;
+        }
+    }
+
+    private async Task BuildOverviewAsync()
+    {
+        _overviewRows = [];
+        foreach (var step in JourneyCatalog.Steps.Take(6))
+        {
+            var ev = _state?.Steps.FirstOrDefault(s => s.Step == step.Number);
+            var isNew = step.Number is >= 3 and <= 6 && ev?.CompletedAtUtc is null && ev?.SkippedAtUtc is null
+                        && (_state?.WizardVersion ?? 3) < OnboardingWizardCatalog.WizardVersionV3;
+            // Completed v2 users: steps 3–6 not filled in v3 terms → Nieuw
+            if (_state?.IsComplete == true && step.Number is >= 3 and <= 6)
+            {
+                var filled = ev?.CompletedAtUtc is not null || ev?.SkippedAtUtc is not null;
+                // Heuristic: if wizard was completed on v2, treat empty discovery fields as Nieuw
+                if (!filled || (_state.WizardVersion < OnboardingWizardCatalog.WizardVersionV3 && !filled))
+                {
+                    isNew = !filled;
+                }
+            }
+
+            string status;
+            string cls;
+            if (ev?.SkippedAtUtc is not null)
+            {
+                status = Culture["Discovery.Overview.Skipped"];
+                cls = "is-skipped";
+            }
+            else if (ev?.CompletedAtUtc is not null)
+            {
+                status = Culture["Discovery.Overview.Done"];
+                cls = "is-done";
+            }
+            else if (isNew)
+            {
+                status = Culture["Discovery.Overview.New"];
+                cls = "is-new";
+            }
+            else
+            {
+                status = Culture["Discovery.Overview.Done"];
+                cls = "is-done";
+            }
+
+            _overviewRows.Add(new JourneyOverview.OverviewRow(
+                step.Number, step.TitleKey, status, cls, Culture["Discovery.Overview.View"]));
+        }
+
+        if (!Draft.HasConsent)
+        {
+            _overviewRows.Add(new JourneyOverview.OverviewRow(
+                0, "Discovery.Overview.Consent", Culture["Discovery.Overview.New"], "is-new",
+                Culture["Discovery.Overview.GiveConsent"], IsConsent: true));
+        }
+
+        _overviewTests = [];
+        foreach (var step in new[] { 7, 8, 9, 10 })
+        {
+            var kind = OnboardingWizardCatalog.TestKindForStep(step)!.Value;
+            var answered = await CountAnsweredAsync(kind);
+            var full = OnboardingWizardCatalog.FullLevelCount(kind);
+            var complete = answered >= full;
+            var next = new List<JourneyOverview.DepthButton>();
+            if (!complete)
+            {
+                if (answered < OnboardingWizardCatalog.DeeperLevelCount)
+                {
+                    next.Add(new(OnboardingWizardCatalog.DeeperLevelCount, Culture["Discovery.Shed.Deeper"]));
+                }
+
+                next.Add(new(full, kind == OnboardingWizardCatalog.OnboardingTestKind.Culture
+                    ? Culture["Discovery.Overview.All18"]
+                    : Culture["Discovery.Shed.Deepest"]));
+            }
+
+            var report = step switch
+            {
+                7 => "/candidate/paspoort?tab=tests",
+                8 => "/candidate/paspoort?tab=tests",
+                9 => "/candidate/paspoort?tab=tests",
+                _ => "/candidate/paspoort?tab=tests"
+            };
+            _overviewTests.Add(new JourneyOverview.TestRow(
+                step,
+                OnboardingWizardCatalog.TestNameKey(kind),
+                Culture.Format("Discovery.Overview.Depth", answered, full),
+                complete,
+                report,
+                next));
+        }
+    }
+
+    private async Task OnOverviewRowAsync(JourneyOverview.OverviewRow row)
+    {
+        if (row.IsConsent)
+        {
+            GoToConsent();
+            return;
+        }
+
+        _reviewMode = true;
+        _countedStep = row.Step;
+        _screen = row.Step.ToString();
+        _depth = row.Step;
+        NavigateStep(_screen);
+        await Task.CompletedTask;
+    }
+
+    private async Task OnOverviewDeepenAsync((int Step, JourneyOverview.DepthButton Level) args)
+    {
+        _reviewMode = false;
+        _targetLevel = args.Level.TargetCount;
+        _countedStep = args.Step;
+        _screen = args.Step.ToString();
+        _depth = args.Step;
+        NavigateStep(_screen);
+        await PrepareMiniAsync();
     }
 
     private async Task AcceptConsentAsync()
@@ -1060,6 +1557,7 @@
 
     private string SegmentClass(int index)
     {
+        if (IsLightScreen) return "is-done";
         var step = Math.Max(RailStep, 0);
         if (step <= 0) return "";
         if (index < step - 1) return "is-done";
@@ -1082,36 +1580,35 @@
         _currentQuestion = 0;
         if (_countedStep is < 7 or > 10 || !Draft.HasConsent) return;
 
+        var kind = OnboardingWizardCatalog.TestKindForStep(_countedStep)!.Value;
+        if (_targetLevel < OnboardingWizardCatalog.MiniLevelCount)
+        {
+            _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
+        }
+
         Dictionary<string, int>? answers;
         IEnumerable<(int Id, string Key)> catalog;
-        int[] questionIds;
         switch (_countedStep)
         {
             case 7:
-                var competency = await Api.GetMyCompetenciesAsync();
-                answers = competency?.Answers;
-                questionIds = OnboardingWizardCatalog.CompetencyQuestionIds;
+                answers = (await Api.GetMyCompetenciesAsync())?.Answers;
                 catalog = CompetencyTestCatalog.Questions.Select(item => (item.Id, item.TextKey));
                 break;
             case 8:
-                var career = await Api.GetMyCareerInterestsAsync();
-                answers = career?.Answers;
-                questionIds = OnboardingWizardCatalog.CareerQuestionIds;
+                answers = (await Api.GetMyCareerInterestsAsync())?.Answers;
                 catalog = CareerTestCatalog.Questions.Select(item => (item.Id, item.TextKey));
                 break;
             case 9:
-                var culture = await Api.GetMyCultureAsync();
-                answers = culture?.Answers;
-                questionIds = OnboardingWizardCatalog.CultureQuestionIds;
+                answers = (await Api.GetMyCultureAsync())?.Answers;
                 catalog = CulturePersonalityCatalog.Questions.Select(item => (item.Id, item.TextKey));
                 break;
             default:
-                var values = await Api.GetMyValuesAsync();
-                answers = values?.Answers;
-                questionIds = OnboardingWizardCatalog.ValuesQuestionIds;
+                answers = (await Api.GetMyValuesAsync())?.Answers;
                 catalog = SchwartzValuesCatalog.Questions.Select(item => (item.Id, item.TextKey));
                 break;
         }
+
+        var questionIds = OnboardingWizardCatalog.QuestionIdsUpTo(kind, _targetLevel);
 
         foreach (var answer in answers ?? [])
         {
@@ -1162,20 +1659,9 @@
         _busy = true;
         try
         {
-            if (_countedStep == 10)
-            {
-                await CompleteJourneyTransitionalAsync();
-                return;
-            }
-
-            _countedStep++;
-            _screen = _countedStep.ToString();
-            _depth = _countedStep;
-            _state = await Api.SaveMyOnboardingProgressAsync(_countedStep, stepCompleted: true);
-            _saveStatus = "saved";
-            NavigateStep(_screen);
-            await PrepareMiniAsync();
-            await TryAutoAdvanceEmptyMiniStepAsync();
+            // Already answered at/above target → shed (or next if fully done and continuing).
+            await ShowShedAsync(_countedStep);
+            return;
         }
         catch (Exception ex)
         {
