@@ -444,8 +444,15 @@ public sealed partial class JobsyApiClient
                ?? new PersonalDataAccessLogPage();
     }
 
-    public async Task<IReadOnlyList<AdminVacancyItem>> GetAdminVacanciesAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<AdminVacancyItem>>("api/admin/vacancies", ct) ?? [];
+    public async Task<IReadOnlyList<AdminVacancyItem>> GetAdminVacanciesAsync(
+        string? moderation = null,
+        CancellationToken ct = default)
+    {
+        var url = string.IsNullOrWhiteSpace(moderation)
+            ? "api/admin/vacancies"
+            : $"api/admin/vacancies?moderation={Uri.EscapeDataString(moderation)}";
+        return await _http.GetFromJsonAsync<List<AdminVacancyItem>>(url, ct) ?? [];
+    }
 
     public async Task<IReadOnlyList<AtsListingItem>> GetAtsListingsAsync(
         string? status = null,
@@ -801,6 +808,15 @@ public sealed partial class JobsyApiClient
 
     public async Task<IReadOnlyList<IntegrationHealthItem>> GetIntegrationHealthAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<IntegrationHealthItem>>("api/integrations/health", ct) ?? [];
+
+    public async Task<AdminTodoResponseItem?> GetAdminTodoAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<AdminTodoResponseItem>("api/admin/todo", ct);
+
+    public async Task<AdminFinanceSummaryItem?> GetAdminFinanceSummaryAsync(
+        string period = "week",
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<AdminFinanceSummaryItem>(
+            $"api/admin/finance/summary?period={Uri.EscapeDataString(period)}", ct);
 
     public async Task<IntegrationHealthItem?> TestIntegrationAsync(string key, CancellationToken ct = default)
     {

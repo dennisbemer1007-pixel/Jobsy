@@ -35,7 +35,8 @@ public record MetricCountDto(
     string Label,
     string Period,
     decimal Value,
-    IReadOnlyList<decimal>? Sparkline = null);
+    IReadOnlyList<decimal>? Sparkline = null,
+    decimal? PreviousValue = null);
 
 public record MetricDrilldownItemDto(
     Guid Id,
@@ -85,7 +86,7 @@ public static class MetricsKeys
 {
     public static readonly HashSet<string> PlatformOnly = new(StringComparer.OrdinalIgnoreCase)
     {
-        "errors", "users_open_for_work", "users_active",
+        "errors", "users_open_for_work", "users_active", "users_active_candidates",
         "companies_employers", "companies_intermediaries",
         "site_visits", "site_visits_unique",
         "companies_with_api", "companies_with_csv",

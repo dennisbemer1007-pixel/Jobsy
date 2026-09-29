@@ -276,6 +276,7 @@ public sealed class MetricCount
     public string Period { get; set; } = string.Empty;
     public decimal Value { get; set; }
     public List<decimal>? Sparkline { get; set; }
+    public decimal? PreviousValue { get; set; }
 }
 
 public sealed class MetricDrilldownItem

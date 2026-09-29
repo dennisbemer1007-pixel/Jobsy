@@ -2,6 +2,8 @@
 @inject NavigationManager Navigation
 @inject CultureState Culture
 @inject AdminSidebarState SidebarState
+@inject AdminTodoCountsStore TodoCounts
+@inject JobsyApiClient Api
 @implements IDisposable
 
 <aside class="admin-sidebar" aria-label="@Culture["AdminShell.Beheer"]">
@@ -15,12 +17,17 @@
             }
 
             var open = SidebarState.IsOpen(group.Key) || items.Any(IsActive);
+            var groupCount = TodoCounts.GroupSum(items.Select(i => i.CountKey));
             <div class="admin-sidebar__group @(open ? "is-open" : null)">
                 <button type="button"
                         class="admin-sidebar__group-toggle"
                         aria-expanded="@(open ? "true" : "false")"
                         @onclick="() => SidebarState.Toggle(group.Key)">
                     <span>@Culture[group.LabelKey]</span>
+                    @if (!open && groupCount > 0)
+                    {
+                        <span class="admin-count-pill">@groupCount</span>
+                    }
                     <span class="admin-sidebar__chevron" aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
                 </button>
                 @if (open)
@@ -29,12 +36,17 @@
                         @foreach (var item in items)
                         {
                             var active = IsActive(item);
+                            var count = TodoCounts.Get(item.CountKey);
                             <li>
                                 <a class="admin-sidebar__link @(active ? "is-active" : null)"
                                    href="@item.Href"
                                    aria-current="@(active ? "page" : null)">
                                     <span class="admin-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
                                     <span class="admin-sidebar__label">@Culture[item.LabelKey]</span>
+                                    @if (count > 0)
+                                    {
+                                        <span class="admin-count-pill">@count</span>
+                                    }
                                 </a>
                             </li>
                         }
@@ -46,11 +58,33 @@
 </aside>
 
 @code {
+    private bool _countsLoaded;
+
     protected override void OnInitialized()
     {
         SidebarState.Changed += OnStateChanged;
+        TodoCounts.Changed += OnStateChanged;
         Navigation.LocationChanged += OnLocationChanged;
         SyncActiveGroup();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _countsLoaded)
+        {
+            return;
+        }
+
+        _countsLoaded = true;
+        try
+        {
+            var snap = await Api.GetAdminTodoAsync();
+            TodoCounts.Apply(snap);
+        }
+        catch
+        {
+            // Sidebar works without counts.
+        }
     }
 
     private void OnStateChanged() => InvokeAsync(StateHasChanged);
@@ -94,6 +128,7 @@
     public void Dispose()
     {
         SidebarState.Changed -= OnStateChanged;
+        TodoCounts.Changed -= OnStateChanged;
         Navigation.LocationChanged -= OnLocationChanged;
     }
 }

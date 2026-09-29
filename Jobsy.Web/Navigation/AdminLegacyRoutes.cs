@@ -19,7 +19,7 @@ public static class AdminLegacyRoutes
         new("/admin/vacancies", "/admin/vacatures"),
         new("/admin/ats-vacancies", "/admin/vacatures/ats"),
         // Until 02 retargets to /admin/vacatures/moderatie:
-        new("/admin/moderation", "/admin/vacatures"),
+        new("/admin/moderation", "/admin/vacatures/moderatie"),
         new("/admin/vacancy-categories", "/admin/vacatures/categorieen"),
         new("/admin/wages", "/admin/vacatures/categorieen", "salaris"),
         new("/admin/finance", "/admin/financien"),

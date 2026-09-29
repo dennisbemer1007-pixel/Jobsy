@@ -652,10 +652,17 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("vacancies")]
-    public async Task<ActionResult<IEnumerable<AdminVacancyDetailDto>>> GetVacancies(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<AdminVacancyDetailDto>>> GetVacancies(
+        [FromQuery] string? moderation = null,
+        CancellationToken cancellationToken = default)
     {
-        var vacancies = await _db.Vacancies
-            .AsNoTracking()
+        var query = _db.Vacancies.AsNoTracking().AsQueryable();
+        if (string.Equals(moderation, "flagged", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(v => !v.ContentModerationPassed);
+        }
+
+        var vacancies = await query
             .OrderByDescending(v => v.StartDate)
             .Select(v => new
             {
@@ -669,7 +676,8 @@ public class AdminController : ControllerBase
                 v.ExtensionCount,
                 v.StartDate,
                 v.EndDate,
-                CreatedVia = v.CreatedVia.ToString()
+                CreatedVia = v.CreatedVia.ToString(),
+                v.ContentModerationPassed
             })
             .ToListAsync(cancellationToken);
 
@@ -717,7 +725,8 @@ public class AdminController : ControllerBase
             applications.GetValueOrDefault(v.Id),
             likes.GetValueOrDefault(v.Id),
             v.ExtensionCount > 0,
-            v.CreatedVia)));
+            v.CreatedVia,
+            v.ContentModerationPassed)));
     }
 
     [HttpGet("api-keys")]

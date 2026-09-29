@@ -30,6 +30,7 @@ public static class MetricDashboardCatalog
                 "active_vacancies_employers",
                 "active_vacancies_intermediaries",
                 "users_active",
+                "users_active_candidates",
                 "users_open_for_work",
                 "companies_employers",
                 "companies_intermediaries",

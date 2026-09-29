@@ -1,0 +1,117 @@
+@page "/admin/te-doen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject Jobsy.Web.Components.Admin.Shell.AdminTodoCountsStore TodoCounts
+
+<PageTitle>@Culture["AdminNav.Todo"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.Todo"]"
+                Lead="@Culture["AdminDash.Todo.PageLead"]"
+                Wide="true">
+    <AdminFilterBar Query="@_search" QueryChanged="OnSearch">
+        <Chips>
+            <button type="button" class="btn-compact @(_areaFilter == "" ? "btn-compact--primary" : null)" @onclick='() => SetArea("")'>@Culture["AdminUi.All"]</button>
+            @foreach (var area in _areas)
+            {
+                <button type="button" class="btn-compact @(_areaFilter == area ? "btn-compact--primary" : null)" @onclick="() => SetArea(area)">@area</button>
+            }
+            <button type="button" class="btn-compact @(_severityFilter == "" ? "btn-compact--primary" : null)" @onclick='() => SetSeverity("")'>@Culture["AdminTodo.Severity.All"]</button>
+            <button type="button" class="btn-compact @(_severityFilter == "danger" ? "btn-compact--primary" : null)" @onclick='() => SetSeverity("danger")'>@Culture["AdminTodo.Severity.Danger"]</button>
+            <button type="button" class="btn-compact @(_severityFilter == "warn" ? "btn-compact--primary" : null)" @onclick='() => SetSeverity("warn")'>@Culture["AdminTodo.Severity.Warn"]</button>
+            <button type="button" class="btn-compact @(_severityFilter == "info" ? "btn-compact--primary" : null)" @onclick='() => SetSeverity("info")'>@Culture["AdminTodo.Severity.Info"]</button>
+        </Chips>
+    </AdminFilterBar>
+
+    <AdminDataTable Loading="_loading"
+                    Empty="_filtered.Count == 0"
+                    EmptyText="@Culture["AdminDash.Todo.Empty"]"
+                    ShowRowActions="true">
+        <Header>
+            <th scope="col"></th>
+            <th scope="col">@Culture["AdminTodo.Col.Title"]</th>
+            <th scope="col">@Culture["AdminTodo.Col.Area"]</th>
+            <th scope="col">@Culture["AdminTodo.Col.Since"]</th>
+            <th scope="col">@Culture["AdminTodo.Col.Severity"]</th>
+        </Header>
+        <Rows>
+            @foreach (var item in _filtered)
+            {
+                <tr>
+                    <td class="admin-todo-list__icon-cell" aria-hidden="true">●</td>
+                    <td>
+                        <strong>@FormatTitle(item)</strong>
+                        <div class="muted">@item.Subtitle</div>
+                    </td>
+                    <td><span class="status-pill">@item.Area</span></td>
+                    <td>@AdminRelativeTime.Format(item.SinceUtc)</td>
+                    <td>@Culture[$"AdminTodo.Severity.{SeverityLabel(item.Severity)}"]</td>
+                    <td>
+                        <a class="btn-compact btn-compact--primary" href="@item.Href">@Culture[item.ActionLabelKey]</a>
+                    </td>
+                </tr>
+            }
+        </Rows>
+    </AdminDataTable>
+</AdminPageShell>
+
+@code {
+    private bool _loading = true;
+    private string _search = "";
+    private string _areaFilter = "";
+    private string _severityFilter = "";
+    private List<AdminTodoItemView> _items = [];
+    private List<string> _areas = [];
+
+    private List<AdminTodoItemView> _filtered => _items
+        .Where(i => string.IsNullOrEmpty(_areaFilter) || i.Area == _areaFilter)
+        .Where(i => string.IsNullOrEmpty(_severityFilter)
+                    || string.Equals(i.Severity, _severityFilter, StringComparison.OrdinalIgnoreCase))
+        .Where(i => string.IsNullOrWhiteSpace(_search)
+                    || i.Subtitle.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                    || Culture[i.TitleKey].Contains(_search, StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var snap = await Api.GetAdminTodoAsync();
+            _items = snap?.Items ?? [];
+            TodoCounts.Apply(snap);
+            _areas = _items.Select(i => i.Area).Distinct(StringComparer.Ordinal).OrderBy(a => a).ToList();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Task OnSearch(string q)
+    {
+        _search = q;
+        return Task.CompletedTask;
+    }
+
+    private void SetArea(string area) => _areaFilter = area;
+    private void SetSeverity(string severity) => _severityFilter = severity;
+
+    private string FormatTitle(AdminTodoItemView item)
+    {
+        var title = Culture[item.TitleKey];
+        return title.Contains("{0}", StringComparison.Ordinal)
+            ? string.Format(System.Globalization.CultureInfo.CurrentCulture, title, item.Count)
+            : title;
+    }
+
+    private static string SeverityLabel(string severity) => severity.ToLowerInvariant() switch
+    {
+        "danger" => "Danger",
+        "warn" => "Warn",
+        _ => "Info"
+    };
+}

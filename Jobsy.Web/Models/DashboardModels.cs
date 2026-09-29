@@ -617,6 +617,7 @@ public class AdminVacancyItem
     public int LikeCount { get; set; }
     public bool IsExtended { get; set; }
     public string CreatedVia { get; set; } = "Manual";
+    public bool ContentModerationPassed { get; set; } = true;
 }
 
 public class AtsListingItem

@@ -152,6 +152,38 @@ public sealed class PlatformFeatureItem
     public bool SupportAccessNotifySubject { get; set; }
 }
 
+public sealed class AdminTodoItemView
+{
+    public string Key { get; set; } = "";
+    public string Severity { get; set; } = "info";
+    public string TitleKey { get; set; } = "";
+    public string Subtitle { get; set; } = "";
+    public string Area { get; set; } = "";
+    public DateTime SinceUtc { get; set; }
+    public string ActionLabelKey { get; set; } = "";
+    public string Href { get; set; } = "";
+    public int Count { get; set; } = 1;
+}
+
+public sealed class AdminTodoResponseItem
+{
+    public List<AdminTodoItemView> Items { get; set; } = [];
+    public Dictionary<string, int> CountsByNavKey { get; set; } = new(StringComparer.Ordinal);
+}
+
+public sealed class AdminFinanceSummaryItem
+{
+    public string Period { get; set; } = "week";
+    public int RevenueInclVatCents { get; set; }
+    public int RevenueExVatCents { get; set; }
+    public int PreviousRevenueInclVatCents { get; set; }
+    public int TokensSold { get; set; }
+    public int OpenAtMollieCents { get; set; }
+    public int VatBufferPendingCents { get; set; }
+    public int OpenPayoutsCents { get; set; }
+    public int OpenPayoutsCount { get; set; }
+}
+
 public sealed class PlatformCompanyItem
 {
     public string CompanyName { get; set; } = "Lobsy";

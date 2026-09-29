@@ -80,6 +80,8 @@ builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.AssistantChatHost>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.FeedbackHost>();
 builder.Services.AddScoped<Jobsy.Web.Components.Admin.Shell.AdminSidebarState>();
+builder.Services.AddScoped<Jobsy.Web.Components.Admin.Shell.AdminTodoCountsStore>();
+builder.Services.AddScoped<Jobsy.Web.Components.Admin.Shell.AdminTodoChanged>();
 builder.Services.AddSingleton(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();

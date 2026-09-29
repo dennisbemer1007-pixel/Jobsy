@@ -1,18 +1,49 @@
 @namespace Jobsy.Web.Components.Admin.Ui
 
-<div class="admin-kpi-card">
-    @if (!string.IsNullOrEmpty(IconSvg))
-    {
-        <span class="admin-kpi-card__icon" aria-hidden="true">@((MarkupString)IconSvg)</span>
-    }
-    <p class="admin-kpi-card__label">@Label</p>
-    <p class="admin-kpi-card__value">@Value</p>
-    @if (!string.IsNullOrWhiteSpace(Delta))
-    {
-        <p class="admin-kpi-card__delta admin-kpi-card__delta--@DeltaTone">@Delta</p>
-    }
-    @ChildContent
-</div>
+@if (!string.IsNullOrWhiteSpace(Href))
+{
+    <a class="admin-kpi-card admin-kpi-card--link @(HideOnNarrow ? "admin-kpi-card--hide-narrow" : null)" href="@Href">
+        @if (!string.IsNullOrEmpty(IconSvg))
+        {
+            <span class="admin-kpi-card__icon" aria-hidden="true">@((MarkupString)IconSvg)</span>
+        }
+        <p class="admin-kpi-card__label">@Label</p>
+        <p class="admin-kpi-card__value">@Value</p>
+        @if (!string.IsNullOrWhiteSpace(Delta))
+        {
+            <p class="admin-kpi-card__delta admin-kpi-card__delta--@DeltaTone">@Delta</p>
+        }
+        @if (Sparkline is { Count: > 1 })
+        {
+            <svg class="admin-kpi-card__spark" viewBox="0 0 64 20" aria-hidden="true" preserveAspectRatio="none">
+                <polyline fill="none" stroke="currentColor" stroke-width="1.5" points="@SparkPoints" />
+            </svg>
+        }
+        @ChildContent
+    </a>
+}
+else
+{
+    <div class="admin-kpi-card @(HideOnNarrow ? "admin-kpi-card--hide-narrow" : null)">
+        @if (!string.IsNullOrEmpty(IconSvg))
+        {
+            <span class="admin-kpi-card__icon" aria-hidden="true">@((MarkupString)IconSvg)</span>
+        }
+        <p class="admin-kpi-card__label">@Label</p>
+        <p class="admin-kpi-card__value">@Value</p>
+        @if (!string.IsNullOrWhiteSpace(Delta))
+        {
+            <p class="admin-kpi-card__delta admin-kpi-card__delta--@DeltaTone">@Delta</p>
+        }
+        @if (Sparkline is { Count: > 1 })
+        {
+            <svg class="admin-kpi-card__spark" viewBox="0 0 64 20" aria-hidden="true" preserveAspectRatio="none">
+                <polyline fill="none" stroke="currentColor" stroke-width="1.5" points="@SparkPoints" />
+            </svg>
+        }
+        @ChildContent
+    </div>
+}
 
 @code {
     [Parameter] public string Label { get; set; } = "";
@@ -20,5 +51,28 @@
     [Parameter] public string? Delta { get; set; }
     [Parameter] public string DeltaTone { get; set; } = "neutral";
     [Parameter] public string? IconSvg { get; set; }
+    [Parameter] public string? Href { get; set; }
+    [Parameter] public bool HideOnNarrow { get; set; }
+    [Parameter] public IReadOnlyList<decimal>? Sparkline { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string SparkPoints => Sparkline is null ? "" : BuildSpark(Sparkline);
+
+    private static string BuildSpark(IReadOnlyList<decimal> points)
+    {
+        var max = points.Max();
+        var min = points.Min();
+        var range = max - min;
+        if (range == 0) range = 1;
+        var step = points.Count <= 1 ? 0 : 64.0 / (points.Count - 1);
+        var parts = new string[points.Count];
+        for (var i = 0; i < points.Count; i++)
+        {
+            var x = i * step;
+            var y = 18 - (double)((points[i] - min) / range) * 16;
+            parts[i] = $"{x.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)},{y.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        return string.Join(" ", parts);
+    }
 }

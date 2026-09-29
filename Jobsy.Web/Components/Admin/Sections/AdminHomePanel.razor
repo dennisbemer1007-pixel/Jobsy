@@ -4,7 +4,9 @@
 @inject JobsyApiClient Api
 
 <div class="admin-dashboard">
-    <div class="admin-dashboard__toolbar" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;justify-content:flex-end;margin-block-end:1rem">
+    @if (!HideToolbar)
+    {
+        <div class="admin-dashboard__toolbar">
             <DashboardRefreshButton Period="_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
             <div class="period-tabs period-tabs--compact" role="tablist" aria-label="Periode">
             @foreach (var p in Periods)
@@ -19,7 +21,14 @@
                 </button>
             }
             </div>
-    </div>
+        </div>
+    }
+    else
+    {
+        <div class="admin-dashboard__toolbar admin-dashboard__toolbar--end">
+            <DashboardRefreshButton Period="_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
+        </div>
+    }
 
     @if (_error is not null && _metrics.Count == 0 && !_loading)
     {
@@ -47,6 +56,9 @@
 </div>
 
 @code {
+    [Parameter] public string? Period { get; set; }
+    [Parameter] public bool HideToolbar { get; set; }
+
     private static readonly (string Key, string Label)[] Periods =
     [
         ("day", "Dag"),
@@ -68,6 +80,14 @@
 
     private string SelectedLabel =>
         _metrics.FirstOrDefault(m => m.Key == _selectedKey)?.Label ?? _selectedKey ?? "";
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrWhiteSpace(Period) && Period != _period)
+        {
+            _period = Period;
+        }
+    }
 
     protected override Task OnInitializedAsync()
         => TryLoadAsync();
@@ -155,7 +175,6 @@
         }
         catch
         {
-            // KPI tiles stay available when Top/Flop fails independently.
             _vacancyBoard = null;
         }
         finally
@@ -204,7 +223,7 @@
         "companies_intermediaries" => "/admin/organisaties?type=Intermediary",
         "companies_with_api" => "/admin/instellingen/integraties?tab=api",
         "companies_with_csv" or "reengagement_emails_sent" or "reengagement_reactivated" => "/admin/organisaties",
-        "users_open_for_work" or "users_active" => "/admin/gebruikers",
+        "users_open_for_work" or "users_active" or "users_active_candidates" => "/admin/gebruikers",
         "tokens_purchased" or "tokens_spent" or "tokens_balance" or "pushboms" or "extensions"
             => "/admin/financien?tab=tokenlog",
         "active_vacancies" or "active_vacancies_employers" or "active_vacancies_intermediaries"

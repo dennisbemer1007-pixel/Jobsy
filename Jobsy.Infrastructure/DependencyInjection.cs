@@ -1,3 +1,4 @@
+using Jobsy.Core.Admin;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
@@ -273,6 +274,14 @@ public static class DependencyInjection
             sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MailOptions>>(),
             sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<KvkOptions>>(),
             sp.GetRequiredService<IMemoryCache>()));
+        services.AddScoped<IAdminFinanceSummaryService, AdminFinanceSummaryService>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.KvkFailedRegistrationsSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.PendingTakeoversSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.ModerationFlaggedVacanciesSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.PendingSalesManagerApplicationsSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.OpenPayoutsSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.NewFeedbackSource>();
+        services.AddScoped<IAdminTodoService, Jobsy.Infrastructure.Services.AdminTodo.AdminTodoService>();
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
         services.AddScoped<IPlatformCompanySettingsService, PlatformCompanySettingsService>();
         services.AddScoped<IAboutPageSettingsService, AboutPageSettingsService>();

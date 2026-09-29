@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Admin redesign (02 · dashboard):** `/admin` met 5 KPI-kaarten, Te doen, systeemstatus en platform-modus; `/admin/te-doen`; moderatiefilter op vacatures (`/admin/vacatures/moderatie`); `GET api/admin/todo` + `GET api/admin/finance/summary`; sidebar count-pills.
 - **Admin redesign (01 · shell):** eigen `AdminLayout` met gegroepeerde sidebar, top bar (globale zoek Ctrl/Cmd+K), environment badge, breadcrumbs; Nederlandse admin-URL’s met 301 vanaf oude paden; gedeelde admin UI-primitives; `GET api/admin/search`.
 
 ### Fixed

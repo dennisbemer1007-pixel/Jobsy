@@ -425,9 +425,21 @@ public static class PageHelpDocs
 
         ["/admin"] = new(
             "Beheer · Dashboard",
-            "Platformdashboard met KPI’s en drilldowns.",
-            "Bekijk metrics en open modules via de sidebar.",
+            "Wat vandaag aandacht vraagt: KPI’s, te doen, systeemstatus.",
+            "Bekijk headline-KPI’s, open acties en systeemgezondheid. Alle KPI’s blijven beschikbaar via drilldown.",
             "Platformbeheer starten."),
+
+        ["/admin/te-doen"] = new(
+            "Beheer · Te doen",
+            "Open acties die admin-aandacht vragen.",
+            "Filter op onderdeel en ernst. Elke rij heeft één actie.",
+            "Openstaande admin-taken afhandelen."),
+
+        ["/admin/vacatures/moderatie"] = new(
+            "Beheer · Moderatie",
+            "Vacatures die AI-moderatie heeft tegengehouden.",
+            "Pas de tekst aan of keur handmatig goed. Zelfde acties als de vacaturelijst.",
+            "Gemarkeerde vacatures beoordelen."),
 
         ["/admin/instellingen"] = new(
             "Beheer · Instellingen",

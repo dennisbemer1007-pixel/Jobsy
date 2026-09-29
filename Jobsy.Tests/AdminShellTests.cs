@@ -18,7 +18,8 @@ public class AdminNavTests
         Assert.Equal(labels.Count, labels.Distinct(StringComparer.Ordinal).Count());
         Assert.DoesNotContain(AdminNav.AvailableItems(), i => i.Href == "/");
         Assert.Contains(AdminNav.AvailableItems(), i => i.Href == "/admin");
-        Assert.DoesNotContain(AdminNav.AvailableItems(), i => i.Href == "/admin/te-doen");
+        Assert.Contains(AdminNav.AvailableItems(), i => i.Href == "/admin/te-doen");
+        Assert.Contains(AdminNav.AvailableItems(), i => i.Href == "/admin/vacatures/moderatie");
     }
 
     [Theory]
@@ -67,7 +68,7 @@ public class AdminLegacyRoutesTests
     [InlineData("/admin/users?companyId=x", "/admin/gebruikers?companyId=x")]
     [InlineData("/admin/ambassadeurs", "/admin/gebruikers/sales?tab=ambassadeurs")]
     [InlineData("/admin/wages?x=1", "/admin/vacatures/categorieen?tab=salaris&x=1")]
-    [InlineData("/admin/moderation", "/admin/vacatures")]
+    [InlineData("/admin/moderation", "/admin/vacatures/moderatie")]
     [InlineData("/admin/notifications", "/admin/content/emails")]
     [InlineData("/admin/cockpit", "/admin")]
     public void TryMap_preserves_query_and_tab(string from, string expected)

@@ -1,0 +1,14 @@
+@page "/admin/vacatures/moderatie"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@inject CultureState Culture
+
+<PageTitle>@Culture["AdminNav.Moderation"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.Moderation"]"
+                Lead="@Culture["AdminDash.Moderation.Lead"]"
+                Wide="true">
+    <VacanciesAdminSection ModerationFilter="flagged" />
+</AdminPageShell>

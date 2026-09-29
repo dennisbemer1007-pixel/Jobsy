@@ -111,7 +111,8 @@ public record AdminVacancyDetailDto(
     int ApplicationCount,
     int LikeCount,
     bool IsExtended,
-    string CreatedVia = "Manual");
+    string CreatedVia = "Manual",
+    bool ContentModerationPassed = true);
 
 public record RegisterAdminCompanyRequest(
     string KvkNumber,

@@ -243,7 +243,9 @@ public sealed class DashboardLiveOverlay : IDashboardLiveOverlay
                     cancellationToken);
         }
 
-        if (includePlatformOnly && (needed.Contains("users_open_for_work") || needed.Contains("users_active")))
+        if (includePlatformOnly && (needed.Contains("users_open_for_work")
+                                    || needed.Contains("users_active")
+                                    || needed.Contains("users_active_candidates")))
         {
             values["users_open_for_work"] = await _db.Users.AsNoTracking()
                 .CountAsync(
@@ -251,6 +253,8 @@ public sealed class DashboardLiveOverlay : IDashboardLiveOverlay
                     cancellationToken);
             values["users_active"] = await _db.Users.AsNoTracking()
                 .CountAsync(u => u.IsActive, cancellationToken);
+            values["users_active_candidates"] = await _db.Users.AsNoTracking()
+                .CountAsync(u => u.Role == UserRole.Candidate && u.IsActive, cancellationToken);
         }
 
         if (includePlatformOnly && needed.Contains("errors"))

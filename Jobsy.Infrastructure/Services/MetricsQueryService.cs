@@ -137,11 +137,22 @@ public sealed class MetricsQueryService : IMetricsQueryService
             .CountAsync(u => u.Role == UserRole.Candidate && u.IsActive && u.OpenForWork, cancellationToken);
         var allUsers = await _db.Users.AsNoTracking()
             .CountAsync(u => u.IsActive, cancellationToken);
+        var activeCandidates = await _db.Users.AsNoTracking()
+            .CountAsync(u => u.Role == UserRole.Candidate && u.IsActive, cancellationToken);
 
         var employers = await _db.Companies.AsNoTracking()
             .CountAsync(c => c.Type == CompanyType.Employer, cancellationToken);
         var intermediaries = await _db.Companies.AsNoTracking()
             .CountAsync(c => c.Type == CompanyType.Intermediary, cancellationToken);
+
+        // Previous equal-length window for period-based KPI deltas.
+        var prevTo = from;
+        var prevFrom = from - (to - from);
+        var previousApplications = await _db.Applications.AsNoTracking()
+            .Where(a => vacancyIds.Contains(a.VacancyId)
+                        && a.EmailVerifiedAt != null
+                        && a.CreatedAt >= prevFrom && a.CreatedAt < prevTo)
+            .CountAsync(cancellationToken);
 
         var metrics = new List<MetricCountDto>
         {
@@ -155,8 +166,9 @@ public sealed class MetricsQueryService : IMetricsQueryService
             new("active_vacancies_regular", "Actieve vacatures (regulier)", periodKey, activeRegularVacancies),
             new("users_open_for_work", "Open for work", periodKey, openForWork),
             new("users_active", "Actieve gebruikers", periodKey, allUsers),
+            new("users_active_candidates", "Actieve kandidaten", periodKey, activeCandidates),
             new("applications_pending", "Openstaande sollicitaties", periodKey, applicationsPending),
-            new("applications", "Sollicitaties", periodKey, applications),
+            new("applications", "Sollicitaties", periodKey, applications, PreviousValue: previousApplications),
             new("conversion_rate", "Conversie sollicitaties", periodKey, conversionRate),
             new("impressions", "Getoond na zoekactie", periodKey, impressions),
             new("clicks", "Vacatureclicks", periodKey, clicks),
@@ -562,6 +574,11 @@ public sealed class MetricsQueryService : IMetricsQueryService
             "users_open_for_work" => await UsersOpenForWorkDrilldownAsync(cancellationToken),
             "users_active" => await _db.Users.AsNoTracking()
                 .Where(u => u.IsActive)
+                .OrderBy(u => u.FullName)
+                .Select(u => new MetricDrilldownItemDto(u.Id, u.FullName, u.Role.ToString(), DateTime.UtcNow, null))
+                .ToListAsync(cancellationToken),
+            "users_active_candidates" => await _db.Users.AsNoTracking()
+                .Where(u => u.IsActive && u.Role == UserRole.Candidate)
                 .OrderBy(u => u.FullName)
                 .Select(u => new MetricDrilldownItemDto(u.Id, u.FullName, u.Role.ToString(), DateTime.UtcNow, null))
                 .ToListAsync(cancellationToken),

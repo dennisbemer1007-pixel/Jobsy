@@ -1,0 +1,431 @@
+@using System.Globalization
+@using System.Security.Claims
+@using Jobsy.Core.Admin
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Dashboard
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
+@inherits CultureAwareComponentBase
+@inject JobsyApiClient Api
+@inject AuthenticationStateProvider AuthState
+@inject Jobsy.Web.Components.Admin.Shell.AdminTodoCountsStore TodoCounts
+@inject Jobsy.Web.Components.Admin.Shell.AdminTodoChanged TodoChanged
+
+<div class="admin-dash">
+    <header class="admin-dash__header">
+        <div class="admin-dash__titles">
+            <h1>@GreetingTitle</h1>
+            <p class="login-lead">@_lead</p>
+        </div>
+        <div class="admin-dash__actions">
+            <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["AdminDash.Period"]">
+                @foreach (var p in Periods)
+                {
+                    <button type="button"
+                            class="period-tab @(_period == p.Key ? "period-tab--active" : null)"
+                            role="tab"
+                            aria-selected="@(_period == p.Key)"
+                            disabled="@_loading"
+                            @onclick="() => SetPeriodAsync(p.Key)">
+                        @Culture[p.LabelKey]
+                    </button>
+                }
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-dash__kpis" role="list">
+        @foreach (var kpi in _kpis)
+        {
+            <div role="listitem">
+                <AdminKpiCard Label="@kpi.Label"
+                              Value="@kpi.Value"
+                              Delta="@kpi.Delta"
+                              DeltaTone="@kpi.Tone"
+                              IconSvg="@kpi.Icon"
+                              Href="@kpi.Href"
+                              HideOnNarrow="@kpi.HideOnNarrow"
+                              Sparkline="@kpi.Sparkline" />
+            </div>
+        }
+    </div>
+
+    <div class="admin-dash__grid">
+        <section class="admin-dash__todo detail-card" aria-labelledby="admin-todo-heading">
+            <div class="admin-dash__card-head">
+                <h2 id="admin-todo-heading">
+                    @Culture["AdminNav.Todo"]
+                    @if (_todoTotal > 0)
+                    {
+                        <span class="admin-count-pill">@_todoTotal</span>
+                    }
+                </h2>
+                <a class="admin-dash__more" href="/admin/te-doen">@Culture["AdminDash.Todo.ViewAll"]</a>
+            </div>
+            @if (_todo.Count == 0)
+            {
+                <p class="admin-dash__empty">@Culture["AdminDash.Todo.Empty"]</p>
+                <p class="muted">@Culture["AdminDash.Todo.EmptyHint"]</p>
+            }
+            else
+            {
+                <ul class="admin-todo-list">
+                    @foreach (var item in _todo.Take(6))
+                    {
+                        <li class="admin-todo-list__row admin-todo-list__row--@item.Severity">
+                            <span class="admin-todo-list__icon" aria-hidden="true">@((MarkupString)SeverityIcon(item.Severity))</span>
+                            <div class="admin-todo-list__body">
+                                <p class="admin-todo-list__title">@TodoTitle(item)</p>
+                                <p class="muted admin-todo-list__sub">@item.Subtitle</p>
+                            </div>
+                            <span class="status-pill">@item.Area</span>
+                            <span class="muted admin-todo-list__since">@AdminRelativeTime.Format(item.SinceUtc)</span>
+                            <a class="btn-compact btn-compact--primary admin-todo-list__action" href="@item.Href">@Culture[item.ActionLabelKey]</a>
+                            <a class="admin-todo-list__chevron" href="@item.Href" aria-label="@Culture[item.ActionLabelKey]">
+                                <span aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+
+        <div class="admin-dash__side">
+            <section class="detail-card admin-dash__status" aria-labelledby="admin-status-heading">
+                <div class="admin-dash__card-head">
+                    <h2 id="admin-status-heading">@Culture["AdminDash.SystemStatus"]</h2>
+                    <a class="admin-dash__more" href="/admin/beveiliging/systeemlogs">@Culture["AdminDash.SystemLogsLink"]</a>
+                </div>
+                <ul class="admin-status-list">
+                    @foreach (var row in _health)
+                    {
+                        <li class="admin-status-list__row">
+                            <span class="admin-status-dot admin-status-dot--@row.Tone" aria-hidden="true"></span>
+                            <span class="admin-status-list__name">@row.Name</span>
+                            <span class="muted">@row.Status</span>
+                        </li>
+                    }
+                </ul>
+            </section>
+
+            <section class="detail-card admin-dash__mode" aria-labelledby="admin-mode-heading">
+                <div class="admin-dash__card-head">
+                    <h2 id="admin-mode-heading">@Culture["AdminDash.PlatformMode"]</h2>
+                    <a class="admin-dash__more" href="/admin/instellingen">@Culture["AdminDash.FeaturesLink"]</a>
+                </div>
+                <ul class="admin-mode-list">
+                    @foreach (var row in _mode)
+                    {
+                        <li class="admin-mode-list__row">
+                            <span>@Culture[row.LabelKey]</span>
+                            <span class="status-pill @(row.IsOn ? "status-pill--success" : null)">@Culture[row.ValueKey]</span>
+                        </li>
+                    }
+                </ul>
+            </section>
+        </div>
+    </div>
+
+    @* Slot: Recente beheeracties — filled in file 07 *@
+
+    <details class="admin-dash__all-kpis detail-card">
+        <summary>@Culture["AdminDash.AllKpis"]</summary>
+        <AdminHomePanel Period="@_period" HideToolbar="true" />
+    </details>
+</div>
+
+@code {
+    private static readonly (string Key, string LabelKey)[] Periods =
+    [
+        ("day", "AdminDash.Period.Today"),
+        ("week", "AdminDash.Period.Week"),
+        ("month", "AdminDash.Period.Month"),
+        ("quarter", "AdminDash.Period.Quarter")
+    ];
+
+    private string _period = "week";
+    private string _firstName = "";
+    private string _lead = "";
+    private bool _loading = true;
+    private bool _loadStarted;
+    private int _todoTotal;
+    private List<AdminTodoItemView> _todo = [];
+    private List<KpiVm> _kpis = [];
+    private List<HealthVm> _health = [];
+    private IReadOnlyList<PlatformModeRow> _mode = [];
+
+    private string GreetingTitle
+    {
+        get
+        {
+            var key = AdminGreeting.GreetingKey(DateTime.UtcNow);
+            var greeting = Culture[key];
+            return string.IsNullOrWhiteSpace(_firstName) ? greeting : $"{greeting}, {_firstName}";
+        }
+    }
+
+    protected override Task OnInitializedAsync() => TryLoadAsync();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+
+    private async Task TryLoadAsync()
+    {
+        if (!HomeDashboardLoad.TryBegin(ref _loadStarted, RendererInfo.IsInteractive))
+        {
+            return;
+        }
+
+        await LoadIdentityAsync();
+        await LoadAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadIdentityAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var user = state.User;
+        var name = user.FindFirst("name")?.Value
+                   ?? user.FindFirst(ClaimTypes.Name)?.Value
+                   ?? user.Identity?.Name
+                   ?? "";
+        _firstName = name.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+        var local = AdminGreeting.LocalNow();
+        var cultureCode = Culture.Language;
+        var cultureInfo = cultureCode switch
+        {
+            "en" => CultureInfo.GetCultureInfo("en-GB"),
+            "pl" => CultureInfo.GetCultureInfo("pl-PL"),
+            "ro" => CultureInfo.GetCultureInfo("ro-RO"),
+            "ar" => CultureInfo.GetCultureInfo("ar-SA"),
+            _ => CultureInfo.GetCultureInfo("nl-NL")
+        };
+        var date = local.ToString("dddd d MMMM yyyy", cultureInfo);
+        if (!string.IsNullOrEmpty(date))
+        {
+            date = char.ToUpper(date[0], cultureInfo) + date[1..];
+        }
+
+        _lead = $"{date} · {Culture["AdminDash.Lead"]}";
+    }
+
+    private async Task SetPeriodAsync(string period)
+    {
+        if (_period == period) return;
+        _period = period;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var metricsTask = Api.GetEmployerMetricsSummaryAsync(_period);
+            var financeTask = Api.GetAdminFinanceSummaryAsync(_period);
+            var todoTask = Api.GetAdminTodoAsync();
+            var healthTask = Api.GetIntegrationHealthAsync();
+            var featuresTask = Api.GetPlatformFeaturesAsync();
+
+            await Task.WhenAll(metricsTask, financeTask, todoTask, healthTask, featuresTask);
+
+            var metrics = (await metricsTask).ToList();
+            var finance = await financeTask;
+            var todo = await todoTask;
+            var health = await healthTask;
+            var features = await featuresTask;
+
+            _todo = todo?.Items ?? [];
+            _todoTotal = todo?.CountsByNavKey.GetValueOrDefault("todo") ?? _todo.Sum(t => Math.Max(1, t.Count));
+            TodoCounts.Apply(todo);
+            _kpis = BuildKpis(metrics, finance);
+            _health = health.Select(MapHealth).ToList();
+            _mode = PlatformModeSummary.Build(features?.VacancyContentModerationEnabled ?? true);
+        }
+        catch
+        {
+            // Partial UI still useful; empty cards / lists show honest empty state.
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private List<KpiVm> BuildKpis(List<MetricCount> metrics, AdminFinanceSummaryItem? finance)
+    {
+        MetricCount? M(string key) => metrics.FirstOrDefault(m =>
+            string.Equals(m.Key, key, StringComparison.OrdinalIgnoreCase));
+
+        var culture = CultureInfo.GetCultureInfo("nl-NL");
+        var apps = M("applications");
+        var appsLabel = Culture["AdminDash.Kpi.Applications"];
+        var periodSuffix = _period switch
+        {
+            "day" => Culture["AdminDash.Period.TodayShort"],
+            "week" => Culture["AdminDash.Period.WeekShort"],
+            "month" => Culture["AdminDash.Period.MonthShort"],
+            "quarter" => Culture["AdminDash.Period.QuarterShort"],
+            _ => ""
+        };
+        if (!string.IsNullOrEmpty(periodSuffix))
+        {
+            appsLabel = $"{appsLabel} ({periodSuffix})";
+        }
+
+        var candidates = M("users_active_candidates") ?? M("users_active");
+        var employers = M("companies_employers");
+        var vacancies = M("active_vacancies");
+
+        var list = new List<KpiVm>();
+        list.Add(ToKpi(Culture["AdminDash.Kpi.Candidates"], candidates, NavIcons.Users, ListHrefFor(candidates?.Key ?? "users_active_candidates")));
+        list.Add(ToKpi(Culture["AdminDash.Kpi.Employers"], employers, NavIcons.Companies, ListHrefFor("companies_employers")));
+        list.Add(ToKpi(Culture["AdminDash.Kpi.Vacancies"], vacancies, NavIcons.Vacancies, ListHrefFor("active_vacancies")));
+        list.Add(ToKpi(appsLabel, apps, NavIcons.Applications, ListHrefFor("applications")));
+
+        var revenue = finance?.RevenueInclVatCents ?? 0;
+        var prevRev = finance?.PreviousRevenueInclVatCents;
+        var (delta, tone) = AdminKpiDelta.Format(revenue, prevRev);
+        var omzetLabel = Culture["AdminDash.Kpi.Revenue"];
+        list.Add(new KpiVm(
+            omzetLabel,
+            FormatEuro(revenue, culture),
+            delta,
+            tone,
+            NavIcons.Finance,
+            "/admin/financien",
+            HideOnNarrow: true,
+            Sparkline: null));
+
+        return list;
+    }
+
+    private static KpiVm ToKpi(string label, MetricCount? m, string icon, string href)
+    {
+        var value = m?.Value ?? 0;
+        var (delta, tone) = AdminKpiDelta.Format(value, m?.PreviousValue);
+        // Snapshot KPIs often lack PreviousValue — still show a neutral "—" so cards have delta text.
+        if (string.IsNullOrEmpty(delta))
+        {
+            delta = "—";
+            tone = "neutral";
+        }
+
+        return new KpiVm(
+            label,
+            value.ToString("N0", CultureInfo.GetCultureInfo("nl-NL")),
+            delta,
+            tone,
+            icon,
+            href,
+            HideOnNarrow: false,
+            Sparkline: m?.Sparkline);
+    }
+
+    private static string FormatEuro(int cents, CultureInfo culture)
+        => (cents / 100m).ToString("C0", culture);
+
+    private string TodoTitle(AdminTodoItemView item)
+    {
+        var title = Culture[item.TitleKey];
+        if (item.Count > 1 && item.TitleKey.Contains("Moderation", StringComparison.Ordinal))
+        {
+            return string.Format(CultureInfo.CurrentCulture, title, item.Count);
+        }
+
+        if (item.Count > 1 && item.TitleKey.Contains("Feedback", StringComparison.Ordinal))
+        {
+            return string.Format(CultureInfo.CurrentCulture, title, item.Count);
+        }
+
+        return title.Contains("{0}", StringComparison.Ordinal)
+            ? string.Format(CultureInfo.CurrentCulture, title, item.Count)
+            : title;
+    }
+
+    private static HealthVm MapHealth(IntegrationHealthItem item)
+    {
+        var name = string.IsNullOrWhiteSpace(item.DisplayName) ? item.Key : item.DisplayName;
+        if (string.Equals(item.Key, "Mail", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("Postmark", StringComparison.OrdinalIgnoreCase))
+        {
+            name = name.Replace("Postmark", "Resend", StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(name, "Mail", StringComparison.OrdinalIgnoreCase))
+            {
+                name = "E-mail (Resend)";
+            }
+        }
+
+        string status;
+        string tone;
+        if (item.LastPingOk == true)
+        {
+            status = "Operationeel";
+            tone = "ok";
+        }
+        else if (item.LastPingOk == false)
+        {
+            status = "Storing";
+            tone = "down";
+        }
+        else if (!string.IsNullOrWhiteSpace(item.StatusMessage)
+                 && item.StatusMessage.Contains("nog niet getest", StringComparison.OrdinalIgnoreCase))
+        {
+            status = "Nog niet getest";
+            tone = "unknown";
+        }
+        else if (!string.IsNullOrWhiteSpace(item.StatusMessage)
+                 && (item.StatusMessage.Contains("traag", StringComparison.OrdinalIgnoreCase)
+                     || item.StatusMessage.Contains("ms", StringComparison.OrdinalIgnoreCase)
+                     || item.StatusMessage.Contains(" s ", StringComparison.OrdinalIgnoreCase)))
+        {
+            status = item.StatusMessage.StartsWith("Traag", StringComparison.OrdinalIgnoreCase)
+                ? item.StatusMessage
+                : $"Traag · {item.StatusMessage}";
+            tone = "slow";
+        }
+        else if (item.IsActive)
+        {
+            status = "Operationeel";
+            tone = "ok";
+        }
+        else
+        {
+            status = string.IsNullOrWhiteSpace(item.StatusMessage) ? "Nog niet getest" : item.StatusMessage;
+            tone = "unknown";
+        }
+
+        return new HealthVm(name, status, tone);
+    }
+
+    private static string SeverityIcon(string severity) => severity.ToLowerInvariant() switch
+    {
+        "danger" => NavIcons.Feedback,
+        "warn" => NavIcons.Applications,
+        _ => NavIcons.List
+    };
+
+    private static string ListHrefFor(string key) => key.ToLowerInvariant() switch
+    {
+        "companies_employers" => "/admin/organisaties?type=Employer",
+        "users_open_for_work" or "users_active" or "users_active_candidates" => "/admin/gebruikers",
+        "active_vacancies" => "/admin/vacatures",
+        "applications" => "/admin/vacatures",
+        _ => "/admin/vacatures"
+    };
+
+    private sealed record KpiVm(
+        string Label,
+        string Value,
+        string Delta,
+        string Tone,
+        string Icon,
+        string Href,
+        bool HideOnNarrow,
+        IReadOnlyList<decimal>? Sparkline);
+
+    private sealed record HealthVm(string Name, string Status, string Tone);
+}

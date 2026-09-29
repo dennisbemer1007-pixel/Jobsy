@@ -201,6 +201,8 @@ public static partial class PageSeoCatalog
             ["/admin/vacatures"] = Private("AdminNav.Vacancies", "Seo.PrivateDescription"),
             ["/admin/vacatures/ats"] = Private("AdminNav.Ats", "Seo.PrivateDescription"),
             ["/admin/vacatures/categorieen"] = Private("AdminNav.CategoriesWages", "Seo.PrivateDescription"),
+            ["/admin/vacatures/moderatie"] = Private("AdminNav.Moderation", "Seo.PrivateDescription"),
+            ["/admin/te-doen"] = Private("AdminNav.Todo", "Seo.PrivateDescription"),
             ["/admin/content/opleidingen"] = Private("AdminNav.Training", "Seo.PrivateDescription"),
             ["/branch"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),
         };

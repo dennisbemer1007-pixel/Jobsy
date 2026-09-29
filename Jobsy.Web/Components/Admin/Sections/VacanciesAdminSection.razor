@@ -1,0 +1,432 @@
+@namespace Jobsy.Web.Components.Admin.Sections
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject CultureState Culture
+@implements IDisposable
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error">@_error</p>
+}
+else
+{
+    @if (string.IsNullOrWhiteSpace(ModerationFilter))
+    {
+        <div class="vacancy-source-balance" role="group" aria-label="Bronverhouding actieve vacatures">
+            <button type="button"
+                    class="vacancy-source-balance__chip @(_channelFilter == "" ? "is-active" : null)"
+                    @onclick='() => SetChannelFilter("")'>
+                Alle actief
+                <strong>@_activeTotal</strong>
+            </button>
+            <button type="button"
+                    class="vacancy-source-balance__chip @(_channelFilter == "ats" ? "is-active" : null)"
+                    @onclick='() => SetChannelFilter("ats")'>
+                <span class="source-badge source-badge--ats">ATS</span>
+                <strong>@_activeAts</strong>
+            </button>
+            <button type="button"
+                    class="vacancy-source-balance__chip @(_channelFilter == "regular" ? "is-active" : null)"
+                    @onclick='() => SetChannelFilter("regular")'>
+                <span class="source-badge source-badge--regular">Regulier</span>
+                <strong>@_activeRegular</strong>
+            </button>
+            @if (_activeTotal > 0)
+            {
+                <span class="muted">@_activeAts / @_activeTotal ATS · @_activeRegular / @_activeTotal regulier</span>
+            }
+        </div>
+    }
+
+    <div class="filter-bar">
+        <label class="filter-bar__query">
+            @Culture["Common.Search"]
+            <input type="search"
+                   @bind="_searchQuery"
+                   @bind:event="oninput"
+                   placeholder="@Culture["Vacancy.SearchCompanyOrTitlePlaceholder"]" />
+        </label>
+        @if (string.IsNullOrWhiteSpace(ModerationFilter))
+        {
+            <label>
+                Bron
+                <select @bind="_channelFilter">
+                    <option value="">Alle</option>
+                    <option value="ats">ATS</option>
+                    <option value="regular">Regulier</option>
+                </select>
+            </label>
+        }
+        <span class="muted">@_filtered.Count van @_vacancies.Count</span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_filtered.Count == 0)
+    {
+        <p class="state-message">@Culture["Admin.NoVacancies"]</p>
+    }
+    else
+    {
+        <div class="table-scroll vacancy-grid">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th class="data-table__col--wrap">@Culture["Admin.Title"]</th>
+                        <th class="data-table__col--wrap">@Culture["Admin.Company"]</th>
+                        <th>@Culture["Admin.Status"]</th>
+                        <th>
+                            <button type="button"
+                                    class="data-table__sort"
+                                    aria-sort="@SortAria("start")"
+                                    @onclick='() => ToggleSort("start")'>
+                                @Culture["Vacancy.PlacementDate"]
+                            </button>
+                        </th>
+                        <th>
+                            <button type="button"
+                                    class="data-table__sort"
+                                    aria-sort="@SortAria("end")"
+                                    @onclick='() => ToggleSort("end")'>
+                                @Culture["Vacancy.Deadline"]
+                            </button>
+                        </th>
+                        <th>Bron</th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("impressions")'>Getoond</button></th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("clicks")'>Clicks</button></th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("shares")'>Shared</button></th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("applications")'>Applied</button></th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("extensions")'>Extended</button></th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("likes")'>Liked</button></th>
+                        <th class="data-table__col--actions">@Culture["Common.Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var v in _filtered)
+                    {
+                        <tr class="data-table__row--interactive"
+                            title="@Culture["VacancyAction.OpenHint"]"
+                            @ondblclick="() => OpenVacancyDetails(v)">
+                            <td class="data-table__col--wrap">
+                                <a href="/vacancies/@v.Id"><strong>@v.Title</strong></a>
+                            </td>
+                            <td class="data-table__col--wrap">@v.CompanyName <span class="muted">(@v.CompanyType)</span></td>
+                            <td>@v.Status</td>
+                            <td>@v.StartDate.ToString("dd-MM-yyyy")</td>
+                            <td>@v.EndDate.ToString("dd-MM-yyyy")</td>
+                            <td>
+                                <span class="source-badge source-badge--@VacancySourceDisplay.ChannelCssModifier(v.CreatedVia)"
+                                      title="@VacancySourceDisplay.Label(v.CreatedVia)">
+                                    @VacancySourceDisplay.ChannelLabel(v.CreatedVia)
+                                </span>
+                            </td>
+                            <td><a href="@MetricHref(v, "impressions")">@v.ImpressionCount</a></td>
+                            <td><a href="@MetricHref(v, "clicks")">@v.ClickCount</a></td>
+                            <td><a href="@MetricHref(v, "shares")">@v.ShareCount</a></td>
+                            <td><a href="@MetricHref(v, "applications")">@v.ApplicationCount</a></td>
+                            <td><a href="@MetricHref(v, "extensions")">@v.ExtensionCount</a></td>
+                            <td><a href="@MetricHref(v, "likes")">@v.LikeCount</a></td>
+                            <td class="data-table__col--actions" @ondblclick:stopPropagation="true">
+                                <RowActionsMenu>
+                                    <a class="row-actions-menu__item" role="menuitem" href="/vacancies/@v.Id">
+                                        @Culture["VacancyAction.View"]
+                                    </a>
+                                    @if (v.Status == "Active")
+                                    {
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => ExtendAsync(v)">
+                                            @Culture["VacancyAction.Extend"]
+                                        </button>
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => DeactivateAsync(v)">
+                                            @Culture["VacancyAction.Deactivate"]
+                                        </button>
+                                    }
+                                </RowActionsMenu>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (_drillKey is not null)
+    {
+        <section class="panel-section">
+            <h2>Drilldown: @_drillKey</h2>
+            @if (_drillLoading)
+            {
+                <p class="state-message">@Culture["Common.Loading"]</p>
+            }
+            else if (_drilldown.Count == 0)
+            {
+                <p class="state-message">Geen items.</p>
+            }
+            else
+            {
+                <div class="table-list">
+                    @foreach (var item in _drilldown)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@item.Title</strong>
+                                <span class="muted">@item.Subtitle</span>
+                            </div>
+                            <span class="muted">@item.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    }
+}
+
+@code {
+    [Parameter] public string? ModerationFilter { get; set; }
+
+    private List<AdminVacancyItem> _vacancies = [];
+    private string _searchQuery = "";
+    private string _sortColumn = "start";
+    private bool _sortAscending;
+    private string _statusFilter = "";
+    private string _channelFilter = "";
+    private bool _extendedOnly;
+    private bool _sortByApplications;
+    private Guid? _companyIdFilter;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _drillLoading;
+    private string? _error;
+    private string? _message;
+    private string? _drillKey;
+    private List<MetricDrilldownItem> _drilldown = [];
+
+    private List<AdminVacancyItem> _filtered => Filter().ToList();
+
+    private int _activeAts => _vacancies.Count(v =>
+        v.Status.Equals("Active", StringComparison.OrdinalIgnoreCase)
+        && VacancySourceDisplay.IsAts(v.CreatedVia));
+
+    private int _activeRegular => _vacancies.Count(v =>
+        v.Status.Equals("Active", StringComparison.OrdinalIgnoreCase)
+        && !VacancySourceDisplay.IsAts(v.CreatedVia));
+
+    private int _activeTotal => _activeAts + _activeRegular;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var qs = QueryHelpers.ParseQuery(uri.Query);
+        if (qs.TryGetValue("companyId", out var cid) && Guid.TryParse(cid, out var companyId))
+        {
+            _companyIdFilter = companyId;
+        }
+
+        if (qs.TryGetValue("status", out var status))
+        {
+            _statusFilter = status.ToString();
+        }
+
+        if (qs.TryGetValue("channel", out var channel)
+            || qs.TryGetValue("source", out channel))
+        {
+            var raw = channel.ToString().Trim().ToLowerInvariant();
+            _channelFilter = raw is "ats" or "regular" or "regulier"
+                ? (raw is "regulier" ? "regular" : raw)
+                : "";
+        }
+
+        if (qs.TryGetValue("extended", out var ext) && bool.TryParse(ext, out var extended) && extended)
+        {
+            _extendedOnly = true;
+        }
+
+        if (qs.TryGetValue("sort", out var sort)
+            && sort.ToString().Equals("applications", StringComparison.OrdinalIgnoreCase))
+        {
+            _sortByApplications = true;
+        }
+
+        if (qs.TryGetValue("moderation", out var mod) && string.IsNullOrWhiteSpace(ModerationFilter))
+        {
+            ModerationFilter = mod.ToString();
+        }
+
+        try
+        {
+            var moderation = string.Equals(ModerationFilter, "flagged", StringComparison.OrdinalIgnoreCase)
+                ? "flagged"
+                : null;
+            _vacancies = (await Api.GetAdminVacanciesAsync(moderation)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private IEnumerable<AdminVacancyItem> Filter()
+    {
+        IEnumerable<AdminVacancyItem> q = _vacancies;
+        if (_companyIdFilter is Guid cid)
+        {
+            q = q.Where(v => v.CompanyId == cid);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            q = q.Where(v =>
+                v.CompanyName.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)
+                || v.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_statusFilter))
+        {
+            q = q.Where(v => v.Status.Equals(_statusFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (string.Equals(_channelFilter, "ats", StringComparison.OrdinalIgnoreCase))
+        {
+            q = q.Where(v => VacancySourceDisplay.IsAts(v.CreatedVia));
+        }
+        else if (string.Equals(_channelFilter, "regular", StringComparison.OrdinalIgnoreCase))
+        {
+            q = q.Where(v => !VacancySourceDisplay.IsAts(v.CreatedVia));
+        }
+
+        if (_extendedOnly)
+        {
+            q = q.Where(v => v.IsExtended);
+        }
+
+        if (_sortByApplications)
+        {
+            return q.OrderByDescending(v => v.ApplicationCount).ThenBy(v => v.Title);
+        }
+
+        return ApplySort(q);
+    }
+
+    private void ToggleSort(string column)
+    {
+        _sortByApplications = false;
+        if (string.Equals(_sortColumn, column, StringComparison.Ordinal))
+        {
+            _sortAscending = !_sortAscending;
+        }
+        else
+        {
+            _sortColumn = column;
+            _sortAscending = true;
+        }
+    }
+
+    private string? SortAria(string column)
+        => !_sortByApplications && string.Equals(_sortColumn, column, StringComparison.Ordinal)
+            ? (_sortAscending ? "ascending" : "descending")
+            : null;
+
+    private IEnumerable<AdminVacancyItem> ApplySort(IEnumerable<AdminVacancyItem> query)
+        => _sortColumn switch
+        {
+            "end" => _sortAscending
+                ? query.OrderBy(v => v.EndDate).ThenBy(v => v.Title)
+                : query.OrderByDescending(v => v.EndDate).ThenBy(v => v.Title),
+            _ => _sortAscending
+                ? query.OrderBy(v => v.StartDate).ThenBy(v => v.Title)
+                : query.OrderByDescending(v => v.StartDate).ThenBy(v => v.Title)
+        };
+
+    private static string MetricHref(AdminVacancyItem v, string metric)
+        => $"/vacancies/{v.Id}?metric={metric}";
+
+    private void SetChannelFilter(string channel)
+        => _channelFilter = channel ?? "";
+
+    private void OpenVacancyDetails(AdminVacancyItem vacancy)
+        => Nav.NavigateTo($"/vacancies/{vacancy.Id}");
+
+    private async Task Drill(string key)
+    {
+        _drillKey = key;
+        _drillLoading = true;
+        try
+        {
+            _drilldown = (await Api.GetEmployerMetricsDrilldownAsync(key, "week")).ToList();
+        }
+        catch
+        {
+            _drilldown = [];
+        }
+        finally
+        {
+            _drillLoading = false;
+        }
+    }
+
+    private async Task ExtendAsync(AdminVacancyItem v)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.AdminExtendVacancyAsync(v.Id);
+            _message = $"Vacature '{v.Title}' verlengd.";
+            var moderation = string.Equals(ModerationFilter, "flagged", StringComparison.OrdinalIgnoreCase)
+                ? "flagged"
+                : null;
+            _vacancies = (await Api.GetAdminVacanciesAsync(moderation)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeactivateAsync(AdminVacancyItem v)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.AdminDeactivateVacancyAsync(v.Id);
+            _message = $"Vacature '{v.Title}' gezet op inactief.";
+            var moderation = string.Equals(ModerationFilter, "flagged", StringComparison.OrdinalIgnoreCase)
+                ? "flagged"
+                : null;
+            _vacancies = (await Api.GetAdminVacanciesAsync(moderation)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -104,5 +104,62 @@ public static class UiStringsAdmin
         Add("AdminUi.PageOf", "Pagina {0} van {1}", "Page {0} of {1}", "Strona {0} z {1}", "Pagina {0} din {1}", "صفحة {0} من {1}");
         Add("AdminUi.CloseDrawer", "Sluiten", "Close", "Zamknij", "Închide", "إغلاق");
         Add("AdminUi.FilterSearch", "Zoeken…", "Search…", "Szukaj…", "Căutare…", "بحث…");
+        Add("AdminUi.All", "Alles", "All", "Wszystko", "Tot", "الكل");
+
+        // Dashboard (02)
+        Add("AdminDash.Lead", "alles wat vandaag aandacht vraagt op één plek.", "everything that needs attention today in one place.", "wszystko, co dziś wymaga uwagi, w jednym miejscu.", "tot ce cere atenție azi într-un singur loc.", "كل ما يحتاج انتباهًا اليوم في مكان واحد.");
+        Add("AdminDash.Greeting.Morning", "Goedemorgen", "Good morning", "Dzień dobry", "Bună dimineața", "صباح الخير");
+        Add("AdminDash.Greeting.Afternoon", "Goedemiddag", "Good afternoon", "Dzień dobry", "Bună ziua", "مساء الخير");
+        Add("AdminDash.Greeting.Evening", "Goedenavond", "Good evening", "Dobry wieczór", "Bună seara", "مساء الخير");
+        Add("AdminDash.Period", "Periode", "Period", "Okres", "Perioadă", "الفترة");
+        Add("AdminDash.Period.Today", "Vandaag", "Today", "Dziś", "Azi", "اليوم");
+        Add("AdminDash.Period.Week", "7 dagen", "7 days", "7 dni", "7 zile", "7 أيام");
+        Add("AdminDash.Period.Month", "30 dagen", "30 days", "30 dni", "30 zile", "30 يومًا");
+        Add("AdminDash.Period.Quarter", "Kwartaal", "Quarter", "Kwartał", "Trimestru", "ربع سنة");
+        Add("AdminDash.Period.TodayShort", "vandaag", "today", "dziś", "azi", "اليوم");
+        Add("AdminDash.Period.WeekShort", "7 d", "7 d", "7 d", "7 z", "٧ ي");
+        Add("AdminDash.Period.MonthShort", "30 d", "30 d", "30 d", "30 z", "٣٠ ي");
+        Add("AdminDash.Period.QuarterShort", "kwartaal", "quarter", "kwartał", "trimestru", "ربع");
+        Add("AdminDash.Kpi.Candidates", "Actieve kandidaten", "Active candidates", "Aktywni kandydaci", "Candidați activi", "مرشحون نشطون");
+        Add("AdminDash.Kpi.Employers", "Actieve werkgevers", "Active employers", "Aktywni pracodawcy", "Angajatori activi", "أصحاب عمل نشطون");
+        Add("AdminDash.Kpi.Vacancies", "Vacatures live", "Live vacancies", "Oferty live", "Joburi live", "وظائف مباشرة");
+        Add("AdminDash.Kpi.Applications", "Sollicitaties", "Applications", "Aplikacje", "Aplicări", "طلبات");
+        Add("AdminDash.Kpi.Revenue", "Omzet", "Revenue", "Przychód", "Venit", "الإيرادات");
+        Add("AdminDash.Todo.ViewAll", "Alles bekijken →", "View all →", "Zobacz wszystko →", "Vezi tot →", "عرض الكل →");
+        Add("AdminDash.Todo.Empty", "Niets te doen. Mooi zo.", "Nothing to do. Nice.", "Nic do zrobienia. Super.", "Nimic de făcut. Super.", "لا مهام. رائع.");
+        Add("AdminDash.Todo.EmptyHint", "We laten het hier zien zodra er iets is.", "We'll show items here as soon as there are any.", "Pokażemy je tutaj, gdy coś się pojawi.", "Le arătăm aici când apar.", "نظهرها هنا فورًا عند وجود شيء.");
+        Add("AdminDash.Todo.PageLead", "Alles wat nu aandacht vraagt, op één plek.", "Everything that needs attention now, in one place.", "Wszystko, co wymaga uwagi, w jednym miejscu.", "Tot ce cere atenție acum, într-un loc.", "كل ما يحتاج انتباهًا الآن في مكان واحد.");
+        Add("AdminDash.SystemStatus", "Systeemstatus", "System status", "Status systemu", "Stare sistem", "حالة النظام");
+        Add("AdminDash.SystemLogsLink", "Systeemlogs →", "System logs →", "Logi systemowe →", "Jurnale →", "سجلات النظام →");
+        Add("AdminDash.PlatformMode", "Platform-modus", "Platform mode", "Tryb platformy", "Mod platformă", "وضع المنصة");
+        Add("AdminDash.FeaturesLink", "Functies →", "Features →", "Funkcje →", "Funcții →", "الميزات →");
+        Add("AdminDash.AllKpis", "Alle KPI's en drilldown", "All KPIs and drilldown", "Wszystkie KPI i drilldown", "Toate KPI și drilldown", "كل مؤشرات الأداء والتفصيل");
+        Add("AdminDash.Mode.AiModeration", "AI-vacaturemoderatie", "AI vacancy moderation", "Moderacja AI ofert", "Moderare AI joburi", "إشراف AI على الوظائف");
+        Add("AdminDash.Mode.Mfa", "Tweestapsverificatie", "Two-factor authentication", "Uwierzytelnianie dwuskładnikowe", "Autentificare în doi pași", "التحقق بخطوتين");
+        Add("AdminDash.Mode.On", "Aan", "On", "Wł.", "Pornit", "تشغيل");
+        Add("AdminDash.Mode.Off", "Uit", "Off", "Wył.", "Oprit", "إيقاف");
+        Add("AdminDash.Mode.Required", "Verplicht", "Required", "Wymagane", "Obligatoriu", "إلزامي");
+        Add("AdminDash.Moderation.Lead", "Vacatures die de AI-moderatie heeft tegengehouden. Pas de tekst aan of keur handmatig goed.", "Vacancies blocked by AI moderation. Edit the text or approve manually.", "Oferty zablokowane przez moderację AI. Edytuj tekst lub zatwierdź ręcznie.", "Joburi blocate de moderarea AI. Editează textul sau aprobă manual.", "وظائف أوقفها إشراف AI. عدّل النص أو وافق يدويًا.");
+
+        Add("AdminTodo.KvkFailed.Title", "KvK-controle mislukt", "Chamber of Commerce check failed", "Kontrola KVK nieudana", "Verificare KvK eșuată", "فشل فحص غرفة التجارة");
+        Add("AdminTodo.KvkFailed.Action", "Controleren", "Review", "Sprawdź", "Verifică", "مراجعة");
+        Add("AdminTodo.Takeover.Title", "Overnameverzoek vestiging", "Branch takeover request", "Wniosek o przejęcie oddziału", "Cerere preluare filială", "طلب استحواذ على فرع");
+        Add("AdminTodo.Takeover.Action", "Beoordelen", "Review", "Oceń", "Evaluează", "تقييم");
+        Add("AdminTodo.Moderation.Title", "{0} vacatures gemarkeerd door moderatie", "{0} vacancies flagged by moderation", "{0} ofert oznaczonych przez moderację", "{0} joburi marcate de moderare", "{0} وظائف مميزة بالإشراف");
+        Add("AdminTodo.Moderation.Action", "Bekijken", "View", "Zobacz", "Vezi", "عرض");
+        Add("AdminTodo.SalesApp.Title", "Aanmelding salesmanager", "Sales manager application", "Wniosek salesmanagera", "Aplicare sales manager", "طلب مدير مبيعات");
+        Add("AdminTodo.SalesApp.Action", "Beoordelen", "Review", "Oceń", "Evaluează", "تقييم");
+        Add("AdminTodo.OpenPayouts.Title", "Facturen salesmanagers open", "Open sales manager invoices", "Otwarte faktury salesmanagerów", "Facturi sales manager deschise", "فواتير مديري المبيعات المفتوحة");
+        Add("AdminTodo.OpenPayouts.Action", "Bekijken", "View", "Zobacz", "Vezi", "عرض");
+        Add("AdminTodo.Feedback.Title", "{0} nieuwe feedbackmeldingen", "{0} new feedback items", "{0} nowych zgłoszeń feedbacku", "{0} feedback-uri noi", "{0} ملاحظات جديدة");
+        Add("AdminTodo.Feedback.Action", "Openen", "Open", "Otwórz", "Deschide", "فتح");
+        Add("AdminTodo.Col.Title", "Titel", "Title", "Tytuł", "Titlu", "العنوان");
+        Add("AdminTodo.Col.Area", "Onderdeel", "Area", "Obszar", "Zonă", "القسم");
+        Add("AdminTodo.Col.Since", "Sinds", "Since", "Od", "De la", "منذ");
+        Add("AdminTodo.Col.Severity", "Ernst", "Severity", "Ważność", "Severitate", "الخطورة");
+        Add("AdminTodo.Severity.All", "Alle ernst", "All severities", "Wszystkie", "Toate", "الكل");
+        Add("AdminTodo.Severity.Danger", "Kritiek", "Critical", "Krytyczne", "Critic", "حرج");
+        Add("AdminTodo.Severity.Warn", "Let op", "Warning", "Ostrzeżenie", "Avertisment", "تحذير");
+        Add("AdminTodo.Severity.Info", "Info", "Info", "Info", "Info", "معلومة");
     }
 }
