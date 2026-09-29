@@ -769,6 +769,13 @@ public class AccountUnsubscribeTests
             UserId = userId,
             StoryText = "Mijn verhaal"
         });
+        db.CandidatePrivatePreferences.Add(new CandidatePrivatePreferences
+        {
+            UserId = userId,
+            DislikesJson = """["night-shifts"]""",
+            CustomDislikesJson = """["drukke winkels"]""",
+            UpdatedAtUtc = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
 
         var export = await CreatePrivacy(db).ExportAsync(CreatePrincipal(email));
@@ -782,6 +789,8 @@ public class AccountUnsubscribeTests
         Assert.Contains("Pushabonnementen", json);
         Assert.Contains("ExterneAanmeldingen", json);
         Assert.Contains("WieBenIkMomentopnamen", json);
+        Assert.Contains("PrivatePreferences", json);
+        Assert.Contains("night-shifts", json);
         Assert.Contains("google", json);
         Assert.Contains("Mijn verhaal", json);
         Assert.DoesNotContain("refresh-secret", json);
