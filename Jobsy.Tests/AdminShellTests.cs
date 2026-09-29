@@ -72,6 +72,7 @@ public class AdminLegacyRoutesTests
     [InlineData("/admin/notifications", "/admin/content/emails")]
     [InlineData("/admin/cockpit", "/admin")]
     [InlineData("/admin/sales", "/admin/financien/prijzen?tab=sales")]
+    [InlineData("/admin/financien/uitbetalingen?tab=goodwill", "/admin/financien/goodwill")]
     public void TryMap_preserves_query_and_tab(string from, string expected)
     {
         Assert.True(AdminLegacyRoutes.TryMap(from, out var dest));

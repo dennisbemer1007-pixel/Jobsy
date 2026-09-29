@@ -1,0 +1,58 @@
+@using Jobsy.Web.Components.Admin.Ui
+@inject CultureState Culture
+
+<section class="detail-card admin-pricing-drives" aria-labelledby="pricing-drives-title">
+    <h2 id="pricing-drives-title">@Culture["AdminFinance.WhatDrivesTitle"]</h2>
+    <p class="muted">@Culture["AdminFinance.WhatDrivesLead"]</p>
+
+    <div class="table-scroll">
+        <table class="data-table admin-pricing-drives__table">
+            <thead>
+                <tr>
+                    <th scope="col">@Culture["AdminFinance.WhatDrives.Entity"]</th>
+                    <th scope="col">@Culture["AdminFinance.WhatDrives.Drives"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>@Culture["AdminFinance.WhatDrives.TokenPacks"]</td>
+                    <td class="muted">@Culture["AdminFinance.WhatDrives.TokenPacksDesc"]</td>
+                </tr>
+                <tr>
+                    <td>@Culture["AdminFinance.WhatDrives.TokenSpendCost"]</td>
+                    <td class="muted">@Culture["AdminFinance.WhatDrives.TokenSpendCostDesc"]</td>
+                </tr>
+                <tr>
+                    <td>@Culture["AdminFinance.WhatDrives.VacancyType"]</td>
+                    <td class="muted">@Culture["AdminFinance.WhatDrives.VacancyTypeDesc"]</td>
+                </tr>
+                <tr>
+                    <td>@Culture["AdminFinance.WhatDrives.VacancyCategory"]</td>
+                    <td class="muted">@Culture["AdminFinance.WhatDrives.VacancyCategoryDesc"]</td>
+                </tr>
+                <tr>
+                    <td>@Culture["AdminFinance.WhatDrives.SalesPackage"]</td>
+                    <td class="muted">@Culture["AdminFinance.WhatDrives.SalesPackageDesc"]</td>
+                </tr>
+                <tr>
+                    <td>@Culture["AdminFinance.WhatDrives.PushBom"]</td>
+                    <td class="muted">@Culture["AdminFinance.WhatDrives.PushBomDesc"]</td>
+                </tr>
+                <tr>
+                    <td>@Culture["AdminFinance.WhatDrives.SalesCommission"]</td>
+                    <td class="muted">@Culture["AdminFinance.WhatDrives.SalesCommissionDesc"]</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <AdminImpactNote Tone="warn">
+        @Culture["AdminFinance.Overlap.Publish"]
+    </AdminImpactNote>
+    <AdminImpactNote Tone="warn">
+        @Culture["AdminFinance.Overlap.Highlight"]
+    </AdminImpactNote>
+    <AdminImpactNote Tone="warn">
+        @Culture["AdminFinance.Overlap.PushBom"]
+    </AdminImpactNote>
+</section>

@@ -1,6 +1,6 @@
 namespace Jobsy.Core.Admin;
 
-/// <summary>Period finance roll-up for the admin dashboard KPI (and file 06).</summary>
+/// <summary>Period finance roll-up for the admin dashboard KPI and Omzet &amp; transacties.</summary>
 public sealed record AdminFinanceSummary(
     string Period,
     int RevenueInclVatCents,
@@ -8,9 +8,21 @@ public sealed record AdminFinanceSummary(
     int PreviousRevenueInclVatCents,
     int TokensSold,
     int OpenAtMollieCents,
+    int OpenAtMollieCount,
+    int? OldestOpenMollieDays,
     int VatBufferPendingCents,
     int OpenPayoutsCents,
-    int OpenPayoutsCount);
+    int OpenPayoutsCount,
+    IReadOnlyList<AdminFinanceOpenPayoutPreview> OpenPayoutPreviews);
+
+/// <summary>Open self-billing invoice row for finance aside / uitbetalingen (amounts unchanged).</summary>
+public sealed record AdminFinanceOpenPayoutPreview(
+    Guid InvoiceId,
+    string InvoiceNumber,
+    string MaskedPayeeName,
+    string RoleLabel,
+    decimal TotalInclVat,
+    string MaskedIban);
 
 public interface IAdminFinanceSummaryService
 {

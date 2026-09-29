@@ -1,0 +1,247 @@
+@using Jobsy.Web.Admin
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Ui
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<p class="muted admin-finance-crosslink">
+    @Culture["AdminFinance.SalesCrossLink"]
+    <a href="/admin/gebruikers/sales">@Culture["AdminNav.SalesAmbassadors"]</a>.
+</p>
+
+@if (!string.IsNullOrEmpty(_bulkMessage))
+{
+    <p class="state-message">@_bulkMessage</p>
+}
+@if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error">@_error</p>
+}
+
+@if (_selected.Count > 0)
+{
+    <AdminBulkBar SelectedCount="_selected.Count" OnClear="ClearSelection">
+        <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="OpenBulkConfirm">
+            @string.Format(Culture["AdminFinance.BulkMarkPaid"], _selected.Count)
+        </button>
+    </AdminBulkBar>
+}
+
+@if (_bulkConfirmOpen)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["AdminFinance.BulkMarkPaidTitle"]"
+                         TitleId="bulk-mark-paid-title"
+                         Lead="@string.Format(Culture["AdminFinance.BulkMarkPaidLead"], _selected.Count)"
+                         OnClose="CloseBulkConfirm">
+        <div class="inline-actions">
+            <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="BulkMarkPaidAsync">
+                @Culture["AdminFinance.MarkPaid"]
+            </button>
+            <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseBulkConfirm">@Culture["Common.Cancel"]</button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+<AdminDataTable Loading="_loading"
+                Empty="_rows.Count == 0"
+                EmptyText="@Culture["AdminFinance.NoOpenPayouts"]"
+                ShowCheckbox="true"
+                AllSelected="@(_rows.Count > 0 && _selected.Count == _rows.Count)"
+                AllSelectedChanged="ToggleAll"
+                ShowRowActions="true">
+    <Header>
+        <th scope="col">@Culture["AdminFinance.Col.Invoice"]</th>
+        <th scope="col">@Culture["AdminFinance.Col.Payee"]</th>
+        <th scope="col">@Culture["AdminFinance.Col.Role"]</th>
+        <th scope="col">IBAN</th>
+        <th scope="col">@Culture["AdminFinance.Col.Amount"]</th>
+        <th scope="col">@Culture["AdminFinance.Col.Status"]</th>
+    </Header>
+    <Rows>
+        @foreach (var row in _rows)
+        {
+            var id = row.InvoiceId;
+            <tr>
+                <td class="admin-data-table__check">
+                    <input type="checkbox"
+                           checked="@_selected.Contains(id)"
+                           @onchange="e => ToggleRow(id, e)"
+                           aria-label="@row.InvoiceNumber" />
+                </td>
+                <td><code class="admin-mono">@row.InvoiceNumber</code></td>
+                <td>@row.MaskedPayeeName</td>
+                <td class="muted">@row.RoleLabel</td>
+                <td class="muted">@row.MaskedIban</td>
+                <td>@AdminFinanceDisplay.Euro(row.TotalInclVat)</td>
+                <td><span class="status-pill status-pill--pending">Issued</span></td>
+                <td>
+                    <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy"
+                            @onclick="() => MarkPaidAsync(id)">
+                        @Culture["AdminFinance.MarkPaid"]
+                    </button>
+                </td>
+            </tr>
+        }
+    </Rows>
+</AdminDataTable>
+
+@if (_checkouts.Count > 0)
+{
+    <section class="panel-section" style="margin-top:1.25rem">
+        <h3>@Culture["AdminFinance.PayoutCheckouts"]</h3>
+        <p class="muted">@Culture["AdminFinance.PayoutCheckoutsLead"]</p>
+        <div class="table-list">
+            @foreach (var c in _checkouts)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@c.MaskedPayeeName</strong>
+                        <span class="muted">@c.RoleLabel · @c.MaskedIban · @c.Status</span>
+                    </div>
+                    <span>@AdminFinanceDisplay.Euro(c.AmountEuro)</span>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private bool _bulkConfirmOpen;
+    private string? _error;
+    private string? _bulkMessage;
+    private List<AdminFinanceOpenPayoutPreviewItem> _rows = [];
+    private List<PayoutCheckoutVm> _checkouts = [];
+    private readonly HashSet<Guid> _selected = [];
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var summary = await Api.GetAdminFinanceSummaryAsync("month");
+            _rows = summary?.OpenPayoutPreviews?.ToList() ?? [];
+            _checkouts = await LoadPendingCheckoutsAsync();
+            _selected.Clear();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _rows = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<List<PayoutCheckoutVm>> LoadPendingCheckoutsAsync()
+    {
+        // Pending Mollie payout checkouts are self-service; no admin list endpoint.
+        // Open Issued self-billing invoices (above) are the admin mark-paid surface.
+        await Task.CompletedTask;
+        return [];
+    }
+
+    private void ToggleAll(bool value)
+    {
+        _selected.Clear();
+        if (value)
+        {
+            foreach (var r in _rows)
+            {
+                _selected.Add(r.InvoiceId);
+            }
+        }
+    }
+
+    private void ToggleRow(Guid id, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b
+                 || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on) _selected.Add(id);
+        else _selected.Remove(id);
+    }
+
+    private void ClearSelection() => _selected.Clear();
+
+    private void OpenBulkConfirm() => _bulkConfirmOpen = true;
+    private void CloseBulkConfirm() { if (!_busy) _bulkConfirmOpen = false; }
+
+    private async Task MarkPaidAsync(Guid invoiceId)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.MarkSelfBillingInvoicePaidAsync(invoiceId);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task BulkMarkPaidAsync()
+    {
+        if (_selected.Count == 0)
+        {
+            return;
+        }
+
+        _busy = true;
+        _bulkMessage = null;
+        var ok = 0;
+        var fail = 0;
+        var errors = new List<string>();
+        foreach (var id in _selected.ToList())
+        {
+            try
+            {
+                await Api.MarkSelfBillingInvoicePaidAsync(id);
+                ok++;
+            }
+            catch (Exception ex)
+            {
+                fail++;
+                errors.Add(ex.Message);
+            }
+        }
+
+        _bulkMessage = fail == 0
+            ? string.Format(Culture["AdminFinance.BulkMarkPaidOk"], ok)
+            : string.Format(Culture["AdminFinance.BulkMarkPaidPartial"], ok, fail);
+        if (errors.Count > 0)
+        {
+            _error = string.Join(" · ", errors.Take(3));
+        }
+
+        _bulkConfirmOpen = false;
+        _busy = false;
+        await ReloadAsync();
+    }
+
+    private sealed class PayoutCheckoutVm
+    {
+        public string MaskedPayeeName { get; set; } = "";
+        public string RoleLabel { get; set; } = "";
+        public string MaskedIban { get; set; } = "—";
+        public string Status { get; set; } = "";
+        public decimal AmountEuro { get; set; }
+    }
+}

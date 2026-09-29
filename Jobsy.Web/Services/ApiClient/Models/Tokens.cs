@@ -32,6 +32,8 @@ public sealed class TokenPurchaseFinanceItem
     public DateTime IssuedAt { get; set; }
     public string InvoicePdfUrl { get; set; } = string.Empty;
     public string? VatDeclarationStatusLabel { get; set; }
+    public string MollieStatus { get; set; } = "Paid";
+    public string? PaymentMethod { get; set; }
 }
 
 public sealed class TokenGoodwillFinanceItem

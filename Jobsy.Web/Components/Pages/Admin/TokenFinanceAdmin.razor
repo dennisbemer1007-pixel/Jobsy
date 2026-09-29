@@ -1,31 +1,27 @@
 @page "/admin/financien/uitbetalingen"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Privacy
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
+@using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject NavigationManager Nav
 @inject IJSRuntime Js
 @implements IDisposable
 
-<PageTitle>Token-administratie · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.Payouts"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["AdminNav.Payouts"]" Lead="Omzet, inkoop (salesmanagers), BTW-aangifte en historie — filterbaar per kwartaal.">
-    <div class="admin-sublinks admin-sublinks--wrap">
-        <a class="admin-sublink" href="/admin/financien">← Financieel</a>
-        <a class="admin-sublink" href="/admin/financien/goodwill">Goodwill toekennen</a>
-        <a class="admin-sublink" href="/admin/instellingen/algemeen">Knab BTW-IBAN</a>
-        <button type="button" class="admin-sublink @(_tab == "purchases" ? "admin-sublink--active" : null)" @onclick='() => SetTab("purchases")'>Aankopen</button>
-        <button type="button" class="admin-sublink @(_tab == "smcosts" ? "admin-sublink--active" : null)" @onclick='() => SetTab("smcosts")'>Inkoop / Salesmanagers</button>
-        <button type="button" class="admin-sublink @(_tab == "goodwill" ? "admin-sublink--active" : null)" @onclick='() => SetTab("goodwill")'>Goodwill</button>
-        <button type="button" class="admin-sublink @(_tab == "vat" ? "admin-sublink--active" : null)" @onclick='() => SetTab("vat")'>BTW-buffer</button>
-        <button type="button" class="admin-sublink @(_tab == "declarations" ? "admin-sublink--active" : null)" @onclick='() => SetTab("declarations")'>BTW Aangiftes &amp; Facturen</button>
-    </div>
+<AdminPageShell Title="@Culture["AdminNav.Payouts"]" Lead="@Culture["AdminFinance.PayoutsLead"]" Wide="true">
+    <AdminTabs BasePath="/admin/financien/uitbetalingen" ActiveKey="@_tab" Tabs="_tabs" />
 
-    <div class="filter-bar" style="margin-top:1rem;align-items:flex-end">
-        @if (_tab != "declarations")
-        {
+    @if (_tab != "declarations" && _tab != "uitbetalingen")
+    {
+        <div class="filter-bar" style="margin-top:1rem;align-items:flex-end">
             <label>
-                Jaar
+                @Culture["AdminFinance.Year"]
                 <select @bind="_year" @bind:after="ReloadAsync">
                     @foreach (var y in Years)
                     {
@@ -34,32 +30,38 @@
                 </select>
             </label>
             <label>
-                Kwartaal
+                @Culture["AdminFinance.Quarter"]
                 <select @bind="_quarter" @bind:after="ReloadAsync">
-                    <option value="0">Heel jaar</option>
+                    <option value="0">@Culture["AdminFinance.WholeYear"]</option>
                     <option value="1">Q1</option>
                     <option value="2">Q2</option>
                     <option value="3">Q3</option>
                     <option value="4">Q4</option>
                 </select>
             </label>
-        }
-        <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">Vernieuwen</button>
-        @if (_tab == "purchases")
-        {
-            <button class="btn-compact" type="button" disabled="@_exportBusy" @onclick="ExportPurchasesAsync">Export CSV</button>
-        }
-        else if (_tab == "goodwill")
-        {
-            <button class="btn-compact" type="button" disabled="@_exportBusy" @onclick="ExportGoodwillAsync">Export CSV</button>
-        }
-        <button class="btn-compact btn-compact--primary" type="button" @onclick="OpenWizardAsync">
-            BTW aangifte versturen / genereren
-        </button>
-        <span class="muted">@_rowCount regels</span>
-    </div>
+            <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["AdminFinance.Refresh"]</button>
+            <button class="btn-compact btn-compact--primary" type="button" @onclick="OpenWizardAsync">
+                @Culture["AdminFinance.VatWizard"]
+            </button>
+            <span class="muted">@_rowCount @Culture["AdminFinance.Rows"]</span>
+        </div>
+    }
+    else if (_tab == "declarations")
+    {
+        <div class="filter-bar" style="margin-top:1rem;align-items:flex-end">
+            <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["AdminFinance.Refresh"]</button>
+            <button class="btn-compact btn-compact--primary" type="button" @onclick="OpenWizardAsync">
+                @Culture["AdminFinance.VatWizard"]
+            </button>
+            <span class="muted">@_rowCount @Culture["AdminFinance.Rows"]</span>
+        </div>
+    }
 
-    @if (_loading)
+    @if (_tab == "uitbetalingen")
+    {
+        <FinancePayoutsSection />
+    }
+    else if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
@@ -67,70 +69,15 @@
     {
         <p class="state-message error">@_error</p>
     }
-    else if (_tab == "purchases")
-    {
-        @if (_purchases.Count == 0)
-        {
-            <p class="state-message">Geen token-aankopen in deze periode.</p>
-        }
-        else
-        {
-            <div class="table-scroll">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Datum</th>
-                            <th>Factuur</th>
-                            <th>Bedrijf</th>
-                            <th>Tokens</th>
-                            <th>Ex-BTW</th>
-                            <th>BTW 21%</th>
-                            <th>Totaal</th>
-                            <th>Aangifte-status</th>
-                            <th>Mollie</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in _purchases)
-                        {
-                            <tr>
-                                <td>@row.IssuedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
-                                <td><strong>@row.InvoiceNumber</strong></td>
-                                <td>@row.CompanyName</td>
-                                <td>@row.PackSize</td>
-                                <td>€ @row.AmountExVatEuro.ToString("0.00")</td>
-                                <td>€ @row.VatAmountEuro.ToString("0.00")</td>
-                                <td>€ @row.TotalAmountEuro.ToString("0.00")</td>
-                                <td class="muted">@(row.VatDeclarationStatusLabel ?? "Openstaand")</td>
-                                <td class="muted" style="max-width:9rem;overflow:hidden;text-overflow:ellipsis">@row.MolliePaymentId</td>
-                                <td>
-                                    <button class="btn-compact" type="button" disabled="@_exportBusy"
-                                            @onclick="() => DownloadPdfAsync(row)">PDF</button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-            <p class="muted" style="margin-top:0.75rem">
-                Som ex-BTW € @_purchases.Sum(p => p.AmountExVatEuro).ToString("0.00") ·
-                BTW € @_purchases.Sum(p => p.VatAmountEuro).ToString("0.00") ·
-                Totaal € @_purchases.Sum(p => p.TotalAmountEuro).ToString("0.00")
-            </p>
-        }
-    }
     else if (_tab == "smcosts")
     {
-        <div class="panel-section" style="margin-bottom:1rem;border-left:4px solid #0F766E;padding-left:1rem">
-            <strong>Inkoop / kostenposten — salesmanager-uitbetalingen</strong>
-            <p class="muted" style="margin:0.25rem 0 0">
-                Alleen betaalde self-billing facturen (PaidAt), gelijk aan Rubriek 5. Ex-BTW + BTW (standaard 21% inkoop-btw).
-            </p>
+        <div class="panel-section" style="margin-bottom:1rem">
+            <strong>@Culture["AdminFinance.SmCostsTitle"]</strong>
+            <p class="muted" style="margin:0.25rem 0 0">@Culture["AdminFinance.SmCostsLead"]</p>
         </div>
         @if (_smCosts.Count == 0)
         {
-            <p class="state-message">Geen salesmanager-uitbetalingen in deze periode.</p>
+            <p class="state-message">@Culture["AdminFinance.NoSmCosts"]</p>
         }
         else
         {
@@ -138,14 +85,14 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Betaald</th>
-                            <th>Factuur</th>
-                            <th>Salesmanager</th>
+                            <th>@Culture["AdminFinance.Col.Paid"]</th>
+                            <th>@Culture["AdminFinance.Col.Invoice"]</th>
+                            <th>@Culture["AdminFinance.Col.Payee"]</th>
                             <th>Ex-BTW</th>
                             <th>BTW</th>
                             <th>Totaal</th>
                             <th>BTW-behandeling</th>
-                            <th>Status</th>
+                            <th>@Culture["AdminFinance.Col.Status"]</th>
                             <th>Aangifte-status</th>
                         </tr>
                     </thead>
@@ -154,8 +101,8 @@
                         {
                             <tr>
                                 <td>@(row.PaidAt?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—")</td>
-                                <td><strong>@row.InvoiceNumber</strong></td>
-                                <td>@row.SalesManagerCompanyName</td>
+                                <td><code class="admin-mono">@row.InvoiceNumber</code></td>
+                                <td>@PersonalDataMasker.MaskName(row.SalesManagerCompanyName)</td>
                                 <td>€ @row.SubtotalExVat.ToString("0.00")</td>
                                 <td>€ @row.VatAmount.ToString("0.00")</td>
                                 <td>€ @row.TotalInclVat.ToString("0.00")</td>
@@ -173,52 +120,11 @@
             </p>
         }
     }
-    else if (_tab == "goodwill")
-    {
-        <div class="panel-section" style="margin-bottom:1rem;border-left:4px solid #0F766E;padding-left:1rem">
-            <strong>Goodwill / Compensatie</strong>
-            <p class="muted" style="margin:0.25rem 0 0">Administratieve waarde € 0,00 — geen BTW-verplichting of omzet. Token-saldo van de ondernemer loopt wel op.</p>
-        </div>
-        @if (_goodwill.Count == 0)
-        {
-            <p class="state-message">Geen goodwill-tokens in deze periode.</p>
-        }
-        else
-        {
-            <div class="table-scroll">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Datum</th>
-                            <th>Ondernemer</th>
-                            <th>Tokens</th>
-                            <th>Waarde</th>
-                            <th>Reden</th>
-                            <th>Uitgegeven door</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in _goodwill)
-                        {
-                            <tr>
-                                <td>@row.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
-                                <td>@row.CompanyName</td>
-                                <td>@row.TokenAmount.ToString("0.##")</td>
-                                <td>€ 0,00</td>
-                                <td>@row.Reason</td>
-                                <td class="muted">@(row.IssuedByName ?? "—")</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    }
     else if (_tab == "vat")
     {
         @if (_vatTransfers.Count == 0)
         {
-            <p class="state-message">Geen BTW-buffer overboekingen in deze periode.</p>
+            <p class="state-message">@Culture["AdminFinance.NoVatTransfers"]</p>
         }
         else
         {
@@ -226,11 +132,11 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Datum</th>
-                            <th>Kenmerk (factuur)</th>
+                            <th>@Culture["AdminFinance.Col.Date"]</th>
+                            <th>@Culture["AdminFinance.Col.Invoice"]</th>
                             <th>IBAN</th>
                             <th>BTW-bedrag</th>
-                            <th>Status</th>
+                            <th>@Culture["AdminFinance.Col.Status"]</th>
                             <th>Notitie</th>
                         </tr>
                     </thead>
@@ -239,7 +145,7 @@
                         {
                             <tr>
                                 <td>@row.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
-                                <td><strong>@row.InvoiceNumber</strong></td>
+                                <td><code class="admin-mono">@row.InvoiceNumber</code></td>
                                 <td>@row.DestinationIbanMasked</td>
                                 <td>€ @row.AmountEuro.ToString("0.00")</td>
                                 <td>@row.Status</td>
@@ -255,7 +161,7 @@
     {
         @if (_declarations.Count == 0)
         {
-            <p class="state-message">Nog geen gegenereerde BTW-aangiftes. Gebruik de knop hierboven om een periode te bevestigen.</p>
+            <p class="state-message">@Culture["AdminFinance.NoDeclarations"]</p>
         }
         else
         {
@@ -310,9 +216,9 @@
 @if (_wizardOpen)
 {
     <LobsyFriendlyDialog IsOpen="true"
-                         Title="BTW aangifte genereren"
+                         Title="@Culture["AdminFinance.VatWizard"]"
                          TitleId="vat-wizard-title"
-                         Lead="Selecteer een openstaand kwartaal. Na bevestiging worden omzet- en inkoopregels verwerkt en een PDF opgeslagen."
+                         Lead="@Culture["AdminFinance.VatWizardLead"]"
                          Style="max-width:32rem"
                          OnClose="CloseWizard">
 
@@ -336,7 +242,7 @@
 
             @if (_wizardPreview is not null)
             {
-                <div class="panel-section" style="background:rgba(15,118,110,0.06);padding:0.75rem;border-radius:0.5rem">
+                <div class="panel-section" style="background:var(--accent-soft);padding:0.75rem;border-radius:var(--radius-sm)">
                     <p style="margin:0"><strong>Rubriek 1</strong> — omzet ex. BTW € @CentsToEuro(_wizardPreview.Rubriek1OmzetExVatCents), verschuldigde BTW € @CentsToEuro(_wizardPreview.Rubriek1VatCents) (@_wizardPreview.TokenInvoiceCount facturen)</p>
                     <p style="margin:0.35rem 0 0"><strong>Rubriek 5</strong> — voorbelasting € @CentsToEuro(_wizardPreview.Rubriek5VoorbelastingCents) (@_wizardPreview.SalesManagerInvoiceCount uitbetalingen)</p>
                     <p style="margin:0.35rem 0 0">Goodwill in periode: @_wizardPreview.GoodwillCount</p>
@@ -368,7 +274,7 @@
                         @onclick="ConfirmWizardAsync">
                     @(_wizardBusy ? "Genereren…" : "Genereer")
                 </button>
-                <button type="button" class="btn-compact" disabled="@_wizardBusy" @onclick="CloseWizard">Annuleren</button>
+                <button type="button" class="btn-compact" disabled="@_wizardBusy" @onclick="CloseWizard">@Culture["Common.Cancel"]</button>
             </div>
         </div>
     </LobsyFriendlyDialog>
@@ -378,14 +284,13 @@
     private static readonly int[] Years =
         Enumerable.Range(DateTime.UtcNow.Year - 2, 4).Reverse().ToArray();
 
-    private string _tab = "purchases";
+    private string _tab = "uitbetalingen";
+    private List<AdminTabs.Tab> _tabs = [];
     private int _year = DateTime.UtcNow.Year;
     private int _quarter;
     private bool _loading = true;
     private bool _exportBusy;
     private string? _error;
-    private List<TokenPurchaseFinanceItem> _purchases = [];
-    private List<TokenGoodwillFinanceItem> _goodwill = [];
     private List<VatBufferTransferItem> _vatTransfers = [];
     private List<SalesManagerCostFinanceItem> _smCosts = [];
     private List<VatDeclarationListItem> _declarations = [];
@@ -399,48 +304,91 @@
 
     private int _rowCount => _tab switch
     {
-        "goodwill" => _goodwill.Count,
         "vat" => _vatTransfers.Count,
         "smcosts" => _smCosts.Count,
         "declarations" => _declarations.Count,
-        _ => _purchases.Count
+        _ => 0
     };
 
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        _tabs =
+        [
+            new("uitbetalingen", Culture["AdminFinance.Tab.Payouts"]),
+            new("smcosts", Culture["AdminFinance.Tab.SmCosts"]),
+            new("vat", Culture["AdminFinance.Tab.VatBuffer"]),
+            new("declarations", Culture["AdminFinance.Tab.VatFiling"]),
+        ];
+        RedirectGoodwillIfNeeded();
+        _tab = ReadTab();
+    }
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
-        => await ReloadAsync();
-
-    private async Task SetTab(string tab)
     {
-        _tab = tab;
-        await ReloadAsync();
+        if (_tab != "uitbetalingen")
+        {
+            await ReloadAsync();
+        }
+        else
+        {
+            _loading = false;
+        }
+    }
+
+    private void RedirectGoodwillIfNeeded()
+    {
+        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (qs.TryGetValue("tab", out var tab)
+            && string.Equals(tab.ToString(), "goodwill", StringComparison.OrdinalIgnoreCase))
+        {
+            Nav.NavigateTo("/admin/financien/goodwill", replace: true);
+        }
+    }
+
+    private string ReadTab()
+    {
+        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (qs.TryGetValue("tab", out var tab))
+        {
+            var key = tab.ToString();
+            if (string.Equals(key, "goodwill", StringComparison.OrdinalIgnoreCase))
+            {
+                return "uitbetalingen";
+            }
+            // Legacy purchases tab → omzet
+            if (string.Equals(key, "purchases", StringComparison.OrdinalIgnoreCase))
+            {
+                Nav.NavigateTo("/admin/financien?tab=transacties", replace: true);
+                return "uitbetalingen";
+            }
+            if (_tabs.Any(t => string.Equals(t.Key, key, StringComparison.OrdinalIgnoreCase)))
+            {
+                return key.ToLowerInvariant();
+            }
+        }
+
+        return "uitbetalingen";
     }
 
     private async Task ReloadAsync()
     {
+        if (_tab == "uitbetalingen")
+        {
+            _loading = false;
+            return;
+        }
+
         _loading = true;
         _error = null;
         try
         {
             var year = _year;
             int? quarter = _quarter == 0 ? null : _quarter;
-            if (_tab == "purchases")
-            {
-                _purchases = (await Api.GetTokenPurchasesAsync(year, quarter)).ToList();
-            }
-            else if (_tab == "goodwill")
-            {
-                _goodwill = (await Api.GetTokenGoodwillAsync(year, quarter)).ToList();
-            }
-            else if (_tab == "smcosts")
+            if (_tab == "smcosts")
             {
                 _smCosts = (await Api.GetSalesManagerCostsAsync(year, quarter)).ToList();
             }
@@ -491,22 +439,14 @@
 
     private void CloseWizard()
     {
-        if (_wizardBusy)
-        {
-            return;
-        }
-
+        if (_wizardBusy) return;
         _wizardOpen = false;
         _wizardError = null;
     }
 
     private async Task OnWizardPeriodChangedAsync()
     {
-        if (string.IsNullOrWhiteSpace(_wizardPeriodKey))
-        {
-            return;
-        }
-
+        if (string.IsNullOrWhiteSpace(_wizardPeriodKey)) return;
         var parts = _wizardPeriodKey.Split('-');
         if (parts.Length != 2 || !int.TryParse(parts[0], out var y) || !int.TryParse(parts[1], out var q))
         {
@@ -537,17 +477,14 @@
 
     private async Task ConfirmWizardAsync()
     {
-        if (_wizardPreview is null)
-        {
-            return;
-        }
-
+        if (_wizardPreview is null) return;
         _wizardBusy = true;
         _wizardError = null;
         try
         {
             var created = await Api.GenerateVatDeclarationAsync(_wizardPreview.Year, _wizardPreview.Quarter);
             _wizardOpen = false;
+            Nav.NavigateTo("/admin/financien/uitbetalingen?tab=declarations", replace: true);
             _tab = "declarations";
             await ReloadAsync();
             if (created is not null && created.HasPdf)
@@ -562,57 +499,6 @@
         finally
         {
             _wizardBusy = false;
-        }
-    }
-
-    private async Task ExportPurchasesAsync()
-    {
-        _exportBusy = true;
-        try
-        {
-            await Api.DownloadTokenPurchasesCsvAsync(Js, _year, _quarter == 0 ? null : _quarter);
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _exportBusy = false;
-        }
-    }
-
-    private async Task ExportGoodwillAsync()
-    {
-        _exportBusy = true;
-        try
-        {
-            await Api.DownloadTokenGoodwillCsvAsync(Js, _year, _quarter == 0 ? null : _quarter);
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _exportBusy = false;
-        }
-    }
-
-    private async Task DownloadPdfAsync(TokenPurchaseFinanceItem row)
-    {
-        _exportBusy = true;
-        try
-        {
-            await Api.DownloadTokenInvoicePdfAsync(Js, row.InvoiceId, row.InvoiceNumber);
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _exportBusy = false;
         }
     }
 
@@ -633,8 +519,7 @@
         }
     }
 
-    private static string CentsToEuro(int cents)
-        => (cents / 100m).ToString("0.00");
+    private static string CentsToEuro(int cents) => (cents / 100m).ToString("0.00");
 
     private static string FormatVatTreatment(string treatment) => treatment switch
     {

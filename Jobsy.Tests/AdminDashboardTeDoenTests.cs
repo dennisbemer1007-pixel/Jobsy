@@ -450,6 +450,8 @@ public class AdminFinanceSummaryServiceTests
         Assert.Equal(10000, summary.RevenueExVatCents);
         Assert.Equal(10, summary.TokensSold);
         Assert.Equal(5000, summary.OpenAtMollieCents);
+        Assert.Equal(1, summary.OpenAtMollieCount);
+        Assert.True(summary.OldestOpenMollieDays is >= 0);
     }
 }
 

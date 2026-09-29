@@ -1,235 +1,546 @@
 @page "/admin/financien"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using System.Globalization
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Ui
 @using Jobsy.Web.Dashboard
+@using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject CultureState Culture
+@inject IJSRuntime Js
 @implements IDisposable
 
 <PageTitle>@Culture["AdminNav.Revenue"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["AdminNav.Revenue"]" Lead="@Culture["Admin.FinanceLead"]">
-    <div class="admin-sublinks admin-sublinks--wrap">
-        <button type="button" class="admin-sublink @(_tab == "kpi" ? "admin-sublink--active" : null)" @onclick='() => SetTab("kpi")'>KPI’s</button>
-        <button type="button" class="admin-sublink @(_tab == "tokenlog" ? "admin-sublink--active" : null)" @onclick='() => SetTab("tokenlog")'>Tokenlog</button>
-        <a class="admin-sublink" href="/admin/financien/uitbetalingen">Token-administratie</a>
-        <a class="admin-sublink" href="/admin/financien/goodwill">Goodwill / Compensatie</a>
-        <a class="admin-sublink" href="/admin/financien/prijzen">Sales beheer</a>
-        <a class="admin-sublink" href="/admin/gebruikers/sales">Salesmanagers</a>
-        <a class="admin-sublink" href="/admin/gebruikers/sales?tab=ambassadeurs">Ambassadeurs</a>
-    </div>
-
-    @if (_tab == "kpi")
-    {
-        <div class="period-tabs period-tabs--compact" role="tablist" aria-label="Periode" style="margin:1rem 0">
-            @foreach (var p in Periods)
+<AdminPageShell Title="@Culture["AdminNav.Revenue"]" Lead="@Culture["AdminFinance.RevenueLead"]" Wide="true">
+    <Actions>
+        <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["AdminFinance.Period"]">
+            @foreach (var p in _periodOptions)
             {
                 <button type="button"
-                        class="period-tab @(_period == p.Key ? "period-tab--active" : null)"
+                        class="period-tab @(_periodKey == p.Key ? "period-tab--active" : null)"
                         role="tab"
-                        aria-selected="@(_period == p.Key)"
+                        aria-selected="@(_periodKey == p.Key)"
                         @onclick="() => SetPeriodAsync(p.Key)">
                     @p.Label
                 </button>
             }
         </div>
-
-        @if (_loading)
+        <button type="button" class="btn-compact" disabled="@_exportBusy" @onclick="ExportPurchasesAsync">
+            @Culture["AdminFinance.ExportAccounting"]
+        </button>
+    </Actions>
+    <ChildContent>
+    <div class="admin-dash__kpis admin-finance-kpis" role="list">
+        @foreach (var kpi in _kpis)
         {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (!string.IsNullOrEmpty(_error))
-        {
-            <p class="state-message error">@_error</p>
-        }
-        else
-        {
-            <div class="bento-metrics">
-                @foreach (var m in _metrics.Where(IsFinanceMetric))
-                {
-                    <MetricTile Label="@m.Label"
-                                FormattedValue="@FormatValue(m)"
-                                Sparkline="@m.Sparkline"
-                                Selected="@(_selectedKey == m.Key)"
-                                Emphasis="@(m.Key is "tokens_balance" or "tokens_purchased" or "tokens_spent")"
-                                Warning="@(m.Key == "tokens_balance" && MetricDashboardCatalog.IsWarning(m.Key, m.Value))"
-                                OnClick="() => SelectMetricAsync(m.Key)" />
-                }
+            <div role="listitem">
+                <AdminKpiCard Label="@kpi.Label" Value="@kpi.Value" Delta="@kpi.Delta" DeltaTone="@kpi.Tone" />
             </div>
+        }
+    </div>
 
-            @if (_selectedKey is not null)
+    <div class="admin-finance-layout">
+        <div class="admin-finance-layout__main">
+            <AdminTabs BasePath="/admin/financien" ActiveKey="@_tab" Tabs="_tabs" />
+
+            @if (_tab == "tokenlog")
             {
-                <section class="panel-section">
-                    <h2>@_metrics.FirstOrDefault(x => x.Key == _selectedKey)?.Label</h2>
-                    @if (_drillLoading)
+                <div class="filter-bar">
+                    <label>
+                        @Culture["AdminFinance.OrgFilter"]
+                        <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="@Culture["Admin.CompanyPlaceholder"]"
+                               @onkeydown="OnFilterKeyDown" />
+                    </label>
+                    <button class="btn-compact" type="button" disabled="@_logLoading" @onclick="LoadLogsAsync">@Culture["AdminFinance.Refresh"]</button>
+                    <span class="muted">@_filteredLogs.Count @Culture["AdminFinance.Rows"]</span>
+                </div>
+
+                @if (_logLoading)
+                {
+                    <p class="state-message">@Culture["Common.Loading"]</p>
+                }
+                else if (!string.IsNullOrEmpty(_logError))
+                {
+                    <p class="state-message error">@_logError</p>
+                }
+                else if (_filteredLogs.Count == 0)
+                {
+                    <p class="state-message">@Culture["AdminFinance.NoTokenlog"]</p>
+                }
+                else
+                {
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>@Culture["AdminFinance.Col.Date"]</th>
+                                    <th>@Culture["AdminFinance.Col.Org"]</th>
+                                    <th>@Culture["AdminFinance.Col.Kind"]</th>
+                                    <th>Reason</th>
+                                    <th>Amount</th>
+                                    <th>Old</th>
+                                    <th>New</th>
+                                    <th>@Culture["AdminFinance.Col.Reason"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in _filteredLogs)
+                                {
+                                    <tr>
+                                        <td>@row.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</td>
+                                        <td>@row.CompanyName</td>
+                                        <td>@row.Kind</td>
+                                        <td>@row.Reason</td>
+                                        <td>@row.Amount.ToString("0.##")</td>
+                                        <td>@row.OldBalance.ToString("0.##")</td>
+                                        <td>@row.NewBalance.ToString("0.##")</td>
+                                        <td class="muted">@row.Note</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+            else if (_tab == "kpis")
+            {
+                <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["AdminFinance.Period"]" style="margin:1rem 0">
+                    @foreach (var p in MetricPeriods)
                     {
-                        <p class="state-message">@Culture["Common.Loading"]</p>
+                        <button type="button"
+                                class="period-tab @(_metricsPeriod == p.Key ? "period-tab--active" : null)"
+                                role="tab"
+                                aria-selected="@(_metricsPeriod == p.Key)"
+                                @onclick="() => SetMetricsPeriodAsync(p.Key)">
+                            @p.Label
+                        </button>
                     }
-                    else if (_drilldown.Count == 0)
+                </div>
+
+                @if (_metricsLoading)
+                {
+                    <p class="state-message">@Culture["Common.Loading"]</p>
+                }
+                else if (!string.IsNullOrEmpty(_metricsError))
+                {
+                    <p class="state-message error">@_metricsError</p>
+                }
+                else
+                {
+                    <div class="bento-metrics">
+                        @foreach (var m in _metrics.Where(IsFinanceMetric))
+                        {
+                            <MetricTile Label="@m.Label"
+                                        FormattedValue="@FormatValue(m)"
+                                        Sparkline="@m.Sparkline"
+                                        Selected="@(_selectedKey == m.Key)"
+                                        Emphasis="@(m.Key is "tokens_balance" or "tokens_purchased" or "tokens_spent")"
+                                        Warning="@(m.Key == "tokens_balance" && MetricDashboardCatalog.IsWarning(m.Key, m.Value))"
+                                        OnClick="() => SelectMetricAsync(m.Key)" />
+                        }
+                    </div>
+
+                    @if (_selectedKey is not null)
                     {
-                        <p class="state-message">Geen items.</p>
-                    }
-                    else
-                    {
-                        <div class="table-list">
-                            @foreach (var item in _drilldown)
+                        <section class="panel-section">
+                            <h2>@_metrics.FirstOrDefault(x => x.Key == _selectedKey)?.Label</h2>
+                            @if (_drillLoading)
                             {
-                                <div class="table-row">
-                                    <div>
-                                        <strong>@item.Title</strong>
-                                        <span class="muted">@item.Subtitle</span>
-                                    </div>
-                                    <span class="muted">
-                                        @if (item.Amount is not null)
-                                        {
-                                            <text>@item.Amount.Value.ToString("0.##") · </text>
-                                        }
-                                        @item.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")
-                                    </span>
+                                <p class="state-message">@Culture["Common.Loading"]</p>
+                            }
+                            else if (_drilldown.Count == 0)
+                            {
+                                <p class="state-message">@Culture["AdminUi.Empty"]</p>
+                            }
+                            else
+                            {
+                                <div class="table-list">
+                                    @foreach (var item in _drilldown)
+                                    {
+                                        <div class="table-row">
+                                            <div>
+                                                <strong>@item.Title</strong>
+                                                <span class="muted">@item.Subtitle</span>
+                                            </div>
+                                            <span class="muted">
+                                                @if (item.Amount is not null)
+                                                {
+                                                    <text>@item.Amount.Value.ToString("0.##") · </text>
+                                                }
+                                                @item.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")
+                                            </span>
+                                        </div>
+                                    }
                                 </div>
                             }
-                        </div>
+                        </section>
                     }
-                </section>
+                }
             }
-        }
-    }
-    else
-    {
-        <div class="filter-bar">
-            <label>
-                Filter bedrijf
-                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="@Culture["Admin.CompanyPlaceholder"]"
-                       @onkeydown="OnFilterKeyDown" />
-            </label>
-            <button class="icon-btn" type="button" disabled="@_logLoading" @onclick="LoadLogsAsync" title="Zoeken" aria-label="Zoeken">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="11" cy="11" r="7"></circle>
-                    <path d="M20 20l-3.5-3.5"></path>
-                </svg>
-            </button>
-            <span class="muted">@_filteredLogs.Count regels</span>
+            else
+            {
+                @if (_txLoading)
+                {
+                    <p class="state-message">@Culture["Common.Loading"]</p>
+                }
+                else if (!string.IsNullOrEmpty(_txError))
+                {
+                    <p class="state-message error">@_txError</p>
+                }
+                else
+                {
+                    <AdminDataTable Loading="false"
+                                    Empty="_visiblePurchases.Count == 0"
+                                    EmptyText="@Culture["AdminFinance.NoTransactions"]"
+                                    ShowRowActions="true">
+                        <Header>
+                            <th scope="col">@Culture["AdminFinance.Col.Date"]</th>
+                            <th scope="col">@Culture["AdminFinance.Col.Invoice"]</th>
+                            <th scope="col">@Culture["AdminFinance.Col.Org"]</th>
+                            <th scope="col">@Culture["AdminFinance.Col.Product"]</th>
+                            <th scope="col">Mollie</th>
+                            <th scope="col">@Culture["AdminFinance.Col.InclVat"]</th>
+                        </Header>
+                        <Rows>
+                            @foreach (var row in _visiblePurchases)
+                            {
+                                <tr>
+                                    <td>@row.IssuedAt.ToLocalTime().ToString("dd-MM-yyyy")</td>
+                                    <td><code class="admin-mono">@row.InvoiceNumber</code></td>
+                                    <td>@row.CompanyName</td>
+                                    <td>
+                                        <strong>@row.PackSize tokens</strong>
+                                        <span class="muted">@AdminFinanceDisplay.PaymentMethodLabel(row.PaymentMethod)</span>
+                                    </td>
+                                    <td>
+                                        <span class="status-pill status-pill--@AdminFinanceDisplay.MollieStatusTone(row.MollieStatus)">
+                                            @AdminFinanceDisplay.MollieStatusLabel(row.MollieStatus)
+                                        </span>
+                                    </td>
+                                    <td>@AdminFinanceDisplay.Euro(row.TotalAmountEuro)</td>
+                                    <td>
+                                        <RowActionsMenu>
+                                            <button type="button" class="row-action" disabled="@_exportBusy"
+                                                    @onclick="() => DownloadPdfAsync(row)">
+                                                @Culture["AdminFinance.InvoicePdf"]
+                                            </button>
+                                        </RowActionsMenu>
+                                    </td>
+                                </tr>
+                            }
+                        </Rows>
+                    </AdminDataTable>
+                }
+            }
         </div>
 
-        @if (_logLoading)
-        {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (!string.IsNullOrEmpty(_logError))
-        {
-            <p class="state-message error">@_logError</p>
-        }
-        else if (_filteredLogs.Count == 0)
-        {
-            <p class="state-message">Geen tokenlog-regels.</p>
-        }
-        else
-        {
-            <div class="table-scroll">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Datum</th>
-                            <th>Bedrijf</th>
-                            <th>Soort</th>
-                            <th>Reason</th>
-                            <th>Amount</th>
-                            <th>Old</th>
-                            <th>New</th>
-                            <th>Reden / note</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in _filteredLogs)
+        <aside class="admin-finance-layout__aside">
+            <section class="detail-card" aria-labelledby="open-payouts-heading">
+                <div class="admin-dash__card-head">
+                    <h2 id="open-payouts-heading">
+                        @Culture["AdminFinance.OpenPayoutsCard"]
+                        @if (_summary?.OpenPayoutsCount > 0)
                         {
-                            <tr>
-                                <td>@row.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</td>
-                                <td>@row.CompanyName</td>
-                                <td>@row.Kind</td>
-                                <td>@row.Reason</td>
-                                <td>@row.Amount.ToString("0.##")</td>
-                                <td>@row.OldBalance.ToString("0.##")</td>
-                                <td>@row.NewBalance.ToString("0.##")</td>
-                                <td class="muted">@row.Note</td>
-                            </tr>
+                            <span class="admin-count-pill">@_summary.OpenPayoutsCount</span>
                         }
-                    </tbody>
-                </table>
-            </div>
-        }
-    }
+                    </h2>
+                </div>
+                @if (_summary is null || _summary.OpenPayoutPreviews.Count == 0)
+                {
+                    <p class="admin-dash__empty">@Culture["AdminFinance.NoOpenPayouts"]</p>
+                }
+                else
+                {
+                    <ul class="admin-todo-list">
+                        @foreach (var row in _summary.OpenPayoutPreviews.Take(5))
+                        {
+                            <li class="admin-todo-list__row">
+                                <div>
+                                    <strong>@row.MaskedPayeeName</strong>
+                                    <div class="muted">@row.RoleLabel · @row.InvoiceNumber</div>
+                                </div>
+                                <span>@AdminFinanceDisplay.Euro(row.TotalInclVat)</span>
+                            </li>
+                        }
+                    </ul>
+                    <p class="muted" style="margin:0.75rem 0">
+                        @Culture["AdminFinance.Total"] @AdminFinanceDisplay.Euro(_summary.OpenPayoutsCents / 100m)
+                    </p>
+                }
+                <a class="btn-compact btn-compact--primary" href="/admin/financien/uitbetalingen?tab=uitbetalingen">
+                    @Culture["AdminFinance.ViewPayouts"]
+                </a>
+            </section>
+
+            <section class="detail-card" aria-labelledby="vat-card-heading" style="margin-top:1rem">
+                <div class="admin-dash__card-head">
+                    <h2 id="vat-card-heading">@_vatTitle</h2>
+                    <a class="admin-dash__more" href="/admin/financien/uitbetalingen?tab=declarations">@Culture["AdminFinance.VatFiling"] ›</a>
+                </div>
+                @if (_vatPreview is null)
+                {
+                    <p class="muted">@Culture["AdminUi.Loading"]</p>
+                }
+                else
+                {
+                    <dl class="admin-finance-vat-dl">
+                        <div><dt>@Culture["AdminFinance.VatOmzetEx"]</dt><dd>@AdminFinanceDisplay.Euro(_vatPreview.Rubriek1OmzetExVatCents)</dd></div>
+                        <div><dt>@Culture["AdminFinance.VatDue"]</dt><dd>@AdminFinanceDisplay.Euro(_vatPreview.Rubriek1VatCents)</dd></div>
+                        <div><dt>@Culture["AdminFinance.VatBuffer"]</dt><dd class="admin-finance-vat-dl__ok">@AdminFinanceDisplay.Euro(_summary?.VatBufferPendingCents ?? 0)</dd></div>
+                    </dl>
+                }
+            </section>
+        </aside>
+    </div>
+    </ChildContent>
 </AdminPageShell>
 
 @code {
-    private static readonly (string Key, string Label)[] Periods =
-    [
-        ("day", "Dag"),
-        ("week", "Week"),
-        ("month", "Maand"),
-        ("quarter", "Kwartaal"),
-        ("year", "Jaar")
-    ];
-
     private static readonly HashSet<string> FinanceKeys = new(StringComparer.OrdinalIgnoreCase)
     {
         "tokens_balance", "tokens_purchased", "tokens_spent", "pushboms", "extensions"
     };
 
-    private string _tab = "kpi";
-    private string _period = "week";
+    private static readonly (string Key, string Label)[] MetricPeriods =
+    [
+        ("day", "Dag"), ("week", "Week"), ("month", "Maand"), ("quarter", "Kwartaal"), ("year", "Jaar")
+    ];
+
+    private string _tab = "transacties";
+    private string _periodKey = "month";
+    private int _filterYear = DateTime.UtcNow.Year;
+    private int? _filterQuarter = ((DateTime.UtcNow.Month - 1) / 3) + 1;
+    private int? _filterMonth = DateTime.UtcNow.Month;
+    private List<(string Key, string Label)> _periodOptions = [];
+    private List<AdminTabs.Tab> _tabs = [];
+
+    private AdminFinanceSummaryItem? _summary;
+    private List<KpiVm> _kpis = [];
+    private List<TokenPurchaseFinanceItem> _purchases = [];
+    private List<TokenPurchaseFinanceItem> _visiblePurchases = [];
+    private bool _txLoading = true;
+    private string? _txError;
+    private bool _exportBusy;
+
+    private VatDeclarationPreviewItem? _vatPreview;
+    private string _vatTitle = "Btw";
+
+    private string _metricsPeriod = "week";
     private string? _selectedKey;
-    private bool _loading = true;
+    private bool _metricsLoading;
     private bool _drillLoading;
-    private bool _logLoading;
-    private string? _error;
-    private string? _logError;
-    private string _companyFilter = "";
+    private string? _metricsError;
     private List<MetricCount> _metrics = [];
     private List<MetricDrilldownItem> _drilldown = [];
-    private List<TokenLogItem> _logs = [];
 
+    private bool _logLoading;
+    private string? _logError;
+    private string _companyFilter = "";
+    private List<TokenLogItem> _logs = [];
     private List<TokenLogItem> _filteredLogs =>
         string.IsNullOrWhiteSpace(_companyFilter)
             ? _logs
             : _logs.Where(l => l.CompanyName.Contains(_companyFilter, StringComparison.OrdinalIgnoreCase)).ToList();
 
-
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        BuildPeriodOptions();
+        _tabs =
+        [
+            new("transacties", Culture["AdminFinance.Tab.Transactions"]),
+            new("tokenlog", Culture["AdminFinance.Tab.Tokenlog"]),
+            new("kpis", Culture["AdminFinance.Tab.Kpis"]),
+        ];
+        _tab = ReadTab();
+    }
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {
-        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
-        if (qs.TryGetValue("tab", out var tab) && tab == "tokenlog")
+        await LoadSummaryAndTransactionsAsync();
+        await LoadVatAsideAsync();
+        if (_tab == "tokenlog")
         {
-            _tab = "tokenlog";
             await LoadLogsAsync();
         }
-        else
+        else if (_tab == "kpis")
         {
             await LoadMetricsAsync();
         }
     }
 
-    private async Task SetTab(string tab)
+    private string ReadTab()
     {
-        _tab = tab;
-        if (tab == "tokenlog" && _logs.Count == 0)
+        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (qs.TryGetValue("tab", out var tab))
         {
-            await LoadLogsAsync();
+            var key = tab.ToString();
+            if (_tabs.Any(t => string.Equals(t.Key, key, StringComparison.OrdinalIgnoreCase)))
+            {
+                return key.ToLowerInvariant();
+            }
+            if (string.Equals(key, "kpi", StringComparison.OrdinalIgnoreCase))
+            {
+                return "kpis";
+            }
         }
-        else if (tab == "kpi" && _metrics.Count == 0)
+
+        return "transacties";
+    }
+
+    private void BuildPeriodOptions()
+    {
+        var now = DateTime.UtcNow;
+        var q = ((now.Month - 1) / 3) + 1;
+        var startMonth = (q - 1) * 3 + 1;
+        var culture = CultureInfo.GetCultureInfo("nl-NL");
+        _periodOptions = [];
+        for (var m = startMonth; m < startMonth + 3; m++)
         {
-            await LoadMetricsAsync();
+            var label = culture.DateTimeFormat.GetMonthName(m);
+            label = char.ToUpper(label[0], culture) + label[1..];
+            _periodOptions.Add(($"m{m}", label));
+        }
+
+        _periodOptions.Add(($"q{q}", $"Q{q}"));
+        _periodKey = $"m{now.Month}";
+        _filterYear = now.Year;
+        _filterQuarter = q;
+        _filterMonth = now.Month;
+    }
+
+    private async Task SetPeriodAsync(string key)
+    {
+        if (_periodKey == key) return;
+        _periodKey = key;
+        if (key.StartsWith('q'))
+        {
+            _filterMonth = null;
+            _filterQuarter = int.Parse(key[1..]);
+        }
+        else if (key.StartsWith('m'))
+        {
+            _filterMonth = int.Parse(key[1..]);
+            _filterQuarter = ((_filterMonth.Value - 1) / 3) + 1;
+        }
+
+        await LoadSummaryAndTransactionsAsync();
+        await LoadVatAsideAsync();
+    }
+
+    private async Task LoadSummaryAndTransactionsAsync()
+    {
+        _txLoading = true;
+        _txError = null;
+        try
+        {
+            var summaryPeriod = _filterMonth is null ? "quarter" : "month";
+            var summaryTask = Api.GetAdminFinanceSummaryAsync(summaryPeriod);
+            var purchasesTask = Api.GetTokenPurchasesAsync(_filterYear, _filterQuarter);
+            await Task.WhenAll(summaryTask, purchasesTask);
+            _summary = summaryTask.Result;
+            _purchases = purchasesTask.Result.ToList();
+            _visiblePurchases = _filterMonth is int m
+                ? _purchases.Where(p => p.IssuedAt.ToLocalTime().Month == m).ToList()
+                : _purchases;
+            _kpis = BuildKpis(_summary);
+        }
+        catch (Exception ex)
+        {
+            _txError = ex.Message;
+            _purchases = [];
+            _visiblePurchases = [];
+        }
+        finally
+        {
+            _txLoading = false;
+        }
+    }
+
+    private List<KpiVm> BuildKpis(AdminFinanceSummaryItem? s)
+    {
+        if (s is null) return [];
+        var culture = CultureInfo.GetCultureInfo("nl-NL");
+        var deltaPct = s.PreviousRevenueInclVatCents <= 0
+            ? (decimal?)null
+            : ((s.RevenueInclVatCents - s.PreviousRevenueInclVatCents) / (decimal)s.PreviousRevenueInclVatCents * 100m);
+        var openMollie = $"{s.OpenAtMollieCount} · {AdminFinanceDisplay.Euro(s.OpenAtMollieCents)}";
+        var oldest = s.OldestOpenMollieDays is int d
+            ? string.Format(Culture["AdminFinance.OldestDays"], d)
+            : null;
+        var due = "";
+        if (_filterQuarter is int q)
+        {
+            var dueDate = AdminFinanceDisplay.VatDueDate(_filterYear, q);
+            due = string.Format(Culture["AdminFinance.VatDueShort"], q, dueDate.ToString("dd-MM"));
+        }
+
+        return
+        [
+            new(Culture["AdminFinance.Kpi.Revenue"], AdminFinanceDisplay.Euro(s.RevenueInclVatCents),
+                deltaPct is null ? null : $"{(deltaPct >= 0 ? "+" : "")}{deltaPct.Value.ToString("0", culture)}%",
+                deltaPct is null ? "neutral" : deltaPct >= 0 ? "up" : "down"),
+            new(Culture["AdminFinance.Kpi.TokensSold"], s.TokensSold.ToString("N0", culture), null, "neutral"),
+            new(Culture["AdminFinance.Kpi.OpenMollie"], openMollie, oldest, "neutral"),
+            new(Culture["AdminFinance.Kpi.VatBuffer"], AdminFinanceDisplay.Euro(s.VatBufferPendingCents), due, "neutral"),
+            new(Culture["AdminFinance.Kpi.OpenPayouts"], AdminFinanceDisplay.Euro(s.OpenPayoutsCents),
+                string.Format(Culture["AdminFinance.OpenCount"], s.OpenPayoutsCount), "neutral"),
+        ];
+    }
+
+    private async Task LoadVatAsideAsync()
+    {
+        try
+        {
+            var q = _filterQuarter ?? ((DateTime.UtcNow.Month - 1) / 3) + 1;
+            _vatTitle = string.Format(Culture["AdminFinance.VatCardTitle"], q, _filterYear);
+            _vatPreview = await Api.PreviewVatDeclarationAsync(_filterYear, q);
+        }
+        catch
+        {
+            _vatPreview = null;
+        }
+    }
+
+    private async Task ExportPurchasesAsync()
+    {
+        _exportBusy = true;
+        try
+        {
+            await Api.DownloadTokenPurchasesCsvAsync(Js, _filterYear, _filterQuarter);
+        }
+        catch (Exception ex)
+        {
+            _txError = ex.Message;
+        }
+        finally
+        {
+            _exportBusy = false;
+        }
+    }
+
+    private async Task DownloadPdfAsync(TokenPurchaseFinanceItem row)
+    {
+        _exportBusy = true;
+        try
+        {
+            await Api.DownloadTokenInvoicePdfAsync(Js, row.InvoiceId, row.InvoiceNumber);
+        }
+        catch (Exception ex)
+        {
+            _txError = ex.Message;
+        }
+        finally
+        {
+            _exportBusy = false;
         }
     }
 
@@ -240,10 +551,10 @@
             ? metric.Value.ToString("0.##")
             : metric.Value.ToString("0");
 
-    private async Task SetPeriodAsync(string period)
+    private async Task SetMetricsPeriodAsync(string period)
     {
-        if (_period == period) return;
-        _period = period;
+        if (_metricsPeriod == period) return;
+        _metricsPeriod = period;
         await LoadMetricsAsync();
         if (_selectedKey is not null)
         {
@@ -266,19 +577,19 @@
 
     private async Task LoadMetricsAsync()
     {
-        _loading = true;
-        _error = null;
+        _metricsLoading = true;
+        _metricsError = null;
         try
         {
-            _metrics = (await Api.GetEmployerMetricsSummaryAsync(_period)).ToList();
+            _metrics = (await Api.GetEmployerMetricsSummaryAsync(_metricsPeriod)).ToList();
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _metricsError = ex.Message;
         }
         finally
         {
-            _loading = false;
+            _metricsLoading = false;
         }
     }
 
@@ -287,7 +598,7 @@
         _drillLoading = true;
         try
         {
-            _drilldown = (await Api.GetEmployerMetricsDrilldownAsync(key, _period)).ToList();
+            _drilldown = (await Api.GetEmployerMetricsDrilldownAsync(key, _metricsPeriod)).ToList();
         }
         catch
         {
@@ -326,4 +637,6 @@
             _logLoading = false;
         }
     }
+
+    private sealed record KpiVm(string Label, string Value, string? Delta, string Tone);
 }

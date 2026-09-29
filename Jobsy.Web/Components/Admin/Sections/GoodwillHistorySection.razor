@@ -1,0 +1,139 @@
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Ui
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+@implements IDisposable
+
+<section class="detail-card admin-finance-history" aria-labelledby="goodwill-history-title">
+    <div class="admin-dash__card-head">
+        <h2 id="goodwill-history-title">@Culture["AdminFinance.HistoryTitle"]</h2>
+        <button class="btn-compact" type="button" disabled="@_exportBusy" @onclick="ExportAsync">
+            @Culture["AdminFinance.ExportCsv"]
+        </button>
+    </div>
+    <p class="muted">@Culture["AdminFinance.HistoryLead"]</p>
+
+    <div class="filter-bar" style="margin-top:0.75rem;align-items:flex-end">
+        <label>
+            @Culture["AdminFinance.Year"]
+            <select @bind="_year" @bind:after="ReloadAsync">
+                @foreach (var y in Years)
+                {
+                    <option value="@y">@y</option>
+                }
+            </select>
+        </label>
+        <label>
+            @Culture["AdminFinance.Quarter"]
+            <select @bind="_quarter" @bind:after="ReloadAsync">
+                <option value="0">@Culture["AdminFinance.WholeYear"]</option>
+                <option value="1">Q1</option>
+                <option value="2">Q2</option>
+                <option value="3">Q3</option>
+                <option value="4">Q4</option>
+            </select>
+        </label>
+        <label>
+            @Culture["AdminFinance.OrgFilter"]
+            <input type="search" @bind="_orgFilter" @bind:event="oninput" placeholder="@Culture["Admin.CompanyPlaceholder"]" />
+        </label>
+        <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["AdminFinance.Refresh"]</button>
+        <span class="muted">@_filtered.Count @Culture["AdminFinance.Rows"]</span>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <AdminDataTable Loading="false" Empty="_filtered.Count == 0" EmptyText="@Culture["AdminFinance.NoGoodwill"]">
+            <Header>
+                <th scope="col">@Culture["AdminFinance.Col.Date"]</th>
+                <th scope="col">@Culture["AdminFinance.Col.Org"]</th>
+                <th scope="col">@Culture["AdminFinance.Col.Tokens"]</th>
+                <th scope="col">@Culture["AdminFinance.Col.Value"]</th>
+                <th scope="col">@Culture["AdminFinance.Col.Reason"]</th>
+                <th scope="col">@Culture["AdminFinance.Col.IssuedBy"]</th>
+            </Header>
+            <Rows>
+                @foreach (var row in _filtered)
+                {
+                    <tr>
+                        <td>@row.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                        <td>@row.CompanyName</td>
+                        <td>@row.TokenAmount.ToString("0.##")</td>
+                        <td>€ 0,00</td>
+                        <td>@row.Reason</td>
+                        <td class="muted">@(row.IssuedByName ?? "—")</td>
+                    </tr>
+                }
+            </Rows>
+        </AdminDataTable>
+    }
+</section>
+
+@code {
+    private static readonly int[] Years =
+        Enumerable.Range(DateTime.UtcNow.Year - 2, 4).Reverse().ToArray();
+
+    private int _year = DateTime.UtcNow.Year;
+    private int _quarter;
+    private string _orgFilter = "";
+    private bool _loading = true;
+    private bool _exportBusy;
+    private string? _error;
+    private List<TokenGoodwillFinanceItem> _rows = [];
+
+    private List<TokenGoodwillFinanceItem> _filtered =>
+        string.IsNullOrWhiteSpace(_orgFilter)
+            ? _rows
+            : _rows.Where(r => r.CompanyName.Contains(_orgFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    public async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _rows = (await Api.GetTokenGoodwillAsync(_year, _quarter == 0 ? null : _quarter)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _rows = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ExportAsync()
+    {
+        _exportBusy = true;
+        try
+        {
+            await Api.DownloadTokenGoodwillCsvAsync(Js, _year, _quarter == 0 ? null : _quarter);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _exportBusy = false;
+        }
+    }
+}

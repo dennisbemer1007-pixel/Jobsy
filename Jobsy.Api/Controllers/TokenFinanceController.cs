@@ -170,7 +170,9 @@ public sealed class TokenFinanceController : ControllerBase
             TokenVatPricing.FromCents(r.TotalAmountCents),
             r.IssuedAt,
             r.InvoicePdfPath,
-            r.VatDeclarationStatusLabel);
+            r.VatDeclarationStatusLabel,
+            r.MollieStatus,
+            r.PaymentMethod);
 
     private static string MaskIban(string? iban)
     {
@@ -199,7 +201,9 @@ public sealed record TokenPurchaseFinanceDto(
     decimal TotalAmountEuro,
     DateTime IssuedAt,
     string InvoicePdfUrl,
-    string? VatDeclarationStatusLabel = null);
+    string? VatDeclarationStatusLabel = null,
+    string MollieStatus = "Paid",
+    string? PaymentMethod = null);
 
 public sealed record TokenGoodwillFinanceDto(
     Guid TransactionId,

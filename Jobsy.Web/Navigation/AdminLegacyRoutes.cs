@@ -52,6 +52,14 @@ public static class AdminLegacyRoutes
         var path = qIndex >= 0 ? raw[..qIndex] : raw;
         var query = qIndex >= 0 ? raw[(qIndex + 1)..] : "";
 
+        // Same-path tab remaps (goodwill left Uitbetalingen; lives under Goodwill & tokens).
+        if (string.Equals(Normalize(path), "/admin/financien/uitbetalingen", StringComparison.OrdinalIgnoreCase)
+            && HasTab(query, "goodwill"))
+        {
+            destinationPathAndQuery = MergeQuery("/admin/financien/goodwill", StripTab(query), tab: null);
+            return true;
+        }
+
         if (!ByOld.TryGetValue(Normalize(path), out var entry))
         {
             return false;
@@ -59,6 +67,27 @@ public static class AdminLegacyRoutes
 
         destinationPathAndQuery = MergeQuery(entry.NewPath, query, entry.Tab);
         return true;
+    }
+
+    private static bool HasTab(string query, string tab)
+    {
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (part.StartsWith("tab=", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(part[4..], tab, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string StripTab(string query)
+    {
+        var parts = query.Split('&', StringSplitOptions.RemoveEmptyEntries)
+            .Where(p => !p.StartsWith("tab=", StringComparison.OrdinalIgnoreCase));
+        return string.Join('&', parts);
     }
 
     public static bool IsLegacyPath(string path)

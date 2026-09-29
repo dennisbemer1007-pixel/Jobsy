@@ -1646,6 +1646,76 @@
     gap: 0.75rem;
 }
 
+/* 06 · Financiën */
+.admin-finance-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4, 1rem);
+    margin-block-start: var(--space-3, 0.75rem);
+}
+
+.admin-finance-kpis {
+    margin-block-start: var(--space-3, 0.75rem);
+}
+
+.admin-finance-crosslink {
+    margin: 0 0 var(--space-3, 0.75rem);
+}
+
+.admin-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: var(--text-sm, 0.875rem);
+}
+
+.admin-finance-vat-dl {
+    margin: 0;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.admin-finance-vat-dl > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: var(--text-sm, 0.875rem);
+}
+
+.admin-finance-vat-dl dt {
+    margin: 0;
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.admin-finance-vat-dl dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.admin-finance-vat-dl__ok {
+    color: var(--success);
+}
+
+.admin-pricing-drives {
+    margin-block-end: var(--space-4, 1rem);
+}
+
+.admin-pricing-drives .admin-impact-note {
+    margin-block-start: var(--space-3, 0.75rem);
+}
+
+.status-pill--neutral {
+    background: var(--pearl-mid, var(--hover));
+    color: var(--muted);
+}
+
+@media (min-width: 1024px) {
+    .admin-finance-layout {
+        grid-template-columns: minmax(0, 1.7fr) minmax(16rem, 0.85fr);
+        align-items: start;
+    }
+}
+
 @media (max-width: 639px) {
     .admin-toggle-row {
         flex-direction: column;

@@ -27,9 +27,18 @@ public sealed class AdminFinanceSummaryController : ControllerBase
             summary.PreviousRevenueInclVatCents,
             summary.TokensSold,
             summary.OpenAtMollieCents,
+            summary.OpenAtMollieCount,
+            summary.OldestOpenMollieDays,
             summary.VatBufferPendingCents,
             summary.OpenPayoutsCents,
-            summary.OpenPayoutsCount));
+            summary.OpenPayoutsCount,
+            summary.OpenPayoutPreviews.Select(p => new AdminFinanceOpenPayoutPreviewDto(
+                p.InvoiceId,
+                p.InvoiceNumber,
+                p.MaskedPayeeName,
+                p.RoleLabel,
+                p.TotalInclVat,
+                p.MaskedIban)).ToList()));
     }
 }
 
@@ -40,6 +49,17 @@ public sealed record AdminFinanceSummaryDto(
     int PreviousRevenueInclVatCents,
     int TokensSold,
     int OpenAtMollieCents,
+    int OpenAtMollieCount,
+    int? OldestOpenMollieDays,
     int VatBufferPendingCents,
     int OpenPayoutsCents,
-    int OpenPayoutsCount);
+    int OpenPayoutsCount,
+    IReadOnlyList<AdminFinanceOpenPayoutPreviewDto> OpenPayoutPreviews);
+
+public sealed record AdminFinanceOpenPayoutPreviewDto(
+    Guid InvoiceId,
+    string InvoiceNumber,
+    string MaskedPayeeName,
+    string RoleLabel,
+    decimal TotalInclVat,
+    string MaskedIban);

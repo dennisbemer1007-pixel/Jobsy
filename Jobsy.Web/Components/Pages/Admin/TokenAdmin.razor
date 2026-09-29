@@ -2,143 +2,31 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
-@inject JobsyApiClient Api
+@using Jobsy.Web.Components.Admin.Sections
 @inject CultureState Culture
 @implements IDisposable
 
 <PageTitle>@Culture["AdminNav.Goodwill"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["AdminNav.Goodwill"]" Lead="@Culture["Admin.TokensLead"]">
-    <div class="admin-sublinks admin-sublinks--wrap">
-        <a class="admin-sublink" href="/admin/financien">← Financieel</a>
-        <a class="admin-sublink" href="/admin/financien/uitbetalingen">Token-administratie</a>
-        <a class="admin-sublink" href="/admin/financien?tab=tokenlog">Tokenlog</a>
+<AdminPageShell Title="@Culture["AdminNav.Goodwill"]" Lead="@Culture["AdminFinance.GoodwillLead"]" Wide="true">
+    <GoodwillGrantSection Granted="OnGrantedAsync" />
+    <div style="margin-block-start:1.25rem">
+        <GoodwillHistorySection @ref="_history" />
     </div>
-
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else
-    {
-        <div class="filter-bar">
-            <label>
-                @Culture["Common.Search"]
-                <input type="search" @bind="_query" @bind:event="oninput" placeholder="@Culture["Admin.SearchPlaceholder"]" />
-            </label>
-            <span class="muted">@_filtered.Count van @_companies.Count</span>
-        </div>
-
-        @if (_filtered.Count == 0)
-        {
-            <p class="state-message">Geen bedrijven gevonden.</p>
-        }
-        else
-        {
-            <div class="table-list">
-                @foreach (var c in _filtered)
-                {
-                    <div class="table-row">
-                        <div>
-                            <strong>@c.Name</strong>
-                            <span class="muted">@c.Type · KVK @c.KvkNumber · @c.TokenBalance.ToString("0.##") tokens</span>
-                            @if (!string.IsNullOrWhiteSpace(c.Address))
-                            {
-                                <span class="muted">@c.Address</span>
-                            }
-                        </div>
-                        <button class="btn-compact" type="button" @onclick="() => OpenGrant(c)">Goodwill toekennen</button>
-                    </div>
-                }
-            </div>
-        }
-        @if (!string.IsNullOrEmpty(_message))
-        {
-            <p class="state-message">@_message</p>
-        }
-    }
 </AdminPageShell>
 
-<GrantTokensDialog IsOpen="_grantOpen"
-                   Company="_selected"
-                   OnClose="CloseGrant"
-                   OnGranted="OnGrantedAsync" />
-
 @code {
-    private List<AdminCompanyItem> _companies = [];
-    private string _query = "";
-    private bool _loading = true;
-    private string? _message;
-    private bool _grantOpen;
-    private AdminCompanyItem? _selected;
+    private GoodwillHistorySection? _history;
 
-    private List<AdminCompanyItem> _filtered => Filter().ToList();
-
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            _companies = (await Api.GetAdminCompaniesAsync()).ToList();
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-            _companies = [];
-        }
-        finally
-        {
-            _loading = false;
-        }
-    }
-
-    private IEnumerable<AdminCompanyItem> Filter()
-    {
-        if (string.IsNullOrWhiteSpace(_query))
-        {
-            return _companies;
-        }
-
-        var terms = _query.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return _companies.Where(c => terms.All(t =>
-            Contains(c.Name, t) || Contains(c.Address, t) || Contains(c.KvkNumber, t) || Contains(c.Type, t)));
-    }
-
-    private static bool Contains(string? value, string term) =>
-        !string.IsNullOrEmpty(value) && value.Contains(term, StringComparison.OrdinalIgnoreCase);
-
-    private void OpenGrant(AdminCompanyItem company)
-    {
-        _selected = company;
-        _grantOpen = true;
-        _message = null;
-    }
-
-    private void CloseGrant()
-    {
-        _grantOpen = false;
-        _selected = null;
-    }
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
 
     private async Task OnGrantedAsync()
     {
-        try
+        if (_history is not null)
         {
-            _companies = (await Api.GetAdminCompaniesAsync()).ToList();
-            _message = "Tokens toegekend. Zie tokenlog voor de reden.";
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-            _companies = [];
+            await _history.ReloadAsync();
         }
     }
 }

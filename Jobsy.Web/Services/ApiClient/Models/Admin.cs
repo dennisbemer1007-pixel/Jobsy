@@ -194,9 +194,22 @@ public sealed class AdminFinanceSummaryItem
     public int PreviousRevenueInclVatCents { get; set; }
     public int TokensSold { get; set; }
     public int OpenAtMollieCents { get; set; }
+    public int OpenAtMollieCount { get; set; }
+    public int? OldestOpenMollieDays { get; set; }
     public int VatBufferPendingCents { get; set; }
     public int OpenPayoutsCents { get; set; }
     public int OpenPayoutsCount { get; set; }
+    public List<AdminFinanceOpenPayoutPreviewItem> OpenPayoutPreviews { get; set; } = [];
+}
+
+public sealed class AdminFinanceOpenPayoutPreviewItem
+{
+    public Guid InvoiceId { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public string MaskedPayeeName { get; set; } = string.Empty;
+    public string RoleLabel { get; set; } = string.Empty;
+    public decimal TotalInclVat { get; set; }
+    public string MaskedIban { get; set; } = "—";
 }
 
 public sealed class PlatformCompanyItem
