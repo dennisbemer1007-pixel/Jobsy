@@ -57,6 +57,10 @@ public class NoPupilNameFieldsTests
         "SchoolProfileDto.AllowedEmailDomains",
         "SchoolPrivacyClassConfirmationDto.ClassName",
         "SchoolPrivacyClassConfirmationDto.ConfirmedByName",
+        // Teacher portal — class labels only (never pupil names).
+        "TeacherAssignedClassDto.ClassName",
+        "TeacherClassOverviewDto.ClassName",
+        "TeacherCodeDetailDto.ClassName",
     };
 
     [Fact]
