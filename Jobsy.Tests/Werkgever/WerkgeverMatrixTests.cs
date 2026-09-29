@@ -48,9 +48,10 @@ public class WerkgeverNavVisibilityTests
             var navItem = items.FirstOrDefault(i =>
                 string.Equals(WerkgeverNav.Normalize(i.Href), WerkgeverNav.Normalize(row.Route), StringComparison.OrdinalIgnoreCase));
             var allowed = WerkgeverRightsMatrix.RoleAllowed(row, role);
-            if (row.Route is "/werkgever/vacatures/nieuw" or "/werkgever/partner" or "/werkgever/koppelingen")
+            if (row.Route is "/werkgever/vacatures/nieuw" or "/werkgever/partner" or "/werkgever/koppelingen"
+                || row.Route.Contains('{', StringComparison.Ordinal))
             {
-                // Nieuw has no nav item; partner/koppelingen are conditional.
+                // Nieuw / detail routes have no nav item; partner/koppelingen are conditional.
                 continue;
             }
 

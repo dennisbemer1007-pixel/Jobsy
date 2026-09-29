@@ -61,17 +61,17 @@ public class MobileSaasUxTests
     public void Applicants_page_uses_cards_and_never_renders_raw_json()
     {
         var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Applicants.razor"));
-        Assert.Contains("class=\"applicants-list\"", razor);
-        Assert.Contains("class=\"applicant-card", razor);
-        Assert.Contains("applicant-card__section", razor);
-        Assert.Contains("Employer.FactMotivation", razor);
-        Assert.Contains("Employer.FactAvailability", razor);
-        Assert.Contains("Employer.FactProfile", razor);
-        Assert.Contains("Employer.FactContact", razor);
-        Assert.Contains("HumanText(a.PreferencesSummary)", razor);
+        Assert.Contains("wg-app__pipeline", razor);
+        Assert.Contains("class=\"wg-app-card", razor);
+        Assert.Contains("ApplicationCandidateDetail", razor);
+        Assert.Contains("CardFacts", razor);
+        Assert.Contains("ApplicationPreferenceRedaction.ToHumanReadable", razor);
         Assert.DoesNotContain("@a.PreferencesSummary", razor);
         Assert.DoesNotContain("applicants-grid__table", razor);
-        Assert.DoesNotContain("<table", razor);
+        Assert.Contains("EntDataTable", razor);
+
+        var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Werkgever/Applications/ApplicationCandidateDetail.razor"));
+        Assert.Contains("WgApp.Tab.Motivation", detail);
     }
 
     [Fact]
@@ -324,20 +324,16 @@ public class MobileSaasUxTests
     [Fact]
     public void Applicants_availability_renders_a_readonly_matrix_not_raw_day_text()
     {
-        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Applicants.razor"));
-        Assert.Contains("availability-matrix--readonly", razor);
-        Assert.Contains("ParseAvailabilityPayload(a.SnapshotAvailabilityJson)", razor);
-        Assert.Contains("a.PiiRevealed", razor);
-        Assert.Contains("contact-details", razor);
-        Assert.Contains("FormatDisplayPhone", razor);
-        Assert.DoesNotContain("contact-icon", razor);
-        Assert.Contains("Common.Yes", razor);
-        Assert.Contains("EmployerDisplayDayPartCodes", razor);
-        Assert.Contains("DayPartMatrix.NightDayPart", razor);
-        Assert.Contains("availability-matrix__night-note", razor);
-        Assert.Contains("Profile.Slot.Night", razor);
-        Assert.DoesNotContain("DayPartMatrix.DayPartCodes", razor);
-        Assert.DoesNotContain("aria-label=\"@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot): @(on ? \"ja\" : \"nee\")\"", razor);
+        var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Werkgever/Applications/ApplicationCandidateDetail.razor"));
+        Assert.Contains("ParseAvailabilityPayload(item.SnapshotAvailabilityJson)", detail);
+        Assert.Contains("WgApp.See.Title", detail);
+        Assert.Contains("IsPiiStage", detail);
+        Assert.Contains("wg-app-contact", detail);
+        Assert.DoesNotContain("contact-icon", detail);
+
+        var rules = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Werkgever/ApplicationPipelineRules.cs"));
+        Assert.Contains("LobsyCvAccessRules.IsPiiRevealed", rules);
+        Assert.Contains("LobsyCvAccessRules.IsDirectContactRevealed", rules);
 
         var contactModal = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/DirectContactModal.razor"));
         Assert.Contains("direct-contact-modal__details", contactModal);

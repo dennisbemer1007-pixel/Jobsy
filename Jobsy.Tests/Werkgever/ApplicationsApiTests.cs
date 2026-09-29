@@ -34,13 +34,19 @@ public class ApplicationsApiTests : IClassFixture<ApplicationsApiFactory>
             Assert.NotNull(list);
 
             var pending = list.Single(a => a.GetProperty("id").GetGuid() == _factory.PendingAppId);
-            Assert.Equal(JsonValueKind.Null, pending.GetProperty("candidateName").ValueKind);
-            Assert.Equal(JsonValueKind.Null, pending.GetProperty("candidateEmail").ValueKind);
+            Assert.True(
+                !pending.TryGetProperty("candidateName", out var pendingName)
+                || pendingName.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined);
+            Assert.True(
+                !pending.TryGetProperty("candidateEmail", out var pendingEmail)
+                || pendingEmail.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined);
             Assert.False(pending.GetProperty("piiRevealed").GetBoolean());
 
             var accepted = list.Single(a => a.GetProperty("id").GetGuid() == _factory.AcceptedAppId);
             Assert.Equal("Priya Sanders", accepted.GetProperty("candidateName").GetString());
-            Assert.Equal(JsonValueKind.Null, accepted.GetProperty("candidateEmail").ValueKind);
+            Assert.True(
+                !accepted.TryGetProperty("candidateEmail", out var acceptedEmail)
+                || acceptedEmail.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined);
             Assert.True(accepted.GetProperty("piiRevealed").GetBoolean());
             Assert.True(LobsyCvAccessRules.IsPiiRevealed(ApplicationStatus.Accepted));
             Assert.False(LobsyCvAccessRules.IsDirectContactRevealed(ApplicationStatus.Accepted));
