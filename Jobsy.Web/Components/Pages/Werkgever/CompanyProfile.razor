@@ -3,21 +3,32 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin,Intermediary")]
 @using Jobsy.Web.Components.Ui.Enterprise
 @using Jobsy.Web.Components.Werkgever.Sections
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
 @using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject EmployerScopeState Scope
 
-<PageTitle>@Culture["WgNav.CompanyProfile"] · Lobsy</PageTitle>
+<PageTitle>@PageTitleText · Lobsy</PageTitle>
 
-<WgPageShell>
+<WgPageShell Title="@PageTitleText" Lead="@Culture["WgProfile.Lead"]">
     <EntTabs Tabs="_tabs" ActiveKey="@_tab" BasePath="/werkgever/organisatie/profiel" />
     @if (_tab == "cultuur")
     {
         <CultureScanSection />
     }
+    else if (_tab == "contact")
+    {
+        <CompanyDetailsSection Mode="contact" />
+    }
+    else if (_tab == "werving")
+    {
+        <CompanyDetailsSection Mode="recruitment" />
+    }
     else
     {
-        <CompanyDetailsSection />
+        <CompanyDetailsSection Mode="profile" />
     }
 </WgPageShell>
 
@@ -25,15 +36,25 @@
     private readonly List<EntTabs.Tab> _tabs = [];
     private string _tab = "profiel";
 
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private string PageTitleText => Role == EmployerRole.Vestigingsmanager
+        ? Culture["WgNav.BranchProfile"]
+        : Culture["WgNav.CompanyProfile"];
+
     protected override void OnInitialized()
     {
         _tabs.Add(new("profiel", Culture["WgTabs.Profile"]));
+        _tabs.Add(new("contact", Culture["WgTabs.ContactChannels"]));
+        _tabs.Add(new("werving", Culture["WgTabs.RecruitmentPrefs"]));
         _tabs.Add(new("cultuur", Culture["WgTabs.Culture"]));
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("tab", out var tab)
-            && string.Equals(tab.ToString(), "cultuur", StringComparison.OrdinalIgnoreCase))
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("tab", out var tab))
         {
-            _tab = "cultuur";
+            var t = tab.ToString();
+            if (_tabs.Any(x => string.Equals(x.Key, t, StringComparison.OrdinalIgnoreCase)))
+            {
+                _tab = t.ToLowerInvariant();
+            }
         }
     }
 }

@@ -443,5 +443,29 @@ public static class UiStringsWerkgever
         Add("WgInvite.Validation.Branch", "Kies een vestiging.", "Choose a branch.", "Wybierz placówkę.", "Alege o filială.", "اختر فرعاً.");
         Add("WgInvite.Validation.Region", "Kies een regio.", "Choose a region.", "Wybierz region.", "Alege o regiune.", "اختر منطقة.");
         Add("WgInvite.Validation.Org", "Geen organisatie gevonden.", "No organisation found.", "Nie znaleziono organizacji.", "Nicio organizație găsită.", "لم يُعثر على منظمة.");
+
+        // Bedrijfsprofiel / Koppelingen / Wervingsmateriaal (05b)
+        Add("WgTabs.ContactChannels", "Contact & kanalen", "Contact & channels", "Kontakt i kanały", "Contact și canale", "التواصل والقنوات");
+        Add("WgTabs.RecruitmentPrefs", "Wervingsvoorkeuren", "Recruitment preferences", "Preferencje rekrutacji", "Preferințe recrutare", "تفضيلات التوظيف");
+        Add("WgTabs.Api", "API", "API", "API", "API", "API");
+        Add("WgTabs.CsvImport", "CSV-import", "CSV import", "Import CSV", "Import CSV", "استيراد CSV");
+        Add("WgProfile.Lead", "Identiteit, contactkanalen, werving en cultuur van je organisatie.", "Identity, contact channels, recruitment and culture of your organisation.", "Tożsamość, kontakt, rekrutacja i kultura organizacji.", "Identitate, canale, recrutare și cultura organizației.", "هوية وقنوات وتوظيف وثقافة منظمتك.");
+        Add("WgIntegrations.Lead", "API-sleutels en CSV-import voor vacatures.", "API keys and CSV import for vacancies.", "Klucze API i import CSV ofert.", "Chei API și import CSV pentru posturi.", "مفاتيح API واستيراد CSV للوظائف.");
+        Add("WgMaterials.Lead", "Raamflyers, overzicht-PDF en tracking voor werving op locatie.", "Window flyers, overview PDF and tracking for on-site recruitment.", "Ulotki witrynowe, PDF przeglądu i tracking rekrutacji.", "Flyere, PDF de ansamblu și tracking pentru recrutare.", "منشورات الواجهة وPDF التتبع للتوظيف في الموقع.");
+        Add("WgMaterials.Raamflyer", "Raamflyer", "Window flyer", "Ulotka witrynowa", "Flyer vitrină", "منشور الواجهة");
+        Add("WgMaterials.RaamflyerLead", "Printbare flyer voor in de etalage — A4 of A3, per vestiging of als overzicht.", "Printable flyer for the window — A4 or A3, per branch or as overview.", "Ulotka do wydruku — A4/A3, per placówka lub zbiorczo.", "Flyer printabil — A4/A3, pe filială sau ansamblu.", "منشور للطباعة — A4 أو A3، لكل فرع أو كنظرة عامة.");
+        Add("WgMaterials.OverviewTitle", "onze vestigingen", "our branches", "nasze placówki", "filialele noastre", "فروعنا");
+        Add("WgMaterials.Tracking", "Trackingcode & flyer", "Tracking code & flyer", "Kod śledzenia i ulotka", "Cod tracking și flyer", "رمز التتبع والمنشور");
+        Add("WgMaterials.TrackingLead", "Deel je trackingcode of partnerflyer om bedrijven aan te brengen.", "Share your tracking code or partner flyer to refer companies.", "Udostępnij kod lub ulotkę partnerską.", "Distribuie codul sau flyerul de partener.", "شارك رمز التتبع أو منشور الشريك.");
+        Add("WgMaterials.TrackingCode", "Trackingcode", "Tracking code", "Kod śledzenia", "Cod tracking", "رمز التتبع");
+        Add("WgMaterials.DownloadFlyer", "Download flyer", "Download flyer", "Pobierz ulotkę", "Descarcă flyerul", "تنزيل المنشور");
+        Add("WgMaterials.Copy", "Kopieer", "Copy", "Kopiuj", "Copiază", "نسخ");
+        Add("WgMaterials.Copied", "Gekopieerd.", "Copied.", "Skopiowano.", "Copiat.", "تم النسخ.");
+        Add("WgSalary.Lead", "CAO-schalen op bedrijfsniveau — vestigingen kiezen hieruit bij vacatureplaatsing.", "Company-level pay scales — branches pick these when posting vacancies.", "Skale płac na poziomie firmy — placówki wybierają je przy ofertach.", "Grile salariale la nivel de firmă — filialele le aleg la publicare.", "جداول أجور على مستوى الشركة — تختارها الفروع عند النشر.");
+        Add("WgSalary.New", "Nieuwe tabel", "New table", "Nowa tabela", "Tabel nou", "جدول جديد");
+        Add("WgTakeovers.Lead", "Vestigingen waarvoor iemand overname heeft aangevraagd.", "Branches for which someone requested a takeover.", "Placówki z wnioskiem o przejęcie.", "Filiale cu cerere de preluare.", "فروع طُلب الاستحواذ عليها.");
+        Add("WgTakeovers.Empty", "Geen openstaande verzoeken.", "No open requests.", "Brak otwartych wniosków.", "Nicio cerere deschisă.", "لا طلبات مفتوحة.");
+        Add("WgTakeovers.Approve", "Goedkeuren", "Approve", "Zatwierdź", "Aprobă", "موافقة");
+        Add("WgTakeovers.Reject", "Afwijzen", "Reject", "Odrzuć", "Respinge", "رفض");
     }
 }

@@ -1,0 +1,122 @@
+@page "/werkgever/wervingsmateriaal"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Admin")]
+@using Jobsy.Web.Components.Employer
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject IJSRuntime Js
+
+<PageTitle>@Culture["WgNav.RecruitmentMaterials"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgNav.RecruitmentMaterials"]"
+             Lead="@Culture["WgMaterials.Lead"]"
+             ReadOnlyHint="@(Role == EmployerRole.Regiomanager)">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <section class="panel-section company-details__card">
+            <h2>@Culture["WgMaterials.Raamflyer"]</h2>
+            <p class="muted">@Culture["WgMaterials.RaamflyerLead"]</p>
+            <RaamflyerTools Companies="_companies"
+                            AllowOverview="@(_companies.Count > 1 && Role != EmployerRole.Vestigingsmanager)"
+                            OverviewTitle="@Culture["WgMaterials.OverviewTitle"]" />
+        </section>
+
+        @if (_isPartnerAffiliate)
+        {
+            <section class="panel-section company-details__card">
+                <h2>@Culture["WgMaterials.Tracking"]</h2>
+                <p class="muted">@Culture["WgMaterials.TrackingLead"]</p>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <span class="stat-card__label">@Culture["WgMaterials.TrackingCode"]</span>
+                        <strong class="stat-card__value">@_trackingCode</strong>
+                    </div>
+                </div>
+                <div class="inline-actions">
+                    <button type="button" class="btn-compact" @onclick="CopyTracking">@Culture["WgMaterials.Copy"]</button>
+                    @if (!string.IsNullOrWhiteSpace(_flyerUrl))
+                    {
+                        <a class="btn-compact btn-compact--primary" href="@_flyerUrl" target="_blank" rel="noopener">
+                            @Culture["WgMaterials.DownloadFlyer"]
+                        </a>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(_message))
+                {
+                    <p class="state-message">@_message</p>
+                }
+            </section>
+        }
+    }
+</WgPageShell>
+
+@code {
+    private List<CompanySummary> _companies = [];
+    private bool _loading = true;
+    private string? _error;
+    private string? _message;
+    private bool _isPartnerAffiliate;
+    private string _trackingCode = "—";
+    private string? _flyerUrl;
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            if (Role == EmployerRole.Vestigingsmanager)
+            {
+                _companies = _companies.Where(c => c.ParentCompanyId is not null).ToList();
+            }
+
+            try
+            {
+                var toolkit = await Api.GetPartnerAffiliateToolkitAsync();
+                if (toolkit is not null && !string.IsNullOrWhiteSpace(toolkit.TrackingCode))
+                {
+                    _isPartnerAffiliate = true;
+                    _trackingCode = toolkit.TrackingCode;
+                    _flyerUrl = toolkit.FlyerUrl;
+                }
+            }
+            catch
+            {
+                _isPartnerAffiliate = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CopyTracking()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", _trackingCode);
+            _message = Culture["WgMaterials.Copied"];
+        }
+        catch
+        {
+            _message = _trackingCode;
+        }
+    }
+}

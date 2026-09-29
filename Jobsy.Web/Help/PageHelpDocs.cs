@@ -237,6 +237,16 @@ public static class PageHelpDocs
             "Kies bovenaan de juiste organisatie/vestiging. Onder Overzicht zie je adres, KVK, tokens en actieve vacatures. Bij Contactvoorkeur geef je aan of kandidaten na sollicitatie mail, telefoon of WhatsApp mogen gebruiken (niet zichtbaar op de openbare vacaturepagina) en sla je de gegevens op. Schakel CSV Batch Import in om de tab CSV Import te tonen — vacatures komen binnen als concept. Bij API-koppeling zie je endpoint, X-API-Key-header en een link naar Swagger (request/response). Genereer of e-mail een API-key; de volledige sleutel is één keer zichtbaar. Publiceren (en tokens) doe je daarna onder Vacatures.",
             "Organisatie veilig bereikbaar maken voor kandidaten, batch-CSV en ATS/partners."),
 
+        ["/werkgever/koppelingen"] = new(
+            "Koppelingen",
+            "API-sleutels en CSV-import voor vacatures.",
+            "Beheer API-keys en schakel CSV-import in.",
+            "Koppelingen"),
+        ["/werkgever/wervingsmateriaal"] = new(
+            "Wervingsmateriaal",
+            "Raamflyers en tracking voor werving op locatie.",
+            "Download flyers per vestiging of als overzicht.",
+            "Wervingsmateriaal"),
         ["/werkgever/koppelingen?tab=csv"] = new(
             "CSV Import",
             "Veilige batch-import van vacatures via een CSV-bestand voor jouw organisatie.",

@@ -174,7 +174,7 @@ public static class WerkgeverNav
             new("takeovers", "WgNav.Takeovers", "/werkgever/overnames", NavIcons.Branches,
                 ["/employer/takeovers"], BmVm, AvailabilityKey: "takeovers"),
             new("materials", "WgNav.RecruitmentMaterials", "/werkgever/wervingsmateriaal", NavIcons.Shared,
-                [], BmRmVm, IsAvailable: false),
+                ["/employer/tokens?tab=tracking"], BmRmVm),
             new("partner", "WgNav.PartnerProgram", "/werkgever/partner", NavIcons.Finance,
                 ["/employer/sales", "/employer/sales/payout-checkout"], BmOnly,
                 AvailabilityKey: "partner"),

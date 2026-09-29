@@ -4,35 +4,29 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
 @using Jobsy.Web.Components.Employer
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject EmployerScopeState Scope
 @implements IDisposable
 
-<PageTitle>@Culture["Employer.SalaryTables"] · Lobsy</PageTitle>
+<PageTitle>@Culture["WgNav.SalaryTables"] · Lobsy</PageTitle>
 
-<div class="panel-page panel-page--desktop-preferred">
-    <AuthorizeView Roles="EnterpriseManager">
-        <Authorized>
-            <DesktopPreferredNotice />
-            <EnterpriseOrgSubnav />
-        </Authorized>
-    </AuthorizeView>
-    <header class="panel-header">
-        <div>
-            <h1>@Culture["Employer.SalaryTables"]</h1>
-            <p class="login-lead">CAO-schalen op bedrijfsniveau — vestigingen kiezen hieruit bij vacatureplaatsing.</p>
-        </div>
-        @if (_view == ViewMode.List)
+<WgPageShell Title="@Culture["WgNav.SalaryTables"]" Lead="@Culture["WgSalary.Lead"]">
+    <Actions>
+        @if (_view == ViewMode.List && CanMutate)
         {
-            <button class="login-submit" type="button" @onclick="StartCreate">Nieuwe tabel</button>
+            <button class="btn-compact btn-compact--primary" type="button" @onclick="StartCreate">@Culture["WgSalary.New"]</button>
         }
-        else
+        else if (_view != ViewMode.List)
         {
-            <button class="provider-btn" type="button" @onclick="BackToList">← Terug</button>
+            <button class="btn-compact" type="button" @onclick="BackToList">@Culture["Common.Back"]</button>
         }
-    </header>
-
+    </Actions>
+    <ChildContent>
+<div class="salary-tables-body">
     @if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
@@ -126,8 +120,8 @@
                 </table>
             </div>
 
-            @if (!_selected.IsSystemWml)
-            {
+                @if (!_selected.IsSystemWml && CanMutate)
+                {
                 <p class="muted" style="margin-top:1rem">
                     Vestigingen:
                     @( _selected.AllowedBranchNames.Count == 0
@@ -135,7 +129,7 @@
                         : string.Join(", ", _selected.AllowedBranchNames) )
                 </p>
                 <button class="login-submit" type="button" @onclick="StartEdit">Wijzigen</button>
-            }
+                }
 
             @if (_vacancies.Count > 0)
             {
@@ -184,7 +178,7 @@
             }
         </section>
     }
-    else if (_view is ViewMode.Create or ViewMode.Edit)
+    else if ((_view is ViewMode.Create or ViewMode.Edit) && CanMutate)
     {
         <section class="panel-section">
             <h2>@(_view == ViewMode.Create ? "Nieuwe salaristabel" : "Salaristabel wijzigen")</h2>
@@ -250,8 +244,10 @@
         <p class="state-message">@_message</p>
     }
 </div>
+    </ChildContent>
+</WgPageShell>
 
-@if (_deactivateConfirm)
+@if (_deactivateConfirm && CanMutate)
 {
     <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="salary-deactivate-title">
         <button type="button" class="confirm-modal__backdrop" @onclick="() => _deactivateConfirm = false" aria-label="Sluiten"></button>
@@ -275,6 +271,8 @@
     private enum ViewMode { List, Detail, Create, Edit }
 
     [Parameter] public Guid? TableId { get; set; }
+
+    private bool CanMutate => Scope.Role != EmployerRole.Vestigingsmanager;
 
     private static readonly int[] _rateAges = [15, 16, 17, 18, 19, 20, 21];
 

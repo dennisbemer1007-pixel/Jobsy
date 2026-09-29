@@ -1,0 +1,40 @@
+@page "/werkgever/koppelingen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Sections
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+<PageTitle>@Culture["WgNav.Integrations"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgNav.Integrations"]" Lead="@Culture["WgIntegrations.Lead"]">
+    <EntTabs Tabs="_tabs" ActiveKey="@_tab" BasePath="/werkgever/koppelingen" />
+    @if (_tab == "csv")
+    {
+        <CompanyDetailsSection Mode="csv" />
+        <CsvImportSection />
+    }
+    else
+    {
+        <CompanyDetailsSection Mode="api" />
+    }
+</WgPageShell>
+
+@code {
+    private readonly List<EntTabs.Tab> _tabs = [];
+    private string _tab = "api";
+
+    protected override void OnInitialized()
+    {
+        _tabs.Add(new("api", Culture["WgTabs.Api"]));
+        _tabs.Add(new("csv", Culture["WgTabs.CsvImport"]));
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("tab", out var tab)
+            && string.Equals(tab.ToString(), "csv", StringComparison.OrdinalIgnoreCase))
+        {
+            _tab = "csv";
+        }
+    }
+}

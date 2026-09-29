@@ -112,25 +112,26 @@ public class MobileSaasUxTests
     }
 
     [Fact]
-    public void Users_and_team_pages_use_cards_not_tables()
+    public void Users_and_team_pages_use_enterprise_table_and_invite_drawer()
     {
         var users = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Users.razor"));
-        Assert.Contains("class=\"user-card-list\"", users);
-        Assert.Contains("class=\"user-card\"", users);
-        Assert.Contains("user-card__menu-toggle", users);
-        Assert.Contains("aria-expanded=\"@(menuOpen ? \"true\" : \"false\")\"", users);
-        Assert.Contains("class=\"users-toolbar__filters\"", users);
-        Assert.Contains("membership-grid", users);
-        Assert.Contains("pb-28", users);
-        Assert.Contains("invite-form__row", users);
-        Assert.Contains("Uitnodigen", users);
+        Assert.Contains("WgTeamTable", users);
+        Assert.Contains("WgInviteDrawer", users);
+        Assert.Contains("EntFilterBar", users);
+        Assert.Contains("ConfirmDeactivate", users);
+        Assert.Contains("LobsyFriendlyDialog", users);
+        Assert.Contains("WgTeam.Action.Deactivate", users);
+        Assert.Contains("WgInvite.Title", users);
+        Assert.DoesNotContain("user-card-list", users);
+        Assert.DoesNotContain("invite-form__row", users);
         Assert.DoesNotContain("users-table", users);
-        Assert.DoesNotContain("<table", users);
 
         var team = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Intermediary/Team.razor"));
         Assert.Contains("class=\"user-card-list\"", team);
         Assert.Contains("class=\"user-card\"", team);
-        Assert.Contains("login-form invite-form", team);
+        Assert.Contains("WgInviteDrawer", team);
+        Assert.Contains("WgInvite.Title", team);
+        Assert.DoesNotContain("login-form invite-form", team);
         Assert.DoesNotContain("users-table", team);
         Assert.DoesNotContain("<table", team);
 
@@ -141,8 +142,6 @@ public class MobileSaasUxTests
         Assert.Contains(".invite-form__row {\n    display: grid;\n    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);", css);
         Assert.Contains(".app-shell.has-bottom-nav .app-footer,\n    .app-shell:has(.bottom-nav) .app-footer {\n        display: none;", css);
         Assert.DoesNotContain(".app-main {\n        padding-bottom: var(--bottom-nav-clearance);", css);
-        Assert.Contains("RequestDeactivate", users);
-        Assert.Contains("Bevestigen", users);
     }
 
     [Fact]
@@ -396,9 +395,10 @@ public class MobileSaasUxTests
         Assert.Contains("panel-header__title-row", home);
         Assert.Contains("DashboardRefreshButton", home);
 
-        var company = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Werkgever/Sections/CompanyDetailsSection.razor"));
+        var company = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Wervingsmateriaal.razor"));
         Assert.Contains("RaamflyerTools", company);
-        Assert.Contains("Wervingsmateriaal", company);
+        Assert.Contains("WgNav.RecruitmentMaterials", company);
+        Assert.Contains("WgMaterials.Raamflyer", company);
 
         var branches = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Werkgever/Sections/BranchesSection.razor"));
         Assert.Contains("RaamflyerTools", branches);

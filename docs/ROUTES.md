@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (142 routes)
+## Table (143 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -153,7 +153,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/vestiging/{CompanyId:guid}` | `Pages/VestigingLanding.razor` | anonymous |
 | `/werkgever` | `Pages/Werkgever/WerkgeverDashboard.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/werkgever/kandidaatinzichten` | `Pages/Werkgever/CandidateInsights.razor` | BranchManager, RegionalManager, EnterpriseManager |
-| `/werkgever/koppelingen` | `Pages/Werkgever/CsvImport.razor` | EnterpriseManager, Admin |
+| `/werkgever/koppelingen` | `Pages/Werkgever/Koppelingen.razor` | EnterpriseManager, Admin |
 | `/werkgever/organisatie/profiel` | `Pages/Werkgever/CompanyProfile.razor` | BranchManager, EnterpriseManager, Admin, Intermediary |
 | `/werkgever/organisatie/salaristabellen` | `Pages/Werkgever/SalaryTables.razor` | BranchManager, EnterpriseManager, Admin |
 | `/werkgever/organisatie/salaristabellen/{TableId:guid}` | `Pages/Werkgever/SalaryTables.razor` | BranchManager, EnterpriseManager, Admin |
@@ -169,6 +169,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werkgever/tokens` | `Pages/Werkgever/Tokens.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/werkgever/vacatures` | `Pages/Werkgever/Vacancies.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/vacatures/nieuw` | `Pages/Werkgever/CreateVacancy.razor` | BranchManager, EnterpriseManager, Intermediary |
+| `/werkgever/wervingsmateriaal` | `Pages/Werkgever/Wervingsmateriaal.razor` | BranchManager, RegionalManager, EnterpriseManager, Admin |
 | `/werven/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
 | `/westland` | `Pages/WestlandTeaser.razor` | anonymous |
 | `/wie-zijn-wij` | `Pages/Legal/WieZijnWij.razor` | anonymous |
