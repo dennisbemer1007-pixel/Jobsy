@@ -47,6 +47,24 @@
                                 }
                             </fieldset>
 
+                            @if (ShowDiscoveryFields)
+                            {
+                            <fieldset class="profile-roles profile-chip-grid">
+                                <legend>@Culture["Profile.EmployerPreferences"]</legend>
+                                @foreach (var code in DiscoveryCatalogs.EmployerPreferenceCodes)
+                                {
+                                    var selected = Editor.EmployerPreferences.Contains(code);
+                                    <button type="button"
+                                            class="kompas-chip @(selected ? "is-selected" : null)"
+                                            aria-pressed="@(selected ? "true" : "false")"
+                                            @onclick="() => Editor.ToggleEmployerPreference(code, !selected)">
+                                        @Culture[DiscoveryCatalogs.EmployerLabelKey(code)]
+                                    </button>
+                                }
+                            </fieldset>
+                            }
+
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+    [Parameter] public bool ShowDiscoveryFields { get; set; }
 }

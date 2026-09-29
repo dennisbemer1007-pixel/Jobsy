@@ -1,0 +1,81 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<p class="passport-data__private-note">
+    <span aria-hidden="true">@((MarkupString)NavIcons.Shield)</span>
+    @Culture["Discovery.Dislike.PrivateNote"]
+</p>
+
+<fieldset class="profile-roles profile-chip-grid" aria-label="@Culture["Profile.Section.Dislikes"]">
+    @foreach (var code in DiscoveryCatalogs.DislikeCodes)
+    {
+        var selected = Editor.Dislikes.Contains(code);
+        <button type="button"
+                class="kompas-chip @(selected ? "is-selected" : null)"
+                aria-pressed="@(selected ? "true" : "false")"
+                @onclick="() => Editor.ToggleDislike(code, !selected)">
+            @Culture[DiscoveryCatalogs.DislikeLabelKey(code)]
+        </button>
+    }
+</fieldset>
+
+<div class="profile-custom-dislikes">
+    @for (var i = 0; i < Editor.CustomDislikes.Count; i++)
+    {
+        var index = i;
+        <div class="profile-language-row">
+            <input type="text"
+                   maxlength="@DiscoveryCatalogs.MaxCustomDislikeLength"
+                   value="@Editor.CustomDislikes[index]"
+                   placeholder="@Culture["Discovery.Dislike.CustomPlaceholder"]"
+                   @oninput="e => OnCustomInput(index, e.Value?.ToString())" />
+            <button type="button" class="btn-compact" @onclick="() => RemoveCustom(index)">×</button>
+        </div>
+    }
+    @if (Editor.CustomDislikes.Count < DiscoveryCatalogs.MaxCustomDislikes)
+    {
+        <button type="button" class="passport-card__fill-link" @onclick="AddCustom">
+            + @Culture["Discovery.Dislike.SomethingElse"]
+        </button>
+    }
+</div>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    private void AddCustom()
+    {
+        if (Editor.CustomDislikes.Count >= DiscoveryCatalogs.MaxCustomDislikes)
+        {
+            return;
+        }
+
+        Editor.CustomDislikes.Add("");
+        Editor.Notify();
+    }
+
+    private void RemoveCustom(int index)
+    {
+        if (index < 0 || index >= Editor.CustomDislikes.Count)
+        {
+            return;
+        }
+
+        Editor.CustomDislikes.RemoveAt(index);
+        Editor.Notify();
+    }
+
+    private void OnCustomInput(int index, string? value)
+    {
+        if (index < 0 || index >= Editor.CustomDislikes.Count)
+        {
+            return;
+        }
+
+        Editor.CustomDislikes[index] = value ?? "";
+        Editor.Notify();
+    }
+}

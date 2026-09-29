@@ -1891,3 +1891,61 @@
     padding: 0 var(--space-4, 1rem) var(--space-4, 1rem);
     border-block-start: 1px solid var(--border);
 }
+
+.profile-radio-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2, 0.5rem);
+    min-height: 44px;
+    padding-block: var(--space-1, 0.25rem);
+}
+
+.profile-language-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
+    margin-block-end: var(--space-2, 0.5rem);
+}
+
+.profile-chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2, 0.5rem);
+}
+
+.profile-chip-grid .kompas-chip.is-selected {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--brand);
+}
+
+.passport-data__private-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2, 0.5rem);
+    color: var(--muted);
+    font-size: var(--text-sm, 0.875rem);
+    margin: 0 0 var(--space-3, 0.75rem);
+}
+
+.passport-data__private-note svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+    margin-block-start: 0.15rem;
+}
+
+.passport-dna__joy {
+    margin-block-start: var(--space-3, 0.75rem);
+}
+
+.passport-dna__joy-label,
+.passport-proof__learn-label {
+    margin: 0 0 var(--space-2, 0.5rem);
+    font-weight: 600;
+}
+
+.passport-proof__learn {
+    margin-block-start: var(--space-3, 0.75rem);
+}

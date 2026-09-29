@@ -110,6 +110,18 @@
                 <button type="button" class="passport-card__fill-link" @onclick='() => OpenEditor("certificates")'>
                     @Culture["Passport.Proof.AddCertificate"]
                 </button>
+                @if (Editor.LearningGoals.Count > 0)
+                {
+                    <div class="passport-proof__learn">
+                        <p class="passport-proof__learn-label">@Culture["Passport.Proof.WantToLearn"]</p>
+                        <div class="passport-proof__pills">
+                            @foreach (var goal in Editor.LearningGoals.Where(g => !string.IsNullOrWhiteSpace(g)).Take(3))
+                            {
+                                <span class="kompas-chip">@goal</span>
+                            }
+                        </div>
+                    </div>
+                }
             </article>
 
             <article class="detail-card passport-proof__card">

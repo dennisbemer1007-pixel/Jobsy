@@ -36,6 +36,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateValuesProfile> CandidateValuesProfiles => Set<CandidateValuesProfile>();
     public DbSet<CompanyCultureProfile> CompanyCultureProfiles => Set<CompanyCultureProfile>();
     public DbSet<CandidateWhoAmIProfile> CandidateWhoAmIProfiles => Set<CandidateWhoAmIProfile>();
+    public DbSet<CandidatePrivatePreferences> CandidatePrivatePreferences => Set<CandidatePrivatePreferences>();
     public DbSet<CandidateCareerPlan> CandidateCareerPlans => Set<CandidateCareerPlan>();
     public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
@@ -612,6 +613,18 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.KeywordsJson).HasMaxLength(1000).IsRequired();
             entity.Property(e => e.InputFingerprint).HasMaxLength(128).IsRequired();
             entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidatePrivatePreferences>(entity =>
+        {
+            entity.ToTable("CandidatePrivatePreferences");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.DislikesJson).HasMaxLength(2000).IsRequired().HasDefaultValue("[]");
+            entity.Property(e => e.CustomDislikesJson).HasMaxLength(2000).IsRequired().HasDefaultValue("[]");
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

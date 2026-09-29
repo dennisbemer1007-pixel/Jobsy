@@ -95,12 +95,20 @@
                             <div id="@panelId" class="passport-data__body" role="region" aria-labelledby="@btnId">
                                 @if (section.Id == "personal")
                                 {
-                                    <PersonalSection />
+                                    <PersonalSection ShowDiscoveryFields="true" />
                                     <DevicesSection />
                                 }
                                 else if (section.Id == "preferences")
                                 {
-                                    <PreferencesSection />
+                                    <PreferencesSection ShowDiscoveryFields="true" />
+                                }
+                                else if (section.Id == "joy")
+                                {
+                                    <JoyAndLearningSection />
+                                }
+                                else if (section.Id == "dislikes")
+                                {
+                                    <DislikesSection />
                                 }
                                 else if (section.Id == "availability")
                                 {
@@ -126,7 +134,21 @@
 
             @if (!string.IsNullOrWhiteSpace(_openSection) && _openSection is not "delete")
             {
-                <ProfileSaveBar />
+                @if (_openSection == "dislikes")
+                {
+                    <div class="profile-save-bar">
+                        <button type="button"
+                                class="btn-compact btn-compact--primary"
+                                disabled="@(Editor.PrivatePrefsSaving)"
+                                @onclick="Editor.SavePrivatePreferencesAsync">
+                            @(Editor.PrivatePrefsSaving ? Culture["Common.Loading"] : Culture["Common.Save"])
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <ProfileSaveBar />
+                }
             }
 
             @if (!string.IsNullOrWhiteSpace(Editor.ConsentMessage))
@@ -152,6 +174,8 @@
     [
         new("personal", "Profile.Section.Personal", "Passport.Data.PersonalSub", NavIcons.Profile, false),
         new("preferences", "Profile.Section.Preferences", "Passport.Data.PreferencesSub", NavIcons.Transport, false),
+        new("joy", "Profile.Section.JoyAndLearning", "Passport.Data.JoySub", NavIcons.Feedback, false),
+        new("dislikes", "Profile.Section.Dislikes", "Passport.Data.DislikesSub", NavIcons.Shield, false),
         new("availability", "Profile.Section.Availability", "Passport.Data.AvailabilitySub", NavIcons.Calendar, false),
         new("motivation", "Passport.Data.Motivation", "Passport.Data.MotivationSub", NavIcons.Feedback, false),
         new("privacy", "Profile.Consent.Title", "Passport.Data.PrivacySub", NavIcons.Shield, false),
@@ -201,6 +225,7 @@
             }
 
             Editor.ApplyFromProfile(me);
+            await Editor.LoadPrivatePreferencesAsync();
             _loaded = true;
         }
         catch

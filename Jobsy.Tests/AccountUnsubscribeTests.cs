@@ -505,6 +505,7 @@ public class AccountUnsubscribeTests
             typeof(CandidateVacancyCultureFit),
             typeof(CandidateValuesProfile),
             typeof(CandidateWhoAmIProfile),
+            typeof(CandidatePrivatePreferences),
             typeof(DeepAnalysisCheckout),
             typeof(DeviceLoginHandoff),
             typeof(LocalAuthCredential),
@@ -611,6 +612,13 @@ public class AccountUnsubscribeTests
         db.CandidateMatchSnapshots.Add(new CandidateMatchSnapshot { Id = Guid.NewGuid(), UserId = userId });
         db.CandidateOnboardings.Add(new CandidateOnboarding { Id = Guid.NewGuid(), UserId = userId });
         db.CandidateWhoAmIProfiles.Add(new CandidateWhoAmIProfile { Id = Guid.NewGuid(), UserId = userId });
+        db.CandidatePrivatePreferences.Add(new CandidatePrivatePreferences
+        {
+            UserId = userId,
+            DislikesJson = """["night-shifts"]""",
+            CustomDislikesJson = "[]",
+            UpdatedAtUtc = DateTime.UtcNow
+        });
         db.UserExternalLogins.Add(new UserExternalLogin
         {
             Id = Guid.NewGuid(),
@@ -652,6 +660,7 @@ public class AccountUnsubscribeTests
         Assert.False(await db.CandidateMatchSnapshots.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.CandidateOnboardings.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.CandidateWhoAmIProfiles.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.CandidatePrivatePreferences.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.UserExternalLogins.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.UserDeviceSessions.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.DeviceLoginHandoffs.AnyAsync(row => row.UserId == userId));

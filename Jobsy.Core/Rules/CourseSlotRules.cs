@@ -12,7 +12,9 @@ public static class CourseSlotRules
 
     public sealed record Context(
         IReadOnlyList<string> DetectedFields,
-        string SearchBlob);
+        string SearchBlob,
+        /// <summary>Extra search keys (e.g. learning goals). Gaps still rank higher via existing match rules.</summary>
+        IReadOnlyList<string>? ExtraContextKeys = null);
 
     public sealed record Slot(
         TrainingOffer Offer,
@@ -25,7 +27,14 @@ public static class CourseSlotRules
     public static IReadOnlyList<Slot> Pick(IEnumerable<TrainingOffer> offers, Context context)
     {
         var detected = context.DetectedFields ?? [];
-        var blob = context.SearchBlob ?? "";
+        var extra = context.ExtraContextKeys?
+            .Where(k => !string.IsNullOrWhiteSpace(k))
+            .Select(k => k.Trim())
+            .ToList() ?? [];
+        var blob = string.Join(' ',
+            new[] { context.SearchBlob ?? "" }
+                .Concat(extra)
+                .Where(s => !string.IsNullOrWhiteSpace(s)));
 
         var eligible = offers
             .Where(o => o.IsActive

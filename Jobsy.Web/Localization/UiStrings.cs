@@ -3386,6 +3386,7 @@ public static class UiStrings
         UiStringsMatch.MergeAll(nl, en, pl, ro, ar);
         UiStringsFeatureFlags.MergeAll(nl, en, pl, ro, ar);
         UiStringsPassport.MergeAll(nl, en, pl, ro, ar);
+        UiStringsDiscovery.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

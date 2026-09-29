@@ -51,6 +51,7 @@
                               TravelLabel="@_travel"
                               HoursLabel="@_hours"
                               AvailableLabel="@_available"
+                              LanguagesLabel="@_languages"
                               LookingFor="_lookingFor"
                               LicenseLabel="@_license"
                               CvBusy="_pdfBusy"
@@ -127,6 +128,7 @@
                                                 Story="@_story"
                                                 StoryGeneratedAt="_storyAt"
                                                 Keywords="_keywords"
+                                                Hobbies="_hobbies"
                                                 CultureDetail="_cultureDetail"
                                                 ValuesDetail="_valuesDetail"
                                                 Shells="_shells"
@@ -239,7 +241,9 @@
     private string? _travel;
     private string? _hours;
     private string? _available;
+    private string? _languages;
     private readonly List<string> _lookingFor = [];
+    private readonly List<string> _hobbies = [];
     private string? _license;
     private string _oneLiner = "";
     private int _completedTests;
@@ -463,6 +467,20 @@
         }
 
         _license = DrivingLicenseLabels.Combine(prefs?.DrivingLicenses);
+        _languages = FormatLanguages(prefs);
+        _hobbies.Clear();
+        foreach (var hobby in prefs?.Hobbies ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(hobby))
+            {
+                continue;
+            }
+
+            _hobbies.Add(DiscoveryCatalogs.IsKnownHobby(hobby)
+                ? Culture[DiscoveryCatalogs.HobbyLabelKey(hobby)]
+                : hobby);
+        }
+
         _oneLiner = string.Join(" · ", new[]
         {
             _city,
@@ -675,6 +693,69 @@
         }
 
         return last;
+    }
+
+    private string? FormatLanguages(CandidatePreferences? prefs)
+    {
+        if (prefs is null)
+        {
+            return null;
+        }
+
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(prefs.DutchLevel)
+            && DiscoveryCatalogs.IsKnownDutchLevel(prefs.DutchLevel))
+        {
+            parts.Add($"Nederlands: {Culture[DiscoveryCatalogs.DutchLabelKey(prefs.DutchLevel)].ToLowerInvariant()}");
+        }
+
+        var others = (prefs.SpokenLanguages ?? [])
+            .Where(l => !string.IsNullOrWhiteSpace(l.Code)
+                        && !string.Equals(l.Code, "nl", StringComparison.OrdinalIgnoreCase))
+            .Take(2)
+            .Select(l =>
+            {
+                var name = LanguageDisplayName(l.Code);
+                if (!string.IsNullOrWhiteSpace(l.Level) && DiscoveryCatalogs.IsKnownDutchLevel(l.Level))
+                {
+                    return $"{name}: {Culture[DiscoveryCatalogs.DutchLabelKey(l.Level)].ToLowerInvariant()}";
+                }
+
+                return name;
+            })
+            .ToList();
+        parts.AddRange(others);
+
+        var extra = (prefs.SpokenLanguages?.Count ?? 0)
+                    - (prefs.SpokenLanguages ?? []).Count(l => string.Equals(l.Code, "nl", StringComparison.OrdinalIgnoreCase))
+                    - others.Count;
+        if (extra > 0)
+        {
+            parts.Add($"+{extra}");
+        }
+
+        return parts.Count == 0 ? null : string.Join(", ", parts);
+    }
+
+    private static string LanguageDisplayName(string code)
+    {
+        try
+        {
+            var info = System.Globalization.CultureInfo.GetCultureInfo(code);
+            var name = info.NativeName;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = info.EnglishName;
+            }
+
+            return string.IsNullOrWhiteSpace(name)
+                ? code.ToUpperInvariant()
+                : char.ToUpperInvariant(name[0]) + name[1..];
+        }
+        catch (System.Globalization.CultureNotFoundException)
+        {
+            return code.ToUpperInvariant();
+        }
     }
 
     private string? FormatAvailability(CandidatePreferences? prefs)

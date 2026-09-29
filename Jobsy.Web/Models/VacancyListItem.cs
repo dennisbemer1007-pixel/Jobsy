@@ -183,6 +183,24 @@ public sealed class CandidatePreferences
     public string? EducationDirection { get; set; }
     public List<string> AvailabilityPresets { get; set; } = [];
     public bool? AvailabilityPresetsOverridden { get; set; }
+    public List<CandidateLanguage> SpokenLanguages { get; set; } = [];
+    public string? DutchLevel { get; set; }
+    public List<string> EmployerPreferences { get; set; } = [];
+    public List<string> LearningGoals { get; set; } = [];
+    public List<string> Hobbies { get; set; } = [];
+}
+
+public sealed class CandidateLanguage
+{
+    public string Code { get; set; } = "";
+    public string? Level { get; set; }
+}
+
+public sealed class CandidatePrivatePreferences
+{
+    public List<string> Dislikes { get; set; } = [];
+    public List<string> CustomDislikes { get; set; } = [];
+    public DateTime? UpdatedAtUtc { get; set; }
 }
 
 public sealed class CandidateEmployerHistory

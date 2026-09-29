@@ -93,6 +93,17 @@
             @Fact("Passport.Facts.Hours", HoursLabel)
             @Fact("Passport.Facts.Available", AvailableLabel)
             <div class="passport-card__fact passport-card__fact--wide">
+                <span class="passport-card__fact-label">@Culture["Passport.Facts.Languages"]</span>
+                @if (string.IsNullOrWhiteSpace(LanguagesLabel))
+                {
+                    <span class="passport-card__fact-empty">— <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
+                }
+                else
+                {
+                    <span class="passport-card__fact-value">@LanguagesLabel</span>
+                }
+            </div>
+            <div class="passport-card__fact passport-card__fact--wide">
                 <span class="passport-card__fact-label">@Culture["Passport.Facts.LookingFor"]</span>
                 @if (LookingFor.Count == 0)
                 {
@@ -145,6 +156,7 @@
     [Parameter] public string? TravelLabel { get; set; }
     [Parameter] public string? HoursLabel { get; set; }
     [Parameter] public string? AvailableLabel { get; set; }
+    [Parameter] public string? LanguagesLabel { get; set; }
     [Parameter] public IReadOnlyList<string> LookingFor { get; set; } = [];
     [Parameter] public string? LicenseLabel { get; set; }
     [Parameter] public string OneLiner { get; set; } = "";

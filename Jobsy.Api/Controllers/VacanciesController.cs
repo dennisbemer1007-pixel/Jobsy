@@ -512,6 +512,32 @@ public class VacanciesController : ControllerBase
                 .OrderByDescending(r => r.MatchPercent ?? -1)
                 .ThenBy(r => r.Title, StringComparer.CurrentCultureIgnoreCase)
                 .ToList();
+
+            var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+            if (lookup is not null)
+            {
+                var dislikeJson = await _db.CandidatePrivatePreferences.AsNoTracking()
+                    .Where(p => p.UserId == lookup.Id)
+                    .Select(p => p.DislikesJson)
+                    .FirstOrDefaultAsync(cancellationToken);
+                IReadOnlyList<string> dislikeCodes = [];
+                if (!string.IsNullOrWhiteSpace(dislikeJson))
+                {
+                    try
+                    {
+                        dislikeCodes = System.Text.Json.JsonSerializer.Deserialize<List<string>>(dislikeJson) ?? [];
+                    }
+                    catch (System.Text.Json.JsonException)
+                    {
+                        dislikeCodes = [];
+                    }
+                }
+
+                results = DislikeMatchRules.DownRankNightShifts(
+                    results,
+                    dislikeCodes,
+                    r => r.LegalNightShift23To06 == true).ToList();
+            }
         }
 
         if (take is int cap)

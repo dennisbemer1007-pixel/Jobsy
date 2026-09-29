@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -102,19 +103,51 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         CancellationToken cancellationToken = default)
     {
         await EnsureDefaultsAsync(cancellationToken);
-        _ = userId;
 
         var keys = searchKeys?.Where(k => !string.IsNullOrWhiteSpace(k)).Select(k => k.Trim()).ToList() ?? [];
+        var learningGoals = await LoadLearningGoalsAsync(userId, cancellationToken);
         var blob = string.Join(' ', keys.Prepend(searchBlob ?? "").Where(s => !string.IsNullOrWhiteSpace(s)));
-        var fields = TrainingFieldCatalog.Detect(keys.Prepend(searchBlob ?? ""));
+        var fields = TrainingFieldCatalog.Detect(keys.Prepend(searchBlob ?? "").Concat(learningGoals));
 
         var rows = await _db.TrainingOffers.AsNoTracking()
             .Include(o => o.Provider)
             .Where(o => o.IsActive && o.Provider.IsActive && o.ShowInPassport)
             .ToListAsync(cancellationToken);
 
-        var slots = CourseSlotRules.Pick(rows, new CourseSlotRules.Context(fields, blob));
+        var slots = CourseSlotRules.Pick(
+            rows,
+            new CourseSlotRules.Context(fields, blob, learningGoals));
         return slots.Select(ToPassportCard).ToList();
+    }
+
+    private async Task<IReadOnlyList<string>> LoadLearningGoalsAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var json = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.PreferencesJson)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            var prefs = System.Text.Json.JsonSerializer.Deserialize<CandidatePreferencesDto>(
+                json,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return prefs?.LearningGoals?
+                .Where(g => !string.IsNullOrWhiteSpace(g))
+                .Select(g => g.Trim())
+                .Take(DiscoveryCatalogs.MaxLearningGoals)
+                .ToList() ?? [];
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return [];
+        }
     }
 
     public async Task<TrainingTrackedLinkDto> TrackAsync(

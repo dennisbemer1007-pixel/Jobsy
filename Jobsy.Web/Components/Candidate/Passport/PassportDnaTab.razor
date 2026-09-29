@@ -71,6 +71,22 @@
                     <p class="passport-dna__meta">@Culture.Format("Dna.StoryUpdated", generated.ToLocalTime().ToString("dd-MM-yyyy"))</p>
                 }
             }
+            @if (Hobbies.Count > 0)
+            {
+                <div class="passport-dna__joy">
+                    <p class="passport-dna__joy-label">@Culture["Passport.Dna.Joy"]</p>
+                    <ul class="passport-dna__chips">
+                        @foreach (var hobby in Hobbies.Take(4))
+                        {
+                            <li class="kompas-chip">@hobby</li>
+                        }
+                        @if (Hobbies.Count > 4)
+                        {
+                            <li class="kompas-chip">+@(Hobbies.Count - 4)</li>
+                        }
+                    </ul>
+                </div>
+            }
         </section>
 
         <section class="detail-card passport-dna__card" aria-labelledby="passport-dna-home-title">
@@ -132,6 +148,7 @@
     [Parameter] public string? Story { get; set; }
     [Parameter] public DateTime? StoryGeneratedAt { get; set; }
     [Parameter] public IReadOnlyList<string> Keywords { get; set; } = [];
+    [Parameter] public IReadOnlyList<string> Hobbies { get; set; } = [];
     [Parameter] public CandidateDnaViewBuilder.DetailBlock? CultureDetail { get; set; }
     [Parameter] public CandidateDnaViewBuilder.DetailBlock? ValuesDetail { get; set; }
     [Parameter] public PassportShellRules.ShellProgress Shells { get; set; } =

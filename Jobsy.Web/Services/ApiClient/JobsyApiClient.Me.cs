@@ -152,6 +152,32 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
     }
 
+    public async Task<CandidatePrivatePreferences?> GetMyPrivatePreferencesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CandidatePrivatePreferences>("api/me/private-preferences", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CandidatePrivatePreferences?> UpdateMyPrivatePreferencesAsync(
+        IReadOnlyList<string>? dislikes = null,
+        IReadOnlyList<string>? customDislikes = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/me/private-preferences", new
+        {
+            dislikes,
+            customDislikes
+        }, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CandidatePrivatePreferences>(cancellationToken: ct);
+    }
+
     public async Task<OnboardingState?> GetMyOnboardingAsync(CancellationToken ct = default)
     {
         if (_meCache is not null)

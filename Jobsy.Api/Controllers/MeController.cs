@@ -134,28 +134,7 @@ public class MeController : ControllerBase
 
         var language = JobsyLanguages.Normalize(request.Language);
         var existing = ParsePreferences(user.PreferencesJson);
-        user.PreferencesJson = SerializePreferences(
-            existing.Roles,
-            existing.MaxTravelMinutes,
-            existing.PreferredTransport,
-            language,
-            existing.AgeYears,
-            existing.AboutMe,
-            existing.DefaultMotivation,
-            existing.DrivingLicenses,
-            existing.Availability,
-            existing.Employers,
-            existing.Educations,
-            existing.HomeAddress,
-            existing.MinHoursPerWeek,
-            existing.MaxHoursPerWeek,
-            existing.FlexibleTimes,
-            existing.Certificates,
-            existing.ShowAddressOnCv,
-            existing.NoWorkExperience,
-            existing.EducationDirection,
-            existing.AvailabilityPresets,
-            existing.AvailabilityPresetsOverridden);
+        user.PreferencesJson = SerializePreferences(existing with { Language = language });
 
         await _db.SaveChangesAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
@@ -297,7 +276,7 @@ public class MeController : ControllerBase
                 ? existing.Language
                 : JobsyLanguages.Normalize(request.Preferences.Language);
 
-            user.PreferencesJson = SerializePreferences(
+            var merged = new CandidatePreferencesDto(
                 roles,
                 request.Preferences.MaxTravelMinutes,
                 string.IsNullOrWhiteSpace(request.Preferences.PreferredTransport)
@@ -320,7 +299,14 @@ public class MeController : ControllerBase
                 request.Preferences.NoWorkExperience ?? existing.NoWorkExperience,
                 request.Preferences.EducationDirection ?? existing.EducationDirection,
                 request.Preferences.AvailabilityPresets ?? existing.AvailabilityPresets,
-                request.Preferences.AvailabilityPresetsOverridden ?? existing.AvailabilityPresetsOverridden);
+                request.Preferences.AvailabilityPresetsOverridden ?? existing.AvailabilityPresetsOverridden,
+                request.Preferences.SpokenLanguages ?? existing.SpokenLanguages,
+                request.Preferences.DutchLevel ?? existing.DutchLevel,
+                request.Preferences.EmployerPreferences ?? existing.EmployerPreferences,
+                request.Preferences.LearningGoals ?? existing.LearningGoals,
+                request.Preferences.Hobbies ?? existing.Hobbies);
+
+            user.PreferencesJson = SerializePreferences(merged);
         }
 
         if (request.AvailableFromDate.HasValue
@@ -719,28 +705,19 @@ public class MeController : ControllerBase
                 user.PhoneNumber = merged.PhoneNumber;
             }
 
-            user.PreferencesJson = SerializePreferences(
-                merged.Preferences.Roles,
-                merged.Preferences.MaxTravelMinutes,
-                merged.Preferences.PreferredTransport,
-                merged.Preferences.Language,
-                merged.Preferences.AgeYears,
-                merged.Preferences.AboutMe,
-                merged.Preferences.DefaultMotivation,
-                merged.Preferences.DrivingLicenses,
-                merged.Preferences.Availability,
-                merged.Preferences.Employers,
-                merged.Preferences.Educations,
-                merged.Preferences.HomeAddress,
-                merged.Preferences.MinHoursPerWeek,
-                merged.Preferences.MaxHoursPerWeek,
-                merged.Preferences.FlexibleTimes,
-                merged.Preferences.Certificates,
-                merged.Preferences.ShowAddressOnCv,
-                merged.Preferences.NoWorkExperience ?? prefs.NoWorkExperience,
-                merged.Preferences.EducationDirection ?? prefs.EducationDirection,
-                merged.Preferences.AvailabilityPresets ?? prefs.AvailabilityPresets,
-                merged.Preferences.AvailabilityPresetsOverridden ?? prefs.AvailabilityPresetsOverridden);
+            user.PreferencesJson = SerializePreferences(merged.Preferences with
+            {
+                NoWorkExperience = merged.Preferences.NoWorkExperience ?? prefs.NoWorkExperience,
+                EducationDirection = merged.Preferences.EducationDirection ?? prefs.EducationDirection,
+                AvailabilityPresets = merged.Preferences.AvailabilityPresets ?? prefs.AvailabilityPresets,
+                AvailabilityPresetsOverridden =
+                    merged.Preferences.AvailabilityPresetsOverridden ?? prefs.AvailabilityPresetsOverridden,
+                SpokenLanguages = merged.Preferences.SpokenLanguages ?? prefs.SpokenLanguages,
+                DutchLevel = merged.Preferences.DutchLevel ?? prefs.DutchLevel,
+                EmployerPreferences = merged.Preferences.EmployerPreferences ?? prefs.EmployerPreferences,
+                LearningGoals = merged.Preferences.LearningGoals ?? prefs.LearningGoals,
+                Hobbies = merged.Preferences.Hobbies ?? prefs.Hobbies
+            });
             existing.ExtractedAtUtc = DateTime.UtcNow;
             existing.FilledFieldsJson = JsonSerializer.Serialize(merged.FilledFields, JsonOptions);
         }
@@ -1463,7 +1440,65 @@ public class MeController : ControllerBase
                 availabilityPresetsOverridden = overriddenEl.GetBoolean();
             }
 
-            return new CandidatePreferencesDto(
+            List<CandidateLanguageDto>? spokenLanguages = null;
+            if (root.TryGetProperty("spokenLanguages", out var spokenEl)
+                && spokenEl.ValueKind == JsonValueKind.Array)
+            {
+                spokenLanguages = [];
+                foreach (var item in spokenEl.EnumerateArray())
+                {
+                    if (item.ValueKind != JsonValueKind.Object)
+                    {
+                        continue;
+                    }
+
+                    string? code = null;
+                    if (item.TryGetProperty("code", out var codeEl) && codeEl.ValueKind == JsonValueKind.String)
+                    {
+                        code = codeEl.GetString();
+                    }
+
+                    string? level = null;
+                    if (item.TryGetProperty("level", out var levelEl) && levelEl.ValueKind == JsonValueKind.String)
+                    {
+                        level = levelEl.GetString();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(code))
+                    {
+                        spokenLanguages.Add(new CandidateLanguageDto(code, level));
+                    }
+                }
+            }
+
+            string? dutchLevel = null;
+            if (root.TryGetProperty("dutchLevel", out var dutchEl) && dutchEl.ValueKind == JsonValueKind.String)
+            {
+                dutchLevel = dutchEl.GetString();
+            }
+
+            List<string>? employerPreferences = null;
+            if (root.TryGetProperty("employerPreferences", out var empPrefEl)
+                && empPrefEl.ValueKind == JsonValueKind.Array)
+            {
+                employerPreferences = ReadStringArray(empPrefEl);
+            }
+
+            List<string>? learningGoals = null;
+            if (root.TryGetProperty("learningGoals", out var goalsEl)
+                && goalsEl.ValueKind == JsonValueKind.Array)
+            {
+                learningGoals = ReadStringArray(goalsEl);
+            }
+
+            List<string>? hobbies = null;
+            if (root.TryGetProperty("hobbies", out var hobbiesEl)
+                && hobbiesEl.ValueKind == JsonValueKind.Array)
+            {
+                hobbies = ReadStringArray(hobbiesEl);
+            }
+
+            var parsed = new CandidatePreferencesDto(
                 roles,
                 maxTravel,
                 transport,
@@ -1484,12 +1519,39 @@ public class MeController : ControllerBase
                 noWorkExperience,
                 educationDirection,
                 availabilityPresets,
-                availabilityPresetsOverridden);
+                availabilityPresetsOverridden,
+                spokenLanguages,
+                dutchLevel,
+                employerPreferences,
+                learningGoals,
+                hobbies);
+
+            return CandidatePreferencesValidator.Sanitize(parsed);
         }
         catch (Exception)
         {
             return EmptyPreferences();
         }
+    }
+
+    private static List<string> ReadStringArray(JsonElement arrayEl)
+    {
+        var list = new List<string>();
+        foreach (var item in arrayEl.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            var value = item.GetString()?.Trim();
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                list.Add(value);
+            }
+        }
+
+        return list;
     }
 
     private static string? ReadEmployerMonth(JsonElement item, string primaryName, string alternateName)
@@ -1549,6 +1611,111 @@ public class MeController : ControllerBase
         null,
         null);
 
+    public static string SerializePreferences(CandidatePreferencesDto prefs)
+    {
+        var sanitized = CandidatePreferencesValidator.Sanitize(prefs);
+        var trimmedHome = string.IsNullOrWhiteSpace(sanitized.HomeAddress) ? null : sanitized.HomeAddress.Trim();
+        if (trimmedHome is { Length: > 256 })
+        {
+            trimmedHome = trimmedHome[..256];
+        }
+
+        var trimmedMotivation = string.IsNullOrWhiteSpace(sanitized.DefaultMotivation)
+            ? null
+            : sanitized.DefaultMotivation.Trim();
+        if (trimmedMotivation is { Length: > 500 })
+        {
+            trimmedMotivation = trimmedMotivation[..500];
+        }
+
+        return JsonSerializer.Serialize(new
+        {
+            roles = sanitized.Roles ?? [],
+            maxTravelMinutes = sanitized.MaxTravelMinutes,
+            preferredTransport = sanitized.PreferredTransport,
+            language = string.IsNullOrWhiteSpace(sanitized.Language)
+                ? null
+                : JobsyLanguages.Normalize(sanitized.Language),
+            ageYears = sanitized.AgeYears,
+            aboutMe = string.IsNullOrWhiteSpace(sanitized.AboutMe) ? null : sanitized.AboutMe.Trim(),
+            defaultMotivation = trimmedMotivation,
+            drivingLicenses = sanitized.DrivingLicenses?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            availability = sanitized.Availability,
+            employers = sanitized.Employers?
+                .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
+                .Select(e =>
+                {
+                    var description = string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim();
+                    if (description is { Length: > 1000 })
+                    {
+                        description = description[..1000];
+                    }
+
+                    return new
+                    {
+                        employerName = e.EmployerName.Trim(),
+                        role = string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
+                        years = e.Years is >= 0 and <= 80 ? e.Years : null,
+                        description,
+                        startMonth = LobsyCvModelFactory.NormalizeMonth(e.StartMonth),
+                        endMonth = NormalizeEmployerEndMonth(e.StartMonth, e.EndMonth)
+                    };
+                })
+                .ToArray(),
+            educations = sanitized.Educations?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            homeAddress = trimmedHome,
+            minHoursPerWeek = sanitized.MinHoursPerWeek,
+            maxHoursPerWeek = sanitized.MaxHoursPerWeek,
+            flexibleTimes = sanitized.FlexibleTimes,
+            certificates = sanitized.Certificates?
+                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                .Select(c =>
+                {
+                    var name = c.Name.Trim();
+                    if (name.Length > 200)
+                    {
+                        name = name[..200];
+                    }
+
+                    return new
+                    {
+                        name,
+                        year = c.Year is >= 1950 and <= 2100 ? c.Year : null
+                    };
+                })
+                .Take(30)
+                .ToArray(),
+            showAddressOnCv = sanitized.ShowAddressOnCv,
+            noWorkExperience = sanitized.NoWorkExperience,
+            educationDirection = string.IsNullOrWhiteSpace(sanitized.EducationDirection)
+                ? null
+                : (sanitized.EducationDirection.Trim().Length > 80
+                    ? sanitized.EducationDirection.Trim()[..80]
+                    : sanitized.EducationDirection.Trim()),
+            availabilityPresets = sanitized.AvailabilityPresets?
+                .Where(x => !string.IsNullOrWhiteSpace(x) && AvailabilityPresetRules.IsKnown(x))
+                .Select(x => AvailabilityPresetRules.TryGet(x)!.Code)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            availabilityPresetsOverridden = sanitized.AvailabilityPresetsOverridden,
+            spokenLanguages = sanitized.SpokenLanguages?
+                .Select(l => new { code = l.Code, level = l.Level })
+                .ToArray(),
+            dutchLevel = sanitized.DutchLevel,
+            employerPreferences = sanitized.EmployerPreferences,
+            learningGoals = sanitized.LearningGoals,
+            hobbies = sanitized.Hobbies
+        }, JsonOptions);
+    }
+
     public static string SerializePreferences(
         IEnumerable<string> roles,
         int? maxTravelMinutes,
@@ -1570,98 +1737,37 @@ public class MeController : ControllerBase
         bool? noWorkExperience = null,
         string? educationDirection = null,
         IEnumerable<string>? availabilityPresets = null,
-        bool? availabilityPresetsOverridden = null)
-    {
-        var trimmedHome = string.IsNullOrWhiteSpace(homeAddress) ? null : homeAddress.Trim();
-        if (trimmedHome is { Length: > 256 })
-        {
-            trimmedHome = trimmedHome[..256];
-        }
-
-        var trimmedMotivation = string.IsNullOrWhiteSpace(defaultMotivation) ? null : defaultMotivation.Trim();
-        if (trimmedMotivation is { Length: > 500 })
-        {
-            trimmedMotivation = trimmedMotivation[..500];
-        }
-
-        return JsonSerializer.Serialize(new
-        {
-            roles,
+        bool? availabilityPresetsOverridden = null,
+        IEnumerable<CandidateLanguageDto>? spokenLanguages = null,
+        string? dutchLevel = null,
+        IEnumerable<string>? employerPreferences = null,
+        IEnumerable<string>? learningGoals = null,
+        IEnumerable<string>? hobbies = null)
+        => SerializePreferences(new CandidatePreferencesDto(
+            roles.ToList(),
             maxTravelMinutes,
             preferredTransport,
-            language = string.IsNullOrWhiteSpace(language)
-                ? null
-                : JobsyLanguages.Normalize(language),
+            language,
             ageYears,
-            aboutMe = string.IsNullOrWhiteSpace(aboutMe) ? null : aboutMe.Trim(),
-            defaultMotivation = trimmedMotivation,
-            drivingLicenses = drivingLicenses?
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(x => x.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToArray(),
+            aboutMe,
+            defaultMotivation,
+            drivingLicenses?.ToList(),
             availability,
-            employers = employers?
-                .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
-                .Select(e =>
-                {
-                    var description = string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim();
-                    if (description is { Length: > 1000 })
-                    {
-                        description = description[..1000];
-                    }
-
-                    return new
-                    {
-                        employerName = e.EmployerName.Trim(),
-                        role = string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
-                        years = e.Years is >= 0 and <= 80 ? e.Years : null,
-                        description,
-                        startMonth = LobsyCvModelFactory.NormalizeMonth(e.StartMonth),
-                        endMonth = NormalizeEmployerEndMonth(e.StartMonth, e.EndMonth)
-                    };
-                })
-                .ToArray(),
-            educations = educations?
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(x => x.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToArray(),
-            homeAddress = trimmedHome,
+            employers?.ToList(),
+            educations?.ToList(),
+            homeAddress,
             minHoursPerWeek,
             maxHoursPerWeek,
             flexibleTimes,
-            certificates = certificates?
-                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
-                .Select(c =>
-                {
-                    var name = c.Name.Trim();
-                    if (name.Length > 200)
-                    {
-                        name = name[..200];
-                    }
-
-                    return new
-                    {
-                        name,
-                        year = c.Year is >= 1950 and <= 2100 ? c.Year : null
-                    };
-                })
-                .Take(30)
-                .ToArray(),
+            certificates?.ToList(),
             showAddressOnCv,
             noWorkExperience,
-            educationDirection = string.IsNullOrWhiteSpace(educationDirection)
-                ? null
-                : (educationDirection.Trim().Length > 80
-                    ? educationDirection.Trim()[..80]
-                    : educationDirection.Trim()),
-            availabilityPresets = availabilityPresets?
-                .Where(x => !string.IsNullOrWhiteSpace(x) && AvailabilityPresetRules.IsKnown(x))
-                .Select(x => AvailabilityPresetRules.TryGet(x)!.Code)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToArray(),
-            availabilityPresetsOverridden
-        }, JsonOptions);
-    }
+            educationDirection,
+            availabilityPresets?.ToList(),
+            availabilityPresetsOverridden,
+            spokenLanguages?.ToList(),
+            dutchLevel,
+            employerPreferences?.ToList(),
+            learningGoals?.ToList(),
+            hobbies?.ToList()));
 }

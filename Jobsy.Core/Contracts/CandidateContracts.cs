@@ -28,7 +28,29 @@ public record CandidatePreferencesDto(
     /// <summary>Selected availability preset codes from onboarding wizard v2.</summary>
     IReadOnlyList<string>? AvailabilityPresets = null,
     /// <summary>True when the candidate manually overrode preset-computed hours/day-parts.</summary>
-    bool? AvailabilityPresetsOverridden = null);
+    bool? AvailabilityPresetsOverridden = null,
+    /// <summary>Spoken languages (ISO 639-1 + optional CEFR-style level). Max 8.</summary>
+    IReadOnlyList<CandidateLanguageDto>? SpokenLanguages = null,
+    /// <summary>Separate Dutch level for B1 support: beginner|basis|goed|vloeiend|moedertaal.</summary>
+    string? DutchLevel = null,
+    /// <summary>Self-knowledge employer preference codes (DiscoveryCatalogs).</summary>
+    IReadOnlyList<string>? EmployerPreferences = null,
+    /// <summary>Free-text learning goals. Max 5 × 60 chars.</summary>
+    IReadOnlyList<string>? LearningGoals = null,
+    /// <summary>Hobby catalog codes and/or free text. Max 10.</summary>
+    IReadOnlyList<string>? Hobbies = null);
+
+public record CandidateLanguageDto(string Code, string? Level = null);
+
+/// <summary>Candidate-only private preferences (dislikes). Never employer-facing.</summary>
+public record CandidatePrivatePreferencesDto(
+    IReadOnlyList<string> Dislikes,
+    IReadOnlyList<string> CustomDislikes,
+    DateTime? UpdatedAtUtc = null);
+
+public record UpdateCandidatePrivatePreferencesRequest(
+    IReadOnlyList<string>? Dislikes = null,
+    IReadOnlyList<string>? CustomDislikes = null);
 
 public record CandidateEmployerHistoryDto(
     string EmployerName,

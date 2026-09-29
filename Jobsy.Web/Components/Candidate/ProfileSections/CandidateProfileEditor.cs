@@ -96,6 +96,16 @@ public sealed class CandidateProfileEditor : IDisposable
     public string? AboutMe { get; set; }
     public string? DefaultMotivation { get; set; }
     public string? Message { get; set; }
+    public string? DutchLevel { get; set; }
+    public List<CandidateLanguage> SpokenLanguages { get; } = [];
+    public HashSet<string> EmployerPreferences { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public List<string> LearningGoals { get; } = [];
+    public HashSet<string> Hobbies { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public List<string> HobbyFreeText { get; } = [];
+    public HashSet<string> Dislikes { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public List<string> CustomDislikes { get; } = [];
+    public bool PrivatePrefsLoaded { get; private set; }
+    public bool PrivatePrefsSaving { get; private set; }
 
     public List<AddressSuggestion> Suggestions { get; private set; } = [];
     public bool ShowSuggestions { get; set; }
@@ -152,6 +162,47 @@ public sealed class CandidateProfileEditor : IDisposable
 
         AboutMe = prefs.AboutMe;
         DefaultMotivation = prefs.DefaultMotivation;
+        DutchLevel = prefs.DutchLevel;
+        SpokenLanguages.Clear();
+        foreach (var lang in prefs.SpokenLanguages ?? [])
+        {
+            if (!string.IsNullOrWhiteSpace(lang.Code))
+            {
+                SpokenLanguages.Add(new CandidateLanguage { Code = lang.Code, Level = lang.Level });
+            }
+        }
+
+        EmployerPreferences.Clear();
+        foreach (var code in prefs.EmployerPreferences ?? [])
+        {
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                EmployerPreferences.Add(code);
+            }
+        }
+
+        LearningGoals.Clear();
+        LearningGoals.AddRange((prefs.LearningGoals ?? []).Where(g => !string.IsNullOrWhiteSpace(g)).Take(DiscoveryCatalogs.MaxLearningGoals));
+
+        Hobbies.Clear();
+        HobbyFreeText.Clear();
+        foreach (var hobby in prefs.Hobbies ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(hobby))
+            {
+                continue;
+            }
+
+            if (DiscoveryCatalogs.IsKnownHobby(hobby))
+            {
+                Hobbies.Add(DiscoveryCatalogs.CanonicalHobby(hobby)!);
+            }
+            else
+            {
+                HobbyFreeText.Add(hobby.Trim());
+            }
+        }
+
         Availability.Clear();
         foreach (var day in prefs.Availability ?? [])
         {
@@ -259,6 +310,119 @@ public sealed class CandidateProfileEditor : IDisposable
         if (selected) SelectedLicenses.Add(license);
         else SelectedLicenses.Remove(license);
         Notify();
+    }
+
+    public void ToggleEmployerPreference(string code, bool selected)
+    {
+        if (selected) EmployerPreferences.Add(code);
+        else EmployerPreferences.Remove(code);
+        Notify();
+    }
+
+    public void ToggleHobby(string code, bool selected)
+    {
+        if (selected) Hobbies.Add(code);
+        else Hobbies.Remove(code);
+        Notify();
+    }
+
+    public void ToggleDislike(string code, bool selected)
+    {
+        if (selected) Dislikes.Add(code);
+        else Dislikes.Remove(code);
+        Notify();
+    }
+
+    public void AddSpokenLanguage(string code)
+    {
+        var canonical = DiscoveryCatalogs.CanonicalLanguage(code);
+        if (canonical is null || SpokenLanguages.Count >= DiscoveryCatalogs.MaxSpokenLanguages)
+        {
+            return;
+        }
+
+        if (SpokenLanguages.Any(l => string.Equals(l.Code, canonical, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        SpokenLanguages.Add(new CandidateLanguage { Code = canonical });
+        Notify();
+    }
+
+    public void RemoveSpokenLanguage(string code)
+    {
+        SpokenLanguages.RemoveAll(l => string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase));
+        Notify();
+    }
+
+    public void SetSpokenLanguageLevel(string code, string? level)
+    {
+        var row = SpokenLanguages.FirstOrDefault(l => string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase));
+        if (row is null)
+        {
+            return;
+        }
+
+        row.Level = string.IsNullOrWhiteSpace(level) ? null : level.Trim();
+        Notify();
+    }
+
+    public async Task LoadPrivatePreferencesAsync()
+    {
+        try
+        {
+            var prefs = await _api.GetMyPrivatePreferencesAsync();
+            Dislikes.Clear();
+            CustomDislikes.Clear();
+            if (prefs is not null)
+            {
+                foreach (var d in prefs.Dislikes ?? [])
+                {
+                    if (!string.IsNullOrWhiteSpace(d))
+                    {
+                        Dislikes.Add(d);
+                    }
+                }
+
+                CustomDislikes.AddRange((prefs.CustomDislikes ?? []).Where(c => !string.IsNullOrWhiteSpace(c)));
+            }
+
+            PrivatePrefsLoaded = true;
+        }
+        catch
+        {
+            PrivatePrefsLoaded = false;
+        }
+
+        Notify();
+    }
+
+    public async Task SavePrivatePreferencesAsync()
+    {
+        PrivatePrefsSaving = true;
+        Message = null;
+        Notify();
+        try
+        {
+            await _api.UpdateMyPrivatePreferencesAsync(
+                Dislikes.OrderBy(x => x).ToList(),
+                CustomDislikes
+                    .Where(c => !string.IsNullOrWhiteSpace(c))
+                    .Select(c => c.Trim())
+                    .Take(DiscoveryCatalogs.MaxCustomDislikes)
+                    .ToList());
+            Message = _culture["Profile.Saved"];
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+        }
+        finally
+        {
+            PrivatePrefsSaving = false;
+            Notify();
+        }
     }
 
     public void ToggleAvailability(string key, bool selected)
@@ -652,7 +816,27 @@ public sealed class CandidateProfileEditor : IDisposable
                         })
                         .Take(30)
                         .ToList(),
-                    ShowAddressOnCv = false
+                    ShowAddressOnCv = false,
+                    SpokenLanguages = SpokenLanguages
+                        .Where(l => !string.IsNullOrWhiteSpace(l.Code))
+                        .Select(l => new CandidateLanguage
+                        {
+                            Code = l.Code.Trim().ToLowerInvariant(),
+                            Level = string.IsNullOrWhiteSpace(l.Level) ? null : l.Level.Trim()
+                        })
+                        .Take(DiscoveryCatalogs.MaxSpokenLanguages)
+                        .ToList(),
+                    DutchLevel = string.IsNullOrWhiteSpace(DutchLevel) ? null : DutchLevel.Trim(),
+                    EmployerPreferences = EmployerPreferences.OrderBy(x => x).ToList(),
+                    LearningGoals = LearningGoals
+                        .Where(g => !string.IsNullOrWhiteSpace(g))
+                        .Select(g => g.Trim())
+                        .Take(DiscoveryCatalogs.MaxLearningGoals)
+                        .ToList(),
+                    Hobbies = Hobbies
+                        .Concat(HobbyFreeText.Where(h => !string.IsNullOrWhiteSpace(h)).Select(h => h.Trim()))
+                        .Take(DiscoveryCatalogs.MaxHobbies)
+                        .ToList()
                 },
                 homeLatitude: clearHome || !HomeLocationDirty ? null : HomeLat,
                 homeLongitude: clearHome || !HomeLocationDirty ? null : HomeLng,
