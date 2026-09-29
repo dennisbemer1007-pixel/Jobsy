@@ -273,9 +273,18 @@ public sealed partial class JobsyApiClient
         }
     }
 
-    public async Task<IReadOnlyList<VacancyListItem>> GetManagedVacanciesAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<VacancyListItem>> GetManagedVacanciesAsync(
+        IReadOnlyList<Guid>? companyIds = null,
+        CancellationToken ct = default)
     {
-        using var response = await _http.GetAsync("api/vacancies/manage", ct);
+        var url = "api/vacancies/manage";
+        if (companyIds is { Count: > 0 })
+        {
+            var qs = string.Join("&", companyIds.Select(id => $"companyIds={id:D}"));
+            url += "?" + qs;
+        }
+
+        using var response = await _http.GetAsync(url, ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);

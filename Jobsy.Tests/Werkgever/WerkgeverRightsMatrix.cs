@@ -35,6 +35,13 @@ public static class WerkgeverRightsMatrix
     [
         new("api/werkgever/dashboard", true, true, true),
         new("api/werkgever/te-doen", true, true, true),
+        new("api/vacancies/manage", true, true, true),
+        // Mutating vacancy lifecycle: RM forbidden; VM scoped; BM allowed (matrix exercised in VacanciesManageApiTests).
+        new("api/vacancies/{id}/approve-publish", true, false, false),
+        new("api/vacancies/{id}/highlight", true, false, true),
+        new("api/vacancies/{id}/pushbom", true, false, true),
+        new("api/vacancies/{id}/extend", true, false, true),
+        new("api/vacancies/{id}/inactive", true, false, true),
     ];
 
     public static bool RoleAllowed(PageRow row, EmployerRole role) => role switch

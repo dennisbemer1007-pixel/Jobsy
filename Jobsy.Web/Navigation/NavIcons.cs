@@ -169,6 +169,12 @@ public static class ActionIcons
     public const string Highlight =
         "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m12 3 2.4 5.4 5.9.7-4.4 4 1.2 5.8L12 16.3 6.9 19l1.2-5.8-4.4-4 5.9-.7Z\"/></svg>";
 
+    public const string Zap =
+        "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13 2 4 14h7l-1 8 9-12h-7l1-8z\"/></svg>";
+
+    public const string Mail =
+        "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><path d=\"m3 7 9 7 9-7\"/></svg>";
+
     public const string Reactivate =
         "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12a9 9 0 0 1 15.5-6.4\"/><path d=\"M21 3v6h-6\"/><path d=\"M21 12a9 9 0 0 1-15.5 6.4\"/><path d=\"M3 21v-6h6\"/></svg>";
 

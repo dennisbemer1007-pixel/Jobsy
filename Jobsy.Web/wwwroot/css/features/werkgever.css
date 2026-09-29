@@ -676,3 +676,171 @@
 .wg-sidebar__link.is-active .wg-sidebar__count {
     background: var(--brand-deep);
 }
+
+/* Vacatures table (03) — enterprise density on desktop list */
+.wg-vac--dense {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.wg-vac .wg-card {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+@media (min-width: 1024px) {
+    .wg-vac--dense .ent-data-table th,
+    .wg-vac--dense .ent-data-table td {
+        padding-block: 0.55rem;
+        font-size: var(--text-sm);
+    }
+
+    .wg-vac--dense .ent-data-table tbody tr {
+        height: 44px;
+    }
+
+    .wg-vac--dense .wg-vac__meta,
+    .wg-vac--dense .wg-vac__info {
+        font-size: var(--text-xs);
+    }
+}
+
+.wg-vac__title-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.wg-vac__title {
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.wg-vac__title:hover {
+    color: var(--brand);
+}
+
+.wg-vac__meta,
+.wg-vac__info {
+    color: var(--muted);
+}
+
+.wg-vac__row--hl {
+    background: var(--warn-soft);
+}
+
+.wg-vac__row--sel {
+    background: var(--accent-soft);
+}
+
+.wg-vac__new {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.35rem;
+    margin-inline-end: 0.35rem;
+    border-radius: var(--radius-pill);
+    background: var(--brand-deep);
+    color: #fff;
+    font-size: var(--text-xs);
+    font-weight: 700;
+}
+
+.wg-vac__vis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.wg-vac__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: var(--text-xs);
+    color: var(--brand);
+}
+
+.wg-vac__chip svg {
+    width: 14px;
+    height: 14px;
+}
+
+.wg-vac__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    justify-content: flex-end;
+    white-space: nowrap;
+}
+
+.wg-vac__inbox {
+    padding-inline: 0.5rem;
+}
+
+.wg-vac__inbox svg {
+    width: 18px;
+    height: 18px;
+}
+
+.wg-vac__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.wg-vac__cols {
+    position: relative;
+}
+
+.wg-vac__cols summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.wg-vac__cols-panel {
+    position: absolute;
+    inset-inline-end: 0;
+    top: calc(100% + 0.35rem);
+    z-index: var(--z-sticky);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+    display: grid;
+    gap: 0.5rem;
+    min-width: 12rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.wg-vac-status--ok {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.wg-vac-status--warn {
+    background: var(--warn-soft);
+    color: var(--warn);
+}
+
+.wg-vac-status--neutral {
+    background: var(--pearl-mid);
+    color: var(--muted);
+}
+
+.wg-vac-create-note {
+    margin-top: var(--space-2);
+    max-width: 40rem;
+}
+
+.tabular {
+    font-variant-numeric: tabular-nums;
+}

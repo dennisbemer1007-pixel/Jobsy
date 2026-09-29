@@ -1,200 +1,271 @@
 @page "/werkgever/vacatures"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using System.Globalization
+@using System.Text
+@using System.Text.Json
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Shell
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+@inject IJSRuntime Js
 @implements IDisposable
 
-<PageTitle>@Culture["Employer.VacanciesTitle"] · Lobsy</PageTitle>
+<PageTitle>@Culture["WgNav.Vacancies"] · Lobsy</PageTitle>
 
-<div class="panel-page panel-page--wide">
-    <header class="panel-header">
-        <div>
-            <h1>@Culture["Employer.VacanciesTitle"]</h1>
-            <p class="login-lead">
-                @(_canManageVacancy ? Culture["Employer.VacanciesLeadManage"] : Culture["Employer.VacanciesLeadRead"])
-            </p>
-        </div>
-        @if (_canManageVacancy)
+<WgPageShell Title="@Culture["WgNav.Vacancies"]" Lead="@LeadText" ReadOnlyHint="@(Role == EmployerRole.Regiomanager)">
+    <Actions>
+        <button type="button" class="btn-compact" @onclick="ExportCsvAsync">
+            <span aria-hidden="true">@((MarkupString)NavIcons.Download)</span>
+            @Culture["WgVac.Export"]
+        </button>
+        <WgAction Kind="WgAction.WgActionKind.Primary" RequiresWrite="true" OnClick="GoNewVacancy">
+            @Culture["WgVac.Post"]
+        </WgAction>
+    </Actions>
+
+    <ChildContent>
+    <div class="wg-vac wg-vac--dense">
+        @if (_loading)
         {
-            <a class="login-submit" href="/werkgever/vacatures/nieuw" style="text-decoration:none;display:inline-flex;align-items:center;">@Culture["Employer.NewVacancy"]</a>
+            <PageContentSkeleton Variant="cards" CardCount="4" LoadingLabel="@Culture["EntUi.Loading"]" />
         }
-    </header>
-
-    <div class="employer-search filter-bar">
-        @if (_salaryTableFilter is not null)
+        else if (!string.IsNullOrEmpty(_error))
         {
-            <p class="muted" style="grid-column:1/-1;margin:0">
-                @Culture["Employer.SalaryTableFilter"]@(string.IsNullOrWhiteSpace(_salaryTableFilterName) ? "" : $": {_salaryTableFilterName}")
-                · <button type="button" class="auth-link" style="border:none;background:none;padding:0;cursor:pointer" @onclick="ClearSalaryTableFilter">@Culture["Employer.ClearFilter"]</button>
-            </p>
-        }
-        <label class="filter-bar__query">
-            @Culture["Common.Search"]
-            <input type="search"
-                   @bind="_searchQuery"
-                   @bind:event="oninput"
-                   @bind:after="ApplyFilters"
-                   placeholder="@Culture["Vacancy.SearchCompanyOrTitlePlaceholder"]" />
-        </label>
-        <span class="muted">@_filtered.Count van @_vacancies.Count</span>
-    </div>
-
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else if (!string.IsNullOrEmpty(_error))
-    {
-        <p class="state-message error">@_error</p>
-    }
-    else if (_filtered.Count == 0)
-    {
-        @if (_vacancies.Count == 0)
-        {
-            <p class="state-message">
-                Nog geen vacatures.
-                @if (_canManageVacancy)
-                {
-                    <a class="auth-link" href="/werkgever/vacatures/nieuw">@Culture["Employer.NewVacancy"]</a>
-                }
-            </p>
+            <p class="state-message error">@_error</p>
         }
         else
         {
-            <p class="state-message">Geen vacatures gevonden voor deze zoekopdracht of filter.</p>
-        }
-    }
-    else
-    {
-        <div class="vacancy-card-list">
-            @foreach (var v in _filtered)
-            {
-                <article class="vacancy-mgmt-card">
-                    <header class="vacancy-mgmt-card__header">
-                        <div class="vacancy-mgmt-card__identity">
-                            <a class="vacancy-mgmt-card__title" href="@($"/vacancies/{v.Id}")">@v.Title</a>
-                            <p class="vacancy-mgmt-card__branch">@v.CompanyName</p>
-                            @if (v.IsHighlighted)
+            <div class="wg-card">
+                <EntTabs Tabs="@TabItems" ActiveKey="@_tab" BasePath="/werkgever/vacatures" ExtraQuery="@FilterQueryWithoutTab" />
+
+                <EntFilterBar Query="@_searchQuery" QueryChanged="OnSearchChanged" Placeholder="@Culture["WgVac.Search"]">
+                    @if (Role is EmployerRole.Bedrijfsmanager or EmployerRole.Regiomanager)
+                    {
+                        <label class="ent-filter-bar__select">
+                            <span class="visually-hidden">@Culture["WgVac.Filter.Branch"]</span>
+                            <select @bind="_filterBranch" @bind:after="OnFilterChanged">
+                                <option value="">@Culture["WgVac.Filter.Branch"]</option>
+                                @foreach (var b in BranchOptions)
+                                {
+                                    <option value="@b.Id">@b.Name</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    @if (Role == EmployerRole.Bedrijfsmanager && RegionOptions.Count > 0)
+                    {
+                        <label class="ent-filter-bar__select">
+                            <span class="visually-hidden">@Culture["WgVac.Filter.Region"]</span>
+                            <select @bind="_filterRegion" @bind:after="OnFilterChanged">
+                                <option value="">@Culture["WgVac.Filter.Region"]</option>
+                                @foreach (var r in RegionOptions)
+                                {
+                                    <option value="@r.Key">@r.Label</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    <label class="ent-filter-bar__select">
+                        <span class="visually-hidden">@Culture["WgVac.Filter.Type"]</span>
+                        <select @bind="_filterType" @bind:after="OnFilterChanged">
+                            <option value="">@Culture["WgVac.Filter.Type"]</option>
+                            @foreach (var t in VacancyManageRules.EmploymentTypes)
                             {
-                                <p class="vacancy-mgmt-card__highlight muted">highlight</p>
+                                <option value="@t">@t</option>
                             }
+                        </select>
+                    </label>
+                    @if (Role == EmployerRole.Vestigingsmanager)
+                    {
+                        <label class="ent-filter-bar__select">
+                            <span class="visually-hidden">@Culture["WgVac.Filter.SalaryTable"]</span>
+                            <select @bind="_filterSalaryTable" @bind:after="OnFilterChanged">
+                                <option value="">@Culture["WgVac.Filter.SalaryTable"]</option>
+                                @foreach (var s in SalaryTableOptions)
+                                {
+                                    <option value="@s.Id">@s.Name</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    <details class="wg-vac__cols">
+                        <summary class="btn-compact">@Culture["WgVac.Columns"]</summary>
+                        <div class="wg-vac__cols-panel">
+                            <label><input type="checkbox" checked="@_colViews" @onchange="e => ToggleCol(nameof(_colViews), e)" /> @Culture["WgVac.Col.Views"]</label>
+                            <label><input type="checkbox" checked="@_colOnline" @onchange="e => ToggleCol(nameof(_colOnline), e)" /> @Culture["WgVac.Col.OnlineUntil"]</label>
+                            <label><input type="checkbox" checked="@_colVisibility" @onchange="e => ToggleCol(nameof(_colVisibility), e)" /> @Culture["WgVac.Col.Visibility"]</label>
                         </div>
-                        <span class="vacancy-mgmt-card__status">@StatusLabel(v)</span>
-                    </header>
-                    <div class="vacancy-mgmt-card__meta">
-                        <span>@v.StartDate.ToString("dd-MM-yyyy") – @v.EndDate.ToString("dd-MM-yyyy")</span>
-                        <span class="source-badge source-badge--@VacancySourceDisplay.CssModifier(v.CreatedVia)">
-                            @VacancySourceDisplay.Label(v.CreatedVia)
-                        </span>
-                    </div>
-                    <div class="vacancy-mgmt-card__stats" role="group" aria-label="Statistieken">
-                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "impressions")">
-                            <span class="vacancy-mgmt-card__stat-label">Getoond</span>
-                            <span class="vacancy-mgmt-card__stat-value">@v.ImpressionCount</span>
-                        </a>
-                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "clicks")">
-                            <span class="vacancy-mgmt-card__stat-label">Clicks</span>
-                            <span class="vacancy-mgmt-card__stat-value">@v.ClickCount</span>
-                        </a>
-                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "shares")">
-                            <span class="vacancy-mgmt-card__stat-label">Gedeeld</span>
-                            <span class="vacancy-mgmt-card__stat-value">@v.ShareCount</span>
-                        </a>
-                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "applications")">
-                            <span class="vacancy-mgmt-card__stat-label">Gesolliciteerd</span>
-                            <span class="vacancy-mgmt-card__stat-value">@v.ApplicationCount</span>
-                        </a>
-                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "extensions")">
-                            <span class="vacancy-mgmt-card__stat-label">Verlengd</span>
-                            <span class="vacancy-mgmt-card__stat-value">@v.ExtensionCount</span>
-                        </a>
-                        <a class="vacancy-mgmt-card__stat" href="@MetricHref(v, "likes")">
-                            <span class="vacancy-mgmt-card__stat-label">Bewaard</span>
-                            <span class="vacancy-mgmt-card__stat-value">@v.LikeCount</span>
-                        </a>
-                    </div>
-                    <div class="vacancy-mgmt-card__actions">
-                        <RowActionsMenu>
-                            <a class="row-actions-menu__item" role="menuitem" href="@($"/vacancies/{v.Id}")">
-                                @Culture["VacancyAction.View"]
-                            </a>
-                            @if (_canManageVacancy)
-                            {
-                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenContactPref(v)">
-                                    @Culture["VacancyAction.Contact"]
-                                </button>
-                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ToggleEmailVerificationAsync(v)">
-                                    @(v.RequireEmailVerification ? "E-mailcheck uitzetten" : "E-mailcheck aanzetten")
-                                </button>
-                                @if (!IsIncompleteDraft(v))
+                    </details>
+                </EntFilterBar>
+
+                @if (ShowBmPendingNote)
+                {
+                    <EntImpactNote Tone="info">
+                        @string.Format(Culture["WgVac.Info.PendingBm"], PendingBranchCount, _tokenBalance.ToString("0.##"))
+                        <a class="auth-link" href="/werkgever/vacatures?tab=wacht">@Culture["WgVac.Info.ShowRequests"]</a>
+                    </EntImpactNote>
+                }
+                else if (ShowVmTokenNote)
+                {
+                    <EntImpactNote Tone="warn">
+                        @string.Format(Culture["WgVac.Info.VmTokens"], Scope.Label, _tokenBalance.ToString("0.##"))
+                        <a class="auth-link" href="/werkgever/tokens">@Culture["WgVac.Info.ViewTokens"]</a>
+                    </EntImpactNote>
+                }
+
+                @if (CanWrite && _selected.Count > 0)
+                {
+                    <EntBulkBar SelectedCount="_selected.Count" OnClear="ClearSelection">
+                        <button type="button" class="btn-compact" @onclick="() => ConfirmBulkAsync(BulkKind.Extend)">
+                            @string.Format(Culture["WgVac.Bulk.Extend"], BulkExtendCost.ToString("0.##"))
+                        </button>
+                        <button type="button" class="btn-compact" @onclick="() => ConfirmBulkAsync(BulkKind.Highlight)">
+                            @string.Format(Culture["WgVac.Bulk.Highlight"], BulkHighlightCost.ToString("0.##"))
+                        </button>
+                        <button type="button" class="btn-compact" @onclick="() => RunBulkAsync(BulkKind.Duplicate)">
+                            @Culture["WgVac.Bulk.Duplicate"]
+                        </button>
+                        <button type="button" class="btn-compact" @onclick="() => RunBulkAsync(BulkKind.Deactivate)">
+                            @Culture["WgVac.Bulk.Deactivate"]
+                        </button>
+                    </EntBulkBar>
+                }
+
+                <EntDataTable Loading="false"
+                              Empty="@(Paged.Count == 0)"
+                              EmptyText="@(_vacancies.Count == 0 ? Culture["WgVac.Empty"] : Culture["WgVac.EmptyFilter"])"
+                              ShowCheckbox="@CanWrite"
+                              AllSelected="@AllPageSelected"
+                              AllSelectedChanged="OnToggleAll"
+                              ShowRowActions="true">
+                    <Header>
+                        <th scope="col">@Culture["WgVac.Col.Vacancy"]</th>
+                        <th scope="col">@Culture["WgVac.Col.Status"]</th>
+                        <th scope="col">@Culture["WgVac.Col.Applications"]</th>
+                        @if (_colViews)
+                        {
+                            <th scope="col">@Culture["WgVac.Col.Views"]</th>
+                        }
+                        @if (_colOnline)
+                        {
+                            <th scope="col">@Culture["WgVac.Col.OnlineUntil"]</th>
+                        }
+                        @if (_colVisibility)
+                        {
+                            <th scope="col">@Culture["WgVac.Col.Visibility"]</th>
+                        }
+                    </Header>
+                    <Rows>
+                        @foreach (var v in Paged)
+                        {
+                            var selected = _selected.Contains(v.Id);
+                            var pending = string.Equals(v.Status, "PendingApproval", StringComparison.OrdinalIgnoreCase);
+                            <tr class="@(pending ? "wg-vac__row--hl" : null) @(selected ? "wg-vac__row--sel" : null)">
+                                @if (CanWrite)
                                 {
-                                    <a class="row-actions-menu__item" role="menuitem" href="@($"/werkgever/vacatures/nieuw?from={v.Id}")">
-                                        @Culture["VacancyAction.Duplicate"]
-                                    </a>
+                                    <td class="ent-data-table__check">
+                                        <input type="checkbox" checked="@selected" @onchange="e => ToggleRow(v.Id, e)"
+                                               aria-label="@v.Title" />
+                                    </td>
                                 }
-                            }
-                            @if (_canManageVacancy && (v.Status == "Draft" || v.Status == "Active"))
-                            {
-                                <a class="row-actions-menu__item" role="menuitem" href="@($"/werkgever/vacatures/nieuw?edit={v.Id}")">
-                                    Bewerken
-                                </a>
-                            }
-                            @if (_canManageVacancy && v.Status == "Draft")
-                            {
-                                @if (!IsIncompleteDraft(v))
+                                <td>
+                                    <div class="wg-vac__title-cell">
+                                        @if (Role == EmployerRole.Regiomanager)
+                                        {
+                                            <a class="wg-vac__title" href="@($"/vacancies/{v.Id}")">@v.Title</a>
+                                        }
+                                        else
+                                        {
+                                            <a class="wg-vac__title" href="@($"/werkgever/vacatures/nieuw?edit={v.Id}")">@v.Title</a>
+                                        }
+                                        <span class="wg-vac__meta">@VacancySubLine(v)</span>
+                                        @if (!string.IsNullOrEmpty(VacancyInfoLine(v)))
+                                        {
+                                            <span class="wg-vac__info">@VacancyInfoLine(v)</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-pill wg-vac-status wg-vac-status--@VacancyManageRules.StatusCss(v)">
+                                        @StatusLabel(v)
+                                    </span>
+                                </td>
+                                <td class="tabular">
+                                    @if (v.NewApplicationCount > 0)
+                                    {
+                                        <span class="wg-vac__new" title="@Culture["WgVac.Col.Applications"]">@v.NewApplicationCount</span>
+                                    }
+                                    @v.ApplicationCount
+                                </td>
+                                @if (_colViews)
                                 {
-                                    <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
-                                        @Culture["VacancyAction.Publish"]
-                                    </button>
+                                    <td class="tabular">@v.ImpressionCount.ToString("N0", CultureInfo.GetCultureInfo("nl-NL"))</td>
                                 }
-                            }
-                            @if (v.Status == "PendingApproval" && _canApprovePublish)
-                            {
-                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ApproveAsync(v.Id)">
-                                    @Culture["VacancyAction.Approve"]
-                                </button>
-                            }
-                            @if (_canManageVacancy && v.Status == "Active")
-                            {
-                                @if (!v.IsHighlighted)
+                                @if (_colOnline)
                                 {
-                                    <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => HighlightAsync(v.Id)">
-                                        @Culture["VacancyAction.Highlight"]
-                                    </button>
+                                    <td class="tabular">@OnlineUntilLabel(v)</td>
                                 }
-                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPushBom(v)">
-                                    @Culture["VacancyAction.PushBom"]
-                                </button>
-                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ExtendAsync(v.Id)">
-                                    @Culture["VacancyAction.Extend"]
-                                </button>
-                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => DeactivateAsync(v.Id)">
-                                    @Culture["VacancyAction.Deactivate"]
-                                </button>
-                            }
-                            @if (_canManageVacancy && v.Status == "Archived")
-                            {
-                                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ExtendAsync(v.Id)">
-                                    @Culture["VacancyAction.Reactivate"]
-                                </button>
-                            }
-                        </RowActionsMenu>
-                    </div>
-                </article>
-            }
-        </div>
+                                @if (_colVisibility)
+                                {
+                                    <td>
+                                        <div class="wg-vac__vis">
+                                            @if (v.IsHighlighted)
+                                            {
+                                                <span class="wg-vac__chip">
+                                                    <span aria-hidden="true">@((MarkupString)ActionIcons.Highlight)</span>
+                                                    @Culture["WgVac.Visibility.Highlighted"]
+                                                </span>
+                                            }
+                                            @if (v.HasPushBom)
+                                            {
+                                                <span class="wg-vac__chip">
+                                                    <span aria-hidden="true">@((MarkupString)ActionIcons.Zap)</span>
+                                                    @Culture["WgVac.Visibility.Push"]
+                                                </span>
+                                            }
+                                        </div>
+                                    </td>
+                                }
+                                <td class="wg-vac__actions">
+                                    @PrimaryAction(v)
+                                    @if (CanWrite)
+                                    {
+                                        <RowActionsMenu>
+                                            @MenuItems(v)
+                                        </RowActionsMenu>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </Rows>
+                </EntDataTable>
+
+                <div class="wg-vac__footer">
+                    <span class="muted">@string.Format(Culture["WgVac.Pager"], Paged.Count, Filtered.Count)</span>
+                    <EntPager Page="_page" TotalPages="@TotalPages" PageChanged="OnPageChanged" />
+                </div>
+            </div>
+        }
+
         @if (!string.IsNullOrEmpty(_message))
         {
-            <p class="state-message">@_message</p>
+            <p class="state-message" role="status">@_message</p>
         }
-    }
-</div>
+    </div>
+    </ChildContent>
+</WgPageShell>
 
 <PublishOptionsDialog IsOpen="_publishOpen"
                       Vacancy="_publishVacancy"
@@ -207,6 +278,33 @@
                       OnConfirmed="OnPushBomConfirmed" />
 
 <TokenTopUpDialog IsOpen="_topUpOpen" Info="_topUpInfo" OnClose="CloseTopUp" />
+
+@if (_confirmOpen)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@_confirmTitle"
+                         TitleId="wg-vac-confirm"
+                         OnClose="CloseConfirm">
+        <p>@_confirmBody</p>
+        @if (_confirmInsufficient && Role == EmployerRole.Vestigingsmanager)
+        {
+            <p class="state-message error">@Culture["WgVac.Confirm.AskTokens"]</p>
+        }
+        <div class="inline-actions">
+            @if (_confirmInsufficient && Role == EmployerRole.Bedrijfsmanager)
+            {
+                <button type="button" class="btn-compact btn-compact--primary" @onclick="OpenTopUpFromConfirm">Tokens kopen</button>
+            }
+            else if (!_confirmInsufficient)
+            {
+                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="ConfirmProceedAsync">
+                    @(_busy ? Culture["Common.Busy"] : Culture["VacancyAction.Approve"])
+                </button>
+            }
+            <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseConfirm">@Culture["Common.Cancel"]</button>
+        </div>
+    </LobsyFriendlyDialog>
+}
 
 @if (_contactOpen && _contactVacancy is not null)
 {
@@ -223,39 +321,48 @@
         @if (_contactDirect)
         {
             <div style="margin-top:0.5rem;display:grid;gap:0.35rem">
-                <label class="checkbox-row">
-                    <input type="checkbox" @bind="_contactMail" disabled="@_contactBusy" />
-                    Mail
-                </label>
-                <label class="checkbox-row">
-                    <input type="checkbox" @bind="_contactPhone" disabled="@_contactBusy" />
-                    Telefoon
-                </label>
-                <label class="checkbox-row">
-                    <input type="checkbox" @bind="_contactWhatsApp" disabled="@_contactBusy" />
-                    WhatsApp
-                </label>
+                <label class="checkbox-row"><input type="checkbox" @bind="_contactMail" disabled="@_contactBusy" /> Mail</label>
+                <label class="checkbox-row"><input type="checkbox" @bind="_contactPhone" disabled="@_contactBusy" /> Telefoon</label>
+                <label class="checkbox-row"><input type="checkbox" @bind="_contactWhatsApp" disabled="@_contactBusy" /> WhatsApp</label>
             </div>
         }
         @if (!string.IsNullOrEmpty(_contactError))
         {
             <p class="state-message error">@_contactError</p>
         }
-<div class="inline-actions">
-                <button type="button" class="login-submit" disabled="@_contactBusy" @onclick="SaveContactPrefAsync">Opslaan</button>
-                <button type="button" class="btn-compact" disabled="@_contactBusy" @onclick="CloseContactPref">Annuleren</button>
-            </div>
-</LobsyFriendlyDialog>
+        <div class="inline-actions">
+            <button type="button" class="login-submit" disabled="@_contactBusy" @onclick="SaveContactPrefAsync">Opslaan</button>
+            <button type="button" class="btn-compact" disabled="@_contactBusy" @onclick="CloseContactPref">Annuleren</button>
+        </div>
+    </LobsyFriendlyDialog>
 }
 
 @code {
+    private enum BulkKind { Extend, Highlight, Duplicate, Deactivate, Approve }
+
     private List<VacancyListItem> _vacancies = [];
-    private List<VacancyListItem> _filtered = [];
+    private List<CompanySummary> _companies = [];
+    private List<(Guid Id, string Name)> SalaryTableOptions = [];
+    private readonly HashSet<Guid> _selected = [];
+    private Dictionary<string, decimal> _costs = new(StringComparer.OrdinalIgnoreCase);
+    private decimal _tokenBalance;
+    private bool _tokensManagedByEnterprise;
     private bool _loading = true;
-    private bool _canApprovePublish;
-    private bool _canManageVacancy;
+    private bool _busy;
+    private bool _started;
     private string? _error;
     private string? _message;
+    private string _tab = "alle";
+    private string _searchQuery = "";
+    private string _filterBranch = "";
+    private string _filterRegion = "";
+    private string _filterType = "";
+    private string _filterSalaryTable = "";
+    private int _page = 1;
+    private bool _colViews = true;
+    private bool _colOnline = true;
+    private bool _colVisibility = true;
+
     private bool _publishOpen;
     private VacancyListItem? _publishVacancy;
     private bool _pushBomOpen;
@@ -270,84 +377,232 @@
     private bool _contactMail;
     private bool _contactPhone;
     private bool _contactWhatsApp;
-    private string _searchQuery = "";
-    private string _sortColumn = "start";
-    private bool _sortAscending;
-    private Guid? _salaryTableFilter;
-    private string? _salaryTableFilterName;
+
+    private bool _confirmOpen;
+    private string _confirmTitle = "";
+    private string _confirmBody = "";
+    private bool _confirmInsufficient;
+    private BulkKind _confirmKind;
+    private Guid? _confirmVacancyId;
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private bool CanWrite => Role is not EmployerRole.Regiomanager;
+    private bool CanApprove => Role == EmployerRole.Bedrijfsmanager;
+    private DateOnly Today => DateOnly.FromDateTime(DateTime.UtcNow);
+
+    private string LeadText => Role switch
+    {
+        EmployerRole.Regiomanager => string.Format(Culture["WgVac.Lead.Rm"], Scope.Label),
+        EmployerRole.Vestigingsmanager => string.Format(Culture["WgVac.Lead.Vm"], Scope.Label),
+        _ => string.Format(Culture["WgVac.Lead.Bm"], Math.Max(1, BranchOptions.Count))
+    };
+
+    private IReadOnlyList<(Guid Id, string Name)> BranchOptions =>
+        _companies.Where(c => c.ParentCompanyId is not null || Role == EmployerRole.Vestigingsmanager)
+            .Select(c => (c.Id, c.Name))
+            .Distinct()
+            .OrderBy(c => c.Name)
+            .ToList();
+
+    private IReadOnlyList<EmployerScopeOption> RegionOptions =>
+        Scope.AvailableScopes.Where(s => s.Kind == EmployerScopeKind.Region).ToList();
+
+    private int PendingBranchCount =>
+        _vacancies.Where(v => string.Equals(v.Status, "PendingApproval", StringComparison.OrdinalIgnoreCase))
+            .Select(v => v.CompanyId).Distinct().Count();
+
+    private bool ShowBmPendingNote =>
+        Role == EmployerRole.Bedrijfsmanager && PendingBranchCount > 0 && _tab != "wacht";
+
+    private bool ShowVmTokenNote =>
+        Role == EmployerRole.Vestigingsmanager && _tokensManagedByEnterprise;
+
+    private IReadOnlyList<VacancyListItem> Filtered
+    {
+        get
+        {
+            IEnumerable<VacancyListItem> q = _vacancies;
+            q = q.Where(v => VacancyManageRules.MatchesTab(v, _tab, Today));
+            if (!string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                q = q.Where(v =>
+                    v.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)
+                    || v.CompanyName.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)
+                    || v.Id.ToString("N").Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (Guid.TryParse(_filterBranch, out var branchId))
+            {
+                q = q.Where(v => v.CompanyId == branchId);
+            }
+
+            if (!string.IsNullOrEmpty(_filterRegion))
+            {
+                var regionIds = Scope.CompanyIdsFor(_filterRegion).ToHashSet();
+                if (regionIds.Count > 0)
+                {
+                    q = q.Where(v => regionIds.Contains(v.CompanyId));
+                }
+            }
+
+            if (!string.IsNullOrEmpty(_filterType))
+            {
+                q = q.Where(v => string.Equals(
+                    VacancyManageRules.EmploymentTypeLabel(v), _filterType, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (Guid.TryParse(_filterSalaryTable, out var tableId))
+            {
+                q = q.Where(v => v.SalaryTableId == tableId);
+            }
+
+            return q.OrderByDescending(v => string.Equals(v.Status, "PendingApproval", StringComparison.OrdinalIgnoreCase))
+                .ThenBy(v => v.Title)
+                .ToList();
+        }
+    }
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(Filtered.Count / (double)VacancyManageRules.PageSize));
+    private IReadOnlyList<VacancyListItem> Paged =>
+        Filtered.Skip((_page - 1) * VacancyManageRules.PageSize).Take(VacancyManageRules.PageSize).ToList();
+
+    private bool AllPageSelected =>
+        CanWrite && Paged.Count > 0 && Paged.All(v => _selected.Contains(v.Id));
+
+    private decimal BulkExtendCost =>
+        _selected.Count * _costs.GetValueOrDefault("Extend", 1m);
+
+    private decimal BulkHighlightCost =>
+        _selected.Count * _costs.GetValueOrDefault("Highlight", VacancyProductRules.DefaultHighlightCostTokens);
+
+    private IReadOnlyList<EntTabs.Tab> TabItems
+    {
+        get
+        {
+            var today = Today;
+            var tabs = new List<EntTabs.Tab>
+            {
+                new("alle", $"{Culture["WgVac.Tab.All"]} ({_vacancies.Count})"),
+                new("actief", $"{Culture["WgVac.Tab.Active"]} ({_vacancies.Count(v => VacancyManageRules.MatchesTab(v, "actief", today))})"),
+                new("wacht", $"{Culture["WgVac.Tab.Pending"]} ({_vacancies.Count(v => VacancyManageRules.MatchesTab(v, "wacht", today))})"),
+                new("concept", $"{Culture["WgVac.Tab.Draft"]} ({_vacancies.Count(v => VacancyManageRules.MatchesTab(v, "concept", today))})"),
+            };
+            var expiring = _vacancies.Count(v => VacancyManageRules.MatchesTab(v, "verloopt", today));
+            // EndDate exists on Vacancy — always show the tab when any vacancy has an end date (all do).
+            tabs.Add(new("verloopt", $"{Culture["WgVac.Tab.Expiring"]} ({expiring})"));
+            tabs.Add(new("gesloten", $"{Culture["WgVac.Tab.Closed"]} ({_vacancies.Count(v => VacancyManageRules.MatchesTab(v, "gesloten", today))})"));
+            return tabs;
+        }
+    }
+
+    private string FilterQueryWithoutTab
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                parts.Add($"q={Uri.EscapeDataString(_searchQuery)}");
+            }
+
+            if (!string.IsNullOrEmpty(_filterBranch))
+            {
+                parts.Add($"vestiging={Uri.EscapeDataString(_filterBranch)}");
+            }
+
+            if (!string.IsNullOrEmpty(_filterType))
+            {
+                parts.Add($"type={Uri.EscapeDataString(_filterType)}");
+            }
+
+            return string.Join("&", parts);
+        }
+    }
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
 
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender || _started)
+        {
+            return;
+        }
+
+        _started = true;
+        await ScopeBootstrap.EnsureLoadedAsync();
+        await LoadColumnsAsync();
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
         try
         {
-            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-            var query = QueryHelpers.ParseQuery(uri.Query);
-            if (query.TryGetValue("salaryTableId", out var raw)
-                && Guid.TryParse(raw, out var tableId))
+            ParseQuery();
+            var ids = Scope.CompanyIds;
+            _vacancies = (await Api.GetManagedVacanciesAsync(ids.Count > 0 ? ids : null))
+                .Select(NormalizeVacancy).ToList();
+            try
             {
-                _salaryTableFilter = tableId;
+                _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            }
+            catch
+            {
+                _companies = [];
             }
 
-            if (query.TryGetValue("q", out var q) && !string.IsNullOrWhiteSpace(q))
+            try
             {
-                _searchQuery = q.ToString().Trim();
+                var costs = await Api.GetTokenCostsAsync();
+                _costs = costs.ToDictionary(c => c.Reason, c => c.CostTokens, StringComparer.OrdinalIgnoreCase);
             }
-
-            if (query.TryGetValue("paidAction", out var paidAction) && !string.IsNullOrWhiteSpace(paidAction))
+            catch
             {
-                _message = paidAction.ToString() switch
+                _costs = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
                 {
-                    "Publish" => "Betaling gelukt — vacature is gepubliceerd.",
-                    "Highlight" => "Betaling gelukt — vacature is gehighlight.",
-                    "PushBom" => "Betaling gelukt — PushBom is verstuurd.",
-                    "Extend" => "Betaling gelukt — vacature is verlengd.",
-                    _ => "Betaling gelukt — actie uitgevoerd."
+                    ["Publish"] = 1m, ["Highlight"] = 2m, ["PushBom"] = 3m, ["Extend"] = 1m
                 };
             }
-            else if (query.TryGetValue("paidActionError", out var paidErr) && !string.IsNullOrWhiteSpace(paidErr))
-            {
-                _message = $"Tokens bijgeschreven, maar actie mislukt: {paidErr}";
-            }
-            else if (query.TryGetValue("moderationWarning", out var moderationWarning)
-                     && !string.IsNullOrWhiteSpace(moderationWarning))
-            {
-                _message = "Concept opgeslagen. De vacaturetekst moet nog worden aangepast voordat je kunt publiceren.";
-            }
 
-            var state = await AuthState.GetAuthenticationStateAsync();
-            var user = state.User;
-            _canApprovePublish = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
-            _canManageVacancy = user.IsInRole("BranchManager")
-                || user.IsInRole("EnterpriseManager")
-                || user.IsInRole("Intermediary")
-                || user.IsInRole("Admin");
-
-            _vacancies = (await Api.GetManagedVacanciesAsync()).Select(NormalizeVacancy).ToList();
-
-            if (_salaryTableFilter is Guid tid)
+            try
             {
-                try
+                var balances = await Api.GetTokenBalancesAsync();
+                if (Role == EmployerRole.Vestigingsmanager)
                 {
-                    var table = await Api.GetSalaryTableAsync(tid);
-                    _salaryTableFilterName = table?.Name;
+                    var own = balances.FirstOrDefault(b => ids.Contains(b.CompanyId)) ?? balances.FirstOrDefault();
+                    _tokenBalance = own?.Balance ?? 0;
+                    var co = _companies.FirstOrDefault(c => c.Id == (own?.CompanyId ?? Guid.Empty));
+                    _tokensManagedByEnterprise = co?.TokensManagedByEnterprise ?? true;
                 }
-                catch
+                else
                 {
-                    _salaryTableFilterName = null;
+                    _tokenBalance = balances.Sum(b => b.Balance);
+                    _tokensManagedByEnterprise = false;
                 }
             }
+            catch
+            {
+                _tokenBalance = 0;
+            }
 
-            ApplyFilters();
-            await TryOpenBoostFromQueryAsync(query);
+            if (Role == EmployerRole.Vestigingsmanager)
+            {
+                SalaryTableOptions = _vacancies
+                    .Where(v => v.SalaryTableId is Guid)
+                    .Select(v => (v.SalaryTableId!.Value, v.CategoryName ?? v.SalaryTableId.Value.ToString("N")[..8]))
+                    .Distinct()
+                    .ToList();
+            }
+
+            await TryOpenBoostFromQueryAsync();
         }
         catch (Exception ex)
         {
@@ -359,13 +614,53 @@
         }
     }
 
-    /// <summary>
-    /// Deep-links from engagement e-mail: ?boost=highlight|pushbom&amp;id={vacancyId}
-    /// </summary>
-    private async Task TryOpenBoostFromQueryAsync(
-        Dictionary<string, Microsoft.Extensions.Primitives.StringValues> query)
+    private void ParseQuery()
     {
-        if (!_canManageVacancy
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("tab", out var tab) && !string.IsNullOrWhiteSpace(tab))
+        {
+            _tab = tab.ToString().Trim().ToLowerInvariant();
+        }
+
+        if (query.TryGetValue("q", out var q) && !string.IsNullOrWhiteSpace(q))
+        {
+            _searchQuery = q.ToString().Trim();
+        }
+
+        if (query.TryGetValue("vestiging", out var vest) && !string.IsNullOrWhiteSpace(vest))
+        {
+            _filterBranch = vest.ToString();
+        }
+
+        if (query.TryGetValue("type", out var type) && !string.IsNullOrWhiteSpace(type))
+        {
+            _filterType = type.ToString();
+        }
+
+        if (query.TryGetValue("salaryTableId", out var st) && Guid.TryParse(st, out var tableId))
+        {
+            _filterSalaryTable = tableId.ToString("D");
+        }
+
+        if (query.TryGetValue("paidAction", out var paid) && !string.IsNullOrWhiteSpace(paid))
+        {
+            _message = paid.ToString() switch
+            {
+                "Publish" => Culture["WgVac.Paid.Publish"],
+                "Highlight" => Culture["WgVac.Paid.Highlight"],
+                "PushBom" => Culture["WgVac.Paid.PushBom"],
+                "Extend" => Culture["WgVac.Paid.Extend"],
+                _ => "Betaling gelukt — actie uitgevoerd."
+            };
+        }
+    }
+
+    private async Task TryOpenBoostFromQueryAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (!CanWrite
             || !query.TryGetValue("boost", out var boostRaw)
             || !query.TryGetValue("id", out var idRaw)
             || !Guid.TryParse(idRaw, out var boostId))
@@ -373,107 +668,20 @@
             return;
         }
 
-        var boost = boostRaw.ToString().Trim().ToLowerInvariant();
         var target = _vacancies.FirstOrDefault(v => v.Id == boostId);
         if (target is null)
         {
-            _message = "De vacature uit de e-mail staat niet in jouw overzicht (of je hebt geen toegang).";
             return;
         }
 
+        var boost = boostRaw.ToString().Trim().ToLowerInvariant();
         if (boost is "pushbom")
         {
             OpenPushBom(target);
-            _message = $"PushBom voor «{target.Title}» — bevestig hieronder om te versturen.";
-            return;
         }
-
-        if (boost is "highlight")
+        else if (boost is "highlight" && !target.IsHighlighted)
         {
-            if (target.IsHighlighted)
-            {
-                _message = $"«{target.Title}» is al gehighlight.";
-                return;
-            }
-
             await HighlightAsync(target.Id);
-        }
-    }
-
-    private void ApplyFilters()
-    {
-        IEnumerable<VacancyListItem> query = _vacancies;
-
-        if (_salaryTableFilter is Guid tableId)
-        {
-            query = query.Where(v => v.SalaryTableId == tableId);
-        }
-
-        if (!string.IsNullOrWhiteSpace(_searchQuery))
-        {
-            query = query.Where(v =>
-                v.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)
-                || v.CompanyName.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
-        }
-
-        query = ApplySort(query);
-        _filtered = query.ToList();
-    }
-
-    private void ToggleSort(string column)
-    {
-        if (string.Equals(_sortColumn, column, StringComparison.Ordinal))
-        {
-            _sortAscending = !_sortAscending;
-        }
-        else
-        {
-            _sortColumn = column;
-            _sortAscending = true;
-        }
-
-        ApplyFilters();
-    }
-
-    private string? SortAria(string column)
-        => string.Equals(_sortColumn, column, StringComparison.Ordinal)
-            ? (_sortAscending ? "ascending" : "descending")
-            : null;
-
-    private IEnumerable<VacancyListItem> ApplySort(IEnumerable<VacancyListItem> query)
-        => _sortColumn switch
-        {
-            "end" => _sortAscending
-                ? query.OrderBy(v => v.EndDate).ThenBy(v => v.Title)
-                : query.OrderByDescending(v => v.EndDate).ThenBy(v => v.Title),
-            _ => _sortAscending
-                ? query.OrderBy(v => v.StartDate).ThenBy(v => v.Title)
-                : query.OrderByDescending(v => v.StartDate).ThenBy(v => v.Title)
-        };
-
-    private void ClearSalaryTableFilter()
-    {
-        _salaryTableFilter = null;
-        _salaryTableFilterName = null;
-        Navigation.NavigateTo("/werkgever/vacatures", replace: true);
-        ApplyFilters();
-    }
-
-    private static string MetricHref(VacancyListItem v, string metric)
-        => $"/vacancies/{v.Id}?metric={metric}";
-
-    private async Task RefreshAsync()
-    {
-        try
-        {
-            _vacancies = (await Api.GetManagedVacanciesAsync()).Select(NormalizeVacancy).ToList();
-            ApplyFilters();
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-            _vacancies = [];
-            _filtered = [];
         }
     }
 
@@ -488,23 +696,455 @@
         return vacancy;
     }
 
-    private string StatusLabel(VacancyListItem vacancy)
+    private string StatusLabel(VacancyListItem v)
     {
-        var key = string.IsNullOrWhiteSpace(vacancy.DisplayStatus)
-            ? vacancy.Status
-            : vacancy.DisplayStatus;
-        var localized = Culture[$"VacancyStatus.{key}"];
-        return string.Equals(localized, $"VacancyStatus.{key}", StringComparison.Ordinal)
-            ? key
-            : localized;
+        if (string.Equals(v.Status, "PendingApproval", StringComparison.OrdinalIgnoreCase)
+            && Role == EmployerRole.Vestigingsmanager)
+        {
+            return Culture["WgVac.Status.PendingVm"];
+        }
+
+        return v.Status switch
+        {
+            "Active" => Culture["WgVac.Status.Active"],
+            "PendingApproval" => Culture["WgVac.Status.Pending"],
+            "Draft" => Culture["WgVac.Status.Draft"],
+            "Archived" => Culture["WgVac.Status.Archived"],
+            "Fulfilled" => Culture["WgVac.Status.Fulfilled"],
+            _ => v.Status
+        };
     }
 
-    private static bool IsIncompleteDraft(VacancyListItem vacancy)
-        => string.Equals(vacancy.Status, "Draft", StringComparison.OrdinalIgnoreCase)
-            && vacancy.IsIncomplete;
+    private string VacancySubLine(VacancyListItem v)
+    {
+        var type = VacancyManageRules.EmploymentTypeLabel(v);
+        return Role == EmployerRole.Vestigingsmanager
+            ? type
+            : $"{v.CompanyName} · {type}";
+    }
 
-    private void OpenVacancyDetails(VacancyListItem vacancy)
-        => Navigation.NavigateTo($"/vacancies/{vacancy.Id}");
+    private string? VacancyInfoLine(VacancyListItem v)
+    {
+        if (string.Equals(v.Status, "PendingApproval", StringComparison.OrdinalIgnoreCase))
+        {
+            var tokens = VacancyManageRules.EstimatePendingTokens(v, _costs).ToString("0.##");
+            return string.IsNullOrWhiteSpace(v.RequesterDisplayName)
+                ? string.Format(Culture["WgVac.RequestLineAnon"], tokens)
+                : string.Format(Culture["WgVac.RequestLine"], v.RequesterDisplayName, tokens);
+        }
+
+        if (string.Equals(v.Status, "Draft", StringComparison.OrdinalIgnoreCase))
+        {
+            if (v.IsIncomplete || v.IncompleteFieldCount > 0)
+            {
+                var n = Math.Max(1, v.IncompleteFieldCount);
+                return string.Format(Culture["WgVac.DraftIncomplete"], n);
+            }
+
+            return Culture["WgVac.DraftReady"];
+        }
+
+        return null;
+    }
+
+    private string OnlineUntilLabel(VacancyListItem v)
+    {
+        if (string.Equals(v.Status, "Archived", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(v.Status, "Fulfilled", StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Format(Culture["WgVac.ClosedOn"], v.EndDate.ToString("dd-MM"));
+        }
+
+        if (string.Equals(v.Status, "Draft", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(v.Status, "PendingApproval", StringComparison.OrdinalIgnoreCase))
+        {
+            return "—";
+        }
+
+        return v.EndDate.ToString("dd-MM-yyyy");
+    }
+
+    private RenderFragment PrimaryAction(VacancyListItem v) => __builder =>
+    {
+        var status = v.Status ?? "";
+        if (string.Equals(status, "PendingApproval", StringComparison.OrdinalIgnoreCase) && CanApprove)
+        {
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="() => ConfirmApproveAsync(v)">
+                @Culture["VacancyAction.Approve"]
+            </button>
+            return;
+        }
+
+        if (string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase) && CanWrite)
+        {
+            <a class="btn-compact btn-compact--primary" href="@($"/werkgever/vacatures/nieuw?edit={v.Id}")">
+                @Culture["VacancyAction.Finish"]
+            </a>
+            return;
+        }
+
+        if (string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase))
+        {
+            <a class="btn-compact wg-vac__inbox" href="@($"/werkgever/sollicitaties?vacature={v.Id}")" title="@Culture["VacancyAction.Applications"]">
+                <span aria-hidden="true">@((MarkupString)ActionIcons.Mail)</span>
+                <span class="visually-hidden">@Culture["VacancyAction.Applications"]</span>
+            </a>
+            return;
+        }
+
+        if ((string.Equals(status, "Archived", StringComparison.OrdinalIgnoreCase)
+             || string.Equals(status, "Fulfilled", StringComparison.OrdinalIgnoreCase))
+            && CanWrite)
+        {
+            <a class="btn-compact" href="@($"/werkgever/vacatures/nieuw?from={v.Id}")">
+                @Culture["VacancyAction.Duplicate"]
+            </a>
+        }
+    };
+
+    private RenderFragment MenuItems(VacancyListItem v) => __builder =>
+    {
+        var status = v.Status ?? "";
+        <a class="row-actions-menu__item" role="menuitem" href="@($"/vacancies/{v.Id}")">@Culture["VacancyAction.View"]</a>
+        if (!CanWrite)
+        {
+            return;
+        }
+
+        if (string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase))
+        {
+            <a class="row-actions-menu__item" role="menuitem" href="@($"/werkgever/vacatures/nieuw?edit={v.Id}")">Bewerken</a>
+        }
+
+        if (string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase))
+        {
+            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
+                @Culture["VacancyAction.Visibility"]
+            </button>
+            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ExtendAsync(v.Id)">
+                @Culture["VacancyAction.Extend"]
+            </button>
+            @if (!v.IsHighlighted)
+            {
+                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => HighlightAsync(v.Id)">
+                    @Culture["VacancyAction.Highlight"]
+                </button>
+            }
+            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPushBom(v)">
+                @Culture["VacancyAction.PushBom"]
+            </button>
+            <a class="row-actions-menu__item" role="menuitem" href="@($"/werkgever/vacatures/nieuw?from={v.Id}")">
+                @Culture["VacancyAction.Duplicate"]
+            </a>
+            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => DeactivateAsync(v.Id)">
+                @Culture["VacancyAction.Deactivate"]
+            </button>
+        }
+
+        if (string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase) && !v.IsIncomplete)
+        {
+            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
+                @Culture["VacancyAction.Publish"]
+            </button>
+        }
+
+        if (string.Equals(status, "Archived", StringComparison.OrdinalIgnoreCase))
+        {
+            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ExtendAsync(v.Id)">
+                @Culture["VacancyAction.Reactivate"]
+            </button>
+        }
+
+        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenContactPref(v)">
+            @Culture["VacancyAction.Contact"]
+        </button>
+    };
+
+    private void GoNewVacancy() => Navigation.NavigateTo("/werkgever/vacatures/nieuw");
+
+    private async Task OnSearchChanged(string q)
+    {
+        _searchQuery = q;
+        _page = 1;
+        await SyncUrlAsync();
+    }
+
+    private async Task OnFilterChanged()
+    {
+        _page = 1;
+        await SyncUrlAsync();
+    }
+
+    private Task OnPageChanged(int page)
+    {
+        _page = page;
+        return Task.CompletedTask;
+    }
+
+    private async Task SyncUrlAsync()
+    {
+        var parts = new List<string>();
+        if (!string.Equals(_tab, "alle", StringComparison.OrdinalIgnoreCase))
+        {
+            parts.Add($"tab={Uri.EscapeDataString(_tab)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(FilterQueryWithoutTab))
+        {
+            parts.Add(FilterQueryWithoutTab);
+        }
+
+        var url = parts.Count == 0 ? "/werkgever/vacatures" : "/werkgever/vacatures?" + string.Join("&", parts);
+        Navigation.NavigateTo(url, replace: true);
+        await Task.CompletedTask;
+    }
+
+    private void ToggleRow(Guid id, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on)
+        {
+            if (_selected.Count < VacancyManageRules.BulkMax)
+            {
+                _selected.Add(id);
+            }
+        }
+        else
+        {
+            _selected.Remove(id);
+        }
+    }
+
+    private void OnToggleAll(bool on)
+    {
+        if (on)
+        {
+            foreach (var v in Paged.Take(VacancyManageRules.BulkMax))
+            {
+                _selected.Add(v.Id);
+            }
+        }
+        else
+        {
+            foreach (var v in Paged)
+            {
+                _selected.Remove(v.Id);
+            }
+        }
+    }
+
+    private void ClearSelection() => _selected.Clear();
+
+    private async Task ToggleCol(string name, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        switch (name)
+        {
+            case nameof(_colViews): _colViews = on; break;
+            case nameof(_colOnline): _colOnline = on; break;
+            case nameof(_colVisibility): _colVisibility = on; break;
+        }
+
+        await SaveColumnsAsync();
+    }
+
+    private async Task LoadColumnsAsync()
+    {
+        try
+        {
+            var raw = await Js.InvokeAsync<string?>("localStorage.getItem", VacancyManageRules.ColumnsStorageKey);
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return;
+            }
+
+            using var doc = JsonDocument.Parse(raw);
+            if (doc.RootElement.TryGetProperty("views", out var views))
+            {
+                _colViews = views.GetBoolean();
+            }
+
+            if (doc.RootElement.TryGetProperty("online", out var online))
+            {
+                _colOnline = online.GetBoolean();
+            }
+
+            if (doc.RootElement.TryGetProperty("visibility", out var vis))
+            {
+                _colVisibility = vis.GetBoolean();
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private async Task SaveColumnsAsync()
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(new { views = _colViews, online = _colOnline, visibility = _colVisibility });
+            await Js.InvokeVoidAsync("localStorage.setItem", VacancyManageRules.ColumnsStorageKey, json);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private async Task ExportCsvAsync()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("title,status,company,type,applications,views,end_date");
+        foreach (var v in Filtered)
+        {
+            sb.AppendLine($"{Escape(v.Title)},{v.Status},{Escape(v.CompanyName)},{VacancyManageRules.EmploymentTypeLabel(v)},{v.ApplicationCount},{v.ImpressionCount},{v.EndDate:yyyy-MM-dd}");
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+        var b64 = Convert.ToBase64String(bytes);
+        await Js.InvokeVoidAsync("eval",
+            $"(()=>{{const a=document.createElement('a');a.href='data:text/csv;base64,{b64}';a.download='vacatures.csv';a.click();}})()");
+    }
+
+    private static string Escape(string s)
+        => "\"" + s.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
+
+    private void ConfirmApproveAsync(VacancyListItem v)
+    {
+        var cost = VacancyManageRules.EstimatePendingTokens(v, _costs);
+        var after = _tokenBalance - cost;
+        _confirmKind = BulkKind.Approve;
+        _confirmVacancyId = v.Id;
+        _confirmTitle = Culture["WgVac.Confirm.ApproveTitle"];
+        _confirmBody = string.Format(Culture["WgVac.Confirm.ApproveBody"],
+            cost.ToString("0.##"), _tokenBalance.ToString("0.##"), after.ToString("0.##"));
+        _confirmInsufficient = after < 0;
+        _confirmOpen = true;
+    }
+
+    private void ConfirmBulkAsync(BulkKind kind)
+    {
+        var cost = kind switch
+        {
+            BulkKind.Extend => BulkExtendCost,
+            BulkKind.Highlight => BulkHighlightCost,
+            _ => 0m
+        };
+        var after = _tokenBalance - cost;
+        _confirmKind = kind;
+        _confirmVacancyId = null;
+        _confirmTitle = Culture["WgVac.Confirm.BulkTitle"];
+        _confirmBody = string.Format(Culture["WgVac.Confirm.BulkBody"],
+            cost.ToString("0.##"), _tokenBalance.ToString("0.##"), after.ToString("0.##"));
+        _confirmInsufficient = cost > 0 && after < 0;
+        _confirmOpen = true;
+    }
+
+    private Task CloseConfirm()
+    {
+        _confirmOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmProceedAsync()
+    {
+        if (_confirmKind == BulkKind.Approve && _confirmVacancyId is Guid id)
+        {
+            _confirmOpen = false;
+            await ApproveAsync(id);
+            return;
+        }
+
+        _confirmOpen = false;
+        await RunBulkAsync(_confirmKind);
+    }
+
+    private void OpenTopUpFromConfirm()
+    {
+        _confirmOpen = false;
+        OpenTopUp(new InsufficientTokensInfo
+        {
+            Message = Culture["WgVac.Confirm.AskTokens"],
+            RequiredTokens = BulkHighlightCost,
+            Balance = _tokenBalance,
+            Deficit = Math.Max(0, BulkHighlightCost - _tokenBalance)
+        });
+    }
+
+    private async Task RunBulkAsync(BulkKind kind)
+    {
+        var ids = _selected.Take(VacancyManageRules.BulkMax).ToList();
+        if (ids.Count == 0)
+        {
+            return;
+        }
+
+        _busy = true;
+        var ok = 0;
+        var fail = 0;
+        var reasons = new List<string>();
+        foreach (var id in ids)
+        {
+            try
+            {
+                switch (kind)
+                {
+                    case BulkKind.Extend:
+                        await Api.ExtendVacancyAsync(id);
+                        break;
+                    case BulkKind.Highlight:
+                        await Api.HighlightVacancyAsync(id);
+                        break;
+                    case BulkKind.Deactivate:
+                        await Api.DeactivateVacancyAsync(id);
+                        break;
+                    case BulkKind.Duplicate:
+                        Navigation.NavigateTo($"/werkgever/vacatures/nieuw?from={id}");
+                        ok++;
+                        continue;
+                }
+
+                ok++;
+            }
+            catch (InsufficientTokensException ex)
+            {
+                fail++;
+                reasons.Add(ex.Info.Message ?? "onvoldoende tokens");
+                if (Role == EmployerRole.Bedrijfsmanager)
+                {
+                    OpenTopUp(ex.Info);
+                }
+            }
+            catch (Exception ex)
+            {
+                fail++;
+                reasons.Add(ex.Message);
+            }
+        }
+
+        _busy = false;
+        _selected.Clear();
+        await RefreshAsync();
+        _message = string.Format(Culture["WgVac.Bulk.Summary"], ok, fail)
+            + (reasons.Count > 0 ? " — " + string.Join("; ", reasons.Distinct().Take(3)) : "");
+    }
+
+    private async Task RefreshAsync()
+    {
+        try
+        {
+            var ids = Scope.CompanyIds;
+            _vacancies = (await Api.GetManagedVacanciesAsync(ids.Count > 0 ? ids : null))
+                .Select(NormalizeVacancy).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
 
     private void OpenPublish(VacancyListItem vacancy)
     {
@@ -551,7 +1191,7 @@
         {
             await Api.HighlightVacancyAsync(id);
             await RefreshAsync();
-            _message = "Vacature gehighlight.";
+            _message = "Vacature uitgelicht.";
         }
         catch (InsufficientTokensException ex)
         {
@@ -579,7 +1219,7 @@
     private async Task OnPushBomConfirmed(VacancyProductActionResult? result)
     {
         await RefreshAsync();
-        _message = $"PushBom verstuurd naar {result?.PushBomRecipientCount ?? 0} kandidaten (stub).";
+        _message = $"Pushbericht verstuurd naar {result?.PushBomRecipientCount ?? 0} kandidaten.";
     }
 
     private async Task ExtendAsync(Guid id)
@@ -600,6 +1240,20 @@
         }
     }
 
+    private async Task DeactivateAsync(Guid id)
+    {
+        try
+        {
+            await Api.DeactivateVacancyAsync(id);
+            await RefreshAsync();
+            _message = "Vacature gedeactiveerd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
     private void OpenTopUp(InsufficientTokensInfo info)
     {
         _topUpInfo = info;
@@ -612,41 +1266,6 @@
         _topUpOpen = false;
         _topUpInfo = null;
         return Task.CompletedTask;
-    }
-
-    private async Task DeactivateAsync(Guid id)
-    {
-        try
-        {
-            await Api.DeactivateVacancyAsync(id);
-            await RefreshAsync();
-            _message = "Vacature inactief (gearchiveerd).";
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-    }
-
-    private async Task ToggleEmailVerificationAsync(VacancyListItem vacancy)
-    {
-        try
-        {
-            var updated = await Api.UpdateVacancyEmailVerificationAsync(
-                vacancy.Id,
-                !vacancy.RequireEmailVerification);
-            if (updated is not null)
-            {
-                vacancy.RequireEmailVerification = updated.RequireEmailVerification;
-                _message = updated.RequireEmailVerification
-                    ? $"E-mailcheck staat aan voor “{vacancy.Title}”. Kandidaten bevestigen hun sollicitatie met een code."
-                    : $"E-mailcheck staat uit voor “{vacancy.Title}”. Solliciteren gaat weer zonder code.";
-            }
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
     }
 
     private async Task OpenContactPref(VacancyListItem vacancy)
@@ -697,10 +1316,7 @@
             return;
         }
 
-        if (_contactDirect
-            && !_contactMail
-            && !_contactPhone
-            && !_contactWhatsApp)
+        if (_contactDirect && !_contactMail && !_contactPhone && !_contactWhatsApp)
         {
             _contactError = "Kies minstens één contactoptie (Mail, Telefoon of WhatsApp).";
             return;
@@ -711,12 +1327,7 @@
         try
         {
             await Api.UpdateVacancyContactPreferenceAsync(
-                _contactVacancy.Id,
-                true,
-                _contactDirect,
-                _contactMail,
-                _contactPhone,
-                _contactWhatsApp);
+                _contactVacancy.Id, true, _contactDirect, _contactMail, _contactPhone, _contactWhatsApp);
             _message = "Contactvoorkeur voor vacature opgeslagen.";
             CloseContactPref();
         }

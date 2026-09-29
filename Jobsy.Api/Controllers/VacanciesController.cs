@@ -723,11 +723,13 @@ public class VacanciesController : ControllerBase
 
     /// <summary>
     /// Employer-managed vacancies, scoped to companies the caller may access.
+    /// Optional <paramref name="companyIds"/> narrows further (intersection with accessible ids).
     /// Branch managers only see their own company.
     /// </summary>
     [HttpGet("manage")]
     [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
     public async Task<ActionResult<IEnumerable<VacancyListItemDto>>> GetManaged(
+        [FromQuery] List<Guid>? companyIds,
         CancellationToken cancellationToken)
     {
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
@@ -736,8 +738,20 @@ public class VacanciesController : ControllerBase
             return Ok(Array.Empty<VacancyListItemDto>());
         }
 
+        IReadOnlyCollection<Guid>? scope = accessible;
+        if (companyIds is { Count: > 0 } && accessible is not null)
+        {
+            var intersection = companyIds.Where(accessible.Contains).Distinct().ToList();
+            if (intersection.Count == 0)
+            {
+                return Ok(Array.Empty<VacancyListItemDto>());
+            }
+
+            scope = intersection;
+        }
+
         // Defense-in-depth: enable EF tenant filter for this manage request.
-        CompanyTenantScope.Enforce(_db, accessible);
+        CompanyTenantScope.Enforce(_db, scope);
 
         var query = _db.Vacancies
             .AsNoTracking()
@@ -749,12 +763,12 @@ public class VacanciesController : ControllerBase
                 .ThenInclude(s => s.Educations)
             .AsQueryable();
 
-        if (accessible is not null)
+        if (scope is not null)
         {
             // End-client company OR intermediary org that posted the vacancy.
             query = query.Where(v =>
-                accessible.Contains(v.CompanyId)
-                || (v.IntermediaryCompanyId != null && accessible.Contains(v.IntermediaryCompanyId.Value)));
+                scope.Contains(v.CompanyId)
+                || (v.IntermediaryCompanyId != null && scope.Contains(v.IntermediaryCompanyId.Value)));
         }
 
         var vacancies = await query.OrderBy(v => v.Title).ToListAsync(cancellationToken);
@@ -785,11 +799,64 @@ public class VacanciesController : ControllerBase
             .GroupBy(a => a.VacancyId)
             .Select(g => new { VacancyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
+        var newApplicationCounts = await _db.Applications.AsNoTracking()
+            .Where(a => ids.Contains(a.VacancyId)
+                        && a.EmailVerifiedAt != null
+                        && a.Status == ApplicationStatus.Pending)
+            .GroupBy(a => a.VacancyId)
+            .Select(g => new { VacancyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
         var likeCounts = await _db.VacancyLikes.AsNoTracking()
             .Where(l => ids.Contains(l.VacancyId))
             .GroupBy(l => l.VacancyId)
             .Select(g => new { VacancyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
+        var pushBomVacancyIds = await _db.TokenTransactions.AsNoTracking()
+            .Where(t => t.VacancyId != null
+                        && ids.Contains(t.VacancyId.Value)
+                        && t.Reason == TokenSpendReason.PushBom
+                        && t.Kind == TokenTransactionKind.Spend)
+            .Select(t => t.VacancyId!.Value)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        var pushBomSet = pushBomVacancyIds.ToHashSet();
+
+        var pendingCompanyIds = vacancies
+            .Where(v => v.Status == VacancyStatus.PendingApproval)
+            .Select(v => v.CompanyId)
+            .Distinct()
+            .ToList();
+        var requesterByCompany = new Dictionary<Guid, string>();
+        if (pendingCompanyIds.Count > 0)
+        {
+            var managers = await _db.Users.AsNoTracking()
+                .Where(u => u.Role == UserRole.BranchManager
+                            && u.CompanyMemberships.Any(m => pendingCompanyIds.Contains(m.CompanyId)))
+                .Select(u => new
+                {
+                    u.FullName,
+                    u.FirstName,
+                    u.LastName,
+                    CompanyIds = u.CompanyMemberships
+                        .Where(m => pendingCompanyIds.Contains(m.CompanyId))
+                        .Select(m => m.CompanyId)
+                        .ToList()
+                })
+                .ToListAsync(cancellationToken);
+            foreach (var m in managers)
+            {
+                var display = FormatRequesterName(m.FirstName, m.LastName, m.FullName);
+                if (string.IsNullOrWhiteSpace(display))
+                {
+                    continue;
+                }
+
+                foreach (var cid in m.CompanyIds)
+                {
+                    requesterByCompany.TryAdd(cid, display);
+                }
+            }
+        }
 
         var freePublishUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
         var mapped = new List<VacancyListItemDto>(vacancies.Count);
@@ -797,7 +864,7 @@ public class VacanciesController : ControllerBase
         {
             try
             {
-                mapped.Add(MapToDto(
+                var dto = MapToDto(
                     v,
                     showWage: true,
                     impressionCount: impressionCounts.GetValueOrDefault(v.Id),
@@ -807,7 +874,21 @@ public class VacanciesController : ControllerBase
                     likeCount: likeCounts.GetValueOrDefault(v.Id),
                     includeDescription: false,
                     includeCategoryInternals: true,
-                    freePublishUntil: freePublishUntil));
+                    freePublishUntil: freePublishUntil);
+                mapped.Add(dto with
+                {
+                    RequestedHighlight = v.RequestedHighlight,
+                    RequestedPushBom = v.RequestedPushBom,
+                    RequestedExtend = v.RequestedExtend,
+                    NewApplicationCount = newApplicationCounts.GetValueOrDefault(v.Id),
+                    HasPushBom = pushBomSet.Contains(v.Id),
+                    IncompleteFieldCount = v.Status == VacancyStatus.Draft
+                        ? VacancyDraftCompletenessRules.CountMissingFields(v)
+                        : 0,
+                    RequesterDisplayName = v.Status == VacancyStatus.PendingApproval
+                        ? requesterByCompany.GetValueOrDefault(v.CompanyId)
+                        : null
+                });
             }
             catch
             {
@@ -816,6 +897,27 @@ public class VacanciesController : ControllerBase
         }
 
         return Ok(mapped);
+    }
+
+    private static string FormatRequesterName(string? first, string? last, string? full)
+    {
+        if (!string.IsNullOrWhiteSpace(first) && !string.IsNullOrWhiteSpace(last))
+        {
+            return $"{first.Trim()[0]}. {last.Trim()}";
+        }
+
+        if (string.IsNullOrWhiteSpace(full))
+        {
+            return "";
+        }
+
+        var parts = full.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0];
+        }
+
+        return $"{parts[0][0]}. {parts[^1]}";
     }
 
     /// <summary>

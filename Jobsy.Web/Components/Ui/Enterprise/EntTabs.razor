@@ -18,17 +18,29 @@
     [Parameter] public string ActiveKey { get; set; } = "";
     [Parameter] public string BasePath { get; set; } = "";
     [Parameter] public string QueryParam { get; set; } = "tab";
+    /// <summary>Additional query string without leading ? (e.g. q=foo&amp;type=Fulltime).</summary>
+    [Parameter] public string? ExtraQuery { get; set; }
 
     private string HrefFor(string key)
     {
         var basePath = BasePath.Split('?', 2)[0];
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(ExtraQuery))
+        {
+            parts.Add(ExtraQuery.TrimStart('?', '&'));
+        }
+
         // Default (first) tab omits the query param for a clean URL.
-        if (Tabs.Count > 0 && string.Equals(Tabs[0].Key, key, StringComparison.OrdinalIgnoreCase))
+        if (!(Tabs.Count > 0 && string.Equals(Tabs[0].Key, key, StringComparison.OrdinalIgnoreCase)))
+        {
+            parts.Add($"{QueryParam}={Uri.EscapeDataString(key)}");
+        }
+
+        if (parts.Count == 0)
         {
             return basePath;
         }
 
-        var sep = "?";
-        return $"{basePath}{sep}{QueryParam}={Uri.EscapeDataString(key)}";
+        return $"{basePath}?{string.Join("&", parts.Where(p => !string.IsNullOrWhiteSpace(p)))}";
     }
 }

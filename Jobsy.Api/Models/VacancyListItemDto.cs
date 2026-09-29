@@ -97,7 +97,19 @@ public record VacancyListItemDto(
     IReadOnlyList<string>? BarrierCertifications = null,
     int? BarrierMinExperienceYears = null,
     int? BarrierMinExperienceHours = null,
-    IReadOnlyList<string>? BarrierHardChecks = null);
+    IReadOnlyList<string>? BarrierHardChecks = null,
+    /// <summary>PendingApproval options (manage list).</summary>
+    bool RequestedHighlight = false,
+    bool RequestedPushBom = false,
+    bool RequestedExtend = false,
+    /// <summary>Pending applications (new badge on manage list).</summary>
+    int NewApplicationCount = 0,
+    /// <summary>True when a PushBom spend exists for this vacancy.</summary>
+    bool HasPushBom = false,
+    /// <summary>Missing draft fields count when incompleteness is known.</summary>
+    int IncompleteFieldCount = 0,
+    /// <summary>Short requester name for publicatieaanvraag rows.</summary>
+    string? RequesterDisplayName = null);
 
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);

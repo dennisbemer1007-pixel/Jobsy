@@ -80,6 +80,17 @@ public sealed class EmployerScopeState
     private IReadOnlyDictionary<string, IReadOnlyList<Guid>> _scopeCompanyMap =
         new Dictionary<string, IReadOnlyList<Guid>>(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Company ids for a scope key (org / region:… / vestiging:…).</summary>
+    public IReadOnlyList<Guid> CompanyIdsFor(string? scopeKey)
+    {
+        if (string.IsNullOrWhiteSpace(scopeKey))
+        {
+            return [];
+        }
+
+        return _scopeCompanyMap.TryGetValue(scopeKey, out var ids) ? ids : [];
+    }
+
     public void Initialize(
         EmployerRole role,
         IReadOnlyList<EmployerScopeOption> available,

@@ -31,6 +31,10 @@
                     <text>Rich text, media en salaristabel. Opslaan als concept — publiceren via de vacaturelijst.</text>
                 }
             </p>
+            @if (!string.IsNullOrEmpty(_vmPublishNote))
+            {
+                <p class="muted wg-vac-create-note">@_vmPublishNote</p>
+            }
         </div>
     </header>
 
@@ -754,6 +758,7 @@
     private List<int> _minReferenceOptions = [1, 2, 3];
     private string? _align;
     private bool _isIntermediary;
+    private string? _vmPublishNote;
     private string _clientKvkNumber = "";
     private string _selectedEstablishmentId = "";
     private bool _kvkBusy;
@@ -948,6 +953,40 @@
         }
 
         await LoadSalaryTablesAsync();
+        await LoadVmPublishNoteAsync(profile?.Role, auth.User);
+    }
+
+    private async Task LoadVmPublishNoteAsync(string? profileRole, System.Security.Claims.ClaimsPrincipal user)
+    {
+        var isVm = string.Equals(profileRole, nameof(UserRole.BranchManager), StringComparison.OrdinalIgnoreCase)
+            || user.IsInRole("BranchManager");
+        if (!isVm)
+        {
+            return;
+        }
+
+        try
+        {
+            var company = _companies.FirstOrDefault(c => c.Id == _companyId) ?? _companies.FirstOrDefault();
+            if (company is null || !company.TokensManagedByEnterprise)
+            {
+                return;
+            }
+
+            var balances = await Api.GetTokenBalancesAsync();
+            var balance = balances.FirstOrDefault(b => b.CompanyId == company.Id)?.Balance ?? company.TokenBalance;
+            var costs = await Api.GetTokenCostsAsync();
+            var publishCost = costs.FirstOrDefault(c =>
+                string.Equals(c.Reason, "Publish", StringComparison.OrdinalIgnoreCase))?.CostTokens ?? 1m;
+            _vmPublishNote = string.Format(
+                Culture["WgVac.Create.VmPublishNote"],
+                balance.ToString("0.##"),
+                publishCost.ToString("0.##"));
+        }
+        catch
+        {
+            // optional note
+        }
     }
 
     private async Task LookupClientKvkAsync()

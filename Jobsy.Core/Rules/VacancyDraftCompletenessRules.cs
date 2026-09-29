@@ -5,20 +5,49 @@ namespace Jobsy.Core.Rules;
 
 public static class VacancyDraftCompletenessRules
 {
-    public static bool IsIncomplete(Vacancy vacancy)
+    public static bool IsIncomplete(Vacancy vacancy) => CountMissingFields(vacancy) > 0;
+
+    /// <summary>Number of required draft fields that are still empty.</summary>
+    public static int CountMissingFields(Vacancy vacancy)
     {
-        if (string.IsNullOrWhiteSpace(vacancy.Title)
-            || string.IsNullOrWhiteSpace(vacancy.Description)
-            || vacancy.SalaryTableId is null
-            || !HasWorkType(vacancy)
-            || vacancy.CategoryId is null
-            || !vacancy.ContentModerationPassed)
+        var missing = 0;
+        if (string.IsNullOrWhiteSpace(vacancy.Title))
         {
-            return true;
+            missing++;
         }
 
-        return IsInclusive(vacancy)
-            && !HasCategoryField(vacancy.CategoryFieldsJson, VacancyCategoryExtraFields.TargetGroup);
+        if (string.IsNullOrWhiteSpace(vacancy.Description))
+        {
+            missing++;
+        }
+
+        if (vacancy.SalaryTableId is null)
+        {
+            missing++;
+        }
+
+        if (!HasWorkType(vacancy))
+        {
+            missing++;
+        }
+
+        if (vacancy.CategoryId is null)
+        {
+            missing++;
+        }
+
+        if (!vacancy.ContentModerationPassed)
+        {
+            missing++;
+        }
+
+        if (IsInclusive(vacancy)
+            && !HasCategoryField(vacancy.CategoryFieldsJson, VacancyCategoryExtraFields.TargetGroup))
+        {
+            missing++;
+        }
+
+        return missing;
     }
 
     private static bool HasWorkType(Vacancy vacancy)

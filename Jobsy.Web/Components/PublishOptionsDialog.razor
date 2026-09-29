@@ -2,7 +2,7 @@
 @inject JobsyApiClient Api
 
 <LobsyFriendlyDialog IsOpen="@(IsOpen && Vacancy is not null)"
-                     Title="@Culture["Employer.Publish"]"
+                     Title="@Culture["Employer.PublishOptionsTitle"]"
                      TitleId="publish-modal-title"
                      Lead="@(Vacancy is null ? null : $"{Vacancy.Title} · {Vacancy.CompanyName}")"
                      Class="publish-modal"
@@ -13,7 +13,7 @@
             <input type="checkbox" checked disabled />
             <span>
                 @Culture["Employer.PublishBase"]
-                <em>@PublishCost.ToString("0.##") token</em>
+                <em>@PublishCost.ToString("0.##") tokens</em>
             </span>
         </label>
         @if (HighlightAvailable)
@@ -21,8 +21,7 @@
             <label class="publish-option">
                 <input type="checkbox" @bind="_highlight" />
                 <span>
-                    @Culture["Employer.Highlight"]
-                    <em>+@HighlightCost.ToString("0.##") token</em>
+                    @string.Format(Culture["WgVac.Cost.Highlight"], HighlightCost.ToString("0.##"))
                 </span>
             </label>
         }
@@ -39,8 +38,7 @@
         <label class="publish-option">
             <input type="checkbox" @bind="_extend" />
             <span>
-                @Culture["Employer.Extend"]
-                <em>+@_costs.GetValueOrDefault("Extend", 1m).ToString("0.##") token</em>
+                @string.Format(Culture["WgVac.Cost.Extend"], _costs.GetValueOrDefault("Extend", 1m).ToString("0.##"))
             </span>
         </label>
     </div>
@@ -68,7 +66,7 @@
                 </p>
                 @if (_preview.CandidateCount == 0)
                 {
-                    <p class="state-message error">Geen bereik — PushBom kan niet worden geactiveerd.</p>
+                    <p class="state-message error">Geen bereik — pushbericht kan niet worden geactiveerd.</p>
                 }
                 else if (!_preview.HasPricing)
                 {
@@ -77,7 +75,7 @@
                 else
                 {
                     <p class="pushbom-preview__cost">
-                        Kost <strong>@_preview.CostTokens.ToString("0.##")</strong> token(s)
+                        @string.Format(Culture["WgVac.Cost.Push"], _preview.CostTokens.ToString("0.##"))
                         · saldo @_preview.TokenBalance.ToString("0.##")
                     </p>
                 }
@@ -85,7 +83,7 @@
         </div>
     }
 
-    <p class="muted">Totaal: <strong>@TotalCost.ToString("0.##")</strong> token(s)</p>
+    <p class="muted">Totaal: <strong>@TotalCost.ToString("0.##")</strong> tokens</p>
 
     @if (!string.IsNullOrEmpty(_error))
     {

@@ -99,6 +99,13 @@ public class VacancyListItem
     public int? BarrierMinExperienceYears { get; set; }
     public int? BarrierMinExperienceHours { get; set; }
     public List<string> BarrierHardChecks { get; set; } = [];
+    public bool RequestedHighlight { get; set; }
+    public bool RequestedPushBom { get; set; }
+    public bool RequestedExtend { get; set; }
+    public int NewApplicationCount { get; set; }
+    public bool HasPushBom { get; set; }
+    public int IncompleteFieldCount { get; set; }
+    public string? RequesterDisplayName { get; set; }
 }
 
 public sealed class WageByAgeItem
