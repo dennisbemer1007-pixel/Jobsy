@@ -12,8 +12,173 @@ public static class UiStringsScholen
         nl["School.ProductLabel"] = "Lobsy voor scholen";
         nl["School.RoleChip"] = "Schoolbeheerder";
         nl["School.DashboardTitle"] = "Dashboard";
-        nl["School.DashboardEmpty"] = "Hier komt je dashboard";
+        nl["School.DashboardEmpty"] = "Nog geen klassen. Maak je eerste klas aan.";
         nl["School.DashboardLead"] = "Klassen, codes en resultaten verschijnen hier zodra je klassen aanmaakt.";
+        nl["School.DashboardIntro"] = "Lobsy bewaart geen namen. Codes koppel je zelf aan leerlingen.";
+        nl["School.Cancel"] = "Annuleren";
+        nl["School.Save"] = "Opslaan";
+        nl["School.Filter.All"] = "Alle";
+
+        nl["School.Kpi.Classes"] = "Klassen";
+        nl["School.Kpi.Codes"] = "Leerlingcodes";
+        nl["School.Kpi.CodesNote"] = "geen namen bij Lobsy";
+        nl["School.Kpi.Completed"] = "Test afgerond";
+        nl["School.Kpi.Teachers"] = "Leraren";
+        nl["School.Kpi.TeachersNoMfa"] = "{0} zonder 2FA";
+
+        nl["School.Dash.TestsPerClass"] = "Tests per klas";
+        nl["School.Dash.Todo"] = "Te doen";
+        nl["School.Dash.TodoAll"] = "Alles bekijken";
+        nl["School.Dash.Interests"] = "Interesses hele school";
+        nl["School.Dash.InterestsEmpty"] = "Zichtbaar vanaf 5 afgeronde tests.";
+
+        nl["School.Todo.Title"] = "Te doen";
+        nl["School.Todo.Lead"] = "Acties die aandacht vragen op school.";
+        nl["School.Todo.Empty"] = "Alles bij.";
+
+        nl["School.Col.Class"] = "Klas";
+        nl["School.Col.Level"] = "Niveau";
+        nl["School.Col.Year"] = "Leerjaar";
+        nl["School.Col.Teacher"] = "Leraar";
+        nl["School.Col.Codes"] = "Codes";
+        nl["School.Col.Started"] = "Gestart";
+        nl["School.Col.Completed"] = "Afgerond";
+        nl["School.Col.Progress"] = "Voortgang";
+        nl["School.Col.Window"] = "Testvenster";
+        nl["School.Col.Parents"] = "Ouders";
+        nl["School.Col.Code"] = "Code";
+        nl["School.Col.Status"] = "Status";
+        nl["School.Col.LastActive"] = "Laatst actief";
+
+        nl["School.Class.Title"] = "Klassen & codes";
+        nl["School.Class.Lead"] = "Maak klassen aan, print de codelijst en beheer het testvenster.";
+        nl["School.Class.New"] = "Nieuwe klas";
+        nl["School.Class.Empty"] = "Nog geen klassen dit schooljaar.";
+        nl["School.Class.NotFound"] = "Klas niet gevonden.";
+        nl["School.Class.Field.Name"] = "Klasnaam";
+        nl["School.Class.Field.Level"] = "Niveau";
+        nl["School.Class.Field.Year"] = "Leerjaar";
+        nl["School.Class.Field.Count"] = "Aantal leerlingen";
+        nl["School.Class.Field.Teachers"] = "Leraar(en)";
+        nl["School.Class.CodesNote"] = "Lobsy maakt voor elke leerling een code. Namen vul je zelf in op de geprinte lijst.";
+        nl["School.Class.Danger"] = "Klas verwijderen";
+        nl["School.Class.Delete"] = "Klas verwijderen";
+        nl["School.Class.DeleteConfirm"] = "Typ de klasnaam ter bevestiging";
+
+        nl["School.CodeList.Pdf"] = "Codelijst printen (PDF)";
+        nl["School.CodeList.Csv"] = "Download CSV";
+        nl["School.CodeList.Add"] = "Codes erbij";
+
+        nl["School.Codes.Title"] = "Leerlingcodes";
+        nl["School.Codes.Empty"] = "Nog geen codes.";
+        nl["School.Codes.Replace"] = "Nieuwe code";
+        nl["School.Codes.Delete"] = "Code verwijderen";
+        nl["School.Codes.ReplaceConfirm"] = "De oude code werkt dan niet meer. De antwoorden blijven bewaard.";
+        nl["School.Codes.DeleteConfirm"] = "Alle antwoorden en uitkomsten van deze code worden direct verwijderd. Gebruik dit bij bezwaar van ouders of leerling. Dit kan niet ongedaan worden.";
+
+        nl["School.Status.NotStarted"] = "Nog niet gestart";
+        nl["School.Status.InProgress"] = "Bezig {0}/{1}";
+        nl["School.Status.Completed"] = "Afgerond";
+
+        nl["School.Parents.Title"] = "Ouders informeren";
+        nl["School.Parents.Body"] = "Lobsy is een hulpmiddel van school. De school is verantwoordelijk voor de gegevens; Lobsy verwerkt ze in opdracht. Informeer ouders vóór de test en geef ze de kans bezwaar te maken.";
+        nl["School.Parents.LetterLink"] = "Ouderbrief (voorbeeld)";
+        nl["School.Parents.ConfirmCheckbox"] = "Ik bevestig: ouders van klas {0} zijn geïnformeerd";
+        nl["School.Parents.Confirm"] = "Bevestigen";
+        nl["School.Parents.Confirmed"] = "Bevestigd";
+        nl["School.Parents.Pending"] = "Nog bevestigen";
+        nl["School.Parents.ConfirmedOn"] = "Bevestigd op";
+        nl["School.Parents.By"] = "door";
+        nl["School.Parents.Withdraw"] = "Bevestiging intrekken";
+
+        nl["School.TestWindow.Title"] = "Testvenster";
+        nl["School.TestWindow.Lead"] = "Leerlingen kunnen alleen inloggen terwijl het venster open is.";
+        nl["School.TestWindow.Open"] = "Openen";
+        nl["School.TestWindow.Close"] = "Sluiten";
+        nl["School.TestWindow.Reopen"] = "Opnieuw openen";
+        nl["School.TestWindow.ClosesOn"] = "Sluit op (optioneel)";
+        nl["School.TestWindow.Until"] = "t/m";
+        nl["School.TestWindow.StatusOpen"] = "Open";
+        nl["School.TestWindow.StatusClosed"] = "Dicht";
+        nl["School.TestWindow.StatusNotOpen"] = "Nog niet open";
+        nl["School.TestWindow.FixLink"] = "Naar de oplossing";
+
+        nl["School.Teachers.Title"] = "Leraren";
+        nl["School.Teachers.Lead"] = "2FA is verplicht voor iedereen met toegang tot resultaten.";
+        nl["School.Teachers.Invite"] = "Leraar uitnodigen";
+        nl["School.Teachers.InviteLead"] = "De leraar ontvangt een e-mail en stelt eerst 2FA in.";
+        nl["School.Teachers.Empty"] = "Nog geen leraren.";
+        nl["School.Teachers.Col.Name"] = "Naam";
+        nl["School.Teachers.Col.Email"] = "E-mail";
+        nl["School.Teachers.Col.Classes"] = "Eigen klassen";
+        nl["School.Teachers.Col.Mfa"] = "2FA";
+        nl["School.Teachers.Col.Status"] = "Status";
+        nl["School.Teachers.Col.LastLogin"] = "Laatst ingelogd";
+        nl["School.Teachers.MfaOn"] = "Aan";
+        nl["School.Teachers.MfaOff"] = "Nog instellen";
+        nl["School.Teachers.StatusInvited"] = "Uitgenodigd";
+        nl["School.Teachers.StatusActive"] = "Actief";
+        nl["School.Teachers.Assign"] = "Klassen wijzigen";
+        nl["School.Teachers.Resend"] = "Opnieuw uitnodigen";
+        nl["School.Teachers.Remove"] = "Verwijderen";
+        nl["School.Teachers.Field.Name"] = "Naam";
+        nl["School.Teachers.Field.Email"] = "School-e-mail";
+        nl["School.Teachers.Field.Classes"] = "Klassen";
+        nl["School.Teachers.DomainHint"] = "moet eindigen op @{0}";
+        nl["School.Teachers.ScopeNote"] = "Een leraar ziet alleen de klassen die je hier aanvinkt. Uitslagen per code, verhaal en PDF: alleen van die klassen.";
+        nl["School.Teachers.MfaLocked"] = "Tweestapsverificatie · Verplicht";
+        nl["School.Teachers.MfaLockedHelp"] = "Na de eerste keer inloggen stelt de leraar een authenticator-app in. Inloggen met Microsoft of Google van school telt ook.";
+        nl["School.Teachers.SendInvite"] = "Uitnodiging versturen";
+
+        nl["School.Results.Title"] = "Resultaten";
+        nl["School.Results.Lead"] = "Per klas en per code. Namen zie je hier nooit. Die staan alleen op de eigen lijst van de leraar.";
+        nl["School.Results.PickClass"] = "Kies een klas.";
+        nl["School.Results.Totals"] = "Totalen per klas";
+        nl["School.Results.TotalsHidden"] = "Zichtbaar vanaf 5 afgeronde tests.";
+        nl["School.Results.Riasec"] = "RIASEC top-3";
+        nl["School.Results.Values"] = "Top-drijfveren";
+        nl["School.Results.DreamJobs"] = "Droombanen";
+        nl["School.Results.PerCode"] = "Per code";
+        nl["School.Results.Interest"] = "Interessecode";
+        nl["School.Results.TopValue"] = "Top-drijfveer";
+        nl["School.Results.DreamJob"] = "Droombaan";
+        nl["School.Results.WhatSchoolSees"] = "Wat de school ziet";
+        nl["School.Results.PerCodeOn"] = "Per code: aan";
+        nl["School.Results.PerCodeOff"] = "Per code: uit";
+        nl["School.Results.PerCodeOnNote"] = "Lobsy-beheer kan 'resultaten per code' uitzetten. Dan zie je alleen totalen per klas (vanaf 5 leerlingen).";
+        nl["School.Results.PerCodeOffNote"] = "Je ziet alleen totalen per klas. Resultaten per code ziet de leraar.";
+        nl["School.Results.TeacherOnlyNote"] = "Verhaal, likes en PDF per code ziet alleen de leraar van de klas.";
+
+        nl["School.Details.Title"] = "Schoolgegevens";
+        nl["School.Details.Lead"] = "Alleen-lezen. Wijzigingen via Lobsy.";
+        nl["School.Details.Name"] = "Naam";
+        nl["School.Details.City"] = "Plaats";
+        nl["School.Details.Brin"] = "BRIN";
+        nl["School.Details.Domains"] = "E-maildomeinen";
+        nl["School.Details.ContactLobsy"] = "Wijzigen? Neem contact op met Lobsy.";
+
+        nl["School.Privacy.Title"] = "Privacy & ouders";
+        nl["School.Privacy.Lead"] = "Verwerkersovereenkomst, bewaartermijn en ouderbrief.";
+        nl["School.Privacy.Agreement"] = "Verwerkersovereenkomst";
+        nl["School.Privacy.AgreementMissing"] = "Nog niet geregistreerd";
+        nl["School.Privacy.Roles"] = "De school is verwerkingsverantwoordelijke; Lobsy is verwerker.";
+        nl["School.Privacy.Retention"] = "Leerlinggegevens worden op {0} na het schooljaar {1} verwijderd. Anonieme totalen (vanaf 5 leerlingen) blijven voor rapportage.";
+        nl["School.Privacy.Confirmations"] = "Bevestigingen per klas";
+        nl["School.Privacy.Ouderbrief"] = "Ouderbrief";
+        nl["School.Privacy.Copy"] = "Tekst kopiëren";
+
+        nl["School.Material.Title"] = "Lesbrief & materiaal";
+        nl["School.Material.Lead"] = "Lesbrief en hoe leerlingen inloggen.";
+        nl["School.Material.Lesbrief"] = "Lesbrief";
+        nl["School.Material.LesbriefBody"] = "Korte handleiding voor in de les: codes uitdelen, testvenster, pauze en afronden.";
+        nl["School.Material.OpenLesbrief"] = "Lesbrief openen";
+        nl["School.Material.OnDemandNote"] = "De lesbrief wordt on-demand als HTML/PDF getoond (niet vooraf gegenereerd).";
+        nl["School.Material.LoginSteps"] = "Zo loggen leerlingen in";
+        nl["School.Material.Step1"] = "Ga naar lobsy.nl/leerling";
+        nl["School.Material.Step2"] = "Kies school en klas";
+        nl["School.Material.Step3"] = "Vul de code van de papieren lijst in";
+        nl["School.Material.Step4"] = "Start de ontdekkingsreis (ca. 25 minuten)";
+
         nl["School.Nav.Overview"] = "Overzicht";
         nl["School.Nav.Dashboard"] = "Dashboard";
         nl["School.Nav.Todo"] = "Te doen";

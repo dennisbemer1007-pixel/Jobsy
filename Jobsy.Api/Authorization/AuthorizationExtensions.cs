@@ -118,6 +118,11 @@ public static class AuthorizationExtensions
                         claims.Add(new Claim(JobsyClaimTypes.CompanyId, primaryCompany.ToString("D")));
                     }
 
+                    if (dbUser.SchoolId is Guid schoolId)
+                    {
+                        claims.Add(new Claim(JobsyClaimTypes.SchoolId, schoolId.ToString("D")));
+                    }
+
                     var membershipIds = dbUser.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
                     if (membershipIds.Count > 0)
                     {

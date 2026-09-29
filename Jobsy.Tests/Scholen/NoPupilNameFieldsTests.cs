@@ -38,6 +38,25 @@ public class NoPupilNameFieldsTests
         "SchoolStaffInviteResultDto.Email",
         "SchoolStaffInviteResult.Email",
         "SchoolStaffInviteResult.FullName",
+        // School portal DTOs — staff/school/class labels only (never pupil names).
+        "SchoolPortalClassListItemDto.ClassName",
+        "SchoolPortalClassListItemDto.TeacherNames",
+        "SchoolPortalClassDetailDto.ClassName",
+        "SchoolPortalClassDetailDto.ParentalInfoConfirmedByName",
+        "SchoolPortalTeacherChipDto.DisplayName",
+        "CreateSchoolClassRequest.ClassName",
+        "UpdateSchoolClassRequest.ClassName",
+        "SchoolPortalResultsDto.ClassName",
+        "SchoolPortalTeacherListItemDto.DisplayName",
+        "SchoolPortalTeacherListItemDto.Email",
+        "SchoolPortalTeacherClassChipDto.ClassName",
+        "SchoolDashboardDto.SchoolName",
+        "SchoolDashboardClassRowDto.ClassName",
+        "SchoolDashboardClassRowDto.TeacherNames",
+        "SchoolProfileDto.Name",
+        "SchoolProfileDto.AllowedEmailDomains",
+        "SchoolPrivacyClassConfirmationDto.ClassName",
+        "SchoolPrivacyClassConfirmationDto.ConfirmedByName",
     };
 
     [Fact]

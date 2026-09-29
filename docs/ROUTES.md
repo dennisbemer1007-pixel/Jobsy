@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (128 routes)
+## Table (136 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -151,6 +151,14 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/salesmanager/referrals` | `Pages/SalesManager/Referrals.razor` | SalesManager |
 | `/salesmanager/toolkit` | `Pages/SalesManager/SalesToolkit.razor` | SalesManager |
 | `/school` | `Pages/School/SchoolDashboard.razor` | SchoolAdmin |
+| `/school/gegevens` | `Pages/School/SchoolDetails.razor` | SchoolAdmin |
+| `/school/klassen` | `Pages/School/SchoolClasses.razor` | SchoolAdmin |
+| `/school/klassen/{ClassId:guid}` | `Pages/School/SchoolClassDetail.razor` | SchoolAdmin |
+| `/school/leraren` | `Pages/School/SchoolTeachers.razor` | SchoolAdmin |
+| `/school/materiaal` | `Pages/School/SchoolMaterials.razor` | SchoolAdmin |
+| `/school/privacy` | `Pages/School/SchoolPrivacy.razor` | SchoolAdmin |
+| `/school/resultaten` | `Pages/School/SchoolResults.razor` | SchoolAdmin |
+| `/school/te-doen` | `Pages/School/SchoolTodos.razor` | SchoolAdmin |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |

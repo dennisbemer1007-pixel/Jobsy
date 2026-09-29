@@ -1,0 +1,107 @@
+@namespace Jobsy.Web.Components.School
+@using Jobsy.Core.Enums
+@inject CultureState Culture
+
+@if (Open)
+{
+    <div class="sch-dialog-backdrop" @onclick="Cancel">
+        <div class="sch-dialog" role="dialog" aria-modal="true" aria-labelledby="tw-title" @onclick:stopPropagation="true">
+            <h2 id="tw-title">@Culture["School.TestWindow.Title"]</h2>
+            <p class="muted">@Culture["School.TestWindow.Lead"]</p>
+            <p>
+                <span class="sch-pill @PillClass">@StatusLabel</span>
+                @if (ClosesOn is DateOnly d)
+                {
+                    <span class="muted"> · @Culture["School.TestWindow.Until"] @d.ToString("dd-MM-yyyy")</span>
+                }
+            </p>
+
+            @if (State is TestWindowState.NotOpen or TestWindowState.Closed)
+            {
+                <label>
+                    @Culture["School.TestWindow.ClosesOn"]
+                    <InputDate class="input" @bind-Value="_closesOn" />
+                </label>
+            }
+
+            @if (!string.IsNullOrEmpty(Error))
+            {
+                <p class="state-message error">@Error</p>
+                @if (!string.IsNullOrEmpty(FixHref))
+                {
+                    <p><a href="@FixHref">@Culture["School.TestWindow.FixLink"]</a></p>
+                }
+            }
+
+            <div class="sch-drawer-actions">
+                <button type="button" class="btn-compact" @onclick="Cancel">@Culture["School.Cancel"]</button>
+                @if (State == TestWindowState.Open)
+                {
+                    <button type="button" class="btn-primary" disabled="@Busy" @onclick="CloseWindow">
+                        @Culture["School.TestWindow.Close"]
+                    </button>
+                }
+                else if (State == TestWindowState.Closed)
+                {
+                    <button type="button" class="btn-primary" disabled="@Busy" @onclick="ReopenWindow">
+                        @Culture["School.TestWindow.Reopen"]
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn-primary" disabled="@Busy" @onclick="OpenWindow">
+                        @Culture["School.TestWindow.Open"]
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public TestWindowState State { get; set; }
+    [Parameter] public DateOnly? ClosesOn { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public string? FixHref { get; set; }
+    [Parameter] public EventCallback<(string Action, DateOnly? ClosesOn)> OnAction { get; set; }
+
+    private DateTime? _closesOn;
+
+    protected override void OnParametersSet()
+    {
+        _closesOn = ClosesOn?.ToDateTime(TimeOnly.MinValue);
+    }
+
+    private string StatusLabel => State switch
+    {
+        TestWindowState.Open => Culture["School.TestWindow.StatusOpen"],
+        TestWindowState.Closed => Culture["School.TestWindow.StatusClosed"],
+        _ => Culture["School.TestWindow.StatusNotOpen"]
+    };
+
+    private string PillClass => State switch
+    {
+        TestWindowState.Open => "sch-pill--ok",
+        TestWindowState.Closed => "sch-pill--muted",
+        _ => "sch-pill--warn"
+    };
+
+    private async Task Cancel()
+    {
+        Open = false;
+        await OpenChanged.InvokeAsync(false);
+    }
+
+    private Task OpenWindow() => Emit("open");
+    private Task CloseWindow() => Emit("close");
+    private Task ReopenWindow() => Emit("reopen");
+
+    private async Task Emit(string action)
+    {
+        DateOnly? close = _closesOn is DateTime dt ? DateOnly.FromDateTime(dt) : null;
+        await OnAction.InvokeAsync((action, close));
+    }
+}

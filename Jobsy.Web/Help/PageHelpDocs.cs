@@ -455,9 +455,57 @@ public static class PageHelpDocs
 
         ["/school"] = new(
             "School · Dashboard",
-            "Leeg dashboard voor de schoolbeheerder.",
-            "Hier verschijnen klassen, codes en resultaten in een volgende release. Lobsy kent geen leerlingnamen.",
+            "Klassen, codes, leraren en openstaande acties.",
+            "Bekijk KPI’s, tests per klas, te-doen-lijst en interesses (vanaf 5 afgeronde tests). Lobsy kent geen leerlingnamen.",
             "Startpunt voor schoolbeheer."),
+
+        ["/school/te-doen"] = new(
+            "School · Te doen",
+            "Openstaande acties voor de schoolbeheerder.",
+            "Ouderbevestiging, leraren zonder klas, openstaande uitnodigingen en bewaartermijn.",
+            "Niets missen vóór het testvenster."),
+
+        ["/school/klassen"] = new(
+            "School · Klassen & codes",
+            "Klassen aanmaken en codes beheren.",
+            "Maak een klas met N codes, print de codelijst (lege naamkolom) en beheer het testvenster.",
+            "Leerlingcodes uitdelen zonder namen in Lobsy."),
+
+        ["/school/klassen/{classId}"] = new(
+            "School · Klasdetail",
+            "Codes, ouders en testvenster van één klas.",
+            "Print codelijst, bevestig ouders, open/sluit het testvenster, reset of verwijder codes.",
+            "Eén klas veilig beheren."),
+
+        ["/school/resultaten"] = new(
+            "School · Resultaten",
+            "Totalen per klas; per code alleen als de setting aan staat.",
+            "Bekijk groepsresultaten vanaf 5 leerlingen. Per-code korte uitkomsten alleen als Lobsy-beheer dat toestaat.",
+            "Inzicht zonder namen of losse antwoorden."),
+
+        ["/school/leraren"] = new(
+            "School · Leraren",
+            "Leraren uitnodigen met verplichte 2FA.",
+            "Nodig leraren uit, koppel eigen klassen en volg 2FA-status. Geen rolkeuze: altijd leraar.",
+            "Team toegang geven tot alleen hun klassen."),
+
+        ["/school/gegevens"] = new(
+            "School · Schoolgegevens",
+            "Alleen-lezen schoolgegevens.",
+            "Bekijk naam, plaats, BRIN en e-maildomeinen. Wijzigen via Lobsy.",
+            "Controleer of schoolgegevens kloppen."),
+
+        ["/school/privacy"] = new(
+            "School · Privacy & ouders",
+            "Verwerkersovereenkomst, bewaartermijn en ouderbrief.",
+            "Bekijk overeenkomststatus, bevestigingen per klas en download de ouderbrief-voorbeeldtekst.",
+            "AVG-plichten van school nalopen."),
+
+        ["/school/materiaal"] = new(
+            "School · Lesbrief & materiaal",
+            "Lesbrief en inlogstappen voor leerlingen.",
+            "Open de lesbrief en leg uit hoe leerlingen inloggen met school, klas en code.",
+            "Lesmateriaal klaarzetten."),
 
         ["/leraar"] = new(
             "Leraar · Dashboard",

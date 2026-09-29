@@ -290,6 +290,9 @@ public static class DependencyInjection
         services.AddScoped<ISchoolStaffInviteService, SchoolStaffInviteService>();
         services.AddScoped<IPupilCodeService, PupilCodeService>();
         services.AddScoped<ISchoolScopeService, SchoolScopeService>();
+        services.AddScoped<ISchoolCodeListPdfService, SchoolCodeListPdfService>();
+        services.AddScoped<ISchoolPortalService, SchoolPortalService>();
+        services.AddHostedService<TestWindowAutoCloser>();
         services.AddScoped<IAmbassadeurOnboardingService, AmbassadeurOnboardingService>();
         services.AddScoped<IAmbassadeurSettingsService, AmbassadeurSettingsService>();
         services.AddScoped<IAmbassadeurAttributionService, AmbassadeurAttributionService>();

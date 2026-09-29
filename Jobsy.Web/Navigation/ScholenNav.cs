@@ -19,22 +19,22 @@ public static class ScholenNav
         new("School.Nav.Overview",
         [
             new("School.Nav.Dashboard", "/school", IsAvailable: true),
-            new("School.Nav.Todo", "/school/te-doen", IsAvailable: false),
+            new("School.Nav.Todo", "/school/te-doen", IsAvailable: true),
         ]),
         new("School.Nav.Pupils",
         [
-            new("School.Nav.Classes", "/school/klassen", IsAvailable: false),
-            new("School.Nav.Results", "/school/resultaten", IsAvailable: false),
+            new("School.Nav.Classes", "/school/klassen", IsAvailable: true),
+            new("School.Nav.Results", "/school/resultaten", IsAvailable: true),
         ]),
         new("School.Nav.Team",
         [
-            new("School.Nav.Teachers", "/school/leraren", IsAvailable: false),
+            new("School.Nav.Teachers", "/school/leraren", IsAvailable: true),
         ]),
         new("School.Nav.School",
         [
-            new("School.Nav.Details", "/school/gegevens", IsAvailable: false),
-            new("School.Nav.Privacy", "/school/privacy", IsAvailable: false),
-            new("School.Nav.Materials", "/school/materiaal", IsAvailable: false),
+            new("School.Nav.Details", "/school/gegevens", IsAvailable: true),
+            new("School.Nav.Privacy", "/school/privacy", IsAvailable: true),
+            new("School.Nav.Materials", "/school/materiaal", IsAvailable: true),
         ]),
     ];
 
