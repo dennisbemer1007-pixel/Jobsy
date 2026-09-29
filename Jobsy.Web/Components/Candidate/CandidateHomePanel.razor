@@ -1,10 +1,20 @@
 @namespace Jobsy.Web.Components.Pages.Candidate
+@using Jobsy.Core.Features
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
+@if (_redirecting)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else
+{
 <div class="panel-page panel-page--dashboard">
     <header class="panel-header panel-header--dashboard">
         <div>
@@ -67,6 +77,7 @@
         }
     }
 </div>
+}
 
 @code {
     private const string Period = "week";
@@ -74,6 +85,7 @@
     private string? _selectedKey;
     private bool _loading = true;
     private bool _drillLoading;
+    private bool _redirecting;
     private string? _error;
     private List<MetricCount> _metrics = [];
     private List<MetricDrilldownItem> _drilldown = [];
@@ -86,11 +98,28 @@
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
 
-    protected override Task OnInitializedAsync()
-        => TryLoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var flags = await FeatureFlags.GetAsync();
+            if (flags.CandidatePassportEnabled)
+            {
+                _redirecting = true;
+                Navigation.NavigateTo(FeatureRoutes.CandidatePassportPath, replace: true);
+                return;
+            }
+        }
+        catch
+        {
+            // Continue classic home.
+        }
+
+        await TryLoadAsync();
+    }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
-        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+        => firstRender && !_redirecting ? TryLoadAsync() : Task.CompletedTask;
 
     private async Task TryLoadAsync()
     {

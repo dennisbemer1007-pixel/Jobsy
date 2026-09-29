@@ -61,6 +61,15 @@ public static class RoleNavCatalog
     public static readonly NavItem ProfileItem =
         new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/profiel", "/home"]);
 
+    public static readonly NavItem PassportItem =
+        new("Nav.Passport", "/candidate/paspoort", NavIcons.Profile,
+            ["/candidate/profile", "/profiel", "/home"]);
+
+    /// <summary>Sollicitaties with Bewaard URLs as active aliases (passport-ON order).</summary>
+    public static readonly NavItem ApplicationsWithSavedAliases =
+        new("Nav.Applications", "/candidate/applications", NavIcons.Applications,
+            ["/candidate/liked", "/candidate/shared"]);
+
     public static readonly NavItem MyApplicationsReadOnly =
         new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications);
 
@@ -159,30 +168,42 @@ public static class RoleNavCatalog
     ];
 
     /// <summary>
-    /// Pure-function candidate nav. File 01 keeps today's order for all passport states;
-    /// employers OFF hides Zoeken / Bewaard / Sollicitaties. File 02 adds passport-ON order.
+    /// Pure-function candidate nav. Passport OFF keeps today's order; passport ON uses §N slots
+    /// (Discovery reserved empty until file 08). Employers OFF hides Zoeken / Bewaard / Sollicitaties.
     /// </summary>
     public static IReadOnlyList<NavItem> CandidateItems(FeatureFlagSnapshot flags)
     {
         // Discovery slot reserved (empty until file 08) — nothing rendered.
         _ = CandidateNavSlot.Discovery;
 
+        if (flags.CandidatePassportEnabled)
+        {
+            if (!flags.EmployersEnabled)
+            {
+                // [Ontdekkingsreis] · Mijn Paspoort · Carrière
+                return [PassportItem, CareerItem];
+            }
+
+            // [Ontdekkingsreis] · Mijn Paspoort · Zoeken · Sollicitaties · Carrière
+            return [PassportItem, SearchItem, ApplicationsWithSavedAliases, CareerItem];
+        }
+
         if (!flags.EmployersEnabled)
         {
-            // Career · Profile (passport OFF and ON share this until file 02)
+            // Career · Profile
             return [CareerItem, ProfileItem];
         }
 
-        // Employers ON: exactly today's order (Search · Saved · Applications · Career · Profile)
+        // Employers ON + passport OFF: exactly today's order
         return Candidate;
     }
 
     /// <summary>
     /// True when Bewaard is its own bottom-nav item (legacy order).
-    /// File 02 returns false when passport is ON (Saved moves into Sollicitaties tabs).
+    /// False when passport is ON (Saved moves into Sollicitaties tabs) or employers OFF.
     /// </summary>
     public static bool ShowsSavedInNav(FeatureFlagSnapshot flags)
-        => flags.EmployersEnabled;
+        => flags.EmployersEnabled && !flags.CandidatePassportEnabled;
 
     public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user)
         => ForUser(user, FeatureFlagSnapshot.Defaults);

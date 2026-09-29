@@ -8,6 +8,7 @@ public static class FeatureRoutes
 {
     public const string OntdekPath = "/ontdek";
     public const string CandidateProfilePath = "/candidate/profile";
+    public const string CandidatePassportPath = "/candidate/paspoort";
     public const string AdminHomePath = "/home";
     public const string EmployersOffAccessDeniedPath = "/access-denied?reason=employers-off";
 
@@ -27,7 +28,7 @@ public static class FeatureRoutes
 
             if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
             {
-                return "/";
+                return flags.CandidatePassportEnabled ? CandidatePassportPath : "/";
             }
 
             return AdminHomePath;
@@ -46,8 +47,7 @@ public static class FeatureRoutes
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
         {
-            // File 02 switches to /candidate/paspoort when CandidatePassportEnabled.
-            return CandidateProfilePath;
+            return flags.CandidatePassportEnabled ? CandidatePassportPath : CandidateProfilePath;
         }
 
         // Employer-side / acquisition roles only

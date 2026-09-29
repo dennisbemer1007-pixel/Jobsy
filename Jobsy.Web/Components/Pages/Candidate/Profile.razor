@@ -9,6 +9,7 @@
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
 @inject Jobsy.Web.Services.ApiCallTracker ApiCalls
+@inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Components.Shared
@@ -781,6 +782,25 @@
     {
         ApiCalls.SetPath("/candidate/profile");
         _returnUrl = SanitizeReturnUrl(ReturnUrl);
+
+        try
+        {
+            var flags = await FeatureFlags.GetAsync();
+            if (flags.CandidatePassportEnabled)
+            {
+                var target = PassportRedirects.TryToPassportUrl(Navigation.Uri);
+                if (target is not null)
+                {
+                    Navigation.NavigateTo(target, replace: true);
+                    return;
+                }
+            }
+        }
+        catch
+        {
+            // Fall through to classic profile on flag lookup failure.
+        }
+
         try
         {
             if (_restored && _dnaState is not null)

@@ -1,4 +1,5 @@
 using Jobsy.Core.Features;
+using Jobsy.Web.Navigation;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Rendering;
@@ -48,6 +49,15 @@ public sealed class FeatureRouteGate : ComponentBase
                 var fallback = string.IsNullOrWhiteSpace(attr.FallbackPath)
                     ? FeatureRoutes.HomeFor(state.User, snap)
                     : attr.FallbackPath!;
+
+                // Passport OFF: keep ?tab= mapped to classic Kompas tabs.
+                if (attr.Feature == PlatformFeature.CandidatePassport
+                    && attr.WhenEnabled
+                    && !string.IsNullOrWhiteSpace(attr.FallbackPath))
+                {
+                    fallback = PassportRedirects.ToClassicProfileUrl(Navigation.Uri);
+                }
+
                 _allowed = false;
                 _checked = true;
                 Navigation.NavigateTo(fallback, forceLoad: false, replace: true);
