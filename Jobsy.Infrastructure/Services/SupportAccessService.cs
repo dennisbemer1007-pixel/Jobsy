@@ -39,8 +39,8 @@ public sealed class SupportAccessService : ISupportAccessService
         Guid adminUserId,
         SupportAccessRequest request,
         bool mfaVerifiedInSession,
-        CancellationToken cancellationToken = default,
-        string? authMethod = null)
+        string? authMethod = null,
+        CancellationToken cancellationToken = default)
     {
         if (request.SubjectUserId is null && request.SubjectCompanyId is null)
         {

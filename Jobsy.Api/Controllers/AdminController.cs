@@ -508,8 +508,8 @@ public class AdminController : ControllerBase
                     body.TicketReference,
                     body.DurationMinutes),
                 PersonalDataAccessLogExtensions.IsMfaVerifiedInSession(User),
-                cancellationToken,
-                authMethod: User.FindFirstValue("auth_method"));
+                authMethod: User.FindFirstValue("auth_method"),
+                cancellationToken: cancellationToken);
 
             await this.LogPersonalDataAccessAsync(
                 _accessLog,
