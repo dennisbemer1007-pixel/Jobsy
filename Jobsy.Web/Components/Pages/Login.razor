@@ -1,5 +1,6 @@
 @page "/login"
 @attribute [AllowAnonymous]
+@using Jobsy.Core.Features
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Localization
 @using Microsoft.AspNetCore.Antiforgery
@@ -10,6 +11,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject CultureState Culture
 @inject IJSRuntime Js
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
@@ -126,11 +128,14 @@
         </form>
 
         <div class="login-register">
-            <p class="login-register__lead">
-                @Culture["Login.RegisterLead"]
-                <a class="login-register__cta" href="/register">@Culture["Login.RegisterCta"]</a>
-            </p>
-            <a class="login-register__back" href="@_dismissUrl">@Culture["Login.BackToMap"]</a>
+            @if (_employersEnabled)
+            {
+                <p class="login-register__lead">
+                    @Culture["Login.RegisterLead"]
+                    <a class="login-register__cta" href="/register">@Culture["Login.RegisterCta"]</a>
+                </p>
+                <a class="login-register__back" href="@_dismissUrl">@Culture["Login.BackToMap"]</a>
+            }
             <p class="login-register__lead gd-quiet-link-wrap">
                 @Culture["GratisDna.QuietLink.Lead"]
                 <a class="auth-link" href="/ontdek">@Culture["GratisDna.QuietLink.Cta"]</a>
@@ -146,6 +151,7 @@
     private bool _sessionExpiredNotice;
     private bool _entraEnabled;
     private bool _googleEnabled;
+    private bool _employersEnabled = true;
     private string _antiforgeryFieldName = string.Empty;
     private string _antiforgeryToken = string.Empty;
 
@@ -167,6 +173,12 @@
         _entraEnabled = await ExternalAuth.IsEntraConfiguredAsync();
         _googleEnabled = await ExternalAuth.IsGoogleConfiguredAsync();
 
+        var flags = await FeatureFlags.GetAsync();
+        _employersEnabled = flags.EmployersEnabled;
+        _dismissUrl = flags.EmployersEnabled
+            ? AuthRedirects.BanenkaartPath
+            : FeatureRoutes.OntdekPath;
+
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
         _returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
@@ -174,8 +186,8 @@
             QueryValue(query, "returnTo"),
             QueryValue(query, "redirect"));
 
-        // Closing the dialog always returns to the banenkaart (not a protected returnUrl).
-        _dismissUrl = AuthRedirects.BanenkaartPath;
+        // Closing the dialog returns to banenkaart (ON) or ontdek (OFF).
+        // (_dismissUrl already set from flags above)
 
         var errorCode = query.TryGetValue("error", out var error) ? error.ToString() : null;
         var sessionExpired = string.Equals(errorCode, "session-expired", StringComparison.OrdinalIgnoreCase);

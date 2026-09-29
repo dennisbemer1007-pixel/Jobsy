@@ -8,6 +8,7 @@ namespace Jobsy.Infrastructure.Jobs;
 /// <summary>Weekly ATS URL/content health + 30-day TTL enforcement.</summary>
 public sealed class AtsVacancyHealthHostedService : BackgroundService
 {
+    private readonly EmployersJobGate _employersGate;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<AtsVacancyHealthHostedService> _logger;
 
@@ -17,6 +18,7 @@ public sealed class AtsVacancyHealthHostedService : BackgroundService
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _employersGate = new EmployersJobGate(_logger, nameof(AtsVacancyHealthHostedService));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -27,6 +29,12 @@ public sealed class AtsVacancyHealthHostedService : BackgroundService
         {
             try
             {
+                if (!await _employersGate.ShouldRunAsync(_scopeFactory, stoppingToken))
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(15), stoppingToken);
+                    continue;
+                }
+
                 await using var scope = _scopeFactory.CreateAsyncScope();
                 var health = scope.ServiceProvider.GetRequiredService<IAtsVacancyHealthService>();
                 var n = await health.RunHealthPassAsync(stoppingToken);

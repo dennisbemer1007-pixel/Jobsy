@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Web.Seo;
 
@@ -77,58 +78,74 @@ public sealed record SiteCrawlIndex(
 
 public sealed record SiteCrawlVacancy(Guid Id, DateOnly StartDate, DateOnly EndDate);
 
+
 public static class SeoEndpoints
 {
     public static void MapSeoEndpoints(this WebApplication app)
     {
-        app.MapGet("/robots.txt", (IConfiguration config, HttpContext http) =>
+        app.MapGet("/robots.txt", async (IConfiguration config, HttpContext http, IFeatureFlags flags) =>
         {
             var origin = PageSeoResolver.Origin(
                 $"{http.Request.Scheme}://{http.Request.Host}{http.Request.Path}",
                 config);
             http.Response.Headers.CacheControl = "public,max-age=86400";
-            return Results.Text(SitemapXml.RobotsTxt(origin), "text/plain; charset=utf-8");
+            var snap = await flags.GetAsync(http.RequestAborted);
+            var robots = SitemapXml.RobotsTxt(origin);
+            if (!snap.EmployersEnabled)
+            {
+                robots = robots.Replace(
+                    "Disallow: /vestiging\n",
+                    "Disallow: /vestiging\nDisallow: /vacancies\nDisallow: /banen\nDisallow: /register\nDisallow: /westland\nDisallow: /lancering\n",
+                    StringComparison.Ordinal);
+            }
+
+            return Results.Text(robots, "text/plain; charset=utf-8");
         }).AllowAnonymous();
 
         app.MapGet("/sitemap.xml", async (
             IConfiguration config,
             HttpContext http,
             IHttpClientFactory clients,
+            IFeatureFlags flags,
             CancellationToken cancellationToken) =>
         {
             var origin = PageSeoResolver.Origin(
                 $"{http.Request.Scheme}://{http.Request.Host}{http.Request.Path}",
                 config);
-            var paths = new List<string>(PageSeoCatalog.StaticIndexablePaths);
+            var snap = await flags.GetAsync(cancellationToken);
+            var paths = new List<string>(PageSeoCatalog.StaticIndexablePathsFor(snap));
 
-            try
+            if (snap.EmployersEnabled)
             {
-                var client = clients.CreateClient("JobsySeo");
-                var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var index = await client.GetFromJsonAsync<SiteCrawlIndex>(
-                    "api/site/crawl-index",
-                    jsonOptions,
-                    cancellationToken);
-                if (index is not null)
+                try
                 {
-                    foreach (var vacancy in index.Vacancies.Take(SitemapXml.MaxDynamicUrls))
+                    var client = clients.CreateClient("JobsySeo");
+                    var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var index = await client.GetFromJsonAsync<SiteCrawlIndex>(
+                        "api/site/crawl-index",
+                        jsonOptions,
+                        cancellationToken);
+                    if (index is not null)
                     {
-                        paths.Add($"/vacancies/{vacancy.Id:D}");
-                    }
-
-                    foreach (var companyPath in index.CompanyPaths)
-                    {
-                        if (!string.IsNullOrWhiteSpace(companyPath)
-                            && PageSeoCatalog.IsPublicCompanyPath(companyPath))
+                        foreach (var vacancy in index.Vacancies.Take(SitemapXml.MaxDynamicUrls))
                         {
-                            paths.Add(companyPath);
+                            paths.Add($"/vacancies/{vacancy.Id:D}");
+                        }
+
+                        foreach (var companyPath in index.CompanyPaths)
+                        {
+                            if (!string.IsNullOrWhiteSpace(companyPath)
+                                && PageSeoCatalog.IsPublicCompanyPath(companyPath))
+                            {
+                                paths.Add(companyPath);
+                            }
                         }
                     }
                 }
-            }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
-            {
-                // Static marketing URLs still help crawlers when the API is briefly unreachable.
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+                {
+                    // Static marketing URLs still help crawlers when the API is briefly unreachable.
+                }
             }
 
             http.Response.Headers.CacheControl = "public,max-age=3600";

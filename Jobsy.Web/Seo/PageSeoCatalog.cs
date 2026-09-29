@@ -64,6 +64,30 @@ public static partial class PageSeoCatalog
         "/partner"
     ];
 
+    /// <summary>
+    /// Static sitemap paths for the current feature flags.
+    /// When employers are OFF, vacancy/marketing URLs are dropped and home is /ontdek.
+    /// </summary>
+    public static IReadOnlyList<string> StaticIndexablePathsFor(Jobsy.Core.Features.FeatureFlagSnapshot flags)
+    {
+        if (flags.EmployersEnabled)
+        {
+            return StaticIndexablePaths;
+        }
+
+        return
+        [
+            "/ontdek",
+            "/login",
+            "/privacy",
+            "/algemene-voorwaarden",
+            "/gebruiksvoorwaarden",
+            "/wie-zijn-wij",
+            "/dna",
+            "/hoe-werkt-lobsy"
+        ];
+    }
+
     public static string Normalize(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))

@@ -79,6 +79,10 @@ public sealed class CandidateKompasService : ICandidateKompasService
         var culture = await _culture.GetAsync(userId, cancellationToken);
         var values = await _values.GetAsync(userId, cancellationToken);
         var (matches, matchStatus) = await _matches.GetAsync(userId, cancellationToken);
+        if (!features.EmployersEnabled)
+        {
+            matches = [];
+        }
         var deepStates = await _deep.GetStatesAsync(
             userId,
             [AssessmentKind.Competence, AssessmentKind.Career, AssessmentKind.Culture, AssessmentKind.Values],

@@ -7,7 +7,8 @@ public sealed record EmailTemplateInfo(
     string Title,
     string Audience,
     string Description,
-    string Category);
+    string Category,
+    bool RequiresEmployers = false);
 
 public sealed record ComposedEmail(
     string Key,

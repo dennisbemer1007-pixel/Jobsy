@@ -16,6 +16,7 @@ namespace Jobsy.Infrastructure.Jobs;
 /// </summary>
 public sealed class VacancyEngagementReminderHostedService : BackgroundService
 {
+    private readonly EmployersJobGate _employersGate;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<VacancyEngagementReminderHostedService> _logger;
 
@@ -25,6 +26,7 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _employersGate = new EmployersJobGate(_logger, nameof(VacancyEngagementReminderHostedService));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -48,7 +50,13 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
 
     private async Task RunAsync(CancellationToken cancellationToken)
     {
-        await using var scope = _scopeFactory.CreateAsyncScope();
+        if (!await _employersGate.ShouldRunAsync(_scopeFactory, stoppingToken))
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(15), stoppingToken);
+                    continue;
+                }
+
+                await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
         var notifications = scope.ServiceProvider.GetRequiredService<IUserNotificationService>();

@@ -1,28 +1,30 @@
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Features;
 
 /// <summary>
 /// Cached platform feature flags backed by <see cref="IPlatformFeatureService"/>.
+/// Registered as singleton; resolves the scoped feature service via <see cref="IServiceScopeFactory"/>.
 /// </summary>
 public sealed class FeatureFlags : IFeatureFlags
 {
     public const string CacheKey = "jobsy.feature-flags";
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
 
-    private readonly IPlatformFeatureService _features;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IMemoryCache _cache;
     private readonly ILogger<FeatureFlags> _logger;
 
     public FeatureFlags(
-        IPlatformFeatureService features,
+        IServiceScopeFactory scopeFactory,
         IMemoryCache cache,
         ILogger<FeatureFlags> logger)
     {
-        _features = features;
+        _scopeFactory = scopeFactory;
         _cache = cache;
         _logger = logger;
     }
@@ -36,7 +38,9 @@ public sealed class FeatureFlags : IFeatureFlags
 
         try
         {
-            var snap = await _features.GetAsync(cancellationToken);
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
+            var snap = await features.GetAsync(cancellationToken);
             var flags = new FeatureFlagSnapshot(snap.EmployersEnabled, snap.CandidatePassportEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;

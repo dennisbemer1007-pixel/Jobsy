@@ -1,6 +1,8 @@
 using System.Text.Json;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -20,22 +22,43 @@ public sealed class WebPushNotificationService : IPushNotificationService
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
+    private static readonly HashSet<string> ExtraEmployerPushCategories = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Match",
+        "PushBom",
+        "PendingApproval",
+        "EmployerReaction",
+        "NewVacancy",
+        "Vacancy"
+    };
+
     private readonly JobsyDbContext _db;
     private readonly WebPushVapidKeyProvider _vapid;
+    private readonly IFeatureFlags _featureFlags;
     private readonly ILogger<WebPushNotificationService> _logger;
 
     public WebPushNotificationService(
         JobsyDbContext db,
         WebPushVapidKeyProvider vapid,
+        IFeatureFlags featureFlags,
         ILogger<WebPushNotificationService> logger)
     {
         _db = db;
         _vapid = vapid;
+        _featureFlags = featureFlags;
         _logger = logger;
     }
 
     public async Task SendAsync(PushMessage message, CancellationToken cancellationToken = default)
     {
+        if (await ShouldSuppressEmployersAsync(message.Category, cancellationToken))
+        {
+            _logger.LogInformation(
+                "Web push suppressed: employers disabled (category={Category}).",
+                message.Category ?? "(none)");
+            return;
+        }
+
         var redactedTo = EmailServiceStub.RedactEmail(message.UserEmail);
         _db.PlatformLogs.Add(new PlatformLog
         {
@@ -128,5 +151,28 @@ public sealed class WebPushNotificationService : IPushNotificationService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async ValueTask<bool> ShouldSuppressEmployersAsync(
+        string? category,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            return false;
+        }
+
+        var cat = category.Trim();
+        var requires = ExtraEmployerPushCategories.Contains(cat)
+            || TransactionalEmails.Templates.Any(t =>
+                t.RequiresEmployers
+                && (string.Equals(t.Category, cat, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(t.Key, cat, StringComparison.OrdinalIgnoreCase)));
+        if (!requires)
+        {
+            return false;
+        }
+
+        return !await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
     }
 }
