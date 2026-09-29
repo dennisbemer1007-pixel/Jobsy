@@ -199,11 +199,9 @@
                         @if (_visited.Contains(PassportTabs.Data))
                         {
                             <LobsyBubble Text="@BubbleFor(PassportTabs.Data)" />
-                            <p class="login-lead">
-                                <a href="@PassportRedirects.BuildClassicProfileUrl(CandidateKompasTabs.Profile)">
-                                    @Culture["Passport.Transitional.OpenData"]
-                                </a>
-                            </p>
+                            <PanelErrorBoundary Name="passport-data">
+                                <PassportDataTab Active="@(_tab == PassportTabs.Data)" />
+                            </PanelErrorBoundary>
                         }
                     </article>
                 </div>

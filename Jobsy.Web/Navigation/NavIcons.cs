@@ -132,6 +132,18 @@ public static class NavIcons
 
     public const string HomeHeart =
         "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 11.5 12 4l9 7.5\"/><path d=\"M5 10.5V20h14v-9.5\"/><path d=\"M12 14.2 9.8 16a2 2 0 0 0 2.8 2.8l.2-.2.2.2a2 2 0 0 0 2.8-2.8Z\"/></svg>";
+
+    /// <summary>Bicycle — travel / preferences accordion.</summary>
+    public const string Transport =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"6.5\" cy=\"17.5\" r=\"2.5\"/><circle cx=\"17.5\" cy=\"17.5\" r=\"2.5\"/><path d=\"M6.5 17.5 10 8h3l2 5h3\"/><path d=\"M12 8V6\"/><path d=\"m14 13-3.5 0\"/></svg>";
+
+    /// <summary>Calendar — availability accordion.</summary>
+    public const string Calendar =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M16 3v4M8 3v4M3 11h18\"/></svg>";
+
+    /// <summary>Shield — privacy &amp; consent accordion.</summary>
+    public const string Shield =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3 5 6v5c0 5 3.2 8.4 7 9.5 3.8-1.1 7-4.5 7-9.5V6l-7-3Z\"/><path d=\"m9.5 12 1.8 1.8 3.7-3.8\"/></svg>";
 }
 
 /// <summary>Inline action icons for list rows (edit / delete / view / etc.).</summary>

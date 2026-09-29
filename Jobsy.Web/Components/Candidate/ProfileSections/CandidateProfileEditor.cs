@@ -720,6 +720,37 @@ public sealed class CandidateProfileEditor : IDisposable
         }
     }
 
+    /// <summary>Quick-save for the passport "open for work" switch (same UpdateMyProfile path).</summary>
+    public async Task SaveOpenForWorkAsync()
+    {
+        Saving = true;
+        Message = null;
+        Notify();
+        try
+        {
+            var updated = await _api.UpdateMyProfileAsync(openForWork: OpenForWork, dateOfBirth: DobInput);
+            if (updated is not null)
+            {
+                OpenForWork = updated.OpenForWork;
+            }
+
+            Message = _culture["Profile.Saved"];
+            if (AfterSaveAsync is not null)
+            {
+                await AfterSaveAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+        }
+        finally
+        {
+            Saving = false;
+            Notify();
+        }
+    }
+
     public Task AcceptTestConsentAsync()
         => UpdateConsentAsync(
             () => _api.AcceptTestAiConsentAsync(),

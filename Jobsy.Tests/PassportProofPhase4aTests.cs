@@ -130,13 +130,31 @@ public class ProfileSectionsExtractionTests
     }
 
     [Fact]
-    public void Transitional_data_tab_still_links_classic_profile()
+    public void Passport_data_tab_hosts_sections_and_employer_switches()
     {
         var root = FindRepoRoot();
+        var tab = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Passport/PassportDataTab.razor"));
+        Assert.Contains("FeatureVisible", tab);
+        Assert.Contains("PlatformFeature.Employers", tab);
+        Assert.Contains("Profile.OpenForWork", tab);
+        Assert.Contains("Passport.Data.TalentPool", tab);
+        Assert.Contains("<PersonalSection", tab);
+        Assert.Contains("<DevicesSection", tab);
+        Assert.Contains("<PreferencesSection", tab);
+        Assert.Contains("<AvailabilitySection", tab);
+        Assert.Contains("<MotivationSection", tab);
+        Assert.Contains("<ConsentSection", tab);
+        Assert.Contains("<DeleteAccountSection", tab);
+        Assert.Contains("UnsubscribeDialog", tab);
+        Assert.Contains("aria-expanded", tab);
+        Assert.Contains("aria-controls", tab);
+        Assert.Contains("IsUnder16", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections/ConsentSection.razor")));
+        Assert.Contains("OpenUnsubscribe", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections/DeleteAccountSection.razor")));
+
         var passport = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Passport.razor"));
-        var data = passport.Split("passport-panel-data")[1];
-        Assert.Contains("Passport.Transitional.OpenData", data);
-        Assert.Contains("ClassicTabsUntilPhase4", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/PassportRedirects.cs")));
+        Assert.Contains("<PassportDataTab", passport);
+        Assert.DoesNotContain("Passport.Transitional.OpenData", passport);
+        Assert.DoesNotContain("ClassicTabsUntilPhase4", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/PassportRedirects.cs")));
     }
 
     private static string FindRepoRoot()

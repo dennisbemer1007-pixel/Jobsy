@@ -73,6 +73,8 @@ public class MijnPaspoortPlaywrightTests
         Assert.Contains("--accent-soft", css, StringComparison.Ordinal);
         Assert.Contains(".passport-fit__", css, StringComparison.Ordinal);
         Assert.Contains(".passport-career__", css, StringComparison.Ordinal);
+        Assert.Contains(".passport-data__", css, StringComparison.Ordinal);
+        Assert.Contains(".passport-proof__", css, StringComparison.Ordinal);
     }
 
     [Fact]

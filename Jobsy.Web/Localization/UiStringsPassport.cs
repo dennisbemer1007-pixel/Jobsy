@@ -653,5 +653,73 @@ public static class UiStringsPassport
             "Twoje CV Lobsy (PDF) tworzymy automatycznie z dowodów i testów.",
             "CV-ul Lobsy (PDF) îl facem automat din dovezi și teste.",
             "ننشئ سيرة Lobsy (PDF) تلقائياً من إثباتاتك واختباراتك.");
+
+        // Mijn gegevens tab
+        Add("Passport.Data.OpenForWorkSub",
+            "Werkgevers zien dat je zoekt",
+            "Employers see that you are looking",
+            "Pracodawcy widzą, że szukasz",
+            "Angajatorii văd că cauți",
+            "أصحاب العمل يرون أنك تبحث");
+        Add("Passport.Data.TalentPool",
+            "Anoniem in de talentpool",
+            "Anonymous in the talent pool",
+            "Anonimowo w puli talentów",
+            "Anonim în pool-ul de talente",
+            "مجهول في مجموعة المواهب");
+        Add("Passport.Data.TalentPoolSub",
+            "Staat standaard uit",
+            "Off by default",
+            "Domyślnie wyłączone",
+            "Dezactivat implicit",
+            "متوقف افتراضياً");
+        Add("Passport.Data.ConsentOn",
+            "Aan", "On", "Wł.", "Pornit", "تشغيل");
+        Add("Passport.Data.ConsentOff",
+            "Uit", "Off", "Wył.", "Oprit", "إيقاف");
+        Add("Passport.Data.ConsentSince",
+            "Toestemming sinds {0}",
+            "Consent since {0}",
+            "Zgoda od {0}",
+            "Consimțământ din {0}",
+            "موافقة منذ {0}");
+        Add("Passport.Data.PersonalSub",
+            "Naam, telefoon, WhatsApp, geboortedatum, adres, apparaten",
+            "Name, phone, WhatsApp, date of birth, address, devices",
+            "Imię, telefon, WhatsApp, data urodzenia, adres, urządzenia",
+            "Nume, telefon, WhatsApp, data nașterii, adresă, dispozitive",
+            "الاسم، الهاتف، واتساب، تاريخ الميلاد، العنوان، الأجهزة");
+        Add("Passport.Data.PreferencesSub",
+            "Reistijd, vervoer, interesses, rijbewijzen",
+            "Travel time, transport, interests, licences",
+            "Czas dojazdu, transport, zainteresowania, prawo jazdy",
+            "Timp de deplasare, transport, interese, permis",
+            "وقت التنقل، المواصلات، الاهتمامات، الرخص");
+        Add("Passport.Data.AvailabilitySub",
+            "Uren per week, snelkeuzes, dagdelen",
+            "Hours per week, presets, day parts",
+            "Godziny tygodniowo, szybkie wybory, pory dnia",
+            "Ore pe săptămână, presetări, momente ale zilei",
+            "ساعات أسبوعياً، اختيارات سريعة، فترات اليوم");
+        Add("Passport.Data.Motivation",
+            "Mijn motivatie", "My motivation", "Moja motywacja", "Motivația mea", "دافعي");
+        Add("Passport.Data.MotivationSub",
+            "Over jezelf, algemene motivatie",
+            "About you, default motivation",
+            "O sobie, ogólna motywacja",
+            "Despre tine, motivație generală",
+            "عن نفسك، الدافع العام");
+        Add("Passport.Data.PrivacySub",
+            "Tests en AI, talentpool, ouder/voogd",
+            "Tests and AI, talent pool, parent/guardian",
+            "Testy i AI, pula talentów, rodzic/opiekun",
+            "Teste și AI, pool de talente, părinte/tutore",
+            "اختبارات وذكاء اصطناعي، مجموعة مواهب، ولي الأمر");
+        Add("Passport.Data.DeleteSub",
+            "Je gegevens definitief wissen",
+            "Permanently erase your data",
+            "Trwale usuń swoje dane",
+            "Șterge definitiv datele tale",
+            "احذف بياناتك نهائياً");
     }
 }

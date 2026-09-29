@@ -61,10 +61,12 @@ public class PassportRedirectsTests
     }
 
     [Fact]
-    public void TryToPassportUrl_skips_classic_profile_tab_until_phase4()
+    public void TryToPassportUrl_maps_profile_tab_to_data()
     {
-        Assert.Null(PassportRedirects.TryToPassportUrl("/candidate/profile?tab=profile"));
-        Assert.True(PassportRedirects.IsClassicTabUntilPhase4("profile"));
+        var url = PassportRedirects.TryToPassportUrl("/candidate/profile?tab=profile");
+        Assert.NotNull(url);
+        Assert.Contains("/candidate/paspoort", url, StringComparison.Ordinal);
+        Assert.Contains("tab=data", url, StringComparison.Ordinal);
     }
 }
 
