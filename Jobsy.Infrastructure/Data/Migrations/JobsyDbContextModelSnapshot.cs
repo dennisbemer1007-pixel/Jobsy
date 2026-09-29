@@ -4151,6 +4151,19 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AffiliateCode")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<int>("Delivery")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DurationUnit")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DurationValue")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ExternalPath")
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
@@ -4163,13 +4176,32 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsFree")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsPartner")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("KeysCsv")
                         .IsRequired()
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
+                    b.Property<string>("Location")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<Guid>("ProviderId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("ShowInPassport")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");
@@ -4179,12 +4211,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ProviderId");
+
+                    b.HasIndex("ShowInPassport");
 
                     b.ToTable("TrainingOffers", (string)null);
                 });

@@ -120,6 +120,19 @@ public sealed partial class JobsyApiClient
     public async Task<List<TrainingProviderAdmin>> GetTrainingProvidersAdminAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<TrainingProviderAdmin>>("api/admin/training/providers", ct) ?? [];
 
+    public async Task<TrainingOfferAdmin> UpsertTrainingOfferAdminAsync(object payload, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/admin/training/offers", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<TrainingOfferAdmin>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Lege opleiding-response.");
+    }
+
     public async Task RecordTrainingConversionAsync(object payload, CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/admin/training/conversions", payload, ct);

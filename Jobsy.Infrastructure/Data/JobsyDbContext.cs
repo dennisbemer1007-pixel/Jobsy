@@ -1758,7 +1758,13 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.FieldsCsv).HasMaxLength(200).IsRequired();
             entity.Property(e => e.KeysCsv).HasMaxLength(400).IsRequired();
             entity.Property(e => e.ExternalPath).HasMaxLength(1024);
+            entity.Property(e => e.Location).HasMaxLength(200);
+            entity.Property(e => e.AffiliateCode).HasMaxLength(120);
+            entity.Property(e => e.ShowInPassport).HasDefaultValue(false);
+            entity.Property(e => e.IsFree).HasDefaultValue(false);
+            entity.Property(e => e.IsPartner).HasDefaultValue(false);
             entity.HasIndex(e => e.ProviderId);
+            entity.HasIndex(e => e.ShowInPassport);
             entity.HasOne(e => e.Provider)
                 .WithMany(p => p.Offers)
                 .HasForeignKey(e => e.ProviderId)

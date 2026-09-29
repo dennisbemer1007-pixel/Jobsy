@@ -95,6 +95,28 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             .ToList();
     }
 
+    public async Task<IReadOnlyList<PassportCourseCardDto>> RecommendPassportAsync(
+        Guid userId,
+        string? searchBlob,
+        IReadOnlyList<string>? searchKeys,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureDefaultsAsync(cancellationToken);
+        _ = userId;
+
+        var keys = searchKeys?.Where(k => !string.IsNullOrWhiteSpace(k)).Select(k => k.Trim()).ToList() ?? [];
+        var blob = string.Join(' ', keys.Prepend(searchBlob ?? "").Where(s => !string.IsNullOrWhiteSpace(s)));
+        var fields = TrainingFieldCatalog.Detect(keys.Prepend(searchBlob ?? ""));
+
+        var rows = await _db.TrainingOffers.AsNoTracking()
+            .Include(o => o.Provider)
+            .Where(o => o.IsActive && o.Provider.IsActive && o.ShowInPassport)
+            .ToListAsync(cancellationToken);
+
+        var slots = CourseSlotRules.Pick(rows, new CourseSlotRules.Context(fields, blob));
+        return slots.Select(ToPassportCard).ToList();
+    }
+
     public async Task<TrainingTrackedLinkDto> TrackAsync(
         Guid userId,
         Guid offerId,
@@ -114,9 +136,17 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         var hash = TrainingTracking.CandidateHash(userId, secret);
         var clickId = Guid.NewGuid();
         var campaignValue = string.IsNullOrWhiteSpace(campaign) ? TrainingTracking.CampaignFit : campaign.Trim();
-        var medium = offer.Provider.Kind == TrainingProviderKind.RegionalPartner ? "partner" : "affiliate";
+        var medium = offer.IsPartner || offer.Provider.Kind == TrainingProviderKind.RegionalPartner
+            ? "partner"
+            : "affiliate";
         var target = TrainingDeepLinkRules.Combine(offer.Provider.BaseUrl, offer.ExternalPath);
-        var outbound = TrainingTracking.AppendParameters(target, hash, clickId, campaignValue, medium);
+        var outbound = TrainingTracking.AppendParameters(
+            target,
+            hash,
+            clickId,
+            campaignValue,
+            medium,
+            offer.AffiliateCode);
         if (!TrainingTracking.LooksSafeOutbound(outbound) || !TrainingDeepLinkRules.IsCourseDeepLink(outbound))
         {
             throw new InvalidOperationException("Ongeldige opleiders-deeplink (geen homepage).");
@@ -243,6 +273,25 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         row.ExternalPath = path;
         row.IsActive = request.IsActive;
         row.SortOrder = request.SortOrder;
+        row.Type = request.Type;
+        row.DurationValue = request.DurationValue;
+        row.DurationUnit = request.DurationUnit;
+        row.Delivery = request.Delivery;
+        row.Location = string.IsNullOrWhiteSpace(request.Location) ? null : request.Location.Trim();
+        row.IsFree = request.IsFree;
+        row.IsPartner = request.IsPartner;
+        row.AffiliateCode = string.IsNullOrWhiteSpace(request.AffiliateCode) ? null : request.AffiliateCode.Trim();
+        row.ShowInPassport = request.ShowInPassport;
+
+        var provider = await _db.TrainingProviders.AsNoTracking()
+            .FirstAsync(p => p.Id == request.ProviderId, cancellationToken);
+        var deepLink = TrainingDeepLinkRules.Combine(provider.BaseUrl, path);
+        var flagError = CourseSlotRules.ValidateFlags(row.IsFree, row.IsPartner, row.AffiliateCode, deepLink);
+        if (flagError is not null)
+        {
+            throw new ArgumentException(flagError);
+        }
+
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
         return ToOfferAdmin(row);
@@ -392,6 +441,23 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             "Zet Training__TrackingSecret op een lange willekeurige geheime waarde.");
     }
 
+    private static PassportCourseCardDto ToPassportCard(CourseSlotRules.Slot slot)
+    {
+        var o = slot.Offer;
+        return new(
+            o.Id,
+            o.Title,
+            o.Provider.Name,
+            o.Type.ToString(),
+            o.DurationValue,
+            o.DurationUnit?.ToString(),
+            o.Delivery.ToString(),
+            o.Location,
+            o.IsFree,
+            o.IsPartner,
+            TrainingTracking.RelFor(o.IsPartner));
+    }
+
     private static TrainingOfferCardDto ToCard(TrainingOffer offer, string? campaign = null)
     {
         var skill = string.Equals(campaign?.Trim(), TrainingTracking.CampaignCompetence, StringComparison.OrdinalIgnoreCase)
@@ -425,7 +491,24 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             provider.Offers.OrderBy(o => o.SortOrder).Select(ToOfferAdmin).ToList());
 
     private static TrainingOfferAdminDto ToOfferAdmin(TrainingOffer offer)
-        => new(offer.Id, offer.ProviderId, offer.Title, offer.FieldsCsv, offer.KeysCsv, offer.ExternalPath, offer.IsActive, offer.SortOrder);
+        => new(
+            offer.Id,
+            offer.ProviderId,
+            offer.Title,
+            offer.FieldsCsv,
+            offer.KeysCsv,
+            offer.ExternalPath,
+            offer.IsActive,
+            offer.SortOrder,
+            offer.Type.ToString(),
+            offer.DurationValue,
+            offer.DurationUnit?.ToString(),
+            offer.Delivery.ToString(),
+            offer.Location,
+            offer.IsFree,
+            offer.IsPartner,
+            offer.AffiliateCode,
+            offer.ShowInPassport);
 
     private static string Csv(string value)
         => "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";

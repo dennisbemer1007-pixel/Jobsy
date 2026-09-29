@@ -391,6 +391,26 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    public async Task<List<PassportCourseCard>> GetPassportTrainingOffersAsync(
+        string? skill,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var qs = "api/me/training-offers/passport";
+            if (!string.IsNullOrWhiteSpace(skill))
+            {
+                qs += "?skill=" + Uri.EscapeDataString(skill);
+            }
+
+            return await _http.GetFromJsonAsync<List<PassportCourseCard>>(qs, ct) ?? [];
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
     public async Task<TrainingTrackedLink> TrackTrainingOfferAsync(
         Guid offerId,
         string campaign,
