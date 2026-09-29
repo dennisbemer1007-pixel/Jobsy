@@ -19,6 +19,10 @@
     "sha256": "1693816b0b407c89dc96ccf53cf8ab37f4c38794b75c9b411bc986be5e17bd11",
     "v": "20260928-insights"
   },
+  "css/features/match-desktop.css": {
+    "sha256": "765bd9ae5c01bb124d2bf13fd9ed4149a242bbdd51a7132eb501ca38a2726ea3",
+    "v": "20260928-match-desktop-ci"
+  },
   "css/features/mijn-dna.css": {
     "sha256": "039f2fead93a7aff58df1e7882497e248dad9193ebc37e7ed06de76ba0d97954",
     "v": "20260927-dna-c"
@@ -48,8 +52,8 @@
     "v": "20260925-coral"
   },
   "js/app-core.js": {
-    "sha256": "feaf19b92ca54d96d4c350199153b5a7c8803628637a963cae53acbf724d6e67",
-    "v": "20260927-banenkaart-v3b"
+    "sha256": "28a314f8119199b436e188ff0faaa7494d15663c6ef304cf147a5b803f0f5636",
+    "v": "20260929-match-desktop"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",

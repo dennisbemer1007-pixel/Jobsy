@@ -1,0 +1,246 @@
+@namespace Jobsy.Web.Components.Match
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+
+@if (IsOpen && Deck is not null)
+{
+    <div class="share-modal-backdrop lobsy-dialog-backdrop"
+         @onclick="CloseAsync"></div>
+    <div @ref="_dialog"
+         class="share-modal lobsy-dialog lobsy-dialog--match"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="match-dialog-title"
+         aria-describedby="match-dialog-progress"
+         tabindex="-1"
+         @onkeydown="OnKeyDownAsync">
+        <div class="lobsy-dialog--match__main">
+            <header class="lobsy-dialog--match__header">
+                <div>
+                    <h2 id="match-dialog-title">@Culture["Match.DialogTitle"]</h2>
+                    <p id="match-dialog-progress" class="lobsy-dialog--match__progress-text" aria-live="polite">
+                        @Culture.Format("Match.DialogProgress", Deck.Position, Deck.Count)
+                    </p>
+                </div>
+                <button type="button"
+                        class="icon-btn share-modal__close"
+                        aria-label="@Culture["Common.Close"]"
+                        @onclick="CloseAsync">×</button>
+            </header>
+
+            @if (Deck.Count > 0)
+            {
+                var progressPct = Deck.Count == 0
+                    ? 0
+                    : (int)Math.Round(100.0 * Deck.Position / Deck.Count);
+                <div class="lobsy-dialog--match__bar"
+                     role="progressbar"
+                     aria-valuemin="1"
+                     aria-valuemax="@Deck.Count"
+                     aria-valuenow="@Deck.Position">
+                    <svg class="lobsy-dialog--match__bar-svg" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true">
+                        <rect class="lobsy-dialog--match__bar-track" x="0" y="0" width="100" height="4" rx="2" />
+                        <rect class="lobsy-dialog--match__bar-fill" x="0" y="0" width="@progressPct" height="4" rx="2" />
+                    </svg>
+                </div>
+            }
+
+            @if (Deck.IsFinished || Deck.Current is null)
+            {
+                <div class="lobsy-dialog--match__done">
+                    <p>@Culture["Match.DeckDone"]</p>
+                    <button type="button" class="engagement-btn" @onclick="CloseAsync">@Culture["Match.DialogClose"]</button>
+                </div>
+            }
+            else
+            {
+                <div class="swipe-stack swipe-stack--dialog">
+                    @if (Deck.PeekNext is not null)
+                    {
+                        <SwipeCard Model="Deck.PeekNext"
+                                   IsBackdrop="true"
+                                   Variant="SwipeCardVariant.Dialog"
+                                   AnimationDurationMs="0" />
+                    }
+                    <SwipeCard @ref="_card"
+                               @key="Deck.Current.VacancyId ?? Guid.Empty"
+                               Model="Deck.Current"
+                               Variant="SwipeCardVariant.Dialog"
+                               AnimationDurationMs="280"
+                               OnReject="HandleReject"
+                               OnInterest="HandleInterest"
+                               OnMoreInfo="HandleMoreInfo"
+                               OnSwipeComplete="HandleSwipeComplete" />
+                </div>
+                <p class="lobsy-dialog--match__hints" aria-hidden="true">
+                    <kbd>←</kbd> @Culture["Match.Reject"]
+                    <span>·</span>
+                    @Culture["Match.Interest"] <kbd>→</kbd>
+                </p>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_status))
+            {
+                <p class="lobsy-dialog--match__status" role="status">@_status</p>
+            }
+        </div>
+
+        <aside class="lobsy-dialog--match__side" aria-label="@Culture["Match.UpNext"]">
+            <h3>@Culture["Match.UpNext"]</h3>
+            <ul class="lobsy-dialog--match__upnext">
+                @foreach (var item in Deck.UpNext(3))
+                {
+                    var pct = item.MatchPercentage;
+                    <li>
+                        <button type="button"
+                                class="lobsy-dialog--match__upnext-row"
+                                @onclick="() => JumpToAsync(item)">
+                            <VacancyPhoto Src="@item.ImageUrl"
+                                          FallbackSrc="@item.CompanyLogoUrl"
+                                          VacancyId="@(item.VacancyId ?? Guid.Empty)"
+                                          Class="lobsy-dialog--match__thumb"
+                                          Width="80"
+                                          Height="80"
+                                          Sizes="40px" />
+                            <span class="lobsy-dialog--match__upnext-body">
+                                <span class="lobsy-dialog--match__upnext-title">@item.JobTitle</span>
+                                <span class="lobsy-dialog--match__upnext-meta">@item.CompanyName</span>
+                            </span>
+                            @if (pct is int p)
+                            {
+                                <span class="lobsy-dialog--match__upnext-pct">@p%</span>
+                            }
+                        </button>
+                    </li>
+                }
+            </ul>
+            <p class="lobsy-dialog--match__footnote">@Culture["Match.DialogFootnote"]</p>
+        </aside>
+    </div>
+}
+
+@code {
+    private ElementReference _dialog;
+    private SwipeCard? _card;
+    private string? _status;
+    private bool _trapActive;
+    private bool _animating;
+
+    [Parameter] public MatchDeck? Deck { get; set; }
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsOpen && !_trapActive)
+        {
+            _trapActive = true;
+            _ = TrapFocusAsync();
+        }
+        else if (!IsOpen && _trapActive)
+        {
+            _trapActive = false;
+            _ = ReleaseFocusAsync();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task CloseAsync()
+    {
+        if (_trapActive)
+        {
+            _trapActive = false;
+            _ = ReleaseFocusAsync();
+        }
+
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task TrapFocusAsync()
+    {
+        try { await Js.InvokeVoidAsync("jobsyDialog.trap", _dialog); }
+        catch (JSException) { }
+        catch (InvalidOperationException) { }
+        catch (TaskCanceledException) { }
+    }
+
+    private async Task ReleaseFocusAsync()
+    {
+        try { await Js.InvokeVoidAsync("jobsyDialog.release"); }
+        catch (JSException) { }
+        catch (InvalidOperationException) { }
+        catch (TaskCanceledException) { }
+    }
+
+    private async Task OnKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (Deck is null || _animating)
+        {
+            return;
+        }
+
+        if (e.Key is "Escape" or "Esc")
+        {
+            await CloseAsync();
+            return;
+        }
+
+        if (Deck.Current is null)
+        {
+            return;
+        }
+
+        if (e.Key is "ArrowLeft" && _card is not null)
+        {
+            _animating = true;
+            await _card.SwipeAsync(SwipeDirection.Left);
+        }
+        else if (e.Key is "ArrowRight" && _card is not null)
+        {
+            _animating = true;
+            await _card.SwipeAsync(SwipeDirection.Right);
+        }
+    }
+
+    private void HandleReject(SwipeViewModel model)
+        => _status = Culture["Match.ToastSkipped"];
+
+    private void HandleInterest(SwipeViewModel model)
+    {
+        if (Deck is not null)
+        {
+            _ = Deck.LikeAsync(Api, model);
+        }
+
+        _status = Culture["Match.ToastLiked"];
+    }
+
+    private void HandleMoreInfo(SwipeViewModel model)
+    {
+        if (model.VacancyId is Guid id)
+        {
+            Navigation.NavigateTo($"/vacancies/{id}");
+        }
+    }
+
+    private void HandleSwipeComplete((SwipeViewModel Model, SwipeDirection Direction) result)
+    {
+        Deck?.Advance();
+        _animating = false;
+    }
+
+    private Task JumpToAsync(SwipeViewModel item)
+    {
+        if (item.VacancyId is Guid id)
+        {
+            Deck?.ResumeAt(id);
+        }
+
+        return Task.CompletedTask;
+    }
+}

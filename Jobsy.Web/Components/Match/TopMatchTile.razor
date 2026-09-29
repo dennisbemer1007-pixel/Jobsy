@@ -1,0 +1,55 @@
+@namespace Jobsy.Web.Components.Match
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@if (Model is not null && Model.MatchPercentage is int pct)
+{
+    <button type="button"
+            @ref="_button"
+            class="highlight-carousel__card highlight-carousel__card--top-match @(IsOpen ? "is-open" : null)"
+            role="listitem"
+            aria-haspopup="dialog"
+            aria-expanded="@(IsOpen ? "true" : "false")"
+            aria-label="@Culture.Format("Match.TopMatchAria", pct, Model.JobTitle, Model.CompanyName)"
+            @onclick="OnOpen">
+        <span class="highlight-carousel__media-wrap">
+            <VacancyPhoto Src="@Model.ImageUrl"
+                          FallbackSrc="@Model.CompanyLogoUrl"
+                          VacancyId="@(Model.VacancyId ?? Guid.Empty)"
+                          WorkType="@(Model.Tags.FirstOrDefault())"
+                          Class="highlight-carousel__media"
+                          Width="160"
+                          Height="107"
+                          Sizes="56px" />
+            <span class="highlight-carousel__match-badge">@pct%</span>
+        </span>
+        <span class="highlight-carousel__body">
+            <span class="highlight-carousel__eyebrow">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="4" y="3" width="12" height="16" rx="1.5"/>
+                    <path d="M8 7h4M8 11h4M8 15h2"/>
+                </svg>
+                @Culture["Match.TopMatch"]
+            </span>
+            <span class="highlight-carousel__title-text">@Model.JobTitle</span>
+            <span class="highlight-carousel__meta">
+                @Model.CompanyName
+                @if (!string.IsNullOrWhiteSpace(TravelText))
+                {
+                    <text> · @TravelText</text>
+                }
+            </span>
+        </span>
+    </button>
+}
+
+@code {
+    private ElementReference _button;
+
+    [Parameter] public SwipeViewModel? Model { get; set; }
+    [Parameter] public string? TravelText { get; set; }
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnOpen { get; set; }
+
+    public ValueTask FocusAsync() => _button.FocusAsync();
+}

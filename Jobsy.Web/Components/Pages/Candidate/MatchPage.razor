@@ -15,7 +15,7 @@
 
 <PageTitle>@Culture["Nav.Match"] · Lobsy</PageTitle>
 
-<div class="match-page match-page--shell @(_gate.IsProfileComplete ? null : "match-page--locked")">
+<div class="match-page match-page--shell @(_deck.Gate.IsProfileComplete ? null : "match-page--locked")">
     <header class="match-page__top">
         <span class="match-page__title">Match</span>
         <div class="match-page__top-actions">
@@ -34,15 +34,15 @@
         </div>
     </header>
 
-    <section class="match-page__body @(_gate.IsProfileComplete ? "match-page__panel--swipe" : "match-page__panel--gate")"
-             aria-label="@(_gate.IsProfileComplete ? "Match swipen" : "Match ontgrendelen")">
+    <section class="match-page__body @(_deck.Gate.IsProfileComplete ? "match-page__panel--swipe" : "match-page__panel--gate")"
+             aria-label="@(_deck.Gate.IsProfileComplete ? "Match swipen" : "Match ontgrendelen")">
         @if (_loading)
         {
             <PageContentSkeleton Variant="match" LoadingLabel="Bezig met laden…" />
         }
-        else if (!_gate.IsProfileComplete)
+        else if (!_deck.Gate.IsProfileComplete)
         {
-            <MatchUnlockPanel Gate="_gate" />
+            <MatchUnlockPanel Gate="_deck.Gate" />
         }
         else if (Current is null)
         {
@@ -92,9 +92,7 @@
 
 @code {
     private const string PersistKey = "candidateMatchDeck";
-    private readonly List<SwipeViewModel> _deck = [];
-    private MatchProfileGateViewModel _gate = new();
-    private int _index;
+    private readonly MatchDeck _deck = new();
     private int _restoredIndex;
     private List<Guid> _restoredVacancyIds = [];
     private bool _loading = true;
@@ -104,26 +102,19 @@
     private CancellationTokenSource? _toastCts;
     private PersistingComponentStateSubscription _persistSubscription;
 
-    private SwipeViewModel? Current =>
-        _index >= 0 && _index < _deck.Count ? _deck[_index] : null;
-
-    private SwipeViewModel? PeekNext =>
-        _index + 1 < _deck.Count ? _deck[_index + 1] : null;
-
+    private SwipeViewModel? Current => _deck.Current;
+    private SwipeViewModel? PeekNext => _deck.PeekNext;
     private SwipeViewModel? PeekAfterNext =>
-        _index + 2 < _deck.Count ? _deck[_index + 2] : null;
+        _deck.Index + 2 < _deck.Count ? _deck.Items[_deck.Index + 2] : null;
 
     protected override void OnInitialized()
     {
         _persistSubscription = Persist.RegisterOnPersisting(PersistState);
         if (Persist.TryTakeFromJson<MatchPagePersistState>(PersistKey, out var saved) && saved is not null)
         {
-            // Slim DTO: gate flags + vacancy ids + index. Never persist the swipe stack.
-            _gate = saved.Gate ?? new();
+            _deck.SetGate(saved.Gate ?? new());
             _restoredVacancyIds = saved.VacancyIds ?? [];
             _restoredIndex = Math.Max(0, saved.Index);
-            _index = 0;
-            _deck.Clear();
             _loading = true;
             _restored = true;
         }
@@ -133,9 +124,9 @@
     {
         Persist.PersistAsJson(PersistKey, new MatchPagePersistState
         {
-            Gate = SlimGate(_gate),
-            VacancyIds = _deck.Select(v => v.VacancyId).Where(id => id is Guid).Select(id => id!.Value).ToList(),
-            Index = _index
+            Gate = SlimGate(_deck.Gate),
+            VacancyIds = _deck.Items.Select(v => v.VacancyId).Where(id => id is Guid).Select(id => id!.Value).ToList(),
+            Index = _deck.Index
         });
         return Task.CompletedTask;
     }
@@ -155,11 +146,9 @@
         RequiredCount = gate.RequiredCount,
         PreferredTransport = gate.PreferredTransport,
         MaxTravelMinutes = gate.MaxTravelMinutes
-        // Educations / home coords reload with the deck — keep persist tiny.
     };
 
     protected override Task OnInitializedAsync()
-        // Deck/report payloads load after the circuit is interactive (OnAfterRenderAsync).
         => Task.CompletedTask;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -179,48 +168,19 @@
     private async Task ReloadDeckAsync(bool preserveProgress = false)
     {
         _loading = true;
-        _deck.Clear();
-        if (!preserveProgress)
-        {
-            _index = 0;
-        }
-
         await InvokeAsync(StateHasChanged);
 
-        _gate = await MatchProfile.RefreshAsync();
+        await _deck.LoadAsync(MatchProfile, MatchVacancies, take: 24, orderByMatch: false);
 
-        if (_gate.IsProfileComplete)
+        if (preserveProgress && _restoredVacancyIds.Count > 0)
         {
-            var items = await MatchVacancies.GetRelevantSwipeVacanciesAsync(_gate, take: 24);
-            foreach (var item in items)
-            {
-                _deck.Add(SwipeViewModel.FromVacancy(item, showMatchPercentage: true));
-            }
-
-            if (preserveProgress && _restoredVacancyIds.Count > 0)
-            {
-                // Resume at the first still-present card at/after the saved index.
-                var resumeId = _restoredIndex < _restoredVacancyIds.Count
-                    ? _restoredVacancyIds[_restoredIndex]
-                    : _restoredVacancyIds[^1];
-                var found = _deck.FindIndex(v => v.VacancyId == resumeId);
-                _index = found >= 0 ? found : 0;
-            }
-            else
-            {
-                _index = 0;
-            }
-        }
-        else
-        {
-            _index = 0;
+            _deck.RestoreIndex(_restoredVacancyIds, _restoredIndex);
         }
 
         _loading = false;
         await InvokeAsync(StateHasChanged);
     }
 
-    /// <summary>Circuit-persist payload — flags + vacancy ids only (no swipe card bodies).</summary>
     internal sealed class MatchPagePersistState
     {
         public MatchProfileGateViewModel? Gate { get; set; }
@@ -229,28 +189,12 @@
     }
 
     private void HandleReject(SwipeViewModel model)
-        => _ = ShowToastAsync("Overgeslagen");
+        => _ = ShowToastAsync(Culture["Match.ToastSkipped"]);
 
     private void HandleInterest(SwipeViewModel model)
     {
-        if (model.VacancyId is Guid id)
-        {
-            _ = PersistLikeAsync(id);
-        }
-
-        _ = ShowToastAsync("Interesse genoteerd");
-    }
-
-    private async Task PersistLikeAsync(Guid vacancyId)
-    {
-        try
-        {
-            await Api.SetLikedAsync(vacancyId, liked: true);
-        }
-        catch
-        {
-            // Guest / network — swipe UX must stay instant.
-        }
+        _ = _deck.LikeAsync(Api, model);
+        _ = ShowToastAsync(Culture["Match.ToastLiked"]);
     }
 
     private void HandleMoreInfo(SwipeViewModel model)
@@ -262,12 +206,7 @@
     }
 
     private void HandleSwipeComplete((SwipeViewModel Model, SwipeDirection Direction) result)
-    {
-        if (_index < _deck.Count)
-        {
-            _index++;
-        }
-    }
+        => _deck.Advance();
 
     private void ShowHistoryHint()
         => _ = ShowToastAsync("Geschiedenis volgt binnenkort");
@@ -290,7 +229,6 @@
         }
         catch (TaskCanceledException)
         {
-            // replaced by a newer toast
         }
     }
 }
