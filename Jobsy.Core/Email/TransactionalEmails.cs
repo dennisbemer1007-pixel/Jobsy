@@ -55,6 +55,7 @@ public static class TransactionalEmails
         new("AmbassadeurInvite", "Uitnodiging ambassadeur", "Ambassadeur", "Uitnodiging + tijdelijk wachtwoord + onboarding.", "AmbassadeurInvite"),
         new("CompanyApiKeyCredentials", "API-credentials", "Werkgever", "Eenmalige API-key (in testmails een voorbeeldkey).", "CompanyApiKeyCredentials"),
         new("AccountUnsubscribeVerification", "Uitschrijfcode", "Account", "OTP om uitschrijving / right-to-be-forgotten te bevestigen.", "AccountUnsubscribeVerification"),
+        new("MfaResetByAdmin", "2FA gereset door support", "Account", "Authenticator ontkoppeld door Lobsy-support; opnieuw instellen bij login.", "MfaResetByAdmin"),
     ];
 
     public static bool TryGet(string? key, out EmailTemplateInfo info)
@@ -133,6 +134,7 @@ public static class TransactionalEmails
                 ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.ApiBaseUrl, ctx.SampleApiKey, "lobsy_test"),
             "accountunsubscribeverification" => AccountUnsubscribeVerification(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.OtpCode, ttlMinutes: 10),
+            "mfaresetbyadmin" => MfaResetByAdmin(ctx.PublicWebBaseUrl, ctx.RecipientName),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };
     }
@@ -803,6 +805,26 @@ public static class TransactionalEmails
             preheader: "Je verificatiecode voor uitschrijving");
         return new("AccountUnsubscribeVerification", "AccountUnsubscribeVerification",
             "Verificatiecode voor uitschrijving bij Lobsy", html);
+    }
+
+    /// <summary>
+    /// Sent after an admin resets another user's authenticator. Never includes admin name or reason.
+    /// </summary>
+    public static ComposedEmail MfaResetByAdmin(string? baseUrl, string recipientName)
+    {
+        var subject = "Je tweestapsverificatie is gereset";
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Tweestapsverificatie gereset")}
+             {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(recipientName)},")}
+             {EmailLayout.Paragraph(
+                 "Je tweestapsverificatie is gereset door Lobsy-support. Log opnieuw in om 2FA in te stellen.")}
+             {EmailLayout.Paragraph("Was jij dit niet? Neem contact op.")}
+             {EmailLayout.PrimaryButton(EmailLayout.LoginUrl(baseUrl), "Opnieuw inloggen")}
+             """,
+            baseUrl,
+            preheader: subject);
+        return new("MfaResetByAdmin", "MfaResetByAdmin", subject, html);
     }
 }
 

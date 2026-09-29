@@ -11,7 +11,7 @@ namespace Jobsy.Infrastructure.Services;
 public sealed class SupportAccessService : ISupportAccessService
 {
     public const int MinReasonLength = 15;
-    public const int DefaultDurationMinutes = 60;
+    public const int DefaultDurationMinutes = 15;
     public const int MaxDurationMinutes = 240;
     private static readonly int[] AllowedDurations = [15, 60, 240];
 

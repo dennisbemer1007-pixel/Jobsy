@@ -377,8 +377,8 @@ public static class PageHelpDocs
 
         ["/admin/gebruikers"] = new(
             "Beheer · Alle gebruikers",
-            "Accounts van kandidaten en managers.",
-            "Zoek gebruikers, bekijk rollen en beheer toegang waar nodig.",
+            "Accounts van kandidaten en managers; persoonsgegevens standaard gemaskeerd.",
+            "Filter op rol/2FA/status, open de detail drawer voor sessies en 2FA-reset, of vraag support-toegang.",
             "Support en beheer van inloggerechtigde personen."),
 
         ["/admin/vacatures"] = new(

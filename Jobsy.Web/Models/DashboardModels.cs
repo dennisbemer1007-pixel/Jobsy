@@ -524,6 +524,36 @@ public class AdminUserItem
     public List<Guid> MembershipCompanyIds { get; set; } = [];
     /// <summary><c>enrolled</c> | <c>not-enrolled</c> | <c>external-only</c></summary>
     public string MfaStatus { get; set; } = "not-enrolled";
+    public string? PhoneNumber { get; set; }
+    public DateTime? TermsAcceptedAt { get; set; }
+    public DateTime? LastActiveAtUtc { get; set; }
+    public DateTime? AuthenticatorEnrolledAtUtc { get; set; }
+    public int ActiveSessionCount { get; set; }
+    public List<string> MembershipCompanyNames { get; set; } = [];
+}
+
+public class AdminUserSessionItem
+{
+    public Guid Id { get; set; }
+    public string DeviceName { get; set; } = string.Empty;
+    public DateTime LastUsedAtUtc { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime ExpiresAtUtc { get; set; }
+    public bool IsCurrent { get; set; }
+}
+
+public class AdminBulkUsersResponse
+{
+    public int Succeeded { get; set; }
+    public int Skipped { get; set; }
+    public List<AdminBulkUserResult> Results { get; set; } = [];
+}
+
+public class AdminBulkUserResult
+{
+    public Guid UserId { get; set; }
+    public bool Ok { get; set; }
+    public string? SkipReason { get; set; }
 }
 
 public class AdminUsersPage

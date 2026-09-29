@@ -301,6 +301,9 @@ public sealed partial class JobsyApiClient
         string? companyType = null,
         Guid? companyId = null,
         bool earlyOnly = false,
+        string? mfa = null,
+        string? active = null,
+        string? tab = null,
         CancellationToken ct = default)
     {
         var qs = new List<string>
@@ -333,6 +336,21 @@ public sealed partial class JobsyApiClient
             qs.Add("earlyOnly=true");
         }
 
+        if (!string.IsNullOrWhiteSpace(mfa))
+        {
+            qs.Add($"mfa={Uri.EscapeDataString(mfa)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(active))
+        {
+            qs.Add($"active={Uri.EscapeDataString(active)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(tab))
+        {
+            qs.Add($"tab={Uri.EscapeDataString(tab)}");
+        }
+
         return await _http.GetFromJsonAsync<AdminUsersPage>($"api/admin/users?{string.Join('&', qs)}", ct)
                ?? new AdminUsersPage();
     }
@@ -353,7 +371,113 @@ public sealed partial class JobsyApiClient
         }
 
         var body = await response.Content.ReadAsStringAsync(ct);
-        throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        throw new InvalidOperationException(ExtractApiMessage(body) ?? response.ReasonPhrase ?? "MFA reset mislukt.");
+    }
+
+    public async Task<IReadOnlyList<AdminUserSessionItem>> GetAdminUserSessionsAsync(
+        Guid userId,
+        CancellationToken ct = default)
+    {
+        return await _http.GetFromJsonAsync<List<AdminUserSessionItem>>(
+                   $"api/admin/users/{userId:D}/sessions", ct)
+               ?? [];
+    }
+
+    public async Task RevokeAdminUserSessionAsync(
+        Guid userId,
+        Guid sessionId,
+        string reason,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/users/{userId:D}/sessions/{sessionId:D}/revoke",
+            new { reason },
+            ct);
+        await EnsureSuccessAsync(response, ct);
+    }
+
+    public async Task RevokeAllAdminUserSessionsAsync(
+        Guid userId,
+        string reason,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/users/{userId:D}/sessions/revoke-all",
+            new { reason },
+            ct);
+        await EnsureSuccessAsync(response, ct);
+    }
+
+    public async Task BlockAdminUserAsync(Guid userId, string reason, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/users/{userId:D}/block",
+            new { reason },
+            ct);
+        await EnsureSuccessAsync(response, ct);
+    }
+
+    public async Task UnblockAdminUserAsync(Guid userId, string reason, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/users/{userId:D}/unblock",
+            new { reason },
+            ct);
+        await EnsureSuccessAsync(response, ct);
+    }
+
+    public async Task<AdminBulkUsersResponse> BulkAdminUsersAsync(
+        string action,
+        IReadOnlyList<Guid> userIds,
+        string reason,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/users/bulk/{Uri.EscapeDataString(action)}",
+            new { userIds, reason },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractApiMessage(body) ?? response.ReasonPhrase ?? "Bulkactie mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<AdminBulkUsersResponse>(cancellationToken: ct)
+               ?? new AdminBulkUsersResponse();
+    }
+
+    private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        var body = await response.Content.ReadAsStringAsync(ct);
+        throw new InvalidOperationException(ExtractApiMessage(body) ?? response.ReasonPhrase ?? "Verzoek mislukt.");
+    }
+
+    private static string? ExtractApiMessage(string? body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("message", out var msg))
+            {
+                return msg.GetString();
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // fall through
+        }
+
+        return body;
     }
 
     public async Task<SupportAccessGrantItem> RequestSupportAccessAsync(

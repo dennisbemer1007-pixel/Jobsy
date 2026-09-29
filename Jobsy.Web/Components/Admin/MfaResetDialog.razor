@@ -1,0 +1,161 @@
+@namespace Jobsy.Web.Components.Admin
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<LobsyFriendlyDialog IsOpen="IsOpen"
+                     Title="@DialogTitle"
+                     TitleId="mfa-reset-dialog-title"
+                     Lead="@DialogLead"
+                     CloseDisabled="_busy"
+                     OnClose="CloseAsync">
+    <div class="admin-mfa-reset">
+        <div class="admin-mfa-reset__icon" aria-hidden="true">
+            @((MarkupString)NavIcons.MfaReset)
+        </div>
+
+        <label class="admin-mfa-reset__field">
+            <span>@Culture["AdminUsers.MfaResetReason"]</span>
+            <textarea rows="3"
+                      maxlength="500"
+                      @bind="_reason"
+                      @bind:event="oninput"
+                      required></textarea>
+            <span class="admin-mfa-reset__counter">@_reason.Trim().Length / 500</span>
+        </label>
+
+        @if (RequireConfirmCode)
+        {
+            <div class="admin-mfa-reset__field">
+                <span>@Culture["AdminUsers.MfaResetYourCode"]</span>
+                <div class="admin-mfa-reset__digits">
+                    @for (var i = 0; i < 6; i++)
+                    {
+                        var idx = i;
+                        <input type="text"
+                               class="admin-mfa-reset__digit"
+                               inputmode="numeric"
+                               autocomplete="@(idx == 0 ? "one-time-code" : "off")"
+                               maxlength="@(idx == 0 ? 6 : 1)"
+                               value="@_digits[idx]"
+                               @oninput="e => OnDigit(idx, e)"
+                               aria-label="@($"Digit {idx + 1}")" />
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <p class="muted admin-mfa-reset__external">@Culture["AdminUsers.MfaResetExternalConfirm"]</p>
+        }
+
+        <div class="admin-impact-note admin-impact-note--warn" role="note">
+            @string.Format(Culture["AdminUsers.MfaResetAuditNote"], MaskedName)
+        </div>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error" role="alert">@_error</p>
+        }
+
+        <div class="admin-mfa-reset__actions">
+            <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseAsync">
+                @Culture["Common.Cancel"]
+            </button>
+            <button type="button"
+                    class="btn-compact btn-compact--danger admin-mfa-reset__confirm"
+                    disabled="@(!CanSubmit || _busy)"
+                    @onclick="ConfirmAsync">
+                <span aria-hidden="true">@((MarkupString)NavIcons.MfaReset)</span>
+                @Culture["Mfa.AdminReset"]
+            </button>
+        </div>
+    </div>
+</LobsyFriendlyDialog>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public Guid? UserId { get; set; }
+    [Parameter] public string MaskedName { get; set; } = "";
+    [Parameter] public int SessionCount { get; set; }
+    [Parameter] public bool RequireConfirmCode { get; set; } = true;
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnReset { get; set; }
+
+    private string _reason = "";
+    private readonly string[] _digits = ["", "", "", "", "", ""];
+    private bool _busy;
+    private string? _error;
+
+    private string DialogTitle =>
+        string.Format(Culture["AdminUsers.MfaResetTitle"], MaskedName);
+
+    private string DialogLead =>
+        string.Format(Culture["AdminUsers.MfaResetLead"], SessionCount);
+
+    private string ConfirmCode => string.Concat(_digits);
+
+    public bool CanSubmit =>
+        _reason.Trim().Length >= 5
+        && (!RequireConfirmCode || ConfirmCode.Length == 6);
+
+    private Task CloseAsync()
+    {
+        if (_busy) return Task.CompletedTask;
+        ResetFields();
+        return OnClose.InvokeAsync();
+    }
+
+    private void ResetFields()
+    {
+        _reason = "";
+        for (var i = 0; i < 6; i++) _digits[i] = "";
+        _error = null;
+    }
+
+    private void OnDigit(int idx, ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        var onlyDigits = new string(raw.Where(char.IsDigit).ToArray());
+        if (onlyDigits.Length > 1)
+        {
+            for (var i = 0; i < 6; i++)
+            {
+                _digits[i] = i < onlyDigits.Length ? onlyDigits[i].ToString() : "";
+            }
+
+            return;
+        }
+
+        _digits[idx] = onlyDigits.Length == 1 ? onlyDigits : "";
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (UserId is not Guid userId || !CanSubmit)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.ResetUserMfaAsync(
+                userId,
+                _reason.Trim(),
+                RequireConfirmCode ? ConfirmCode : null);
+            await OnReset.InvokeAsync();
+            ResetFields();
+            await OnClose.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}
