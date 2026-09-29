@@ -160,7 +160,7 @@ public static class UiStringsDiscovery
         Add("Discovery.Rail.Aria",
             "Jouw reis, van het strand naar de diepte", "Your journey, from the beach to the deep", "Twoja podróż, od plaży do głębin", "Călătoria ta, de la plajă spre adânc", "رحلتك من الشاطئ إلى الأعماق");
         Add("Discovery.Rail.Start",
-            "Start", "Start", "Start", "Start", "البداية");
+            "Start", "Starting point", "Punkt startowy", "Punct de start", "البداية");
         Add("Discovery.Rail.NewShell",
             "Je nieuwe schaal", "Your new shell", "Twoja nowa skorupa", "Noua ta carapace", "صدفتك الجديدة");
         Add("Discovery.Rail.LayerOff",
