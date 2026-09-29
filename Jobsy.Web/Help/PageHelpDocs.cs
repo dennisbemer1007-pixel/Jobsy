@@ -509,8 +509,8 @@ public static class PageHelpDocs
 
         ["/leraar"] = new(
             "Leraar · Dashboard",
-            "Leeg dashboard voor de leraar.",
-            "Hier verschijnen je toegewezen klassen. Vraag je schoolbeheerder om je aan een klas te koppelen.",
+            "Startpunt: door naar je eerste toegewezen klas of een lege staat.",
+            "Als je klassen hebt, ga je naar het klasoverzicht. Anders vraag je je schoolbeheerder om je te koppelen.",
             "Startpunt voor leraren."),
 
         ["/admin/company"] = new(
@@ -617,6 +617,12 @@ public static class PageHelpDocs
             "Details van één vacature op de banenkaart.",
             "Bekijk eisen, loon, uren/dagdelen en locatie. Solliciteer als kandidaat (met eventuele harde eisen en wettelijke checks), of bewaar/deel. Managers zien geen solliciteer-CTA.",
             "Een baan beoordelen en solliciteren of delen.")),
+
+        ("/leraar/klas/", new(
+            "Leraar · Klas",
+            "Overzicht, codes, groepsresultaten en droombaan per eigen klas.",
+            "Bekijk voortgang, open het testvenster, print de codelijst en bekijk groeps- of codedetails (geen namen, geen ruwe antwoorden).",
+            "Les voorbereiden en nabespreken.")),
 
         ("/home/metrics/", new(
             "Metric detail",

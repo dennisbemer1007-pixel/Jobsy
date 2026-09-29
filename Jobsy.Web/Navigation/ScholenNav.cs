@@ -10,7 +10,8 @@ public static class ScholenNav
         string LabelKey,
         string Href,
         bool IsAvailable,
-        string? BadgeKey = null);
+        string? BadgeKey = null,
+        string? FixedLabel = null);
 
     public sealed record ScholenNavGroup(string LabelKey, IReadOnlyList<ScholenNavItem> Items);
 
@@ -38,6 +39,7 @@ public static class ScholenNav
         ]),
     ];
 
+    /// <summary>Template teacher groups (classId substituted at render time).</summary>
     public static readonly IReadOnlyList<ScholenNavGroup> TeacherGroups =
     [
         new("Leraar.Nav.MyClass",
@@ -55,6 +57,36 @@ public static class ScholenNav
         new("Leraar.Nav.MyClasses", []),
     ];
 
+    public static IReadOnlyList<ScholenNavGroup> TeacherGroupsForClass(
+        Guid classId,
+        IReadOnlyList<(Guid Id, string Name)> assignedClasses)
+    {
+        var basePath = $"/leraar/klas/{classId:D}";
+        var myClass = new ScholenNavGroup("Leraar.Nav.MyClass",
+        [
+            new("Leraar.Nav.Overview", basePath, IsAvailable: true),
+            new("Leraar.Nav.Codes", $"{basePath}/codes", IsAvailable: true),
+            new("Leraar.Nav.Group", $"{basePath}/groep", IsAvailable: true),
+            new("Leraar.Nav.DreamJobs", $"{basePath}/droombanen", IsAvailable: true),
+        ]);
+        var inClass = new ScholenNavGroup("Leraar.Nav.InClass",
+        [
+            new("Leraar.Nav.TestWindow", $"{basePath}/testvenster", IsAvailable: true),
+            new("Leraar.Nav.Materials", $"{basePath}/materiaal", IsAvailable: true),
+        ]);
+        var myClasses = new ScholenNavGroup(
+            "Leraar.Nav.MyClasses",
+            assignedClasses
+                .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(c => new ScholenNavItem(
+                    "Leraar.Nav.ClassItem",
+                    $"/leraar/klas/{c.Id:D}",
+                    IsAvailable: true,
+                    FixedLabel: $"Klas {c.Name}"))
+                .ToList());
+        return [myClass, inClass, myClasses];
+    }
+
     public static readonly (string LabelKey, string Href)[] SchoolBottomNav =
     [
         ("School.Nav.Dashboard", "/school"),
@@ -63,11 +95,19 @@ public static class ScholenNav
         ("School.Nav.More", "/school"),
     ];
 
+    public static (string LabelKey, string Href)[] TeacherBottomNavForClass(Guid classId) =>
+    [
+        ("Leraar.Nav.Overview", $"/leraar/klas/{classId:D}"),
+        ("Leraar.Nav.Codes", $"/leraar/klas/{classId:D}/codes"),
+        ("Leraar.Nav.Group", $"/leraar/klas/{classId:D}/groep"),
+        ("Leraar.Nav.More", $"/leraar/klas/{classId:D}/materiaal"),
+    ];
+
     public static readonly (string LabelKey, string Href)[] TeacherBottomNav =
     [
         ("Leraar.Nav.Overview", "/leraar"),
-        ("Leraar.Nav.Codes", "/leraar/codes"),
-        ("Leraar.Nav.Group", "/leraar/groep"),
+        ("Leraar.Nav.Codes", "/leraar"),
+        ("Leraar.Nav.Group", "/leraar"),
         ("Leraar.Nav.More", "/leraar"),
     ];
 }

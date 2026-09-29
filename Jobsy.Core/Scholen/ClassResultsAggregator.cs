@@ -10,6 +10,7 @@ namespace Jobsy.Core.Scholen;
 public static class ClassResultsAggregator
 {
     private static readonly string[] RiasecOrder = ["R", "I", "A", "S", "E", "C"];
+    public const string UndecidedDreamJobKey = "weet-ik-nog-niet";
 
     public static ClassResultsAggregate Aggregate(
         IReadOnlyList<PupilResult> results,
@@ -31,32 +32,8 @@ public static class ClassResultsAggregator
                 DreamJobs: []);
         }
 
-        var riasecCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        foreach (var letter in RiasecOrder)
-        {
-            riasecCounts[letter] = 0;
-        }
-
-        var valueCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        var dreamCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var r in results)
-        {
-            CountRiasec(r, riasecCounts);
-            if (!string.IsNullOrWhiteSpace(r.TopValue))
-            {
-                var key = r.TopValue.Trim();
-                valueCounts[key] = valueCounts.GetValueOrDefault(key) + 1;
-            }
-
-            if (!string.IsNullOrWhiteSpace(r.DreamJobKey))
-            {
-                var key = r.DreamJobKey.Trim();
-                dreamCounts[key] = dreamCounts.GetValueOrDefault(key) + 1;
-            }
-        }
-
-        var riasecTop3 = riasecCounts
+        var counts = CountAll(results);
+        var riasecTop3 = counts.Riasec
             .OrderByDescending(kv => kv.Value)
             .ThenBy(kv => Array.IndexOf(RiasecOrder, kv.Key.ToUpperInvariant()))
             .Take(3)
@@ -64,14 +41,14 @@ public static class ClassResultsAggregator
             .Select(kv => new NamedCount(kv.Key.ToUpperInvariant(), kv.Value))
             .ToList();
 
-        var topValues = valueCounts
+        var topValues = counts.Values
             .OrderByDescending(kv => kv.Value)
             .ThenBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
             .Take(5)
             .Select(kv => new NamedCount(kv.Key, kv.Value))
             .ToList();
 
-        var dreamJobs = CollapseDreamJobs(dreamCounts);
+        var dreamJobs = CollapseDreamJobs(counts.DreamJobs);
 
         return new ClassResultsAggregate(
             TotalCodes: totalCodes,
@@ -81,6 +58,66 @@ public static class ClassResultsAggregator
             RiasecTop3: riasecTop3,
             TopValues: topValues,
             DreamJobs: dreamJobs);
+    }
+
+    /// <summary>
+    /// Teacher group/overview insights: full RIASEC bars, cultures, competence bands.
+    /// Empty lists when completed &lt; k.
+    /// </summary>
+    public static TeacherGroupAggregate AggregateTeacherGroup(IReadOnlyList<PupilResult> results)
+    {
+        ArgumentNullException.ThrowIfNull(results);
+        var completed = results.Count;
+        if (completed < SchoolAnonymity.MinGroupSize)
+        {
+            return new TeacherGroupAggregate(
+                Visible: false,
+                CompletedCount: completed,
+                RiasecBars: [],
+                TopValues: [],
+                TopCultures: [],
+                CompetenceBands: [],
+                DreamJobs: [],
+                UndecidedDreamJobCount: 0);
+        }
+
+        var counts = CountAll(results);
+        var riasecBars = RiasecOrder
+            .Select(letter => new NamedCount(letter, counts.Riasec.GetValueOrDefault(letter)))
+            .ToList();
+
+        var topValues = counts.Values
+            .OrderByDescending(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .Take(3)
+            .Select(kv => new NamedCount(kv.Key, kv.Value))
+            .ToList();
+
+        var topCultures = counts.Cultures
+            .OrderByDescending(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .Take(5)
+            .Select(kv => new NamedCount(kv.Key, kv.Value))
+            .ToList();
+
+        var competenceBands = counts.CompetenceBands
+            .OrderByDescending(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(kv => new NamedCount(kv.Key, kv.Value))
+            .ToList();
+
+        var undecided = counts.UndecidedDreamJobs;
+        var dreamJobs = CollapseDreamJobs(counts.DreamJobs);
+
+        return new TeacherGroupAggregate(
+            Visible: true,
+            CompletedCount: completed,
+            RiasecBars: riasecBars,
+            TopValues: topValues,
+            TopCultures: topCultures,
+            CompetenceBands: competenceBands,
+            DreamJobs: dreamJobs,
+            UndecidedDreamJobCount: undecided);
     }
 
     /// <summary>School-wide RIASEC top-3 over completed results (same k gate).</summary>
@@ -109,6 +146,56 @@ public static class ClassResultsAggregator
             .Where(kv => kv.Value > 0)
             .Select(kv => new NamedCount(kv.Key.ToUpperInvariant(), kv.Value))
             .ToList();
+    }
+
+    private static CountBag CountAll(IReadOnlyList<PupilResult> results)
+    {
+        var riasec = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var letter in RiasecOrder)
+        {
+            riasec[letter] = 0;
+        }
+
+        var values = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var cultures = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var competenceBands = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var dreamJobs = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var undecided = 0;
+
+        foreach (var r in results)
+        {
+            CountRiasec(r, riasec);
+            if (!string.IsNullOrWhiteSpace(r.TopValue))
+            {
+                var key = r.TopValue.Trim();
+                values[key] = values.GetValueOrDefault(key) + 1;
+            }
+
+            if (!string.IsNullOrWhiteSpace(r.TopCulture))
+            {
+                var key = r.TopCulture.Trim();
+                cultures[key] = cultures.GetValueOrDefault(key) + 1;
+            }
+
+            var band = CompetenceBand(r);
+            if (band is not null)
+            {
+                competenceBands[band] = competenceBands.GetValueOrDefault(band) + 1;
+            }
+
+            if (string.IsNullOrWhiteSpace(r.DreamJobKey)
+                || string.Equals(r.DreamJobKey.Trim(), UndecidedDreamJobKey, StringComparison.OrdinalIgnoreCase))
+            {
+                undecided++;
+            }
+            else
+            {
+                var key = r.DreamJobKey.Trim();
+                dreamJobs[key] = dreamJobs.GetValueOrDefault(key) + 1;
+            }
+        }
+
+        return new CountBag(riasec, values, cultures, competenceBands, dreamJobs, undecided);
     }
 
     private static void CountRiasec(PupilResult r, Dictionary<string, int> counts)
@@ -152,6 +239,49 @@ public static class ClassResultsAggregator
         }
     }
 
+    /// <summary>
+    /// Maps competence scores JSON to a coarse band label (counts only — never per code).
+    /// Bands: Laag / Midden / Hoog based on average of numeric properties.
+    /// </summary>
+    private static string? CompetenceBand(PupilResult r)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(
+                string.IsNullOrWhiteSpace(r.CompetenceScoresJson) ? "{}" : r.CompetenceScoresJson);
+            var scores = new List<double>();
+            foreach (var prop in doc.RootElement.EnumerateObject())
+            {
+                if (prop.Value.TryGetDouble(out var score))
+                {
+                    scores.Add(score);
+                }
+            }
+
+            if (scores.Count == 0)
+            {
+                return null;
+            }
+
+            var avg = scores.Average();
+            if (avg < 2.5)
+            {
+                return "Laag";
+            }
+
+            if (avg < 3.5)
+            {
+                return "Midden";
+            }
+
+            return "Hoog";
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
     private static IReadOnlyList<NamedCount> CollapseDreamJobs(Dictionary<string, int> dreamCounts)
     {
         var kept = new List<NamedCount>();
@@ -176,6 +306,14 @@ public static class ClassResultsAggregator
 
         return kept;
     }
+
+    private sealed record CountBag(
+        Dictionary<string, int> Riasec,
+        Dictionary<string, int> Values,
+        Dictionary<string, int> Cultures,
+        Dictionary<string, int> CompetenceBands,
+        Dictionary<string, int> DreamJobs,
+        int UndecidedDreamJobs);
 }
 
 public sealed record NamedCount(string Key, int Count);
@@ -188,3 +326,13 @@ public sealed record ClassResultsAggregate(
     IReadOnlyList<NamedCount> RiasecTop3,
     IReadOnlyList<NamedCount> TopValues,
     IReadOnlyList<NamedCount> DreamJobs);
+
+public sealed record TeacherGroupAggregate(
+    bool Visible,
+    int CompletedCount,
+    IReadOnlyList<NamedCount> RiasecBars,
+    IReadOnlyList<NamedCount> TopValues,
+    IReadOnlyList<NamedCount> TopCultures,
+    IReadOnlyList<NamedCount> CompetenceBands,
+    IReadOnlyList<NamedCount> DreamJobs,
+    int UndecidedDreamJobCount);

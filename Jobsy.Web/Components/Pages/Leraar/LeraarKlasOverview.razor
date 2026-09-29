@@ -1,0 +1,315 @@
+@page "/leraar/klas/{ClassId:guid}"
+@implements IDisposable
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.School
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IJSRuntime Js
+@inject IPlatformFeatureService Features
+
+<PageTitle>@( _overview is null ? Culture["Leraar.Overview.Title"] : $"Klas {_overview.ClassName}") · Lobsy</PageTitle>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_overview is null)
+{
+    <p class="state-message error">@Culture["Leraar.Class.NotFound"]</p>
+}
+else
+{
+    <header class="sch-page-header">
+        <h1>Klas @_overview.ClassName</h1>
+        <p class="muted">@_overview.Level · @_overview.Year · @_overview.SchoolYearLabel · @_overview.CodeCount @Culture["Leraar.Kpi.Codes"]</p>
+        @if (_overview.TestWindow == TestWindowState.Open && _overview.TestWindowClosesOn is DateOnly until)
+        {
+            <p class="sch-pill sch-pill--ok">@Culture["School.TestWindow.StatusOpen"] · @Culture["School.TestWindow.Until"] @until.ToString("dd-MM-yyyy")</p>
+        }
+        <div class="sch-admin-toolbar sch-toolbar-wrap">
+            <button type="button" class="btn-compact" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
+            <button type="button" class="btn-compact" @onclick="DownloadPdf" disabled="@_busy">@Culture["School.CodeList.Pdf"]</button>
+            <button type="button" class="btn-compact" @onclick="DownloadCsv" disabled="@_busy">@Culture["School.CodeList.Csv"]</button>
+        </div>
+        @if (!string.IsNullOrEmpty(_actionError))
+        {
+            <p class="state-message error">@_actionError</p>
+        }
+    </header>
+
+    <div class="sch-kpi-row" data-testid="leraar-kpi-row">
+        <EntKpiCard Label="@Culture["Leraar.Kpi.Codes"]" Value="@_overview.CodeCount.ToString()" />
+        <EntKpiCard Label="@Culture["Leraar.Kpi.Completed"]" Value="@($"{_overview.CompletedCount}/{_overview.CodeCount}")" Delta="@($"{_overview.CompletedPercent:0}%")" DeltaTone="positive" />
+        <EntKpiCard Label="@Culture["Leraar.Kpi.InProgress"]" Value="@_overview.InProgressCount.ToString()" />
+        <EntKpiCard Label="@Culture["Leraar.Kpi.NotStarted"]" Value="@_overview.NotStartedCount.ToString()" />
+        <EntKpiCard Label="@Culture["Leraar.Kpi.AvgTime"]" Value="@(_overview.AverageMinutes is int m ? $"{m} min" : "—")" />
+    </div>
+
+    <div class="sch-overview-grid">
+        <section class="sch-card">
+            <div class="sch-card__head">
+                <h2>@Culture["Leraar.Codes.Title"]</h2>
+                <a href="@($"/leraar/klas/{ClassId:D}/codes")">@Culture["Leraar.Codes.All"]</a>
+            </div>
+            <p class="muted">@Culture["Leraar.Codes.NamesNote"]</p>
+            <EntDataTable Loading="false" Empty="@(_overview.CodesPreview.Count == 0)" EmptyText="@Culture["School.Codes.Empty"]">
+                <Header>
+                    <th scope="col">#</th>
+                    <th scope="col">@Culture["School.Col.Code"]</th>
+                    <th scope="col">@Culture["School.Col.Status"]</th>
+                    <th scope="col">@Culture["School.Col.Progress"]</th>
+                    <th scope="col">@Culture["School.Col.LastActive"]</th>
+                    <th scope="col"></th>
+                </Header>
+                <Rows>
+                    @foreach (var row in _overview.CodesPreview)
+                    {
+                        <tr class="ent-data-table__row">
+                            <td class="tabular">@row.Number</td>
+                            <td><span class="sch-code">@row.DisplayCode</span></td>
+                            <td><span class="sch-pill @StatusPill(row.Status)">@StatusLabel(row)</span></td>
+                            <td>
+                                <progress class="sch-progress-meter" max="@row.ProgressTotal" value="@row.ProgressCurrent"
+                                          aria-label="@($"{row.ProgressCurrent}/{row.ProgressTotal}")"></progress>
+                                <span class="tabular muted">@row.ProgressCurrent/@row.ProgressTotal</span>
+                            </td>
+                            <td>@(row.LastSeenAtUtc is DateTime t ? Relative(t) : "—")</td>
+                            <td>
+                                @if (row.Status == PupilCodeStatus.Completed)
+                                {
+                                    <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/code/{row.Id:D}")">@Culture["Leraar.Codes.View"]</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </Rows>
+            </EntDataTable>
+        </section>
+
+        <aside class="sch-overview-side">
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Group.Interests"]</h2>
+                @if (!_overview.GroupInsights.Visible)
+                {
+                    <p class="muted">@string.Format(Culture["Leraar.Group.Hidden"], _overview.GroupInsights.CompletedCount)</p>
+                }
+                else
+                {
+                    <ul class="sch-bar-list">
+                        @foreach (var bar in _overview.GroupInsights.RiasecBars)
+                        {
+                            var max = Math.Max(1, _overview.GroupInsights.RiasecBars.Max(b => b.Count));
+                            <li>
+                                <span>@Culture[bar.KidLabelKey]</span>
+                                <progress class="sch-progress-meter" max="@max" value="@bar.Count"></progress>
+                                <span class="tabular">@bar.Count</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Group.Drivers"]</h2>
+                @if (!_overview.GroupInsights.Visible)
+                {
+                    <p class="muted">@string.Format(Culture["Leraar.Group.Hidden"], _overview.GroupInsights.CompletedCount)</p>
+                }
+                else
+                {
+                    <ol class="sch-rank-list">
+                        @foreach (var v in _overview.GroupInsights.TopValues)
+                        {
+                            <li>@v.Key <span class="muted">· @v.Count</span></li>
+                        }
+                    </ol>
+                }
+            </section>
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Group.DreamJobs"]</h2>
+                @if (!_overview.GroupInsights.Visible)
+                {
+                    <p class="muted">@string.Format(Culture["Leraar.Group.Hidden"], _overview.GroupInsights.CompletedCount)</p>
+                }
+                else
+                {
+                    <div class="sch-chip-list">
+                        @foreach (var d in _overview.GroupInsights.DreamJobs)
+                        {
+                            <span class="sch-chip">@d.Key @d.Count</span>
+                        }
+                    </div>
+                }
+            </section>
+        </aside>
+    </div>
+}
+
+<TestWindowDialog @bind-Open="_windowOpen"
+                  State="@(_overview?.TestWindow ?? TestWindowState.NotOpen)"
+                  ClosesOn="_overview?.TestWindowClosesOn"
+                  Busy="_busy"
+                  Error="_windowError"
+                  OnAction="OnWindowAction" />
+
+@code {
+    [Parameter] public Guid ClassId { get; set; }
+
+    private bool _disabled;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _windowOpen;
+    private string? _actionError;
+    private string? _windowError;
+    private TeacherClassOverviewDto? _overview;
+    private CancellationTokenSource? _pollCts;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (_disabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        await LoadAsync();
+        RestartPoll();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _actionError = null;
+        try
+        {
+            _overview = await Api.GetTeacherOverviewAsync(ClassId);
+        }
+        catch
+        {
+            _overview = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void RestartPoll()
+    {
+        _pollCts?.Cancel();
+        if (_overview?.TestWindow != TestWindowState.Open)
+        {
+            return;
+        }
+
+        _pollCts = new CancellationTokenSource();
+        _ = PollAsync(_pollCts.Token);
+    }
+
+    private async Task PollAsync(CancellationToken ct)
+    {
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(30), ct);
+                _overview = await Api.GetTeacherOverviewAsync(ClassId, ct);
+                await InvokeAsync(StateHasChanged);
+                if (_overview?.TestWindow != TestWindowState.Open)
+                {
+                    break;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // disposed
+        }
+        catch
+        {
+            // ignore transient poll errors
+        }
+    }
+
+    private async Task DownloadPdf()
+    {
+        _busy = true;
+        try { await Api.DownloadTeacherCodeListPdfAsync(Js, ClassId); }
+        catch (Exception ex) { _actionError = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task DownloadCsv()
+    {
+        _busy = true;
+        try { await Api.DownloadTeacherCodeListCsvAsync(Js, ClassId); }
+        catch (Exception ex) { _actionError = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task OnWindowAction((string Action, DateOnly? ClosesOn) args)
+    {
+        _busy = true;
+        _windowError = null;
+        try
+        {
+            var detail = await Api.SetTeacherTestWindowAsync(ClassId, args.Action, args.ClosesOn);
+            if (detail is not null && _overview is not null)
+            {
+                _overview = _overview with
+                {
+                    TestWindow = detail.TestWindow,
+                    TestWindowClosesOn = detail.TestWindowClosesOn
+                };
+            }
+            _windowOpen = false;
+            RestartPoll();
+        }
+        catch (Exception ex)
+        {
+            _windowError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string StatusLabel(TeacherCodeRowDto row) => row.Status switch
+    {
+        PupilCodeStatus.Completed => Culture["School.Status.Completed"],
+        PupilCodeStatus.InProgress => string.Format(Culture["School.Status.InProgress"], row.ProgressCurrent, row.ProgressTotal),
+        _ => Culture["School.Status.NotStarted"]
+    };
+
+    private static string StatusPill(PupilCodeStatus s) => s switch
+    {
+        PupilCodeStatus.Completed => "sch-pill--ok",
+        PupilCodeStatus.InProgress => "sch-pill--info",
+        _ => "sch-pill--muted"
+    };
+
+    private static string Relative(DateTime utc)
+    {
+        var span = DateTime.UtcNow - utc;
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m";
+        if (span.TotalHours < 24) return $"{(int)span.TotalHours}u";
+        return utc.ToLocalTime().ToString("dd-MM");
+    }
+
+    public void Dispose() => _pollCts?.Cancel();
+}

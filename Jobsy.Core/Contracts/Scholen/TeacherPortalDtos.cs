@@ -1,0 +1,95 @@
+using Jobsy.Core.Enums;
+using Jobsy.Core.Scholen;
+
+namespace Jobsy.Core.Contracts.Scholen;
+
+public sealed record TeacherAssignedClassDto(
+    Guid Id,
+    string ClassName,
+    SchoolLevel Level,
+    int Year,
+    int SchoolYearStart,
+    string SchoolYearLabel);
+
+public sealed record TeacherClassOverviewDto(
+    Guid ClassId,
+    string ClassName,
+    SchoolLevel Level,
+    int Year,
+    string SchoolYearLabel,
+    int CodeCount,
+    int CompletedCount,
+    int InProgressCount,
+    int NotStartedCount,
+    double CompletedPercent,
+    /// <summary>Average minutes when ≥ 5 completed; otherwise null (UI shows "—").</summary>
+    int? AverageMinutes,
+    TestWindowState TestWindow,
+    DateOnly? TestWindowClosesOn,
+    bool ParentalInfoConfirmed,
+    IReadOnlyList<TeacherCodeRowDto> CodesPreview,
+    TeacherGroupInsightsDto GroupInsights);
+
+public sealed record TeacherCodeRowDto(
+    Guid Id,
+    int Number,
+    string DisplayCode,
+    PupilCodeStatus Status,
+    int ProgressCurrent,
+    int ProgressTotal,
+    DateTime? LastSeenAtUtc);
+
+public sealed record TeacherGroupInsightsDto(
+    bool Visible,
+    int CompletedCount,
+    IReadOnlyList<RiasecBarDto> RiasecBars,
+    IReadOnlyList<NamedCountDto> TopValues,
+    IReadOnlyList<NamedCountDto> DreamJobs,
+    IReadOnlyList<NamedCountDto> TopCultures,
+    IReadOnlyList<NamedCountDto> CompetenceBands,
+    IReadOnlyList<string> DiscussionPromptKeys);
+
+public sealed record RiasecBarDto(string Letter, string KidLabelKey, int Count);
+
+public sealed record TeacherDreamJobsDto(
+    bool Visible,
+    int CompletedCount,
+    IReadOnlyList<NamedCountDto> Jobs,
+    int UndecidedCount);
+
+public sealed record TeacherCodeDetailDto(
+    Guid CodeId,
+    Guid ClassId,
+    string DisplayCode,
+    string ClassName,
+    PupilCodeStatus Status,
+    int ProgressCurrent,
+    int ProgressTotal,
+    DateTime? CompletedAtUtc,
+    int? DurationMinutes,
+    PupilStoryViewDto? Story,
+    IReadOnlyList<string> Likes,
+    IReadOnlyList<string> Dislikes,
+    string? LikeOtherWord,
+    string? DislikeOtherWord,
+    IReadOnlyList<string> ConversationStarterKeys,
+    DreamJobRouteStubDto? DreamJob,
+    bool PdfAvailable);
+
+/// <summary>Rendered story placeholders (06 replaces the stub renderer).</summary>
+public sealed record PupilStoryViewDto(
+    string Title,
+    string Body,
+    IReadOnlyList<PupilStoryTileDto> Tiles);
+
+public sealed record PupilStoryTileDto(string ModelKey, string KidLabel, string Explanation);
+
+/// <summary>Droombaan route stub until 06 fills FitSnapshotJson templates.</summary>
+public sealed record DreamJobRouteStubDto(
+    string? JobKey,
+    string? JobTitle,
+    int HaveCount,
+    int TotalCount,
+    IReadOnlyList<string> HaveItems,
+    IReadOnlyList<string> LearnItems,
+    IReadOnlyList<string> RouteSteps);

@@ -210,7 +210,77 @@ public static class UiStringsScholen
         nl["Leraar.Nav.TestWindow"] = "Testvenster";
         nl["Leraar.Nav.Materials"] = "Codelijst & lesbrief";
         nl["Leraar.Nav.MyClasses"] = "Mijn klassen";
+        nl["Leraar.Nav.ClassItem"] = "Klas";
         nl["Leraar.Nav.More"] = "Meer";
+
+        nl["Leraar.Overview.Title"] = "Klasoverzicht";
+        nl["Leraar.Class.NotFound"] = "Klas niet gevonden.";
+        nl["Leraar.Kpi.Codes"] = "Codes";
+        nl["Leraar.Kpi.Completed"] = "Afgerond";
+        nl["Leraar.Kpi.InProgress"] = "Bezig";
+        nl["Leraar.Kpi.NotStarted"] = "Nog niet gestart";
+        nl["Leraar.Kpi.AvgTime"] = "Gem. tijd";
+
+        nl["Leraar.Codes.Title"] = "Leerlingcodes";
+        nl["Leraar.Codes.All"] = "Alle codes";
+        nl["Leraar.Codes.View"] = "Bekijk";
+        nl["Leraar.Codes.NamesNote"] = "Namen staan op jouw eigen lijst.";
+        nl["Leraar.Codes.Filter"] = "Zoek op code of nummer";
+        nl["Leraar.Codes.DeleteHint"] = "Code verwijderen bij bezwaar? Vraag je schoolbeheerder.";
+        nl["Leraar.Status.Busy"] = "Bezig";
+
+        nl["Leraar.Group.Title"] = "Groepsresultaten";
+        nl["Leraar.Group.Interests"] = "Interesses in de klas";
+        nl["Leraar.Group.Drivers"] = "Wat drijft de klas";
+        nl["Leraar.Group.DreamJobs"] = "Droombanen";
+        nl["Leraar.Group.Cultures"] = "Voorkeurssfeer";
+        nl["Leraar.Group.Competence"] = "Competentiebanden";
+        nl["Leraar.Group.Discussion"] = "Gesprek in de klas";
+        nl["Leraar.Group.Hidden"] = "Zichtbaar vanaf 5 afgeronde tests. Nu: {0}.";
+        nl["Leraar.Group.Prompt1"] = "Welke interesses herkennen jullie in de klas?";
+        nl["Leraar.Group.Prompt2"] = "Wat is voor jullie belangrijk in werk of school?";
+        nl["Leraar.Group.Prompt3"] = "Welke droombanen verrassen jullie?";
+
+        nl["Leraar.Riasec.R"] = "Maken";
+        nl["Leraar.Riasec.I"] = "Onderzoeken";
+        nl["Leraar.Riasec.A"] = "Creatief";
+        nl["Leraar.Riasec.S"] = "Helpen";
+        nl["Leraar.Riasec.E"] = "Leiden";
+        nl["Leraar.Riasec.C"] = "Ordenen";
+        nl["Leraar.Riasec.Unknown"] = "Overig";
+
+        nl["Leraar.DreamJobs.Title"] = "Droombanen";
+        nl["Leraar.DreamJobs.Lead"] = "Alleen banen met minstens 2 leerlingen. Minder dan 2 gaat naar Overig. Geen codes bij banen.";
+        nl["Leraar.DreamJobs.Undecided"] = "Weet ik nog niet";
+
+        nl["Leraar.Detail.Title"] = "Codedetail";
+        nl["Leraar.Detail.InProgress"] = "Deze code is nog bezig ({0}/{1}).";
+        nl["Leraar.Detail.CompletedOn"] = "klaar op";
+        nl["Leraar.Detail.Questions"] = "vragen";
+        nl["Leraar.Detail.Pdf"] = "PDF downloaden";
+        nl["Leraar.Detail.PdfLater"] = "PDF volgt in een volgende versie.";
+        nl["Leraar.Detail.NoNameNote"] = "Je ziet een code, geen naam. Zoek de naam op je eigen lijst. Losse antwoorden zie je niet, alleen de uitkomst.";
+        nl["Leraar.Detail.OwnListHint"] = "Weet je wie dit is? Kijk op je eigen codelijst.";
+        nl["Leraar.Detail.StoryTitle"] = "Dit ben jij";
+        nl["Leraar.Detail.StoryPlaceholder"] = "Het verhaal zoals de leerling het zag verschijnt hier zodra de sjablonen klaar zijn.";
+        nl["Leraar.Detail.Likes"] = "Vindt het leuk";
+        nl["Leraar.Detail.Dislikes"] = "Vindt het niet leuk";
+        nl["Leraar.Detail.Starters"] = "Gespreksstarters";
+        nl["Leraar.Detail.Starter1"] = "Wat herken je het meest in dit verhaal?";
+        nl["Leraar.Detail.Starter2"] = "Welke hobby of activiteit past het best bij jou?";
+        nl["Leraar.Detail.Starter3"] = "Wat wil je nog ontdekken over je droombaan?";
+        nl["Leraar.Detail.DreamTitle"] = "Droombaan";
+        nl["Leraar.Detail.DreamLead"] = "Ingevuld door leerling";
+        nl["Leraar.Detail.DreamProgress"] = "{0} van {1} heb je al";
+        nl["Leraar.Detail.DreamStubNote"] = "Route en checklist volgen in een volgende versie. Geen opleidingslinks, werkgevers of vacatures.";
+
+        nl["Leraar.TestWindow.ParentsMissing"] = "De schoolbeheerder moet eerst bevestigen dat ouders zijn geïnformeerd.";
+
+        nl["Leraar.Material.Title"] = "Codelijst & lesbrief";
+        nl["Leraar.Material.HowItWorks"] = "Zo werkt het in de les";
+        nl["Leraar.Material.Step1"] = "Deel de kaartjes uit.";
+        nl["Leraar.Material.Step2"] = "Leerlingen gaan naar lobsy.nl/leerling.";
+        nl["Leraar.Material.Step3"] = "Kiezen school, klas en typen de code.";
 
         // —— Leerling (shell placeholders for later files) ——
         nl["Leerling.LoginTitle"] = "Inloggen met code";

@@ -1,0 +1,75 @@
+@page "/leraar/klas/{ClassId:guid}/droombanen"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IPlatformFeatureService Features
+
+<PageTitle>@Culture["Leraar.DreamJobs.Title"] · Lobsy</PageTitle>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_dto is null)
+{
+    <p class="state-message error">@Culture["Leraar.Class.NotFound"]</p>
+}
+else
+{
+    <header class="sch-page-header">
+        <p class="sch-breadcrumb"><a href="@($"/leraar/klas/{ClassId:D}")">@Culture["Leraar.Nav.Overview"]</a> / @Culture["Leraar.DreamJobs.Title"]</p>
+        <h1>@Culture["Leraar.DreamJobs.Title"]</h1>
+        <p class="muted">@Culture["Leraar.DreamJobs.Lead"]</p>
+    </header>
+
+    @if (!_dto.Visible)
+    {
+        <p class="sch-empty-state panel-section">@string.Format(Culture["Leraar.Group.Hidden"], _dto.CompletedCount)</p>
+    }
+    else
+    {
+        <section class="sch-card">
+            <div class="sch-chip-list">
+                @foreach (var job in _dto.Jobs)
+                {
+                    <span class="sch-chip">@job.Key · @job.Count</span>
+                }
+            </div>
+            <p class="muted">@Culture["Leraar.DreamJobs.Undecided"]: @_dto.UndecidedCount</p>
+        </section>
+    }
+}
+
+@code {
+    [Parameter] public Guid ClassId { get; set; }
+
+    private bool _disabled;
+    private bool _loading = true;
+    private TeacherDreamJobsDto? _dto;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (_disabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        _loading = true;
+        try { _dto = await Api.GetTeacherDreamJobsAsync(ClassId); }
+        catch { _dto = null; }
+        finally { _loading = false; }
+    }
+}

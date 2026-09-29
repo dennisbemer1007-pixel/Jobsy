@@ -1,11 +1,14 @@
 @page "/leraar"
 @layout SchoolLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Authorize(Roles = "Teacher")]
+@attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
 @inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
 @inject IPlatformFeatureService Features
 @using Jobsy.Core.Interfaces
 @using Jobsy.Core.Scholen
+@using Jobsy.Web.Services
 
 <PageTitle>@Culture["Leraar.DashboardTitle"] · Lobsy</PageTitle>
 
@@ -13,23 +16,51 @@
 {
     <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
 }
-else
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_empty)
 {
     <header class="sch-page-header">
         <h1>@Culture["Leraar.DashboardTitle"]</h1>
     </header>
     <div class="sch-empty-state panel-section">
-        <p>@Culture["Leraar.DashboardEmpty"]</p>
-        <p class="muted">@Culture["Leraar.NoClass"]</p>
+        <p>@Culture["Leraar.NoClass"]</p>
     </div>
 }
 
 @code {
     private bool _disabled;
+    private bool _loading = true;
+    private bool _empty;
 
     protected override async Task OnInitializedAsync()
     {
         await Culture.SetLanguageAsync("nl");
         _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (_disabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            var classes = await Api.GetTeacherClassesAsync();
+            if (classes.Count == 0)
+            {
+                _empty = true;
+                _loading = false;
+                return;
+            }
+
+            Nav.NavigateTo($"/leraar/klas/{classes[0].Id:D}", replace: true);
+        }
+        catch
+        {
+            _empty = true;
+            _loading = false;
+        }
     }
 }

@@ -1,0 +1,117 @@
+@page "/leraar/klas/{ClassId:guid}/groep"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IPlatformFeatureService Features
+
+<PageTitle>@Culture["Leraar.Group.Title"] · Lobsy</PageTitle>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_group is null)
+{
+    <p class="state-message error">@Culture["Leraar.Class.NotFound"]</p>
+}
+else
+{
+    <header class="sch-page-header">
+        <p class="sch-breadcrumb"><a href="@($"/leraar/klas/{ClassId:D}")">@Culture["Leraar.Nav.Overview"]</a> / @Culture["Leraar.Group.Title"]</p>
+        <h1>@Culture["Leraar.Group.Title"]</h1>
+    </header>
+
+    @if (!_group.Visible)
+    {
+        <p class="sch-empty-state panel-section">@string.Format(Culture["Leraar.Group.Hidden"], _group.CompletedCount)</p>
+    }
+    else
+    {
+        <div class="sch-group-grid">
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Group.Interests"]</h2>
+                <ul class="sch-bar-list">
+                    @foreach (var bar in _group.RiasecBars)
+                    {
+                        var max = Math.Max(1, _group.RiasecBars.Max(b => b.Count));
+                        <li>
+                            <span>@Culture[bar.KidLabelKey] <span class="muted">(@bar.Letter)</span></span>
+                            <progress class="sch-progress-meter" max="@max" value="@bar.Count"></progress>
+                            <span class="tabular">@bar.Count</span>
+                        </li>
+                    }
+                </ul>
+            </section>
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Group.Drivers"]</h2>
+                <ol class="sch-rank-list">
+                    @foreach (var v in _group.TopValues)
+                    {
+                        <li>@v.Key <span class="muted">· @v.Count</span></li>
+                    }
+                </ol>
+            </section>
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Group.Cultures"]</h2>
+                <ol class="sch-rank-list">
+                    @foreach (var c in _group.TopCultures)
+                    {
+                        <li>@c.Key <span class="muted">· @c.Count</span></li>
+                    }
+                </ol>
+            </section>
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Group.Competence"]</h2>
+                <ul class="sch-chip-list">
+                    @foreach (var b in _group.CompetenceBands)
+                    {
+                        <li class="sch-chip">@b.Key · @b.Count</li>
+                    }
+                </ul>
+            </section>
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Group.Discussion"]</h2>
+                <ul class="sch-prompt-list">
+                    @foreach (var key in _group.DiscussionPromptKeys)
+                    {
+                        <li>@Culture[key]</li>
+                    }
+                </ul>
+            </section>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public Guid ClassId { get; set; }
+
+    private bool _disabled;
+    private bool _loading = true;
+    private TeacherGroupInsightsDto? _group;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (_disabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        _loading = true;
+        try { _group = await Api.GetTeacherGroupAsync(ClassId); }
+        catch { _group = null; }
+        finally { _loading = false; }
+    }
+}

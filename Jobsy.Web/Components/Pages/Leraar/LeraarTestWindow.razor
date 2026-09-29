@@ -1,0 +1,131 @@
+@page "/leraar/klas/{ClassId:guid}/testvenster"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.School
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IPlatformFeatureService Features
+
+<PageTitle>@Culture["School.TestWindow.Title"] · Lobsy</PageTitle>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_overview is null)
+{
+    <p class="state-message error">@Culture["Leraar.Class.NotFound"]</p>
+}
+else
+{
+    <header class="sch-page-header">
+        <p class="sch-breadcrumb"><a href="@($"/leraar/klas/{ClassId:D}")">Klas @_overview.ClassName</a> / @Culture["School.TestWindow.Title"]</p>
+        <h1>@Culture["School.TestWindow.Title"]</h1>
+        <p class="muted">@Culture["School.TestWindow.Lead"]</p>
+    </header>
+
+    <section class="sch-card">
+        <p>
+            <span class="sch-pill @PillClass">@StatusLabel</span>
+            @if (_overview.TestWindowClosesOn is DateOnly d)
+            {
+                <span class="muted"> · @Culture["School.TestWindow.Until"] @d.ToString("dd-MM-yyyy")</span>
+            }
+        </p>
+        @if (!_overview.ParentalInfoConfirmed)
+        {
+            <p class="state-message error">@Culture["Leraar.TestWindow.ParentsMissing"]</p>
+        }
+        <button type="button" class="btn-primary" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
+    </section>
+}
+
+<TestWindowDialog @bind-Open="_windowOpen"
+                  State="@(_overview?.TestWindow ?? TestWindowState.NotOpen)"
+                  ClosesOn="_overview?.TestWindowClosesOn"
+                  Busy="_busy"
+                  Error="_windowError"
+                  OnAction="OnWindowAction" />
+
+@code {
+    [Parameter] public Guid ClassId { get; set; }
+
+    private bool _disabled;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _windowOpen;
+    private string? _windowError;
+    private TeacherClassOverviewDto? _overview;
+
+    private string StatusLabel => (_overview?.TestWindow ?? TestWindowState.NotOpen) switch
+    {
+        TestWindowState.Open => Culture["School.TestWindow.StatusOpen"],
+        TestWindowState.Closed => Culture["School.TestWindow.StatusClosed"],
+        _ => Culture["School.TestWindow.StatusNotOpen"]
+    };
+
+    private string PillClass => (_overview?.TestWindow ?? TestWindowState.NotOpen) switch
+    {
+        TestWindowState.Open => "sch-pill--ok",
+        TestWindowState.Closed => "sch-pill--muted",
+        _ => "sch-pill--warn"
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (_disabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        _loading = true;
+        try { _overview = await Api.GetTeacherOverviewAsync(ClassId); }
+        catch { _overview = null; }
+        finally { _loading = false; }
+    }
+
+    private async Task OnWindowAction((string Action, DateOnly? ClosesOn) args)
+    {
+        _busy = true;
+        _windowError = null;
+        try
+        {
+            var detail = await Api.SetTeacherTestWindowAsync(ClassId, args.Action, args.ClosesOn);
+            if (detail is not null && _overview is not null)
+            {
+                _overview = _overview with
+                {
+                    TestWindow = detail.TestWindow,
+                    TestWindowClosesOn = detail.TestWindowClosesOn
+                };
+            }
+            _windowOpen = false;
+        }
+        catch (Exception ex)
+        {
+            _windowError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

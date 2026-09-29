@@ -1,0 +1,226 @@
+@page "/leraar/klas/{ClassId:guid}/codes"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IPlatformFeatureService Features
+
+<PageTitle>@Culture["Leraar.Codes.Title"] · Lobsy</PageTitle>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_notFound)
+{
+    <p class="state-message error">@Culture["Leraar.Class.NotFound"]</p>
+}
+else
+{
+    <header class="sch-page-header">
+        <p class="sch-breadcrumb"><a href="@($"/leraar/klas/{ClassId:D}")">@Culture["Leraar.Nav.Overview"]</a> / @Culture["Leraar.Codes.Title"]</p>
+        <h1>@Culture["Leraar.Codes.Title"]</h1>
+        <p class="muted">@Culture["Leraar.Codes.NamesNote"]</p>
+    </header>
+
+    <EntFilterBar @bind-Query="_query" Placeholder="@Culture["Leraar.Codes.Filter"]">
+        <Chips>
+            <button type="button" class="btn-compact @(_statusFilter is null ? "is-active" : null)" @onclick="() => SetFilter(null)">@Culture["School.Filter.All"]</button>
+            <button type="button" class="btn-compact @(_statusFilter == PupilCodeStatus.Completed ? "is-active" : null)" @onclick="() => SetFilter(PupilCodeStatus.Completed)">@Culture["School.Status.Completed"]</button>
+            <button type="button" class="btn-compact @(_statusFilter == PupilCodeStatus.InProgress ? "is-active" : null)" @onclick="() => SetFilter(PupilCodeStatus.InProgress)">@Culture["Leraar.Status.Busy"]</button>
+            <button type="button" class="btn-compact @(_statusFilter == PupilCodeStatus.NotStarted ? "is-active" : null)" @onclick="() => SetFilter(PupilCodeStatus.NotStarted)">@Culture["School.Status.NotStarted"]</button>
+        </Chips>
+    </EntFilterBar>
+
+    @if (!string.IsNullOrEmpty(_actionError))
+    {
+        <p class="state-message error">@_actionError</p>
+    }
+
+    <div data-testid="leraar-code-table">
+    <EntDataTable Loading="false" Empty="@(!Filtered.Any())" EmptyText="@Culture["School.Codes.Empty"]">
+        <Header>
+            <th scope="col"><button type="button" class="sch-sort" @onclick="SortByNumber">#</button></th>
+            <th scope="col">@Culture["School.Col.Code"]</th>
+            <th scope="col"><button type="button" class="sch-sort" @onclick="SortByStatus">@Culture["School.Col.Status"]</button></th>
+            <th scope="col">@Culture["School.Col.Progress"]</th>
+            <th scope="col"><button type="button" class="sch-sort" @onclick="SortByActive">@Culture["School.Col.LastActive"]</button></th>
+            <th scope="col"></th>
+        </Header>
+        <Rows>
+            @foreach (var row in Filtered)
+            {
+                <tr class="ent-data-table__row">
+                    <td class="tabular">@row.Number</td>
+                    <td><span class="sch-code">@row.DisplayCode</span></td>
+                    <td><span class="sch-pill @StatusPill(row.Status)">@StatusLabel(row)</span></td>
+                    <td>
+                        <progress class="sch-progress-meter" max="@row.ProgressTotal" value="@row.ProgressCurrent"></progress>
+                        <span class="tabular muted">@row.ProgressCurrent/@row.ProgressTotal</span>
+                    </td>
+                    <td>@(row.LastSeenAtUtc is DateTime t ? t.ToLocalTime().ToString("dd-MM HH:mm") : "—")</td>
+                    <td class="sch-row-actions">
+                        @if (row.Status == PupilCodeStatus.Completed)
+                        {
+                            <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/code/{row.Id:D}")">@Culture["Leraar.Codes.View"]</a>
+                        }
+                        <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => Replace(row.Id)">@Culture["School.Codes.Replace"]</button>
+                        <span class="muted sch-hint">@Culture["Leraar.Codes.DeleteHint"]</span>
+                    </td>
+                </tr>
+            }
+        </Rows>
+    </EntDataTable>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid ClassId { get; set; }
+
+    private bool _disabled;
+    private bool _loading = true;
+    private bool _notFound;
+    private bool _busy;
+    private string? _actionError;
+    private string _query = "";
+    private PupilCodeStatus? _statusFilter;
+    private string _sort = "num";
+    private bool _sortDesc;
+    private List<TeacherCodeRowDto> _codes = [];
+
+    private IEnumerable<TeacherCodeRowDto> Filtered
+    {
+        get
+        {
+            IEnumerable<TeacherCodeRowDto> q = _codes;
+            if (_statusFilter is PupilCodeStatus s)
+            {
+                q = q.Where(c => c.Status == s);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_query))
+            {
+                q = q.Where(c => c.DisplayCode.Contains(_query, StringComparison.OrdinalIgnoreCase)
+                                 || c.Number.ToString().Contains(_query, StringComparison.Ordinal));
+            }
+
+            q = _sort switch
+            {
+                "status" => _sortDesc ? q.OrderByDescending(c => c.Status) : q.OrderBy(c => c.Status),
+                "active" => _sortDesc
+                    ? q.OrderByDescending(c => c.LastSeenAtUtc ?? DateTime.MinValue)
+                    : q.OrderBy(c => c.LastSeenAtUtc ?? DateTime.MaxValue),
+                _ => _sortDesc ? q.OrderByDescending(c => c.Number) : q.OrderBy(c => c.Number)
+            };
+            return q;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (_disabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        _loading = true;
+        try
+        {
+            var rows = await Api.GetTeacherCodesAsync(ClassId);
+            _codes = rows.ToList();
+            _notFound = false;
+        }
+        catch
+        {
+            _notFound = true;
+            _codes = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SetFilter(PupilCodeStatus? status) => _statusFilter = status;
+
+    private void SortByNumber() => SortBy("num");
+    private void SortByStatus() => SortBy("status");
+    private void SortByActive() => SortBy("active");
+
+    private void SortBy(string key)
+    {
+        if (_sort == key)
+        {
+            _sortDesc = !_sortDesc;
+        }
+        else
+        {
+            _sort = key;
+            _sortDesc = false;
+        }
+    }
+
+    private async Task Replace(Guid codeId)
+    {
+        if (!await ConfirmReplace())
+        {
+            return;
+        }
+
+        _busy = true;
+        _actionError = null;
+        try
+        {
+            var row = await Api.ReplaceTeacherCodeAsync(ClassId, codeId);
+            if (row is not null)
+            {
+                var idx = _codes.FindIndex(c => c.Id == codeId);
+                if (idx >= 0)
+                {
+                    _codes[idx] = new TeacherCodeRowDto(
+                        row.Id, row.Number, row.DisplayCode, row.Status,
+                        row.ProgressCurrent, row.ProgressTotal, row.LastSeenAtUtc);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _actionError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task<bool> ConfirmReplace()
+        => Task.FromResult(true); // confirm dialog via browser: keep simple; API is source of truth
+
+    private string StatusLabel(TeacherCodeRowDto row) => row.Status switch
+    {
+        PupilCodeStatus.Completed => Culture["School.Status.Completed"],
+        PupilCodeStatus.InProgress => string.Format(Culture["School.Status.InProgress"], row.ProgressCurrent, row.ProgressTotal),
+        _ => Culture["School.Status.NotStarted"]
+    };
+
+    private static string StatusPill(PupilCodeStatus s) => s switch
+    {
+        PupilCodeStatus.Completed => "sch-pill--ok",
+        PupilCodeStatus.InProgress => "sch-pill--info",
+        _ => "sch-pill--muted"
+    };
+}
