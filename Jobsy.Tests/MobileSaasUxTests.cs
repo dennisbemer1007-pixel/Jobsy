@@ -231,9 +231,18 @@ public class MobileSaasUxTests
         Assert.Contains(".profile-page--candidate .profile-check-grid,\n.profile-page--candidate .profile-roles.profile-check-grid {\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
         Assert.Contains(".availability-matrix {\n    display: grid;\n    grid-template-columns: 2.35rem repeat(4, minmax(0, 1fr));", css);
         Assert.Contains("bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));", css);
+        Assert.Contains("--profile-save-bar-h: 4.25rem;", css);
+        Assert.Contains("4.75rem + var(--profile-save-bar-h)", css);
         Assert.Contains(".profile-save-bar .login-submit {\n    width: 100%;", css);
         Assert.Contains(".profile-page--candidate .profile-contact__names {\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
         Assert.Contains(".profile-page--candidate .profile-page__header {\n        display: none;", css);
+        // page-in must not leave a transform (fill-mode:both) or fixed Opslaan sticks near the top
+        Assert.Contains(
+            "animation: lobsy-page-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;",
+            css);
+        Assert.DoesNotContain(
+            "animation: lobsy-page-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;",
+            css);
     }
 
     [Fact]
