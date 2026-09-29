@@ -289,10 +289,12 @@ public class AdminAuditRedesignTests : IClassFixture<RoleFunctionalWebAppFactory
     }
 
     [Fact]
-    public void Nav_auditlog_available()
+    public void Nav_security_items_available()
     {
         var items = Jobsy.Web.Navigation.AdminNav.AvailableItems().Select(i => i.Href).ToHashSet(StringComparer.OrdinalIgnoreCase);
         Assert.Contains("/admin/beveiliging", items);
+        Assert.Contains("/admin/beveiliging/2fa", items);
+        Assert.Contains("/admin/beveiliging/privacy", items);
         Assert.Contains("/admin/beveiliging/gegevensinzage", items);
         Assert.Contains("/admin/beveiliging/systeemlogs", items);
     }

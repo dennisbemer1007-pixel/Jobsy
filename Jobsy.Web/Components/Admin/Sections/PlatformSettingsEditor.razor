@@ -41,7 +41,7 @@ else if (_snapshot is not null)
                     var value = CurrentValue(entry);
                     var meta = dirty
                         ? string.Format(Culture["AdminSettings.DirtyMeta"], FormatDisplay(entry, _baseline[entry.Key]))
-                        : null;
+                        : LastChangedMeta(entry.Key);
                     <AdminToggleRow Title="@Culture[entry.TitleKey]"
                                     Description="@Culture[entry.DescriptionKey]"
                                     Meta="@meta"
@@ -137,12 +137,42 @@ else if (_snapshot is not null)
     {
         <div class="admin-save-bar" role="status">
             <p class="admin-save-bar__summary">@SaveSummary</p>
+            <label class="admin-save-bar__reason">
+                <span>@Culture["AdminSettings.Reason"]</span>
+                <input type="text" class="admin-settings-input admin-settings-input--wide"
+                       maxlength="500"
+                       @bind="_reason"
+                       placeholder="@Culture["AdminSettings.ReasonPlaceholder"]" />
+            </label>
             <div class="admin-save-bar__actions">
                 <button type="button" class="btn-compact" disabled="@_busy" @onclick="Cancel">@Culture["Common.Cancel"]</button>
-                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="SaveAsync">@Culture["Common.Save"]</button>
+                <button type="button" class="btn-compact btn-compact--primary" disabled="@(_busy || !CanSave)" @onclick="SaveAsync">
+                    @Culture["AdminSettings.SaveAndLog"]
+                </button>
             </div>
         </div>
     }
+
+    <aside class="detail-card admin-settings-changes" aria-labelledby="settings-changes-heading">
+        <h2 id="settings-changes-heading">@Culture["AdminSettings.ChangesPanel"]</h2>
+        @if (_recentChanges.Count == 0)
+        {
+            <p class="muted">@Culture["AdminSettings.ChangesEmpty"]</p>
+        }
+        else
+        {
+            <ul class="admin-audit-changes">
+                @foreach (var c in _recentChanges)
+                {
+                    <li>
+                        <span class="admin-mono muted">@c.OccurredAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</span>
+                        <span>@c.ActorDisplayName</span>
+                        <span class="muted">@c.TargetLabel</span>
+                    </li>
+                }
+            </ul>
+        }
+    </aside>
 
     @if (!string.IsNullOrEmpty(_message))
     {
@@ -174,6 +204,33 @@ else if (_snapshot is not null)
     private bool _confirmOpen;
     private PlatformSettingDescriptor? _confirmEntry;
     private object? _confirmValue;
+    private string _reason = "";
+    private List<AdminAuditItem> _recentChanges = [];
+    private Dictionary<string, AdminAuditItem> _lastByField = new(StringComparer.Ordinal);
+
+    private bool CanSave
+    {
+        get
+        {
+            var needsReason = _draft.Keys.Any(k =>
+            {
+                var entry = _entries.FirstOrDefault(e => e.Key == k);
+                return entry is not null && (entry.ConfirmOnChange || entry.ImpactLevel == PlatformSettingImpactLevel.Danger);
+            });
+            if (!needsReason) return true;
+            var r = _reason.Trim();
+            return r.Length is >= 5 and <= 500;
+        }
+    }
+
+    private string? LastChangedMeta(string fieldKey)
+    {
+        if (!_lastByField.TryGetValue(fieldKey, out var e)) return null;
+        return string.Format(
+            Culture["AdminSettings.LastChangedBy"],
+            e.ActorDisplayName,
+            e.OccurredAtUtc.ToLocalTime().ToString("dd-MM-yyyy"));
+    }
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -189,6 +246,7 @@ else if (_snapshot is not null)
         {
             var item = await Api.GetPlatformFeaturesAsync() ?? new PlatformFeatureItem();
             ApplySnapshot(ToSnapshot(item));
+            await LoadRecentChangesAsync();
         }
         catch (Exception ex)
         {
@@ -307,12 +365,30 @@ else if (_snapshot is not null)
     private void Cancel()
     {
         _draft.Clear();
+        _reason = "";
         _message = null;
+    }
+
+    private async Task LoadRecentChangesAsync()
+    {
+        try
+        {
+            var page = await Api.GetAdminAuditAsync(action: "settings.platform.update", page: 1, pageSize: 10);
+            _recentChanges = page.Items;
+            _lastByField = page.Items
+                .GroupBy(i => i.TargetId, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+        }
+        catch
+        {
+            _recentChanges = [];
+            _lastByField = new(StringComparer.Ordinal);
+        }
     }
 
     private async Task SaveAsync()
     {
-        if (_draft.Count == 0 || _busy)
+        if (_draft.Count == 0 || _busy || !CanSave)
         {
             return;
         }
@@ -342,8 +418,12 @@ else if (_snapshot is not null)
             });
             var merged = PlatformSettingsCatalog.Merge(parts);
             var patch = ToPatch(merged);
+            patch.Reason = string.IsNullOrWhiteSpace(_reason) ? null : _reason.Trim();
+            LastPatch = patch;
             var saved = await Api.PatchPlatformFeaturesAsync(patch) ?? new PlatformFeatureItem();
             ApplySnapshot(ToSnapshot(saved));
+            _reason = "";
+            await LoadRecentChangesAsync();
             _message = Culture["AdminSettings.Saved"];
         }
         catch (Exception ex)

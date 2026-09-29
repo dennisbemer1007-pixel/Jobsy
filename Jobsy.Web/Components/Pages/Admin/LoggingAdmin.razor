@@ -2,6 +2,8 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
@@ -11,70 +13,46 @@
 <PageTitle>@Culture["AdminNav.SystemLogs"] · Lobsy</PageTitle>
 
 <AdminPageShell Title="@Culture["AdminNav.SystemLogs"]" Lead="@Culture["Admin.LoggingLead"]">
-    <div class="filter-bar">
-        <label>
-            Level
-            <select @bind="_level" @bind:after="ReloadAsync">
-                <option value="">Alle</option>
-                <option value="Info">Info</option>
-                <option value="Warning">Warning</option>
-                <option value="Error">Error</option>
-            </select>
-        </label>
-        <label>
-            Categorie
-            <input type="search" @bind="_category" @bind:event="oninput" placeholder="bijv. Unsubscribe, Privacy…" />
-        </label>
-        <label>
-            Van
-            <input type="date" @bind="_fromDate" />
-        </label>
-        <label>
-            Tot
-            <input type="date" @bind="_toDate" />
-        </label>
-        <button class="provider-btn" type="button" disabled="@_loading" @onclick="ReloadAsync">Filter</button>
-        <span class="muted">@_logs.Count logs</span>
-    </div>
+    <BeveiligingTabs ActiveKey="logs" />
 
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else if (!string.IsNullOrEmpty(_error))
+    <AdminFilterBar>
+        <select class="admin-filter-select" @bind="_level" @bind:after="ReloadAsync">
+            <option value="">@Culture["AdminAudit.Filter.ResultAll"]</option>
+            <option value="Info">Info</option>
+            <option value="Warning">Warning</option>
+            <option value="Error">Error</option>
+        </select>
+        <input type="search" class="admin-filter-input" @bind="_category" @bind:event="oninput"
+               placeholder="@Culture["AdminLogs.CategoryPlaceholder"]" />
+        <input type="date" class="admin-filter-input" @bind="_fromDate" />
+        <input type="date" class="admin-filter-input" @bind="_toDate" />
+        <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["Common.Filter"]</button>
+    </AdminFilterBar>
+
+    @if (!string.IsNullOrEmpty(_error))
     {
         <p class="state-message error">@_error</p>
     }
-    else if (_filtered.Count == 0)
-    {
-        <p class="state-message">Geen logs gevonden.</p>
-    }
-    else
-    {
-        <div class="table-scroll">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Datum</th>
-                        <th>Level</th>
-                        <th>Type / categorie</th>
-                        <th>Bericht</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var log in _filtered)
-                    {
-                        <tr>
-                            <td>@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
-                            <td>@log.Level</td>
-                            <td>@log.Category</td>
-                            <td>@log.Message</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
+
+    <AdminDataTable Loading="_loading" Empty="@(_filtered.Count == 0)" EmptyText="@Culture["AdminLogs.Empty"]">
+        <Header>
+            <th scope="col">@Culture["AdminLogs.Col.Date"]</th>
+            <th scope="col">@Culture["AdminLogs.Col.Level"]</th>
+            <th scope="col">@Culture["AdminLogs.Col.Category"]</th>
+            <th scope="col">@Culture["AdminLogs.Col.Message"]</th>
+        </Header>
+        <Rows>
+            @foreach (var log in _filtered)
+            {
+                <tr>
+                    <td class="admin-mono">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                    <td>@log.Level</td>
+                    <td>@log.Category</td>
+                    <td>@log.Message</td>
+                </tr>
+            }
+        </Rows>
+    </AdminDataTable>
 </AdminPageShell>
 
 @code {
@@ -91,22 +69,17 @@
             ? _logs
             : _logs.Where(l => l.Category.Contains(_category, StringComparison.OrdinalIgnoreCase)).ToList();
 
-
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {
-        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
-        if (qs.TryGetValue("level", out var level))
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var q = QueryHelpers.ParseQuery(uri.Query);
+        if (q.TryGetValue("level", out var levelRaw) && !string.IsNullOrWhiteSpace(levelRaw))
         {
-            _level = level.ToString();
+            _level = levelRaw.ToString()!;
         }
 
         await ReloadAsync();
@@ -118,13 +91,10 @@
         _error = null;
         try
         {
-            DateTime? from = _fromDate?.Date;
-            DateTime? to = _toDate?.Date.AddDays(1).AddTicks(-1);
             _logs = (await Api.GetPlatformLogsAsync(
-                category: null,
                 level: string.IsNullOrWhiteSpace(_level) ? null : _level,
-                from: from,
-                to: to)).ToList();
+                from: _fromDate?.ToUniversalTime(),
+                to: _toDate?.ToUniversalTime())).ToList();
         }
         catch (Exception ex)
         {

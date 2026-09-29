@@ -14,7 +14,8 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
-- **Admin redesign (07 · beveiliging & audit):** append-only `AdminAuditEvent` (7 jaar), writer + filter + reflection guard; Auditlog / 2FA / Privacy-pagina’s; Gegevensinzage + Systeemlogs gerestyled; dashboard “Recente beheeracties”, gebruiker-Activiteit, Functies “Opslaan en loggen” + Wijzigingen; globale zoek Correlatie. `auth.admin.login-failed` deferred (geen extra lookup bij login-fout).
+- **Admin redesign (07a · audit kern):** append-only `AdminAuditEvent` (7 jaar), writer + filter + reflection guard, Auditlog-pagina, admin-writes gelogd, globale zoek Correlatie. `auth.admin.login-failed` deferred (geen extra lookup bij login-fout).
+- **Admin redesign (07b · tabs + slots):** 2FA & sessies, Privacy & AVG, Gegevensinzage + Systeemlogs gerestyled; dashboard “Recente beheeracties”, gebruiker-Activiteit, Functies “Opslaan en loggen” + Wijzigingen.
 - **Admin redesign (02 · dashboard):** `/admin` met 5 KPI-kaarten, Te doen, systeemstatus en platform-modus; `/admin/te-doen`; moderatiefilter op vacatures (`/admin/vacatures/moderatie`); `GET api/admin/todo` + `GET api/admin/finance/summary`; sidebar count-pills.
 - **Admin redesign (01 · shell):** eigen `AdminLayout` met gegroepeerde sidebar, top bar (globale zoek Ctrl/Cmd+K), environment badge, breadcrumbs; Nederlandse admin-URL’s met 301 vanaf oude paden; gedeelde admin UI-primitives; `GET api/admin/search`.
 - **Admin redesign (04 · organisaties):** `/admin/organisaties` boom/plat + detailpanel, filters en tellingen op `GET api/admin/companies`; `/admin/organisaties/regios` tabs Domeinen · Regio's; `/admin/organisaties/aanvragen` KvK + overnames (aanvrager-e-mail gemaskeerd voor admin); KvK-retry endpoint.

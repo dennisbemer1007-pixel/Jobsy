@@ -356,6 +356,30 @@ else if (_page is not null)
                         }
                     </section>
                 }
+                else if (_drawerTab == "activiteit")
+                {
+                    @if (_activityLoading)
+                    {
+                        <p class="muted">@Culture["Common.Loading"]</p>
+                    }
+                    else if (_activity.Count == 0)
+                    {
+                        <p class="muted">@Culture["AdminUsers.ActivityEmpty"]</p>
+                    }
+                    else
+                    {
+                        <ul class="admin-activity-list">
+                            @foreach (var item in _activity)
+                            {
+                                <li>
+                                    <span class="admin-mono muted">@item.OccurredAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</span>
+                                    <span>@item.Label</span>
+                                    <span class="muted">@item.Actor</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                }
             </div>
         }
         </ChildContent>
@@ -416,6 +440,8 @@ else if (_page is not null)
     private List<AdminTabs.Tab> _drawerTabs = [];
     private List<AdminUserSessionItem> _sessions = [];
     private bool _sessionsLoading;
+    private List<ActivityRow> _activity = [];
+    private bool _activityLoading;
     private ActiveGrantBanner? _activeGrantForDrawer;
     private bool _bulkOpen;
     private string _bulkAction = "";
@@ -433,6 +459,7 @@ else if (_page is not null)
             new("overzicht", Culture["AdminUsers.TabOverview"]),
             new("rollen", Culture["AdminUsers.TabRoles"]),
             new("beveiliging", Culture["AdminUsers.TabSecurity"]),
+            new("activiteit", Culture["AdminUsers.TabActivity"]),
         ];
     }
 
@@ -731,6 +758,10 @@ else if (_page is not null)
         {
             await LoadSessionsIfNeededAsync();
         }
+        else if (key == "activiteit")
+        {
+            await LoadActivityIfNeededAsync();
+        }
     }
 
     private async Task LoadSessionsIfNeededAsync()
@@ -750,6 +781,46 @@ else if (_page is not null)
             _sessionsLoading = false;
         }
     }
+
+    private async Task LoadActivityIfNeededAsync()
+    {
+        if (_drawerUser is null) return;
+        _activityLoading = true;
+        try
+        {
+            var audit = await Api.GetAdminAuditAsync(
+                targetType: "user",
+                targetId: _drawerUser.Id.ToString("D"),
+                page: 1,
+                pageSize: 25);
+            var access = await Api.GetPersonalDataAccessLogAsync(
+                page: 1,
+                pageSize: 25,
+                subjectUserId: _drawerUser.Id);
+
+            _activity = audit.Items
+                .Select(e => new ActivityRow(e.OccurredAtUtc, e.Action, e.ActorDisplayName))
+                .Concat(access.Items.Select(l => new ActivityRow(
+                    l.OccurredAt,
+                    string.Format(Culture["AdminUsers.ActivityViewed"], l.Resource),
+                    ShortActor(l.ActorUserId))))
+                .OrderByDescending(a => a.OccurredAtUtc)
+                .Take(40)
+                .ToList();
+        }
+        catch
+        {
+            _activity = [];
+        }
+        finally
+        {
+            _activityLoading = false;
+        }
+    }
+
+    private static string ShortActor(Guid id) => id.ToString("N")[..6];
+
+    private sealed record ActivityRow(DateTime OccurredAtUtc, string Label, string Actor);
 
     private async Task RefreshDrawerGrantAsync()
     {

@@ -1,0 +1,116 @@
+@page "/admin/beveiliging/2fa"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>@Culture["AdminNav.MfaSessions"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.MfaSessions"]" Lead="@Culture["AdminMfa.Lead"]">
+    <BeveiligingTabs ActiveKey="mfa" />
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_overview is null)
+    {
+        <p class="state-message error">@Culture["Common.Error"]</p>
+    }
+    else
+    {
+        <section class="detail-card" aria-labelledby="mfa-roles-heading">
+            <h2 id="mfa-roles-heading">@Culture["AdminMfa.ByRole"]</h2>
+            <AdminDataTable Empty="@(_overview.ByRole.Count == 0)">
+                <Header>
+                    <th scope="col">@Culture["AdminMfa.Col.Role"]</th>
+                    <th scope="col">@Culture["AdminMfa.Col.Enrolled"]</th>
+                    <th scope="col">@Culture["AdminMfa.Col.NotEnrolled"]</th>
+                    <th scope="col">@Culture["AdminMfa.Col.ViaIdp"]</th>
+                    <th scope="col">@Culture["AdminMfa.Col.Total"]</th>
+                </Header>
+                <Rows>
+                    @foreach (var row in _overview.ByRole)
+                    {
+                        <tr>
+                            <td>@row.Role</td>
+                            <td>@row.Enrolled</td>
+                            <td>@row.NotEnrolled</td>
+                            <td>@row.ViaIdp</td>
+                            <td>@row.Total</td>
+                        </tr>
+                    }
+                </Rows>
+            </AdminDataTable>
+        </section>
+
+        <section class="detail-card" aria-labelledby="mfa-missing-heading">
+            <h2 id="mfa-missing-heading">@Culture["AdminMfa.Without"]</h2>
+            <AdminDataTable Empty="@(_overview.WithoutMfa.Count == 0)" EmptyText="@Culture["AdminMfa.WithoutEmpty"]">
+                <Header>
+                    <th scope="col">@Culture["AdminUsers.Col.Name"]</th>
+                    <th scope="col">@Culture["AdminUsers.Col.Email"]</th>
+                    <th scope="col">@Culture["AdminUsers.Col.Role"]</th>
+                    <th scope="col">@Culture["AdminMfa.LastActive"]</th>
+                </Header>
+                <Rows>
+                    @foreach (var u in _overview.WithoutMfa)
+                    {
+                        <tr class="admin-audit-row" @onclick="() => OpenUser(u.UserId)">
+                            <td>@u.MaskedName</td>
+                            <td>@u.MaskedEmail</td>
+                            <td>@u.Role</td>
+                            <td class="muted">@(u.LastActiveUtc?.ToLocalTime().ToString("dd-MM HH:mm") ?? "—")</td>
+                        </tr>
+                    }
+                </Rows>
+            </AdminDataTable>
+        </section>
+
+        <section class="detail-card" aria-labelledby="mfa-recent-heading">
+            <h2 id="mfa-recent-heading">@Culture["AdminMfa.Recent"]</h2>
+            <AdminDataTable Empty="@(_overview.RecentEvents.Count == 0)">
+                <Header>
+                    <th scope="col">@Culture["AdminAudit.Col.Time"]</th>
+                    <th scope="col">@Culture["AdminAudit.Col.Action"]</th>
+                    <th scope="col">@Culture["AdminAudit.Col.Object"]</th>
+                    <th scope="col">@Culture["AdminAudit.Col.Result"]</th>
+                </Header>
+                <Rows>
+                    @foreach (var e in _overview.RecentEvents)
+                    {
+                        <tr>
+                            <td class="admin-mono">@e.OccurredAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</td>
+                            <td>@e.Action</td>
+                            <td>@e.TargetLabel</td>
+                            <td>@e.Result</td>
+                        </tr>
+                    }
+                </Rows>
+            </AdminDataTable>
+        </section>
+    }
+</AdminPageShell>
+
+@code {
+    private AdminMfaOverview? _overview;
+    private bool _loading = true;
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _overview = await Api.GetAdminMfaOverviewAsync(); }
+        catch { _overview = null; }
+        finally { _loading = false; }
+    }
+
+    private void OpenUser(Guid id) => Nav.NavigateTo($"/admin/gebruikers?open={id:D}");
+}

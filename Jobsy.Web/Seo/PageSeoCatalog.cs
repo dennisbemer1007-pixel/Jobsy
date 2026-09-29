@@ -191,6 +191,8 @@ public static partial class PageSeoCatalog
             ["/admin/instellingen/integraties"] = Private("AdminNav.Integrations", "Seo.PrivateDescription"),
             ["/admin/beveiliging/systeemlogs"] = Private("AdminNav.SystemLogs", "Seo.PrivateDescription"),
             ["/admin/beveiliging"] = Private("AdminNav.AuditLog", "Seo.PrivateDescription"),
+            ["/admin/beveiliging/2fa"] = Private("AdminNav.MfaSessions", "Seo.PrivateDescription"),
+            ["/admin/beveiliging/privacy"] = Private("AdminNav.Privacy", "Seo.PrivateDescription"),
             ["/admin/beveiliging/gegevensinzage"] = Private("AdminNav.DataAccess", "Seo.PrivateDescription"),
             ["/admin/content/emails"] = Private("AdminNav.Emails", "Seo.PrivateDescription"),
             ["/admin/content/stamgegevens"] = Private("AdminNav.Masterdata", "Seo.PrivateDescription"),

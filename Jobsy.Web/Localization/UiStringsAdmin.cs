@@ -635,5 +635,15 @@ public static class UiStringsAdmin
         Add("AdminSettings.ChangesPanel", "Wijzigingen", "Changes", "Zmiany", "Modificări", "التغييرات");
         Add("AdminSettings.ChangesEmpty", "Nog geen instellingswijzigingen.", "No setting changes yet.", "Brak zmian ustawień.", "Nicio modificare de setări.", "لا تغييرات إعدادات بعد.");
         Add("AdminSettings.LastChangedBy", "Laatst gewijzigd door {0} · {1}", "Last changed by {0} · {1}", "Ostatnio zmienione przez {0} · {1}", "Ultima modificare de {0} · {1}", "آخر تعديل بواسطة {0} · {1}");
+        Add("AdminDataAccess.Actor", "Actor (user-id)", "Actor (user id)", "Aktor (id użytkownika)", "Actor (id utilizator)", "الفاعل (معرّف المستخدم)");
+        Add("AdminDataAccess.Subject", "Subject (user-id)", "Subject (user id)", "Podmiot (id użytkownika)", "Subiect (id utilizator)", "الموضوع (معرّف المستخدم)");
+        Add("AdminDataAccess.Resource", "Resource", "Resource name", "Zasób", "Nume resursă", "اسم المورد");
+        Add("AdminDataAccess.Empty", "Geen inzage-logs gevonden.", "No access logs found.", "Brak logów dostępu.", "Niciun jurnal de acces.", "لا سجلات اطلاع.");
+        Add("AdminLogs.Col.Date", "Datum", "Date", "Data", "Dată", "التاريخ");
+        Add("AdminLogs.Col.Level", "Level", "Log level", "Poziom", "Nivel", "المستوى");
+        Add("AdminLogs.Col.Category", "Categorie", "Category", "Kategoria", "Categorie jurnal", "الفئة");
+        Add("AdminLogs.Col.Message", "Bericht", "Message", "Wiadomość", "Mesaj", "الرسالة");
+        Add("AdminLogs.Empty", "Geen logs gevonden.", "No logs found.", "Brak logów.", "Niciun jurnal.", "لا سجلات.");
+        Add("AdminLogs.CategoryPlaceholder", "Categorie", "Category", "Kategoria", "Filtrează categoria", "الفئة");
     }
 }

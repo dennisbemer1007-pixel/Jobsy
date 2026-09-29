@@ -1,0 +1,127 @@
+@page "/admin/beveiliging/privacy"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using System.Text.Json
+@using Jobsy.Core.Privacy
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["AdminNav.Privacy"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.Privacy"]" Lead="@Culture["AdminPrivacy.Lead"]">
+    <BeveiligingTabs ActiveKey="privacy" />
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <section class="detail-card">
+            <ul class="admin-mode-list">
+                <li class="admin-mode-list__row">
+                    <span>@Culture["AdminPrivacy.MaskingDefault"]</span>
+                    <span class="status-pill status-pill--success">@Culture["AdminAudit.On"]</span>
+                </li>
+            </ul>
+        </section>
+
+        <section class="detail-card" aria-labelledby="retention-heading">
+            <h2 id="retention-heading">@Culture["AdminPrivacy.Retention"]</h2>
+            <AdminDataTable>
+                <Header>
+                    <th scope="col">@Culture["AdminPrivacy.Col.Dataset"]</th>
+                    <th scope="col">@Culture["AdminPrivacy.Col.Days"]</th>
+                </Header>
+                <Rows>
+                    <tr><td>@Culture["AdminPrivacy.AdminAudit"]</td><td>@(_summary?.AdminAuditRetentionDays ?? PrivacyConstants.AdminAuditRetentionDays)</td></tr>
+                    <tr><td>@Culture["AdminPrivacy.AccessLog"]</td><td>@(_summary?.PersonalDataAccessLogRetentionDays ?? PrivacyConstants.PersonalDataAccessLogRetentionDays)</td></tr>
+                    <tr><td>@Culture["AdminPrivacy.PlatformLogs"]</td><td>@(_summary?.PlatformLogRetentionDays ?? PrivacyConstants.PlatformLogRetentionDays)</td></tr>
+                </Rows>
+            </AdminDataTable>
+        </section>
+
+        <section class="detail-card" aria-labelledby="last-run-heading">
+            <h2 id="last-run-heading">@Culture["AdminPrivacy.LastRun"]</h2>
+            @if (_summary?.LastRetentionRunUtc is DateTime lr)
+            {
+                <p class="muted">@lr.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</p>
+                @if (!string.IsNullOrWhiteSpace(_summary.LastRetentionDetailsJson))
+                {
+                    <ul class="admin-audit-changes">
+                        @foreach (var kv in ParseCounts(_summary.LastRetentionDetailsJson))
+                        {
+                            <li><span class="admin-mono">@kv.Key</span>: @kv.Value</li>
+                        }
+                    </ul>
+                }
+            }
+            else
+            {
+                <p class="muted">@Culture["AdminPrivacy.NoRunYet"]</p>
+            }
+        </section>
+
+        <section class="detail-card" aria-labelledby="deleted-heading">
+            <h2 id="deleted-heading">@Culture["AdminPrivacy.RecentDeleted"]</h2>
+            <AdminDataTable Loading="_deletedLoading" Empty="@(_deleted.Count == 0)" EmptyText="@Culture["AdminPrivacy.NoDeleted"]">
+                <Header>
+                    <th scope="col">@Culture["AdminAudit.Col.Time"]</th>
+                    <th scope="col">@Culture["AdminAudit.Col.Object"]</th>
+                    <th scope="col">@Culture["AdminAudit.Col.Result"]</th>
+                </Header>
+                <Rows>
+                    @foreach (var e in _deleted)
+                    {
+                        <tr>
+                            <td class="admin-mono">@e.OccurredAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</td>
+                            <td>@e.TargetLabel</td>
+                            <td>@e.Result</td>
+                        </tr>
+                    }
+                </Rows>
+            </AdminDataTable>
+        </section>
+    }
+</AdminPageShell>
+
+@code {
+    private AdminAuditSummary? _summary;
+    private List<AdminAuditItem> _deleted = [];
+    private bool _loading = true;
+    private bool _deletedLoading = true;
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _summary = await Api.GetAdminAuditSummaryAsync(); }
+        catch { _summary = null; }
+        finally { _loading = false; }
+
+        try
+        {
+            var page = await Api.GetAdminAuditAsync(action: "privacy.account.deleted", page: 1, pageSize: 20);
+            _deleted = page.Items;
+        }
+        catch { _deleted = []; }
+        finally { _deletedLoading = false; }
+    }
+
+    private static Dictionary<string, string> ParseCounts(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.EnumerateObject()
+                .ToDictionary(p => p.Name, p => p.Value.ToString());
+        }
+        catch { return []; }
+    }
+}

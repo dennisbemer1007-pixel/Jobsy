@@ -2,6 +2,8 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
@@ -9,216 +11,90 @@
 <PageTitle>@Culture["AdminNav.DataAccess"] · Lobsy</PageTitle>
 
 <AdminPageShell Title="@Culture["AdminNav.DataAccess"]" Lead="@Culture["Admin.PersonalDataAccessLogLead"]">
-    <section class="panel-section">
-        <h2>@Culture["Admin.SupportAccessGrants"]</h2>
-        <p class="muted">Vier-ogen: alle admins zien actieve en recente break-glass toegang.</p>
-        @if (_grantsLoading)
-        {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (_grants.Count == 0)
-        {
-            <p class="muted">Geen support-toegang gevonden.</p>
-        }
-        else
-        {
-            <div class="table-scroll">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Status</th>
-                            <th>Admin</th>
-                            <th>Subject</th>
-                            <th>Scope</th>
-                            <th>Reden</th>
-                            <th>Tot</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var g in _grants)
-                        {
-                            <tr>
-                                <td>@(g.IsActive ? "Actief" : (g.RevokedAt is not null ? "Ingetrokken" : "Verlopen"))</td>
-                                <td class="muted">@Short(g.AdminUserId)</td>
-                                <td class="muted">
-                                    @(g.SubjectUserId is Guid su ? Short(su) : g.SubjectCompanyId is Guid sc ? "co:" + Short(sc) : "—")
-                                </td>
-                                <td>@g.Scope</td>
-                                <td class="muted">@g.Reason</td>
-                                <td>@g.ExpiresAt.ToLocalTime().ToString("dd-MM HH:mm")</td>
-                                <td>
-                                    @if (g.IsActive)
-                                    {
-                                        <button class="provider-btn" type="button" disabled="@_busy"
-                                                @onclick="() => RevokeGrantAsync(g.Id)">
-                                            @Culture["Admin.SupportAccessRevoke"]
-                                        </button>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </section>
+    <BeveiligingTabs ActiveKey="pii" />
 
-    <div class="filter-bar">
-        <label>
-            Actor user id
-            <input type="text" @bind="_actorIdText" placeholder="guid" />
-        </label>
-        <label>
-            Subject user id
-            <input type="text" @bind="_subjectIdText" placeholder="guid" />
-        </label>
-        <label>
-            Van
-            <input type="date" @bind="_fromDate" />
-        </label>
-        <label>
-            Tot
-            <input type="date" @bind="_toDate" />
-        </label>
-        <button class="provider-btn" type="button" disabled="@_loading" @onclick="ReloadAsync">Filter</button>
-        <span class="muted">@_page?.TotalCount logs</span>
-    </div>
+    <AdminFilterBar Query="@_actorIdText" QueryChanged="OnActorChanged" Placeholder="@Culture["AdminDataAccess.Actor"]">
+        <input type="text" class="admin-filter-input" placeholder="@Culture["AdminDataAccess.Subject"]" @bind="_subjectIdText" />
+        <input type="text" class="admin-filter-input" placeholder="@Culture["AdminDataAccess.Resource"]" @bind="_resource" />
+        <input type="text" class="admin-filter-input" placeholder="@Culture["AdminAudit.Col.Action"]" @bind="_action" />
+        <input type="date" class="admin-filter-input" @bind="_fromDate" />
+        <input type="date" class="admin-filter-input" @bind="_toDate" />
+        <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["Common.Filter"]</button>
+    </AdminFilterBar>
 
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else if (!string.IsNullOrEmpty(_error))
-    {
-        <p class="state-message error">@_error</p>
-    }
-    else if (_page is null || _page.Items.Count == 0)
-    {
-        <p class="state-message">Geen access logs gevonden.</p>
-    }
-    else
-    {
-        <div class="table-scroll">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Datum</th>
-                        <th>Actor</th>
-                        <th>Rol</th>
-                        <th>Subject</th>
-                        <th>Resource</th>
-                        <th>Action</th>
-                        <th>Reason</th>
-                        <th>Grant</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var log in _page.Items)
-                    {
-                        <tr>
-                            <td>@log.OccurredAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
-                            <td class="muted">@Short(log.ActorUserId)</td>
-                            <td>@log.ActorRole</td>
-                            <td class="muted">@(log.SubjectUserId is Guid s ? Short(s) : "—")</td>
-                            <td>@log.Resource</td>
-                            <td>@log.Action</td>
-                            <td class="muted">@(log.Reason ?? "—")</td>
-                            <td class="muted">@(log.SupportAccessGrantId is Guid gid ? Short(gid) : "—")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        <div class="filter-bar">
-            <button class="provider-btn" type="button" disabled="@(_pageNumber <= 1 || _loading)" @onclick="() => GoPageAsync(_pageNumber - 1)">Vorige</button>
-            <button class="provider-btn" type="button" disabled="@(!HasNext || _loading)" @onclick="() => GoPageAsync(_pageNumber + 1)">Volgende</button>
-        </div>
-    }
+    <AdminDataTable Loading="_loading" Empty="@(_rows.Count == 0)" EmptyText="@Culture["AdminDataAccess.Empty"]">
+        <Header>
+            <th scope="col">@Culture["AdminAudit.Col.Time"]</th>
+            <th scope="col">@Culture["AdminDataAccess.Actor"]</th>
+            <th scope="col">@Culture["AdminDataAccess.Subject"]</th>
+            <th scope="col">@Culture["AdminDataAccess.Resource"]</th>
+            <th scope="col">@Culture["AdminAudit.Col.Action"]</th>
+            <th scope="col">@Culture["AdminAudit.Reason"]</th>
+            <th scope="col">@Culture["AdminAudit.Col.Correlation"]</th>
+        </Header>
+        <Rows>
+            @foreach (var row in _rows)
+            {
+                <tr>
+                    <td class="admin-mono">@row.OccurredAt.ToLocalTime().ToString("dd-MM HH:mm")</td>
+                    <td class="muted">@Short(row.ActorUserId)</td>
+                    <td class="muted">@(row.SubjectUserId is Guid s ? Short(s) : "—")</td>
+                    <td>@row.Resource</td>
+                    <td>@row.Action</td>
+                    <td class="muted">@(row.Reason ?? "—")</td>
+                    <td class="admin-mono">@row.CorrelationId</td>
+                </tr>
+            }
+        </Rows>
+    </AdminDataTable>
 </AdminPageShell>
 
 @code {
     private PersonalDataAccessLogPage? _page;
-    private List<SupportAccessGrantItem> _grants = [];
     private string _actorIdText = "";
     private string _subjectIdText = "";
+    private string _resource = "";
+    private string _action = "";
     private DateTime? _fromDate;
     private DateTime? _toDate;
     private bool _loading = true;
-    private bool _grantsLoading = true;
-    private bool _busy;
-    private string? _error;
-    private int _pageNumber = 1;
 
-    private bool HasNext =>
-        _page is not null && (_page.Page * _page.PageSize) < _page.TotalCount;
+    private List<PersonalDataAccessLogItem> _rows =>
+        (_page?.Items ?? [])
+            .Where(r => string.IsNullOrWhiteSpace(_resource)
+                        || r.Resource.Contains(_resource, StringComparison.OrdinalIgnoreCase))
+            .Where(r => string.IsNullOrWhiteSpace(_action)
+                        || r.Action.Contains(_action, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
 
     protected override Task OnInitializedAsync() => ReloadAsync();
 
-    private async Task GoPageAsync(int page)
+    private Task OnActorChanged(string q)
     {
-        _pageNumber = Math.Max(1, page);
-        await ReloadAsync();
+        _actorIdText = q;
+        return Task.CompletedTask;
     }
 
     private async Task ReloadAsync()
     {
         _loading = true;
-        _grantsLoading = true;
-        _error = null;
         try
         {
-            _grants = (await Api.ListSupportAccessAsync(activeOnly: false, take: 50)).ToList();
             Guid? actor = Guid.TryParse(_actorIdText, out var a) ? a : null;
             Guid? subject = Guid.TryParse(_subjectIdText, out var s) ? s : null;
-            DateTime? from = _fromDate?.ToUniversalTime();
-            DateTime? to = _toDate?.Date.AddDays(1).AddTicks(-1).ToUniversalTime();
             _page = await Api.GetPersonalDataAccessLogAsync(
-                page: _pageNumber,
-                pageSize: 50,
-                actorUserId: actor,
-                subjectUserId: subject,
-                fromUtc: from,
-                toUtc: to);
+                page: 1, pageSize: 50,
+                actorUserId: actor, subjectUserId: subject,
+                fromUtc: _fromDate?.ToUniversalTime(),
+                toUtc: _toDate?.ToUniversalTime());
         }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-            _page = null;
-        }
-        finally
-        {
-            _loading = false;
-            _grantsLoading = false;
-        }
+        catch { _page = new PersonalDataAccessLogPage(); }
+        finally { _loading = false; }
     }
 
-    private async Task RevokeGrantAsync(Guid grantId)
-    {
-        _busy = true;
-        try
-        {
-            await Api.RevokeSupportAccessAsync(grantId);
-            await ReloadAsync();
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
-    }
-
-    private static string Short(Guid id) => id.ToString("D")[..8] + "…";
+    private static string Short(Guid id) => id.ToString("N")[..8];
 }

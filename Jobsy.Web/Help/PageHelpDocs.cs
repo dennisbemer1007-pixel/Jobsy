@@ -513,6 +513,18 @@ public static class PageHelpDocs
             "Filter op actie, periode en resultaat; exporteer CSV; bekijk detail in de drawer.",
             "Verantwoorden wie wat wanneer wijzigde."),
 
+        ["/admin/beveiliging/2fa"] = new(
+            "Beheer · 2FA & sessies",
+            "2FA-inschrijving per rol en recente resets.",
+            "Zie wie 2FA mist en open de gebruiker-drawer voor reset of sessies.",
+            "Privileged accounts afdwingen tot 2FA."),
+
+        ["/admin/beveiliging/privacy"] = new(
+            "Beheer · Privacy & AVG",
+            "Maskering, bewaartermijnen en uitgevoerde verwijderingen.",
+            "Read-only feiten; geen verzoekenwachtrij.",
+            "AVG-retentie en anonymisatie naslaan."),
+
         ["/admin/beveiliging/gegevensinzage"] = new(
             "Beheer · Gegevensinzage",
             "Accesslog van persoonsgegevensinzage door support.",
