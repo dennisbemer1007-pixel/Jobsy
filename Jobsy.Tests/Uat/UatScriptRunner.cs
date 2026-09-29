@@ -623,12 +623,18 @@ public static class UatScriptRunner
         }
 
         if (string.Equals(jobsyRole, JobsyRoles.EnterpriseManager, StringComparison.Ordinal)
-            && Contains(blob, "e-mail+naam+rol+vestigingen"))
+            && Contains(blob, "WgInviteDrawer", "e-mail+rol+bereik"))
         {
             var root = RepoRoot.Find();
             var users = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Werkgever/Users.razor"));
-            Assert.Contains("InviteExtraCompanies", users, StringComparison.Ordinal);
-            Assert.Contains("EmployerInviteCompanyOptions", users, StringComparison.Ordinal);
+            Assert.Contains("WgInviteDrawer", users, StringComparison.Ordinal);
+
+            var drawer = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Werkgever/Team/WgInviteDrawer.razor"));
+            Assert.Contains("InviteCompanyUserAsync", drawer, StringComparison.Ordinal);
+            Assert.Contains("TeamRoleCopy.Cards", drawer, StringComparison.Ordinal);
+            Assert.Contains("WgInvite.Privacy", drawer, StringComparison.Ordinal);
+            Assert.Contains("WgInvite.Branch", drawer, StringComparison.Ordinal);
+            Assert.Contains("WgInvite.Region", drawer, StringComparison.Ordinal);
 
             var orgId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
             var branchId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
@@ -637,8 +643,8 @@ public static class UatScriptRunner
                 new(orgId, "Bemer IT Solutions", "Laan 1", ParentCompanyId: null),
                 new(branchId, "Bemer IT Solutions", "Laan 1", orgId, "000012345678")
             ];
-            Assert.Empty(EmployerInviteCompanyOptions.ExtraMembershipChoices(companies, branchId));
-            Assert.Single(EmployerInviteCompanyOptions.ExtraMembershipChoices(companies, orgId));
+            Assert.Equal("Bemer IT Solutions (organisatie)", EmployerInviteCompanyOptions.Label(companies[0], companies));
+            Assert.Equal("Bemer IT Solutions — Laan 1", EmployerInviteCompanyOptions.Label(companies[1], companies));
         }
     }
 

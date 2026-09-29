@@ -567,7 +567,7 @@ Account: `enterprise@jobsy.local`. Mobiel: Home · Kaart · Vacatures · Sollici
 | Bedrijfsmanager | User **bewerken**: naam, rol EM/RM/BM, primary + memberships, actief. | Opgeslagen; verkeerde rol (Admin/Candidate) niet kiesbaar. |
 | Bedrijfsmanager | User inactief zetten. | Kan niet meer inloggen / 403 op org-API. |
 | Bedrijfsmanager | User membership andere org geven. | Niet mogelijk / 403. |
-| Bedrijfsmanager | **Uitnodigen** e-mail+naam+rol+vestigingen. | Invite-mail stub; user verschijnt/pending. Extra lidmaatschappen toont geen dubbele org/vestiging met dezelfde naam. |
+| Bedrijfsmanager | **Uitnodigen** via WgInviteDrawer e-mail+rol+bereik (vestiging/regio). | Invite-mail stub; user verschijnt/pending. Rolkaarten + privacyregel; één invite-UI. |
 | Bedrijfsmanager | Invite: ongeldig e-mail / bestaande user / lege naam. | Validatie. |
 | Bedrijfsmanager | Organization hub: klik elke modulekaart (Bedrijf, Vestigingen, Regio’s, Salaristabellen, CSV indien enabled, Overnames). | Juiste pagina + EnterpriseOrgSubnav. |
 | Bedrijfsmanager | Organization op **mobiel** openen via URL. | DesktopPreferredNotice; pagina’s blijven beperkt bruikbaar. |
