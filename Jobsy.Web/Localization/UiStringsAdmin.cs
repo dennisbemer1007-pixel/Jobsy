@@ -117,8 +117,8 @@ public static class UiStringsAdmin
         Add("AdminDash.Period.Month", "30 dagen", "30 days", "30 dni", "30 zile", "30 يومًا");
         Add("AdminDash.Period.Quarter", "Kwartaal", "Quarter", "Kwartał", "Trimestru", "ربع سنة");
         Add("AdminDash.Period.TodayShort", "vandaag", "today", "dziś", "azi", "اليوم");
-        Add("AdminDash.Period.WeekShort", "7 d", "7 d", "7 d", "7 z", "٧ ي");
-        Add("AdminDash.Period.MonthShort", "30 d", "30 d", "30 d", "30 z", "٣٠ ي");
+        Add("AdminDash.Period.WeekShort", "7 d", "7 days", "7 dni", "7 zile", "٧ أيام");
+        Add("AdminDash.Period.MonthShort", "30 d", "30 days", "30 dni", "30 zile", "٣٠ يومًا");
         Add("AdminDash.Period.QuarterShort", "kwartaal", "quarter", "kwartał", "trimestru", "ربع");
         Add("AdminDash.Kpi.Candidates", "Actieve kandidaten", "Active candidates", "Aktywni kandydaci", "Candidați activi", "مرشحون نشطون");
         Add("AdminDash.Kpi.Employers", "Actieve werkgevers", "Active employers", "Aktywni pracodawcy", "Angajatori activi", "أصحاب عمل نشطون");
@@ -136,8 +136,8 @@ public static class UiStringsAdmin
         Add("AdminDash.AllKpis", "Alle KPI's en drilldown", "All KPIs and drilldown", "Wszystkie KPI i drilldown", "Toate KPI și drilldown", "كل مؤشرات الأداء والتفصيل");
         Add("AdminDash.Mode.AiModeration", "AI-vacaturemoderatie", "AI vacancy moderation", "Moderacja AI ofert", "Moderare AI joburi", "إشراف AI على الوظائف");
         Add("AdminDash.Mode.Mfa", "Tweestapsverificatie", "Two-factor authentication", "Uwierzytelnianie dwuskładnikowe", "Autentificare în doi pași", "التحقق بخطوتين");
-        Add("AdminDash.Mode.On", "Aan", "On", "Wł.", "Pornit", "تشغيل");
-        Add("AdminDash.Mode.Off", "Uit", "Off", "Wył.", "Oprit", "إيقاف");
+        Add("AdminDash.Mode.On", "Aan", "On", "Włączone", "Pornit", "تشغيل");
+        Add("AdminDash.Mode.Off", "Uit", "Off", "Wyłączone", "Oprit", "إيقاف");
         Add("AdminDash.Mode.Required", "Verplicht", "Required", "Wymagane", "Obligatoriu", "إلزامي");
         Add("AdminDash.Moderation.Lead", "Vacatures die de AI-moderatie heeft tegengehouden. Pas de tekst aan of keur handmatig goed.", "Vacancies blocked by AI moderation. Edit the text or approve manually.", "Oferty zablokowane przez moderację AI. Edytuj tekst lub zatwierdź ręcznie.", "Joburi blocate de moderarea AI. Editează textul sau aprobă manual.", "وظائف أوقفها إشراف AI. عدّل النص أو وافق يدويًا.");
 
@@ -148,7 +148,7 @@ public static class UiStringsAdmin
         Add("AdminTodo.Moderation.Title", "{0} vacatures gemarkeerd door moderatie", "{0} vacancies flagged by moderation", "{0} ofert oznaczonych przez moderację", "{0} joburi marcate de moderare", "{0} وظائف مميزة بالإشراف");
         Add("AdminTodo.Moderation.Action", "Bekijken", "View", "Zobacz", "Vezi", "عرض");
         Add("AdminTodo.SalesApp.Title", "Aanmelding salesmanager", "Sales manager application", "Wniosek salesmanagera", "Aplicare sales manager", "طلب مدير مبيعات");
-        Add("AdminTodo.SalesApp.Action", "Beoordelen", "Review", "Oceń", "Evaluează", "تقييم");
+        Add("AdminTodo.SalesApp.Action", "Beoordelen", "Assess", "Oceń", "Evaluează", "تقييم");
         Add("AdminTodo.OpenPayouts.Title", "Facturen salesmanagers open", "Open sales manager invoices", "Otwarte faktury salesmanagerów", "Facturi sales manager deschise", "فواتير مديري المبيعات المفتوحة");
         Add("AdminTodo.OpenPayouts.Action", "Bekijken", "View", "Zobacz", "Vezi", "عرض");
         Add("AdminTodo.Feedback.Title", "{0} nieuwe feedbackmeldingen", "{0} new feedback items", "{0} nowych zgłoszeń feedbacku", "{0} feedback-uri noi", "{0} ملاحظات جديدة");
@@ -157,9 +157,9 @@ public static class UiStringsAdmin
         Add("AdminTodo.Col.Area", "Onderdeel", "Area", "Obszar", "Zonă", "القسم");
         Add("AdminTodo.Col.Since", "Sinds", "Since", "Od", "De la", "منذ");
         Add("AdminTodo.Col.Severity", "Ernst", "Severity", "Ważność", "Severitate", "الخطورة");
-        Add("AdminTodo.Severity.All", "Alle ernst", "All severities", "Wszystkie", "Toate", "الكل");
+        Add("AdminTodo.Severity.All", "Alle ernst", "All severities", "Wszystkie poziomy", "Toate nivelurile", "كل المستويات");
         Add("AdminTodo.Severity.Danger", "Kritiek", "Critical", "Krytyczne", "Critic", "حرج");
         Add("AdminTodo.Severity.Warn", "Let op", "Warning", "Ostrzeżenie", "Avertisment", "تحذير");
-        Add("AdminTodo.Severity.Info", "Info", "Info", "Info", "Info", "معلومة");
+        Add("AdminTodo.Severity.Info", "Info", "Information", "Informacja", "Informație", "معلومة");
     }
 }

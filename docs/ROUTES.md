@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (144 routes)
+## Table (146 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -77,6 +77,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/sales` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/sales-managers` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/settings` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
+| `/admin/te-doen` | `Pages/Admin/TodoAdmin.razor` | Admin |
 | `/admin/token-finance` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/tokens` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/training` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
@@ -87,7 +88,6 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/vacatures/ats` | `Pages/Admin/AtsVacanciesAdmin.razor` | Admin |
 | `/admin/vacatures/categorieen` | `Pages/Admin/CategorieenSalarisPage.razor` | Admin |
 | `/admin/vacatures/moderatie` | `Pages/Admin/VacanciesModerationPage.razor` | Admin |
-| `/admin/te-doen` | `Pages/Admin/TodoAdmin.razor` | Admin |
 | `/admin/wages` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/algemene-voorwaarden` | `Pages/Legal/AlgemeneVoorwaarden.razor` | anonymous |
 | `/ambassadeur` | `Pages/Ambassadeur/Dashboard.razor` | Ambassadeur |

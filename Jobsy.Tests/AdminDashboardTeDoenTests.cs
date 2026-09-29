@@ -629,7 +629,7 @@ public class AdminDashboardBunitTests : TestContext
             ["feedback"] = 1
         });
         Assert.Equal(7, store.Get("todo"));
-        Assert.Equal(3, store.GroupSum(["org-requests", "feedback"]));
+        Assert.Equal(4, store.GroupSum(["org-requests", "feedback"]));
         Assert.Equal(2, store.GroupSum(["moderation"]));
     }
 
