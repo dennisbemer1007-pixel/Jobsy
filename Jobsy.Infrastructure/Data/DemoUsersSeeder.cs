@@ -97,6 +97,22 @@ internal static class DemoUsersSeeder
             },
             password: "Lobsy123!");
 
+        // Named test candidate Valentine (Acceptatie login).
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = Guid.Parse("aaaaaaaa-8888-8888-8888-888888888888"),
+            Email = "valentine@jobsy.local",
+            FullName = "Valentine",
+            FirstName = "Valentine",
+            Role = UserRole.Candidate,
+            CompanyId = null,
+            DateOfBirth = new DateOnly(1999, 2, 14),
+            OpenForWork = true,
+            HomeLocation = new GeoPoint(51.9850, 4.2300),
+            PreferencesJson = """{"roles":["horeca","retail"],"maxTravelMinutes":30}""",
+            IsActive = true
+        });
+
         var branchManagerId = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111");
         added += await EnsureUserAsync(db, new User
         {

@@ -18,6 +18,7 @@ public class DemoAccountPasswordSeedTests
             "kandidaat@jobsy.local",
             "kandidaat.denhaag@jobsy.local",
             "kandidaat.ver@jobsy.local",
+            "valentine@jobsy.local",
             "ondernemer@jobsy.local",
             "regio@jobsy.local",
             "enterprise@jobsy.local",
@@ -58,6 +59,22 @@ public class DemoAccountPasswordSeedTests
         await DemoUsersSeeder.SeedUsersAsync(db, NullLogger.Instance);
         var restored = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "twalieb@jobsy.local");
         Assert.True(JobsyPasswordHasher.Verify("Lobsy123!", restored.PasswordHash));
+    }
+
+    [Fact]
+    public async Task Seed_creates_valentine_candidate()
+    {
+        await using var db = CreateDb();
+        await DemoUsersSeeder.SeedUsersAsync(db, NullLogger.Instance);
+
+        var user = await db.Users.SingleAsync(u => u.Email == "valentine@jobsy.local");
+        Assert.Equal("Valentine", user.FullName);
+        Assert.Equal(Jobsy.Core.Enums.UserRole.Candidate, user.Role);
+        Assert.True(user.IsActive);
+        Assert.True(user.OpenForWork);
+
+        var credential = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "valentine@jobsy.local");
+        Assert.True(JobsyPasswordHasher.Verify(DemoUsersSeeder.DemoPassword, credential.PasswordHash));
     }
 
     [Fact]
