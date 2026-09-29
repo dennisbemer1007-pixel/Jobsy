@@ -6,6 +6,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
+@using Jobsy.Web.Components.Candidate.Dna
 @inject JobsyApiClient Api
 @inject CultureState Culture
 
@@ -302,11 +303,11 @@
     private string? _story;
     private DateTime? _storyGeneratedAt;
     private readonly List<string> _keywords = [];
-    private readonly List<DnaCard> _cards = [];
-    private readonly List<DnaHighlight> _highlights = [];
-    private readonly List<DnaSlide> _slides = [];
-    private DetailBlock? _cultureDetail;
-    private DetailBlock? _valuesDetail;
+    private readonly List<CandidateDnaViewBuilder.DnaCard> _cards = [];
+    private readonly List<CandidateDnaViewBuilder.DnaHighlight> _highlights = [];
+    private readonly List<CandidateDnaViewBuilder.DnaSlide> _slides = [];
+    private CandidateDnaViewBuilder.DetailBlock? _cultureDetail;
+    private CandidateDnaViewBuilder.DetailBlock? _valuesDetail;
     private int _completedCount;
     private int _activeSlide;
     private ElementReference _carouselTrack;
@@ -459,391 +460,26 @@
         DeepAnalysisState? cultureDeep,
         DeepAnalysisState? valuesDeep)
     {
+        var view = CandidateDnaViewBuilder.Paint(
+            competenceStatus, competenceScores, competenceAnswered,
+            careerStatus, careerScores, careerAnswered,
+            cultureStatus, cultureScores, cultureAnswered,
+            valuesStatus, valuesScores, valuesAnswered,
+            competenceDeep, careerDeep, cultureDeep, valuesDeep,
+            k => Culture[k],
+            (k, args) => Culture.Format(k, args));
+
         _cards.Clear();
+        _cards.AddRange(view.Cards);
         _highlights.Clear();
+        _highlights.AddRange(view.Highlights);
         _slides.Clear();
-        _cultureDetail = null;
-        _valuesDetail = null;
-
-        var competence = BuildCompetence(competenceStatus, competenceScores, competenceAnswered, competenceDeep);
-        var career = BuildCareer(careerStatus, careerScores, careerAnswered, careerDeep);
-        var culture = BuildCulture(cultureStatus, cultureScores, cultureAnswered, cultureDeep);
-        var values = BuildValues(valuesStatus, valuesScores, valuesAnswered, valuesDeep);
-
-        _cards.Add(competence);
-        _cards.Add(career);
-        _cards.Add(culture);
-        _cards.Add(values);
-        _completedCount = _cards.Count(c => c.Completed);
-
-        if (competence.TopLabel is { } strong)
-        {
-            _highlights.Add(new DnaHighlight("Dna.HighlightStrongest", strong));
-        }
-
-        if (career.TopLabel is { } work)
-        {
-            _highlights.Add(new DnaHighlight("Dna.HighlightWork", work));
-        }
-
-        if (values.TopLabel is { } important)
-        {
-            _highlights.Add(new DnaHighlight("Dna.HighlightImportant", important));
-        }
-
-        foreach (var card in _cards)
-        {
-            _slides.Add(BuildSlide(card));
-        }
-
-        _cultureDetail = BuildCultureDetail(culture);
-        _valuesDetail = BuildValuesDetail(values);
+        _slides.AddRange(view.Slides);
+        _cultureDetail = view.CultureDetail;
+        _valuesDetail = view.ValuesDetail;
+        _completedCount = view.CompletedCount;
         _activeSlide = 0;
     }
-
-    private DnaSlide BuildSlide(DnaCard card)
-    {
-        var ghost = !card.Completed && !card.IsProvisional;
-        return new DnaSlide(
-            card.Kind,
-            card.TitleKey,
-            card.Completed,
-            card.Extended,
-            card.IsProvisional,
-            ghost,
-            card.StartHref,
-            card.QuestionCount,
-            card.Axes,
-            card.Bars,
-            card.Poles,
-            ChartAltKey(card.Kind),
-            TeaserKey(card.Kind),
-            Culture.Format(
-                "Dna.TileA11y",
-                Culture[card.TitleKey],
-                ghost
-                    ? Culture["Test.Status.NotDone"]
-                    : card.IsProvisional
-                        ? Culture["Onboarding.ProvisionalBadge"]
-                        : Culture["Dna.StatusComplete"],
-                card.Answered,
-                card.QuestionCount));
-    }
-
-    private DetailBlock BuildCultureDetail(DnaCard culture)
-    {
-        var aside = culture.Completed
-            ? Culture["Dna.StatusComplete"]
-            : culture.IsProvisional
-                ? Culture["Onboarding.ProvisionalBadge"]
-                : Culture["Test.Status.NotDone"];
-        return new DetailBlock(
-            culture.Poles.Count > 0 ? culture.Poles : GhostCulturePoles(),
-            [],
-            !culture.Completed && !culture.IsProvisional,
-            culture.StartHref,
-            culture.QuestionCount,
-            aside);
-    }
-
-    private DetailBlock BuildValuesDetail(DnaCard values)
-    {
-        var aside = values.Completed
-            ? Culture["Dna.StatusComplete"]
-            : values.IsProvisional
-                ? Culture["Onboarding.ProvisionalBadge"]
-                : Culture["Test.Status.NotDone"];
-        return new DetailBlock(
-            [],
-            values.Bars.Count > 0 ? values.Bars : GhostValueBars(),
-            !values.Completed && !values.IsProvisional,
-            values.StartHref,
-            values.QuestionCount,
-            aside);
-    }
-
-    private List<(string LowLabel, string HighLabel, int? Percent)> GhostCulturePoles()
-        => CulturePersonalityCatalog.CultureDimensionCodes
-            .Select(code =>
-            {
-                var (low, high) = DnaSummarySentences.CulturePoles(code);
-                return (Culture[low], Culture[high], (int?)null);
-            })
-            .ToList();
-
-    private static List<ChartAxisValue> GhostValueBars()
-        => SchwartzValuesCatalog.CategoryCodes
-            .Select(code => new ChartAxisValue(DimensionLabels.For(code), null))
-            .ToList();
-
-    private static string ChartAltKey(AssessmentKind kind) => kind switch
-    {
-        AssessmentKind.Competence => "Dna.ChartAlt.Competence",
-        AssessmentKind.Career => "Dna.ChartAlt.Career",
-        AssessmentKind.Culture => "Dna.ChartAlt.Culture",
-        _ => "Dna.ChartAlt.Values"
-    };
-
-    private static string TeaserKey(AssessmentKind kind) => kind switch
-    {
-        AssessmentKind.Competence => "Dna.TeaserCompetence",
-        AssessmentKind.Career => "Dna.TeaserCareer",
-        AssessmentKind.Culture => "Dna.TeaserCulture",
-        _ => "Dna.TeaserValues"
-    };
-
-    private DnaCard BuildCompetence(string? status, CompetencyScoreSet? scores, int answered, DeepAnalysisState? deep)
-    {
-        var def = AssessmentTestCatalog.TryGet(AssessmentKind.Competence)!;
-        var freeDone = IsCompleted(status);
-        var extended = deep is { IsCompleted: true };
-        var completed = freeDone || extended;
-        var provisional = !completed && answered > 0;
-        var axes = new List<ChartAxisValue>();
-        string? top = null;
-        string summary = Culture["Dna.TileNotStarted"];
-
-        if ((completed || provisional) && scores is not null)
-        {
-            var ranked = Rank(
-                (CompetencyTestCatalog.Samenwerken, scores.Samenwerken),
-                (CompetencyTestCatalog.Resultaatgerichtheid, scores.Resultaatgerichtheid),
-                (CompetencyTestCatalog.Stressbestendigheid, scores.Stressbestendigheid),
-                (CompetencyTestCatalog.Innovatie, scores.Innovatie),
-                (CompetencyTestCatalog.Extraversie, scores.Extraversie));
-            foreach (var code in new[]
-                     {
-                         CompetencyTestCatalog.Samenwerken,
-                         CompetencyTestCatalog.Resultaatgerichtheid,
-                         CompetencyTestCatalog.Stressbestendigheid,
-                         CompetencyTestCatalog.Innovatie,
-                         CompetencyTestCatalog.Extraversie
-                     })
-            {
-                var pct = ranked.FirstOrDefault(r => r.Code == code).Percent;
-                var has = ranked.Any(r => r.Code == code);
-                axes.Add(new ChartAxisValue(DeepAnalysisQuestionHelp.DomainLabel(code), has ? pct : null));
-            }
-
-            if (ranked.Count > 0)
-            {
-                top = DeepAnalysisQuestionHelp.DomainLabel(ranked[0].Code);
-                summary = Culture.Format("Dna.TileSummaryStrong", top);
-            }
-        }
-
-        return new DnaCard(
-            AssessmentKind.Competence,
-            def.TitleKey,
-            completed,
-            extended,
-            def.DetailHref,
-            def.FreeStartHref,
-            answered,
-            def.FreeQuestionCount,
-            def.FreeMinutesApprox,
-            provisional,
-            top,
-            summary,
-            axes,
-            [],
-            []);
-    }
-
-    private DnaCard BuildCareer(string? status, RiasecScoreSet? scores, int answered, DeepAnalysisState? deep)
-    {
-        var def = AssessmentTestCatalog.TryGet(AssessmentKind.Career)!;
-        var freeDone = IsCompleted(status);
-        var extended = deep is { IsCompleted: true };
-        var completed = freeDone || extended;
-        var provisional = !completed && answered > 0;
-        var axes = new List<ChartAxisValue>();
-        var bars = new List<ChartAxisValue>();
-        string? top = null;
-        string summary = Culture["Dna.TileNotStarted"];
-
-        if ((completed || provisional) && scores is not null)
-        {
-            var ranked = Rank(
-                (CareerTestCatalog.Realistic, scores.Realistic),
-                (CareerTestCatalog.Investigative, scores.Investigative),
-                (CareerTestCatalog.Artistic, scores.Artistic),
-                (CareerTestCatalog.Social, scores.Social),
-                (CareerTestCatalog.Enterprising, scores.Enterprising),
-                (CareerTestCatalog.Conventional, scores.Conventional));
-            foreach (var code in new[]
-                     {
-                         CareerTestCatalog.Realistic,
-                         CareerTestCatalog.Investigative,
-                         CareerTestCatalog.Artistic,
-                         CareerTestCatalog.Social,
-                         CareerTestCatalog.Enterprising,
-                         CareerTestCatalog.Conventional
-                     })
-            {
-                var hit = ranked.FirstOrDefault(r => r.Code == code);
-                var has = ranked.Any(r => r.Code == code);
-                axes.Add(new ChartAxisValue(CareerCompassBuilder.TypeLabel(code), has ? hit.Percent : null, code[..1]));
-            }
-
-            foreach (var (code, pct) in ranked.Take(3))
-            {
-                bars.Add(new ChartAxisValue(CareerCompassBuilder.TypeLabel(code), pct, code[..1]));
-            }
-
-            if (ranked.Count > 0)
-            {
-                top = CareerCompassBuilder.TypeLabel(ranked[0].Code);
-                summary = Culture.Format(
-                    "Dna.TileSummaryTop",
-                    string.Join(" · ", ranked.Take(3).Select(r => r.Code[..1])));
-            }
-        }
-
-        return new DnaCard(
-            AssessmentKind.Career,
-            def.TitleKey,
-            completed,
-            extended,
-            def.DetailHref,
-            def.FreeStartHref,
-            answered,
-            def.FreeQuestionCount,
-            def.FreeMinutesApprox,
-            provisional,
-            top,
-            summary,
-            axes,
-            bars,
-            []);
-    }
-
-    private DnaCard BuildCulture(string? status, CulturePersonalityScoreSet? scores, int answered, DeepAnalysisState? deep)
-    {
-        var def = AssessmentTestCatalog.TryGet(AssessmentKind.Culture)!;
-        var freeDone = IsCompleted(status);
-        var extended = deep is { IsCompleted: true };
-        var completed = freeDone || extended;
-        var provisional = !completed && answered > 0;
-        var poles = new List<(string LowLabel, string HighLabel, int? Percent)>();
-        string? top = null;
-        string summary = Culture["Dna.TileNotStarted"];
-
-        if ((completed || provisional) && scores is not null)
-        {
-            var pairs = new (string Code, int? Value)[]
-            {
-                (CulturePersonalityCatalog.Autonomy, scores.Autonomy),
-                (CulturePersonalityCatalog.Informal, scores.Informal),
-                (CulturePersonalityCatalog.Collaboration, scores.Collaboration),
-                (CulturePersonalityCatalog.Flexibility, scores.Flexibility),
-                (CulturePersonalityCatalog.Innovation, scores.Innovation),
-                (CulturePersonalityCatalog.PeopleFirst, scores.PeopleFirst)
-            };
-            foreach (var (code, value) in pairs)
-            {
-                var (low, high) = DnaSummarySentences.CulturePoles(code);
-                poles.Add((Culture[low], Culture[high], value));
-            }
-
-            var ranked = Rank(pairs);
-            if (ranked.Count > 0)
-            {
-                top = Culture[DnaSummarySentences.CulturePoles(ranked[0].Code).HighPoleKey];
-                summary = string.Join(
-                    " · ",
-                    ranked.Take(2).Select(r => Culture[DnaSummarySentences.CulturePoles(r.Code).HighPoleKey]));
-            }
-        }
-        else
-        {
-            poles = GhostCulturePoles();
-        }
-
-        return new DnaCard(
-            AssessmentKind.Culture,
-            def.TitleKey,
-            completed,
-            extended,
-            def.DetailHref,
-            def.FreeStartHref,
-            answered,
-            def.FreeQuestionCount,
-            def.FreeMinutesApprox,
-            provisional,
-            top,
-            summary,
-            [],
-            [],
-            poles);
-    }
-
-    private DnaCard BuildValues(string? status, SchwartzValuesScoreSet? scores, int answered, DeepAnalysisState? deep)
-    {
-        var def = AssessmentTestCatalog.TryGet(AssessmentKind.Values)!;
-        var freeDone = IsCompleted(status);
-        var extended = deep is { IsCompleted: true };
-        var completed = freeDone || extended;
-        var provisional = !completed && answered > 0;
-        var bars = new List<ChartAxisValue>();
-        string? top = null;
-        string summary = Culture["Dna.TileNotStarted"];
-
-        if ((completed || provisional) && scores is not null)
-        {
-            var ranked = Rank(
-                (SchwartzValuesCatalog.Autonomy, scores.Autonomy),
-                (SchwartzValuesCatalog.Connection, scores.Connection),
-                (SchwartzValuesCatalog.Achievement, scores.Achievement),
-                (SchwartzValuesCatalog.Stability, scores.Stability),
-                (SchwartzValuesCatalog.Impact, scores.Impact));
-            // Strength order so the top 3 get brand colour in BarList.
-            bars = ranked
-                .Select(r => new ChartAxisValue(DimensionLabels.For(r.Code), r.Percent))
-                .Concat(SchwartzValuesCatalog.CategoryCodes
-                    .Where(c => ranked.All(r => r.Code != c))
-                    .Select(c => new ChartAxisValue(DimensionLabels.For(c), null)))
-                .ToList();
-
-            if (ranked.Count > 0)
-            {
-                top = DimensionLabels.For(ranked[0].Code);
-                summary = top;
-            }
-        }
-        else
-        {
-            bars = GhostValueBars();
-        }
-
-        return new DnaCard(
-            AssessmentKind.Values,
-            def.TitleKey,
-            completed,
-            extended,
-            def.DetailHref,
-            def.FreeStartHref,
-            answered,
-            def.FreeQuestionCount,
-            def.FreeMinutesApprox,
-            provisional,
-            top,
-            summary,
-            [],
-            bars,
-            []);
-    }
-
-    private static List<(string Code, int Percent)> Rank(params (string Code, int? Value)[] items)
-        => items
-            .Where(x => x.Value is not null)
-            .Select(x => (x.Code, Percent: x.Value!.Value))
-            .OrderByDescending(x => x.Percent)
-            .ThenBy(x => x.Code, StringComparer.Ordinal)
-            .ToList();
-
-    private static bool IsCompleted(string? status)
-        => string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase);
 
     private static IEnumerable<string> StoryParagraphs(string story)
         => story.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -855,51 +491,5 @@
     private void ScrollToSlide(int index)
     {
         _activeSlide = Math.Clamp(index, 0, Math.Max(0, _slides.Count - 1));
-    }
-
-    private sealed record DnaHighlight(string LabelKey, string Value);
-
-    private sealed record DnaSlide(
-        AssessmentKind Kind,
-        string TitleKey,
-        bool Completed,
-        bool Extended,
-        bool IsProvisional,
-        bool IsGhost,
-        string StartHref,
-        int QuestionCount,
-        IReadOnlyList<ChartAxisValue> Axes,
-        IReadOnlyList<ChartAxisValue> Bars,
-        IReadOnlyList<(string LowLabel, string HighLabel, int? Percent)> Poles,
-        string ChartAltKey,
-        string TeaserKey,
-        string AriaName);
-
-    private sealed record DetailBlock(
-        IReadOnlyList<(string LowLabel, string HighLabel, int? Percent)> Poles,
-        IReadOnlyList<ChartAxisValue> Bars,
-        bool IsGhost,
-        string StartHref,
-        int QuestionCount,
-        string Aside);
-
-    private sealed record DnaCard(
-        AssessmentKind Kind,
-        string TitleKey,
-        bool Completed,
-        bool Extended,
-        string DetailHref,
-        string StartHref,
-        int Answered,
-        int QuestionCount,
-        int MinutesApprox,
-        bool IsProvisional,
-        string? TopLabel,
-        string Summary,
-        IReadOnlyList<ChartAxisValue> Axes,
-        IReadOnlyList<ChartAxisValue> Bars,
-        IReadOnlyList<(string LowLabel, string HighLabel, int? Percent)> Poles)
-    {
-        public int Remaining => Math.Max(0, QuestionCount - Answered);
     }
 }

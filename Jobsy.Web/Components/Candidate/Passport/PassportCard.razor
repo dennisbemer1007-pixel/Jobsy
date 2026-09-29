@@ -1,0 +1,171 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<aside class="passport-card @(Compact ? "passport-card--compact" : null)" aria-labelledby="passport-card-name">
+    <div class="passport-card__banner">
+        <div class="passport-card__banner-text">
+            <p class="passport-card__banner-title">@Culture["Passport.Banner"]</p>
+            <p class="passport-card__member">@MemberNumber</p>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(StartedStamp))
+        {
+            <span class="passport-card__stamp">@Culture.Format("Passport.StartedStamp", StartedStamp)</span>
+        }
+    </div>
+
+    <div class="passport-card__identity">
+        <div class="passport-card__avatar" aria-hidden="true">@Initials</div>
+        <div class="passport-card__identity-main">
+            <h2 id="passport-card-name" class="passport-card__name">@DisplayName</h2>
+            @if (!Compact)
+            {
+                <div class="passport-card__pills">
+                    @if (ShowOpenForWork)
+                    {
+                        <span class="status-pill status-pill--success">@Culture["Profile.OpenForWork"]</span>
+                    }
+                    @foreach (var kw in Keywords.Take(2))
+                    {
+                        <span class="kompas-chip">@kw</span>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="passport-card__one-liner">@OneLiner</p>
+                <div class="passport-card__pills">
+                    @if (ShowOpenForWork)
+                    {
+                        <span class="status-pill status-pill--success">@Culture["Profile.OpenForWork"]</span>
+                    }
+                    @foreach (var kw in Keywords.Take(1))
+                    {
+                        <span class="kompas-chip">@kw</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="passport-card__layers"
+         role="progressbar"
+         aria-valuemin="0"
+         aria-valuemax="100"
+         aria-valuenow="@CompletenessPercent"
+         aria-label="@Culture.Format("Passport.LayersAria", CompletenessPercent)">
+        <div class="passport-card__layers-bars" aria-hidden="true">
+            @for (var i = 0; i < 5; i++)
+            {
+                <span class="passport-card__layer @(i < FilledLayers ? $"passport-card__layer--{i + 1}" : null)"></span>
+            }
+        </div>
+        <p class="passport-card__layers-text">
+            @Culture.Format("Passport.Layers", FilledLayers)
+            <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button>
+        </p>
+    </div>
+
+    @if (!Compact)
+    {
+        <section class="passport-card__story" aria-labelledby="passport-story-title">
+            <h3 id="passport-story-title" class="passport-card__section-title">@Culture["Passport.MyStory"]</h3>
+            @if (string.IsNullOrWhiteSpace(AboutMe))
+            {
+                <p class="passport-card__story-empty">
+                    @Culture["Passport.MyStoryEmpty"]
+                    <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button>
+                </p>
+            }
+            else
+            {
+                <p class="passport-card__story-text">@AboutMe</p>
+            }
+        </section>
+
+        <div class="passport-card__facts">
+            @Fact("Passport.Facts.LivesIn", City)
+            @Fact("Passport.Facts.Travel", TravelLabel)
+            @Fact("Passport.Facts.Hours", HoursLabel)
+            @Fact("Passport.Facts.Available", AvailableLabel)
+            <div class="passport-card__fact passport-card__fact--wide">
+                <span class="passport-card__fact-label">@Culture["Passport.Facts.LookingFor"]</span>
+                @if (LookingFor.Count == 0)
+                {
+                    <span class="passport-card__fact-empty">— <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
+                }
+                else
+                {
+                    <span class="passport-card__fact-chips">
+                        @foreach (var role in LookingFor.Take(2))
+                        {
+                            <span class="kompas-chip">@role</span>
+                        }
+                        @if (LookingFor.Count > 2)
+                        {
+                            <span class="kompas-chip">+@(LookingFor.Count - 2)</span>
+                        }
+                    </span>
+                }
+            </div>
+            @Fact("Passport.Facts.License", LicenseLabel)
+        </div>
+
+        <div class="passport-card__actions">
+            <button type="button" class="btn-compact" disabled="@CvBusy" @onclick="OnDownloadCv">
+                @(CvBusy ? Culture["Common.Loading"] : Culture["Passport.LobsyCv"])
+            </button>
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="OnEdit">
+                @Culture["Passport.Edit"]
+            </button>
+        </div>
+
+        <p class="passport-card__tagline">
+            <span class="passport-card__tagline-icon" aria-hidden="true">@((MarkupString)NavIcons.Shell)</span>
+            @Culture["Passport.Tagline"]
+        </p>
+    }
+</aside>
+
+@code {
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public string DisplayName { get; set; } = "";
+    [Parameter] public string Initials { get; set; } = "?";
+    [Parameter] public string MemberNumber { get; set; } = "";
+    [Parameter] public string? StartedStamp { get; set; }
+    [Parameter] public bool ShowOpenForWork { get; set; }
+    [Parameter] public IReadOnlyList<string> Keywords { get; set; } = [];
+    [Parameter] public int CompletenessPercent { get; set; }
+    [Parameter] public string? AboutMe { get; set; }
+    [Parameter] public string? City { get; set; }
+    [Parameter] public string? TravelLabel { get; set; }
+    [Parameter] public string? HoursLabel { get; set; }
+    [Parameter] public string? AvailableLabel { get; set; }
+    [Parameter] public IReadOnlyList<string> LookingFor { get; set; } = [];
+    [Parameter] public string? LicenseLabel { get; set; }
+    [Parameter] public string OneLiner { get; set; } = "";
+    [Parameter] public bool CvBusy { get; set; }
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public EventCallback OnDownloadCv { get; set; }
+
+    private int FilledLayers => Math.Clamp(CompletenessPercent / 20, 0, 5);
+
+    private RenderFragment Fact(string labelKey, string? value) => __builder =>
+    {
+        <div class="passport-card__fact">
+            <span class="passport-card__fact-label">@Culture[labelKey]</span>
+            @if (string.IsNullOrWhiteSpace(value))
+            {
+                <span class="passport-card__fact-empty">— <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
+            }
+            else
+            {
+                <span class="passport-card__fact-value">@value</span>
+            }
+        </div>
+    };
+}

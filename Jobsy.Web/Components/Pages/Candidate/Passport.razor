@@ -1,0 +1,706 @@
+@page "/candidate/paspoort"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.CandidatePassport, FallbackPath = "/candidate/profile")]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Candidate.Dna
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject PersistentComponentState Persist
+@inject IFeatureFlags FeatureFlags
+@implements IDisposable
+
+<PageTitle>@Culture["Passport.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page passport-page">
+    <h1 class="visually-hidden">@Culture["Passport.Title"]</h1>
+
+    @if (_loading)
+    {
+        <PageContentSkeleton Variant="profile" LoadingLabel="@Culture["Common.Loading"]" />
+    }
+    else if (!string.IsNullOrWhiteSpace(_message) && _profile is null)
+    {
+        <p class="state-message">@_message</p>
+    }
+    else
+    {
+        <div class="passport-layout">
+            <div class="passport-layout__card passport-layout__card--desktop">
+                <PassportCard Compact="false"
+                              DisplayName="@_displayName"
+                              Initials="@_initials"
+                              MemberNumber="@_memberNumber"
+                              StartedStamp="@_startedStamp"
+                              ShowOpenForWork="@_showOpenForWork"
+                              Keywords="_keywords"
+                              CompletenessPercent="_completeness"
+                              AboutMe="@_aboutMe"
+                              City="@_city"
+                              TravelLabel="@_travel"
+                              HoursLabel="@_hours"
+                              AvailableLabel="@_available"
+                              LookingFor="_lookingFor"
+                              LicenseLabel="@_license"
+                              CvBusy="_pdfBusy"
+                              OnEdit="OpenDataTab"
+                              OnDownloadCv="DownloadLobsyCvAsync" />
+            </div>
+
+            <div class="passport-layout__main">
+                <div class="passport-layout__card passport-layout__card--mobile">
+                    <PassportCard Compact="true"
+                                  DisplayName="@_displayName"
+                                  Initials="@_initials"
+                                  MemberNumber="@_memberNumber"
+                                  StartedStamp="@_startedStamp"
+                                  ShowOpenForWork="@_showOpenForWork"
+                                  Keywords="_keywords"
+                                  CompletenessPercent="_completeness"
+                                  OneLiner="@_oneLiner"
+                                  OnEdit="OpenDataTab" />
+                </div>
+
+                <PassportOverview CompetenceProgress="@Arc(AssessmentKind.Competence)"
+                                  CareerProgress="@Arc(AssessmentKind.Career)"
+                                  CultureProgress="@Arc(AssessmentKind.Culture)"
+                                  ValuesProgress="@Arc(AssessmentKind.Values)"
+                                  CompletedCount="_completedTests"
+                                  Strongest="@_strongest"
+                                  StrongestStatus="@_strongestStatus"
+                                  WorkFit="@_workFit"
+                                  WorkFitStatus="@_workFitStatus"
+                                  CultureHome="@_cultureHome"
+                                  CultureHomeStatus="@_cultureHomeStatus"
+                                  Important="@_important"
+                                  ImportantStatus="@_importantStatus"
+                                  OnGoTests="() => SetTab(PassportTabs.Tests)" />
+
+                <div class="passport-tabs admin-sublinks"
+                     role="tablist"
+                     aria-label="@Culture["Passport.Title"]"
+                     @onkeydown="OnTabListKeyDown">
+                    @foreach (var tab in PassportTabs.All)
+                    {
+                        var id = $"passport-tab-{tab}";
+                        var selected = _tab == tab;
+                        <button type="button"
+                                id="@id"
+                                class="admin-sublink @(selected ? "admin-sublink--active" : null)"
+                                role="tab"
+                                aria-selected="@(selected ? "true" : "false")"
+                                aria-controls="@($"passport-panel-{tab}")"
+                                tabindex="@(selected ? 0 : -1)"
+                                @onclick="() => SetTab(tab)">
+                            <span class="passport-tabs__icon" aria-hidden="true">@((MarkupString)TabIcon(tab))</span>
+                            <span>@Culture[TabLabelKey(tab)]</span>
+                            @if (tab == PassportTabs.Tests && _testsNextStepCount > 0)
+                            {
+                                <span class="passport-tabs__pill">@_testsNextStepCount</span>
+                            }
+                        </button>
+                    }
+                </div>
+
+                <div class="passport-panels">
+                    <article id="passport-panel-dna"
+                             class="passport-panel"
+                             role="tabpanel"
+                             aria-labelledby="passport-tab-dna"
+                             hidden="@(_tab != PassportTabs.Dna)">
+                        @if (_visited.Contains(PassportTabs.Dna))
+                        {
+                            <PanelErrorBoundary Name="passport-dna">
+                                <PassportDnaTab BubbleText="@BubbleFor(PassportTabs.Dna)"
+                                                Highlights="_highlights"
+                                                Story="@_story"
+                                                StoryGeneratedAt="_storyAt"
+                                                Keywords="_keywords"
+                                                CultureDetail="_cultureDetail"
+                                                ValuesDetail="_valuesDetail"
+                                                Shells="_shells"
+                                                OnGoTests="() => SetTab(PassportTabs.Tests)" />
+                            </PanelErrorBoundary>
+                        }
+                    </article>
+
+                    <article id="passport-panel-tests"
+                             class="passport-panel"
+                             role="tabpanel"
+                             aria-labelledby="passport-tab-tests"
+                             hidden="@(_tab != PassportTabs.Tests)">
+                        @if (_visited.Contains(PassportTabs.Tests))
+                        {
+                            <LobsyBubble Text="@BubbleFor(PassportTabs.Tests)" />
+                            <PanelErrorBoundary Name="passport-tests">
+                                <TestsOverviewPanel Active="@(_tab == PassportTabs.Tests)" Snapshot="_kompas" />
+                            </PanelErrorBoundary>
+                        }
+                    </article>
+
+                    <article id="passport-panel-fit"
+                             class="passport-panel"
+                             role="tabpanel"
+                             aria-labelledby="passport-tab-fit"
+                             hidden="@(_tab != PassportTabs.Fit)">
+                        @if (_visited.Contains(PassportTabs.Fit))
+                        {
+                            <LobsyBubble Text="@BubbleFor(PassportTabs.Fit)" />
+                            <PanelErrorBoundary Name="passport-fit">
+                                <RoleFitCheckPanel Active="@(_tab == PassportTabs.Fit)" />
+                            </PanelErrorBoundary>
+                        }
+                    </article>
+
+                    <article id="passport-panel-career"
+                             class="passport-panel"
+                             role="tabpanel"
+                             aria-labelledby="passport-tab-career"
+                             hidden="@(_tab != PassportTabs.Career)">
+                        @if (_visited.Contains(PassportTabs.Career))
+                        {
+                            <LobsyBubble Text="@BubbleFor(PassportTabs.Career)" />
+                            <div class="detail-card">
+                                <h3 class="passport-dna__h">@Culture["Passport.Tab.Career"]</h3>
+                                <p class="login-lead">@Culture["Passport.Career.Lead"]</p>
+                                <a class="btn-compact btn-compact--primary" href="/carriere">@Culture["Passport.Career.Open"]</a>
+                            </div>
+                        }
+                    </article>
+
+                    <article id="passport-panel-proof"
+                             class="passport-panel"
+                             role="tabpanel"
+                             aria-labelledby="passport-tab-proof"
+                             hidden="@(_tab != PassportTabs.Proof)">
+                        @if (_visited.Contains(PassportTabs.Proof))
+                        {
+                            <LobsyBubble Text="@BubbleFor(PassportTabs.Proof)" />
+                            <p class="login-lead">
+                                <a href="@PassportRedirects.BuildClassicProfileUrl(CandidateKompasTabs.Profile)">
+                                    @Culture["Passport.Transitional.OpenData"]
+                                </a>
+                            </p>
+                        }
+                    </article>
+
+                    <article id="passport-panel-data"
+                             class="passport-panel"
+                             role="tabpanel"
+                             aria-labelledby="passport-tab-data"
+                             hidden="@(_tab != PassportTabs.Data)">
+                        @if (_visited.Contains(PassportTabs.Data))
+                        {
+                            <LobsyBubble Text="@BubbleFor(PassportTabs.Data)" />
+                            <p class="login-lead">
+                                <a href="@PassportRedirects.BuildClassicProfileUrl(CandidateKompasTabs.Profile)">
+                                    @Culture["Passport.Transitional.OpenData"]
+                                </a>
+                            </p>
+                        }
+                    </article>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private const string DnaPersistKey = "passport-dna";
+    private const string KompasPersistKey = "passport-kompas";
+
+    private string _tab = PassportTabs.Dna;
+    private readonly HashSet<string> _visited = new(StringComparer.OrdinalIgnoreCase);
+    private bool _loading = true;
+    private bool _listening;
+    private bool _pdfBusy;
+    private string? _message;
+    private FeatureFlagSnapshot _flags = FeatureFlagSnapshot.Defaults;
+
+    private MeProfile? _profile;
+    private CandidateKompasState? _kompas;
+    private CandidateDnaSummary? _dna;
+    private CandidateDnaViewBuilder.DnaViewModel? _view;
+
+    private string _displayName = "";
+    private string _initials = "?";
+    private string _memberNumber = "";
+    private string? _startedStamp;
+    private bool _showOpenForWork;
+    private readonly List<string> _keywords = [];
+    private int _completeness;
+    private string? _aboutMe;
+    private string? _city;
+    private string? _travel;
+    private string? _hours;
+    private string? _available;
+    private readonly List<string> _lookingFor = [];
+    private string? _license;
+    private string _oneLiner = "";
+    private int _completedTests;
+    private int _testsNextStepCount;
+    private string? _strongest;
+    private string? _strongestStatus;
+    private string? _workFit;
+    private string? _workFitStatus;
+    private string? _cultureHome;
+    private string? _cultureHomeStatus;
+    private string? _important;
+    private string? _importantStatus;
+    private string? _story;
+    private DateTime? _storyAt;
+    private CandidateDnaViewBuilder.DetailBlock? _cultureDetail;
+    private CandidateDnaViewBuilder.DetailBlock? _valuesDetail;
+    private List<CandidateDnaViewBuilder.DnaHighlight> _highlights = [];
+    private PassportShellRules.ShellProgress _shells = new([], 0, 0, 0);
+    private int _applicationCount;
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        _listening = true;
+        if (Persist.TryTakeFromJson<CandidateDnaSummary>(DnaPersistKey, out var dna) && dna is not null)
+        {
+            _dna = dna;
+        }
+
+        if (Persist.TryTakeFromJson<CandidateKompasState>(KompasPersistKey, out var kompas) && kompas is not null)
+        {
+            _kompas = kompas;
+        }
+
+        ApplyTabFromUri();
+        _visited.Add(_tab);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _flags = await FeatureFlags.GetAsync();
+            if (!_flags.CandidatePassportEnabled)
+            {
+                Navigation.NavigateTo(PassportRedirects.ToClassicProfileUrl(Navigation.Uri), replace: true);
+                return;
+            }
+
+            if (_dna is null)
+            {
+                var dnaResult = await Api.GetMyKompasDnaResultAsync();
+                if (!dnaResult.TemporarilyUnavailable)
+                {
+                    _dna = dnaResult.Value;
+                }
+            }
+
+            if (_kompas is null)
+            {
+                var kompasResult = await Api.GetMyKompasResultAsync();
+                if (!kompasResult.TemporarilyUnavailable)
+                {
+                    _kompas = kompasResult.Value;
+                }
+            }
+
+            if (_kompas is not null)
+            {
+                Persist.PersistAsJson(KompasPersistKey, _kompas);
+            }
+
+            if (_dna is not null)
+            {
+                Persist.PersistAsJson(DnaPersistKey, _dna);
+            }
+
+            ApplyModel();
+            try
+            {
+                var apps = await Api.GetMyApplicationsAsync();
+                _applicationCount = apps?.Count ?? 0;
+            }
+            catch
+            {
+                _applicationCount = 0;
+            }
+
+            ApplyShells();
+        }
+        catch (Exception)
+        {
+            _message = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_listening)
+        {
+            Navigation.LocationChanged -= OnLocationChanged;
+            _listening = false;
+        }
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        ApplyTabFromUri();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ApplyTabFromUri()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var tab = PassportTabs.Dna;
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("tab", out var values))
+        {
+            tab = PassportTabs.Normalize(values.FirstOrDefault());
+        }
+
+        _tab = tab;
+        _visited.Add(_tab);
+    }
+
+    private Task SetTab(string tab)
+    {
+        tab = PassportTabs.Normalize(tab);
+        _tab = tab;
+        _visited.Add(tab);
+        var url = PassportRedirects.BuildPassportUrl(tab);
+        Navigation.NavigateTo(url, forceLoad: false, replace: true);
+        return Task.CompletedTask;
+    }
+
+    private Task OpenDataTab() => SetTab(PassportTabs.Data);
+
+    private async Task OnTabListKeyDown(KeyboardEventArgs e)
+    {
+        var delta = e.Key switch
+        {
+            "ArrowRight" or "ArrowDown" => 1,
+            "ArrowLeft" or "ArrowUp" => -1,
+            "Home" => int.MinValue,
+            "End" => int.MaxValue,
+            _ => 0
+        };
+        if (delta == 0)
+        {
+            return;
+        }
+
+        if (delta == int.MinValue)
+        {
+            await SetTab(PassportTabs.All[0]);
+            return;
+        }
+
+        if (delta == int.MaxValue)
+        {
+            await SetTab(PassportTabs.All[^1]);
+            return;
+        }
+
+        await SetTab(PassportTabs.Neighbor(_tab, delta));
+    }
+
+    private void ApplyModel()
+    {
+        _profile = _kompas?.Profile;
+        _completeness = CandidateDnaViewBuilder.EffectiveCompletenessPercent(_kompas, _dna);
+        var who = _kompas?.WhoAmI ?? _dna?.WhoAmI;
+        _story = string.IsNullOrWhiteSpace(who?.Story) ? null : who!.Story;
+        _storyAt = who?.GeneratedAtUtc;
+        _keywords.Clear();
+        if (who?.Keywords is { Count: > 0 })
+        {
+            _keywords.AddRange(who.Keywords.Where(k => !string.IsNullOrWhiteSpace(k)).Take(6));
+        }
+
+        _displayName = string.IsNullOrWhiteSpace(_profile?.FullName)
+            ? Culture["Passport.Title"]
+            : _profile!.FullName;
+        _initials = InitialsFrom(_profile);
+        _memberNumber = PassportMemberNumber.Format(_profile?.Id ?? Guid.Empty);
+        // Account creation month is not on MeProfile yet — hide stamp rather than invent.
+        _startedStamp = null;
+        _showOpenForWork = _flags.EmployersEnabled && (_profile?.OpenForWork ?? false);
+        _aboutMe = _profile?.Preferences?.AboutMe;
+        _city = CityFromAddress(_profile?.Preferences?.HomeAddress);
+        var prefs = _profile?.Preferences;
+        _travel = prefs?.MaxTravelMinutes is int m
+            ? $"{TransportLabels.Canonical(prefs.PreferredTransport)} {m} min"
+            : null;
+        if (prefs?.MinHoursPerWeek is decimal || prefs?.MaxHoursPerWeek is decimal)
+        {
+            var min = prefs!.MinHoursPerWeek;
+            var max = prefs.MaxHoursPerWeek;
+            if (min is not null && max is not null)
+            {
+                _hours = $"{min:0}-{max:0} u";
+            }
+            else
+            {
+                _hours = $"{(max ?? min):0} u";
+            }
+        }
+        else
+        {
+            _hours = null;
+        }
+
+        _available = FormatAvailability(prefs);
+        _lookingFor.Clear();
+        if (prefs?.Roles is { Count: > 0 })
+        {
+            _lookingFor.AddRange(prefs.Roles.Where(r => !string.IsNullOrWhiteSpace(r)));
+        }
+
+        _license = DrivingLicenseLabels.Combine(prefs?.DrivingLicenses);
+        _oneLiner = string.Join(" · ", new[]
+        {
+            _city,
+            _travel,
+            _hours
+        }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+        CandidateDnaViewBuilder.TextLookup t = k => Culture[k];
+        CandidateDnaViewBuilder.TextFormat format = (k, args) => Culture.Format(k, args);
+        _view = _kompas is not null
+            ? CandidateDnaViewBuilder.FromKompas(_kompas, t, format)
+            : _dna is not null
+                ? CandidateDnaViewBuilder.FromDnaSummary(_dna, t, format)
+                : null;
+
+        _highlights = _view?.Highlights.ToList() ?? [];
+        _completedTests = _view?.CompletedCount ?? 0;
+        _cultureDetail = _view?.CultureDetail;
+        _valuesDetail = _view?.ValuesDetail;
+        _testsNextStepCount = _view?.Cards.Count(c => !c.Completed) ?? 0;
+
+        ApplyStats();
+    }
+
+    private void ApplyStats()
+    {
+        _strongest = null;
+        _strongestStatus = null;
+        _workFit = null;
+        _workFitStatus = null;
+        _cultureHome = null;
+        _cultureHomeStatus = null;
+        _important = null;
+        _importantStatus = null;
+        if (_view is null)
+        {
+            return;
+        }
+
+        var competence = _view.Cards.FirstOrDefault(c => c.Kind == AssessmentKind.Competence);
+        var career = _view.Cards.FirstOrDefault(c => c.Kind == AssessmentKind.Career);
+        var culture = _view.Cards.FirstOrDefault(c => c.Kind == AssessmentKind.Culture);
+        var values = _view.Cards.FirstOrDefault(c => c.Kind == AssessmentKind.Values);
+
+        if (competence is { TopLabel: not null })
+        {
+            _strongest = competence.TopLabel;
+            _strongestStatus = StatusLabel(competence);
+        }
+
+        if (career is { TopLabel: not null })
+        {
+            _workFit = career.TopLabel;
+            _workFitStatus = career.Summary.Contains('·', StringComparison.Ordinal) ? career.Summary : null;
+        }
+
+        if (culture is { TopLabel: not null })
+        {
+            _cultureHome = culture.TopLabel;
+            _cultureHomeStatus = StatusLabel(culture);
+        }
+
+        if (values is { TopLabel: not null })
+        {
+            _important = values.TopLabel;
+            _importantStatus = StatusLabel(values);
+        }
+    }
+
+    private void ApplyShells()
+    {
+        var extended = _view?.Cards.Count(c => c.Extended) ?? 0;
+        var hasCv = _profile?.UploadedCv is not null;
+        var remaining = _view is null ? 0 : CandidateDnaViewBuilder.NearestUnfinishedRemaining(_view.Cards);
+        _shells = PassportShellRules.Evaluate(
+            _completedTests,
+            extended,
+            hasCv,
+            _applicationCount,
+            _flags.EmployersEnabled,
+            remaining);
+    }
+
+    private string StatusLabel(CandidateDnaViewBuilder.DnaCard card)
+    {
+        if (card.Extended)
+        {
+            return Culture["Test.Status.Extended"];
+        }
+
+        if (card.Completed)
+        {
+            return Culture["Dna.StatusComplete"];
+        }
+
+        if (card.IsProvisional)
+        {
+            return Culture["Onboarding.ProvisionalBadge"];
+        }
+
+        return Culture["Test.Status.NotDone"];
+    }
+
+    private double Arc(AssessmentKind kind)
+    {
+        var card = _view?.Cards.FirstOrDefault(c => c.Kind == kind);
+        return card is null ? 0 : CandidateDnaViewBuilder.ArcProgress(card);
+    }
+
+    private string BubbleFor(string tab)
+    {
+        if (tab == PassportTabs.Dna && _completedTests == 0)
+        {
+            return Culture["Passport.Bubble.DnaEmpty"];
+        }
+
+        return Culture[tab switch
+        {
+            PassportTabs.Tests => "Passport.Bubble.Tests",
+            PassportTabs.Fit => "Passport.Bubble.Fit",
+            PassportTabs.Career => "Passport.Bubble.Career",
+            PassportTabs.Proof => "Passport.Bubble.Proof",
+            PassportTabs.Data => "Passport.Bubble.Data",
+            _ => "Passport.Bubble.Dna"
+        }];
+    }
+
+    private static string TabLabelKey(string tab) => tab switch
+    {
+        PassportTabs.Tests => "Passport.Tab.Tests",
+        PassportTabs.Fit => "Passport.Tab.Fit",
+        PassportTabs.Career => "Passport.Tab.Career",
+        PassportTabs.Proof => "Passport.Tab.Proof",
+        PassportTabs.Data => "Passport.Tab.Data",
+        _ => "Passport.Tab.Dna"
+    };
+
+    private static string TabIcon(string tab) => tab switch
+    {
+        PassportTabs.Tests => NavIcons.Vacancies,
+        PassportTabs.Fit => NavIcons.Target,
+        PassportTabs.Career => NavIcons.Career,
+        PassportTabs.Proof => NavIcons.Stone,
+        PassportTabs.Data => NavIcons.Profile,
+        _ => NavIcons.DnaHelix
+    };
+
+    private async Task DownloadLobsyCvAsync()
+    {
+        _pdfBusy = true;
+        try
+        {
+            await Api.DownloadMyLobsyCvPdfAsync(Js);
+        }
+        catch
+        {
+            _message = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _pdfBusy = false;
+        }
+    }
+
+    private static string InitialsFrom(MeProfile? profile)
+    {
+        var first = profile?.FirstName?.Trim();
+        var last = profile?.LastName?.Trim();
+        if (!string.IsNullOrEmpty(first) || !string.IsNullOrEmpty(last))
+        {
+            var a = string.IsNullOrEmpty(first) ? "" : first[..1];
+            var b = string.IsNullOrEmpty(last) ? "" : last[..1];
+            return (a + b).ToUpperInvariant();
+        }
+
+        var name = profile?.FullName?.Trim();
+        if (string.IsNullOrEmpty(name))
+        {
+            return "?";
+        }
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0][..1].ToUpperInvariant();
+        }
+
+        return (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
+    }
+
+    private static string? CityFromAddress(string? address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return null;
+        }
+
+        var parts = address.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 0)
+        {
+            return null;
+        }
+
+        var last = parts[^1];
+        // Strip leading postal code "1234 AB "
+        var tokens = last.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length >= 2 && tokens[0].Any(char.IsDigit))
+        {
+            return string.Join(' ', tokens.Skip(1));
+        }
+
+        return last;
+    }
+
+    private string? FormatAvailability(CandidatePreferences? prefs)
+    {
+        if (prefs is null)
+        {
+            return null;
+        }
+
+        if (prefs.AvailabilityPresets is { Count: > 0 })
+        {
+            return string.Join(", ", prefs.AvailabilityPresets.Take(2));
+        }
+
+        if (_profile?.AvailableFromDate is DateOnly d)
+        {
+            return d.ToString("dd-MM-yyyy");
+        }
+
+        return Culture["Profile.PresetImmediate"];
+    }
+
+}

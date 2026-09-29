@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "ebb735ce83b7c581c4eda87bc229dc6058fef5284b06a104d2e3fa7920084d47",
-    "v": "20260929-acc"
+    "sha256": "67d9f5b1554d38ee506218cfac7c26dd7ba985c0d5b7f67f5d0571b1fb29d639",
+    "v": "20260929-passport"
   },
   "css/features/applications.css": {
     "sha256": "08e8ccce5618f81b8e728a073d7630c2e9c6759ae09a2552c936bad4910e713d",
@@ -26,6 +26,10 @@
   "css/features/mijn-dna.css": {
     "sha256": "039f2fead93a7aff58df1e7882497e248dad9193ebc37e7ed06de76ba0d97954",
     "v": "20260927-dna-c"
+  },
+  "css/features/mijn-paspoort.css": {
+    "sha256": "0f08ecb81f6cca1ccb4b9f10a8a03d0646b220c7549f2c1a89efb24b55d11629",
+    "v": "20260929-paspoort-1"
   },
   "css/features/nav-feedback.css": {
     "sha256": "bcca67f50643f55b0d169df00fb48e97b6aa468af59443acb8de732fa409fd55",

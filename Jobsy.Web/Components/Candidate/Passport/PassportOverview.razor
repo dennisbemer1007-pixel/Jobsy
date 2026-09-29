@@ -1,0 +1,74 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Components.Candidate.Dna
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<section class="passport-overview" aria-labelledby="passport-overview-title">
+    <div class="passport-overview__ring-block">
+        <DnaRing CompetenceProgress="CompetenceProgress"
+                 CareerProgress="CareerProgress"
+                 CultureProgress="CultureProgress"
+                 ValuesProgress="ValuesProgress"
+                 AriaLabel="@Culture["Passport.Overview.Title"]" />
+        <div class="passport-overview__ring-copy">
+            <h2 id="passport-overview-title" class="passport-overview__title">@Culture["Passport.Overview.Title"]</h2>
+            <p class="passport-overview__stage">
+                @(CompletedCount == 0
+                    ? Culture["Passport.Overview.Egg"]
+                    : Culture.Format("Passport.Overview.Stage", CompletedCount))
+            </p>
+            <ul class="passport-overview__legend" aria-label="@Culture["Passport.Overview.Title"]">
+                <li><span class="passport-overview__swatch passport-overview__swatch--brand"></span>@Culture["Passport.Legend.Competence"]</li>
+                <li><span class="passport-overview__swatch passport-overview__swatch--success"></span>@Culture["Passport.Legend.Career"]</li>
+                <li><span class="passport-overview__swatch passport-overview__swatch--gold"></span>@Culture["Passport.Legend.Culture"]</li>
+                <li><span class="passport-overview__swatch passport-overview__swatch--warn"></span>@Culture["Passport.Legend.Values"]</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="passport-overview__stats">
+        @StatCard("passport-stat--brand", NavIcons.Claw, "Passport.Stat.Strongest", Strongest, StrongestStatus)
+        @StatCard("passport-stat--success", NavIcons.Antenna, "Passport.Stat.Work", WorkFit, WorkFitStatus)
+        @StatCard("passport-stat--gold", NavIcons.HomeHeart, "Passport.Stat.Home", CultureHome, CultureHomeStatus)
+        @StatCard("passport-stat--warn", NavIcons.Wave, "Passport.Stat.Important", Important, ImportantStatus)
+    </div>
+</section>
+
+@code {
+    [Parameter] public double CompetenceProgress { get; set; }
+    [Parameter] public double CareerProgress { get; set; }
+    [Parameter] public double CultureProgress { get; set; }
+    [Parameter] public double ValuesProgress { get; set; }
+    [Parameter] public int CompletedCount { get; set; }
+    [Parameter] public string? Strongest { get; set; }
+    [Parameter] public string? StrongestStatus { get; set; }
+    [Parameter] public string? WorkFit { get; set; }
+    [Parameter] public string? WorkFitStatus { get; set; }
+    [Parameter] public string? CultureHome { get; set; }
+    [Parameter] public string? CultureHomeStatus { get; set; }
+    [Parameter] public string? Important { get; set; }
+    [Parameter] public string? ImportantStatus { get; set; }
+    [Parameter] public EventCallback OnGoTests { get; set; }
+
+    private RenderFragment StatCard(string tone, string icon, string labelKey, string? value, string? status) => __builder =>
+    {
+        <article class="passport-stat @tone">
+            <span class="passport-stat__icon" aria-hidden="true">@((MarkupString)icon)</span>
+            <p class="passport-stat__label">@Culture[labelKey]</p>
+            @if (string.IsNullOrWhiteSpace(value))
+            {
+                <p class="passport-stat__value">@Culture["Passport.Stat.NotYet"]</p>
+                <button type="button" class="passport-stat__link" @onclick="OnGoTests">@Culture["Passport.Stat.DoTest"]</button>
+            }
+            else
+            {
+                <p class="passport-stat__value">@value</p>
+                @if (!string.IsNullOrWhiteSpace(status))
+                {
+                    <p class="passport-stat__status">@status</p>
+                }
+            }
+        </article>
+    };
+}
