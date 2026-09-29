@@ -18,7 +18,7 @@ public static class UiStringsDiscovery
 
         // Dutch levels
         Add("Discovery.Dutch.beginner",
-            "Beginner", "Beginner", "Początkujący", "Începător", "مبتدئ");
+            "Beginner", "Beginner level", "Początkujący", "Începător", "مبتدئ");
         Add("Discovery.Dutch.beginner.Explain",
             "Ik leer het net (A1–A2).", "I’m just starting (A1–A2).", "Dopiero się uczę (A1–A2).", "Abia învăț (A1–A2).", "أتعلم للتو (A1–A2).");
         Add("Discovery.Dutch.basis",
@@ -57,7 +57,7 @@ public static class UiStringsDiscovery
             "Veel afwisseling", "Lots of variety", "Dużo różnorodności", "Multă varietate", "تنوع كبير");
 
         // Hobbies
-        Add("Discovery.Hobby.sport", "Sport", "Sport", "Sport", "Sport", "رياضة");
+        Add("Discovery.Hobby.sport", "Sport", "Sports", "Sporty", "Sporturi", "رياضة");
         Add("Discovery.Hobby.music", "Muziek", "Music", "Muzyka", "Muzică", "موسيقى");
         Add("Discovery.Hobby.cooking", "Koken", "Cooking", "Gotowanie", "Gătit", "طبخ");
         Add("Discovery.Hobby.gaming", "Games", "Gaming", "Gry", "Jocuri", "ألعاب");
