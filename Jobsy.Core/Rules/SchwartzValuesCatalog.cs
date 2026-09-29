@@ -100,31 +100,21 @@ public static class SchwartzValuesCatalog
         => LikertAnswerJson.Serialize(answers, QuestionCount);
 
     public static SchwartzValuesScores? Score(IReadOnlyDictionary<int, int> answers)
+        => Score(answers, Questions);
+
+    /// <summary>Same math as <see cref="Score(IReadOnlyDictionary{int,int})"/> over an explicit item list (pupil bank).</summary>
+    public static SchwartzValuesScores? Score(
+        IReadOnlyDictionary<int, int> answers,
+        IEnumerable<CompetencyQuestion> items)
     {
-        int? Pct(string code)
-        {
-            var items = Questions.Where(q => q.Category == code).ToList();
-            var scored = new List<int>();
-            foreach (var question in items)
-            {
-                if (!answers.TryGetValue(question.Id, out var raw) || !IsValidAnswer(raw))
-                {
-                    continue;
-                }
-
-                scored.Add(question.Reverse ? LikertMax + LikertMin - raw : raw);
-            }
-
-            // Allow provisional / draft scores from any answered items in the dimension
-            // (e.g. onboarding mini-test with one item per driver).
-            return scored.Count == 0 ? null : LikertAnswerJson.ToPercent(scored);
-        }
-
-        var autonomy = Pct(Autonomy);
-        var connection = Pct(Connection);
-        var achievement = Pct(Achievement);
-        var stability = Pct(Stability);
-        var impact = Pct(Impact);
+        var list = items.Select(q => (q.Id, q.Category, q.Reverse)).ToList();
+        // Allow provisional / draft scores from any answered items in the dimension
+        // (e.g. onboarding mini-test with one item per driver).
+        var autonomy = LikertCategoryScorer.ScoreCategory(list, answers, Autonomy);
+        var connection = LikertCategoryScorer.ScoreCategory(list, answers, Connection);
+        var achievement = LikertCategoryScorer.ScoreCategory(list, answers, Achievement);
+        var stability = LikertCategoryScorer.ScoreCategory(list, answers, Stability);
+        var impact = LikertCategoryScorer.ScoreCategory(list, answers, Impact);
 
         if (autonomy is null && connection is null && achievement is null && stability is null && impact is null)
         {
