@@ -183,6 +183,7 @@ public static partial class PageSeoCatalog
             ["/admin"] = Private("Seo.AdminTitle", "Seo.PrivateDescription"),
             ["/admin/content/paginas"] = Private("AdminNav.PagesFlyer", "Seo.PrivateDescription"),
             ["/admin/organisaties/regios"] = Private("AdminNav.Regions", "Seo.PrivateDescription"),
+            ["/admin/organisaties/aanvragen"] = Private("AdminNav.Requests", "Seo.PrivateDescription"),
             ["/admin/organisaties"] = Private("AdminNav.Companies", "Seo.PrivateDescription"),
             ["/admin/instellingen/algemeen"] = Private("AdminNav.General", "Seo.PrivateDescription"),
             ["/admin/feedback"] = Private("AdminNav.Feedback", "Seo.PrivateDescription"),

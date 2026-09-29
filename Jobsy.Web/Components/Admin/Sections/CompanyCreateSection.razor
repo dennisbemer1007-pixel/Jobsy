@@ -1,0 +1,116 @@
+@*
+  KvK create form extracted from CompaniesAdmin (04) — logic unchanged.
+*@
+@namespace Jobsy.Web.Components.Admin.Sections
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IHostEnvironment Env
+
+<section class="admin-company-create">
+    <form class="login-form" @onsubmit="LookupAsync" @onsubmit:preventDefault>
+        <label>
+            @Culture["AdminOrgs.KvkNumber"]
+            <input @bind="_kvkNumber" placeholder="8 cijfers" required />
+        </label>
+        @if (Env.IsDevelopment())
+        {
+            <p class="muted admin-company-create__hint">
+                @Culture["AdminOrgs.KvkDemoHint"]
+            </p>
+        }
+        <label>
+            @Culture["AdminOrgs.ColType"]
+            <select @bind="_newType">
+                <option value="Employer">Employer</option>
+                <option value="Intermediary">Intermediary</option>
+            </select>
+        </label>
+        <button class="btn-compact btn-compact--primary" type="submit" disabled="@_busy">
+            @Culture["AdminOrgs.LookupEstablishments"]
+        </button>
+    </form>
+
+    @if (_establishments.Count > 0)
+    {
+        <div class="table-list admin-company-create__list">
+            @foreach (var e in _establishments)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@e.Name</strong>
+                        <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
+                    </div>
+                    @if (e.IsInUse)
+                    {
+                        <span class="muted">@Culture["AdminOrgs.AlreadyRegistered"]</span>
+                    }
+                    else
+                    {
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => RegisterAsync(e)">
+                            @Culture["AdminOrgs.AddEstablishment"]
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+</section>
+
+@code {
+    [Parameter] public EventCallback OnCreated { get; set; }
+
+    private List<KvkEstablishmentItem> _establishments = [];
+    private string _kvkNumber = "55667788";
+    private string _newType = "Intermediary";
+    private bool _busy;
+    private string? _message;
+
+    private async Task LookupAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            _establishments = (await Api.GetKvkEstablishmentsAsync(_kvkNumber.Trim())).ToList();
+            if (_establishments.Count == 0)
+            {
+                _message = Culture["AdminOrgs.NoEstablishments"];
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _establishments = [];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RegisterAsync(KvkEstablishmentItem e)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.RegisterAdminCompanyFromKvkAsync(e.KvkNumber, e.KvkEstablishmentId, _newType);
+            _message = string.Format(Culture["AdminOrgs.AddedAs"], e.Name, _newType);
+            _establishments = (await Api.GetKvkEstablishmentsAsync(_kvkNumber.Trim())).ToList();
+            await OnCreated.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

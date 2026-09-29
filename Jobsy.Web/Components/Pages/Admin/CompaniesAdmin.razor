@@ -2,224 +2,284 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject CultureState Culture
-@inject IHostEnvironment Env
+@inject IJSRuntime Js
 @implements IDisposable
 
 <PageTitle>@Culture["AdminNav.Companies"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["AdminNav.Companies"]" Lead="@Culture["Admin.CompaniesLead"]" Wide="true">
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else if (!string.IsNullOrEmpty(_error))
+<AdminPageShell Title="@Culture["AdminNav.Companies"]" Lead="@Culture["AdminOrgs.Lead"]" Wide="true">
+    <Actions>
+        <button type="button" class="btn-compact btn-compact--primary" @onclick="OpenCreate">
+            + @Culture["AdminOrgs.AddOrganisation"]
+        </button>
+    </Actions>
+
+    <ChildContent>
+    @if (!string.IsNullOrEmpty(_error))
     {
         <p class="state-message error">@_error</p>
     }
-    else
-    {
-        <div class="filter-bar">
-            <label>
-                @Culture["Common.Search"]
-                <input type="search" @bind="_query" @bind:event="oninput" placeholder="@Culture["Admin.SearchPlaceholder"]" />
-            </label>
-            <label>
-                Type
-                <select @bind="_typeFilter">
-                    <option value="">Alle</option>
-                    <option value="Employer">Bedrijven</option>
-                    <option value="Intermediary">Intermediairs</option>
+
+    <AdminFilterBar Query="@_query" QueryChanged="OnQueryChanged" Placeholder="@Culture["AdminOrgs.SearchPlaceholder"]">
+        <Chips>
+            <label class="admin-filter-chip">
+                <span>@Culture["AdminOrgs.ColType"]</span>
+                <select @bind="_typeFilter" @bind:after="ReloadAsync">
+                    <option value="">@Culture["AdminUi.All"]</option>
+                    <option value="Employer">@Culture["AdminOrgs.TypeEmployer"]</option>
+                    <option value="Intermediary">@Culture["AdminOrgs.TypeIntermediary"]</option>
                 </select>
             </label>
-            <span class="muted">@_filtered.Count van @_companies.Count</span>
-        </div>
-
-        <div class="table-scroll">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th class="data-table__col--wrap">Naam</th>
-                        <th>Type</th>
-                        <th>KVK</th>
-                        <th>Gebruikers</th>
-                        <th>Actieve vacatures</th>
-                        <th>Totaal vacatures</th>
-                        <th>Sollicitaties</th>
-                        <th>Tokens</th>
-                        <th>Salesmanager</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var c in _filtered)
+            <label class="admin-filter-chip">
+                <span>@Culture["AdminOrgs.ColRegion"]</span>
+                <select @bind="_regionFilter" @bind:after="ReloadAsync">
+                    <option value="">@Culture["AdminUi.All"]</option>
+                    @foreach (var r in _regionOptions)
                     {
-                        <tr>
+                        <option value="@r">@r</option>
+                    }
+                </select>
+            </label>
+            <label class="admin-filter-chip">
+                <span>@Culture["AdminOrgs.ColStatus"]</span>
+                <select @bind="_statusFilter" @bind:after="ReloadAsync">
+                    <option value="">@Culture["AdminUi.All"]</option>
+                    <option value="active">@Culture["AdminOrgs.StatusActive"]</option>
+                    <option value="kvk-failed">@Culture["AdminOrgs.StatusKvkFailed"]</option>
+                    <option value="inactive">@Culture["AdminOrgs.StatusInactive"]</option>
+                    <option value="takeover">@Culture["AdminOrgs.StatusTakeover"]</option>
+                    <option value="not-live">@Culture["AdminOrgs.StatusNotLive"]</option>
+                </select>
+            </label>
+            <div class="admin-segment" role="group" aria-label="@Culture["AdminOrgs.ViewMode"]">
+                <button type="button"
+                        class="admin-segment__btn @(_treeMode ? "is-active" : null)"
+                        aria-pressed="@_treeMode"
+                        @onclick="() => SetTreeMode(true)">@Culture["AdminOrgs.ViewTree"]</button>
+                <button type="button"
+                        class="admin-segment__btn @(!_treeMode ? "is-active" : null)"
+                        aria-pressed="@(!_treeMode)"
+                        @onclick="() => SetTreeMode(false)">@Culture["AdminOrgs.ViewFlat"]</button>
+            </div>
+        </Chips>
+    </AdminFilterBar>
+
+    @if (_openRequests > 0)
+    {
+        <p class="admin-note-bar" role="status">
+            @string.Format(Culture["AdminOrgs.OpenRequestsNote"], _openRequests)
+            <a href="/admin/organisaties/aanvragen">@Culture["AdminOrgs.OpenRequestsLink"]</a>
+        </p>
+    }
+
+    <div class="admin-orgs @(_selected is not null && !_useDrawer ? "admin-orgs--with-panel" : null)">
+        <div class="admin-orgs__main">
+            <AdminDataTable Loading="_loading"
+                            Empty="_rows.Count == 0"
+                            EmptyText="@Culture["AdminOrgs.Empty"]">
+                <Header>
+                    <th scope="col">@Culture["AdminOrgs.ColOrganisation"]</th>
+                    <th scope="col">@Culture["AdminOrgs.ColKvk"]</th>
+                    <th scope="col" class="admin-col-desktop">@Culture["AdminOrgs.ColRegion"]</th>
+                    <th scope="col" class="admin-col-desktop">@Culture["AdminOrgs.ColUsers"]</th>
+                    <th scope="col" class="admin-col-desktop">@Culture["AdminOrgs.ColVacancies"]</th>
+                    <th scope="col" class="admin-col-desktop">@Culture["AdminOrgs.ColTokens"]</th>
+                    <th scope="col">@Culture["AdminOrgs.ColStatus"]</th>
+                </Header>
+                <Rows>
+                    @foreach (var row in _rows)
+                    {
+                        var selected = _selected?.Id == row.Id;
+                        var isChild = row.ParentCompanyId is not null;
+                        var expanded = _expanded.Contains(row.Id);
+                        <tr class="admin-org-row @(selected ? "is-selected" : null) @(isChild ? "admin-org-row--child" : null)"
+                            tabindex="0"
+                            @onclick="() => SelectRow(row)"
+                            @onkeydown="e => OnRowKey(e, row)">
                             <td class="data-table__col--wrap">
-                                <strong>@c.Name</strong>
-                                <div class="muted">@c.Address</div>
-                            </td>
-                            <td>@c.Type</td>
-                            <td>@c.KvkNumber</td>
-                            <td><a href="/admin/gebruikers?companyId=@c.Id">@c.UserCount</a></td>
-                            <td><a href="/admin/vacatures?companyId=@c.Id&amp;status=Active">@c.ActiveVacancyCount</a></td>
-                            <td><a href="/admin/vacatures?companyId=@c.Id">@c.TotalVacancyCount</a></td>
-                            <td><a href="/admin/vacatures?companyId=@c.Id&amp;sort=applications">@c.ApplicationCount</a></td>
-                            <td>
-                                <div class="inline-actions">
-                                    <a href="/admin/financien?tab=tokenlog">@c.TokenBalance.ToString("0.##")</a>
-                                    <button class="btn-compact" type="button" @onclick="() => OpenGrant(c)">+ Tokens</button>
+                                <div class="admin-org-cell @(isChild ? "admin-org-cell--child" : null)">
+                                    @if (!isChild && _treeMode && row.BranchCount > 0)
+                                    {
+                                        <button type="button"
+                                                class="admin-org-caret"
+                                                aria-expanded="@expanded"
+                                                aria-label="@Culture["AdminOrgs.ToggleBranches"]"
+                                                @onclick:stopPropagation="true"
+                                                @onclick="() => ToggleExpand(row.Id)">
+                                            <span aria-hidden="true">@(expanded ? "▾" : "▸")</span>
+                                        </button>
+                                    }
+                                    else if (isChild)
+                                    {
+                                        <span class="admin-org-connector" aria-hidden="true"></span>
+                                    }
+                                    <span class="admin-org-cell__text">
+                                        <strong>@row.Name</strong>
+                                        <span class="muted">@TypeLabel(row.Type)@BranchMeta(row)</span>
+                                    </span>
                                 </div>
                             </td>
+                            <td>@row.KvkNumber</td>
+                            <td class="admin-col-desktop">@(row.RegionName ?? "—")</td>
+                            <td class="admin-col-desktop">@row.UserCount</td>
+                            <td class="admin-col-desktop">@row.ActiveVacancyCount</td>
+                            <td class="admin-col-desktop">@row.TokenBalance.ToString("0.##")</td>
                             <td>
-                                @if (!string.IsNullOrWhiteSpace(c.SalesManagerName))
-                                {
-                                    <a href="/admin/gebruikers/sales">@c.SalesManagerName</a>
-                                }
-                                else
-                                {
-                                    <span class="muted">—</span>
-                                }
-                            </td>
-                            <td>
-                                <button class="btn-compact" type="button" @onclick="() => OpenSupport(c)">
-                                    @Culture["Admin.WhySeeThis"]
-                                </button>
+                                <span class="admin-status-dot @StatusClass(row.Status)">@StatusLabel(row)</span>
                             </td>
                         </tr>
                     }
-                </tbody>
-            </table>
+                </Rows>
+            </AdminDataTable>
+
+            <AdminPager Page="_page"
+                        PageSize="_pageSize"
+                        TotalCount="_totalCount"
+                        TotalPages="@Math.Max(1, (int)Math.Ceiling(_totalCount / (double)_pageSize))"
+                        PageChanged="GoPageAsync"
+                        PageSizeChanged="OnPageSizeAsync"
+                        PageSizeOptions="@(new[] { 25, 50, 100 })" />
         </div>
 
-        @if (_activeSupportGrant is not null)
+        @if (_selected is not null && !_useDrawer)
         {
-            <p class="state-message">
-                @string.Format(Culture["Admin.SupportAccessBanner"],
-                    _activeSupportGrant.SubjectCompanyId?.ToString("D")[..8] + "…" ?? "—",
-                    _activeSupportGrant.ExpiresAt.ToLocalTime().ToString("HH:mm"),
-                    _activeSupportGrant.Reason)
-                <button class="provider-btn" type="button" disabled="@_busy" @onclick="RevokeSupportAsync">
-                    @Culture["Admin.SupportAccessRevoke"]
-                </button>
-            </p>
+            <aside class="admin-orgs__panel" aria-label="@Culture["AdminOrgs.DetailPanel"]">
+                @DetailBody(_selected)
+            </aside>
         }
-
-        <section class="panel-section">
-            <h2>Nieuw bedrijf / intermediair (KVK)</h2>
-            <form class="login-form" style="max-width:480px" @onsubmit="LookupAsync" @onsubmit:preventDefault>
-                <label>
-                    KVK-nummer
-                    <input @bind="_kvkNumber" placeholder="8 cijfers" required />
-                </label>
-                @if (Env.IsDevelopment())
-                {
-                    <p class="muted" style="margin:0.35rem 0 0;font-size:0.85rem">
-                        Zonder live KVK-key werken demo-nummers: 12345678, 11223344, 55667788, 33445566, 44556677, 66778899, 77889900, 88990011, 99001122
-                    </p>
-                }
-                <label>
-                    Type
-                    <select @bind="_newType">
-                        <option value="Employer">Employer</option>
-                        <option value="Intermediary">Intermediary</option>
-                    </select>
-                </label>
-                <button class="btn-compact btn-compact--primary" type="submit" disabled="@_busy">Zoek vestigingen</button>
-            </form>
-
-            @if (_establishments.Count > 0)
-            {
-                <div class="table-list" style="margin-top:1rem">
-                    @foreach (var e in _establishments)
-                    {
-                        <div class="table-row">
-                            <div>
-                                <strong>@e.Name</strong>
-                                <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
-                            </div>
-                            @if (e.IsInUse)
-                            {
-                                <span class="muted">Al geregistreerd</span>
-                            }
-                            else
-                            {
-                                <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => RegisterAsync(e)">
-                                    Toevoegen
-                                </button>
-                            }
-                        </div>
-                    }
-                </div>
-            }
-
-            @if (!string.IsNullOrEmpty(_message))
-            {
-                <p class="state-message">@_message</p>
-            }
-        </section>
-    }
+    </div>
+    </ChildContent>
 </AdminPageShell>
+
+@if (_selected is not null && _useDrawer)
+{
+    <AdminDrawer Open="true"
+                 OpenChanged="OnDrawerOpenChanged"
+                 Title="@_selected.Name"
+                 FullSheet="true">
+        @DetailBody(_selected)
+    </AdminDrawer>
+}
+
+<AdminDrawer Open="_createOpen"
+             OpenChanged="v => _createOpen = v"
+             Title="@Culture["AdminOrgs.AddOrganisation"]">
+    <CompanyCreateSection OnCreated="OnCreatedAsync" />
+</AdminDrawer>
 
 <GrantTokensDialog IsOpen="_grantOpen"
                    Company="_grantCompany"
                    OnClose="CloseGrant"
                    OnGranted="OnGrantedAsync" />
 
-<SupportAccessDialog IsOpen="_supportOpen"
-                     SubjectCompanyId="_supportCompanyId"
-                     OnClose="CloseSupport"
-                     OnGranted="OnSupportGrantedAsync" />
-
 @code {
-    private List<AdminCompanyItem> _companies = [];
-    private List<KvkEstablishmentItem> _establishments = [];
+    private List<AdminCompanyItem> _all = [];
+    private List<AdminCompanyItem> _rows = [];
+    private List<string> _regionOptions = [];
+    private AdminCompanyItem? _selected;
+    private HashSet<Guid> _expanded = [];
     private string _query = "";
     private string _typeFilter = "";
-    private string _kvkNumber = "55667788";
-    private string _newType = "Intermediary";
+    private string _regionFilter = "";
+    private string _statusFilter = "";
+    private bool _treeMode = true;
     private bool _loading = true;
-    private bool _busy;
-    private string? _error;
-    private string? _message;
+    private bool _createOpen;
     private bool _grantOpen;
+    private bool _useDrawer;
     private AdminCompanyItem? _grantCompany;
-    private bool _supportOpen;
-    private Guid? _supportCompanyId;
-    private SupportAccessGrantItem? _activeSupportGrant;
-
-    private List<AdminCompanyItem> _filtered => Filter().ToList();
-
+    private string? _error;
+    private int _page = 1;
+    private int _pageSize = 50;
+    private int _totalCount;
+    private int _openRequests;
+    private CancellationTokenSource? _searchCts;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
 
     public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    {
+        Culture.Changed -= OnCultureChanged;
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+    }
 
     protected override async Task OnInitializedAsync()
     {
         var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
-        if (qs.TryGetValue("type", out var type))
-        {
-            _typeFilter = type.ToString();
-        }
-
+        if (qs.TryGetValue("type", out var type)) _typeFilter = type.ToString();
+        if (qs.TryGetValue("status", out var status)) _statusFilter = status.ToString();
+        if (qs.TryGetValue("q", out var q)) _query = q.ToString();
+        if (qs.TryGetValue("region", out var region)) _regionFilter = region.ToString();
+        await ReloadAsync();
         try
         {
-            _companies = (await Api.GetAdminCompaniesAsync()).ToList();
-            var grants = await Api.ListSupportAccessAsync(activeOnly: true, take: 20);
-            _activeSupportGrant = grants.FirstOrDefault(g => g.IsActive && g.SubjectCompanyId is not null);
+            var todo = await Api.GetAdminTodoAsync();
+            if (todo?.CountsByNavKey is not null)
+            {
+                _openRequests = todo.CountsByNavKey.GetValueOrDefault("org-requests");
+            }
+        }
+        catch { /* non-blocking */ }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            _useDrawer = await Js.InvokeAsync<bool>("eval", "window.matchMedia('(max-width: 1023px)').matches");
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            _useDrawer = false;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var page = await Api.GetAdminCompaniesPageAsync(
+                q: string.IsNullOrWhiteSpace(_query) ? null : _query,
+                type: string.IsNullOrWhiteSpace(_typeFilter) ? null : _typeFilter,
+                region: string.IsNullOrWhiteSpace(_regionFilter) ? null : _regionFilter,
+                status: string.IsNullOrWhiteSpace(_statusFilter) ? null : _statusFilter,
+                page: _page,
+                pageSize: _pageSize);
+            _all = page.Items;
+            _totalCount = page.TotalCount;
+            _regionOptions = _all
+                .Select(c => c.RegionName)
+                .Where(r => !string.IsNullOrWhiteSpace(r))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(r => r)
+                .Cast<string>()
+                .ToList();
+            RebuildRows();
+            if (_selected is not null)
+            {
+                _selected = _all.FirstOrDefault(c => c.Id == _selected.Id) ?? _selected;
+            }
         }
         catch (Exception ex)
         {
             _error = ex.Message;
+            _all = [];
+            _rows = [];
         }
         finally
         {
@@ -227,76 +287,116 @@
         }
     }
 
-    private IEnumerable<AdminCompanyItem> Filter()
+    private void RebuildRows()
     {
-        IEnumerable<AdminCompanyItem> q = _companies;
-        if (!string.IsNullOrWhiteSpace(_typeFilter))
+        if (!_treeMode)
         {
-            q = q.Where(c => c.Type.Equals(_typeFilter, StringComparison.OrdinalIgnoreCase));
+            _rows = _all.OrderBy(c => c.Name).ToList();
+            return;
         }
 
-        if (string.IsNullOrWhiteSpace(_query))
+        var roots = _all.Where(c => c.ParentCompanyId is null).OrderBy(c => c.Name).ToList();
+        var children = _all.Where(c => c.ParentCompanyId is not null)
+            .GroupBy(c => c.ParentCompanyId!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderBy(c => c.Name).ToList());
+        var rows = new List<AdminCompanyItem>();
+        foreach (var root in roots)
         {
-            return q;
-        }
-
-        var terms = _query.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return q.Where(c => terms.All(t =>
-            Contains(c.Name, t) || Contains(c.Address, t) || Contains(c.KvkNumber, t) || Contains(c.Type, t)));
-    }
-
-    private static bool Contains(string? value, string term) =>
-        !string.IsNullOrEmpty(value) && value.Contains(term, StringComparison.OrdinalIgnoreCase);
-
-    private async Task LookupAsync()
-    {
-        _busy = true;
-        _message = null;
-        try
-        {
-            _establishments = (await Api.GetKvkEstablishmentsAsync(_kvkNumber.Trim())).ToList();
-            if (_establishments.Count == 0)
+            rows.Add(root);
+            if (_expanded.Contains(root.Id) && children.TryGetValue(root.Id, out var kids))
             {
-                _message = "Geen vestigingen gevonden in KVK.";
+                rows.AddRange(kids);
             }
         }
-        catch (Exception ex)
+
+        // Orphans (child without parent in page) still shown in flat append
+        var shown = rows.Select(r => r.Id).ToHashSet();
+        foreach (var orphan in _all.Where(c => c.ParentCompanyId is not null && !shown.Contains(c.Id)))
         {
-            _message = ex.Message;
-            _establishments = [];
+            rows.Add(orphan);
         }
-        finally
+
+        _rows = rows;
+    }
+
+    private async Task OnQueryChanged(string value)
+    {
+        _query = value;
+        _page = 1;
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+        var token = _searchCts.Token;
+        try
         {
-            _busy = false;
+            await Task.Delay(280, token);
+            await ReloadAsync();
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task GoPageAsync(int page)
+    {
+        _page = page;
+        await ReloadAsync();
+    }
+
+    private async Task OnPageSizeAsync(int size)
+    {
+        _pageSize = size;
+        _page = 1;
+        await ReloadAsync();
+    }
+
+    private void SetTreeMode(bool tree)
+    {
+        _treeMode = tree;
+        RebuildRows();
+    }
+
+    private void ToggleExpand(Guid id)
+    {
+        if (!_expanded.Add(id))
+        {
+            _expanded.Remove(id);
+        }
+
+        RebuildRows();
+    }
+
+    private void SelectRow(AdminCompanyItem row)
+    {
+        _selected = row;
+    }
+
+    /// <summary>Test seam: force drawer mode (&lt; 1024 behaviour).</summary>
+    public void SetUseDrawerForTests(bool useDrawer) => _useDrawer = useDrawer;
+
+    private void OnRowKey(KeyboardEventArgs e, AdminCompanyItem row)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            SelectRow(row);
         }
     }
 
-    private async Task RegisterAsync(KvkEstablishmentItem e)
+    private Task OnDrawerOpenChanged(bool open)
     {
-        _busy = true;
-        _message = null;
-        try
-        {
-            await Api.RegisterAdminCompanyFromKvkAsync(e.KvkNumber, e.KvkEstablishmentId, _newType);
-            _message = $"'{e.Name}' toegevoegd als {_newType}.";
-            _companies = (await Api.GetAdminCompaniesAsync()).ToList();
-            _establishments = (await Api.GetKvkEstablishmentsAsync(_kvkNumber.Trim())).ToList();
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
+        if (!open) _selected = null;
+        return Task.CompletedTask;
+    }
+
+    private void OpenCreate() => _createOpen = true;
+
+    private async Task OnCreatedAsync()
+    {
+        await ReloadAsync();
     }
 
     private void OpenGrant(AdminCompanyItem company)
     {
         _grantCompany = company;
         _grantOpen = true;
-        _message = null;
     }
 
     private void CloseGrant()
@@ -307,44 +407,123 @@
 
     private async Task OnGrantedAsync()
     {
-        _companies = (await Api.GetAdminCompaniesAsync()).ToList();
-        _message = "Tokens toegekend. Zie tokenlog voor de reden.";
+        await ReloadAsync();
     }
 
-    private void OpenSupport(AdminCompanyItem company)
+    private RenderFragment DetailBody(AdminCompanyItem c) => __builder =>
     {
-        _supportCompanyId = company.Id;
-        _supportOpen = true;
-    }
+        <div class="admin-org-detail">
+            <div class="admin-org-detail__head">
+                <span class="admin-org-detail__icon" aria-hidden="true">@((MarkupString)NavIcons.Companies)</span>
+                <div>
+                    <h2>@c.Name</h2>
+                    <p class="muted">@TypeLabel(c.Type) · @Culture["AdminOrgs.CustomerSince"] @FormatSince(c.CustomerSinceUtc)</p>
+                </div>
+            </div>
+            <dl class="admin-kv">
+                <div>
+                    <dt>@Culture["AdminOrgs.ColKvk"]</dt>
+                    <dd>
+                        @c.KvkNumber
+                        <span class="status-pill @(c.KvkVerificationStatus == "Verified" ? "status-pill--accepted" : "status-pill--warn")">
+                            @(c.KvkVerificationStatus == "Verified" ? Culture["AdminOrgs.KvkVerified"] : Culture["AdminOrgs.KvkFailedPill"])
+                        </span>
+                    </dd>
+                </div>
+                <div>
+                    <dt>@Culture["AdminOrgs.ColRegion"]</dt>
+                    <dd>@(c.RegionName ?? "—")</dd>
+                </div>
+                <div>
+                    <dt>@Culture["AdminOrgs.ColDomain"]</dt>
+                    <dd>@(c.DomainHostname ?? "—")</dd>
+                </div>
+                <div>
+                    <dt>@Culture["AdminOrgs.ColEnterpriseManager"]</dt>
+                    <dd>@(c.EnterpriseManagerName ?? "—")</dd>
+                </div>
+                <div>
+                    <dt>@Culture["AdminOrgs.ColTokens"]</dt>
+                    <dd>
+                        @c.TokenBalance.ToString("0.##")
+                        @if (c.GoodwillBalance > 0)
+                        {
+                            <span class="muted"> (@c.GoodwillBalance.ToString("0.##") @Culture["AdminOrgs.Goodwill"])</span>
+                        }
+                    </dd>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(c.PackageLabel))
+                {
+                    <div>
+                        <dt>@Culture["AdminOrgs.ColPackage"]</dt>
+                        <dd>@c.PackageLabel</dd>
+                    </div>
+                }
+            </dl>
 
-    private Task CloseSupport()
-    {
-        _supportOpen = false;
-        return Task.CompletedTask;
-    }
+            @if (c.PendingTakeoverId is Guid tid)
+            {
+                <AdminImpactNote Tone="warn">
+                    <strong>@Culture["AdminOrgs.TakeoverNoteTitle"]</strong>
+                    <p>
+                        @string.Format(
+                            Culture["AdminOrgs.TakeoverNoteBody"],
+                            c.PendingTakeoverApplicant ?? "—",
+                            c.PendingTakeoverAtUtc?.ToLocalTime().ToString("dd-MM-yyyy") ?? "—")
+                    </p>
+                </AdminImpactNote>
+                <div class="admin-org-detail__actions">
+                    <a class="btn-compact btn-compact--primary"
+                       href="@($"/admin/organisaties/aanvragen?tab=overnames&takeoverId={tid:D}")">
+                        @Culture["AdminOrgs.ReviewTakeover"]
+                    </a>
+                </div>
+            }
 
-    private async Task OnSupportGrantedAsync(SupportAccessGrantItem grant)
-    {
-        _activeSupportGrant = grant;
-        await Task.CompletedTask;
-    }
+            <div class="admin-org-detail__actions">
+                <button type="button" class="btn-compact" @onclick="() => OpenGrant(c)">
+                    @Culture["AdminOrgs.GrantTokens"]
+                </button>
+                <a class="btn-compact" href="@($"/admin/gebruikers?companyId={c.Id:D}")">
+                    @string.Format(Culture["AdminOrgs.UsersLink"], c.UserCount)
+                </a>
+            </div>
+        </div>
+    };
 
-    private async Task RevokeSupportAsync()
+    private string TypeLabel(string type)
+        => type.Equals("Intermediary", StringComparison.OrdinalIgnoreCase)
+            ? Culture["AdminOrgs.TypeIntermediary"]
+            : Culture["AdminOrgs.TypeEmployer"];
+
+    private string BranchMeta(AdminCompanyItem row)
     {
-        if (_activeSupportGrant is null) return;
-        _busy = true;
-        try
+        if (row.ParentCompanyId is not null || row.BranchCount <= 0)
         {
-            await Api.RevokeSupportAccessAsync(_activeSupportGrant.Id);
-            _activeSupportGrant = null;
+            return "";
         }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
+
+        return $" · {string.Format(Culture["AdminOrgs.BranchCount"], row.BranchCount)}";
     }
+
+    private string StatusLabel(AdminCompanyItem row) => row.Status switch
+    {
+        "kvk-failed" => Culture["AdminOrgs.StatusKvkFailed"],
+        "inactive" => string.Format(Culture["AdminOrgs.StatusInactiveDays"], row.InactiveDays ?? 0),
+        "takeover" => Culture["AdminOrgs.StatusTakeover"],
+        "not-live" => Culture["AdminOrgs.StatusNotLive"],
+        _ => Culture["AdminOrgs.StatusActive"]
+    };
+
+    private static string StatusClass(string status) => status switch
+    {
+        "kvk-failed" => "is-danger",
+        "inactive" => "is-muted",
+        "takeover" => "is-warn",
+        "not-live" => "is-muted",
+        _ => "is-active"
+    };
+
+    private static string FormatSince(DateTime? utc)
+        => utc is null ? "—" : utc.Value.ToLocalTime().ToString("MM-yyyy");
 }

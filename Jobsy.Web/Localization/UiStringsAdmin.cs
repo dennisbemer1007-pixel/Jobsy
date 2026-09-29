@@ -285,5 +285,108 @@ public static class UiStringsAdmin
         Add("AdminUsers.RoleDesc.Ambassadeur", "Werft kandidaten via trackingcodes en flyers.", "Acquires candidates via tracking codes and flyers.", "Pozyskuje kandydatów.", "Atrage candidați.", "يستقطب المرشحين.");
         Add("AdminUi.RangeOf", "{0}–{1} van {2}", "{0}–{1} of {2}", "{0}–{1} z {2}", "{0}–{1} din {2}", "{0}–{1} من {2}");
         Add("AdminUi.PageSize", "Per pagina", "Per page", "Na stronę", "Pe pagină", "لكل صفحة");
+
+        // Organisations redesign (04)
+        Add("AdminOrgs.Lead",
+            "Klanten en intermediairs met hun vestigingen. Lobsy's eigen gegevens staan onder Platforminstellingen.",
+            "Customers and intermediaries with their branches. Lobsy's own details are under Platform settings.",
+            "Klienci i pośrednicy z oddziałami. Dane Lobsy są w ustawieniach platformy.",
+            "Clienți și intermediari cu filialele lor. Datele Lobsy sunt la setări platformă.",
+            "العملاء والوسطاء مع فروعهم. بيانات Lobsy تحت إعدادات المنصة.");
+        Add("AdminOrgs.RegionsLead",
+            "Domeinen bepalen branding en kaartfocus (bijv. westland.lobsy.nl). Regio's zijn groepen vestigingen binnen één organisatie.",
+            "Domains drive branding and map focus (e.g. westland.lobsy.nl). Regions group branches within one organisation.",
+            "Domeny sterują brandingiem i mapą. Regiony grupują oddziały w organizacji.",
+            "Domeniile definesc brandingul și harta. Regiunile grupează filialele într-o organizație.",
+            "النطاقات تحدد العلامة التجارية وتركيز الخريطة. المناطق تجمع الفروع داخل منظمة.");
+        Add("AdminOrgs.RequestsLead",
+            "KvK-controles en overnameverzoeken op één plek.",
+            "Chamber of Commerce checks and takeover requests in one place.",
+            "Kontrole KVK i wnioski o przejęcie w jednym miejscu.",
+            "Verificări KvK și cereri de preluare într-un singur loc.",
+            "فحوصات غرفة التجارة وطلبات الاستحواذ في مكان واحد.");
+        Add("AdminOrgs.AddOrganisation", "Organisatie toevoegen", "Add organisation", "Dodaj organizację", "Adaugă organizație", "إضافة منظمة");
+        Add("AdminOrgs.SearchPlaceholder", "Zoek op naam of KvK", "Search by name or KvK", "Szukaj po nazwie lub KvK", "Caută după nume sau KvK", "ابحث بالاسم أو KvK");
+        Add("AdminOrgs.ViewMode", "Weergave", "View", "Widok", "Vizualizare", "العرض");
+        Add("AdminOrgs.ViewTree", "Boom", "Tree", "Drzewo", "Arbore", "شجرة");
+        Add("AdminOrgs.ViewFlat", "Plat", "Flat", "Płaski", "Listă", "مسطح");
+        Add("AdminOrgs.OpenRequestsNote", "{0} registraties wachten op KvK-controle of overname.", "{0} registrations await KvK check or takeover.", "{0} rejestracji czeka na kontrolę KvK lub przejęcie.", "{0} înregistrări așteaptă verificare KvK sau preluare.", "{0} تسجيلات بانتظار فحص KvK أو استحواذ.");
+        Add("AdminOrgs.OpenRequestsLink", "Aanvragen bekijken", "View requests", "Zobacz wnioski", "Vezi cererile", "عرض الطلبات");
+        Add("AdminOrgs.Empty", "Geen organisaties gevonden.", "No organisations found.", "Brak organizacji.", "Nicio organizație.", "لا منظمات.");
+        Add("AdminOrgs.ColOrganisation", "Organisatie", "Organisation", "Organizacja", "Organizație", "المنظمة");
+        Add("AdminOrgs.ColKvk", "KvK", "CoC", "nr KVK", "nr. KvK", "رقم KvK");
+        Add("AdminOrgs.ColRegion", "Regio", "Region", "Region", "Regiune", "المنطقة");
+        Add("AdminOrgs.ColUsers", "Gebr.", "Users", "Użytk.", "Util.", "مستخدمون");
+        Add("AdminOrgs.ColVacancies", "Vac.", "Jobs", "Oferty", "Joburi", "وظائف");
+        Add("AdminOrgs.ColTokens", "Tokens", "Tok.", "Tokeny", "Tokenuri", "رموز");
+        Add("AdminOrgs.ColStatus", "Status", "Status", "Status", "Status", "الحالة");
+        Add("AdminOrgs.ColType", "Type", "Kind", "Typ", "Tip", "النوع");
+        Add("AdminOrgs.ColDomain", "Domein", "Domain", "Domena", "Domeniu", "النطاق");
+        Add("AdminOrgs.ColEnterpriseManager", "Enterprisemanager", "Enterprise manager", "Kierownik firmy", "Manager enterprise", "مدير المؤسسة");
+        Add("AdminOrgs.ColPackage", "Pakket", "Package", "Pakiet", "Pachet", "الباقة");
+        Add("AdminOrgs.ColBranches", "# Vestigingen", "# Branches", "# Oddziały", "# Filiale", "# فروع");
+        Add("AdminOrgs.ColDisplayName", "Weergavenaam", "Display name", "Nazwa wyświetlana", "Nume afișat", "اسم العرض");
+        Add("AdminOrgs.ColAddress", "Adres", "Address", "Adres firmy", "Adresă", "العنوان");
+        Add("AdminOrgs.ColRequester", "Aanvrager", "Requester", "Wnioskodawca", "Solicitant", "مقدّم الطلب");
+        Add("AdminOrgs.ColTarget", "Doelvestiging", "Target branch", "Docelowy oddział", "Filiala țintă", "الفرع المستهدف");
+        Add("AdminOrgs.ColSince", "Sinds", "Since", "Od", "De la", "منذ");
+        Add("AdminOrgs.ColAttempts", "Pogingen", "Attempts", "Próby", "Încercări", "محاولات");
+        Add("AdminOrgs.ColLastAttempt", "Laatste poging", "Last attempt", "Ostatnia próba", "Ultima încercare", "آخر محاولة");
+        Add("AdminOrgs.TypeEmployer", "Werkgever", "Employer", "Pracodawca", "Angajator", "صاحب عمل");
+        Add("AdminOrgs.TypeIntermediary", "Intermediair", "Intermediary", "Pośrednik", "Intermediar", "وسيط");
+        Add("AdminOrgs.StatusActive", "Actief", "Active", "Aktywny", "Activ", "نشط");
+        Add("AdminOrgs.StatusKvkFailed", "KvK mislukt", "KvK failed", "KvK nieudane", "KvK eșuat", "فشل KvK");
+        Add("AdminOrgs.StatusInactive", "Inactief", "Inactive", "Nieaktywny", "Inactiv", "غير نشط");
+        Add("AdminOrgs.StatusInactiveDays", "Inactief {0} d", "Inactive {0} d", "Nieaktywny {0} d", "Inactiv {0} z", "غير نشط {0} ي");
+        Add("AdminOrgs.StatusTakeover", "Overname", "Takeover", "Przejęcie", "Preluare", "استحواذ");
+        Add("AdminOrgs.StatusNotLive", "Niet live", "Not live", "Nieaktywny", "Nu e live", "غير مباشر");
+        Add("AdminOrgs.StatusOff", "Uit", "Off", "Wył.", "Oprit", "إيقاف");
+        Add("AdminOrgs.BranchCount", "{0} vest.", "{0} br.", "{0} oddz.", "{0} fil.", "{0} فرع");
+        Add("AdminOrgs.ToggleBranches", "Vestigingen tonen of verbergen", "Show or hide branches", "Pokaż lub ukryj oddziały", "Arată sau ascunde filialele", "إظهار أو إخفاء الفروع");
+        Add("AdminOrgs.DetailPanel", "Organisatiedetail", "Organisation detail", "Szczegóły organizacji", "Detaliu organizație", "تفاصيل المنظمة");
+        Add("AdminOrgs.CustomerSince", "klant sinds", "customer since", "klient od", "client din", "عميل منذ");
+        Add("AdminOrgs.KvkVerified", "Geverifieerd", "Verified", "Zweryfikowano", "Verificat", "موثّق");
+        Add("AdminOrgs.KvkFailedPill", "Mislukt", "Failed", "Nieudane", "Eșuat", "فشل");
+        Add("AdminOrgs.Goodwill", "goodwill", "goodwill part", "część goodwill", "parte goodwill", "حسن نية");
+        Add("AdminOrgs.TakeoverNoteTitle", "Overname aangevraagd", "Takeover requested", "Wniosek o przejęcie", "Preluare solicitată", "طُلب استحواذ");
+        Add("AdminOrgs.TakeoverNoteBody", "{0} wil deze vestiging overnemen ({1}).", "{0} wants to take over this branch ({1}).", "{0} chce przejąć ten oddział ({1}).", "{0} vrea să preia această filială ({1}).", "{0} يريد الاستحواذ على هذا الفرع ({1}).");
+        Add("AdminOrgs.ReviewTakeover", "Overname beoordelen", "Review takeover", "Oceń przejęcie", "Evaluează preluarea", "تقييم الاستحواذ");
+        Add("AdminOrgs.GrantTokens", "Tokens geven", "Grant tokens", "Przyznaj tokeny", "Acordă tokenuri", "منح رموز");
+        Add("AdminOrgs.UsersLink", "{0} gebruikers", "{0} users", "{0} użytkowników", "{0} utilizatori", "{0} مستخدمون");
+        Add("AdminOrgs.KvkNumber", "KVK-nummer", "Chamber of Commerce number", "Numer KVK", "Număr KvK", "رقم غرفة التجارة");
+        Add("AdminOrgs.KvkDemoHint", "Zonder live KVK-key werken demo-nummers: 12345678, 11223344, 55667788, 33445566, 44556677, 66778899, 77889900, 88990011, 99001122", "Without a live KVK key, demo numbers work: 12345678, 11223344, 55667788, …", "Bez klucza KVK działają numery demo.", "Fără cheie KvK funcționează numere demo.", "بدون مفتاح KvK تعمل أرقام تجريبية.");
+        Add("AdminOrgs.LookupEstablishments", "Zoek vestigingen", "Look up branches", "Szukaj oddziałów", "Caută filiale", "ابحث عن فروع");
+        Add("AdminOrgs.AlreadyRegistered", "Al geregistreerd", "Already registered", "Już zarejestrowany", "Deja înregistrat", "مسجّل مسبقاً");
+        Add("AdminOrgs.AddEstablishment", "Toevoegen", "Add", "Dodaj", "Adaugă", "إضافة");
+        Add("AdminOrgs.NoEstablishments", "Geen vestigingen gevonden in KVK.", "No branches found in the Chamber of Commerce registry.", "Brak oddziałów w KVK.", "Nicio filială în KvK.", "لا فروع في السجل.");
+        Add("AdminOrgs.AddedAs", "'{0}' toegevoegd als {1}.", "'{0}' added as {1}.", "'{0}' dodano jako {1}.", "'{0}' adăugat ca {1}.", "أُضيف '{0}' كـ {1}.");
+        Add("AdminOrgs.TabDomains", "Domeinen", "Domains", "Domeny", "Domenii", "النطاقات");
+        Add("AdminOrgs.TabRegions", "Regio's", "Regions", "Regiony", "Regiuni", "المناطق");
+        Add("AdminOrgs.TabKvk", "KvK-controle", "KvK check", "Kontrola KvK", "Verificare KvK", "فحص KvK");
+        Add("AdminOrgs.TabTakeovers", "Overnames", "Takeovers", "Przejęcia", "Preluări", "استحواذات");
+        Add("AdminOrgs.DomainsTabTitle", "CNAME / regio-hosts", "CNAME / region hosts", "CNAME / hosty regionów", "CNAME / hosturi regiune", "CNAME / مضيفو المناطق");
+        Add("AdminOrgs.CnameHelpTitle", "Hoe richt ik een nieuw CNAME-subdomein in?", "How do I set up a new CNAME subdomain?", "Jak skonfigurować nową subdomenę CNAME?", "Cum configurez un subdomeniu CNAME?", "كيف أضبط نطاق فرعي CNAME؟");
+        Add("AdminOrgs.CnameHelpAria", "Hulp: CNAME-subdomein inrichten", "Help: set up CNAME subdomain", "Pomoc: subdomena CNAME", "Ajutor: subdomeniu CNAME", "مساعدة: نطاق فرعي CNAME");
+        Add("AdminOrgs.DomainsHint", "Koppel subdomeinen zoals westland.lobsy.nl aan regionale branding, kaartfocus en campagne-KPI's.", "Map subdomains such as westland.lobsy.nl to regional branding, map focus and campaign KPIs.", "Powiąż subdomeny z brandingiem regionalnym.", "Leagă subdomenii de branding regional.", "اربط النطاقات الفرعية بالعلامة الإقليمية.");
+        Add("AdminOrgs.DomainsEmpty", "Nog geen CNAME-hosts.", "No CNAME hosts yet.", "Brak hostów CNAME.", "Niciun host CNAME.", "لا مضيفين CNAME بعد.");
+        Add("AdminOrgs.NewDomain", "Nieuwe regio-host", "New region host", "Nowy host regionu", "Host regiune nou", "مضيف منطقة جديد");
+        Add("AdminOrgs.EditDomain", "Regio-host bewerken", "Edit region host", "Edytuj host regionu", "Editează host regiune", "تعديل مضيف المنطقة");
+        Add("AdminOrgs.DomainUpdated", "Regio-host bijgewerkt.", "Region host updated.", "Host regionu zaktualizowany.", "Host regiune actualizat.", "تم تحديث مضيف المنطقة.");
+        Add("AdminOrgs.DomainAdded", "Regio-host toegevoegd.", "Region host added.", "Dodano host regionu.", "Host regiune adăugat.", "أُضيف مضيف المنطقة.");
+        Add("AdminOrgs.DomainDeleted", "‘{0}’ verwijderd.", "‘{0}’ deleted.", "Usunięto ‘{0}’.", "‘{0}’ șters.", "حُذف ‘{0}’.");
+        Add("AdminOrgs.Refresh", "Vernieuwen", "Refresh", "Odśwież", "Reîmprospătează", "تحديث");
+        Add("AdminOrgs.RegionsManagedNote", "Beheerd door de organisatie", "Managed by the organisation", "Zarządzane przez organizację", "Gestionate de organizație", "تُدار من المنظمة");
+        Add("AdminOrgs.RegionsEmpty", "Nog geen regio's.", "No regions yet.", "Brak regionów.", "Nicio regiune.", "لا مناطق بعد.");
+        Add("AdminOrgs.TakeoversEmpty", "Geen openstaande overnames.", "No pending takeovers.", "Brak oczekujących przejęć.", "Nicio preluare în așteptare.", "لا استحواذات معلّقة.");
+        Add("AdminOrgs.KvkEmpty", "Geen openstaande KvK-controles.", "No pending KvK checks.", "Brak kontroli KvK.", "Nicio verificare KvK.", "لا فحوصات KvK معلّقة.");
+        Add("AdminOrgs.RetryKvk", "Opnieuw controleren", "Retry check", "Sprawdź ponownie", "Reîncearcă", "إعادة الفحص");
+        Add("AdminOrgs.RetryDone", "KvK-controle opnieuw gestart.", "KvK check restarted.", "Ponowiono kontrolę KvK.", "Verificarea KvK a fost relansată.", "أُعيد تشغيل فحص KvK.");
+        Add("AdminOrgs.Approve", "Goedkeuren", "Approve", "Zatwierdź", "Aprobă", "موافقة");
+        Add("AdminOrgs.Reject", "Afwijzen", "Reject", "Odrzuć", "Respinge", "رفض");
+        Add("AdminOrgs.ApproveDone", "Overname goedgekeurd.", "Takeover approved.", "Przejęcie zatwierdzone.", "Preluare aprobată.", "تمت الموافقة على الاستحواذ.");
+        Add("AdminOrgs.RejectDone", "Overname afgewezen.", "Takeover rejected.", "Przejęcie odrzucone.", "Preluare respinsă.", "رُفض الاستحواذ.");
+        Add("AdminOrgs.RejectTitle", "Overname afwijzen", "Reject takeover", "Odrzuć przejęcie", "Respinge preluarea", "رفض الاستحواذ");
+        Add("AdminOrgs.RejectLead", "Geef een korte reden. De aanvrager wordt geïnformeerd.", "Provide a short reason. The requester will be informed.", "Podaj krótki powód.", "Oferă un motiv scurt.", "قدّم سبباً موجزاً.");
+        Add("AdminOrgs.RejectReason", "Reden", "Reason", "Powód", "Motiv", "السبب");
     }
 }

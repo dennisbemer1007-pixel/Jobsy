@@ -16,7 +16,39 @@ public record AdminCompanyDetailDto(
     int ApplicationCount,
     decimal TokenBalance,
     Guid? SalesManagerUserId = null,
-    string? SalesManagerName = null);
+    string? SalesManagerName = null,
+    int BranchCount = 0,
+    string? RegionName = null,
+    string? DomainHostname = null,
+    string? EnterpriseManagerName = null,
+    string KvkVerificationStatus = "Verified",
+    string Status = "active",
+    int? InactiveDays = null,
+    DateTime? CustomerSinceUtc = null,
+    decimal GoodwillBalance = 0,
+    string? PackageLabel = null,
+    Guid? PendingTakeoverId = null,
+    string? PendingTakeoverApplicant = null,
+    DateTime? PendingTakeoverAtUtc = null,
+    Guid? PendingTakeoverTargetCompanyId = null,
+    int KvkVerificationAttempts = 0,
+    DateTime? KvkLastVerificationAttemptAtUtc = null);
+
+/// <summary>Paged admin companies response (only when page/pageSize query params are set).</summary>
+public record AdminCompaniesPageDto(
+    IReadOnlyList<AdminCompanyDetailDto> Items,
+    int Page,
+    int PageSize,
+    int TotalCount);
+
+public record AdminKvkIssueDto(
+    Guid Id,
+    string Source,
+    string Name,
+    string KvkNumber,
+    string Status,
+    int Attempts,
+    DateTime? LastAttemptAtUtc);
 
 public record AdminUserDetailDto(
     Guid Id,

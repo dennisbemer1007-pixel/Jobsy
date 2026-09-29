@@ -45,8 +45,7 @@ public sealed class KvkFailedRegistrationsSource : IAdminTodoSource
                 Area: "Organisaties",
                 SinceUtc: r.CreatedAt,
                 ActionLabelKey: "AdminTodo.KvkFailed.Action",
-                // 04 builds /admin/organisaties/aanvragen?filter=kvk; until then companies list filtered.
-                Href: "/admin/organisaties?kvk=failed",
+                Href: "/admin/organisaties/aanvragen?tab=kvk",
                 Count: 1));
         }
 
@@ -61,7 +60,7 @@ public sealed class KvkFailedRegistrationsSource : IAdminTodoSource
                 Area: "Organisaties",
                 SinceUtc: c.Since ?? fallbackSince,
                 ActionLabelKey: "AdminTodo.KvkFailed.Action",
-                Href: "/admin/organisaties?kvk=failed",
+                Href: "/admin/organisaties/aanvragen?tab=kvk",
                 Count: 1));
         }
 

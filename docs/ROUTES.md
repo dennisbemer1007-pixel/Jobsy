@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (148 routes)
+## Table (149 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -74,6 +74,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/moderation` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/notifications` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/organisaties` | `Pages/Admin/CompaniesAdmin.razor` | Admin |
+| `/admin/organisaties/aanvragen` | `Pages/Admin/OrganisationRequestsAdmin.razor` | Admin |
 | `/admin/organisaties/regios` | `Pages/Admin/CnamesAdmin.razor` | Admin |
 | `/admin/personal-data-access-log` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/sales` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |

@@ -67,108 +67,54 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("companies")]
-    public async Task<ActionResult<IEnumerable<AdminCompanyDetailDto>>> GetCompanies(CancellationToken cancellationToken)
+    public async Task<ActionResult> GetCompanies(
+        [FromQuery] string? q = null,
+        [FromQuery] string? type = null,
+        [FromQuery] string? region = null,
+        [FromQuery] string? status = null,
+        [FromQuery] int? page = null,
+        [FromQuery] int? pageSize = null,
+        CancellationToken cancellationToken = default)
     {
-        var companies = await _db.Companies
-            .AsNoTracking()
-            .OrderBy(c => c.Name)
-            .Select(c => new
-            {
-                c.Id,
-                c.Name,
-                c.KvkNumber,
-                c.Address,
-                c.LogoUrl,
-                Type = c.Type.ToString(),
-                c.ParentCompanyId,
-                c.ReferredBySalesManagerUserId,
-                SalesManagerName = c.ReferredBySalesManagerUser != null
-                    ? c.ReferredBySalesManagerUser.FullName
-                    : null
-            })
-            .ToListAsync(cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        var result = await AdminCompaniesQuery.QueryAsync(
+            _db,
+            new AdminCompaniesQuery.QueryArgs(
+                Q: q,
+                Type: type,
+                Region: region,
+                Status: status,
+                Page: page,
+                PageSize: pageSize,
+                InactiveCompanyDays: features.InactiveCompanyDays),
+            cancellationToken);
 
-        var companyIds = companies.Select(c => c.Id).ToList();
-        if (companyIds.Count == 0)
+        if (result.Paged)
         {
-            return Ok(Array.Empty<AdminCompanyDetailDto>());
+            return Ok(new AdminCompaniesPageDto(result.Items, result.Page, result.PageSize, result.TotalCount));
         }
 
-        // Users counted via primary CompanyId OR membership (same semantics as before).
-        var activeUserIds = await _db.Users.AsNoTracking()
-            .Where(u => u.IsActive)
-            .Select(u => u.Id)
-            .ToListAsync(cancellationToken);
-        var activeUserSet = activeUserIds.ToHashSet();
+        // No paging params → today's array shape (extended fields are additive).
+        return Ok(result.Items);
+    }
 
-        var membershipPairs = await _db.UserCompanies.AsNoTracking()
-            .Where(m => companyIds.Contains(m.CompanyId))
-            .Select(m => new { m.CompanyId, m.UserId })
-            .ToListAsync(cancellationToken);
-        membershipPairs = membershipPairs
-            .Where(m => activeUserSet.Contains(m.UserId))
-            .ToList();
+    [HttpGet("companies/kvk-issues")]
+    public async Task<ActionResult<IEnumerable<AdminKvkIssueDto>>> GetKvkIssues(CancellationToken cancellationToken)
+        => Ok(await AdminCompaniesQuery.ListKvkIssuesAsync(_db, cancellationToken));
 
-        var primaryPairs = await _db.Users.AsNoTracking()
-            .Where(u => u.IsActive && u.CompanyId != null && companyIds.Contains(u.CompanyId.Value))
-            .Select(u => new { CompanyId = u.CompanyId!.Value, UserId = u.Id })
-            .ToListAsync(cancellationToken);
-        var userCounts = primaryPairs.Concat(membershipPairs)
-            .GroupBy(x => x.CompanyId)
-            .ToDictionary(g => g.Key, g => g.Select(x => x.UserId).Distinct().Count());
-
-        var vacancyStats = await _db.Vacancies.AsNoTracking()
-            .Where(v => companyIds.Contains(v.CompanyId))
-            .GroupBy(v => v.CompanyId)
-            .Select(g => new
-            {
-                CompanyId = g.Key,
-                Active = g.Count(v => v.Status == VacancyStatus.Active),
-                Total = g.Count()
-            })
-            .ToDictionaryAsync(x => x.CompanyId, cancellationToken);
-
-        var companyByVacancy = await _db.Vacancies.AsNoTracking()
-            .Where(v => companyIds.Contains(v.CompanyId))
-            .Select(v => new { v.Id, v.CompanyId })
-            .ToListAsync(cancellationToken);
-        var vacancyCompanyMap = companyByVacancy.ToDictionary(v => v.Id, v => v.CompanyId);
-
-        var applicationRows = await _db.Applications.AsNoTracking()
-            .Select(a => a.VacancyId)
-            .ToListAsync(cancellationToken);
-        var applicationCounts = applicationRows
-            .Where(vacancyCompanyMap.ContainsKey)
-            .Select(vacancyId => vacancyCompanyMap[vacancyId])
-            .GroupBy(companyId => companyId)
-            .Select(g => new { CompanyId = g.Key, Count = g.Count() })
-            .ToDictionary(x => x.CompanyId, x => x.Count);
-
-        var tokenBalances = await _db.TokenTransactions.AsNoTracking()
-            .Where(t => companyIds.Contains(t.CompanyId))
-            .GroupBy(t => t.CompanyId)
-            .Select(g => new { CompanyId = g.Key, Balance = g.Sum(t => t.Amount) })
-            .ToDictionaryAsync(x => x.CompanyId, x => x.Balance, cancellationToken);
-
-        return Ok(companies.Select(c =>
+    [HttpPost("companies/{id:guid}/kvk-retry")]
+    public async Task<ActionResult<object>> RetryKvkVerification(
+        Guid id,
+        [FromServices] IKvkVerificationRetryService kvkRetry,
+        CancellationToken cancellationToken)
+    {
+        var updated = await kvkRetry.RetryNowAsync(id, cancellationToken);
+        if (!updated)
         {
-            vacancyStats.TryGetValue(c.Id, out var vac);
-            return new AdminCompanyDetailDto(
-                c.Id,
-                c.Name,
-                c.KvkNumber,
-                c.Address,
-                c.LogoUrl,
-                c.Type,
-                c.ParentCompanyId,
-                userCounts.GetValueOrDefault(c.Id),
-                vac?.Active ?? 0,
-                vac?.Total ?? 0,
-                applicationCounts.GetValueOrDefault(c.Id),
-                tokenBalances.GetValueOrDefault(c.Id),
-                c.ReferredBySalesManagerUserId,
-                c.SalesManagerName);
-        }));
+            return NotFound(new { message = "Bedrijf niet gevonden of geen openstaande KvK-controle." });
+        }
+
+        return Ok(new { ok = true, companyId = id });
     }
 
     [HttpPost("companies/from-kvk")]

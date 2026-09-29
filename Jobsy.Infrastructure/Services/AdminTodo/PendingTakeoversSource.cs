@@ -36,7 +36,7 @@ public sealed class PendingTakeoversSource : IAdminTodoSource
             Area: "Organisaties",
             SinceUtc: t.CreatedAt,
             ActionLabelKey: "AdminTodo.Takeover.Action",
-            Href: "/admin/organisaties?filter=takeover",
+            Href: "/admin/organisaties/aanvragen?tab=overnames",
             Count: 1)).ToList();
     }
 }

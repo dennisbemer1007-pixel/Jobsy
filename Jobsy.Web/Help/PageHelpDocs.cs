@@ -371,9 +371,15 @@ public static class PageHelpDocs
 
         ["/admin/organisaties"] = new(
             "Beheer · Bedrijven & vestigingen",
-            "Alle werkgevers en intermediairs op het platform.",
-            "Zoek/filter bedrijven, ken tokens toe, of voeg toe via KVK.",
+            "Klanten en intermediairs met hun vestigingen in een boomweergave.",
+            "Filter, open detail (panel of drawer), geef tokens of beoordeel een overname.",
             "Platformbeheer van organisatiestructuur en wallets."),
+
+        ["/admin/organisaties/aanvragen"] = new(
+            "Beheer · Aanvragen",
+            "KvK-controles en overnameverzoeken.",
+            "Herstart een mislukte KvK-controle of keur een overname goed/af.",
+            "Inbox voor organisatieregistraties die aandacht vragen."),
 
         ["/admin/gebruikers"] = new(
             "Beheer · Alle gebruikers",
@@ -527,8 +533,8 @@ public static class PageHelpDocs
 
         ["/admin/organisaties/regios"] = new(
             "Beheer · Regio's & domeinen",
-            "CNAME / regio-hosts voor lokale Lobsy-domeinen.",
-            "Beheer hostnames, slogans en branding per regio.",
+            "Domeinen (CNAME) en regio's van organisaties.",
+            "Beheer hostnames onder Domeinen; regio-lijst is read-only (beheerd door de organisatie).",
             "Regionale landingspagina’s en hosts beheren."),
 
         ["/privacy"] = new(

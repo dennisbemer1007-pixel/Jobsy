@@ -1,0 +1,263 @@
+@page "/admin/organisaties/aanvragen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Ui
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["AdminNav.Requests"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.Requests"]" Lead="@Culture["AdminOrgs.RequestsLead"]" Wide="true">
+    <AdminTabs BasePath="/admin/organisaties/aanvragen" ActiveKey="@_tab" Tabs="_tabs" />
+
+    @if (!string.IsNullOrEmpty(_toast))
+    {
+        <p class="state-message" role="status">@_toast</p>
+    }
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+
+    @if (_tab == "overnames")
+    {
+        <AdminDataTable Loading="_loading"
+                        Empty="_takeovers.Count == 0"
+                        EmptyText="@Culture["AdminOrgs.TakeoversEmpty"]"
+                        ShowRowActions="true">
+            <Header>
+                <th scope="col">@Culture["AdminOrgs.ColRequester"]</th>
+                <th scope="col">@Culture["AdminOrgs.ColTarget"]</th>
+                <th scope="col">@Culture["AdminOrgs.ColKvk"]</th>
+                <th scope="col">@Culture["AdminOrgs.ColSince"]</th>
+            </Header>
+            <Rows>
+                @foreach (var t in _takeovers)
+                {
+                    var open = _openTakeoverId == t.TakeoverId;
+                    <tr class="@(open ? "is-selected" : null)">
+                        <td>
+                            <strong>@t.RequesterName</strong>
+                            <div class="muted">@t.RequesterEmail</div>
+                        </td>
+                        <td>@t.TargetCompanyName</td>
+                        <td>@t.KvkEstablishmentId</td>
+                        <td>@t.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")</td>
+                        <td class="data-table__col--actions">
+                            <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy"
+                                    @onclick="() => ApproveAsync(t)">@Culture["AdminOrgs.Approve"]</button>
+                            <button type="button" class="btn-compact btn-compact--danger-outline" disabled="@_busy"
+                                    @onclick="() => OpenReject(t)">@Culture["AdminOrgs.Reject"]</button>
+                        </td>
+                    </tr>
+                }
+            </Rows>
+        </AdminDataTable>
+    }
+    else
+    {
+        <AdminDataTable Loading="_loading"
+                        Empty="_kvkIssues.Count == 0"
+                        EmptyText="@Culture["AdminOrgs.KvkEmpty"]"
+                        ShowRowActions="true">
+            <Header>
+                <th scope="col">@Culture["AdminOrgs.ColOrganisation"]</th>
+                <th scope="col">@Culture["AdminOrgs.ColKvk"]</th>
+                <th scope="col">@Culture["AdminOrgs.ColStatus"]</th>
+                <th scope="col">@Culture["AdminOrgs.ColAttempts"]</th>
+                <th scope="col">@Culture["AdminOrgs.ColLastAttempt"]</th>
+            </Header>
+            <Rows>
+                @foreach (var issue in _kvkIssues)
+                {
+                    <tr>
+                        <td>
+                            <strong>@issue.Name</strong>
+                            <div class="muted">@issue.Source</div>
+                        </td>
+                        <td>@issue.KvkNumber</td>
+                        <td>@issue.Status</td>
+                        <td>@issue.Attempts</td>
+                        <td>@(issue.LastAttemptAtUtc?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—")</td>
+                        <td class="data-table__col--actions">
+                            @if (issue.Source == "company"
+                                 && (issue.Status is "Failed" or "Pending"))
+                            {
+                                <button type="button" class="btn-compact" disabled="@_busy"
+                                        @onclick="() => RetryKvkAsync(issue)">
+                                    @Culture["AdminOrgs.RetryKvk"]
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </Rows>
+        </AdminDataTable>
+    }
+</AdminPageShell>
+
+@if (_rejectOpen && _rejectTarget is not null)
+{
+    <LobsyFriendlyDialog IsOpen="_rejectOpen"
+                         Title="@Culture["AdminOrgs.RejectTitle"]"
+                         TitleId="reject-takeover-title"
+                         Lead="@Culture["AdminOrgs.RejectLead"]"
+                         OnClose="() => { _rejectOpen = false; return Task.CompletedTask; }">
+        <label class="feedback-dialog__field">
+            <span>@Culture["AdminOrgs.RejectReason"]</span>
+            <textarea rows="3" maxlength="500" @bind="_rejectReason" @bind:event="oninput"></textarea>
+        </label>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" @onclick="() => _rejectOpen = false">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact btn-compact--danger"
+                    disabled="@(_busy || _rejectReason.Trim().Length < 3)"
+                    @onclick="ConfirmRejectAsync">@Culture["AdminOrgs.Reject"]</button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@code {
+    private string _tab = "kvk";
+    private readonly List<AdminTabs.Tab> _tabs = [];
+    private List<AdminKvkIssueItem> _kvkIssues = [];
+    private List<TakeoverInboxItem> _takeovers = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _toast;
+    private Guid? _openTakeoverId;
+    private bool _rejectOpen;
+    private TakeoverInboxItem? _rejectTarget;
+    private string _rejectReason = "";
+
+    protected override void OnInitialized()
+    {
+        Culture.Changed += OnCultureChanged;
+        RebuildTabs();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (qs.TryGetValue("tab", out var tab)
+            && string.Equals(tab.ToString(), "overnames", StringComparison.OrdinalIgnoreCase))
+        {
+            _tab = "overnames";
+        }
+
+        if (qs.TryGetValue("takeoverId", out var tid) && Guid.TryParse(tid, out var id))
+        {
+            _openTakeoverId = id;
+            _tab = "overnames";
+        }
+
+        await ReloadAsync();
+    }
+
+    private void OnCultureChanged()
+    {
+        RebuildTabs();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    private void RebuildTabs()
+    {
+        _tabs.Clear();
+        _tabs.Add(new AdminTabs.Tab("kvk", $"{Culture["AdminOrgs.TabKvk"]} ({_kvkIssues.Count})"));
+        _tabs.Add(new AdminTabs.Tab("overnames", $"{Culture["AdminOrgs.TabTakeovers"]} ({_takeovers.Count})"));
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _kvkIssues = (await Api.GetAdminKvkIssuesAsync()).ToList();
+            _takeovers = (await Api.GetTakeoverInboxAsync()).ToList();
+            RebuildTabs();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RetryKvkAsync(AdminKvkIssueItem issue)
+    {
+        _busy = true;
+        _toast = null;
+        try
+        {
+            await Api.RetryCompanyKvkAsync(issue.Id);
+            _toast = Culture["AdminOrgs.RetryDone"];
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ApproveAsync(TakeoverInboxItem item)
+    {
+        _busy = true;
+        _toast = null;
+        try
+        {
+            await Api.ApproveTakeoverAsync(item.TakeoverId);
+            _toast = Culture["AdminOrgs.ApproveDone"];
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void OpenReject(TakeoverInboxItem item)
+    {
+        _rejectTarget = item;
+        _rejectReason = "";
+        _rejectOpen = true;
+    }
+
+    private async Task ConfirmRejectAsync()
+    {
+        if (_rejectTarget is null) return;
+        _busy = true;
+        try
+        {
+            await Api.RejectTakeoverAsync(_rejectTarget.TakeoverId, _rejectReason.Trim());
+            _rejectOpen = false;
+            _toast = Culture["AdminOrgs.RejectDone"];
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

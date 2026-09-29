@@ -70,6 +70,43 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
         var verified = 0;
         foreach (var company in pending)
         {
+            if (await RetryCompanyAsync(company, cancellationToken))
+            {
+                verified++;
+            }
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return verified;
+    }
+
+    public async Task<bool> RetryNowAsync(Guid companyId, CancellationToken cancellationToken = default)
+    {
+        var company = await _db.Companies
+            .FirstOrDefaultAsync(
+                c => c.Id == companyId
+                     && c.KvkEstablishmentId != null
+                     && (c.KvkVerificationStatus == KvkVerificationStatus.Pending
+                         || c.KvkVerificationStatus == KvkVerificationStatus.Failed),
+                cancellationToken);
+        if (company is null)
+        {
+            return false;
+        }
+
+        // Allow one more attempt after Failed when an admin triggers retry.
+        if (company.KvkVerificationStatus == KvkVerificationStatus.Failed)
+        {
+            company.KvkVerificationStatus = KvkVerificationStatus.Pending;
+        }
+
+        await RetryCompanyAsync(company, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    private async Task<bool> RetryCompanyAsync(Company company, CancellationToken cancellationToken)
+    {
             company.KvkLastVerificationAttemptAtUtc = DateTime.UtcNow;
             company.KvkVerificationAttempts += 1;
 
@@ -84,13 +121,13 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
                         company.KvkVerificationAttempts, company.Id);
                 }
 
-                continue;
+                return false;
             }
 
             if (lookup.Status == KvkLookupStatus.NotFound)
             {
                 company.KvkVerificationStatus = KvkVerificationStatus.Failed;
-                continue;
+                return false;
             }
 
             var match = lookup.Establishments.FirstOrDefault(e =>
@@ -98,7 +135,7 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
             if (match is null)
             {
                 company.KvkVerificationStatus = KvkVerificationStatus.Failed;
-                continue;
+                return false;
             }
 
             // Ownership: if another company already owns this establishment, do not auto-verify.
@@ -121,7 +158,7 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
                     _logger.LogWarning(
                         "KVK verification rejected for company {CompanyId}: establishment {Establishment} already owned",
                         company.Id, company.KvkEstablishmentId);
-                    continue;
+                    return false;
                 }
             }
 
@@ -158,14 +195,10 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
                 }
             }
 
-            verified++;
             _logger.LogInformation(
                 "KVK verification succeeded for company {CompanyId} ({Establishment})",
                 company.Id, company.KvkEstablishmentId);
-        }
-
-        await _db.SaveChangesAsync(cancellationToken);
-        return verified;
+            return true;
     }
 
     private async Task ApplyVerifiedSbiClassificationAsync(

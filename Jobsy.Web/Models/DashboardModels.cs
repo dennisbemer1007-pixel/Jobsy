@@ -508,6 +508,41 @@ public class AdminCompanyItem
     public decimal TokenBalance { get; set; }
     public Guid? SalesManagerUserId { get; set; }
     public string? SalesManagerName { get; set; }
+    public int BranchCount { get; set; }
+    public string? RegionName { get; set; }
+    public string? DomainHostname { get; set; }
+    public string? EnterpriseManagerName { get; set; }
+    public string KvkVerificationStatus { get; set; } = "Verified";
+    public string Status { get; set; } = "active";
+    public int? InactiveDays { get; set; }
+    public DateTime? CustomerSinceUtc { get; set; }
+    public decimal GoodwillBalance { get; set; }
+    public string? PackageLabel { get; set; }
+    public Guid? PendingTakeoverId { get; set; }
+    public string? PendingTakeoverApplicant { get; set; }
+    public DateTime? PendingTakeoverAtUtc { get; set; }
+    public Guid? PendingTakeoverTargetCompanyId { get; set; }
+    public int KvkVerificationAttempts { get; set; }
+    public DateTime? KvkLastVerificationAttemptAtUtc { get; set; }
+}
+
+public class AdminCompaniesPage
+{
+    public List<AdminCompanyItem> Items { get; set; } = [];
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 50;
+    public int TotalCount { get; set; }
+}
+
+public class AdminKvkIssueItem
+{
+    public Guid Id { get; set; }
+    public string Source { get; set; } = "company";
+    public string Name { get; set; } = string.Empty;
+    public string KvkNumber { get; set; } = string.Empty;
+    public string Status { get; set; } = "Failed";
+    public int Attempts { get; set; }
+    public DateTime? LastAttemptAtUtc { get; set; }
 }
 
 public class AdminUserItem

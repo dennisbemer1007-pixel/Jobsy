@@ -49,7 +49,7 @@ public static class AdminNav
             new("regions", "AdminNav.Regions", "/admin/organisaties/regios", NavIcons.Regions,
                 ["/admin/cnames"], IsAvailable: true),
             new("requests", "AdminNav.Requests", "/admin/organisaties/aanvragen", NavIcons.Applications,
-                [], IsAvailable: false, CountKey: "org-requests"),
+                [], IsAvailable: true, CountKey: "org-requests"),
         ]),
         new("candidates", "AdminNav.Group.Candidates",
         [

@@ -2,6 +2,7 @@ using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -184,9 +185,10 @@ public class RegistrationController : ControllerBase
         CancellationToken cancellationToken)
     {
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        var isAdmin = _companyAuth.IsAdmin(User);
         var items = await _registration.ListPendingTakeoversAsync(
             accessible ?? [],
-            _companyAuth.IsAdmin(User),
+            isAdmin,
             cancellationToken);
 
         return Ok(items.Select(i => new TakeoverInboxItemDto(
@@ -196,7 +198,8 @@ public class RegistrationController : ControllerBase
             i.TargetCompanyName,
             i.KvkEstablishmentId,
             i.RequesterName,
-            i.RequesterEmail,
+            // Admin sees masked e-mail by default (AVG); enterprise/branch managers keep full view.
+            isAdmin ? PersonalDataMasker.MaskEmail(i.RequesterEmail) : i.RequesterEmail,
             i.Scope.ToString(),
             i.CreatedAt)));
     }

@@ -257,6 +257,42 @@ public sealed partial class JobsyApiClient
     public async Task<IReadOnlyList<AdminCompanyItem>> GetAdminCompaniesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<AdminCompanyItem>>("api/admin/companies", ct) ?? [];
 
+    public async Task<AdminCompaniesPage> GetAdminCompaniesPageAsync(
+        string? q = null,
+        string? type = null,
+        string? region = null,
+        string? status = null,
+        int page = 1,
+        int pageSize = 50,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>
+        {
+            $"page={Math.Max(1, page)}",
+            $"pageSize={Math.Clamp(pageSize, 1, 100)}"
+        };
+        if (!string.IsNullOrWhiteSpace(q)) qs.Add($"q={Uri.EscapeDataString(q)}");
+        if (!string.IsNullOrWhiteSpace(type)) qs.Add($"type={Uri.EscapeDataString(type)}");
+        if (!string.IsNullOrWhiteSpace(region)) qs.Add($"region={Uri.EscapeDataString(region)}");
+        if (!string.IsNullOrWhiteSpace(status)) qs.Add($"status={Uri.EscapeDataString(status)}");
+
+        return await _http.GetFromJsonAsync<AdminCompaniesPage>($"api/admin/companies?{string.Join('&', qs)}", ct)
+               ?? new AdminCompaniesPage();
+    }
+
+    public async Task<IReadOnlyList<AdminKvkIssueItem>> GetAdminKvkIssuesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AdminKvkIssueItem>>("api/admin/companies/kvk-issues", ct) ?? [];
+
+    public async Task RetryCompanyKvkAsync(Guid companyId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/companies/{companyId:D}/kvk-retry", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
     public async Task<AdminCompanyItem?> RegisterAdminCompanyFromKvkAsync(
         string kvkNumber,
         string kvkEstablishmentId,
