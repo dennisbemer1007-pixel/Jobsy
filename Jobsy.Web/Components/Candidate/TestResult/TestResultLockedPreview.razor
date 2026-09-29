@@ -1,0 +1,77 @@
+@namespace Jobsy.Web.Components.Candidate.TestResult
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Reports
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@*
+  Locked deep-report preview: same honesty rules as testresultaten
+  (client-side placeholders, Voorbeelddata stamp, gated cards, one gold CTA).
+*@
+<section class="passport-tests-locked" aria-labelledby="@_titleId">
+    @if (ShowHeading)
+    {
+        <header class="passport-tests-locked__head">
+            <h3 id="@_titleId" class="passport-tests-locked__title">
+                @Culture[TitleKey] · @Culture["TestResult.Locked.Title"]
+            </h3>
+        </header>
+    }
+
+    <LockedDeepReportSection Kind="Kind" QuestionCount="QuestionCount" />
+
+    @if (AllExtendedDone)
+    {
+        <div class="passport-tests-locked__downloads">
+            <p class="passport-tests-locked__downloads-title">@Culture["Passport.Tests.DownloadReports"]</p>
+            <ul class="passport-tests-locked__downloads-list">
+                @foreach (var link in ReportLinks)
+                {
+                    <li>
+                        <a class="btn-compact" href="@link.Href">@Culture[link.TitleKey]</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+    else
+    {
+        <TestResultPremiumBlock Kind="Kind"
+                                TestTitle="@Culture[TitleKey]"
+                                PriceEuro="PriceEuro"
+                                QuestionCount="QuestionCount"
+                                MinutesApprox="MinutesApprox"
+                                Busy="Busy"
+                                IsUnlockedNotCompleted="IsUnlockedNotCompleted"
+                                DeepStartHref="@DeepStartHref"
+                                ProgressCurrent="ProgressCurrent"
+                                ProgressTotal="ProgressTotal"
+                                ShowSamplePdf="ShowSamplePdf"
+                                OnStart="OnStart"
+                                OnSamplePdf="OnSamplePdf" />
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public AssessmentKind Kind { get; set; }
+    [Parameter] public string TitleKey { get; set; } = "Test.Career.Title";
+    [Parameter] public int QuestionCount { get; set; } = 150;
+    [Parameter] public decimal PriceEuro { get; set; } = 2.99m;
+    [Parameter] public int MinutesApprox { get; set; } = 20;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool IsUnlockedNotCompleted { get; set; }
+    [Parameter] public string DeepStartHref { get; set; } = "#";
+    [Parameter] public int ProgressCurrent { get; set; }
+    [Parameter] public int ProgressTotal { get; set; } = 150;
+    [Parameter] public bool ShowSamplePdf { get; set; }
+    [Parameter] public bool AllExtendedDone { get; set; }
+    [Parameter] public bool ShowHeading { get; set; } = true;
+    [Parameter] public IReadOnlyList<ReportLink> ReportLinks { get; set; } = [];
+    [Parameter] public EventCallback OnStart { get; set; }
+    [Parameter] public EventCallback OnSamplePdf { get; set; }
+
+    private readonly string _titleId = "passport-locked-" + Guid.NewGuid().ToString("N")[..8];
+
+    public sealed record ReportLink(string TitleKey, string Href);
+}

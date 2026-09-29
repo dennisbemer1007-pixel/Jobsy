@@ -196,5 +196,106 @@ public static class UiStringsPassport
             "خطة مسارك في مساري المهني.");
         Add("Passport.Career.Open",
             "Mijn loopbaanplan", "My career plan", "Mój plan kariery", "Planul meu de carieră", "خطة مساري");
+
+        Add("Passport.Tests.Surface",
+            "Oppervlakte", "Surface", "Powierzchnia", "Suprafață", "السطح");
+        Add("Passport.Tests.Deep",
+            "Diep", "Deep", "Głęboko", "Adânc", "عميق");
+        Add("Passport.Tests.DepthAria",
+            "Voortgang van quick-scan tot rapport", "Progress from quick scan to report", "Postęp od szybkiego skanu do raportu", "Progres de la scanare rapidă la raport", "التقدم من المسح السريع إلى التقرير");
+        Add("Passport.Tests.Report",
+            "Rapport", "Report", "Raport", "Raport", "تقرير");
+        Add("Passport.Tests.Action.Start",
+            "Start", "Start test", "Zacznij", "Începe", "ابدأ");
+        Add("Passport.Tests.Action.Continue",
+            "Ga verder", "Continue", "Kontynuuj", "Continuă", "تابع");
+        Add("Passport.Tests.Action.Extended",
+            "Uitgebreid", "Extended", "Rozszerzony", "Extins", "موسّع");
+        Add("Passport.Tests.Action.Report",
+            "Rapport", "Report", "Raport", "Raport", "تقرير");
+        Add("Passport.Tests.Q.Competence",
+            "Wat kun jij goed?", "What are you good at?", "W czym jesteś dobry?", "La ce ești bun?", "فيم أنت جيد؟");
+        Add("Passport.Tests.Q.Career",
+            "Welk werk past bij je?", "Which work fits you?", "Jaka praca do ciebie pasuje?", "Ce muncă ți se potrivește?", "أي عمل يناسبك؟");
+        Add("Passport.Tests.Q.Culture",
+            "Waar voel jij je thuis?", "Where do you feel at home?", "Gdzie czujesz się jak w domu?", "Unde te simți acasă?", "أين تشعر بالانتماء؟");
+        Add("Passport.Tests.Q.Values",
+            "Wat vind jij belangrijk?", "What matters to you?", "Co jest dla ciebie ważne?", "Ce contează pentru tine?", "ما الذي يهمك؟");
+        Add("Passport.Tests.QuestionsLeft",
+            "Nog {0} van {1} vragen", "{0} of {1} questions left", "Jeszcze {0} z {1} pytań", "Încă {0} din {1} întrebări", "بقي {0} من {1} أسئلة");
+        Add("Passport.Tests.WhatCosts",
+            "Wat kost uitgebreid?", "What does extended cost?", "Ile kosztuje rozszerzony?", "Cât costă cel extins?", "كم تكلفة الموسّع؟");
+        Add("Passport.Tests.DownloadReports",
+            "Download je rapporten", "Download your reports", "Pobierz raporty", "Descarcă rapoartele", "حمّل تقاريرك");
+
+        Add("Passport.Course.GrowFurther",
+            "Groei verder", "Grow further", "Rośnij dalej", "Crește mai departe", "نم أكثر");
+        Add("Passport.Course.Free",
+            "Gratis", "Free", "Bez opłat", "Gratuit", "مجاني");
+        Add("Passport.Course.Partner",
+            "Partnerlink", "Partner link", "Link partnerski", "Link partener", "رابط شريك");
+        Add("Passport.Course.PartnerDisclosure",
+            "Partnerlink: Lobsy kan een vergoeding krijgen.",
+            "Partner link: Lobsy may receive a fee.",
+            "Link partnerski: Lobsy może otrzymać wynagrodzenie.",
+            "Link partener: Lobsy poate primi o remunerație.",
+            "رابط شريك: قد تحصل لوبسي على عمولة.");
+        Add("Passport.Course.FreeWhy",
+            "Laat je klauw ‘{0}’ groeien",
+            "Let your ‘{0}’ claw grow",
+            "Pozwól rosnąć szczypcom ‘{0}’",
+            "Lasă clea ‘{0}’ să crească",
+            "دع مخلبك «{0}» ينمو");
+        Add("Passport.Course.PartnerWhy",
+            "Met certificaat voor je Bewijzen",
+            "With a certificate for your Proof",
+            "Z certyfikatem do Dowodów",
+            "Cu certificat pentru Dovezi",
+            "مع شهادة لإثباتاتك");
+        Add("Passport.Course.Open",
+            "Open cursus", "Open course", "Otwórz kurs", "Deschide cursul", "افتح الدورة");
+        Add("Passport.Course.Type.Opleiding",
+            "Opleiding", "Programme", "Kształcenie", "Formare", "تدريب");
+        Add("Passport.Course.Type.Cursus",
+            "Cursus", "Course", "Kurs", "Curs", "دورة");
+        Add("Passport.Course.Type.Workshop",
+            "Workshop", "Short workshop", "Warsztat", "Atelier", "ورشة");
+        Add("Passport.Course.Delivery.Online",
+            "online", "online only", "przez internet", "doar online", "عبر الإنترنت");
+        Add("Passport.Course.Delivery.OnSite",
+            "op locatie", "on site", "na miejscu", "la fața locului", "في الموقع");
+        Add("Passport.Course.Delivery.Blended",
+            "blended", "blended learning", "hybrydowo", "mixt", "مدمج");
+        Add("Passport.Course.Duration.Hours",
+            "{0} uur", "{0} hours", "{0} godz.", "{0} ore", "{0} ساعات");
+        Add("Passport.Course.Duration.Days",
+            "{0} dagen", "{0} days", "{0} dni", "{0} zile", "{0} أيام");
+        Add("Passport.Course.Duration.Weeks",
+            "{0} weken", "{0} weeks", "{0} tyg.", "{0} săptămâni", "{0} أسابيع");
+        Add("Passport.Course.Duration.Months",
+            "{0} maanden", "{0} months", "{0} mies.", "{0} luni", "{0} أشهر");
+        Add("Passport.Course.Duration.Years",
+            "{0} jaar", "{0} years", "{0} lat", "{0} ani", "{0} سنوات");
+
+        Add("Admin.Training.ShowInPassport",
+            "Toon in Mijn Paspoort", "Show in My Passport", "Pokaż w Paszporcie", "Arată în Pașaport", "أظهر في الجواز");
+        Add("Admin.Training.IsFree",
+            "Gratis", "Free", "Bez opłat", "Gratuit", "مجاني");
+        Add("Admin.Training.IsPartner",
+            "Partnerlink", "Partner link", "Link partnerski", "Link partener", "رابط شريك");
+        Add("Admin.Training.AffiliateCode",
+            "Affiliate-code", "Affiliate code", "Kod afiliacyjny", "Cod afiliat", "رمز الإحالة");
+        Add("Admin.Training.Type",
+            "Type", "Course type", "Typ", "Tip", "النوع");
+        Add("Admin.Training.Duration",
+            "Duur", "Duration", "Czas", "Durată", "المدة");
+        Add("Admin.Training.Delivery",
+            "Vorm", "Delivery", "Forma", "Livrare", "التقديم");
+        Add("Admin.Training.Location",
+            "Locatie", "Location", "Lokalizacja", "Locație", "الموقع");
+        Add("Admin.Training.SaveOffer",
+            "Opslaan opleiding", "Save course", "Zapisz kurs", "Salvează cursul", "احفظ الدورة");
+        Add("Admin.Training.EditOffer",
+            "Bewerk opleiding", "Edit course", "Edytuj kurs", "Editează cursul", "عدّل الدورة");
     }
 }

@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Mijn Paspoort · Mijn tests:** depth rows, quota line, locked-report preview, Groei verder course slots (curated `ShowInPassport`); TrainingOffer passport fields + admin; no demo course seeds in production.
 - **Mijn Paspoort (flag ON):** `/candidate/paspoort` with overview (DNA ring + stats), tab shell, Mijn DNA tab, derived schalen; nav order Passport · Zoeken · Sollicitaties · Carrière; Bewaard as tab inside Sollicitaties; classic profile kept when flag OFF.
 
 ### Fixed
