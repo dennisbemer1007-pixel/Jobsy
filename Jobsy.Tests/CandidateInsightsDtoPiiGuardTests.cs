@@ -21,7 +21,14 @@ public class CandidateInsightsDtoPiiGuardTests
         "InsightsBranchRef.Name",
         "RankedItem.Label",
         "InsightsDistributionBucket.Label",
-        "InsightsDistributionBucket.Key"
+        "InsightsDistributionBucket.Key",
+        "CandidateInsightsDto.Coverage",
+        "InsightsCoverageDto.CoveredCount",
+        "InsightsCoverageDto.TotalCount",
+        "InsightsCoverageDto.ExpiresAtUtc",
+        "InsightsCoverageDto.CanRenew",
+        "InsightsCoverageDto.ScopeKind",
+        "InsightsCoverageDto.IsFull"
     };
 
     private static readonly HashSet<Type> ForbiddenTypes =

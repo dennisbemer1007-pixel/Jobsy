@@ -22,36 +22,34 @@ public class CandidateInsightsBunitTests : TestContext
     }
 
     [Fact]
-    public void Locked_overlay_uses_tokens_cta_and_placeholder_not_real_locked_values()
+    public void Locked_card_uses_gold_pattern_without_real_locked_values()
     {
-        var dto = LockedDto();
         var cut = Render(builder =>
         {
             builder.OpenComponent<InsightsLockedPanelProbe>(0);
-            builder.AddAttribute(1, "Dto", dto);
-            builder.AddAttribute(2, "TokensHref", "/werkgever/tokens");
+            builder.AddAttribute(1, "Title", "Werkvelden");
             builder.CloseComponent();
         });
 
         var markup = cut.Markup;
-        Assert.Contains("Volledige inzichten met tokens", markup, StringComparison.Ordinal);
-        Assert.Contains("href=\"/werkgever/tokens\"", markup, StringComparison.Ordinal);
-        Assert.Contains("insights-locked__placeholder", markup, StringComparison.Ordinal);
+        Assert.Contains("test-result-card-locked", markup, StringComparison.Ordinal);
+        Assert.Contains("test-result-lock-chip", markup, StringComparison.Ordinal);
+        Assert.Contains("Vergrendeld", markup, StringComparison.Ordinal);
         Assert.DoesNotContain("SECRET_LOCKED_DNA", markup, StringComparison.Ordinal);
-        Assert.Contains("data-testid=\"insights-insufficient\"", markup, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"insights-locked-probe\"", markup, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Branch_manager_locked_cta_links_to_branch_tokens()
+    public void Locked_kpi_renders_no_numeric_value()
     {
         var cut = Render(builder =>
         {
-            builder.OpenComponent<InsightsLockedPanelProbe>(0);
-            builder.AddAttribute(1, "Dto", LockedDto());
-            builder.AddAttribute(2, "TokensHref", "/branch/tokens");
+            builder.OpenComponent<InsightsKpiLockedProbe>(0);
             builder.CloseComponent();
         });
-        Assert.Contains("href=\"/branch/tokens\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("wg-kpi-locked", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Premium", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("2340", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -64,22 +62,22 @@ public class CandidateInsightsBunitTests : TestContext
             builder.CloseComponent();
         });
         Assert.Contains("data-testid=\"insights-story-card-6\"", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("insights-locked", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Volledige inzichten met tokens", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("test-result-card-locked", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Vergrendeld", cut.Markup, StringComparison.Ordinal);
     }
 
-    private static CandidateInsightsDto LockedDto()
-        => new()
+    [Fact]
+    public void Rm_premium_shows_ask_bm_text_without_unlock_button()
+    {
+        var cut = Render(builder =>
         {
-            Scope = new InsightsScopeModel { IsFullAccess = false, RadiusKm = 20, PeriodDays = 90 },
-            Kpis = new InsightsKpisModel
-            {
-                CandidatesInRadius = new SuppressedCountModel { Status = "insufficient" }
-            },
-            LockedSections = ["dreamJobs4to10", "dna", "story5to10"],
-            DnaRiasec = null,
-            Competences = null
-        };
+            builder.OpenComponent<InsightsPremiumProbe>(0);
+            builder.AddAttribute(1, "IsRegionalManager", true);
+            builder.CloseComponent();
+        });
+        Assert.Contains("bedrijfsmanager", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("btn-gold", cut.Markup, StringComparison.Ordinal);
+    }
 
     private sealed class FakeAuth : AuthenticationStateProvider
     {
@@ -96,41 +94,45 @@ public class CandidateInsightsBunitTests : TestContext
     }
 }
 
-/// <summary>Minimal markup probe mirroring locked UI contracts without hosting the full page.</summary>
 public class InsightsLockedPanelProbe : ComponentBase
 {
     [Inject] public CultureState Culture { get; set; } = default!;
-    [Parameter] public CandidateInsightsDto Dto { get; set; } = new();
-    [Parameter] public string TokensHref { get; set; } = "/werkgever/tokens";
+    [Parameter] public string Title { get; set; } = "Werkvelden";
 
     protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder)
     {
-        builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "class", "insights-locked");
-        builder.AddAttribute(2, "data-testid", "insights-locked-dna");
-        builder.OpenElement(3, "div");
-        builder.AddAttribute(4, "class", "insights-locked__placeholder");
-        builder.AddAttribute(5, "aria-hidden", "true");
-        builder.AddContent(6, "————");
-        builder.CloseElement();
-        builder.OpenElement(7, "div");
-        builder.AddAttribute(8, "class", "insights-locked__overlay");
-        builder.OpenElement(9, "span");
-        builder.AddAttribute(10, "class", "status-pill");
-        builder.AddContent(11, Culture["Insights.Locked.BlurHint"]);
-        builder.CloseElement();
-        builder.OpenElement(12, "a");
-        builder.AddAttribute(13, "class", "btn-compact login-submit");
-        builder.AddAttribute(14, "href", TokensHref);
-        builder.AddContent(15, Culture["Insights.Cta.Full"]);
-        builder.CloseElement();
-        builder.CloseElement();
-        builder.OpenElement(16, "span");
-        builder.AddAttribute(17, "class", "status-pill status-pill--neutral");
-        builder.AddAttribute(18, "data-testid", "insights-insufficient");
-        builder.AddContent(19, Culture["Insights.Insufficient"]);
-        builder.CloseElement();
-        builder.CloseElement();
+        builder.OpenComponent<Jobsy.Web.Components.Werkgever.Insights.WgLockedCard>(0);
+        builder.AddAttribute(1, "Title", Title);
+        builder.AddAttribute(2, "TestId", "insights-locked-probe");
+        builder.CloseComponent();
+    }
+}
+
+public class InsightsKpiLockedProbe : ComponentBase
+{
+    protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder)
+    {
+        builder.OpenComponent<Jobsy.Web.Components.Werkgever.Insights.WgInsightsKpiLocked>(0);
+        builder.AddAttribute(1, "Title", "Passend bij vacatures");
+        builder.AddAttribute(2, "Question", "Hoeveel passen?");
+        builder.AddAttribute(3, "TestId", "insights-kpi-locked-probe");
+        builder.CloseComponent();
+    }
+}
+
+public class InsightsPremiumProbe : ComponentBase
+{
+    [Parameter] public bool IsRegionalManager { get; set; }
+
+    protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder)
+    {
+        builder.OpenComponent<Jobsy.Web.Components.Werkgever.Insights.WgInsightsPremium>(0);
+        builder.AddAttribute(1, "ScopeLabel", "alle vestigingen");
+        builder.AddAttribute(2, "PriceLabel", "12 tokens");
+        builder.AddAttribute(3, "MetaLabel", "90 dagen");
+        builder.AddAttribute(4, "IsRegionalManager", IsRegionalManager);
+        builder.AddAttribute(5, "CanUnlock", true);
+        builder.CloseComponent();
     }
 }
 
@@ -144,23 +146,15 @@ public class InsightsStoryCard6Probe : ComponentBase
         builder.OpenElement(0, "article");
         builder.AddAttribute(1, "class", "insights-story-card");
         builder.AddAttribute(2, "data-testid", "insights-story-card-6");
-        builder.AddAttribute(3, "role", "group");
         if (Locked)
         {
-            builder.OpenElement(4, "div");
-            builder.AddAttribute(5, "class", "insights-locked");
-            builder.OpenElement(6, "div");
-            builder.AddAttribute(7, "class", "insights-locked__placeholder");
-            builder.AddContent(8, "————");
-            builder.CloseElement();
-            builder.OpenElement(9, "div");
-            builder.AddAttribute(10, "class", "insights-locked__overlay");
-            builder.OpenElement(11, "span");
-            builder.AddAttribute(12, "class", "status-pill");
-            builder.AddContent(13, Culture["Insights.Locked.BlurHint"]);
-            builder.CloseElement();
-            builder.CloseElement();
-            builder.CloseElement();
+            builder.OpenComponent<Jobsy.Web.Components.Werkgever.Insights.WgLockedCard>(3);
+            builder.AddAttribute(4, "Title", Culture["Insights.Section.Vacancies"]);
+            builder.CloseComponent();
+        }
+        else
+        {
+            builder.AddContent(5, "open");
         }
 
         builder.CloseElement();

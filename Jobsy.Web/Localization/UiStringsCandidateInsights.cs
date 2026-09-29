@@ -60,10 +60,10 @@ public static class UiStringsCandidateInsights
             "wszystkie placówki", "toate filialele", "جميع الفروع");
         Add("Insights.Kpi.Free",
             "Gratis", "Free",
-            "Gratis", "Gratuit", "مجاني");
+            "Za darmo", "Gratuit", "مجاني");
         Add("Insights.Kpi.Premium",
             "Premium", "Premium",
-            "Premium", "Premium", "مميز");
+            "Premium", "Complet", "مميز");
         Add("Insights.Kpi.MatchingQ",
             "Hoeveel passen bij je {0} vacatures?", "How many match your {0} vacancies?",
             "Ilu pasuje do Twoich {0} ofert?", "Câți se potrivesc cu {0} posturi?", "كم يتوافق مع {0} وظائف؟");

@@ -94,6 +94,7 @@ public sealed class CandidateInsightsController : ControllerBase
     }
 
     [HttpPost("unlock")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<CandidateInsightsUnlockResultDto>> Unlock(
         [FromBody] UnlockInsightsRequest body,
@@ -132,6 +133,7 @@ public sealed class CandidateInsightsController : ControllerBase
     }
 
     [HttpPost("unlock-request")]
+    [Authorize(Roles = JobsyRoles.BranchManager)]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<CandidateInsightsUnlockRequestDto>> UnlockRequest(
         [FromBody] UnlockInsightsRequestBody body,
@@ -158,6 +160,7 @@ public sealed class CandidateInsightsController : ControllerBase
     }
 
     [HttpPost("unlock-request/{id:guid}/reject")]
+    [Authorize(Roles = JobsyRoles.EnterpriseManager)]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<CandidateInsightsUnlockRequestDto>> RejectUnlockRequest(
         Guid id,

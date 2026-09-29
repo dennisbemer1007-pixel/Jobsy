@@ -61,6 +61,7 @@ public class CandidateInsightsServiceTests
         var svc = CreateService(db, out var tokens);
         tokens.Balance = 5;
         SeedUnlock(db, company);
+        await db.SaveChangesAsync();
         var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 20, 90);
 
         Assert.Equal(CandidateInsightsPrivacy.StatusOk, dto.Kpis.CandidatesInRadius.Status);
@@ -82,6 +83,7 @@ public class CandidateInsightsServiceTests
         var svc = CreateService(db, out var tokens);
         tokens.Balance = 1;
         SeedUnlock(db, company);
+        await db.SaveChangesAsync();
         var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 20, 90);
         Assert.NotEmpty(dto.Density);
         Assert.All(dto.Density, c => Assert.InRange(c.Band, 1, 3));
