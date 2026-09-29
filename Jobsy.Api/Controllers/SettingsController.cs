@@ -2,6 +2,7 @@ using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Hosting;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
@@ -26,6 +27,7 @@ public class SettingsController : ControllerBase
     private readonly IMarketingFlyerSettingsService _marketingFlyer;
     private readonly IMarketingFlyerPdfService _marketingFlyerPdf;
     private readonly IFlexCommercialService _flexCommercial;
+    private readonly DeploymentEnvironmentLabel _deploymentEnv;
 
     public SettingsController(
         JobsyDbContext db,
@@ -35,7 +37,8 @@ public class SettingsController : ControllerBase
         IAboutPageSettingsService aboutPage,
         IMarketingFlyerSettingsService marketingFlyer,
         IMarketingFlyerPdfService marketingFlyerPdf,
-        IFlexCommercialService flexCommercial)
+        IFlexCommercialService flexCommercial,
+        DeploymentEnvironmentLabel deploymentEnv)
     {
         _db = db;
         _credentials = credentials;
@@ -45,6 +48,7 @@ public class SettingsController : ControllerBase
         _marketingFlyer = marketingFlyer;
         _marketingFlyerPdf = marketingFlyerPdf;
         _flexCommercial = flexCommercial;
+        _deploymentEnv = deploymentEnv;
     }
 
     [HttpGet("token-pricing")]
@@ -320,6 +324,12 @@ public class SettingsController : ControllerBase
         [FromBody] UpdatePlatformFeatureRequest request,
         CancellationToken cancellationToken)
     {
+        if (request.ExposeRegistrationActivationLinks == true
+            && string.Equals(_deploymentEnv.Value, DeploymentEnvironment.Productie, StringComparison.Ordinal))
+        {
+            return BadRequest(new { message = "Alleen in Acceptatie." });
+        }
+
         try
         {
             var snap = await _features.UpdateAsync(

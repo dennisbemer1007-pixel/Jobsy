@@ -2,7 +2,7 @@ namespace Jobsy.Core.Admin;
 
 /// <summary>
 /// Tiny read-model for the dashboard Platform-modus card.
-/// File 05 replaces this with <c>PlatformSettingsCatalog</c> entries marked ShowOnDashboard.
+/// Built from <c>PlatformSettingsCatalog</c> ShowOnDashboard entries (file 05).
 /// </summary>
 public sealed record PlatformModeRow(
     string Key,
@@ -11,27 +11,25 @@ public sealed record PlatformModeRow(
     bool IsOn,
     bool IsPolicyReadonly = false);
 
+/// <summary>
+/// Compatibility shim — prefer <c>Jobsy.Web.Admin.PlatformSettingsCatalog.DashboardRows</c>.
+/// Kept so Core tests can assert absent employer/passport flags without referencing Web.
+/// </summary>
 public static class PlatformModeSummary
 {
-    /// <summary>
-    /// Builds dashboard rows from the live platform-features payload.
-    /// EmployersEnabled / CandidatePassportEnabled stay commented slots until those fields exist (D7).
-    /// </summary>
-    public static IReadOnlyList<PlatformModeRow> Build(
-        bool vacancyContentModerationEnabled)
+    public static IReadOnlyList<PlatformModeRow> Build(bool vacancyContentModerationEnabled)
     {
         var rows = new List<PlatformModeRow>
         {
-            // Slot: Werkgevers actief — only when EmployersEnabled exists on PlatformFeatureSettings.
-            // Slot: Mijn Paspoort — only when CandidatePassportEnabled exists.
+            // EmployersEnabled / CandidatePassportEnabled stay out until those fields exist (D7).
             new(
-                "ai-moderation",
-                "AdminDash.Mode.AiModeration",
+                "VacancyContentModerationEnabled",
+                "AdminSettings.AiModeration.Title",
                 vacancyContentModerationEnabled ? "AdminDash.Mode.On" : "AdminDash.Mode.Off",
                 vacancyContentModerationEnabled),
             new(
-                "mfa-policy",
-                "AdminDash.Mode.Mfa",
+                "MfaPolicy",
+                "AdminSettings.Mfa.Title",
                 "AdminDash.Mode.Required",
                 IsOn: true,
                 IsPolicyReadonly: true)

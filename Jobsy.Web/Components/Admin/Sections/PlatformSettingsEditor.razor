@@ -1,0 +1,456 @@
+@using Jobsy.Core.Hosting
+@using Jobsy.Core.Interfaces
+@using Jobsy.Web.Admin
+@using Jobsy.Web.Components
+@using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject DeploymentEnvironmentLabel Env
+@implements IDisposable
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error">@_error</p>
+}
+else if (_snapshot is not null)
+{
+    @foreach (var groupKey in GroupKeys)
+    {
+        var group = PlatformSettingsCatalog.Groups.First(g => g.Key == groupKey);
+        var entries = _entries.Where(e => e.Group == groupKey).ToList();
+        <section class="detail-card admin-settings-group" aria-labelledby="settings-group-@groupKey">
+            <h2 id="settings-group-@groupKey">@Culture[group.TitleKey]</h2>
+            <p class="muted admin-settings-group__desc">@Culture[group.DescriptionKey]</p>
+
+            @if (groupKey == PlatformSettingsCatalog.GroupPlatformMode && entries.Count == 0)
+            {
+                <p class="muted">@Culture["AdminSettings.NoPlatformSwitches"]</p>
+            }
+            else
+            {
+                @foreach (var entry in entries)
+                {
+                    var dirty = _draft.ContainsKey(entry.Key);
+                    var locked = IsLocked(entry);
+                    var value = CurrentValue(entry);
+                    var meta = dirty
+                        ? string.Format(Culture["AdminSettings.DirtyMeta"], FormatDisplay(entry, _baseline[entry.Key]))
+                        : null;
+                    <AdminToggleRow Title="@Culture[entry.TitleKey]"
+                                    Description="@Culture[entry.DescriptionKey]"
+                                    Meta="@meta"
+                                    Badge="@(entry.BadgeKey is null ? null : Culture[entry.BadgeKey])"
+                                    IsDirty="@dirty"
+                                    IsLocked="@locked">
+                        <Control>
+                            @if (entry.Kind == PlatformSettingKind.Policy)
+                            {
+                                <span class="admin-settings-lock" title="@Culture["AdminSettings.Mfa.Meta"]" aria-hidden="true">
+                                    @((MarkupString)NavIcons.Lock)
+                                </span>
+                            }
+                            else if (entry.Kind == PlatformSettingKind.Bool)
+                            {
+                                <button type="button"
+                                        class="admin-switch @((bool)value! ? "is-on" : null)"
+                                        role="switch"
+                                        aria-checked="@((bool)value!)"
+                                        aria-label="@Culture[entry.TitleKey]"
+                                        disabled="@locked"
+                                        @onclick="() => ToggleBool(entry)">
+                                    <span class="admin-switch__thumb"></span>
+                                </button>
+                            }
+                            else if (entry.Kind == PlatformSettingKind.Int)
+                            {
+                                <div class="admin-settings-int">
+                                    <input type="number"
+                                           class="admin-settings-input"
+                                           min="@(entry.Min ?? 0)"
+                                           max="@(entry.Max ?? 9999)"
+                                           value="@value"
+                                           disabled="@locked"
+                                           @onchange="e => SetInt(entry, e)" />
+                                    @if (entry.UnitKey is not null)
+                                    {
+                                        <span class="muted">@Culture[entry.UnitKey]</span>
+                                    }
+                                </div>
+                            }
+                            else if (entry.Kind == PlatformSettingKind.Date)
+                            {
+                                <div class="admin-settings-date">
+                                    <input type="date"
+                                           class="admin-settings-input"
+                                           value="@FormatDateInput(value as DateOnly?)"
+                                           disabled="@locked"
+                                           @onchange="e => SetDate(entry, e)" />
+                                    <button type="button"
+                                            class="btn-compact"
+                                            disabled="@(locked || value is null)"
+                                            @onclick="() => ClearDate(entry)">
+                                        @Culture["AdminSettings.StopAction"]
+                                    </button>
+                                </div>
+                            }
+                            else if (entry.Kind == PlatformSettingKind.Text)
+                            {
+                                <input type="url"
+                                       class="admin-settings-input admin-settings-input--wide"
+                                       value="@(value?.ToString() ?? "")"
+                                       disabled="@locked"
+                                       @onchange="e => SetText(entry, e)" />
+                            }
+                        </Control>
+                        <Impact>
+                            @if (entry.ImpactLevel != PlatformSettingImpactLevel.None
+                                 && entry.ImpactKey is not null
+                                 && ShouldShowImpact(entry, value))
+                            {
+                                <AdminImpactNote Tone="@(entry.ImpactLevel == PlatformSettingImpactLevel.Danger ? "danger" : "warn")">
+                                    @Culture[entry.ImpactKey]
+                                </AdminImpactNote>
+                            }
+                            @if (entry.Kind == PlatformSettingKind.Policy && entry.ImpactKey is not null)
+                            {
+                                <p class="admin-toggle-row__meta">@Culture[entry.ImpactKey]</p>
+                            }
+                        </Impact>
+                    </AdminToggleRow>
+                }
+            }
+        </section>
+    }
+
+    @if (_snapshot.UpdatedAtUtc is DateTime updated)
+    {
+        <p class="muted admin-settings-saved">@string.Format(Culture["AdminSettings.LastSaved"], FormatAmsterdam(updated))</p>
+    }
+
+    @if (_draft.Count > 0)
+    {
+        <div class="admin-save-bar" role="status">
+            <p class="admin-save-bar__summary">@SaveSummary</p>
+            <div class="admin-save-bar__actions">
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="Cancel">@Culture["Common.Cancel"]</button>
+                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="SaveAsync">@Culture["Common.Save"]</button>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+}
+
+<LobsyFriendlyDialog IsOpen="_confirmOpen"
+                     Title="@(_confirmEntry is null ? "" : Culture[_confirmEntry.TitleKey])"
+                     Lead="@(_confirmEntry?.ImpactKey is null ? null : Culture[_confirmEntry.ImpactKey])"
+                     OnClose="() => { _confirmOpen = false; return Task.CompletedTask; }">
+    <div class="inline-actions">
+        <button type="button" class="btn-compact" @onclick="() => _confirmOpen = false">@Culture["Common.Cancel"]</button>
+        <button type="button" class="btn-compact btn-compact--primary" @onclick="ConfirmPendingAsync">@Culture["Common.Confirm"]</button>
+    </div>
+</LobsyFriendlyDialog>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<string> GroupKeys { get; set; } = [];
+
+    private PlatformFeatureSnapshot? _snapshot;
+    private readonly Dictionary<string, object?> _baseline = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, object?> _draft = new(StringComparer.Ordinal);
+    private List<PlatformSettingDescriptor> _entries = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private bool _confirmOpen;
+    private PlatformSettingDescriptor? _confirmEntry;
+    private object? _confirmValue;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _entries = PlatformSettingsCatalog.ForGroups(GroupKeys).ToList();
+        try
+        {
+            var item = await Api.GetPlatformFeaturesAsync() ?? new PlatformFeatureItem();
+            ApplySnapshot(ToSnapshot(item));
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ApplySnapshot(PlatformFeatureSnapshot snap)
+    {
+        _snapshot = snap;
+        _baseline.Clear();
+        _draft.Clear();
+        foreach (var entry in _entries)
+        {
+            _baseline[entry.Key] = entry.Read(snap);
+        }
+    }
+
+    private object? CurrentValue(PlatformSettingDescriptor entry)
+        => _draft.TryGetValue(entry.Key, out var v) ? v : _baseline.GetValueOrDefault(entry.Key);
+
+    private bool IsLocked(PlatformSettingDescriptor entry)
+        => entry.EnvironmentLock == PlatformSettingEnvironmentLock.AcceptatieOnly
+           && string.Equals(Env.Value, DeploymentEnvironment.Productie, StringComparison.Ordinal);
+
+    private bool ShouldShowImpact(PlatformSettingDescriptor entry, object? value)
+    {
+        if (entry.Key == "VacancyContentModerationEnabled")
+        {
+            return value is false;
+        }
+
+        return entry.ConfirmOnChange && value is false;
+    }
+
+    private void ToggleBool(PlatformSettingDescriptor entry)
+    {
+        if (IsLocked(entry) || entry.Kind != PlatformSettingKind.Bool)
+        {
+            return;
+        }
+
+        var next = !(CurrentValue(entry) is true);
+        if (entry.ConfirmOnChange && next == false)
+        {
+            _confirmEntry = entry;
+            _confirmValue = next;
+            _confirmOpen = true;
+            return;
+        }
+
+        SetDraft(entry, next);
+    }
+
+    private Task ConfirmPendingAsync()
+    {
+        if (_confirmEntry is not null)
+        {
+            SetDraft(_confirmEntry, _confirmValue);
+        }
+
+        _confirmOpen = false;
+        _confirmEntry = null;
+        return Task.CompletedTask;
+    }
+
+    private void SetInt(PlatformSettingDescriptor entry, ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var n))
+        {
+            return;
+        }
+
+        if (entry.Min is int min) n = Math.Max(min, n);
+        if (entry.Max is int max) n = Math.Min(max, n);
+        SetDraft(entry, n);
+    }
+
+    private void SetDate(PlatformSettingDescriptor entry, ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            SetDraft(entry, null);
+            return;
+        }
+
+        if (DateOnly.TryParse(raw, out var d))
+        {
+            SetDraft(entry, d);
+        }
+    }
+
+    private void ClearDate(PlatformSettingDescriptor entry) => SetDraft(entry, null);
+
+    private void SetText(PlatformSettingDescriptor entry, ChangeEventArgs e)
+        => SetDraft(entry, e.Value?.ToString() ?? "");
+
+    private void SetDraft(PlatformSettingDescriptor entry, object? value)
+    {
+        var baseline = _baseline.GetValueOrDefault(entry.Key);
+        if (ValuesEqual(baseline, value))
+        {
+            _draft.Remove(entry.Key);
+        }
+        else
+        {
+            _draft[entry.Key] = value;
+        }
+    }
+
+    private void Cancel()
+    {
+        _draft.Clear();
+        _message = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_draft.Count == 0 || _busy)
+        {
+            return;
+        }
+
+        // ConfirmOnChange entries that flip to off without prior dialog
+        foreach (var (key, value) in _draft.ToList())
+        {
+            var entry = _entries.First(e => e.Key == key);
+            if (entry.ConfirmOnChange && value is false && !_confirmOpen)
+            {
+                _confirmEntry = entry;
+                _confirmValue = value;
+                _confirmOpen = true;
+                // Defer actual save until confirm; user re-clicks Opslaan after confirm sets draft.
+                return;
+            }
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            var parts = _draft.Select(kv =>
+            {
+                var entry = _entries.First(e => e.Key == kv.Key);
+                return entry.Write(kv.Value);
+            });
+            var merged = PlatformSettingsCatalog.Merge(parts);
+            var patch = ToPatch(merged);
+            var saved = await Api.PatchPlatformFeaturesAsync(patch) ?? new PlatformFeatureItem();
+            ApplySnapshot(ToSnapshot(saved));
+            _message = Culture["AdminSettings.Saved"];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string SaveSummary
+    {
+        get
+        {
+            var n = _draft.Count;
+            var parts = _draft.Select(kv =>
+            {
+                var entry = _entries.First(e => e.Key == kv.Key);
+                var oldV = FormatDisplay(entry, _baseline.GetValueOrDefault(entry.Key));
+                var newV = FormatDisplay(entry, kv.Value);
+                return $"{Culture[entry.TitleKey]} {oldV} → {newV}";
+            });
+            var list = string.Join(", ", parts);
+            return string.Format(Culture["AdminSettings.SaveSummary"], n, list);
+        }
+    }
+
+    /// <summary>Expose draft count for bUnit tests.</summary>
+    public int DirtyCount => _draft.Count;
+
+    /// <summary>Last patch sent (tests).</summary>
+    public PlatformFeaturePatch? LastPatch { get; private set; }
+
+    public void SetDraftForTests(string key, object? value)
+    {
+        var entry = _entries.First(e => e.Key == key);
+        SetDraft(entry, value);
+    }
+
+    public Task SaveForTestsAsync() => SaveAsync();
+
+    public void CancelForTests() => Cancel();
+
+    private PlatformFeaturePatch ToPatch(PlatformFeatureUpdate u)
+    {
+        var patch = new PlatformFeaturePatch
+        {
+            VacancyContentModerationEnabled = u.VacancyContentModerationEnabled,
+            AuthenticatorEnabled = u.AuthenticatorEnabled,
+            ExposeRegistrationActivationLinks = u.ExposeRegistrationActivationLinks,
+            PublicWebBaseUrl = u.PublicWebBaseUrl,
+            InactiveCompanyDays = u.InactiveCompanyDays,
+            SessionInactivityTimeoutMinutes = u.SessionInactivityTimeoutMinutes,
+            FreePublishUntil = u.FreePublishUntil,
+            ClearFreePublishUntil = u.ClearFreePublishUntil,
+            SupportAccessNotifyAdmins = u.SupportAccessNotifyAdmins,
+            SupportAccessNotifySubject = u.SupportAccessNotifySubject
+        };
+        LastPatch = patch;
+        return patch;
+    }
+
+    private static bool ValuesEqual(object? a, object? b)
+    {
+        if (a is null && b is null) return true;
+        if (a is null || b is null) return false;
+        return a.Equals(b) || string.Equals(a.ToString(), b.ToString(), StringComparison.Ordinal);
+    }
+
+    private string FormatDisplay(PlatformSettingDescriptor entry, object? value) => entry.Kind switch
+    {
+        PlatformSettingKind.Bool => value is true ? Culture["AdminDash.Mode.On"] : Culture["AdminDash.Mode.Off"],
+        PlatformSettingKind.Date => value is DateOnly d ? d.ToString("dd-MM-yyyy") : Culture["AdminDash.Mode.Off"],
+        PlatformSettingKind.Policy => Culture["AdminDash.Mode.Required"],
+        _ => value?.ToString() ?? "—"
+    };
+
+    private static string FormatDateInput(DateOnly? d)
+        => d is null ? "" : d.Value.ToString("yyyy-MM-dd");
+
+    private static string FormatAmsterdam(DateTime utc)
+    {
+        try
+        {
+            var tz = TimeZoneInfo.FindSystemTimeZoneById(
+                OperatingSystem.IsWindows() ? "W. Europe Standard Time" : "Europe/Amsterdam");
+            var local = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), tz);
+            return local.ToString("dd-MM-yyyy HH:mm");
+        }
+        catch
+        {
+            return utc.ToString("dd-MM-yyyy HH:mm") + " UTC";
+        }
+    }
+
+    private static PlatformFeatureSnapshot ToSnapshot(PlatformFeatureItem f) =>
+        new(
+            f.VacancyContentModerationEnabled,
+            f.AuthenticatorEnabled,
+            f.ExposeRegistrationActivationLinks,
+            f.PublicWebBaseUrl,
+            f.UpdatedAtUtc,
+            f.InactiveCompanyDays,
+            f.SessionInactivityTimeoutMinutes,
+            f.FreePublishUntil,
+            SupportAccessNotifyAdmins: f.SupportAccessNotifyAdmins,
+            SupportAccessNotifySubject: f.SupportAccessNotifySubject);
+}

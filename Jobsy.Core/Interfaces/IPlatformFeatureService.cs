@@ -23,13 +23,16 @@ public sealed record PlatformFeatureSnapshot(
     bool SupportAccessNotifyAdmins = false,
     bool SupportAccessNotifySubject = false);
 
+/// <summary>
+/// Partial platform-feature update. Null fields keep the current value (nullable = keep).
+/// </summary>
 public sealed record PlatformFeatureUpdate(
-    bool VacancyContentModerationEnabled,
-    bool AuthenticatorEnabled,
-    bool ExposeRegistrationActivationLinks,
-    string? PublicWebBaseUrl,
-    int InactiveCompanyDays = 120,
-    int SessionInactivityTimeoutMinutes = 30,
+    bool? VacancyContentModerationEnabled = null,
+    bool? AuthenticatorEnabled = null,
+    bool? ExposeRegistrationActivationLinks = null,
+    string? PublicWebBaseUrl = null,
+    int? InactiveCompanyDays = null,
+    int? SessionInactivityTimeoutMinutes = null,
     DateOnly? FreePublishUntil = null,
     /// <summary>
     /// When true, clears <see cref="FreePublishUntil"/> (promo off). When false and

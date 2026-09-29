@@ -460,9 +460,9 @@ public static class PageHelpDocs
             "Gemarkeerde vacatures beoordelen."),
 
         ["/admin/instellingen"] = new(
-            "Beheer · Instellingen",
-            "Systeeminstellingen, platformfeatures en inactiviteitsperiode.",
-            "Zet features aan/uit (moderatie, authenticator, …), stel de inactieve periode in voor de eenmalige “We missen je”-mail (standaard 120 dagen), en beheer integraties.",
+            "Beheer · Functies",
+            "Platformfuncties groepsgewijs aan of uit.",
+            "Zet moderatie, sessie-timeout, support-meldingen en demo-flags aan of uit. Wijzigingen gaan via één opslaan-balk. Prijzen staan onder Financiën › Prijzen.",
             "Gedrag van Lobsy afstemmen zonder code-deploys."),
 
         ["/admin/instellingen/algemeen"] = new(

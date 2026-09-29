@@ -152,6 +152,21 @@ public sealed class PlatformFeatureItem
     public bool SupportAccessNotifySubject { get; set; }
 }
 
+/// <summary>Partial PUT body for platform features (null = keep).</summary>
+public sealed class PlatformFeaturePatch
+{
+    public bool? VacancyContentModerationEnabled { get; set; }
+    public bool? AuthenticatorEnabled { get; set; }
+    public bool? ExposeRegistrationActivationLinks { get; set; }
+    public string? PublicWebBaseUrl { get; set; }
+    public int? InactiveCompanyDays { get; set; }
+    public int? SessionInactivityTimeoutMinutes { get; set; }
+    public DateOnly? FreePublishUntil { get; set; }
+    public bool ClearFreePublishUntil { get; set; }
+    public bool? SupportAccessNotifyAdmins { get; set; }
+    public bool? SupportAccessNotifySubject { get; set; }
+}
+
 public sealed class AdminTodoItemView
 {
     public string Key { get; set; } = "";

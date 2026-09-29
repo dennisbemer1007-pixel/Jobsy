@@ -1087,6 +1087,20 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<PlatformFeatureItem>(cancellationToken: ct);
     }
 
+    public async Task<PlatformFeatureItem?> PatchPlatformFeaturesAsync(
+        PlatformFeaturePatch patch,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/settings/platform-features", patch, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<PlatformFeatureItem>(cancellationToken: ct);
+    }
+
     public async Task<PlatformCompanyItem?> GetPlatformCompanyAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<PlatformCompanyItem>("api/settings/company", ct);
 

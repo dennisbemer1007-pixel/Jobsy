@@ -1,0 +1,69 @@
+@page "/admin/financien/prijzen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["AdminNav.Pricing"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.Pricing"]" Lead="@Culture["AdminSettings.PricingLead"]" Wide="true">
+    <AdminTabs BasePath="/admin/financien/prijzen" ActiveKey="@_tab" Tabs="_tabs" />
+    @if (_tab == "pushbom")
+    {
+        <PricingSettingsSection Mode="pushbom" />
+    }
+    else if (_tab == "flex")
+    {
+        <PricingSettingsSection Mode="flex" />
+    }
+    else if (_tab == "early")
+    {
+        <PricingSettingsSection Mode="early" />
+    }
+    else if (_tab == "sales")
+    {
+        <SalesCommercialSection />
+    }
+    else
+    {
+        <PricingSettingsSection Mode="tokens" />
+    }
+</AdminPageShell>
+
+@code {
+    private string _tab = "tokens";
+    private List<AdminTabs.Tab> _tabs = [];
+
+    protected override void OnInitialized()
+    {
+        _tabs =
+        [
+            new("tokens", Culture["AdminTabs.TokenPrices"]),
+            new("pushbom", Culture["AdminTabs.PushBom"]),
+            new("flex", Culture["AdminTabs.FlexTalent"]),
+            new("early", Culture["AdminTabs.EarlyAdapters"]),
+            new("sales", Culture["AdminTabs.SalesCommission"]),
+        ];
+        _tab = ReadTab();
+    }
+
+    protected override void OnParametersSet() => _tab = ReadTab();
+
+    private string ReadTab()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (q.TryGetValue("tab", out var v))
+        {
+            var key = v.ToString();
+            if (_tabs.Any(t => string.Equals(t.Key, key, StringComparison.OrdinalIgnoreCase)))
+            {
+                return key.ToLowerInvariant();
+            }
+        }
+
+        return "tokens";
+    }
+}

@@ -23,7 +23,7 @@ public static class AdminLegacyRoutes
         new("/admin/vacancy-categories", "/admin/vacatures/categorieen"),
         new("/admin/wages", "/admin/vacatures/categorieen", "salaris"),
         new("/admin/finance", "/admin/financien"),
-        new("/admin/sales", "/admin/financien/prijzen"),
+        new("/admin/sales", "/admin/financien/prijzen", "sales"),
         new("/admin/tokens", "/admin/financien/goodwill"),
         new("/admin/token-finance", "/admin/financien/uitbetalingen"),
         new("/admin/about", "/admin/content/paginas"),

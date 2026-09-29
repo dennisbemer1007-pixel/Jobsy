@@ -45,14 +45,34 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         {
             row = new PlatformFeatureSettings { Id = SingletonId };
             _db.PlatformFeatureSettings.Add(row);
+            ApplyDefaultsForInsert(row);
         }
 
-        row.VacancyContentModerationEnabled = update.VacancyContentModerationEnabled;
-        row.AuthenticatorEnabled = update.AuthenticatorEnabled;
-        row.ExposeRegistrationActivationLinks = update.ExposeRegistrationActivationLinks;
-        row.InactiveCompanyDays = Math.Clamp(update.InactiveCompanyDays, 30, 730);
-        row.SessionInactivityTimeoutMinutes =
-            SessionSecurityRules.ClampTimeoutMinutes(update.SessionInactivityTimeoutMinutes);
+        if (update.VacancyContentModerationEnabled is bool moderation)
+        {
+            row.VacancyContentModerationEnabled = moderation;
+        }
+
+        if (update.AuthenticatorEnabled is bool authenticator)
+        {
+            row.AuthenticatorEnabled = authenticator;
+        }
+
+        if (update.ExposeRegistrationActivationLinks is bool expose)
+        {
+            row.ExposeRegistrationActivationLinks = expose;
+        }
+
+        if (update.InactiveCompanyDays is int inactiveDays)
+        {
+            row.InactiveCompanyDays = Math.Clamp(inactiveDays, 30, 730);
+        }
+
+        if (update.SessionInactivityTimeoutMinutes is int timeout)
+        {
+            row.SessionInactivityTimeoutMinutes = SessionSecurityRules.ClampTimeoutMinutes(timeout);
+        }
+
         if (update.MinimumSessionVersion is int minSession)
         {
             row.MinimumSessionVersion = Math.Max(0, minSession);
@@ -67,6 +87,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         {
             row.SupportAccessNotifySubject = notifySubject;
         }
+
         // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
         // so session-timeout-only PUTs do not silently disable the free-publish promo.
         if (update.ClearFreePublishUntil)
@@ -81,6 +102,8 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         {
             row.FreePublishUntil = FreePublishRules.DefaultUntil;
         }
+
+        // Null PublicWebBaseUrl = keep. Non-empty = set after validation.
         if (!string.IsNullOrWhiteSpace(update.PublicWebBaseUrl))
         {
             var normalized = JobsyPublicUrl.NormalizeOrigin(update.PublicWebBaseUrl);
@@ -92,13 +115,21 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
 
             row.PublicWebBaseUrl = normalized.TrimEnd('/');
         }
-        else
-        {
-            row.PublicWebBaseUrl = null;
-        }
+
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
         return ToSnapshot(row);
+    }
+
+    private void ApplyDefaultsForInsert(PlatformFeatureSettings row)
+    {
+        row.VacancyContentModerationEnabled = _options.VacancyContentModerationEnabled;
+        row.AuthenticatorEnabled = _options.AuthenticatorEnabled;
+        row.ExposeRegistrationActivationLinks = _options.ExposeRegistrationActivationLinks;
+        row.InactiveCompanyDays = 120;
+        row.SessionInactivityTimeoutMinutes = SessionSecurityRules.DefaultInactivityTimeoutMinutes;
+        row.SupportAccessNotifyAdmins = false;
+        row.SupportAccessNotifySubject = false;
     }
 
     private bool IsAllowedPublicOrigin(string origin)

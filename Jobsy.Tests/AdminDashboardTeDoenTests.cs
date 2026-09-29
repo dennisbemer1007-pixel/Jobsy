@@ -478,10 +478,10 @@ public class PlatformModeSummaryTests
     public void Shows_required_for_2fa_and_hides_absent_flags()
     {
         var rows = PlatformModeSummary.Build(vacancyContentModerationEnabled: true);
-        Assert.Contains(rows, r => r.Key == "mfa-policy" && r.ValueKey == "AdminDash.Mode.Required" && r.IsPolicyReadonly);
-        Assert.Contains(rows, r => r.Key == "ai-moderation" && r.IsOn);
+        Assert.Contains(rows, r => r.Key == "MfaPolicy" && r.ValueKey == "AdminDash.Mode.Required" && r.IsPolicyReadonly);
+        Assert.Contains(rows, r => r.Key == "VacancyContentModerationEnabled" && r.IsOn);
         Assert.DoesNotContain(rows, r => r.Key.Contains("passport", StringComparison.OrdinalIgnoreCase));
-        Assert.DoesNotContain(rows, r => r.Key.Contains("employer", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(rows, r => r.Key.Contains("Employer", StringComparison.OrdinalIgnoreCase));
     }
 }
 

@@ -1,8 +1,14 @@
 @namespace Jobsy.Web.Components.Admin.Ui
 
-<div class="admin-toggle-row">
+<div class="admin-toggle-row @(IsDirty ? "admin-toggle-row--dirty" : null) @(IsLocked ? "admin-toggle-row--locked" : null)">
     <div class="admin-toggle-row__text">
-        <p class="admin-toggle-row__title">@Title</p>
+        <p class="admin-toggle-row__title">
+            @Title
+            @if (!string.IsNullOrWhiteSpace(Badge))
+            {
+                <span class="status-pill status-pill--warn admin-toggle-row__badge">@Badge</span>
+            }
+        </p>
         @if (!string.IsNullOrWhiteSpace(Description))
         {
             <p class="admin-toggle-row__desc">@Description</p>
@@ -25,6 +31,9 @@
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public string? Description { get; set; }
     [Parameter] public string? Meta { get; set; }
+    [Parameter] public string? Badge { get; set; }
+    [Parameter] public bool IsDirty { get; set; }
+    [Parameter] public bool IsLocked { get; set; }
     [Parameter] public RenderFragment? Control { get; set; }
     [Parameter] public RenderFragment? Impact { get; set; }
 }

@@ -1,0 +1,139 @@
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject Jobsy.Web.Branding.PlatformBrandingState Branding
+@implements IDisposable
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error">@_error</p>
+}
+else
+{
+    <section class="detail-card admin-settings-group">
+        <div class="panel-header">
+            <h2>@Culture["AdminSettings.LobsyCompany.Title"]</h2>
+            <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="SaveAsync">
+                @Culture["Common.Save"]
+            </button>
+        </div>
+        <p class="muted admin-settings-group__desc">@Culture["AdminShell.CompanyLead"]</p>
+        <p class="muted">@Culture["AdminSettings.LobsyCompany.Hint"]</p>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+
+        <div class="login-form admin-company-form">
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Name"]
+                <input @bind="_form.CompanyName" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Slogan"]
+                <input @bind="_form.Slogan" maxlength="240" />
+            </label>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.SloganHint"]</p>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Address"]
+                <input @bind="_form.Address" />
+            </label>
+            <div class="admin-company-form__row">
+                <label>
+                    @Culture["AdminSettings.LobsyCompany.PostalCode"]
+                    <input @bind="_form.PostalCode" />
+                </label>
+                <label>
+                    @Culture["AdminSettings.LobsyCompany.City"]
+                    <input @bind="_form.City" />
+                </label>
+            </div>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Country"]
+                <input @bind="_form.Country" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Kvk"]
+                <input @bind="_form.KvkNumber" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Vat"]
+                <input @bind="_form.VatNumber" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Iban"]
+                <input @bind="_form.VatBufferIban"
+                       placeholder="NL00KNAB0123456789"
+                       autocomplete="off"
+                       spellcheck="false" />
+            </label>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.IbanHint"]</p>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.IbanVatHint"]</p>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Phone"]
+                <input @bind="_form.Phone" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Email"]
+                <input type="email" @bind="_form.Email" />
+            </label>
+        </div>
+    </section>
+}
+
+@code {
+    private PlatformCompanyItem _form = new();
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _form = await Api.GetPlatformCompanyAsync() ?? new PlatformCompanyItem();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            _form = await Api.SavePlatformCompanyAsync(_form) ?? _form;
+            await Branding.RefreshAsync();
+            _message = Culture["AdminSettings.LobsyCompany.Saved"];
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -235,13 +235,14 @@ public record IntegrationCredentialDto(
     bool IgnoresEnvironmentCredentials = false,
     bool UsesEnvironmentCredentials = false);
 
+/// <summary>Partial update: null fields keep the current value.</summary>
 public record UpdatePlatformFeatureRequest(
-    bool VacancyContentModerationEnabled,
-    bool AuthenticatorEnabled,
-    bool ExposeRegistrationActivationLinks,
-    string? PublicWebBaseUrl,
-    int InactiveCompanyDays = 120,
-    int SessionInactivityTimeoutMinutes = 30,
+    bool? VacancyContentModerationEnabled = null,
+    bool? AuthenticatorEnabled = null,
+    bool? ExposeRegistrationActivationLinks = null,
+    string? PublicWebBaseUrl = null,
+    int? InactiveCompanyDays = null,
+    int? SessionInactivityTimeoutMinutes = null,
     DateOnly? FreePublishUntil = null,
     bool ClearFreePublishUntil = false,
     bool? SupportAccessNotifyAdmins = null,

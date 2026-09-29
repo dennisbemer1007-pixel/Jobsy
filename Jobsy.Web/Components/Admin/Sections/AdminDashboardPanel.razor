@@ -1,6 +1,8 @@
 @using System.Globalization
 @using System.Security.Claims
 @using Jobsy.Core.Admin
+@using Jobsy.Core.Interfaces
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
@@ -243,7 +245,9 @@
             TodoCounts.Apply(todo);
             _kpis = BuildKpis(metrics, finance);
             _health = health.Select(MapHealth).ToList();
-            _mode = PlatformModeSummary.Build(features?.VacancyContentModerationEnabled ?? true);
+            _mode = features is null
+                ? PlatformModeSummary.Build(true)
+                : PlatformSettingsCatalog.DashboardRows(ToSnapshot(features));
         }
         catch
         {
@@ -416,6 +420,19 @@
         "applications" => "/admin/vacatures",
         _ => "/admin/vacatures"
     };
+
+    private static PlatformFeatureSnapshot ToSnapshot(PlatformFeatureItem f) =>
+        new(
+            f.VacancyContentModerationEnabled,
+            f.AuthenticatorEnabled,
+            f.ExposeRegistrationActivationLinks,
+            f.PublicWebBaseUrl,
+            f.UpdatedAtUtc,
+            f.InactiveCompanyDays,
+            f.SessionInactivityTimeoutMinutes,
+            f.FreePublishUntil,
+            SupportAccessNotifyAdmins: f.SupportAccessNotifyAdmins,
+            SupportAccessNotifySubject: f.SupportAccessNotifySubject);
 
     private sealed record KpiVm(
         string Label,
