@@ -289,10 +289,10 @@ public class MatchDesktopBunitTests : TestContext
 
         var skippedId = deck.Current!.VacancyId;
         cut.Find("button.swipe-actions__btn--reject").Click();
-        cut.WaitForAssertion(() => Assert.Equal(2, deck.Position), TimeSpan.FromSeconds(2));
+        cut.WaitForAssertion(() => Assert.Equal(skippedId, deck.Items[^1].VacancyId), TimeSpan.FromSeconds(2));
         Assert.Equal(1, _likeHandler.LikePosts);
-        Assert.Equal(skippedId, deck.Items[^1].VacancyId);
         Assert.Contains("We laten hem later nog eens zien", cut.Markup, StringComparison.Ordinal);
+        Assert.Equal(2, deck.Position);
 
         cut.Find("[role=dialog]").KeyDown(new KeyboardEventArgs { Key = "ArrowRight" });
         cut.WaitForAssertion(() => Assert.Equal(3, deck.Position), TimeSpan.FromSeconds(2));

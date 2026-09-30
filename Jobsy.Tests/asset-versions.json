@@ -63,6 +63,10 @@
     "sha256": "226498db3c36a03789a4d3d80af373c11fcdd52635bab0327a9e8004930aff4c",
     "v": "20260925-coral"
   },
+  "images/brand/mascot-128.png": {
+    "sha256": "a9cd27038f64cc06840f62837b92ccb0aa918261f3d86d756b2f8e53bbd1a352",
+    "v": "20260828-mascot"
+  },
   "js/app-core.js": {
     "sha256": "5f0a7d277d4d2b6235907a42f56924c7559950ad31b601f039a2663c9e06e3f4",
     "v": "20260930-kb6"

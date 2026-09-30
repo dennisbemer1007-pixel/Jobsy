@@ -89,7 +89,9 @@ public class MatchProfileGateTests
         Assert.Contains("IsProfileComplete", page, StringComparison.Ordinal);
         Assert.Contains("MatchVacancyService", page, StringComparison.Ordinal);
         Assert.Contains("CandidateMatchProfileService", page, StringComparison.Ordinal);
-        Assert.Contains("banenkaart", page, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("KbRoutes.Map", page, StringComparison.Ordinal);
+        Assert.Contains("MatchUnlockPanel", page, StringComparison.Ordinal);
+        Assert.Contains("FitGateOpen", page, StringComparison.Ordinal);
 
         var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Program.cs"));
         Assert.Contains("CandidateMatchProfileService", program, StringComparison.Ordinal);
