@@ -8,7 +8,7 @@
 
     @if (Variant != ClimbVariant.Stones && _points.Count > 0)
     {
-        <div class="career-scene__lob" style="@LobsterStyle">
+        <div class="career-scene__lob" style="--x:@(LobsterX)%;--y:@(LobsterY)%;--size:@(LobsterSize)px">
             <JourneyLobster PlatesShed="@PlatesShed"
                             Size="@LobsterSize"
                             Mobile="@Mobile"
@@ -21,7 +21,8 @@
         @for (var i = 0; i < _points.Count && i < Stones.Count; i++)
         {
             var stone = Stones[i];
-            <span class="career-scene__label career-scene__label--@StateClass(stone.State)" style="@LabelStyle(i)">
+            <span class="career-scene__label career-scene__label--@StateClass(stone.State)"
+                  style="--x:@(Xp(i))%;--y:@(Yp(i))%">
                 <b>@stone.Label</b>
                 @if (!string.IsNullOrWhiteSpace(stone.StateText))
                 {
@@ -57,25 +58,17 @@
             listen: Variant == ClimbVariant.Listen);
     }
 
-    private string LobsterStyle
-    {
-        get
-        {
-            var index = Math.Clamp(CurrentIndex, 0, Math.Max(0, _points.Count - 1));
-            var p = _points[index];
-            return string.Create(
-                CultureInfo.InvariantCulture,
-                $"--x:{Percent(p.X, CareerClimbGeometry.Width(Mobile))}%;--y:{Percent(p.Y, CareerClimbGeometry.Height(Mobile))}%;--size:{LobsterSize}px");
-        }
-    }
+    private int LobsterIndex => Math.Clamp(CurrentIndex, 0, Math.Max(0, _points.Count - 1));
 
-    private string LabelStyle(int index)
-    {
-        var p = _points[index];
-        return string.Create(
-            CultureInfo.InvariantCulture,
-            $"--x:{Percent(p.X, CareerClimbGeometry.Width(Mobile))}%;--y:{Percent(p.Y, CareerClimbGeometry.Height(Mobile))}%");
-    }
+    private string LobsterX => Xp(LobsterIndex);
+
+    private string LobsterY => Yp(LobsterIndex);
+
+    private string Xp(int index)
+        => Percent(_points[index].X, CareerClimbGeometry.Width(Mobile));
+
+    private string Yp(int index)
+        => Percent(_points[index].Y, CareerClimbGeometry.Height(Mobile));
 
     private static string Percent(double value, double total)
         => (Math.Round(value / total * 1000) / 10).ToString("0.#", CultureInfo.InvariantCulture);

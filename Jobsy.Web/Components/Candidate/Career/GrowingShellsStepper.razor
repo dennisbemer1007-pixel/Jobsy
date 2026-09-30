@@ -10,7 +10,7 @@
             var stone = Stones[i];
             var isCurrent = stone.State == ClimbStoneState.Now;
             <li class="career-stepper__item career-stepper__item--@StateClass(stone.State)"
-                style="@SizeStyle(i)"
+                style="--shell-size:@(ShellSize(i))px"
                 aria-current="@(isCurrent ? "step" : null)">
                 <span class="career-stepper__shell" aria-hidden="true">
                     @if (stone.State == ClimbStoneState.Done)
@@ -60,11 +60,11 @@
         return space > 2 ? text[..space] : text;
     }
 
-    private string SizeStyle(int index)
+    /// <summary>30 px at "Nu" growing to 48 px at the goal (paspoort 04.2); mobile is 4 px smaller.</summary>
+    private int ShellSize(int index)
     {
         var last = Math.Max(1, Stones.Count - 1);
-        var size = 30 + (48 - 30) * index / last - (Mobile ? 4 : 0);
-        return $"--shell-size:{size}px";
+        return 30 + (48 - 30) * index / last - (Mobile ? 4 : 0);
     }
 
     private static string StateClass(ClimbStoneState state) => state switch

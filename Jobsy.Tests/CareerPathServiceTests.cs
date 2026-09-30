@@ -142,53 +142,45 @@ public class CareerPathServiceTests
     }
 
     [Fact]
-    public void Career_dashboard_page_is_horizon_layout_with_progress()
+    public void Career_dashboard_page_is_the_journey_style_climb()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerDashboard.razor"));
         Assert.Contains("@page \"/carriere\"", page);
-        Assert.Contains("CareerPathService", page);
-        Assert.Contains("horizon-hero", page);
-        Assert.Contains("horizon-stepper", page);
-        Assert.Contains("horizon-card", page);
-        Assert.Contains("career-dream-input", page);
+        Assert.Contains("journey-page career-page", page);
+        Assert.Contains("CareerStage", page);
+        Assert.Contains("CareerRail", page);
+        Assert.Contains("CareerEmptyCard", page);
+        Assert.Contains("CareerOverviewCard", page);
+        Assert.Contains("CareerDreamDialog", page);
+        Assert.Contains("CareerArchivedPlans", page);
+        Assert.Contains("GrowingShellsStepper", page);
+        Assert.Contains("CareerPlanViewBuilder.BuildPage", page);
         Assert.Contains("GetCareerPathAsync", page);
         Assert.Contains("GenerateCareerPathAsync", page);
-        Assert.Contains("CompleteCareerStepAsync", page);
-        Assert.Contains("ClaimCareerCourseAsync", page);
-        Assert.Contains("LobsyToast", page);
-        Assert.Contains("CareerDash.Courses", page);
-        Assert.Contains("CareerDash.CourseClaim", page);
-        Assert.Contains("CareerDash.MarkComplete", page);
-        Assert.Contains("CareerDash.GoalReachedTitle", page);
-        Assert.Contains("CareerDash.YearsExperience", page);
-        Assert.Contains("CareerDash.MatchWithProfile", page);
-        Assert.Contains("CareerDash.ViewStep", page);
-        Assert.Contains("CareerDash.Generating", page);
-        Assert.Contains("aria-current", page);
-        Assert.DoesNotContain("CareerDash.CurrentRole", page);
-        Assert.DoesNotContain("CareerDash.PlanLead", page);
-        Assert.DoesNotContain("Magazijnmedewerker", page);
-        Assert.DoesNotContain("career-gauge", page);
-        Assert.DoesNotContain("career-dream-select", page);
-        Assert.DoesNotContain("career-accordion", page);
-        Assert.DoesNotContain("career-dash__bar", page);
-        Assert.DoesNotContain("career-steps", page);
+        Assert.Contains("RestoreArchivedCareerPlanAsync", page);
+
+        // B2/B3/B6/B10/B11/B12: the old horizon hero, confirm interop and % are gone.
+        Assert.DoesNotContain("horizon-hero", page);
+        Assert.DoesNotContain("horizon-stepper", page);
+        Assert.DoesNotContain("horizon-card", page);
+        Assert.DoesNotContain("HorizonArt", page);
+        Assert.DoesNotContain("career-dream-input", page);
+        Assert.DoesNotContain("datalist", page);
+        Assert.DoesNotContain("window.confirm", page);
+        Assert.DoesNotContain("@onblur", page);
+        Assert.DoesNotContain("ClaimCareerCourseAsync", page);
+        Assert.DoesNotContain("MatchWithProfile", page);
+        Assert.DoesNotContain("ex.Message", page);
         Assert.DoesNotContain("<select", page);
 
-        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".career-dash", css);
-        Assert.Contains(".horizon-hero", css);
-        Assert.Contains(".horizon-stepper", css);
-        Assert.Contains(".horizon-card", css);
-        Assert.Contains(".horizon-course.is-on-profile", css);
-        Assert.Contains(".horizon-card__ghost", css);
-        Assert.Contains(".lobsy-toast", css);
-        Assert.Contains("is-goal-reached", css);
-        Assert.Contains("--gold", css);
-        Assert.DoesNotContain(".career-gauge", css);
-        Assert.DoesNotContain(".career-accordion {", css);
-        Assert.DoesNotContain(".career-steps {", css);
-        Assert.DoesNotContain(".career-dash__bar", css);
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/carriere.css"));
+        Assert.Contains(".career-page", css);
+        Assert.Contains(".career-scene", css);
+        Assert.Contains(".career-stage", css);
+        Assert.Contains(".career-rail", css);
+        Assert.Contains(".career-stepper", css);
+        Assert.Contains("journey-page h1:focus:not(:focus-visible)", css);
+        Assert.Contains("prefers-reduced-motion", css);
     }
 }
