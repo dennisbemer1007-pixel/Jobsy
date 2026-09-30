@@ -1,0 +1,32 @@
+@namespace Jobsy.Web.Components.Registration
+
+<div class="wa-mascot wa-mascot--@Pose.ToString().ToLowerInvariant() @(SizeClass)" aria-hidden="true">
+    <img class="wa-mascot__img"
+         src="@Jobsy.Web.Media.BrandImages.MascotWebp256"
+         srcset="@Jobsy.Web.Media.BrandImages.MascotSrcSet56"
+         sizes="(max-width: 640px) 96px, 150px"
+         width="150"
+         height="150"
+         alt=""
+         loading="lazy"
+         decoding="async" />
+</div>
+
+@code {
+    public enum MascotPose
+    {
+        Waving,
+        Default,
+        Celebrating
+    }
+
+    [Parameter] public MascotPose Pose { get; set; } = MascotPose.Waving;
+    [Parameter] public string Size { get; set; } = "md";
+
+    private string SizeClass => Size switch
+    {
+        "sm" => "wa-mascot--sm",
+        "lg" => "wa-mascot--lg",
+        _ => "wa-mascot--md"
+    };
+}

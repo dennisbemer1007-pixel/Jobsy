@@ -1,0 +1,203 @@
+@namespace Jobsy.Web.Components.Registration
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="wa-step-account">
+    <p class="wa-eyebrow">@Culture["Wa.Account.Eyebrow"]</p>
+    <h1>@Culture["Wa.Account.Title"]</h1>
+    <p class="wa-lead">
+        @string.Format(Culture["Wa.Account.Lead"], State.CompanyName ?? "")
+    </p>
+
+    <div class="wa-grid-2">
+        <label class="wa-field">
+            <span class="wa-field__label">@Culture["Wa.Account.Name"]</span>
+            <span class="wa-input">
+                <input @bind="State.ContactName" maxlength="256" autocomplete="name" required />
+            </span>
+        </label>
+        <label class="wa-field">
+            <span class="wa-field__label">@Culture["Wa.Account.Function"]</span>
+            <span class="wa-input">
+                <input @bind="State.ContactFunction" maxlength="128" />
+            </span>
+        </label>
+        <label class="wa-field">
+            <span class="wa-field__label">@Culture["Wa.Account.Email"]</span>
+            <span class="wa-input">
+                <input @bind="State.ContactEmail" @bind:event="oninput" type="email" maxlength="256" autocomplete="email" required />
+                @if (DomainPill is not null)
+                {
+                    <span class="wa-chip @DomainPillClass">@DomainPill</span>
+                }
+            </span>
+            @if (DomainHint is not null)
+            {
+                <span class="wa-hint">@DomainHint</span>
+            }
+        </label>
+        <label class="wa-field">
+            <span class="wa-field__label">@Culture["Wa.Account.Phone"]</span>
+            <span class="wa-input">
+                <input @bind="State.ContactPhone" maxlength="64" autocomplete="tel" />
+            </span>
+            <span class="wa-hint">@Culture["Wa.Account.PhoneHint"]</span>
+        </label>
+    </div>
+
+    <h3 class="wa-section-title">@Culture["Wa.Account.LoginMethod"]</h3>
+    <p class="wa-hint">@Culture["Wa.Account.LoginMethodHint"]</p>
+    <div class="wa-providers">
+        <button type="button" class="wa-btn wa-btn--outline @(State.PreferredLoginProvider == "microsoft" ? "is-on" : null)" @onclick='() => SetProvider("microsoft")'>Microsoft</button>
+        <button type="button" class="wa-btn wa-btn--outline @(State.PreferredLoginProvider == "google" ? "is-on" : null)" @onclick='() => SetProvider("google")'>Google</button>
+        <button type="button" class="wa-btn wa-btn--outline @(State.PreferredLoginProvider == "password" ? "is-on" : null)" @onclick='() => SetProvider("password")'>@Culture["Wa.Account.EmailPassword"]</button>
+    </div>
+
+    @if (State.PreferredLoginProvider == "password")
+    {
+        <div class="wa-grid-2">
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["Wa.Account.Password"]</span>
+                <span class="wa-input">
+                    <input type="password" @bind="_password" maxlength="128" autocomplete="new-password" />
+                </span>
+            </label>
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["Wa.Account.PasswordConfirm"]</span>
+                <span class="wa-input">
+                    <input type="password" @bind="_passwordConfirm" maxlength="128" autocomplete="new-password" />
+                </span>
+            </label>
+        </div>
+    }
+
+    <div class="wa-note wa-note--soft">
+        <strong>@Culture["Wa.Account.SalesTitle"]</strong>
+        <p>@Culture["Wa.Account.SalesBody"]</p>
+        @if (State.SalesCodeKnown && !string.IsNullOrWhiteSpace(State.SalesCodeResolved))
+        {
+            <span class="wa-chip wa-chip--ok">✓ @State.SalesCodeResolved · @Culture["Wa.Account.SalesViaLink"]</span>
+            <button type="button" class="wa-link" @onclick="ClearSales">@Culture["Wa.Account.SalesChange"]</button>
+        }
+        else
+        {
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["Wa.Account.SalesCode"]</span>
+                <span class="wa-input">
+                    <input value="@State.SalesCodeTyped"
+                           @oninput="OnSalesInput"
+                           @onblur="OnSalesBlur"
+                           maxlength="32" />
+                </span>
+            </label>
+            @if (_salesUnknown)
+            {
+                <p class="wa-hint">@Culture["Wa.Account.SalesUnknown"]</p>
+            }
+        }
+    </div>
+
+    <label class="wa-check">
+        <input type="checkbox" @bind="_terms" />
+        <span>@Culture["Wa.Account.Terms"]</span>
+    </label>
+    <label class="wa-check">
+        <input type="checkbox" @bind="_represent" />
+        <span>@string.Format(Culture["Wa.Account.Represent"], State.CompanyName ?? "")</span>
+    </label>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public RegistrationWizardState State { get; set; } = null!;
+    [Parameter] public EventCallback OnChanged { get; set; }
+    [Parameter] public EventCallback<(string? Code, Guid? UserId, bool Known)> OnSalesResolve { get; set; }
+
+    private string _password = "";
+    private string _passwordConfirm = "";
+    private bool _terms;
+    private bool _represent;
+    private bool _salesUnknown;
+
+    public string? Password => _password;
+    public string? PasswordConfirm => _passwordConfirm;
+    public bool AcceptedTerms => _terms;
+    public bool AcceptedRepresentation => _represent;
+
+    private string? DomainPill
+    {
+        get
+        {
+            var domain = DomainMatch.ExtractEmailDomain(State.ContactEmail);
+            if (string.IsNullOrWhiteSpace(domain))
+            {
+                return null;
+            }
+
+            if (FreeMailDomains.IsFreeMail(domain))
+            {
+                return Culture["Wa.Account.PillFreeMail"];
+            }
+
+            if (DomainMatch.EmailMatchesAnyWebsite(State.ContactEmail, State.Websites))
+            {
+                return Culture["Wa.Account.PillMatch"];
+            }
+
+            return Culture["Wa.Account.PillOther"];
+        }
+    }
+
+    private string DomainPillClass =>
+        FreeMailDomains.IsFreeMail(State.ContactEmail) ? "wa-chip--warn"
+        : DomainMatch.EmailMatchesAnyWebsite(State.ContactEmail, State.Websites) ? "wa-chip--ok"
+        : "";
+
+    private string? DomainHint
+    {
+        get
+        {
+            if (DomainMatch.EmailMatchesAnyWebsite(State.ContactEmail, State.Websites))
+            {
+                var site = DomainMatch.RegistrableDomain(State.Websites.FirstOrDefault()) ?? "";
+                return string.Format(Culture["Wa.Account.DomainMatchHint"], site);
+            }
+
+            if (FreeMailDomains.IsFreeMail(State.ContactEmail))
+            {
+                return Culture["Wa.Account.FreeMailHint"];
+            }
+
+            return null;
+        }
+    }
+
+    private async Task SetProvider(string provider)
+    {
+        State.PreferredLoginProvider = provider;
+        await OnChanged.InvokeAsync();
+    }
+
+    private void OnSalesInput(ChangeEventArgs e)
+    {
+        State.SalesCodeTyped = e.Value?.ToString();
+        _salesUnknown = false;
+    }
+
+    private async Task OnSalesBlur()
+    {
+        await OnSalesResolve.InvokeAsync((State.SalesCodeTyped, State.SalesManagerUserId, State.SalesCodeKnown));
+        _salesUnknown = !string.IsNullOrWhiteSpace(State.SalesCodeTyped) && !State.SalesCodeKnown;
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task ClearSales()
+    {
+        State.SalesCodeTyped = null;
+        State.SalesCodeResolved = null;
+        State.SalesManagerUserId = null;
+        State.SalesCodeKnown = false;
+        State.SalesCodeSource = null;
+        await OnChanged.InvokeAsync();
+    }
+}

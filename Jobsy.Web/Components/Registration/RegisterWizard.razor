@@ -1,0 +1,507 @@
+@namespace Jobsy.Web.Components.Registration
+@using Jobsy.Core.Rules
+@using Jobsy.Core.Security
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using System.Net.Http.Json
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IHostEnvironment HostEnvironment
+@inject ProtectedSessionStorage SessionStorage
+@inject IGeocodingClient Geocoder
+@inject IConfiguration Configuration
+
+<div class="wa-wizard">
+    <WaWizardChrome CurrentStep="@ChromeStep"
+                    Speech="@Speech"
+                    Pose="@(State.Done ? WaMascot.MascotPose.Celebrating : WaMascot.MascotPose.Waving)"
+                    DoneOnCurrent="State.Done" />
+
+    <div class="wa-card">
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <p class="wa-error" role="alert">@_error</p>
+        }
+
+        @if (State.Done)
+        {
+            <WaDone State="State" />
+        }
+        else if (State.Step == 1)
+        {
+            <p class="wa-eyebrow">@Culture["Wa.Search.Eyebrow"]</p>
+            <h1>@Culture["Wa.Search.Title"]</h1>
+            <p class="wa-lead">@Culture["Wa.Search.Lead"]</p>
+
+            <WaKvkSearchBox InitialQuery="@State.SearchQuery"
+                            InitialPlace="@State.SearchPlace"
+                            OnSelected="OnHitSelected"
+                            OnManualRequested="ShowManual"
+                            OnQueryChanged="OnSearchQueryChanged" />
+
+            @if (HostEnvironment.IsDevelopment())
+            {
+                <p class="wa-hint">Stub-KVK’s: 12345678 (werkgever), 55667788 (intermediair SBI 78)</p>
+            }
+
+            <div class="wa-need">
+                <h3>@Culture["Wa.Search.NeedTitle"]</h3>
+                <ul>
+                    <li>@Culture["Wa.Search.Need1"]</li>
+                    <li>@Culture["Wa.Search.Need2"]</li>
+                    <li>@Culture["Wa.Search.Need3"]</li>
+                    <li>@Culture["Wa.Search.Need4"]</li>
+                </ul>
+            </div>
+
+            <p class="wa-note">
+                @Culture["Wa.Search.ManualLead"]
+                <button type="button" class="wa-link" @onclick="ShowManual">@Culture["Wa.Search.ManualCta"]</button>
+            </p>
+
+            @if (_showManual)
+            {
+                <form class="wa-manual" @onsubmit="ContinueManual" @onsubmit:preventDefault>
+                    <label class="wa-field">
+                        <span class="wa-field__label">@Culture["Wa.Manual.Name"]</span>
+                        <span class="wa-input"><input @bind="State.ManualName" required maxlength="256" /></span>
+                    </label>
+                    <label class="wa-field">
+                        <span class="wa-field__label">@Culture["Wa.Manual.Kvk"]</span>
+                        <span class="wa-input"><input @bind="State.ManualKvk" required maxlength="20" /></span>
+                    </label>
+                    <label class="wa-field">
+                        <span class="wa-field__label">@Culture["Wa.Manual.Address"]</span>
+                        <span class="wa-input"><input @bind="State.ManualAddress" required maxlength="512" /></span>
+                    </label>
+                    <label class="wa-field">
+                        <span class="wa-field__label">@Culture["Wa.Manual.PostcodePlace"]</span>
+                        <span class="wa-input"><input @bind="State.ManualPostcodePlace" required maxlength="128" /></span>
+                    </label>
+                    <button class="wa-btn wa-btn--primary" type="submit" disabled="@_busy">@Culture["Common.Continue"]</button>
+                </form>
+            }
+        }
+        else if (State.Step == 2)
+        {
+            <WaStepScope State="State" OnChanged="Persist" OnChangeCompany="BackToSearch" />
+            <div class="wa-actions wa-fixed-bottom">
+                <button type="button" class="wa-link" @onclick="BackToSearch">@Culture["Common.Back"]</button>
+                <button type="button" class="wa-btn wa-btn--primary" disabled="@(!CanContinueScope || _busy)" @onclick="GoAccount">
+                    @Culture["Wa.Scope.Continue"]
+                </button>
+            </div>
+        }
+        else if (State.Step == 3 && State.RegistrationId == Guid.Empty)
+        {
+            <WaStepAccount @ref="_account"
+                           State="State"
+                           OnChanged="Persist"
+                           OnSalesResolve="ResolveSalesAsync" />
+            <div class="wa-actions wa-fixed-bottom">
+                <button type="button" class="wa-link" @onclick="() => { State.Step = 2; return Persist(); }">@Culture["Common.Back"]</button>
+                <button type="button" class="wa-btn wa-btn--primary" disabled="@_busy" @onclick="SubmitAccountAsync">
+                    @Culture["Wa.Account.Submit"]
+                </button>
+            </div>
+        }
+        else if (State.Step == 3)
+        {
+            <WaStepCode State="State"
+                        Busy="_busy"
+                        Error="_error"
+                        Expired="_codeExpired"
+                        OnConfirm="ConfirmCodeAsync"
+                        OnResend="ResendCodeAsync" />
+            <div class="wa-actions">
+                <button type="button" class="wa-link" @onclick="BackFromCode">@Culture["Common.Back"]</button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? DeepLinkKvk { get; set; }
+    [Parameter] public string? RefCode { get; set; }
+
+    [Inject] public RegistrationWizardState State { get; set; } = null!;
+
+    private WaStepAccount? _account;
+    private bool _busy;
+    private bool _hydrated;
+    private bool _showManual;
+    private bool _codeExpired;
+    private string? _error;
+
+    private int ChromeStep => State.Done ? 3 : State.Step is 1 or 2 or 3 ? State.Step : 1;
+
+    private string Speech => State.Step switch
+    {
+        1 => Culture["Wa.Guide.Speech1"],
+        2 => Culture["Wa.Guide.Speech2"],
+        3 when State.RegistrationId == Guid.Empty => Culture["Wa.Guide.Speech3"],
+        3 => Culture["Wa.Guide.SpeechCode"],
+        _ => Culture["Wa.Guide.Speech1"]
+    };
+
+    private bool CanContinueScope =>
+        State.Establishments.Any(e => !e.IsInUse)
+        && State.SelectedEstablishmentIds.Count > 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _hydrated)
+        {
+            return;
+        }
+
+        _hydrated = true;
+        try
+        {
+            await State.RestoreAsync(SessionStorage);
+        }
+        catch
+        {
+            // ProtectedSessionStorage unavailable during prerender — ignore.
+        }
+
+        if (!string.IsNullOrWhiteSpace(RefCode) && string.IsNullOrWhiteSpace(State.SalesCodeResolved))
+        {
+            await ApplyReferralAsync(null, RefCode);
+        }
+
+        if (!string.IsNullOrWhiteSpace(DeepLinkKvk) && string.IsNullOrWhiteSpace(State.SelectedKvk))
+        {
+            State.SearchQuery = DeepLinkKvk;
+            await LoadProfileAsync(DeepLinkKvk);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private Task OnSearchQueryChanged((string Query, string Place) value)
+    {
+        State.SearchQuery = value.Query;
+        State.SearchPlace = value.Place;
+        return Persist();
+    }
+
+    private void ShowManual() => _showManual = true;
+
+    private async Task OnHitSelected(KvkSearchHitItem hit)
+    {
+        _error = null;
+        _busy = true;
+        try
+        {
+            await LoadProfileAsync(hit.KvkNumber);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task LoadProfileAsync(string kvk)
+    {
+        var profile = await Api.GetKvkProfileAsync(kvk);
+        if (profile.Status.Equals("Unavailable", StringComparison.OrdinalIgnoreCase))
+        {
+            _showManual = true;
+            _error = profile.Message ?? Culture["Wa.Search.Unavailable"];
+            return;
+        }
+
+        if (profile.Status.Equals("NotFound", StringComparison.OrdinalIgnoreCase))
+        {
+            _error = Culture["Wa.Search.NoResults"];
+            return;
+        }
+
+        State.SelectedKvk = profile.KvkNumber;
+        State.CompanyName = profile.Name;
+        State.LegalForm = profile.LegalForm;
+        State.CompanyAddress = profile.Address;
+        State.Websites = profile.Websites ?? [];
+        State.SbiCodes = profile.SbiCodes ?? [];
+        State.ManualMode = false;
+        State.Establishments = (profile.Establishments ?? [])
+            .Select((e, i) => new WizardEstablishment
+            {
+                KvkEstablishmentId = e.KvkEstablishmentId,
+                EstablishmentNumber = e.EstablishmentNumber,
+                Name = string.IsNullOrWhiteSpace(e.Name) ? profile.Name : e.Name,
+                Address = e.Address,
+                Latitude = e.Latitude,
+                Longitude = e.Longitude,
+                IsInUse = e.IsInUse,
+                IsHoofdvestiging = i == 0
+            })
+            .ToList();
+        State.SelectedEstablishmentIds = new HashSet<string>(
+            State.Establishments.Where(e => !e.IsInUse).Select(e => e.KvkEstablishmentId),
+            StringComparer.OrdinalIgnoreCase);
+        State.Scope = State.IsIntermediarySbi ? "BranchOnly" : "Organization";
+        State.Step = 2;
+        await Persist();
+    }
+
+    private async Task ContinueManual()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var addressQuery = $"{State.ManualAddress}, {State.ManualPostcodePlace}".Trim().Trim(',');
+            var suggestions = await Geocoder.SuggestAsync(addressQuery);
+            var geo = suggestions.FirstOrDefault();
+            State.ManualLatitude = geo?.Latitude;
+            State.ManualLongitude = geo?.Longitude;
+            State.LocationUnknown = geo is null;
+            State.ManualMode = true;
+            State.SelectedKvk = new string(State.ManualKvk.Where(char.IsDigit).ToArray());
+            State.CompanyName = State.ManualName;
+            State.CompanyAddress = $"{State.ManualAddress}, {State.ManualPostcodePlace}".Trim().Trim(',');
+            State.Websites = [];
+            State.SbiCodes = [];
+            var estId = $"{State.SelectedKvk}_{State.ManualEstablishmentNumber.PadLeft(4, '0')}";
+            State.Establishments =
+            [
+                new WizardEstablishment
+                {
+                    KvkEstablishmentId = estId,
+                    EstablishmentNumber = State.ManualEstablishmentNumber.PadLeft(4, '0'),
+                    Name = State.ManualName,
+                    Address = State.CompanyAddress ?? "",
+                    Latitude = State.ManualLatitude ?? 0,
+                    Longitude = State.ManualLongitude ?? 0,
+                    IsInUse = false,
+                    IsHoofdvestiging = true
+                }
+            ];
+            State.SelectedEstablishmentIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { estId };
+            State.Scope = "BranchOnly";
+            State.Step = 2;
+            await Persist();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task BackToSearch()
+    {
+        State.Step = 1;
+        State.SelectedKvk = null;
+        State.Establishments = [];
+        State.SelectedEstablishmentIds.Clear();
+        await Persist();
+    }
+
+    private async Task GoAccount()
+    {
+        if (!CanContinueScope)
+        {
+            _error = Culture["Wa.Scope.PickOne"];
+            return;
+        }
+
+        State.Step = 3;
+        await Persist();
+    }
+
+    private async Task ResolveSalesAsync((string? Code, Guid? UserId, bool Known) _)
+    {
+        await ApplyReferralAsync(State.SalesCodeTyped, RefCode);
+    }
+
+    private async Task ApplyReferralAsync(string? typed, string? link)
+    {
+        try
+        {
+            var result = await Api.ResolveRegistrationReferralAsync(typed, link);
+            State.SalesCodeResolved = result.Code;
+            State.SalesManagerUserId = result.SalesManagerUserId;
+            State.SalesCodeKnown = result.IsKnown;
+            State.SalesCodeSource = result.Source;
+            if (result.IsKnown && string.IsNullOrWhiteSpace(State.SalesCodeTyped))
+            {
+                State.SalesCodeTyped = result.Code;
+            }
+
+            await Persist();
+        }
+        catch
+        {
+            // Soft-fail: unknown codes never block.
+            State.SalesCodeKnown = false;
+        }
+    }
+
+    private async Task SubmitAccountAsync()
+    {
+        if (_account is null)
+        {
+            return;
+        }
+
+        _error = null;
+        if (!_account.AcceptedTerms || !_account.AcceptedRepresentation)
+        {
+            _error = Culture["Wa.Account.ConsentRequired"];
+            return;
+        }
+
+        if (State.PreferredLoginProvider == "password")
+        {
+            if (!string.Equals(_account.Password, _account.PasswordConfirm, StringComparison.Ordinal))
+            {
+                _error = Culture["Wa.Account.PasswordMismatch"];
+                return;
+            }
+
+            try
+            {
+                RegistrationPasswordRules.Validate(_account.Password);
+            }
+            catch (ArgumentException ex)
+            {
+                _error = ex.Message;
+                return;
+            }
+        }
+
+        var primary = State.Establishments
+            .FirstOrDefault(e => State.SelectedEstablishmentIds.Contains(e.KvkEstablishmentId) && !e.IsInUse)
+            ?? State.Establishments.FirstOrDefault(e => !e.IsInUse);
+        if (primary is null || string.IsNullOrWhiteSpace(State.SelectedKvk))
+        {
+            _error = Culture["Wa.Scope.PickOne"];
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var result = await Api.SubmitRegistrationAsync(
+                State.SelectedKvk,
+                primary.KvkEstablishmentId,
+                State.IsIntermediarySbi ? "BranchOnly" : State.Scope,
+                State.ContactName.Trim(),
+                State.ContactEmail.Trim(),
+                string.IsNullOrWhiteSpace(State.ContactPhone) ? null : State.ContactPhone.Trim(),
+                acceptedTerms: true,
+                salesManagerTrackingCode: State.SalesCodeKnown ? State.SalesCodeResolved : null,
+                password: State.PreferredLoginProvider == "password" ? _account.Password : null,
+                allowPendingKvkVerification: State.ManualMode,
+                manualEstablishmentName: State.ManualMode ? State.CompanyName : null,
+                manualEstablishmentAddress: State.ManualMode ? State.CompanyAddress : null,
+                manualEstablishmentNumber: State.ManualMode ? primary.EstablishmentNumber : null,
+                manualLatitude: State.ManualMode ? State.ManualLatitude : null,
+                manualLongitude: State.ManualMode ? State.ManualLongitude : null,
+                selectedEstablishmentIds: State.SelectedEstablishmentIds.ToList(),
+                salesManagerUserId: State.SalesManagerUserId,
+                representationConsentAtUtc: DateTime.UtcNow,
+                representationConsentVersion: "Wa.Account.Represent/v1",
+                preferredLoginProvider: State.PreferredLoginProvider,
+                locationUnknown: State.LocationUnknown);
+
+            State.RegistrationId = result.RegistrationId;
+            State.VerificationExpiresAt = result.VerificationExpiresAt;
+            _codeExpired = false;
+            await Persist();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ConfirmCodeAsync(string code)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var activated = await Api.ConfirmRegistrationAsync(State.RegistrationId, code);
+            State.InstantlyVerified = activated.InstantlyVerified;
+            await State.ClearAsync(SessionStorage);
+
+            if (!string.IsNullOrWhiteSpace(activated.SessionToken)
+                && !RegistrationPasswordRules.IsExternalLoginProvider(activated.PreferredLoginProvider ?? State.PreferredLoginProvider))
+            {
+                var returnUrl = MfaPolicyNeedsSetup(activated.Role) ? "/account/mfa/setup" : "/home";
+                Navigation.NavigateTo(
+                    $"/account/register-signin?token={Uri.EscapeDataString(activated.SessionToken)}&returnUrl={Uri.EscapeDataString(returnUrl)}",
+                    forceLoad: true);
+                return;
+            }
+
+            if (RegistrationPasswordRules.IsExternalLoginProvider(activated.PreferredLoginProvider ?? State.PreferredLoginProvider))
+            {
+                var provider = (activated.PreferredLoginProvider ?? State.PreferredLoginProvider)!.ToLowerInvariant();
+                Navigation.NavigateTo(
+                    $"/account/external-login?provider={Uri.EscapeDataString(provider)}&returnUrl={Uri.EscapeDataString("/register/koppelen")}",
+                    forceLoad: true);
+                return;
+            }
+
+            State.Done = true;
+            State.Step = 3;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            if (ex.Message.Contains("verwijderd", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("verlopen", StringComparison.OrdinalIgnoreCase))
+            {
+                _codeExpired = true;
+                // Stay on the page — no banenkaart redirect on expiry (bug §B).
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ResendCodeAsync()
+    {
+        // Re-submit with same payload triggers soft resend for pending same e-mail.
+        _codeExpired = false;
+        await SubmitAccountAsync();
+    }
+
+    private async Task BackFromCode()
+    {
+        State.RegistrationId = Guid.Empty;
+        State.VerificationExpiresAt = null;
+        _codeExpired = false;
+        _error = null;
+        await Persist();
+    }
+
+    private Task Persist() => State.PersistAsync(SessionStorage);
+
+    private static bool MfaPolicyNeedsSetup(string role) =>
+        string.Equals(role, "EnterpriseManager", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(role, "SalesManager", StringComparison.OrdinalIgnoreCase);
+}

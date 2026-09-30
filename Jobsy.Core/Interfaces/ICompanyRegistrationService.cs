@@ -55,7 +55,7 @@ public sealed record RegistrationSubmitRequest(
     RegistrationScope Scope,
     string ContactName,
     string ContactEmail,
-    string? ContactPhone,
+    string? ContactPhone = null,
     bool AcceptedTerms = false,
     string? ConsentVersion = null,
     string? SalesManagerTrackingCode = null,
@@ -71,7 +71,13 @@ public sealed record RegistrationSubmitRequest(
     string? ManualEstablishmentNumber = null,
     double? ManualLatitude = null,
     double? ManualLongitude = null,
-    bool? ManualIsIntermediarySbi = null);
+    bool? ManualIsIntermediarySbi = null,
+    IReadOnlyList<string>? SelectedEstablishmentIds = null,
+    Guid? SalesManagerUserId = null,
+    DateTime? RepresentationConsentAtUtc = null,
+    string? RepresentationConsentVersion = null,
+    string? PreferredLoginProvider = null,
+    bool LocationUnknown = false);
 
 public sealed record RegistrationSubmitResult(
     Guid RegistrationId,

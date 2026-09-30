@@ -1,5 +1,6 @@
 using System.Net;
 using System.Security.Cryptography;
+using System.Text.Json;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
@@ -33,6 +34,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     private readonly ITokenLedgerService _ledger;
     private readonly IPlatformFeatureService _features;
     private readonly IPartnerAffiliateService _partnerAffiliates;
+    private readonly IRegistrationReferralResolver _referralResolver;
+    private readonly IGeocodingService? _geocoder;
     private readonly ILogger<CompanyRegistrationService> _logger;
 
     public CompanyRegistrationService(
@@ -52,6 +55,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 db,
                 ledger,
                 features),
+            null,
+            null,
             logger)
     {
     }
@@ -64,6 +69,20 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         IPlatformFeatureService features,
         IPartnerAffiliateService partnerAffiliates,
         ILogger<CompanyRegistrationService> logger)
+        : this(db, kvk, email, ledger, features, partnerAffiliates, null, null, logger)
+    {
+    }
+
+    public CompanyRegistrationService(
+        JobsyDbContext db,
+        IKvkService kvk,
+        IEmailService email,
+        ITokenLedgerService ledger,
+        IPlatformFeatureService features,
+        IPartnerAffiliateService partnerAffiliates,
+        IRegistrationReferralResolver? referralResolver,
+        IGeocodingService? geocoder,
+        ILogger<CompanyRegistrationService> logger)
     {
         _db = db;
         _kvk = kvk;
@@ -71,6 +90,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         _ledger = ledger;
         _features = features;
         _partnerAffiliates = partnerAffiliates;
+        _referralResolver = referralResolver
+            ?? new DefaultRegistrationReferralResolver(db, partnerAffiliates);
+        _geocoder = geocoder;
         _logger = logger;
     }
 
@@ -96,41 +118,32 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             throw new ArgumentException("Je moet akkoord gaan met de voorwaarden en privacyverklaring.");
         }
 
-        RegistrationPasswordRules.Validate(request.Password);
+        var externalLogin = RegistrationPasswordRules.IsExternalLoginProvider(request.PreferredLoginProvider);
+        RegistrationPasswordRules.Validate(request.Password, required: !externalLogin);
 
         string? trackingCode = null;
         string? partnerTrackingCode = null;
-        if (!string.IsNullOrWhiteSpace(request.SalesManagerTrackingCode))
+        Guid? salesManagerUserId = request.SalesManagerUserId;
+
+        // Soft referral: unknown codes never block submit (UI shows inline message).
+        var referral = await _referralResolver.ResolveAsync(
+            request.SalesManagerTrackingCode ?? request.PartnerTrackingCode,
+            linkCode: null,
+            cancellationToken);
+        if (referral.IsKnown && !string.IsNullOrWhiteSpace(referral.Code))
         {
-            trackingCode = request.SalesManagerTrackingCode.Trim().ToUpperInvariant();
-            if (PartnerAffiliateService.IsPartnerTrackingCode(trackingCode))
+            if (referral.IsPartnerCode)
             {
-                partnerTrackingCode = trackingCode;
-                trackingCode = null;
+                partnerTrackingCode = referral.Code;
+            }
+            else
+            {
+                trackingCode = referral.Code;
+                salesManagerUserId ??= referral.SalesManagerUserId;
             }
         }
-
-        if (!string.IsNullOrWhiteSpace(request.PartnerTrackingCode))
-        {
-            if (partnerTrackingCode is not null || trackingCode is not null)
-            {
-                throw new ArgumentException("Vul maximaal één trackingcode in.");
-            }
-
-            partnerTrackingCode = request.PartnerTrackingCode.Trim().ToUpperInvariant();
-        }
-
-        if (trackingCode is not null)
-        {
-            await ValidateSalesOrAmbassadeurTrackingCodeAsync(trackingCode, cancellationToken);
-        }
-
-        if (partnerTrackingCode is not null
-            && await _partnerAffiliates.ResolveByTrackingCodeAsync(partnerTrackingCode, cancellationToken) is null)
-        {
-            throw new ArgumentException(
-                "Deze trackingcode is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
-        }
+        // Unknown codes are ignored (never block submit; never store unverified text).
+        _ = request.PartnerTrackingCode;
 
         var lookup = await _kvk.LookupEstablishmentsAsync(kvkNumber, cancellationToken);
         KvkEstablishmentResult match;
@@ -148,6 +161,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
             // Never trust client-declared SBI/intermediary during an outage — always Employer
             // until the retry job confirms SBI 78* from KVK.
+            request = await GeocodeManualRequestAsync(request, cancellationToken);
             match = BuildPendingEstablishmentSnapshot(request, kvkNumber);
             kvkVerificationStatus = KvkVerificationStatus.Pending;
             sbiCodes = [];
@@ -238,14 +252,29 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 ? null
                 : request.ContactPhone.Trim(),
             ActivationToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
-            PasswordHash = JobsyPasswordHasher.Hash(request.Password!),
+            PasswordHash = externalLogin
+                ? JobsyPasswordHasher.Hash(Convert.ToHexString(RandomNumberGenerator.GetBytes(32)))
+                : JobsyPasswordHasher.Hash(request.Password!),
             PrimarySbiCode = primarySbi,
             IsIntermediarySbi = isIntermediarySbi,
             KvkVerificationStatus = kvkVerificationStatus,
             ConsentAcceptedAt = DateTime.UtcNow,
             ConsentVersion = PrivacyConstants.CurrentConsentVersion,
             SalesManagerTrackingCode = trackingCode,
+            SalesManagerUserId = salesManagerUserId,
             PartnerTrackingCode = partnerTrackingCode,
+            SelectedEstablishmentIdsJson = SerializeSelectedIds(request.SelectedEstablishmentIds),
+            RepresentationConsentAtUtc = request.RepresentationConsentAtUtc,
+            RepresentationConsentVersion = string.IsNullOrWhiteSpace(request.RepresentationConsentVersion)
+                ? null
+                : request.RepresentationConsentVersion.Trim(),
+            PreferredLoginProvider = string.IsNullOrWhiteSpace(request.PreferredLoginProvider)
+                ? null
+                : request.PreferredLoginProvider.Trim().ToLowerInvariant(),
+            LocationUnknown = request.LocationUnknown
+                || (kvkVerificationStatus == KvkVerificationStatus.Pending
+                    && request.ManualLatitude is null
+                    && request.ManualLongitude is null),
             CreatedAt = DateTime.UtcNow
         };
 
@@ -740,7 +769,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 await WmlSalaryTableService.EnsureForCompanyAsync(_db, org.Id, cancellationToken);
             }
 
-            await ClaimSiblingEstablishmentsAsync(registration.KvkNumber, orgId.Value, target.Id, cancellationToken);
+            await ClaimSiblingEstablishmentsAsync(registration.KvkNumber, orgId.Value, target.Id, registration, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
 
             var balance = await _ledger.GetBalanceAsync(target.Id, cancellationToken);
@@ -938,6 +967,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = registration.KvkEstablishmentId,
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
+                LocationSource = ResolveLocationSource(registration),
                 Type = CompanyType.Intermediary,
                 VerificationStatus = CompanyVerificationStatus.Unverified,
                 VerificationMethod = CompanyVerificationMethod.None,
@@ -958,6 +988,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = null,
                 Address = kvkCompany?.Address ?? registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
+                LocationSource = ResolveLocationSource(registration),
                 Type = CompanyType.Employer,
                 VerificationStatus = CompanyVerificationStatus.Unverified,
                 VerificationMethod = CompanyVerificationMethod.None,
@@ -976,6 +1007,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = registration.KvkEstablishmentId,
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
+                LocationSource = ResolveLocationSource(registration),
                 Type = CompanyType.Employer,
                 ParentCompanyId = org.Id,
                 VerificationStatus = CompanyVerificationStatus.Unverified,
@@ -990,7 +1022,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             if (registration.KvkVerificationStatus == KvkVerificationStatus.Verified)
             {
                 await ClaimSiblingEstablishmentsAsync(
-                    registration.KvkNumber, org.Id, branch.Id, cancellationToken);
+                    registration.KvkNumber, org.Id, branch.Id, registration, cancellationToken);
             }
         }
         else
@@ -1003,6 +1035,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = registration.KvkEstablishmentId,
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
+                LocationSource = ResolveLocationSource(registration),
                 Type = CompanyType.Employer,
                 VerificationStatus = CompanyVerificationStatus.Unverified,
                 VerificationMethod = CompanyVerificationMethod.None,
@@ -1053,9 +1086,11 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         string kvkNumber,
         Guid orgId,
         Guid excludeBranchId,
+        CompanyRegistration registration,
         CancellationToken cancellationToken)
     {
         var establishments = await _kvk.GetEstablishmentsAsync(kvkNumber, cancellationToken);
+        var selected = ParseSelectedIds(registration.SelectedEstablishmentIdsJson);
         var usedIds = await _db.Companies
             .Where(c => c.KvkNumber == kvkNumber && c.KvkEstablishmentId != null)
             .Select(c => c.KvkEstablishmentId!)
@@ -1072,6 +1107,12 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             .Select(r => r.KvkEstablishmentId)
             .ToListAsync(cancellationToken);
 
+        var excludeEstId = _db.Companies.Local.FirstOrDefault(c => c.Id == excludeBranchId)?.KvkEstablishmentId
+            ?? (await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == excludeBranchId)
+                .Select(c => c.KvkEstablishmentId)
+                .FirstOrDefaultAsync(cancellationToken));
+
         foreach (var est in establishments)
         {
             if (usedIds.Contains(est.KvkEstablishmentId, StringComparer.OrdinalIgnoreCase))
@@ -1079,8 +1120,21 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 continue;
             }
 
-            // Do not steal vestigingen that another registrant already started.
+            // Do not steal vestigingen that another registrant already started / owned.
             if (pendingEstablishmentIds.Contains(est.KvkEstablishmentId, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(excludeEstId)
+                && est.KvkEstablishmentId.Equals(excludeEstId, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            // D7: only claim exactly the ticked set when the wizard sent one.
+            if (selected is { Count: > 0 }
+                && !selected.Contains(est.KvkEstablishmentId, StringComparer.OrdinalIgnoreCase))
             {
                 continue;
             }
@@ -1093,6 +1147,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = est.KvkEstablishmentId,
                 Address = est.Address,
                 Location = new GeoPoint(est.Latitude, est.Longitude),
+                LocationSource = CompanyLocationSource.Kvk,
                 Type = CompanyType.Employer,
                 ParentCompanyId = orgId,
                 KvkVerificationStatus = KvkVerificationStatus.Verified,
@@ -1105,8 +1160,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, sibling.Id, cancellationToken);
             usedIds.Add(est.KvkEstablishmentId);
         }
-
-        _ = excludeBranchId;
     }
 
     private async Task<User> CreateRegistrationUserAsync(
@@ -1549,6 +1602,20 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         Guid? orgId,
         CancellationToken cancellationToken)
     {
+        SalesManagerProfile? profile = null;
+        if (registration.SalesManagerUserId is Guid smUserId)
+        {
+            profile = await _db.SalesManagerProfiles
+                .FirstOrDefaultAsync(
+                    p => p.UserId == smUserId && p.OnboardingCompletedAt != null,
+                    cancellationToken);
+            if (profile is not null)
+            {
+                await ApplyResolvedSalesManagerAsync(profile, branch, orgId, cancellationToken);
+                return;
+            }
+        }
+
         if (string.IsNullOrWhiteSpace(registration.SalesManagerTrackingCode))
         {
             return;
@@ -1562,7 +1629,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             return;
         }
 
-        var profile = await _db.SalesManagerProfiles
+        profile = await _db.SalesManagerProfiles
             .FirstOrDefaultAsync(
                 p => p.TrackingCode != null
                      && p.TrackingCode.ToUpper() == code
@@ -1583,6 +1650,15 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             return;
         }
 
+        await ApplyResolvedSalesManagerAsync(profile, branch, orgId, cancellationToken);
+    }
+
+    private async Task ApplyResolvedSalesManagerAsync(
+        SalesManagerProfile profile,
+        Company branch,
+        Guid? orgId,
+        CancellationToken cancellationToken)
+    {
         branch.ReferredBySalesManagerUserId = profile.UserId;
         branch.FirstYearStartedAt = DateTime.UtcNow;
         // Only the publishing vestiging gets the one-time start-highlight (not the org pot).
@@ -1764,6 +1840,22 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             company.KvkLastVerificationAttemptAtUtc = DateTime.UtcNow;
             company.KvkVerificationAttempts = 0;
         }
+
+        company.LocationSource = ResolveLocationSource(registration);
+    }
+
+    private static CompanyLocationSource ResolveLocationSource(CompanyRegistration registration)
+    {
+        if (registration.LocationUnknown
+            || (registration.Latitude == 0d && registration.Longitude == 0d
+                && registration.KvkVerificationStatus == KvkVerificationStatus.Pending))
+        {
+            return CompanyLocationSource.Unknown;
+        }
+
+        return registration.KvkVerificationStatus == KvkVerificationStatus.Pending
+            ? CompanyLocationSource.Pdok
+            : CompanyLocationSource.Kvk;
     }
 
     private static KvkEstablishmentResult BuildPendingEstablishmentSnapshot(
@@ -1799,9 +1891,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         // that could squat on another vestiging during an outage.
         var composedId = $"{normalizedKvk}_{establishmentNumber}";
 
-        // Default NL centroid when the user cannot geocode during an outage.
-        var lat = request.ManualLatitude ?? 52.1326;
-        var lng = request.ManualLongitude ?? 5.2913;
+        // Never pin at the NL centre. Missing coordinates → 0,0 + LocationUnknown on the company.
+        var lat = request.ManualLatitude ?? 0d;
+        var lng = request.ManualLongitude ?? 0d;
 
         return new KvkEstablishmentResult(
             normalizedKvk,
@@ -1815,6 +1907,96 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             SbiCodes: null);
     }
 
+
+    /// <summary>D15: whether the confirmed contact e-mail matches a KVK website domain.</summary>
+    public async Task<bool> MatchesBusinessEmailDomainAsync(
+        string kvkNumber,
+        string contactEmail,
+        CancellationToken cancellationToken = default)
+    {
+        if (FreeMailDomains.IsFreeMail(contactEmail))
+        {
+            return false;
+        }
+
+        var profile = await _kvk.GetProfileAsync(kvkNumber, cancellationToken);
+        if (profile.Status != KvkLookupStatus.Ok || profile.Websites.Count == 0)
+        {
+            return false;
+        }
+
+        return DomainMatch.EmailMatchesAnyWebsite(contactEmail, profile.Websites);
+    }
+
+    private async Task<RegistrationSubmitRequest> GeocodeManualRequestAsync(
+        RegistrationSubmitRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.ManualLatitude is not null && request.ManualLongitude is not null)
+        {
+            return request with { LocationUnknown = false };
+        }
+
+        var query = string.Join(" ", new[]
+        {
+            request.ManualEstablishmentAddress,
+            request.ManualEstablishmentName
+        }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+        if (_geocoder is null || string.IsNullOrWhiteSpace(query))
+        {
+            return request with { ManualLatitude = null, ManualLongitude = null, LocationUnknown = true };
+        }
+
+        var geo = await _geocoder.GeocodeAsync(query, cancellationToken);
+        if (geo is null)
+        {
+            return request with { ManualLatitude = null, ManualLongitude = null, LocationUnknown = true };
+        }
+
+        return request with
+        {
+            ManualLatitude = geo.Latitude,
+            ManualLongitude = geo.Longitude,
+            LocationUnknown = false
+        };
+    }
+
+    private static string? SerializeSelectedIds(IReadOnlyList<string>? ids)
+    {
+        if (ids is null || ids.Count == 0)
+        {
+            return null;
+        }
+
+        var cleaned = ids
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(id => id.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        return cleaned.Count == 0 ? null : JsonSerializer.Serialize(cleaned);
+    }
+
+    private static HashSet<string>? ParseSelectedIds(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            var list = JsonSerializer.Deserialize<List<string>>(json) ?? [];
+            return new HashSet<string>(
+                list.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>
     /// After a deferred KVK verification succeeds for an organisation branch,
     /// claim free sibling vestigingen under the parent (same as verified activation).
@@ -1824,5 +2006,13 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         Guid orgId,
         Guid excludeBranchId,
         CancellationToken cancellationToken)
-        => await ClaimSiblingEstablishmentsAsync(kvkNumber, orgId, excludeBranchId, cancellationToken);
+    {
+        // Retry path has no registration selection — claim all free siblings (legacy).
+        var synthetic = new CompanyRegistration
+        {
+            KvkNumber = kvkNumber,
+            SelectedEstablishmentIdsJson = null
+        };
+        await ClaimSiblingEstablishmentsAsync(kvkNumber, orgId, excludeBranchId, synthetic, cancellationToken);
+    }
 }

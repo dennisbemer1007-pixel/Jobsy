@@ -1,0 +1,75 @@
+@namespace Jobsy.Web.Components.Registration
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="wa-vestigingen">
+    <h3 class="wa-section-title">@Culture["Wa.Scope.BranchesTitle"]</h3>
+    <ul class="wa-vest-list">
+        @foreach (var est in Establishments)
+        {
+            var selected = SelectedIds.Contains(est.KvkEstablishmentId);
+            var disabled = est.IsInUse;
+            <li class="wa-vest @(selected && !disabled ? "is-on" : null) @(disabled ? "is-used" : null)">
+                <label class="wa-vest__row">
+                    <input type="checkbox"
+                           checked="@selected"
+                           disabled="@disabled"
+                           @onchange="e => Toggle(est, e)" />
+                    <span class="wa-vest__body">
+                        <strong>
+                            @est.Name
+                            @if (est.IsHoofdvestiging)
+                            {
+                                <span class="wa-chip">@Culture["Wa.Scope.HeadOffice"]</span>
+                            }
+                        </strong>
+                        <span class="wa-vest__addr">@est.Address</span>
+                    </span>
+                    @if (est.IsInUse)
+                    {
+                        <span class="wa-chip wa-chip--warn">@Culture["Wa.Scope.AlreadyManaged"]</span>
+                        <a class="wa-link" href="@AccessHref(est)">@Culture["Wa.Scope.RequestAccess"]</a>
+                    }
+                    else
+                    {
+                        <span class="wa-chip wa-chip--ok">@Culture["Wa.Scope.Available"]</span>
+                    }
+                </label>
+            </li>
+        }
+    </ul>
+    @if (Establishments.Any(e => e.IsInUse))
+    {
+        <p class="wa-note wa-note--warn">@Culture["Wa.Scope.OwnedWarning"]</p>
+    }
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<WizardEstablishment> Establishments { get; set; } = [];
+    [Parameter] public HashSet<string> SelectedIds { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    [Parameter] public string? KvkNumber { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private async Task Toggle(WizardEstablishment est, ChangeEventArgs e)
+    {
+        if (est.IsInUse)
+        {
+            return;
+        }
+
+        var on = e.Value is bool b && b || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on)
+        {
+            SelectedIds.Add(est.KvkEstablishmentId);
+        }
+        else
+        {
+            SelectedIds.Remove(est.KvkEstablishmentId);
+        }
+
+        await OnChanged.InvokeAsync();
+    }
+
+    private string AccessHref(WizardEstablishment est)
+        => $"/register/toegang?kvk={Uri.EscapeDataString(KvkNumber ?? "")}&vestiging={Uri.EscapeDataString(est.KvkEstablishmentId)}";
+}

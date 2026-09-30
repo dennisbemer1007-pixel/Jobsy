@@ -1,0 +1,94 @@
+@namespace Jobsy.Web.Components.Registration
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="wa-step-scope">
+    <p class="wa-eyebrow">@Culture["Wa.Scope.Eyebrow"]</p>
+    <h1>@Culture["Wa.Scope.Title"]</h1>
+
+    <div class="wa-company-box">
+        <div>
+            <h2>@State.CompanyName</h2>
+            <p class="wa-muted">
+                KvK @State.SelectedKvk
+                @if (!string.IsNullOrWhiteSpace(State.LegalForm))
+                {
+                    <text> · @State.LegalForm</text>
+                }
+                @if (State.Websites.FirstOrDefault() is string site)
+                {
+                    <text> · @site</text>
+                }
+                · @State.Establishments.Count @(State.Establishments.Count == 1 ? Culture["Wa.Search.BranchSingular"] : Culture["Wa.Search.BranchPlural"])
+            </p>
+        </div>
+        <button type="button" class="wa-link" @onclick="OnChangeCompany">@Culture["Wa.Scope.OtherCompany"]</button>
+    </div>
+
+    @if (AllOwned)
+    {
+        <div class="wa-note wa-note--warn">
+            <p><strong>@Culture["Wa.Scope.AlreadyRegistered"]</strong></p>
+            <p>@Culture["Wa.Scope.AlreadyRegisteredBody"]</p>
+            <div class="wa-actions">
+                <a class="wa-btn wa-btn--primary" href="@($"/register/toegang?kvk={Uri.EscapeDataString(State.SelectedKvk ?? "")}")">
+                    @Culture["Wa.Scope.RequestAccess"]
+                </a>
+                <a class="wa-link" href="@($"/register/toegang?kvk={Uri.EscapeDataString(State.SelectedKvk ?? "")}&eigendom=1")">
+                    @Culture["Wa.Scope.OwnershipTransfer"]
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <h3 class="wa-section-title">@Culture["Wa.Scope.WhatTitle"]</h3>
+        <div class="wa-scope-cards" role="radiogroup" aria-label="@Culture["Wa.Scope.WhatTitle"]">
+            <button type="button"
+                    class="wa-scope-card @(State.Scope == "Organization" ? "is-on" : null)"
+                    role="radio"
+                    aria-checked="@(State.Scope == "Organization")"
+                    @onclick='() => SetScope("Organization")'>
+                <strong>@Culture["Wa.Scope.WholeCompany"]</strong>
+                <p>@Culture["Wa.Scope.WholeCompanyBody"]</p>
+            </button>
+            <button type="button"
+                    class="wa-scope-card @(State.Scope == "BranchOnly" ? "is-on" : null)"
+                    role="radio"
+                    aria-checked="@(State.Scope == "BranchOnly")"
+                    @onclick='() => SetScope("BranchOnly")'>
+                <strong>@Culture["Wa.Scope.SomeBranches"]</strong>
+                <p>@Culture["Wa.Scope.SomeBranchesBody"]</p>
+            </button>
+        </div>
+
+        <WaVestigingList Establishments="State.Establishments"
+                         SelectedIds="State.SelectedEstablishmentIds"
+                         KvkNumber="State.SelectedKvk"
+                         OnChanged="OnSelectionChanged" />
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public RegistrationWizardState State { get; set; } = null!;
+    [Parameter] public EventCallback OnChanged { get; set; }
+    [Parameter] public EventCallback OnChangeCompany { get; set; }
+
+    private bool AllOwned => State.Establishments.Count > 0 && State.Establishments.All(e => e.IsInUse);
+
+    private async Task SetScope(string scope)
+    {
+        State.Scope = scope;
+        if (scope == "Organization")
+        {
+            foreach (var est in State.Establishments.Where(e => !e.IsInUse))
+            {
+                State.SelectedEstablishmentIds.Add(est.KvkEstablishmentId);
+            }
+        }
+
+        await OnChanged.InvokeAsync();
+    }
+
+    private Task OnSelectionChanged() => OnChanged.InvokeAsync();
+}

@@ -1,0 +1,38 @@
+@namespace Jobsy.Web.Components.Layout
+@inherits LayoutComponentBase
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@implements IDisposable
+
+<PageSeoHead />
+<div class="wa-theme" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <header class="wa-header">
+        <a class="wa-header__brand" href="/" aria-label="Lobsy">
+            <LobsyLogo Class="wa-header__logo" Alt="" Animate="false" />
+            <span class="wa-header__name">Lobsy</span>
+            <span class="wa-header__ctx">@Culture["Wa.Layout.Title"]</span>
+        </a>
+        <div class="wa-header__right">
+            <LanguageSelector />
+            <span class="wa-header__account-hint">@Culture["Wa.Layout.HaveAccount"]</span>
+            <a class="wa-btn wa-btn--ghost" href="/login">@Culture["Wa.Layout.Login"]</a>
+        </div>
+    </header>
+    <main class="wa-main">
+        @Body
+    </main>
+    <CookieConsentBanner />
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        await Culture.InitializeAsync();
+        await Culture.SyncDocumentAsync();
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+}

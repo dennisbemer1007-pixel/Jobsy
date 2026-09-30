@@ -100,6 +100,7 @@ public static partial class PageSeoCatalog
             ["/banen"] = Private("Page.JobMapTitle", "Seo.HomeDescription"),
             ["/login"] = Public("Login.Title", "Seo.LoginDescription"),
             ["/register"] = Public("Page.RegisterTitle", "Seo.RegisterDescription"),
+            ["/register/koppelen"] = Private("Wa.Link.Title", "Wa.Link.Lead"),
             ["/register/activate"] = Private("Page.ActivateTitle", "Seo.ActivateDescription"),
             ["/privacy"] = Public("Legal.Privacy", "Seo.PrivacyDescription"),
             ["/algemene-voorwaarden"] = Public("Legal.Terms", "Seo.TermsDescription"),

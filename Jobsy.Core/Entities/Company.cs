@@ -52,6 +52,12 @@ public class Company
     public string Address { get; set; } = string.Empty;
     public string? LogoUrl { get; set; }
     public GeoPoint Location { get; set; } = null!;
+
+    /// <summary>
+    /// How <see cref="Location"/> was obtained. Unknown → skip on the public map.
+    /// </summary>
+    public CompanyLocationSource LocationSource { get; set; } = CompanyLocationSource.Kvk;
+
     public CompanyType Type { get; set; } = CompanyType.Employer;
 
     public Guid? ParentCompanyId { get; set; }

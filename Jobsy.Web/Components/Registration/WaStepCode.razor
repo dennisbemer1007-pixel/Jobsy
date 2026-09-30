@@ -1,0 +1,110 @@
+@namespace Jobsy.Web.Components.Registration
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@implements IDisposable
+
+<section class="wa-step-code">
+    <p class="wa-eyebrow">@Culture["Wa.Code.Eyebrow"]</p>
+    <h1>@Culture["Wa.Code.Title"]</h1>
+    <p class="wa-lead">@string.Format(Culture["Wa.Code.Lead"], State.ContactEmail)</p>
+
+    @if (_expired)
+    {
+        <div class="wa-note wa-note--warn" role="alert">
+            <strong>@Culture["Wa.Code.Expired"]</strong>
+            <p>@Culture["Wa.Code.ExpiredBody"]</p>
+            <button type="button" class="wa-btn wa-btn--primary" disabled="@Busy" @onclick="OnResend">
+                @Culture["Wa.Code.Resend"]
+            </button>
+        </div>
+    }
+    else
+    {
+        <label class="wa-field">
+            <span class="wa-field__label">@Culture["Wa.Code.Label"]</span>
+            <span class="wa-input wa-input--otp">
+                <input @bind="_code"
+                       maxlength="6"
+                       inputmode="numeric"
+                       autocomplete="one-time-code"
+                       aria-describedby="wa-code-countdown" />
+            </span>
+        </label>
+        <p id="wa-code-countdown" class="wa-hint">
+            @if (_secondsLeft > 0)
+            {
+                @string.Format(Culture["Wa.Code.Countdown"], _secondsLeft / 60, _secondsLeft % 60)
+            }
+        </p>
+        <div class="wa-actions">
+            <button type="button" class="wa-btn wa-btn--primary" disabled="@(Busy || _code.Trim().Length != 6)" @onclick="Confirm">
+                @Culture["Wa.Code.Confirm"]
+            </button>
+            <button type="button" class="wa-link" disabled="@Busy" @onclick="OnResend">@Culture["Wa.Code.Resend"]</button>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <p class="wa-error" role="alert">@Error</p>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public RegistrationWizardState State { get; set; } = null!;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public EventCallback<string> OnConfirm { get; set; }
+    [Parameter] public EventCallback OnResend { get; set; }
+    [Parameter] public bool Expired
+    {
+        get => _expired;
+        set
+        {
+            _expired = value;
+            if (value)
+            {
+                _timer?.Dispose();
+                _timer = null;
+            }
+        }
+    }
+
+    private string _code = "";
+    private bool _expired;
+    private int _secondsLeft;
+    private System.Threading.Timer? _timer;
+
+    protected override void OnParametersSet()
+    {
+        if (State.VerificationExpiresAt is DateTime exp && !_expired)
+        {
+            StartCountdown(exp);
+        }
+    }
+
+    private void StartCountdown(DateTime expiresAtUtc)
+    {
+        _timer?.Dispose();
+        void Tick(object? _)
+        {
+            var left = (int)Math.Ceiling((expiresAtUtc.ToUniversalTime() - DateTime.UtcNow).TotalSeconds);
+            _secondsLeft = Math.Max(0, left);
+            if (_secondsLeft <= 0)
+            {
+                _expired = true;
+                _timer?.Dispose();
+                _timer = null;
+            }
+
+            _ = InvokeAsync(StateHasChanged);
+        }
+
+        Tick(null);
+        _timer = new System.Threading.Timer(Tick, null, 1000, 1000);
+    }
+
+    private Task Confirm() => OnConfirm.InvokeAsync(_code.Trim());
+
+    public void Dispose() => _timer?.Dispose();
+}

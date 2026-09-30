@@ -1,4 +1,8 @@
 # Changelog: Jobsy
+## Unreleased
+
+- Employer registration wizard (search → vestigingen → account + code) with WA theme fallback, referral resolver, geocode-safe manual entry, Microsoft/Google sign-up, and §B review fixes.
+
 
 ## Vacaturecategorieën (flexibel)
 

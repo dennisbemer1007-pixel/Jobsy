@@ -187,6 +187,74 @@ public class AuthController : ControllerBase
     /// New users become Candidate; invited managers keep their DB role.
     /// Requires the shared JobsyAuth development/provision secret (server-to-server).
     /// </summary>
+    /// <summary>
+    /// Exchanges a HMAC local session token (issued after registration confirm) for a login profile.
+    /// </summary>
+    [HttpPost("session-login")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<LocalLoginResponse>> SessionLogin(
+        [FromBody] SessionLoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.SessionToken))
+        {
+            return BadRequest(new { message = "Sessietoken ontbreekt." });
+        }
+
+        var secret = JobsyLocalSessionToken.ResolveSigningKey(
+            _configuration["JobsyAuth:LocalSessionSigningKey"],
+            _configuration["JobsyAuth:DevelopmentAuthSecret"]);
+        if (string.IsNullOrWhiteSpace(secret)
+            || !JobsyLocalSessionToken.TryValidate(request.SessionToken, secret, out var email, out var userId))
+        {
+            return Unauthorized(new { message = "Sessie ongeldig of verlopen." });
+        }
+
+        var user = await _db.Users
+            .Include(u => u.CompanyMemberships)
+            .FirstOrDefaultAsync(u => u.Id == userId && u.Email.ToLower() == email, cancellationToken);
+        if (user is null || !user.IsActive)
+        {
+            return Unauthorized(new { message = "Sessie ongeldig of verlopen." });
+        }
+
+        if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
+        {
+            return Ok(new LocalLoginResponse(
+                user.Email,
+                user.FullName,
+                user.Role.ToString(),
+                user.CompanyId,
+                [],
+                RequiresMfa: true,
+                MfaEnrolled: user.AuthenticatorEnabled,
+                MfaChallengeToken: _mfaChallenges.Create(user, rememberDevice: false, localPassword: true),
+                UserId: user.Id,
+                SessionToken: request.SessionToken));
+        }
+
+        var flags = await BuildFlagsAsync(user, cancellationToken);
+        user.LastLoginAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(new LocalLoginResponse(
+            user.Email,
+            user.FullName,
+            user.Role.ToString(),
+            user.CompanyId,
+            flags.CompanyIds,
+            flags.ShowCandidateHowTo,
+            flags.HasCandidateApplications,
+            flags.HasSalesReferral,
+            request.SessionToken,
+            user.SessionVersion,
+            null,
+            null,
+            null,
+            UserId: user.Id));
+    }
+
     [HttpPost("ensure-external")]
     [AllowAnonymous]
     [EnableRateLimiting("auth")]

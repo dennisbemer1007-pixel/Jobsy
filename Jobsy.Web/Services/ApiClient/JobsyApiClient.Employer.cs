@@ -280,6 +280,13 @@ public sealed partial class JobsyApiClient
         double? manualLatitude = null,
         double? manualLongitude = null,
         bool? manualIsIntermediarySbi = null,
+        IReadOnlyList<string>? selectedEstablishmentIds = null,
+        Guid? salesManagerUserId = null,
+        DateTime? representationConsentAtUtc = null,
+        string? representationConsentVersion = null,
+        string? preferredLoginProvider = null,
+        bool locationUnknown = false,
+        bool acceptedRepresentation = false,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/registration", new
@@ -301,7 +308,14 @@ public sealed partial class JobsyApiClient
             manualEstablishmentNumber,
             manualLatitude,
             manualLongitude,
-            manualIsIntermediarySbi
+            manualIsIntermediarySbi,
+            selectedEstablishmentIds,
+            salesManagerUserId,
+            representationConsentAtUtc,
+            representationConsentVersion,
+            preferredLoginProvider,
+            locationUnknown,
+            acceptedRepresentation
         }, ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -311,6 +325,32 @@ public sealed partial class JobsyApiClient
 
         return await response.Content.ReadFromJsonAsync<RegistrationSubmitResult>(cancellationToken: ct)
                ?? throw new InvalidOperationException("Lege registratierespons.");
+    }
+
+    public async Task<RegistrationReferralItem> ResolveRegistrationReferralAsync(
+        string? typedCode,
+        string? linkCode,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(typedCode))
+        {
+            qs.Add($"typed={Uri.EscapeDataString(typedCode)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(linkCode))
+        {
+            qs.Add($"link={Uri.EscapeDataString(linkCode)}");
+        }
+
+        if (qs.Count == 0)
+        {
+            return new RegistrationReferralItem();
+        }
+
+        return await _http.GetFromJsonAsync<RegistrationReferralItem>(
+                   $"api/registration/referral?{string.Join("&", qs)}", ct)
+               ?? new RegistrationReferralItem();
     }
 
     public async Task<RegistrationActivationResult> ConfirmRegistrationAsync(

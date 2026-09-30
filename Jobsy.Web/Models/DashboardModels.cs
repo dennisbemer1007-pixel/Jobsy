@@ -423,6 +423,18 @@ public class RegistrationActivationResult
     public bool EmailVerifiedAwaitingTakeover { get; set; }
     public bool WelcomeTokenGranted { get; set; }
     public DateOnly? FreePublishUntil { get; set; }
+    public string? SessionToken { get; set; }
+    public bool InstantlyVerified { get; set; }
+    public string? PreferredLoginProvider { get; set; }
+}
+
+public class RegistrationReferralItem
+{
+    public string? Code { get; set; }
+    public string? Source { get; set; }
+    public Guid? SalesManagerUserId { get; set; }
+    public bool IsPartnerCode { get; set; }
+    public bool IsKnown { get; set; }
 }
 
 public class TakeoverInboxItem

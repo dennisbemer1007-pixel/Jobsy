@@ -570,6 +570,64 @@ public static class AuthServiceCollectionExtensions
             return Results.Redirect("/");
         });
 
+        // After employer registration OTP: mint cookie from local session token (no second password).
+        app.MapGet("/account/register-signin", async (HttpContext http, IConfiguration configuration, string? token, string? returnUrl) =>
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return Results.Redirect("/login?error=retry");
+            }
+
+            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(configuration["ApiBaseUrl"], "http://localhost:5200/");
+            var factory = http.RequestServices.GetRequiredService<IHttpClientFactory>();
+            var client = factory.CreateClient("JobsyAuthProvision");
+            client.BaseAddress = new Uri(apiBase);
+            client.Timeout = TimeSpan.FromSeconds(8);
+
+            using var response = await client.PostAsJsonAsync(
+                "api/auth/session-login",
+                new { sessionToken = token });
+            if (!response.IsSuccessStatusCode)
+            {
+                return Results.Redirect("/login?error=retry");
+            }
+
+            var profile = await response.Content.ReadFromJsonAsync<LocalApiLoginProfile>();
+            if (profile is null || string.IsNullOrWhiteSpace(profile.Email))
+            {
+                return Results.Redirect("/login?error=retry");
+            }
+
+            if (profile.RequiresMfa && !string.IsNullOrWhiteSpace(profile.MfaChallengeToken))
+            {
+                var safeReturn = AuthRedirects.SafeLocalUrl(returnUrl ?? "/home");
+                SetMfaChallengeCookies(http, profile.MfaChallengeToken, safeReturn);
+                return Results.Redirect(profile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup");
+            }
+
+            var principal = CreatePrincipalFromProfile(profile, "local-registration");
+            if (principal.Identity is ClaimsIdentity identity)
+            {
+                AuthPrincipalFactory.StampSessionVersion(identity, profile.SessionVersion);
+                if (!string.IsNullOrWhiteSpace(profile.SessionToken))
+                {
+                    identity.AddClaim(new Claim(JobsyClaimTypes.LocalSession, profile.SessionToken));
+                }
+                else
+                {
+                    identity.AddClaim(new Claim(JobsyClaimTypes.LocalSession, token));
+                }
+            }
+
+            await http.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                CreateSessionAuthProperties());
+            StampLastActivity(http);
+
+            return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl ?? "/home"));
+        });
+
         // In-scope exchange after Google/Entra (iOS standalone PWA cookie jar).
         app.MapGet("/account/complete-login", async (HttpContext http, string? code, string? returnUrl) =>
         {

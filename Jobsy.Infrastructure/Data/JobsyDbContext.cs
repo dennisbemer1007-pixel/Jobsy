@@ -212,6 +212,7 @@ public class JobsyDbContext : DbContext
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
             entity.HasIndex(e => e.Location).HasMethod("GIST");
+            entity.Property(e => e.LocationSource);
             entity.HasIndex(e => e.KvkEstablishmentId).IsUnique();
             entity.HasIndex(e => e.KvkVerificationStatus);
             entity.HasIndex(e => e.VerificationStatus);
@@ -1389,10 +1390,14 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
             entity.Property(e => e.SalesManagerTrackingCode).HasMaxLength(32);
             entity.Property(e => e.PartnerTrackingCode).HasMaxLength(32);
+            entity.Property(e => e.SelectedEstablishmentIdsJson).HasMaxLength(4000);
+            entity.Property(e => e.RepresentationConsentVersion).HasMaxLength(64);
+            entity.Property(e => e.PreferredLoginProvider).HasMaxLength(32);
             entity.HasIndex(e => e.ActivationToken).IsUnique();
             entity.HasIndex(e => e.ContactEmail);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.EmailVerificationExpiresAt);
+            entity.HasIndex(e => e.SalesManagerUserId);
             entity.HasOne(e => e.CreatedUser)
                 .WithMany()
                 .HasForeignKey(e => e.CreatedUserId)

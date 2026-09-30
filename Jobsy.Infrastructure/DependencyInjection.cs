@@ -290,6 +290,12 @@ public static class DependencyInjection
         services.AddScoped<CompanyRegistrationService>();
         services.AddScoped<ICompanyRegistrationService>(sp => sp.GetRequiredService<CompanyRegistrationService>());
         services.AddScoped<ICompanyVerificationService, CompanyVerificationService>();
+        services.AddScoped<IRegistrationReferralResolver, DefaultRegistrationReferralResolver>();
+        services.AddHttpClient<IGeocodingService, NominatimGeocodingService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(8);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("LobsyRegistration/1.0 (werkgever-aanmelding)");
+        });
         services.AddScoped<ISalesManagerInviteService, SalesManagerInviteService>();
         services.AddScoped<ISalesManagerApplicationService, SalesManagerApplicationService>();
         services.AddScoped<ISalesManagerOnboardingService, SalesManagerOnboardingService>();

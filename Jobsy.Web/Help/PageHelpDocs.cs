@@ -81,6 +81,11 @@ public static class PageHelpDocs
             "Vul contact- en KVK-/vestigingsgegevens in. Na indienen volgt activatie (e-mail) en eventueel controle/overname als de vestiging al bestaat.",
             "Een organisatie-account opzetten om vacatures te plaatsen en tokens te beheren."),
 
+        ["/register/koppelen"] = new(
+            "Account koppelen",
+            "Microsoft- of Google-login koppelen aan het zojuist geactiveerde werkgeversaccount.",
+            "Na de bevestigingscode word je doorgestuurd naar de IdP. Alleen als het IdP-e-mailadres overeenkomt, wordt de login gekoppeld.",
+            "Inloggen zonder opnieuw een wachtwoord te kiezen."),
         ["/register/activate"] = new(
             "Account activeren",
             "Bevestigen van een registratie via activatielink.",

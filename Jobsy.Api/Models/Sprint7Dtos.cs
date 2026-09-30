@@ -20,7 +20,14 @@ public record SubmitRegistrationRequest(
     string? ManualEstablishmentNumber = null,
     double? ManualLatitude = null,
     double? ManualLongitude = null,
-    bool? ManualIsIntermediarySbi = null);
+    bool? ManualIsIntermediarySbi = null,
+    IReadOnlyList<string>? SelectedEstablishmentIds = null,
+    Guid? SalesManagerUserId = null,
+    DateTime? RepresentationConsentAtUtc = null,
+    string? RepresentationConsentVersion = null,
+    string? PreferredLoginProvider = null,
+    bool LocationUnknown = false,
+    bool AcceptedRepresentation = false);
 
 public record KvkEstablishmentsLookupResponse(
     string Status,
@@ -83,7 +90,10 @@ public record RegistrationActivationResponse(
     bool UsedChosenPassword = false,
     bool EmailVerifiedAwaitingTakeover = false,
     bool WelcomeTokenGranted = false,
-    DateOnly? FreePublishUntil = null);
+    DateOnly? FreePublishUntil = null,
+    string? SessionToken = null,
+    bool InstantlyVerified = false,
+    string? PreferredLoginProvider = null);
 
 public record TakeoverInboxItemDto(
     Guid TakeoverId,
@@ -104,6 +114,8 @@ public record TakeoverDecisionResponse(
     Guid? BranchCompanyId);
 
 public record RejectTakeoverRequest(string? Note = null);
+
+public record SessionLoginRequest(string SessionToken);
 
 public record LocalLoginRequest(string Email, string Password, bool RememberDevice = true);
 

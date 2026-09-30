@@ -3,80 +3,76 @@ namespace Jobsy.Tests;
 public class RegisterWizardUiTests
 {
     [Fact]
-    public void Register_wizard_has_breadcrumbs_address_hint_and_no_activation_link()
+    public void Register_wizard_prerenders_search_and_has_no_double_question_mark_error()
     {
         var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Register.razor"));
-        Assert.Contains("class=\"register-crumbs\"", razor);
-        Assert.Contains("Register.CrumbPage", razor);
-        Assert.Contains("Register.AddressHint", razor);
-        Assert.Contains("Animate=\"false\"", razor);
-        Assert.Contains("HostEnvironment.IsDevelopment()", razor);
-        Assert.Contains("private string _kvkNumber = \"\";", razor);
-        Assert.DoesNotContain("private string _kvkNumber = \"12345678\";", razor);
-        Assert.DoesNotContain("Register.OpenActivationLink", razor);
-        Assert.DoesNotContain("Register.ActivationLinkHint", razor);
-        Assert.DoesNotContain("_activationUrl", razor);
-        Assert.Contains("RegisterEstablishmentIdentity", razor);
-        Assert.Contains("Register.KvkDetailsHint", razor);
-        Assert.DoesNotContain("@e.Address · @e.KvkEstablishmentId", razor);
-        Assert.DoesNotContain("SBI @string.Join", razor);
+        Assert.Contains("prerender: true", razor);
+        Assert.Contains("RegisterWizard", razor);
+        Assert.DoesNotContain("GratisDnaRegisterBox", razor);
+        Assert.DoesNotContain("@_error ?? \"", razor);
+        Assert.DoesNotContain("?? \"KVK", razor);
     }
 
     [Fact]
-    public void Establishment_identity_hides_kvk_id_and_sbi_behind_info_button()
+    public void Register_wizard_components_have_no_inline_style_and_use_wa_keys()
     {
-        var identity = File.ReadAllText(Path.Combine(
+        var root = Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Registration");
+        foreach (var file in Directory.GetFiles(root, "*.razor"))
+        {
+            var text = File.ReadAllText(file);
+            Assert.DoesNotContain("style=\"", text);
+        }
+
+        var wizard = File.ReadAllText(Path.Combine(root, "RegisterWizard.razor"));
+        Assert.Contains("HostEnvironment.IsDevelopment()", wizard);
+        Assert.Contains("WaKvkSearchBox", wizard);
+        Assert.DoesNotContain("NavigateTo(AuthRedirects.BanenkaartPath", wizard);
+        Assert.DoesNotContain("52.1326", wizard);
+        Assert.DoesNotContain("5.2913", wizard);
+        // Code-expiry must not auto-redirect after a delay (debounce Task.Delay in search is fine).
+        Assert.DoesNotContain("await Task.Delay(1800)", wizard);
+        Assert.DoesNotContain("BanenkaartPath, forceLoad: true", wizard);
+
+        var codeStep = File.ReadAllText(Path.Combine(root, "WaStepCode.razor"));
+        Assert.DoesNotContain("NavigateTo", codeStep);
+        Assert.DoesNotContain("Task.Delay", codeStep);
+    }
+
+    [Fact]
+    public void Registration_service_never_pins_nl_centre_for_manual_entry()
+    {
+        var service = File.ReadAllText(Path.Combine(
             FindRepoRoot(),
-            "Jobsy.Web/Components/RegisterEstablishmentIdentity.razor"));
-        Assert.Contains("register-choice__address-row", identity);
-        Assert.Contains("Register.KvkDetailsHint", identity);
-        Assert.Contains("Register.EstablishmentNumber", identity);
-        Assert.Contains("Register.SbiCodes", identity);
-        Assert.Contains("@onclick:stopPropagation=\"true\"", identity);
-        Assert.DoesNotContain("@Item.KvkEstablishmentId", identity);
-        Assert.DoesNotContain("SBI @", identity);
+            "Jobsy.Infrastructure/Services/CompanyRegistrationService.cs"));
+        Assert.DoesNotContain("52.1326", service);
+        Assert.DoesNotContain("5.2913", service);
+        Assert.Contains("LocationUnknown", service);
+        Assert.Contains("CompanyLocationSource", service);
     }
 
     [Fact]
-    public void Register_css_keeps_confirm_label_visible_and_logo_static()
+    public void Wa_public_layout_and_mascot_fallback_exist()
     {
-        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".wizard-actions {\n    display: flex;\n    flex-wrap: wrap;", css);
-        Assert.Contains("min-width: 11rem;", css);
-        Assert.Contains("white-space: nowrap;", css);
-        Assert.Contains(".register-crumbs {", css);
-        Assert.Contains(".register-choice__address-row {", css);
-        Assert.Contains(".register-choice__kvk-details {", css);
-        Assert.DoesNotContain("register-mascot-bob", css);
-        Assert.DoesNotContain("animation: register-mascot-bob", css);
+        var root = FindRepoRoot();
+        Assert.True(File.Exists(Path.Combine(root, "Jobsy.Web/Components/Layout/WaPublicLayout.razor")));
+        Assert.True(File.Exists(Path.Combine(root, "Jobsy.Web/Components/Registration/WaMascot.razor")));
+        Assert.True(File.Exists(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/werkgever-aanmelding.css")));
+        Assert.True(File.Exists(Path.Combine(root, "docs/werkgever-aanmelding-landing-followup.md")));
+        Assert.True(File.Exists(Path.Combine(root, "docs/werkgever-aanmelding-followups.md")));
     }
 
     [Fact]
-    public void Production_asset_query_is_cache_busted_and_commit_is_exposed()
-    {
-        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
-        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/app.min.css");
-        Assert.Contains("name=\"lobsy-commit\"", app);
-        Assert.Contains("RENDER_GIT_COMMIT", app);
-
-        var api = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api/Program.cs"));
-        Assert.Contains("status = \"ok\"", api);
-        Assert.Contains("RENDER_GIT_COMMIT", api);
-    }
-
-    [Fact]
-    public void Register_address_strings_exist_in_all_languages()
+    public void Wa_strings_exist_in_all_languages()
     {
         string[] languages = ["nl", "en", "pl", "ro", "ar"];
         string[] keys =
         [
-            "Register.Breadcrumb",
-            "Register.CrumbPage",
-            "Register.AddressLabel",
-            "Register.AddressHint",
-            "Register.KvkDetailsHint",
-            "Register.EstablishmentNumber",
-            "Register.SbiCodes"
+            "Wa.Search.Title",
+            "Wa.Scope.WholeCompany",
+            "Wa.Account.Represent",
+            "Wa.Code.Expired",
+            "Wa.Done.Title",
+            "Wa.Layout.Title"
         ];
 
         foreach (var key in keys)
@@ -88,6 +84,16 @@ public class RegisterWizardUiTests
                 Assert.NotEqual(key, value);
             }
         }
+    }
+
+    [Fact]
+    public void Production_asset_query_is_cache_busted_and_commit_is_exposed()
+    {
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
+        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/app.min.css");
+        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/features/werkgever-aanmelding.css");
+        Assert.Contains("name=\"lobsy-commit\"", app);
+        Assert.Contains("RENDER_GIT_COMMIT", app);
     }
 
     private static string FindRepoRoot()
@@ -103,6 +109,6 @@ public class RegisterWizardUiTests
             dir = dir.Parent;
         }
 
-        throw new InvalidOperationException("Jobsy.sln not found from test base directory.");
+        throw new InvalidOperationException("Could not find Jobsy.sln from test base directory.");
     }
 }

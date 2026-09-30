@@ -69,8 +69,29 @@ public class CompanyRegistration
     /// <summary>Optional salesmanager tracking code captured at submit.</summary>
     public string? SalesManagerTrackingCode { get; set; }
 
+    /// <summary>Resolved salesmanager user id (preferred over raw tracking text).</summary>
+    public Guid? SalesManagerUserId { get; set; }
+
     /// <summary>Optional partner affiliate tracking code (BM-/IM-) captured at submit.</summary>
     public string? PartnerTrackingCode { get; set; }
+
+    /// <summary>
+    /// JSON array of KVK establishment ids the registrant selected (organization scope with untick).
+    /// Null/empty → claim all free siblings (legacy).
+    /// </summary>
+    public string? SelectedEstablishmentIdsJson { get; set; }
+
+    /// <summary>When the registrant confirmed they may represent the company.</summary>
+    public DateTime? RepresentationConsentAtUtc { get; set; }
+
+    /// <summary>Version string of the representation consent text.</summary>
+    public string? RepresentationConsentVersion { get; set; }
+
+    /// <summary>Preferred login: password | microsoft | google.</summary>
+    public string? PreferredLoginProvider { get; set; }
+
+    /// <summary>True when manual entry could not be geocoded (never pin at NL centre).</summary>
+    public bool LocationUnknown { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime? ActivatedAt { get; set; }

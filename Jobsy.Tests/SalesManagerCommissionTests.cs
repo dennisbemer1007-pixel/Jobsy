@@ -258,7 +258,7 @@ public class SalesManagerCommissionTests
     }
 
     [Fact]
-    public async Task Registration_rejects_unknown_tracking_code_but_allows_empty()
+    public async Task Registration_ignores_unknown_tracking_code_but_allows_empty()
     {
         await using var db = CreateDb();
         var registration = CreateRegistrationService(db);
@@ -275,7 +275,11 @@ public class SalesManagerCommissionTests
             Password: "TestPassphrase!"));
         Assert.Equal(CompanyRegistrationStatus.PendingActivation, emptyOk.Status);
 
-        var ex = await Assert.ThrowsAsync<ArgumentException>(() => registration.SubmitAsync(
+        // Soft referral (05): unknown codes never block submit; tracking is left unset.
+        db.CompanyRegistrations.RemoveRange(db.CompanyRegistrations);
+        await db.SaveChangesAsync();
+
+        var soft = await registration.SubmitAsync(
             new RegistrationSubmitRequest(
                 "99990001",
                 "99990001_0001",
@@ -285,9 +289,11 @@ public class SalesManagerCommissionTests
                 null,
                 AcceptedTerms: true,
                 SalesManagerTrackingCode: "SM-NOPE01",
-                Password: "TestPassphrase!")));
-        Assert.Contains("trackingcode", ex.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(0, await db.CompanyRegistrations.CountAsync(r => r.ContactEmail == "nova.badcode@jobsy.local"));
+                Password: "TestPassphrase!"));
+        Assert.Equal(CompanyRegistrationStatus.PendingActivation, soft.Status);
+        var reg = await db.CompanyRegistrations.SingleAsync(r => r.ContactEmail == "nova.badcode@jobsy.local");
+        Assert.Null(reg.SalesManagerTrackingCode);
+        Assert.Null(reg.SalesManagerUserId);
     }
 
     [Fact]
