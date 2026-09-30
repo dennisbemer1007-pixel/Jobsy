@@ -1,34 +1,30 @@
 KEY: TakeoverApproved
-SUBJECT: وُوفق على الاستحواذ - Lobsy
-PREHEADER: وُوفق على الاستحواذ
+SUBJECT: You now have access to ⁨Bakkerij De Gouden Korrel⁩
+PREHEADER: Sign in and continue.
 KIND: Essential
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
 
-وُوفق على الاستحواذ
+You have access
 
-وُوفق على طلب استحواذك على ⁨Bakkerij De Gouden Korrel⁩.
+Your request for ⁨Bakkerij De Gouden Korrel⁩ was approved. Vacancies, tokens
+and history stay with the branch.
 
-تبقى الرموز والوظائف والسجل مرتبطة بالموقع ضمن المنظمة.
-
-اختر كلمة مرور لـ ⁨tester@example.com⁩ عبر الزر أدناه.
+The branch stays linked to the organization.
 
 الرابط صالح حتى 7 أكتوبر 2026. بعد ذلك اطلب دعوة جديدة.
-
-سجّل الدخول عبر Lobsy (https://lobsy.nl/login).
 
 اختر كلمة المرور: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
 
 فريق Lobsy
 
-تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+You get this email because you asked for access to ⁨Bakkerij De Gouden Korrel⁩.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: وُوفق على الاستحواذ
+h1: You have access
 marker: table data-lobsy-layout=2
-marker: table data-lobsy-block=note
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl

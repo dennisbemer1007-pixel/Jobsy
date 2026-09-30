@@ -1,19 +1,17 @@
 KEY: SalesManagerInvite
-SUBJECT: Uitnodiging Lobsy salesmanager
-PREHEADER: Je bent uitgenodigd als salesmanager op Lobsy.
+SUBJECT: Je bent uitgenodigd als salesmanager bij Lobsy
+PREHEADER: Kies een wachtwoord en begin.
 KIND: Essential
 --- TEXT ---
 Hallo Alex,
 
-Uitnodiging salesmanager
-========================
+Welkom als salesmanager
+=======================
 
-Je bent uitgenodigd als salesmanager op Lobsy.
+Je bent uitgenodigd als salesmanager bij Lobsy.
 
-Log in met tester@example.com om verder te gaan.
-
-Na je eerste login vul je je KvK/BTW/NAW-gegevens in en onderteken je de
-bemiddelingsovereenkomst om je trackingcode te ontvangen.
+1 Kies je wachtwoord. 2 Vul je bedrijfsgegevens in. 3 Onderteken de
+overeenkomst. Dan krijg je je eigen code.
 
 Inloggen: https://lobsy.nl/login
 
@@ -24,7 +22,7 @@ Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Uitnodiging salesmanager
+h1: Welkom als salesmanager
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl

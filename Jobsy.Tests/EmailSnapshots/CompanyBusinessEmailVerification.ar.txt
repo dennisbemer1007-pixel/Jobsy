@@ -14,7 +14,7 @@ KIND: Security
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأنك تُنهي تسجيلًا في Lobsy.
+You get this email because you are registering a company on Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy

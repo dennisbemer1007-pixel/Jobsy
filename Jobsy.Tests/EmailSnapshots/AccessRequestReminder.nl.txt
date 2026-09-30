@@ -1,6 +1,6 @@
 KEY: AccessRequestReminder
-SUBJECT: Herinnering toegangsverzoek - Lobsy
-PREHEADER: Herinnering toegangsverzoek
+SUBJECT: Herinnering toegangsverzoek
+PREHEADER: Er wacht nog een toegangsverzoek van Alex de Tester voor Bakkerij De Gouden Korrel.
 KIND: Essential
 --- TEXT ---
 Herinnering toegangsverzoek
@@ -13,7 +13,7 @@ Bekijk verzoek: https://lobsy.nl/werkgever/overnames
 
 Team Lobsy
 
-Je ontvangt deze mail omdat jij deze vestiging beheert.
+Je ontvangt deze mail vanwege een actie op Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

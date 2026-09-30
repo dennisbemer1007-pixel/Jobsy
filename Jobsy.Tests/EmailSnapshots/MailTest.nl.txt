@@ -1,25 +1,24 @@
 KEY: MailTest
-SUBJECT: Lobsy testmail
-PREHEADER: Dit is een testmail van Lobsy.
+SUBJECT: Testmail van Lobsy
+PREHEADER: Als je dit leest, werkt het versturen van mail.
 KIND: Essential
 --- TEXT ---
-Testmail
-========
+Dit is een testmail
+===================
 
-Dit is een testmail van Lobsy.
-
-Als je dit bericht ziet, werkt de uitgaande mailconfiguratie.
+Als je dit leest, werkt het versturen van mail vanaf acceptatie (Resend:
+Resend of SMTP). Verstuurd op 30 september 2026, 17:22.
 
 Naar e-mails: https://lobsy.nl/admin/content/emails
 
 Team Lobsy
 
-Je ontvangt deze mail als Lobsy-beheerder.
+Je krijgt deze mail omdat je beheerder bent van Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Testmail
+h1: Dit is een testmail
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl

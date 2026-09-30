@@ -1,25 +1,26 @@
 KEY: TakeoverRejected
-SUBJECT: Takeover rejected - Lobsy
-PREHEADER: Takeover rejected
+SUBJECT: Your request for Bakkerij De Gouden Korrel was rejected
+PREHEADER: Think this is wrong? Contact us.
 KIND: Essential
 --- TEXT ---
 Hello Alex,
 
-Takeover rejected
-=================
+Your request was rejected
+=========================
 
-Your takeover request for Bakkerij De Gouden Korrel was rejected.
+The manager of Bakkerij De Gouden Korrel rejected your request. Think this
+is wrong? Contact us.
 
 Contact us: mailto:support@lobsy.nl
 
 Team Lobsy
 
-You receive this email because of an access or takeover request.
+You get this email because you asked for access to Bakkerij De Gouden Korrel.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Takeover rejected
+h1: Your request was rejected
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl

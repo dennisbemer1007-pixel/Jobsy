@@ -1,6 +1,6 @@
 KEY: CompanyVerificationRejected
-SUBJECT: رُفض التوثيق - Lobsy
-PREHEADER: رُفض التوثيق
+SUBJECT: رُفض التوثيق
+PREHEADER: تعذر علينا توثيق Bakkerij De Gouden Korrel.
 KIND: Essential
 --- TEXT ---
 مرحبًا ⁨Alex⁩،

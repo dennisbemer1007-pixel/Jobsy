@@ -1,6 +1,6 @@
 KEY: CompanyVerificationRejected
-SUBJECT: Verificatie afgewezen - Lobsy
-PREHEADER: Verificatie afgewezen
+SUBJECT: Verificatie afgewezen
+PREHEADER: We konden Bakkerij De Gouden Korrel niet verifiëren.
 KIND: Essential
 --- TEXT ---
 Hallo Alex,

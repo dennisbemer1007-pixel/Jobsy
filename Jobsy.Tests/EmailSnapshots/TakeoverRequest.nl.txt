@@ -1,33 +1,37 @@
 KEY: TakeoverRequest
-SUBJECT: Overnameverzoek vestiging - Lobsy
-PREHEADER: Overnameverzoek vestiging
+SUBJECT: Alex de Tester wil toegang tot Bakkerij De Gouden Korrel
+PREHEADER: Keur het verzoek goed of wijs het af.
 KIND: Essential
 --- TEXT ---
-Overnameverzoek
-===============
+Iemand wil toegang tot Bakkerij De Gouden Korrel
+================================================
 
-Er is een overnameverzoek voor Bakkerij De Gouden Korrel (000012345678).
+Alex de Tester (tester@example.com) wil Bakkerij De Gouden Korrel ook
+beheren op Lobsy.
 
-Aanvrager: Alex de Tester (tester@example.com).
+Naam: Alex de Tester
+E-mail: tester@example.com
+Vestiging: Bakkerij De Gouden Korrel
+KvK-vestigingsnummer: 000012345678
+Aangevraagd op: 30 september 2026, 17:22
 
-Bekijk verzoeken in Lobsy onder Overnames
-(https://lobsy.nl/werkgever/overnames).
+Ken je deze persoon niet? Wijs het verzoek dan af.
 
-Bekijk overnames: https://lobsy.nl/werkgever/overnames
+Bekijk het verzoek: https://lobsy.nl/werkgever/overnames
 
 Team Lobsy
 
-Je ontvangt deze mail omdat jij deze vestiging beheert.
+Je krijgt deze mail omdat je Bakkerij De Gouden Korrel beheert op Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Overnameverzoek
+h1: Iemand wil toegang tot Bakkerij De Gouden Korrel
 marker: table data-lobsy-layout=2
-marker: table data-lobsy-block=note
+marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Bekijk overnames -> https://lobsy.nl/werkgever/overnames
+a: Bekijk het verzoek -> https://lobsy.nl/werkgever/overnames
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

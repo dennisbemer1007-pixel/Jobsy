@@ -1,6 +1,6 @@
 KEY: AccessRequestReminder
-SUBJECT: تذكير بطلب الوصول - Lobsy
-PREHEADER: تذكير بطلب الوصول
+SUBJECT: تذكير بطلب الوصول
+PREHEADER: ما زال هناك طلب وصول من Alex de Tester لـ Bakkerij De Gouden Korrel.
 KIND: Essential
 --- TEXT ---
 تذكير بطلب الوصول
@@ -11,7 +11,7 @@ KIND: Essential
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأنك تدير هذا الموقع.
+تصلك هذه الرسالة بسبب إجراء على Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy

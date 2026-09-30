@@ -1,6 +1,6 @@
 KEY: CompanyVerificationRejected
-SUBJECT: Verification rejected - Lobsy
-PREHEADER: Verification rejected
+SUBJECT: Verification rejected
+PREHEADER: We could not verify Bakkerij De Gouden Korrel.
 KIND: Essential
 --- TEXT ---
 Hello Alex,

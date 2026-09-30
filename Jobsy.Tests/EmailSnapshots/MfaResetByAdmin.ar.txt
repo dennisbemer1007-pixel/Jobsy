@@ -1,30 +1,31 @@
 KEY: MfaResetByAdmin
-SUBJECT: أُعيد تعيين التحقق بخطوتين
-PREHEADER: أعاد الدعم تعيين التحقق بخطوتين.
+SUBJECT: Your two-step verification was reset
+PREHEADER: Set it up again when you sign in.
 KIND: Essential
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
 
-أُعيد تعيين التحقق بخطوتين
+Your two-step verification was reset
 
-أعاد دعم Lobsy تعيين التحقق بخطوتين. سجّل الدخول مجددًا لإعداد 2FA.
+An administrator reset your two-step verification. You set it up again when
+you sign in.
 
-ألم تكن أنت؟ تواصل معنا.
+Was this not intended? Contact us.
 
-سجّل الدخول مجددًا: https://lobsy.nl/login
+Sign in: https://lobsy.nl/login
 
 فريق Lobsy
 
-تصلك هذه الرسالة بسبب تنبيه أمني من Lobsy.
+You get this email to protect your account.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: أُعيد تعيين التحقق بخطوتين
+h1: Your two-step verification was reset
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: سجّل الدخول مجددًا -> https://lobsy.nl/login
+a: Sign in -> https://lobsy.nl/login
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

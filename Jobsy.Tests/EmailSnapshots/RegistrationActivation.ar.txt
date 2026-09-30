@@ -1,34 +1,33 @@
 KEY: RegistrationActivation
-SUBJECT: رمز التأكيد - Lobsy
-PREHEADER: رمز تأكيد Lobsy
+SUBJECT: Your Lobsy code: 123456
+PREHEADER: Enter this code to register your company.
 KIND: Security
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
 
-مرحبًا بك في Lobsy
+Your code
 
-أكد بريدك لتفعيل تسجيل الشركة لـ ⁨Bakkerij De Gouden Korrel — Delft⁩ (الدور:
-⁨Filiaalmanager⁩⁨، SBI 5610⁩).
-
-بعد التأكيد يمكنك تجهيز شركتك مباشرة: مسودات وظائف وملف وتعريفات. النشر بعد
-التحقق.
-
-رمز التأكيد (صالح 10 دقائق):
+Enter this code to register ⁨Bakkerij De Gouden Korrel — Delft⁩ on Lobsy.
 
 
 123456
 
+الرمز يعمل لمدة 10 دقائق.
+
+Did you not do this yourself? Then you can ignore this email.
+
 فريق Lobsy
 
-تصلك هذه الرسالة لأنك تُنهي تسجيلًا في Lobsy.
+You get this email because you are registering a company on Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: مرحبًا بك في Lobsy
+h1: Your code
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=code
 marker: div data-lobsy-otp=123456
+marker: table data-lobsy-block=note
 a: Lobsy -> https://lobsy.nl
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy

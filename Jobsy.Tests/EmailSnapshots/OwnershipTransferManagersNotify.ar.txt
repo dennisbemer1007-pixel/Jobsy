@@ -1,6 +1,6 @@
 KEY: OwnershipTransferManagersNotify
-SUBJECT: طُلب نقل الملكية - Lobsy
-PREHEADER: طُلب نقل الملكية
+SUBJECT: طُلب نقل الملكية
+PREHEADER: طُلب نقل ملكية لـ Bakkerij De Gouden Korrel.
 KIND: Essential
 --- TEXT ---
 طُلب نقل الملكية
@@ -12,7 +12,7 @@ KIND: Essential
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأنك تدير هذا الموقع.
+تصلك هذه الرسالة بسبب إجراء على Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy

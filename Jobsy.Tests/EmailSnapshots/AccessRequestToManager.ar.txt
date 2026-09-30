@@ -1,5 +1,5 @@
 KEY: AccessRequestToManager
-SUBJECT: طلب وصول - Lobsy
+SUBJECT: طلب وصول
 PREHEADER: طلب وصول على Lobsy
 KIND: Essential
 --- TEXT ---
@@ -14,7 +14,7 @@ KIND: Essential
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأنك تدير هذا الموقع.
+تصلك هذه الرسالة بسبب إجراء على Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy

@@ -1,5 +1,5 @@
 KEY: EngagementClaimRemoved
-SUBJECT: Kenmerk verwijderd - Lobsy
+SUBJECT: Kenmerk verwijderd
 PREHEADER: Maatschappelijk kenmerk verwijderd
 KIND: Essential
 --- TEXT ---

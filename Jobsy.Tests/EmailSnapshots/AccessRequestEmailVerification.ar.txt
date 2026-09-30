@@ -1,6 +1,6 @@
 KEY: AccessRequestEmailVerification
-SUBJECT: رمز تأكيد طلب الوصول - Lobsy
-PREHEADER: رمز تأكيد طلب الوصول
+SUBJECT: رمز تأكيد طلب الوصول
+PREHEADER: أكد بريدك لطلب الوصول إلى Bakkerij De Gouden Korrel.
 KIND: Security
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
@@ -14,7 +14,7 @@ KIND: Security
 
 فريق Lobsy
 
-تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+تصلك هذه الرسالة بسبب إجراء على Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy

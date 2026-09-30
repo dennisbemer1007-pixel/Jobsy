@@ -128,7 +128,7 @@ public static partial class TransactionalEmails
         var links = Links(ctx.PublicWebBaseUrl);
         return key.ToLowerInvariant() switch
         {
-            "mailtest" => MailTest(ctx.PublicWebBaseUrl, c),
+            "mailtest" => MailTest(ctx.PublicWebBaseUrl, "acceptatie", "Resend", DateTime.UtcNow, c),
             "applicationconfirmation" => ApplicationConfirmation(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
             "applicationverificationcode" => ApplicationVerificationCode(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.VacancyId, ctx.OtpCode, c),
             "employerreactionaccepted" => EmployerReactionAccepted(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
@@ -150,7 +150,8 @@ public static partial class TransactionalEmails
                 ctx.PublicWebBaseUrl, ctx.VacancyTitle, ctx.CompanyName, ctx.VacancyId,
                 new DateTime(2026, 10, 7, 12, 0, 0, DateTimeKind.Utc), culture: c),
             "companyreengagement" => CompanyReEngagement(ctx.PublicWebBaseUrl, ctx.CompanyName, culture: c),
-            "registrationactivation" => RegistrationActivation(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.EstablishmentName, ctx.RoleLabel, "5610", ctx.OtpCode, c),
+            "registrationactivation" => RegistrationActivation(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.EstablishmentName, ctx.OtpCode, c),
             "registrationcredentials" => RegistrationCredentials(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.EstablishmentName, ctx.ContactEmail, ctx.SetPasswordUrl, c),
             "companyverificationreminder" => CompanyVerificationReminder(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, 7, null, c),
             "companyverified" => CompanyVerified(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, true, [ctx.VacancyTitle], c),
@@ -159,8 +160,10 @@ public static partial class TransactionalEmails
             "engagementclaimremoved" => EngagementClaimRemoved(ctx.PublicWebBaseUrl, ctx.CompanyName, "duurzaamheid", ctx.RoleLabel, c),
             "companyunverifieddeleted" => CompanyUnverifiedDeleted(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, c),
             "takeoveremailverification" => TakeoverEmailVerification(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.OtpCode, c),
-            "takeoverrequest" => TakeoverRequest(ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.KvkEstablishmentId, ctx.RecipientName, ctx.ContactEmail, c),
-            "takeoversubmitted" => TakeoverSubmitted(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, c),
+            "takeoverrequest" => TakeoverRequest(
+                ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.KvkEstablishmentId, ctx.RecipientName, ctx.ContactEmail,
+                DateTime.UtcNow, c),
+            "takeoversubmitted" => TakeoverSubmitted(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, culture: c),
             "takeoverapproved" => TakeoverApproved(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.ContactEmail, ctx.SetPasswordUrl, true, c),
             "takeoverrejected" => TakeoverRejected(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, c),
             "userinvite" => UserInvite(
@@ -176,7 +179,8 @@ public static partial class TransactionalEmails
             "emailcodeusepassword" => EmailCodeUsePassword(ctx.PublicWebBaseUrl, c.Language),
             "parentalconsent" => ParentalConsent(ctx.PublicWebBaseUrl, "Sanne", links.ParentalConsent("voorbeeld"), new DateTime(2026, 10, 7, 12, 0, 0, DateTimeKind.Utc), c),
             "supportaccessrequested" => SupportAccessRequested(ctx.PublicWebBaseUrl, "Admin Demo", "Voorbeeldreden", new DateTime(2026, 9, 30, 18, 0, 0, DateTimeKind.Utc), "Persoonsgegevens", c),
-            "accountlockout" => AccountLockout(ctx.PublicWebBaseUrl, c),
+            "accountlockout" => AccountLockout(
+                ctx.PublicWebBaseUrl, 5, DateTime.UtcNow.AddMinutes(15), TimeSpan.FromMinutes(15), c),
             "accessrequestemailverification" => AccessRequestEmailVerification(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.OtpCode, c),
             "accessrequestsubmitted" => AccessRequestSubmitted(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, c),
             "accessrequesttomanager" => AccessRequestToManager(ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.RecipientName, ctx.RoleLabel, ctx.ContactEmail, ctx.RoleLabel, c),

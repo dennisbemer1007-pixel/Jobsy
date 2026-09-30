@@ -1,18 +1,16 @@
 KEY: SalesManagerInvite
-SUBJECT: دعوة مدير مبيعات Lobsy
-PREHEADER: دُعيت كمدير مبيعات على Lobsy.
+SUBJECT: You are invited as sales manager at Lobsy
+PREHEADER: Choose a password and get started.
 KIND: Essential
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
 
-دعوة مدير مبيعات
+Welcome as sales manager
 
-دُعيت كمدير مبيعات على Lobsy.
+You are invited as sales manager at Lobsy.
 
-سجّل الدخول بـ ⁨tester@example.com⁩ للمتابعة.
-
-بعد أول دخول تملأ بيانات KvK/الضريبة/العنوان وتوقّع اتفاقية الوساطة لاستلام
-رمز التتبع.
+1 Choose your password. 2 Enter your company details. 3 Sign the agreement.
+Then you get your own code.
 
 تسجيل الدخول: https://lobsy.nl/login
 
@@ -23,7 +21,7 @@ KIND: Essential
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: دعوة مدير مبيعات
+h1: Welcome as sales manager
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl

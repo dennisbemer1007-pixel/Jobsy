@@ -1,6 +1,6 @@
 KEY: AccessRequestSubmitted
-SUBJECT: Toegangsverzoek verstuurd - Lobsy
-PREHEADER: Toegangsverzoek verstuurd
+SUBJECT: Toegangsverzoek verstuurd
+PREHEADER: Je aanvraag is verstuurd.
 KIND: Essential
 --- TEXT ---
 Hallo Alex,
@@ -15,7 +15,7 @@ Naar Lobsy: https://lobsy.nl/login
 
 Team Lobsy
 
-Je ontvangt deze mail vanwege een overname- of toegangsverzoek.
+Je ontvangt deze mail vanwege een actie op Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

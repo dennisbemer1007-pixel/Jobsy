@@ -1,6 +1,6 @@
 KEY: AccessRequestSubmitted
-SUBJECT: Access request sent - Lobsy
-PREHEADER: Access request sent
+SUBJECT: Access request sent
+PREHEADER: Your request was sent.
 KIND: Essential
 --- TEXT ---
 Hello Alex,
@@ -15,7 +15,7 @@ Go to Lobsy: https://lobsy.nl/login
 
 Team Lobsy
 
-You receive this email because of an access or takeover request.
+You receive this email because of an action on Lobsy.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

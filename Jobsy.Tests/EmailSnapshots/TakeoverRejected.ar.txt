@@ -1,28 +1,29 @@
 KEY: TakeoverRejected
-SUBJECT: رُفض الاستحواذ - Lobsy
-PREHEADER: رُفض الاستحواذ
+SUBJECT: Your request for ⁨Bakkerij De Gouden Korrel⁩ was rejected
+PREHEADER: Think this is wrong? Contact us.
 KIND: Essential
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
 
-رُفض الاستحواذ
+Your request was rejected
 
-رُفض طلب استحواذك على ⁨Bakkerij De Gouden Korrel⁩.
+The manager of ⁨Bakkerij De Gouden Korrel⁩ rejected your request. Think this
+is wrong? Contact us.
 
-تواصل معنا: mailto:support@lobsy.nl
+Contact us: mailto:support@lobsy.nl
 
 فريق Lobsy
 
-تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+You get this email because you asked for access to ⁨Bakkerij De Gouden Korrel⁩.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: رُفض الاستحواذ
+h1: Your request was rejected
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: تواصل معنا -> mailto:support@lobsy.nl
+a: Contact us -> mailto:support@lobsy.nl
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

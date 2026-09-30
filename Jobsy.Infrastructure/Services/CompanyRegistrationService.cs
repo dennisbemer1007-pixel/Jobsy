@@ -1694,18 +1694,11 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         string plaintextCode,
         CancellationToken cancellationToken)
     {
-        var roleLabel = registration.IsIntermediarySbi
-            ? "Intermediair"
-            : registration.Scope == RegistrationScope.Organization
-                ? "Bedrijfsmanager"
-                : "Filiaalmanager";
         var features = await _features.GetAsync(cancellationToken);
         var activation = TransactionalEmails.RegistrationActivation(
             features.PublicWebBaseUrl,
             registration.ContactName,
             registration.EstablishmentName,
-            roleLabel,
-            registration.PrimarySbiCode,
             plaintextCode);
         await _mailer.SendAsync(activation, registration.ContactEmail, cancellationToken: cancellationToken);
     }

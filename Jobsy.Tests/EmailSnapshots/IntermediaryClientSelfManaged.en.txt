@@ -1,5 +1,5 @@
 KEY: IntermediaryClientSelfManaged
-SUBJECT: Client self-managed - Lobsy
+SUBJECT: Client self-managed
 PREHEADER: Client self-managed - link stays
 KIND: Essential
 --- TEXT ---

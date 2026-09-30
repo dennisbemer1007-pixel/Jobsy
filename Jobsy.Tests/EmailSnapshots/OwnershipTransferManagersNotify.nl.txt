@@ -1,6 +1,6 @@
 KEY: OwnershipTransferManagersNotify
-SUBJECT: Eigendomsoverdracht aangevraagd - Lobsy
-PREHEADER: Eigendomsoverdracht aangevraagd
+SUBJECT: Eigendomsoverdracht aangevraagd
+PREHEADER: Er is een eigendomsoverdracht aangevraagd voor Bakkerij De Gouden Korrel.
 KIND: Essential
 --- TEXT ---
 Eigendomsoverdracht aangevraagd
@@ -13,7 +13,7 @@ Naar Lobsy: https://lobsy.nl/werkgever/overnames
 
 Team Lobsy
 
-Je ontvangt deze mail omdat jij deze vestiging beheert.
+Je ontvangt deze mail vanwege een actie op Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

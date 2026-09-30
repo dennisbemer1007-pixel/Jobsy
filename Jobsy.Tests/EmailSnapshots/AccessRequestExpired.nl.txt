@@ -1,6 +1,6 @@
 KEY: AccessRequestExpired
-SUBJECT: Toegangsverzoek verlopen - Lobsy
-PREHEADER: Toegangsverzoek verlopen
+SUBJECT: Toegangsverzoek verlopen
+PREHEADER: Je verzoek voor toegang tot Bakkerij De Gouden Korrel is na 30 dagen verlopen.
 KIND: Essential
 --- TEXT ---
 Hallo Alex,
@@ -15,7 +15,7 @@ Opnieuw aanvragen: https://lobsy.nl/register/toegang
 
 Team Lobsy
 
-Je ontvangt deze mail vanwege een overname- of toegangsverzoek.
+Je ontvangt deze mail vanwege een actie op Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

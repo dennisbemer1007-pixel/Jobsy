@@ -1,12 +1,12 @@
 KEY: SupportAccessRequested
-SUBJECT: Support access requested by an admin
-PREHEADER: Admin Demo requested temporary access to personal data.
+SUBJECT: Support access requested by Admin Demo
+PREHEADER: Access to Persoonsgegevens until 30 September 2026, 20:00.
 KIND: Essential
 --- TEXT ---
-Support access requested
-========================
+Support access was requested
+============================
 
-Admin Demo requested temporary access to personal data.
+Admin Demo requested support access.
 
 Reason: Voorbeeldreden
 Access to: Persoonsgegevens
@@ -16,12 +16,12 @@ View the access: https://lobsy.nl/admin/personal-data-access-log
 
 Team Lobsy
 
-You receive this email as a Lobsy administrator.
+You get this email because you are a Lobsy administrator.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Support access requested
+h1: Support access was requested
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=

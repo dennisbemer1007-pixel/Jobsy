@@ -1,5 +1,5 @@
 KEY: CompanyVerified
-SUBJECT: Your company is verified - Lobsy
+SUBJECT: Your company is verified
 PREHEADER: Your company is verified on Lobsy
 KIND: Essential
 --- TEXT ---

@@ -1,5 +1,5 @@
 KEY: IntermediaryClientSelfManaged
-SUBJECT: العميل يدير بنفسه - Lobsy
+SUBJECT: العميل يدير بنفسه
 PREHEADER: العميل يدير بنفسه - الرابط يبقى
 KIND: Essential
 --- TEXT ---

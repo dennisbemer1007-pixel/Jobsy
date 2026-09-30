@@ -8,21 +8,25 @@ namespace Jobsy.Core.Email;
 public static partial class TransactionalEmails
 {
     public static ComposedEmail RegistrationActivation(
-        string? baseUrl, string contactName, string establishmentName, string roleLabel, string? sbi, string code,
-        EmailCulture? culture = null)
+        string? baseUrl, string contactName, string establishmentName, string code,
+        EmailCulture? culture = null, bool codeInSubject = true)
     {
         var c = culture ?? EmailCulture.Nl;
-        var sbiBit = string.IsNullOrEmpty(sbi) ? "" : Sf(c, "Email.RegistrationActivation.SbiBit", sbi);
-        return Finish(Doc("RegistrationActivation", S(c, "Email.RegistrationActivation.Subject"),
+        var minutes = PrivacyConstants.UnconfirmedRegistrationRetentionMinutes;
+        var subject = codeInSubject
+            ? Sf(c, "Email.RegistrationActivation.SubjectWithCode", code)
+            : S(c, "Email.RegistrationActivation.Subject");
+        return Finish(Doc("RegistrationActivation", subject,
             S(c, "Email.RegistrationActivation.Preheader"), S(c, "Email.RegistrationActivation.Heading"),
             [
-                P(T(c, "Email.RegistrationActivation.P1",
-                    EmailArg.Bold(establishmentName), EmailArg.Plain(roleLabel), EmailArg.Plain(sbiBit))),
-                P(S(c, "Email.RegistrationActivation.P2")),
-                P(Sf(c, "Email.RegistrationActivation.P3", ApplicationRules.EmailVerificationCodeMinutes)),
-                C(code, "")
+                P(T(c, "Email.RegistrationActivation.P1", EmailArg.Bold(establishmentName))),
+                C(code, Sf(c, "Email.Common.CodeWorksMinutes", minutes)),
+                N(S(c, "Email.RegistrationActivation.Note"))
             ],
-            greeting: GreetOther(c, contactName), culture: c), baseUrl);
+            greeting: GreetOther(c, contactName),
+            eyebrow: new EmailEyebrow(S(c, "Email.RegistrationActivation.Eyebrow"), EmailTone.Sky),
+            culture: c,
+            reasonText: S(c, "Email.Reason.Registering")), baseUrl);
     }
 
     public static ComposedEmail RegistrationCredentials(
@@ -31,26 +35,31 @@ public static partial class TransactionalEmails
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var ctaUrl = setPasswordUrl ?? links.Login;
-        var ctaLabel = setPasswordUrl is null ? S(c, "Email.Common.Cta.Login") : S(c, "Email.Common.Cta.SetPassword");
+        var ctaUrl = setPasswordUrl ?? links.EmployerHome;
+        var ctaLabel = setPasswordUrl is null
+            ? S(c, "Email.RegistrationCredentials.CtaDashboard")
+            : S(c, "Email.Common.Cta.SetPassword");
         var blocks = new List<EmailBlock>
         {
             P(T(c, "Email.RegistrationCredentials.P1", EmailArg.Bold(establishmentName))),
-            P(S(c, "Email.RegistrationCredentials.P2")),
-            P(T(c, "Email.RegistrationCredentials.P3", EmailArg.Plain(contactEmail))),
-            setPasswordUrl is null
-                ? P(S(c, "Email.RegistrationCredentials.P4HasPassword"))
-                : P(S(c, "Email.RegistrationCredentials.P4SetPassword"))
+            F([
+                (S(c, "Email.Common.Fact.Company"), establishmentName),
+                (S(c, "Email.Common.Fact.YourEmail"), contactEmail)
+            ]),
+            P(S(c, "Email.RegistrationCredentials.P2Oauth"))
         };
         if (setPasswordUrl is not null)
         {
             blocks.Add(N(Sf(c, "Email.Common.LinkValidUntil", EmailFormat.Date(DateTime.UtcNow.AddDays(7), c))));
         }
 
-        blocks.Add(N(Sf(c, "Email.Common.LoginViaLobsy", links.Login)));
         return Finish(Doc("RegistrationCredentials", S(c, "Email.RegistrationCredentials.Subject"),
             S(c, "Email.RegistrationCredentials.Preheader"), S(c, "Email.RegistrationCredentials.Heading"),
-            blocks, Button(ctaLabel, ctaUrl), greeting: GreetOther(c, contactName), showMascot: true, culture: c), baseUrl);
+            blocks, Button(ctaLabel, ctaUrl),
+            greeting: GreetOther(c, contactName),
+            eyebrow: new EmailEyebrow(S(c, "Email.RegistrationCredentials.Eyebrow"), EmailTone.Mint),
+            showMascot: true, culture: c,
+            reasonText: S(c, "Email.Reason.Registered")), baseUrl);
     }
 
     public static ComposedEmail CompanyVerificationReminder(
@@ -169,47 +178,86 @@ public static partial class TransactionalEmails
     }
 
     public static ComposedEmail TakeoverEmailVerification(
-        string? baseUrl, string contactName, string companyName, string code, EmailCulture? culture = null)
+        string? baseUrl, string contactName, string companyName, string code,
+        EmailCulture? culture = null, bool codeInSubject = true)
     {
         var c = culture ?? EmailCulture.Nl;
-        return Finish(Doc("TakeoverEmailVerification", S(c, "Email.TakeoverEmailVerification.Subject"),
+        var minutes = PrivacyConstants.UnconfirmedRegistrationRetentionMinutes;
+        var subject = codeInSubject
+            ? Sf(c, "Email.TakeoverEmailVerification.SubjectWithCode", code)
+            : S(c, "Email.TakeoverEmailVerification.Subject");
+        return Finish(Doc("TakeoverEmailVerification", subject,
             S(c, "Email.TakeoverEmailVerification.Preheader"), S(c, "Email.TakeoverEmailVerification.Heading"),
             [
-                P(T(c, "Email.TakeoverEmailVerification.P1", EmailArg.Bold(companyName), EmailArg.Plain(ApplicationRules.EmailVerificationCodeMinutes.ToString(), isolate: false))),
-                C(code, ""),
-                P(S(c, "Email.TakeoverEmailVerification.P2"))
+                P(T(c, "Email.TakeoverEmailVerification.P1", EmailArg.Bold(companyName))),
+                C(code, Sf(c, "Email.Common.CodeWorksMinutes", minutes)),
+                N(S(c, "Email.TakeoverEmailVerification.Note"))
             ],
-            greeting: GreetOther(c, contactName), culture: c), baseUrl);
+            greeting: GreetOther(c, contactName),
+            eyebrow: new EmailEyebrow(S(c, "Email.TakeoverEmailVerification.Eyebrow"), EmailTone.Sky),
+            culture: c,
+            reasonText: Sf(c, "Email.Reason.TakeoverRequested", EmailBidi.Isolate(c, companyName))), baseUrl);
     }
 
     public static ComposedEmail TakeoverRequest(
         string? baseUrl, string companyName, string? kvkEstablishmentId, string applicantName, string applicantEmail,
+        DateTime? requestedAtUtc = null, EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var links = Links(baseUrl);
+        var facts = new List<(string, string)>
+        {
+            (S(c, "Email.Common.Fact.Name"), applicantName),
+            (S(c, "Email.Common.Fact.Email"), applicantEmail),
+            (S(c, "Email.Common.Fact.Branch"), companyName)
+        };
+        if (!string.IsNullOrWhiteSpace(kvkEstablishmentId))
+        {
+            facts.Add((S(c, "Email.Common.Fact.KvkEstablishment"), kvkEstablishmentId!));
+        }
+
+        if (requestedAtUtc is DateTime when)
+        {
+            facts.Add((S(c, "Email.Common.Fact.RequestedOn"), EmailFormat.DateTimeWithoutZone(when, c)));
+        }
+
+        return Finish(Doc("TakeoverRequest",
+            Sf(c, "Email.TakeoverRequest.Subject", EmailBidi.Isolate(c, applicantName), EmailBidi.Isolate(c, companyName)),
+            S(c, "Email.TakeoverRequest.Preheader"),
+            Sf(c, "Email.TakeoverRequest.Heading", EmailBidi.Isolate(c, companyName)),
+            [
+                P(T(c, "Email.TakeoverRequest.P1",
+                    EmailArg.Bold(applicantName), EmailArg.Plain(applicantEmail), EmailArg.Bold(companyName))),
+                F(facts),
+                P(S(c, "Email.TakeoverRequest.P2"))
+            ],
+            Button(S(c, "Email.TakeoverRequest.Cta"), links.EmployerTakeovers),
+            eyebrow: new EmailEyebrow(S(c, "Email.TakeoverRequest.Eyebrow"), EmailTone.Sun),
+            culture: c,
+            reasonText: Sf(c, "Email.Reason.YouManage", EmailBidi.Isolate(c, companyName))), baseUrl);
+    }
+
+    public static ComposedEmail TakeoverSubmitted(
+        string? baseUrl, string contactName, string companyName, string? withdrawUrl = null,
         EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var inboxUrl = links.EmployerTakeovers;
-        return Finish(Doc("TakeoverRequest", S(c, "Email.TakeoverRequest.Subject"),
-            S(c, "Email.TakeoverRequest.Preheader"), S(c, "Email.TakeoverRequest.Heading"),
-            [
-                P(T(c, "Email.TakeoverRequest.P1", EmailArg.Bold(companyName), EmailArg.Plain(kvkEstablishmentId ?? ""))),
-                P(Sf(c, "Email.TakeoverRequest.P2", EmailBidi.Isolate(c, applicantName), EmailBidi.Isolate(c, applicantEmail))),
-                N(Sf(c, "Email.TakeoverRequest.Note", inboxUrl))
-            ],
-            Button(S(c, "Email.TakeoverRequest.Cta"), inboxUrl), culture: c), baseUrl);
-    }
-
-    public static ComposedEmail TakeoverSubmitted(string? baseUrl, string contactName, string companyName, EmailCulture? culture = null)
-    {
-        var c = culture ?? EmailCulture.Nl;
-        var links = Links(baseUrl);
-        return Finish(Doc("TakeoverSubmitted", S(c, "Email.TakeoverSubmitted.Subject"),
+        var ctaUrl = string.IsNullOrWhiteSpace(withdrawUrl) ? links.HowLobsyWorks : withdrawUrl!;
+        var ctaLabel = string.IsNullOrWhiteSpace(withdrawUrl)
+            ? S(c, "Email.TakeoverSubmitted.CtaHow")
+            : S(c, "Email.TakeoverSubmitted.CtaWithdraw");
+        return Finish(Doc("TakeoverSubmitted",
+            Sf(c, "Email.TakeoverSubmitted.Subject", EmailBidi.Isolate(c, companyName)),
             S(c, "Email.TakeoverSubmitted.Preheader"), S(c, "Email.TakeoverSubmitted.Heading"),
             [
                 P(T(c, "Email.TakeoverSubmitted.P1", EmailArg.Bold(companyName)))
             ],
-            Button(S(c, "Email.TakeoverSubmitted.Cta"), links.HowLobsyWorks),
-            greeting: GreetOther(c, contactName), culture: c), baseUrl);
+            Button(ctaLabel, ctaUrl),
+            greeting: GreetOther(c, contactName),
+            eyebrow: new EmailEyebrow(S(c, "Email.TakeoverSubmitted.Eyebrow"), EmailTone.Sky),
+            culture: c,
+            reasonText: Sf(c, "Email.Reason.TakeoverRequested", EmailBidi.Isolate(c, companyName))), baseUrl);
     }
 
     public static ComposedEmail AccessRequestEmailVerification(
@@ -333,36 +381,44 @@ public static partial class TransactionalEmails
         var links = Links(baseUrl);
         var ctaUrl = setPasswordUrl ?? links.Login;
         var ctaLabel = setPasswordUrl is null ? S(c, "Email.Common.Cta.Login") : S(c, "Email.Common.Cta.SetPassword");
-        var orgBit = hasOrganization ? S(c, "Email.TakeoverApproved.OrgBit") : "";
         var blocks = new List<EmailBlock>
         {
-            P(T(c, "Email.TakeoverApproved.P1", EmailArg.Bold(companyName))),
-            P(Sf(c, "Email.TakeoverApproved.P2", orgBit)),
-            setPasswordUrl is null
-                ? P(S(c, "Email.TakeoverApproved.P3HasPassword"))
-                : P(T(c, "Email.TakeoverApproved.P3SetPassword", EmailArg.Plain(contactEmail)))
+            P(T(c, "Email.TakeoverApproved.P1", EmailArg.Bold(companyName)))
         };
+        if (hasOrganization)
+        {
+            blocks.Add(P(S(c, "Email.TakeoverApproved.POrg")));
+        }
+
         if (setPasswordUrl is not null)
         {
             blocks.Add(N(Sf(c, "Email.Common.LinkValidUntil", EmailFormat.Date(DateTime.UtcNow.AddDays(7), c))));
         }
 
-        blocks.Add(N(Sf(c, "Email.Common.LoginViaLobsy", links.Login)));
-        return Finish(Doc("TakeoverApproved", S(c, "Email.TakeoverApproved.Subject"),
+        return Finish(Doc("TakeoverApproved",
+            Sf(c, "Email.TakeoverApproved.Subject", EmailBidi.Isolate(c, companyName)),
             S(c, "Email.TakeoverApproved.Preheader"), S(c, "Email.TakeoverApproved.Heading"),
-            blocks, Button(ctaLabel, ctaUrl), greeting: GreetOther(c, contactName), showMascot: true, culture: c), baseUrl);
+            blocks, Button(ctaLabel, ctaUrl),
+            greeting: GreetOther(c, contactName),
+            eyebrow: new EmailEyebrow(S(c, "Email.TakeoverApproved.Eyebrow"), EmailTone.Mint),
+            showMascot: true, culture: c,
+            reasonText: Sf(c, "Email.Reason.TakeoverRequested", EmailBidi.Isolate(c, companyName))), baseUrl);
     }
 
     public static ComposedEmail TakeoverRejected(string? baseUrl, string contactName, string companyName, EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var brand = Brand(baseUrl);
-        return Finish(Doc("TakeoverRejected", S(c, "Email.TakeoverRejected.Subject"),
+        return Finish(Doc("TakeoverRejected",
+            Sf(c, "Email.TakeoverRejected.Subject", EmailBidi.Isolate(c, companyName)),
             S(c, "Email.TakeoverRejected.Preheader"), S(c, "Email.TakeoverRejected.Heading"),
             [
                 P(T(c, "Email.TakeoverRejected.P1", EmailArg.Bold(companyName)))
             ],
             Button(S(c, "Email.TakeoverRejected.Cta"), $"mailto:{brand.SupportAddress}"),
-            greeting: GreetOther(c, contactName), culture: c), baseUrl);
+            greeting: GreetOther(c, contactName),
+            eyebrow: new EmailEyebrow(S(c, "Email.TakeoverRejected.Eyebrow"), EmailTone.Peach),
+            culture: c,
+            reasonText: Sf(c, "Email.Reason.TakeoverRequested", EmailBidi.Isolate(c, companyName))), baseUrl);
     }
 }

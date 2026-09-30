@@ -1,6 +1,6 @@
 KEY: OwnershipTransferManagersNotify
-SUBJECT: Ownership transfer requested - Lobsy
-PREHEADER: Ownership transfer requested
+SUBJECT: Ownership transfer requested
+PREHEADER: An ownership transfer was requested for Bakkerij De Gouden Korrel.
 KIND: Essential
 --- TEXT ---
 Ownership transfer requested
@@ -13,7 +13,7 @@ Go to Lobsy: https://lobsy.nl/werkgever/overnames
 
 Team Lobsy
 
-You receive this email because you manage this location.
+You receive this email because of an action on Lobsy.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

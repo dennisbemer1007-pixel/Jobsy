@@ -1,32 +1,35 @@
 KEY: TakeoverEmailVerification
-SUBJECT: Takeover confirmation code - Lobsy
-PREHEADER: Takeover confirmation code
+SUBJECT: Your code for your request: 123456
+PREHEADER: Enter this code to send your request.
 KIND: Security
 --- TEXT ---
 Hello Alex,
 
-Confirm your email address
-==========================
+Your code
+=========
 
-Location Bakkerij De Gouden Korrel is already registered. First confirm your
-email with this code (valid 10 minutes):
+Bakkerij De Gouden Korrel is already on Lobsy. Enter this code. Then we send
+your request to the manager.
 
 
 123456
 
-Then we send the takeover request to the current owner.
+The code works for 10 minutes.
+
+Did you not do this yourself? Then you can ignore this email.
 
 Team Lobsy
 
-You receive this email because of an access or takeover request.
+You get this email because you asked for access to Bakkerij De Gouden Korrel.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Confirm your email address
+h1: Your code
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=code
 marker: div data-lobsy-otp=123456
+marker: table data-lobsy-block=note
 a: Lobsy -> https://lobsy.nl
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy

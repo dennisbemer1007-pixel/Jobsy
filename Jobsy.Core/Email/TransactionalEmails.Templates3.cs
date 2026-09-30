@@ -1,6 +1,7 @@
 using Jobsy.Core.Email.Model;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Core.Time;
 
 namespace Jobsy.Core.Email;
@@ -69,21 +70,19 @@ public static partial class TransactionalEmails
         var blocks = new List<EmailBlock>
         {
             P(S(c, "Email.SalesManagerInvite.P1")),
-            setPasswordUrl is null
-                ? P(T(c, "Email.SalesManagerInvite.P2HasPassword", EmailArg.Bold(email)))
-                : P(T(c, "Email.SalesManagerInvite.P2SetPassword", EmailArg.Bold(email))),
-            P(S(c, "Email.SalesManagerInvite.P3"))
+            P(S(c, "Email.SalesManagerInvite.Steps"))
         };
         if (setPasswordUrl is not null)
         {
             blocks.Add(N(Sf(c, "Email.Common.LinkValidUntil", EmailFormat.Date(DateTime.UtcNow.AddDays(7), c))));
-            blocks.Add(N(S(c, "Email.SalesManagerInvite.NoteOnboarding"),
-                new EmailLink(S(c, "Email.SalesManagerInvite.NoteLink"), links.SalesOnboarding)));
         }
 
         return Finish(Doc("SalesManagerInvite", S(c, "Email.SalesManagerInvite.Subject"),
             S(c, "Email.SalesManagerInvite.Preheader"), S(c, "Email.SalesManagerInvite.Heading"),
-            blocks, Button(ctaLabel, ctaUrl), greeting: GreetOther(c, name), culture: c), baseUrl);
+            blocks, Button(ctaLabel, ctaUrl),
+            greeting: GreetOther(c, name),
+            eyebrow: new EmailEyebrow(S(c, "Email.SalesManagerInvite.Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail AmbassadeurInvite(
@@ -96,21 +95,19 @@ public static partial class TransactionalEmails
         var blocks = new List<EmailBlock>
         {
             P(S(c, "Email.AmbassadeurInvite.P1")),
-            setPasswordUrl is null
-                ? P(T(c, "Email.AmbassadeurInvite.P2HasPassword", EmailArg.Bold(email)))
-                : P(T(c, "Email.AmbassadeurInvite.P2SetPassword", EmailArg.Bold(email))),
-            P(S(c, "Email.AmbassadeurInvite.P3"))
+            P(S(c, "Email.AmbassadeurInvite.Steps"))
         };
         if (setPasswordUrl is not null)
         {
             blocks.Add(N(Sf(c, "Email.Common.LinkValidUntil", EmailFormat.Date(DateTime.UtcNow.AddDays(7), c))));
-            blocks.Add(N(S(c, "Email.AmbassadeurInvite.NoteOnboarding"),
-                new EmailLink(S(c, "Email.AmbassadeurInvite.NoteLink"), links.AmbassadeurOnboarding)));
         }
 
         return Finish(Doc("AmbassadeurInvite", S(c, "Email.AmbassadeurInvite.Subject"),
             S(c, "Email.AmbassadeurInvite.Preheader"), S(c, "Email.AmbassadeurInvite.Heading"),
-            blocks, Button(ctaLabel, ctaUrl), greeting: GreetOther(c, name), culture: c), baseUrl);
+            blocks, Button(ctaLabel, ctaUrl),
+            greeting: GreetOther(c, name),
+            eyebrow: new EmailEyebrow(S(c, "Email.AmbassadeurInvite.Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail CompanyApiKeyCredentials(
@@ -180,8 +177,10 @@ public static partial class TransactionalEmails
         var links = Links(baseUrl);
         var expiresLabel = EmailFormat.DateTimeWithoutZone(expiresAtUtc, c);
         var zone = S(c, "Email.Common.TimeZoneNl");
-        return Finish(Doc("SupportAccessRequested", S(c, "Email.SupportAccessRequested.Subject"),
-            S(c, "Email.SupportAccessRequested.Preheader"), S(c, "Email.SupportAccessRequested.Heading"),
+        return Finish(Doc("SupportAccessRequested",
+            Sf(c, "Email.SupportAccessRequested.Subject", EmailBidi.Isolate(c, adminDisplay)),
+            Sf(c, "Email.SupportAccessRequested.Preheader", EmailBidi.Isolate(c, scopeLabel), EmailBidi.Isolate(c, expiresLabel)),
+            S(c, "Email.SupportAccessRequested.Heading"),
             [
                 P(Sf(c, "Email.SupportAccessRequested.P1", EmailBidi.Isolate(c, adminDisplay))),
                 F([
@@ -190,19 +189,36 @@ public static partial class TransactionalEmails
                     (S(c, "Email.SupportAccessRequested.Fact.Expires"), Sf(c, "Email.SupportAccessRequested.ExpiresVal", expiresLabel, zone))
                 ])
             ],
-            Button(S(c, "Email.SupportAccessRequested.Cta"), links.AdminPersonalDataAccessLog), culture: c), baseUrl);
+            Button(S(c, "Email.SupportAccessRequested.Cta"), links.AdminPersonalDataAccessLog),
+            eyebrow: new EmailEyebrow(S(c, "Email.SupportAccessRequested.Eyebrow"), EmailTone.Peach),
+            culture: c), baseUrl);
     }
 
-    public static ComposedEmail AccountLockout(string? baseUrl, EmailCulture? culture = null)
+    public static ComposedEmail AccountLockout(
+        string? baseUrl,
+        int failedAttempts = 5,
+        DateTime? lockoutUntilUtc = null,
+        TimeSpan? duration = null,
+        EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var brand = Brand(baseUrl);
+        var effectiveDuration = duration ?? LoginLockoutRules.LockoutDuration(failedAttempts);
+        var durationLabel = EmailFormat.Duration(effectiveDuration, c);
+        var until = lockoutUntilUtc ?? DateTime.UtcNow.Add(effectiveDuration);
         return Finish(Doc("AccountLockout", S(c, "Email.AccountLockout.Subject"),
-            S(c, "Email.AccountLockout.Preheader"), S(c, "Email.AccountLockout.Heading"),
+            Sf(c, "Email.AccountLockout.Preheader", durationLabel),
+            S(c, "Email.AccountLockout.Heading"),
             [
-                P(S(c, "Email.AccountLockout.P1"))
+                P(T(c, "Email.AccountLockout.P1",
+                    EmailArg.Plain(failedAttempts.ToString(), isolate: false),
+                    EmailArg.Plain(durationLabel, isolate: false))),
+                F([(S(c, "Email.AccountLockout.Fact.Until"), EmailFormat.DateTimeWithoutZone(until, c))]),
+                P(S(c, "Email.AccountLockout.P2"))
             ],
-            Button(S(c, "Email.AccountLockout.Cta"), $"mailto:{brand.SupportAddress}"), culture: c), baseUrl);
+            Button(S(c, "Email.AccountLockout.Cta"), $"mailto:{brand.SupportAddress}"),
+            eyebrow: new EmailEyebrow(S(c, "Email.AccountLockout.Eyebrow"), EmailTone.Peach),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail AccountUnsubscribeVerification(
@@ -236,7 +252,9 @@ public static partial class TransactionalEmails
                 P(S(c, "Email.MfaResetByAdmin.P2"))
             ],
             Button(S(c, "Email.MfaResetByAdmin.Cta"), links.Login),
-            greeting: GreetOther(c, recipientName), culture: c), baseUrl);
+            greeting: GreetOther(c, recipientName),
+            eyebrow: new EmailEyebrow(S(c, "Email.MfaResetByAdmin.Eyebrow"), EmailTone.Peach),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail EmailSignUpCode(string? baseUrl, string code, string? culture)

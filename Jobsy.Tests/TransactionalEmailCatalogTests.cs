@@ -122,8 +122,10 @@ public class TransactionalEmailCatalogTests
         var sales = TransactionalEmails.Compose("SalesManagerInvite", ctx);
         Assert.Contains("/login", sales.Html);
         Assert.DoesNotContain("/salesmanager/onboarding", sales.Html);
-        Assert.Contains("/sales/start", TransactionalEmails.SalesManagerInvite(
-            ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.ContactEmail, ctx.SetPasswordUrl).Html);
+        var salesSetPassword = TransactionalEmails.SalesManagerInvite(
+            ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.ContactEmail, ctx.SetPasswordUrl);
+        Assert.Contains("/account/wachtwoord-instellen?t=", salesSetPassword.Html);
+        Assert.DoesNotContain("/salesmanager/onboarding", salesSetPassword.Html);
     }
 
     [Fact]

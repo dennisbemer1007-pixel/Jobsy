@@ -1,32 +1,35 @@
 KEY: TakeoverEmailVerification
-SUBJECT: Bevestigingscode overnameverzoek - Lobsy
-PREHEADER: Bevestigingscode overnameverzoek
+SUBJECT: Je code voor je verzoek: 123456
+PREHEADER: Vul deze code in om je verzoek te versturen.
 KIND: Security
 --- TEXT ---
 Hallo Alex,
 
-Bevestig je e-mailadres
-=======================
+Je code
+=======
 
-Vestiging Bakkerij De Gouden Korrel is al geregistreerd. Bevestig eerst je
-e-mailadres met deze code (geldig 10 minuten):
+Bakkerij De Gouden Korrel staat al op Lobsy. Vul deze code in. Dan sturen we
+je verzoek naar de beheerder.
 
 
 123456
 
-Daarna sturen we het overnameverzoek naar de huidige eigenaar.
+De code werkt 10 minuten.
+
+Heb je dit niet zelf gedaan? Dan kun je deze mail negeren.
 
 Team Lobsy
 
-Je ontvangt deze mail vanwege een overname- of toegangsverzoek.
+Je krijgt deze mail omdat je toegang hebt gevraagd tot Bakkerij De Gouden Korrel.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Bevestig je e-mailadres
+h1: Je code
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=code
 marker: div data-lobsy-otp=123456
+marker: table data-lobsy-block=note
 a: Lobsy -> https://lobsy.nl
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy

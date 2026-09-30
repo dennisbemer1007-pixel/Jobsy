@@ -6,13 +6,23 @@ namespace Jobsy.Core.Email;
 
 public static partial class TransactionalEmails
 {
-    public static ComposedEmail MailTest(string? baseUrl, EmailCulture? culture = null)
+    public static ComposedEmail MailTest(
+        string? baseUrl, string? environmentName = null, string? providerName = null,
+        DateTime? sentAtUtc = null, EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("MailTest", S(c, "Email.MailTest.Subject"), S(c, "Email.MailTest.Preheader"), S(c, "Email.MailTest.Heading"),
-            [P(S(c, "Email.MailTest.P1")), P(S(c, "Email.MailTest.P2"))],
-            Button(S(c, "Email.MailTest.Cta"), links.AdminEmails), culture: c), baseUrl);
+        var env = string.IsNullOrWhiteSpace(environmentName) ? "local" : environmentName!;
+        var provider = string.IsNullOrWhiteSpace(providerName) ? "SMTP" : providerName!;
+        var when = EmailFormat.DateTimeWithoutZone(sentAtUtc ?? DateTime.UtcNow, c);
+        return Finish(Doc("MailTest", S(c, "Email.MailTest.Subject"), S(c, "Email.MailTest.Preheader"),
+            S(c, "Email.MailTest.Heading"),
+            [
+                P(T(c, "Email.MailTest.P1", EmailArg.Plain(env), EmailArg.Plain(provider), EmailArg.Plain(when)))
+            ],
+            Button(S(c, "Email.MailTest.Cta"), links.AdminEmails),
+            eyebrow: new EmailEyebrow(S(c, "Email.MailTest.Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail ApplicationConfirmation(

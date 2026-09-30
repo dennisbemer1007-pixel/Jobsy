@@ -1,5 +1,5 @@
 KEY: CompanyUnverifiedDeleted
-SUBJECT: Registration deleted - Lobsy
+SUBJECT: Registration deleted
 PREHEADER: Unverified registration deleted
 KIND: Essential
 --- TEXT ---

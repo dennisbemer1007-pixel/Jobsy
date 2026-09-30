@@ -1,18 +1,16 @@
 KEY: AmbassadeurInvite
-SUBJECT: دعوة سفير Lobsy
-PREHEADER: دُعيت كسفير على Lobsy.
+SUBJECT: You are invited as ambassador at Lobsy
+PREHEADER: Choose a password and get started.
 KIND: Essential
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
 
-دعوة سفير
+Welcome as ambassador
 
-دُعيت كسفير على Lobsy.
+You are invited as ambassador at Lobsy.
 
-سجّل الدخول بـ ⁨tester@example.com⁩ للمتابعة.
-
-بعد أول دخول تملأ بيانات KvK/الضريبة/العنوان وتوقّع اتفاقية الوساطة لاستلام
-رمز التتبع.
+1 Choose your password. 2 Enter your company details. 3 Sign the agreement.
+Then you get your own code.
 
 تسجيل الدخول: https://lobsy.nl/login
 
@@ -23,7 +21,7 @@ KIND: Essential
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: دعوة سفير
+h1: Welcome as ambassador
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl

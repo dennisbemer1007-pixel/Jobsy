@@ -1,5 +1,5 @@
 KEY: AccessRequestToManager
-SUBJECT: Toegangsverzoek - Lobsy
+SUBJECT: Toegangsverzoek
 PREHEADER: Toegangsverzoek op Lobsy
 KIND: Essential
 --- TEXT ---
@@ -15,7 +15,7 @@ Bekijk toegangsverzoeken: https://lobsy.nl/werkgever/overnames
 
 Team Lobsy
 
-Je ontvangt deze mail omdat jij deze vestiging beheert.
+Je ontvangt deze mail vanwege een actie op Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

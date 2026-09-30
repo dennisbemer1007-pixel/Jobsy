@@ -1,5 +1,5 @@
 KEY: CompanyUnverifiedDeleted
-SUBJECT: Registratie verwijderd - Lobsy
+SUBJECT: Registratie verwijderd
 PREHEADER: Niet-geverifieerde registratie verwijderd
 KIND: Essential
 --- TEXT ---

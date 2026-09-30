@@ -1,32 +1,36 @@
 KEY: TakeoverRequest
-SUBJECT: طلب استحواذ موقع - Lobsy
-PREHEADER: طلب استحواذ موقع
+SUBJECT: ⁨Alex de Tester⁩ wants access to ⁨Bakkerij De Gouden Korrel⁩
+PREHEADER: Approve or reject the request.
 KIND: Essential
 --- TEXT ---
-طلب استحواذ
+Someone wants access to ⁨Bakkerij De Gouden Korrel⁩
 
-هناك طلب استحواذ على ⁨Bakkerij De Gouden Korrel⁩ (⁨000012345678⁩).
+⁨Alex de Tester⁩ (⁨tester@example.com⁩) also wants to manage ⁨Bakkerij De
+Gouden Korrel⁩ on Lobsy.
 
-مقدّم الطلب: ⁨Alex de Tester⁩ (⁨tester@example.com⁩).
+Alex de Tester :الاسم
+tester@example.com :Email
+Bakkerij De Gouden Korrel :Branch
+000012345678 :Chamber of Commerce branch number
+30 سبتمبر 2026, 17:22 :Requested on
 
-اعرض الطلبات في Lobsy ضمن الاستحواذات
-(https://lobsy.nl/werkgever/overnames).
+Do you not know this person? Then reject the request.
 
-عرض الاستحواذات: https://lobsy.nl/werkgever/overnames
+View the request: https://lobsy.nl/werkgever/overnames
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأنك تدير هذا الموقع.
+You get this email because you manage ⁨Bakkerij De Gouden Korrel⁩ on Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: طلب استحواذ
+h1: Someone wants access to ⁨Bakkerij De Gouden Korrel⁩
 marker: table data-lobsy-layout=2
-marker: table data-lobsy-block=note
+marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: عرض الاستحواذات -> https://lobsy.nl/werkgever/overnames
+a: View the request -> https://lobsy.nl/werkgever/overnames
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

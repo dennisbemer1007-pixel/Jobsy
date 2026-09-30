@@ -1,31 +1,31 @@
 KEY: SupportAccessRequested
-SUBJECT: طُلب وصول الدعم من مسؤول
-PREHEADER: طلب ⁨Admin Demo⁩ وصولًا مؤقتًا إلى بيانات شخصية.
+SUBJECT: Support access requested by ⁨Admin Demo⁩
+PREHEADER: Access to ⁨Persoonsgegevens⁩ until ⁨30 سبتمبر 2026, 20:00⁩.
 KIND: Essential
 --- TEXT ---
-طُلب وصول الدعم
+Support access was requested
 
-طلب ⁨Admin Demo⁩ وصولًا مؤقتًا إلى بيانات شخصية.
+⁨Admin Demo⁩ requested support access.
 
 Voorbeeldreden :السبب
 Persoonsgegevens :الوصول إلى
 30 سبتمبر 2026, 20:00 (التوقيت الهولندي) :صالح حتى
 
-عرض الوصول: https://lobsy.nl/admin/personal-data-access-log
+View the access: https://lobsy.nl/admin/personal-data-access-log
 
 فريق Lobsy
 
-تصلك هذه الرسالة كمسؤول Lobsy.
+You get this email because you are a Lobsy administrator.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: طُلب وصول الدعم
+h1: Support access was requested
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: عرض الوصول -> https://lobsy.nl/admin/personal-data-access-log
+a: View the access -> https://lobsy.nl/admin/personal-data-access-log
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

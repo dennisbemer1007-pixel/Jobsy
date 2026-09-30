@@ -1,30 +1,30 @@
 KEY: TakeoverSubmitted
-SUBJECT: Overnameverzoek ingediend - Lobsy
-PREHEADER: Overnameverzoek ingediend
+SUBJECT: Je verzoek voor Bakkerij De Gouden Korrel is verstuurd
+PREHEADER: De beheerder beslist. Je krijgt een mail.
 KIND: Essential
 --- TEXT ---
 Hallo Alex,
 
-Verzoek ingediend
-=================
+Je verzoek is verstuurd
+=======================
 
-Vestiging Bakkerij De Gouden Korrel is al in gebruik. We hebben een
-overnameverzoek gestuurd naar de huidige eigenaar.
+Bakkerij De Gouden Korrel heeft al een beheerder. We hebben je verzoek naar
+die persoon gestuurd. Je krijgt een mail zodra die beslist.
 
-Naar Lobsy: https://lobsy.nl/hoe-werkt-lobsy
+Hoe werkt Lobsy?: https://lobsy.nl/hoe-werkt-lobsy
 
 Team Lobsy
 
-Je ontvangt deze mail vanwege een overname- of toegangsverzoek.
+Je krijgt deze mail omdat je toegang hebt gevraagd tot Bakkerij De Gouden Korrel.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Verzoek ingediend
+h1: Je verzoek is verstuurd
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Naar Lobsy -> https://lobsy.nl/hoe-werkt-lobsy
+a: Hoe werkt Lobsy? -> https://lobsy.nl/hoe-werkt-lobsy
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

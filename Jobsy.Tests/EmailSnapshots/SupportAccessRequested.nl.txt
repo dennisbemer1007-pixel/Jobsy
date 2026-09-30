@@ -1,12 +1,12 @@
 KEY: SupportAccessRequested
-SUBJECT: Support-toegang aangevraagd door een admin
-PREHEADER: Admin Demo vroeg tijdelijk toegang tot persoonsgegevens aan.
+SUBJECT: Supporttoegang aangevraagd door Admin Demo
+PREHEADER: Toegang tot Persoonsgegevens tot 30 september 2026, 20:00.
 KIND: Essential
 --- TEXT ---
-Support-toegang aangevraagd
-===========================
+Er is supporttoegang aangevraagd
+================================
 
-Admin Demo vroeg tijdelijk toegang tot persoonsgegevens aan.
+Admin Demo heeft supporttoegang aangevraagd.
 
 Reden: Voorbeeldreden
 Toegang tot: Persoonsgegevens
@@ -16,12 +16,12 @@ Bekijk de toegang: https://lobsy.nl/admin/personal-data-access-log
 
 Team Lobsy
 
-Je ontvangt deze mail als Lobsy-beheerder.
+Je krijgt deze mail omdat je beheerder bent van Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Support-toegang aangevraagd
+h1: Er is supporttoegang aangevraagd
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=

@@ -1,25 +1,30 @@
 KEY: AccountLockout
 SUBJECT: Your Lobsy account is temporarily locked
-PREHEADER: There were several failed sign-in attempts.
+PREHEADER: You can sign in again after 15 minutes.
 KIND: Essential
 --- TEXT ---
-Account temporarily locked
-==========================
+Your account is locked for a while
+==================================
 
-There were several failed sign-in attempts. Your account is temporarily
-locked. If this was not you, choose a new password after the lockout.
+A wrong password was entered 5 times. That is why your account is locked for
+15 minutes.
+
+Locked until: 30 September 2026, 17:37
+
+After that you can sign in again. Was this not you? Then contact us.
 
 Contact us: mailto:support@lobsy.nl
 
 Team Lobsy
 
-You receive this email because of a Lobsy security notice.
+You get this email to protect your account.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Account temporarily locked
+h1: Your account is locked for a while
 marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: Contact us -> mailto:support@lobsy.nl

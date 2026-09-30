@@ -104,7 +104,11 @@ public class AuthController : ControllerBase
                 try
                 {
                     var features = await _features.GetAsync(cancellationToken);
-                    var lockoutMail = TransactionalEmails.AccountLockout(features.PublicWebBaseUrl);
+                    var lockoutMail = TransactionalEmails.AccountLockout(
+                        features.PublicWebBaseUrl,
+                        credential.FailedLoginCount,
+                        credential.LockoutUntil,
+                        duration);
                     await _mailer.SendAsync(lockoutMail, credential.Email, cancellationToken: cancellationToken);
                 }
                 catch

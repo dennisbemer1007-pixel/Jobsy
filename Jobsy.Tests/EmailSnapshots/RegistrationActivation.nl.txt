@@ -1,36 +1,35 @@
 KEY: RegistrationActivation
-SUBJECT: Bevestigingscode - Lobsy
-PREHEADER: Je Lobsy-bevestigingscode
+SUBJECT: Je code voor Lobsy: 123456
+PREHEADER: Vul deze code in om je bedrijf aan te melden.
 KIND: Security
 --- TEXT ---
 Hallo Alex,
 
-Welkom bij Lobsy
-================
+Je code
+=======
 
-Bevestig je e-mailadres om je bedrijfsregistratie voor Bakkerij De Gouden
-Korrel — Delft te activeren (rol: Filiaalmanager, SBI 5610).
-
-Na bevestiging kun je direct je bedrijf inrichten: conceptvacatures
-klaarzetten, het profiel invullen en collega's uitnodigen. Publiceren volgt
-na verificatie.
-
-Je bevestigingscode (geldig 10 minuten):
+Vul deze code in om Bakkerij De Gouden Korrel — Delft aan te melden op
+Lobsy.
 
 
 123456
 
+De code werkt 10 minuten.
+
+Heb je dit niet zelf gedaan? Dan kun je deze mail negeren.
+
 Team Lobsy
 
-Je ontvangt deze mail omdat je een registratie bij Lobsy afrondt.
+Je krijgt deze mail omdat je een bedrijf aanmeldt op Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Welkom bij Lobsy
+h1: Je code
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=code
 marker: div data-lobsy-otp=123456
+marker: table data-lobsy-block=note
 a: Lobsy -> https://lobsy.nl
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy

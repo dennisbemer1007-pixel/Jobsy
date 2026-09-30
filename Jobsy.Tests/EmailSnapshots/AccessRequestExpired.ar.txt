@@ -1,6 +1,6 @@
 KEY: AccessRequestExpired
-SUBJECT: انتهت صلاحية طلب الوصول - Lobsy
-PREHEADER: انتهت صلاحية طلب الوصول
+SUBJECT: انتهت صلاحية طلب الوصول
+PREHEADER: انتهت صلاحية طلب وصولك إلى Bakkerij De Gouden Korrel بعد 30 يومًا.
 KIND: Essential
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
@@ -13,7 +13,7 @@ KIND: Essential
 
 فريق Lobsy
 
-تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+تصلك هذه الرسالة بسبب إجراء على Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy

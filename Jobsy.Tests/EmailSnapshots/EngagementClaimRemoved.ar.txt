@@ -1,5 +1,5 @@
 KEY: EngagementClaimRemoved
-SUBJECT: أُزيلت السمة - Lobsy
+SUBJECT: أُزيلت السمة
 PREHEADER: أُزيلت سمة مجتمعية
 KIND: Essential
 --- TEXT ---

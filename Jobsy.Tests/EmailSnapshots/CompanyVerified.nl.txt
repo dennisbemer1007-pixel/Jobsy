@@ -1,5 +1,5 @@
 KEY: CompanyVerified
-SUBJECT: Je bedrijf is geverifieerd - Lobsy
+SUBJECT: Je bedrijf is geverifieerd
 PREHEADER: Je bedrijf is geverifieerd op Lobsy
 KIND: Essential
 --- TEXT ---

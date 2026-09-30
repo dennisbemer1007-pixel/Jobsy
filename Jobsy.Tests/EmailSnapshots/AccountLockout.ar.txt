@@ -1,27 +1,32 @@
 KEY: AccountLockout
-SUBJECT: حساب Lobsy موقوف مؤقتًا
-PREHEADER: حدثت عدة محاولات دخول فاشلة.
+SUBJECT: Your Lobsy account is temporarily locked
+PREHEADER: You can sign in again after 15 minutes.
 KIND: Essential
 --- TEXT ---
-الحساب موقوف مؤقتًا
+Your account is locked for a while
 
-حدثت عدة محاولات دخول فاشلة. حسابك موقوف مؤقتًا. إن لم تكن أنت، اختر كلمة
-مرور جديدة بعد الحظر.
+A wrong password was entered 5 times. That is why your account is locked for
+15 minutes.
 
-تواصل معنا: mailto:support@lobsy.nl
+30 سبتمبر 2026, 17:37 :Locked until
+
+After that you can sign in again. Was this not you? Then contact us.
+
+Contact us: mailto:support@lobsy.nl
 
 فريق Lobsy
 
-تصلك هذه الرسالة بسبب تنبيه أمني من Lobsy.
+You get this email to protect your account.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: الحساب موقوف مؤقتًا
+h1: Your account is locked for a while
 marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: تواصل معنا -> mailto:support@lobsy.nl
+a: Contact us -> mailto:support@lobsy.nl
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

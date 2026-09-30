@@ -1,6 +1,6 @@
 KEY: AccessRequestSubmitted
-SUBJECT: أُرسل طلب الوصول - Lobsy
-PREHEADER: أُرسل طلب الوصول
+SUBJECT: أُرسل طلب الوصول
+PREHEADER: أُرسل طلبك.
 KIND: Essential
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
@@ -14,7 +14,7 @@ KIND: Essential
 
 فريق Lobsy
 
-تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+تصلك هذه الرسالة بسبب إجراء على Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy

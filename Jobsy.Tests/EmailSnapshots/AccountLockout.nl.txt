@@ -1,26 +1,30 @@
 KEY: AccountLockout
 SUBJECT: Je Lobsy-account is tijdelijk geblokkeerd
-PREHEADER: Er zijn meerdere mislukte inlogpogingen gedaan.
+PREHEADER: Je kunt over 15 minuten weer inloggen.
 KIND: Essential
 --- TEXT ---
-Account tijdelijk geblokkeerd
-=============================
+Je account is even geblokkeerd
+==============================
 
-Er zijn meerdere mislukte inlogpogingen gedaan. Je account is tijdelijk
-geblokkeerd. Was je dit niet zelf? Kies dan na de blokkade een nieuw
-wachtwoord.
+Er is 5 keer een verkeerd wachtwoord ingevuld. Daarom is je account 15
+minuten geblokkeerd.
+
+Geblokkeerd tot: 30 september 2026, 17:37
+
+Daarna kun je weer inloggen. Was jij dit niet? Neem dan contact met ons op.
 
 Neem contact op: mailto:support@lobsy.nl
 
 Team Lobsy
 
-Je ontvangt deze mail vanwege een beveiligingsmelding op Lobsy.
+Je krijgt deze mail om je account te beschermen.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Account tijdelijk geblokkeerd
+h1: Je account is even geblokkeerd
 marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: Neem contact op -> mailto:support@lobsy.nl

@@ -1,25 +1,24 @@
 KEY: MailTest
-SUBJECT: Lobsy test email
-PREHEADER: This is a test email from Lobsy.
+SUBJECT: Test email from Lobsy
+PREHEADER: If you can read this, sending mail works.
 KIND: Essential
 --- TEXT ---
-Test email
-==========
+This is a test email
+====================
 
-This is a test email from Lobsy.
-
-If you see this message, outgoing mail is configured correctly.
+If you can read this, sending mail from acceptatie works (Resend: Resend or
+SMTP). Sent at 30 September 2026, 17:22.
 
 Go to emails: https://lobsy.nl/admin/content/emails
 
 Team Lobsy
 
-You receive this email as a Lobsy administrator.
+You get this email because you are a Lobsy administrator.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Test email
+h1: This is a test email
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl

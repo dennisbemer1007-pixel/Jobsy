@@ -1,5 +1,5 @@
 KEY: CompanyVerified
-SUBJECT: تم توثيق شركتك - Lobsy
+SUBJECT: تم توثيق شركتك
 PREHEADER: تم توثيق شركتك على Lobsy
 KIND: Essential
 --- TEXT ---

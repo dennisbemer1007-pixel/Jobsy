@@ -53,6 +53,21 @@ public static class EmailFormat
     public static string Minutes(int minutes, EmailCulture culture)
         => EmailStrings.FormatRaw(culture, "Email.Common.Minutes", minutes);
 
+    /// <summary>Human duration for lockout copy (minutes or whole hours). No literal numbers in resource values.</summary>
+    public static string Duration(TimeSpan duration, EmailCulture culture)
+    {
+        if (duration.TotalHours >= 1 && Math.Abs(duration.TotalHours - Math.Round(duration.TotalHours)) < 0.01)
+        {
+            var hours = (int)Math.Round(duration.TotalHours);
+            return hours == 1
+                ? EmailStrings.Get(culture, "Email.Common.Duration.OneHour")
+                : EmailStrings.FormatRaw(culture, "Email.Common.Duration.Hours", hours);
+        }
+
+        var mins = (int)Math.Round(duration.TotalMinutes);
+        return EmailStrings.FormatRaw(culture, "Email.Common.Duration.Minutes", mins);
+    }
+
     // Back-compat aliases used by templates ported in 02 (nl until callers pass culture).
     public static string FormatEuro(decimal amount) => Money(amount, EmailCulture.Nl);
 

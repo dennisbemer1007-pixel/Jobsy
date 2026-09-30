@@ -1,5 +1,5 @@
 KEY: CompanyUnverifiedDeleted
-SUBJECT: حُذف التسجيل - Lobsy
+SUBJECT: حُذف التسجيل
 PREHEADER: حُذف تسجيل غير موثّق
 KIND: Essential
 --- TEXT ---

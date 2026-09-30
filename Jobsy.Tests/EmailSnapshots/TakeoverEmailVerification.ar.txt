@@ -1,31 +1,34 @@
 KEY: TakeoverEmailVerification
-SUBJECT: رمز تأكيد طلب الاستحواذ - Lobsy
-PREHEADER: رمز تأكيد الاستحواذ
+SUBJECT: Your code for your request: 123456
+PREHEADER: Enter this code to send your request.
 KIND: Security
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
 
-أكد بريدك الإلكتروني
+Your code
 
-الموقع ⁨Bakkerij De Gouden Korrel⁩ مسجّل مسبقًا. أكّد بريدك أولًا بهذا الرمز
-(صالح 10 دقائق):
+⁨Bakkerij De Gouden Korrel⁩ is already on Lobsy. Enter this code. Then we
+send your request to the manager.
 
 
 123456
 
-بعدها نرسل طلب الاستحواذ إلى المالك الحالي.
+الرمز يعمل لمدة 10 دقائق.
+
+Did you not do this yourself? Then you can ignore this email.
 
 فريق Lobsy
 
-تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+You get this email because you asked for access to ⁨Bakkerij De Gouden Korrel⁩.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: أكد بريدك الإلكتروني
+h1: Your code
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=code
 marker: div data-lobsy-otp=123456
+marker: table data-lobsy-block=note
 a: Lobsy -> https://lobsy.nl
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy

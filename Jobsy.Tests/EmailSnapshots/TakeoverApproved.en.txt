@@ -1,36 +1,31 @@
 KEY: TakeoverApproved
-SUBJECT: Takeover approved - Lobsy
-PREHEADER: Takeover approved
+SUBJECT: You now have access to Bakkerij De Gouden Korrel
+PREHEADER: Sign in and continue.
 KIND: Essential
 --- TEXT ---
 Hello Alex,
 
-Takeover approved
-=================
+You have access
+===============
 
-Your takeover request for Bakkerij De Gouden Korrel was approved.
+Your request for Bakkerij De Gouden Korrel was approved. Vacancies, tokens
+and history stay with the branch.
 
-Tokens, vacancies and history stay linked to the location under the
-organisation.
-
-Choose a password for tester@example.com with the button below.
+The branch stays linked to the organization.
 
 The link works until 7 October 2026. After that, ask for a new invitation.
-
-Sign in via Lobsy (https://lobsy.nl/login).
 
 Choose your password: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
 
 Team Lobsy
 
-You receive this email because of an access or takeover request.
+You get this email because you asked for access to Bakkerij De Gouden Korrel.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Takeover approved
+h1: You have access
 marker: table data-lobsy-layout=2
-marker: table data-lobsy-block=note
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
