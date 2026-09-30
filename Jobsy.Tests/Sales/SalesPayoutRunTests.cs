@@ -25,12 +25,18 @@ public class SalesPayoutRunTests
     public async Task Job_creates_exactly_one_run_on_first_workday_after_0600(int y, int m, int day)
     {
         await using var db = CreateDb();
-        var (user, _) = await SeedBeneficiaryAsync(db);
-        await AddAvailableAndRequestAsync(db, user.Id, 100m);
-
-        var runs = CreateRunService(db, configured: true);
         var first = SalesClock.FirstWorkdayOfMonth(y, m);
         Assert.Equal(new DateOnly(y, m, day), first);
+
+        var afterLocal = first.ToDateTime(new TimeOnly(6, 0), DateTimeKind.Unspecified);
+        var afterUtc = TimeZoneInfo.ConvertTimeToUtc(
+            afterLocal,
+            TimeZoneInfo.FindSystemTimeZoneById("Europe/Amsterdam"));
+
+        var (user, _) = await SeedBeneficiaryAsync(db);
+        await AddAvailableAndRequestAsync(db, user.Id, 100m, requestedAtUtc: afterUtc.AddHours(-1));
+
+        var runs = CreateRunService(db, configured: true);
 
         // Before 06:00 local — no run
         var beforeLocal = first.ToDateTime(new TimeOnly(5, 59), DateTimeKind.Unspecified);
@@ -40,10 +46,6 @@ public class SalesPayoutRunTests
         Assert.False(await SalesPayoutRunHostedService.TryCreateForClockAsync(runs, db, beforeUtc));
 
         // After 06:00 — create once
-        var afterLocal = first.ToDateTime(new TimeOnly(6, 0), DateTimeKind.Unspecified);
-        var afterUtc = TimeZoneInfo.ConvertTimeToUtc(
-            afterLocal,
-            TimeZoneInfo.FindSystemTimeZoneById("Europe/Amsterdam"));
         Assert.True(await SalesPayoutRunHostedService.TryCreateForClockAsync(runs, db, afterUtc));
         Assert.False(await SalesPayoutRunHostedService.TryCreateForClockAsync(runs, db, afterUtc.AddMinutes(15)));
 
@@ -117,7 +119,44 @@ public class SalesPayoutRunTests
         await AddAvailableAndRequestAsync(db, holdUser.Id, 150m);
 
         var (noConsentUser, _) = await SeedBeneficiaryAsync(db, withConsent: false, email: "noc@test.local");
-        await AddAvailableAndRequestAsync(db, noConsentUser.Id, 160m);
+        // RequestAsync blocks without consent — seed an open request directly for deferral coverage.
+        db.CommissionLedgerEntries.Add(new CommissionLedgerEntry
+        {
+            Id = Guid.NewGuid(),
+            SalesManagerUserId = noConsentUser.Id,
+            Kind = CommissionEntryKind.TokenCommission,
+            AmountExVat = 160m,
+            VatAmount = SalesCommissionRules.VatOn(160m),
+            VatRate = 0.21m,
+            AvailableFromUtc = DateTime.UtcNow.AddDays(-1),
+            CreatedAt = DateTime.UtcNow.AddDays(-2)
+        });
+        db.SalesPayoutRequests.Add(new SalesPayoutRequest
+        {
+            Id = Guid.NewGuid(),
+            BeneficiaryUserId = noConsentUser.Id,
+            AmountExVat = 160m,
+            VatAmount = SalesCommissionRules.VatOn(160m),
+            TotalInclVat = 160m + SalesCommissionRules.VatOn(160m),
+            VatTreatment = SalesManagerVatTreatment.Standard21,
+            MaskedIban = Iban.Mask("NL91ABNA0417164300"),
+            Status = SalesPayoutRequestStatus.Requested,
+            RequestedAtUtc = DateTime.UtcNow.AddMinutes(-10)
+        });
+        await db.SaveChangesAsync();
+        // Link ledger lines so approve path can evaluate the request.
+        var nocReqId = await db.SalesPayoutRequests
+            .Where(r => r.BeneficiaryUserId == noConsentUser.Id)
+            .Select(r => r.Id)
+            .SingleAsync();
+        foreach (var line in await db.CommissionLedgerEntries
+                     .Where(e => e.SalesManagerUserId == noConsentUser.Id)
+                     .ToListAsync())
+        {
+            line.SalesPayoutRequestId = nocReqId;
+        }
+
+        await db.SaveChangesAsync();
 
         var runs = CreateRunService(db, configured: true, email: email);
         var run = await runs.TryCreateScheduledRunAsync(SalesClock.Today(), DateTime.UtcNow);
@@ -439,7 +478,11 @@ public class SalesPayoutRunTests
         return (user, profile);
     }
 
-    private static async Task AddAvailableAndRequestAsync(JobsyDbContext db, Guid userId, decimal amount)
+    private static async Task AddAvailableAndRequestAsync(
+        JobsyDbContext db,
+        Guid userId,
+        decimal amount,
+        DateTime? requestedAtUtc = null)
     {
         db.CommissionLedgerEntries.Add(new CommissionLedgerEntry
         {
@@ -457,7 +500,13 @@ public class SalesPayoutRunTests
         var wallet = new SalesWalletReadService(db);
         var svc = new SalesPayoutRequestService(
             db, wallet, new CapturingEmail(), new PlatformCompanySettingsService(db));
-        await svc.RequestAsync(userId, mfaSatisfied: true);
+        var dto = await svc.RequestAsync(userId, mfaSatisfied: true);
+        if (requestedAtUtc is DateTime at)
+        {
+            var tracked = await db.SalesPayoutRequests.SingleAsync(r => r.Id == dto.Id);
+            tracked.RequestedAtUtc = at;
+            await db.SaveChangesAsync();
+        }
     }
 
     private static JobsyDbContext CreateDb()
