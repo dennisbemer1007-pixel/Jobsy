@@ -1,5 +1,6 @@
 using System.Globalization;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Sales;
@@ -402,7 +403,61 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
                 cancellationToken);
         }
 
+        // Close matching payout request from every mark-paid path (admin page, redesign 06.4, run bulk).
+        await CloseLinkedPayoutRequestAsync(paid, cancellationToken);
+
         return paid;
+    }
+
+    private async Task CloseLinkedPayoutRequestAsync(
+        SelfBillingInvoice paid,
+        CancellationToken cancellationToken)
+    {
+        SalesPayoutRequest? request = null;
+        if (paid.SalesPayoutRequestId is Guid rid)
+        {
+            request = await _db.SalesPayoutRequests
+                .FirstOrDefaultAsync(r => r.Id == rid, cancellationToken);
+        }
+
+        request ??= await _db.SalesPayoutRequests
+            .FirstOrDefaultAsync(r => r.SelfBillingInvoiceId == paid.Id, cancellationToken);
+
+        if (request is null || request.Status == SalesPayoutRequestStatus.Paid)
+        {
+            return;
+        }
+
+        request.Status = SalesPayoutRequestStatus.Paid;
+        request.PaidAtUtc ??= paid.PaidAt ?? DateTime.UtcNow;
+        request.SelfBillingInvoiceId ??= paid.Id;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        if (request.SalesPayoutRunId is not Guid runId)
+        {
+            return;
+        }
+
+        var run = await _db.SalesPayoutRuns
+            .Include(r => r.Requests)
+            .FirstOrDefaultAsync(r => r.Id == runId, cancellationToken);
+        if (run is null)
+        {
+            return;
+        }
+
+        var anyOpen = run.Requests.Any(r =>
+            r.Status is SalesPayoutRequestStatus.Approved or SalesPayoutRequestStatus.InRun);
+        if (!anyOpen && run.Requests.Any(r => r.Status == SalesPayoutRequestStatus.Paid))
+        {
+            run.Status = SalesPayoutRunStatus.Closed;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        else if (run.Status is SalesPayoutRunStatus.Approved or SalesPayoutRunStatus.Exported)
+        {
+            run.Status = SalesPayoutRunStatus.Paid;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
     }
 
     public async Task<IReadOnlyList<SelfBillingInvoice>> ListForSalesManagerAsync(

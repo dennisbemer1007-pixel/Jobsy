@@ -14,6 +14,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Sales admin uitbetaalrondes (08):** maandelijkse payout run (job 1e werkdag 06:00 Europe/Amsterdam), admin approve/reject per regel, self-billing bij goedkeuring, SEPA pain.001 + CSV, mark paid (sluit payout request), IBAN-hold/consent flags, correctie + toewijzing UI, bank-transfer provider-seam, geparkeerde ambassadeurs-saldo panel. Fallback-tab Uitbetalingen op `/admin/sales-managers` tot admin redesign 06.4.
+
+### Added
 - **Sales wallet & uitbetalingen (07):** balances by state, Mutaties/Uitbetalingen/Facturen, payout request (≥ € 50, full available amount), invoice preview, cancel while Requested, self-billing PDF legal text + KOR, jaaroverzicht PDF; old checkout/complete endpoints return 410.
 
 ### Added

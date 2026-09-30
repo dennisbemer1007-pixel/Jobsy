@@ -380,6 +380,11 @@ public static class DependencyInjection
         services.AddScoped<ISalesWalletReadService, SalesWalletReadService>();
         services.AddScoped<ISalesPayoutRequestService, SalesPayoutRequestService>();
         services.AddScoped<ISalesWalletPortalService, SalesWalletPortalService>();
+        services.Configure<SalesPayoutProviderOptions>(
+            configuration.GetSection(SalesPayoutProviderOptions.SectionName));
+        services.AddScoped<ISalesPayoutProvider, BankTransferPayoutProvider>();
+        services.AddScoped<ISalesPayoutRunService, SalesPayoutRunService>();
+        services.AddHostedService<SalesPayoutRunHostedService>();
         services.AddScoped<SalesEmployerReadService>();
         services.AddScoped<ISalesEmployerReadService>(sp => sp.GetRequiredService<SalesEmployerReadService>());
         services.AddScoped<ISalesEmployerPortalReadService>(sp => sp.GetRequiredService<SalesEmployerReadService>());

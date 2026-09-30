@@ -2,6 +2,8 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sales
+@using Jobsy.Web.Components.Ui.Enterprise
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
@@ -15,6 +17,17 @@
         <a class="admin-sublink" href="/admin/tokens">Goodwill / Compensatie</a>
         <a class="admin-sublink admin-sublink--active" href="/admin/sales-managers" aria-current="page">Salesmanagers</a>
     </div>
+
+    <EntTabs Tabs="_tabs" ActiveKey="@_tab" BasePath="/admin/sales-managers" />
+
+    @if (_tab == "uitbetalingen")
+    {
+        @* // moves to /admin/financien/uitbetalingen (admin-redesign 06.4) *@
+        <PayoutRunsSection />
+        <p class="muted">@Culture["SalesAdmin.Runs.CrossLinkFinance"]</p>
+    }
+    else
+    {
     <section class="panel-section">
         <h2>Direct uitnodigen (Admin)</h2>
         <p class="muted">Alleen Admin kan initiële (tier-0) salesmanagers aanmaken die zelf mogen werven.</p>
@@ -165,10 +178,25 @@
                 </div>
             </section>
         }
+
+        @* // moves to /admin/gebruikers/sales *@
+        <AttributionSection />
+        <p class="muted">@Culture["SalesAdmin.Runs.CrossLinkFinance"]</p>
+    }
     }
 </AdminPageShell>
 
 @code {
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? TabQuery { get; set; }
+
+    private readonly IReadOnlyList<EntTabs.Tab> _tabs =
+    [
+        new("salesmanagers", "Salesmanagers"),
+        new("uitbetalingen", "Uitbetalingen")
+    ];
+
+    private string _tab = "salesmanagers";
     private List<SalesManagerListItem> _list = [];
     private List<SalesManagerApplicationItem> _applications = [];
     private SalesManagerDashboard? _selected;
@@ -183,7 +211,19 @@
     private SupportAccessGrantItem? _activeGrant;
 
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        ResolveTab();
+    }
+
+    protected override void OnParametersSet() => ResolveTab();
+
+    private void ResolveTab()
+    {
+        _tab = string.Equals(TabQuery, "uitbetalingen", StringComparison.OrdinalIgnoreCase)
+            ? "uitbetalingen"
+            : "salesmanagers";
+    }
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);

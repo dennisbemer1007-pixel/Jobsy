@@ -1,0 +1,269 @@
+@* // moves to /admin/financien/uitbetalingen (admin-redesign 06.4) *@
+@namespace Jobsy.Web.Components.Admin.Sales
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Sales
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+<EntDrawer Open="Open" OpenChanged="OpenChanged" Title="@DrawerTitle" Placement="end">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_detail is not null)
+    {
+        <EntImpactNote Tone="info">
+            <p>@Culture[_detail.NextStepKey]</p>
+        </EntImpactNote>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+
+        <EntDataTable Empty="@(_detail.Lines.Count == 0)" EmptyText="@Culture["SalesAdmin.Runs.NoLines"]">
+            <Header>
+                <th scope="col">@Culture["SalesAdmin.Runs.Line.Name"]</th>
+                <th scope="col" style="text-align:right">@Culture["SalesAdmin.Runs.Line.Amount"]</th>
+                <th scope="col">@Culture["SalesAdmin.Runs.Line.Iban"]</th>
+                <th scope="col">@Culture["SalesAdmin.Runs.Line.Flags"]</th>
+                <th scope="col">@Culture["SalesAdmin.Runs.Line.Status"]</th>
+                <th scope="col"></th>
+            </Header>
+            <Rows>
+                @foreach (var line in _detail.Lines)
+                {
+                    <tr>
+                        <td>@line.BeneficiaryMaskedName</td>
+                        <td style="text-align:right;font-variant-numeric:tabular-nums">@SalesMoney.FormatPlain(line.TotalInclVat)</td>
+                        <td><code>@line.MaskedIban</code></td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(line.FlagNote))
+                            {
+                                <span class="muted">@line.FlagNote</span>
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </td>
+                        <td>@line.Status</td>
+                        <td>
+                            @if (_detail.Status == nameof(SalesPayoutRunStatus.Draft) && line.Status == nameof(SalesPayoutRequestStatus.InRun))
+                            {
+                                <button type="button" class="btn-compact" disabled="@_busy"
+                                        @onclick="() => BeginReject(line.RequestId)">
+                                    @Culture["SalesAdmin.Runs.Reject"]
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </Rows>
+        </EntDataTable>
+
+        <div class="inline-actions" style="margin-top:1rem;flex-wrap:wrap;gap:.5rem">
+            <button type="button" class="login-submit" disabled="@(_busy || !CanApprove)"
+                    @onclick="ApproveAsync">@Culture["SalesAdmin.Runs.Approve"]</button>
+            <button type="button" class="provider-btn" disabled="@(_busy || !CanExport || !_detail.ExportConfigured)"
+                    @onclick='() => ExportAsync("sepa")'>@Culture["SalesAdmin.Runs.ExportSepa"]</button>
+            <button type="button" class="provider-btn" disabled="@(_busy || !CanExport)"
+                    @onclick='() => ExportAsync("csv")'>@Culture["SalesAdmin.Runs.ExportCsv"]</button>
+            <button type="button" class="provider-btn" disabled="@(_busy || !CanMarkPaid)"
+                    @onclick="MarkPaidAsync">@Culture["SalesAdmin.Runs.MarkPaid"]</button>
+        </div>
+        @if (!_detail.ExportConfigured && !string.IsNullOrEmpty(_detail.ExportDisabledReason))
+        {
+            <p class="muted">@_detail.ExportDisabledReason</p>
+        }
+    }
+</EntDrawer>
+
+@if (_rejectOpen)
+{
+    <div class="ent-drawer-backdrop" style="z-index:60"></div>
+    <div class="panel-section" style="position:fixed;inset:auto 1rem 1rem auto;z-index:61;background:var(--surface,#fff);padding:1rem;max-width:24rem;border:1px solid var(--border,#ddd)">
+        <h3>@Culture["SalesAdmin.Runs.RejectTitle"]</h3>
+        <label>
+            @Culture["SalesAdmin.Runs.RejectReason"]
+            <textarea @bind="_rejectReason" rows="3" style="width:100%"></textarea>
+        </label>
+        <div class="inline-actions" style="margin-top:.75rem">
+            <button type="button" class="provider-btn" @onclick="() => _rejectOpen = false">@Culture["Common.Cancel"]</button>
+            <button type="button" class="login-submit" disabled="@_busy" @onclick="ConfirmRejectAsync">@Culture["SalesAdmin.Runs.Reject"]</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid? RunId { get; set; }
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private SalesPayoutRunDetailDto? _detail;
+    private bool _loading;
+    private bool _busy;
+    private string? _error;
+    private bool _rejectOpen;
+    private Guid? _rejectRequestId;
+    private string _rejectReason = "";
+
+    private string DrawerTitle => _detail is null
+        ? Culture["SalesAdmin.Runs.DrawerTitle"]
+        : Culture.Format("SalesAdmin.Runs.DrawerTitleDated", _detail.RunDate.ToString("dd-MM-yyyy"));
+
+    private bool CanApprove => _detail?.Status == nameof(SalesPayoutRunStatus.Draft);
+    private bool CanExport => _detail?.Status is nameof(SalesPayoutRunStatus.Approved) or nameof(SalesPayoutRunStatus.Exported);
+    private bool CanMarkPaid => _detail?.Status is nameof(SalesPayoutRunStatus.Approved)
+        or nameof(SalesPayoutRunStatus.Exported)
+        or nameof(SalesPayoutRunStatus.Paid);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Open && RunId is Guid id)
+        {
+            await LoadAsync(id);
+        }
+    }
+
+    private async Task LoadAsync(Guid id)
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _detail = await Api.GetAdminSalesPayoutRunAsync(id);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _detail = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void BeginReject(Guid requestId)
+    {
+        _rejectRequestId = requestId;
+        _rejectReason = "";
+        _rejectOpen = true;
+    }
+
+    private async Task ConfirmRejectAsync()
+    {
+        if (RunId is not Guid runId || _rejectRequestId is not Guid requestId)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.RejectAdminSalesPayoutLineAsync(runId, requestId, _rejectReason);
+            _rejectOpen = false;
+            await LoadAsync(runId);
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ApproveAsync()
+    {
+        if (RunId is not Guid runId)
+        {
+            return;
+        }
+
+        if (!await Js.InvokeAsync<bool>("confirm", Culture["SalesAdmin.Runs.ApproveConfirm"]))
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.ApproveAdminSalesPayoutRunAsync(runId);
+            await LoadAsync(runId);
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ExportAsync(string format)
+    {
+        if (RunId is not Guid runId)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.DownloadAdminSalesPayoutExportAsync(Js, runId, format);
+            await LoadAsync(runId);
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task MarkPaidAsync()
+    {
+        if (RunId is not Guid runId || _detail is null)
+        {
+            return;
+        }
+
+        var n = _detail.Lines.Count(l => l.Status == nameof(SalesPayoutRequestStatus.Approved));
+        if (!await Js.InvokeAsync<bool>("confirm", Culture.Format("SalesAdmin.Runs.MarkPaidConfirm", n)))
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.MarkAdminSalesPayoutRunPaidAsync(runId);
+            await LoadAsync(runId);
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -14,15 +14,18 @@ public sealed class AdminSalesController : ControllerBase
     private readonly ISalesParkedBalanceService _parked;
     private readonly ISalesCorrectionService _corrections;
     private readonly ISalesAttributionAdminService _attribution;
+    private readonly ISalesPayoutRunService _runs;
 
     public AdminSalesController(
         ISalesParkedBalanceService parked,
         ISalesCorrectionService corrections,
-        ISalesAttributionAdminService attribution)
+        ISalesAttributionAdminService attribution,
+        ISalesPayoutRunService runs)
     {
         _parked = parked;
         _corrections = corrections;
         _attribution = attribution;
+        _runs = runs;
     }
 
     [HttpGet("parked-balances")]
@@ -30,22 +33,184 @@ public sealed class AdminSalesController : ControllerBase
         CancellationToken cancellationToken)
         => Ok(await _parked.ListAsync(cancellationToken));
 
+    [HttpGet("payout-runs")]
+    public async Task<ActionResult<IReadOnlyList<SalesPayoutRunListItemDto>>> ListPayoutRuns(
+        CancellationToken cancellationToken)
+        => Ok(await _runs.ListRunsAsync(cancellationToken));
+
+    [HttpGet("payout-runs/{id:guid}")]
+    public async Task<ActionResult<SalesPayoutRunDetailDto>> GetPayoutRun(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(await _runs.GetRunAsync(id, cancellationToken));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("payout-runs")]
+    public async Task<ActionResult<SalesPayoutRunDto>> CreateExtraPayoutRun(
+        CancellationToken cancellationToken)
+    {
+        if (!RequireMfa(out var forbid))
+        {
+            return forbid!;
+        }
+
+        if (!TryAdminId(out var adminId, out var unauthorized))
+        {
+            return unauthorized!;
+        }
+
+        var run = await _runs.CreateExtraRunAsync(adminId, cancellationToken);
+        return Ok(run);
+    }
+
+    [HttpPost("payout-runs/{id:guid}/lines/{requestId:guid}/reject")]
+    public async Task<IActionResult> RejectPayoutLine(
+        Guid id,
+        Guid requestId,
+        [FromBody] SalesPayoutRejectRequest body,
+        CancellationToken cancellationToken)
+    {
+        if (!RequireMfa(out var forbid))
+        {
+            return forbid!;
+        }
+
+        if (!TryAdminId(out var adminId, out var unauthorized))
+        {
+            return unauthorized!;
+        }
+
+        try
+        {
+            await _runs.RejectLineAsync(adminId, id, requestId, body.Reason, cancellationToken);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("payout-runs/{id:guid}/approve")]
+    public async Task<ActionResult<SalesPayoutRunDto>> ApprovePayoutRun(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (!RequireMfa(out var forbid))
+        {
+            return forbid!;
+        }
+
+        if (!TryAdminId(out var adminId, out var unauthorized))
+        {
+            return unauthorized!;
+        }
+
+        try
+        {
+            return Ok(await _runs.ApproveRunAsync(adminId, id, cancellationToken));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("payout-runs/{id:guid}/export")]
+    public async Task<IActionResult> ExportPayoutRun(
+        Guid id,
+        [FromQuery] string format = "sepa",
+        CancellationToken cancellationToken = default)
+    {
+        if (!RequireMfa(out var forbid))
+        {
+            return forbid!;
+        }
+
+        if (!TryAdminId(out var adminId, out var unauthorized))
+        {
+            return unauthorized!;
+        }
+
+        try
+        {
+            var file = await _runs.ExportAsync(adminId, id, format, cancellationToken);
+            return File(file.Bytes, file.ContentType, file.FileName);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("payout-runs/{id:guid}/mark-paid")]
+    public async Task<ActionResult<SalesPayoutRunDto>> MarkPayoutRunPaid(
+        Guid id,
+        [FromBody] SalesPayoutMarkPaidRequest? body,
+        CancellationToken cancellationToken)
+    {
+        if (!RequireMfa(out var forbid))
+        {
+            return forbid!;
+        }
+
+        if (!TryAdminId(out var adminId, out var unauthorized))
+        {
+            return unauthorized!;
+        }
+
+        try
+        {
+            return Ok(await _runs.MarkPaidAsync(adminId, id, body?.InvoiceIds, cancellationToken));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
     /// <summary>Book a manual ledger correction (±). Requires MFA-verified session.</summary>
     [HttpPost("ledger/corrections")]
     public async Task<ActionResult<object>> BookCorrection(
         [FromBody] SalesLedgerCorrectionRequest request,
         CancellationToken cancellationToken)
     {
-        if (!PersonalDataAccessLogExtensions.IsMfaVerifiedInSession(User))
+        if (!RequireMfa(out var forbid))
         {
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "MFA-sessie vereist." });
+            return forbid!;
         }
 
-        var adminIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-            ?? User.FindFirst("sub")?.Value;
-        if (!Guid.TryParse(adminIdClaim, out var adminId))
+        if (!TryAdminId(out var adminId, out var unauthorized))
         {
-            return Unauthorized();
+            return unauthorized!;
         }
 
         try
@@ -81,16 +246,14 @@ public sealed class AdminSalesController : ControllerBase
         [FromBody] SalesAttributionReassignRequest request,
         CancellationToken cancellationToken)
     {
-        if (!PersonalDataAccessLogExtensions.IsMfaVerifiedInSession(User))
+        if (!RequireMfa(out var forbid))
         {
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "MFA-sessie vereist." });
+            return forbid!;
         }
 
-        var adminIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-            ?? User.FindFirst("sub")?.Value;
-        if (!Guid.TryParse(adminIdClaim, out var adminId))
+        if (!TryAdminId(out var adminId, out var unauthorized))
         {
-            return Unauthorized();
+            return unauthorized!;
         }
 
         try
@@ -137,6 +300,32 @@ public sealed class AdminSalesController : ControllerBase
             return NotFound(new { message = ex.Message });
         }
     }
+
+    private bool RequireMfa(out ActionResult? forbid)
+    {
+        if (!PersonalDataAccessLogExtensions.IsMfaVerifiedInSession(User))
+        {
+            forbid = StatusCode(StatusCodes.Status403Forbidden, new { message = "MFA-sessie vereist." });
+            return false;
+        }
+
+        forbid = null;
+        return true;
+    }
+
+    private bool TryAdminId(out Guid adminId, out ActionResult? unauthorized)
+    {
+        var adminIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+        if (!Guid.TryParse(adminIdClaim, out adminId))
+        {
+            unauthorized = Unauthorized();
+            return false;
+        }
+
+        unauthorized = null;
+        return true;
+    }
 }
 
 public sealed record SalesLedgerCorrectionRequest(
@@ -148,3 +337,7 @@ public sealed record SalesLedgerCorrectionRequest(
 public sealed record SalesAttributionReassignRequest(
     Guid? ToBeneficiaryUserId,
     string Reason);
+
+public sealed record SalesPayoutRejectRequest(string Reason);
+
+public sealed record SalesPayoutMarkPaidRequest(IReadOnlyList<Guid>? InvoiceIds);

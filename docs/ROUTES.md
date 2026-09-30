@@ -59,6 +59,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/personal-data-access-log` | `Pages/Admin/PersonalDataAccessLogAdmin.razor` | Admin |
 | `/admin/sales` | `Pages/Admin/SalesCommercialPage.razor` | Admin |
 | `/admin/sales-managers` | `Pages/Admin/SalesManagersAdmin.razor` | Admin |
+| `/admin/sales-managers?tab=uitbetalingen` | `Pages/Admin/SalesManagersAdmin.razor` (+ `Components/Admin/Sales/PayoutRunsSection`) | Admin — fallback until admin redesign 06.4 hosts `PayoutRunsSection` in tab **Rondes** on `/admin/financien/uitbetalingen` and keeps mark-paid closing payout requests |
 | `/admin/settings` | `Pages/Admin/SettingsAdmin.razor` | Admin |
 | `/admin/token-finance` | `Pages/Admin/TokenFinanceAdmin.razor` | Admin |
 | `/admin/tokens` | `Pages/Admin/TokenAdmin.razor` | Admin |

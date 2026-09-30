@@ -34,6 +34,7 @@ Legend for **Scope**: `branch` = primary company only · `memberships` = `UserCo
 | Manage branches / invites | — | limited | **no** (read) | org | limited | — | — | all |
 | Salary tables (manage) | — | read/use | read | org | clients | — | — | all |
 | Sales wallet / payout | — | — | — | — | — | self | self | all |
+| Sales payout approve / SEPA export / mark paid | — | — | — | — | — | — | — | Admin + MFA session |
 | Tracking code / toolkit | — | — | — | partner affiliate | partner affiliate | self | self | all |
 | Admin screens | — | — | — | — | — | — | — | all |
 | Own profile / sessions / feedback | self | self | self | self | self | self | self | self |

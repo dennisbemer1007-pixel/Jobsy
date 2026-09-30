@@ -1,0 +1,180 @@
+@* // moves to /admin/financien/uitbetalingen (admin-redesign 06.4) *@
+@namespace Jobsy.Web.Components.Admin.Sales
+@using Jobsy.Core.Sales
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+<section class="panel-section">
+    <div class="admin-sublinks admin-sublinks--wrap" style="justify-content:space-between">
+        <div>
+            <h2>@Culture["SalesAdmin.Runs.Title"]</h2>
+            <p class="muted">@Culture["SalesAdmin.Runs.Lead"]</p>
+        </div>
+        <button type="button" class="login-submit" disabled="@_busy" @onclick="CreateExtraAsync">
+            @Culture["SalesAdmin.Runs.CreateExtra"]
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    @if (!string.IsNullOrEmpty(_info))
+    {
+        <p class="state-message">@_info</p>
+    }
+
+    <EntDataTable Loading="_loading" Empty="@(!_loading && _runs.Count == 0)" EmptyText="@Culture["SalesAdmin.Runs.Empty"]">
+        <Header>
+            <th scope="col">@Culture["SalesAdmin.Runs.Col.Date"]</th>
+            <th scope="col">@Culture["SalesAdmin.Runs.Col.Kind"]</th>
+            <th scope="col">@Culture["SalesAdmin.Runs.Col.Status"]</th>
+            <th scope="col">@Culture["SalesAdmin.Runs.Col.Lines"]</th>
+            <th scope="col" style="text-align:right">@Culture["SalesAdmin.Runs.Col.Total"]</th>
+            <th scope="col">@Culture["SalesAdmin.Runs.Col.ApprovedBy"]</th>
+        </Header>
+        <Rows>
+            @foreach (var run in _runs)
+            {
+                <tr style="cursor:pointer" @onclick="() => OpenRunAsync(run.Id)">
+                    <td>@run.RunDate.ToString("dd-MM-yyyy")</td>
+                    <td>@(run.IsExtra ? Culture["SalesAdmin.Runs.Kind.Extra"] : Culture["SalesAdmin.Runs.Kind.Monthly"])</td>
+                    <td><span class="status-pill">@Culture[SalesLabels.Key(Enum.Parse<Jobsy.Core.Enums.SalesPayoutRunStatus>(run.Status))]</span></td>
+                    <td>@run.LineCount</td>
+                    <td style="text-align:right;font-variant-numeric:tabular-nums">@SalesMoney.FormatPlain(run.TotalInclVat)</td>
+                    <td>@(run.ApprovedByMaskedName ?? "—")</td>
+                </tr>
+            }
+        </Rows>
+    </EntDataTable>
+
+    @if (_parked.Count > 0)
+    {
+        <div style="margin-top:1.5rem">
+            <h3>@Culture["SalesAdmin.Parked.Title"]</h3>
+            <EntImpactNote Tone="warn">
+                <p>@Culture["SalesAdmin.Parked.Intro"]</p>
+            </EntImpactNote>
+            <EntDataTable Empty="false">
+                <Header>
+                    <th scope="col">@Culture["SalesAdmin.Parked.Col.Name"]</th>
+                    <th scope="col" style="text-align:right">@Culture["SalesAdmin.Parked.Col.Balance"]</th>
+                    <th scope="col">@Culture["SalesAdmin.Parked.Col.Last"]</th>
+                    <th scope="col"></th>
+                </Header>
+                <Rows>
+                    @foreach (var row in _parked)
+                    {
+                        <tr>
+                            <td>@row.MaskedDisplayName</td>
+                            <td style="text-align:right;font-variant-numeric:tabular-nums">@SalesMoney.FormatPlain(row.OpenBalanceExVat)</td>
+                            <td>@(row.LastLineAtUtc?.ToLocalTime().ToString("dd-MM-yyyy") ?? "—")</td>
+                            <td>
+                                <button type="button" class="btn-compact" @onclick="() => OpenCorrection(row.UserId)">
+                                    @Culture["SalesAdmin.Correction.Open"]
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </Rows>
+            </EntDataTable>
+        </div>
+    }
+
+    <p class="muted" style="margin-top:1rem">@Culture["SalesAdmin.Runs.CrossLinkUsers"]</p>
+</section>
+
+<PayoutRunDetailDrawer RunId="_openRunId"
+                       Open="_drawerOpen"
+                       OpenChanged="OnDrawerOpenChanged"
+                       OnChanged="ReloadAsync" />
+
+<LedgerCorrectionDialog Open="_correctionOpen"
+                        BeneficiaryUserId="_correctionUserId"
+                        OpenChanged="v => _correctionOpen = v"
+                        OnSaved="ReloadAsync" />
+
+@code {
+    private List<SalesPayoutRunListItemDto> _runs = [];
+    private List<SalesParkedBalanceItem> _parked = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _info;
+    private Guid? _openRunId;
+    private bool _drawerOpen;
+    private bool _correctionOpen;
+    private Guid? _correctionUserId;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _runs = await Api.GetAdminSalesPayoutRunsAsync();
+            _parked = await Api.GetAdminSalesParkedBalancesAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CreateExtraAsync()
+    {
+        if (!await Js.InvokeAsync<bool>("confirm", Culture["SalesAdmin.Runs.CreateExtraConfirm"]))
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        _info = null;
+        try
+        {
+            var run = await Api.CreateAdminSalesExtraPayoutRunAsync();
+            _info = Culture.Format("SalesAdmin.Runs.Created", run.RunDate.ToString("dd-MM-yyyy"));
+            await ReloadAsync();
+            await OpenRunAsync(run.Id);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task OpenRunAsync(Guid id)
+    {
+        _openRunId = id;
+        _drawerOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnDrawerOpenChanged(bool open)
+    {
+        _drawerOpen = open;
+        if (!open)
+        {
+            await ReloadAsync();
+        }
+    }
+
+    private void OpenCorrection(Guid userId)
+    {
+        _correctionUserId = userId;
+        _correctionOpen = true;
+    }
+}
