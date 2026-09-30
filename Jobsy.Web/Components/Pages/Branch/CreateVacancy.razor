@@ -20,7 +20,7 @@
             <p class="login-lead">
                 @if (_editVacancyId is not null)
                 {
-                    <text>Werk het concept bij. Publiceren kan zodra alle verplichte onderdelen compleet zijn.</text>
+                    <text>Werk het concept bij. Klaarzetten of publiceren kan zodra alle verplichte onderdelen compleet zijn.</text>
                 }
                 else if (_isDuplicate)
                 {
@@ -637,6 +637,12 @@
             <button class="login-submit" type="submit" disabled="@_saving">
                 @(_saving ? "Opslaan…" : Culture["Employer.SaveDraft"])
             </button>
+            @if (SelectedCompanyIsUnverified && _editVacancyId is Guid readyId && !_saving)
+            {
+                <button class="login-submit" type="button" disabled="@_readyBusy" @onclick="() => MarkReadyAsync(readyId)">
+                    @(_readyBusy ? Culture["Common.Busy"] : Culture["WaBanner.ReadyCta"])
+                </button>
+            }
         </form>
 
         <aside class="vacancy-preview" aria-label="Voorbeeldtegel">
@@ -784,6 +790,7 @@
     private DateOnly? _draftEndDate;
     private Guid _companyId;
     private List<CompanySummary> _companies = [];
+    private bool _readyBusy;
     private List<KvkEstablishmentItem> _clientEstablishments = [];
     private List<SalaryTableItem> _salaryTables = [];
     private bool _vacancyDirectContact;
@@ -804,6 +811,10 @@
 
     private CompanySummary? SelectedCompany =>
         _companies.FirstOrDefault(c => c.Id == _companyId);
+
+    private bool SelectedCompanyIsUnverified =>
+        SelectedCompany is not null
+        && !string.Equals(SelectedCompany.VerificationStatus, "Verified", StringComparison.OrdinalIgnoreCase);
 
     private string SelectedCompanyName =>
         SelectedCompany?.Name ?? "Vestiging";
@@ -1621,6 +1632,25 @@
     private void CloseModeration()
     {
         _moderationOpen = false;
+    }
+
+    private async Task MarkReadyAsync(Guid vacancyId)
+    {
+        _readyBusy = true;
+        _message = null;
+        try
+        {
+            await Api.MarkVacancyReadyAsync(vacancyId);
+            _message = Culture["WaBanner.ReadyStatus"];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _readyBusy = false;
+        }
     }
 
     private async Task SaveAsync()

@@ -23,7 +23,8 @@ public record CompanySummaryDto(
     string? KvkEstablishmentId = null,
     string KvkVerificationStatus = nameof(Jobsy.Core.Enums.KvkVerificationStatus.Verified),
     string? PreferredPaymentMethod = null,
-    bool RequireEmailVerificationForApplications = false);
+    bool RequireEmailVerificationForApplications = false,
+    string VerificationStatus = nameof(Jobsy.Core.Enums.CompanyVerificationStatus.Verified));
 
 public record UpdateBillingPreferenceRequest(string? PreferredPaymentMethod);
 

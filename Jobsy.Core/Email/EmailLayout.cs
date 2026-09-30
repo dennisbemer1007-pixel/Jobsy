@@ -76,6 +76,9 @@ public static class EmailLayout
     public static string RegisterActivateUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, "/register/activate");
 
+    public static string RegisterVerifyUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/register/verifieren");
+
     public static string RegisterUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, "/register");
 

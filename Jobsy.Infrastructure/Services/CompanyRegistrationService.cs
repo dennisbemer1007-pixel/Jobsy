@@ -23,7 +23,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         TimeSpan.FromMinutes(PrivacyConstants.UnconfirmedRegistrationRetentionMinutes);
 
     /// <summary>Ledger note for the one-time registration welcome grant (1 token).</summary>
-    public const string WelcomeTokenNote = "Welkomsttoken toegekend bij accountactivatie";
+    public const string WelcomeTokenNote = "Welkomsttoken toegekend bij bedrijfsverificatie";
 
     public const decimal WelcomeTokenAmount = 1m;
 
@@ -516,7 +516,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
 
-        var welcomeGranted = await GrantWelcomeTokenAsync(branchId, user.Id, cancellationToken);
+        // Welcome token is granted on verification (CompanyVerificationService), not at activation.
+        const bool welcomeGranted = false;
 
         await SendActivatedCredentialsEmailAsync(registration, temporaryPassword, cancellationToken);
 
@@ -533,15 +534,28 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     /// Credits 1 welcome token on the registered vestiging so the first publish is free.
     /// Skipped during the free-publish promo (publish is already free until that date).
     /// Idempotent via <see cref="Company.HasReceivedWelcomeToken"/>.
+    /// Called from <see cref="CompanyVerificationService"/> after verification — not at activation.
     /// Returns whether a ledger credit was granted.
     /// </summary>
-    private async Task<bool> GrantWelcomeTokenAsync(
+    internal async Task<bool> GrantWelcomeTokenAsync(
         Guid branchCompanyId,
         Guid actorUserId,
         CancellationToken cancellationToken)
     {
         var company = await _db.Companies.FirstAsync(c => c.Id == branchCompanyId, cancellationToken);
         if (company.HasReceivedWelcomeToken)
+        {
+            return false;
+        }
+
+        // Welcome only after the root organisation is verified.
+        var rootStatus = company.ParentCompanyId is Guid parentId
+            ? await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == parentId)
+                .Select(c => c.VerificationStatus)
+                .FirstOrDefaultAsync(cancellationToken)
+            : company.VerificationStatus;
+        if (!CompanyVerificationRules.CanUseWelcomeToken(rootStatus))
         {
             return false;
         }

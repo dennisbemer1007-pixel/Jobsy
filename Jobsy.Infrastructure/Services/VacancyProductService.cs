@@ -91,6 +91,12 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, KvkVerificationRules.BlockedMessage(company.KvkVerificationStatus));
         }
 
+        var rootStatus = await ResolveRootVerificationStatusAsync(company, cancellationToken);
+        if (!CompanyVerificationRules.CanPublish(rootStatus))
+        {
+            return Fail(vacancy, CompanyVerificationRules.BlockedMessageNl);
+        }
+
         var useStartHighlight = company?.PendingStartHighlightBonus == true;
         if (useStartHighlight)
         {
@@ -110,7 +116,9 @@ public sealed class VacancyProductService : IVacancyProductService
 
         var publishCost = FreePublishRules.EffectivePublishCost(
             pricing.PublishCostTokens,
-            (await _features.GetAsync(cancellationToken)).FreePublishUntil,
+            CompanyVerificationRules.CanUseFreePublishPromo(rootStatus)
+                ? (await _features.GetAsync(cancellationToken)).FreePublishUntil
+                : null,
             DateTime.UtcNow);
         if (publishCost > 0 && await HasActiveAgencySubscriptionAsync(vacancy.CompanyId, cancellationToken))
         {
@@ -380,7 +388,10 @@ public sealed class VacancyProductService : IVacancyProductService
 
         var publishCost = FreePublishRules.EffectivePublishCost(
             pricing.PublishCostTokens,
-            (await _features.GetAsync(cancellationToken)).FreePublishUntil,
+            CompanyVerificationRules.CanUseFreePublishPromo(
+                await ResolveRootVerificationStatusAsync(company, cancellationToken))
+                ? (await _features.GetAsync(cancellationToken)).FreePublishUntil
+                : null,
             DateTime.UtcNow);
         if (publishCost > 0 && await HasActiveAgencySubscriptionAsync(vacancy.CompanyId, cancellationToken))
         {
@@ -1295,16 +1306,53 @@ public sealed class VacancyProductService : IVacancyProductService
         Vacancy vacancy,
         CancellationToken cancellationToken)
     {
-        var status = await _db.Companies.AsNoTracking()
+        var company = await _db.Companies.AsNoTracking()
             .Where(c => c.Id == companyId)
-            .Select(c => c.KvkVerificationStatus)
+            .Select(c => new Company
+            {
+                Id = c.Id,
+                ParentCompanyId = c.ParentCompanyId,
+                KvkVerificationStatus = c.KvkVerificationStatus,
+                VerificationStatus = c.VerificationStatus
+            })
             .FirstOrDefaultAsync(cancellationToken);
-        if (!KvkVerificationRules.CanPublishOrSpend(status))
+        if (company is null)
         {
-            return Fail(vacancy, KvkVerificationRules.BlockedMessage(status));
+            return null;
+        }
+
+        if (!KvkVerificationRules.CanPublishOrSpend(company.KvkVerificationStatus))
+        {
+            return Fail(vacancy, KvkVerificationRules.BlockedMessage(company.KvkVerificationStatus));
+        }
+
+        var rootStatus = await ResolveRootVerificationStatusAsync(company, cancellationToken);
+        if (!CompanyVerificationRules.CanPublish(rootStatus))
+        {
+            return Fail(vacancy, CompanyVerificationRules.BlockedMessageNl);
         }
 
         return null;
+    }
+
+    private async Task<CompanyVerificationStatus> ResolveRootVerificationStatusAsync(
+        Company? company,
+        CancellationToken cancellationToken)
+    {
+        if (company is null)
+        {
+            return CompanyVerificationStatus.Unverified;
+        }
+
+        if (company.ParentCompanyId is Guid parentId)
+        {
+            return await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == parentId)
+                .Select(c => c.VerificationStatus)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        return company.VerificationStatus;
     }
 
     private async Task<bool> HasActiveAgencySubscriptionAsync(

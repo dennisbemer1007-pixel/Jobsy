@@ -1,3 +1,4 @@
+using Jobsy.Api.Authorization;
 using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
@@ -33,6 +34,7 @@ public sealed class TalentPoolController : ControllerBase
 
     [HttpGet("search")]
     [EnableRateLimiting("public-read")]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<IReadOnlyList<AnonymousTalentCardDto>>> Search(
         [FromQuery] string? tags,
         [FromQuery] int? maxTravelMinutes,
@@ -74,6 +76,7 @@ public sealed class TalentPoolController : ControllerBase
     [HttpPost("unlock")]
     [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [EnableRateLimiting("public-write")]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<TalentContactRequestDto>> Unlock(
         [FromBody] TalentUnlockRequest body,
         CancellationToken cancellationToken = default)
@@ -113,6 +116,7 @@ public sealed class TalentPoolController : ControllerBase
     [HttpPost("{requestId:guid}/withdraw")]
     [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [EnableRateLimiting("public-write")]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<TalentContactRequestDto>> Withdraw(
         Guid requestId,
         CancellationToken cancellationToken = default)
@@ -139,6 +143,7 @@ public sealed class TalentPoolController : ControllerBase
     }
 
     [HttpGet("requests")]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<IReadOnlyList<TalentContactRequestDto>>> ListRequests(
         CancellationToken cancellationToken = default)
     {

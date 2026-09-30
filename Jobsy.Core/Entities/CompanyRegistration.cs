@@ -75,5 +75,11 @@ public class CompanyRegistration
     public DateTime CreatedAt { get; set; }
     public DateTime? ActivatedAt { get; set; }
 
+    /// <summary>Day-7 unverified reminder e-mail sent (once).</summary>
+    public DateTime? ReminderSentDay7AtUtc { get; set; }
+
+    /// <summary>Day-21 unverified reminder e-mail sent (once).</summary>
+    public DateTime? ReminderSentDay21AtUtc { get; set; }
+
     public ICollection<EstablishmentTakeoverRequest> TakeoverRequests { get; set; } = new List<EstablishmentTakeoverRequest>();
 }

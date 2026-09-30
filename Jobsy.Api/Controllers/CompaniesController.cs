@@ -71,7 +71,8 @@ public class CompaniesController : ControllerBase
                 c.KvkEstablishmentId,
                 c.KvkVerificationStatus.ToString(),
                 c.PreferredPaymentMethod,
-                c.RequireEmailVerificationForApplications))
+                c.RequireEmailVerificationForApplications,
+                c.VerificationStatus.ToString()))
             .ToListAsync(cancellationToken);
 
         return Ok(companies);
@@ -616,7 +617,8 @@ public class CompaniesController : ControllerBase
             company.KvkEstablishmentId,
             company.KvkVerificationStatus.ToString(),
             company.PreferredPaymentMethod,
-            company.RequireEmailVerificationForApplications);
+            company.RequireEmailVerificationForApplications,
+            company.VerificationStatus.ToString());
 
     /// <summary>
     /// Intermediaries may change or view billing/contact/email-check only on their own organisation,

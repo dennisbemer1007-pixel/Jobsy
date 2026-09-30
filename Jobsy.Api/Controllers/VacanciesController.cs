@@ -1170,6 +1170,7 @@ public class VacanciesController : ControllerBase
 
     [HttpPost("publish")]
     [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<VacancyProductActionResultDto>> Publish(
         [FromBody] PublishVacancyRequest request,
         CancellationToken cancellationToken)
@@ -1236,6 +1237,30 @@ public class VacanciesController : ControllerBase
             return access;
         }
 
+        // Unverified: BM may only approve a "klaar" request (PendingApproval + PublishOnVerification).
+        var rootStatus = await ResolveRootVerificationStatusForCompanyAsync(vacancy.CompanyId, cancellationToken);
+        if (!CompanyVerificationRules.CanPublish(rootStatus))
+        {
+            if (vacancy.Status == VacancyStatus.PendingApproval && vacancy.PublishOnVerification)
+            {
+                vacancy.Status = VacancyStatus.Draft;
+                vacancy.PublishOnVerification = true;
+                vacancy.ReadyMarkedAtUtc ??= DateTime.UtcNow;
+                await _db.SaveChangesAsync(cancellationToken);
+                var freeUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
+                return Ok(new VacancyProductActionResultDto(
+                    MapToDto(vacancy, showWage: true, includeCategoryInternals: true, freePublishUntil: freeUntil),
+                    PendingApproval: false,
+                    Message: "Klaar — gaat live na verificatie."));
+            }
+
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = CompanyVerificationRules.UnverifiedErrorCode,
+                message = CompanyVerificationRules.BlockedMessageNl
+            });
+        }
+
         var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
         var result = await _products.ApprovePublishAsync(vacancy, actor?.Id, cancellationToken);
         if (result.InsufficientTokens)
@@ -1258,6 +1283,7 @@ public class VacanciesController : ControllerBase
 
     [HttpPost("{id:guid}/highlight")]
     [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<VacancyProductActionResultDto>> Highlight(
         Guid id,
         CancellationToken cancellationToken)
@@ -1304,6 +1330,7 @@ public class VacanciesController : ControllerBase
 
     [HttpPost("{id:guid}/pushbom")]
     [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<VacancyProductActionResultDto>> PushBom(
         Guid id,
         CancellationToken cancellationToken)
@@ -1317,6 +1344,7 @@ public class VacanciesController : ControllerBase
 
     [HttpPost("{id:guid}/extend")]
     [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<VacancyProductActionResultDto>> Extend(
         Guid id,
         CancellationToken cancellationToken)
@@ -1353,6 +1381,106 @@ public class VacanciesController : ControllerBase
         }
 
         return Ok(await ToProductResultAsync(result, cancellationToken));
+    }
+
+    /// <summary>
+    /// Mark a draft "klaar" so it auto-publishes when the company is verified (D4).
+    /// Only available while the company is not verified.
+    /// </summary>
+    [HttpPost("{id:guid}/ready")]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    public async Task<ActionResult<VacancyProductActionResultDto>> MarkReady(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var vacancy = await LoadManagedVacancyAsync(id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
+        if (access is not null)
+        {
+            return access;
+        }
+
+        var rootStatus = await ResolveRootVerificationStatusForCompanyAsync(vacancy.CompanyId, cancellationToken);
+        if (CompanyVerificationRules.CanPublish(rootStatus))
+        {
+            return BadRequest(new
+            {
+                message = "Je bedrijf is al geverifieerd — publiceer de vacature normaal."
+            });
+        }
+
+        if (vacancy.Status is not (VacancyStatus.Draft or VacancyStatus.PendingApproval))
+        {
+            return BadRequest(new { message = "Alleen conceptvacatures kunnen klaargezet worden." });
+        }
+
+        if (VacancyDraftCompletenessRules.IsIncomplete(vacancy))
+        {
+            return BadRequest(new { message = "Conceptvacature is incompleet en kan nog niet klaargezet worden." });
+        }
+
+        if (!vacancy.ContentModerationPassed)
+        {
+            return BadRequest(new { message = "De vacaturetekst moet eerst de contentcontrole doorstaan." });
+        }
+
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var canPurchase = await CanPurchaseTokensForCompanyAsync(vacancy.CompanyId, cancellationToken);
+
+        vacancy.PublishOnVerification = true;
+        vacancy.ReadyMarkedAtUtc = DateTime.UtcNow;
+        vacancy.ReadyMarkedByUserId = actor?.Id;
+
+        // Keep PendingApproval semantics for vestigingsmanagers without purchase rights.
+        if (!canPurchase && vacancy.Status == VacancyStatus.Draft)
+        {
+            vacancy.Status = VacancyStatus.PendingApproval;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var freeUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
+        return Ok(new VacancyProductActionResultDto(
+            MapToDto(vacancy, showWage: true, includeCategoryInternals: true, freePublishUntil: freeUntil),
+            PendingApproval: vacancy.Status == VacancyStatus.PendingApproval,
+            Message: "Klaar — gaat live na verificatie."));
+    }
+
+    [HttpDelete("{id:guid}/ready")]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    public async Task<ActionResult<VacancyProductActionResultDto>> ClearReady(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var vacancy = await LoadManagedVacancyAsync(id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
+        if (access is not null)
+        {
+            return access;
+        }
+
+        vacancy.PublishOnVerification = false;
+        vacancy.ReadyMarkedAtUtc = null;
+        vacancy.ReadyMarkedByUserId = null;
+        if (vacancy.Status == VacancyStatus.PendingApproval)
+        {
+            vacancy.Status = VacancyStatus.Draft;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        var freeUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
+        return Ok(new VacancyProductActionResultDto(
+            MapToDto(vacancy, showWage: true, includeCategoryInternals: true, freePublishUntil: freeUntil)));
     }
 
     /// <summary>
@@ -1572,6 +1700,30 @@ public class VacanciesController : ControllerBase
             .Select(c => c.TokensManagedByEnterprise)
             .FirstOrDefaultAsync(cancellationToken);
         return !managedByEnterprise;
+    }
+
+    private async Task<CompanyVerificationStatus> ResolveRootVerificationStatusForCompanyAsync(
+        Guid companyId,
+        CancellationToken cancellationToken)
+    {
+        var row = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => new { c.ParentCompanyId, c.VerificationStatus })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (row is null)
+        {
+            return CompanyVerificationStatus.Unverified;
+        }
+
+        if (row.ParentCompanyId is Guid parentId)
+        {
+            return await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == parentId)
+                .Select(c => c.VerificationStatus)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        return row.VerificationStatus;
     }
 
     private async Task<Core.Entities.Vacancy?> LoadManagedVacancyAsync(Guid id, CancellationToken cancellationToken)
@@ -2095,9 +2247,12 @@ public class VacanciesController : ControllerBase
         }
 
         var isIncomplete = v.Status == VacancyStatus.Draft && VacancyDraftCompletenessRules.IsIncomplete(v);
-        var displayStatus = v.Status == VacancyStatus.Draft && isIncomplete
-            ? "DraftIncomplete"
-            : v.Status.ToString();
+        var displayStatus = v.PublishOnVerification
+            && v.Status is VacancyStatus.Draft or VacancyStatus.PendingApproval
+            ? "ReadyOnVerification"
+            : v.Status == VacancyStatus.Draft && isIncomplete
+                ? "DraftIncomplete"
+                : v.Status.ToString();
         var barrier = includeDescription ? MapBarrier(v.BarrierRequirementsJson) : default;
 
         return new VacancyListItemDto(
@@ -2203,7 +2358,8 @@ public class VacanciesController : ControllerBase
             BarrierMinExperienceYears: barrier.Years,
             BarrierMinExperienceHours: barrier.Hours,
             BarrierHardChecks: barrier.HardChecks,
-            IsPreview: isPreview);
+            IsPreview: isPreview,
+            PublishOnVerification: v.PublishOnVerification);
     }
 
     private static (string? Kind, IReadOnlyList<string>? Diplomas, IReadOnlyList<string>? Certs, int? Years, int? Hours, IReadOnlyList<string>? HardChecks)

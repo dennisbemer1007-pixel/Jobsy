@@ -8,6 +8,8 @@ public class CompanySummary
     public string KvkNumber { get; set; } = string.Empty;
     public string? KvkEstablishmentId { get; set; }
     public string KvkVerificationStatus { get; set; } = "Verified";
+    /// <summary>Lobsy company verification (Unverified/Pending/Verified/Rejected).</summary>
+    public string VerificationStatus { get; set; } = "Verified";
     public decimal TokenBalance { get; set; }
     public int ActiveVacancies { get; set; }
     public Guid? ParentCompanyId { get; set; }

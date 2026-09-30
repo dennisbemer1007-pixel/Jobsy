@@ -60,9 +60,10 @@ public class Sprint7RegistrationTests
             l.Category == "RegistrationCredentials"
             || (l.Category == "Email" && l.Message.Contains("Geslaagd", StringComparison.OrdinalIgnoreCase))));
 
-        Assert.True(branch.HasReceivedWelcomeToken);
+        // Welcome token moves to verification (03) — not granted at activation.
+        Assert.False(branch.HasReceivedWelcomeToken);
         Assert.Equal(
-            CompanyRegistrationService.WelcomeTokenAmount,
+            0m,
             await db.TokenTransactions.Where(t => t.CompanyId == branch.Id).SumAsync(t => (decimal?)t.Amount) ?? 0m);
 
         var consumed = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
@@ -71,7 +72,7 @@ public class Sprint7RegistrationTests
     }
 
     [Fact]
-    public async Task Activate_organization_grants_welcome_token_to_primary_branch()
+    public async Task Activate_organization_does_not_grant_welcome_token_until_verification()
     {
         await using var db = CreateDb();
         var sut = CreateService(db);
@@ -95,12 +96,11 @@ public class Sprint7RegistrationTests
 
         Assert.NotNull(activated.BranchCompanyId);
         var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
-        Assert.True(branch.HasReceivedWelcomeToken);
-        Assert.Equal(1m, await db.TokenTransactions
+        Assert.False(branch.HasReceivedWelcomeToken);
+        Assert.Equal(0m, await db.TokenTransactions
             .Where(t => t.CompanyId == branch.Id)
             .SumAsync(t => (decimal?)t.Amount) ?? 0m);
 
-        // Sibling vestigingen (claimed under org) do not get a welcome grant.
         var siblings = await db.Companies
             .Where(c => c.ParentCompanyId == activated.OrganizationCompanyId
                         && c.Id != activated.BranchCompanyId)

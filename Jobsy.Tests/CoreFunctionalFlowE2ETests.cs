@@ -88,6 +88,14 @@ public class CoreFunctionalFlowE2ETests
         Assert.Equal(direct.UserId, company.ReferredBySalesManagerUserId);
         Assert.Equal(upline.UserId, company.CommissionIndirectSalesManagerUserId);
         Assert.NotNull(company.FirstYearStartedAt);
+        Assert.False(company.HasReceivedWelcomeToken);
+        Assert.Equal(0m, await new TokenLedgerService(db).GetBalanceAsync(company.Id));
+
+        // Verification unlocks welcome token + publishing.
+        var verification = CreateVerification(db, registration);
+        await verification.MarkVerifiedAsync(
+            company.Id, CompanyVerificationMethod.BusinessEmail, activated.UserId, null);
+        await db.Entry(company).ReloadAsync();
         Assert.True(company.HasReceivedWelcomeToken);
         Assert.Equal(1m, await new TokenLedgerService(db).GetBalanceAsync(company.Id));
 
@@ -591,6 +599,35 @@ public class CoreFunctionalFlowE2ETests
             new TokenLedgerService(db),
             features,
             NullLogger<CompanyRegistrationService>.Instance);
+    }
+
+    private static CompanyVerificationService CreateVerification(
+        JobsyDbContext db,
+        CompanyRegistrationService registration)
+    {
+        var features = CreateFeatures(db);
+        var ledger = new TokenLedgerService(db);
+        var products = new VacancyProductService(
+            db,
+            ledger,
+            new SalesCommercialService(db, ledger),
+            new VacancyCategoryService(db),
+            new PushNotificationServiceStub(db, NullLogger<PushNotificationServiceStub>.Instance),
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            features,
+            new MockRoutingService(),
+            new UserNotificationService(db),
+            new CandidateActionTokenService(db),
+            NullLogger<VacancyProductService>.Instance);
+        return new CompanyVerificationService(
+            db,
+            registration,
+            products,
+            discovery: null,
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new UserNotificationService(db),
+            features,
+            NullLogger<CompanyVerificationService>.Instance);
     }
 
     private static IPlatformFeatureService CreateFeatures(JobsyDbContext db)

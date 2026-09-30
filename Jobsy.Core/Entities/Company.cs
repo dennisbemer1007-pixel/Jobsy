@@ -39,6 +39,16 @@ public class Company
     /// <summary>When verification status or method last changed.</summary>
     public DateTime? VerificationUpdatedAtUtc { get; set; }
 
+    /// <summary>
+    /// When a manual verification check was opened (06). Cleanup (day 60) skips while open.
+    /// </summary>
+    public DateTime? ManualVerificationOpenedAtUtc { get; set; }
+
+    /// <summary>
+    /// When a manual verification check was decided. Cleanup waits 7 more days after this.
+    /// </summary>
+    public DateTime? ManualVerificationClosedAtUtc { get; set; }
+
     public string Address { get; set; } = string.Empty;
     public string? LogoUrl { get; set; }
     public GeoPoint Location { get; set; } = null!;

@@ -150,9 +150,27 @@
                             {
                                 @if (!IsIncompleteDraft(v))
                                 {
-                                    <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
-                                        @Culture["VacancyAction.Publish"]
-                                    </button>
+                                    @if (IsCompanyUnverified(v))
+                                    {
+                                        @if (v.PublishOnVerification)
+                                        {
+                                            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ClearReadyAsync(v.Id)">
+                                                Klaar ongedaan maken
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => MarkReadyAsync(v)">
+                                                @Culture["WaBanner.ReadyCta"]
+                                            </button>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
+                                            @Culture["VacancyAction.Publish"]
+                                        </button>
+                                    }
                                 }
                             }
                             @if (v.Status == "PendingApproval" && _canApprovePublish)
@@ -252,6 +270,7 @@
 @code {
     private List<VacancyListItem> _vacancies = [];
     private List<VacancyListItem> _filtered = [];
+    private List<CompanySummary> _companies = [];
     private bool _loading = true;
     private bool _canApprovePublish;
     private bool _canManageVacancy;
@@ -333,6 +352,14 @@
                 || user.IsInRole("Admin");
 
             _vacancies = (await Api.GetManagedVacanciesAsync()).Select(NormalizeVacancy).ToList();
+            try
+            {
+                _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            }
+            catch
+            {
+                _companies = [];
+            }
 
             if (_salaryTableFilter is Guid tid)
             {
@@ -468,6 +495,14 @@
         try
         {
             _vacancies = (await Api.GetManagedVacanciesAsync()).Select(NormalizeVacancy).ToList();
+            try
+            {
+                _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            }
+            catch
+            {
+                _companies = [];
+            }
             ApplyFilters();
         }
         catch (Exception ex)
@@ -491,6 +526,12 @@
 
     private string StatusLabel(VacancyListItem vacancy)
     {
+        if (vacancy.PublishOnVerification
+            || string.Equals(vacancy.DisplayStatus, "ReadyOnVerification", StringComparison.OrdinalIgnoreCase))
+        {
+            return Culture["WaBanner.ReadyStatus"];
+        }
+
         var key = string.IsNullOrWhiteSpace(vacancy.DisplayStatus)
             ? vacancy.Status
             : vacancy.DisplayStatus;
@@ -500,12 +541,52 @@
             : localized;
     }
 
+    private bool IsCompanyUnverified(VacancyListItem vacancy)
+    {
+        var company = _companies.FirstOrDefault(c => c.Id == vacancy.CompanyId)
+                      ?? _companies.FirstOrDefault(c => c.Id == vacancy.IntermediaryCompanyId);
+        if (company is null)
+        {
+            return false;
+        }
+
+        return !string.Equals(company.VerificationStatus, "Verified", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool IsIncompleteDraft(VacancyListItem vacancy)
         => string.Equals(vacancy.Status, "Draft", StringComparison.OrdinalIgnoreCase)
             && vacancy.IsIncomplete;
 
     private void OpenVacancyDetails(VacancyListItem vacancy)
         => Navigation.NavigateTo($"/vacancies/{vacancy.Id}");
+
+    private async Task MarkReadyAsync(VacancyListItem vacancy)
+    {
+        try
+        {
+            await Api.MarkVacancyReadyAsync(vacancy.Id);
+            _message = Culture["WaBanner.ReadyStatus"];
+            await RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task ClearReadyAsync(Guid id)
+    {
+        try
+        {
+            await Api.ClearVacancyReadyAsync(id);
+            _message = "Klaar-status verwijderd.";
+            await RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
 
     private void OpenPublish(VacancyListItem vacancy)
     {

@@ -113,12 +113,12 @@ public class FreePublishProductTests
         Assert.Equal(FreePublishRules.DefaultUntil, activated.FreePublishUntil);
 
         var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
-        Assert.True(branch.HasReceivedWelcomeToken);
+        Assert.False(branch.HasReceivedWelcomeToken);
         Assert.Equal(0m, await db.TokenTransactions.Where(t => t.CompanyId == branch.Id).SumAsync(t => t.Amount));
     }
 
     [Fact]
-    public async Task Welcome_token_granted_when_promo_disabled()
+    public async Task Welcome_token_not_granted_at_activation_when_promo_disabled()
     {
         await using var db = CreateDb();
         SeedFreePublish(db, freeUntil: null);
@@ -140,11 +140,12 @@ public class FreePublishProductTests
             .SingleAsync();
 
         var activated = await sut.ActivateAsync(token!);
-        Assert.True(activated.WelcomeTokenGranted);
+        Assert.False(activated.WelcomeTokenGranted);
         Assert.Null(activated.FreePublishUntil);
 
         var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
-        Assert.Equal(1m, await db.TokenTransactions.Where(t => t.CompanyId == branch.Id).SumAsync(t => t.Amount));
+        Assert.False(branch.HasReceivedWelcomeToken);
+        Assert.Equal(0m, await db.TokenTransactions.Where(t => t.CompanyId == branch.Id).SumAsync(t => t.Amount));
     }
 
     [Fact]
@@ -180,7 +181,18 @@ public class FreePublishProductTests
         var companyId = activated.BranchCompanyId!.Value;
         var company = await db.Companies.SingleAsync(c => c.Id == companyId);
         Assert.Equal(KvkVerificationStatus.Verified, company.KvkVerificationStatus);
+        Assert.Equal(CompanyVerificationStatus.Unverified, company.VerificationStatus);
         Assert.Equal(0m, await BalanceAsync(db, companyId));
+
+        // Verify company so free-publish promo can apply.
+        company.VerificationStatus = CompanyVerificationStatus.Verified;
+        company.VerificationMethod = CompanyVerificationMethod.Manual;
+        company.VerifiedAtUtc = DateTime.UtcNow;
+        company.VerificationUpdatedAtUtc = DateTime.UtcNow;
+        // Promo active → skip welcome at verification path would mark HasReceived; simulate that.
+        company.HasReceivedWelcomeToken = true;
+        company.WelcomeTokenLedgerCredited = false;
+        await db.SaveChangesAsync();
 
         var products = CreateProducts(db);
 
@@ -290,6 +302,18 @@ public class FreePublishProductTests
         Assert.NotNull(activated.OrganizationCompanyId);
         Assert.NotNull(activated.BranchCompanyId);
 
+        var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
+        branch.VerificationStatus = CompanyVerificationStatus.Verified;
+        branch.VerificationMethod = CompanyVerificationMethod.Manual;
+        branch.VerifiedAtUtc = DateTime.UtcNow;
+        branch.VerificationUpdatedAtUtc = DateTime.UtcNow;
+        var org = await db.Companies.SingleAsync(c => c.Id == activated.OrganizationCompanyId);
+        org.VerificationStatus = CompanyVerificationStatus.Verified;
+        org.VerificationMethod = CompanyVerificationMethod.Manual;
+        org.VerifiedAtUtc = DateTime.UtcNow;
+        org.VerificationUpdatedAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
         var orgDraft = await SeedDraftForCompanyAsync(db, activated.BranchCompanyId!.Value, "Org gratis");
         var orgPublish = await products.PublishAsync(
             orgDraft,
@@ -397,7 +421,11 @@ public class FreePublishProductTests
                 KvkNumber = "1",
                 Address = "a",
                 Location = new GeoPoint(51.98, 4.22),
-                KvkVerificationStatus = KvkVerificationStatus.Verified
+                KvkVerificationStatus = KvkVerificationStatus.Verified,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             });
         }
 

@@ -102,7 +102,8 @@ public record VacancyListItemDto(
     /// True when the response is an employer-only preview of a non-public vacancy
     /// (draft, unverified publisher, etc.). Suppresses indexation and JSON-LD.
     /// </summary>
-    bool IsPreview = false);
+    bool IsPreview = false,
+    bool PublishOnVerification = false);
 
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);

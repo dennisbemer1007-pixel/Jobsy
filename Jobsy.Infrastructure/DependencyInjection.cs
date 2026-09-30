@@ -281,6 +281,7 @@ public static class DependencyInjection
         services.AddScoped<IRegionHostService, RegionHostService>();
         services.AddScoped<CompanyRegistrationService>();
         services.AddScoped<ICompanyRegistrationService>(sp => sp.GetRequiredService<CompanyRegistrationService>());
+        services.AddScoped<ICompanyVerificationService, CompanyVerificationService>();
         services.AddScoped<ISalesManagerInviteService, SalesManagerInviteService>();
         services.AddScoped<ISalesManagerApplicationService, SalesManagerApplicationService>();
         services.AddScoped<ISalesManagerOnboardingService, SalesManagerOnboardingService>();
@@ -422,6 +423,8 @@ public static class DependencyInjection
         services.AddHostedService<IbanEncryptionMigrationHostedService>();
         services.AddHostedService<TalentContactRefundHostedService>();
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
+        services.AddHostedService<UnverifiedCompanyReminderHostedService>();
+        services.AddHostedService<UnverifiedCompanyCleanupHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();

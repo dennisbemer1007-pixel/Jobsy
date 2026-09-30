@@ -101,6 +101,9 @@ public class VacancyListItem
     public List<string> BarrierHardChecks { get; set; } = [];
     /// <summary>Employer-only preview of a non-public vacancy (noindex, no JSON-LD).</summary>
     public bool IsPreview { get; set; }
+
+    /// <summary>Draft marked klaar — auto-publishes on company verification.</summary>
+    public bool PublishOnVerification { get; set; }
 }
 
 public sealed class WageByAgeItem
