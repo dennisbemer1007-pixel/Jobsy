@@ -232,6 +232,12 @@
             || path.Equals("account/mfa", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("account/mfa/", StringComparison.OrdinalIgnoreCase))
         {
+            // Intro/finish keep normal nav (?stap=intro|klaar).
+            if (HasTestShellNavQuery(relativeUri))
+            {
+                return false;
+            }
+
             return true;
         }
 
@@ -258,6 +264,27 @@
             if (!key.Equals("stap", StringComparison.OrdinalIgnoreCase)) continue;
             var value = eq < 0 ? "" : Uri.UnescapeDataString(part[(eq + 1)..]);
             return !string.IsNullOrWhiteSpace(value);
+        }
+
+        return false;
+    }
+
+    /// <summary>Intro/finish of free tests use ?stap=intro|klaar and keep the normal bottom nav.</summary>
+    private static bool HasTestShellNavQuery(string relativeUri)
+    {
+        var qIdx = relativeUri.IndexOf('?', StringComparison.Ordinal);
+        if (qIdx < 0) return false;
+        var query = relativeUri[(qIdx + 1)..];
+        var hash = query.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0) query = query[..hash];
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=', StringComparison.Ordinal);
+            var key = eq < 0 ? part : part[..eq];
+            if (!key.Equals("stap", StringComparison.OrdinalIgnoreCase)) continue;
+            var value = eq < 0 ? "" : Uri.UnescapeDataString(part[(eq + 1)..]);
+            return value.Equals("intro", StringComparison.OrdinalIgnoreCase)
+                   || value.Equals("klaar", StringComparison.OrdinalIgnoreCase);
         }
 
         return false;

@@ -153,14 +153,26 @@ public static class TestsOverviewBuilder
             if (extended)
             {
                 accent = "gold";
-                statusKey = "Test.Status.Extended";
+                statusKey = "DeepPay.Title";
                 icon = "★";
             }
             else if (freeDone)
             {
                 accent = "success";
-                statusKey = "Test.Status.FreeDone";
+                statusKey = "TestDepth.Full";
                 icon = "✓";
+            }
+            else if (freeAnswered >= TestDepthRules.DeeperCount)
+            {
+                accent = "pending";
+                statusKey = "TestDepth.Deeper";
+                icon = "○";
+            }
+            else if (freeAnswered >= TestDepthRules.FirstCount)
+            {
+                accent = "pending";
+                statusKey = "TestDepth.First";
+                icon = "○";
             }
             else
             {
@@ -168,6 +180,12 @@ public static class TestsOverviewBuilder
                 statusKey = "Test.Status.NotDone";
                 icon = "○";
             }
+
+            var freeTotalResolved = TestDepthRules.FullCount(def.Kind);
+            if (freeTotal <= 0) freeTotal = freeTotalResolved;
+            var freeMinutes = TestDepthRules.MinutesFor(def.Kind, TestDepthLevel.Full);
+            var deepTotalResolved = TestDepthRules.Bottom(def.Kind);
+            if (deepTotal <= 0) deepTotal = deepTotalResolved;
 
             var action = ResolveAction(freeDone, extended, deepUnlocked, deepInProgress, freeAnswered, freeTotal);
             tiles.Add(new OverviewTile(
@@ -178,8 +196,8 @@ public static class TestsOverviewBuilder
                 statusKey,
                 icon,
                 freeDone || extended ? outcome : null,
-                def.FreeQuestionCount,
-                def.FreeMinutesApprox,
+                freeTotalResolved,
+                freeMinutes,
                 freeDone,
                 extended,
                 deepUnlocked,

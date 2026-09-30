@@ -13,75 +13,159 @@
 
 <PageTitle>@Culture["Competency.Title"] · Lobsy</PageTitle>
 
-<div class="test-page journey-page">
-    <h1 tabindex="-1">@Culture["Competency.Title"]</h1>
-    <p class="test-page__save" aria-live="polite">@_liveSave</p>
-    @if (_loading)
-    {
-        <div class="test-skeleton" aria-busy="true">
-            <span class="skeleton-line skeleton-line--title"></span>
-            <span class="skeleton-line skeleton-line--row"></span>
-        </div>
-    }
-    else if (_loadFailed)
-    {
-        <p>@Culture["Common.Error"]</p>
-        <a href="/candidate/competencies">@Culture["Common.Retry"]</a>
-    }
-    else
-    {
-        <TestConsentGate GateChanged="OnGateChanged">
-            @if (_gateOpen && _autosave is not null)
+@if (_loading)
+{
+    <div class="test-page journey-page"><div class="test-skeleton" aria-busy="true"><span class="skeleton-line skeleton-line--title"></span></div></div>
+}
+else if (_loadFailed)
+{
+    <div class="test-page"><p>@Culture["Common.Error"]</p><a href="/candidate/competencies?stap=intro">@Culture["Common.Retry"]</a></div>
+}
+else
+{
+    <TestConsentGate GateChanged="OnGateChanged">
+        @if (_gateOpen)
+        {
+            @if (_mode == TestPageShell.ShellMode.Intro)
             {
-                <TestQuestionFlow Kind="AssessmentKind.Competence"
-                                  Questions="_flowQuestions"
-                                  Answers="_autosave.Answers"
-                                  Target="TestDepthLevel.Full"
-                                  Autosave="_autosave"
-                                  OnFinished="CompleteAsync"
-                                  OnLater="LaterAsync"
-                                  OnChanged="OnFlowChanged" />
+                <TestPageShell Kind="AssessmentKind.Competence"
+                               Mode="TestPageShell.ShellMode.Intro"
+                               H1="@Culture["Discovery.Test.Competency.Title"]"
+                               Lead="@Culture["TestFlow.Lead.Competence"]"
+                               TestName="@Culture["Competency.Title"]"
+                               Answered="_answered"
+                               TargetCount="_targetCount"
+                               BubbleText="@IntroBubble">
+                    <RailContent>@RenderRail()</RailContent>
+                    <ChildContent>
+                        <fieldset class="test-depth-pick" role="radiogroup" aria-label="@Culture["TestFlow.DepthPick"]">
+                            <legend>@Culture["TestFlow.DepthPick"]</legend>
+                            @foreach (var band in TestDepthRules.Levels(AssessmentKind.Competence))
+                            {
+                                var done = _answered >= band.Count;
+                                <label class="test-depth-pick__card @(done ? "is-done" : null) @(_target == band.Level ? "is-on" : null)">
+                                    <input type="radio" name="depth" value="@band.Level" checked="@(_target == band.Level)"
+                                           disabled="@done" @onchange="() => SelectDepth(band.Level)" />
+                                    <strong>@Culture[TestDepthRules.NameKey(band.Level)]</strong>
+                                    <span>@Culture.Format("TestFlow.DepthMeta", band.Count, TestDepthRules.MinutesFor(AssessmentKind.Competence, band.Level))</span>
+                                </label>
+                            }
+                        </fieldset>
+                        <footer class="test-shell__footer">
+                            <a href="/profiel/tests/competence">@Culture["TestFlow.ToMyTests"]</a>
+                            <button type="button" class="engagement-btn" @onclick="StartQuestions">
+                                @(_answered == 0 ? Culture["TestFlow.Begin"] : Culture.Format("TestFlow.ContinueAt", _answered + 1))
+                            </button>
+                        </footer>
+                    </ChildContent>
+                </TestPageShell>
             }
-        </TestConsentGate>
-    }
-    @if (!string.IsNullOrEmpty(_banner))
-    {
-        <p class="form-error" role="alert">@_banner</p>
-        <button type="button" class="engagement-btn" @onclick="RetrySaveAsync">@Culture["TestErr.Retry"]</button>
-    }
-</div>
+            else if (_mode == TestPageShell.ShellMode.Question && _autosave is not null)
+            {
+                <TestPageShell Kind="AssessmentKind.Competence"
+                               Mode="TestPageShell.ShellMode.Question"
+                               H1="@Culture["Discovery.Test.Competency.Title"]"
+                               TestName="@Culture["Competency.Title"]"
+                               LevelName="@Culture[TestDepthRules.NameKey(_target)]"
+                               Answered="_autosave.AnsweredCount"
+                               TargetCount="_targetCount"
+                               BubbleText="@Culture["TestFlow.Bubble.Question"]">
+                    <RailContent>@RenderRail()</RailContent>
+                    <ChildContent>
+                        <p class="test-page__save" aria-live="polite">@_liveSave</p>
+                        <TestQuestionFlow Kind="AssessmentKind.Competence"
+                                          Questions="_flowQuestions"
+                                          Answers="_autosave.Answers"
+                                          Target="_target"
+                                          Autosave="_autosave"
+                                          OnLevelReached="OnLevelReached"
+                                          OnFinished="OnFinished"
+                                          OnLater="LaterAsync"
+                                          OnChanged="OnFlowChanged" />
+                    </ChildContent>
+                </TestPageShell>
+            }
+            else if (_mode == TestPageShell.ShellMode.Done)
+            {
+                <TestPageShell Kind="AssessmentKind.Competence"
+                               Mode="TestPageShell.ShellMode.Done"
+                               H1="@Culture["TestDone.Title"]"
+                               TestName="@Culture["Competency.Title"]"
+                               LevelName="@Culture[TestDepthRules.NameKey(_reachedLevel ?? _target)]"
+                               DoneLead="@DoneLead"
+                               Answered="_answered"
+                               TargetCount="_targetCount"
+                               BubbleText="@Culture["TestDone.Bubble.Competence"]">
+                    <RailContent>@RenderRail()</RailContent>
+                    <ChildContent>
+                        <ul class="test-done__gains">
+                            @foreach (var line in _gainLines)
+                            {
+                                <li>✓ @line</li>
+                            }
+                        </ul>
+                        <footer class="test-shell__footer">
+                            <a href="/profiel/tests/competence">@Culture["TestDone.Back"]</a>
+                            <a class="engagement-btn" href="@(_fromReis ? "/candidate/ontdekkingsreis" : "/profiel/tests/competence")">
+                                @(_fromReis ? Culture["TestDone.BackToJourney"] : Culture["TestDone.ViewResult"])
+                            </a>
+                        </footer>
+                    </ChildContent>
+                </TestPageShell>
+            }
+        }
+    </TestConsentGate>
+}
 
 @code {
     private bool _loading = true;
     private bool _loadFailed;
     private bool _gateOpen;
-    private string? _banner;
+    private bool _fromReis;
+    private TestPageShell.ShellMode _mode = TestPageShell.ShellMode.Intro;
+    private TestDepthLevel _target = TestDepthLevel.Full;
+    private TestDepthLevel? _reachedLevel;
+    private int _answered;
     private string? _liveSave;
-    private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
     private QuestionnaireAutosave? _autosave;
     private List<TestQuestionFlow.FlowQuestion> _flowQuestions = [];
+    private List<string> _gainLines = [];
+    private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
+
+    private int _targetCount => TestDepthRules.CountFor(AssessmentKind.Competence, _target);
+    private string IntroBubble => _answered >= 5
+        ? Culture["TestFlow.Bubble.IntroContinue"]
+        : Culture["TestFlow.Bubble.IntroStart"];
+    private string DoneLead => (_reachedLevel ?? _target) == TestDepthLevel.Full
+        ? Culture.Format("TestDone.LeadFull", Culture["Competency.Title"])
+        : Culture.Format("TestDone.LeadLevel", Culture["Competency.Title"], Culture[TestDepthRules.NameKey(_reachedLevel ?? _target)]);
 
     protected override async Task OnInitializedAsync()
     {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        _fromReis = q.TryGetValue("from", out var f) && f == "reis";
+        if (q.TryGetValue("stap", out var stap) && stap == "klaar")
+        {
+            _mode = TestPageShell.ShellMode.Done;
+        }
+        else if (!q.ContainsKey("stap") || stap == "intro")
+        {
+            _mode = TestPageShell.ShellMode.Intro;
+            if (!uri.Query.Contains("stap=", StringComparison.Ordinal))
+            {
+                Navigation.NavigateTo("/candidate/competencies?stap=intro", replace: true);
+            }
+        }
+        else
+        {
+            _mode = TestPageShell.ShellMode.Question;
+        }
+
         _autosave = new QuestionnaireAutosave(
-            persist: async (answers, ct) =>
-            {
-                try
-                {
-                    await Api.SaveMyCompetenciesAsync(answers, complete: false, ct);
-                }
-                catch (TestSaveClientException)
-                {
-                    throw;
-                }
-            },
+            persist: async (answers, ct) => await Api.SaveMyCompetenciesAsync(answers, complete: false, ct),
             onChanged: OnAutosaveChanged,
-            onFailed: err => InvokeAsync(() =>
-            {
-                _banner = MapSaveCode((err.Exception as TestSaveClientException)?.Code) ?? Culture["TestErr.SaveBanner"];
-                AnnounceSave(QuestionnaireSaveStatus.Failed);
-                return Task.CompletedTask;
-            }));
+            onFailed: _ => InvokeAsync(() => { _liveSave = Culture["TestFlow.SaveFailed"]; return Task.CompletedTask; }));
 
         try
         {
@@ -91,115 +175,87 @@
             {
                 foreach (var (key, value) in state.Answers)
                 {
-                    if (int.TryParse(key, out var id) && value is >= 1 and <= 5)
-                    {
-                        answers[id] = value;
-                    }
+                    if (int.TryParse(key, out var id) && value is >= 1 and <= 5) answers[id] = value;
                 }
             }
-
+            _answered = answers.Count;
             _flowQuestions = TestDepthRules.QuestionIdsFor(AssessmentKind.Competence, TestDepthLevel.Full)
                 .Select(id =>
                 {
-                    var q = CompetencyTestCatalog.Questions.First(x => x.Id == id);
-                    return new TestQuestionFlow.FlowQuestion(id, Culture[q.TextKey]);
-                })
-                .ToList();
+                    var qItem = CompetencyTestCatalog.Questions.First(x => x.Id == id);
+                    return new TestQuestionFlow.FlowQuestion(id, Culture[qItem.TextKey]);
+                }).ToList();
             _autosave.ReplaceAll(answers);
+            var reached = TestDepthRules.Reached(AssessmentKind.Competence, _answered);
+            if (reached is TestDepthLevel r && r != TestDepthLevel.Full)
+            {
+                _target = TestDepthRules.Next(AssessmentKind.Competence, _answered) ?? TestDepthLevel.Full;
+            }
         }
-        catch
-        {
-            _loadFailed = true;
-        }
-        finally
-        {
-            _loading = false;
-        }
+        catch { _loadFailed = true; }
+        finally { _loading = false; }
     }
 
-    private Task OnGateChanged(bool open)
+    private RenderFragment RenderRail() => __builder =>
     {
-        _gateOpen = open;
-        return Task.CompletedTask;
-    }
+        <ol class="test-rail">
+            @foreach (var band in TestDepthRules.Levels(AssessmentKind.Competence))
+            {
+                var done = _answered >= band.Count;
+                var current = _mode == TestPageShell.ShellMode.Question && _target == band.Level;
+                <li class="@(done ? "is-done" : current ? "is-current" : null)" aria-current="@(current ? "step" : null)">
+                    @Culture[TestDepthRules.NameKey(band.Level)] · @band.Count
+                </li>
+            }
+        </ol>
+    };
 
+    private void SelectDepth(TestDepthLevel level) { if (_answered < TestDepthRules.CountFor(AssessmentKind.Competence, level)) _target = level; }
+    private void StartQuestions()
+    {
+        _mode = TestPageShell.ShellMode.Question;
+        Navigation.NavigateTo("/candidate/competencies?stap=vraag", replace: true);
+    }
+    private Task OnGateChanged(bool open) { _gateOpen = open; return Task.CompletedTask; }
     private Task OnAutosaveChanged()
     {
-        AnnounceSave(_autosave?.Status ?? QuestionnaireSaveStatus.Idle);
+        var s = _autosave?.Status ?? QuestionnaireSaveStatus.Idle;
+        if (s == QuestionnaireSaveStatus.Saved) _liveSave = Culture["TestFlow.Saved"];
+        if (s == QuestionnaireSaveStatus.Failed) _liveSave = Culture["TestFlow.SaveFailed"];
+        _answered = _autosave?.AnsweredCount ?? _answered;
         return InvokeAsync(StateHasChanged);
     }
-
     private Task OnFlowChanged() => InvokeAsync(StateHasChanged);
-
-    private void AnnounceSave(QuestionnaireSaveStatus status)
+    private async Task OnLevelReached(TestDepthLevel level)
     {
-        if (status == QuestionnaireSaveStatus.Saved && _lastAnnounced == QuestionnaireSaveStatus.Failed)
-        {
-            _liveSave = Culture["TestFlow.Saved"];
-        }
-        else if (status == QuestionnaireSaveStatus.Failed)
-        {
-            _liveSave = Culture["TestFlow.SaveFailed"];
-        }
-        else if (status == QuestionnaireSaveStatus.Saved)
-        {
-            _liveSave = Culture["TestFlow.Saved"];
-        }
-
-        _lastAnnounced = status;
+        if (level == _target) await FinishAtLevel(level, complete: level == TestDepthLevel.Full);
     }
-
-    private async Task RetrySaveAsync()
+    private async Task OnFinished() => await FinishAtLevel(_target, complete: _target == TestDepthLevel.Full);
+    private async Task FinishAtLevel(TestDepthLevel level, bool complete)
     {
-        if (_autosave is null) return;
-        _banner = null;
-        await _autosave.RetryAsync();
-    }
-
-    private async Task LaterAsync()
-    {
-        if (_autosave is not null) await _autosave.FlushAsync();
-        Navigation.NavigateTo("/profiel/tests/competence");
-    }
-
-    private async Task CompleteAsync()
-    {
-        _banner = null;
+        _reachedLevel = level;
         try
         {
             if (_autosave is not null)
             {
                 await _autosave.FlushAsync();
-                await Api.SaveMyCompetenciesAsync(_autosave.Answers, complete: true);
+                if (complete) await Api.SaveMyCompetenciesAsync(_autosave.Answers, complete: true);
             }
-
-            Navigation.NavigateTo("/profiel/tests/competence");
+            _answered = _autosave?.AnsweredCount ?? _answered;
+            _gainLines = [Culture["TestDone.Gain.Strength"], Culture["TestDone.Gain.Strength2"], Culture["TestDone.Gain.Less"]];
+            _mode = TestPageShell.ShellMode.Done;
+            Navigation.NavigateTo("/candidate/competencies?stap=klaar", replace: true);
         }
-        catch (TestSaveClientException ex)
+        catch (TestSaveClientException ex) when (ex.Code == "assessment_adjustment_limit")
         {
-            _banner = MapSaveCode(ex.Code) ?? Culture["Common.Error"];
+            _liveSave = Culture["TestErr.Limit"];
         }
-        catch
-        {
-            _banner = Culture["Common.Error"];
-        }
+        catch { _liveSave = Culture["Common.Error"]; }
     }
-
-    private string? MapSaveCode(string? code) => code switch
+    private async Task LaterAsync()
     {
-        "unknown_question" => Culture["TestErr.unknown_question"],
-        "invalid_answer" => Culture["TestErr.invalid_answer"],
-        "consent_required" => Culture["TestErr.consent_required"],
-        "parental_consent_required" => Culture["TestErr.parental_consent_required"],
-        "assessment_adjustment_limit" => Culture["TestErr.Limit"],
-        _ => null
-    };
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_autosave is not null)
-        {
-            await _autosave.DisposeAsync();
-        }
+        if (_autosave is not null) await _autosave.FlushAsync();
+        Navigation.NavigateTo("/profiel/tests/competence");
     }
+    public async ValueTask DisposeAsync() { if (_autosave is not null) await _autosave.DisposeAsync(); }
 }

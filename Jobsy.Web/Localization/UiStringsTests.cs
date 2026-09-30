@@ -75,6 +75,41 @@ public static class UiStringsTests
             "Je hebt je antwoorden 3 keer aangepast. Dit is je uitslag.",
             "You have changed your answers 3 times. This is your result.");
 
+
+        Add("TestFlow.Rail.Aria", "Jouw duik", "Your dive");
+        Add("TestFlow.Eyebrow.Intro", "Mijn tests · {0}", "My tests · {0}");
+        Add("TestFlow.Eyebrow.Dive", "In de diepte · {0} · {1}", "Diving · {0} · {1}");
+        Add("TestFlow.QuestionLead", "Hoe goed past deze zin bij jou? Er zijn geen foute antwoorden.", "How well does this sentence fit you? There are no wrong answers.");
+        Add("TestFlow.Lead.Competence", "25 korte zinnen over hoe je werkt. Zo zien we waar je sterk in bent.", "25 short sentences about how you work. We see where you are strong.");
+        Add("TestFlow.Lead.Career", "25 korte zinnen over werk dat je leuk vindt. Zo vinden we beroepen die bij je passen.", "25 short sentences about work you like. We find careers that fit.");
+        Add("TestFlow.Lead.Culture", "18 korte zinnen over waar je graag werkt. Zo vinden we werkplekken waar je je thuis voelt.", "18 short sentences about where you like to work.");
+        Add("TestFlow.Lead.Values", "25 korte zinnen over wat je belangrijk vindt in werk.", "25 short sentences about what matters to you at work.");
+        Add("TestFlow.DepthPick", "Hoe diep wil je duiken?", "How deep do you want to dive?");
+        Add("TestFlow.DepthMeta", "{0} vragen · + {1} min", "{0} questions · + {1} min");
+        Add("TestFlow.ToMyTests", "Mijn tests", "My tests");
+        Add("TestFlow.Begin", "Begin", "Start");
+        Add("TestFlow.ContinueAt", "Ga verder bij vraag {0}", "Continue at question {0}");
+        Add("TestFlow.Bubble.IntroStart", "Klaar voor een duik? Ik ga met je mee.", "Ready for a dive? I’ll come with you.");
+        Add("TestFlow.Bubble.IntroContinue", "Vijf vragen heb je al gedaan. Zullen we samen wat dieper gaan?", "You’ve already done five questions. Shall we go a bit deeper?");
+        Add("TestFlow.Bubble.Question", "Er zijn geen foute antwoorden. Kies wat het eerst in je opkomt.", "There are no wrong answers. Choose what comes first.");
+        Add("TestDone.Title", "Weer een laag eraf", "Another layer off");
+        Add("TestDone.Eyebrow", "In de diepte · {0} · {1} klaar", "Diving · {0} · {1} done");
+        Add("TestDone.LeadFull", "{0} is helemaal klaar. Dit staat nu in je paspoort:", "{0} is fully done. This is now in your passport:");
+        Add("TestDone.LeadLevel", "{0}: {1} is klaar. Dit staat nu in je paspoort:", "{0}: {1} is done. This is now in your passport:");
+        Add("TestDone.Live", "Weer een laag eraf. {0} {1} is klaar.", "Another layer off. {0} {1} is done.");
+        Add("TestDone.Back", "Terug naar Mijn tests", "Back to My tests");
+        Add("TestDone.ViewResult", "Bekijk je uitslag", "View your result");
+        Add("TestDone.BackToJourney", "Terug naar de reis", "Back to the journey");
+        Add("TestDone.Bubble.Competence", "Voel je dat? Weer een laag eraf. Nu zie ik nog beter hoe je werkt.", "Feel that? Another layer off. I see better how you work.");
+        Add("TestDone.Bubble.Career", "Voel je dat? Weer een laag eraf. Nu zie ik nog beter wat je leuk vindt.", "Feel that? Another layer off. I see better what you like.");
+        Add("TestDone.Bubble.Culture", "Voel je dat? Weer een laag eraf. Nu zie ik nog beter waar je je thuis voelt.", "Feel that? Another layer off. I see better where you feel at home.");
+        Add("TestDone.Bubble.Values", "Voel je dat? Weer een laag eraf. Nu zie ik nog beter wat je belangrijk vindt.", "Feel that? Another layer off. I see better what matters to you.");
+        Add("TestDone.Gain.Strength", "Je sterke kant komt duidelijker naar voren", "Your strength comes through more clearly");
+        Add("TestDone.Gain.Strength2", "We zien beter waar je energie van krijgt", "We see better what gives you energy");
+        Add("TestDone.Gain.Less", "En wat minder jouw ding is", "And what is less your thing");
+        Add("TestDone.CareerMatches", "{0} vacatures passen goed bij wat je leuk vindt", "{0} vacancies fit well with what you like");
+        Add("TestDone.CareerMatchesLink", "Bekijk ze", "View them");
+
         Add("TestDepth.First", "Eerste indruk", "First look");
         Add("TestDepth.Deeper", "Iets dieper", "A bit deeper");
         Add("TestDepth.Full", "Heel diep", "Very deep");

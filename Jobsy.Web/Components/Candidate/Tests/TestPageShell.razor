@@ -1,0 +1,116 @@
+@namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Discovery
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Components.Shared.Questionnaire
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="test-shell journey-page @(Deep ? "test-shell--deep" : null)" data-mode="@Mode">
+    @if (Mode == ShellMode.Intro)
+    {
+        <div class="test-shell__layout">
+            <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
+                @RailContent
+            </aside>
+            <div class="test-shell__card">
+                <p class="test-shell__eyebrow">@Culture.Format("TestFlow.Eyebrow.Intro", TestName)</p>
+                <h1 tabindex="-1">@H1</h1>
+                <p class="test-shell__lead">@Lead</p>
+                @if (ChildContent is not null)
+                {
+                    @ChildContent
+                }
+            </div>
+            <div class="test-shell__scene">
+                <TestDiveScene Kind="Kind"
+                               Answered="Answered"
+                               Target="TargetCount"
+                               Deep="Deep"
+                               Mobile="false"
+                               PlatesShed="PlatesShed"
+                               NewShell="NewShell"
+                               BubbleText="@BubbleText" />
+            </div>
+        </div>
+    }
+    else if (Mode == ShellMode.Question)
+    {
+        <div class="test-shell__layout">
+            <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
+                @RailContent
+            </aside>
+            <div class="test-shell__card">
+                <p class="test-shell__eyebrow">@Culture.Format("TestFlow.Eyebrow.Dive", TestName, LevelName)</p>
+                <h1 tabindex="-1">@H1</h1>
+                <p class="test-shell__lead">@Culture["TestFlow.QuestionLead"]</p>
+                @ChildContent
+            </div>
+            <div class="test-shell__scene">
+                <TestDiveScene Kind="Kind"
+                               Answered="Answered"
+                               Target="TargetCount"
+                               Deep="Deep"
+                               Mobile="false"
+                               PlatesShed="PlatesShed"
+                               NewShell="NewShell"
+                               BubbleText="@BubbleText" />
+            </div>
+        </div>
+    }
+    else if (Mode == ShellMode.Done)
+    {
+        <div class="test-shell__layout">
+            <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
+                @RailContent
+            </aside>
+            <div class="test-shell__card test-done">
+                <p class="test-shell__eyebrow">@Culture.Format("TestDone.Eyebrow", TestName, LevelName)</p>
+                <div class="test-done__shard" aria-hidden="true"></div>
+                <h1 tabindex="-1">@Culture["TestDone.Title"]</h1>
+                <p class="test-shell__lead">@DoneLead</p>
+                @if (ChildContent is not null)
+                {
+                    @ChildContent
+                }
+                <div class="test-done__live" aria-live="polite">@Culture.Format("TestDone.Live", TestName, LevelName)</div>
+            </div>
+            <div class="test-shell__scene">
+                <TestDiveScene Kind="Kind"
+                               Answered="Answered"
+                               Target="TargetCount"
+                               Deep="Deep"
+                               Celebrate="true"
+                               FallingShard="true"
+                               PlatesShed="PlatesShed"
+                               NewShell="NewShell"
+                               BubbleText="@BubbleText" />
+            </div>
+        </div>
+    }
+    else
+    {
+        @ChildContent
+    }
+</div>
+
+@code {
+    public enum ShellMode { Intro, Question, Done, Offer, Other }
+
+    [Parameter] public AssessmentKind Kind { get; set; }
+    [Parameter] public ShellMode Mode { get; set; } = ShellMode.Intro;
+    [Parameter] public bool Deep { get; set; }
+    [Parameter] public string H1 { get; set; } = "";
+    [Parameter] public string Lead { get; set; } = "";
+    [Parameter] public string TestName { get; set; } = "";
+    [Parameter] public string LevelName { get; set; } = "";
+    [Parameter] public string DoneLead { get; set; } = "";
+    [Parameter] public string? BubbleText { get; set; }
+    [Parameter] public int Answered { get; set; }
+    [Parameter] public int TargetCount { get; set; } = 25;
+    [Parameter] public int PlatesShed { get; set; } = 10;
+    [Parameter] public bool NewShell { get; set; } = true;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? RailContent { get; set; }
+}

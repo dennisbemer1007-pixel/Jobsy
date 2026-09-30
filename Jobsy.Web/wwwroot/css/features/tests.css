@@ -309,3 +309,51 @@
   max-inline-size: 16rem;
   background: color-mix(in srgb, var(--surface) 92%, transparent);
 }
+
+.test-shell__layout {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+@media (min-width: 1024px) {
+  .test-shell__layout {
+    grid-template-columns: 272px minmax(0, 640px) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+.test-shell__rail { display: none; }
+@media (min-width: 1024px) {
+  .test-shell__rail { display: block; }
+}
+.test-rail { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.test-rail li { color: var(--muted); padding: 0.35rem 0; }
+.test-rail li.is-done { color: var(--brand); }
+.test-rail li.is-current { color: var(--ink); font-weight: 600; }
+.test-shell__card {
+  background: var(--surface);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+.test-shell__eyebrow { margin: 0; color: var(--muted); font-weight: 600; }
+.test-shell__lead { margin: 0; color: var(--muted); }
+.test-shell__footer { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
+.test-depth-pick { border: 0; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+.test-depth-pick__card {
+  display: grid; gap: 0.25rem; padding: 0.85rem 1rem;
+  border: 2px solid var(--pearl); border-radius: var(--radius-md, 8px); cursor: pointer;
+}
+.test-depth-pick__card.is-on { border-color: var(--brand); background: var(--accent-soft); }
+.test-depth-pick__card.is-done { opacity: 0.55; cursor: default; }
+.test-depth-pick__card input { position: absolute; opacity: 0; }
+.test-done__gains { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; color: var(--ink); }
+.test-done__shard {
+  width: 48px; height: 36px;
+  background: color-mix(in srgb, var(--shell-old, var(--pearl)) 80%, var(--brand));
+  clip-path: polygon(20% 0, 100% 30%, 70% 100%, 0 60%);
+}
+.test-shell__scene { display: none; }
+@media (min-width: 1024px) {
+  .test-shell__scene { display: block; min-block-size: 320px; }
+}
