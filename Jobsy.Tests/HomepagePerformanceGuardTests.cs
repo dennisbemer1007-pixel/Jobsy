@@ -41,6 +41,7 @@ public class HomepagePerformanceGuardTests
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("ShouldRenderVacancyCards", discovery);
         Assert.Contains("_wideViewport || (_mapPainted && !showMapOnMobile)", discovery);
+        Assert.Contains("!_wideViewport && !showMapOnMobile", discovery);
         Assert.Contains("VisibleVacancies", discovery);
         Assert.Contains("RendererInfo.IsInteractive", discovery);
         Assert.DoesNotContain("photoEager", discovery);

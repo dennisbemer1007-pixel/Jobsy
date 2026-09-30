@@ -60,3 +60,9 @@ Shared foundation for the candidate jobs stack (banenkaart, lijst, vacature, sol
   - No Route / Street View; KvK/vestiging of the end client redacted on discovery/detail DTOs.
   - Reveal: none in this fallback (intermediair D4 absent).
   - `ResolvePublicDisplay` pins the bureau (D3); intermediair 03 must delete the fallback.
+
+## List + vacancy detail (file 06)
+
+- Desktop ≥900: Kaart/Lijst radio toggle (`?weergave=lijst` + `sessionStorage jobsy.kb.weergave`). List mode hides the map canvas, full-width `KbListRow` + right rail (≥1024: mini map + how we sort).
+- Mobile list: compact `KbListRow` + floating **Kaart** FAB above bottom nav (`ToggleMobileView`).
+- Vacancy detail: fit panel, key facts grid, travel card (transport switch Fiets/Auto/Lopen/OV with “ongeveer” for OV), one `.btn--primary` Solliciteer (rail ≥1024 / sticky apply bar &lt;1024). Dep B blocks still absent. Route/Street View secondary links only when not hidden mode.

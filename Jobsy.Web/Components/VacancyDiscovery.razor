@@ -27,7 +27,7 @@
 <HeadContent>
     <script src="js/discoveryHover.js?v=20260928-list-rerender" defer data-discovery-hover="true"></script>
 </HeadContent>
-<div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null)">
+<div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null) @(_desktopListMode && _wideViewport ? "jobsy-discovery--list" : null)">
     <div class="jobsy-chrome">
         <header class="jobsy-chrome__header">
             <a class="jobsy-logo" href="/" aria-label="Lobsy">
@@ -144,7 +144,10 @@
                     <a class="kb-chip kb-chip--match jobsy-action--match" href="/candidate/match">@Culture["Nav.Match"]</a>
                 </Authorized>
             </AuthorizeView>
-            <button type="button" class="kb-chip kb-chip--toggle" @onclick="ToggleMobileView">
+            <button type="button"
+                    class="kb-chip kb-chip--toggle"
+                    data-testid="kb-mobile-view-toggle"
+                    @onclick="ToggleMobileView">
                 @(showMapOnMobile ? Culture["Discovery.List"] : Culture["Discovery.Map"])
             </button>
         </div>
@@ -280,6 +283,28 @@
                         @Culture["Kb.Filter.Clear"]
                     </button>
                 }
+
+                <div class="kb-view-toggle"
+                     role="radiogroup"
+                     aria-label="@Culture["Kb.View.ToggleAria"]"
+                     data-testid="kb-view-toggle">
+                    <button type="button"
+                            class="kb-view-toggle__btn @(!_desktopListMode ? "is-active" : null)"
+                            role="radio"
+                            aria-checked="@(!_desktopListMode ? "true" : "false")"
+                            data-testid="kb-view-kaart"
+                            @onclick="() => SetDesktopViewAsync(list: false)">
+                        @Culture["Kb.View.Map"]
+                    </button>
+                    <button type="button"
+                            class="kb-view-toggle__btn @(_desktopListMode ? "is-active" : null)"
+                            role="radio"
+                            aria-checked="@(_desktopListMode ? "true" : "false")"
+                            data-testid="kb-view-lijst"
+                            @onclick="() => SetDesktopViewAsync(list: true)">
+                        @Culture["Kb.View.List"]
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -493,69 +518,117 @@
         }
         else
         {
+            <div class="@(_useListRows ? "kb-list-layout" : null)">
+                <div class="@(_useListRows ? "kb-list-layout__main" : null)">
             <div class="results-meta">
-                <p class="results-meta__count">
-                    @if (_origin is not null)
+                <div class="results-meta__text">
+                    <p class="results-meta__count">
+                        @if (_origin is not null)
+                        {
+                            @if (_desktopListMode && _wideViewport)
+                            {
+                                @Culture.Format("Kb.List.HeaderWithin", _vacancies.Count, _maxTravelMinutes, UiLabels.TransportVerb(Culture, _selectedTransport))
+                            }
+                            else
+                            {
+                                @Culture.Format("Kb.List.Header", _vacancies.Count, _maxTravelMinutes, UiLabels.TransportVerb(Culture, _selectedTransport))
+                            }
+                        }
+                        else
+                        {
+                            @Culture.Format("Discovery.ResultCount", _vacancies.Count)
+                        }
+                    </p>
+                    @if (_origin is not null && !string.IsNullOrWhiteSpace(_addressQuery) && _useListRows)
                     {
-                        @Culture.Format("Kb.List.Header", _vacancies.Count, _maxTravelMinutes, UiLabels.TransportVerb(Culture, _selectedTransport))
+                        <p class="results-meta__sub muted">@Culture.Format("Kb.List.FromAddress", _addressQuery)</p>
                     }
-                    else
-                    {
-                        @Culture.Format("Discovery.ResultCount", _vacancies.Count)
-                    }
-                </p>
+                </div>
                 <label class="results-meta__sort">
                     <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.List)</span>
                     <span class="visually-hidden">@Culture["Discovery.Sort"]</span>
-                    <select class="results-meta__sort-select" value="@EffectiveSortMode" @onchange="OnSortChanged">
+                    <select class="results-meta__sort-select" value="@EffectiveSortMode" @onchange="OnSortChanged" data-testid="kb-list-sort">
                         @if (_isCandidate && ShowFitFilters)
                         {
-                            <option value="match">@Culture["Discovery.SortMatch"]</option>
+                            <option value="match">@Culture["Kb.List.SortBest"]</option>
                         }
                         @if (_origin is not null)
                         {
-                            <option value="distance">@Culture["Discovery.SortDistance"]</option>
+                            <option value="distance">@Culture["Kb.List.SortNear"]</option>
                         }
-                        <option value="type">@Culture["Discovery.SortType"]</option>
-                        <option value="recent">@Culture["Discovery.SortRecent"]</option>
-                        <option value="title">@Culture["Discovery.SortAlphaAsc"]</option>
-                        <option value="title-desc">@Culture["Discovery.SortAlphaDesc"]</option>
+                        <option value="recent">@Culture["Kb.List.SortNew"]</option>
+                        @if (!_useListRows)
+                        {
+                            <option value="type">@Culture["Discovery.SortType"]</option>
+                            <option value="title">@Culture["Discovery.SortAlphaAsc"]</option>
+                            <option value="title-desc">@Culture["Discovery.SortAlphaDesc"]</option>
+                        }
                     </select>
                 </label>
             </div>
             @if (ShouldRenderVacancyCards)
             {
-                <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
-                                          ActiveId="_hoveredId"
-                                          ModifierClass="highlight-carousel--list"
-                                          FormatTravel="FormatCarouselTravel"
-                                          OnHover="OnHover"
-                                          OnSelect="OnCarouselSelect" />
-                <div class="vacancy-list vacancy-list--cards">
-                    @{
-                        var cardIndex = 0;
-                    }
-                    @foreach (var vacancy in VisibleVacancies)
-                    {
-                        <VacancyCard @key="vacancy.Id"
-                                     Vacancy="vacancy"
-                                     IsHighlighted="vacancy.IsHighlighted"
-                                     IsPressed="_pressedVacancyId == vacancy.Id"
-                                     Eager="cardIndex == 0"
-                                     WageText="@FormatWage(vacancy)"
-                                     TravelText="@FormatCardTravel(vacancy)"
-                                     OnSelect="OnSelect"
-                                     OnOpen="OnOpenVacancy"
-                                     OnExplainMatch="OpenMatchExplain" />
-                        cardIndex++;
-                    }
-                    @if (HasMoreVacancyCards)
-                    {
-                        <div class="vacancy-list__more-sentinel"
-                             @ref="_moreCardsSentinel"
-                             aria-hidden="true"></div>
-                    }
-                </div>
+                @if (!_useListRows)
+                {
+                    <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
+                                              ActiveId="_hoveredId"
+                                              ModifierClass="highlight-carousel--list"
+                                              FormatTravel="FormatCarouselTravel"
+                                              OnHover="OnHover"
+                                              OnSelect="OnCarouselSelect" />
+                    <div class="vacancy-list vacancy-list--cards">
+                        @{
+                            var cardIndex = 0;
+                        }
+                        @foreach (var vacancy in VisibleVacancies)
+                        {
+                            <VacancyCard @key="vacancy.Id"
+                                         Vacancy="vacancy"
+                                         IsHighlighted="vacancy.IsHighlighted"
+                                         IsPressed="_pressedVacancyId == vacancy.Id"
+                                         Eager="cardIndex == 0"
+                                         WageText="@FormatWage(vacancy)"
+                                         TravelText="@FormatCardTravel(vacancy)"
+                                         OnSelect="OnSelect"
+                                         OnOpen="OnOpenVacancy"
+                                         OnExplainMatch="OpenMatchExplain" />
+                            cardIndex++;
+                        }
+                        @if (HasMoreVacancyCards)
+                        {
+                            <div class="vacancy-list__more-sentinel"
+                                 @ref="_moreCardsSentinel"
+                                 aria-hidden="true"></div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="kb-list-rows" data-testid="kb-list-rows">
+                        @{
+                            var rowIndex = 0;
+                        }
+                        @foreach (var vacancy in VisibleVacancies)
+                        {
+                            <KbListRow @key="vacancy.Id"
+                                       Vacancy="vacancy"
+                                       Compact="@(!_wideViewport)"
+                                       IsPressed="_pressedVacancyId == vacancy.Id"
+                                       Eager="rowIndex == 0"
+                                       Transport="@_selectedTransport"
+                                       TravelApprox="@(string.Equals(_selectedTransport, "OV", StringComparison.OrdinalIgnoreCase) || !string.Equals(_isoMode, "real", StringComparison.Ordinal))"
+                                       WageText="@FormatWage(vacancy)"
+                                       OnOpen="OnOpenVacancy" />
+                            rowIndex++;
+                        }
+                        @if (HasMoreVacancyCards)
+                        {
+                            <div class="vacancy-list__more-sentinel"
+                                 @ref="_moreCardsSentinel"
+                                 aria-hidden="true"></div>
+                        }
+                    </div>
+                }
                 @if (HasMoreVacancyCards)
                 {
                     <button type="button" class="vacancy-list__more" @onclick="ShowMoreVacancyCards">
@@ -563,6 +636,43 @@
                     </button>
                 }
             }
+                </div>
+                @if (_useListRows && _wideViewport && _desktopListMode)
+                {
+                    <aside class="kb-list-rail" data-testid="kb-list-rail" aria-label="@Culture["Kb.List.HowWeSort.Title"]">
+                        <div class="kb-list-rail__card">
+                            <h2 class="kb-list-rail__title">@Culture["Kb.List.RailTravel.Title"]</h2>
+                            <div class="kb-list-rail__map" aria-hidden="true">
+                                <div id="kb-list-rail-map" class="kb-list-rail__map-canvas" @ref="_listRailMapElement"></div>
+                            </div>
+                            @if (_origin is not null)
+                            {
+                                <p class="kb-list-rail__body">
+                                    @Culture.Format(
+                                        "Kb.List.RailTravel.Body",
+                                        _maxTravelMinutes,
+                                        UiLabels.TransportVerb(Culture, _selectedTransport),
+                                        TravelChipLabel)
+                                </p>
+                                @if (string.Equals(_selectedTransport, "OV", StringComparison.OrdinalIgnoreCase)
+                                    || !string.Equals(_isoMode, "real", StringComparison.Ordinal))
+                                {
+                                    <p class="kb-list-rail__body">@Culture["Kb.List.RailTravel.Approx"]</p>
+                                }
+                            }
+                        </div>
+                        <div class="kb-list-rail__card">
+                            <h2 class="kb-list-rail__title">@Culture["Kb.List.HowWeSort.Title"]</h2>
+                            <ul class="kb-list-rail__list">
+                                <li>@Culture["Kb.List.HowWeSort.FitFirst"]</li>
+                                <li>@Culture["Kb.List.HowWeSort.TravelNext"]</li>
+                                <li>@Culture["Kb.List.HowWeSort.DislikesLower"]</li>
+                            </ul>
+                            <a class="kb-list-rail__link" href="@KbRoutes.PaspoortTests">@Culture["Kb.List.HowWeSort.Passport"]</a>
+                        </div>
+                    </aside>
+                }
+            </div>
         }
     </aside>
 
@@ -940,6 +1050,13 @@
             </div>
         </div>
     }
+    <button type="button"
+            class="kb-map-fab"
+            data-testid="kb-map-fab"
+            aria-label="@Culture["Kb.View.OpenMap"]"
+            @onclick="ToggleMobileView">
+        @Culture["Kb.View.OpenMap"]
+    </button>
 </div>
 
 <LobsyFriendlyDialog IsOpen="@(_matchExplain is not null)"
@@ -995,6 +1112,11 @@
     private bool showMapOnMobile = true;
     /// <summary>Desktop split view (≥900px). Default false so mobile PSI does not mount 200+ cards.</summary>
     private bool _wideViewport;
+    /// <summary>Desktop full-width list mode (?weergave=lijst). Independent of the mobile map/list toggle.</summary>
+    private bool _desktopListMode;
+    private bool _weergaveHydrated;
+    private ElementReference _listRailMapElement;
+    private bool _listRailMapReady;
     private const int VacancyCardPageSize = 20;
     private const int HighlightCarouselCap = 8;
     private int _visibleCardCount = VacancyCardPageSize;
@@ -1251,7 +1373,11 @@
     /// so toggling away from the map does not flash an empty column.
     /// </summary>
     private bool ShouldRenderVacancyCards =>
-        RendererInfo.IsInteractive && (_wideViewport || (_mapPainted && !showMapOnMobile));
+        RendererInfo.IsInteractive && (_wideViewport || (_mapPainted && !showMapOnMobile) || (!_wideViewport && !showMapOnMobile));
+
+    /// <summary>Full-width list rows (desktop list mode or mobile list).</summary>
+    private bool _useListRows =>
+        (_wideViewport && _desktopListMode) || (!_wideViewport && !showMapOnMobile);
 
     private IReadOnlyList<VacancyListItem> HighlightedVacanciesForUi
     {
@@ -1460,6 +1586,7 @@
         ApplyTransportFromQuery();
         ApplyHoursFromQuery();
         ApplyCompanyFocusFromQuery();
+        ApplyWeergaveFromQuery();
         // Kaartfocus/branding must not block catalog load or first paint.
         var regionHostTask = RegionHost.EnsureInitializedAsync();
 
@@ -1582,6 +1709,8 @@
             ApplyTransportFromQuery();
             ApplyHoursFromQuery();
             ApplyCompanyFocusFromQuery();
+            var weergaveBefore = _desktopListMode;
+            ApplyWeergaveFromQuery();
             var afterCompanies = _companyFocusIds is null
                 ? ""
                 : string.Join(',', _companyFocusIds.OrderBy(x => x));
@@ -1608,6 +1737,10 @@
                     await InvokeAsync(StateHasChanged);
                 }
             }
+            else if (weergaveBefore != _desktopListMode && !_disposed)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
         }
         catch (JSDisconnectedException)
         {
@@ -1619,6 +1752,99 @@
         {
             Logger.LogWarning(ex, "Vacancy discovery location-changed handler failed.");
         }
+    }
+
+    private void ApplyWeergaveFromQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!QueryHelpers.ParseQuery(uri.Query).TryGetValue("weergave", out var values))
+        {
+            return;
+        }
+
+        var raw = values.FirstOrDefault();
+        if (string.Equals(raw, "lijst", StringComparison.OrdinalIgnoreCase))
+        {
+            _desktopListMode = true;
+        }
+        else if (string.Equals(raw, "kaart", StringComparison.OrdinalIgnoreCase))
+        {
+            _desktopListMode = false;
+        }
+    }
+
+    private async Task SetDesktopViewAsync(bool list)
+    {
+        if (_desktopListMode == list)
+        {
+            return;
+        }
+
+        _desktopListMode = list;
+        await PersistWeergaveAsync();
+        var uri = Navigation.GetUriWithQueryParameter("weergave", list ? "lijst" : null);
+        Navigation.NavigateTo(uri, replace: true);
+        if (!list && !_mapReady)
+        {
+            _mapInitScheduled = false;
+            await TryInitJobMapAsync();
+        }
+        else if (list && _mapReady)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobMap.dispose");
+            }
+            catch (JSDisconnectedException) { }
+            catch (JSException) { }
+            catch (InvalidOperationException) { }
+            _mapReady = false;
+            _mapPainted = false;
+            _mapInitScheduled = false;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task PersistWeergaveAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyGeo.setWeergave", _desktopListMode ? "lijst" : "kaart");
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+        catch (InvalidOperationException) { }
+    }
+
+    private async Task HydrateWeergaveAsync()
+    {
+        if (_weergaveHydrated)
+        {
+            return;
+        }
+
+        _weergaveHydrated = true;
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).ContainsKey("weergave"))
+        {
+            ApplyWeergaveFromQuery();
+            return;
+        }
+
+        try
+        {
+            var stored = await Js.InvokeAsync<string?>("jobsyGeo.getWeergave");
+            if (string.Equals(stored, "lijst", StringComparison.OrdinalIgnoreCase))
+            {
+                _desktopListMode = true;
+                var next = Navigation.GetUriWithQueryParameter("weergave", "lijst");
+                Navigation.NavigateTo(next, replace: true);
+            }
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
+        catch (InvalidOperationException) { }
     }
 
     private void ApplyCompanyFocusFromQuery()
@@ -1922,7 +2148,11 @@
             _ = WarmDiscoveryScriptsAsync();
             // Measure the viewport before MapLibre so desktop cards never wait on the map.
             await MeasureViewportAsync();
-            await TryInitJobMapAsync();
+            await HydrateWeergaveAsync();
+            if (!(_desktopListMode && _wideViewport))
+            {
+                await TryInitJobMapAsync();
+            }
         }
 
         await EnsureDiscoveryHoverAsync();
@@ -2128,6 +2358,11 @@
 
     private async Task TryInitJobMapAsync()
     {
+        if (_desktopListMode && _wideViewport)
+        {
+            return;
+        }
+
         try
         {
             await MapScripts.EnsureDiscoveryAsync(Js);

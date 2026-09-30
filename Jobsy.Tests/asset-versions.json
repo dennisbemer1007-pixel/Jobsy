@@ -20,8 +20,8 @@
     "v": "20260927-gratis-dna"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "b3045558dc04cef0af26f22e337e40bd10b49a7aa86de91ca5ad528909a05fb0",
-    "v": "20260930-kb5"
+    "sha256": "7fb1a39e4f5c1fda846a60b0bb3c959215973dd66d9ce0648e5b707dc217d34f",
+    "v": "20260930-kb6"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "1693816b0b407c89dc96ccf53cf8ab37f4c38794b75c9b411bc986be5e17bd11",
@@ -64,8 +64,8 @@
     "v": "20260925-coral"
   },
   "js/app-core.js": {
-    "sha256": "25eb4cc100121235afc2d0297ffc36a114d8cc45a50b7a12b556958ba770621c",
-    "v": "20260930-kb3"
+    "sha256": "5f0a7d277d4d2b6235907a42f56924c7559950ad31b601f039a2663c9e06e3f4",
+    "v": "20260930-kb6"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",

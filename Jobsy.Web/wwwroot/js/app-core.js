@@ -103,6 +103,32 @@ window.jobsyGeo = (function () {
         }
     }
 
+    const WEERGAVE_KEY = "jobsy.kb.weergave";
+
+    function getWeergave() {
+        try {
+            var raw = sessionStorage.getItem(WEERGAVE_KEY);
+            if (raw === "lijst" || raw === "kaart") {
+                return raw;
+            }
+            return null;
+        } catch {
+            return null;
+        }
+    }
+
+    function setWeergave(value) {
+        try {
+            if (value === "lijst" || value === "kaart") {
+                sessionStorage.setItem(WEERGAVE_KEY, value);
+            } else {
+                sessionStorage.removeItem(WEERGAVE_KEY);
+            }
+        } catch {
+            // ignore
+        }
+    }
+
     function wasLocationPrompted() {
         try {
             return sessionStorage.getItem(PROMPT_KEY) === "1";
@@ -374,6 +400,8 @@ window.jobsyGeo = (function () {
         getSessionOrigin,
         setSessionOrigin,
         clearSessionOrigin,
+        getWeergave,
+        setWeergave,
         getStoredAge,
         setStoredAge,
         clearStoredAge,

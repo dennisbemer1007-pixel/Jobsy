@@ -320,8 +320,8 @@ public static class UiStringsKandidaatBanen
             "{0} banen · {1} min {2}", "{0} jobs · {1} min {2}",
             "{0} ofert · {1} min {2}", "{0} joburi · {1} min {2}", "{0} وظائف · {1} د {2}");
         Add("Kb.List.HeaderWithin",
-            "{0} banen binnen {1} min", "{0} jobs within {1} min",
-            "{0} ofert w {1} min", "{0} joburi în {1} min", "{0} وظائف خلال {1} د");
+            "{0} banen binnen {1} min {2}", "{0} jobs within {1} min {2}",
+            "{0} ofert w {1} min {2}", "{0} joburi în {1} min {2}", "{0} وظائف خلال {1} د {2}");
         Add("Kb.List.SubBestFirst",
             "Beste match bovenaan.", "Best match on top.",
             "Najlepsze dopasowanie na górze.", "Cea mai bună potrivire sus.", "أفضل تطابق في الأعلى.");
@@ -357,5 +357,155 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Legend.RingMinutes",
             "{0} min", "{0} mins",
             "{0} minut", "{0} min.", "{0} د");
+
+        // View toggle (06)
+        Add("Kb.View.ToggleAria",
+            "Weergave", "View",
+            "Widok", "Vizualizare", "العرض");
+        Add("Kb.View.Map",
+            "Kaart", "Map",
+            "Mapa", "Hartă", "خريطة");
+        Add("Kb.View.List",
+            "Lijst", "List",
+            "Lista", "Listă", "قائمة");
+        Add("Kb.View.OpenMap",
+            "Kaart", "Map",
+            "Mapa", "Hartă", "خريطة");
+
+        // Full-width / mobile list (06)
+        Add("Kb.List.FromAddress",
+            "Vanaf {0}", "From {0}",
+            "Od {0}", "De la {0}", "من {0}");
+        Add("Kb.List.SortLabel",
+            "Sorteer", "Sort",
+            "Sortuj", "Sortează", "ترتيب");
+        Add("Kb.List.SortBest",
+            "Past het best", "Best fit",
+            "Najlepsze dopasowanie", "Cea mai bună potrivire", "الأنسب لك");
+        Add("Kb.List.SortNear",
+            "Dichtbij", "Nearby",
+            "Blisko", "Aproape", "بالقرب");
+        Add("Kb.List.SortNew",
+            "Nieuwste", "Newest",
+            "Najnowsze", "Cele mai noi", "الأحدث");
+        Add("Kb.List.Save",
+            "Bewaar", "Save",
+            "Zapisz", "Salvează", "احفظ");
+        Add("Kb.List.View",
+            "Bekijk", "View",
+            "Zobacz", "Vezi", "عرض");
+        Add("Kb.List.Hours",
+            "{0}–{1} uur", "{0}–{1} hrs",
+            "{0}–{1} godz.", "{0}–{1} ore", "{0}–{1} ساعة");
+        Add("Kb.List.HoursSingle",
+            "{0} uur", "{0} hrs",
+            "{0} godz.", "{0} ore", "{0} ساعة");
+        Add("Kb.List.DayFlexible",
+            "Flexibel", "Flexible",
+            "Elastycznie", "Flexibil", "مرن");
+        Add("Kb.List.DayDay",
+            "Dag", "Day",
+            "Dzień", "Zi", "نهار");
+        Add("Kb.List.DayEvening",
+            "Avond", "Evening",
+            "Wieczór", "Seară", "مساء");
+        Add("Kb.List.DayNight",
+            "Nacht", "Night",
+            "Noc", "Noapte", "ليل");
+        Add("Kb.List.DayAndEvening",
+            "Dag en avond", "Day and evening",
+            "Dzień i wieczór", "Zi și seară", "نهار ومساء");
+        Add("Kb.List.HowWeSort.Title",
+            "Zo sorteren we", "How we sort",
+            "Jak sortujemy", "Cum sortăm", "كيف نرتّب");
+        Add("Kb.List.HowWeSort.FitFirst",
+            "Wat past bij jouw paspoort staat bovenaan.",
+            "What fits your passport comes first.",
+            "To, co pasuje do paszportu, jest na górze.",
+            "Ce se potrivește pașaportului tău e sus.",
+            "ما يناسب جوازك يأتي أولاً.");
+        Add("Kb.List.HowWeSort.TravelNext",
+            "Daarna kijken we naar reistijd.",
+            "Then we look at travel time.",
+            "Następnie bierzemy pod uwagę dojazd.",
+            "Apoi ne uităm la timpul de drum.",
+            "ثم ننظر إلى وقت الوصول.");
+        Add("Kb.List.HowWeSort.DislikesLower",
+            "Wat je liever niet doet staat lager — nooit verborgen.",
+            "What you prefer not to do ranks lower — never hidden.",
+            "Czego wolisz unikać, jest niżej — nigdy nie ukryte.",
+            "Ce preferi să eviți e mai jos — niciodată ascuns.",
+            "ما تفضّل تجنّبه يأتي أدنى — ولا يُخفى أبداً.");
+        Add("Kb.List.HowWeSort.Passport",
+            "Mijn Paspoort bekijken", "View my passport",
+            "Zobacz mój paszport", "Vezi pașaportul", "عرض جوازي");
+        Add("Kb.List.RailTravel.Title",
+            "Jouw reistijd", "Your travel time",
+            "Twój dojazd", "Timpul tău de drum", "وقت وصولك");
+        Add("Kb.List.RailTravel.Body",
+            "Binnen {0} min {1} van huis. Pas het aan met de knop '{2}'.",
+            "Within {0} min {1} from home. Change it with the '{2}' chip.",
+            "W {0} min {1} od domu. Zmień przyciskiem '{2}'.",
+            "În {0} min {1} de acasă. Schimbă cu butonul '{2}'.",
+            "خلال {0} د {1} من المنزل. عدّله بزر '{2}'.");
+        Add("Kb.List.RailTravel.Approx",
+            "Ongeveer — echte OV-routes volgen we nog niet.",
+            "Approximate — we do not follow real transit routes yet.",
+            "Orientacyjnie — nie śledzimy jeszcze tras komunikacji.",
+            "Aproximativ — încă nu urmărim rutele de transport.",
+            "تقريبي — لا نتبع مسارات المواصلات بعد.");
+
+        // Vacancy detail (06)
+        Add("Kb.Detail.TravelTitle",
+            "Hoe kom je er?", "How do you get there?",
+            "Jak dojedziesz?", "Cum ajungi?", "كيف تصل؟");
+        Add("Kb.Detail.TravelFrom",
+            "Vanaf {0}", "From {0}",
+            "Od {0}", "De la {0}", "من {0}");
+        Add("Kb.Detail.Apply",
+            "Solliciteer", "Apply",
+            "Aplikuj", "Aplică", "قدّم");
+        Add("Kb.Detail.Applied",
+            "Je hebt gesolliciteerd · Bekijk", "You applied · View",
+            "Aplikowano · Zobacz", "Ai aplicat · Vezi", "قدّمت · عرض");
+        Add("Kb.Detail.Save",
+            "Bewaar", "Save",
+            "Zapisz", "Salvează", "احفظ");
+        Add("Kb.Detail.Share",
+            "Delen", "Share",
+            "Udostępnij", "Distribuie", "مشاركة");
+        Add("Kb.Detail.PassportHint",
+            "Je paspoort gaat mee. Een brief is niet nodig.",
+            "Your passport goes with you. No cover letter needed.",
+            "Twój paszport idzie z tobą. List nie jest potrzebny.",
+            "Pașaportul tău te însoțește. Nu e nevoie de scrisoare.",
+            "جوازك يرافقك. لا حاجة لرسالة.");
+        Add("Kb.Detail.HoursFact",
+            "Uren per week", "Hours per week",
+            "Godziny tygodniowo", "Ore pe săptămână", "ساعات في الأسبوع");
+        Add("Kb.Detail.WageFact",
+            "Loon per uur", "Wage per hour",
+            "Stawka godzinowa", "Salariu pe oră", "الأجر بالساعة");
+        Add("Kb.Detail.WhenFact",
+            "Wanneer", "When",
+            "Kiedy", "Când", "متى");
+        Add("Kb.Detail.StartFact",
+            "Begin", "Start",
+            "Start", "Început", "البداية");
+        Add("Kb.Detail.StartFlexible",
+            "In overleg", "By arrangement",
+            "Do uzgodnienia", "De comun acord", "بالاتفاق");
+        Add("Kb.Detail.Route",
+            "Route", "Route",
+            "Trasa", "Rută", "المسار");
+        Add("Kb.Detail.StreetView",
+            "Street View", "Street View",
+            "Street View", "Street View", "تجوّل افتراضي");
+        Add("Kb.Detail.TransportAria",
+            "Vervoerswijze", "Transport mode",
+            "Środek transportu", "Mod de transport", "وسيلة النقل");
+        Add("Kb.Detail.FactsAria",
+            "Belangrijkste feiten", "Key facts",
+            "Najważniejsze fakty", "Fapte cheie", "حقائق أساسية");
     }
 }
