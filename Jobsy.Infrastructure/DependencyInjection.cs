@@ -20,6 +20,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure;
 
@@ -135,6 +136,8 @@ public static class DependencyInjection
                 }
             });
 
+        services.Configure<LegalOptions>(configuration.GetSection(LegalOptions.SectionName));
+
         services.AddOptions<MailOptions>()
             .Bind(configuration.GetSection(MailOptions.SectionName))
             .PostConfigure(options =>
@@ -158,6 +161,7 @@ public static class DependencyInjection
                     }
                 }
             });
+        services.AddSingleton<IPostConfigureOptions<MailOptions>, MailOptionsLegalIdentityPostConfigure>();
 
         services.AddDbContext<JobsyDbContext>((sp, options) =>
         {
@@ -329,6 +333,8 @@ public static class DependencyInjection
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
         services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Infrastructure.Features.FeatureFlags>();
         services.AddScoped<IPlatformCompanySettingsService, PlatformCompanySettingsService>();
+        services.AddScoped<ILegalIdentity, LegalIdentityService>();
+        services.AddScoped<IPublicCompanyQuery, PublicCompanyQuery>();
         services.AddScoped<IAboutPageSettingsService, AboutPageSettingsService>();
         services.AddScoped<IMarketingFlyerSettingsService, MarketingFlyerSettingsService>();
         services.AddScoped<IMarketingFlyerPdfService, MarketingFlyerPdfService>();

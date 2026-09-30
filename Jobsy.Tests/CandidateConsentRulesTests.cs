@@ -1,11 +1,68 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 
 namespace Jobsy.Tests;
 
 public class CandidateConsentRulesTests
 {
+    [Fact]
+    public void No_legal_placeholders_in_source()
+    {
+        var roots = new[]
+        {
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Jobsy.Web")),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Jobsy.Core")),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Jobsy.Infrastructure")),
+        };
+        var banned = new[]
+        {
+            "[BEDRIJFSNAAM]",
+            "[KVK-NUMMER]",
+            "[ADRES]",
+            "[CONTACT E-MAIL PRIVACY]",
+            "PlatformLegalIdentity"
+        };
+        var hits = new List<string>();
+        foreach (var root in roots)
+        {
+            if (!Directory.Exists(root))
+            {
+                continue;
+            }
+
+            foreach (var file in Directory.EnumerateFiles(root, "*.*", SearchOption.AllDirectories))
+            {
+                if (file.Contains($"{Path.DirectorySeparatorChar}Migrations{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                    || file.EndsWith(".Designer.cs", StringComparison.Ordinal)
+                    || file.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                    || file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (!file.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
+                    && !file.EndsWith(".razor", StringComparison.OrdinalIgnoreCase)
+                    && !file.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var text = File.ReadAllText(file);
+                foreach (var token in banned)
+                {
+                    if (text.Contains(token, StringComparison.Ordinal))
+                    {
+                        hits.Add($"{Path.GetRelativePath(root, file)}:{token}");
+                    }
+                }
+            }
+        }
+
+        Assert.True(hits.Count == 0, string.Join("\n", hits));
+    }
+
     [Fact]
     public void Talent_pool_excludes_non_consenting_and_under_18()
     {
@@ -46,15 +103,6 @@ public class CandidateConsentRulesTests
 
         user.TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion;
         Assert.True(CandidateConsentRules.HasCurrentTestAiConsent(user));
-    }
-
-    [Fact]
-    public void Platform_legal_identity_uses_placeholders()
-    {
-        Assert.Equal("[BEDRIJFSNAAM]", PlatformLegalIdentity.CompanyName);
-        Assert.Equal("[KVK-NUMMER]", PlatformLegalIdentity.KvkNumber);
-        Assert.Equal("[ADRES]", PlatformLegalIdentity.Address);
-        Assert.Equal("[CONTACT E-MAIL PRIVACY]", PlatformLegalIdentity.PrivacyEmail);
     }
 
     private static User User(DateOnly dob) => new()

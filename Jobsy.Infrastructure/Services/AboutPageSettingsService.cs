@@ -1,6 +1,5 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -49,7 +48,7 @@ public sealed class AboutPageSettingsService : IAboutPageSettingsService
         </section>
         <section>
         <h2>Vragen of sparren?</h2>
-        <p>Heb je een vraag, wil je sparren over de mogelijkheden voor jouw organisatie, of ben je benieuwd wat Lobsy voor jou kan betekenen? Neem gerust contact op via <a href="mailto:{{PlatformLegalIdentity.PrivacyEmail}}">{{PlatformLegalIdentity.PrivacyEmail}}</a> of het contactkanaal in het platform.</p>
+        <p>Heb je een vraag, wil je sparren over de mogelijkheden voor jouw organisatie, of ben je benieuwd wat Lobsy voor jou kan betekenen? Neem gerust contact op via <a href="mailto:support@lobsy.nl">support@lobsy.nl</a> of het contactkanaal in het platform.</p>
         </section>
         """;
 

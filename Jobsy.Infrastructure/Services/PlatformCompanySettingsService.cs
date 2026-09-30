@@ -3,6 +3,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -19,10 +20,17 @@ public sealed class PlatformCompanySettingsService : IPlatformCompanySettingsSer
     private static readonly Lazy<byte[]> WatermarkLogoBytes = new(() => CreateWatermarkLogo(LogoBytes.Value));
 
     private readonly JobsyDbContext _db;
+    private readonly IMemoryCache _cache;
 
     public PlatformCompanySettingsService(JobsyDbContext db)
+        : this(db, new MemoryCache(new MemoryCacheOptions()))
+    {
+    }
+
+    public PlatformCompanySettingsService(JobsyDbContext db, IMemoryCache cache)
     {
         _db = db;
+        _cache = cache;
     }
 
     public async Task<PlatformCompanySnapshot> GetAsync(CancellationToken cancellationToken = default)
@@ -59,6 +67,7 @@ public sealed class PlatformCompanySettingsService : IPlatformCompanySettingsSer
         row.UpdatedAtUtc = DateTime.UtcNow;
 
         await _db.SaveChangesAsync(cancellationToken);
+        LegalIdentityService.EvictCache(_cache);
         return ToSnapshot(row);
     }
 
