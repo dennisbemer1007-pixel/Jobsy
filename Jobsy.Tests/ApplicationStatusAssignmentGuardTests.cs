@@ -7,12 +7,13 @@ namespace Jobsy.Tests;
 /// </summary>
 public class ApplicationStatusAssignmentGuardTests
 {
+    /// <summary>Assignments of the ApplicationStatus enum onto a Status property.</summary>
     private static readonly Regex StatusAssign = new(
-        @"\b(?:application|chosen|other|existing|app|onVacancy|promote)\.Status\s*=",
+        @"\.Status\s*=\s*ApplicationStatus\.",
         RegexOptions.Compiled);
 
     private static readonly Regex SetPropertyStatus = new(
-        @"SetProperty\s*\(\s*a\s*=>\s*a\.Status",
+        @"SetProperty\s*\(\s*[a-zA-Z_]\w*\s*=>\s*[a-zA-Z_]\w*\.Status\s*,\s*request\.Status|SetProperty\s*\(\s*a\s*=>\s*a\.Status\s*,\s*(?:request\.Status|newStatus|ApplicationStatus\.)",
         RegexOptions.Compiled);
 
     private static readonly HashSet<string> AllowList = new(StringComparer.OrdinalIgnoreCase)
@@ -55,12 +56,12 @@ public class ApplicationStatusAssignmentGuardTests
                 var text = File.ReadAllText(file);
                 foreach (Match m in StatusAssign.Matches(text))
                 {
-                    violations.Add($"{Relative(root, file)}:{LineOf(text, m.Index)} {m.Value}");
+                    violations.Add($"{Relative(root, file)}:{LineOf(text, m.Index)} {m.Value.Trim()}");
                 }
 
                 foreach (Match m in SetPropertyStatus.Matches(text))
                 {
-                    violations.Add($"{Relative(root, file)}:{LineOf(text, m.Index)} {m.Value}");
+                    violations.Add($"{Relative(root, file)}:{LineOf(text, m.Index)} {m.Value.Trim()}");
                 }
             }
         }

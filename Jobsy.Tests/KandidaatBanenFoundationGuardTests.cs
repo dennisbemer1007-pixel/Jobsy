@@ -80,7 +80,7 @@ public class KandidaatBanenFoundationGuardTests
         Assert.True(File.Exists(Path.Combine(root, "docs", "features", "kandidaat-banen.md")));
         Assert.True(File.Exists(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "kandidaat-banen.css")));
         var appRazor = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
-        Assert.Contains("css/features/kandidaat-banen.css?v=20260930-kb6", appRazor, StringComparison.Ordinal);
+        Assert.Contains("css/features/kandidaat-banen.css?v=20260930-kb7", appRazor, StringComparison.Ordinal);
     }
 
     [Fact]
