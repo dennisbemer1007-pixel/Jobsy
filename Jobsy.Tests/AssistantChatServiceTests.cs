@@ -78,7 +78,11 @@ public class AssistantChatServiceTests
             Name = "Buurtsuper",
             Address = "Straat 1",
             Type = CompanyType.Employer,
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         db.Vacancies.Add(new Vacancy
@@ -191,7 +195,11 @@ public class AssistantChatServiceTests
             Id = Guid.NewGuid(),
             Name = "Albert Heijn Westland",
             Address = "Klantstraat 1",
-            Location = new GeoPoint(52.1, 4.3)
+            Location = new GeoPoint(52.1, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         var intermediary = new Company
         {
@@ -199,7 +207,11 @@ public class AssistantChatServiceTests
             Name = "Randstad Logistics",
             Address = "Bureauweg 9",
             Location = new GeoPoint(52.0, 4.2),
-            Type = CompanyType.Intermediary
+            Type = CompanyType.Intermediary,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         var vacancy = new Vacancy
         {
@@ -234,7 +246,11 @@ public class AssistantChatServiceTests
             Name = "Café Test",
             Address = "Straat 1",
             Type = CompanyType.Employer,
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         db.Vacancies.Add(new Vacancy
@@ -275,7 +291,11 @@ public class AssistantChatServiceTests
             Name = "DC West",
             Address = "Straat 1",
             Type = CompanyType.Employer,
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var id = Guid.NewGuid();
@@ -320,7 +340,11 @@ public class AssistantChatServiceTests
             Name = "DC West",
             Address = "Straat 1",
             Type = CompanyType.Employer,
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var matchId = Guid.NewGuid();
@@ -436,7 +460,11 @@ public class AssistantChatServiceTests
             Name = "Co",
             Address = "a",
             Type = CompanyType.Employer,
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var lowId = Guid.NewGuid();

@@ -295,7 +295,11 @@ public class AtsPipelineTests
             Name = "Demo",
             KvkNumber = "12345678",
             Address = "A",
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var vacancyId = Guid.NewGuid();
         db.Vacancies.Add(new Vacancy

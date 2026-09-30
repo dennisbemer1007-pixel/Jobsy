@@ -71,6 +71,10 @@
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
     "v": "20260929-testresultaten-b2"
   },
+  "css/features/werkgever-aanmelding.css": {
+    "sha256": "61ab5ba72e934f78dde05395a0af29eb0cf55ab4d3d3dfae4c1c19091d799a09",
+    "v": "20260930-wa11"
+  },
   "css/features/werkgever.css": {
     "sha256": "a6d1e1997735bcbe82a8aa21fabbd3bead7df94afa86bb66bdb7985123f19074",
     "v": "20260929-wg-insights"

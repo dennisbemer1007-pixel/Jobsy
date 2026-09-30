@@ -176,7 +176,7 @@ public class VacanciesController : ControllerBase
             var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is not null)
             {
-                matches = _profileMatch.Score(matchContext, candidates);
+                matches = await _profileMatch.ScoreAsync(matchContext, candidates, cancellationToken);
                 candidates = candidates
                     .Where(c =>
                     {
@@ -280,7 +280,7 @@ public class VacanciesController : ControllerBase
             var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is not null)
             {
-                var scored = _profileMatch.Score(matchContext, [(record, travelMinutes)]);
+                var scored = await _profileMatch.ScoreAsync(matchContext, [(record, travelMinutes)], cancellationToken);
                 if (scored.TryGetValue(id, out var match))
                 {
                     matchPercent = match.TotalPercent;
@@ -339,7 +339,7 @@ public class VacanciesController : ControllerBase
                         return (Record: r, TravelMinutes: travel);
                     })
                     .ToList();
-                matches = _profileMatch.Score(matchContext, scoreInput);
+                matches = await _profileMatch.ScoreAsync(matchContext, scoreInput, cancellationToken);
             }
         }
 
@@ -464,9 +464,10 @@ public class VacanciesController : ControllerBase
             var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is not null)
             {
-                matches = _profileMatch.Score(
+                matches = await _profileMatch.ScoreAsync(
                     matchContext,
-                    candidates.Select(c => (c.Record, c.TravelMinutes)));
+                    candidates.Select(c => (c.Record, c.TravelMinutes)),
+                    cancellationToken);
                 candidates = candidates
                     .Where(c =>
                     {
@@ -591,17 +592,18 @@ public class VacanciesController : ControllerBase
         if (VacancyVisibilityRules.IsPubliclyVisible(vacancy, today))
         {
             var showWage = age is not null || await CanViewerSeeWageAsync(cancellationToken);
-            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage, age, cancellationToken));
+            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage, age, isPreview: false, cancellationToken));
         }
 
-        // Drafts / pending / archived: only for authenticated employers with company access (or admin).
+        // Drafts / pending / archived / unverified publisher: only for authenticated employers with company access (or admin).
         // Intermediaries may also access via IntermediaryCompanyId (end-client CompanyId alone is insufficient).
         if (User.Identity?.IsAuthenticated == true
             && (_companyAuth.IsAdmin(User) || _companyAuth.IsEmployer(User))
             && await CanManageVacancyAsync(vacancy, cancellationToken))
         {
-            // Employers always see wage on managed vacancies.
-            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage: true, age, cancellationToken));
+            // Employers always see wage on managed vacancies. Preview is noindex.
+            Response.Headers["X-Robots-Tag"] = "noindex";
+            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage: true, age, isPreview: true, cancellationToken));
         }
 
         return NotFound();
@@ -626,25 +628,19 @@ public class VacanciesController : ControllerBase
             return BadRequest();
         }
 
-        var row = await _db.Vacancies
+        var vacancy = await _db.Vacancies
             .AsNoTracking()
-            .Where(v => v.Id == id)
-            .Select(v => new
-            {
-                v.Status,
-                v.StartDate,
-                v.EndDate,
-                v.Location
-            })
-            .FirstOrDefaultAsync(cancellationToken);
+            .Include(v => v.Company)
+            .Include(v => v.IntermediaryCompany)
+            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 
-        if (row is null)
+        if (vacancy is null)
         {
             return NotFound();
         }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        if (!VacancyVisibilityRules.IsPubliclyVisible(row.Status, row.StartDate, row.EndDate, today))
+        if (!VacancyVisibilityRules.IsPubliclyVisible(vacancy, today))
         {
             return NotFound();
         }
@@ -652,8 +648,8 @@ public class VacanciesController : ControllerBase
         var (minutes, km) = await TryExactRouteAsync(
             originLat,
             originLng,
-            row.Location.Latitude,
-            row.Location.Longitude,
+            vacancy.Location.Latitude,
+            vacancy.Location.Longitude,
             transport,
             cancellationToken);
         return Ok(new VacancyTravelDto(minutes, km));
@@ -669,6 +665,21 @@ public class VacanciesController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
+        var vacancy = await _db.Vacancies.AsNoTracking()
+            .Include(v => v.Company)
+            .Include(v => v.IntermediaryCompany)
+            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (!VacancyVisibilityRules.IsPubliclyVisible(vacancy, today))
+        {
+            return NotFound();
+        }
+
         if (!_companyAuth.IsCandidate(User))
         {
             return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
@@ -684,13 +695,6 @@ public class VacanciesController : ControllerBase
             return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
         }
 
-        var vacancy = await _db.Vacancies.AsNoTracking()
-            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
-        if (vacancy is null)
-        {
-            return NotFound();
-        }
-
         var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
         if (matchContext is null)
         {
@@ -698,7 +702,7 @@ public class VacanciesController : ControllerBase
         }
 
         var record = VacancyDiscoveryIndex.ToRecord(vacancy);
-        var matches = _profileMatch.Score(matchContext, [(record, (int?)null)]);
+        var matches = await _profileMatch.ScoreAsync(matchContext, [(record, (int?)null)], cancellationToken);
         if (!matches.TryGetValue(vacancy.Id, out var match) || match.CultureFit is null)
         {
             return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
@@ -1035,6 +1039,24 @@ public class VacanciesController : ControllerBase
         }
 
         var branchLabels = NormalizeBranchLabels(request.WorkTypes);
+        if (branchLabels.Length == 0 && existing is null)
+        {
+            // New vacancy defaults to the company's first branche (D12).
+            var rootId = company.ParentCompanyId ?? company.Id;
+            var rootLabels = rootId == company.Id
+                ? company.WorkTypeLabels
+                : await _db.Companies.AsNoTracking()
+                    .Where(c => c.Id == rootId)
+                    .Select(c => c.WorkTypeLabels)
+                    .FirstOrDefaultAsync(cancellationToken);
+            var first = WorkTypeLabels.NormalizeCompanyLabels(WorkTypeLabels.SplitStored(rootLabels))
+                .FirstOrDefault();
+            if (first is not null)
+            {
+                branchLabels = [first];
+            }
+        }
+
         if (branchLabels.Length is < 1 or > WorkTypeLabels.MaxPerVacancy)
         {
             return BadRequest(new { message = $"Kies 1 of {WorkTypeLabels.MaxPerVacancy} branches." });
@@ -1268,6 +1290,7 @@ public class VacanciesController : ControllerBase
 
     [HttpPost("publish")]
     [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<VacancyProductActionResultDto>> Publish(
         [FromBody] PublishVacancyRequest request,
         CancellationToken cancellationToken)
@@ -1310,6 +1333,15 @@ public class VacanciesController : ControllerBase
 
         if (!result.Succeeded)
         {
+            if (string.Equals(result.ErrorCode, LenderRegistrationRules.PendingErrorCode, StringComparison.Ordinal))
+            {
+                return StatusCode(StatusCodes.Status409Conflict, new
+                {
+                    code = result.ErrorCode,
+                    message = result.ErrorMessage
+                });
+            }
+
             return BadRequest(new { message = result.ErrorMessage });
         }
 
@@ -1334,6 +1366,30 @@ public class VacanciesController : ControllerBase
             return access;
         }
 
+        // Unverified: BM may only approve a "klaar" request (PendingApproval + PublishOnVerification).
+        var rootStatus = await ResolveRootVerificationStatusForCompanyAsync(vacancy.CompanyId, cancellationToken);
+        if (!CompanyVerificationRules.CanPublish(rootStatus))
+        {
+            if (vacancy.Status == VacancyStatus.PendingApproval && vacancy.PublishOnVerification)
+            {
+                vacancy.Status = VacancyStatus.Draft;
+                vacancy.PublishOnVerification = true;
+                vacancy.ReadyMarkedAtUtc ??= DateTime.UtcNow;
+                await _db.SaveChangesAsync(cancellationToken);
+                var freeUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
+                return Ok(new VacancyProductActionResultDto(
+                    MapToDto(vacancy, showWage: true, includeCategoryInternals: true, freePublishUntil: freeUntil),
+                    PendingApproval: false,
+                    Message: "Klaar — gaat live na verificatie."));
+            }
+
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = CompanyVerificationRules.UnverifiedErrorCode,
+                message = CompanyVerificationRules.BlockedMessageNl
+            });
+        }
+
         var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
         var result = await _products.ApprovePublishAsync(vacancy, actor?.Id, cancellationToken);
         if (result.InsufficientTokens)
@@ -1348,6 +1404,15 @@ public class VacanciesController : ControllerBase
 
         if (!result.Succeeded)
         {
+            if (string.Equals(result.ErrorCode, LenderRegistrationRules.PendingErrorCode, StringComparison.Ordinal))
+            {
+                return StatusCode(StatusCodes.Status409Conflict, new
+                {
+                    code = result.ErrorCode,
+                    message = result.ErrorMessage
+                });
+            }
+
             return BadRequest(new { message = result.ErrorMessage });
         }
 
@@ -1356,6 +1421,7 @@ public class VacanciesController : ControllerBase
 
     [HttpPost("{id:guid}/highlight")]
     [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<VacancyProductActionResultDto>> Highlight(
         Guid id,
         CancellationToken cancellationToken)
@@ -1402,6 +1468,7 @@ public class VacanciesController : ControllerBase
 
     [HttpPost("{id:guid}/pushbom")]
     [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<VacancyProductActionResultDto>> PushBom(
         Guid id,
         CancellationToken cancellationToken)
@@ -1415,6 +1482,7 @@ public class VacanciesController : ControllerBase
 
     [HttpPost("{id:guid}/extend")]
     [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<VacancyProductActionResultDto>> Extend(
         Guid id,
         CancellationToken cancellationToken)
@@ -1451,6 +1519,106 @@ public class VacanciesController : ControllerBase
         }
 
         return Ok(await ToProductResultAsync(result, cancellationToken));
+    }
+
+    /// <summary>
+    /// Mark a draft "klaar" so it auto-publishes when the company is verified (D4).
+    /// Only available while the company is not verified.
+    /// </summary>
+    [HttpPost("{id:guid}/ready")]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    public async Task<ActionResult<VacancyProductActionResultDto>> MarkReady(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var vacancy = await LoadManagedVacancyAsync(id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
+        if (access is not null)
+        {
+            return access;
+        }
+
+        var rootStatus = await ResolveRootVerificationStatusForCompanyAsync(vacancy.CompanyId, cancellationToken);
+        if (CompanyVerificationRules.CanPublish(rootStatus))
+        {
+            return BadRequest(new
+            {
+                message = "Je bedrijf is al geverifieerd — publiceer de vacature normaal."
+            });
+        }
+
+        if (vacancy.Status is not (VacancyStatus.Draft or VacancyStatus.PendingApproval))
+        {
+            return BadRequest(new { message = "Alleen conceptvacatures kunnen klaargezet worden." });
+        }
+
+        if (VacancyDraftCompletenessRules.IsIncomplete(vacancy))
+        {
+            return BadRequest(new { message = "Conceptvacature is incompleet en kan nog niet klaargezet worden." });
+        }
+
+        if (!vacancy.ContentModerationPassed)
+        {
+            return BadRequest(new { message = "De vacaturetekst moet eerst de contentcontrole doorstaan." });
+        }
+
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var canPurchase = await CanPurchaseTokensForCompanyAsync(vacancy.CompanyId, cancellationToken);
+
+        vacancy.PublishOnVerification = true;
+        vacancy.ReadyMarkedAtUtc = DateTime.UtcNow;
+        vacancy.ReadyMarkedByUserId = actor?.Id;
+
+        // Keep PendingApproval semantics for vestigingsmanagers without purchase rights.
+        if (!canPurchase && vacancy.Status == VacancyStatus.Draft)
+        {
+            vacancy.Status = VacancyStatus.PendingApproval;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var freeUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
+        return Ok(new VacancyProductActionResultDto(
+            MapToDto(vacancy, showWage: true, includeCategoryInternals: true, freePublishUntil: freeUntil),
+            PendingApproval: vacancy.Status == VacancyStatus.PendingApproval,
+            Message: "Klaar — gaat live na verificatie."));
+    }
+
+    [HttpDelete("{id:guid}/ready")]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    public async Task<ActionResult<VacancyProductActionResultDto>> ClearReady(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var vacancy = await LoadManagedVacancyAsync(id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
+        if (access is not null)
+        {
+            return access;
+        }
+
+        vacancy.PublishOnVerification = false;
+        vacancy.ReadyMarkedAtUtc = null;
+        vacancy.ReadyMarkedByUserId = null;
+        if (vacancy.Status == VacancyStatus.PendingApproval)
+        {
+            vacancy.Status = VacancyStatus.Draft;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        var freeUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
+        return Ok(new VacancyProductActionResultDto(
+            MapToDto(vacancy, showWage: true, includeCategoryInternals: true, freePublishUntil: freeUntil)));
     }
 
     /// <summary>
@@ -1614,6 +1782,15 @@ public class VacanciesController : ControllerBase
 
         if (!result.Succeeded)
         {
+            if (string.Equals(result.ErrorCode, LenderRegistrationRules.PendingErrorCode, StringComparison.Ordinal))
+            {
+                return StatusCode(StatusCodes.Status409Conflict, new
+                {
+                    code = result.ErrorCode,
+                    message = result.ErrorMessage
+                });
+            }
+
             return BadRequest(new { message = result.ErrorMessage });
         }
 
@@ -1670,6 +1847,30 @@ public class VacanciesController : ControllerBase
             .Select(c => c.TokensManagedByEnterprise)
             .FirstOrDefaultAsync(cancellationToken);
         return !managedByEnterprise;
+    }
+
+    private async Task<CompanyVerificationStatus> ResolveRootVerificationStatusForCompanyAsync(
+        Guid companyId,
+        CancellationToken cancellationToken)
+    {
+        var row = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => new { c.ParentCompanyId, c.VerificationStatus })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (row is null)
+        {
+            return CompanyVerificationStatus.Unverified;
+        }
+
+        if (row.ParentCompanyId is Guid parentId)
+        {
+            return await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == parentId)
+                .Select(c => c.VerificationStatus)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        return row.VerificationStatus;
     }
 
     private async Task<Core.Entities.Vacancy?> LoadManagedVacancyAsync(Guid id, CancellationToken cancellationToken)
@@ -1781,6 +1982,7 @@ public class VacanciesController : ControllerBase
         string? transport,
         bool showWage,
         int? ageYears = null,
+        bool isPreview = false,
         CancellationToken cancellationToken = default)
     {
         var targetLanguage = await ResolveTargetLanguageAsync(cancellationToken);
@@ -1805,6 +2007,7 @@ public class VacanciesController : ControllerBase
             ageYears,
             travelMinutes: travelMinutes,
             distanceKm: distanceKm,
+            isPreview: isPreview,
             cancellationToken: cancellationToken);
 
         return await AttachCandidateMatchAsync(dto, vacancy, travelMinutes, cancellationToken);
@@ -1990,9 +2193,17 @@ public class VacanciesController : ControllerBase
         int? travelMinutes = null,
         double? distanceKm = null,
         bool includeDescription = true,
+        bool isPreview = false,
         CancellationToken cancellationToken = default)
     {
-        var dto = MapToDto(v, showWage, ageYears, travelMinutes, distanceKm, includeDescription: includeDescription);
+        var dto = MapToDto(
+            v,
+            showWage,
+            ageYears,
+            travelMinutes,
+            distanceKm,
+            includeDescription: includeDescription,
+            isPreview: isPreview);
         return await TranslateDtoAsync(dto, targetLanguage, cancellationToken);
     }
 
@@ -2123,7 +2334,10 @@ public class VacanciesController : ControllerBase
             EngagementReminderTip: null,
             EngagementReminderSentAtUtc: null,
             MinimumReferences: compact ? null : r.MinimumReferences,
-            CulturePillars: r.CulturePillars is { Count: > 0 } ? r.CulturePillars.ToList() : null);
+            CulturePillars: r.CulturePillars is { Count: > 0 } ? r.CulturePillars.ToList() : null,
+            EngagementItems: r.EngagementItems is { Count: > 0 }
+                ? r.EngagementItems.Select(e => new VacancyEngagementBadgeDto(e.ItemId, e.Checked)).ToList()
+                : null);
     }
 
     private static VacancyListItemDto MapToDto(
@@ -2140,7 +2354,8 @@ public class VacanciesController : ControllerBase
         int likeCount = 0,
         bool includeCategoryInternals = false,
         DateOnly? freePublishUntil = null,
-        string? moderationWarning = null)
+        string? moderationWarning = null,
+        bool isPreview = false)
     {
         decimal? hourly = null;
         IReadOnlyList<WageByAgeDto>? wageByAge = null;
@@ -2182,9 +2397,12 @@ public class VacanciesController : ControllerBase
         }
 
         var isIncomplete = v.Status == VacancyStatus.Draft && VacancyDraftCompletenessRules.IsIncomplete(v);
-        var displayStatus = v.Status == VacancyStatus.Draft && isIncomplete
-            ? "DraftIncomplete"
-            : v.Status.ToString();
+        var displayStatus = v.PublishOnVerification
+            && v.Status is VacancyStatus.Draft or VacancyStatus.PendingApproval
+            ? "ReadyOnVerification"
+            : v.Status == VacancyStatus.Draft && isIncomplete
+                ? "DraftIncomplete"
+                : v.Status.ToString();
         var barrier = includeDescription ? MapBarrier(v.BarrierRequirementsJson) : default;
 
         return new VacancyListItemDto(
@@ -2289,7 +2507,9 @@ public class VacanciesController : ControllerBase
             BarrierCertifications: barrier.Certs,
             BarrierMinExperienceYears: barrier.Years,
             BarrierMinExperienceHours: barrier.Hours,
-            BarrierHardChecks: barrier.HardChecks);
+            BarrierHardChecks: barrier.HardChecks,
+            IsPreview: isPreview,
+            PublishOnVerification: v.PublishOnVerification);
     }
 
     private static (string? Kind, IReadOnlyList<string>? Diplomas, IReadOnlyList<string>? Certs, int? Years, int? Hours, IReadOnlyList<string>? HardChecks)
@@ -2572,7 +2792,7 @@ public class VacanciesController : ControllerBase
         }
 
         var record = VacancyDiscoveryIndex.ToRecord(vacancy);
-        var matches = _profileMatch.Score(matchContext, [(record, travelMinutes)]);
+        var matches = await _profileMatch.ScoreAsync(matchContext, [(record, travelMinutes)], cancellationToken);
         if (!matches.TryGetValue(vacancy.Id, out var match))
         {
             return dto;
@@ -2624,6 +2844,7 @@ public class VacanciesController : ControllerBase
             CompetencyScore01 = match.CompetencyScore01,
             InterestScore01 = match.InterestScore01,
             CultureFit = culture,
+            EngagementBonus = match.EngagementBonus,
             IsBroadMatch = match.IsBroadMatch,
             MatchRationale = match.MatchRationale,
             Why = why,

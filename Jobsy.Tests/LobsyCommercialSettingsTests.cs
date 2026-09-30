@@ -46,7 +46,11 @@ public class LobsyCommercialSettingsTests
             Name = "Agency",
             KvkNumber = "12345678",
             Address = "Test",
-            Location = new Core.ValueObjects.GeoPoint(52.0, 4.3)
+            Location = new Core.ValueObjects.GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 

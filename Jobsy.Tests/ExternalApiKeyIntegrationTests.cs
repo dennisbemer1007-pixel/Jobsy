@@ -221,16 +221,24 @@ public sealed class ExternalApiKeyWebAppFactory : WebApplicationFactory<Program>
                 Name = "Own Co",
                 KvkNumber = "11111111",
                 Address = "A",
-                Location = new GeoPoint(52, 4)
-            },
+                Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = ForeignCompanyId,
                 Name = "Foreign Co",
                 KvkNumber = "22222222",
                 Address = "B",
-                Location = new GeoPoint(52.1, 4.1)
-            });
+                Location = new GeoPoint(52.1, 4.1),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
 
         db.Users.Add(new User
         {

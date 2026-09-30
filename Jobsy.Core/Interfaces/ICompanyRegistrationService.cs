@@ -47,6 +47,12 @@ public interface ICompanyRegistrationService
         bool isAdmin,
         string? note = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Confirms the ownership-transfer letter code before admin approval (07.5).</summary>
+    Task ConfirmOwnershipTransferLetterAsync(
+        Guid takeoverId,
+        string code,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record RegistrationSubmitRequest(
@@ -72,6 +78,12 @@ public sealed record RegistrationSubmitRequest(
     double? ManualLatitude = null,
     double? ManualLongitude = null,
     bool? ManualIsIntermediarySbi = null,
+    IReadOnlyList<string>? SelectedEstablishmentIds = null,
+    Guid? SalesManagerUserId = null,
+    DateTime? RepresentationConsentAtUtc = null,
+    string? RepresentationConsentVersion = null,
+    string? PreferredLoginProvider = null,
+    bool LocationUnknown = false,
     /// <summary>Code from the first-click <c>lobsy_sales_ref</c> cookie (typed code still wins).</summary>
     string? CookieTrackingCode = null);
 

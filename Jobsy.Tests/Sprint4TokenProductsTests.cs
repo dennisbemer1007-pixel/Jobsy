@@ -471,7 +471,11 @@ public class Sprint4TokenProductsTests
             Name = "Westland Demo",
             KvkNumber = "1",
             Address = "a",
-            Location = new GeoPoint(51.9812, 4.2235)
+            Location = new GeoPoint(51.9812, 4.2235),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {

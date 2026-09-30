@@ -53,11 +53,19 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
             .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
             ?? throw new KeyNotFoundException("Vestiging niet gevonden.");
 
+        if (!PublicVisibility.IsCompanyPublic(company))
+        {
+            throw new KeyNotFoundException("Vestiging niet gevonden.");
+        }
+
         var baseUrl = await GetBaseUrlAsync(cancellationToken);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var activeIds = await _db.Vacancies.AsNoTracking()
-            .Where(v => v.CompanyId == companyId
-                        && v.Status == VacancyStatus.Active
+            .Include(v => v.Company)
+            .Include(v => v.IntermediaryCompany)
+            .Where(v => v.CompanyId == companyId)
+            .Where(PublicVisibility.VacancyPublisherIsPublic)
+            .Where(v => v.Status == VacancyStatus.Active
                         && v.StartDate <= today
                         && v.EndDate >= today)
             .OrderBy(v => v.Title)

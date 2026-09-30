@@ -157,6 +157,17 @@ public class Vacancy
     /// </summary>
     public bool RequireEmailVerification { get; set; }
 
+    /// <summary>
+    /// When true on an unverified company, this draft is "klaar" and auto-publishes on verification.
+    /// </summary>
+    public bool PublishOnVerification { get; set; }
+
+    /// <summary>When <see cref="PublishOnVerification"/> was set.</summary>
+    public DateTime? ReadyMarkedAtUtc { get; set; }
+
+    /// <summary>User who marked the vacancy klaar (actor for auto-publish).</summary>
+    public Guid? ReadyMarkedByUserId { get; set; }
+
     /// <summary>When the 14-day engagement reminder e-mail/notification was sent.</summary>
     public DateTime? EngagementReminderSentAtUtc { get; set; }
 

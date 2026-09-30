@@ -36,6 +36,10 @@
 
     <main class="app-main">
         <CircuitErrorBoundary BoundaryTag="main">
+            @if (RendererInfo.IsInteractive)
+            {
+                <Jobsy.Web.Components.Employer.CompanyVerificationBanner />
+            }
             @Body
         </CircuitErrorBoundary>
         @if (!_isMatchPage && !_isQuestionnairePage)

@@ -25,7 +25,11 @@ public class SalaryTableBackfillTests
             KvkNumber = "87654321",
             Address = "Test 1",
             Type = CompanyType.Employer,
-            Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4)
+            Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         var emptyTableId = Guid.NewGuid();
@@ -72,7 +76,11 @@ public class SalaryTableBackfillTests
             KvkNumber = "99887766",
             Address = "Test 3",
             Type = CompanyType.Employer,
-            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.2, 4.2)
+            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.2, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         var tableId = Guid.NewGuid();
@@ -125,7 +133,11 @@ public class SalaryTableBackfillTests
             KvkNumber = "11223344",
             Address = "Test 2",
             Type = CompanyType.Employer,
-            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.1, 4.1)
+            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.1, 4.1),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -156,8 +168,12 @@ public class SalaryTableBackfillTests
                 KvkNumber = "55667788",
                 Address = "Org 1",
                 Type = CompanyType.Employer,
-                Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4)
-            },
+                Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = branchId,
@@ -166,8 +182,12 @@ public class SalaryTableBackfillTests
                 Address = "Vestiging 1",
                 Type = CompanyType.Employer,
                 ParentCompanyId = orgId,
-                Location = new Jobsy.Core.ValueObjects.GeoPoint(52.01, 4.01)
-            });
+                Location = new Jobsy.Core.ValueObjects.GeoPoint(52.01, 4.01),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
 
         var withTableId = Guid.NewGuid();
         var withoutTableId = Guid.NewGuid();

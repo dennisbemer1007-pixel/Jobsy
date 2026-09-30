@@ -279,8 +279,12 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Progra
                 KvkNumber = "11111111",
                 Address = "HQ",
                 Location = new GeoPoint(52, 4),
-                CsvBatchImportEnabled = true
-            },
+                CsvBatchImportEnabled = true,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = BranchId,
@@ -288,8 +292,12 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Progra
                 KvkNumber = "11111111",
                 Address = "Branch",
                 Location = new GeoPoint(52.01, 4.01),
-                ParentCompanyId = OrgId
-            },
+                ParentCompanyId = OrgId,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = DisabledOrgId,
@@ -297,8 +305,12 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Progra
                 KvkNumber = "22222222",
                 Address = "Other",
                 Location = new GeoPoint(52.1, 4.1),
-                CsvBatchImportEnabled = false
-            });
+                CsvBatchImportEnabled = false,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
 
         db.Users.Add(new User
         {

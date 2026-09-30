@@ -90,6 +90,14 @@ public class CoreFunctionalFlowE2ETests
         Assert.Null(company.CommissionIndirectSalesManagerUserId);
         Assert.Null(company.CommissionStartsAtUtc);
         Assert.NotNull(company.SalesAttributedAtUtc);
+        Assert.False(company.HasReceivedWelcomeToken);
+        Assert.Equal(0m, await new TokenLedgerService(db).GetBalanceAsync(company.Id));
+
+        // Verification unlocks welcome token + publishing.
+        var verification = CreateVerification(db, registration);
+        await verification.MarkVerifiedAsync(
+            company.Id, CompanyVerificationMethod.BusinessEmail, activated.UserId, null);
+        await db.Entry(company).ReloadAsync();
         Assert.True(company.HasReceivedWelcomeToken);
         Assert.Equal(1m, await new TokenLedgerService(db).GetBalanceAsync(company.Id));
 
@@ -347,7 +355,11 @@ public class CoreFunctionalFlowE2ETests
             CommissionDurationDaysSnapshot = SalesCommissionRules.DefaultCommissionDurationDays,
             CommissionTermsSnapshottedAtUtc = started,
             CommissionStartsAtUtc = started,
-            FirstYearStartedAt = started
+            FirstYearStartedAt = started,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -398,7 +410,11 @@ public class CoreFunctionalFlowE2ETests
             KvkNumber = "66660001",
             Address = "Delft",
             Location = new GeoPoint(52.01, 4.36),
-            PreferredPaymentMethod = MolliePaymentMethods.CreditCard
+            PreferredPaymentMethod = MolliePaymentMethods.CreditCard,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var vacancy = await SeedDraftVacancyAsync(db, companyId, "Highlight me");
         vacancy.Status = VacancyStatus.Active;
@@ -588,6 +604,35 @@ public class CoreFunctionalFlowE2ETests
             new TokenLedgerService(db),
             features,
             NullLogger<CompanyRegistrationService>.Instance);
+    }
+
+    private static CompanyVerificationService CreateVerification(
+        JobsyDbContext db,
+        CompanyRegistrationService registration)
+    {
+        var features = CreateFeatures(db);
+        var ledger = new TokenLedgerService(db);
+        var products = new VacancyProductService(
+            db,
+            ledger,
+            new SalesCommercialService(db, ledger),
+            new VacancyCategoryService(db),
+            new PushNotificationServiceStub(db, NullLogger<PushNotificationServiceStub>.Instance),
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            features,
+            new MockRoutingService(),
+            new UserNotificationService(db),
+            new CandidateActionTokenService(db),
+            NullLogger<VacancyProductService>.Instance);
+        return new CompanyVerificationService(
+            db,
+            registration,
+            products,
+            discovery: null,
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new UserNotificationService(db),
+            features,
+            NullLogger<CompanyVerificationService>.Instance);
     }
 
     private static IPlatformFeatureService CreateFeatures(JobsyDbContext db)

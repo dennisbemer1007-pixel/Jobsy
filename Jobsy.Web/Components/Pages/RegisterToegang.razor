@@ -1,0 +1,253 @@
+@page "/register/toegang"
+@layout Jobsy.Web.Components.Layout.WaPublicLayout
+@attribute [AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Web.Components.Registration
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+<PageTitle>@Culture["WaAccess.Title"] · Lobsy</PageTitle>
+
+<div class="wa-wizard">
+    <WaWizardChrome CurrentStep="2" Speech="@Culture["WaAccess.Speech"]" Pose="WaMascot.MascotPose.Waving" />
+
+    <div class="wa-card">
+        @if (_done)
+        {
+            <h1>@Culture["WaAccess.Sent"]</h1>
+            <p class="wa-lead">@_message</p>
+            <a class="wa-btn wa-btn--primary" href="/register">@Culture["WaAccess.OtherCompany"]</a>
+        }
+        else if (_awaitingCode)
+        {
+            <p class="wa-eyebrow">@Culture["WaAccess.FormTitle"]</p>
+            <h1>@Culture["WaAccess.CodeTitle"]</h1>
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="wa-error" role="alert">@_error</p>
+            }
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["WaAccess.CodeTitle"]</span>
+                <span class="wa-input"><input @bind="_code" maxlength="8" inputmode="numeric" autocomplete="one-time-code" /></span>
+            </label>
+            <div class="wa-actions">
+                <button type="button" class="wa-link" @onclick="() => _awaitingCode = false">@Culture["Common.Back"]</button>
+                <button type="button" class="wa-btn wa-btn--primary" disabled="@_busy" @onclick="ConfirmAsync">@Culture["WaAccess.CodeConfirm"]</button>
+            </div>
+        }
+        else if (_ownership)
+        {
+            <p class="wa-eyebrow">@Culture["WaAccess.Ownership.Title"]</p>
+            <h1>@Culture["WaAccess.Ownership.Title"]</h1>
+            <p class="wa-lead">@Culture["WaAccess.Ownership.Body"]</p>
+            <p class="wa-hint">@Culture["WaAccess.ManagedBadge"]</p>
+            @if (!string.IsNullOrWhiteSpace(_companyName))
+            {
+                <div class="wa-company-box">
+                    <div>
+                        <h2>@_companyName</h2>
+                        <p class="wa-muted">KvK @_kvk</p>
+                    </div>
+                </div>
+            }
+            <div class="wa-actions">
+                <a class="wa-link" href="/register">@Culture["Common.Back"]</a>
+                <a class="wa-btn wa-btn--primary" href="@($"/register?kvk={Uri.EscapeDataString(_kvk ?? "")}")">
+                    @Culture["WaAccess.Ownership.Cta"]
+                </a>
+            </div>
+        }
+        else
+        {
+            <p class="wa-eyebrow">@Culture["WaAccess.FormTitle"]</p>
+            <h1>@Culture["WaAccess.Title"]</h1>
+            <p class="wa-lead">@Culture["WaAccess.Lead"]</p>
+            <p class="wa-hint">@Culture["WaAccess.Privacy"]</p>
+
+            @if (!string.IsNullOrWhiteSpace(_companyName))
+            {
+                <div class="wa-company-box">
+                    <div>
+                        <h2>@_companyName</h2>
+                        <p class="wa-muted">
+                            KvK @_kvk
+                            @if (!string.IsNullOrWhiteSpace(_legalForm))
+                            {
+                                <text> · @_legalForm</text>
+                            }
+                        </p>
+                        <p class="wa-hint">@Culture["WaAccess.ManagedBadge"]</p>
+                    </div>
+                    <a class="wa-link" href="/register">@Culture["WaAccess.OtherCompany"]</a>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="wa-error" role="alert">@_error</p>
+            }
+
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["WaAccess.Name"]</span>
+                <span class="wa-input"><input @bind="_name" maxlength="200" required /></span>
+            </label>
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["WaAccess.Function"]</span>
+                <span class="wa-input"><input @bind="_function" maxlength="200" /></span>
+            </label>
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["WaAccess.Email"]</span>
+                <span class="wa-input"><input @bind="_email" type="email" maxlength="256" required /></span>
+            </label>
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["WaAccess.Phone"]</span>
+                <span class="wa-input"><input @bind="_phone" maxlength="40" /></span>
+            </label>
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["WaAccess.Role"]</span>
+                <span class="wa-input">
+                    <select @bind="_role">
+                        <option value="BranchManager">@Culture["WaAccess.Role.Branch"]</option>
+                        <option value="RegionalManager">@Culture["WaAccess.Role.Regional"]</option>
+                        <option value="EnterpriseManager">@Culture["WaAccess.Role.Enterprise"]</option>
+                    </select>
+                </span>
+            </label>
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["WaAccess.Message"]</span>
+                <span class="wa-input"><textarea @bind="_messageText" rows="3" maxlength="500"></textarea></span>
+            </label>
+
+            <section class="wa-timeline" aria-label="@Culture["WaAccess.Timeline.Title"]">
+                <h3>@Culture["WaAccess.Timeline.Title"]</h3>
+                <ol>
+                    <li>@Culture["WaAccess.Timeline.1"]</li>
+                    <li>@Culture["WaAccess.Timeline.2"]</li>
+                    <li>@Culture["WaAccess.Timeline.3"]</li>
+                </ol>
+            </section>
+
+            <div class="wa-note">
+                <p><strong>@Culture["WaAccess.Ownership.Title"]</strong></p>
+                <p>@Culture["WaAccess.Ownership.Body"]</p>
+                <a class="wa-link" href="@($"/register/toegang?kvk={Uri.EscapeDataString(_kvk ?? "")}&eigendom=1")">
+                    @Culture["WaAccess.Ownership.Cta"]
+                </a>
+            </div>
+
+            <div class="wa-actions">
+                <a class="wa-link" href="/register">@Culture["Common.Back"]</a>
+                <button type="button" class="wa-btn wa-btn--primary" disabled="@(_busy || string.IsNullOrWhiteSpace(_kvk))" @onclick="SubmitAsync">
+                    @Culture["WaAccess.Submit"]
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "kvk")] public string? Kvk { get; set; }
+    [SupplyParameterFromQuery(Name = "vestiging")] public string? Vestiging { get; set; }
+    [SupplyParameterFromQuery(Name = "eigendom")] public string? Eigendom { get; set; }
+
+    private string? _kvk;
+    private string? _companyName;
+    private string? _legalForm;
+    private bool _ownership;
+    private bool _awaitingCode;
+    private bool _done;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private Guid? _requestId;
+
+    private string _name = "";
+    private string _function = "";
+    private string _email = "";
+    private string _phone = "";
+    private string _role = "BranchManager";
+    private string _messageText = "";
+    private string _code = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _kvk = Kvk?.Trim();
+        _ownership = Eigendom is "1" or "true";
+        if (string.IsNullOrWhiteSpace(_kvk))
+        {
+            return;
+        }
+
+        try
+        {
+            var profile = await Api.GetKvkProfileAsync(_kvk);
+            _companyName = profile.Name;
+            _legalForm = profile.LegalForm;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_kvk))
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.SubmitAccessRequestAsync(new AccessRequestSubmitModel(
+                _kvk,
+                Vestiging,
+                _role,
+                _name,
+                _function,
+                _email,
+                _phone,
+                _messageText));
+            _requestId = result.RequestId;
+            _awaitingCode = true;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (_requestId is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.ConfirmAccessRequestAsync(_requestId.Value, _code);
+            _message = result.Message;
+            _done = true;
+            _awaitingCode = false;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

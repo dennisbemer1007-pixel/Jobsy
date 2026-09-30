@@ -6,13 +6,32 @@ namespace Jobsy.Core.Rules;
 
 public static class VacancyVisibilityRules
 {
+    /// <summary>
+    /// Full public visibility including publisher verification
+    /// (<see cref="PublicVisibility"/>).
+    /// </summary>
     public static bool IsPubliclyVisible(Vacancy vacancy, DateOnly today) =>
-        IsPubliclyVisible(vacancy.Status, vacancy.StartDate, vacancy.EndDate, today);
+        PublicVisibility.IsVacancyPublic(vacancy, today);
 
+    /// <summary>
+    /// Full public visibility including publisher verification
+    /// (<see cref="PublicVisibility"/>).
+    /// </summary>
     public static bool IsPubliclyVisible(VacancyDiscoveryRecord record, DateOnly today) =>
-        IsPubliclyVisible(record.Status, record.StartDate, record.EndDate, today);
+        PublicVisibility.IsVacancyPublic(record, today);
 
+    /// <summary>
+    /// Date/status window only — prefer the Vacancy/Record overloads so publisher
+    /// verification is enforced. Kept for callers that already filtered the publisher.
+    /// </summary>
     public static bool IsPubliclyVisible(
+        VacancyStatus status,
+        DateOnly startDate,
+        DateOnly endDate,
+        DateOnly today) =>
+        IsDateAndStatusPublic(status, startDate, endDate, today);
+
+    public static bool IsDateAndStatusPublic(
         VacancyStatus status,
         DateOnly startDate,
         DateOnly endDate,

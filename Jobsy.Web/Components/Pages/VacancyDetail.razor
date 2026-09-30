@@ -9,6 +9,7 @@
 @inject PersistentComponentState Persist
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Components.Authorization
@@ -17,7 +18,7 @@
 <PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) · Lobsy</PageTitle>
 <PageSeo Title="@SeoTitle"
          Description="@SeoDescription"
-         Index="@(_vacancy is not null)"
+         Index="@(_vacancy is not null && !_vacancy.IsPreview)"
          ImageUrl="@SeoImage"
          OgType="article"
          JsonLd="@SeoJsonLd" />
@@ -99,6 +100,11 @@
                 </div>
             </div>
 
+            @if (_vacancy.IsPreview)
+            {
+                <p class="wa-banner__preview-line" role="status">@Culture["WaBanner.PreviewLine"]</p>
+            }
+
             <div class="detail-card__top detail-card__top--before-media">
                 <div>
                     <h1>@_vacancy.Title</h1>
@@ -151,6 +157,10 @@
                         }
                     </p>
                     <p class="address">@_vacancy.CompanyAddress</p>
+                    @if (_vacancy.EngagementItems is { Count: > 0 })
+                    {
+                        <EngagementBadges Items="@(_vacancy.EngagementItems.Select(e => new EngagementBadges.EngageBadgeItem(e.ItemId, e.Checked)).ToList())" />
+                    }
                     @if (!string.IsNullOrWhiteSpace(_vacancy.OfferedByLabel))
                     {
                         <p class="muted" style="margin:0.25rem 0 0">@_vacancy.OfferedByLabel</p>
@@ -773,7 +783,8 @@
                 _vacancy.MinHoursPerWeek,
                 _vacancy.MaxHoursPerWeek,
                 pageUrl,
-                origin);
+                origin,
+                isPreview: _vacancy.IsPreview);
         }
     }
     private bool ShowsSuitableFor65Plus =>

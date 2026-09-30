@@ -21,12 +21,51 @@ public record SubmitRegistrationRequest(
     double? ManualLatitude = null,
     double? ManualLongitude = null,
     bool? ManualIsIntermediarySbi = null,
+    IReadOnlyList<string>? SelectedEstablishmentIds = null,
+    Guid? SalesManagerUserId = null,
+    DateTime? RepresentationConsentAtUtc = null,
+    string? RepresentationConsentVersion = null,
+    string? PreferredLoginProvider = null,
+    bool LocationUnknown = false,
+    bool AcceptedRepresentation = false,
     string? CookieTrackingCode = null);
 
 public record KvkEstablishmentsLookupResponse(
     string Status,
     string? Message,
     IReadOnlyList<Jobsy.Core.Interfaces.KvkEstablishmentResult> Establishments);
+
+public record KvkAddressLineDto(
+    string Street,
+    string HouseNumber,
+    string? HouseLetter,
+    string Postcode,
+    string Place,
+    string FormattedLine);
+
+public record KvkEstablishmentProfileDto(
+    string KvkNumber,
+    string EstablishmentNumber,
+    string KvkEstablishmentId,
+    string Name,
+    string Address,
+    double Latitude,
+    double Longitude,
+    bool IsInUse,
+    IReadOnlyList<string> SbiCodes,
+    KvkAddressLineDto? VisitingAddress,
+    KvkAddressLineDto? PostalAddress);
+
+public record KvkCompanyProfileResponse(
+    string Status,
+    string KvkNumber,
+    string Name,
+    string Address,
+    string? LegalForm,
+    IReadOnlyList<string> SbiCodes,
+    IReadOnlyList<string> Websites,
+    IReadOnlyList<KvkEstablishmentProfileDto> Establishments,
+    string? Message = null);
 
 public record RegistrationSubmitResponse(
     Guid RegistrationId,
@@ -52,7 +91,10 @@ public record RegistrationActivationResponse(
     bool UsedChosenPassword = false,
     bool EmailVerifiedAwaitingTakeover = false,
     bool WelcomeTokenGranted = false,
-    DateOnly? FreePublishUntil = null);
+    DateOnly? FreePublishUntil = null,
+    string? SessionToken = null,
+    bool InstantlyVerified = false,
+    string? PreferredLoginProvider = null);
 
 public record TakeoverInboxItemDto(
     Guid TakeoverId,
@@ -73,6 +115,8 @@ public record TakeoverDecisionResponse(
     Guid? BranchCompanyId);
 
 public record RejectTakeoverRequest(string? Note = null);
+
+public record SessionLoginRequest(string SessionToken);
 
 public record LocalLoginRequest(string Email, string Password, bool RememberDevice = true);
 

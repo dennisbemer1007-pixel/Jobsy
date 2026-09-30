@@ -1,0 +1,177 @@
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject KvkSearchClient KvkSearch
+
+<div class="kvk-search-field">
+    <div class="kvk-search-field__row">
+        <label class="kvk-search-field__query">
+            @Label
+            <input value="@_query"
+                   @oninput="OnQueryInput"
+                   maxlength="80"
+                   placeholder="@Placeholder"
+                   autocomplete="organization" />
+        </label>
+        @if (ShowPlace)
+        {
+            <label class="kvk-search-field__place">
+                Plaats
+                <input value="@_place"
+                       @oninput="OnPlaceInput"
+                       maxlength="64"
+                       placeholder="Optioneel"
+                       autocomplete="address-level2" />
+            </label>
+        }
+        <button type="button"
+                class="provider-btn"
+                disabled="@(_busy || !CanSearch)"
+                @onclick="SearchAsync">
+            @(_busy ? "Zoeken…" : SearchButtonLabel)
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+
+    @if (_hits.Count > 0)
+    {
+        <ul class="kvk-search-field__hits" role="listbox">
+            @foreach (var hit in _hits)
+            {
+                <li>
+                    <button type="button"
+                            class="kvk-search-field__hit @(_selectedKvk == hit.KvkNumber ? "is-selected" : null)"
+                            @onclick="() => SelectAsync(hit)">
+                        <strong>@hit.Name</strong>
+                        <span class="muted">
+                            KVK @hit.KvkNumber
+                            @if (!string.IsNullOrWhiteSpace(hit.Place))
+                            {
+                                <text> · @hit.Place</text>
+                            }
+                            @if (hit.VestigingCount is int count)
+                            {
+                                <text> · @count @(count == 1 ? "vestiging" : "vestigingen")</text>
+                            }
+                            @if (hit.IsOnLobsy)
+                            {
+                                <text> · Al op Lobsy</text>
+                            }
+                        </span>
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "Bedrijfsnaam of KVK-nummer";
+    [Parameter] public string Placeholder { get; set; } = "Minimaal 3 tekens of 8 cijfers";
+    [Parameter] public string SearchButtonLabel { get; set; } = "Zoeken";
+    [Parameter] public bool ShowPlace { get; set; } = true;
+    [Parameter] public EventCallback<KvkSearchHitItem> OnSelected { get; set; }
+
+    private string _query = "";
+    private string _place = "";
+    private string? _selectedKvk;
+    private bool _busy;
+    private string? _error;
+    private List<KvkSearchHitItem> _hits = [];
+    private CancellationTokenSource? _debounce;
+
+    private bool CanSearch
+    {
+        get
+        {
+            var text = _query.Trim();
+            var digits = new string(text.Where(char.IsDigit).ToArray());
+            var isNumber = digits.Length == 8
+                           && text.All(c => char.IsDigit(c) || char.IsWhiteSpace(c) || c is '.' or '-');
+            return isNumber || text.Length >= 3;
+        }
+    }
+
+    private async Task OnQueryInput(ChangeEventArgs e)
+    {
+        _query = e.Value?.ToString() ?? "";
+        await DebouncedSearchAsync();
+    }
+
+    private async Task OnPlaceInput(ChangeEventArgs e)
+    {
+        _place = e.Value?.ToString() ?? "";
+        if (CanSearch)
+        {
+            await DebouncedSearchAsync();
+        }
+    }
+
+    private async Task DebouncedSearchAsync()
+    {
+        _debounce?.Cancel();
+        _debounce?.Dispose();
+        if (!CanSearch)
+        {
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _debounce = cts;
+        try
+        {
+            await Task.Delay(300, cts.Token);
+            await SearchAsync();
+        }
+        catch (TaskCanceledException)
+        {
+            // Newer keystroke superseded this search.
+        }
+    }
+
+    private async Task SearchAsync()
+    {
+        if (!CanSearch)
+        {
+            _error = "Typ minimaal 3 tekens of een KVK-nummer van 8 cijfers.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await KvkSearch.SearchAsync(_query.Trim(), string.IsNullOrWhiteSpace(_place) ? null : _place.Trim());
+            if (string.Equals(result.Status, "Unavailable", StringComparison.OrdinalIgnoreCase))
+            {
+                _hits = [];
+                _error = result.Message ?? "KVK-dienst is tijdelijk niet beschikbaar.";
+                return;
+            }
+
+            _hits = result.Hits;
+            if (_hits.Count == 0)
+            {
+                _error = "Geen bedrijven gevonden.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _hits = [];
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SelectAsync(KvkSearchHitItem hit)
+    {
+        _selectedKvk = hit.KvkNumber;
+        await OnSelected.InvokeAsync(hit);
+    }
+}

@@ -1,6 +1,10 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
 @inject JobsyApiClient Api
+@inject CultureState Culture
 @inject IJSRuntime Js
 @inject BottomNavRefreshService NavRefresh
 @inject IConfiguration Configuration
@@ -117,6 +121,56 @@
                 }
             </section>
             }
+
+            <AuthorizeView Roles="BranchManager,EnterpriseManager,Admin">
+                <Authorized>
+                    <section class="panel-section company-details__card">
+                        <h2>@Culture["WaEngage.OrgSection"]</h2>
+                        <p class="muted company-details__lead">@Culture["WaEngage.OrgLead"]</p>
+                        <div class="wa-engage">
+                            @foreach (var item in EngagementCatalog.All)
+                            {
+                                var on = _engageSelected.Contains(item.Id);
+                                var proof = _engageProof.GetValueOrDefault(item.Id) ?? "";
+                                <div class="wa-engage__card @(on ? "is-on" : null)">
+                                    <button type="button" class="wa-engage__toggle" disabled="@_busy" @onclick="() => ToggleEngageOrg(item.Id)">
+                                        <span class="wa-engage__ck" aria-hidden="true">@(on ? "✓" : "")</span>
+                                        <span class="pub-emoji" aria-hidden="true">@item.Emoji</span>
+                                        <span>
+                                            <strong>@Culture[item.TitleKey]</strong>
+                                            <small>@Culture[item.HintKey]</small>
+                                        </span>
+                                    </button>
+                                    @if (on)
+                                    {
+                                        <label class="wa-engage__proof">
+                                            <span>@Culture["WaProfile.Engage.ProofLabel"]</span>
+                                            <input type="text"
+                                                   maxlength="500"
+                                                   disabled="@_busy"
+                                                   value="@proof"
+                                                   @oninput="e => SetEngageProofOrg(item.Id, e.Value?.ToString())" />
+                                        </label>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="SaveEngageOrgAsync">@Culture["WaEngage.Save"]</button>
+                    </section>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView Roles="BranchManager,EnterpriseManager,Admin">
+                <Authorized>
+                    <section class="panel-section company-details__card">
+                        <h2>Wervingsmateriaal</h2>
+                        <p class="muted company-details__lead">Raamflyer voor in de etalage — A4 of A3, per vestiging of als overzicht.</p>
+                        <RaamflyerTools Companies="_organizations"
+                                        AllowOverview="@(_organizations.Count > 1)"
+                                        OverviewTitle="@(_org?.ParentCompanyId is null ? "onze vestigingen" : "onze vestiging")" />
+                    </section>
+                </Authorized>
+            </AuthorizeView>
 
             @if (Show("contact"))
             {
@@ -562,6 +616,8 @@
     private string _apiBaseUrl = "http://localhost:5200";
     private string _vacanciesEndpoint = "http://localhost:5200/api/external/vacancies";
     private string _swaggerUrl = "http://localhost:5200/swagger";
+    private HashSet<string> _engageSelected = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, string> _engageProof = new(StringComparer.OrdinalIgnoreCase);
 
     private string ExampleRequestCurl => ExternalApiDocsCopy.ExampleRequestCurl(_vacanciesEndpoint);
     private static string ExampleResponseJson => ExternalApiDocsCopy.ExampleResponseJson;
@@ -689,6 +745,7 @@
         }
 
         SyncContactFormFromOrg();
+        await LoadEngagementAsync();
         _keys = [];
         _activeKey = null;
         _inactiveKeys = [];
@@ -706,6 +763,94 @@
                 _activeKey = null;
                 _inactiveKeys = [];
             }
+        }
+    }
+
+    private async Task LoadEngagementAsync()
+    {
+        _engageSelected.Clear();
+        _engageProof.Clear();
+        if (_org is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var state = await Api.GetCompanyEngagementAsync(_org.Id);
+            foreach (var claim in state?.Claims ?? [])
+            {
+                _engageSelected.Add(claim.ItemId);
+                _engageProof[claim.ItemId] = claim.ProofUrl ?? claim.ProofText ?? "";
+            }
+        }
+        catch
+        {
+            // optional section
+        }
+    }
+
+    private void ToggleEngageOrg(string id)
+    {
+        if (_engageSelected.Contains(id))
+        {
+            _engageSelected.Remove(id);
+        }
+        else
+        {
+            _engageSelected.Add(id);
+            _engageProof.TryAdd(id, "");
+        }
+    }
+
+    private void SetEngageProofOrg(string id, string? value)
+        => _engageProof[id] = value ?? "";
+
+    private async Task SaveEngageOrgAsync()
+    {
+        if (_org is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        ClearFeedback();
+        try
+        {
+            var claims = _engageSelected.Select(id =>
+            {
+                var proof = _engageProof.GetValueOrDefault(id)?.Trim();
+                string? url = null;
+                string? text = null;
+                if (!string.IsNullOrWhiteSpace(proof))
+                {
+                    if (proof.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    {
+                        url = proof;
+                    }
+                    else
+                    {
+                        text = proof;
+                    }
+                }
+
+                return new CompanyEngagementClaimEdit
+                {
+                    ItemId = id,
+                    ProofUrl = url,
+                    ProofText = text
+                };
+            }).ToList();
+            await Api.SaveCompanyEngagementAsync(_org.Id, claims);
+            SetFeedback(FeedbackSection.Contact, Culture["WaEngage.Save"] + " ✓");
+        }
+        catch (Exception ex)
+        {
+            SetFeedback(FeedbackSection.Contact, ex.Message, isError: true);
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

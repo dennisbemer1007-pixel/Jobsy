@@ -1,0 +1,60 @@
+{
+  "pagina": 1,
+  "resultatenPerPagina": 10,
+  "totaal": 6,
+  "resultaten": [
+    {
+      "kvkNummer": "90123456",
+      "vestigingsnummer": "000045678901",
+      "naam": "Groen & Zorg Thuiszorg B.V.",
+      "handelsnaam": "Groen & Zorg Thuiszorg B.V.",
+      "type": "hoofdvestiging",
+      "adres": {
+        "type": "bezoekadres",
+        "straatnaam": "Vondellaan",
+        "plaats": "Utrecht"
+      }
+    },
+    {
+      "kvkNummer": "90123456",
+      "vestigingsnummer": "000045678912",
+      "naam": "Groen & Zorg Thuiszorg B.V.",
+      "type": "nevenvestiging",
+      "adres": { "plaats": "Amersfoort" }
+    },
+    {
+      "kvkNummer": "90123456",
+      "vestigingsnummer": "000045678923",
+      "naam": "Groen & Zorg Thuiszorg B.V.",
+      "type": "nevenvestiging",
+      "adres": { "plaats": "Zeist" }
+    },
+    {
+      "kvkNummer": "81234567",
+      "naam": "Stichting Groen en Zorgboerderij De Hoef",
+      "type": "rechtspersoon",
+      "adres": { "plaats": "Houten" }
+    },
+    {
+      "kvkNummer": "77889900",
+      "vestigingsnummer": "0001",
+      "naam": "Groenzorg Hoveniers V.O.F.",
+      "type": "hoofdvestiging",
+      "adres": { "plaats": "Nieuwegein" }
+    },
+    {
+      "kvkNummer": "66554433",
+      "vestigingsnummer": "0001",
+      "naam": "Zorgschoon Groen B.V.",
+      "type": "hoofdvestiging",
+      "adres": { "plaats": "Utrecht" }
+    },
+    {
+      "kvkNummer": "66554433",
+      "vestigingsnummer": "0002",
+      "naam": "Zorgschoon Groen B.V.",
+      "type": "nevenvestiging",
+      "adres": { "plaats": "Nieuwegein" }
+    }
+  ]
+}

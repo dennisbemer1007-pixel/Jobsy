@@ -349,6 +349,16 @@ public sealed partial class JobsyApiClient
     public async Task<VacancyProductActionResult?> ApprovePublishAsync(Guid vacancyId, CancellationToken ct = default)
         => await PostVacancyProductAsync($"api/vacancies/{vacancyId}/approve-publish", ct);
 
+    public async Task<VacancyProductActionResult?> MarkVacancyReadyAsync(Guid vacancyId, CancellationToken ct = default)
+        => await PostVacancyProductAsync($"api/vacancies/{vacancyId}/ready", ct);
+
+    public async Task<VacancyProductActionResult?> ClearVacancyReadyAsync(Guid vacancyId, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/vacancies/{vacancyId}/ready", ct);
+        await ThrowIfVacancyProductFailedAsync(response, ct);
+        return await response.Content.ReadFromJsonAsync<VacancyProductActionResult>(cancellationToken: ct);
+    }
+
     public async Task<VacancyProductActionResult?> HighlightVacancyAsync(Guid vacancyId, CancellationToken ct = default)
         => await PostVacancyProductAsync($"api/vacancies/{vacancyId}/highlight", ct);
 

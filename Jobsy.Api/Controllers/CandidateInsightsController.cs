@@ -1,3 +1,4 @@
+using Jobsy.Api.Authorization;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Exceptions;
@@ -28,6 +29,7 @@ public sealed class CandidateInsightsController : ControllerBase
 
     [HttpGet]
     [EnableRateLimiting("public-read")]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<CandidateInsightsDto>> Get(
         [FromQuery] Guid? branchId,
         [FromQuery] int radiusKm = 20,
@@ -71,6 +73,7 @@ public sealed class CandidateInsightsController : ControllerBase
 
     [HttpGet("branches")]
     [EnableRateLimiting("public-read")]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<IReadOnlyList<CandidateInsightsBranchDto>>> Branches(
         CancellationToken cancellationToken = default)
     {

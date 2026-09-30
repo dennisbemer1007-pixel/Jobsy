@@ -101,7 +101,11 @@ internal static class MediaBackfillSeeder
             KvkEstablishmentId = "55667788_0001",
             Address = "Binckhorstlaan 36, Den Haag",
             Type = Core.Enums.CompanyType.Intermediary,
-            Location = new Core.ValueObjects.GeoPoint(52.0680, 4.3350)
+            Location = new Core.ValueObjects.GeoPoint(52.0680, 4.3350),
+            VerificationStatus = Core.Enums.CompanyVerificationStatus.Verified,
+            VerificationMethod = Core.Enums.CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenTransactions.Add(new Core.Entities.TokenTransaction
         {

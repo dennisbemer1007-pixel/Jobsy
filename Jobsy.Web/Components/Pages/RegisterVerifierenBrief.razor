@@ -1,0 +1,187 @@
+@page "/register/verifieren/brief"
+@layout Jobsy.Web.Components.Layout.WaPublicLayout
+@attribute [Authorize(Roles = "EnterpriseManager,BranchManager,Intermediary,Admin")]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Web.Components.Registration
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["WaVerify.Brief.Title"] · Lobsy</PageTitle>
+
+<div class="wa-wizard">
+    <WaWizardChrome CurrentStep="5" Speech="@Culture["WaVerify.Brief.Speech"]" Pose="WaMascot.MascotPose.Default" />
+
+    <div class="wa-card">
+        @if (_loading)
+        {
+            <p class="wa-hint">@Culture["Common.Loading"]</p>
+        }
+        else
+        {
+            <p class="wa-chip wa-chip--warn">@Culture["WaVerify.Brief.Badge"]</p>
+            <h1>@Culture["WaVerify.Brief.Title"]</h1>
+            <p class="wa-lead">@string.Format(Culture["WaVerify.Brief.Lead"], _companyName)</p>
+            @if (!string.IsNullOrWhiteSpace(_deliveryHint))
+            {
+                <p class="wa-hint">@_deliveryHint</p>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="wa-error" role="alert">@_error</p>
+            }
+
+            <div class="wa-verify-code">
+                <h2>@Culture["WaVerify.Brief.CodeTitle"]</h2>
+                <p class="wa-hint">@Culture["WaVerify.Brief.CodeHint"]</p>
+                <label class="wa-field">
+                    <span class="wa-field__label">@Culture["WaVerify.Brief.CodeTitle"]</span>
+                    <span class="wa-input">
+                        <input @bind="_code"
+                               maxlength="12"
+                               autocomplete="one-time-code"
+                               placeholder="XXXX-XXXX"
+                               aria-label="@Culture["WaVerify.Brief.CodeTitle"]" />
+                    </span>
+                </label>
+                <p class="wa-hint">@Culture["WaVerify.Brief.Attempts"]</p>
+                <button type="button" class="wa-btn wa-btn--primary" disabled="@_busy" @onclick="ConfirmAsync">
+                    @Culture["WaVerify.Brief.Confirm"]
+                </button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_resendHint))
+            {
+                <p class="wa-note">@_resendHint</p>
+            }
+            @if (_canResend)
+            {
+                <button type="button" class="wa-link" disabled="@_busy" @onclick="ResendAsync">@Culture["WaVerify.Brief.ResendCta"]</button>
+            }
+
+            <p class="wa-note">
+                <a class="wa-link" href="/register/verifieren">@Culture["WaVerify.Brief.EmailAlt"]</a>
+            </p>
+            <p class="wa-hint">@Culture["WaVerify.Brief.Later"]</p>
+            <a class="wa-btn wa-btn--primary" href="/home">@Culture["WaVerify.Dashboard"]</a>
+        }
+    </div>
+</div>
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private bool _canResend;
+    private string _companyName = "";
+    private string _code = "";
+    private string? _deliveryHint;
+    private string? _resendHint;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var options = await Api.GetCompanyVerificationOptionsAsync();
+            if (options is null)
+            {
+                Navigation.NavigateTo("/register/verifieren");
+                return;
+            }
+
+            _companyName = options.CompanyName;
+            if (options.ActiveLetterId is null)
+            {
+                Navigation.NavigateTo("/register/verifieren");
+                return;
+            }
+
+            var nl = new System.Globalization.CultureInfo("nl-NL");
+            var sent = options.LetterSentAtUtc?.ToLocalTime().Date ?? DateTime.Today;
+            var expectFrom = AddBusinessDays(sent, 1);
+            var expectTo = AddBusinessDays(sent, 3);
+            var deliveryWindow = $"{expectFrom.ToString("ddd d MMM", nl)} of {expectTo.ToString("ddd d MMM", nl)}";
+            var expires = options.LetterExpiresAtUtc?.ToLocalTime().ToString("d MMM", nl) ?? "";
+            _deliveryHint = string.Format(
+                Culture["WaVerify.Brief.Delivery"],
+                deliveryWindow,
+                options.LetterAddressMasked ?? "",
+                expires);
+
+            if (options.LetterResendAvailableAtUtc is DateTime resendAt)
+            {
+                var local = resendAt.ToLocalTime();
+                _resendHint = string.Format(
+                    Culture["WaVerify.Brief.Resend"],
+                    local.ToString("ddd d MMM", nl),
+                    options.LetterResendsRemaining);
+                _canResend = DateTime.UtcNow >= resendAt && options.LetterResendsRemaining > 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ConfirmAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.ConfirmCompanyLetterVerificationAsync(_code);
+            Navigation.NavigateTo("/home");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ResendAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.StartCompanyLetterVerificationAsync(resend: true);
+            Navigation.NavigateTo("/register/verifieren/brief", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static DateTime AddBusinessDays(DateTime start, int days)
+    {
+        var d = start;
+        var left = days;
+        while (left > 0)
+        {
+            d = d.AddDays(1);
+            if (d.DayOfWeek is not (DayOfWeek.Saturday or DayOfWeek.Sunday))
+            {
+                left--;
+            }
+        }
+
+        return d;
+    }
+}

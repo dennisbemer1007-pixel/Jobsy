@@ -45,6 +45,12 @@ public static class TransactionalEmails
         new("CompanyReEngagement", "We missen je", "Werkgever", "Inactief bedrijf — tools staan nog klaar.", DraftVacancyCleanupRules.ReengagementEmailCategory),
         new("RegistrationActivation", "Bevestigingscode registratie", "Registratie", "OTP om bedrijfsregistratie te activeren.", "RegistrationActivation"),
         new("RegistrationCredentials", "Account actief", "Registratie", "Welkomstmail na activatie, met inlogknop.", "RegistrationCredentials"),
+        new("CompanyVerificationReminder", "Herinnering verificatie", "Werkgever", "Day 7/21 reminder om het bedrijf te verifiëren.", "CompanyVerificationReminder"),
+        new("CompanyVerified", "Bedrijf geverifieerd", "Werkgever", "Bevestiging na verificatie + gepubliceerde vacatures.", "CompanyVerified"),
+        new("CompanyBusinessEmailVerification", "Verificatiecode zakelijk e-mail", "Werkgever", "6-cijferige code om bedrijf via zakelijk e-mail te verifiëren.", "CompanyBusinessEmailVerification"),
+        new("CompanyVerificationRejected", "Verificatie afgewezen", "Werkgever", "Admin wees de handmatige controle af met reden.", "CompanyVerificationRejected"),
+        new("EngagementClaimRemoved", "Betrokkenheid verwijderd", "Werkgever", "Admin verwijderde een maatschappelijk kenmerk met reden.", "EngagementClaimRemoved"),
+        new("CompanyUnverifiedDeleted", "Registratie verwijderd", "Werkgever", "Day-60 opruiming van niet-geverifieerde registratie.", "CompanyUnverifiedDeleted"),
         new("TakeoverEmailVerification", "Bevestigingscode overname", "Registratie", "OTP voordat een overnameverzoek de eigenaar bereikt.", "TakeoverEmailVerification"),
         new("TakeoverRequest", "Overnameverzoek (eigenaar)", "Werkgever", "Inbox-mail voor de huidige vestigingseigenaar.", "TakeoverRequest"),
         new("TakeoverSubmitted", "Overnameverzoek ingediend", "Registratie", "Bevestiging aan de aanvrager.", "TakeoverSubmitted"),
@@ -117,6 +123,19 @@ public static class TransactionalEmails
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.EstablishmentName, ctx.RoleLabel, "5610", ctx.OtpCode),
             "registrationcredentials" => RegistrationCredentials(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.EstablishmentName, ctx.ContactEmail, temporaryPassword: null),
+            "companyverificationreminder" => CompanyVerificationReminder(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, day: 7, deletionDateLabel: null),
+            "companyverified" => CompanyVerified(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, welcomeTokenGranted: true,
+                publishedTitles: [ctx.VacancyTitle]),
+            "companybusinessemailverification" => CompanyBusinessEmailVerification(
+                ctx.CompanyName, ctx.OtpCode, ctx.PublicWebBaseUrl),
+            "companyverificationrejected" => CompanyVerificationRejected(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.RoleLabel),
+            "engagementclaimremoved" => EngagementClaimRemoved(
+                ctx.PublicWebBaseUrl, ctx.CompanyName, "duurzaamheid", ctx.RoleLabel),
+            "companyunverifieddeleted" => CompanyUnverifiedDeleted(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName),
             "takeoveremailverification" => TakeoverEmailVerification(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.OtpCode),
             "takeoverrequest" => TakeoverRequest(
@@ -531,8 +550,8 @@ public static class TransactionalEmails
                  $"<strong>{EmailLayout.Escape(establishmentName)}</strong> te activeren " +
                  $"(rol: {EmailLayout.Escape(roleLabel)}{sbiBit}).")}
              {EmailLayout.Paragraph(
-                 "Na bevestiging kun je direct aan de slag — je eerste token is helemaal gratis, " +
-                 "zodat je meteen een vacature kunt plaatsen.")}
+                 "Na bevestiging kun je direct je bedrijf inrichten: conceptvacatures klaarzetten, " +
+                 "het profiel invullen en collega's uitnodigen. Publiceren volgt na verificatie.")}
              {EmailLayout.Paragraph("Je bevestigingscode (geldig 10 minuten):")}
              {EmailLayout.OtpBlock(code)}
              {EmailLayout.PrimaryButton(EmailLayout.RegisterActivateUrl(baseUrl), "Code invoeren")}
@@ -561,9 +580,10 @@ public static class TransactionalEmails
              {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(contactName)},")}
              {EmailLayout.Paragraph(
                  $"Geslaagd! Je account voor <strong>{EmailLayout.Escape(establishmentName)}</strong> " +
-                 "is geactiveerd. Je kunt direct aan de slag.")}
+                 "is geactiveerd. Je kunt direct aan de slag met concepten, het profiel en uitnodigingen.")}
              {EmailLayout.Paragraph(
-                 "Je hebt van ons je eerste token helemaal gratis gekregen — daarmee plaats je meteen je eerste vacature.")}
+                 "Zodra je bedrijf is geverifieerd, worden klaargezette vacatures gepubliceerd " +
+                 "en ontvang je (buiten de gratis-publicatieperiode) je welkomsttoken.")}
              {EmailLayout.Paragraph(
                  "Je kunt inloggen met e-mail/wachtwoord of met <strong>Microsoft Entra</strong> / " +
                  $"Google op <code>{EmailLayout.Escape(contactEmail)}</code>.")}
@@ -574,6 +594,163 @@ public static class TransactionalEmails
             baseUrl,
             preheader: "Je Lobsy-account is actief");
         return new("RegistrationCredentials", "RegistrationCredentials", "Geslaagd — je Lobsy-account is actief!", html);
+    }
+
+    public static ComposedEmail CompanyVerificationReminder(
+        string? baseUrl,
+        string contactName,
+        string companyName,
+        int day,
+        string? deletionDateLabel)
+    {
+        var verifyUrl = EmailLayout.RegisterVerifyUrl(baseUrl);
+        var dayBit = day == 21
+            ? "Al drie weken geleden heb je je bedrijf geregistreerd, maar het is nog niet geverifieerd."
+            : "Een week geleden heb je je bedrijf geregistreerd. Verifieer het zodat kandidaten je kunnen vinden.";
+        var deletionBit = string.IsNullOrWhiteSpace(deletionDateLabel)
+            ? ""
+            : EmailLayout.Paragraph(
+                $"Zonder verificatie verwijderen we deze registratie op <strong>{EmailLayout.Escape(deletionDateLabel)}</strong> (60 dagen na aanmelding).");
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Verifieer je bedrijf")}
+             {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(contactName)},")}
+             {EmailLayout.Paragraph(dayBit)}
+             {EmailLayout.Paragraph(
+                 $"Bedrijf: <strong>{EmailLayout.Escape(companyName)}</strong>. " +
+                 "Tot die tijd blijft het onzichtbaar voor kandidaten.")}
+             {deletionBit}
+             {EmailLayout.PrimaryButton(verifyUrl, "Nu verifiëren")}
+             """,
+            baseUrl,
+            preheader: "Verifieer je bedrijf op Lobsy");
+        return new("CompanyVerificationReminder", "CompanyVerificationReminder",
+            day == 21
+                ? "Laatste herinnering: verifieer je bedrijf — Lobsy"
+                : "Herinnering: verifieer je bedrijf — Lobsy",
+            html);
+    }
+
+    public static ComposedEmail CompanyVerified(
+        string? baseUrl,
+        string contactName,
+        string companyName,
+        bool welcomeTokenGranted,
+        IReadOnlyList<string> publishedTitles)
+    {
+        var listHtml = publishedTitles.Count == 0
+            ? EmailLayout.Paragraph("Er stonden geen klaargezette vacatures klaar om te publiceren.")
+            : EmailLayout.Paragraph(
+                  "Gepubliceerd:")
+              + "<ul style=\"margin:8px 0 16px 20px;padding:0;\">"
+              + string.Join("", publishedTitles.Select(t =>
+                  $"<li style=\"margin:4px 0;\">{EmailLayout.Escape(t)}</li>"))
+              + "</ul>";
+        var welcomeBit = welcomeTokenGranted
+            ? EmailLayout.Paragraph(
+                "Je hebt van ons je welkomsttoken gekregen — daarmee plaats je (of verleng je) een vacature.")
+            : EmailLayout.Paragraph(
+                "Tijdens de gratis-publicatieperiode ontvang je geen welkomsttoken; publiceren is nu gratis.");
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Je bedrijf is geverifieerd")}
+             {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(contactName)},")}
+             {EmailLayout.Paragraph(
+                 $"Gefeliciteerd! <strong>{EmailLayout.Escape(companyName)}</strong> is geverifieerd " +
+                 "en nu zichtbaar voor kandidaten.")}
+             {listHtml}
+             {welcomeBit}
+             {EmailLayout.PrimaryButton(EmailLayout.EmployerVacanciesUrl(baseUrl), "Naar vacatures")}
+             """,
+            baseUrl,
+            preheader: "Je bedrijf is geverifieerd op Lobsy");
+        return new("CompanyVerified", "CompanyVerified", "Je bedrijf is geverifieerd — Lobsy", html);
+    }
+
+    public static ComposedEmail CompanyBusinessEmailVerification(
+        string companyName,
+        string code,
+        string? baseUrl)
+    {
+        var verifyUrl = EmailLayout.RegisterVerifyUrl(baseUrl);
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Je verificatiecode")}
+             {EmailLayout.Paragraph(
+                 $"Gebruik deze 6-cijferige code om <strong>{EmailLayout.Escape(companyName)}</strong> te verifiëren:")}
+             {EmailLayout.OtpBlock(code)}
+             {EmailLayout.Paragraph("De code is 10 minuten geldig.")}
+             {EmailLayout.PrimaryButton(verifyUrl, "Code invullen")}
+             """,
+            baseUrl,
+            preheader: "Verificatiecode voor je bedrijf");
+        return new("CompanyBusinessEmailVerification", "CompanyBusinessEmailVerification",
+            "Je Lobsy-verificatiecode", html);
+    }
+
+    public static ComposedEmail CompanyVerificationRejected(
+        string? baseUrl,
+        string contactName,
+        string companyName,
+        string reason)
+    {
+        var verifyUrl = EmailLayout.RegisterVerifyUrl(baseUrl);
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Verificatie afgewezen")}
+             {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(contactName)},")}
+             {EmailLayout.Paragraph(
+                 $"We konden <strong>{EmailLayout.Escape(companyName)}</strong> niet verifiëren.")}
+             {EmailLayout.Paragraph($"Reden: {EmailLayout.Escape(reason)}")}
+             {EmailLayout.Paragraph("Je kunt een brief met code aanvragen of opnieuw een handmatige controle starten.")}
+             {EmailLayout.PrimaryButton(verifyUrl, "Opnieuw verifiëren")}
+             """,
+            baseUrl,
+            preheader: "Verificatie afgewezen");
+        return new("CompanyVerificationRejected", "CompanyVerificationRejected",
+            "Verificatie afgewezen — Lobsy", html);
+    }
+
+    public static ComposedEmail EngagementClaimRemoved(
+        string? baseUrl,
+        string companyName,
+        string itemLabel,
+        string reason)
+    {
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Kenmerk verwijderd")}
+             {EmailLayout.Paragraph(
+                 $"Het kenmerk <strong>{EmailLayout.Escape(itemLabel)}</strong> van " +
+                 $"<strong>{EmailLayout.Escape(companyName)}</strong> is verwijderd van Lobsy.")}
+             {EmailLayout.Paragraph($"Reden: {EmailLayout.Escape(reason)}")}
+             {EmailLayout.Paragraph(
+                 "Je kunt het kenmerk over 30 dagen opnieuw opgeven met nieuw bewijs, " +
+                 "of een ander kenmerk kiezen.")}
+             {EmailLayout.PrimaryButton(EmailLayout.LoginUrl(baseUrl), "Naar dashboard")}
+             """,
+            baseUrl,
+            preheader: "Maatschappelijk kenmerk verwijderd");
+        return new("EngagementClaimRemoved", "EngagementClaimRemoved",
+            "Kenmerk verwijderd — Lobsy", html);
+    }
+
+    public static ComposedEmail CompanyUnverifiedDeleted(
+        string? baseUrl, string contactName, string companyName)
+    {
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Registratie verwijderd")}
+             {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(contactName)},")}
+             {EmailLayout.Paragraph(
+                 $"Je niet-geverifieerde registratie voor <strong>{EmailLayout.Escape(companyName)}</strong> " +
+                 "is na 60 dagen verwijderd. Je kunt opnieuw beginnen via Bedrijf registreren.")}
+             {EmailLayout.PrimaryButton(EmailLayout.RegisterUrl(baseUrl), "Opnieuw registreren")}
+             """,
+            baseUrl,
+            preheader: "Niet-geverifieerde registratie verwijderd");
+        return new("CompanyUnverifiedDeleted", "CompanyUnverifiedDeleted",
+            "Registratie verwijderd — Lobsy", html);
     }
 
     public static ComposedEmail TakeoverEmailVerification(
@@ -630,6 +807,160 @@ public static class TransactionalEmails
             baseUrl,
             preheader: "Overnameverzoek ingediend");
         return new("TakeoverSubmitted", "TakeoverSubmitted", "Overnameverzoek ingediend — Lobsy", html);
+    }
+
+    public static ComposedEmail AccessRequestEmailVerification(
+        string? baseUrl, string contactName, string companyName, string code)
+    {
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Bevestig je e-mailadres")}
+             {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(contactName)},")}
+             {EmailLayout.Paragraph(
+                 $"Bevestig je e-mailadres om toegang aan te vragen tot <strong>{EmailLayout.Escape(companyName)}</strong>. " +
+                 "Code geldig 10 minuten:")}
+             {EmailLayout.OtpBlock(code)}
+             {EmailLayout.PrimaryButton(EmailLayout.RegisterAccessUrl(baseUrl), "Code invoeren")}
+             """,
+            baseUrl,
+            preheader: "Bevestigingscode toegangsverzoek");
+        return new("AccessRequestEmailVerification", "AccessRequestEmailVerification",
+            "Bevestigingscode toegangsverzoek — Lobsy", html);
+    }
+
+    public static ComposedEmail AccessRequestSubmitted(
+        string? baseUrl, string contactName, string companyName)
+    {
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Aanvraag verstuurd")}
+             {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(contactName)},")}
+             {EmailLayout.Paragraph(
+                 $"Je aanvraag is verstuurd. <strong>{EmailLayout.Escape(companyName)}</strong> beslist; " +
+                 "na 5 werkdagen kijkt Lobsy mee.")}
+             {EmailLayout.PrimaryButton(EmailLayout.LoginUrl(baseUrl), "Naar Lobsy")}
+             """,
+            baseUrl,
+            preheader: "Toegangsverzoek verstuurd");
+        return new("AccessRequestSubmitted", "AccessRequestSubmitted",
+            "Toegangsverzoek verstuurd — Lobsy", html);
+    }
+
+    public static ComposedEmail AccessRequestToManager(
+        string? baseUrl,
+        string companyName,
+        string requesterName,
+        string? requesterFunction,
+        string requesterEmail,
+        string roleLabel)
+    {
+        var inboxUrl = EmailLayout.AccessRequestsUrl(baseUrl);
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Nieuw toegangsverzoek")}
+             {EmailLayout.Paragraph(
+                 $"Er is een toegangsverzoek voor <strong>{EmailLayout.Escape(companyName)}</strong>.")}
+             {EmailLayout.Paragraph(
+                 $"Aanvrager: {EmailLayout.Escape(requesterName)}" +
+                 (string.IsNullOrWhiteSpace(requesterFunction)
+                     ? ""
+                     : $" ({EmailLayout.Escape(requesterFunction)})") +
+                 $" — {EmailLayout.Escape(requesterEmail)}. Gevraagde rol: {EmailLayout.Escape(roleLabel)}.")}
+             {EmailLayout.PrimaryButton(inboxUrl, "Bekijk toegangsverzoeken")}
+             """,
+            baseUrl,
+            preheader: "Toegangsverzoek op Lobsy");
+        return new("AccessRequestToManager", "AccessRequestToManager",
+            "Toegangsverzoek — Lobsy", html);
+    }
+
+    public static ComposedEmail AccessRequestReminder(
+        string? baseUrl, string companyName, string requesterName)
+    {
+        var inboxUrl = EmailLayout.AccessRequestsUrl(baseUrl);
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Herinnering toegangsverzoek")}
+             {EmailLayout.Paragraph(
+                 $"Er wacht nog een toegangsverzoek van {EmailLayout.Escape(requesterName)} " +
+                 $"voor <strong>{EmailLayout.Escape(companyName)}</strong>.")}
+             {EmailLayout.PrimaryButton(inboxUrl, "Bekijk verzoek")}
+             """,
+            baseUrl,
+            preheader: "Herinnering toegangsverzoek");
+        return new("AccessRequestReminder", "AccessRequestReminder",
+            "Herinnering toegangsverzoek — Lobsy", html);
+    }
+
+    public static ComposedEmail AccessRequestRejected(
+        string? baseUrl, string contactName, string companyName, string? reason)
+    {
+        var reasonBlock = string.IsNullOrWhiteSpace(reason)
+            ? ""
+            : EmailLayout.Paragraph($"Reden: {EmailLayout.Escape(reason)}");
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Toegangsverzoek afgewezen")}
+             {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(contactName)},")}
+             {EmailLayout.Paragraph(
+                 $"Je verzoek voor toegang tot <strong>{EmailLayout.Escape(companyName)}</strong> is afgewezen.")}
+             {reasonBlock}
+             """,
+            baseUrl,
+            preheader: "Toegangsverzoek afgewezen");
+        return new("AccessRequestRejected", "AccessRequestRejected",
+            "Toegangsverzoek afgewezen — Lobsy", html);
+    }
+
+    public static ComposedEmail AccessRequestExpired(
+        string? baseUrl, string contactName, string companyName)
+    {
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Toegangsverzoek verlopen")}
+             {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(contactName)},")}
+             {EmailLayout.Paragraph(
+                 $"Je verzoek voor toegang tot <strong>{EmailLayout.Escape(companyName)}</strong> is na 30 dagen verlopen.")}
+             {EmailLayout.PrimaryButton(EmailLayout.RegisterAccessUrl(baseUrl), "Opnieuw aanvragen")}
+             """,
+            baseUrl,
+            preheader: "Toegangsverzoek verlopen");
+        return new("AccessRequestExpired", "AccessRequestExpired",
+            "Toegangsverzoek verlopen — Lobsy", html);
+    }
+
+    public static ComposedEmail OwnershipTransferManagersNotify(
+        string? baseUrl, string companyName)
+    {
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Eigendomsoverdracht aangevraagd")}
+             {EmailLayout.Paragraph(
+                 $"Er is een eigendomsoverdracht aangevraagd voor <strong>{EmailLayout.Escape(companyName)}</strong>. " +
+                 "Klopt dit niet? Reageer binnen 7 dagen via Lobsy-support.")}
+             {EmailLayout.PrimaryButton(EmailLayout.AccessRequestsUrl(baseUrl), "Naar Lobsy")}
+             """,
+            baseUrl,
+            preheader: "Eigendomsoverdracht aangevraagd");
+        return new("OwnershipTransferManagersNotify", "OwnershipTransferManagersNotify",
+            "Eigendomsoverdracht aangevraagd — Lobsy", html);
+    }
+
+    public static ComposedEmail IntermediaryClientSelfManaged(
+        string? baseUrl, string companyName)
+    {
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Klant beheert nu zelf")}
+             {EmailLayout.Paragraph(
+                 $"<strong>{EmailLayout.Escape(companyName)}</strong> beheert nu zelf een account op Lobsy; " +
+                 "jullie koppeling blijft bestaan.")}
+             {EmailLayout.PrimaryButton(EmailLayout.LoginUrl(baseUrl), "Naar Lobsy")}
+             """,
+            baseUrl,
+            preheader: "Klant beheert zelf — koppeling blijft");
+        return new("IntermediaryClientSelfManaged", "IntermediaryClientSelfManaged",
+            "Klant beheert zelf — Lobsy", html);
     }
 
     public static ComposedEmail TakeoverApproved(

@@ -1,0 +1,45 @@
+@page "/register/koppelen"
+@layout Jobsy.Web.Components.Layout.WaPublicLayout
+@using Microsoft.AspNetCore.Authorization
+@using Jobsy.Web.Components.Registration
+@attribute [Authorize]
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["Wa.Link.Title"]</PageTitle>
+
+<div class="wa-wizard">
+    <div class="wa-card">
+        <h1>@Culture["Wa.Link.Title"]</h1>
+        <p class="wa-lead">@Culture["Wa.Link.Lead"]</p>
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <p class="wa-error" role="alert">@_error</p>
+            <p>
+                <a class="wa-btn wa-btn--primary" href="/login">@Culture["Wa.Layout.Login"]</a>
+            </p>
+        }
+        else
+        {
+            <p class="wa-hint">@Culture["Wa.Link.Working"]</p>
+        }
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "error")] public string? Error { get; set; }
+
+    private string? _error;
+
+    protected override void OnInitialized()
+    {
+        if (string.Equals(Error, "email-mismatch", StringComparison.OrdinalIgnoreCase))
+        {
+            _error = Culture["Wa.Link.EmailMismatch"];
+            return;
+        }
+
+        // Successful external bind → home (ensure-external already signed in via complete-login).
+        Navigation.NavigateTo("/home", forceLoad: true);
+    }
+}

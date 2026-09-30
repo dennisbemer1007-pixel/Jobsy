@@ -309,7 +309,11 @@ public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program
             Type = CompanyType.Employer,
             TokensManagedByEnterprise = false,
             PreferredPaymentMethod = MolliePaymentMethods.Ideal,
-            KvkVerificationStatus = KvkVerificationStatus.Verified
+            KvkVerificationStatus = KvkVerificationStatus.Verified,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         var salaryTableId = Guid.Parse("d2000000-0000-0000-0000-000000000030");

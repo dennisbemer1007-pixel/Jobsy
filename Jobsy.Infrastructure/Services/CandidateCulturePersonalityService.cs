@@ -3,6 +3,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -201,8 +202,13 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
 public sealed class CompanyCultureService : ICompanyCultureService
 {
     private readonly JobsyDbContext _db;
+    private readonly IMemoryCache _cache;
 
-    public CompanyCultureService(JobsyDbContext db) => _db = db;
+    public CompanyCultureService(JobsyDbContext db, IMemoryCache cache)
+    {
+        _db = db;
+        _cache = cache;
+    }
 
     public async Task<CompanyCultureStateDto> GetAsync(
         Guid companyId,
@@ -263,6 +269,7 @@ public sealed class CompanyCultureService : ICompanyCultureService
         if (complete && preview is not null)
         {
             row.Status = CandidateCompetencyStatuses.Completed;
+            row.Source = CompanyCultureSources.Full;
             row.AutonomyPercent = preview.Autonomy;
             row.InformalPercent = preview.Informal;
             row.CollaborationPercent = preview.Collaboration;
@@ -283,6 +290,7 @@ public sealed class CompanyCultureService : ICompanyCultureService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await EvictCultureCacheAsync(companyId, cancellationToken);
         return ToDto(row);
     }
 
@@ -314,6 +322,19 @@ public sealed class CompanyCultureService : ICompanyCultureService
         return scores.Autonomy is not null ? scores : null;
     }
 
+    private async Task EvictCultureCacheAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        _cache.Remove(CompanyCultureCacheKeys.ForCompany(companyId));
+        var childIds = await _db.Companies.AsNoTracking()
+            .Where(c => c.ParentCompanyId == companyId)
+            .Select(c => c.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var childId in childIds)
+        {
+            _cache.Remove(CompanyCultureCacheKeys.ForCompany(childId));
+        }
+    }
+
     private static IReadOnlyDictionary<int, int> PadPersonalityDefaults(IReadOnlyDictionary<int, int> answers)
     {
         var map = answers.ToDictionary(kv => kv.Key, kv => kv.Value);
@@ -333,7 +354,8 @@ public sealed class CompanyCultureService : ICompanyCultureService
                 CandidateCompetencyStatuses.Draft,
                 new Dictionary<int, int>(),
                 null,
-                null);
+                null,
+                CompanyCultureSources.Full);
         }
 
         var scores = new CulturePersonalityScores(
@@ -353,6 +375,7 @@ public sealed class CompanyCultureService : ICompanyCultureService
             row.Status,
             CulturePersonalityCatalog.ParseAnswers(row.AnswersJson),
             row.Status == CandidateCompetencyStatuses.Completed ? scores : null,
-            row.CompletedAtUtc);
+            row.CompletedAtUtc,
+            row.Source);
     }
 }

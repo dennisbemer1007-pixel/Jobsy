@@ -243,7 +243,7 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
 
         var vacancies = await _discovery.GetActiveAsync(cancellationToken);
         var transport = TransportLabels.Parse(context.Prefs.PreferredTransport);
-        var scored = _matches.Score(
+        var scored = await _matches.ScoreAsync(
             context,
             vacancies.Select(vacancy =>
             {
@@ -260,7 +260,8 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
                 }
 
                 return (vacancy, travelMinutes);
-            }));
+            }),
+            cancellationToken);
 
         var ranked = ProfileVacancyMatchCalculator.RankScored(scored.Values);
         var byId = vacancies.ToDictionary(v => v.Id);

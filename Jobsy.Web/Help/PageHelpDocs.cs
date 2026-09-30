@@ -93,11 +93,46 @@ public static class PageHelpDocs
             "Vul contact- en KVK-/vestigingsgegevens in. Na indienen volgt activatie (e-mail) en eventueel controle/overname als de vestiging al bestaat.",
             "Een organisatie-account opzetten om vacatures te plaatsen en tokens te beheren."),
 
+        ["/register/koppelen"] = new(
+            "Account koppelen",
+            "Microsoft- of Google-login koppelen aan het zojuist geactiveerde werkgeversaccount.",
+            "Na de bevestigingscode word je doorgestuurd naar de IdP. Alleen als het IdP-e-mailadres overeenkomt, wordt de login gekoppeld.",
+            "Inloggen zonder opnieuw een wachtwoord te kiezen."),
         ["/register/activate"] = new(
             "Account activeren",
             "Bevestigen van een registratie via activatielink.",
             "Open de link uit de e-mail (of demo-link). Daarna is het account actief of volgt een overnameproces.",
             "Registratie afronden zodat managers kunnen inloggen."),
+
+        ["/register/verifieren"] = new(
+            "Bedrijf verifiëren",
+            "Kies zakelijk e-mailadres of brief met code om je bedrijf te verifiëren.",
+            "Zonder website bij KVK is e-mail niet beschikbaar. Handmatige controle is de fallback.",
+            "Zichtbaar worden voor kandidaten en publiceren/tokens vrijgeven."),
+
+        ["/register/verifieren/brief"] = new(
+            "Brief onderweg",
+            "Code uit de verificatiebrief invullen.",
+            "De brief gaat naar het KvK-adres. Code is 30 dagen geldig; opnieuw versturen na 7 dagen.",
+            "Bedrijf verifiëren zonder zakelijk e-maildomein."),
+
+        ["/register/toegang"] = new(
+            "Toegang aanvragen",
+            "Vraag toegang aan tot een bedrijf dat al op Lobsy staat.",
+            "Bevestig je e-mail; de bedrijfsmanager beslist. Na 5 werkdagen kijkt Lobsy-support mee.",
+            "Samenwerken in één bedrijfsaccount zonder tweede eigenaar te worden."),
+
+        ["/register/bedrijf"] = new(
+            "Over je bedrijf",
+            "Optioneel: branches, Zo werken wij (cultuurschuifjes) en kernwaarden.",
+            "Alles is optioneel (± 3 minuten). Overslaan brengt je naar verifiëren.",
+            "Zelfde taal als Cultuurscan en Waardentest zodat Match beter werkt."),
+
+        ["/admin/werkgeververificatie"] = new(
+            "Werkgeververificatie",
+            "Admin-wachtrij voor handmatige controles, gemarkeerde registraties, geblokkeerde brieven en geëscaleerde toegangsverzoeken.",
+            "Goedkeuren, afwijzen met reden, of een brief sturen. Beslissingen worden geaudit.",
+            "Twijfelgevallen afhandelen zodat echte bedrijven zichtbaar worden."),
 
         ["/access-denied"] = new(
             "Geen toegang",
@@ -290,10 +325,10 @@ public static class PageHelpDocs
             "Consistente beloning tonen en WML-/CAO-afspraken ondersteunen."),
 
         ["/werkgever/overnames"] = new(
-            "Overnameverzoeken",
-            "Conflicten wanneer een vestiging al geregistreerd is.",
-            "Bekijk openstaande overnames en keur goed of af. Goedkeuring kan org-structuur samenvoegen.",
-            "Dubbele KVK-vestigingen netjes laten claimen door de juiste partij."),
+            "Toegangsverzoeken",
+            "Collega's die toegang vragen en legacy overnameverzoeken.",
+            "Geef toegang (rol mag verlaagd), wijs af, of behandel oude overnames. Geëscaleerde verzoeken gaan naar admin.",
+            "Nieuwe collega's laten aansluiten zonder tweede eigenaar te maken."),
 
         ["/werkgever/te-doen"] = new(
             "Te doen",

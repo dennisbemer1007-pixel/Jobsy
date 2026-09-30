@@ -1,3 +1,4 @@
+using Jobsy.Core.Entities;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Interfaces;
@@ -45,4 +46,5 @@ public sealed record CompanyCultureStateDto(
     string Status,
     IReadOnlyDictionary<int, int> Answers,
     CulturePersonalityScores? Scores,
-    DateTime? CompletedAtUtc);
+    DateTime? CompletedAtUtc,
+    string Source = CompanyCultureSources.Full);

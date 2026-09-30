@@ -59,8 +59,18 @@ public class CompanyAuthorizationServiceTests
         var foreign = Guid.Parse("99999999-9999-9999-9999-999999999999");
         await using var db = CreateDb();
         db.Companies.AddRange(
-            new Company { Id = companyA, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(51.9, 4.2) },
-            new Company { Id = companyB, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52.0, 4.3) });
+            new Company { Id = companyA, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
+            new Company { Id = companyB, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
         var userId = Guid.NewGuid();
         db.Users.Add(new User
         {
@@ -93,8 +103,18 @@ public class CompanyAuthorizationServiceTests
         var companyB = Guid.Parse("22222222-2222-2222-2222-222222222222");
         await using var db = CreateDb();
         db.Companies.AddRange(
-            new Company { Id = companyA, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(51.9, 4.2) },
-            new Company { Id = companyB, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52.0, 4.3) });
+            new Company { Id = companyA, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
+            new Company { Id = companyB, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
         var userId = Guid.NewGuid();
         db.Users.Add(new User
         {
@@ -127,8 +147,18 @@ public class CompanyAuthorizationServiceTests
         var companyB = Guid.Parse("22222222-2222-2222-2222-222222222222");
         await using var db = CreateDb();
         db.Companies.AddRange(
-            new Company { Id = companyA, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(51.9, 4.2) },
-            new Company { Id = companyB, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52.0, 4.3) });
+            new Company { Id = companyA, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
+            new Company { Id = companyB, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
         var userId = Guid.NewGuid();
         db.Users.Add(new User
         {

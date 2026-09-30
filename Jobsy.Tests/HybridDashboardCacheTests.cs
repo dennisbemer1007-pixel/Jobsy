@@ -48,7 +48,11 @@ public sealed class HybridDashboardCacheTests
             KvkNumber = "11112222",
             Address = "A",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Vacancies.Add(new Vacancy
         {

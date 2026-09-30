@@ -978,6 +978,9 @@ public sealed partial class JobsyApiClient
         => await _http.GetFromJsonAsync<AdminFinanceSummaryItem>(
             $"api/admin/finance/summary?period={Uri.EscapeDataString(period)}", ct);
 
+    public async Task<KvkUsageItem?> GetKvkUsageAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<KvkUsageItem>("api/integrations/kvk/usage", ct);
+
     public async Task<IntegrationHealthItem?> TestIntegrationAsync(string key, CancellationToken ct = default)
     {
         var response = await _http.PostAsync(

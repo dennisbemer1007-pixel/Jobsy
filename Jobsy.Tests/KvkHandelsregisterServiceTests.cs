@@ -33,16 +33,32 @@ public class KvkHandelsregisterServiceTests
     public async Task With_api_key_calls_basisprofiel_and_vestigingen()
     {
         await using var db = CreateDb();
+        var companyId = Guid.NewGuid();
         db.Companies.Add(new Company
         {
-            Id = Guid.NewGuid(),
+            Id = companyId,
             Name = "Existing HQ",
             KvkNumber = "69599084",
             KvkEstablishmentId = CompanyPublicPaths.BuildEstablishmentId("69599084", "000038509658"),
             Address = "Old",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
+        var emId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = emId,
+            Email = "hq.em@jobsy.local",
+            FullName = "EM",
+            Role = UserRole.EnterpriseManager,
+            CompanyId = companyId,
+            IsActive = true
+        });
+        db.UserCompanies.Add(new UserCompany { UserId = emId, CompanyId = companyId });
         await db.SaveChangesAsync();
 
         var handler = new RecordingHandler(request =>

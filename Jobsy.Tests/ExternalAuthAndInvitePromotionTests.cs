@@ -109,7 +109,11 @@ public class ExternalAuthAndInvitePromotionTests
             KvkNumber = "12345678",
             Address = "Straat 1",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -151,7 +155,11 @@ public class ExternalAuthAndInvitePromotionTests
             KvkNumber = "12345678",
             Address = "Straat 1",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {

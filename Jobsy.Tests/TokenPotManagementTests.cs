@@ -22,8 +22,12 @@ public class TokenPotManagementTests
                 KvkNumber = "11223344",
                 Address = "HQ",
                 Location = new GeoPoint(52, 4),
-                Type = CompanyType.Employer
-            },
+                Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = branchId,
@@ -33,8 +37,12 @@ public class TokenPotManagementTests
                 Location = new GeoPoint(52.1, 4.1),
                 Type = CompanyType.Employer,
                 ParentCompanyId = orgId,
-                TokensManagedByEnterprise = true
-            });
+                TokensManagedByEnterprise = true,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
 
         var loaded = await db.Companies.AsNoTracking().SingleAsync(c => c.Id == branchId);
@@ -62,8 +70,12 @@ public class TokenPotManagementTests
                 KvkNumber = "11223344",
                 Address = "HQ",
                 Location = new GeoPoint(52, 4),
-                Type = CompanyType.Employer
-            },
+                Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = westlandId,
@@ -73,8 +85,12 @@ public class TokenPotManagementTests
                 Location = new GeoPoint(52, 4),
                 Type = CompanyType.Employer,
                 ParentCompanyId = supermarketId,
-                TokensManagedByEnterprise = true
-            },
+                TokensManagedByEnterprise = true,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = cafeId,
@@ -84,8 +100,12 @@ public class TokenPotManagementTests
                 Location = new GeoPoint(52, 4),
                 Type = CompanyType.Employer,
                 ParentCompanyId = supermarketId,
-                TokensManagedByEnterprise = true
-            });
+                TokensManagedByEnterprise = true,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
 
         Assert.All(

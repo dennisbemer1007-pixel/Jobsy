@@ -92,7 +92,11 @@ internal static class EnterpriseWestlandVacanciesSeeder
             Type = CompanyType.Employer,
             Location = new GeoPoint(51.9812, 4.2235),
             ParentCompanyId = parentExists ? FredSupermarketId : null,
-            TokensManagedByEnterprise = parentExists
+            TokensManagedByEnterprise = parentExists,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         db.TokenTransactions.Add(new TokenTransaction

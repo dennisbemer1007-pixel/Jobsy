@@ -49,8 +49,12 @@ public class RegisteredUserProductionAuthTests : IClassFixture<RegisteredUserPro
                     KvkEstablishmentId = "88881111_0001",
                     Address = "Teststraat 1",
                     Location = new GeoPoint(52.1, 5.1),
-                    Type = CompanyType.Employer
-                });
+                    Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
             }
 
             if (!await db.Users.AnyAsync(u => u.Id == userId))

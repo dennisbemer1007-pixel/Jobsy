@@ -1,0 +1,641 @@
+@page "/register/bedrijf"
+@layout Jobsy.Web.Components.Layout.WaPublicLayout
+@attribute [Authorize(Roles = "EnterpriseManager,BranchManager,Intermediary,Admin")]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Engagement
+@using Jobsy.Web.Components.Registration
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+
+<PageTitle>@Culture["Wa.Steps.4.Title"] · Lobsy</PageTitle>
+
+<div class="wa-wizard">
+    <WaWizardChrome CurrentStep="4" Speech="@Speech" Pose="WaMascot.MascotPose.Default" />
+
+    <div class="wa-card">
+        @if (_loading)
+        {
+            <p class="wa-hint">@Culture["Common.Loading"]</p>
+        }
+        else if (_companyId == Guid.Empty)
+        {
+            <p class="wa-error" role="alert">@Culture["Common.ErrorGeneric"]</p>
+            <a class="wa-btn wa-btn--primary" href="/home">@Culture["WaVerify.Dashboard"]</a>
+        }
+        else
+        {
+            <div class="wa-toprow">
+                <span class="wa-pill">@Eyebrow</span>
+                <span class="wa-pill wa-pill--line">@OptionalLabel</span>
+            </div>
+
+            <nav class="wa-mini-steps" aria-label="@Culture["WaProfile.Mini.Hint"]">
+                <span class="@MiniClass("branche")">@Culture["WaProfile.Mini.Branche"]</span>
+                <span class="@MiniClass("cultuur")">@Culture["WaProfile.Mini.Cultuur"]</span>
+                <span class="@MiniClass("betrokkenheid")">@Culture["WaProfile.Mini.Betrokkenheid"]</span>
+                <span class="wa-mini-steps__hint">@Culture["WaProfile.Mini.Hint"]</span>
+            </nav>
+
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="wa-error" role="alert">@_error</p>
+            }
+
+            @if (_stap == "branche")
+            {
+                <h1>@Culture["WaProfile.Branche.Title"]</h1>
+                <p class="wa-lead">@Culture["WaProfile.Branche.Lead"]</p>
+
+                @if (_suggested.Count > 0)
+                {
+                    <div class="wa-sbi">
+                        <span class="pub-emoji" aria-hidden="true">🏛️</span>
+                        <span>
+                            @Culture["WaProfile.Branche.SbiLine"]
+                            @string.Join(" · ", _suggested.Select(l => l))
+                            <span class="wa-hint"> (@Culture["WaProfile.Branche.Suggested"])</span>
+                        </span>
+                    </div>
+                }
+
+                <div class="wa-sec">
+                    <h3>
+                        @Culture["WaProfile.Mini.Branche"]
+                        <span class="wa-cnt">@string.Format(Culture["WaProfile.Branche.Count"], _selectedBranches.Count, WorkTypeLabels.MaxPerCompany)</span>
+                    </h3>
+                    <div class="wa-chs" role="group" aria-label="@Culture["WaProfile.Mini.Branche"]">
+                        @foreach (var label in WorkTypeLabels.All)
+                        {
+                            var on = _selectedBranches.Contains(label);
+                            var fromKvk = _suggested.Contains(label, StringComparer.OrdinalIgnoreCase);
+                            var disabled = !on && _selectedBranches.Count >= WorkTypeLabels.MaxPerCompany;
+                            <button type="button"
+                                    class="wa-ch @(on ? "is-on" : null)"
+                                    disabled="@disabled"
+                                    @onclick="() => ToggleBranch(label)">
+                                <span>@label</span>
+                                @if (fromKvk)
+                                {
+                                    <span class="wa-ch__tag">@Culture["WaProfile.Branche.FromKvk"]</span>
+                                }
+                                @if (on)
+                                {
+                                    <span class="wa-ch__ck" aria-hidden="true">✓</span>
+                                }
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div class="wa-nb">
+                    <span class="pub-emoji" aria-hidden="true">💡</span>
+                    <div>
+                        <strong>@Culture["WaProfile.Branche.HintTitle"]</strong>
+                        <p>@Culture["WaProfile.Branche.HintBody"]</p>
+                    </div>
+                </div>
+            }
+            else if (_stap == "cultuur")
+            {
+                <h1>@(_isIntermediary ? Culture["Wa.Intermediary.CultuurTitle"] : Culture["WaProfile.Cultuur.Title"])</h1>
+                <p class="wa-lead">@Culture["WaProfile.Cultuur.Lead"]</p>
+
+                <div class="wa-sec">
+                    <h3><span class="pub-emoji" aria-hidden="true">🧭</span> @Culture["WaProfile.Cultuur.SlidersTitle"]</h3>
+                    <div class="wa-sliders">
+                        @foreach (var (code, index) in CulturePersonalityCatalog.CultureDimensionCodes.Select((c, i) => (c, i)))
+                        {
+                            if (!_showAllSliders && index >= 4)
+                            {
+                                continue;
+                            }
+                            var v = _sliders.GetValueOrDefault(code, 3);
+                            <div class="wa-slr">
+                                <span class="wa-slr__l">@Culture[$"WaProfile.Slider.{code}.Low"]</span>
+                                <div class="wa-slr__trk" role="radiogroup" aria-label="@Culture[$"CultureScan.Cat.{code}"]">
+                                    @for (var n = 1; n <= 5; n++)
+                                    {
+                                        var current = n;
+                                        <button type="button"
+                                                class="wa-slr__dot @(v == current ? "is-on" : null)"
+                                                aria-pressed="@(v == current)"
+                                                @onclick="() => SetSlider(code, current)"></button>
+                                    }
+                                </div>
+                                <span class="wa-slr__r">@Culture[$"WaProfile.Slider.{code}.High"]</span>
+                            </div>
+                        }
+                    </div>
+                    @if (!_showAllSliders)
+                    {
+                        <button type="button" class="wa-link" @onclick="() => _showAllSliders = true">@Culture["WaProfile.Cultuur.ShowMore"]</button>
+                    }
+                </div>
+
+                <div class="wa-sec">
+                    <h3>
+                        <span class="pub-emoji" aria-hidden="true">💛</span>
+                        @Culture["WaProfile.Cultuur.CardsTitle"]
+                        <span class="wa-cnt">@string.Format(Culture["WaProfile.Cultuur.CardsCount"], _selectedCards.Count, CompanyValueCards.RequiredCount)</span>
+                    </h3>
+                    <p class="wa-hint">@Culture["WaProfile.Cultuur.CardsLead"]</p>
+                    <div class="wa-vcards">
+                        @foreach (var card in CompanyValueCards.All)
+                        {
+                            var on = _selectedCards.Contains(card.Id);
+                            var disabled = !on && _selectedCards.Count >= CompanyValueCards.RequiredCount;
+                            <button type="button"
+                                    class="wa-vc @(on ? "is-on" : null)"
+                                    disabled="@disabled"
+                                    @onclick="() => ToggleCard(card.Id)">
+                                @if (on)
+                                {
+                                    <span class="wa-ch__ck" aria-hidden="true">✓</span>
+                                }
+                                <span class="pub-emoji" aria-hidden="true">@card.Emoji</span>
+                                <strong>@Culture[card.TitleKey]</strong>
+                                <small>@DimensionLabels.For(card.DriverCode)</small>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                @if (_previewPercents is not null)
+                {
+                    <div class="wa-sec">
+                        <h3>
+                            <span class="pub-emoji" aria-hidden="true">🧬</span>
+                            @Culture["WaProfile.Cultuur.ProfileTitle"]
+                            <span class="wa-pill wa-pill--line">@Culture["WaProfile.Cultuur.Live"]</span>
+                        </h3>
+                        <p class="wa-hint">@Culture["WaProfile.Cultuur.ProfileLead"]</p>
+                        <div class="wa-prof">
+                            @foreach (var (code, label) in _previewLabels)
+                            {
+                                <div><b>@_previewPercents.GetValueOrDefault(code)%</b>@label</div>
+                            }
+                        </div>
+                        <div class="wa-toprow wa-toprow--gap">
+                            @foreach (var driver in _selectedDrivers)
+                            {
+                                <span class="wa-pill">@DimensionLabels.For(driver)</span>
+                            }
+                            <span class="wa-hint">@Culture["WaProfile.Cultuur.FullHint"]</span>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <h1>@Culture["WaProfile.Engage.Title"]</h1>
+                <p class="wa-lead">@Culture["WaProfile.Engage.Lead"]</p>
+
+                <div class="wa-engage" role="group" aria-label="@Culture["WaProfile.Mini.Betrokkenheid"]">
+                    @foreach (var item in EngagementCatalog.All)
+                    {
+                        var on = _engageSelected.Contains(item.Id);
+                        var draft = _engageDrafts.GetValueOrDefault(item.Id) ?? new EngageDraft();
+                        <div class="wa-engage__card @(on ? "is-on" : null)">
+                            <button type="button" class="wa-engage__toggle" @onclick="() => ToggleEngage(item.Id)">
+                                <span class="wa-engage__ck" aria-hidden="true">@(on ? "✓" : "")</span>
+                                <span class="pub-emoji" aria-hidden="true">@item.Emoji</span>
+                                <span>
+                                    <strong>@Culture[item.TitleKey]</strong>
+                                    <small>@Culture[item.HintKey]</small>
+                                </span>
+                            </button>
+                            @if (on)
+                            {
+                                @if (string.Equals(draft.Status, CompanyEngagementStatuses.Checked, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="wa-chip wa-chip--ok">
+                                        @(string.Equals(draft.CheckedSource, CompanyEngagementCheckedSources.Sbb, StringComparison.OrdinalIgnoreCase)
+                                            ? Culture["WaEngage.Label.CheckedSbb"]
+                                            : Culture["WaEngage.Label.CheckedAdmin"])
+                                    </span>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(draft.Proof))
+                                {
+                                    <span class="wa-chip">@Culture["WaEngage.Label.LinkAdded"]</span>
+                                }
+                                else
+                                {
+                                    <span class="wa-chip">@Culture["WaEngage.Label.SelfDeclared"]</span>
+                                }
+                                <label class="wa-engage__proof">
+                                    <span>@Culture["WaProfile.Engage.ProofLabel"]</span>
+                                    <input type="text"
+                                           maxlength="500"
+                                           placeholder="@Culture["WaProfile.Engage.ProofPlaceholder"]"
+                                           value="@draft.Proof"
+                                           @oninput="e => SetEngageProof(item.Id, e.Value?.ToString())" />
+                                </label>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if (_engageSelected.Count > 0)
+                {
+                    <div class="wa-sec">
+                        <h3>@Culture["WaProfile.Engage.PreviewTitle"]</h3>
+                        <EngagementBadges Items="@PreviewBadges()" />
+                    </div>
+                }
+
+                <div class="wa-nb">
+                    <span class="pub-emoji" aria-hidden="true">🎯</span>
+                    <div>
+                        <strong>@Culture["WaProfile.Engage.MatchHintTitle"]</strong>
+                        <p>@Culture["WaProfile.Engage.MatchHintBody"]</p>
+                    </div>
+                </div>
+            }
+
+            <div class="wa-actions">
+                @if (_stap != "branche")
+                {
+                    <button type="button" class="wa-link" @onclick="GoBack">@Culture["Common.Back"]</button>
+                }
+                <button type="button" class="wa-link" disabled="@_busy" @onclick="SkipAsync">@Culture["WaProfile.Skip"]</button>
+                <button type="button" class="wa-btn wa-btn--primary" disabled="@_busy" @onclick="SaveAndNextAsync">
+                    @(_stap == "betrokkenheid" ? Culture["WaProfile.Engage.NextVerify"] : Culture["WaProfile.Next"])
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "stap")] public string? Stap { get; set; }
+
+    private bool _loading = true;
+    private bool _busy;
+    private bool _showAllSliders;
+    private string? _error;
+    private string _stap = "branche";
+    private Guid _companyId;
+    private bool _verified;
+    private bool _isIntermediary;
+    private HashSet<string> _selectedBranches = new(StringComparer.OrdinalIgnoreCase);
+    private List<string> _suggested = [];
+    private Dictionary<string, int> _sliders = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _selectedCards = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _engageSelected = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, EngageDraft> _engageDrafts = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, int>? _previewPercents;
+    private static readonly (string Code, string Label)[] _previewLabels =
+    [
+        ("Autonomy", "Zelfstandig"),
+        ("Informal", "Informeel"),
+        ("Collaboration", "Samenwerken"),
+        ("Flexibility", "Flexibel"),
+        ("Innovation", "Vernieuwend"),
+        ("PeopleFirst", "Mensen voorop")
+    ];
+
+    private string Speech => _stap switch
+    {
+        "cultuur" => Culture["WaProfile.Speech.Cultuur"],
+        "betrokkenheid" => Culture["WaProfile.Speech.Betrokkenheid"],
+        _ => Culture["WaProfile.Speech.Branche"]
+    };
+
+    private string Eyebrow => _stap switch
+    {
+        "cultuur" => Culture["WaProfile.Eyebrow.Cultuur"],
+        "betrokkenheid" => Culture["WaProfile.Eyebrow.Betrokkenheid"],
+        _ => Culture["WaProfile.Eyebrow.Branche"]
+    };
+
+    private string OptionalLabel => _stap == "cultuur"
+        ? Culture["WaProfile.OptionalMinute"]
+        : Culture["WaProfile.Optional"];
+
+    private IEnumerable<string> _selectedDrivers =>
+        _selectedCards
+            .Select(id => CompanyValueCards.TryGet(id, out var c) ? c.DriverCode : null)
+            .Where(x => x is not null)
+            .Cast<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _stap = NormalizeStap(Stap);
+        if (_companyId == Guid.Empty && !_loading)
+        {
+            return;
+        }
+
+        if (_loading)
+        {
+            await LoadAsync();
+        }
+        else
+        {
+            RefreshPreview();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            _isIntermediary = auth.User.IsInRole("Intermediary");
+
+            var companies = await Api.GetMyCompaniesAsync();
+            var root = companies.FirstOrDefault(c => c.ParentCompanyId is null)
+                       ?? companies.FirstOrDefault();
+            if (root is null)
+            {
+                _companyId = Guid.Empty;
+                return;
+            }
+
+            _companyId = root.Id;
+            _verified = string.Equals(root.VerificationStatus, "Verified", StringComparison.OrdinalIgnoreCase);
+
+            var extras = await Api.GetCompanyProfileExtrasAsync(_companyId);
+            if (extras is not null)
+            {
+                _suggested = extras.SuggestedWorkTypeLabels?.ToList() ?? [];
+                _selectedBranches = (extras.WorkTypeLabels ?? []).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                _sliders = extras.CultureSliders is null
+                    ? CulturePersonalityCatalog.CultureDimensionCodes.ToDictionary(c => c, _ => 3, StringComparer.OrdinalIgnoreCase)
+                    : new Dictionary<string, int>(extras.CultureSliders, StringComparer.OrdinalIgnoreCase);
+                _selectedCards = (extras.ValueCardIds ?? []).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            }
+            else
+            {
+                foreach (var code in CulturePersonalityCatalog.CultureDimensionCodes)
+                {
+                    _sliders[code] = 3;
+                }
+            }
+
+            var engagement = await Api.GetCompanyEngagementAsync(_companyId);
+            _engageSelected.Clear();
+            _engageDrafts.Clear();
+            if (engagement?.Claims is { Count: > 0 })
+            {
+                foreach (var claim in engagement.Claims)
+                {
+                    _engageSelected.Add(claim.ItemId);
+                    _engageDrafts[claim.ItemId] = new EngageDraft
+                    {
+                        Proof = claim.ProofUrl ?? claim.ProofText ?? "",
+                        Status = claim.Status,
+                        CheckedSource = claim.CheckedSource
+                    };
+                }
+            }
+
+            RefreshPreview();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string NormalizeStap(string? stap) => stap?.Trim().ToLowerInvariant() switch
+    {
+        "cultuur" => "cultuur",
+        "betrokkenheid" => "betrokkenheid",
+        _ => "branche"
+    };
+
+    private string MiniClass(string name)
+        => name == _stap ? "wa-mini-steps__item is-on" : "wa-mini-steps__item";
+
+    private void ToggleBranch(string label)
+    {
+        if (_selectedBranches.Contains(label))
+        {
+            _selectedBranches.Remove(label);
+        }
+        else if (_selectedBranches.Count < WorkTypeLabels.MaxPerCompany)
+        {
+            _selectedBranches.Add(label);
+        }
+    }
+
+    private void SetSlider(string code, int value)
+    {
+        _sliders[code] = value;
+        RefreshPreview();
+    }
+
+    private void ToggleCard(string id)
+    {
+        if (_selectedCards.Contains(id))
+        {
+            _selectedCards.Remove(id);
+        }
+        else if (_selectedCards.Count < CompanyValueCards.RequiredCount)
+        {
+            _selectedCards.Add(id);
+        }
+
+        RefreshPreview();
+    }
+
+    private void RefreshPreview()
+    {
+        var answers = QuickCultureSliders.ToAnswers(_sliders);
+        var padded = answers.ToDictionary(kv => kv.Key, kv => kv.Value);
+        for (var i = 13; i <= 18; i++)
+        {
+            padded.TryAdd(i, 3);
+        }
+
+        var scores = CulturePersonalityCatalog.Score(padded);
+        if (scores is null)
+        {
+            _previewPercents = null;
+            return;
+        }
+
+        _previewPercents = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Autonomy"] = scores.Autonomy ?? 0,
+            ["Informal"] = scores.Informal ?? 0,
+            ["Collaboration"] = scores.Collaboration ?? 0,
+            ["Flexibility"] = scores.Flexibility ?? 0,
+            ["Innovation"] = scores.Innovation ?? 0,
+            ["PeopleFirst"] = scores.PeopleFirst ?? 0
+        };
+    }
+
+    private void GoBack()
+    {
+        var prev = _stap switch
+        {
+            "cultuur" => "branche",
+            "betrokkenheid" => "cultuur",
+            _ => "branche"
+        };
+        Navigation.NavigateTo($"/register/bedrijf?stap={prev}");
+    }
+
+    private async Task SkipAsync()
+    {
+        await AdvanceAsync(save: false);
+    }
+
+    private async Task SaveAndNextAsync()
+    {
+        await AdvanceAsync(save: true);
+    }
+
+    private async Task AdvanceAsync(bool save)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            if (save)
+            {
+                if (_stap == "branche")
+                {
+                    await Api.SaveCompanyProfileExtrasAsync(
+                        _companyId,
+                        workTypeLabels: _selectedBranches.ToArray());
+                }
+                else if (_stap == "cultuur")
+                {
+                    if (_selectedCards.Count is not 0 and not CompanyValueCards.RequiredCount)
+                    {
+                        _error = string.Format(
+                            Culture["WaProfile.Cultuur.CardsCount"],
+                            CompanyValueCards.RequiredCount,
+                            CompanyValueCards.RequiredCount);
+                        return;
+                    }
+
+                    await Api.SaveCompanyProfileExtrasAsync(
+                        _companyId,
+                        cultureSliders: _sliders,
+                        valueCardIds: _selectedCards.Count == 0 ? [] : _selectedCards.ToArray());
+                }
+                else if (_stap == "betrokkenheid")
+                {
+                    var claims = _engageSelected.Select(id =>
+                    {
+                        var proof = _engageDrafts.GetValueOrDefault(id)?.Proof?.Trim();
+                        string? url = null;
+                        string? text = null;
+                        if (!string.IsNullOrWhiteSpace(proof))
+                        {
+                            if (proof.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                            {
+                                url = proof;
+                            }
+                            else
+                            {
+                                text = proof;
+                            }
+                        }
+
+                        return new CompanyEngagementClaimEdit
+                        {
+                            ItemId = id,
+                            ProofUrl = url,
+                            ProofText = text
+                        };
+                    }).ToList();
+                    await Api.SaveCompanyEngagementAsync(_companyId, claims);
+                }
+            }
+
+            var next = _stap switch
+            {
+                "branche" => "cultuur",
+                "cultuur" => "betrokkenheid",
+                _ => null
+            };
+
+            if (next is null)
+            {
+                NavigateAfterProfile();
+                return;
+            }
+
+            Navigation.NavigateTo($"/register/bedrijf?stap={next}");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void NavigateAfterProfile()
+    {
+        if (_verified)
+        {
+            Navigation.NavigateTo("/home");
+        }
+        else
+        {
+            Navigation.NavigateTo("/register/verifieren");
+        }
+    }
+
+    private void ToggleEngage(string id)
+    {
+        if (_engageSelected.Contains(id))
+        {
+            _engageSelected.Remove(id);
+        }
+        else
+        {
+            _engageSelected.Add(id);
+            _engageDrafts.TryAdd(id, new EngageDraft());
+        }
+    }
+
+    private void SetEngageProof(string id, string? value)
+    {
+        if (!_engageDrafts.TryGetValue(id, out var draft))
+        {
+            draft = new EngageDraft();
+            _engageDrafts[id] = draft;
+        }
+
+        draft.Proof = value ?? "";
+    }
+
+    private IReadOnlyList<EngagementBadges.EngageBadgeItem> PreviewBadges()
+        => _engageSelected
+            .Select(id =>
+            {
+                var d = _engageDrafts.GetValueOrDefault(id);
+                var checkedFlag = string.Equals(d?.Status, CompanyEngagementStatuses.Checked, StringComparison.OrdinalIgnoreCase);
+                return new EngagementBadges.EngageBadgeItem(id, checkedFlag, d?.CheckedSource);
+            })
+            .ToList();
+
+    private sealed class EngageDraft
+    {
+        public string Proof { get; set; } = "";
+        public string Status { get; set; } = CompanyEngagementStatuses.SelfDeclared;
+        public string? CheckedSource { get; set; }
+    }
+}

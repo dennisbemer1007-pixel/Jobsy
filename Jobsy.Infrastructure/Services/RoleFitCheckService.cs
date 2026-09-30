@@ -557,7 +557,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
 
         var vacancies = await _discovery.GetActiveAsync(cancellationToken);
         var transport = TransportLabels.Parse(context.Prefs.PreferredTransport);
-        var scored = _matches.Score(
+        var scored = await _matches.ScoreAsync(
             context,
             vacancies.Select(vacancy =>
             {
@@ -574,7 +574,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 }
 
                 return (vacancy, travelMinutes);
-            }));
+            }),
+            cancellationToken);
 
         var ranked = scored.Values
             .Where(m => m.VacancyId != excludeVacancyId)

@@ -167,6 +167,7 @@ public class TokensController : ControllerBase
     [AdminAuditExempt("Checkout is employer-facing, not an admin write")]
     [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
     [RequireCompanyAccess]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<CheckoutResultDto>> CreateCheckout(
         [FromBody] CreateCheckoutRequest request,
         CancellationToken cancellationToken)
@@ -198,6 +199,31 @@ public class TokensController : ControllerBase
             return BadRequest(new
             {
                 message = Jobsy.Core.Rules.KvkVerificationRules.BlockedMessage(company.KvkVerificationStatus)
+            });
+        }
+
+        if (!Jobsy.Core.Rules.CompanyVerificationRules.CanBuyTokens(company.VerificationStatus)
+            && company.ParentCompanyId is Guid rootParentId)
+        {
+            var parentStatus = await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == rootParentId)
+                .Select(c => c.VerificationStatus)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (!Jobsy.Core.Rules.CompanyVerificationRules.CanBuyTokens(parentStatus))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = Jobsy.Core.Rules.CompanyVerificationRules.UnverifiedErrorCode,
+                    message = Jobsy.Core.Rules.CompanyVerificationRules.BlockedMessageNl
+                });
+            }
+        }
+        else if (!Jobsy.Core.Rules.CompanyVerificationRules.CanBuyTokens(company.VerificationStatus))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = Jobsy.Core.Rules.CompanyVerificationRules.UnverifiedErrorCode,
+                message = Jobsy.Core.Rules.CompanyVerificationRules.BlockedMessageNl
             });
         }
 
@@ -319,6 +345,7 @@ public class TokensController : ControllerBase
     [HttpPost("checkout/complete")]
     [AdminAuditExempt("Checkout complete is employer-facing")]
     [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<CompleteCheckoutResultDto>> CompleteCheckout(
         [FromBody] CompleteCheckoutRequest request,
         CancellationToken cancellationToken)

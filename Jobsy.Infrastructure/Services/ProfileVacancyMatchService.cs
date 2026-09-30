@@ -14,15 +14,18 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
     private readonly JobsyDbContext _db;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IUserLookupService _users;
+    private readonly ICompanyCultureLookup _companyCulture;
 
     public ProfileVacancyMatchService(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
-        IUserLookupService users)
+        IUserLookupService users,
+        ICompanyCultureLookup companyCulture)
     {
         _db = db;
         _companyAuth = companyAuth;
         _users = users;
+        _companyCulture = companyCulture;
     }
 
     public async Task<ProfileVacancyMatchContext?> TryLoadForPrincipalAsync(
@@ -43,13 +46,23 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
         CancellationToken cancellationToken = default)
         => LoadForUserAsync(userId, cancellationToken);
 
-    public IReadOnlyDictionary<Guid, ProfileVacancyMatch> Score(
+    public async Task<IReadOnlyDictionary<Guid, ProfileVacancyMatch>> ScoreAsync(
         ProfileVacancyMatchContext context,
-        IEnumerable<(VacancyDiscoveryRecord Record, int? TravelMinutes)> vacancies)
+        IEnumerable<(VacancyDiscoveryRecord Record, int? TravelMinutes)> vacancies,
+        CancellationToken cancellationToken = default)
     {
+        var batch = vacancies as IList<(VacancyDiscoveryRecord Record, int? TravelMinutes)>
+                    ?? vacancies.ToList();
+        // End-client CompanyId only (never IntermediaryCompanyId). G absent: clients are companies.
+        var companyIds = batch.Select(v => v.Record.CompanyId).Distinct().ToList();
+        var companyProfiles = await _companyCulture.GetForCompaniesAsync(companyIds, cancellationToken);
+
         var result = new Dictionary<Guid, ProfileVacancyMatch>();
-        foreach (var (record, travelMinutes) in vacancies)
+        foreach (var (record, travelMinutes) in batch)
         {
+            companyProfiles.TryGetValue(record.CompanyId, out var companyProfile);
+            // Per-team override: pillars set → ignore company culture; kernwaarden always from company.
+            var overridesCulture = CulturePillarCatalog.HasProfile(record.CulturePillars);
             var core = MatchingProfileMapper.BuildInput(record, context.Prefs, travelMinutes, context.AgeYears);
             var match = ProfileVacancyMatchCalculator.Calculate(new ProfileVacancyMatchInput
             {
@@ -74,8 +87,11 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 CareerOccupations = context.CareerOccupations,
                 CulturePillars = record.CulturePillars,
                 CandidateCultureScores = context.CultureScores,
-                CompanyCultureScores = context.CompanyCultureScores,
-                CandidateValuesScores = context.ValuesScores
+                CompanyCultureScores = overridesCulture ? null : companyProfile?.Culture,
+                CandidateValuesScores = context.ValuesScores,
+                CompanyValuesScores = companyProfile?.Values,
+                CompanyEngagement = companyProfile?.Engagement,
+                CompanyName = record.CompanyName
             });
             result[record.Id] = match;
         }

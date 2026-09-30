@@ -27,7 +27,11 @@ public class TalentPoolListForEmployerTests
             Name = "Acme BV",
             KvkNumber = "12345678",
             Address = "Straat 1",
-            Location = new GeoPoint(52.1, 5.1)
+            Location = new GeoPoint(52.1, 5.1),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.AddRange(
             new User

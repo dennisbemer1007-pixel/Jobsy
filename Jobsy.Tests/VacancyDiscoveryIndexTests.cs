@@ -163,7 +163,11 @@ public class VacancyDiscoveryIndexTests
                 Name = "Index Café",
                 KvkNumber = "12345678",
                 Address = "Plein 1",
-                Location = new GeoPoint(52.07, 4.30)
+                Location = new GeoPoint(52.07, 4.30),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             });
             db.Vacancies.AddRange(
                 new Vacancy
@@ -243,7 +247,11 @@ public class VacancyDiscoveryIndexTests
                 Name = "Refresh Café",
                 KvkNumber = "87654321",
                 Address = "Plein 2",
-                Location = new GeoPoint(52.07, 4.30)
+                Location = new GeoPoint(52.07, 4.30),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             });
             db.Vacancies.Add(new Vacancy
             {
@@ -309,8 +317,12 @@ public class VacancyDiscoveryIndexTests
                 Name = "Kaart Café",
                 KvkNumber = "11223344",
                 Address = "Plein 3",
-                Location = new GeoPoint(52.00, 4.20)
-            });
+                Location = new GeoPoint(52.00, 4.20),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
             db.Vacancies.AddRange(
                 new Vacancy
                 {

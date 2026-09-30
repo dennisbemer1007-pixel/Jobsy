@@ -697,9 +697,17 @@
     }
 
     private string StatusLabel(VacancyListItem v)
-        => Culture[WerkgeverStatusLabels.VacancyKey(
+    {
+        if (v.PublishOnVerification
+            || string.Equals(v.DisplayStatus, "ReadyOnVerification", StringComparison.OrdinalIgnoreCase))
+        {
+            return Culture["WaBanner.ReadyStatus"];
+        }
+
+        return Culture[WerkgeverStatusLabels.VacancyKey(
             v.Status,
             pendingAsVmWaiting: Role == EmployerRole.Vestigingsmanager)];
+    }
 
     private string VacancySubLine(VacancyListItem v)
     {
@@ -830,9 +838,27 @@
 
         if (string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase) && !v.IsIncomplete)
         {
-            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
-                @Culture["VacancyAction.Publish"]
-            </button>
+            if (IsCompanyUnverified(v))
+            {
+                if (v.PublishOnVerification)
+                {
+                    <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ClearReadyAsync(v.Id)">
+                        Klaar ongedaan maken
+                    </button>
+                }
+                else
+                {
+                    <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => MarkReadyAsync(v)">
+                        @Culture["WaBanner.ReadyCta"]
+                    </button>
+                }
+            }
+            else
+            {
+                <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
+                    @Culture["VacancyAction.Publish"]
+                </button>
+            }
         }
 
         if (string.Equals(status, "Archived", StringComparison.OrdinalIgnoreCase))
@@ -1136,6 +1162,46 @@
     {
         _publishVacancy = vacancy;
         _publishOpen = true;
+    }
+
+    private bool IsCompanyUnverified(VacancyListItem vacancy)
+    {
+        var company = _companies.FirstOrDefault(c => c.Id == vacancy.CompanyId)
+                      ?? _companies.FirstOrDefault(c => c.Id == vacancy.IntermediaryCompanyId);
+        if (company is null)
+        {
+            return false;
+        }
+
+        return !string.Equals(company.VerificationStatus, "Verified", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task MarkReadyAsync(VacancyListItem vacancy)
+    {
+        try
+        {
+            await Api.MarkVacancyReadyAsync(vacancy.Id);
+            _message = Culture["WaBanner.ReadyStatus"];
+            await RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task ClearReadyAsync(Guid id)
+    {
+        try
+        {
+            await Api.ClearVacancyReadyAsync(id);
+            _message = "Klaar-status verwijderd.";
+            await RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
     }
 
     private Task ClosePublish()

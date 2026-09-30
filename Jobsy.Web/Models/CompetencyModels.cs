@@ -167,6 +167,7 @@ public sealed class CompanyCultureState
     public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public CulturePersonalityScoreSet? Scores { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
+    public string Source { get; set; } = "Full";
 }
 
 public sealed class RiasecScoreSet

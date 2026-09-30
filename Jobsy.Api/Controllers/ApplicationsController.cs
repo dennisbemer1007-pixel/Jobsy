@@ -1,4 +1,5 @@
 using System.Net;
+using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Api.Privacy;
 using Jobsy.Core.ValueObjects;
@@ -71,6 +72,7 @@ public class ApplicationsController : ControllerBase
 
     [HttpGet]
     [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult> GetForManagedCompanies(
         [FromQuery] Guid? companyId = null,
         [FromQuery] Guid? vacancyId = null,
@@ -474,6 +476,20 @@ public class ApplicationsController : ControllerBase
             return Forbid();
         }
 
+        if (!_companyAuth.IsAdmin(User))
+        {
+            var publisherId = application.Vacancy.IntermediaryCompanyId ?? application.Vacancy.CompanyId;
+            var rootStatus = await ResolveRootVerificationStatusAsync(publisherId, cancellationToken);
+            if (!CompanyVerificationRules.CanSeeCandidates(rootStatus))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = CompanyVerificationRules.UnverifiedErrorCode,
+                    message = CompanyVerificationRules.BlockedMessageNl
+                });
+            }
+        }
+
         if (!LobsyCvAccessRules.CanEmployerDownloadCv(application.Status, application.EmailVerifiedAt))
         {
             return StatusCode((int)HttpStatusCode.Forbidden, new
@@ -499,6 +515,30 @@ public class ApplicationsController : ControllerBase
             reason: "lobsy-cv",
             cancellationToken: cancellationToken);
         return File(employerPdf, "application/pdf", _lobsyCvPdf.BuildFileName(employerModel));
+    }
+
+    private async Task<CompanyVerificationStatus> ResolveRootVerificationStatusAsync(
+        Guid companyId,
+        CancellationToken cancellationToken)
+    {
+        var row = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => new { c.ParentCompanyId, c.VerificationStatus })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (row is null)
+        {
+            return CompanyVerificationStatus.Unverified;
+        }
+
+        if (row.ParentCompanyId is Guid parentId)
+        {
+            return await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == parentId)
+                .Select(c => c.VerificationStatus)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        return row.VerificationStatus;
     }
 
     [HttpGet("{id:guid}/uploaded-cv")]
@@ -538,6 +578,20 @@ public class ApplicationsController : ControllerBase
             if (!await CanAccessApplicationEmployerAsync(application, cancellationToken))
             {
                 return Forbid();
+            }
+
+            if (!_companyAuth.IsAdmin(User))
+            {
+                var publisherId = application.Vacancy.IntermediaryCompanyId ?? application.Vacancy.CompanyId;
+                var rootStatus = await ResolveRootVerificationStatusAsync(publisherId, cancellationToken);
+                if (!CompanyVerificationRules.CanSeeCandidates(rootStatus))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new
+                    {
+                        code = CompanyVerificationRules.UnverifiedErrorCode,
+                        message = CompanyVerificationRules.BlockedMessageNl
+                    });
+                }
             }
 
             if (!LobsyCvAccessRules.CanEmployerDownloadCv(application.Status, application.EmailVerifiedAt))
@@ -613,6 +667,7 @@ public class ApplicationsController : ControllerBase
         var vacancy = await _db.Vacancies
             .Include(v => v.Company)
                 .ThenInclude(c => c.ParentCompany)
+            .Include(v => v.IntermediaryCompany)
             .Include(v => v.ExclusivitySetting!)
                 .ThenInclude(s => s.Educations)
             .FirstOrDefaultAsync(v => v.Id == request.VacancyId, cancellationToken);
@@ -1193,6 +1248,7 @@ public class ApplicationsController : ControllerBase
 
     [HttpPost("{id:guid}/react")]
     [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<EmployerApplicationDto>> React(
         Guid id,
         [FromBody] ReactToApplicationRequest request,
@@ -1322,6 +1378,7 @@ public class ApplicationsController : ControllerBase
 
     [HttpPost("{id:guid}/contact")]
     [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<EmployerApplicationDto>> MarkEmployerContact(Guid id, CancellationToken cancellationToken)
     {
         var application = await _db.Applications
@@ -1377,6 +1434,7 @@ public class ApplicationsController : ControllerBase
 
     [HttpPost("vacancies/{vacancyId:guid}/fulfill/{applicationId:guid}")]
     [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult> FulfillVacancy(
         Guid vacancyId,
         Guid applicationId,

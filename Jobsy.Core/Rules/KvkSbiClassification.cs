@@ -22,6 +22,17 @@ public static class KvkSbiClassification
     public static bool IsIntermediary(IEnumerable<string>? sbiCodes)
         => sbiCodes?.Any(IsIntermediarySbi) == true;
 
+    public static bool HasNonIntermediary(IEnumerable<string>? sbiCodes)
+        => sbiCodes?.Any(s => !string.IsNullOrWhiteSpace(s) && !IsIntermediarySbi(s)) == true;
+
+    /// <summary>SBI 78 plus at least one non-78 code → wizard asks "als werkgever / als intermediair".</summary>
+    public static bool IsMixedIntermediary(IEnumerable<string>? sbiCodes)
+        => IsIntermediary(sbiCodes) && HasNonIntermediary(sbiCodes);
+
+    /// <summary>True when the first (main) SBI activity is 78*.</summary>
+    public static bool IsMainActivityIntermediary(IEnumerable<string>? sbiCodes)
+        => IsIntermediarySbi(PrimarySbiCode(sbiCodes));
+
     public static string? PrimarySbiCode(IEnumerable<string>? sbiCodes)
         => sbiCodes?.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s))?.Trim();
 }

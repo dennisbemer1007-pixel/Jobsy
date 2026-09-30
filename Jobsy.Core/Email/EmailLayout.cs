@@ -76,6 +76,9 @@ public static class EmailLayout
     public static string RegisterActivateUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, "/register/activate");
 
+    public static string RegisterVerifyUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/register/verifieren");
+
     public static string RegisterUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, "/register");
 
@@ -84,6 +87,17 @@ public static class EmailLayout
 
     public static string TakeoversUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, "/werkgever/overnames");
+
+    public static string AccessRequestsUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/employer/takeovers");
+
+    public static string RegisterAccessUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/register/toegang");
+
+    public static string AdminWerkgeverVerificatieUrl(string? publicWebBaseUrl, string? tab = null)
+        => Absolute(publicWebBaseUrl, string.IsNullOrWhiteSpace(tab)
+            ? "/admin/werkgeververificatie"
+            : $"/admin/werkgeververificatie?tab={Uri.EscapeDataString(tab)}");
 
     public static string EmployerVacanciesUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, "/werkgever/vacatures");

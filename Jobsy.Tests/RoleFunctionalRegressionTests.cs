@@ -1731,7 +1731,11 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             Name = "Test Vestiging Westland",
             KvkNumber = "12345678",
             Address = "Veilingweg 1, Naaldwijk",
-            Location = new GeoPoint(52.0, 4.2)
+            Location = new GeoPoint(52.0, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Companies.Add(new Company
         {
@@ -1739,7 +1743,11 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             Name = "Test Intermediair",
             KvkNumber = "87654321",
             Address = "Intermediairweg 1, Naaldwijk",
-            Location = new GeoPoint(52.01, 4.21)
+            Location = new GeoPoint(52.01, 4.21),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         var table = new CompanySalaryTable
@@ -2157,7 +2165,11 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             Name = $"Ander Filiaal {n}",
             KvkNumber = "87654321",
             Address = "Elders 1",
-            Location = new GeoPoint(52.1, 4.3)
+            Location = new GeoPoint(52.1, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {

@@ -49,6 +49,187 @@ public sealed partial class JobsyApiClient
                ?? new CompanyCultureState();
     }
 
+    public async Task<CompanyProfileExtras?> GetCompanyProfileExtrasAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CompanyProfileExtras>(
+                $"api/companies/{companyId}/profile-extras", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CompanyProfileExtras> SaveCompanyProfileExtrasAsync(
+        Guid companyId,
+        IReadOnlyList<string>? workTypeLabels = null,
+        IReadOnlyDictionary<string, int>? cultureSliders = null,
+        IReadOnlyList<string>? valueCardIds = null,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            workTypeLabels,
+            cultureSliders,
+            valueCardIds
+        };
+        var response = await _http.PutAsJsonAsync($"api/companies/{companyId}/profile-extras", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Profiel opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanyProfileExtras>(cancellationToken: ct)
+               ?? new CompanyProfileExtras();
+    }
+
+    public async Task<CompanyEngagementState?> GetCompanyEngagementAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CompanyEngagementState>(
+                $"api/companies/{companyId}/engagement", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CompanyEngagementState> SaveCompanyEngagementAsync(
+        Guid companyId,
+        IEnumerable<CompanyEngagementClaimEdit> claims,
+        CancellationToken ct = default)
+    {
+        var payload = new { claims };
+        var response = await _http.PutAsJsonAsync($"api/companies/{companyId}/engagement", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Betrokkenheid opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanyEngagementState>(cancellationToken: ct)
+               ?? new CompanyEngagementState();
+    }
+
+    public async Task<IReadOnlyList<PublicEngagementBadge>> GetPublicEngagementAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<PublicEngagementBadge>>(
+                       $"api/public/companies/{companyId}/engagement", ct)
+                   ?? [];
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
+    public async Task ReportEngagementAsync(
+        Guid companyId,
+        string itemId,
+        string message,
+        string? reporterEmail = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/public/companies/{companyId}/engagement/report",
+            new { itemId, message, reporterEmail },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Melding mislukt.");
+        }
+    }
+
+    public async Task<IReadOnlyList<AdminEngagementItem>> GetAdminEngagementQueueAsync(
+        string? filter = null,
+        string? q = null,
+        CancellationToken ct = default)
+    {
+        var url = "api/admin/engagement";
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            qs.Add($"filter={Uri.EscapeDataString(filter)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            qs.Add($"q={Uri.EscapeDataString(q)}");
+        }
+
+        if (qs.Count > 0)
+        {
+            url += "?" + string.Join('&', qs);
+        }
+
+        return await _http.GetFromJsonAsync<List<AdminEngagementItem>>(url, ct) ?? [];
+    }
+
+    public async Task AdminCheckEngagementAsync(Guid claimId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/engagement/{claimId}/check", null, ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task AdminRemoveEngagementAsync(Guid claimId, string reason, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/engagement/{claimId}/remove",
+            new { reason },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Verwijderen mislukt.");
+        }
+    }
+
+    public async Task AdminResetEngagementAsync(Guid claimId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/engagement/{claimId}/reset", null, ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<IReadOnlyList<AdminLenderRegistrationItem>> GetAdminLenderRegistrationsAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AdminLenderRegistrationItem>>(
+               "api/admin/lender-registrations", ct)
+           ?? [];
+
+    public async Task AdminDecideLenderRegistrationAsync(
+        Guid bureauId,
+        bool approve,
+        string? source,
+        string? reference,
+        DateTime? validUntil,
+        string? note,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/lender-registrations/{bureauId}/decision",
+            new { approve, source, reference, validUntil, note },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Beslissing mislukt.");
+        }
+    }
+
     public async Task<IReadOnlyList<MetricCount>> GetMyMetricsSummaryAsync(string period = "week", CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<MetricCount>>($"api/me/metrics/summary?period={Uri.EscapeDataString(period)}", ct) ?? [];
 
@@ -382,6 +563,35 @@ public sealed partial class JobsyApiClient
         => await _http.GetFromJsonAsync<List<KvkEstablishmentItem>>(
             $"api/kvk/{Uri.EscapeDataString(kvkNumber)}/establishments", ct) ?? [];
 
+    public async Task<KvkSearchResultItem> SearchKvkAsync(
+        string query,
+        string? place = null,
+        int page = 1,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string> { $"q={Uri.EscapeDataString(query)}" };
+        if (!string.IsNullOrWhiteSpace(place))
+        {
+            qs.Add($"plaats={Uri.EscapeDataString(place.Trim())}");
+        }
+
+        if (page > 1)
+        {
+            qs.Add($"pagina={page}");
+        }
+
+        return await _http.GetFromJsonAsync<KvkSearchResultItem>(
+                   $"api/kvk/search?{string.Join("&", qs)}", ct)
+               ?? new KvkSearchResultItem { Status = "NotFound" };
+    }
+
+    public async Task<KvkCompanyProfileItem> GetKvkProfileAsync(
+        string kvkNumber,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<KvkCompanyProfileItem>(
+               $"api/registration/kvk/{Uri.EscapeDataString(kvkNumber)}/profile", ct)
+           ?? new KvkCompanyProfileItem { Status = "NotFound", KvkNumber = kvkNumber };
+
     public async Task<KvkEstablishmentsLookupResult> LookupRegistrationEstablishmentsAsync(
         string kvkNumber,
         CancellationToken ct = default)
@@ -408,6 +618,13 @@ public sealed partial class JobsyApiClient
         double? manualLatitude = null,
         double? manualLongitude = null,
         bool? manualIsIntermediarySbi = null,
+        IReadOnlyList<string>? selectedEstablishmentIds = null,
+        Guid? salesManagerUserId = null,
+        DateTime? representationConsentAtUtc = null,
+        string? representationConsentVersion = null,
+        string? preferredLoginProvider = null,
+        bool locationUnknown = false,
+        bool acceptedRepresentation = false,
         string? cookieTrackingCode = null,
         CancellationToken ct = default)
     {
@@ -431,6 +648,13 @@ public sealed partial class JobsyApiClient
             manualLatitude,
             manualLongitude,
             manualIsIntermediarySbi,
+            selectedEstablishmentIds,
+            salesManagerUserId,
+            representationConsentAtUtc,
+            representationConsentVersion,
+            preferredLoginProvider,
+            locationUnknown,
+            acceptedRepresentation,
             cookieTrackingCode
         }, ct);
         if (!response.IsSuccessStatusCode)
@@ -441,6 +665,32 @@ public sealed partial class JobsyApiClient
 
         return await response.Content.ReadFromJsonAsync<RegistrationSubmitResult>(cancellationToken: ct)
                ?? throw new InvalidOperationException("Lege registratierespons.");
+    }
+
+    public async Task<RegistrationReferralItem> ResolveRegistrationReferralAsync(
+        string? typedCode,
+        string? linkCode,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(typedCode))
+        {
+            qs.Add($"typed={Uri.EscapeDataString(typedCode)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(linkCode))
+        {
+            qs.Add($"link={Uri.EscapeDataString(linkCode)}");
+        }
+
+        if (qs.Count == 0)
+        {
+            return new RegistrationReferralItem();
+        }
+
+        return await _http.GetFromJsonAsync<RegistrationReferralItem>(
+                   $"api/registration/referral?{string.Join("&", qs)}", ct)
+               ?? new RegistrationReferralItem();
     }
 
     public async Task<RegistrationActivationResult> ConfirmRegistrationAsync(
@@ -513,6 +763,106 @@ public sealed partial class JobsyApiClient
 
         return await response.Content.ReadFromJsonAsync<TakeoverDecisionResult>(cancellationToken: ct)
                ?? throw new InvalidOperationException("Lege takeover-respons.");
+    }
+
+    public async Task<AccessRequestSubmitResultModel> SubmitAccessRequestAsync(
+        AccessRequestSubmitModel model,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/access-requests", model, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Verzoek mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<AccessRequestSubmitResultModel>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Lege access-request respons.");
+    }
+
+    public async Task<AccessRequestConfirmResultModel> ConfirmAccessRequestAsync(
+        Guid requestId,
+        string code,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/access-requests/{requestId}/confirm",
+            new { code },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Bevestigen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<AccessRequestConfirmResultModel>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Lege access-confirm respons.");
+    }
+
+    public async Task<IReadOnlyList<AccessRequestInboxItemModel>> GetAccessRequestInboxAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AccessRequestInboxItemModel>>("api/access-requests/inbox", ct) ?? [];
+
+    public async Task ApproveAccessRequestAsync(
+        Guid requestId,
+        string? grantedRole = null,
+        Guid[]? grantedCompanyIds = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/access-requests/{requestId}/approve",
+            new { grantedRole, grantedCompanyIds },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Goedkeuren mislukt.");
+        }
+    }
+
+    public async Task RejectAccessRequestAsync(
+        Guid requestId,
+        string? reason = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/access-requests/{requestId}/reject",
+            new { reason },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Afwijzen mislukt.");
+        }
+    }
+
+    public async Task<IReadOnlyList<AccessRequestAdminItemModel>> GetAdminEscalatedAccessRequestsAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AccessRequestAdminItemModel>>(
+               "api/access-requests/admin/escalated", ct) ?? [];
+
+    public async Task<IReadOnlyList<OwnershipTransferAdminItemModel>> GetAdminOwnershipTransfersAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<OwnershipTransferAdminItemModel>>(
+               "api/access-requests/admin/ownership-transfers", ct) ?? [];
+
+    public async Task AdminApproveOwnershipTransferAsync(Guid takeoverId, CancellationToken ct = default)
+        => await ApproveTakeoverAsync(takeoverId, ct);
+
+    public async Task ConfirmOwnershipTransferLetterAsync(
+        Guid takeoverId,
+        string code,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/access-requests/ownership-transfers/{takeoverId}/confirm-letter",
+            new { code },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Briefcode mislukt.");
+        }
     }
 
     public async Task<CompanySummary?> UpdateTokenManagementAsync(

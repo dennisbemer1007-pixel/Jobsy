@@ -175,7 +175,11 @@ public class CandidateInsightsServiceTests
             Name = "Parent",
             KvkNumber = "1",
             Address = "x",
-            Location = BranchLoc
+            Location = BranchLoc,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         var branch = new Company
         {
@@ -185,7 +189,11 @@ public class CandidateInsightsServiceTests
             Address = "y",
             ParentCompanyId = parent.Id,
             TokensManagedByEnterprise = true,
-            Location = BranchLoc
+            Location = BranchLoc,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         db.Companies.AddRange(parent, branch);
         db.Users.Add(new User
@@ -334,7 +342,11 @@ public class CandidateInsightsServiceTests
             Name = "Vestiging",
             KvkNumber = "123",
             Address = "Straat 1",
-            Location = BranchLoc
+            Location = BranchLoc,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         db.Companies.Add(company);
         db.Users.Add(new User

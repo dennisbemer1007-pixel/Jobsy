@@ -13,11 +13,16 @@ public static class RegistrationPasswordRules
         "letmein123", "administrator", "admin123456", "jobsy123!"
     };
 
-    public static void Validate(string? password)
+    public static void Validate(string? password, bool required = true)
     {
         if (string.IsNullOrWhiteSpace(password))
         {
-            throw new ArgumentException("Wachtwoord is verplicht.");
+            if (required)
+            {
+                throw new ArgumentException("Wachtwoord is verplicht.");
+            }
+
+            return;
         }
 
         if (password.Length < MinLength)
@@ -35,4 +40,8 @@ public static class RegistrationPasswordRules
             throw new ArgumentException("Kies een minder vaak gebruikt wachtwoord.");
         }
     }
+
+    public static bool IsExternalLoginProvider(string? provider) =>
+        string.Equals(provider, "microsoft", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(provider, "google", StringComparison.OrdinalIgnoreCase);
 }

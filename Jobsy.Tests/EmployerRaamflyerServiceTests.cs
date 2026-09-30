@@ -148,7 +148,11 @@ public class EmployerRaamflyerServiceTests
             KvkNumber = "12345678",
             KvkEstablishmentId = "12345678_0001",
             Location = new GeoPoint(51.99, 4.21),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
     }
 

@@ -28,7 +28,11 @@ public class AccountUnsubscribeTests
             Name = "Demo BV",
             Address = "Straat 1",
             KvkNumber = "123",
-            Location = new GeoPoint(52.0, 4.3)
+            Location = new GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -210,7 +214,11 @@ public class AccountUnsubscribeTests
             Name = "Export Co",
             Address = "Straat 1",
             KvkNumber = "999",
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -559,7 +567,11 @@ public class AccountUnsubscribeTests
             Address = "Straat 1",
             Location = new GeoPoint(52, 4),
             ReferredByAmbassadeurUserId = userId,
-            CommissionAmbassadeurRateSnapshot = 0.05m
+            CommissionAmbassadeurRateSnapshot = 0.05m,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Vacancies.Add(new Vacancy
         {

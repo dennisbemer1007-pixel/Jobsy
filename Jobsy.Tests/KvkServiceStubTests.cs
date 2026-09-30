@@ -49,16 +49,32 @@ public class KvkServiceStubTests
     public async Task GetEstablishments_marks_in_use_from_database()
     {
         await using var db = CreateDb();
+        var companyId = Guid.NewGuid();
         db.Companies.Add(new Company
         {
-            Id = Guid.NewGuid(),
+            Id = companyId,
             Name = "De Fred Statenkwartier",
             KvkNumber = "11223344",
             KvkEstablishmentId = "11223344_0001",
             Address = "Frederik Hendriklaan 88, Den Haag",
             Location = new GeoPoint(52.0910, 4.2815),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
+        var emId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = emId,
+            Email = "fred.em@jobsy.local",
+            FullName = "EM",
+            Role = UserRole.EnterpriseManager,
+            CompanyId = companyId,
+            IsActive = true
+        });
+        db.UserCompanies.Add(new UserCompany { UserId = emId, CompanyId = companyId });
         await db.SaveChangesAsync();
 
         var sut = new KvkServiceStub(db);
@@ -79,12 +95,43 @@ public class KvkServiceStubTests
                  {
                      "12345678", "87654321", "11223344", "55667788",
                      "33445566", "44556677", "66778899", "77889900",
-                     "88990011", "99001122"
+                     "88990011", "99001122", "90123456", "81234567", "66554433"
                  })
         {
             Assert.NotNull(await sut.GetByKvkNumberAsync(kvk));
             Assert.NotEmpty(await sut.GetEstablishmentsAsync(kvk));
         }
+    }
+
+    [Fact]
+    public async Task Name_search_returns_groen_en_zorg_hits()
+    {
+        await using var db = CreateDb();
+        var sut = new KvkServiceStub(db);
+
+        var result = await sut.SearchAsync(new Core.Interfaces.KvkSearchQuery("groen en zorg", "Utrecht"));
+
+        Assert.Equal(Core.Interfaces.KvkLookupStatus.Ok, result.Status);
+        Assert.Contains(result.Hits, h => h.KvkNumber == "90123456" && h.VestigingCount == 3);
+        Assert.Contains(result.Hits, h => h.KvkNumber == "81234567");
+        Assert.Contains(result.Hits, h => h.KvkNumber == "77889900");
+        Assert.Contains(result.Hits, h => h.KvkNumber == "66554433");
+    }
+
+    [Fact]
+    public async Task Profile_includes_website_and_postal_address()
+    {
+        await using var db = CreateDb();
+        var sut = new KvkServiceStub(db);
+
+        var profile = await sut.GetProfileAsync("90123456");
+
+        Assert.Equal(Core.Interfaces.KvkLookupStatus.Ok, profile.Status);
+        Assert.Contains("groenenzorg.nl", profile.Websites);
+        Assert.Equal(3, profile.Establishments.Count);
+        var hq = profile.Establishments.Single(e => e.EstablishmentNumber == "000045678901");
+        Assert.NotNull(hq.PostalAddress);
+        Assert.Contains(profile.Establishments, e => e.IsInUse && e.KvkEstablishmentId == KvkServiceStub.ForcedInUseEstablishmentId);
     }
 
     [Fact]

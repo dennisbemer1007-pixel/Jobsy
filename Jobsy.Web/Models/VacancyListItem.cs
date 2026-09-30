@@ -88,6 +88,7 @@ public class VacancyListItem
     public bool IsBroadMatch { get; set; }
     public string? MatchRationale { get; set; }
     public List<string> CulturePillars { get; set; } = [];
+    public List<VacancyEngagementBadge> EngagementItems { get; set; } = [];
     public int? CultureFitPercent { get; set; }
     public string? CultureFitBand { get; set; }
     public string? CultureFitLabel { get; set; }
@@ -106,6 +107,18 @@ public class VacancyListItem
     public bool HasPushBom { get; set; }
     public int IncompleteFieldCount { get; set; }
     public string? RequesterDisplayName { get; set; }
+
+    /// <summary>Employer-only preview of a non-public vacancy (noindex, no JSON-LD).</summary>
+    public bool IsPreview { get; set; }
+
+    /// <summary>Draft marked klaar — auto-publishes on company verification.</summary>
+    public bool PublishOnVerification { get; set; }
+}
+
+public sealed class VacancyEngagementBadge
+{
+    public string ItemId { get; set; } = "";
+    public bool Checked { get; set; }
 }
 
 public sealed class WageByAgeItem

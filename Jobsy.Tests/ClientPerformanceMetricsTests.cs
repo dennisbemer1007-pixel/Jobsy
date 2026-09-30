@@ -29,8 +29,12 @@ public sealed class ClientPerformanceMetricsTests
                 KvkNumber = "11111111",
                 Address = "A",
                 Location = new GeoPoint(52, 4),
-                Type = CompanyType.Employer
-            },
+                Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = companyB,
@@ -38,8 +42,12 @@ public sealed class ClientPerformanceMetricsTests
                 KvkNumber = "22222222",
                 Address = "B",
                 Location = new GeoPoint(52.1, 4.1),
-                Type = CompanyType.Employer
-            });
+                Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
 
         db.Vacancies.AddRange(
             new Vacancy

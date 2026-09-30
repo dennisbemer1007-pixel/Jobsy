@@ -54,7 +54,11 @@ public class SalesCommercialServiceTests
             KvkNumber = "12345678",
             Address = "Teststraat 1",
             Location = new GeoPoint(52.0, 4.3),
-            PendingStartHighlightBonus = true
+            PendingStartHighlightBonus = true,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         var vacancy = new Vacancy
         {
@@ -217,7 +221,11 @@ public class SalesCommercialServiceTests
             KvkNumber = "12345678",
             Address = "Teststraat 1",
             Location = new GeoPoint(52.0, 4.3),
-            PendingStartHighlightBonus = true
+            PendingStartHighlightBonus = true,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         db.Companies.Add(company);
         db.TokenTransactions.Add(new TokenTransaction

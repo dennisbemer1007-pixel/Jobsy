@@ -23,6 +23,10 @@
 
     <article class="detail-card">
         <p class="login-lead">@Culture["CultureScan.EmployerNote"]</p>
+        @if (_fromQuick)
+        {
+            <p class="state-message">@Culture["WaProfile.Cultuur.QuickBanner"]</p>
+        }
         <p class="competency-test__progress" aria-live="polite">
             @Culture.Format("Competency.Progress", AnsweredCultureCount, 12)
         </p>
@@ -108,6 +112,7 @@
     private bool _saving;
     private bool _loadFailed;
     private bool _canMutate = true;
+    private bool _fromQuick;
     private string? _message;
     private readonly Dictionary<int, int> _answers = [];
     private CulturePersonalityScoreSet? _scores;
@@ -133,6 +138,7 @@
                 }
 
                 _scores = state.Scores;
+                _fromQuick = string.Equals(state.Source, "Quick", StringComparison.OrdinalIgnoreCase);
             }
         }
         catch (Exception ex)

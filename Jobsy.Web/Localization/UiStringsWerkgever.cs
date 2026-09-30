@@ -384,7 +384,7 @@ public static class UiStringsWerkgever
         Add("WgOrg.Expand", "Uitklappen", "Expand", "Rozwiń", "Extinde", "توسيع");
         Add("WgOrg.Collapse", "Inklappen", "Collapse", "Zwiń", "Restrânge", "طي");
         Add("WgOrg.KvkNumber", "KVK-nummer", "KvK number", "Numer KVK", "Număr KVK", "رقم KVK");
-        Add("WgOrg.KvkDemoHint", "Demo KVK: 12345678, 11223344, …", "Demo KvK: 12345678, 11223344, …", "Przykładowe KVK: 12345678, 11223344, …", "Exemple KVK: 12345678, 11223344, …", "تجريبي: 12345678, 11223344, …");
+        Add("WgOrg.KvkDemoHint", "Demo KVK: 12345678, 11223344, …, 90123456", "Demo KvK: 12345678, 11223344, …, 90123456", "Przykładowe KVK: 12345678, 11223344, …, 90123456", "Exemple KVK: 12345678, 11223344, …, 90123456", "تجريبي: 12345678, 11223344, …, 90123456");
         Add("WgOrg.KvkSearch", "Zoek vestigingen", "Search establishments", "Szukaj placówek", "Caută unități", "بحث عن الفروع");
         Add("WgOrg.KvkInUse", "Al geregistreerd", "Already registered", "Już zarejestrowana", "Deja înregistrată", "مسجّل مسبقاً");
         Add("WgOrg.KvkEmpty", "Geen vestigingen gevonden.", "No establishments found.", "Nie znaleziono placówek.", "Nicio unitate găsită.", "لم يُعثر على فروع.");

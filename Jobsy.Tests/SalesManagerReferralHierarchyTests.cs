@@ -129,7 +129,11 @@ public class SalesManagerReferralHierarchyTests
             Address = "A",
             Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4),
             ReferredBySalesManagerUserId = childId,
-            FirstYearStartedAt = now.AddMonths(-2)
+            FirstYearStartedAt = now.AddMonths(-2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -192,7 +196,11 @@ public class SalesManagerReferralHierarchyTests
             CommissionYear2RateSnapshot = 0.10m,
             CommissionYear3RateSnapshot = 0.05m,
             CommissionDurationDaysSnapshot = 1095,
-            CommissionTermsSnapshottedAtUtc = started
+            CommissionTermsSnapshottedAtUtc = started,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 

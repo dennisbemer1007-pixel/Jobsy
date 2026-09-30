@@ -24,9 +24,53 @@ public class Company
     public DateTime? KvkLastVerificationAttemptAtUtc { get; set; }
     public int KvkVerificationAttempts { get; set; }
 
+    /// <summary>
+    /// Whether the company has proven it is real on Lobsy (public visibility gate).
+    /// No C# initializer — every creation path sets this explicitly.
+    /// </summary>
+    public CompanyVerificationStatus VerificationStatus { get; set; }
+
+    /// <summary>How <see cref="VerificationStatus"/> was last set.</summary>
+    public CompanyVerificationMethod VerificationMethod { get; set; }
+
+    /// <summary>When the company first became <see cref="CompanyVerificationStatus.Verified"/>.</summary>
+    public DateTime? VerifiedAtUtc { get; set; }
+
+    /// <summary>When verification status or method last changed.</summary>
+    public DateTime? VerificationUpdatedAtUtc { get; set; }
+
+    /// <summary>
+    /// When a manual verification check was opened (06). Cleanup (day 60) skips while open.
+    /// </summary>
+    public DateTime? ManualVerificationOpenedAtUtc { get; set; }
+
+    /// <summary>
+    /// When a manual verification check was decided. Cleanup waits 7 more days after this.
+    /// </summary>
+    public DateTime? ManualVerificationClosedAtUtc { get; set; }
+
+    /// <summary>
+    /// Vacancies that went live automatically when this company was last verified (11 success banner).
+    /// </summary>
+    public int LastAutoPublishedVacancyCount { get; set; }
+
     public string Address { get; set; } = string.Empty;
     public string? LogoUrl { get; set; }
+
+    /// <summary>
+    /// Company-level branches (max 4), stored like <see cref="Vacancy.WorkTypeLabels"/> via
+    /// <see cref="Rules.WorkTypeLabels.CombineStoredForCompany"/>. Root organisation only;
+    /// vestigingen inherit from the root.
+    /// </summary>
+    public string? WorkTypeLabels { get; set; }
+
     public GeoPoint Location { get; set; } = null!;
+
+    /// <summary>
+    /// How <see cref="Location"/> was obtained. Unknown → skip on the public map.
+    /// </summary>
+    public CompanyLocationSource LocationSource { get; set; } = CompanyLocationSource.Kvk;
+
     public CompanyType Type { get; set; } = CompanyType.Employer;
 
     public Guid? ParentCompanyId { get; set; }

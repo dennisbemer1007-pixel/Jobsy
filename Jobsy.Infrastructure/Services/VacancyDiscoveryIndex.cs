@@ -45,6 +45,13 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
 
     public void Invalidate() => _dirty = true;
 
+    public Task InvalidateCompanyAsync(Guid companyId, CancellationToken cancellationToken = default)
+    {
+        _ = companyId;
+        Invalidate();
+        return Task.CompletedTask;
+    }
+
     public async Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(
         CancellationToken cancellationToken = default)
     {
@@ -123,10 +130,36 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
                 v.Status == VacancyStatus.Active
                 && v.StartDate <= today
                 && v.EndDate >= today)
+            .Where(PublicVisibility.VacancyPublisherIsPublic)
             .OrderBy(v => v.Title)
             .ToListAsync(cancellationToken);
 
         var records = new List<VacancyDiscoveryRecord>(vacancies.Count);
+        var companyIds = vacancies.Select(v => v.CompanyId).Distinct().ToList();
+        var parents = await db.Companies.AsNoTracking()
+            .Where(c => companyIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.ParentCompanyId })
+            .ToListAsync(cancellationToken);
+        var rootByCompany = parents.ToDictionary(
+            c => c.Id,
+            c => c.ParentCompanyId ?? c.Id);
+        var rootIds = rootByCompany.Values.Distinct().ToList();
+        var engagementRows = await db.CompanyEngagementClaims.AsNoTracking()
+            .Where(c => rootIds.Contains(c.CompanyId)
+                        && c.Status != CompanyEngagementStatuses.Removed)
+            .ToListAsync(cancellationToken);
+        var engagementByRoot = engagementRows
+            .GroupBy(c => c.CompanyId)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<VacancyEngagementItem>)g
+                    .OrderByDescending(x => x.Status == CompanyEngagementStatuses.Checked)
+                    .ThenBy(x => x.ItemId, StringComparer.Ordinal)
+                    .Select(x => new VacancyEngagementItem(
+                        x.ItemId,
+                        x.Status == CompanyEngagementStatuses.Checked))
+                    .ToList());
+
         foreach (var vacancy in vacancies)
         {
             if (vacancy.Location is null)
@@ -134,7 +167,15 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
                 continue;
             }
 
-            records.Add(ToRecord(vacancy));
+            var record = ToRecord(vacancy);
+            if (rootByCompany.TryGetValue(vacancy.CompanyId, out var rootId)
+                && engagementByRoot.TryGetValue(rootId, out var items)
+                && items.Count > 0)
+            {
+                record = record with { EngagementItems = items };
+            }
+
+            records.Add(record);
         }
 
         return records;
@@ -217,7 +258,10 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             vacancy.ContentModerationPassed,
             vacancy.RequireEmailVerification,
             vacancy.MinimumReferences,
-            CulturePillarCatalog.Deserialize(vacancy.CulturePillarsJson));
+            CulturePillarCatalog.Deserialize(vacancy.CulturePillarsJson),
+            PublisherVerified: PublicVisibility.IsCompanyPublic(vacancy.Company)
+                && (vacancy.IntermediaryCompanyId is null
+                    || PublicVisibility.IsCompanyPublic(vacancy.IntermediaryCompany)));
     }
 
     private static IReadOnlyList<VacancyDiscoveryRecord> VisibleToday(

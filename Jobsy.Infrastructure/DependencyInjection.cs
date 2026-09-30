@@ -1,6 +1,7 @@
 using Jobsy.Core.Admin;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Sales;
 using Jobsy.Core.Scholen;
@@ -10,6 +11,7 @@ using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Infrastructure.Services.LenderRegistration;
 using Jobsy.Infrastructure.Services.OpenAi;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -277,7 +279,15 @@ public static class DependencyInjection
 
         // Live KVK when API key is configured (Admin Integraties or Kvk__ApiKey); otherwise demo stub.
         services.AddScoped<KvkServiceStub>();
-        services.AddScoped<IKvkService, KvkHandelsregisterService>();
+        services.AddScoped<IKvkUsageCounter, KvkUsageCounter>();
+        services.AddScoped<IKvkService>(sp => new KvkHandelsregisterService(
+            sp.GetRequiredService<JobsyDbContext>(),
+            sp.GetRequiredService<IIntegrationCredentialService>(),
+            sp.GetRequiredService<IHttpClientFactory>(),
+            sp.GetRequiredService<KvkServiceStub>(),
+            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<KvkHandelsregisterService>>(),
+            sp.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>(),
+            sp.GetRequiredService<IKvkUsageCounter>()));
         services.AddScoped<IKvkVerificationRetryService, KvkVerificationRetryService>();
         services.AddScoped<EmailServiceStub>();
         services.AddScoped<IEmailService, SmtpEmailService>();
@@ -312,6 +322,39 @@ public static class DependencyInjection
         services.AddScoped<IRegionHostService, RegionHostService>();
         services.AddScoped<CompanyRegistrationService>();
         services.AddScoped<ICompanyRegistrationService>(sp => sp.GetRequiredService<CompanyRegistrationService>());
+        services.AddScoped<ICompanyAccessRequestService, CompanyAccessRequestService>();
+        services.AddScoped<ICompanyVerificationService, CompanyVerificationService>();
+        services.Configure<CompanyVerificationSettings>(configuration.GetSection(CompanyVerificationSettings.SectionName));
+        services.AddSingleton<IStubLetterStore, Jobsy.Infrastructure.Services.Letters.StubLetterStore>();
+        services.AddScoped<Jobsy.Infrastructure.Services.Letters.StubLetterService>();
+        services.AddScoped<Jobsy.Infrastructure.Services.Letters.PingenLetterService>();
+        services.AddHttpClient(Jobsy.Infrastructure.Services.Letters.PingenLetterService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(60);
+        });
+        services.AddScoped<ILetterService>(sp =>
+        {
+            var settings = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<CompanyVerificationSettings>>().Value;
+            if (settings.LetterProvider == LetterProviderKind.Pingen
+                && !string.IsNullOrWhiteSpace(settings.PingenClientId)
+                && !string.IsNullOrWhiteSpace(settings.PingenClientSecret)
+                && !string.IsNullOrWhiteSpace(settings.PingenOrganisationId))
+            {
+                return sp.GetRequiredService<Jobsy.Infrastructure.Services.Letters.PingenLetterService>();
+            }
+
+            return sp.GetRequiredService<Jobsy.Infrastructure.Services.Letters.StubLetterService>();
+        });
+        services.AddScoped<ICompanyVerificationFlowService, Jobsy.Infrastructure.Services.Verification.CompanyVerificationFlowService>();
+        services.AddScoped<IVestigingSuggestionService, VestigingSuggestionService>();
+        services.AddScoped<IEmployerOnboardingStatusService, EmployerOnboardingStatusService>();
+        services.AddScoped<ICompanyVerificationAdminService, Jobsy.Infrastructure.Services.Verification.CompanyVerificationAdminService>();
+        services.AddScoped<IRegistrationReferralResolver, DefaultRegistrationReferralResolver>();
+        services.AddHttpClient<IGeocodingService, NominatimGeocodingService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(8);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("LobsyRegistration/1.0 (werkgever-aanmelding)");
+        });
         services.AddScoped<ISalesManagerInviteService, SalesManagerInviteService>();
         services.AddScoped<ISalesManagerApplicationService, SalesManagerApplicationService>();
         services.AddScoped<ISalesManagerOnboardingService, SalesManagerOnboardingService>();
@@ -359,6 +402,7 @@ public static class DependencyInjection
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
         services.AddScoped<ICvExtractionService, CvExtractionService>();
         services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
+        services.AddScoped<ICompanyCultureLookup, CompanyCultureLookup>();
         services.AddHttpClient(CultureFitAiService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(12);
@@ -373,6 +417,12 @@ public static class DependencyInjection
         services.AddScoped<IAssessmentAdjustmentService, AssessmentAdjustmentService>();
         services.AddScoped<IAssessmentRetakeService, AssessmentRetakeService>();
         services.AddScoped<ICompanyCultureService, CompanyCultureService>();
+        services.AddScoped<ICompanyProfileExtrasService, CompanyProfileExtrasService>();
+        services.AddScoped<ICompanyEngagementService, CompanyEngagementService>();
+        services.AddScoped<ILenderRegistrationProvider, WaadiKvkProvider>();
+        services.AddScoped<ILenderRegistrationProvider, WttaNauProvider>();
+        services.AddScoped<ILenderRegistrationProvider, AdminManualLenderProvider>();
+        services.AddScoped<ILenderRegistrationCheck, LenderRegistrationCheckService>();
         services.AddScoped<ICandidateCareerInterestService, CandidateCareerInterestService>();
         services.AddHttpClient(CareerCompassGenerationService.HttpClientName, client =>
         {
@@ -494,12 +544,16 @@ public static class DependencyInjection
         services.AddHostedService<SalesCommissionBackfillHostedService>();
         services.AddHostedService<TalentContactRefundHostedService>();
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
+        services.AddHostedService<UnverifiedCompanyReminderHostedService>();
+        services.AddHostedService<UnverifiedCompanyCleanupHostedService>();
+        services.AddHostedService<AccessRequestEscalationHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();
         services.AddHostedService<TokenCheckoutReconcileHostedService>();
         services.AddHostedService<KvkVerificationRetryHostedService>();
+        services.AddHostedService<VestigingSuggestionHostedService>();
 
         return services;
     }

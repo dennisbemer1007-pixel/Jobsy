@@ -71,7 +71,8 @@ public class CompaniesController : ControllerBase
                 c.KvkEstablishmentId,
                 c.KvkVerificationStatus.ToString(),
                 c.PreferredPaymentMethod,
-                c.RequireEmailVerificationForApplications))
+                c.RequireEmailVerificationForApplications,
+                c.VerificationStatus.ToString()))
             .ToListAsync(cancellationToken);
 
         return Ok(companies);
@@ -112,6 +113,7 @@ public class CompaniesController : ControllerBase
             parentId = actor?.CompanyId;
         }
 
+        Company? parent = null;
         if (parentId is not null)
         {
             var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
@@ -120,7 +122,7 @@ public class CompaniesController : ControllerBase
                 return Forbid();
             }
 
-            var parent = await _db.Companies.AsNoTracking()
+            parent = await _db.Companies.AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == parentId.Value, cancellationToken);
             if (parent is null)
             {
@@ -142,7 +144,13 @@ public class CompaniesController : ControllerBase
             Address = match.Address,
             Location = new GeoPoint(match.Latitude, match.Longitude),
             Type = CompanyType.Employer,
-            ParentCompanyId = parentId
+            ParentCompanyId = parentId,
+            VerificationStatus = parent?.VerificationStatus ?? CompanyVerificationStatus.Unverified,
+            VerificationMethod = CompanyVerificationMethod.InheritedFromOrganization,
+            VerifiedAtUtc = parent?.VerificationStatus == CompanyVerificationStatus.Verified
+                ? (parent.VerifiedAtUtc ?? DateTime.UtcNow)
+                : null,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
 
         _db.Companies.Add(company);
@@ -198,6 +206,18 @@ public class CompaniesController : ControllerBase
             return Ok(await ToSummaryAsync(existing, cancellationToken));
         }
 
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var intermediaryStatus = CompanyVerificationStatus.Unverified;
+        if (actor?.CompanyId is Guid actorCompanyId)
+        {
+            var intermediary = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == actorCompanyId, cancellationToken);
+            if (intermediary is not null)
+            {
+                intermediaryStatus = intermediary.VerificationStatus;
+            }
+        }
+
         var company = new Company
         {
             Id = Guid.NewGuid(),
@@ -207,7 +227,13 @@ public class CompaniesController : ControllerBase
             Address = match.Address,
             Location = new GeoPoint(match.Latitude, match.Longitude),
             Type = CompanyType.Employer,
-            ParentCompanyId = null
+            ParentCompanyId = null,
+            VerificationStatus = intermediaryStatus,
+            VerificationMethod = CompanyVerificationMethod.IntermediaryClient,
+            VerifiedAtUtc = intermediaryStatus == CompanyVerificationStatus.Verified
+                ? DateTime.UtcNow
+                : null,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
 
         _db.Companies.Add(company);
@@ -591,7 +617,8 @@ public class CompaniesController : ControllerBase
             company.KvkEstablishmentId,
             company.KvkVerificationStatus.ToString(),
             company.PreferredPaymentMethod,
-            company.RequireEmailVerificationForApplications);
+            company.RequireEmailVerificationForApplications,
+            company.VerificationStatus.ToString());
 
     /// <summary>
     /// Intermediaries may change or view billing/contact/email-check only on their own organisation,
