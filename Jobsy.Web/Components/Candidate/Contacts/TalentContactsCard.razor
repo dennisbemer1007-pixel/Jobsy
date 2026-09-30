@@ -1,0 +1,182 @@
+@namespace Jobsy.Web.Components.Candidate.Contacts
+@using Jobsy.Web.Components.Candidate.Discovery
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+
+<section class="career-card talent-card" aria-labelledby="talent-title">
+    <p class="career-card__eyebrow">@Culture["TalentC.Eyebrow"]</p>
+    <h1 id="talent-title" tabindex="-1">@Title</h1>
+    <p class="career-card__lead">@Culture["TalentC.Lead"]</p>
+
+    <p class="talent-card__live visually-hidden" role="status" aria-live="polite">@Announcement</p>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorText))
+    {
+        <p class="career-card__error" role="alert">@ErrorText</p>
+    }
+
+    @if (Loading)
+    {
+        <div class="career-card--skeleton" aria-busy="true">
+            <p class="visually-hidden">@Culture["Common.Loading"]</p>
+            <span class="career-skeleton career-skeleton--title"></span>
+            <span class="career-skeleton"></span>
+        </div>
+    }
+    else if (Rows.Count == 0)
+    {
+        <div class="talent-empty">
+            <div class="talent-empty__lob" aria-hidden="true">
+                <JourneyLobster PlatesShed="2" Size="72" Label="" />
+            </div>
+            <p class="talent-empty__text">@Culture.Format("TalentC.Empty.Text", Word)</p>
+            <p class="career-card__discovery">
+                <a href="@PassportHref">@Culture.Format("TalentC.Empty.Link", Word)</a>
+            </p>
+        </div>
+    }
+    else
+    {
+        <ul class="talent-list">
+            @foreach (var row in Rows)
+            {
+                var headingId = $"talent-req-{row.Id}";
+                <li class="talent-req @(row.IsOpen ? "talent-req--open" : null)">
+                    <article aria-labelledby="@headingId">
+                        <div class="talent-req__top">
+                            <span class="talent-req__avatar" aria-hidden="true">@row.Initial</span>
+                            <h2 class="talent-req__company"
+                                id="@headingId"
+                                tabindex="-1"
+                                @ref="_headings[row.Id]">@CompanyOf(row)</h2>
+                            <span class="career-pill @PillClass(row.State)">
+                                <span class="talent-req__pill-icon" aria-hidden="true">@PillIcon(row.State)</span>
+                                @Culture[TalentContactViewBuilder.StatusKey(row.State)]
+                            </span>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(row.Message))
+                        {
+                            <blockquote class="talent-req__quote">@row.Message</blockquote>
+                        }
+
+                        <p class="talent-req__when">@WhenLine(row)</p>
+
+                        @if (JustDeclinedId == row.Id)
+                        {
+                            <p class="career-note career-note--soft talent-req__said">@Culture["TalentC.Said.No"]</p>
+                        }
+
+                        @if (row.IsOpen)
+                        {
+                            <div class="talent-req__actions">
+                                <button type="button"
+                                        class="career-btn career-btn--primary"
+                                        disabled="@Busy"
+                                        @onclick="() => OnAccept.InvokeAsync(row)">
+                                    @Culture["TalentC.Action.Yes"]
+                                </button>
+                                <button type="button"
+                                        class="career-btn career-btn--secondary"
+                                        disabled="@Busy"
+                                        @onclick="() => OnDecline.InvokeAsync(new TalentDeclineRequest(row, AlreadyPlaced: true))">
+                                    @Culture["TalentC.Action.Placed"]
+                                </button>
+                                <button type="button"
+                                        class="career-btn career-btn--text"
+                                        disabled="@Busy"
+                                        @onclick="() => OnDecline.InvokeAsync(new TalentDeclineRequest(row, AlreadyPlaced: false))">
+                                    @Culture["TalentC.Action.No"]
+                                </button>
+                            </div>
+                        }
+                    </article>
+                </li>
+            }
+        </ul>
+    }
+
+    <TalentHowCard AsDisclosure="true" PassportOn="@PassportOn" />
+</section>
+
+@code {
+    private readonly Dictionary<Guid, ElementReference> _headings = [];
+
+    [Parameter] public IReadOnlyList<TalentContactRow> Rows { get; set; } = [];
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+    [Parameter] public string Announcement { get; set; } = "";
+
+    /// <summary>The request the candidate just declined, so the card can confirm it in place.</summary>
+    [Parameter] public Guid? JustDeclinedId { get; set; }
+
+    [Parameter] public bool PassportOn { get; set; }
+    [Parameter] public string PassportHref { get; set; } = "/candidate/profile";
+    [Parameter] public EventCallback<TalentContactRow> OnAccept { get; set; }
+    [Parameter] public EventCallback<TalentDeclineRequest> OnDecline { get; set; }
+
+    /// <summary>Moves focus back to the card heading after a successful answer (§4).</summary>
+    public async ValueTask FocusRequestAsync(Guid id)
+    {
+        if (_headings.TryGetValue(id, out var heading))
+        {
+            try
+            {
+                await heading.FocusAsync();
+            }
+            catch (InvalidOperationException)
+            {
+                // The card was replaced before focus could move; the live region still announces.
+            }
+        }
+    }
+
+    private string Title => Rows.Any(r => r.IsOpen)
+        ? Culture["TalentC.Title"]
+        : Culture["TalentC.TitleNone"];
+
+    private string Word => Culture[PassportOn ? "TalentC.Word.Passport" : "TalentC.Word.Profile"];
+
+    private string CompanyOf(TalentContactRow row)
+        => string.IsNullOrWhiteSpace(row.CompanyName)
+            ? Culture["TalentC.Company.Unknown"]
+            : row.CompanyName!;
+
+    private string WhenLine(TalentContactRow row) => row.State switch
+    {
+        TalentContactState.Open =>
+            Culture.Format("TalentC.When.Before", LobsyTime.Deadline(row.RespondByUtc)),
+        TalentContactState.OpenLate => Culture["TalentC.When.Late"],
+        TalentContactState.Shared =>
+            Culture.Format("TalentC.Shared.Line", Day(row.HistoryUtc)),
+        TalentContactState.Declined => DeclinedLine(row),
+        _ => Culture["TalentC.Withdrawn.Line"]
+    };
+
+    private string DeclinedLine(TalentContactRow row)
+    {
+        var line = Culture.Format("TalentC.Declined.Line", Day(row.HistoryUtc));
+        return row.DeclinedBecauseAlreadyPlaced
+            ? $"{line} {Culture["TalentC.Declined.Placed"]}"
+            : line;
+    }
+
+    private static string Day(DateTime? utc)
+        => utc is DateTime value ? LobsyTime.Day(value) : "";
+
+    private static string PillClass(TalentContactState state) => state switch
+    {
+        TalentContactState.Shared => "talent-pill--yes",
+        TalentContactState.Open or TalentContactState.OpenLate => "talent-pill--wait",
+        _ => "talent-pill--quiet"
+    };
+
+    private RenderFragment PillIcon(TalentContactState state) => state switch
+    {
+        TalentContactState.Shared => @<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>,
+        TalentContactState.Open or TalentContactState.OpenLate => @<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>,
+        _ => @<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M8 12h8" /></svg>
+    };
+}

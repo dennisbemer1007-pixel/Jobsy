@@ -17,6 +17,9 @@ public interface ITalentPoolService
         string message,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Candidate answer. Accepting shares the PII; declining stores why (D14).
+    /// </summary>
     Task<TalentContactRequestDto> CandidateRespondAsync(
         Guid candidateUserId,
         Guid requestId,
@@ -36,6 +39,15 @@ public interface ITalentPoolService
 
     Task<IReadOnlyList<TalentContactRequestDto>> ListForCandidateAsync(
         Guid candidateUserId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Exactly the fields the employer receives when the candidate accepts (04 §1).
+    /// Null when the request does not exist or belongs to another candidate.
+    /// </summary>
+    Task<TalentContactSharePreviewDto?> GetSharePreviewAsync(
+        Guid candidateUserId,
+        Guid requestId,
         CancellationToken cancellationToken = default);
 
     /// <summary>Marks pending requests past the 48h window as RefundEligible.</summary>
@@ -82,4 +94,16 @@ public sealed record TalentContactRequestDto(
     string? CandidateFullName,
     string? CandidateEmail,
     string? CandidatePhone,
-    string? CompanyName = null);
+    string? CompanyName = null,
+    /// <summary>D14: <c>NotInterested</c> or <c>AlreadyPlaced</c>; null when not declined.</summary>
+    string? CandidateDeclineReason = null);
+
+/// <summary>
+/// What the employer gets when the candidate says yes — shown in the share-confirm dialog
+/// before anything is sent. Missing phone stays null ("niet ingevuld" in the dialog).
+/// </summary>
+public sealed record TalentContactSharePreviewDto(
+    string? CompanyName,
+    string? Name,
+    string? Email,
+    string? Phone);

@@ -274,8 +274,8 @@ public static class PageHelpDocs
 
         ["/candidate/talent-contacts"] = new(
             "Contactverzoeken",
-            "Berichten van werkgevers uit de anonieme talentpool.",
-            "Reageer binnen 48 uur. Bij akkoord worden contactgegevens gedeeld. Als je al voorzien bent, kan de werkgever het token terugkrijgen.",
+            "Werkgevers die je willen spreken. Jij beslist per verzoek.",
+            "Zeg je ja, dan zie je eerst in een venster precies wat de werkgever krijgt: je naam, e-mail en telefoon. Pas na dat 'ja' wordt er iets gedeeld. Zeg je niets, dan wordt er niets gedeeld; nee zeggen laat alleen 'geen interesse' zien.",
             "Contact leggen zonder dat je 06 of e-mail publiek staat."),
 
         ["/werkgever/talentpool"] = new(

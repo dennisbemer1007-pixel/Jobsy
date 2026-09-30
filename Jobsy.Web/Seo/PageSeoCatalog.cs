@@ -179,7 +179,7 @@ public static partial class PageSeoCatalog
             ["/profiel/tests/values"] = Private("Test.Values.Title", "Seo.PrivateDescription"),
             ["/werkgever/organisatie/profiel?tab=cultuur"] = Private("CultureScan.EmployerTitle", "Seo.PrivateDescription"),
             ["/candidate/deep-analysis/checkout"] = Private("Deep.Checkout", "Seo.PrivateDescription"),
-            ["/candidate/talent-contacts"] = Private("Talent.CandidateTitle", "Seo.PrivateDescription"),
+            ["/candidate/talent-contacts"] = Private("TalentC.Eyebrow", "Seo.PrivateDescription"),
             ["/werkgever/talentpool"] = Private("Talent.Title", "Seo.PrivateDescription"),
             ["/werkgever/talentpool?tab=contact"] = Private("Talent.EmployerContactsTitle", "Seo.PrivateDescription"),
             ["/candidate/actions/set-unavailable"] = Private("Seo.SiteName", "Seo.PrivateDescription"),
