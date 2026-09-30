@@ -6,6 +6,8 @@
 - Carrière 01 (Web): career API wiring on `/carriere` — fit bands, action kinds, error codes, dream-options/archive client stubs; `UiStringsCareer` for nl/en/pl/ro/ar.
 - Carrière 02 (Web): `/carriere` in the ontdekkingsreis style — `CareerClimbScene` with the lobster climbing stone by stone to the golden dream stone, `CareerRail`, `GrowingShellsStepper`, empty state with real job suggestions + job search, overview with "nu aan de beurt", and a calm dream-change dialog that keeps what you achieved (archive restore from the UI). Removes `HorizonArt`, the native `window.confirm`, the blur-commit dream input, the datalist and every percentage; new `features/carriere.css` (`?v=20260930-carriere`) and copy in nl/en/pl/ro/ar incl. `ar` RTL.
 
+- Carrière 03 (Web): step detail on `/carriere?stap={n}` (deep-linkable, back button works) with "Wat je nog mist" in claws, a fit band instead of a percentage, real courses (free first, at most one labelled Partnerlink) and "Voeg bewijs toe" into the paspoort Bewijzen tab. Completing a step is now a warm moment in the scene — the old shell falls, the lobster grows a gold new shell and moves up a stone — instead of a toast, announced politely with focus on the new heading, with "Toch nog niet klaar" right there. Werkgevers OFF hides every vacancy link, count and "Nieuw: … vacatures" line; never "0 jaar", never a clickable AI course name. Copy in nl/en/pl/ro/ar. Closes B6 (step), B7 (UI), B8, B9, B13 (step copy), B15.
+
 ### Security
 - Auth login redesign (03): `/login` static SSR on PublicLayout (`au-*` theme), honest status/pause cards, configured providers only, Werkgevers-aware "Bedrijf registreren", Account maken links, LoginHint cookie (no e-mail in URL), `AuthFeatures.PasswordResetAvailable=false` until 05.
 
