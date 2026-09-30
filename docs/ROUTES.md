@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (125 routes)
+## Table (128 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -67,6 +67,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/vacancies` | `Pages/Admin/VacanciesAdmin.razor` | Admin |
 | `/admin/vacancy-categories` | `Pages/Admin/VacancyCategoriesAdmin.razor` | Admin |
 | `/admin/wages` | `Pages/Admin/WageAdmin.razor` | Admin |
+| `/admin/werkgeververificatie` | `Pages/Admin/WerkgeverVerificatieAdmin.razor` | Admin |
 | `/algemene-voorwaarden` | `Pages/Legal/AlgemeneVoorwaarden.razor` | anonymous |
 | `/ambassadeur` | `Pages/Ambassadeur/Dashboard.razor` | Ambassadeur |
 | `/ambassadeur/finance` | `Pages/Ambassadeur/Finance.razor` | Ambassadeur |
@@ -142,9 +143,8 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/register` | `Pages/Register.razor` | anonymous |
 | `/register/activate` | `Pages/RegisterActivate.razor` | anonymous |
 | `/register/koppelen` | `Pages/RegisterKoppelen.razor` | authenticated |
-| `/register/verifieren` | `Pages/RegisterVerifieren.razor` | employer (unverified) |
-| `/register/verifieren/brief` | `Pages/RegisterVerifierenBrief.razor` | employer (unverified) |
-| `/admin/werkgeververificatie` | `Pages/Admin/WerkgeverVerificatieAdmin.razor` | Admin |
+| `/register/verifieren` | `Pages/RegisterVerifieren.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |
+| `/register/verifieren/brief` | `Pages/RegisterVerifierenBrief.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |
 | `/salesmanager` | `Pages/SalesManager/Dashboard.razor` | SalesManager |
 | `/salesmanager/invoices` | `Pages/SalesManager/Invoices.razor` | SalesManager |
 | `/salesmanager/onboarding` | `Pages/SalesManager/Onboarding.razor` | SalesManager |

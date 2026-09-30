@@ -19,7 +19,7 @@ public class TransactionalEmailCatalogTests
     public void Catalog_covers_every_known_transactional_type()
     {
         var keys = TransactionalEmails.Templates.Select(t => t.Key).ToList();
-        Assert.Equal(31, keys.Count);
+        Assert.Equal(33, keys.Count);
         Assert.Equal(keys.Count, keys.Distinct(StringComparer.OrdinalIgnoreCase).Count());
         Assert.Contains("ApplicationConfirmation", keys);
         Assert.Contains("PushBom", keys);
@@ -29,6 +29,8 @@ public class TransactionalEmailCatalogTests
         Assert.Contains("CompanyVerificationReminder", keys);
         Assert.Contains("CompanyVerified", keys);
         Assert.Contains("CompanyUnverifiedDeleted", keys);
+        Assert.Contains("CompanyBusinessEmailVerification", keys);
+        Assert.Contains("CompanyVerificationRejected", keys);
     }
 
     [Fact]

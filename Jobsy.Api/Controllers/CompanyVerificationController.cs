@@ -9,7 +9,7 @@ namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/company-verification")]
-[Authorize(Policy = JobsyPolicies.RequireEmployer)]
+[Authorize(Roles = JobsyRoles.EmployerMutateRolesWithAdmin)]
 public sealed class CompanyVerificationController : ControllerBase
 {
     private readonly ICompanyVerificationFlowService _flow;
