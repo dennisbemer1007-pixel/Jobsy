@@ -126,6 +126,16 @@
                     <button class="btn-compact btn-compact--primary" type="button" disabled="@_featureBusy" @onclick="SaveFeaturesAsync">@Culture["Common.Save"]</button>
                 </div>
             </article>
+            @* moves into PlatformSettingsCatalog group "Sales" *@
+            <article class="company-card platform-features-card" style="margin-bottom:1rem">
+                <h2>@Culture["SalesAdmin.SalesSection"]</h2>
+                <label class="field">
+                    <input type="checkbox" @bind="_features.AmbassadorsEnabled" />
+                    @Culture["SalesAdmin.AmbassadorsToggle"]
+                </label>
+                <p class="login-lead">@Culture["SalesAdmin.AmbassadorsToggleHelp"]</p>
+            </article>
+
         </section>
 
         <section class="panel-section">

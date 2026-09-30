@@ -21,7 +21,9 @@ public sealed record PlatformFeatureSnapshot(
     DateOnly? FreePublishUntil = null,
     int MinimumSessionVersion = 0,
     bool SupportAccessNotifyAdmins = false,
-    bool SupportAccessNotifySubject = false);
+    bool SupportAccessNotifySubject = false,
+    /// <summary>Default false — Ambassadeur role parked.</summary>
+    bool AmbassadorsEnabled = false);
 
 public sealed record PlatformFeatureUpdate(
     bool VacancyContentModerationEnabled,
@@ -39,4 +41,6 @@ public sealed record PlatformFeatureUpdate(
     bool ClearFreePublishUntil = false,
     int? MinimumSessionVersion = null,
     bool? SupportAccessNotifyAdmins = null,
-    bool? SupportAccessNotifySubject = null);
+    bool? SupportAccessNotifySubject = null,
+    /// <summary>Null = keep existing.</summary>
+    bool? AmbassadorsEnabled = null);

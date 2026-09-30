@@ -1,0 +1,7 @@
+@page "/sales"
+@layout SalesLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+
+<PageTitle>Dashboard · Lobsy Partner</PageTitle>
+<SalesManagerHomePanel />

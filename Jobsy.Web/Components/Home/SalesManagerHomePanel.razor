@@ -82,7 +82,7 @@
                     </div>
                     <div class="stat-card stat-card--tile">
                         <span class="stat-card__top">
-                            <span class="stat-card__label">Suppliers</span>
+                            <span class="stat-card__label">@Culture["Sales.Label.Employers"]</span>
                         </span>
                         <span class="stat-card__body">
                             <span class="stat-card__main">
@@ -135,7 +135,7 @@
                                 {
                                     <li class="bento-rank__row">
                                         <div class="bento-rank__meta">
-                                            <strong class="bento-rank__title">@e.Kind</strong>
+                                            <strong class="bento-rank__title">@LabelKind(e.Kind)</strong>
                                             <span class="bento-rank__sub muted">@(e.CompanyName ?? "—") · @e.CreatedAt.ToLocalTime().ToString("g")</span>
                                         </div>
                                         <span class="bento-rank__value" style="min-width:auto">€ @e.AmountExVat.ToString("0.00")</span>
@@ -185,5 +185,15 @@
         }
 
         return Task.CompletedTask;
+    }
+
+    private string LabelKind(string kind)
+    {
+        if (Enum.TryParse<Jobsy.Core.Entities.CommissionEntryKind>(kind, ignoreCase: true, out var parsed))
+        {
+            return Culture[Jobsy.Core.Sales.SalesLabels.Key(parsed)];
+        }
+
+        return kind;
     }
 }

@@ -226,7 +226,7 @@ public class PlatformRobustnessTests
 
         var tokens = new TokenLedgerService(db);
         var share = new RevenueShareService(
-            db, tokens, new CommissionLedgerService(db), new SalesCommercialService(db, tokens));
+            db, tokens, new CommissionLedgerService(db, new AlwaysOnFeatures()), new SalesCommercialService(db, tokens));
 
         var checkoutId = Guid.NewGuid();
         await share.ApplyTokenPurchaseShareAsync(
@@ -369,7 +369,7 @@ public class PlatformRobustnessTests
             db,
             config,
             new IntegrationCredentialService(db, new PassthroughSecretProtector()),
-            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance),
+            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance, new AlwaysOnFeatures()),
             new TestHostEnvironment(),
             new DeviceSessionService(
                 db,
@@ -378,7 +378,8 @@ public class PlatformRobustnessTests
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<DeviceSessionService>.Instance),
             new Jobsy.Infrastructure.Services.EmailServiceStub(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<Jobsy.Infrastructure.Services.EmailServiceStub>.Instance),
             new Jobsy.Api.Security.MfaChallengeService(
-                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())));
+                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
+            new AlwaysOnFeatures());
     }
 
     private static ControllerContext WithProvisionSecret(string secret)

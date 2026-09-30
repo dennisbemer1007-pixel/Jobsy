@@ -1,4 +1,5 @@
-@page "/salesmanager/toolkit"
+@page "/sales/link"
+@layout SalesLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "SalesManager")]
 @inject JobsyApiClient Api
@@ -28,7 +29,7 @@
     else if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
     {
         <p class="state-message">Rond eerst je onboarding af om een trackingcode te ontvangen.</p>
-        <a class="login-submit" href="/salesmanager/onboarding" style="display:inline-block;text-decoration:none;text-align:center">Start onboarding</a>
+        <a class="login-submit" href="/sales/start" style="display:inline-block;text-decoration:none;text-align:center">Start onboarding</a>
     }
     else if (_dashboard is not null)
     {

@@ -447,11 +447,12 @@ public class MfaForcedEnrollmentTests : IClassFixture<RoleFunctionalWebAppFactor
         var credentials = new IntegrationCredentialService(db, new PassthroughSecretProtector());
         var sut = new AuthController(
             db, config, credentials,
-            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), NullLogger<AmbassadeurAttributionService>.Instance),
+            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), NullLogger<AmbassadeurAttributionService>.Instance, new AlwaysOnFeatures()),
             new StubHostEnvironment(),
             new DeviceSessionService(db, config, new MemoryCache(new MemoryCacheOptions()), NullLogger<DeviceSessionService>.Instance),
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
-            challenges);
+            challenges,
+            new StubFeatures(authenticatorEnabled: true));
         sut.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         return sut;
     }

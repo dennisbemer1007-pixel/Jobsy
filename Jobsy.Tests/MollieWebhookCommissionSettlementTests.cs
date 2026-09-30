@@ -63,7 +63,7 @@ public class MollieWebhookCommissionSettlementTests
         var expectedIndirect = SalesCommissionRules.ShareEuro(
             purchaseExVat, SalesCommissionRules.DefaultIndirectCommissionRate);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(expectedDirect, await commissions.GetBalanceExVatAsync(directSmId));
         Assert.Equal(expectedIndirect, await commissions.GetBalanceExVatAsync(parentSmId));
 
@@ -126,7 +126,7 @@ public class MollieWebhookCommissionSettlementTests
         var result = await fulfillment.TryFulfillPaidCheckoutAsync(checkoutId);
         Assert.NotNull(result);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(directSmId));
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(parentSmId));
 
@@ -215,7 +215,7 @@ public class MollieWebhookCommissionSettlementTests
         var expectedIndirect = SalesCommissionRules.ShareEuro(
             purchaseExVat, SalesCommissionRules.DefaultIndirectCommissionRate);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(expectedDirect, await commissions.GetBalanceExVatAsync(directSmId));
         Assert.Equal(expectedIndirect, await commissions.GetBalanceExVatAsync(parentSmId));
     }
@@ -319,7 +319,7 @@ public class MollieWebhookCommissionSettlementTests
     {
         var companySettings = new PlatformCompanySettingsService(db);
         var tokens = new TokenLedgerService(db);
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var commercial = new SalesCommercialService(db, tokens);
         var revenueShare = new RevenueShareService(db, tokens, commissions, commercial);
         var features = new PlatformFeatureService(
@@ -337,7 +337,7 @@ public class MollieWebhookCommissionSettlementTests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             revenueShare,
-            new CommissionLedgerService(db),
+            new CommissionLedgerService(db, new AlwaysOnFeatures()),
             new NoopPendingActions(),
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);

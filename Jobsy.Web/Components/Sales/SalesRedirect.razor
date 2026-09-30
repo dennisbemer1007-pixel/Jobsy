@@ -1,0 +1,9 @@
+@namespace Jobsy.Web.Components.Sales
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter] public string Href { get; set; } = "/sales";
+
+    protected override void OnInitialized()
+        => Navigation.NavigateTo(Href, replace: true);
+}

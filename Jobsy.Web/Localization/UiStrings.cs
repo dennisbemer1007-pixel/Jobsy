@@ -3385,6 +3385,7 @@ public static class UiStrings
         UiStringsCandidateInsights.MergeAll(nl, en, pl, ro, ar);
         UiStringsMatch.MergeAll(nl, en, pl, ro, ar);
         UiStringsMfa.MergeAll(nl, en, pl, ro, ar);
+        UiStringsSales.MergeNl(nl);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

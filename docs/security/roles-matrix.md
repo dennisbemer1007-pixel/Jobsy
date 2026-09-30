@@ -11,8 +11,8 @@ API `[Authorize]` attributes remain authoritative; this document is the human-re
 | Bedrijfsmanager | `EnterpriseManager` | All branches + regions of **own company**; posts vacancies; buys / allocates tokens |
 | Regiomanager | `RegionalManager` | **Read-only**, only branches in its own region |
 | Filiaalmanager | `BranchManager` | Enterprise-like rights, but **own branch only** |
-| Salesmanager | `SalesManager` | Wallet payout, sales toolkit, tracking code + % of referred employers |
-| Ambassadeur | `Ambassadeur` | Like salesmanager (product unfinished) |
+| Salesmanager | `SalesManager` | Wallet payout, sales toolkit, tracking code + % of referred employers. **2FA verplicht.** |
+| Ambassadeur | `Ambassadeur` | **Geparkeerd** (`AmbassadorsEnabled` uit). Geen toegang tot ambassadeur-functies; gegevens blijven bewaard. 2FA blijft verplicht als de rol weer aan gaat. |
 | Decaan | — | Not built |
 | Admin | `Admin` | Everything |
 | Intermediary | `Intermediary` | **Exists in code, not in Dennis’s list** — see open question below |

@@ -1,3 +1,5 @@
+@namespace Jobsy.Web.Components.Layout
+@using Jobsy.Core.Sales
 @using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -7,9 +9,10 @@
     <Authorized>
         @if (_loaded)
         {
-            <a class="sales-wallet-chip" href="/salesmanager/invoices" title="Beschikbaar commissiesaldo">
-                <span>Wallet</span>
-                <strong>€ @_balance.ToString("0.00")</strong>
+            <a class="sp-wallet-chip" href="/sales/wallet" title="@Culture.Format("Sales.WalletAvailable", SalesMoney.FormatPlain(_balance))">
+                <span class="sp-wallet-chip__icon" aria-hidden="true">@((MarkupString)NavIcons.Wallet)</span>
+                <span class="sp-wallet-chip__label">@Culture["Sales.Label.State.Available"]</span>
+                <strong class="sp-wallet-chip__amount">@SalesMoney.FormatPlain(_balance)</strong>
             </a>
         }
     </Authorized>

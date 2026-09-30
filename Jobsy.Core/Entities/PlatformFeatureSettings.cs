@@ -49,5 +49,11 @@ public class PlatformFeatureSettings
     /// </summary>
     public bool SupportAccessNotifySubject { get; set; }
 
+    /// <summary>
+    /// When false (default), the Ambassadeur role is parked: no pages, links, or new commission.
+    /// Existing data is kept.
+    /// </summary>
+    public bool AmbassadorsEnabled { get; set; }
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

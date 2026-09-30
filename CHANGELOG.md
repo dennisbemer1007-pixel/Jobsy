@@ -13,6 +13,10 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ## [Unreleased]
 
+### Added
+- **Lobsy Partner (salesmanager) foundation:** mandatory 2FA for SalesManager (+ Ambassadeur when re-enabled), partner data model + migration, `SalesLayout` / `/sales/*` URLs (legacy 301s), labels, and Ambassadeur parked behind `AmbassadorsEnabled` (default off). Existing salesmanagers are forced through 2FA at next sign-in.
+
+
 ### Fixed
 - **Render `jobsy-api` deploys:** `WebPushSubscriptions` ontbrak in `JobsyDbContextModelSnapshot`. EF Core 9 behandelt dat als `PendingModelChangesWarning` → harde fout in `MigrateAsync` → API-host stopt (Auto-Deploy Failed sinds PWA-commit). Snapshot + regressietest herstellen de deploy.
 

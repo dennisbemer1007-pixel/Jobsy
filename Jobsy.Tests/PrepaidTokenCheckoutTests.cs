@@ -109,7 +109,7 @@ public class PrepaidTokenCheckoutTests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             new FakeRevenueShare(),
-            new CommissionLedgerService(db),
+            new CommissionLedgerService(db, new AlwaysOnFeatures()),
             pending,
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);

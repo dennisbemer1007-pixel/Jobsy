@@ -1,3 +1,4 @@
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
@@ -50,7 +51,7 @@ public class RevenueShareServiceTests
         await db.SaveChangesAsync();
 
         var tokens = new TokenLedgerService(db);
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var share = new RevenueShareService(db, tokens, commissions, new SalesCommercialService(db, tokens));
 
         var checkoutId = Guid.NewGuid();

@@ -1,8 +1,10 @@
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
+using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Jobsy.Infrastructure.Services.OpenAi;
@@ -373,6 +375,9 @@ public static class DependencyInjection
         services.AddScoped<ICandidateMapImageService, OsmTileMapImageService>();
         services.AddHttpClient("OsmTiles", OsmTileMapImageService.ConfigureHttpClient);
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
+        services.AddScoped<ISalesBeneficiaryService, SalesBeneficiaryService>();
+        services.AddScoped<ISalesWalletReadService, SalesWalletReadService>();
+        services.AddScoped<ISalesParkedBalanceService, SalesParkedBalanceService>();
         services.AddScoped<IRevenueShareService, RevenueShareService>();
         services.AddScoped<ISupplierOnboardingPaymentService, SupplierOnboardingPaymentService>();
         services.AddScoped<ISelfBillingInvoiceService, SelfBillingInvoiceService>();

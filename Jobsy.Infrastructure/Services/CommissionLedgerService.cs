@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -9,10 +10,12 @@ namespace Jobsy.Infrastructure.Services;
 public sealed class CommissionLedgerService : ICommissionLedgerService
 {
     private readonly JobsyDbContext _db;
+    private readonly IPlatformFeatureService _features;
 
-    public CommissionLedgerService(JobsyDbContext db)
+    public CommissionLedgerService(JobsyDbContext db, IPlatformFeatureService features)
     {
         _db = db;
+        _features = features;
     }
 
     public async Task<decimal> GetBalanceExVatAsync(
@@ -75,6 +78,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         }
 
         var amountEx = SalesCommissionRules.FounderBonusExVat;
+        var now = DateTime.UtcNow;
         var entry = new CommissionLedgerEntry
         {
             Id = Guid.NewGuid(),
@@ -86,7 +90,8 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             Note = $"Founder-bonus 20% first-year onboarding (slot {firstYearSlot})",
             CompanyId = companyId,
             SourcePaymentId = paymentId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            AvailableFromUtc = now.AddDays(14)
         };
         _db.CommissionLedgerEntries.Add(entry);
         try
@@ -163,7 +168,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             cancellationToken);
     }
 
-    public Task<CommissionLedgerEntry?> TryCreditAmbassadeurTokenCommissionAsync(
+    public async Task<CommissionLedgerEntry?> TryCreditAmbassadeurTokenCommissionAsync(
         Guid ambassadeurUserId,
         Guid companyId,
         Guid tokenCheckoutId,
@@ -173,18 +178,34 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         int? durationDays = null,
         CancellationToken cancellationToken = default)
     {
+        var snap = await _features.GetAsync(cancellationToken);
+        if (!snap.AmbassadorsEnabled)
+        {
+            _db.PlatformLogs.Add(new PlatformLog
+            {
+                Id = Guid.NewGuid(),
+                Level = PlatformLogLevel.Info,
+                Category = "sales.ambassadors.parked-skip",
+                Message = "Ambassadeur commission skipped while parked",
+                DetailsJson = $"{{\"checkoutId\":\"{tokenCheckoutId:D}\"}}",
+                CreatedAt = DateTime.UtcNow
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+            return null;
+        }
+
         if (rate <= 0)
         {
-            return Task.FromResult<CommissionLedgerEntry?>(null);
+            return null;
         }
 
         var windowDays = durationDays ?? SalesCommissionRules.DefaultCommissionDurationDays;
         if (!SalesCommissionRules.IsWithinCommissionWindow(firstYearStartedAt, DateTime.UtcNow, windowDays))
         {
-            return Task.FromResult<CommissionLedgerEntry?>(null);
+            return null;
         }
 
-        return CreditCheckoutCommissionAsync(
+        return await CreditCheckoutCommissionAsync(
             ambassadeurUserId,
             companyId,
             tokenCheckoutId,
@@ -227,6 +248,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             return null;
         }
 
+        var now = DateTime.UtcNow;
         var entry = new CommissionLedgerEntry
         {
             Id = Guid.NewGuid(),
@@ -238,7 +260,8 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             Note = $"{notePrefix} {(rate.Value * 100):0.##}% over €{purchaseAmountEuro:0.00} ex BTW",
             CompanyId = companyId,
             SourceTokenCheckoutId = tokenCheckoutId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            AvailableFromUtc = now.AddDays(14)
         };
         _db.CommissionLedgerEntries.Add(entry);
         try
@@ -281,6 +304,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         decimal vatAmount,
         CancellationToken cancellationToken = default)
     {
+        var now = DateTime.UtcNow;
         var entry = new CommissionLedgerEntry
         {
             Id = Guid.NewGuid(),
@@ -291,7 +315,8 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             VatRate = SalesCommissionRules.VatRate,
             Note = "Self-billing uitbetaling",
             SelfBillingInvoiceId = invoiceId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            AvailableFromUtc = now
         };
         _db.CommissionLedgerEntries.Add(entry);
         await _db.SaveChangesAsync(cancellationToken);

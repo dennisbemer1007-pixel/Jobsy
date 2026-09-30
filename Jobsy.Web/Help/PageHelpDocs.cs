@@ -315,19 +315,19 @@ public static class PageHelpDocs
             "Nodig teamleden uit en bekijk wie toegang heeft tot opdrachtgevers en vacatures.",
             "Samenwerken zonder accounts buiten je organisatie te delen."),
 
-        ["/salesmanager"] = new(
+        ["/sales"] = new(
             "Salesdashboard",
             "Overzicht van trackingcode, referrals en commissiesaldo.",
             "Bekijk je performance, open toolkit of referrals en rond onboarding af als dat nog openstaat.",
             "Snel zien waar je staat in acquisitie en uitbetaling."),
 
-        ["/salesmanager/toolkit"] = new(
+        ["/sales/link"] = new(
             "Sales-toolkit",
             "Materialen en links om ondernemers te werven met jouw trackingcode.",
             "Kopieer je partnerlink, deel materialen en volg hoe prospects instappen.",
             "Acquisitie versnellen met consistente Lobsy-boodschap."),
 
-        ["/salesmanager/referrals"] = new(
+        ["/sales/aanbevelen"] = new(
             "Sales-aanbevelingen",
             "Nieuwe salesmanagers aandragen (tier-afhankelijk).",
             "Deel referral-opties en volg wie via jou is aangemeld.",
@@ -339,19 +339,19 @@ public static class PageHelpDocs
             "Prospects komen hier via een saleslink en starten registratie of oriëntatie.",
             "Salesmanagers koppelen acquisitie aan hun trackingcode."),
 
-        ["/salesmanager/onboarding"] = new(
+        ["/sales/start"] = new(
             "Sales onboarding",
             "Profiel en gegevens van de salesmanager afronden.",
             "Vul verplichte velden (o.a. bedrijfs-/factuurgegevens) in tot onboarding compleet is.",
             "Klaarzetten voor facturatie en uitbetalingen."),
 
-        ["/salesmanager/invoices"] = new(
+        ["/sales/wallet"] = new(
             "Facturen (sales)",
             "Self-billing / factuuroverzicht voor salesmanagers. Kies zelf het uitbetalingsbedrag; download facturen als PDF.",
             "Bekijk of download facturen gekoppeld aan uitbetalingen.",
             "Administratie van commissies of uitbetalingen."),
 
-        ["/salesmanager/payout-checkout"] = new(
+        ["/sales/wallet/uitbetalen"] = new(
             "Uitbetaling",
             "Uitbetalingstraject (Mollie-stub) voor salesmanagers.",
             "Start de checkout-stub; daarna volgt self-billing/documentatie in het platform.",

@@ -229,7 +229,7 @@ public class CoreFunctionalFlowE2ETests
             Math.Round(purchaseExVat * 0.05m, 2, MidpointRounding.AwayFromZero),
             expectedIndirect);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(expectedDirect, await commissions.GetBalanceExVatAsync(direct.UserId));
         Assert.Equal(expectedIndirect, await commissions.GetBalanceExVatAsync(upline.UserId));
 
@@ -371,7 +371,7 @@ public class CoreFunctionalFlowE2ETests
         var result = await fulfillment.TryFulfillPaidCheckoutAsync(checkoutId);
         Assert.NotNull(result);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(direct.UserId));
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(upline.UserId));
     }
@@ -643,7 +643,7 @@ public class CoreFunctionalFlowE2ETests
     {
         var companySettings = new PlatformCompanySettingsService(db);
         var tokens = new TokenLedgerService(db);
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var commercial = new SalesCommercialService(db, tokens);
         var revenueShare = new RevenueShareService(db, tokens, commissions, commercial);
         var features = CreateFeatures(db);
@@ -655,7 +655,7 @@ public class CoreFunctionalFlowE2ETests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             revenueShare,
-            new CommissionLedgerService(db),
+            new CommissionLedgerService(db, new AlwaysOnFeatures()),
             pending,
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);

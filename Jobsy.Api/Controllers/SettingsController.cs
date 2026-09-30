@@ -333,7 +333,8 @@ public class SettingsController : ControllerBase
                     request.FreePublishUntil,
                     request.ClearFreePublishUntil,
                     SupportAccessNotifyAdmins: request.SupportAccessNotifyAdmins,
-                    SupportAccessNotifySubject: request.SupportAccessNotifySubject),
+                    SupportAccessNotifySubject: request.SupportAccessNotifySubject,
+                    AmbassadorsEnabled: request.AmbassadorsEnabled),
                 cancellationToken);
             return Ok(ToFeatureDto(snap));
         }
@@ -541,7 +542,8 @@ public class SettingsController : ControllerBase
             snap.SessionInactivityTimeoutMinutes,
             snap.FreePublishUntil,
             snap.SupportAccessNotifyAdmins,
-            snap.SupportAccessNotifySubject);
+            snap.SupportAccessNotifySubject,
+            snap.AmbassadorsEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

@@ -29,7 +29,9 @@ public sealed class LocalizationParityReportTests
         foreach (var lang in Languages)
         {
             Assert.True(catalog.ContainsKey(lang), $"Missing language catalog: {lang}");
-            var missing = nlKeys.Where(k => !catalog[lang].ContainsKey(k)).ToList();
+            var missing = nlKeys
+                .Where(k => !UiStringsSales.IsNlOnlyPrefix(k) && !catalog[lang].ContainsKey(k))
+                .ToList();
             Assert.True(
                 missing.Count == 0,
                 $"Language {lang} missing {missing.Count} keys. First: {string.Join(", ", missing.Take(10))}");
@@ -61,7 +63,8 @@ public sealed class LocalizationParityReportTests
                     continue;
                 }
 
-                if (LocalizationParityAllowList.IsExemptIdenticalValue(nlValue))
+                if (UiStringsSales.IsNlOnlyPrefix(key)
+                    || LocalizationParityAllowList.IsExemptIdenticalValue(nlValue))
                 {
                     exempt++;
                 }

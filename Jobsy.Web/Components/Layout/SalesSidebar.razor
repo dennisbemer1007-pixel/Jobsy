@@ -1,0 +1,44 @@
+@namespace Jobsy.Web.Components.Layout
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<nav class="sp-sidebar__nav" aria-label="@Culture["Sales.ProductLabel"]">
+    @foreach (var group in SalesNav.Groups)
+    {
+        var items = group.Items
+            .Where(i => i.IsAvailable && (!i.RequiresCanRecruit || CanRecruit))
+            .ToList();
+        if (items.Count == 0)
+        {
+            continue;
+        }
+
+        <div class="sp-sidebar__group">
+            <p class="sp-sidebar__group-label">@Culture[group.LabelKey]</p>
+            <ul class="sp-sidebar__list">
+                @foreach (var item in items)
+                {
+                    var active = IsActive(item.Href);
+                    <li>
+                        <a class="sp-sidebar__link @(active ? "is-active" : null)" href="@item.Href">
+                            <span class="sp-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                            <span>@Culture[item.LabelKey]</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</nav>
+
+@code {
+    [Parameter] public bool CanRecruit { get; set; }
+
+    private bool IsActive(string href)
+    {
+        var path = new Uri(Navigation.Uri).AbsolutePath.TrimEnd('/');
+        var target = href.Split('?')[0].TrimEnd('/');
+        return string.Equals(path, target, StringComparison.OrdinalIgnoreCase);
+    }
+}

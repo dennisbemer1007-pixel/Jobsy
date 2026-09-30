@@ -68,12 +68,12 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/vacancy-categories` | `Pages/Admin/VacancyCategoriesAdmin.razor` | Admin |
 | `/admin/wages` | `Pages/Admin/WageAdmin.razor` | Admin |
 | `/algemene-voorwaarden` | `Pages/Legal/AlgemeneVoorwaarden.razor` | anonymous |
-| `/ambassadeur` | `Pages/Ambassadeur/Dashboard.razor` | Ambassadeur |
-| `/ambassadeur/finance` | `Pages/Ambassadeur/Finance.razor` | Ambassadeur |
-| `/ambassadeur/onboarding` | `Pages/Ambassadeur/Onboarding.razor` | Ambassadeur |
-| `/ambassadeur/payout-checkout` | `Pages/Ambassadeur/PayoutCheckoutStub.razor` | Ambassadeur |
-| `/ambassadeur/ref/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
-| `/ambassadeur/toolkit` | `Pages/Ambassadeur/Toolkit.razor` | Ambassadeur |
+| `/ambassadeur` (geparkeerd) | `Pages/Ambassadeur/Dashboard.razor` | Ambassadeur |
+| `/ambassadeur/ (geparkeerd) /finance` | `Pages/Ambassadeur/Finance.razor` | Ambassadeur |
+| `/ambassadeur/ (geparkeerd) /onboarding` | `Pages/Ambassadeur/Onboarding.razor` | Ambassadeur |
+| `/ambassadeur/ (geparkeerd) /payout-checkout` | `Pages/Ambassadeur/PayoutCheckoutStub.razor` | Ambassadeur |
+| `/ambassadeur/ (geparkeerd) /ref/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
+| `/ambassadeur/ (geparkeerd) /toolkit` | `Pages/Ambassadeur/Toolkit.razor` | Ambassadeur |
 | `/banen` | `Pages/Banen.razor` | anonymous |
 | `/branch` | `Pages/Branch/BranchDashboard.razor` | BranchManager, EnterpriseManager |
 | `/branch/applicants` | `Pages/Branch/Applicants.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
@@ -141,12 +141,12 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/regional/tokens` | `Pages/Regional/TokenControl.razor` | RegionalManager, EnterpriseManager |
 | `/register` | `Pages/Register.razor` | anonymous |
 | `/register/activate` | `Pages/RegisterActivate.razor` | anonymous |
-| `/salesmanager` | `Pages/SalesManager/Dashboard.razor` | SalesManager |
-| `/salesmanager/invoices` | `Pages/SalesManager/Invoices.razor` | SalesManager |
-| `/salesmanager/onboarding` | `Pages/SalesManager/Onboarding.razor` | SalesManager |
-| `/salesmanager/payout-checkout` | `Pages/SalesManager/PayoutCheckoutStub.razor` | SalesManager |
-| `/salesmanager/referrals` | `Pages/SalesManager/Referrals.razor` | SalesManager |
-| `/salesmanager/toolkit` | `Pages/SalesManager/SalesToolkit.razor` | SalesManager |
+| `/sales` | `Pages/Sales/Dashboard.razor` | SalesManager |
+| `/sales/wallet` | `Pages/SalesManager/Invoices.razor` | SalesManager |
+| `/sales/start` | `Pages/SalesManager/Onboarding.razor` | SalesManager |
+| `/sales/wallet/uitbetalen` | `Pages/SalesManager/PayoutCheckoutStub.razor` | SalesManager |
+| `/sales/aanbevelen` | `Pages/SalesManager/Referrals.razor` | SalesManager |
+| `/sales/link` | `Pages/SalesManager/SalesToolkit.razor` | SalesManager |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |
@@ -156,3 +156,6 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/wie-zijn-wij` | `Pages/Legal/WieZijnWij.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
+
+
+<!-- Salesmanager stack 01: Uitbetalingen tab lands on /admin/sales-managers in 08 (Dependencies B ABSENT). Parked-balance note on /admin/token-finance. -->

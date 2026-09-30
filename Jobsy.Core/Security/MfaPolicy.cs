@@ -9,5 +9,8 @@ public static class MfaPolicy
            || role is UserRole.BranchManager
                or UserRole.RegionalManager
                or UserRole.EnterpriseManager
-               or UserRole.Intermediary;
+               or UserRole.Intermediary
+           || role == UserRole.SalesManager
+           // Ambassadeur is parked (AmbassadorsEnabled = false); 2FA stays required when the role is re-enabled.
+           || role == UserRole.Ambassadeur;
 }

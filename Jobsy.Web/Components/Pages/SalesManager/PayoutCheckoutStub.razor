@@ -1,12 +1,13 @@
-@page "/salesmanager/payout-checkout"
+@page "/sales/wallet/uitbetalen"
+@layout SalesLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "SalesManager")]
 @inject JobsyApiClient Api
 
 <PageTitle>Uitbetaling stub · Lobsy</PageTitle>
 
-<PayoutCheckoutStubView CancelHref="/salesmanager/invoices"
-                        SuccessNavigateHref="/salesmanager/invoices"
+<PayoutCheckoutStubView CancelHref="/sales/wallet"
+                        SuccessNavigateHref="/sales/wallet"
                         CompleteCheckoutAsync="CompleteAsync" />
 
 @code {

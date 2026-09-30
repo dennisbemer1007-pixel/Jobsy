@@ -150,6 +150,15 @@ public sealed class PlatformFeatureItem
     public bool ClearFreePublishUntil { get; set; }
     public bool SupportAccessNotifyAdmins { get; set; }
     public bool SupportAccessNotifySubject { get; set; }
+    public bool AmbassadorsEnabled { get; set; }
+}
+
+public sealed class SalesParkedBalanceApiItem
+{
+    public Guid UserId { get; set; }
+    public string MaskedDisplayName { get; set; } = "";
+    public decimal OpenBalanceExVat { get; set; }
+    public DateTime? LastLineAtUtc { get; set; }
 }
 
 public sealed class PlatformCompanyItem

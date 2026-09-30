@@ -32,7 +32,7 @@ public class SalesManagerCommissionTests
         Assert.True(first.CommissionCredited);
         Assert.Equal(1, first.FirstYearSupplierSlot);
 
-        var balance = await new CommissionLedgerService(db).GetBalanceExVatAsync(smId);
+        var balance = await new CommissionLedgerService(db, new AlwaysOnFeatures()).GetBalanceExVatAsync(smId);
         Assert.Equal(SalesCommissionRules.FounderBonusExVat, balance);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -45,7 +45,7 @@ public class SalesManagerCommissionTests
             await db.CommissionLedgerEntries.CountAsync(e =>
                 e.Kind == CommissionEntryKind.FounderBonus && e.CompanyId == companyId));
         Assert.Equal(SalesCommissionRules.FounderBonusExVat,
-            await new CommissionLedgerService(db).GetBalanceExVatAsync(smId));
+            await new CommissionLedgerService(db, new AlwaysOnFeatures()).GetBalanceExVatAsync(smId));
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class SalesManagerCommissionTests
         company.FirstYearStartedAt = DateTime.UtcNow.AddMonths(-1);
         await db.SaveChangesAsync();
 
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var checkoutId = Guid.NewGuid();
         var first = await ledger.TryCreditTokenCommissionAsync(
             smId, companyId, checkoutId, 40.00m, company.FirstYearStartedAt);
@@ -93,7 +93,7 @@ public class SalesManagerCommissionTests
     {
         await using var db = CreateDb();
         var (smId, companyId) = await SeedReferredCompanyAsync(db, slot: 5, kvk: "55550005");
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_payout_1", 5);
 
         var invoices = new SelfBillingInvoiceService(db, ledger);
@@ -146,7 +146,7 @@ public class SalesManagerCommissionTests
     {
         await using var db = CreateDb();
         var (smId, companyId) = await SeedReferredCompanyAsync(db, slot: 6, kvk: "55550006");
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_partial_1", 6);
 
         var invoices = new SelfBillingInvoiceService(db, ledger);
@@ -180,7 +180,7 @@ public class SalesManagerCommissionTests
     {
         await using var db = CreateDb();
         var (smId, companyId) = await SeedReferredCompanyAsync(db, slot: 3);
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_test_1", 3);
 
         var invoices = new SelfBillingInvoiceService(db, ledger);
@@ -492,7 +492,7 @@ public class SalesManagerCommissionTests
     {
         await using var db = CreateDb();
         var (smId, companyId) = await SeedReferredCompanyAsync(db, slot: 4);
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_privacy", 4);
         await new SelfBillingInvoiceService(db, ledger).CreateFromUninvoicedBalanceAsync(smId);
 
@@ -572,7 +572,7 @@ public class SalesManagerCommissionTests
     }
 
     private static SupplierOnboardingPaymentService CreateOnboardingService(JobsyDbContext db) =>
-        new(db, new CommissionLedgerService(db), new TestHostEnvironment(),
+        new(db, new CommissionLedgerService(db, new AlwaysOnFeatures()), new TestHostEnvironment(),
             NullLogger<SupplierOnboardingPaymentService>.Instance);
 
     private static PartnerAffiliateService CreatePartnerAffiliateService(JobsyDbContext db) =>

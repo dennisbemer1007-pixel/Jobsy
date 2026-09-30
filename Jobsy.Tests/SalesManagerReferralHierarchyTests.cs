@@ -134,7 +134,7 @@ public class SalesManagerReferralHierarchyTests
         await db.SaveChangesAsync();
 
         var tokens = new TokenLedgerService(db);
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var commercial = new SalesCommercialService(db, tokens);
         var share = new RevenueShareService(db, tokens, commissions, commercial);
 
@@ -190,7 +190,7 @@ public class SalesManagerReferralHierarchyTests
         await db.SaveChangesAsync();
 
         var tokens = new TokenLedgerService(db);
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var share = new RevenueShareService(db, tokens, commissions, new SalesCommercialService(db, tokens));
 
         await share.ApplyTokenPurchaseShareAsync(

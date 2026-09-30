@@ -1595,6 +1595,14 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         Guid? orgId,
         CancellationToken cancellationToken)
     {
+        var features = await _db.PlatformFeatureSettings.AsNoTracking()
+            .Select(s => (bool?)s.AmbassadorsEnabled)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (features != true)
+        {
+            return false;
+        }
+
         var profile = await _db.AmbassadeurProfiles
             .FirstOrDefaultAsync(
                 p => p.TrackingCode != null

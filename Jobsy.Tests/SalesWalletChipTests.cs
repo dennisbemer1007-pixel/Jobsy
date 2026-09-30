@@ -13,41 +13,41 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
 
-public class SalesWalletChipTests : TestContext
+public class SalesWalletChipV2Tests : TestContext
 {
     [Fact]
     public void Anonymous_makes_zero_dashboard_calls()
     {
         var counter = Arrange(CreateAnonymous());
-        var cut = RenderComponent<SalesWalletChip>();
+        var cut = RenderComponent<SalesWalletChipV2>();
         cut.WaitForState(() => cut.Instance is not null, TimeSpan.FromSeconds(1));
 
         Assert.Equal(0, counter.DashboardCalls);
-        Assert.DoesNotContain("sales-wallet-chip", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("sp-wallet-chip", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Candidate_makes_zero_dashboard_calls()
     {
         var counter = Arrange(CreateUser("Candidate"));
-        var cut = RenderComponent<SalesWalletChip>();
+        var cut = RenderComponent<SalesWalletChipV2>();
         cut.WaitForState(() => cut.Instance is not null, TimeSpan.FromSeconds(1));
 
         Assert.Equal(0, counter.DashboardCalls);
-        Assert.DoesNotContain("sales-wallet-chip", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("sp-wallet-chip", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
     public void SalesManager_makes_exactly_one_dashboard_call()
     {
         var counter = Arrange(CreateUser("SalesManager"), dashboardOk: true);
-        var cut = RenderComponent<SalesWalletChip>();
+        var cut = RenderComponent<SalesWalletChipV2>();
 
         cut.WaitForAssertion(
-            () => Assert.Contains("sales-wallet-chip", cut.Markup, StringComparison.Ordinal),
+            () => Assert.Contains("sp-wallet-chip", cut.Markup, StringComparison.Ordinal),
             TimeSpan.FromSeconds(2));
         Assert.Equal(1, counter.DashboardCalls);
-        Assert.Contains("€ 12.50", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("€ 12,50", cut.Markup, StringComparison.Ordinal);
     }
 
     private CountingHandler Arrange(ClaimsPrincipal user, bool dashboardOk = false)

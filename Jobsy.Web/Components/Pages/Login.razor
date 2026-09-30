@@ -205,27 +205,8 @@
             };
         }
 
-        // Persist Ambassadeur referral from ?ref= so OAuth ensure-external can attribute.
-        if (query.TryGetValue("ref", out var refValues))
-        {
-            var refCode = refValues.FirstOrDefault()?.Trim().ToUpperInvariant() ?? "";
-            if (Jobsy.Core.Rules.AmbassadeurCommissionRules.IsAmbassadeurTrackingCode(refCode)
-                && http is not null)
-            {
-                http.Response.Cookies.Append(
-                    "lobsy_ambassadeur_ref",
-                    refCode,
-                    new CookieOptions
-                    {
-                        HttpOnly = true,
-                        IsEssential = true,
-                        SameSite = SameSiteMode.Lax,
-                        Secure = JobsyCookie.ShouldMarkSecure(http),
-                        MaxAge = TimeSpan.FromDays(30),
-                        Path = "/"
-                    });
-            }
-        }
+        // Ambassadeur referral cookie (?ref=AM-…) is parked while AmbassadorsEnabled is off (01.10).
+        // Re-enable with a features check when the Ambassadeur stack returns.
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

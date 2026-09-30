@@ -189,6 +189,8 @@ app.UseLoginProtection();
 app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();
 app.UseAuthorization();
+app.UseMiddleware<SalesLegacyRoutesMiddleware>();
+app.UseMiddleware<AmbassadorsFeatureMiddleware>();
 app.UseMfaEnforcement();
 app.UseAntiforgery();
 

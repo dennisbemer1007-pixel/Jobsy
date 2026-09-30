@@ -1,0 +1,225 @@
+/* Lobsy Partner (salesmanager) shell — BEM block sp-* */
+.sp-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.sp-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  height: 56px;
+  padding-inline: var(--space-4, 1rem);
+  background: var(--brand-deep);
+  color: #fff;
+}
+
+.sp-topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  color: inherit;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.sp-topbar__logo { height: 28px; width: auto; }
+.sp-topbar__product {
+  font-weight: 600;
+  font-size: var(--text-sm, 0.875rem);
+  white-space: nowrap;
+}
+
+.sp-topbar .ent-scope-chip {
+  --ent-chip-bg: color-mix(in srgb, #fff 12%, transparent);
+  --ent-chip-fg: #fff;
+}
+
+.sp-topbar__search { flex: 1; min-width: 0; }
+.sp-topbar__actions {
+  display: none;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+}
+
+.sp-topbar__menu {
+  margin-inline-start: auto;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  padding: 0.35rem;
+  display: inline-flex;
+}
+
+.sp-shell__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.sp-sidebar {
+  width: 248px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-inline-end: 1px solid var(--border);
+  display: none;
+  flex-direction: column;
+  padding: var(--space-4, 1rem) var(--space-3, 0.75rem);
+}
+
+.sp-sidebar--desktop { display: none; }
+
+.sp-sidebar__group { margin-bottom: var(--space-4, 1rem); }
+.sp-sidebar__group-label {
+  margin: 0 0 var(--space-2, 0.5rem);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+.sp-sidebar__list { list-style: none; margin: 0; padding: 0; }
+.sp-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 400;
+}
+.sp-sidebar__link.is-active {
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
+  color: var(--brand-deep);
+  font-weight: 600;
+}
+.sp-sidebar__icon svg { width: 1.1rem; height: 1.1rem; display: block; }
+.sp-sidebar__privacy {
+  margin-top: auto;
+  font-size: 0.75rem;
+  color: var(--muted);
+  display: flex;
+  gap: 0.4rem;
+  align-items: flex-start;
+  line-height: 1.35;
+}
+.sp-sidebar__privacy svg { width: 1rem; height: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
+
+.sp-main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-4, 1rem);
+  padding-bottom: calc(var(--bottom-nav-clearance, 4.5rem) + var(--space-4, 1rem));
+}
+
+.sp-breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--muted);
+  margin-bottom: var(--space-3, 0.75rem);
+}
+.sp-breadcrumbs a { color: inherit; text-decoration: none; }
+.sp-breadcrumbs a:hover { color: var(--brand); }
+.sp-breadcrumbs__sep { opacity: 0.6; }
+
+.sp-wallet-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #fff 14%, transparent);
+  color: #fff;
+  text-decoration: none;
+  font-size: var(--text-sm, 0.875rem);
+}
+.sp-wallet-chip__amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.sp-wallet-chip__icon svg { width: 1rem; height: 1rem; display: block; }
+.sp-wallet-chip__label { display: none; }
+
+.sp-bottom-nav {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 35;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background: var(--surface);
+  border-block-start: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.sp-bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.45rem 0.2rem;
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+}
+.sp-bottom-nav__item.is-active { color: var(--brand-deep); font-weight: 600; }
+.sp-bottom-nav__icon svg { width: 1.25rem; height: 1.25rem; }
+
+.sp-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.35);
+  z-index: 45;
+}
+.sp-drawer {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: min(248px, 88vw);
+  background: var(--surface);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-105%);
+  transition: transform 0.2s ease;
+}
+.sp-drawer.is-open { transform: translateX(0); }
+[dir="rtl"] .sp-drawer { transform: translateX(105%); }
+[dir="rtl"] .sp-drawer.is-open { transform: translateX(0); }
+.sp-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  border-block-end: 1px solid var(--border);
+}
+.sp-drawer__close { background: transparent; border: 0; padding: 0.35rem; }
+.sp-drawer__body {
+  padding: var(--space-3, 0.75rem);
+  overflow: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+  .sp-topbar__actions { display: inline-flex; }
+  .sp-topbar__menu { display: none; }
+  .sp-sidebar--desktop { display: flex; }
+  .sp-bottom-nav { display: none; }
+  .sp-main { padding-bottom: var(--space-6, 1.5rem); }
+  .sp-wallet-chip__label { display: inline; }
+}
