@@ -353,6 +353,7 @@ public class EmailCodeAuthTests
                 config,
                 new MemoryCache(new MemoryCacheOptions()),
                 NullLogger<DeviceSessionService>.Instance),
+            new MfaTrustedDeviceService(db),
             email,
             new MfaChallengeService(new MemoryCache(new MemoryCacheOptions())),
             features,

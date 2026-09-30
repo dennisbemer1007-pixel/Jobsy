@@ -1,10 +1,12 @@
 @page "/account/mfa/recovery-codes"
 @attribute [AllowAnonymous]
 @attribute [ExcludeFromInteractiveRouting]
-@using System.Text
+@layout PublicLayout
 @using System.Text.Json
+@using Jobsy.Core.Security
 @using Jobsy.Core.Time
 @using Jobsy.Web.Auth
+@using Jobsy.Web.Components.Registration
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Security
 @using Microsoft.AspNetCore.Components
@@ -23,76 +25,108 @@
         : CspNonce.GetOrCreate(HttpContextAccessor.HttpContext);
 }
 
-<div class="login-modal login-modal--compact account-mfa" role="dialog" aria-modal="true" aria-labelledby="mfa-recovery-title">
-    <div class="login-modal__dialog login-card">
-        <div class="login-modal__header">
-            <h1 id="mfa-recovery-title">@(_usedRecovery ? Culture["Mfa.RecoveryUsedTitle"] : Culture["Mfa.RecoveryTitle"])</h1>
-        </div>
-
-        @if (!_usedRecovery)
-        {
-            <p class="account-mfa__step">@string.Format(Culture["Mfa.StepOf"], 2, 2)</p>
-            <p class="login-lead">@Culture["Mfa.RecoveryLead"]</p>
-        }
-        else
-        {
-            <p class="login-lead" role="status">
-                @string.Format(Culture["Mfa.RecoveryUsedLead"], _codesLeft)
-            </p>
-            @if (_codesLeft <= 3)
-            {
-                <p class="login-error" role="alert">@Culture["Mfa.RecoveryAlmostOut"]</p>
-            }
-        }
-
-        @if (!_usedRecovery && _codes.Count == 0)
-        {
-            <p class="state-message" role="status">@Culture["Mfa.CodesAlreadyShown"]</p>
-            <p>
-                <a class="login-submit account-mfa__continue-link" href="@_returnUrl">@Culture["Mfa.Continue"]</a>
-            </p>
-        }
-        else if (!_usedRecovery)
-        {
-            <ul class="account-mfa__codes" id="mfa-recovery-list">
-                @foreach (var recoveryCode in _codes)
-                {
-                    <li><code>@recoveryCode</code></li>
-                }
-            </ul>
-
-            <div class="account-mfa__code-actions">
-                <button type="button"
-                        class="btn-compact"
-                        data-download-codes
-                        data-header-email="@_downloadHeaderEmail"
-                        data-header-date="@_downloadHeaderDate"
-                        data-header-note="@Culture["Mfa.DownloadNote"]">@Culture["Mfa.DownloadTxt"]</button>
-                <button type="button"
-                        class="btn-compact"
-                        data-copy-target="#mfa-recovery-list"
-                        data-copied-label="@Culture["Mfa.CodesCopied"]">@Culture["Mfa.CopyCodes"]</button>
-                <span data-copy-status role="status" aria-live="polite" class="visually-hidden"></span>
-            </div>
-
-            <form method="get" action="@_returnUrl" class="login-form account-mfa__confirm-form" data-enhance="false" id="mfa-recovery-continue">
-                <label class="login-remember">
-                    <input type="checkbox" id="mfa-codes-saved" required />
-                    <span>@Culture["Mfa.SavedCheckbox"]</span>
-                </label>
-                <button type="submit" class="login-submit" id="mfa-continue-btn">@Culture["Mfa.Continue"]</button>
-            </form>
-        }
-        else
-        {
-            <p>
-                <a class="login-submit account-mfa__continue-link" href="@_returnUrl">@Culture["Mfa.Continue"]</a>
-            </p>
-        }
+@if (_wizardVariant)
+{
+    <div class="au-wizard-wrap">
+        <WaWizardChrome CurrentStep="4" Speech="@Culture["Mfa.RecoveryLead"]" DoneOnCurrent="false" />
     </div>
-</div>
+}
 
-<script src="js/features/account-mfa.js?v=20260930-auth01" nonce="@nonce" defer></script>
+<section class="au-stage" data-au-mfa-codes>
+    <div class="au-blob au-blob--a" aria-hidden="true"></div>
+    <div class="au-col">
+        <div class="au-card au-card--print">
+            @if (!_usedRecovery)
+            {
+                <div class="au-alert au-alert--mint" role="status">
+                    <span class="au-alert__icon" aria-hidden="true">✓</span>
+                    <div>
+                        <strong class="au-alert__title">@Culture["Mfa.SuccessOn"]</strong>
+                    </div>
+                </div>
+                <p class="au-eyebrow">@(_wizardVariant ? string.Format(Culture["Mfa.StepOf"], 4, 4) : string.Format(Culture["Mfa.StepOf"], 2, 2))</p>
+                <h1 class="au-title">@Culture["Mfa.RecoveryTitle"]</h1>
+                <p class="au-lead">@Culture["Mfa.RecoveryLead"]</p>
+            }
+            else
+            {
+                <h1 class="au-title">@Culture["Mfa.RecoveryUsedTitle"]</h1>
+                <p class="au-lead" role="status">
+                    @string.Format(Culture["Mfa.RecoveryUsedLead"], _codesLeft)
+                </p>
+                @if (_codesLeft <= 3)
+                {
+                    <div class="au-alert au-alert--danger" role="alert">
+                        <span class="au-alert__icon" aria-hidden="true">!</span>
+                        <p class="au-alert__text">@Culture["Mfa.RecoveryAlmostOut"]</p>
+                    </div>
+                }
+                <p class="au-below">
+                    <a href="/account/mfa/herstelcodes-vernieuwen">@Culture["Mfa.RegenerateLink"]</a>
+                </p>
+            }
+
+            @if (!_usedRecovery && _codes.Count == 0)
+            {
+                <p class="au-lead" role="status">@Culture["Mfa.CodesAlreadyShown"]</p>
+                <p>
+                    <a class="au-submit" href="@_returnUrl">@ContinueLabel</a>
+                </p>
+            }
+            else if (!_usedRecovery)
+            {
+                <ol class="au-codes" id="mfa-recovery-list" dir="ltr">
+                    @for (var i = 0; i < _codes.Count; i++)
+                    {
+                        var recoveryCode = _codes[i];
+                        var n = i + 1;
+                        <li aria-label="@($"{n}: {recoveryCode}")">
+                            <span class="au-codes__n" aria-hidden="true">@n</span>
+                            <code>@recoveryCode</code>
+                        </li>
+                    }
+                </ol>
+
+                <div class="au-code-actions no-print">
+                    <button type="button"
+                            class="au-submit au-submit--secondary"
+                            data-download-codes
+                            data-header-email="@_downloadHeaderEmail"
+                            data-header-date="@_downloadHeaderDate"
+                            data-header-note="@Culture["Mfa.DownloadNote"]">@Culture["Mfa.DownloadTxt"]</button>
+                    <button type="button"
+                            class="au-submit au-submit--secondary"
+                            data-copy-target="#mfa-recovery-list"
+                            data-copied-label="@Culture["Mfa.CodesCopied"]">@Culture["Mfa.CopyCodes"]</button>
+                    <button type="button"
+                            class="au-submit au-submit--secondary"
+                            data-print-codes>@Culture["Mfa.Print"]</button>
+                    <span data-copy-status role="status" aria-live="polite" class="visually-hidden"></span>
+                </div>
+
+                <p class="au-print-meta" hidden>
+                    @_downloadHeaderEmail · @_downloadHeaderDate
+                </p>
+
+                <form method="get" action="@_returnUrl" class="au-form no-print" data-enhance="false" id="mfa-recovery-continue">
+                    <label class="au-remember">
+                        <input type="checkbox" id="mfa-codes-saved" name="codesSaved" required />
+                        <span>@Culture["Mfa.SavedCheckbox"]</span>
+                    </label>
+                    <button type="submit" class="au-submit" id="mfa-continue-btn">@ContinueLabel</button>
+                </form>
+            }
+            else
+            {
+                <p class="no-print">
+                    <a class="au-submit" href="@_returnUrl">@ContinueLabel</a>
+                </p>
+            }
+        </div>
+    </div>
+</section>
+
+<script src="js/features/account-mfa.js?v=20260930-auth04" nonce="@nonce" defer></script>
 
 @code {
     private readonly List<string> _codes = [];
@@ -101,6 +135,10 @@
     private int _codesLeft;
     private string _downloadHeaderEmail = string.Empty;
     private string _downloadHeaderDate = string.Empty;
+    private bool _wizardVariant;
+
+    private string ContinueLabel =>
+        _wizardVariant ? Culture["Mfa.ContinueCompany"] : Culture["Mfa.Continue"];
 
     protected override void OnInitialized()
     {
@@ -128,6 +166,8 @@
         {
             _returnUrl = AuthRedirects.SafeLocalUrl(cookieReturn);
         }
+
+        _wizardVariant = _returnUrl.StartsWith("/register/", StringComparison.OrdinalIgnoreCase);
 
         _usedRecovery = query.TryGetValue("used", out var used)
                         && string.Equals(used.ToString(), "1", StringComparison.OrdinalIgnoreCase);
@@ -159,7 +199,10 @@
                 var protector = DataProtection.CreateProtector(MfaRecoveryCodesCookie.ProtectorPurpose);
                 var json = protector.Unprotect(protectedPayload);
                 var codes = JsonSerializer.Deserialize<List<string>>(json) ?? [];
-                _codes.AddRange(codes.Where(c => !string.IsNullOrWhiteSpace(c)).Take(10));
+                foreach (var c in codes.Where(c => !string.IsNullOrWhiteSpace(c)).Take(10))
+                {
+                    _codes.Add(Jobsy.Core.Security.MfaRecoveryCodes.FormatGrouped(c));
+                }
             }
             catch
             {
@@ -168,7 +211,7 @@
         }
 
         var email = http.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? string.Empty;
-        var masked = MaskEmail(email);
+        var masked = EmailMask.Mask(email);
         _downloadHeaderEmail = string.Format(Culture["Mfa.DownloadHeaderEmail"], masked);
         _downloadHeaderDate = string.Format(
             Culture["Mfa.DownloadHeaderDate"],
@@ -187,16 +230,5 @@
 
         http.Response.Headers.CacheControl = "no-store";
         http.Response.Headers["Referrer-Policy"] = "no-referrer";
-    }
-
-    private static string MaskEmail(string email)
-    {
-        var at = email.IndexOf('@');
-        if (at <= 1)
-        {
-            return "***";
-        }
-
-        return email[0] + "***" + email[at..];
     }
 }

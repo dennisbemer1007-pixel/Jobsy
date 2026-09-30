@@ -367,9 +367,20 @@ public static class AuthServiceCollectionExtensions
             else
             {
                 var authApi = http.RequestServices.GetRequiredService<AuthApiClient>();
-                var outcome = await authApi.LocalLoginAsync(email, password, rememberDevice);
+                var trustToken = MfaTrustCookie.TryReadRawToken(http, dataProtection, out _);
+                var outcome = await authApi.LocalLoginAsync(email, password, rememberDevice, trustToken);
                 if (outcome.Failure is LocalLoginFailureKind failure)
                 {
+                    if (failure is LocalLoginFailureKind.Invalid or LocalLoginFailureKind.Locked or LocalLoginFailureKind.TooMany)
+                    {
+                        // keep existing hint cookie below
+                    }
+
+                    if (failure == LocalLoginFailureKind.Invalid && !string.IsNullOrWhiteSpace(trustToken))
+                    {
+                        // Wrong password — do not clear trust; only clear when MFA is required without match.
+                    }
+
                     var error = failure switch
                     {
                         LocalLoginFailureKind.Locked => "locked",
@@ -393,6 +404,7 @@ public static class AuthServiceCollectionExtensions
                 if (apiProfile?.RequiresMfa == true
                     && !string.IsNullOrWhiteSpace(apiProfile.MfaChallengeToken))
                 {
+                    MfaTrustCookie.Clear(http);
                     SetMfaChallengeCookies(http, apiProfile.MfaChallengeToken, safeReturn);
                     var mfaPath = apiProfile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup";
                     return Results.Redirect(mfaPath);
@@ -597,10 +609,22 @@ public static class AuthServiceCollectionExtensions
             }
 
             var authApi = http.RequestServices.GetRequiredService<AuthApiClient>();
+            var method = form["method"].ToString();
+            if (string.IsNullOrWhiteSpace(method))
+            {
+                method = string.IsNullOrWhiteSpace(form["recoveryCode"].ToString()) ? "totp" : "recovery";
+            }
+
+            var trustDevice = string.Equals(
+                form["trustDevice"].ToString(),
+                "true",
+                StringComparison.OrdinalIgnoreCase);
             var outcome = await authApi.MfaVerifyAsync(
                 challenge,
                 form["code"].ToString(),
-                form["recoveryCode"].ToString());
+                form["recoveryCode"].ToString(),
+                trustDevice,
+                method);
 
             string ErrorRedirect(string error, DateTime? retryAt = null)
             {
@@ -650,6 +674,11 @@ public static class AuthServiceCollectionExtensions
             ClearMfaChallengeCookies(http);
             StampLastActivity(http);
 
+            if (!string.IsNullOrWhiteSpace(profile.MfaTrustToken) && profile.UserId is Guid trustUserId)
+            {
+                MfaTrustCookie.Set(http, dataProtection, trustUserId, profile.MfaTrustToken);
+            }
+
             var returnUrl = AuthRedirects.SafeLocalUrl(
                 http.Request.Cookies["Jobsy.MfaReturnUrl"] ?? "/home");
 
@@ -669,6 +698,102 @@ public static class AuthServiceCollectionExtensions
 
             return Results.Redirect(returnUrl);
         }).RequireRateLimiting("auth");
+
+        app.MapPost("/account/mfa/cancel", async (
+            HttpContext http,
+            IAntiforgery antiforgery) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(http))
+            {
+                return Results.Redirect("/login?error=retry");
+            }
+
+            ClearMfaChallengeCookies(http);
+            return Results.Redirect("/login");
+        }).RequireRateLimiting("auth");
+
+        app.MapPost("/account/mfa/herstelcodes-vernieuwen", async (
+            HttpContext http,
+            IConfiguration configuration,
+            IAntiforgery antiforgery,
+            IDataProtectionProvider dataProtection,
+            IHttpClientFactory httpClientFactory) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(http)
+                || http.User.Identity?.IsAuthenticated != true
+                || !http.User.HasClaim(JobsyClaimTypes.MfaVerified, "1"))
+            {
+                return Results.Redirect("/login?error=mfa-required");
+            }
+
+            var form = await http.Request.ReadFormAsync();
+            var code = form["code"].ToString();
+            var issuer = http.RequestServices.GetService<JobsyAccessTokenIssuer>();
+            var jwt = issuer?.TryCreate(http.User, http.Connection.RemoteIpAddress?.ToString());
+            if (string.IsNullOrWhiteSpace(jwt))
+            {
+                return Results.Redirect("/login?error=mfa-required");
+            }
+
+            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
+                configuration["ApiBaseUrl"],
+                "http://localhost:5200/");
+            var client = httpClientFactory.CreateClient("JobsyAuthProvision");
+            client.BaseAddress = new Uri(apiBase);
+            client.Timeout = TimeSpan.FromSeconds(15);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/mfa/recovery-codes/regenerate")
+            {
+                Content = JsonContent.Create(new { code })
+            };
+            request.Headers.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwt);
+            using var response = await client.SendAsync(request);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                var until = DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds();
+                return Results.Redirect($"/account/mfa/herstelcodes-vernieuwen?error=too-many&until={until}");
+            }
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                var until = DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds();
+                try
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(body);
+                    if (doc.RootElement.TryGetProperty("retryAtUtc", out var retry)
+                        && retry.ValueKind == JsonValueKind.String
+                        && DateTime.TryParse(retry.GetString(), out var retryAt))
+                    {
+                        until = new DateTimeOffset(DateTime.SpecifyKind(retryAt, DateTimeKind.Utc)).ToUnixTimeSeconds();
+                    }
+                }
+                catch
+                {
+                    // keep default until
+                }
+
+                return Results.Redirect($"/account/mfa/herstelcodes-vernieuwen?error=locked&until={until}");
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return Results.Redirect("/account/mfa/herstelcodes-vernieuwen?error=invalid");
+            }
+
+            var payload = await response.Content.ReadFromJsonAsync<RegenerateCodesDto>();
+            var codes = payload?.RecoveryCodes?.Where(c => !string.IsNullOrWhiteSpace(c)).Take(10).ToList()
+                ?? [];
+            if (codes.Count == 0)
+            {
+                return Results.Redirect("/account/mfa/herstelcodes-vernieuwen?error=invalid");
+            }
+
+            SetRecoveryCodesCookie(http, dataProtection, codes);
+            MfaTrustCookie.Clear(http);
+            return Results.Redirect("/account/mfa/recovery-codes?returnUrl=" + Uri.EscapeDataString("/home"));
+        }).RequireAuthorization().RequireRateLimiting("auth");
 
         // Demo one-click login resolves password server-side so credentials stay out of HTML.
         // Impossible in Production regardless of JobsyAuth:AllowDevelopmentAuth (fail closed).
@@ -1544,6 +1669,11 @@ public static class AuthServiceCollectionExtensions
         public string RefreshToken { get; set; } = "";
         public DateTime ExpiresAtUtc { get; set; }
         public int SessionVersion { get; set; }
+    }
+
+    private sealed class RegenerateCodesDto
+    {
+        public List<string>? RecoveryCodes { get; set; }
     }
 
     private sealed class HandoffExchangeProfile

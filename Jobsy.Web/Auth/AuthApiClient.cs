@@ -29,6 +29,7 @@ public sealed class AuthApiClient
         string email,
         string password,
         bool rememberDevice,
+        string? mfaTrustToken = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -36,7 +37,7 @@ public sealed class AuthApiClient
             var client = CreateClient();
             using var response = await client.PostAsJsonAsync(
                 "api/auth/local-login",
-                new { email, password, rememberDevice },
+                new { email, password, rememberDevice, mfaTrustToken },
                 cancellationToken);
             return await MapLoginResponseAsync(response, cancellationToken);
         }
@@ -54,6 +55,8 @@ public sealed class AuthApiClient
         string challengeToken,
         string? code,
         string? recoveryCode,
+        bool trustDevice = false,
+        string? method = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -61,7 +64,7 @@ public sealed class AuthApiClient
             var client = CreateClient();
             using var response = await client.PostAsJsonAsync(
                 "api/auth/mfa/verify",
-                new { challengeToken, code, recoveryCode },
+                new { challengeToken, code, recoveryCode, trustDevice, method },
                 cancellationToken);
             return await MapMfaResponseAsync(response, cancellationToken);
         }
@@ -310,4 +313,6 @@ public sealed class LocalApiLoginProfile
     public List<string>? RecoveryCodes { get; set; }
     public int? RecoveryCodesLeft { get; set; }
     public bool UsedRecoveryCode { get; set; }
+    public string? MfaTrustToken { get; set; }
+    public string? AuthMethod { get; set; }
 }

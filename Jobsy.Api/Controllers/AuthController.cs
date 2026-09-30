@@ -29,6 +29,7 @@ public class AuthController : ControllerBase
     private readonly IAmbassadeurAttributionService _ambassadeurAttribution;
     private readonly IHostEnvironment _environment;
     private readonly IDeviceSessionService _deviceSessions;
+    private readonly IMfaTrustedDeviceService _trustedDevices;
     private readonly ITransactionalMailer _mailer;
     private readonly MfaChallengeService _mfaChallenges;
     private readonly IPlatformFeatureService _features;
@@ -42,6 +43,7 @@ public class AuthController : ControllerBase
         IAmbassadeurAttributionService ambassadeurAttribution,
         IHostEnvironment environment,
         IDeviceSessionService deviceSessions,
+        IMfaTrustedDeviceService trustedDevices,
         ITransactionalMailer mailer,
         MfaChallengeService mfaChallenges,
         IPlatformFeatureService features,
@@ -54,6 +56,7 @@ public class AuthController : ControllerBase
         _ambassadeurAttribution = ambassadeurAttribution;
         _environment = environment;
         _deviceSessions = deviceSessions;
+        _trustedDevices = trustedDevices;
         _mailer = mailer;
         _mfaChallenges = mfaChallenges;
         _features = features;
@@ -187,6 +190,53 @@ public class AuthController : ControllerBase
 
         if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
         {
+            if (user.AuthenticatorEnabled
+                && await _trustedDevices.TryValidateAsync(
+                    user.Id,
+                    request.MfaTrustToken,
+                    user.SessionVersion,
+                    authenticatorEnabled: true,
+                    cancellationToken))
+            {
+                var trustedFlags = await BuildFlagsAsync(user, cancellationToken);
+                var trustedSession = CreateLocalSessionToken(user.Email, user.Id);
+                Guid? trustedDeviceId = null;
+                string? trustedRefresh = null;
+                DateTime? trustedExpires = null;
+                if (request.RememberDevice)
+                {
+                    var device = await _deviceSessions.CreateAsync(
+                        user.Id,
+                        Request.Headers.UserAgent.ToString(),
+                        cancellationToken,
+                        mfaVerified: true);
+                    trustedDeviceId = device.DeviceSessionId;
+                    trustedRefresh = device.RefreshToken;
+                    trustedExpires = device.ExpiresAtUtc;
+                }
+
+                user.LastLoginAtUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(cancellationToken);
+                return Ok(new LocalLoginResponse(
+                    user.Email,
+                    user.FullName,
+                    user.Role.ToString(),
+                    user.CompanyId,
+                    trustedFlags.CompanyIds,
+                    trustedFlags.ShowCandidateHowTo,
+                    trustedFlags.HasCandidateApplications,
+                    trustedFlags.HasSalesReferral,
+                    trustedSession,
+                    user.SessionVersion,
+                    trustedDeviceId,
+                    trustedRefresh,
+                    trustedExpires,
+                    user.Id,
+                    MfaVerified: true,
+                    SchoolId: user.SchoolId,
+                    AuthMethod: "password+trusted-device"));
+            }
+
             return Ok(new LocalLoginResponse(
                 user.Email,
                 user.FullName,

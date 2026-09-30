@@ -14,13 +14,16 @@ public sealed class DeviceSessionsController : ControllerBase
 {
     private readonly IDeviceSessionService _sessions;
     private readonly IUserLookupService _users;
+    private readonly IMfaTrustedDeviceService _trustedDevices;
 
     public DeviceSessionsController(
         IDeviceSessionService sessions,
-        IUserLookupService users)
+        IUserLookupService users,
+        IMfaTrustedDeviceService trustedDevices)
     {
         _sessions = sessions;
         _users = users;
+        _trustedDevices = trustedDevices;
     }
 
     [HttpPost]
@@ -150,6 +153,7 @@ public sealed class DeviceSessionsController : ControllerBase
             DeviceSessionRules.RevokeReasonLogoutAll,
             bumpSessionVersion: true,
             cancellationToken);
+        await _trustedDevices.RevokeAllForUserAsync(user.Id, cancellationToken);
         return NoContent();
     }
 

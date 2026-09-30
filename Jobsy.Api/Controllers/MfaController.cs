@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -28,6 +29,7 @@ public sealed class MfaController : ControllerBase
     private readonly JobsyDbContext _db;
     private readonly ISecretProtector _secrets;
     private readonly IDeviceSessionService _deviceSessions;
+    private readonly IMfaTrustedDeviceService _trustedDevices;
     private readonly IConfiguration _configuration;
     private readonly MfaChallengeService _challenges;
     private readonly ITotpVerifier _totp;
@@ -39,6 +41,7 @@ public sealed class MfaController : ControllerBase
         JobsyDbContext db,
         ISecretProtector secrets,
         IDeviceSessionService deviceSessions,
+        IMfaTrustedDeviceService trustedDevices,
         IConfiguration configuration,
         MfaChallengeService challenges,
         ITotpVerifier totp,
@@ -49,6 +52,7 @@ public sealed class MfaController : ControllerBase
         _db = db;
         _secrets = secrets;
         _deviceSessions = deviceSessions;
+        _trustedDevices = trustedDevices;
         _configuration = configuration;
         _challenges = challenges;
         _totp = totp;
@@ -81,7 +85,10 @@ public sealed class MfaController : ControllerBase
             return StatusCode(StatusCodes.Status403Forbidden, new { code = "mfa_locked", retryAtUtc = until });
         }
 
-        return Ok(new MfaStateResponse(user.AuthenticatorEnabled, user.Email));
+        return Ok(new MfaStateResponse(
+            user.AuthenticatorEnabled,
+            user.Email,
+            EmailMask.Mask(user.Email)));
     }
 
     [HttpPost("enroll")]
@@ -163,41 +170,60 @@ public sealed class MfaController : ControllerBase
         string[] recoveryCodes = [];
         var usedRecovery = false;
         int? recoveryCodesLeft = null;
+        var method = (request.Method ?? string.Empty).Trim().ToLowerInvariant();
+        var preferRecovery = method == "recovery"
+            || (string.IsNullOrWhiteSpace(method) && !string.IsNullOrWhiteSpace(request.RecoveryCode));
 
         if (!user.AuthenticatorEnabled)
         {
-            var enrollResult = await _totp.VerifyAsync(user, secret, request.Code?.Trim(), now, cancellationToken);
+            var enrollResult = await _totp.VerifyAsync(
+                user, secret, StripSpaces(request.Code), now, cancellationToken);
             if (!enrollResult.Ok)
             {
                 return await FailCodeAsync(user, request.ChallengeToken, cancellationToken);
             }
 
-            recoveryCodes = GenerateRecoveryCodes();
-            user.RecoveryCodesHash = JsonSerializer.Serialize(recoveryCodes.Select(HashRecoveryCode));
+            recoveryCodes = MfaRecoveryCodes.Generate();
+            user.RecoveryCodesHash = JsonSerializer.Serialize(recoveryCodes.Select(MfaRecoveryCodes.Hash));
             user.AuthenticatorEnabled = true;
             user.AuthenticatorEnrolledAtUtc = now;
         }
-        else
+        else if (preferRecovery)
         {
             usedRecovery = TryUseRecoveryCode(user, request.RecoveryCode);
             if (!usedRecovery)
             {
-                var totpResult = await _totp.VerifyAsync(user, secret, request.Code?.Trim(), now, cancellationToken);
-                if (!totpResult.Ok)
-                {
-                    return await FailCodeAsync(user, request.ChallengeToken, cancellationToken);
-                }
+                return await FailCodeAsync(user, request.ChallengeToken, cancellationToken);
             }
-            else
+
+            var hashes = JsonSerializer.Deserialize<List<string>>(user.RecoveryCodesHash ?? "[]") ?? [];
+            recoveryCodesLeft = hashes.Count;
+            await SendRecoveryCodeUsedMailAsync(user, recoveryCodesLeft.Value, cancellationToken);
+        }
+        else
+        {
+            var totpResult = await _totp.VerifyAsync(
+                user, secret, StripSpaces(request.Code), now, cancellationToken);
+            if (!totpResult.Ok)
             {
-                var hashes = JsonSerializer.Deserialize<List<string>>(user.RecoveryCodesHash ?? "[]") ?? [];
-                recoveryCodesLeft = hashes.Count;
-                await SendRecoveryCodeUsedMailAsync(user, recoveryCodesLeft.Value, cancellationToken);
+                return await FailCodeAsync(user, request.ChallengeToken, cancellationToken);
             }
         }
 
         user.MfaFailedCount = 0;
         user.MfaLockoutUntilUtc = null;
+
+        string? trustRaw = null;
+        // Trust only after successful TOTP/recovery on an already-enrolled account (not first enroll).
+        if (request.TrustDevice && recoveryCodes.Length == 0)
+        {
+            var created = await _trustedDevices.CreateAsync(
+                user.Id,
+                Request.Headers.UserAgent.ToString(),
+                user.SessionVersion,
+                cancellationToken);
+            trustRaw = created.RawToken;
+        }
 
         var sessionToken = CreateLocalSessionToken(user.Email, user.Id);
         Guid? deviceSessionId = null;
@@ -237,6 +263,10 @@ public sealed class MfaController : ControllerBase
             _logger.LogInformation("mfa.recovery.used userId={UserId}", user.Id);
         }
 
+        var grouped = recoveryCodes.Length == 0
+            ? recoveryCodes
+            : recoveryCodes.Select(MfaRecoveryCodes.FormatGrouped).ToArray();
+
         return Ok(new LocalLoginResponse(
             user.Email,
             user.FullName,
@@ -253,10 +283,74 @@ public sealed class MfaController : ControllerBase
             deviceExpires,
             user.Id,
             MfaVerified: true,
-            RecoveryCodes: recoveryCodes,
+            RecoveryCodes: grouped,
             SchoolId: user.SchoolId,
             RecoveryCodesLeft: recoveryCodesLeft,
-            UsedRecoveryCode: usedRecovery));
+            UsedRecoveryCode: usedRecovery,
+            MfaTrustToken: trustRaw,
+            AuthMethod: "password+mfa"));
+    }
+
+    [HttpPost("recovery-codes/regenerate")]
+    [Authorize]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<object>> RegenerateRecoveryCodes(
+        [FromBody] MfaRegenerateRecoveryCodesRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userIdRaw = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub");
+        if (!Guid.TryParse(userIdRaw, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId && u.IsActive, cancellationToken);
+        if (user is null || !user.AuthenticatorEnabled)
+        {
+            return Unauthorized();
+        }
+
+        var now = DateTime.UtcNow;
+        if (user.MfaLockoutUntilUtc is DateTime lockedUntil && lockedUntil > now)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = "mfa_locked",
+                retryAtUtc = lockedUntil
+            });
+        }
+
+        var secret = _secrets.Unprotect(user.AuthenticatorSecret);
+        var totpResult = await _totp.VerifyAsync(user, secret, StripSpaces(request.Code), now, cancellationToken);
+        if (!totpResult.Ok)
+        {
+            return await FailCodeAsync(user, challengeToken: null, cancellationToken);
+        }
+
+        var codes = MfaRecoveryCodes.Generate();
+        user.RecoveryCodesHash = JsonSerializer.Serialize(codes.Select(MfaRecoveryCodes.Hash));
+        user.MfaFailedCount = 0;
+        user.MfaLockoutUntilUtc = null;
+        await _trustedDevices.RevokeAllForUserAsync(user.Id, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            var features = await _features.GetAsync(cancellationToken);
+            var mail = TransactionalEmails.RecoveryCodesRegenerated(features.PublicWebBaseUrl);
+            await _mailer.SendAsync(mail, user.Email, cancellationToken: cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Recovery regenerate mail failed for user {UserId}", user.Id);
+        }
+
+        _logger.LogInformation("mfa.recovery.regenerated userId={UserId}", user.Id);
+        return Ok(new
+        {
+            recoveryCodes = codes.Select(MfaRecoveryCodes.FormatGrouped).ToArray()
+        });
     }
 
     private async Task<ActionResult> FailCodeAsync(
@@ -272,7 +366,11 @@ public sealed class MfaController : ControllerBase
             user.MfaFailedCount = 0;
             await _db.SaveChangesAsync(cancellationToken);
             await SendMfaLockoutMailAsync(user, cancellationToken);
-            _challenges.Consume(challengeToken);
+            if (!string.IsNullOrWhiteSpace(challengeToken))
+            {
+                _challenges.Consume(challengeToken);
+            }
+
             _logger.LogInformation("mfa.locked userId={UserId}", user.Id);
             return StatusCode(StatusCodes.Status403Forbidden, new
             {
@@ -284,7 +382,7 @@ public sealed class MfaController : ControllerBase
         await _db.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("mfa.verify.failed userId={UserId}", user.Id);
 
-        if (_challenges.RegisterFailure(challengeToken))
+        if (!string.IsNullOrWhiteSpace(challengeToken) && _challenges.RegisterFailure(challengeToken))
         {
             return Unauthorized(new { code = "challenge_expired" });
         }
@@ -337,21 +435,8 @@ public sealed class MfaController : ControllerBase
         return string.IsNullOrWhiteSpace(secret) ? null : JobsyLocalSessionToken.Create(email, userId, secret);
     }
 
-    private static string[] GenerateRecoveryCodes()
-        => Enumerable.Range(0, 10)
-            .Select(_ => Convert.ToHexString(RandomNumberGenerator.GetBytes(8)))
-            .ToArray();
-
-    private static string HashRecoveryCode(string code)
-    {
-        var normalized = NormalizeRecoveryCode(code);
-        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(normalized)));
-    }
-
-    private static string NormalizeRecoveryCode(string code)
-        => code.Trim().ToUpperInvariant()
-            .Replace("-", string.Empty, StringComparison.Ordinal)
-            .Replace(" ", string.Empty, StringComparison.Ordinal);
+    private static string? StripSpaces(string? code)
+        => string.IsNullOrWhiteSpace(code) ? code : code.Replace(" ", string.Empty, StringComparison.Ordinal);
 
     private static bool TryUseRecoveryCode(User user, string? rawCode)
     {
@@ -361,7 +446,7 @@ public sealed class MfaController : ControllerBase
         }
 
         var hashes = JsonSerializer.Deserialize<List<string>>(user.RecoveryCodesHash) ?? [];
-        var candidate = HashRecoveryCode(rawCode);
+        var candidate = MfaRecoveryCodes.Hash(rawCode);
         var index = hashes.FindIndex(hash =>
             CryptographicOperations.FixedTimeEquals(
                 Encoding.ASCII.GetBytes(hash),

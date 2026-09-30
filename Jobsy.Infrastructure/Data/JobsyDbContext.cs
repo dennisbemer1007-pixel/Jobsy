@@ -68,6 +68,7 @@ public class JobsyDbContext : DbContext
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
     public DbSet<WebPushSubscription> WebPushSubscriptions => Set<WebPushSubscription>();
     public DbSet<UserDeviceSession> UserDeviceSessions => Set<UserDeviceSession>();
+    public DbSet<MfaTrustedDevice> MfaTrustedDevices => Set<MfaTrustedDevice>();
     public DbSet<DeviceLoginHandoff> DeviceLoginHandoffs => Set<DeviceLoginHandoff>();
     public DbSet<CandidateActionToken> CandidateActionTokens => Set<CandidateActionToken>();
     public DbSet<OneTimeLink> OneTimeLinks => Set<OneTimeLink>();
@@ -1122,6 +1123,20 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.RefreshTokenHash);
             entity.HasIndex(e => e.PreviousRefreshTokenHash);
             entity.HasIndex(e => e.FamilyId);
+            entity.HasIndex(e => new { e.UserId, e.RevokedAtUtc });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MfaTrustedDevice>(entity =>
+        {
+            entity.ToTable("MfaTrustedDevices");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.UserAgentSummary).HasMaxLength(120);
+            entity.HasIndex(e => e.TokenHash).IsUnique();
             entity.HasIndex(e => new { e.UserId, e.RevokedAtUtc });
             entity.HasOne(e => e.User)
                 .WithMany()

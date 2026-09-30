@@ -348,14 +348,31 @@ public static partial class TransactionalEmails
     {
         var c = culture ?? EmailCulture.Nl;
         var brand = Brand(baseUrl);
+        var links = Links(baseUrl);
         return Finish(Doc("RecoveryCodeUsed", S(c, "Email.RecoveryCodeUsed.Subject"),
             Sf(c, "Email.RecoveryCodeUsed.Preheader", codesLeft),
             S(c, "Email.RecoveryCodeUsed.Heading"),
             [
                 P(T(c, "Email.RecoveryCodeUsed.P1", EmailArg.Plain(codesLeft.ToString(), isolate: false))),
-                P(T(c, "Email.RecoveryCodeUsed.P2", EmailArg.Plain(brand.SupportAddress)))
+                P(T(c, "Email.RecoveryCodeUsed.P2", EmailArg.Plain(brand.SupportAddress))),
+                P(T(c, "Email.RecoveryCodeUsed.P3", EmailArg.Plain(links.Absolute("/account/mfa/herstelcodes-vernieuwen"))))
             ],
             eyebrow: new EmailEyebrow(S(c, "Email.RecoveryCodeUsed.Eyebrow"), EmailTone.Peach),
+            culture: c), baseUrl);
+    }
+
+    public static ComposedEmail RecoveryCodesRegenerated(string? baseUrl, EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var brand = Brand(baseUrl);
+        return Finish(Doc("RecoveryCodesRegenerated", S(c, "Email.RecoveryCodesRegenerated.Subject"),
+            S(c, "Email.RecoveryCodesRegenerated.Preheader"),
+            S(c, "Email.RecoveryCodesRegenerated.Heading"),
+            [
+                P(S(c, "Email.RecoveryCodesRegenerated.P1")),
+                P(T(c, "Email.RecoveryCodesRegenerated.P2", EmailArg.Plain(brand.SupportAddress)))
+            ],
+            eyebrow: new EmailEyebrow(S(c, "Email.RecoveryCodesRegenerated.Eyebrow"), EmailTone.Peach),
             culture: c), baseUrl);
     }
 }

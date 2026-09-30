@@ -278,6 +278,10 @@ else if (_page is not null)
                     <section class="admin-sec-box">
                         <h3>@Culture["AdminUsers.MfaBoxTitle"]</h3>
                         <p>@MfaDetailText(_drawerUser)</p>
+                        @if (_drawerUser.MfaStatus == "enrolled")
+                        {
+                            <p class="muted">@string.Format(Culture["Mfa.TrustedDevicesCount"], _drawerUser.TrustedDeviceCount)</p>
+                        }
                         @if (_drawerUser.MfaStatus == "enrolled" && _drawerUser.Id != _currentAdminId)
                         {
                             <button type="button" class="btn-compact btn-compact--danger-outline" @onclick="() => OpenMfaReset(_drawerUser)">

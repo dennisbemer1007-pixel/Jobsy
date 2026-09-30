@@ -203,7 +203,8 @@ builder.Services.AddRateLimiter(options =>
         var path = http.Request.Path.Value ?? string.Empty;
         var isAuthForm = HttpMethods.IsPost(http.Request.Method)
             && (path.Equals("/account/login", StringComparison.OrdinalIgnoreCase)
-                || path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase));
+                || path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)
+                || path.Equals("/account/mfa/herstelcodes-vernieuwen", StringComparison.OrdinalIgnoreCase));
         if (isAuthForm)
         {
             var retryAfterSeconds = 60;
@@ -215,7 +216,9 @@ builder.Services.AddRateLimiter(options =>
             var until = DateTimeOffset.UtcNow.AddSeconds(retryAfterSeconds).ToUnixTimeSeconds();
             var target = path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)
                 ? $"/account/mfa?error=too-many&until={until}"
-                : $"/login?error=too-many&until={until}";
+                : path.Equals("/account/mfa/herstelcodes-vernieuwen", StringComparison.OrdinalIgnoreCase)
+                    ? $"/account/mfa/herstelcodes-vernieuwen?error=too-many&until={until}"
+                    : $"/login?error=too-many&until={until}";
             http.Response.StatusCode = StatusCodes.Status303SeeOther;
             http.Response.Headers.Location = target;
             return;

@@ -117,7 +117,11 @@ public record RejectTakeoverRequest(string? Note = null);
 
 public record SessionLoginRequest(string SessionToken);
 
-public record LocalLoginRequest(string Email, string Password, bool RememberDevice = true);
+public record LocalLoginRequest(
+    string Email,
+    string Password,
+    bool RememberDevice = true,
+    string? MfaTrustToken = null);
 
 public record LocalLoginResponse(
     string Email,
@@ -142,7 +146,9 @@ public record LocalLoginResponse(
     IReadOnlyList<string>? RecoveryCodes = null,
     Guid? SchoolId = null,
     int? RecoveryCodesLeft = null,
-    bool UsedRecoveryCode = false);
+    bool UsedRecoveryCode = false,
+    string? MfaTrustToken = null,
+    string? AuthMethod = null);
 
 public record MfaEnrollmentRequest(string ChallengeToken);
 
@@ -150,12 +156,16 @@ public record MfaEnrollmentResponse(string Secret, string ProvisioningUri, strin
 
 public record MfaStateRequest(string ChallengeToken);
 
-public record MfaStateResponse(bool Enrolled, string Email);
+public record MfaStateResponse(bool Enrolled, string Email, string MaskedEmail);
 
 public record MfaVerifyRequest(
     string ChallengeToken,
     string? Code = null,
-    string? RecoveryCode = null);
+    string? RecoveryCode = null,
+    bool TrustDevice = false,
+    string? Method = null);
+
+public record MfaRegenerateRecoveryCodesRequest(string Code);
 
 public record AdminMfaResetRequest(string Reason, string? ConfirmCode = null);
 

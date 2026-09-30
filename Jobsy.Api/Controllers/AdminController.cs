@@ -36,6 +36,7 @@ public class AdminController : ControllerBase
     private readonly ISupportAccessService _supportAccess;
     private readonly ISecretProtector _secrets;
     private readonly IDeviceSessionService _deviceSessions;
+    private readonly IMfaTrustedDeviceService _trustedDevices;
     private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
     private readonly IAdminAuditLog _audit;
@@ -52,6 +53,7 @@ public class AdminController : ControllerBase
         ISupportAccessService supportAccess,
         ISecretProtector secrets,
         IDeviceSessionService deviceSessions,
+        IMfaTrustedDeviceService trustedDevices,
         ITransactionalMailer mailer,
         IPlatformFeatureService features,
         IAdminAuditLog audit,
@@ -67,6 +69,7 @@ public class AdminController : ControllerBase
         _supportAccess = supportAccess;
         _secrets = secrets;
         _deviceSessions = deviceSessions;
+        _trustedDevices = trustedDevices;
         _mailer = mailer;
         _features = features;
         _audit = audit;
@@ -343,6 +346,13 @@ public class AdminController : ControllerBase
                     LastActiveAtUtc: g.Max(s => s.LastUsedAtUtc),
                     ActiveSessionCount: g.Count(s => s.ExpiresAtUtc > now)));
 
+        var trustedRows = await _db.MfaTrustedDevices.AsNoTracking()
+            .Where(d => pageIds.Contains(d.UserId) && d.RevokedAtUtc == null && d.ExpiresAtUtc > now)
+            .GroupBy(d => d.UserId)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+        var trustedByUser = trustedRows.ToDictionary(x => x.UserId, x => x.Count);
+
         var membershipNames = await _db.UserCompanies.AsNoTracking()
             .Where(m => pageIds.Contains(m.UserId))
             .Select(m => new { m.UserId, Name = m.Company != null ? m.Company.Name : "—" })
@@ -383,6 +393,7 @@ public class AdminController : ControllerBase
 
             sessionByUser.TryGetValue(u.Id, out var sess);
             namesByUser.TryGetValue(u.Id, out var names);
+            trustedByUser.TryGetValue(u.Id, out var trustedCount);
             DateTime? lastActive = sessionByUser.ContainsKey(u.Id) ? sess.LastActiveAtUtc : null;
             var activeSessions = sessionByUser.ContainsKey(u.Id) ? sess.ActiveSessionCount : 0;
             items.Add(new AdminUserDetailDto(
@@ -404,7 +415,8 @@ public class AdminController : ControllerBase
                 lastActive,
                 u.AuthenticatorEnrolledAtUtc,
                 activeSessions,
-                names));
+                names,
+                trustedCount));
         }
 
         await this.LogPersonalDataAccessAsync(
@@ -690,6 +702,7 @@ public class AdminController : ControllerBase
         }
 
         await _deviceSessions.RevokeAllAsync(userId, "mfa-reset", bumpSessionVersion: false, cancellationToken);
+        await _trustedDevices.RevokeAllForUserAsync(userId, cancellationToken);
 
         await this.LogPersonalDataAccessAsync(
             _accessLog,

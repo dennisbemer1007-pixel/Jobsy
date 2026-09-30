@@ -7,11 +7,6 @@
     return;
 }
 
-@if (State == LoginState.Locked)
-{
-    return;
-}
-
 @{
     var (tint, role, titleKey, body, icon) = Resolve();
 }
@@ -42,6 +37,9 @@
         {
             LoginState.Invalid => (
                 "danger", "alert", "Login.ErrorInvalidTitle", Culture["Login.ErrorInvalid"], "⚠️"),
+            LoginState.Locked => (
+                "sun", "status", "Login.PauseTitle",
+                FormatPause(Culture["Login.ErrorLocked"]), "⏸️"),
             LoginState.TooMany => (
                 "sun", "status", null,
                 FormatPause(Culture["Login.ErrorTooMany"]), "⏳"),

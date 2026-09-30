@@ -16,8 +16,8 @@
     "v": "20260927-apps-clamp"
   },
   "css/features/auth.css": {
-    "sha256": "3a5a3e8796623edd4ca39267b87545fd858e9c2e81b891b72044d09310d901d2",
-    "v": "20260930-auth03"
+    "sha256": "3388f3f86c22de763eab34d89641cef75fa0ea83e621d5a4d4373acc182a6f4c",
+    "v": "20260930-auth04b"
   },
   "css/features/banenkaart.css": {
     "sha256": "a83c0048d9a4fcea8e0008499db6b00e81d3d1f825a723481fe3e0f05119731f",
@@ -132,8 +132,8 @@
     "v": "20260928-list-rerender"
   },
   "js/features/account-mfa.js": {
-    "sha256": "97c0254f1829c02225c2e4fcef37933e4421ca93f95f63ee7661b535b6c23f7d",
-    "v": "20260930-auth01"
+    "sha256": "01fcae80a3439833ca143a9bbb11278e63d3d9d4fdb55be3136b9a4f035c63f5",
+    "v": "20260930-auth04"
   },
   "js/features/auth.js": {
     "sha256": "abe562c0ae9e57649701c7512e6cddf34476ccd519d48caf51eff2677ab5a456",

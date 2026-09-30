@@ -90,8 +90,7 @@
     private string DialogTitle =>
         string.Format(Culture["AdminUsers.MfaResetTitle"], MaskedName);
 
-    private string DialogLead =>
-        string.Format(Culture["AdminUsers.MfaResetLead"], SessionCount);
+    private string DialogLead => Culture["Mfa.AdminResetLeadTrusted"];
 
     private string ConfirmCode => string.Concat(_digits);
 

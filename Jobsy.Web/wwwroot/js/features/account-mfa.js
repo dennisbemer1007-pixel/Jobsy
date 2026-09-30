@@ -49,6 +49,11 @@
       a.download = 'lobsy-herstelcodes.txt';
       a.click();
       URL.revokeObjectURL(url);
+      return;
+    }
+
+    if (e.target.closest('[data-print-codes]')) {
+      window.print();
     }
   });
 

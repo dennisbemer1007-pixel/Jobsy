@@ -724,6 +724,7 @@ public class AdminUserItem
     public DateTime? LastActiveAtUtc { get; set; }
     public DateTime? AuthenticatorEnrolledAtUtc { get; set; }
     public int ActiveSessionCount { get; set; }
+    public int TrustedDeviceCount { get; set; }
     public List<string> MembershipCompanyNames { get; set; } = [];
 }
 
