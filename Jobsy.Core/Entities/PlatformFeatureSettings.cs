@@ -49,7 +49,7 @@ public class PlatformFeatureSettings
     /// </summary>
     public bool SupportAccessNotifySubject { get; set; }
 
-/// <summary>When false, Kandidaatinzichten nav/API are hidden/404 (D18). Default true.</summary>
+    /// <summary>When false, Kandidaatinzichten nav/API are hidden/404 (D18). Default true.</summary>
     public bool CandidateInsightsEnabled { get; set; } = true;
 
     /// <summary>Paid unlock duration in days (7–365). Default 90. Snapshot on purchase.</summary>
@@ -73,7 +73,7 @@ public class PlatformFeatureSettings
     public int SchoolRetentionCutoffMonth { get; set; } = 7;
 
     /// <summary>Retention cutoff day. Default 31.</summary>
-    public int SchoolRetentionCutoffDay { get; set; } = 31
+    public int SchoolRetentionCutoffDay { get; set; } = 31;
 
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }
