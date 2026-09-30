@@ -157,14 +157,17 @@ public class SalesAttributionTests
             db,
             Options.Create(new JobsyFeatureOptions()),
             new ConfigurationBuilder().Build());
+        var ledger = new TokenLedgerService(db);
+        var partners = new PartnerAffiliateService(db, ledger, features);
         var registration = new CompanyRegistrationService(
             db,
             new StubKvk(),
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
-            new TokenLedgerService(db),
+            ledger,
             features,
-            new PartnerAffiliateService(db, new TokenLedgerService(db), features),
-            CreateResolver(db),
+            partners,
+            new DefaultRegistrationReferralResolver(db, partners),
+            geocoder: null,
             NullLogger<CompanyRegistrationService>.Instance);
 
         var submit = await registration.SubmitAsync(new RegistrationSubmitRequest(
