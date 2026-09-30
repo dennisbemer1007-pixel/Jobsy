@@ -81,7 +81,7 @@
         </div>
     </a>
     <div class="job-card__footer">
-        <p class="job-card__company">@(string.IsNullOrWhiteSpace(Vacancy.OfferedByLabel) ? Vacancy.CompanyName : Vacancy.OfferedByLabel)</p>
+        <p class="job-card__company">@KbIntermediaryDisplay.CompanyLine(Culture, Vacancy)</p>
         <p class="job-card__location">@Vacancy.CompanyAddress</p>
     </div>
 </article>
@@ -115,7 +115,7 @@
 
     protected override bool ShouldRender()
     {
-        var company = string.IsNullOrWhiteSpace(Vacancy.OfferedByLabel) ? Vacancy.CompanyName : Vacancy.OfferedByLabel;
+        var company = KbIntermediaryDisplay.CompanyLine(Culture, Vacancy);
         if (_renderVacancyId == Vacancy.Id
             && _renderHighlighted == IsHighlighted
             && _renderPressed == IsPressed

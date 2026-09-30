@@ -49,3 +49,14 @@ Shared foundation for the candidate jobs stack (banenkaart, lijst, vacature, sol
 - Filter badge: `KbFilterDefaults` / `KbFilterBadge` — fresh page is 0 (D13)
 - Split view from **900 px**; docked popup for pin + cluster; stronger rings + `data-iso-mode`; Open Sans → Noto Sans glyph rewrite
 - `KbRoutes.Map = "/"` (KB-FALLBACK(E))
+
+## Employer attributes + uitzendbureau hidden mode (file 05)
+
+- **Dep B ABSENT** (all three: `CompanyValuesProfile`, `EngagementCatalog`, `Company.WorkTypeLabels`): **do not render** branche pills, kernwaarden tiles, or engagement badges/tiles. No placeholders. Cards keep fit + "Staat lager" via `KbBadgeRow` (D7).
+- **Dep A ABSENT:** `KbHiddenIntermediaryMask` (`// KB-FALLBACK(A): superseded by intermediair 03`).
+  - Hidden when `IntermediaryCompanyId != null && !ShowClientAddressOnMap`.
+  - Pin / mini map / travel → bureau organisation location (root parent when loaded); no pin when bureau has no coords ("Reistijd onbekend").
+  - Label: `Kb.Via.Bureau` ("via uitzendbureau {bureau}"); travel: `Kb.Travel.ToBureauSimple`.
+  - No Route / Street View; KvK/vestiging of the end client redacted on discovery/detail DTOs.
+  - Reveal: none in this fallback (intermediair D4 absent).
+  - `ResolvePublicDisplay` pins the bureau (D3); intermediair 03 must delete the fallback.

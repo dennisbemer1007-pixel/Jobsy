@@ -16,8 +16,17 @@
         <span class="kb-travel__text">@string.Format(Culture["Kb.Travel.Minutes"], mins, verb)</span>
         @if (ToBureau)
         {
-            var region = string.IsNullOrWhiteSpace(BureauRegion) ? modeWord : BureauRegion;
-            <span class="kb-travel__bureau">@string.Format(Culture["Kb.Travel.ToBureau"], region)</span>
+            <span class="kb-travel__bureau">
+                @if (string.IsNullOrWhiteSpace(BureauRegion))
+                {
+                    @* KB-FALLBACK(A): no gemeente leak — simple bureau travel label *@
+                    @Culture["Kb.Travel.ToBureauSimple"]
+                }
+                else
+                {
+                    @string.Format(Culture["Kb.Travel.ToBureau"], BureauRegion)
+                }
+            </span>
         }
     </span>
 }

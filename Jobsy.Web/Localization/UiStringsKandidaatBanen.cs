@@ -118,9 +118,54 @@ public static class UiStringsKandidaatBanen
             "Czas dojazdu do oddziału biura · lokalizacja w regionie {0}",
             "Timp până la sediul agenției · locație în zona {0}",
             "وقت الوصول إلى فرع الوكالة · موقع العمل في منطقة {0}");
+        // KB-FALLBACK(A): simpler label when intermediair D5 region label is unavailable
+        Add("Kb.Travel.ToBureauSimple",
+            "Reistijd tot het bureau",
+            "Travel time to the agency",
+            "Czas dojazdu do biura",
+            "Timp până la agenție",
+            "وقت الوصول إلى الوكالة");
+        Add("Kb.Travel.Unknown",
+            "Reistijd onbekend",
+            "Travel time unknown",
+            "Czas dojazdu nieznany",
+            "Timp de deplasare necunoscut",
+            "وقت الوصول غير معروف");
         Add("Kb.Travel.Aria",
             "Reistijd {0} minuten {1}", "Travel time {0} minutes {1}",
             "Czas dojazdu {0} minut {1}", "Timp de deplasare {0} minute {1}", "وقت الوصول {0} دقيقة {1}");
+
+        // Uitzendbureau hidden mode (05 / Dep A fallback)
+        Add("Kb.Via.Bureau",
+            "via uitzendbureau {0}",
+            "via agency {0}",
+            "przez agencję {0}",
+            "prin agenția {0}",
+            "عبر وكالة {0}");
+        Add("Kb.Hidden.Info",
+            "Bij welk bedrijf je gaat werken, hoor je van {0} na je sollicitatie. De kaart toont het kantoor van {0}.",
+            "Which company you will work for is told by {0} after you apply. The map shows the {0} office.",
+            "Dla jakiej firmy będziesz pracować, dowiesz się od {0} po aplikacji. Mapa pokazuje biuro {0}.",
+            "La ce firmă vei lucra afli de la {0} după ce aplici. Harta arată biroul {0}.",
+            "أي شركة ستعمل لديها تخبرك بها {0} بعد التقديم. الخريطة تعرض مكتب {0}.");
+        Add("Kb.Map.ShowsBureau",
+            "Kaart toont de vestiging van het bureau",
+            "Map shows the agency branch",
+            "Mapa pokazuje oddział biura",
+            "Harta arată sediul agenției",
+            "الخريطة تعرض فرع الوكالة");
+        Add("Kb.Map.BureauPin",
+            "Kantoor {0}",
+            "{0} office",
+            "Biuro {0}",
+            "Biroul {0}",
+            "مكتب {0}");
+        Add("Kb.Map.TravelNoteHidden",
+            "{0} min {1} naar het kantoor. De echte werkplek kan anders zijn.",
+            "{0} min {1} to the office. The real workplace may differ.",
+            "{0} min {1} do biura. Prawdziwe miejsce pracy może być inne.",
+            "{0} min {1} până la birou. Locul real de muncă poate diferi.",
+            "{0} د {1} إلى المكتب. قد يختلف مكان العمل الحقيقي.");
 
         // Badges
         Add("Kb.Badge.More",

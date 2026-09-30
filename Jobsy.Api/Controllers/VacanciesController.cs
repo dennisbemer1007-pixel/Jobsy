@@ -2228,10 +2228,17 @@ public class VacanciesController : ControllerBase
                     || (v.Category.PushBomAvailable && !v.Category.IsAlwaysFree && v.Category.PushBomCostTokens is null)),
             includeCategoryInternals ? DeserializeCategoryFields(v.CategoryFieldsJson) : null,
             v.SuitableFor65Plus,
-            CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber),
-            CompanyPublicPaths.TryParseVestigingsnummer(
-                v.Company?.KvkEstablishmentId,
-                CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber)),
+            // KB-FALLBACK(A): redact end-client KvK/vestiging on candidate public DTOs in hidden mode.
+            Jobsy.Core.Rules.KandidaatBanen.KbHiddenIntermediaryMask.RedactClientPublicPaths(
+                v.IntermediaryCompanyId, v.ShowClientAddressOnMap)
+                ? null
+                : CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber),
+            Jobsy.Core.Rules.KandidaatBanen.KbHiddenIntermediaryMask.RedactClientPublicPaths(
+                v.IntermediaryCompanyId, v.ShowClientAddressOnMap)
+                ? null
+                : CompanyPublicPaths.TryParseVestigingsnummer(
+                    v.Company?.KvkEstablishmentId,
+                    CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber)),
             v.ContentModerationPassed,
             isIncomplete,
             displayStatus,
