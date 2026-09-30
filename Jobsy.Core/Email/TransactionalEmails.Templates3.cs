@@ -357,9 +357,9 @@ public static partial class TransactionalEmails
             S(c, "Email.RecoveryCodeUsed.Heading"),
             [
                 P(T(c, "Email.RecoveryCodeUsed.P1", EmailArg.Plain(codesLeft.ToString(), isolate: false))),
-                P(T(c, "Email.RecoveryCodeUsed.P2", EmailArg.Plain(brand.SupportAddress))),
-                P(T(c, "Email.RecoveryCodeUsed.P3", EmailArg.Plain(links.Absolute("/account/mfa/herstelcodes-vernieuwen"))))
+                P(T(c, "Email.RecoveryCodeUsed.P2", EmailArg.Plain(brand.SupportAddress)))
             ],
+            Button(S(c, "Email.RecoveryCodeUsed.Cta"), links.Absolute("/account/mfa/herstelcodes-vernieuwen")),
             eyebrow: new EmailEyebrow(S(c, "Email.RecoveryCodeUsed.Eyebrow"), EmailTone.Peach),
             culture: c), baseUrl);
     }
@@ -368,6 +368,7 @@ public static partial class TransactionalEmails
     {
         var c = culture ?? EmailCulture.Nl;
         var brand = Brand(baseUrl);
+        var links = Links(baseUrl);
         return Finish(Doc("RecoveryCodesRegenerated", S(c, "Email.RecoveryCodesRegenerated.Subject"),
             S(c, "Email.RecoveryCodesRegenerated.Preheader"),
             S(c, "Email.RecoveryCodesRegenerated.Heading"),
@@ -375,6 +376,7 @@ public static partial class TransactionalEmails
                 P(S(c, "Email.RecoveryCodesRegenerated.P1")),
                 P(T(c, "Email.RecoveryCodesRegenerated.P2", EmailArg.Plain(brand.SupportAddress)))
             ],
+            Button(S(c, "Email.RecoveryCodesRegenerated.Cta"), links.Absolute("/account/mfa/herstelcodes")),
             eyebrow: new EmailEyebrow(S(c, "Email.RecoveryCodesRegenerated.Eyebrow"), EmailTone.Peach),
             culture: c), baseUrl);
     }
@@ -421,6 +423,7 @@ public static partial class TransactionalEmails
         var c = culture ?? EmailCulture.Nl;
         var brand = Brand(baseUrl);
         var when = EmailFormat.DateTimeWithoutZone(changedAtUtc, c);
+        var links = Links(baseUrl);
         return Finish(Doc("PasswordChanged", S(c, "Email.PasswordChanged.Subject"),
             Sf(c, "Email.PasswordChanged.Preheader", when),
             S(c, "Email.PasswordChanged.Heading"),
@@ -428,6 +431,7 @@ public static partial class TransactionalEmails
                 P(T(c, "Email.PasswordChanged.P1", EmailArg.Plain(when, isolate: false))),
                 P(T(c, "Email.PasswordChanged.P2", EmailArg.Plain(brand.SupportAddress)))
             ],
+            Button(S(c, "Email.PasswordChanged.Cta"), links.Absolute("/login")),
             eyebrow: new EmailEyebrow(S(c, "Email.PasswordChanged.Eyebrow"), EmailTone.Peach),
             culture: c), baseUrl);
     }

@@ -47,6 +47,7 @@ internal static class EmailStringsNl
         ["Email.RecoveryCodesRegenerated.Preheader"] = "Je oude herstelcodes werken niet meer.",
         ["Email.RecoveryCodesRegenerated.Heading"] = "Nieuwe herstelcodes",
         ["Email.RecoveryCodesRegenerated.Subject"] = "Je hebt nieuwe herstelcodes gemaakt",
+        ["Email.RecoveryCodesRegenerated.Cta"] = "Bekijk je herstelcodes",
 
         ["Email.AccountLockout.Cta"] = "Nieuw wachtwoord kiezen",
         ["Email.MfaLockout.Cta"] = "Nieuw wachtwoord kiezen",
@@ -66,6 +67,7 @@ internal static class EmailStringsNl
         ["Email.PasswordResetExternalOnly.Cta"] = "Naar inloggen",
         ["Email.PasswordChanged.Eyebrow"] = "Beveiliging",
         ["Email.PasswordChanged.Subject"] = "Je wachtwoord is gewijzigd",
+        ["Email.PasswordChanged.Cta"] = "Inloggen",
         ["Email.PasswordChanged.Preheader"] = "Je bent op alle apparaten uitgelogd.",
         ["Email.PasswordChanged.Heading"] = "Wachtwoord gewijzigd",
         ["Email.PasswordChanged.P1"] = "Je wachtwoord is gewijzigd op {0}. Je bent op alle apparaten uitgelogd.",

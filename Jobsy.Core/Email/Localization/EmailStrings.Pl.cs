@@ -46,7 +46,8 @@ internal static class EmailStringsPl
         ["Email.RecoveryCodesRegenerated.P1"] = "You just created new recovery codes. Your old codes no longer work.",
         ["Email.RecoveryCodesRegenerated.Preheader"] = "Your old recovery codes no longer work.",
         ["Email.RecoveryCodesRegenerated.Heading"] = "New recovery codes",
-        ["Email.RecoveryCodesRegenerated.Subject"] = "You created new recovery codes",
+        ["Email.RecoveryCodesRegenerated.Subject"] = "Utworzyłeś nowe kody odzyskiwania",
+        ["Email.RecoveryCodesRegenerated.Cta"] = "Zobacz kody odzyskiwania",
 
         ["Email.AccountLockout.Cta"] = "Choose a new password",
         ["Email.MfaLockout.Cta"] = "Choose a new password",
@@ -66,6 +67,7 @@ internal static class EmailStringsPl
         ["Email.PasswordResetExternalOnly.Cta"] = "Go to sign in",
         ["Email.PasswordChanged.Eyebrow"] = "Security",
         ["Email.PasswordChanged.Subject"] = "Your password was changed",
+        ["Email.PasswordChanged.Cta"] = "Zaloguj się",
         ["Email.PasswordChanged.Preheader"] = "You have been signed out on all devices.",
         ["Email.PasswordChanged.Heading"] = "Password changed",
         ["Email.PasswordChanged.P1"] = "Your password was changed on {0}. You have been signed out on all devices.",

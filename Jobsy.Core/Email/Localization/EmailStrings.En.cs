@@ -47,6 +47,7 @@ internal static class EmailStringsEn
         ["Email.RecoveryCodesRegenerated.Preheader"] = "Your old recovery codes no longer work.",
         ["Email.RecoveryCodesRegenerated.Heading"] = "New recovery codes",
         ["Email.RecoveryCodesRegenerated.Subject"] = "You created new recovery codes",
+        ["Email.RecoveryCodesRegenerated.Cta"] = "View your recovery codes",
 
         ["Email.AccountLockout.Cta"] = "Choose a new password",
         ["Email.MfaLockout.Cta"] = "Choose a new password",
@@ -66,6 +67,7 @@ internal static class EmailStringsEn
         ["Email.PasswordResetExternalOnly.Cta"] = "Go to sign in",
         ["Email.PasswordChanged.Eyebrow"] = "Security",
         ["Email.PasswordChanged.Subject"] = "Your password was changed",
+        ["Email.PasswordChanged.Cta"] = "Sign in",
         ["Email.PasswordChanged.Preheader"] = "You have been signed out on all devices.",
         ["Email.PasswordChanged.Heading"] = "Password changed",
         ["Email.PasswordChanged.P1"] = "Your password was changed on {0}. You have been signed out on all devices.",

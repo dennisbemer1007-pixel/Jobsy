@@ -35,7 +35,7 @@
             @if (!string.IsNullOrEmpty(_maskedEmail))
             {
                 <p class="au-who">
-                    <span>@_maskedEmail</span>
+                    <span dir="ltr">@_maskedEmail</span>
                     <form method="post" action="/account/mfa/cancel" data-enhance="false" class="au-inline-form">
                         <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
                         <button type="submit" class="au-link-btn">@Culture["Mfa.OtherAccount"]</button>
@@ -87,7 +87,7 @@
                         <input type="hidden" name="method" value="recovery" />
                         <div class="au-field">
                             <label class="au-field__label" for="mfa-recovery">@Culture["Mfa.RecoveryLabel"]</label>
-                            <p class="au-help">@Culture["Mfa.RecoveryHint"]</p>
+                            <p class="au-help" id="mfa-recovery-hint">@Culture["Mfa.RecoveryHint"]</p>
                             <div class="au-input-wrap">
                                 <input id="mfa-recovery"
                                        class="au-input"
@@ -96,6 +96,7 @@
                                        autocomplete="off"
                                        autocapitalize="characters"
                                        spellcheck="false"
+                                       aria-describedby="mfa-recovery-hint"
                                        dir="ltr" />
                             </div>
                         </div>
