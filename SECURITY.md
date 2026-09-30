@@ -47,3 +47,12 @@ De ASP.NET Core pipeline stuurt standaard:
 - **Stub payments / payouts:** alleen Development of expliciet `JobsyAuth:AllowStubPayments=true` (niet meer gekoppeld aan AllowDevelopmentAuth). Geldt ook voor diepte-analyse-checkout (`stub_deep_*`); `CompleteCheckout` bindt aan de ingelogde user en markeert Pending→Paid alleen onder die stub-gate. Production Render: `AllowStubPayments=false`.
 - **Mollie test mode:** API-keys die met `test_` beginnen worden buiten Development geweigerd (fail closed). Production vereist een `live_` key.
 - **Cookie consent:** banner + `Jobsy.CookieConsent` in localStorage and a first-party cookie; anonymous site-analytics POSTs only after “Accepteer cookies” (`X-Jobsy-Cookie-Consent` or the cookie).
+
+
+## Auth hardening (2026-09)
+
+- Anonymous Web→API auth calls forward a trusted visitor IP (`X-Jobsy-Client-Ip` + `JobsyAuth:InternalClientIpSecret`). Without the secret, limits fall back to the Web→API hop (startup warning outside Development).
+- Login lockout: 5 failures → pause (15/30/60/120/240 min by lockouts in 24 h). Counter resets after the pause. At most one lockout mail per 24 h. Unknown e-mails get the same pause shape (process-local HMAC tracker).
+- 2FA: 5 wrong codes end the challenge; 10 wrong codes pause MFA for 15 min; TOTP time-steps cannot be reused; recovery-code use is mailed and shows remaining count.
+- Never log passwords, TOTP codes, recovery codes, or challenge tokens.
+- `/register/activate` without a token redirects to `/register`.

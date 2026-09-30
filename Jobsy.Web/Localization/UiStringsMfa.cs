@@ -66,8 +66,41 @@ public static class UiStringsMfa
             "Inloggen",
             "Sign in");
         Add("Mfa.AdminHelp",
-            "Hulp nodig? Vraag een beheerder je 2FA te resetten",
-            "Need help? Ask an admin to reset your 2FA");
+            "Hulp nodig? Mail support. Een beheerder kan je 2FA opnieuw instellen.",
+            "Need help? Mail support. An admin can reset your 2FA.");
+        Add("Mfa.KeyCopied",
+            "Sleutel gekopieerd",
+            "Key copied");
+        Add("Mfa.CodesCopied",
+            "Gekopieerd",
+            "Copied");
+        Add("Mfa.ErrorLocked",
+            "Even pauze. Er is te vaak een verkeerde code ingevuld. Probeer het om {0} opnieuw.",
+            "A short pause. A wrong code was entered too often. Please try again at {0}.");
+        Add("Mfa.ErrorTooManyUntil",
+            "Te veel pogingen. Probeer het om {0} opnieuw.",
+            "Too many attempts. Please try again at {0}.");
+        Add("Mfa.ErrorLockedFallback",
+            "Probeer het over een kwartier opnieuw.",
+            "Please try again in about fifteen minutes.");
+        Add("Mfa.RecoveryUsedTitle",
+            "Herstelcode gebruikt",
+            "Recovery code used");
+        Add("Mfa.RecoveryUsedLead",
+            "Je bent ingelogd met een herstelcode. Je hebt er nog {0}.",
+            "You signed in with a recovery code. You have {0} left.");
+        Add("Mfa.RecoveryAlmostOut",
+            "Bijna op. Vraag een beheerder om je 2FA opnieuw in te stellen, of maak nieuwe codes.",
+            "Almost out. Ask an admin to reset your 2FA, or create new codes.");
+        Add("Mfa.DownloadHeaderEmail",
+            "Lobsy herstelcodes voor {0}",
+            "Lobsy recovery codes for {0}");
+        Add("Mfa.DownloadHeaderDate",
+            "Gemaakt op {0}",
+            "Created on {0}");
+        Add("Mfa.DownloadNote",
+            "Elke code werkt één keer.",
+            "Each code works once.");
         Add("Mfa.RecoveryTitle",
             "Bewaar je herstelcodes",
             "Save your recovery codes");

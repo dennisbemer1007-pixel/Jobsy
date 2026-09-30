@@ -1,5 +1,11 @@
 # Changelog: Jobsy
 
+## Unreleased
+
+### Security
+- Auth hotfix: per-visitor trusted client IP for Web→API auth rate limits; typed login/2FA failures (`invalid_credentials`, `locked_out`, `rate_limited`, `invalid_code`, `challenge_expired`, `mfa_locked`); visible “Even pauze” lockout with counter reset and max 1 lockout mail / 24 h; unknown-e-mail lockout parity; dummy-hash timing; 2FA attempt limits + TOTP replay block; recovery-code-used mail; CSP-safe MFA scripts; “Blijf ingelogd” off by default. Migration `AddAuthHardening`.
+
+
 ## Candidate tests stack (02–07)
 
 - Shared `TestQuestionFlow` + `TestDepthRules`, consent gate, 3-change limit, free pages in ontdekkingsreis shell.

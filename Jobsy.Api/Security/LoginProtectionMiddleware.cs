@@ -16,9 +16,12 @@ public sealed class LoginProtectionMiddleware
         if (operation is not null)
         {
             var account = await ReadAccountAsync(context);
-            var ip = context.User.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value
-                     ?? context.Connection.RemoteIpAddress?.ToString()
-                     ?? "unknown";
+            var secret = context.RequestServices.GetRequiredService<IConfiguration>()[RateLimitPartitioning.ConfigKey];
+            var ip = RateLimitPartitioning.TryReadTrustedClientIp(context, secret, out var trusted)
+                ? trusted
+                : (context.User.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value
+                   ?? context.Connection.RemoteIpAddress?.ToString()
+                   ?? "unknown");
             if (!limiter.TryAcquire(operation, ip, account))
             {
                 context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
@@ -40,7 +43,8 @@ public sealed class LoginProtectionMiddleware
         }
 
         var path = request.Path.Value ?? string.Empty;
-        if (path.Equals("/api/auth/local-login", StringComparison.OrdinalIgnoreCase))
+        if (path.Equals("/api/auth/local-login", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/api/auth/mfa/verify", StringComparison.OrdinalIgnoreCase))
         {
             return "login";
         }

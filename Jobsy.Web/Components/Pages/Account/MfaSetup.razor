@@ -3,15 +3,26 @@
 @attribute [ExcludeFromInteractiveRouting]
 @using System.Net
 @using System.Net.Http.Json
+@using Jobsy.Core.Time
+@using Jobsy.Web.Auth
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Security
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.WebUtilities
 @inject IHttpContextAccessor HttpContextAccessor
-@inject IConfiguration Configuration
+@inject AuthApiClient AuthApi
 @inject IAntiforgery Antiforgery
 @inject CultureState Culture
+@inject NavigationManager Nav
 
 <PageTitle>@Culture["Mfa.SetupTitle"] · Lobsy</PageTitle>
+
+@{
+    var nonce = HttpContextAccessor.HttpContext is null
+        ? string.Empty
+        : CspNonce.GetOrCreate(HttpContextAccessor.HttpContext);
+}
 
 <div class="login-modal login-modal--compact account-mfa" role="dialog" aria-modal="true" aria-labelledby="mfa-setup-title">
     <div class="login-modal__dialog login-card">
@@ -44,12 +55,14 @@
                             class="icon-btn"
                             aria-label="@Culture["Mfa.CopyKey"]"
                             title="@Culture["Mfa.CopyKey"]"
-                            onclick="navigator.clipboard.writeText(document.getElementById('mfa-manual-key').textContent.replace(/\s+/g,''))">
+                            data-copy-target="#mfa-manual-key"
+                            data-copied-label="@Culture["Mfa.KeyCopied"]">
                         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="9" y="9" width="13" height="13" rx="2"></rect>
                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
                     </button>
+                    <span data-copy-status role="status" aria-live="polite" class="visually-hidden"></span>
                 </div>
             </details>
 
@@ -57,6 +70,7 @@
 
             <form method="post" action="/account/mfa/verify" class="login-form" data-enhance="false">
                 <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                <input type="hidden" name="source" value="setup" />
                 <label>
                     @Culture["Mfa.CodeLabel"]
                     <input type="text"
@@ -74,6 +88,8 @@
         }
     </div>
 </div>
+
+<script src="js/features/account-mfa.js?v=20260930-auth01" nonce="@nonce" defer></script>
 
 @code {
     private string _antiforgeryFieldName = string.Empty;
@@ -95,18 +111,15 @@
             return;
         }
 
+        ApplyErrorQuery();
+
         var tokens = Antiforgery.GetAndStoreTokens(http);
         _antiforgeryFieldName = tokens.FormFieldName;
         _antiforgeryToken = tokens.RequestToken ?? string.Empty;
 
         try
         {
-            var apiBase = Jobsy.Core.JobsyPublicUrl.NormalizeBaseUrl(
-                Configuration["ApiBaseUrl"],
-                "http://localhost:5200/");
-            using var client = new HttpClient { BaseAddress = new Uri(apiBase), Timeout = TimeSpan.FromSeconds(8) };
-
-            using var stateResponse = await client.PostAsJsonAsync(
+            using var stateResponse = await AuthApi.PostJsonAsync(
                 "api/auth/mfa/state",
                 new { challengeToken = challenge });
             if (stateResponse.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.BadRequest)
@@ -119,6 +132,12 @@
             if (stateResponse.StatusCode == HttpStatusCode.TooManyRequests)
             {
                 _error = Culture["Mfa.ErrorTooMany"];
+                return;
+            }
+
+            if (stateResponse.StatusCode == HttpStatusCode.Forbidden)
+            {
+                _error = Culture["Mfa.ErrorLockedFallback"];
                 return;
             }
 
@@ -136,7 +155,7 @@
                 }
             }
 
-            using var enrollResponse = await client.PostAsJsonAsync(
+            using var enrollResponse = await AuthApi.PostJsonAsync(
                 "api/auth/mfa/enroll",
                 new { challengeToken = challenge });
             if (enrollResponse.StatusCode == HttpStatusCode.Conflict)
@@ -155,6 +174,12 @@
             if (enrollResponse.StatusCode == HttpStatusCode.TooManyRequests)
             {
                 _error = Culture["Mfa.ErrorTooMany"];
+                return;
+            }
+
+            if (enrollResponse.StatusCode == HttpStatusCode.Forbidden)
+            {
+                _error = Culture["Mfa.ErrorLockedFallback"];
                 return;
             }
 
@@ -179,6 +204,42 @@
             _error = Culture["Mfa.ErrorGeneric"];
             _expired = true;
         }
+    }
+
+    private void ApplyErrorQuery()
+    {
+        var query = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (!query.TryGetValue("error", out var error))
+        {
+            return;
+        }
+
+        var code = error.ToString();
+        query.TryGetValue("until", out var untilRaw);
+        _error = code switch
+        {
+            "invalid" => Culture["Mfa.ErrorInvalid"],
+            "expired" => Culture["Mfa.ErrorExpired"],
+            "locked" => FormatUntil(Culture["Mfa.ErrorLocked"], untilRaw.ToString()),
+            "too-many" => FormatUntil(Culture["Mfa.ErrorTooManyUntil"], untilRaw.ToString()),
+            _ => Culture["Mfa.ErrorGeneric"]
+        };
+        _expired = code is "expired";
+    }
+
+    private string FormatUntil(string template, string? untilUnix)
+    {
+        if (long.TryParse(untilUnix, out var unix))
+        {
+            var utc = DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime;
+            if (utc > DateTime.UtcNow)
+            {
+                var local = AmsterdamTime.ToLocal(utc);
+                return string.Format(template, local.ToString("HH:mm"));
+            }
+        }
+
+        return Culture["Mfa.ErrorLockedFallback"];
     }
 
     private static string? GroupSecret(string? secret)

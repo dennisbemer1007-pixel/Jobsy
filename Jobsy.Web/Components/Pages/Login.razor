@@ -40,7 +40,12 @@
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
-            <p class="login-error">@_errorMessage</p>
+            <p class="login-error" role="@(_sessionExpiredNotice || _pauseNotice ? "status" : "alert")">@_errorMessage</p>
+            @if (_pauseNotice)
+            {
+                <p class="login-lead">@Culture["Login.ErrorLockedProviders"]</p>
+                <p class="muted">@((MarkupString)_supportHelpHtml)</p>
+            }
         }
 
         <div class="login-providers">
@@ -120,8 +125,9 @@
                 <input type="password" name="password" class="w-full px-4 py-3" required autocomplete="current-password" placeholder="••••••••" />
             </label>
             <label class="login-remember">
-                <input type="checkbox" name="rememberDevice" value="true" checked />
+                <input type="checkbox" name="rememberDevice" value="true" />
                 <span>@Culture["Login.RememberDevice"]</span>
+                <span class="muted login-remember__hint">@Culture["Login.RememberDeviceHint"]</span>
             </label>
             <button type="submit" class="login-submit" disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">@Culture["Login.Submit"]</button>
             @if (string.IsNullOrEmpty(_antiforgeryToken))
@@ -156,6 +162,8 @@
     private string _dismissUrl = AuthRedirects.BanenkaartPath;
     private string? _errorMessage;
     private bool _sessionExpiredNotice;
+    private bool _pauseNotice;
+    private string _supportHelpHtml = string.Empty;
     private bool _entraEnabled;
     private bool _googleEnabled;
     private bool _employersOn = true;
@@ -220,9 +228,22 @@
         else if (!string.IsNullOrEmpty(errorCode))
         {
             _sessionExpiredNotice = sessionExpired;
+            var untilRaw = QueryValue(query, "until");
+            var config = http?.RequestServices.GetService<IConfiguration>();
+            var support = config?["Support:Email"]
+                ?? config?["Mail:SupportAddress"]
+                ?? "support@lobsy.nl";
+            _supportHelpHtml = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                Culture["Login.ErrorLockedSupport"],
+                $"<a href=\"mailto:{support}\">{support}</a>");
+
             _errorMessage = errorCode switch
             {
                 "invalid" => Culture["Login.ErrorInvalid"],
+                "locked" => FormatPause(Culture["Login.ErrorLocked"], untilRaw),
+                "too-many" => FormatPause(Culture["Login.ErrorTooMany"], untilRaw),
+                "unavailable" => Culture["Login.ErrorUnavailable"],
                 "retry" => Culture["Login.ErrorRetry"],
                 "session-expired" => Culture["Login.ErrorSessionExpired"],
                 "entra-not-configured" => Culture["Login.ErrorEntra"],
@@ -232,6 +253,7 @@
                 "unknown-provider" => Culture["Login.ErrorProvider"],
                 _ => Culture["Login.ErrorGeneric"]
             };
+            _pauseNotice = errorCode is "locked";
         }
 
         // Ambassadeur referral cookie (?ref=AM-…) is parked while AmbassadorsEnabled is off (01.10).
@@ -263,6 +285,21 @@
         => query.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value)
             ? value.ToString()
             : null;
+
+    private string FormatPause(string template, string? untilUnix)
+    {
+        if (long.TryParse(untilUnix, out var unix))
+        {
+            var utc = DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime;
+            if (utc > DateTime.UtcNow)
+            {
+                var local = Jobsy.Core.Time.AmsterdamTime.ToLocal(utc);
+                return string.Format(template, local.ToString("HH:mm"));
+            }
+        }
+
+        return Culture["Login.ErrorLockedFallback"];
+    }
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);

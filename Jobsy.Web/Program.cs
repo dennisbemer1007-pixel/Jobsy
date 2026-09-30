@@ -62,11 +62,20 @@ builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions
 });
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Jobsy.Web.Hosting.CircuitExceptionLogger>();
 
+builder.Services.AddTransient<Jobsy.Web.Auth.TrustedClientIpHandler>();
 builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddSingleton<JobsyAccessTokenIssuer>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddHttpClient("JobsySessionSecurity");
+builder.Services.AddHttpClient(Jobsy.Web.Auth.AuthApiClient.HttpClientName, client =>
+{
+    client.BaseAddress = new Uri(Jobsy.Core.JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/"));
+    client.Timeout = TimeSpan.FromSeconds(8);
+}).AddHttpMessageHandler<Jobsy.Web.Auth.TrustedClientIpHandler>();
+builder.Services.AddSingleton<Jobsy.Web.Auth.AuthApiClient>();
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Web.Features.WebFeatureFlags>();
 builder.Services.AddScoped<CultureState>();
@@ -188,9 +197,39 @@ builder.Services.AddHsts(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        var http = context.HttpContext;
+        var path = http.Request.Path.Value ?? string.Empty;
+        var isAuthForm = HttpMethods.IsPost(http.Request.Method)
+            && (path.Equals("/account/login", StringComparison.OrdinalIgnoreCase)
+                || path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase));
+        if (isAuthForm)
+        {
+            var retryAfterSeconds = 60;
+            if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            {
+                retryAfterSeconds = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds));
+            }
+
+            var until = DateTimeOffset.UtcNow.AddSeconds(retryAfterSeconds).ToUnixTimeSeconds();
+            var target = path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)
+                ? $"/account/mfa?error=too-many&until={until}"
+                : $"/login?error=too-many&until={until}";
+            http.Response.StatusCode = StatusCodes.Status303SeeOther;
+            http.Response.Headers.Location = target;
+            return;
+        }
+
+        http.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await http.Response.WriteAsJsonAsync(
+            new { code = "rate_limited", message = "Te veel verzoeken." },
+            token);
+    };
     options.AddPolicy("auth", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 20,
@@ -230,6 +269,14 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+if (string.IsNullOrWhiteSpace(builder.Configuration[Jobsy.Core.Security.InternalClientIpHeaders.ConfigKey])
+    && !app.Environment.IsDevelopment())
+{
+    app.Logger.LogWarning(
+        "JobsyAuth:InternalClientIpSecret is empty; auth rate limits fall back to the Web→API hop");
+}
+
+
 // Rewrite HEAD→GET before routing so MapRazorComponents (GET-only) does not 405.
 app.UseMiddleware<HeadAsGetMiddleware>();
 app.UseForwardedHeaders();
@@ -267,6 +314,7 @@ app.UseExternalAuthCallbackCredentials();
 
 app.UseAuthentication();
 app.UseRateLimiter();
+app.UseLegacyAuthRouteRedirects();
 app.UseLoginProtection();
 app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();

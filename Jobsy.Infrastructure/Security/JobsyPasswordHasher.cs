@@ -27,7 +27,60 @@ public static class JobsyPasswordHasher
         return $"{Prefix}${DefaultIterations}${Convert.ToBase64String(salt)}${Convert.ToBase64String(hash)}";
     }
 
+    public static bool NeedsRehash(string storedHash)
+    {
+        if (string.IsNullOrWhiteSpace(storedHash))
+        {
+            return true;
+        }
+
+        var parts = storedHash.Split('$', 4);
+        return parts.Length != 4
+               || !string.Equals(parts[0], Prefix, StringComparison.Ordinal)
+               || !int.TryParse(parts[1], out var iterations)
+               || iterations < DefaultIterations;
+    }
+
+    /// <summary>
+    /// Test seam: incremented once per Verify / VerifyAgainstDummy call.
+    /// </summary>
+    internal static Action? OnVerifyInvoked { get; set; }
+
+    private static string? _dummyHash;
+    private static readonly object DummyLock = new();
+
+    /// <summary>
+    /// Runs one PBKDF2 verify against a fixed dummy hash and always returns false.
+    /// Used so unknown / paused / inactive login paths match known-account timing.
+    /// </summary>
+    public static bool VerifyAgainstDummy(string password)
+    {
+        OnVerifyInvoked?.Invoke();
+        var dummy = GetOrCreateDummyHash();
+        _ = VerifyCore(password, dummy);
+        return false;
+    }
+
     public static bool Verify(string password, string storedHash)
+    {
+        OnVerifyInvoked?.Invoke();
+        return VerifyCore(password, storedHash);
+    }
+
+    private static string GetOrCreateDummyHash()
+    {
+        if (_dummyHash is not null)
+        {
+            return _dummyHash;
+        }
+
+        lock (DummyLock)
+        {
+            return _dummyHash ??= Hash(Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)));
+        }
+    }
+
+    private static bool VerifyCore(string password, string storedHash)
     {
         if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(storedHash))
         {
@@ -67,19 +120,5 @@ public static class JobsyPasswordHasher
             expected.Length);
 
         return CryptographicOperations.FixedTimeEquals(actual, expected);
-    }
-
-    public static bool NeedsRehash(string storedHash)
-    {
-        if (string.IsNullOrWhiteSpace(storedHash))
-        {
-            return true;
-        }
-
-        var parts = storedHash.Split('$', 4);
-        return parts.Length != 4
-               || !string.Equals(parts[0], Prefix, StringComparison.Ordinal)
-               || !int.TryParse(parts[1], out var iterations)
-               || iterations < DefaultIterations;
     }
 }

@@ -111,7 +111,7 @@ public static class RateLimitPartitioning
         http.Response.Headers.RetryAfter = retryAfterSeconds.ToString();
         http.Response.ContentType = "application/json; charset=utf-8";
         await http.Response.WriteAsync(
-            """{"title":"Te veel verzoeken","detail":"Probeer het zo opnieuw."}""",
+            """{"code":"rate_limited","title":"Te veel verzoeken","detail":"Probeer het zo opnieuw."}""",
             cancellationToken);
     }
 

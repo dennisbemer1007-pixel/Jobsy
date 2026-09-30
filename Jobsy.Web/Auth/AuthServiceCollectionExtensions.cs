@@ -42,7 +42,8 @@ public static class AuthServiceCollectionExtensions
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
         services.AddSingleton<DemoUserStore>();
         services.AddMemoryCache();
-        services.AddHttpClient("JobsyAuthProvision");
+        services.AddHttpClient("JobsyAuthProvision")
+            .AddHttpMessageHandler<TrustedClientIpHandler>();
         services.AddSingleton<IExternalAuthCredentialSource, ExternalAuthCredentialSource>();
 
         var authOptions = configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
@@ -349,12 +350,29 @@ public static class AuthServiceCollectionExtensions
             }
             else
             {
-                apiProfile = await TryLocalApiLoginProfileAsync(configuration, email, password, rememberDevice);
+                var authApi = http.RequestServices.GetRequiredService<AuthApiClient>();
+                var outcome = await authApi.LocalLoginAsync(email, password, rememberDevice);
+                if (outcome.Failure is LocalLoginFailureKind failure)
+                {
+                    var error = failure switch
+                    {
+                        LocalLoginFailureKind.Locked => "locked",
+                        LocalLoginFailureKind.TooMany => "too-many",
+                        LocalLoginFailureKind.Unavailable => "unavailable",
+                        _ => "invalid"
+                    };
+                    var until = outcome.RetryAtUtc is DateTime retry
+                        ? $"&until={new DateTimeOffset(DateTime.SpecifyKind(retry, DateTimeKind.Utc)).ToUnixTimeSeconds()}"
+                        : string.Empty;
+                    return Results.Redirect(
+                        $"/login?error={error}{until}&returnUrl={Uri.EscapeDataString(safeReturn)}");
+                }
+
+                apiProfile = outcome.Profile;
                 if (apiProfile?.RequiresMfa == true
                     && !string.IsNullOrWhiteSpace(apiProfile.MfaChallengeToken))
                 {
                     SetMfaChallengeCookies(http, apiProfile.MfaChallengeToken, safeReturn);
-                    // Not enrolled yet → setup (QR). Already enrolled → code prompt.
                     var mfaPath = apiProfile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup";
                     return Results.Redirect(mfaPath);
                 }
@@ -550,16 +568,47 @@ public static class AuthServiceCollectionExtensions
             }
 
             var form = await http.Request.ReadFormAsync();
-            var profile = await TryMfaVerifyAsync(
-                configuration,
+            var source = form["source"].ToString();
+            if (string.IsNullOrWhiteSpace(source))
+            {
+                source = "prompt";
+            }
+
+            var authApi = http.RequestServices.GetRequiredService<AuthApiClient>();
+            var outcome = await authApi.MfaVerifyAsync(
                 challenge,
                 form["code"].ToString(),
                 form["recoveryCode"].ToString());
-            if (profile is null)
+
+            string ErrorRedirect(string error, DateTime? retryAt = null)
             {
-                return Results.Redirect("/account/mfa?error=invalid");
+                var until = retryAt is DateTime r
+                    ? $"&until={new DateTimeOffset(DateTime.SpecifyKind(r, DateTimeKind.Utc)).ToUnixTimeSeconds()}"
+                    : string.Empty;
+                var basePath = string.Equals(source, "setup", StringComparison.OrdinalIgnoreCase)
+                    ? "/account/mfa/setup"
+                    : "/account/mfa";
+                if (string.Equals(error, "expired", StringComparison.OrdinalIgnoreCase))
+                {
+                    ClearMfaChallengeCookies(http);
+                }
+
+                return $"{basePath}?error={error}{until}";
             }
 
+            if (outcome.Failure is MfaVerifyFailureKind failure)
+            {
+                return Results.Redirect(failure switch
+                {
+                    MfaVerifyFailureKind.Expired => ErrorRedirect("expired"),
+                    MfaVerifyFailureKind.Locked => ErrorRedirect("locked", outcome.RetryAtUtc),
+                    MfaVerifyFailureKind.TooMany => ErrorRedirect("too-many", outcome.RetryAtUtc),
+                    MfaVerifyFailureKind.Unavailable => ErrorRedirect("invalid"),
+                    _ => ErrorRedirect("invalid")
+                });
+            }
+
+            var profile = outcome.Profile!;
             var principal = CreatePrincipalFromProfile(profile, "password+totp");
             if (principal.Identity is ClaimsIdentity identity)
             {
@@ -587,6 +636,13 @@ public static class AuthServiceCollectionExtensions
                 SetRecoveryCodesCookie(http, dataProtection, profile.RecoveryCodes);
                 return Results.Redirect(
                     "/account/mfa/recovery-codes?returnUrl=" + Uri.EscapeDataString(returnUrl));
+            }
+
+            if (profile.UsedRecoveryCode)
+            {
+                SetRecoveryUsedCookie(http, dataProtection, profile.RecoveryCodesLeft ?? 0);
+                return Results.Redirect(
+                    "/account/mfa/recovery-codes?used=1&returnUrl=" + Uri.EscapeDataString(returnUrl));
             }
 
             return Results.Redirect(returnUrl);
@@ -1226,65 +1282,6 @@ public static class AuthServiceCollectionExtensions
         public int? AttemptsLeft { get; set; }
     }
 
-    private static async Task<LocalApiLoginProfile?> TryLocalApiLoginProfileAsync(
-        IConfiguration configuration,
-        string email,
-        string password,
-        bool rememberDevice)
-    {
-        try
-        {
-            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
-                configuration["ApiBaseUrl"],
-                "http://localhost:5200/");
-            using var client = new HttpClient { BaseAddress = new Uri(apiBase), Timeout = TimeSpan.FromSeconds(8) };
-            using var response = await client.PostAsJsonAsync(
-                "api/auth/local-login",
-                new { email, password, rememberDevice });
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            var profile = await response.Content.ReadFromJsonAsync<LocalApiLoginProfile>();
-            if (profile is null || string.IsNullOrWhiteSpace(profile.Email))
-            {
-                return null;
-            }
-
-            return profile;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static async Task<LocalApiLoginProfile?> TryMfaVerifyAsync(
-        IConfiguration configuration,
-        string challengeToken,
-        string code,
-        string recoveryCode)
-    {
-        try
-        {
-            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
-                configuration["ApiBaseUrl"],
-                "http://localhost:5200/");
-            using var client = new HttpClient { BaseAddress = new Uri(apiBase), Timeout = TimeSpan.FromSeconds(8) };
-            using var response = await client.PostAsJsonAsync(
-                "api/auth/mfa/verify",
-                new { challengeToken, code, recoveryCode });
-            return response.IsSuccessStatusCode
-                ? await response.Content.ReadFromJsonAsync<LocalApiLoginProfile>()
-                : null;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
     private static void SetMfaChallengeCookies(HttpContext http, string challenge, string returnUrl)
     {
         var secure = JobsyCookie.ShouldMarkSecure(http);
@@ -1307,6 +1304,28 @@ public static class AuthServiceCollectionExtensions
         http.Response.Cookies.Delete("Jobsy.MfaChallenge", new CookieOptions { Path = "/" });
         http.Response.Cookies.Delete("Jobsy.MfaReturnUrl", new CookieOptions { Path = "/", Secure = true });
         http.Response.Cookies.Delete("Jobsy.MfaReturnUrl", new CookieOptions { Path = "/" });
+    }
+
+    private static void SetRecoveryUsedCookie(
+        HttpContext http,
+        IDataProtectionProvider dataProtection,
+        int left)
+    {
+        var protector = dataProtection.CreateProtector(MfaRecoveryUsedCookie.ProtectorPurpose);
+        var payload = protector.Protect(left.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        var secure = JobsyCookie.ShouldMarkSecure(http);
+        http.Response.Cookies.Append(
+            MfaRecoveryUsedCookie.Name,
+            payload,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                IsEssential = true,
+                SameSite = SameSiteMode.Lax,
+                Secure = secure,
+                MaxAge = TimeSpan.FromMinutes(5),
+                Path = "/"
+            });
     }
 
     private static void SetRecoveryCodesCookie(
@@ -1843,31 +1862,6 @@ public static class AuthServiceCollectionExtensions
         identity.AddClaim(new Claim(ClaimTypes.Role, role));
     }
 
-    private sealed class LocalApiLoginProfile
-    {
-        public string Email { get; set; } = string.Empty;
-        public string FullName { get; set; } = string.Empty;
-        public string Role { get; set; } = "Candidate";
-        public Guid? CompanyId { get; set; }
-        public List<Guid>? CompanyIds { get; set; }
-        public Guid? SchoolId { get; set; }
-        public bool ShowCandidateHowTo { get; set; }
-        public bool HasCandidateApplications { get; set; }
-        public bool HasSalesReferral { get; set; }
-        public bool IsNewUser { get; set; }
-        public string? SessionToken { get; set; }
-        public int SessionVersion { get; set; }
-        public Guid? DeviceSessionId { get; set; }
-        public string? DeviceRefreshToken { get; set; }
-        public DateTime? DeviceExpiresAtUtc { get; set; }
-        public string? HandoffCode { get; set; }
-        public Guid? UserId { get; set; }
-        public bool RequiresMfa { get; set; }
-        public bool MfaEnrolled { get; set; }
-        public string? MfaChallengeToken { get; set; }
-        public bool MfaVerified { get; set; }
-        public List<string>? RecoveryCodes { get; set; }
-    }
 
     private static string NormalizeRole(string role) => role.Trim().ToLowerInvariant() switch
     {

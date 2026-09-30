@@ -206,14 +206,14 @@ public static partial class TransactionalEmails
         var effectiveDuration = duration ?? LoginLockoutRules.LockoutDuration(failedAttempts);
         var durationLabel = EmailFormat.Duration(effectiveDuration, c);
         var until = lockoutUntilUtc ?? DateTime.UtcNow.Add(effectiveDuration);
+        var untilLabel = EmailFormat.DateTimeWithoutZone(until, c);
         return Finish(Doc("AccountLockout", S(c, "Email.AccountLockout.Subject"),
-            Sf(c, "Email.AccountLockout.Preheader", durationLabel),
+            Sf(c, "Email.AccountLockout.Preheader", untilLabel),
             S(c, "Email.AccountLockout.Heading"),
             [
                 P(T(c, "Email.AccountLockout.P1",
-                    EmailArg.Plain(failedAttempts.ToString(), isolate: false),
-                    EmailArg.Plain(durationLabel, isolate: false))),
-                F([(S(c, "Email.AccountLockout.Fact.Until"), EmailFormat.DateTimeWithoutZone(until, c))]),
+                    EmailArg.Plain(untilLabel, isolate: false))),
+                F([(S(c, "Email.AccountLockout.Fact.Until"), untilLabel)]),
                 P(S(c, "Email.AccountLockout.P2"))
             ],
             Button(S(c, "Email.AccountLockout.Cta"), $"mailto:{brand.SupportAddress}"),
@@ -326,6 +326,36 @@ public static partial class TransactionalEmails
             greeting: GreetCandidate(c, candidateName),
             eyebrow: new EmailEyebrow(S(c, "Email.DeepTestReceipt.Eyebrow"), EmailTone.Peach),
             showMascot: true,
+            culture: c), baseUrl);
+    }
+
+    public static ComposedEmail MfaLockout(string? baseUrl, EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var brand = Brand(baseUrl);
+        return Finish(Doc("MfaLockout", S(c, "Email.MfaLockout.Subject"),
+            S(c, "Email.MfaLockout.Preheader"),
+            S(c, "Email.MfaLockout.Heading"),
+            [
+                P(S(c, "Email.MfaLockout.P1")),
+                P(T(c, "Email.MfaLockout.P2", EmailArg.Plain(brand.SupportAddress)))
+            ],
+            eyebrow: new EmailEyebrow(S(c, "Email.MfaLockout.Eyebrow"), EmailTone.Peach),
+            culture: c), baseUrl);
+    }
+
+    public static ComposedEmail RecoveryCodeUsed(string? baseUrl, int codesLeft, EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var brand = Brand(baseUrl);
+        return Finish(Doc("RecoveryCodeUsed", S(c, "Email.RecoveryCodeUsed.Subject"),
+            Sf(c, "Email.RecoveryCodeUsed.Preheader", codesLeft),
+            S(c, "Email.RecoveryCodeUsed.Heading"),
+            [
+                P(T(c, "Email.RecoveryCodeUsed.P1", EmailArg.Plain(codesLeft.ToString(), isolate: false))),
+                P(T(c, "Email.RecoveryCodeUsed.P2", EmailArg.Plain(brand.SupportAddress)))
+            ],
+            eyebrow: new EmailEyebrow(S(c, "Email.RecoveryCodeUsed.Eyebrow"), EmailTone.Peach),
             culture: c), baseUrl);
     }
 }

@@ -18,4 +18,13 @@ public class LocalAuthCredential
 
     /// <summary>Until when password sign-in is temporarily blocked.</summary>
     public DateTime? LockoutUntil { get; set; }
+
+    /// <summary>Number of lockouts started in the current 24 h window.</summary>
+    public int LockoutCount { get; set; }
+
+    /// <summary>When the most recent lockout started (UTC).</summary>
+    public DateTime? LastLockoutAtUtc { get; set; }
+
+    /// <summary>When the most recent lockout mail was sent (UTC). At most one per 24 h.</summary>
+    public DateTime? LastLockoutMailAtUtc { get; set; }
 }

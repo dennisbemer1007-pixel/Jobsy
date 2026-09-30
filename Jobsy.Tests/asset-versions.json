@@ -127,6 +127,10 @@
     "sha256": "f8da38e2ecdf91f6bd33e7de3b3dd9c0316344dfc603143d8de92f73a57ea164",
     "v": "20260928-list-rerender"
   },
+  "js/features/account-mfa.js": {
+    "sha256": "97c0254f1829c02225c2e4fcef37933e4421ca93f95f63ee7661b535b6c23f7d",
+    "v": "20260930-auth01"
+  },
   "js/features/kandidaatinzichten-map.js": {
     "sha256": "54ad7d6c5ef51bb5ddcfff758509d7e96a597ad11d897c2454badaf2944a6a5b",
     "v": "20260928-insights"

@@ -140,7 +140,9 @@ public record LocalLoginResponse(
     string? MfaChallengeToken = null,
     bool MfaVerified = false,
     IReadOnlyList<string>? RecoveryCodes = null,
-    Guid? SchoolId = null);
+    Guid? SchoolId = null,
+    int? RecoveryCodesLeft = null,
+    bool UsedRecoveryCode = false);
 
 public record MfaEnrollmentRequest(string ChallengeToken);
 

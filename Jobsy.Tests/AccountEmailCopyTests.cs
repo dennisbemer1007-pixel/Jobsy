@@ -63,16 +63,18 @@ public class AccountEmailCopyTests
     }
 
     [Theory]
-    [InlineData(5, 15)]
-    [InlineData(6, 30)]
-    [InlineData(7, 60)]
+    [InlineData(1, 15)]
+    [InlineData(2, 30)]
+    [InlineData(3, 60)]
+    [InlineData(4, 120)]
+    [InlineData(5, 240)]
     [InlineData(9, 240)]
-    public void AccountLockout_duration_matches_login_lockout_rules(int failures, int expectedMinutes)
+    public void AccountLockout_duration_matches_login_lockout_rules(int lockoutsInWindow, int expectedMinutes)
     {
-        var duration = LoginLockoutRules.LockoutDuration(failures);
+        var duration = LoginLockoutRules.LockoutDuration(lockoutsInWindow);
         Assert.Equal(TimeSpan.FromMinutes(expectedMinutes), duration);
         var mail = TransactionalEmails.AccountLockout(
-            "https://lobsy.nl", failures, DateTime.UtcNow.Add(duration), duration);
+            "https://lobsy.nl", LoginLockoutRules.FailedAttemptsBeforeLockout, DateTime.UtcNow.Add(duration), duration);
         Assert.DoesNotContain("nieuw wachtwoord", mail.Text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("mailto:", mail.Html, StringComparison.OrdinalIgnoreCase);
     }

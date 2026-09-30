@@ -3,7 +3,10 @@
 @attribute [ExcludeFromInteractiveRouting]
 @using System.Text
 @using System.Text.Json
+@using Jobsy.Core.Time
+@using Jobsy.Web.Auth
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Security
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.DataProtection
 @using Microsoft.AspNetCore.WebUtilities
@@ -14,23 +17,42 @@
 
 <PageTitle>@Culture["Mfa.RecoveryTitle"] · Lobsy</PageTitle>
 
+@{
+    var nonce = HttpContextAccessor.HttpContext is null
+        ? string.Empty
+        : CspNonce.GetOrCreate(HttpContextAccessor.HttpContext);
+}
+
 <div class="login-modal login-modal--compact account-mfa" role="dialog" aria-modal="true" aria-labelledby="mfa-recovery-title">
     <div class="login-modal__dialog login-card">
         <div class="login-modal__header">
-            <h1 id="mfa-recovery-title">@Culture["Mfa.RecoveryTitle"]</h1>
+            <h1 id="mfa-recovery-title">@(_usedRecovery ? Culture["Mfa.RecoveryUsedTitle"] : Culture["Mfa.RecoveryTitle"])</h1>
         </div>
 
-        <p class="account-mfa__step">@string.Format(Culture["Mfa.StepOf"], 2, 2)</p>
-        <p class="login-lead">@Culture["Mfa.RecoveryLead"]</p>
+        @if (!_usedRecovery)
+        {
+            <p class="account-mfa__step">@string.Format(Culture["Mfa.StepOf"], 2, 2)</p>
+            <p class="login-lead">@Culture["Mfa.RecoveryLead"]</p>
+        }
+        else
+        {
+            <p class="login-lead" role="status">
+                @string.Format(Culture["Mfa.RecoveryUsedLead"], _codesLeft)
+            </p>
+            @if (_codesLeft <= 3)
+            {
+                <p class="login-error" role="alert">@Culture["Mfa.RecoveryAlmostOut"]</p>
+            }
+        }
 
-        @if (_codes.Count == 0)
+        @if (!_usedRecovery && _codes.Count == 0)
         {
             <p class="state-message" role="status">@Culture["Mfa.CodesAlreadyShown"]</p>
             <p>
                 <a class="login-submit account-mfa__continue-link" href="@_returnUrl">@Culture["Mfa.Continue"]</a>
             </p>
         }
-        else
+        else if (!_usedRecovery)
         {
             <ul class="account-mfa__codes" id="mfa-recovery-list">
                 @foreach (var recoveryCode in _codes)
@@ -40,8 +62,17 @@
             </ul>
 
             <div class="account-mfa__code-actions">
-                <button type="button" class="btn-compact" id="mfa-download-codes">@Culture["Mfa.DownloadTxt"]</button>
-                <button type="button" class="btn-compact" id="mfa-copy-codes">@Culture["Mfa.CopyCodes"]</button>
+                <button type="button"
+                        class="btn-compact"
+                        data-download-codes
+                        data-header-email="@_downloadHeaderEmail"
+                        data-header-date="@_downloadHeaderDate"
+                        data-header-note="@Culture["Mfa.DownloadNote"]">@Culture["Mfa.DownloadTxt"]</button>
+                <button type="button"
+                        class="btn-compact"
+                        data-copy-target="#mfa-recovery-list"
+                        data-copied-label="@Culture["Mfa.CodesCopied"]">@Culture["Mfa.CopyCodes"]</button>
+                <span data-copy-status role="status" aria-live="polite" class="visually-hidden"></span>
             </div>
 
             <form method="get" action="@_returnUrl" class="login-form account-mfa__confirm-form" data-enhance="false" id="mfa-recovery-continue">
@@ -49,45 +80,27 @@
                     <input type="checkbox" id="mfa-codes-saved" required />
                     <span>@Culture["Mfa.SavedCheckbox"]</span>
                 </label>
-                <button type="submit" class="login-submit" id="mfa-continue-btn" disabled>@Culture["Mfa.Continue"]</button>
+                <button type="submit" class="login-submit" id="mfa-continue-btn">@Culture["Mfa.Continue"]</button>
             </form>
-
-            <script>
-                (function () {
-                    var codes = @((MarkupString)JsonSerializer.Serialize(_codes));
-                    var text = codes.join('\n');
-                    var saved = document.getElementById('mfa-codes-saved');
-                    var btn = document.getElementById('mfa-continue-btn');
-                    if (saved && btn) {
-                        saved.addEventListener('change', function () { btn.disabled = !saved.checked; });
-                    }
-                    var copyBtn = document.getElementById('mfa-copy-codes');
-                    if (copyBtn) {
-                        copyBtn.addEventListener('click', function () {
-                            navigator.clipboard.writeText(text);
-                        });
-                    }
-                    var dl = document.getElementById('mfa-download-codes');
-                    if (dl) {
-                        dl.addEventListener('click', function () {
-                            var blob = new Blob([text], { type: 'text/plain' });
-                            var url = URL.createObjectURL(blob);
-                            var a = document.createElement('a');
-                            a.href = url;
-                            a.download = 'lobsy-herstelcodes.txt';
-                            a.click();
-                            URL.revokeObjectURL(url);
-                        });
-                    }
-                })();
-            </script>
+        }
+        else
+        {
+            <p>
+                <a class="login-submit account-mfa__continue-link" href="@_returnUrl">@Culture["Mfa.Continue"]</a>
+            </p>
         }
     </div>
 </div>
 
+<script src="js/features/account-mfa.js?v=20260930-auth01" nonce="@nonce" defer></script>
+
 @code {
     private readonly List<string> _codes = [];
     private string _returnUrl = "/home";
+    private bool _usedRecovery;
+    private int _codesLeft;
+    private string _downloadHeaderEmail = string.Empty;
+    private string _downloadHeaderDate = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -97,16 +110,45 @@
             return;
         }
 
+        if (http.User.Identity?.IsAuthenticated != true)
+        {
+            http.Response.Redirect("/login");
+            return;
+        }
+
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("returnUrl", out var raw)
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("returnUrl", out var raw)
             && !string.IsNullOrWhiteSpace(raw))
         {
-            _returnUrl = Jobsy.Web.Auth.AuthRedirects.SafeLocalUrl(raw.ToString());
+            _returnUrl = AuthRedirects.SafeLocalUrl(raw.ToString());
         }
         else if (http.Request.Cookies.TryGetValue("Jobsy.MfaReturnUrl", out var cookieReturn)
                  && !string.IsNullOrWhiteSpace(cookieReturn))
         {
-            _returnUrl = Jobsy.Web.Auth.AuthRedirects.SafeLocalUrl(cookieReturn);
+            _returnUrl = AuthRedirects.SafeLocalUrl(cookieReturn);
+        }
+
+        _usedRecovery = query.TryGetValue("used", out var used)
+                        && string.Equals(used.ToString(), "1", StringComparison.OrdinalIgnoreCase);
+
+        if (_usedRecovery
+            && http.Request.Cookies.TryGetValue(MfaRecoveryUsedCookie.Name, out var usedPayload)
+            && !string.IsNullOrWhiteSpace(usedPayload))
+        {
+            try
+            {
+                var protector = DataProtection.CreateProtector(MfaRecoveryUsedCookie.ProtectorPurpose);
+                var leftText = protector.Unprotect(usedPayload);
+                _ = int.TryParse(leftText, out _codesLeft);
+            }
+            catch
+            {
+                _codesLeft = 0;
+            }
+
+            http.Response.Cookies.Delete(MfaRecoveryUsedCookie.Name, new CookieOptions { Path = "/" });
+            return;
         }
 
         if (http.Request.Cookies.TryGetValue(MfaRecoveryCodesCookie.Name, out var protectedPayload)
@@ -125,7 +167,13 @@
             }
         }
 
-        // One-time: delete so a reload does not show codes again.
+        var email = http.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? string.Empty;
+        var masked = MaskEmail(email);
+        _downloadHeaderEmail = string.Format(Culture["Mfa.DownloadHeaderEmail"], masked);
+        _downloadHeaderDate = string.Format(
+            Culture["Mfa.DownloadHeaderDate"],
+            AmsterdamTime.FormatDate(DateTime.UtcNow));
+
         http.Response.Cookies.Delete(MfaRecoveryCodesCookie.Name, new CookieOptions
         {
             Path = "/",
@@ -136,5 +184,19 @@
         http.Response.Cookies.Delete(MfaRecoveryCodesCookie.Name, new CookieOptions { Path = "/" });
         http.Response.Cookies.Delete("Jobsy.MfaReturnUrl", new CookieOptions { Path = "/", Secure = true });
         http.Response.Cookies.Delete("Jobsy.MfaReturnUrl", new CookieOptions { Path = "/" });
+
+        http.Response.Headers.CacheControl = "no-store";
+        http.Response.Headers["Referrer-Policy"] = "no-referrer";
+    }
+
+    private static string MaskEmail(string email)
+    {
+        var at = email.IndexOf('@');
+        if (at <= 1)
+        {
+            return "***";
+        }
+
+        return email[0] + "***" + email[at..];
     }
 }

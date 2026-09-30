@@ -14,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Core.Security;
 
 namespace Jobsy.Tests;
 
@@ -397,7 +398,9 @@ public class PlatformRobustnessTests
             new Jobsy.Infrastructure.Services.EmailServiceStub(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<Jobsy.Infrastructure.Services.EmailServiceStub>.Instance),
             new Jobsy.Api.Security.MfaChallengeService(
                 new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
-            new AlwaysOnFeatures());
+            new AlwaysOnFeatures(),
+            new UnknownAccountLockoutTracker("test-lockout-key"),
+            NullLogger<AuthController>.Instance);
     }
 
     private static ControllerContext WithProvisionSecret(string secret)

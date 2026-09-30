@@ -90,6 +90,18 @@ public class User
 
     public DateTime? AuthenticatorEnrolledAtUtc { get; set; }
 
+    /// <summary>Consecutive wrong TOTP / recovery-code attempts since last success.</summary>
+    public int MfaFailedCount { get; set; }
+
+    /// <summary>Until when 2FA verification is temporarily blocked.</summary>
+    public DateTime? MfaLockoutUntilUtc { get; set; }
+
+    /// <summary>Last accepted TOTP time-step (replay block).</summary>
+    public long? LastTotpTimeStep { get; set; }
+
+    /// <summary>When the most recent MFA lockout mail was sent (UTC). At most one per 24 h.</summary>
+    public DateTime? LastMfaLockoutMailAtUtc { get; set; }
+
     /// <summary>
     /// Incremented to invalidate all cookie principals (password change, logout-all, admin block).
     /// Mirrored as a claim and checked in CookieAuthenticationEvents.OnValidatePrincipal.
