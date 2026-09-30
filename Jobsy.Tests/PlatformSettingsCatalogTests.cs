@@ -127,21 +127,8 @@ public class PlatformSettingsCatalogTests
 public class PlatformFeaturesEnvLockApiTests
 {
     [Fact]
-    public async Task Activation_links_refused_in_productie_allowed_in_acceptatie()
+    public async Task Activation_links_setting_removed_always_false()
     {
-        await using var dbProd = CreateDb();
-        var prod = CreateController(dbProd, DeploymentEnvironment.Productie);
-        var refuse = await prod.UpdatePlatformFeatures(
-            new UpdatePlatformFeatureRequest(ExposeRegistrationActivationLinks: true),
-            CancellationToken.None);
-        var bad = Assert.IsType<BadRequestObjectResult>(refuse.Result);
-        Assert.Contains("Acceptatie", bad.Value?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
-
-        var okOther = await prod.UpdatePlatformFeatures(
-            new UpdatePlatformFeatureRequest(SessionInactivityTimeoutMinutes: 45),
-            CancellationToken.None);
-        Assert.IsType<OkObjectResult>(okOther.Result);
-
         await using var dbAcc = CreateDb();
         var acc = CreateController(dbAcc, DeploymentEnvironment.Acceptatie);
         var allow = await acc.UpdatePlatformFeatures(
@@ -149,7 +136,11 @@ public class PlatformFeaturesEnvLockApiTests
             CancellationToken.None);
         var ok = Assert.IsType<OkObjectResult>(allow.Result);
         var dto = Assert.IsType<PlatformFeatureDto>(ok.Value);
-        Assert.True(dto.ExposeRegistrationActivationLinks);
+        Assert.False(dto.ExposeRegistrationActivationLinks);
+
+        Assert.DoesNotContain(
+            PlatformSettingsCatalog.Entries,
+            d => string.Equals(d.Key, "ExposeRegistrationActivationLinks", StringComparison.Ordinal));
     }
 
     private static Jobsy.Api.Controllers.SettingsController CreateController(JobsyDbContext db, string env)

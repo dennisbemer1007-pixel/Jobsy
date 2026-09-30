@@ -81,7 +81,7 @@ public sealed class EmailLinks
     public string EmployerTeam => Absolute("/werkgever/organisatie/team");
     public string EmployerProfile => Absolute("/werkgever/organisatie/profiel");
 
-    public string RegisterActivate => Absolute("/register/activate");
+    public string RegisterActivate => Absolute("/register"); // auth 06: activate page removed
     public string RegisterVerify => Absolute("/register/verifieren");
     public string Register => Absolute("/register");
     public string RegisterAccess => Absolute("/register/toegang");

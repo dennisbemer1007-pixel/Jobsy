@@ -72,8 +72,7 @@ public class AuthHardeningHotfixTests
                 Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Account"),
                 "*.razor",
                 SearchOption.TopDirectoryOnly)
-            .Append(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Login.razor"))
-            .Append(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "RegisterActivate.razor"));
+            .Append(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Login.razor"));
 
         foreach (var file in paths)
         {

@@ -13,8 +13,9 @@ public sealed class JobsyFeatureOptions
     public bool AuthenticatorEnabled { get; set; } = true;
 
     /// <summary>
-    /// When true, registration API may return the activation URL in the submit response (local demo only).
+    /// Unused since auth 06 (activation links removed). Kept for config binding compatibility.
     /// </summary>
+    [Obsolete("Unused since auth 06; drop with PlatformFeatureSettings column")]
     public bool ExposeRegistrationActivationLinks { get; set; }
 
     /// <summary>

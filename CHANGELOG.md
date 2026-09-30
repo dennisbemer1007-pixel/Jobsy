@@ -339,3 +339,6 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - Basis Web API endpoints voor het opvragen van actieve vacatures.
 - Eerste Blazor frontend component met een Funda-achtige split-screen opzet.
 - Documentatie bestanden (`REQUIREMENTS.md`, `CONTEXT.md`, `SECURITY.md`, `TESTING.md`, `ARCHITECTURE.md`).
+
+## Auth 06
+- Removed `/register/activate` page and activation-link builder; permanent 301 to `/register`. Wizard code step remains.

@@ -84,8 +84,6 @@ projects:
                 value: acceptatie
               - key: Training__TrackingSecret
                 generateValue: true
-              - key: JobsyFeatures__ExposeRegistrationActivationLinks
-                value: "false"
               - key: Swagger__Enabled
                 value: "false"
               - key: VerificationCodes__Pepper
@@ -250,8 +248,6 @@ projects:
                 sync: false
               - key: Training__TrackingSecret
                 generateValue: true
-              - key: JobsyFeatures__ExposeRegistrationActivationLinks
-                value: "false"
               - key: Swagger__Enabled
                 value: "false"
               - key: VerificationCodes__Pepper

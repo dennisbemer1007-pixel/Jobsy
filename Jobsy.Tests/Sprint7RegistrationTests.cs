@@ -32,7 +32,7 @@ public class Sprint7RegistrationTests
 
         Assert.False(submit.RequiresTakeover);
         Assert.Equal(CompanyRegistrationStatus.PendingActivation, submit.Status);
-        Assert.False(string.IsNullOrWhiteSpace(submit.ActivationUrl));
+        Assert.Null(submit.ActivationUrl);
 
         var pending = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
         Assert.Equal(RegistrationScope.BranchOnly, pending.Scope);
@@ -457,7 +457,7 @@ public class Sprint7RegistrationTests
 
         Assert.True(submit.RequiresTakeover);
         Assert.Equal(CompanyRegistrationStatus.TakeoverPending, submit.Status);
-        Assert.False(string.IsNullOrWhiteSpace(submit.ActivationUrl));
+        Assert.Null(submit.ActivationUrl);
 
         var takeover = await db.EstablishmentTakeoverRequests
             .SingleAsync(t => t.RegistrationId == submit.RegistrationId);

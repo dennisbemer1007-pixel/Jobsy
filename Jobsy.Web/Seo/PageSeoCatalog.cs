@@ -135,7 +135,6 @@ public static partial class PageSeoCatalog
             ["/register"] = Public("Page.RegisterTitle", "Seo.RegisterDescription"),
             ["/register/koppelen"] = Private("Wa.Link.Title", "Wa.Link.Lead"),
             ["/register/toegang"] = Private("WaAccess.Title", "WaAccess.Lead"),
-            ["/register/activate"] = Private("Page.ActivateTitle", "Seo.ActivateDescription"),
             ["/register/toegang"] = Private("WaAccess.Title", "WaAccess.Lead"),
             ["/register/bedrijf"] = Private("Wa.Steps.4.Title", "Wa.Steps.4.Sub"),
             ["/register/verifieren"] = Private("WaVerify.Eyebrow", "WaVerify.Lead"),
