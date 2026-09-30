@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "1b0415fcea8c9a66c46a2beb480ae0030e7990c9cf536c38bd8a56fe41e05c54",
-    "v": "20260929-wg"
+    "sha256": "35e619882e064f65b360816536cd4ecd9ff1db312855798316a6e5ef871805bd",
+    "v": "20260930-filters"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -32,8 +32,8 @@
     "v": "20260928-match-desktop-ci"
   },
   "css/features/mijn-dna.css": {
-    "sha256": "039f2fead93a7aff58df1e7882497e248dad9193ebc37e7ed06de76ba0d97954",
-    "v": "20260927-dna-c"
+    "sha256": "dc4132dd0ecb72d496a433bdb015caf8baf98cd6c1fe576358cd574c1d63fcdf",
+    "v": "20260930-dna-overflow"
   },
   "css/features/nav-feedback.css": {
     "sha256": "bcca67f50643f55b0d169df00fb48e97b6aa468af59443acb8de732fa409fd55",

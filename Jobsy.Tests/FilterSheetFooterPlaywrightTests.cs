@@ -35,6 +35,7 @@ public class FilterSheetFooterPlaywrightTests
             IsMobile = true,
             IgnoreHTTPSErrors = true
         });
+        await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         if (!await TryLoginAsync(page, baseUrl))
         {
@@ -42,6 +43,7 @@ public class FilterSheetFooterPlaywrightTests
         }
 
         await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await OpenFiltersAsync(page);
 
         var apply = page.Locator(".filter-sheet__apply").First;
@@ -102,8 +104,10 @@ public class FilterSheetFooterPlaywrightTests
             ViewportSize = new() { Width = 1440, Height = 900 },
             IgnoreHTTPSErrors = true
         });
+        await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         var search = page.Locator(".filter-bar__search").First;
         await search.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         Assert.True(await search.IsVisibleAsync());

@@ -2484,12 +2484,14 @@ html[dir="rtl"] .account-menu__panel {
     background: var(--brand-deep);
 }
 
-/* Mobile: hide fixed bottom-nav while the filter sheet is open so Toepassen/Annuleren
-   are tappable. .app-main (z-index: 1) creates a stacking context that otherwise traps
-   .filter-sheet (z-index 90) below .bottom-nav (z-index 50). */
+/* Mobile: hide fixed bottom-nav + cookie banner while the filter sheet is open so
+   Toepassen/Annuleren are tappable. .app-main (z-index: 1) creates a stacking context
+   that otherwise traps .filter-sheet (z-index 90) below .bottom-nav (z-index 50) and
+   .cookie-consent (z-index 80). */
 @media (max-width: 768px) {
-    .app-shell:has(.jobsy-discovery.filters-open) .bottom-nav {
-        display: none;
+    .app-shell:has(.jobsy-discovery.filters-open) .bottom-nav,
+    .app-shell:has(.jobsy-discovery.filters-open) .cookie-consent {
+        display: none !important;
     }
 }
 

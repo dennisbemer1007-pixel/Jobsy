@@ -30,6 +30,7 @@ public class BanenkaartMapPerfPlaywrightTests
             IsMobile = true,
             IgnoreHTTPSErrors = true
         });
+        await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         var cdp = await context.NewCDPSessionAsync(page);
         await cdp.SendAsync("Emulation.setCPUThrottlingRate", new Dictionary<string, object> { ["rate"] = 4 });
@@ -44,6 +45,7 @@ public class BanenkaartMapPerfPlaywrightTests
         };
 
         await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
 
         try
         {
@@ -78,18 +80,23 @@ public class BanenkaartMapPerfPlaywrightTests
         Assert.True(networkCount <= 1, $"Expected ≤1 jobMap network pin fetch, got {networkCount}");
 
         // Switch travel mode — must not trigger another pins HTTP.
+        // Transport select lives in the (often closed) filter UI; only act when visible.
         var before = pinsHits;
-        var transportSelect = page.Locator("select").Filter(new() { HasText = "Fiets" }).First;
+        var transportSelect = page.Locator("select").Filter(new() { HasText = "Fiets" });
         if (await transportSelect.CountAsync() > 0)
         {
+            var visible = transportSelect.First;
             try
             {
-                await transportSelect.SelectOptionAsync("Auto");
-                await page.WaitForTimeoutAsync(800);
+                if (await visible.IsVisibleAsync())
+                {
+                    await visible.SelectOptionAsync("Auto");
+                    await page.WaitForTimeoutAsync(800);
+                }
             }
-            catch (PlaywrightException)
+            catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
             {
-                // Filter UI may be in a sheet — ignore.
+                // Filter UI may be in a closed sheet — ignore.
             }
         }
 

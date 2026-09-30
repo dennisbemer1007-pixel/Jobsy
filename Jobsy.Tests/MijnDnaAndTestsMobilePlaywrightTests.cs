@@ -91,14 +91,17 @@ public class MijnDnaAndTestsMobilePlaywrightTests
             ViewportSize = new() { Width = width, Height = height },
             IgnoreHTTPSErrors = true
         });
+        await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         var guard = AttachGuards(page);
 
         await LoginAsync(page, baseUrl);
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
 
         await page.GotoAsync(
             baseUrl + "/candidate/profile?tab=dna",
             new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await page.WaitForTimeoutAsync(800);
         await AssertNoHorizontalOverflowAsync(page);
         await page.ScreenshotAsync(new()

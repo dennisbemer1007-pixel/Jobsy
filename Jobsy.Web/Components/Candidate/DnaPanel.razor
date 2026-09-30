@@ -102,10 +102,13 @@
                  aria-labelledby="dna-carousel-title">
             <h3 id="dna-carousel-title" class="visually-hidden">@Culture["Dna.CarouselLabel"]</h3>
             <div class="dna-carousel__track" @ref="_carouselTrack">
-                @foreach (var slide in _slides)
+                @for (var slideIndex = 0; slideIndex < _slides.Count; slideIndex++)
                 {
-                    <article class="dna-carousel__slide @(slide.IsProvisional ? "dna-carousel__slide--provisional" : null) @(slide.IsGhost ? "dna-carousel__slide--ghost" : null)"
-                             tabindex="0"
+                    var slide = _slides[slideIndex];
+                    var isActive = _activeSlide == slideIndex;
+                    <article class="dna-carousel__slide @(isActive ? "is-active" : null) @(slide.IsProvisional ? "dna-carousel__slide--provisional" : null) @(slide.IsGhost ? "dna-carousel__slide--ghost" : null)"
+                             tabindex="@(isActive ? 0 : -1)"
+                             aria-hidden="@(isActive ? "false" : "true")"
                              aria-label="@slide.AriaName">
                         <header class="dna-carousel__head">
                             <h4 class="dna-carousel__title">@Culture[slide.TitleKey]</h4>
