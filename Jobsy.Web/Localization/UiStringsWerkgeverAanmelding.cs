@@ -59,6 +59,144 @@ internal static class UiStringsWerkgeverAanmelding
             "Gata · apare după verificare",
             "جاهز · يُنشر بعد التحقق");
 
+        // Dashboard banner / checklist / visibility (11)
+        Add("WaBanner.Title",
+            "Nog niet zichtbaar voor kandidaten",
+            "Not yet visible to candidates",
+            "Jeszcze niewidoczny dla kandydatów",
+            "Încă nevăzut de candidați",
+            "غير مرئي للمرشحين بعد");
+        Add("WaBanner.Pill.Unverified", "Niet geverifieerd", "Not verified", "Niezweryfikowany", "Neverificat", "غير موثّق");
+        Add("WaBanner.Pill.Letter", "Brief onderweg", "Letter on its way", "List w drodze", "Scrisoare pe drum", "الخطاب في الطريق");
+        Add("WaBanner.Pill.Manual", "In controle bij Lobsy", "Under review at Lobsy", "W kontroli Lobsy", "În control la Lobsy", "قيد المراجعة في Lobsy");
+        Add("WaBanner.Pill.Rejected", "Afgewezen: {0}", "Rejected: {0}", "Odrzucono: {0}", "Respins: {0}", "مرفوض: {0}");
+        Add("WaBanner.Body",
+            "Je bedrijf, vacatures en bedrijfspagina verschijnen pas op Lobsy als we weten dat je echt bij {0} hoort.",
+            "Your company, vacancies and company page only appear on Lobsy once we know you really belong to {0}.",
+            "Twoja firma, oferty i strona pojawi się na Lobsy, gdy wiemy, że należysz do {0}.",
+            "Firma, posturile și pagina apar pe Lobsy abia când știm că aparții de {0}.",
+            "شركتك والوظائف وصفحة الشركة تظهر على Lobsy فقط عندما نعرف أنك تنتمي فعلاً إلى {0}.");
+        Add("WaBanner.Body.Letter",
+            "Je bedrijfspagina, vacatures, banenkaart, Match en Google tonen nog niets van {0}. Zodra je code is ingevuld, gaan je klaargezette vacatures automatisch live.",
+            "Your company page, vacancies, job map, Match and Google do not show {0} yet. Once you enter the code, prepared vacancies go live automatically.",
+            "Strona firmy, oferty, mapa, Match i Google nie pokazują jeszcze {0}. Po wpisaniu kodu oferty wystartują.",
+            "Pagina firmei, posturile, harta, Match și Google nu arată încă {0}. După cod, posturile pregătite apar automat.",
+            "صفحة شركتك والوظائف والخريطة وMatch وGoogle لا تظهر {0} بعد. بعد إدخال الرمز تُنشر الوظائف الجاهزة تلقائياً.");
+        Add("WaBanner.Cta.Verify", "Verifieer nu", "Verify now", "Zweryfikuj teraz", "Verifică acum", "تحقّق الآن");
+        Add("WaBanner.Cta.LetterCode", "Code uit de brief invoeren", "Enter the letter code", "Wpisz kod z listu", "Introdu codul din scrisoare", "أدخل رمز الخطاب");
+        Add("WaBanner.Cta.Email", "Via e-mail", "Via e-mail", "E-mailem", "Prin e-mail", "عبر البريد");
+        Add("WaBanner.Manual.Reply",
+            "We reageren vóór {0}",
+            "We reply before {0}",
+            "Odpowiemy przed {0}",
+            "Răspundem înainte de {0}",
+            "نرد قبل {0}");
+        Add("WaBanner.Dismiss", "Verberg", "Dismiss", "Ukryj", "Ascunde", "إخفاء");
+        Add("WaBanner.Success.Title",
+            "Je bedrijf is zichtbaar voor kandidaten 🎉",
+            "Your company is visible to candidates 🎉",
+            "Twoja firma jest widoczna dla kandydatów 🎉",
+            "Firma ta e vizibilă pentru candidați 🎉",
+            "شركتك مرئية للمرشحين 🎉");
+        Add("WaBanner.Success.Body",
+            "{0} vacature(s) zijn live gegaan.",
+            "{0} vacancy(ies) went live.",
+            "{0} oferta/ofert wystartowało.",
+            "{0} post(uri) au devenit live.",
+            "أصبحت {0} وظيفة مباشرة.");
+        Add("WaBanner.Success.BodyZero",
+            "Kandidaten kunnen je bedrijf nu vinden.",
+            "Candidates can find your company now.",
+            "Kandydaci mogą teraz znaleźć Twoją firmę.",
+            "Candidații pot găsi acum firma ta.",
+            "يمكن للمرشحين إيجاد شركتك الآن.");
+        Add("WaBanner.Lender.Title",
+            "Je bureau is zichtbaar. Publiceren kan zodra we je uitleenregistratie hebben bevestigd.",
+            "Your agency is visible. Publishing unlocks once we confirm your lender registration.",
+            "Twoje biuro jest widoczne. Publikacja po potwierdzeniu rejestracji użyczenia.",
+            "Biroul e vizibil. Publicarea după confirmarea înregistrării de împrumut.",
+            "مكتبك مرئي. النشر بعد تأكيد تسجيل الإعارة.");
+        Add("WaBanner.Ready.Title",
+            "Je bedrijf staat klaar! 🎉",
+            "Your company is ready! 🎉",
+            "Twoja firma jest gotowa! 🎉",
+            "Firma ta e gata! 🎉",
+            "شركتك جاهزة! 🎉");
+        Add("WaBanner.Ready.Body",
+            "Nog één ding: de code uit de brief. Intussen kun je alvast vacatures klaarzetten en je team uitnodigen.",
+            "One more thing: the letter code. Meanwhile you can prepare vacancies and invite your team.",
+            "Jeszcze kod z listu. Tymczasem możesz przygotować oferty i zaprosić zespół.",
+            "Mai rămâne codul din scrisoare. Între timp poți pregăti posturi și invita echipa.",
+            "بقي رمز الخطاب. يمكنك في الأثناء تجهيز الوظائف ودعوة فريقك.");
+
+        Add("WaBanner.Checklist.Title", "Aan de slag", "Getting started", "Na start", "Hai la treabă", "ابدأ");
+        Add("WaBanner.Checklist.Progress", "{0} van {1}", "{0} of {1}", "{0} z {1}", "{0} din {1}", "{0} من {1}");
+        Add("WaBanner.Checklist.Account", "Account aangemaakt", "Account created", "Konto utworzone", "Cont creat", "تم إنشاء الحساب");
+        Add("WaBanner.Checklist.Verify", "Bedrijf verifiëren", "Verify company", "Zweryfikuj firmę", "Verifică firma", "تحقّق من الشركة");
+        Add("WaBanner.Checklist.Verify.Letter", "Brief onderweg", "Letter on its way", "List w drodze", "Scrisoare pe drum", "الخطاب في الطريق");
+        Add("WaBanner.Checklist.Verify.Manual", "In controle bij Lobsy", "Under review at Lobsy", "W kontroli Lobsy", "În control la Lobsy", "قيد المراجعة");
+        Add("WaBanner.Checklist.About", "Over je bedrijf", "About your company", "O firmie", "Despre firmă", "عن شركتك");
+        Add("WaBanner.Checklist.About.Detail", "Branche · cultuur · betrokkenheid", "Industry · culture · engagement", "Branża · kultura · zaangażowanie", "Industrie · cultură · implicare", "القطاع · الثقافة · المشاركة");
+        Add("WaBanner.Checklist.Vacancy", "Eerste vacature klaarzetten", "Prepare first vacancy", "Przygotuj pierwszą ofertę", "Pregătește primul post", "جهّز أول وظيفة");
+        Add("WaBanner.Checklist.Vacancy.Ready", "Gaat live na verificatie", "Goes live after verification", "Start po weryfikacji", "Apare după verificare", "يُنشر بعد التحقق");
+        Add("WaBanner.Checklist.Invite", "Collega uitnodigen", "Invite a colleague", "Zaproś kolegę", "Invită un coleg", "ادعُ زميلاً");
+        Add("WaBanner.Checklist.Suggestion", "Nieuwe vestiging bij KVK: {0}. Toevoegen?", "New KVK location: {0}. Add it?", "Nowa lokalizacja KVK: {0}. Dodać?", "Locație KVK nouă: {0}. Adaugi?", "موقع KVK جديد: {0}. إضافة؟");
+        Add("WaBanner.Checklist.Add", "Toevoegen", "Add", "Dodaj", "Adaugă", "إضافة");
+        Add("WaBanner.Checklist.NotNow", "Niet nu", "Not now", "Nie teraz", "Nu acum", "ليس الآن");
+
+        Add("WaBanner.Visibility.Title", "Wat ziet een kandidaat?", "What does a candidate see?", "Co widzi kandydat?", "Ce vede candidatul?", "ماذا يرى المرشح؟");
+        Add("WaBanner.Visibility.CompanyPage", "Bedrijfspagina", "Company page", "Strona firmy", "Pagina firmei", "صفحة الشركة");
+        Add("WaBanner.Visibility.Map", "Vacatures op de kaart", "Vacancies on the map", "Oferty na mapie", "Posturi pe hartă", "وظائف على الخريطة");
+        Add("WaBanner.Visibility.Matches", "Matches", "Matches", "Dopasowania", "Potriviri", "التطابقات");
+        Add("WaBanner.Visibility.Search", "Zoekmachines", "Search engines", "Wyszukiwarki", "Motoare de căutare", "محركات البحث");
+        Add("WaBanner.Visibility.Hidden", "Nog verborgen", "Still hidden", "Jeszcze ukryte", "Încă ascuns", "لا يزال مخفياً");
+        Add("WaBanner.Visibility.Visible", "Zichtbaar", "Visible", "Widoczne", "Vizibil", "مرئي");
+        Add("WaBanner.Visibility.Locked", "Na verificatie", "After verification", "Po weryfikacji", "După verificare", "بعد التحقق");
+        Add("WaBanner.Visibility.Applications", "Sollicitaties bekijken", "View applications", "Zobacz aplikacje", "Vezi aplicațiile", "عرض الطلبات");
+        Add("WaBanner.Visibility.Tokens", "Tokens kopen", "Buy tokens", "Kup tokeny", "Cumpără tokeni", "شراء الرموز");
+        Add("WaBanner.Visibility.Insights", "Kandidaatinzichten", "Candidate insights", "Wgląd w kandydatów", "Perspective candidați", "رؤى المرشحين");
+        Add("WaBanner.Visibility.Footer",
+            "Kandidaten, sollicitaties en tokens kopen gaan open na verificatie.",
+            "Candidates, applications and buying tokens unlock after verification.",
+            "Kandydaci, aplikacje i tokeny otwierają się po weryfikacji.",
+            "Candidații, aplicațiile și tokenii se deschid după verificare.",
+            "المرشحون والطلبات وشراء الرموز تُفتح بعد التحقق.");
+        Add("WaBanner.Visibility.CompanyPage.Hint", "verborgen, geeft 404 aan bezoekers", "hidden, shows 404 to visitors", "ukryta, 404 dla odwiedzających", "ascunsă, 404 pentru vizitatori", "مخفية، تظهر 404 للزوار");
+        Add("WaBanner.Visibility.Map.Hint", "geen vacatures zichtbaar", "no vacancies visible", "brak widocznych ofert", "niciun post vizibil", "لا وظائف ظاهرة");
+        Add("WaBanner.Visibility.Search.Hint", "niet vermeld, geen structured data", "not listed, no structured data", "brak w indeksie, bez structured data", "nelistat, fără date structurate", "غير مدرج، بلا بيانات منظمة");
+
+        Add("WaBanner.Letter.AttemptsLeft",
+            "Nog {0} pogingen over.",
+            "{0} attempts left.",
+            "Pozostało {0} prób.",
+            "Mai ai {0} încercări.",
+            "متبقي {0} محاولات.");
+        Add("WaBanner.Letter.NothingYet",
+            "Nog niets ontvangen?",
+            "Nothing received yet?",
+            "Nic nie doszło?",
+            "Nimic primit încă?",
+            "لم يصل شيء بعد؟");
+        Add("WaBanner.Nav.Locked",
+            "Beschikbaar na verificatie",
+            "Available after verification",
+            "Dostępne po weryfikacji",
+            "Disponibil după verificare",
+            "متاح بعد التحقق");
+
+        Add("Legal.Privacy.EmployerSignup.Title",
+            "Werkgevers die zich aanmelden",
+            "Employers who sign up",
+            "Pracodawcy rejestrujący się",
+            "Angajatori care se înscriu",
+            "أصحاب العمل عند التسجيل");
+        Add("Legal.Privacy.EmployerSignup.Body",
+            "Wanneer je als werkgever een bedrijf registreert, verwerken we openbare KVK-gegevens (naam, vestigingen, SBI, websites, post-/bezoekadres; cache max. 24 uur), je contact-e-mail en de bevestigingscode, eventueel een verificatiebrief via Pingen naar het KvK-adres (wij bewaren geen briefinhoud langer dan de audit), toegangsverzoeken (gedeeld met bedrijfsmanagers), maatschappelijke claims (openbaar met label), herinneringen, en we wissen niet-geverifieerde registraties na 60 dagen.",
+            "When you register a company as an employer we process public KVK data (name, locations, SBI, websites, postal/visiting address; cached ≤ 24 h), your contact e-mail and confirmation code, optionally a verification letter via Pingen to the KvK address (we do not keep letter content beyond the audit), access requests (shared with company managers), engagement claims (public, labelled), reminders, and we delete unverified registrations after 60 days.",
+            "Przy rejestracji firmy przetwarzamy publiczne dane KVK (nazwa, lokalizacje, SBI, strony, adres; cache ≤ 24 h), e-mail kontaktowy i kod, opcjonalnie list weryfikacyjny przez Pingen na adres KVK (bez treści listu poza audytem), wnioski o dostęp (dla menedżerów), deklaracje zaangażowania (publiczne z etykietą), przypomnienia oraz usuwamy niezweryfikowane rejestracje po 60 dniach.",
+            "La înregistrare procesăm date KVK publice (nume, locații, SBI, site-uri, adresă; cache ≤ 24 h), e-mailul de contact și codul, opțional o scrisoare via Pingen la adresa KVK (fără conținut dincolo de audit), cereri de acces (cu managerii), declarații de implicare (publice, etichetate), memento-uri și ștergem înregistrările neverificate după 60 de zile.",
+            "عند تسجيل شركة نعالج بيانات KVK العامة (الاسم والمواقع وSBI والمواقع والعنوان؛ تخزين مؤقت ≤ 24 ساعة) وبريد التواصل ورمز التأكيد، واختيارياً خطاب تحقق عبر Pingen إلى عنوان KVK (لا نحتفظ بمحتوى الخطاب بعد التدقيق)، وطلبات الوصول (مع مديري الشركة)، ومطالبات المشاركة (عامة مع تسمية)، والتذكيرات، ونحذف التسجيلات غير الموثّقة بعد 60 يوماً.");
+
         // Layout / guide / steps
         Add("Wa.Layout.Title", "Bedrijf registreren", "Register company", "Zarejestruj firmę", "Înregistrează firma", "تسجيل الشركة");
         Add("Wa.Layout.HaveAccount", "Al een account?", "Already have an account?", "Masz już konto?", "Ai deja un cont?", "هل لديك حساب؟");

@@ -96,6 +96,7 @@ public sealed class CompanyVerificationService : ICompanyVerificationService
 
         var welcomeGranted = await GrantWelcomeForTreeAsync(root, actorUserId, cancellationToken);
         var publishedTitles = await PublishReadyVacanciesAsync(root.Id, cancellationToken);
+        root.LastAutoPublishedVacancyCount = publishedTitles.Count;
         await (_discovery?.InvalidateCompanyAsync(root.Id, cancellationToken) ?? Task.CompletedTask);
 
         _db.PlatformLogs.Add(new PlatformLog

@@ -106,6 +106,7 @@ public class JobsyDbContext : DbContext
     public DbSet<KvkUsageDaily> KvkUsageDaily => Set<KvkUsageDaily>();
     public DbSet<EstablishmentTakeoverRequest> EstablishmentTakeoverRequests => Set<EstablishmentTakeoverRequest>();
     public DbSet<CompanyAccessRequest> CompanyAccessRequests => Set<CompanyAccessRequest>();
+    public DbSet<DismissedVestigingSuggestion> DismissedVestigingSuggestions => Set<DismissedVestigingSuggestion>();
     public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
     public DbSet<SalesManagerProfile> SalesManagerProfiles => Set<SalesManagerProfile>();
     public DbSet<AmbassadeurProfile> AmbassadeurProfiles => Set<AmbassadeurProfile>();
@@ -1555,6 +1556,19 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.CallType).HasMaxLength(32).IsRequired();
             entity.HasIndex(e => new { e.Date, e.CallType }).IsUnique();
+        });
+
+        modelBuilder.Entity<DismissedVestigingSuggestion>(entity =>
+        {
+            entity.ToTable("DismissedVestigingSuggestions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.KvkEstablishmentId).HasMaxLength(40).IsRequired();
+            entity.HasIndex(e => new { e.CompanyId, e.KvkEstablishmentId }).IsUnique();
+            entity.HasIndex(e => e.HiddenUntilUtc);
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<EstablishmentTakeoverRequest>(entity =>

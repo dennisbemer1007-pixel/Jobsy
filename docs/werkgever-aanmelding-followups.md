@@ -16,3 +16,5 @@ When intermediair 04b runs: skip what already exists; only add the admin tab on 
 
 ## Intermediair data model (Dependencies G) — recheck at 10
 **STILL ABSENT** on acceptatie at file 10: no `IntermediaryClient` entity. File 10 follows the Absent path (client companies with intermediary `UserCompany` membership).
+## Werkgever shell (Dependencies C) — recheck at 11
+**STILL ABSENT** on acceptatie at file 11: no `WerkgeverLayout` / `WgPageShell` / `WerkgeverNav`. File 11 uses `CompanyVerificationBanner` in `MainLayout` for employer roles, checklist + visibility panel in `EmployerHomePanel`, and `EmployerLinks` for today’s URLs. When werkgever-redesign 01/02 lands: move the banner into `WgPageShell` Banner slot, checklist items into Te doen, and point `EmployerLinks` at `/werkgever/...` (301s keep old URLs working).

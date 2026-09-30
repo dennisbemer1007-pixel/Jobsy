@@ -49,6 +49,11 @@ public class Company
     /// </summary>
     public DateTime? ManualVerificationClosedAtUtc { get; set; }
 
+    /// <summary>
+    /// Vacancies that went live automatically when this company was last verified (11 success banner).
+    /// </summary>
+    public int LastAutoPublishedVacancyCount { get; set; }
+
     public string Address { get; set; } = string.Empty;
     public string? LogoUrl { get; set; }
 

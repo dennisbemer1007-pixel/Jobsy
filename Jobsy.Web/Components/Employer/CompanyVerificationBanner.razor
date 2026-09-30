@@ -1,0 +1,261 @@
+@namespace Jobsy.Web.Components.Employer
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthState
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@implements IDisposable
+
+@if (_ready && _status is not null && !_dismissed)
+{
+    <div class="cv-banner-slot" aria-live="polite">
+        @if (_status.ShowUnverifiedBanner)
+        {
+            <div class="cv-banner cv-banner--warn" role="status">
+                <div class="cv-banner__text">
+                    <div class="cv-banner__title-row">
+                        <h2 class="cv-banner__title">@Culture["WaBanner.Title"]</h2>
+                        <span class="cv-banner__pill">@PillLabel()</span>
+                    </div>
+                    <p class="cv-banner__body">@BannerBody()</p>
+                    @if (_status.ManualPending && _status.ManualReplyByUtc is DateTime replyBy)
+                    {
+                        <p class="cv-banner__meta">@string.Format(Culture["WaBanner.Manual.Reply"], FormatNlDate(replyBy))</p>
+                    }
+                    @if (_showCodeEntry)
+                    {
+                        <LetterCodeEntry AttemptsRemaining="_status.LetterAttemptsRemaining"
+                                         ShowNothingYet="ShowNothingYetHint()"
+                                         OnVerified="OnLetterVerifiedAsync" />
+                    }
+                </div>
+                <div class="cv-banner__actions">
+                    @if (!_showCodeEntry)
+                    {
+                        @if (_status.LetterUnderway)
+                        {
+                            <button type="button" class="login-submit" @onclick="() => _showCodeEntry = true">
+                                @Culture["WaBanner.Cta.LetterCode"]
+                            </button>
+                            @if (_status.EmailAvailable)
+                            {
+                                <a class="provider-btn" href="@EmployerLinks.Verify">@Culture["WaBanner.Cta.Email"]</a>
+                            }
+                        }
+                        else if (!_status.ManualPending)
+                        {
+                            <a class="login-submit" href="@EmployerLinks.Verify">@Culture["WaBanner.Cta.Verify"]</a>
+                        }
+                    }
+                    <button type="button" class="cv-banner__dismiss" @onclick="DismissSessionAsync" aria-label="@Culture["WaBanner.Dismiss"]">×</button>
+                </div>
+            </div>
+            @if (_status.LetterUnderway)
+            {
+                <div class="cv-banner cv-banner--ready" role="status">
+                    <div class="cv-banner__text">
+                        <h2 class="cv-banner__title">@Culture["WaBanner.Ready.Title"]</h2>
+                        <p class="cv-banner__body">@Culture["WaBanner.Ready.Body"]</p>
+                    </div>
+                </div>
+            }
+        }
+        else if (_status.LenderRegistrationPending)
+        {
+            <div class="cv-banner cv-banner--info" role="status">
+                <div class="cv-banner__text">
+                    <p class="cv-banner__body">@Culture["WaBanner.Lender.Title"]</p>
+                </div>
+                <button type="button" class="cv-banner__dismiss" @onclick="DismissSessionAsync" aria-label="@Culture["WaBanner.Dismiss"]">×</button>
+            </div>
+        }
+        else if (_status.ShowSuccessBanner && !_successDismissed)
+        {
+            <div class="cv-banner cv-banner--success" role="status">
+                <div class="cv-banner__text">
+                    <h2 class="cv-banner__title">@Culture["WaBanner.Success.Title"]</h2>
+                    <p class="cv-banner__body">
+                        @(_status.LastAutoPublishedVacancyCount > 0
+                            ? string.Format(Culture["WaBanner.Success.Body"], _status.LastAutoPublishedVacancyCount)
+                            : Culture["WaBanner.Success.BodyZero"])
+                    </p>
+                </div>
+                <button type="button" class="cv-banner__dismiss" @onclick="DismissSuccessAsync" aria-label="@Culture["WaBanner.Dismiss"]">×</button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private EmployerOnboardingStatusItem? _status;
+    private bool _ready;
+    private bool _dismissed;
+    private bool _successDismissed;
+    private bool _showCodeEntry;
+    private bool _loadStarted;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+
+    private async Task TryLoadAsync()
+    {
+        if (_loadStarted)
+        {
+            return;
+        }
+
+        _loadStarted = true;
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var user = state.User;
+            if (user.Identity?.IsAuthenticated != true
+                || !(user.IsInRole("EnterpriseManager")
+                     || user.IsInRole("BranchManager")
+                     || user.IsInRole("Intermediary")
+                     || user.IsInRole("RegionalManager")))
+            {
+                return;
+            }
+
+            // Skip public wizard pages — they have their own chrome.
+            var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+            if (path.StartsWith("register", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _status = await Api.GetEmployerOnboardingStatusAsync();
+            if (_status is null)
+            {
+                return;
+            }
+
+            try
+            {
+                _dismissed = await Js.InvokeAsync<bool>("eval", "sessionStorage.getItem('wa.cvBanner.dismiss')==='1'");
+                _successDismissed = await Js.InvokeAsync<bool>("eval", "sessionStorage.getItem('wa.cvBanner.successDismiss')==='1'");
+            }
+            catch
+            {
+                // JS not ready.
+            }
+
+            if (_status.LetterUnderway)
+            {
+                _showCodeEntry = false;
+            }
+
+            _ready = true;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            _loadStarted = false;
+        }
+    }
+
+    private string PillLabel()
+    {
+        if (_status is null)
+        {
+            return Culture["WaBanner.Pill.Unverified"];
+        }
+
+        if (string.Equals(_status.VerificationStatus, "Rejected", StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Format(Culture["WaBanner.Pill.Rejected"], _status.RejectionReason ?? "—");
+        }
+
+        if (_status.ManualPending)
+        {
+            return Culture["WaBanner.Pill.Manual"];
+        }
+
+        if (_status.LetterUnderway)
+        {
+            return Culture["WaBanner.Pill.Letter"];
+        }
+
+        return Culture["WaBanner.Pill.Unverified"];
+    }
+
+    private string BannerBody()
+    {
+        if (_status is null)
+        {
+            return "";
+        }
+
+        return _status.LetterUnderway
+            ? string.Format(Culture["WaBanner.Body.Letter"], _status.CompanyName)
+            : string.Format(Culture["WaBanner.Body"], _status.CompanyName);
+    }
+
+    private bool ShowNothingYetHint()
+    {
+        if (_status?.LetterSentAtUtc is not DateTime sent)
+        {
+            return false;
+        }
+
+        return DateTime.UtcNow >= sent.AddDays(7);
+    }
+
+    private static string FormatNlDate(DateTime utc)
+    {
+        var nl = new System.Globalization.CultureInfo("nl-NL");
+        return utc.ToLocalTime().ToString("ddd d MMM", nl);
+    }
+
+    private async Task DismissSessionAsync()
+    {
+        _dismissed = true;
+        try
+        {
+            await Js.InvokeVoidAsync("eval", "sessionStorage.setItem('wa.cvBanner.dismiss','1')");
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private async Task DismissSuccessAsync()
+    {
+        _successDismissed = true;
+        try
+        {
+            await Js.InvokeVoidAsync("eval", "sessionStorage.setItem('wa.cvBanner.successDismiss','1')");
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private async Task OnLetterVerifiedAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("eval", "sessionStorage.removeItem('wa.cvBanner.dismiss');sessionStorage.removeItem('wa.cvBanner.successDismiss')");
+        }
+        catch
+        {
+            // ignore
+        }
+
+        Navigation.NavigateTo(EmployerLinks.Home, forceLoad: true);
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+}

@@ -779,3 +779,222 @@ a.wa-link { display: inline; }
   border: 1px solid var(--border, #d6d0c8);
   padding: 0.55rem 0.75rem;
 }
+
+/* —— Dashboard verification banner / checklist / visibility (11, app shell) —— */
+.cv-banner-slot {
+  display: grid;
+  gap: 0.75rem;
+  margin-block: 0.75rem 1rem;
+  min-height: 0;
+}
+.cv-banner {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 1rem 1.15rem;
+  border-radius: var(--radius, 12px);
+  border: 1px solid var(--border);
+  background: var(--warn-soft, #fff8e7);
+  color: var(--text);
+  min-height: 4.5rem;
+}
+.cv-banner--success { background: var(--success-soft, #ecfdf3); }
+.cv-banner--info { background: var(--accent-soft, #e7eef7); }
+.cv-banner--ready {
+  background: color-mix(in srgb, var(--gold-soft, #faf6e8) 80%, #fff);
+  border-color: color-mix(in srgb, var(--gold, #c9a227) 28%, var(--border));
+}
+.cv-banner__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+}
+.cv-banner__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.cv-banner__pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--warn, #a65b00) 14%, #fff);
+  color: var(--warn, #a65b00);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+.cv-banner__body { margin: 0.35rem 0 0; color: var(--muted); max-width: 52rem; }
+.cv-banner__meta { margin: 0.35rem 0 0; font-size: 0.9rem; }
+.cv-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.cv-banner__dismiss {
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm, 8px);
+}
+.cv-banner__dismiss:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cv-letter-code {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  display: grid;
+  gap: 0.45rem;
+  max-width: 28rem;
+}
+.cv-letter-code__title { margin: 0; font-size: 1rem; }
+.cv-letter-code__hint,
+.cv-letter-code__attempts { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.cv-letter-code__field { display: grid; gap: 0.25rem; }
+.cv-letter-code__label { font-weight: 600; font-size: 0.9rem; }
+.cv-letter-code__input {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  font: inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cv-letter-code__input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.cv-letter-code__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+.cv-letter-code__link { color: var(--accent); min-height: 44px; display: inline-flex; align-items: center; }
+
+.cv-onboarding { margin-block: 0.5rem 1.25rem; }
+.cv-onboarding__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+  .cv-onboarding__grid { grid-template-columns: 1.2fr 0.9fr; }
+}
+.cv-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 12px);
+  padding: 1rem 1.1rem 1.15rem;
+  box-shadow: var(--shadow);
+}
+.cv-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+  margin-bottom: 0.65rem;
+}
+.cv-card__header h2 { margin: 0; font-size: 1.1rem; }
+.cv-card__progress { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.cv-card__bar {
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--pearl-mid, #efe9e3);
+  overflow: hidden;
+  margin-bottom: 0.85rem;
+}
+.cv-card__bar span {
+  display: block;
+  height: 100%;
+  width: var(--pct, 0%);
+  background: var(--coral, #f54a1b);
+  border-radius: inherit;
+}
+.cv-checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.cv-checklist__item {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr auto;
+  gap: 0.65rem;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.4rem 0.2rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+}
+.cv-checklist__item--suggest { grid-template-columns: 1.5rem 1fr; }
+.cv-checklist__mark {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--success);
+}
+.cv-checklist__item.is-done .cv-checklist__mark {
+  background: var(--success-soft);
+  border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+}
+.cv-checklist__title { margin: 0; font-weight: 600; }
+.cv-checklist__detail { margin: 0.15rem 0 0; color: var(--muted); font-size: 0.88rem; }
+.cv-checklist__go {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--muted);
+  border-radius: var(--radius-sm, 8px);
+}
+.cv-checklist__go:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cv-checklist__suggest-actions {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.cv-visibility { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+.cv-visibility__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+}
+.cv-visibility__label { font-weight: 600; }
+.cv-visibility__state { font-size: 0.88rem; color: var(--muted); }
+.cv-visibility__state.is-hidden { color: var(--warn, #a65b00); }
+.cv-visibility__state.is-visible { color: var(--success); }
+.cv-visibility__hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.cv-visibility__row--locked .cv-visibility__state { font-style: italic; }
+.cv-visibility__footer {
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-card__bar span { transition: none; }
+}

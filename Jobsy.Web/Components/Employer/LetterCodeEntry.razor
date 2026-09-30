@@ -1,0 +1,73 @@
+@namespace Jobsy.Web.Components.Employer
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+<div class="cv-letter-code" role="group" aria-label="@Culture["WaVerify.Brief.CodeTitle"]">
+    <h3 class="cv-letter-code__title">@Culture["WaVerify.Brief.CodeTitle"]</h3>
+    <p class="cv-letter-code__hint">@Culture["WaVerify.Brief.CodeHint"]</p>
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <p class="state-message error" role="alert">@_error</p>
+    }
+    <label class="cv-letter-code__field">
+        <span class="cv-letter-code__label">@Culture["WaVerify.Brief.CodeTitle"]</span>
+        <input class="cv-letter-code__input"
+               @bind="_code"
+               maxlength="12"
+               autocomplete="one-time-code"
+               placeholder="XXXX-XXXX"
+               aria-label="@Culture["WaVerify.Brief.CodeTitle"]" />
+    </label>
+    @if (AttemptsRemaining >= 0)
+    {
+        <p class="cv-letter-code__attempts">@string.Format(Culture["WaBanner.Letter.AttemptsLeft"], AttemptsRemaining)</p>
+    }
+    <div class="cv-letter-code__actions">
+        <button type="button" class="login-submit" disabled="@_busy" @onclick="ConfirmAsync">
+            @Culture["WaVerify.Brief.Confirm"]
+        </button>
+        @if (ShowNothingYet)
+        {
+            <a class="cv-letter-code__link" href="@EmployerLinks.VerifyBrief">@Culture["WaBanner.Letter.NothingYet"]</a>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int AttemptsRemaining { get; set; } = -1;
+    [Parameter] public bool ShowNothingYet { get; set; }
+    [Parameter] public EventCallback OnVerified { get; set; }
+
+    private string _code = "";
+    private bool _busy;
+    private string? _error;
+
+    private async Task ConfirmAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.ConfirmCompanyLetterVerificationAsync(_code);
+            if (OnVerified.HasDelegate)
+            {
+                await OnVerified.InvokeAsync();
+            }
+            else
+            {
+                Navigation.NavigateTo(EmployerLinks.Home, forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

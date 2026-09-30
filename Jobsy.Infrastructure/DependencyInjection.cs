@@ -315,6 +315,8 @@ public static class DependencyInjection
             return sp.GetRequiredService<Jobsy.Infrastructure.Services.Letters.StubLetterService>();
         });
         services.AddScoped<ICompanyVerificationFlowService, Jobsy.Infrastructure.Services.Verification.CompanyVerificationFlowService>();
+        services.AddScoped<IVestigingSuggestionService, VestigingSuggestionService>();
+        services.AddScoped<IEmployerOnboardingStatusService, EmployerOnboardingStatusService>();
         services.AddScoped<ICompanyVerificationAdminService, Jobsy.Infrastructure.Services.Verification.CompanyVerificationAdminService>();
         services.AddScoped<IRegistrationReferralResolver, DefaultRegistrationReferralResolver>();
         services.AddHttpClient<IGeocodingService, NominatimGeocodingService>(client =>
@@ -478,6 +480,7 @@ public static class DependencyInjection
         services.AddHostedService<VatBufferTransferHostedService>();
         services.AddHostedService<TokenCheckoutReconcileHostedService>();
         services.AddHostedService<KvkVerificationRetryHostedService>();
+        services.AddHostedService<VestigingSuggestionHostedService>();
 
         return services;
     }

@@ -41,6 +41,10 @@
     <main class="app-main">
         <ErrorBoundary @ref="_errorBoundary">
             <ChildContent>
+                @if (RendererInfo.IsInteractive)
+                {
+                    <Jobsy.Web.Components.Employer.CompanyVerificationBanner />
+                }
                 @Body
             </ChildContent>
             <ErrorContent Context="ex">
