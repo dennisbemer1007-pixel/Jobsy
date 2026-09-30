@@ -13,7 +13,8 @@
                             Size="@LobsterSize"
                             Mobile="@Mobile"
                             NewShell="@Celebrate"
-                            Label="" />
+                            FallingPlate="@FallingPlate"
+                            Label="@LobsterLabel" />
         </div>
     }
 
@@ -44,6 +45,12 @@
     [Parameter] public bool Celebrate { get; set; }
     [Parameter] public int PlatesShed { get; set; } = 4;
     [Parameter] public int LobsterSize { get; set; }
+
+    /// <summary>Index of the old-shell plate that falls once during the growth moment (03 §5).</summary>
+    [Parameter] public int? FallingPlate { get; set; }
+
+    /// <summary>Localized label; only the completion moment carries meaning (§0).</summary>
+    [Parameter] public string LobsterLabel { get; set; } = "";
 
     protected override void OnParametersSet()
     {

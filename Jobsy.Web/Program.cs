@@ -131,6 +131,9 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateMatchProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Services.MatchVacancyService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CareerPathService>();
+builder.Services.AddScoped<
+    Jobsy.Web.Services.Careers.ICareerStepVacancyFit,
+    Jobsy.Web.Services.Careers.CareerStepVacancyFitService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Components.Candidate.ProfileSections.CandidateProfileEditor>();
 builder.Services.AddScoped<Jobsy.Web.Services.GratisDnaStorage>();

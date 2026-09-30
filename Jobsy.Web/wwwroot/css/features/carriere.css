@@ -673,6 +673,165 @@
 
 .career-archive__list small { display: block; color: var(--muted); font-size: 0.78rem; }
 
+/* ---------------- step detail (03) ---------------- */
+
+.career-step__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--brand);
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.career-step__back-icon { display: inline-flex; transform: rotate(180deg); }
+
+[dir="rtl"] .career-step__back-icon { transform: rotate(0deg); }
+
+.career-step__level { margin: 0 0 var(--space-3); }
+
+.career-step__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  margin-block: var(--space-4);
+}
+
+.career-step__block--courses { grid-column: 1 / -1; }
+
+.career-step__block {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.career-step__block--courses {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.career-step__sub { margin: 0 0 var(--space-3); color: var(--muted); font-size: 0.85rem; }
+
+.career-step__quiet { margin: var(--space-3) 0 0; color: var(--muted); font-size: 0.88rem; }
+
+.career-step__gaps { margin: 0; padding: 0; list-style: none; }
+
+.career-step__gap {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-block: 6px;
+  font-size: 0.92rem;
+}
+
+.career-step__gap-icon { display: inline-flex; flex: 0 0 auto; margin-block-start: 2px; }
+
+.career-step__gap.is-met { color: var(--muted); }
+.career-step__gap.is-met .career-step__gap-icon { color: var(--brand); }
+.career-step__gap.is-missing .career-step__gap-icon { color: var(--accent); }
+
+.career-step__years { margin: var(--space-2) 0 0; color: var(--muted); font-size: 0.85rem; }
+
+.career-step__band { margin: 0 0 var(--space-2); }
+
+.career-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border: 1.5px solid var(--brand);
+  border-radius: 999px;
+  color: var(--brand);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.career-step__band-text { margin: 0 0 var(--space-3); font-size: 0.92rem; }
+
+.career-step__vacancies {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--brand);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.career-step__chev { display: inline-flex; }
+
+[dir="rtl"] .career-step__chev { transform: scaleX(-1); }
+
+.career-step__vacancy-count { margin: 0; color: var(--muted); font-size: 0.85rem; }
+
+.career-step__proof-icon,
+.career-step__check { display: inline-flex; }
+
+.career-courses { margin-block-start: var(--space-2); }
+
+.career-courses__disclosure {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.career-courses__plain {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: var(--space-3) 0 0;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.career-courses__icon { display: inline-flex; flex: 0 0 auto; color: var(--accent); }
+
+/* ---------------- growth moment (03 §5) ---------------- */
+
+.career-done__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.career-done__shard {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.career-done__shard-icon { display: inline-flex; color: var(--shell-old); }
+
+.career-done__gained { margin: 0 0 var(--space-4); padding: 0; list-style: none; }
+
+.career-done__gained li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-block: 6px;
+  font-size: 0.95rem;
+}
+
+.career-done__gained-icon { display: inline-flex; flex: 0 0 auto; color: var(--brand); }
+
+.career-done__next {
+  margin-block: var(--space-4);
+  padding: var(--space-3);
+  border-radius: 14px;
+  background: var(--accent-soft);
+}
+
+.career-done__next-step { margin: 0; font-weight: 600; }
+.career-done__next-facts { margin: 4px 0 0; color: var(--muted); font-size: 0.85rem; }
+
+.career-done__undo-icon { display: inline-flex; }
+
 /* ---------------- responsive ---------------- */
 
 @media (max-width: 1023px) {
@@ -702,6 +861,12 @@
     background: var(--surface);
   }
   .career-card__actions--sticky .career-btn { flex: 1 1 100%; }
+  .career-card__actions--sticky .career-btn--icon { flex: 0 0 44px; }
+
+  /* Mobile shows the courses first, then the two blocks stacked (cr-m3). */
+  .career-step__grid { grid-template-columns: minmax(0, 1fr); }
+  .career-step__block--courses { order: -1; }
+  .career-done__top { flex-wrap: wrap; }
 }
 
 @media (min-width: 900px) {
@@ -709,6 +874,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /*
+    The growth moment has no fall and no move: the new shell and the new position are
+    simply there. `journey-plate--falling` is the spec name, `journey-lob__fall` the
+    class JourneyLobster renders; both are covered so either contract holds.
+  */
+  .career-scene--celebrate .journey-plate--falling,
+  .career-scene--celebrate .journey-lob__fall {
+    animation: none;
+  }
+
   .career-scene__lob,
   .career-scene__bubble--0,
   .career-scene__bubble--1,
