@@ -81,6 +81,16 @@ public static class RoutesDocGenerator
         }
 
         sb.AppendLine();
+        sb.AppendLine("## Minimal API (public shell)");
+        sb.AppendLine();
+        sb.AppendLine("Not Blazor `@page` routes — documented here for discoverability (landing stack).");
+        sb.AppendLine();
+        sb.AppendLine("| Route | Notes |");
+        sb.AppendLine("|-------|-------|");
+        sb.AppendLine("| `/taal/{lang}` | Sets `Jobsy.Culture` cookie; 302 to local `returnUrl` only; `noindex` |");
+        sb.AppendLine("| `/account/cookie-consent/analytics-token` | POST; same-origin analytics consent token for static cookie banner |");
+        sb.AppendLine();
+
         return sb.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
     }
 

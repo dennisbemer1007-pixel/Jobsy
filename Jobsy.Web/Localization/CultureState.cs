@@ -42,6 +42,21 @@ public sealed class CultureState
     public string Format(string key, params object[] args)
         => string.Format(CultureInfo.InvariantCulture, this[key], args);
 
+    /// <summary>
+    /// SSR/prerender culture from the request: <c>?lang=</c> → cookie → nl.
+    /// Marks the state initialized so <see cref="InitializeAsync"/> keeps this value.
+    /// </summary>
+    public void InitializeFromRequest(HttpContext? http)
+    {
+        if (_initialized)
+        {
+            return;
+        }
+
+        Apply(CultureRequest.ResolveLanguage(http));
+        _initialized = true;
+    }
+
     public async Task InitializeAsync()
     {
         if (_initialized)

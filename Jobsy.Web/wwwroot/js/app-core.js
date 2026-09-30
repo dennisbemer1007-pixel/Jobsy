@@ -472,6 +472,44 @@ window.jobsyCulture = {
         };
     })();
 
+    // Static cookie banner (PublicLayout SSR): buttons use data-consent, no Blazor circuit.
+    document.addEventListener("click", function (ev) {
+        var btn = ev.target && ev.target.closest ? ev.target.closest("[data-consent]") : null;
+        if (!btn || !btn.getAttribute) return;
+        var choice = (btn.getAttribute("data-consent") || "").toLowerCase();
+        if (choice !== "necessary" && choice !== "analytics") return;
+        ev.preventDefault();
+
+        function finish(value) {
+            window.jobsyCookieConsent.set(value);
+            var banner = btn.closest(".cookie-consent");
+            if (banner && banner.parentNode) {
+                banner.parentNode.removeChild(banner);
+            }
+        }
+
+        if (choice === "necessary") {
+            finish("necessary");
+            return;
+        }
+
+        fetch("/account/cookie-consent/analytics-token", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Accept": "application/json" }
+        })
+            .then(function (res) {
+                if (!res.ok) throw new Error("token");
+                return res.json();
+            })
+            .then(function (body) {
+                finish((body && body.token) || "analytics");
+            })
+            .catch(function () {
+                finish("analytics");
+            });
+    });
+
     applyKnownClass();
 })();
 

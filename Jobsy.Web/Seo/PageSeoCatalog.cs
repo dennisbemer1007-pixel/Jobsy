@@ -234,8 +234,8 @@ public static partial class PageSeoCatalog
         ("/tokens/", Private("Seo.SiteName", "Seo.PrivateDescription")),
     ];
 
-    private static PageSeoEntry Public(string titleKey, string descriptionKey, string ogType = "website")
-        => new(titleKey, descriptionKey, Indexable: true, ogType);
+    private static PageSeoEntry Public(string titleKey, string descriptionKey, string ogType = "website", bool hreflang = false)
+        => new(titleKey, descriptionKey, Indexable: true, ogType, Hreflang: hreflang);
 
     private static PageSeoEntry Private(string titleKey, string descriptionKey)
         => new(titleKey, descriptionKey, Indexable: false);

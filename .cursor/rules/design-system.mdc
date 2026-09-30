@@ -39,3 +39,20 @@ Do not use gold gradients for backgrounds, heroes, or decorative fills.
 | Not taken | gray / muted | Nog niet gedaan |
 
 If both free and extended are done, **gold wins**.
+
+## Public theme (landing, gratis test, public info pages)
+
+Approved deviations valid **only inside `.pub-theme`** (`wwwroot/css/features/public-theme.css`, root class on `PublicLayout`):
+
+1. Warm tints mixed from existing tokens with `color-mix()` (`--gold`, `--coral`, `--success`, `--brand` with `--surface`); coral may appear several times per screen; navy only for the primary CTA and text. No new hex values.
+2. Radii 24/36 px for cards and scenes, pill-shaped buttons.
+3. Public type sizes: hero h1 `3.25rem` desktop / `2.125rem` mobile, h2 `2.25rem`, result h1 `3rem`, and 700 weight on h2s. Defined once as `--pub-text-*` custom properties.
+4. Emoji as icons (next to some headings, in chips and buttons), always `aria-hidden` with a text label next to them.
+5. Organic blobs, waves and illustration scenes (inline SVG or CSS), plus one extra soft shadow `--pub-shadow-soft` (coral-tinted), public theme only.
+6. Likert buttons with emoji faces; blur on the locked passport teaser.
+
+Still binding inside `.pub-theme`: tokens only, no inline `style=""` in `.razor` (use CSS custom properties set via classes, or `style` only for a computed `--pct` value as existing components do), breakpoints 640/900/1024 only, logical properties, tap targets ≥ 44 px, focus rings visible, contrast AA (the -zw and ON palettes both pass; a test checks the main text/background pairs), `prefers-reduced-motion` fallbacks, and **no `!important`** (the mockup CSS uses a few; the implementation must not).
+
+**The logged-in app is untouched**: no `pub-` class and no `public-theme.css` rule may affect a page under `MainLayout`.
+
+BEM blocks (shell in file 01; later files add `pub-landing__…`, `pub-test__…`, `pub-signup__…`): `pub-header`, `pub-nav`, `pub-menu`, `pub-footer`, `pub-lang`, `pub-btn` (`--primary` / `--secondary` / `--ghost`), `pub-chip`, `pub-card`, `pub-eyebrow`, `pub-section` (`--alt`, `--wave-top` / `--wave-bottom`), `pub-emoji`, `pub-pill-sample`.

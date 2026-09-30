@@ -156,3 +156,12 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/wie-zijn-wij` | `Pages/Legal/WieZijnWij.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
+
+## Minimal API (public shell)
+
+Not Blazor `@page` routes — documented here for discoverability (landing stack).
+
+| Route | Notes |
+|-------|-------|
+| `/taal/{lang}` | Sets `Jobsy.Culture` cookie; 302 to local `returnUrl` only; `noindex` |
+| `/account/cookie-consent/analytics-token` | POST; same-origin analytics consent token for static cookie banner |

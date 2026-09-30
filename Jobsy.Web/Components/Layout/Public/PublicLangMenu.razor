@@ -1,0 +1,72 @@
+@using Jobsy.Core.Localization
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<details class="pub-lang" id="pub-lang">
+    <summary class="pub-lang__toggle" aria-label="@Culture["PublicNav.ChooseLanguage"]">
+        <span class="pub-lang__code">@Culture.Language.ToUpperInvariant()</span>
+        <span class="pub-lang__caret" aria-hidden="true">▾</span>
+    </summary>
+    <ul class="pub-lang__menu" role="listbox" aria-label="@Culture["PublicNav.ChooseLanguage"]">
+        @foreach (var lang in JobsyLanguages.All)
+        {
+            var href = $"/taal/{lang.Code}?returnUrl={Uri.EscapeDataString(EffectiveReturn)}";
+            <li role="option" aria-selected="@(lang.Code == Culture.Language ? "true" : "false")">
+                <a class="pub-lang__option @(lang.Code == Culture.Language ? "is-current" : null)"
+                   href="@href"
+                   hreflang="@lang.Code"
+                   lang="@lang.Code"
+                   rel="nofollow"
+                   aria-current="@(lang.Code == Culture.Language ? "true" : null)">
+                    <span class="pub-lang__name">@lang.NativeName</span>
+                    <span class="pub-lang__code">@lang.Code.ToUpperInvariant()</span>
+                </a>
+            </li>
+        }
+    </ul>
+</details>
+
+@code {
+    [Parameter] public string? ReturnPath { get; set; }
+
+    private string EffectiveReturn =>
+        string.IsNullOrWhiteSpace(ReturnPath)
+            ? SanitizeReturnPath(Navigation.Uri)
+            : ReturnPath;
+
+    /// <summary>Path + query without <c>lang</c> / <c>_variant</c>; falls back to "/".</summary>
+    public static string SanitizeReturnPath(string navigationUri)
+    {
+        try
+        {
+            var uri = new Uri(navigationUri);
+            var path = uri.AbsolutePath;
+            if (string.IsNullOrEmpty(path))
+            {
+                path = "/";
+            }
+
+            if (string.IsNullOrEmpty(uri.Query))
+            {
+                return path;
+            }
+
+            var parts = uri.Query.TrimStart('?')
+                .Split('&', StringSplitOptions.RemoveEmptyEntries)
+                .Where(p =>
+                {
+                    var key = p.Split('=', 2)[0];
+                    return !key.Equals("lang", StringComparison.OrdinalIgnoreCase)
+                           && !key.Equals(Features.LandingVariantResolver.QueryName, StringComparison.OrdinalIgnoreCase);
+                })
+                .ToArray();
+
+            return parts.Length == 0 ? path : path + "?" + string.Join('&', parts);
+        }
+        catch
+        {
+            return "/";
+        }
+    }
+}

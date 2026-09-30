@@ -70,6 +70,9 @@ builder.Services.AddHttpClient("JobsySessionSecurity");
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddScoped<CultureState>();
 builder.Services.AddScoped<PageSeoContext>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IEmployersSwitch, Jobsy.Web.Features.AlwaysOnEmployersSwitch>();
+builder.Services.AddScoped<Jobsy.Web.Features.LandingVariantResolver>();
+builder.Services.AddSingleton<Jobsy.Web.Services.ICookieConsentTokenService, Jobsy.Web.Services.CookieConsentTokenService>();
 builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();
 builder.Services.AddScoped<TokenBalanceCache>();
@@ -193,6 +196,8 @@ app.UseMfaEnforcement();
 app.UseAntiforgery();
 
 app.MapJobsyAuthEndpoints();
+app.MapLanguageEndpoints();
+app.MapCookieConsentEndpoints();
 app.MapSeoEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.
 app.MapGet("/healthz", () => Results.Text("ok"));

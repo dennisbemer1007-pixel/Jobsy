@@ -1,0 +1,53 @@
+@using Jobsy.Core.Localization
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<header class="pub-header">
+    <div class="pub-header__inner">
+        <a class="pub-header__brand" href="@PublicRoutes.Landing" aria-label="Lobsy">
+            <LobsyLogo Class="pub-header__logo" Alt="" Animate="false" />
+            <span class="pub-header__name">Lobsy</span>
+        </a>
+
+        <nav class="pub-nav" aria-label="@Culture["PublicNav.MainNav"]">
+            @foreach (var item in PublicNavCatalog.Header(Variant).Where(i => i.IsAvailable))
+            {
+                <a class="pub-nav__link" href="@item.Href">@Culture[item.LabelKey]</a>
+            }
+        </nav>
+
+        <div class="pub-header__actions">
+            <PublicLangMenu ReturnPath="@ReturnPath" />
+            <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+            <a class="pub-btn pub-btn--primary pub-header__cta" href="@PublicRoutes.Test">@Culture["PublicNav.TakeFreeTest"]</a>
+        </div>
+
+        <div class="pub-header__mobile">
+            <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+            <details class="pub-menu" id="pub-menu">
+                <summary class="pub-menu__toggle" aria-label="@Culture["PublicNav.Menu"]">
+                    <span class="pub-menu__icon" aria-hidden="true"></span>
+                </summary>
+                <div class="pub-menu__panel">
+                    <nav class="pub-menu__nav" aria-label="@Culture["PublicNav.MainNav"]">
+                        @foreach (var item in PublicNavCatalog.Header(Variant).Where(i => i.IsAvailable))
+                        {
+                            <a class="pub-menu__link" href="@item.Href">@Culture[item.LabelKey]</a>
+                        }
+                    </nav>
+                    <PublicLangMenu ReturnPath="@ReturnPath" />
+                    <a class="pub-btn pub-btn--primary pub-menu__cta" href="@PublicRoutes.Test">@Culture["PublicNav.TakeFreeTest"]</a>
+                </div>
+            </details>
+        </div>
+    </div>
+</header>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+
+    private string ReturnPath => PublicLangMenu.SanitizeReturnPath(Navigation.Uri);
+}

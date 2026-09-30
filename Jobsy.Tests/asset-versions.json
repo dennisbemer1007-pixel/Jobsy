@@ -39,6 +39,10 @@
     "sha256": "5ee04db60aae5c26eaadf67dc9333bca45ddfac643be966643445c55f88becad",
     "v": "20260927-dna-c"
   },
+  "css/features/public-theme.css": {
+    "sha256": "79f90b799a59f9d7fc31e4913970f648cf3b8967fda4e14f8e3e1bb8dc8c5571",
+    "v": "20260930-public-theme"
+  },
   "css/features/questionnaire.css": {
     "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",
     "v": "20260928-q-scroll"
@@ -60,8 +64,8 @@
     "v": "20260925-coral"
   },
   "js/app-core.js": {
-    "sha256": "28a314f8119199b436e188ff0faaa7494d15663c6ef304cf147a5b803f0f5636",
-    "v": "20260929-match-desktop"
+    "sha256": "eb0cd80e73122e4921fb4689d52434fa75edfb10433f5bee59ba97babf9e64c1",
+    "v": "20260930-landing-1"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -94,6 +98,10 @@
   "js/jobsyMapLibre.min.js": {
     "sha256": "0bd8f0e24e1af41385fcfac63ae64147cc660fc50dea151b0e6cae7a06bd6ff5",
     "v": "20260926-mapfix9"
+  },
+  "js/landing.js": {
+    "sha256": "4a0a61f3face2c40dcaf720b11d338d09fc8f072fb89f104d71cf6e5777b3630",
+    "v": "20260930-landing-1"
   },
   "js/lobsyPush.js": {
     "sha256": "8784b68ede39d40c60bdc370eecc5a461b61a6e7eea787415b3d0d6e064fd01a",

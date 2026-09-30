@@ -1,0 +1,41 @@
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<footer class="pub-footer">
+    <div class="pub-footer__inner">
+        <div class="pub-footer__brand">
+            <a class="pub-footer__logo-link" href="@PublicRoutes.Landing" aria-label="Lobsy">
+                <LobsyLogo Class="pub-footer__logo" Alt="" Animate="false" />
+                <span class="pub-footer__name">Lobsy</span>
+            </a>
+            <p class="pub-footer__tagline">@LandingText.For("PublicFooter.BrandLine", Variant, Culture.Language)</p>
+        </div>
+
+        @foreach (var column in PublicNavCatalog.Footer(Variant))
+        {
+            <div class="pub-footer__col">
+                <h2 class="pub-footer__heading">@Culture[column.TitleKey]</h2>
+                <ul class="pub-footer__list">
+                    @foreach (var item in column.Items.Where(i => i.IsAvailable))
+                    {
+                        <li>
+                            <a class="pub-footer__link" href="@item.Href">@Culture[item.LabelKey]</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+    <div class="pub-footer__bottom">
+        <p class="pub-footer__copy">
+            @Culture.Format("PublicFooter.Copyright", DateTime.UtcNow.Year, Culture["PublicFooter.MadeWith"])
+        </p>
+        <p class="pub-footer__lang-name">@Culture.Current.NativeName</p>
+    </div>
+</footer>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+}

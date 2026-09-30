@@ -31,6 +31,13 @@
     {
         <script type="application/ld+json">@((MarkupString)Model.JsonLd)</script>
     }
+    @if (Model.Indexable && PageSeoCatalog.Resolve(new Uri(Navigation.Uri).AbsolutePath).Hreflang)
+    {
+        @foreach (var link in HreflangLinks.ForPath(Origin, new Uri(Navigation.Uri).AbsolutePath))
+        {
+            <link rel="alternate" hreflang="@link.Hreflang" href="@link.Href" />
+        }
+    }
 </HeadContent>
 
 @code {

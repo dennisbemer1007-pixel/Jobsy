@@ -1,0 +1,43 @@
+@inherits LayoutComponentBase
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject LandingVariantResolver VariantResolver
+@inject IHttpContextAccessor HttpContextAccessor
+@implements IDisposable
+
+<PageSeoHead />
+<div class="pub-theme"
+     dir="@(Culture.IsRightToLeft ? "rtl" : null)"
+     lang="@Culture.Language">
+    <a class="pub-skip" href="#main">@Culture["PublicNav.SkipToContent"]</a>
+    <PublicHeader Variant="_variant" />
+    <main id="main" class="pub-main">
+        @Body
+    </main>
+    <PublicFooter Variant="_variant" />
+    <CookieConsentBanner Mode="_cookieMode" />
+</div>
+
+@code {
+    private LandingVariant _variant = LandingVariant.On;
+    private CookieConsentBanner.CookieConsentMode _cookieMode = CookieConsentBanner.CookieConsentMode.Interactive;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        var http = HttpContextAccessor.HttpContext;
+        Culture.InitializeFromRequest(http);
+        _variant = await VariantResolver.GetAsync();
+        var interactive = http?.AcceptsInteractiveRouting() == true;
+        _cookieMode = interactive
+            ? CookieConsentBanner.CookieConsentMode.Interactive
+            : CookieConsentBanner.CookieConsentMode.Static;
+        await Culture.InitializeAsync();
+        await Culture.SyncDocumentAsync();
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+}

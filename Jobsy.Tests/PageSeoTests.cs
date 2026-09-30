@@ -69,7 +69,8 @@ public class PageSeoCatalogTests
     {
         var root = FindRepoRoot();
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
-        Assert.Contains("<html lang=\"nl\">", app);
+        Assert.Contains("<html lang=\"@HtmlLang\"", app);
+        Assert.Contains("HtmlLang", app);
         Assert.Contains("theme-color", app);
         Assert.Contains("Lobsy — vacatures op reistijd", app);
         Assert.Contains("HeadOutlet", app);
@@ -79,6 +80,9 @@ public class PageSeoCatalogTests
 
         var teaser = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "TeaserLayout.razor"));
         Assert.Contains("PageSeoHead", teaser);
+
+        var publicLayout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "PublicLayout.razor"));
+        Assert.Contains("PageSeoHead", publicLayout);
 
         var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Program.cs"));
         Assert.Contains("MapSeoEndpoints", program);

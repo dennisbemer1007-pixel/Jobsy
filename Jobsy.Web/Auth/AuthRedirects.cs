@@ -145,6 +145,13 @@ public static partial class AuthRedirects
         return url;
     }
 
+    /// <summary>
+    /// True when <paramref name="url"/> is a same-origin relative path safe for redirects
+    /// (no scheme, no <c>//</c>, no backslash). Empty/null → false.
+    /// </summary>
+    public static bool IsLocalReturnUrl(string? url)
+        => !string.IsNullOrWhiteSpace(url) && IsSafeLocalPath(url.Trim());
+
     private static bool IsSafeLocalPath(string url)
     {
         // Must be a single-slash relative path (not protocol-relative //...).
