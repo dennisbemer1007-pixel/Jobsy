@@ -356,6 +356,7 @@ public class UnverifiedCompanyJobsTests
         var services = new ServiceCollection();
         services.AddSingleton(db);
         services.AddSingleton<IEmailService>(email);
+        services.AddSingleton<ITransactionalMailer>(email);
         services.AddSingleton<IPlatformFeatureService>(new PlatformFeatureService(
             db,
             Options.Create(new JobsyFeatureOptions()),
@@ -407,6 +408,7 @@ public class UnverifiedCompanyJobsTests
         var services = new ServiceCollection();
         services.AddSingleton(db);
         services.AddSingleton<IEmailService>(email);
+        services.AddSingleton<ITransactionalMailer>(email);
         services.AddSingleton<IPlatformFeatureService>(new PlatformFeatureService(
             db,
             Options.Create(new JobsyFeatureOptions()),
@@ -491,8 +493,20 @@ public class UnverifiedCompanyJobsTests
         return new JobsyDbContext(options);
     }
 
-    private sealed class CapturingEmail : IEmailService
+    private sealed class CapturingEmail : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public List<EmailMessage> Sent { get; } = [];
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
         {

@@ -31,7 +31,7 @@ public class ApplicationsController : ControllerBase
     private readonly JobsyDbContext _db;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IUserLookupService _users;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IPushNotificationService _push;
     private readonly IPlatformFeatureService _features;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
@@ -47,7 +47,7 @@ public class ApplicationsController : ControllerBase
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
         IUserLookupService users,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IPushNotificationService push,
         IPlatformFeatureService features,
         ILobsyCvPdfService lobsyCvPdf,
@@ -62,7 +62,7 @@ public class ApplicationsController : ControllerBase
         _db = db;
         _companyAuth = companyAuth;
         _users = users;
-        _email = email;
+        _mailer = mailer;
         _push = push;
         _features = features;
         _lobsyCvPdf = lobsyCvPdf;
@@ -1336,11 +1336,7 @@ public class ApplicationsController : ControllerBase
                 $"{application.Vacancy.Company.Name}: helaas niet geselecteerd voor {application.Vacancy.Title}";
             var rejectMail = TransactionalEmails.EmployerReactionRejected(
                 baseUrl, application.CandidateName, application.Vacancy.Title, application.Vacancy.Company.Name);
-            await _email.SendAsync(new EmailMessage(
-                application.CandidateEmail,
-                rejectMail.Subject,
-                rejectMail.Html,
-                rejectMail.Category), cancellationToken);
+            await _mailer.SendAsync(rejectMail, application.CandidateEmail, cancellationToken: cancellationToken);
 
             await _push.SendAsync(new PushMessage(
                 application.CandidateEmail,
@@ -1364,11 +1360,7 @@ public class ApplicationsController : ControllerBase
                 $"{application.Vacancy.Company.Name}: sollicitatie geaccepteerd — {application.Vacancy.Title}";
             var acceptMail = TransactionalEmails.EmployerReactionAccepted(
                 baseUrl, application.CandidateName, application.Vacancy.Title, application.Vacancy.Company.Name);
-            await _email.SendAsync(new EmailMessage(
-                application.CandidateEmail,
-                acceptMail.Subject,
-                acceptMail.Html,
-                acceptMail.Category), cancellationToken);
+            await _mailer.SendAsync(acceptMail, application.CandidateEmail, cancellationToken: cancellationToken);
 
             await _push.SendAsync(new PushMessage(
                 application.CandidateEmail,
@@ -1457,11 +1449,7 @@ public class ApplicationsController : ControllerBase
         var contactMail = TransactionalEmails.EmployerContacting(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
             application.Vacancy.Title);
-        await _email.SendAsync(new EmailMessage(
-            application.CandidateEmail,
-            contactMail.Subject,
-            contactMail.Html,
-            contactMail.Category), cancellationToken);
+        await _mailer.SendAsync(contactMail, application.CandidateEmail, cancellationToken: cancellationToken);
         await _push.SendAsync(new PushMessage(
             application.CandidateEmail,
             "Werkgever neemt contact op",
@@ -1597,11 +1585,7 @@ public class ApplicationsController : ControllerBase
             vacancy.Company.Name,
             chosen.Id,
             withdrawAbsolute);
-        await _email.SendAsync(new EmailMessage(
-            chosen.CandidateEmail,
-            hiredMail.Subject,
-            hiredMail.Html,
-            hiredMail.Category), cancellationToken);
+        await _mailer.SendAsync(hiredMail, chosen.CandidateEmail, cancellationToken: cancellationToken);
 
         await NotifyCandidateAsync(
             chosen,
@@ -1622,11 +1606,7 @@ public class ApplicationsController : ControllerBase
                 other.CandidateName,
                 vacancy.Title,
                 vacancy.Company.Name);
-            await _email.SendAsync(new EmailMessage(
-                other.CandidateEmail,
-                otherMail.Subject,
-                otherMail.Html,
-                otherMail.Category), cancellationToken);
+            await _mailer.SendAsync(otherMail, other.CandidateEmail, cancellationToken: cancellationToken);
 
             await NotifyCandidateAsync(
                 other,
@@ -1744,11 +1724,7 @@ public class ApplicationsController : ControllerBase
             vacancy.Title,
             vacancy.Company.Name,
             authenticatorStubUsed);
-        await _email.SendAsync(new EmailMessage(
-            candidate.Email,
-            mail.Subject,
-            mail.Html,
-            mail.Category), cancellationToken);
+        await _mailer.SendAsync(mail, candidate.Email, cancellationToken: cancellationToken);
 
         await NotifyCandidateAsync(
             application,
@@ -1773,11 +1749,7 @@ public class ApplicationsController : ControllerBase
             vacancy.Title,
             vacancy.Id,
             code);
-        await _email.SendAsync(new EmailMessage(
-            candidate.Email,
-            mail.Subject,
-            mail.Html,
-            mail.Category), cancellationToken);
+        await _mailer.SendAsync(mail, candidate.Email, cancellationToken: cancellationToken);
 
         await _notifications.CreateAsync(
             new NotificationCreateRequest(
@@ -1852,11 +1824,7 @@ public class ApplicationsController : ControllerBase
             vacancy.Title);
         foreach (var contact in contacts)
         {
-            await _email.SendAsync(new EmailMessage(
-                contact.Email,
-                mail.Subject,
-                mail.Html,
-                mail.Category), cancellationToken);
+            await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
 
             await _push.SendAsync(new PushMessage(
                 contact.Email,
@@ -1900,11 +1868,7 @@ public class ApplicationsController : ControllerBase
             vacancy.Title);
         foreach (var contact in contacts)
         {
-            await _email.SendAsync(new EmailMessage(
-                contact.Email,
-                mail.Subject,
-                mail.Html,
-                mail.Category), cancellationToken);
+            await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
 
             await _notifications.CreateAsync(
                 new NotificationCreateRequest(

@@ -13,20 +13,20 @@ namespace Jobsy.Infrastructure.Services;
 public sealed class AmbassadeurInviteService : IAmbassadeurInviteService
 {
     private readonly JobsyDbContext _db;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IOneTimeLinkService _links;
     private readonly IPlatformFeatureService _features;
     private readonly ILogger<AmbassadeurInviteService> _logger;
 
     public AmbassadeurInviteService(
         JobsyDbContext db,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IOneTimeLinkService links,
         IPlatformFeatureService features,
         ILogger<AmbassadeurInviteService> logger)
     {
         _db = db;
-        _email = email;
+        _mailer = mailer;
         _links = links;
         _features = features;
         _logger = logger;
@@ -117,11 +117,7 @@ public sealed class AmbassadeurInviteService : IAmbassadeurInviteService
         var features = await _features.GetAsync(cancellationToken);
         var invite = TransactionalEmails.AmbassadeurInvite(
             features.PublicWebBaseUrl, name, normalizedEmail, setPasswordUrl);
-        await _email.SendAsync(new EmailMessage(
-            normalizedEmail,
-            invite.Subject,
-            invite.Html,
-            invite.Category), cancellationToken);
+        await _mailer.SendAsync(invite, normalizedEmail, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Invited ambassadeur {Email} ({UserId})",

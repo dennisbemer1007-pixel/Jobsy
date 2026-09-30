@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Email;
+using Jobsy.Core.Email.Model;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
@@ -52,20 +53,20 @@ public sealed class SchoolStaffInviteService : ISchoolStaffInviteService
     private static readonly TimeSpan InviteTtl = TimeSpan.FromDays(7);
 
     private readonly JobsyDbContext _db;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IOneTimeLinkService _links;
     private readonly IPlatformFeatureService _features;
     private readonly ILogger<SchoolStaffInviteService> _logger;
 
     public SchoolStaffInviteService(
         JobsyDbContext db,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IOneTimeLinkService links,
         IPlatformFeatureService features,
         ILogger<SchoolStaffInviteService> logger)
     {
         _db = db;
-        _email = email;
+        _mailer = mailer;
         _links = links;
         _features = features;
         _logger = logger;
@@ -278,24 +279,33 @@ public sealed class SchoolStaffInviteService : ISchoolStaffInviteService
                 OneTimeLinkRules.SetPasswordLifetime,
                 invitedByUserId,
                 cancellationToken);
-            setPasswordUrl = EmailLayout.Absolute(
-                features.PublicWebBaseUrl,
-                $"/account/wachtwoord-instellen?t={Uri.EscapeDataString(created.Token)}");
+            setPasswordUrl = EmailLinks.For(features.PublicWebBaseUrl).SetPassword(created.Token);
         }
 
-        var loginUrl = EmailLayout.LoginUrl(features.PublicWebBaseUrl);
-        var ctaUrl = setPasswordUrl ?? loginUrl;
+        var links = EmailLinks.For(features.PublicWebBaseUrl);
+        var ctaUrl = setPasswordUrl ?? links.Login;
         var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Kies je wachtwoord";
         var subject = $"Uitnodiging Lobsy voor scholen — {school.Name}";
-        var body =
-            $"<p>Hallo {EmailLayout.Escape(name)},</p>" +
-            $"<p>Je bent uitgenodigd voor Lobsy voor scholen bij <strong>{EmailLayout.Escape(school.Name)}</strong>. " +
-            "Tweestapsverificatie is verplicht.</p>" +
-            $"<p>{(setPasswordUrl is null
-                ? $"Log in met <strong>{EmailLayout.Escape(normalizedEmail)}</strong> om verder te gaan."
-                : $"Kies een wachtwoord voor <strong>{EmailLayout.Escape(normalizedEmail)}</strong> via de knop hieronder.")}</p>" +
-            $"<p><a href=\"{EmailLayout.Escape(ctaUrl)}\">{EmailLayout.Escape(ctaLabel)}</a></p>";
-        await _email.SendAsync(new EmailMessage(normalizedEmail, subject, body, "Scholen.Invite"), cancellationToken);
+        var bodyText = setPasswordUrl is null
+            ? $"Log in met {normalizedEmail} om verder te gaan."
+            : $"Kies een wachtwoord voor {normalizedEmail} via de knop hieronder.";
+        var inviteMail = TransactionalEmails.AdHoc(
+            "Scholen.Invite",
+            "Scholen.Invite",
+            EmailKind.Essential,
+            features.PublicWebBaseUrl,
+            subject,
+            "Je bent uitgenodigd voor Lobsy voor scholen.",
+            "Uitnodiging voor scholen",
+            [
+                new ParagraphBlock(EmailText.Format(
+                    "Je bent uitgenodigd voor Lobsy voor scholen bij {0}. Tweestapsverificatie is verplicht.",
+                    EmailArg.Bold(school.Name))),
+                new ParagraphBlock(EmailText.Plain(bodyText))
+            ],
+            new EmailCta(ctaLabel, ctaUrl),
+            greeting: $"Hallo {name},");
+        await _mailer.SendAsync(inviteMail, normalizedEmail, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Invited school staff {Role} {Email} for school {SchoolId}",

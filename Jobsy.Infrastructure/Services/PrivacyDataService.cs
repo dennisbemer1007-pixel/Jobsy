@@ -20,13 +20,19 @@ public sealed class PrivacyDataService : IPrivacyDataService
 
     private readonly JobsyDbContext _db;
     private readonly IUserLookupService _users;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
+    private readonly IPlatformFeatureService _features;
 
-    public PrivacyDataService(JobsyDbContext db, IUserLookupService users, IEmailService email)
+    public PrivacyDataService(
+        JobsyDbContext db,
+        IUserLookupService users,
+        ITransactionalMailer mailer,
+        IPlatformFeatureService features)
     {
         _db = db;
         _users = users;
-        _email = email;
+        _mailer = mailer;
+        _features = features;
     }
 
     public async Task<object> ExportAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
@@ -724,16 +730,13 @@ public sealed class PrivacyDataService : IPrivacyDataService
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        var features = await _features.GetAsync(cancellationToken);
         var unsub = TransactionalEmails.AccountUnsubscribeVerification(
-            baseUrl: null,
+            features.PublicWebBaseUrl,
             user.FullName,
             verificationCode,
             UnsubscribeCodeTtlMinutes);
-        await _email.SendAsync(new EmailMessage(
-            user.Email,
-            unsub.Subject,
-            unsub.Html,
-            unsub.Category), cancellationToken);
+        await _mailer.SendAsync(unsub, user.Email, cancellationToken: cancellationToken);
 
         return new RequestUnsubscribeResponse(
             "Er is een verificatiecode naar je e-mail gestuurd.",

@@ -36,7 +36,7 @@ public class AdminController : ControllerBase
     private readonly ISupportAccessService _supportAccess;
     private readonly ISecretProtector _secrets;
     private readonly IDeviceSessionService _deviceSessions;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
     private readonly IAdminAuditLog _audit;
     private readonly IAdminAuditContext _auditContext;
@@ -52,7 +52,7 @@ public class AdminController : ControllerBase
         ISupportAccessService supportAccess,
         ISecretProtector secrets,
         IDeviceSessionService deviceSessions,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IPlatformFeatureService features,
         IAdminAuditLog audit,
         IAdminAuditContext auditContext,
@@ -67,7 +67,7 @@ public class AdminController : ControllerBase
         _supportAccess = supportAccess;
         _secrets = secrets;
         _deviceSessions = deviceSessions;
-        _email = email;
+        _mailer = mailer;
         _features = features;
         _audit = audit;
         _auditContext = auditContext;
@@ -705,9 +705,7 @@ public class AdminController : ControllerBase
         {
             var baseUrl = (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl;
             var mail = TransactionalEmails.MfaResetByAdmin(baseUrl, target.FullName);
-            await _email.SendAsync(
-                new EmailMessage(target.Email, mail.Subject, mail.Html, mail.Category),
-                cancellationToken);
+            await _mailer.SendAsync(mail, target.Email, cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {

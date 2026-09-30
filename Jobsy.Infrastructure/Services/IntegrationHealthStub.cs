@@ -12,7 +12,8 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 {
     private readonly IIntegrationCredentialService _credentials;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
+    private readonly IPlatformFeatureService _features;
     private readonly OpenAiOptions _openAiOptions;
     private readonly ILogger<IntegrationHealthStub> _logger;
     private readonly KvkHandelsregisterService? _kvk;
@@ -20,14 +21,16 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
     public IntegrationHealthStub(
         IIntegrationCredentialService credentials,
         IHttpClientFactory httpClientFactory,
-        IEmailService email,
+        ITransactionalMailer mailer,
+        IPlatformFeatureService features,
         IOptions<OpenAiOptions> openAiOptions,
         ILogger<IntegrationHealthStub> logger,
         KvkHandelsregisterService? kvk = null)
     {
         _credentials = credentials;
         _httpClientFactory = httpClientFactory;
-        _email = email;
+        _mailer = mailer;
+        _features = features;
         _openAiOptions = openAiOptions.Value;
         _logger = logger;
         _kvk = kvk;
@@ -83,14 +86,12 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         var resendReady = SmtpEmailService.TryResolveResend(secrets, out _);
         var smtpReady = SmtpEmailService.TryResolveSmtp(secrets, out var smtp);
         var redacted = EmailServiceStub.RedactEmail(trimmed);
-        var composed = TransactionalEmails.MailTest(baseUrl: null);
-        var body = composed.Html;
+        var features = await _features.GetAsync(cancellationToken);
+        var composed = TransactionalEmails.MailTest(features.PublicWebBaseUrl);
 
         if (!resendReady && !smtpReady)
         {
-            await _email.SendAsync(
-                new EmailMessage(trimmed, "Lobsy testmail", body, "MailTest"),
-                cancellationToken);
+            await _mailer.SendAsync(composed, trimmed, cancellationToken: cancellationToken);
             var stubMessage =
                 "Mail niet geconfigureerd. Vul Resend API-key + From in (aanbevolen op cloud), " +
                 "of SMTP-host/gebruiker/app-wachtwoord/From. " +
@@ -101,9 +102,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
         try
         {
-            var delivery = await _email.SendAsync(
-                new EmailMessage(trimmed, "Lobsy testmail", body, "MailTest"),
-                cancellationToken);
+            var delivery = await _mailer.SendAsync(composed, trimmed, cancellationToken: cancellationToken);
 
             if (!delivery.DeliveredViaProvider)
             {

@@ -8,6 +8,9 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
+using Jobsy.Core.Email;
+using Jobsy.Core.Email.Model;
+
 namespace Jobsy.Infrastructure.Sales;
 
 public sealed class SalesPayoutRunService : ISalesPayoutRunService
@@ -15,7 +18,7 @@ public sealed class SalesPayoutRunService : ISalesPayoutRunService
     private readonly JobsyDbContext _db;
     private readonly ISelfBillingInvoiceService _invoices;
     private readonly ISalesPayoutProvider _provider;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
     private readonly IPersonalDataAccessLogger _accessLog;
     private readonly SalesPayoutProviderOptions _options;
@@ -24,7 +27,7 @@ public sealed class SalesPayoutRunService : ISalesPayoutRunService
         JobsyDbContext db,
         ISelfBillingInvoiceService invoices,
         ISalesPayoutProvider provider,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IPlatformFeatureService features,
         IPersonalDataAccessLogger accessLog,
         IOptions<SalesPayoutProviderOptions> options)
@@ -32,7 +35,7 @@ public sealed class SalesPayoutRunService : ISalesPayoutRunService
         _db = db;
         _invoices = invoices;
         _provider = provider;
-        _email = email;
+        _mailer = mailer;
         _features = features;
         _accessLog = accessLog;
         _options = options.Value;
@@ -788,9 +791,20 @@ public sealed class SalesPayoutRunService : ISalesPayoutRunService
             return;
         }
 
-        await _email.SendAsync(
-            new EmailMessage(email, subject, html, category),
-            cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        var plain = System.Text.RegularExpressions.Regex.Replace(html ?? string.Empty, "<[^>]+>", " ");
+        plain = System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(plain, @"\s+", " ")).Trim();
+        var mail = TransactionalEmails.AdHoc(
+            category,
+            category,
+            EmailKind.Essential,
+            features.PublicWebBaseUrl,
+            subject,
+            plain.Length > 80 ? plain[..80] : plain,
+            subject,
+            [new ParagraphBlock(EmailText.Plain(plain))],
+            greeting: null);
+        await _mailer.SendAsync(mail, email, cancellationToken: cancellationToken);
     }
 
     private async Task AuditAsync(

@@ -19,7 +19,7 @@ public sealed class SupportAccessService : ISupportAccessService
     private readonly JobsyDbContext _db;
     private readonly TimeProvider _clock;
     private readonly ILogger<SupportAccessService> _logger;
-    private readonly IEmailService? _email;
+    private readonly ITransactionalMailer? _mailer;
     private readonly IPlatformFeatureService _features;
 
     public SupportAccessService(
@@ -27,13 +27,13 @@ public sealed class SupportAccessService : ISupportAccessService
         TimeProvider clock,
         ILogger<SupportAccessService> logger,
         IPlatformFeatureService features,
-        IEmailService? email = null)
+        ITransactionalMailer? mailer = null)
     {
         _db = db;
         _clock = clock;
         _logger = logger;
         _features = features;
-        _email = email;
+        _mailer = mailer;
     }
 
     public async Task<SupportAccessGrantDto> RequestAsync(
@@ -221,7 +221,7 @@ public sealed class SupportAccessService : ISupportAccessService
         try
         {
             var features = await _features.GetAsync(cancellationToken);
-            if (!features.SupportAccessNotifyAdmins || _email is null)
+            if (!features.SupportAccessNotifyAdmins || _mailer is null)
             {
                 return;
             }
@@ -240,9 +240,7 @@ public sealed class SupportAccessService : ISupportAccessService
                     grant.Reason,
                     grant.ExpiresAt,
                     grant.Scope.ToString());
-                await _email.SendAsync(
-                    new EmailMessage(to, mail.Subject, mail.Html, mail.Category),
-                    cancellationToken);
+                await _mailer.SendAsync(mail, to, cancellationToken: cancellationToken);
             }
         }
         catch (Exception ex)

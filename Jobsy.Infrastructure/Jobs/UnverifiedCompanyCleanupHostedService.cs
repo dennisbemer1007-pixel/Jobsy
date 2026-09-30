@@ -52,7 +52,7 @@ public sealed class UnverifiedCompanyCleanupHostedService : BackgroundService
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-        var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var mailer = scope.ServiceProvider.GetRequiredService<ITransactionalMailer>();
         var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
         var snap = await features.GetAsync(cancellationToken);
         var now = _clock.GetUtcNow().UtcDateTime;
@@ -221,9 +221,7 @@ public sealed class UnverifiedCompanyCleanupHostedService : BackgroundService
 
             var mail = TransactionalEmails.CompanyUnverifiedDeleted(
                 snap.PublicWebBaseUrl, contactName, companyName);
-            await email.SendAsync(
-                new EmailMessage(contactEmail, mail.Subject, mail.Html, mail.Category),
-                cancellationToken);
+            await mailer.SendAsync(mail, contactEmail, cancellationToken: cancellationToken);
 
             deleted++;
         }

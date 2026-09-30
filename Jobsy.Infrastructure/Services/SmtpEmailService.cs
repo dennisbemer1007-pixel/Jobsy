@@ -177,9 +177,8 @@ public sealed class SmtpEmailService : IEmailService
             mime.Subject = message.Subject;
             var builder = new BodyBuilder
             {
-                HtmlBody = EmailLogoEmbedder.WithCidLogo(message.BodyHtml)
+                HtmlBody = message.BodyHtml
             };
-            EmailLogoEmbedder.AddInlineLogo(builder);
             mime.Body = builder.ToMessageBody();
 
             using var client = new SmtpClient();

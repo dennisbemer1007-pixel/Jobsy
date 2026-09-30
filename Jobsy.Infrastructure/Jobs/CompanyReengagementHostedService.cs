@@ -58,7 +58,7 @@ public sealed class CompanyReengagementHostedService : BackgroundService
 
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-        var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var mailer = scope.ServiceProvider.GetRequiredService<ITransactionalMailer>();
         var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
 
         var snap = await features.GetAsync(cancellationToken);
@@ -134,11 +134,7 @@ public sealed class CompanyReengagementHostedService : BackgroundService
             }
 
             var mail = TransactionalEmails.CompanyReEngagement(baseUrl, org.Name);
-            await email.SendAsync(new EmailMessage(
-                recipient,
-                mail.Subject,
-                mail.Html,
-                mail.Category), cancellationToken);
+            await mailer.SendAsync(mail, recipient, cancellationToken: cancellationToken);
 
             var tracked = await db.Companies.FirstAsync(c => c.Id == org.Id, cancellationToken);
             tracked.ReengagementEmailSentAtUtc = DateTime.UtcNow;

@@ -30,7 +30,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
     private readonly JobsyDbContext _db;
     private readonly IKvkService _kvk;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly ITokenLedgerService _ledger;
     private readonly IPlatformFeatureService _features;
     private readonly IPartnerAffiliateService _partnerAffiliates;
@@ -43,14 +43,14 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     public CompanyRegistrationService(
         JobsyDbContext db,
         IKvkService kvk,
-        IEmailService email,
+        ITransactionalMailer mailer,
         ITokenLedgerService ledger,
         IPlatformFeatureService features,
         ILogger<CompanyRegistrationService> logger)
         : this(
             db,
             kvk,
-            email,
+            mailer,
             ledger,
             features,
             new PartnerAffiliateService(
@@ -67,33 +67,33 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     public CompanyRegistrationService(
         JobsyDbContext db,
         IKvkService kvk,
-        IEmailService email,
+        ITransactionalMailer mailer,
         ITokenLedgerService ledger,
         IPlatformFeatureService features,
         IPartnerAffiliateService partnerAffiliates,
         ILogger<CompanyRegistrationService> logger)
-        : this(db, kvk, email, ledger, features, partnerAffiliates, null, null, null, logger)
+        : this(db, kvk, mailer, ledger, features, partnerAffiliates, null, null, null, logger)
     {
     }
 
     public CompanyRegistrationService(
         JobsyDbContext db,
         IKvkService kvk,
-        IEmailService email,
+        ITransactionalMailer mailer,
         ITokenLedgerService ledger,
         IPlatformFeatureService features,
         IPartnerAffiliateService partnerAffiliates,
         IRegistrationReferralResolver? referralResolver,
         IGeocodingService? geocoder,
         ILogger<CompanyRegistrationService> logger)
-        : this(db, kvk, email, ledger, features, partnerAffiliates, referralResolver, geocoder, null, logger)
+        : this(db, kvk, mailer, ledger, features, partnerAffiliates, referralResolver, geocoder, null, logger)
     {
     }
 
     public CompanyRegistrationService(
         JobsyDbContext db,
         IKvkService kvk,
-        IEmailService email,
+        ITransactionalMailer mailer,
         ITokenLedgerService ledger,
         IPlatformFeatureService features,
         IPartnerAffiliateService partnerAffiliates,
@@ -104,7 +104,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     {
         _db = db;
         _kvk = kvk;
-        _email = email;
+        _mailer = mailer;
         _ledger = ledger;
         _features = features;
         _partnerAffiliates = partnerAffiliates;
@@ -961,11 +961,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             registration.ContactEmail,
             setPasswordUrl,
             orgId is not null);
-        await _email.SendAsync(new EmailMessage(
-            registration.ContactEmail,
-            approved.Subject,
-            approved.Html,
-            approved.Category), cancellationToken);
+        await _mailer.SendAsync(approved, registration.ContactEmail, cancellationToken: cancellationToken);
 
         return new TakeoverDecisionResult(
             takeover.Id,
@@ -1010,15 +1006,12 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        var features = await _features.GetAsync(cancellationToken);
         var rejected = TransactionalEmails.TakeoverRejected(
-            baseUrl: null,
+            features.PublicWebBaseUrl,
             takeover.Registration.ContactName,
             takeover.TargetCompany.Name);
-        await _email.SendAsync(new EmailMessage(
-            takeover.Registration.ContactEmail,
-            rejected.Subject,
-            rejected.Html,
-            rejected.Category), cancellationToken);
+        await _mailer.SendAsync(rejected, takeover.Registration.ContactEmail, cancellationToken: cancellationToken);
 
         return new TakeoverDecisionResult(
             takeover.Id,
@@ -1351,9 +1344,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var mail = TransactionalEmails.IntermediaryClientSelfManaged(features.PublicWebBaseUrl, companyName);
         foreach (var email in intermediaries)
         {
-            await _email.SendAsync(
-                new EmailMessage(email, mail.Subject, mail.Html, mail.Category),
-                cancellationToken);
+            await _mailer.SendAsync(mail, email, cancellationToken: cancellationToken);
         }
     }
 
@@ -1497,9 +1488,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var mail = TransactionalEmails.OwnershipTransferManagersNotify(features.PublicWebBaseUrl, company.Name);
         foreach (var email in managers)
         {
-            await _email.SendAsync(
-                new EmailMessage(email, mail.Subject, mail.Html, mail.Category),
-                cancellationToken);
+            await _mailer.SendAsync(mail, email, cancellationToken: cancellationToken);
         }
 
         var takeover = await _db.EstablishmentTakeoverRequests
@@ -1659,13 +1648,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         string plaintextCode,
         CancellationToken cancellationToken)
     {
+        var features = await _features.GetAsync(cancellationToken);
         var verify = TransactionalEmails.TakeoverEmailVerification(
-            baseUrl: null, registration.ContactName, existing.Name, plaintextCode);
-        await _email.SendAsync(new EmailMessage(
-            registration.ContactEmail,
-            verify.Subject,
-            verify.Html,
-            verify.Category), cancellationToken);
+            features.PublicWebBaseUrl, registration.ContactName, existing.Name, plaintextCode);
+        await _mailer.SendAsync(verify, registration.ContactEmail, cancellationToken: cancellationToken);
     }
 
     private async Task NotifyTakeoverRequestedAsync(
@@ -1695,20 +1681,12 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             registration.ContactEmail);
         foreach (var ownerEmail in owners)
         {
-            await _email.SendAsync(new EmailMessage(
-                ownerEmail,
-                requestMail.Subject,
-                requestMail.Html,
-                requestMail.Category), cancellationToken);
+            await _mailer.SendAsync(requestMail, ownerEmail, cancellationToken: cancellationToken);
         }
 
         var submitted = TransactionalEmails.TakeoverSubmitted(
             features.PublicWebBaseUrl, registration.ContactName, existing.Name);
-        await _email.SendAsync(new EmailMessage(
-            registration.ContactEmail,
-            submitted.Subject,
-            submitted.Html,
-            submitted.Category), cancellationToken);
+        await _mailer.SendAsync(submitted, registration.ContactEmail, cancellationToken: cancellationToken);
     }
 
     private async Task SendActivationEmailAsync(
@@ -1721,18 +1699,15 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             : registration.Scope == RegistrationScope.Organization
                 ? "Bedrijfsmanager"
                 : "Filiaalmanager";
+        var features = await _features.GetAsync(cancellationToken);
         var activation = TransactionalEmails.RegistrationActivation(
-            baseUrl: null,
+            features.PublicWebBaseUrl,
             registration.ContactName,
             registration.EstablishmentName,
             roleLabel,
             registration.PrimarySbiCode,
             plaintextCode);
-        await _email.SendAsync(new EmailMessage(
-            registration.ContactEmail,
-            activation.Subject,
-            activation.Html,
-            activation.Category), cancellationToken);
+        await _mailer.SendAsync(activation, registration.ContactEmail, cancellationToken: cancellationToken);
     }
 
     private async Task SendActivatedCredentialsEmailAsync(
@@ -1764,11 +1739,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             registration.EstablishmentName,
             registration.ContactEmail,
             setPasswordUrl);
-        await _email.SendAsync(new EmailMessage(
-            registration.ContactEmail,
-            credentials.Subject,
-            credentials.Html,
-            credentials.Category), cancellationToken);
+        await _mailer.SendAsync(credentials, registration.ContactEmail, cancellationToken: cancellationToken);
     }
 
     private async Task<string?> CreateSetPasswordUrlAsync(

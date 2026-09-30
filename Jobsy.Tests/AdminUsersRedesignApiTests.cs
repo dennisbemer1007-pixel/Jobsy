@@ -285,6 +285,10 @@ public class AdminUsersRedesignApiTests : IClassFixture<RoleFunctionalWebAppFact
     [Fact]
     public async Task Mfa_reset_sends_mail_once_without_admin_name_or_reason()
     {
+        // Seed the shared in-memory DB via the fixture factory first.
+        // WithWebHostBuilder's delegated factory does not call RoleFunctionalWebAppFactory.ConfigureClient.
+        using var seedClient = _factory.CreateClient();
+
         var capturing = new CapturingEmail();
         using var factory = _factory.WithWebHostBuilder(builder =>
         {
@@ -387,8 +391,20 @@ public class AdminUsersRedesignApiTests : IClassFixture<RoleFunctionalWebAppFact
         return new JobsyDbContext(options);
     }
 
-    private sealed class CapturingEmail : IEmailService
+    private sealed class CapturingEmail : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public List<EmailMessage> Sent { get; } = [];
 
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)

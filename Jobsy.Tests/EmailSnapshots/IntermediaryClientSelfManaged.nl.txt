@@ -1,0 +1,28 @@
+KEY: IntermediaryClientSelfManaged
+SUBJECT: Klant beheert zelf — Lobsy
+PREHEADER: Klant beheert zelf — koppeling blijft
+KIND: Essential
+--- TEXT ---
+Klant beheert nu zelf
+=====================
+
+Bakkerij De Gouden Korrel beheert nu zelf een account op Lobsy; jullie
+koppeling blijft bestaan.
+
+Naar Lobsy: https://lobsy.nl/login
+
+Team Lobsy
+
+Je ontvangt deze mail omdat je een bedrijf beheert op Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Klant beheert nu zelf
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Naar Lobsy -> https://lobsy.nl/login
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

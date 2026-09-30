@@ -293,7 +293,9 @@ public static class DependencyInjection
         services.AddScoped<IKvkVerificationRetryService, KvkVerificationRetryService>();
         services.AddScoped<EmailServiceStub>();
         services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddScoped<ITransactionalMailer, TransactionalMailer>();
         services.AddScoped<IEmailCatalogService, EmailCatalogService>();
+        services.AddHostedService<MailLegalFooterWarningHostedService>();
         services.AddSingleton<WebPushVapidKeyProvider>();
         services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<WebPushVapidKeyProvider>());
         services.Configure<Jobsy.Core.Options.WebPushOptions>(configuration.GetSection(Jobsy.Core.Options.WebPushOptions.SectionName));

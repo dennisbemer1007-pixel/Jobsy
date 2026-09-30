@@ -20,7 +20,7 @@ public sealed class VacancyProductService : IVacancyProductService
     private readonly ISalesCommercialService _salesCommercial;
     private readonly IVacancyCategoryService _categories;
     private readonly IPushNotificationService _push;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
     private readonly IRoutingService _routing;
     private readonly IUserNotificationService _notifications;
@@ -35,7 +35,7 @@ public sealed class VacancyProductService : IVacancyProductService
         ISalesCommercialService salesCommercial,
         IVacancyCategoryService categories,
         IPushNotificationService push,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IPlatformFeatureService features,
         IRoutingService routing,
         IUserNotificationService notifications,
@@ -49,7 +49,7 @@ public sealed class VacancyProductService : IVacancyProductService
         _salesCommercial = salesCommercial;
         _categories = categories;
         _push = push;
-        _email = email;
+        _mailer = mailer;
         _features = features;
         _routing = routing;
         _notifications = notifications;
@@ -1123,9 +1123,7 @@ public sealed class VacancyProductService : IVacancyProductService
                 wageNote ?? "Uurloon",
                 setUnavailableLink);
 
-            await _email.SendAsync(
-                new EmailMessage(candidate.Email, mail.Subject, mail.Html, mail.Category),
-                cancellationToken);
+            await _mailer.SendAsync(mail, candidate.Email, cancellationToken: cancellationToken);
 
             await _push.SendAsync(
                 new PushMessage(
@@ -1309,13 +1307,7 @@ public sealed class VacancyProductService : IVacancyProductService
             features.PublicWebBaseUrl, vacancy.Title, companyName);
         foreach (var manager in managers)
         {
-            await _email.SendAsync(
-                new EmailMessage(
-                    manager.Email,
-                    pending.Subject,
-                    pending.Html,
-                    pending.Category),
-                cancellationToken);
+            await _mailer.SendAsync(pending, manager.Email, cancellationToken: cancellationToken);
 
             await _push.SendAsync(
                 new PushMessage(

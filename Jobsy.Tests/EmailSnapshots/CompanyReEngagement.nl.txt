@@ -1,0 +1,42 @@
+KEY: CompanyReEngagement
+SUBJECT: We missen je bij Lobsy
+PREHEADER: Je tools staan nog klaar op Lobsy.
+KIND: Optional
+--- TEXT ---
+We missen je
+============
+
+Hallo team Bakkerij De Gouden Korrel,
+
+Het is al een tijdje stil op Lobsy — geen actieve vacatures, geen inlog,
+geen API-call en geen CSV-upload.
+
+Goed nieuws: jullie tools staan nog klaar:
+
+CSV Batch Import: Veel vacatures in één keer als concept
+Externe API: Koppel je ATS met een API-key
+Publiceren: Tokens pas bij publicatie in Lobsy
+
+Log in op Lobsy wanneer je weer wilt starten.
+
+Inloggen op Lobsy: https://lobsy.nl/werkgever
+
+Team Lobsy
+
+Je ontvangt deze mail omdat je een bedrijf beheert op Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail-instellingen: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: We missen je
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Inloggen op Lobsy -> https://lobsy.nl/werkgever
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail-instellingen -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

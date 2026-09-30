@@ -16,7 +16,7 @@ public sealed class CompanyVerificationAdminService : ICompanyVerificationAdminS
     private readonly ICompanyVerificationService _verification;
     private readonly IKvkService _kvk;
     private readonly IStubLetterStore _stubLetters;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly ILogger<CompanyVerificationAdminService> _logger;
 
     public CompanyVerificationAdminService(
@@ -24,14 +24,14 @@ public sealed class CompanyVerificationAdminService : ICompanyVerificationAdminS
         ICompanyVerificationService verification,
         IKvkService kvk,
         IStubLetterStore stubLetters,
-        IEmailService email,
+        ITransactionalMailer mailer,
         ILogger<CompanyVerificationAdminService> logger)
     {
         _db = db;
         _verification = verification;
         _kvk = kvk;
         _stubLetters = stubLetters;
-        _email = email;
+        _mailer = mailer;
         _logger = logger;
     }
 
@@ -223,9 +223,7 @@ public sealed class CompanyVerificationAdminService : ICompanyVerificationAdminS
         {
             var mail = TransactionalEmails.CompanyVerificationRejected(
                 "https://lobsy.nl", manager.FullName, company.Name, reason.Trim());
-            await _email.SendAsync(
-                new EmailMessage(manager.Email, mail.Subject, mail.Html, mail.Category),
-                cancellationToken);
+            await _mailer.SendAsync(mail, manager.Email, cancellationToken: cancellationToken);
         }
 
         _logger.LogInformation("Company {CompanyId} verification rejected by admin {Admin}", companyId, adminUserId);

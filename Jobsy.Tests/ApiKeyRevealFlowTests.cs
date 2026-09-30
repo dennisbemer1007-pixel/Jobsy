@@ -7,6 +7,7 @@ using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 
@@ -76,8 +77,20 @@ public class ApiKeyRevealFlowTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options);
 
-    private sealed class RecordingEmail : IEmailService
+    private sealed class RecordingEmail : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public string? LastHtml { get; private set; }
 
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)

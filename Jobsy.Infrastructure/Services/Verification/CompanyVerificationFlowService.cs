@@ -20,7 +20,7 @@ public sealed class CompanyVerificationFlowService : ICompanyVerificationFlowSer
     private readonly ICompanyVerificationService _verification;
     private readonly IKvkService _kvk;
     private readonly ILetterService _letters;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IOptions<CompanyVerificationSettings> _options;
     private readonly IPlatformCompanySettingsService _brand;
     private readonly ILogger<CompanyVerificationFlowService> _logger;
@@ -30,7 +30,7 @@ public sealed class CompanyVerificationFlowService : ICompanyVerificationFlowSer
         ICompanyVerificationService verification,
         IKvkService kvk,
         ILetterService letters,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IOptions<CompanyVerificationSettings> options,
         IPlatformCompanySettingsService brand,
         ILogger<CompanyVerificationFlowService> logger)
@@ -39,7 +39,7 @@ public sealed class CompanyVerificationFlowService : ICompanyVerificationFlowSer
         _verification = verification;
         _kvk = kvk;
         _letters = letters;
-        _email = email;
+        _mailer = mailer;
         _options = options;
         _brand = brand;
         _logger = logger;
@@ -208,9 +208,7 @@ public sealed class CompanyVerificationFlowService : ICompanyVerificationFlowSer
             root.Name,
             code,
             PublicBase());
-        await _email.SendAsync(
-            new EmailMessage(normalized, composed.Subject, composed.Html, composed.Category),
-            cancellationToken);
+        await _mailer.SendAsync(composed, normalized, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Business-email verification started company={CompanyId} email={Email} (code not logged)",

@@ -18,7 +18,7 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
     public const string ExternalVacanciesPath = "/api/external/vacancies";
 
     private readonly JobsyDbContext _db;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IConfiguration _configuration;
     private readonly IOneTimeLinkService _links;
     private readonly IPlatformFeatureService _features;
@@ -26,14 +26,14 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
 
     public CompanyApiKeyService(
         JobsyDbContext db,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IConfiguration configuration,
         IOneTimeLinkService links,
         IPlatformFeatureService features,
         ILogger<CompanyApiKeyService> logger)
     {
         _db = db;
-        _email = email;
+        _mailer = mailer;
         _configuration = configuration;
         _links = links;
         _features = features;
@@ -222,11 +222,7 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
                 apiBase,
                 revealUrl,
                 expiresAt);
-            await _email.SendAsync(new EmailMessage(
-                normalized,
-                keyMail.Subject,
-                keyMail.Html,
-                keyMail.Category), cancellationToken);
+            await _mailer.SendAsync(keyMail, normalized, cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {

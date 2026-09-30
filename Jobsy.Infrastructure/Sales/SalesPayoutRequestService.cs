@@ -1,3 +1,5 @@
+using Jobsy.Core.Email;
+using Jobsy.Core.Email.Model;
 using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -15,19 +17,22 @@ public sealed class SalesPayoutRequestService : ISalesPayoutRequestService
 
     private readonly JobsyDbContext _db;
     private readonly ISalesWalletReadService _wallet;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IPlatformCompanySettingsService _companySettings;
+    private readonly IPlatformFeatureService _features;
 
     public SalesPayoutRequestService(
         JobsyDbContext db,
         ISalesWalletReadService wallet,
-        IEmailService email,
-        IPlatformCompanySettingsService companySettings)
+        ITransactionalMailer mailer,
+        IPlatformCompanySettingsService companySettings,
+        IPlatformFeatureService features)
     {
         _db = db;
         _wallet = wallet;
-        _email = email;
+        _mailer = mailer;
         _companySettings = companySettings;
+        _features = features;
     }
 
     public async Task<SalesPayoutPreviewDto> PreviewAsync(
@@ -530,9 +535,16 @@ public sealed class SalesPayoutRequestService : ISalesPayoutRequestService
             $"<p>Hallo {System.Net.WebUtility.HtmlEncode(user.FullName)},</p>"
             + $"<p>We hebben je aanvraag. Lobsy keurt uitbetalingen goed op {System.Net.WebUtility.HtmlEncode(dateLabel)}.</p>"
             + "<p>Je volgt de status in Wallet &amp; uitbetalingen.</p>";
-        await _email.SendAsync(
-            new EmailMessage(user.Email, subject, html, "SalesMail.PayoutRequested"),
-            cancellationToken);
+        {
+            var __features = await _features.GetAsync(cancellationToken);
+            var __plain = System.Text.RegularExpressions.Regex.Replace(html ?? string.Empty, "<[^>]+>", " ");
+            __plain = System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(__plain, @"\s+", " ")).Trim();
+            var __pre = __plain.Length > 90 ? __plain[..90] : __plain;
+            if (string.Equals(__pre, subject, StringComparison.Ordinal)) __pre = "Bericht van Lobsy";
+            var __mail = TransactionalEmails.AdHoc("SalesMail.PayoutRequested", "SalesMail.PayoutRequested", EmailKind.Essential, __features.PublicWebBaseUrl, subject, __pre, subject,
+                [new ParagraphBlock(EmailText.Plain(__plain))]);
+            await _mailer.SendAsync(__mail, user.Email, cancellationToken: cancellationToken);
+        }
     }
 
     private static string FormatAddress(SalesManagerProfile profile) =>

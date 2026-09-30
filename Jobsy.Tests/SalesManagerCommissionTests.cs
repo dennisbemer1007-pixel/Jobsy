@@ -551,7 +551,8 @@ public class SalesManagerCommissionTests
         var privacy = new PrivacyDataService(
             db,
             new StubUserLookup(db),
-            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance));
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new AlwaysOnFeatures());
         var principal = CreatePrincipal("sm@jobsy.local", smId);
         var export = await privacy.ExportAsync(principal);
         var json = System.Text.Json.JsonSerializer.Serialize(export);

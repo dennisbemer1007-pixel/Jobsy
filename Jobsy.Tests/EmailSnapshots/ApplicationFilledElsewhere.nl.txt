@@ -1,0 +1,33 @@
+KEY: ApplicationFilledElsewhere
+SUBJECT: Update sollicitatie: Weekendhulp verkoop
+PREHEADER: Update op je sollicitatie.
+KIND: Essential
+--- TEXT ---
+Hoi Alex de Tester,
+
+Update op je sollicitatie
+=========================
+
+Bedankt voor je sollicitatie op Weekendhulp verkoop bij Bakkerij De Gouden
+Korrel.
+
+Helaas is de keuze op een andere kandidaat gevallen. We wensen je veel
+succes!
+
+Bekijk andere vacatures: https://lobsy.nl/banenkaart
+
+Team Lobsy
+
+Je ontvangt deze mail omdat je hebt gesolliciteerd via Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Update op je sollicitatie
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Bekijk andere vacatures -> https://lobsy.nl/banenkaart
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

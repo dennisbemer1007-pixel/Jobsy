@@ -1,0 +1,30 @@
+KEY: AccessRequestSubmitted
+SUBJECT: Toegangsverzoek verstuurd — Lobsy
+PREHEADER: Toegangsverzoek verstuurd
+KIND: Essential
+--- TEXT ---
+Hoi Alex de Tester,
+
+Aanvraag verstuurd
+==================
+
+Je aanvraag is verstuurd. Bakkerij De Gouden Korrel beslist; na 5 werkdagen
+kijkt Lobsy mee.
+
+Naar Lobsy: https://lobsy.nl/login
+
+Team Lobsy
+
+Je ontvangt deze mail vanwege een overname- of toegangsverzoek.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Aanvraag verstuurd
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Naar Lobsy -> https://lobsy.nl/login
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

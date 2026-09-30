@@ -8,6 +8,7 @@ using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 
@@ -787,7 +788,7 @@ public class Sprint7RegistrationTests
     private static CompanyRegistrationService CreateService(
         JobsyDbContext db,
         bool exposeActivationLinks = true,
-        IEmailService? email = null)
+        ITransactionalMailer? email = null)
     {
         EnsurePaidPublishPeriod(db, exposeActivationLinks);
         var config = new ConfigurationBuilder().Build();
@@ -839,8 +840,20 @@ public class Sprint7RegistrationTests
         return new JobsyDbContext(options);
     }
 
-    private sealed class CapturingEmailService : IEmailService
+    private sealed class CapturingEmailService : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         private readonly JobsyDbContext _db;
         private readonly EmailServiceStub _inner;
 

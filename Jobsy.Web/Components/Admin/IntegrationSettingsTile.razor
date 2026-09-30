@@ -1,6 +1,9 @@
 @using Jobsy.Web.Admin
+@using Jobsy.Core.Options
+@using Microsoft.Extensions.Options
 @* Expandable integration settings tile with green/red status and live test. *@
 @inject CultureState Culture
+@inject IOptions<MailOptions> MailOptions
 
 <article class="company-card integration-tile @(StatusClass)" @onclick="Toggle">
     <div class="integration-tile__header">
@@ -245,6 +248,10 @@
                         Stuur testmail
                     </button>
                     <p class="muted">Stuurt een echte testmail via Resend (als API-key gezet is) of SMTP.</p>
+                    @if (_mailLegalFooterMissing)
+                    {
+                        <p class="state-message error">E-mailfooter mist adres en/of KvK-nummer (Mail:LegalAddress, Mail:KvkNumber).</p>
+                    }
                 </div>
             }
 
@@ -281,6 +288,7 @@
     private string _testMailTo = "";
     private string? _kvkUsageLine;
     private bool _kvkBudgetWarning;
+    private bool _mailLegalFooterMissing;
 
     private IntegrationHelpDocs.Doc? Help => IntegrationHelpDocs.TryGet(Credential.Key);
 
@@ -320,6 +328,7 @@
 
     protected override void OnParametersSet()
     {
+        _mailLegalFooterMissing = IsMailIntegration && MailOptions.Value.MissingLegalFooter;
         var keyChanged = !string.Equals(_boundKey, Credential.Key, StringComparison.OrdinalIgnoreCase);
         var serverUpdated = Credential.UpdatedAtUtc != _boundUpdatedAtUtc;
         if (keyChanged)

@@ -1,0 +1,31 @@
+KEY: AccessRequestEmailVerification
+SUBJECT: Bevestigingscode toegangsverzoek — Lobsy
+PREHEADER: Bevestigingscode toegangsverzoek
+KIND: Security
+--- TEXT ---
+Hoi Alex de Tester,
+
+Bevestig je e-mailadres
+=======================
+
+Bevestig je e-mailadres om toegang aan te vragen tot Bakkerij De Gouden
+Korrel. Code geldig 10 minuten:
+
+
+123456
+
+Team Lobsy
+
+Je ontvangt deze mail vanwege een overname- of toegangsverzoek.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Bevestig je e-mailadres
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=code
+marker: div data-lobsy-otp=123456
+a: Lobsy -> https://lobsy.nl
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

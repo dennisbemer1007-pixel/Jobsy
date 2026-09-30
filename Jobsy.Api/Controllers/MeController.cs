@@ -44,7 +44,7 @@ public class MeController : ControllerBase
     private readonly IWhoAmIService _whoAmI;
     private readonly ICandidateInsightsQueue _insightsQueue;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private const string VacancySourceLanguage = "nl";
 
     public MeController(
@@ -59,7 +59,7 @@ public class MeController : ControllerBase
         IWhoAmIService whoAmI,
         ICandidateInsightsQueue insightsQueue,
         ICandidateMatchSnapshotService matchSnapshots,
-        IEmailService email)
+        ITransactionalMailer mailer)
     {
         _companyAuth = companyAuth;
         _users = users;
@@ -72,7 +72,7 @@ public class MeController : ControllerBase
         _whoAmI = whoAmI;
         _insightsQueue = insightsQueue;
         _matchSnapshots = matchSnapshots;
-        _email = email;
+        _mailer = mailer;
     }
 
     [HttpGet("access")]
@@ -1040,9 +1040,7 @@ public class MeController : ControllerBase
             user.FirstName,
             confirmUrl,
             expiresAt);
-        await _email.SendAsync(
-            new EmailMessage(email, mail.Subject, mail.Html, mail.Category),
-            cancellationToken);
+        await _mailer.SendAsync(mail, email, cancellationToken: cancellationToken);
 
         return Ok(new { message = "We hebben je ouder of voogd een e-mail met een bevestigingslink gestuurd." });
     }

@@ -13,6 +13,7 @@ using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests.Sales;
 
@@ -499,7 +500,7 @@ public class SalesPayoutRunTests
 
         var wallet = new SalesWalletReadService(db);
         var svc = new SalesPayoutRequestService(
-            db, wallet, new CapturingEmail(), new PlatformCompanySettingsService(db));
+            db, wallet, new CapturingEmail(), new PlatformCompanySettingsService(db), new AlwaysOnFeatures());
         var dto = await svc.RequestAsync(userId, mfaSatisfied: true);
         if (requestedAtUtc is DateTime at)
         {
@@ -518,8 +519,20 @@ public class SalesPayoutRunTests
         return new JobsyDbContext(options);
     }
 
-    private sealed class CapturingEmail : IEmailService
+    private sealed class CapturingEmail : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public List<EmailMessage> Sent { get; } = [];
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
         {

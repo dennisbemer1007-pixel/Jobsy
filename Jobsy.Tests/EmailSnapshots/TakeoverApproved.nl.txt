@@ -1,0 +1,41 @@
+KEY: TakeoverApproved
+SUBJECT: Overname goedgekeurd — Lobsy
+PREHEADER: Overname goedgekeurd
+KIND: Essential
+--- TEXT ---
+Hoi Alex de Tester,
+
+Overname goedgekeurd
+====================
+
+Je overnameverzoek voor Bakkerij De Gouden Korrel is goedgekeurd.
+
+Tokens, vacatures en geschiedenis blijven gekoppeld aan de vestiging onder
+de organisatie.
+
+Kies een wachtwoord voor tester@example.com via de knop hieronder.
+
+De link werkt tot 7 oktober 2026. Daarna vraag je een nieuwe uitnodiging.
+
+Inloggen via Lobsy (https://lobsy.nl/login).
+
+Kies je wachtwoord: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+
+Team Lobsy
+
+Je ontvangt deze mail vanwege een overname- of toegangsverzoek.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Overname goedgekeurd
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Kies je wachtwoord -> https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
+img: src=https://lobsy.nl/images/email/mascot-celebrating-128.png?v=20260930-mail2 alt= width=64 height=64

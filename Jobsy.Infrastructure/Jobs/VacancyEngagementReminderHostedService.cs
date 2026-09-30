@@ -57,7 +57,7 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
 
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-        var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var mailer = scope.ServiceProvider.GetRequiredService<ITransactionalMailer>();
         var notifications = scope.ServiceProvider.GetRequiredService<IUserNotificationService>();
         var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
 
@@ -135,11 +135,7 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
 
             foreach (var contact in contacts)
             {
-                await email.SendAsync(new EmailMessage(
-                    contact.Email,
-                    notifyTitle,
-                    bodyHtml,
-                    "VacancyEngagementReminder"), cancellationToken);
+                await mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
 
                 await notifications.CreateAsync(
                     new NotificationCreateRequest(

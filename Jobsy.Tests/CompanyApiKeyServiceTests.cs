@@ -9,6 +9,7 @@ using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 
@@ -173,7 +174,7 @@ public class CompanyApiKeyServiceTests
         Assert.NotEqual(hash, ApiKeyHasher.Hash("lobsy_other"));
     }
 
-    private static CompanyApiKeyService CreateSut(JobsyDbContext db, IEmailService? email = null)
+    private static CompanyApiKeyService CreateSut(JobsyDbContext db, ITransactionalMailer? email = null)
         => new(
             db,
             email ?? new RecordingEmailService(),
@@ -273,8 +274,20 @@ public class CompanyApiKeyServiceTests
         return new JobsyDbContext(options);
     }
 
-    private sealed class RecordingEmailService : IEmailService
+    private sealed class RecordingEmailService : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public List<EmailMessage> Messages { get; } = [];
 
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
@@ -284,8 +297,20 @@ public class CompanyApiKeyServiceTests
         }
     }
 
-    private sealed class FailingEmailService : IEmailService
+    private sealed class FailingEmailService : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
             => throw new InvalidOperationException("SMTP down");
     }

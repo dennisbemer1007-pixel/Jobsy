@@ -1,3 +1,5 @@
+using Jobsy.Core.Email;
+using Jobsy.Core.Email.Model;
 using System.Globalization;
 using System.Net;
 using System.Security.Cryptography;
@@ -24,20 +26,20 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
 
     private readonly JobsyDbContext _db;
     private readonly ISalesManagerInviteService _invite;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
     private readonly ILogger<SalesManagerApplicationService> _logger;
 
     public SalesManagerApplicationService(
         JobsyDbContext db,
         ISalesManagerInviteService invite,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IPlatformFeatureService features,
         ILogger<SalesManagerApplicationService> logger)
     {
         _db = db;
         _invite = invite;
-        _email = email;
+        _mailer = mailer;
         _features = features;
         _logger = logger;
     }
@@ -482,18 +484,30 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
         var baseUrl = JobsyPublicUrl.NormalizeOrigin(features.PublicWebBaseUrl).TrimEnd('/');
         var link = $"{baseUrl}/sales/aanbevelen/bezwaar?token={Uri.EscapeDataString(plaintextToken)}";
         var subject = "Iemand heeft je aanbevolen bij Lobsy";
-        var html =
-            $"<p>Hallo {WebUtility.HtmlEncode(application.CandidateFullName)},</p>"
-            + $"<p><strong>{WebUtility.HtmlEncode(referrerDisplayName)}</strong> heeft je aanbevolen als salesmanager bij Lobsy.</p>"
-            + "<p>Lobsy bewaart je naam, e-mailadres en de motivatie van de aanbeveler. "
-            + "Openstaande aanbevelingen wissen we na 60 dagen; bij afwijzing of goedkeuring na 30 dagen.</p>"
-            + "<p>Wil je dit niet? Verwijder je gegevens via deze link (60 dagen geldig, eenmalig):</p>"
-            + $"<p><a href=\"{WebUtility.HtmlEncode(link)}\">Ik wil dit niet – verwijder mijn gegevens</a></p>"
-            + "<p>Heb je vragen? Mail privacy@lobsy.nl.</p>";
-
-        await _email.SendAsync(
-            new EmailMessage(application.CandidateEmail, subject, html, "SalesMail.RecommendedNotice"),
-            cancellationToken);
+        var preheader = $"{referrerDisplayName} heeft je aanbevolen als salesmanager.";
+        var mail = TransactionalEmails.AdHoc(
+            "SalesMail.RecommendedNotice",
+            "SalesMail.RecommendedNotice",
+            EmailKind.Essential,
+            features.PublicWebBaseUrl,
+            subject,
+            preheader,
+            "Aanbeveling bij Lobsy",
+            [
+                new ParagraphBlock(EmailText.Format(
+                    "{0} heeft je aanbevolen als salesmanager bij Lobsy.",
+                    EmailArg.Bold(referrerDisplayName))),
+                new ParagraphBlock(EmailText.Plain(
+                    "Lobsy bewaart je naam, e-mailadres en de motivatie van de aanbeveler. "
+                    + "Openstaande aanbevelingen wissen we na 60 dagen; bij afwijzing of goedkeuring na 30 dagen.")),
+                new NoteBlock(
+                    EmailText.Plain("Wil je dit niet? Verwijder je gegevens via de knop (60 dagen geldig, eenmalig).")),
+                new NoteBlock(
+                    EmailText.Plain("Heb je vragen? Mail privacy@lobsy.nl."))
+            ],
+            cta: new EmailCta("Ik wil dit niet – verwijder mijn gegevens", link),
+            greeting: $"Hallo {application.CandidateFullName},");
+        await _mailer.SendAsync(mail, application.CandidateEmail, cancellationToken: cancellationToken);
     }
 
     private async Task<SalesManagerApplicationDto> MapAsync(

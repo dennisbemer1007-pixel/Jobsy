@@ -8,6 +8,7 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests.Sales;
 
@@ -338,8 +339,20 @@ public class SalesPayoutProfileServiceTests
         return new JobsyDbContext(options);
     }
 
-    private sealed class CapturingEmail : IEmailService
+    private sealed class CapturingEmail : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public List<EmailMessage> Sent { get; } = [];
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
         {

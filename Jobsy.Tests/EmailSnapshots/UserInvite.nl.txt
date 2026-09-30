@@ -1,0 +1,36 @@
+KEY: UserInvite
+SUBJECT: Uitnodiging voor Lobsy (Filiaalmanager)
+PREHEADER: Je bent uitgenodigd als Filiaalmanager op Lobsy.
+KIND: Essential
+--- TEXT ---
+Hoi Alex de Tester,
+
+Uitnodiging — Filiaalmanager
+============================
+
+Je bent uitgenodigd als Filiaalmanager op Lobsy.
+
+Accepteer de uitnodiging via de knop hieronder om een wachtwoord te kiezen
+voor tester@example.com. Of log in met Google of Microsoft Entra met
+hetzelfde e-mailadres.
+
+De link werkt tot 7 oktober 2026. Daarna vraag je een nieuwe uitnodiging.
+
+Uitnodiging accepteren: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+
+Team Lobsy
+
+Je ontvangt deze mail omdat je bent uitgenodigd voor Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Uitnodiging — Filiaalmanager
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Uitnodiging accepteren -> https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

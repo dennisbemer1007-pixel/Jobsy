@@ -1,0 +1,53 @@
+KEY: VacancyEngagementReminder
+SUBJECT: Even checken: Weekendhulp verkoop staat 14 dagen open
+PREHEADER: Weekendhulp verkoop: 42 zoek · 18 bekeken · 2 sollicitaties
+KIND: Optional
+--- TEXT ---
+Hoi,
+
+Even checken — je vacature staat 14 dagen open
+==============================================
+
+Je vacature Weekendhulp verkoop bij Bakkerij De Gouden Korrel staat al 14
+dagen open. Tijd voor een korte check-in.
+
+Dit zien we tot nu toe:
+
+In zoekresultaten: 42
+Bekeken: 18
+Gedeeld: 3
+Bewaard: 5
+Sollicitaties: 2
+
+Tip van Lobsy: Controleer of titel, taken en rooster nog kloppen. Kleine
+tekstuele updates verbeteren relevantie in matching en zoekfilters.
+
+Pas de vacature aan vóór de einddatum. Bij een update verlengen we de
+deadline als goodwill met 7 dagen — zo geef je je tekst nog even de ruimte.
+
+Highlight en PushBom openen je vacatureoverzicht, waar je de actie met één
+klik kunt afronden (tokens vereist). Highlight deze vacature:
+https://lobsy.nl/werkgever/vacatures?boost=highlight&id=11111111-1111-1111-1111-111111111111
+
+Vacature nu verbeteren: https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+
+Team Lobsy
+
+Je ontvangt deze mail omdat je vacatures beheert op Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail-instellingen: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Even checken — je vacature staat 14 dagen open
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Highlight deze vacature -> https://lobsy.nl/werkgever/vacatures?boost=highlight&id=11111111-1111-1111-1111-111111111111
+a: Vacature nu verbeteren -> https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail-instellingen -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

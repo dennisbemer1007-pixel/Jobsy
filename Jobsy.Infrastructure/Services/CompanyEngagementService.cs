@@ -15,19 +15,19 @@ public sealed class CompanyEngagementService : ICompanyEngagementService
     private readonly JobsyDbContext _db;
     private readonly IMemoryCache _cache;
     private readonly IVacancyDiscoveryIndex? _discovery;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly ILogger<CompanyEngagementService> _logger;
 
     public CompanyEngagementService(
         JobsyDbContext db,
         IMemoryCache cache,
-        IEmailService email,
+        ITransactionalMailer mailer,
         ILogger<CompanyEngagementService> logger,
         IVacancyDiscoveryIndex? discovery = null)
     {
         _db = db;
         _cache = cache;
-        _email = email;
+        _mailer = mailer;
         _logger = logger;
         _discovery = discovery;
     }
@@ -431,9 +431,7 @@ public sealed class CompanyEngagementService : ICompanyEngagementService
                     companyName,
                     label,
                     reason);
-                await _email.SendAsync(
-                    new EmailMessage(user.Email, mail.Subject, mail.Html, mail.Category),
-                    cancellationToken);
+                await _mailer.SendAsync(mail, user.Email, cancellationToken: cancellationToken);
             }
         }
         catch (Exception ex)

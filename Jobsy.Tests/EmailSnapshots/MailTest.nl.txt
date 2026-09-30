@@ -1,0 +1,29 @@
+KEY: MailTest
+SUBJECT: Lobsy testmail
+PREHEADER: Dit is een testmail van Lobsy.
+KIND: Essential
+--- TEXT ---
+Testmail
+========
+
+Dit is een testmail van Lobsy.
+
+Als je dit bericht ziet, werkt de uitgaande mailconfiguratie.
+
+Naar e-mails: https://lobsy.nl/admin/content/emails
+
+Team Lobsy
+
+Je ontvangt deze mail als Lobsy-beheerder.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Testmail
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Naar e-mails -> https://lobsy.nl/admin/content/emails
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

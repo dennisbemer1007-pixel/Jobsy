@@ -174,6 +174,8 @@ public class AdminOrganisationsApiTests : IClassFixture<RoleFunctionalWebAppFact
     [Fact]
     public async Task Takeover_list_masks_email_for_admin_not_for_enterprise()
     {
+        // Seed via client creation before touching the shared in-memory DbContext.
+        using var _ = AdminClient();
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var reg = new CompanyRegistration

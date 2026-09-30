@@ -23,7 +23,7 @@ public class CandidateActionsController : ControllerBase
     private readonly JobsyDbContext _db;
     private readonly ICandidateActionTokenService _tokens;
     private readonly IUserNotificationService _notifications;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
     private readonly IUserLookupService _users;
     private readonly IApplicationStatusRecorder _statusRecorder;
@@ -32,7 +32,7 @@ public class CandidateActionsController : ControllerBase
         JobsyDbContext db,
         ICandidateActionTokenService tokens,
         IUserNotificationService notifications,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IPlatformFeatureService features,
         IUserLookupService users,
         IApplicationStatusRecorder statusRecorder)
@@ -40,7 +40,7 @@ public class CandidateActionsController : ControllerBase
         _db = db;
         _tokens = tokens;
         _notifications = notifications;
-        _email = email;
+        _mailer = mailer;
         _features = features;
         _users = users;
         _statusRecorder = statusRecorder;
@@ -253,11 +253,7 @@ public class CandidateActionsController : ControllerBase
 
             foreach (var contact in contacts)
             {
-                await _email.SendAsync(new EmailMessage(
-                    contact.Email,
-                    mail.Subject,
-                    mail.Html,
-                    mail.Category), cancellationToken);
+                await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
 
                 await _notifications.CreateAsync(
                     new NotificationCreateRequest(

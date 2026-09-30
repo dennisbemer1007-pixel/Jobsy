@@ -18,7 +18,7 @@ public sealed class CompanyVerificationService : ICompanyVerificationService
     private readonly CompanyRegistrationService _registration;
     private readonly IVacancyProductService _products;
     private readonly IVacancyDiscoveryIndex? _discovery;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IUserNotificationService _notifications;
     private readonly IPlatformFeatureService _features;
     private readonly ILogger<CompanyVerificationService> _logger;
@@ -28,7 +28,7 @@ public sealed class CompanyVerificationService : ICompanyVerificationService
         CompanyRegistrationService registration,
         IVacancyProductService products,
         IVacancyDiscoveryIndex? discovery,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IUserNotificationService notifications,
         IPlatformFeatureService features,
         ILogger<CompanyVerificationService> logger)
@@ -37,7 +37,7 @@ public sealed class CompanyVerificationService : ICompanyVerificationService
         _registration = registration;
         _products = products;
         _discovery = discovery;
-        _email = email;
+        _mailer = mailer;
         _notifications = notifications;
         _features = features;
         _logger = logger;
@@ -367,9 +367,7 @@ public sealed class CompanyVerificationService : ICompanyVerificationService
                 root.Name,
                 welcomeGranted,
                 publishedTitles);
-            await _email.SendAsync(
-                new EmailMessage(manager.Email, mail.Subject, mail.Html, mail.Category),
-                cancellationToken);
+            await _mailer.SendAsync(mail, manager.Email, cancellationToken: cancellationToken);
             await _notifications.CreateAsync(
                 new NotificationCreateRequest(
                     manager.Id,

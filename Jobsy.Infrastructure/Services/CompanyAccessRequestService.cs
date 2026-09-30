@@ -21,7 +21,7 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     private readonly JobsyDbContext _db;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IUserNotificationService _notifications;
     private readonly IPlatformFeatureService _features;
     private readonly IOneTimeLinkService _links;
@@ -29,14 +29,14 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
 
     public CompanyAccessRequestService(
         JobsyDbContext db,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IUserNotificationService notifications,
         IPlatformFeatureService features,
         IOneTimeLinkService links,
         ILogger<CompanyAccessRequestService> logger)
     {
         _db = db;
-        _email = email;
+        _mailer = mailer;
         _notifications = notifications;
         _features = features;
         _links = links;
@@ -150,9 +150,7 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
         var features = await _features.GetAsync(cancellationToken);
         var mail = TransactionalEmails.AccessRequestEmailVerification(
             features.PublicWebBaseUrl, row.RequesterName, company.Name, code);
-        await _email.SendAsync(
-            new EmailMessage(row.RequesterEmail, mail.Subject, mail.Html, mail.Category),
-            cancellationToken);
+        await _mailer.SendAsync(mail, row.RequesterEmail, cancellationToken: cancellationToken);
 
         return new AccessRequestSubmitResult(
             row.Id,
@@ -211,9 +209,7 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
         var features = await _features.GetAsync(cancellationToken);
         var confirmMail = TransactionalEmails.AccessRequestSubmitted(
             features.PublicWebBaseUrl, row.RequesterName, row.TargetCompany.Name);
-        await _email.SendAsync(
-            new EmailMessage(row.RequesterEmail, confirmMail.Subject, confirmMail.Html, confirmMail.Category),
-            cancellationToken);
+        await _mailer.SendAsync(confirmMail, row.RequesterEmail, cancellationToken: cancellationToken);
 
         return new AccessRequestConfirmResult(
             row.Id,
@@ -380,9 +376,7 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
         var features = await _features.GetAsync(cancellationToken);
         var mail = TransactionalEmails.AccessRequestRejected(
             features.PublicWebBaseUrl, row.RequesterName, row.TargetCompany.Name, row.DecisionReason);
-        await _email.SendAsync(
-            new EmailMessage(row.RequesterEmail, mail.Subject, mail.Html, mail.Category),
-            cancellationToken);
+        await _mailer.SendAsync(mail, row.RequesterEmail, cancellationToken: cancellationToken);
 
         return new AccessRequestDecisionResult(row.Id, row.Status, "Verzoek afgewezen.", null);
     }
@@ -497,9 +491,7 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
                 expiries++;
                 var mail = TransactionalEmails.AccessRequestExpired(
                     features.PublicWebBaseUrl, row.RequesterName, row.TargetCompany.Name);
-                await _email.SendAsync(
-                    new EmailMessage(row.RequesterEmail, mail.Subject, mail.Html, mail.Category),
-                    cancellationToken);
+                await _mailer.SendAsync(mail, row.RequesterEmail, cancellationToken: cancellationToken);
             }
         }
 
@@ -532,9 +524,7 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
                     row.RequesterEmail,
                     roleLabel);
 
-            await _email.SendAsync(
-                new EmailMessage(manager.Email, mail.Subject, mail.Html, mail.Category),
-                cancellationToken);
+            await _mailer.SendAsync(mail, manager.Email, cancellationToken: cancellationToken);
 
             await _notifications.CreateAsync(
                 new NotificationCreateRequest(
@@ -690,9 +680,7 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
             user.Email,
             setPasswordUrl,
             promotedFromCandidate: false);
-        await _email.SendAsync(
-            new EmailMessage(user.Email, invite.Subject, invite.Html, invite.Category),
-            cancellationToken);
+        await _mailer.SendAsync(invite, user.Email, cancellationToken: cancellationToken);
 
         return user;
     }

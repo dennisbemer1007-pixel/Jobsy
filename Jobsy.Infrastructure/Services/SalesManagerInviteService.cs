@@ -12,20 +12,20 @@ namespace Jobsy.Infrastructure.Services;
 public sealed class SalesManagerInviteService : ISalesManagerInviteService
 {
     private readonly JobsyDbContext _db;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IOneTimeLinkService _links;
     private readonly IPlatformFeatureService _features;
     private readonly ILogger<SalesManagerInviteService> _logger;
 
     public SalesManagerInviteService(
         JobsyDbContext db,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IOneTimeLinkService links,
         IPlatformFeatureService features,
         ILogger<SalesManagerInviteService> logger)
     {
         _db = db;
-        _email = email;
+        _mailer = mailer;
         _links = links;
         _features = features;
         _logger = logger;
@@ -150,11 +150,7 @@ public sealed class SalesManagerInviteService : ISalesManagerInviteService
         var features = await _features.GetAsync(cancellationToken);
         var invite = TransactionalEmails.SalesManagerInvite(
             features.PublicWebBaseUrl, name, normalizedEmail, setPasswordUrl);
-        await _email.SendAsync(new EmailMessage(
-            normalizedEmail,
-            invite.Subject,
-            invite.Html,
-            invite.Category), cancellationToken);
+        await _mailer.SendAsync(invite, normalizedEmail, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Invited salesmanager {Email} ({UserId}) canRecruit={CanRecruit} referredBy={ReferredBy}",

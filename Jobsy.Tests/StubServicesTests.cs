@@ -85,6 +85,7 @@ public class StubServicesTests
             credentials,
             http,
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new AlwaysOnFeatures(),
             Options.Create(new OpenAiOptions()),
             NullLogger<IntegrationHealthStub>.Instance);
 

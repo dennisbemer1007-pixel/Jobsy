@@ -1,0 +1,29 @@
+KEY: TakeoverRejected
+SUBJECT: Overname afgewezen — Lobsy
+PREHEADER: Overname afgewezen
+KIND: Essential
+--- TEXT ---
+Hoi Alex de Tester,
+
+Overname afgewezen
+==================
+
+Je overnameverzoek voor Bakkerij De Gouden Korrel is afgewezen.
+
+Neem contact op: mailto:support@lobsy.nl
+
+Team Lobsy
+
+Je ontvangt deze mail vanwege een overname- of toegangsverzoek.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Overname afgewezen
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Neem contact op -> mailto:support@lobsy.nl
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

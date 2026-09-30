@@ -1,0 +1,39 @@
+KEY: DraftVacancyCleanupWarning
+SUBJECT: Concept-vacature 'Weekendhulp verkoop' wordt over 14 dagen verwijderd
+PREHEADER: Concept 'Weekendhulp verkoop' wordt over 14 dagen verwijderd
+KIND: Essential
+--- TEXT ---
+Hallo,
+
+Concept wordt binnenkort opgeruimd
+==================================
+
+Je concept-vacature Weekendhulp verkoop voor Bakkerij De Gouden Korrel staat
+al 30 dagen als concept en is nog nooit gepubliceerd.
+
+Als je niets doet, ruimt Lobsy dit concept automatisch op op 07-10-2026 (14
+dagen vanaf deze mail).
+
+Vacatures die je wél hebt gepubliceerd blijven altijd bewaard — ook na de
+deadline.
+
+Log in op Lobsy → Vacatures om dit concept te publiceren of te verwijderen.
+
+Open dit concept: https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+
+Team Lobsy
+
+Je ontvangt deze mail omdat je vacatures beheert op Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Concept wordt binnenkort opgeruimd
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Open dit concept -> https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

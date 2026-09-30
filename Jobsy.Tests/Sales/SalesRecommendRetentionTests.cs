@@ -9,6 +9,7 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests.Sales;
 
@@ -188,7 +189,7 @@ public class SalesRecommendRetentionTests
 
     private static async Task<(ISalesManagerApplicationService Apps, Guid SmId)> SeedRecruiterAsync(
         JobsyDbContext db,
-        IEmailService? email = null)
+        ITransactionalMailer? email = null)
     {
         email ??= new CapturingEmail();
         var invite = new SalesManagerInviteService(
@@ -242,8 +243,20 @@ public class SalesRecommendRetentionTests
         return new JobsyDbContext(options);
     }
 
-    private sealed class CapturingEmail : IEmailService
+    private sealed class CapturingEmail : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public List<EmailMessage> Sent { get; } = [];
 
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)

@@ -1,0 +1,29 @@
+KEY: EmployerNewApplication
+SUBJECT: Nieuwe sollicitatie: Weekendhulp verkoop
+PREHEADER: Er is een nieuwe sollicitatie.
+KIND: Essential
+--- TEXT ---
+Nieuwe sollicitatie
+===================
+
+Er is een nieuwe sollicitatie ontvangen voor Weekendhulp verkoop.
+
+Log in op Lobsy om de kandidaat te bekijken en te reageren.
+
+Bekijk sollicitaties: https://lobsy.nl/werkgever/sollicitaties
+
+Team Lobsy
+
+Je ontvangt deze mail omdat je vacatures beheert op Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Nieuwe sollicitatie
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Bekijk sollicitaties -> https://lobsy.nl/werkgever/sollicitaties
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

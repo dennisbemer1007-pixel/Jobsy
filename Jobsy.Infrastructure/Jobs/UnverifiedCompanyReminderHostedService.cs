@@ -55,7 +55,7 @@ public sealed class UnverifiedCompanyReminderHostedService : BackgroundService
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-        var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var mailer = scope.ServiceProvider.GetRequiredService<ITransactionalMailer>();
         var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
         var snap = await features.GetAsync(cancellationToken);
         var baseUrl = snap.PublicWebBaseUrl;
@@ -102,9 +102,7 @@ public sealed class UnverifiedCompanyReminderHostedService : BackgroundService
             {
                 var mail = TransactionalEmails.CompanyVerificationReminder(
                     baseUrl, contactName, companyName, day: 7, deletionDateLabel: null);
-                await email.SendAsync(
-                    new EmailMessage(contactEmail, mail.Subject, mail.Html, mail.Category),
-                    cancellationToken);
+                await mailer.SendAsync(mail, contactEmail, cancellationToken: cancellationToken);
                 registration.ReminderSentDay7AtUtc = now;
                 sent++;
             }
@@ -116,9 +114,7 @@ public sealed class UnverifiedCompanyReminderHostedService : BackgroundService
                 var deletionLabel = deletionLocal.ToString("d MMMM yyyy", new CultureInfo("nl-NL"));
                 var mail = TransactionalEmails.CompanyVerificationReminder(
                     baseUrl, contactName, companyName, day: 21, deletionDateLabel: deletionLabel);
-                await email.SendAsync(
-                    new EmailMessage(contactEmail, mail.Subject, mail.Html, mail.Category),
-                    cancellationToken);
+                await mailer.SendAsync(mail, contactEmail, cancellationToken: cancellationToken);
                 registration.ReminderSentDay21AtUtc = now;
                 sent++;
             }

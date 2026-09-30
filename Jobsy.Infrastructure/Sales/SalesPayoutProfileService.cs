@@ -2,6 +2,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using Jobsy.Core;
+using Jobsy.Core.Email;
+using Jobsy.Core.Email.Model;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -30,7 +32,7 @@ public sealed class SalesPayoutProfileService : ISalesPayoutProfileService
     private readonly JobsyDbContext _db;
     private readonly ISalesCommercialService _commercial;
     private readonly IPlatformFeatureService _features;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly ISecretProtector _secrets;
     private readonly IIbanProtector _ibanProtector;
 
@@ -43,14 +45,14 @@ public sealed class SalesPayoutProfileService : ISalesPayoutProfileService
         JobsyDbContext db,
         ISalesCommercialService commercial,
         IPlatformFeatureService features,
-        IEmailService email,
+        ITransactionalMailer mailer,
         ISecretProtector secrets,
         IIbanProtector ibanProtector)
     {
         _db = db;
         _commercial = commercial;
         _features = features;
-        _email = email;
+        _mailer = mailer;
         _secrets = secrets;
         _ibanProtector = ibanProtector;
     }
@@ -686,13 +688,24 @@ public sealed class SalesPayoutProfileService : ISalesPayoutProfileService
     private async Task SendIbanChangedMailAsync(User user, string masked, CancellationToken cancellationToken)
     {
         var when = SalesClock.ToLocal(DateTime.UtcNow).ToString("dd-MM-yyyy HH:mm");
-        var subject = "Je uitbetaalrekening is gewijzigd";
-        var html =
-            $"<p>Hallo {System.Net.WebUtility.HtmlEncode(user.FullName)},</p>"
-            + $"<p>Je uitbetaalrekening is gewijzigd naar <strong>{System.Net.WebUtility.HtmlEncode(masked)}</strong> "
-            + $"(op {when} Europe/Amsterdam).</p>"
-            + "<p>Was jij dit niet? Neem direct contact op met Lobsy.</p>";
-        await _email.SendAsync(new EmailMessage(user.Email, subject, html, "SalesMail.IbanChanged"), cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        var mail = TransactionalEmails.AdHoc(
+            "SalesMail.IbanChanged",
+            "SalesMail.IbanChanged",
+            EmailKind.Essential,
+            features.PublicWebBaseUrl,
+            "Je uitbetaalrekening is gewijzigd",
+            "Je uitbetaalrekening is gewijzigd.",
+            "Uitbetaalrekening gewijzigd",
+            [
+                new ParagraphBlock(EmailText.Format(
+                    "Je uitbetaalrekening is gewijzigd naar {0} (op {1} Europe/Amsterdam).",
+                    EmailArg.Bold(masked),
+                    EmailArg.Plain(when))),
+                new ParagraphBlock(EmailText.Plain("Was jij dit niet? Neem direct contact op met Lobsy."))
+            ],
+            greeting: $"Hallo {user.FullName},");
+        await _mailer.SendAsync(mail, user.Email, cancellationToken: cancellationToken);
     }
 
     private async Task SendConfirmLinkMailAsync(User user, string token, CancellationToken cancellationToken)
@@ -700,13 +713,21 @@ public sealed class SalesPayoutProfileService : ISalesPayoutProfileService
         var features = await _features.GetAsync(cancellationToken);
         var baseUrl = JobsyPublicUrl.NormalizeOrigin(features.PublicWebBaseUrl).TrimEnd('/');
         var link = $"{baseUrl}/sales/profiel/iban-bevestigen?token={Uri.EscapeDataString(token)}";
-        var subject = "Bevestig je nieuwe uitbetaalrekening";
-        var html =
-            $"<p>Hallo {System.Net.WebUtility.HtmlEncode(user.FullName)},</p>"
-            + "<p>Bevestig je nieuwe uitbetaalrekening via deze link (30 minuten geldig):</p>"
-            + $"<p><a href=\"{System.Net.WebUtility.HtmlEncode(link)}\">{System.Net.WebUtility.HtmlEncode(link)}</a></p>"
-            + "<p>Heb je dit niet aangevraagd? Negeer deze mail of neem contact op met Lobsy.</p>";
-        await _email.SendAsync(new EmailMessage(user.Email, subject, html, "SalesMail.IbanConfirm"), cancellationToken);
+        var mail = TransactionalEmails.AdHoc(
+            "SalesMail.IbanConfirm",
+            "SalesMail.IbanConfirm",
+            EmailKind.Essential,
+            features.PublicWebBaseUrl,
+            "Bevestig je nieuwe uitbetaalrekening",
+            "Bevestig je nieuwe uitbetaalrekening (30 minuten geldig).",
+            "Bevestig je uitbetaalrekening",
+            [
+                new ParagraphBlock(EmailText.Plain("Bevestig je nieuwe uitbetaalrekening via de knop hieronder (30 minuten geldig).")),
+                new NoteBlock(EmailText.Plain("Heb je dit niet aangevraagd? Negeer deze mail of neem contact op met Lobsy."))
+            ],
+            new EmailCta("Bevestigen", link),
+            greeting: $"Hallo {user.FullName},");
+        await _mailer.SendAsync(mail, user.Email, cancellationToken: cancellationToken);
     }
 
     private static byte[] RenderSimplePdf(string title, string body)

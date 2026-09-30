@@ -8,6 +8,7 @@ using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 
@@ -830,7 +831,7 @@ public class AccountUnsubscribeTests
     private static PrivacyDataService CreatePrivacy(JobsyDbContext db, out CapturingEmailService email)
     {
         email = new CapturingEmailService();
-        return new PrivacyDataService(db, new StubUserLookup(db), email);
+        return new PrivacyDataService(db, new StubUserLookup(db), email, new AlwaysOnFeatures());
     }
 
     private static PrivacyDataService CreatePrivacy(JobsyDbContext db)
@@ -866,8 +867,20 @@ public class AccountUnsubscribeTests
         return new JobsyDbContext(options);
     }
 
-    private sealed class CapturingEmailService : IEmailService
+    private sealed class CapturingEmailService : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public List<EmailMessage> Messages { get; } = [];
 
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)

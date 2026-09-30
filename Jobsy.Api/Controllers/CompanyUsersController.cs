@@ -32,7 +32,7 @@ public class CompanyUsersController : ControllerBase
 
     private readonly JobsyDbContext _db;
     private readonly ICompanyAuthorizationService _companyAuth;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IUserLookupService _users;
     private readonly IPlatformFeatureService _features;
     private readonly IPartnerAffiliateService _partnerAffiliates;
@@ -43,7 +43,7 @@ public class CompanyUsersController : ControllerBase
     public CompanyUsersController(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IUserLookupService users,
         IPlatformFeatureService features,
         IPartnerAffiliateService partnerAffiliates,
@@ -53,7 +53,7 @@ public class CompanyUsersController : ControllerBase
     {
         _db = db;
         _companyAuth = companyAuth;
-        _email = email;
+        _mailer = mailer;
         _users = users;
         _features = features;
         _partnerAffiliates = partnerAffiliates;
@@ -369,11 +369,7 @@ public class CompanyUsersController : ControllerBase
             user.Email,
             setPasswordUrl,
             promotedFromCandidate);
-        await _email.SendAsync(new EmailMessage(
-            user.Email,
-            invite.Subject,
-            invite.Html,
-            invite.Category), cancellationToken);
+        await _mailer.SendAsync(invite, user.Email, cancellationToken: cancellationToken);
 
         var loaded = await _db.Users
             .AsNoTracking()

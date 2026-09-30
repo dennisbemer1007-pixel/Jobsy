@@ -197,18 +197,11 @@ public class MailTestSendTests
     private static IntegrationHealthStub CreateHealth(JobsyDbContext db)
     {
         var credentials = new IntegrationCredentialService(db, new PassthroughSecretProtector());
-        var email = new SmtpEmailService(
-            credentials,
-            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
-            db,
-            new FakeHttpClientFactory(),
-            new FakeHostEnvironment { EnvironmentName = Environments.Development },
-            new AlwaysOnFeatureFlags(),
-            NullLogger<SmtpEmailService>.Instance);
         return new IntegrationHealthStub(
             credentials,
             new FakeHttpClientFactory(),
-            email,
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new AlwaysOnFeatures(),
             Options.Create(new OpenAiOptions()),
             NullLogger<IntegrationHealthStub>.Instance);
     }

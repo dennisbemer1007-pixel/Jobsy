@@ -13,20 +13,20 @@ namespace Jobsy.Infrastructure.Services;
 
 public sealed class EmailCatalogService : IEmailCatalogService
 {
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
     private readonly JobsyDbContext _db;
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailCatalogService> _logger;
 
     public EmailCatalogService(
-        IEmailService email,
+        ITransactionalMailer mailer,
         IPlatformFeatureService features,
         JobsyDbContext db,
         IConfiguration configuration,
         ILogger<EmailCatalogService> logger)
     {
-        _email = email;
+        _mailer = mailer;
         _features = features;
         _db = db;
         _configuration = configuration;
@@ -68,9 +68,7 @@ public sealed class EmailCatalogService : IEmailCatalogService
 
         var ctx = await BuildContextAsync(trimmed, cancellationToken);
         var composed = TransactionalEmails.Compose(info.Key, ctx);
-        var delivery = await _email.SendAsync(
-            new EmailMessage(trimmed, composed.Subject, composed.Html, composed.Category),
-            cancellationToken);
+        var delivery = await _mailer.SendAsync(composed, trimmed, cancellationToken: cancellationToken);
 
         var redacted = EmailServiceStub.RedactEmail(trimmed);
         _db.PlatformLogs.Add(new PlatformLog

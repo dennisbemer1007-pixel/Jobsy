@@ -17,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 
@@ -423,7 +424,7 @@ public class CompanyVerificationFlow06Tests
                 })
                 .Build());
 
-    private static CompanyVerificationService CreateVerification(JobsyDbContext db, IEmailService email)
+    private static CompanyVerificationService CreateVerification(JobsyDbContext db, ITransactionalMailer email)
     {
         var features = CreateFeatures(db);
         var ledger = new TokenLedgerService(db);
@@ -460,7 +461,7 @@ public class CompanyVerificationFlow06Tests
     private static CompanyVerificationFlowService CreateFlow(
         JobsyDbContext db,
         ILetterService? letters = null,
-        IEmailService? email = null,
+        ITransactionalMailer? email = null,
         IOptions<CompanyVerificationSettings>? settings = null)
     {
         email ??= new CapturingEmail();
@@ -487,8 +488,20 @@ public class CompanyVerificationFlow06Tests
             NullLogger<CompanyVerificationAdminService>.Instance);
     }
 
-    private sealed class CapturingEmail : IEmailService
+    private sealed class CapturingEmail : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public List<EmailMessage> Sent { get; } = [];
         public string? LastOtp { get; private set; }
 

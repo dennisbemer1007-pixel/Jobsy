@@ -29,7 +29,7 @@ public class AuthController : ControllerBase
     private readonly IAmbassadeurAttributionService _ambassadeurAttribution;
     private readonly IHostEnvironment _environment;
     private readonly IDeviceSessionService _deviceSessions;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly MfaChallengeService _mfaChallenges;
     private readonly IPlatformFeatureService _features;
 
@@ -40,7 +40,7 @@ public class AuthController : ControllerBase
         IAmbassadeurAttributionService ambassadeurAttribution,
         IHostEnvironment environment,
         IDeviceSessionService deviceSessions,
-        IEmailService email,
+        ITransactionalMailer mailer,
         MfaChallengeService mfaChallenges,
         IPlatformFeatureService features)
     {
@@ -50,7 +50,7 @@ public class AuthController : ControllerBase
         _ambassadeurAttribution = ambassadeurAttribution;
         _environment = environment;
         _deviceSessions = deviceSessions;
-        _email = email;
+        _mailer = mailer;
         _mfaChallenges = mfaChallenges;
         _features = features;
     }
@@ -103,12 +103,9 @@ public class AuthController : ControllerBase
             {
                 try
                 {
-                    await _email.SendAsync(new EmailMessage(
-                        credential.Email,
-                        "Je Lobsy-account is tijdelijk geblokkeerd",
-                        "<p>Er zijn meerdere mislukte inlogpogingen gedaan. Je account is tijdelijk geblokkeerd. Was je dit niet zelf? Kies dan na de blokkade een nieuw wachtwoord.</p>",
-                        "AccountLockout"),
-                        cancellationToken);
+                    var features = await _features.GetAsync(cancellationToken);
+                    var lockoutMail = TransactionalEmails.AccountLockout(features.PublicWebBaseUrl);
+                    await _mailer.SendAsync(lockoutMail, credential.Email, cancellationToken: cancellationToken);
                 }
                 catch
                 {
@@ -516,9 +513,7 @@ public class AuthController : ControllerBase
             try
             {
                 var mail = TransactionalEmails.EmailCodeUsePassword(baseUrl, culture);
-                await _email.SendAsync(
-                    new EmailMessage(email, mail.Subject, mail.Html, mail.Category),
-                    cancellationToken);
+                await _mailer.SendAsync(mail, email, cancellationToken: cancellationToken);
             }
             catch
             {
@@ -552,9 +547,7 @@ public class AuthController : ControllerBase
             var mail = purpose == EmailSignInPurpose.SignUp
                 ? TransactionalEmails.EmailSignUpCode(baseUrl, code, culture)
                 : TransactionalEmails.EmailSignInCode(baseUrl, code, culture);
-            await _email.SendAsync(
-                new EmailMessage(email, mail.Subject, mail.Html, mail.Category),
-                cancellationToken);
+            await _mailer.SendAsync(mail, email, cancellationToken: cancellationToken);
         }
         catch
         {

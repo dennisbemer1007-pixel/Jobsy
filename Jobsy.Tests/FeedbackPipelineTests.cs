@@ -367,7 +367,8 @@ public class FeedbackPipelineTests
         var privacy = new PrivacyDataService(
             db,
             new StubUserLookup(db),
-            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance));
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new AlwaysOnFeatures());
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
         [
             new Claim(ClaimTypes.Email, "forget@jobsy.local"),

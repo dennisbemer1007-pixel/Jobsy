@@ -329,8 +329,20 @@ public class AccessRequest07Tests
         return new JobsyDbContext(options);
     }
 
-    private sealed class CapturingEmailService : IEmailService
+    private sealed class CapturingEmailService : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         private readonly EmailServiceStub _inner;
         public CapturingEmailService(JobsyDbContext db)
             => _inner = new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance);

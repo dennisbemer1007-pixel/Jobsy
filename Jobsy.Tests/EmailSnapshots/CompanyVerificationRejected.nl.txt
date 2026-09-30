@@ -1,0 +1,34 @@
+KEY: CompanyVerificationRejected
+SUBJECT: Verificatie afgewezen — Lobsy
+PREHEADER: Verificatie afgewezen
+KIND: Essential
+--- TEXT ---
+Hoi Alex de Tester,
+
+Verificatie afgewezen
+=====================
+
+We konden Bakkerij De Gouden Korrel niet verifiëren.
+
+Reden: Filiaalmanager
+
+Je kunt een brief met code aanvragen of opnieuw een handmatige controle
+starten.
+
+Opnieuw verifiëren: https://lobsy.nl/register/verifieren
+
+Team Lobsy
+
+Je ontvangt deze mail omdat je een bedrijf beheert op Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Verificatie afgewezen
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Opnieuw verifiëren -> https://lobsy.nl/register/verifieren
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -1,0 +1,33 @@
+KEY: EngagementClaimRemoved
+SUBJECT: Kenmerk verwijderd — Lobsy
+PREHEADER: Maatschappelijk kenmerk verwijderd
+KIND: Essential
+--- TEXT ---
+Kenmerk verwijderd
+==================
+
+Het kenmerk duurzaamheid van Bakkerij De Gouden Korrel is verwijderd van
+Lobsy.
+
+Reden: Filiaalmanager
+
+Je kunt het kenmerk over 30 dagen opnieuw opgeven met nieuw bewijs, of een
+ander kenmerk kiezen.
+
+Naar dashboard: https://lobsy.nl/werkgever
+
+Team Lobsy
+
+Je ontvangt deze mail omdat je een bedrijf beheert op Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Kenmerk verwijderd
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Naar dashboard -> https://lobsy.nl/werkgever
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
