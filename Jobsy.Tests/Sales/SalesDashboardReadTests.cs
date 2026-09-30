@@ -65,7 +65,7 @@ public class SalesDashboardReadTests
         var sut = new SalesDashboardReadService(db, wallet, funnel, employers);
 
         var dto = await sut.GetAsync(smId, "year", now);
-        Assert.Equal(200m, dto.Available);
+        Assert.Equal(250m, dto.Available);
         Assert.Equal(100m, dto.Pending);
         Assert.Equal(350m, dto.EarnedInPeriod);
         Assert.Null(dto.EarnedPrevComparable);

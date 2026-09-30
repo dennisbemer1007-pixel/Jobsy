@@ -2,7 +2,7 @@ namespace Jobsy.Core.Contracts.Sales;
 
 public sealed class SalesDashboardDto
 {
-    public string FirstName { get; init; } = "";
+    public string GreetingName { get; init; } = "";
     public string? TrackingCode { get; init; }
     public string Period { get; init; } = "year";
     public decimal Available { get; init; }

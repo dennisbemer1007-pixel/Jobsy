@@ -101,7 +101,7 @@ public sealed class SalesDashboardReadService : ISalesDashboardReadService
 
         return new SalesDashboardDto
         {
-            FirstName = FirstNameOf(user?.FullName),
+            GreetingName = FirstNameOf(user?.FullName),
             TrackingCode = profile?.TrackingCode,
             Period = periodKey,
             Available = balances.Available,

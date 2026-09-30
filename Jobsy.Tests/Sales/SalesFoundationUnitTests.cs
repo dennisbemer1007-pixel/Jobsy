@@ -84,12 +84,12 @@ public class SalesFoundationUnitTests
     {
         var withRecruit = SalesNav.VisibleItems(canRecruit: true).Select(i => i.Key).ToHashSet();
         Assert.Contains("recommend", withRecruit);
-        Assert.DoesNotContain("employers", withRecruit); // IsAvailable false until 04
+        Assert.Contains("employers", withRecruit); // available since 04
         Assert.DoesNotContain("profile", withRecruit);
 
         var without = SalesNav.VisibleItems(canRecruit: false).Select(i => i.Key).ToHashSet();
         Assert.DoesNotContain("recommend", without);
-        // Available bottom items today: Overzicht, Mijn link, Wallet (Werkgevers arrives in 04). Meer is layout-only.
-        Assert.Equal(3, SalesNav.BottomNavItems(true).Count);
+        // Available bottom items: Overzicht, Mijn link, Werkgevers, Wallet. Meer is layout-only.
+        Assert.Equal(4, SalesNav.BottomNavItems(true).Count);
     }
 }

@@ -25,8 +25,8 @@ else
     <section class="sp-dash">
         <header class="sp-dash__header">
             <div>
-                <h1 class="sp-dash__hi-desktop">@Greeting(_dash.FirstName)</h1>
-                <h1 class="sp-dash__hi-mobile">@Culture.Format("Sales.Dash.Hi", _dash.FirstName)</h1>
+                <h1 class="sp-dash__hi-desktop">@Greeting(_dash.GreetingName)</h1>
+                <h1 class="sp-dash__hi-mobile">@Culture.Format("Sales.Dash.Hi", _dash.GreetingName)</h1>
                 <p class="sp-dash__lead sp-dash__hi-desktop">@Culture["Sales.Dash.Lead"]</p>
                 <p class="sp-dash__role-line sp-dash__hi-mobile">
                     @Culture["Sales.RoleChip"] · <span class="sp-mono">@(_dash.TrackingCode ?? Culture["Sales.RoleChipNoCode"])</span>
