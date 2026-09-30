@@ -1,6 +1,7 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -139,7 +140,7 @@ public sealed class CandidateCareerPathController : ControllerBase
                 snapshot,
                 catalogKey: catalogKey,
                 dreamSource: catalogKey is not null ? CareerDreamSources.Catalog : CareerDreamSources.FreeText,
-                planLanguage: null,
+                planLanguage: JobsyLanguages.Normalize(request.PlanLanguage),
                 force: request.Force,
                 cancellationToken);
             return Ok(HorizonCareerPathPlanDto.From(plan));
@@ -313,7 +314,13 @@ public sealed class CandidateCareerPathController : ControllerBase
 }
 
 /// <summary><paramref name="DreamTitle"/> stays for legacy clients; new clients send <see cref="FreeText"/> or <see cref="CatalogKey"/>.</summary>
-public sealed record HorizonCareerPathPlanRequest(string? CatalogKey, string? FreeText, bool Force = false, string? DreamTitle = null);
+public sealed record HorizonCareerPathPlanRequest(
+    string? CatalogKey,
+    string? FreeText,
+    bool Force = false,
+    string? DreamTitle = null,
+    /// <summary>UI language at generation time (D13); normalized to a supported language.</summary>
+    string? PlanLanguage = null);
 
 public sealed record HorizonCareerPathPlanDto(
     string DreamTitle,

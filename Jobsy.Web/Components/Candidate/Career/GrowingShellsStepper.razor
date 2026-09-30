@@ -1,0 +1,77 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Components.Candidate.Journey
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<nav class="career-stepper @(Mobile ? "career-stepper--compact" : null)" aria-label="@Culture["Career.Stepper.Aria"]">
+    <ol class="career-stepper__list">
+        @for (var i = 0; i < Stones.Count; i++)
+        {
+            var stone = Stones[i];
+            var isCurrent = stone.State == ClimbStoneState.Now;
+            <li class="career-stepper__item career-stepper__item--@StateClass(stone.State)"
+                style="@SizeStyle(i)"
+                aria-current="@(isCurrent ? "step" : null)">
+                <span class="career-stepper__shell" aria-hidden="true">
+                    @if (stone.State == ClimbStoneState.Done)
+                    {
+                        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3.5 8.2 6.4 11l6.1-6.5" />
+                        </svg>
+                    }
+                    else if (stone.State == ClimbStoneState.Dream)
+                    {
+                        <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor">
+                            <path d="M8 1.5l1.9 4 4.4.6-3.2 3.1.8 4.3L8 11.5l-3.9 2 .8-4.3L1.7 6.1l4.4-.6z" />
+                        </svg>
+                    }
+                    else if (stone.Number is int n)
+                    {
+                        <span class="career-stepper__num">@n</span>
+                    }
+                </span>
+                <span class="career-stepper__caption">@Label(stone)</span>
+            </li>
+        }
+    </ol>
+</nav>
+
+@code {
+    [Parameter] public IReadOnlyList<CareerStoneModel> Stones { get; set; } = [];
+    [Parameter] public bool Mobile { get; set; }
+
+    private string Label(CareerStoneModel stone)
+    {
+        var text = stone.State switch
+        {
+            ClimbStoneState.Done when stone.Number is null =>
+                string.IsNullOrWhiteSpace(stone.Label) ? Culture["Career.Rail.Now"] : stone.Label,
+            ClimbStoneState.Dream =>
+                string.IsNullOrWhiteSpace(stone.Label) ? Culture["Career.Stepper.Goal"] : stone.Label,
+            _ => stone.Label
+        };
+
+        if (!Mobile || string.IsNullOrWhiteSpace(text))
+        {
+            return text;
+        }
+
+        var space = text.IndexOf(' ');
+        return space > 2 ? text[..space] : text;
+    }
+
+    private string SizeStyle(int index)
+    {
+        var last = Math.Max(1, Stones.Count - 1);
+        var size = 30 + (48 - 30) * index / last - (Mobile ? 4 : 0);
+        return $"--shell-size:{size}px";
+    }
+
+    private static string StateClass(ClimbStoneState state) => state switch
+    {
+        ClimbStoneState.Done => "done",
+        ClimbStoneState.Now => "now",
+        ClimbStoneState.Dream => "goal",
+        _ => "todo"
+    };
+}

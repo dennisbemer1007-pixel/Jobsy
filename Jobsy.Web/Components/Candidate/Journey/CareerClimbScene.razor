@@ -1,0 +1,90 @@
+@namespace Jobsy.Web.Components.Candidate.Journey
+@using System.Globalization
+@using Jobsy.Web.Components.Candidate.Discovery
+
+<div class="career-scene @(Mobile ? "career-scene--mobile" : "career-scene--desktop") @(Celebrate ? "career-scene--celebrate" : null)"
+     aria-hidden="true">
+    @((MarkupString)_svg)
+
+    @if (Variant != ClimbVariant.Stones && _points.Count > 0)
+    {
+        <div class="career-scene__lob" style="@LobsterStyle">
+            <JourneyLobster PlatesShed="@PlatesShed"
+                            Size="@LobsterSize"
+                            Mobile="@Mobile"
+                            NewShell="@Celebrate"
+                            Label="" />
+        </div>
+    }
+
+    <div class="career-scene__labels">
+        @for (var i = 0; i < _points.Count && i < Stones.Count; i++)
+        {
+            var stone = Stones[i];
+            <span class="career-scene__label career-scene__label--@StateClass(stone.State)" style="@LabelStyle(i)">
+                <b>@stone.Label</b>
+                @if (!string.IsNullOrWhiteSpace(stone.StateText))
+                {
+                    <small>@stone.StateText</small>
+                }
+            </span>
+        }
+    </div>
+</div>
+
+@code {
+    private string _svg = "";
+    private IReadOnlyList<CareerClimbGeometry.Point> _points = [];
+
+    [Parameter] public ClimbVariant Variant { get; set; } = ClimbVariant.Climb;
+    [Parameter] public bool Mobile { get; set; }
+    [Parameter] public IReadOnlyList<ClimbStone> Stones { get; set; } = [];
+    [Parameter] public int CurrentIndex { get; set; }
+    [Parameter] public bool Celebrate { get; set; }
+    [Parameter] public int PlatesShed { get; set; } = 4;
+    [Parameter] public int LobsterSize { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        var stepCount = Math.Max(1, Stones.Count - 2);
+        _points = CareerClimbGeometry.Points(stepCount, Mobile);
+        _svg = CareerClimbSceneBuilder.BuildSvg(
+            _points,
+            Stones,
+            Math.Clamp(CurrentIndex, 0, Math.Max(0, _points.Count - 1)),
+            Mobile,
+            Celebrate,
+            listen: Variant == ClimbVariant.Listen);
+    }
+
+    private string LobsterStyle
+    {
+        get
+        {
+            var index = Math.Clamp(CurrentIndex, 0, Math.Max(0, _points.Count - 1));
+            var p = _points[index];
+            return string.Create(
+                CultureInfo.InvariantCulture,
+                $"--x:{Percent(p.X, CareerClimbGeometry.Width(Mobile))}%;--y:{Percent(p.Y, CareerClimbGeometry.Height(Mobile))}%;--size:{LobsterSize}px");
+        }
+    }
+
+    private string LabelStyle(int index)
+    {
+        var p = _points[index];
+        return string.Create(
+            CultureInfo.InvariantCulture,
+            $"--x:{Percent(p.X, CareerClimbGeometry.Width(Mobile))}%;--y:{Percent(p.Y, CareerClimbGeometry.Height(Mobile))}%");
+    }
+
+    private static string Percent(double value, double total)
+        => (Math.Round(value / total * 1000) / 10).ToString("0.#", CultureInfo.InvariantCulture);
+
+    private static string StateClass(ClimbStoneState state) => state switch
+    {
+        ClimbStoneState.Done => "done",
+        ClimbStoneState.Now => "now",
+        ClimbStoneState.Dream => "dream",
+        _ => "todo"
+    };
+}

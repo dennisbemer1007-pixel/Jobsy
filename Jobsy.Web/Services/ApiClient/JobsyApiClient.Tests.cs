@@ -238,12 +238,20 @@ public sealed partial class JobsyApiClient
         string? freeText,
         bool force = false,
         CancellationToken ct = default)
+        => await GenerateCareerPathAsync(catalogKey, freeText, force, planLanguage: null, ct);
+
+    public async Task<CareerPathPlanApiModel?> GenerateCareerPathAsync(
+        string? catalogKey,
+        string? freeText,
+        bool force,
+        string? planLanguage,
+        CancellationToken ct = default)
     {
         try
         {
             var response = await _http.PostAsJsonAsync(
                 "api/me/career-path",
-                new { catalogKey, freeText, force },
+                new { catalogKey, freeText, force, planLanguage },
                 ct);
             if (!response.IsSuccessStatusCode)
             {
