@@ -333,6 +333,7 @@ public class EmailCodeAuthTests
             })
             .Build();
         var credentials = new IntegrationCredentialService(db, new PassthroughSecretProtector());
+        var features = new AlwaysOnFeatures();
         return new AuthController(
             db,
             config,
@@ -340,7 +341,8 @@ public class EmailCodeAuthTests
             new AmbassadeurAttributionService(
                 db,
                 new AmbassadeurSettingsService(db),
-                NullLogger<AmbassadeurAttributionService>.Instance),
+                NullLogger<AmbassadeurAttributionService>.Instance,
+                features),
             new StubHostEnvironment
             {
                 EnvironmentName = production ? Environments.Production : Environments.Development
@@ -351,7 +353,8 @@ public class EmailCodeAuthTests
                 new MemoryCache(new MemoryCacheOptions()),
                 NullLogger<DeviceSessionService>.Instance),
             email,
-            new MfaChallengeService(new MemoryCache(new MemoryCacheOptions())));
+            new MfaChallengeService(new MemoryCache(new MemoryCacheOptions())),
+            features);
     }
 
     private static ControllerContext WithProvisionSecret(string secret)
