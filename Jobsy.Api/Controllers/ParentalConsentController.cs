@@ -57,16 +57,36 @@ public sealed class ParentalConsentController : ControllerBase
         [FromBody] ParentalConsentConfirmRequest request,
         CancellationToken cancellationToken)
     {
-        var user = await FindValidUserAsync(request.Token, cancellationToken);
+        if (string.IsNullOrWhiteSpace(request.Token))
+        {
+            return BadRequest(new { message = "invalid_or_expired" });
+        }
+
+        var tokenHash = VerificationCodes.Hash(request.Token.Trim());
+        var now = DateTime.UtcNow;
+        var user = await _db.Users.FirstOrDefaultAsync(
+            u => u.ParentalConsentTokenHash == tokenHash
+                 && u.ParentalConsentTokenExpiresAt != null
+                 && u.ParentalConsentTokenExpiresAt > now,
+            cancellationToken);
         if (user is null)
         {
             return BadRequest(new { message = "invalid_or_expired" });
         }
 
-        var now = DateTime.UtcNow;
+        if (user.ParentalConsentAt is not null)
+        {
+            // Idempotent: already confirmed (token kept until expiry for no-op retries).
+            return Ok(new ParentalConsentConfirmResponse(Ok: true, ChildFirstName: FirstNameOrNull(user.FirstName)));
+        }
+
+        if (!CandidateConsentRules.RequiresParentalConsent(user))
+        {
+            return BadRequest(new { message = "invalid_or_expired" });
+        }
+
         user.ParentalConsentAt = now;
-        user.ParentalConsentTokenHash = null;
-        user.ParentalConsentTokenExpiresAt = null;
+        // Keep hash until ExpiresAt so a second POST is a no-op success (09.3).
         await _db.SaveChangesAsync(cancellationToken);
 
         return Ok(new ParentalConsentConfirmResponse(Ok: true, ChildFirstName: FirstNameOrNull(user.FirstName)));

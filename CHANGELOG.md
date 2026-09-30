@@ -1,6 +1,7 @@
 # Changelog: Jobsy
 ## Unreleased
 
+- **E-mail stack (look & safety):** one-button catalog layout, language-aware copy (nl/en/pl/ro/ar + RTL), optional-mail unsubscribe (List-Unsubscribe One-Click), safer links (set-password / API-key reveal / parental consent without secrets in mail), admin preview with fake data and limited test send. See `docs/emails.md`.
 - **E-mail 03 (verzending/headers/afmelden):** multipart text+HTML, From/Reply-To via config (`Lobsy <hallo@mail.lobsy.nl>` / `support@lobsy.nl`), RFC 8058 List-Unsubscribe One-Click for optional mails only, `EmailOptOut` + `/mail/afmelden` + `/account/mail-instellingen`, migration `AddEmailOptOuts`, `docs/email-deliverability.md`.
 - **E-mail security hotfix:** parental consent only via website POST (`/toestemming`); single-use set-password links replace mailed temporary passwords; API-key reveal-once links (`/koppeling/sleutel`); escaped support-access mail with Europe/Amsterdam expiry; migration `AddOneTimeLinks`.
 - Werkgever-aanmelding afronding (11): dashboardbanner “Nog niet zichtbaar voor kandidaten”, checklist + zichtbaarheidspanel, briefcode vanaf het dashboard, suggesties voor nieuwe KvK-vestigingen, privacytekst voor werkgeversaamelding (incl. Pingen), docs en E2E-dekking.

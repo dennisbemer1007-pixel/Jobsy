@@ -440,6 +440,7 @@ public static class EmailRenderer
         sb.Append("body{margin:0!important;padding:0!important;width:100%!important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}");
         sb.Append("table{border-collapse:collapse;mso-table-lspace:0;mso-table-rspace:0} img{border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic}");
         sb.Append("a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important}");
+        sb.Append("a,p,.t,.m,.ft{word-break:break-word;overflow-wrap:anywhere}");
         sb.Append("@media (max-width:620px){");
         sb.Append(".outer{padding:18px 0 24px 0!important} .card{border-radius:0!important;border-left:0!important;border-right:0!important}");
         sb.Append(".px{padding-left:20px!important;padding-right:20px!important} .h1{font-size:24px!important;line-height:30px!important}");

@@ -56,7 +56,9 @@ public class ParentalConsentFlowTests
         Assert.NotNull((await db.Users.SingleAsync(u => u.Id == user.Id)).ParentalConsentAt);
 
         var second = await sut.ConfirmPost(new ParentalConsentController.ParentalConsentConfirmRequest(token), CancellationToken.None);
-        Assert.IsType<BadRequestObjectResult>(second.Result);
+        var secondOk = Assert.IsType<OkObjectResult>(second.Result).Value as ParentalConsentController.ParentalConsentConfirmResponse;
+        Assert.NotNull(secondOk);
+        Assert.True(secondOk.Ok);
     }
 
     [Fact]
