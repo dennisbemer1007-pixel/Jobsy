@@ -175,10 +175,22 @@ public static class UatScriptRunner
 
         if (Contains(blob, "bottom-nav", "Bottom-nav", "Elke bottom-nav", "rondklikken"))
         {
-            Assert.NotEmpty(items);
-            foreach (var item in items)
+            if (jobsyRole == JobsyRoles.SalesManager)
             {
-                AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: nav {jobsyRole} → {item.Href}");
+                var salesItems = Jobsy.Web.Navigation.SalesNav.BottomNavItems(canRecruit: true);
+                Assert.NotEmpty(salesItems);
+                foreach (var item in salesItems)
+                {
+                    AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: sales nav → {item.Href}");
+                }
+            }
+            else
+            {
+                Assert.NotEmpty(items);
+                foreach (var item in items)
+                {
+                    AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: nav {jobsyRole} → {item.Href}");
+                }
             }
         }
 

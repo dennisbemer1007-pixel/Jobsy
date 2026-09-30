@@ -165,7 +165,15 @@ public class LocalizationTests
         foreach (var lang in languages)
         {
             Assert.True(catalog.ContainsKey(lang), $"Missing language catalog: {lang}");
-            Assert.Equal(nlCount, catalog[lang].Count);
+            if (lang == "nl")
+            {
+                continue;
+            }
+
+            // Sales.* / EntUi.* are nl-only (D10); other langs fall back via UiStrings.Get.
+            var nlComparable = catalog["nl"].Keys.Count(k => !UiStringsSales.IsNlOnlyPrefix(k));
+            var langComparable = catalog[lang].Keys.Count(k => !UiStringsSales.IsNlOnlyPrefix(k));
+            Assert.Equal(nlComparable, langComparable);
         }
 
         // New extras keys resolve distinctly (not as the key itself) after Build/MergeAll.

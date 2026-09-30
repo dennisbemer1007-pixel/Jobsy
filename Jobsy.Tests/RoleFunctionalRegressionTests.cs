@@ -1196,7 +1196,8 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Null(RoleNavCatalog.HowLobsyHrefFor(NavPrincipal(JobsyRoles.Admin)));
 
         Assert.Contains(RoleNavCatalog.Ambassadeur, n => n.Href == "/ambassadeur/toolkit");
-        Assert.Contains(RoleNavCatalog.SalesManager, n => n.Href == "/salesmanager/toolkit");
+        Assert.Empty(RoleNavCatalog.SalesManager);
+        Assert.Contains(Jobsy.Web.Navigation.SalesNav.VisibleItems(true), n => n.Href == "/sales/link");
         Assert.Contains(RoleNavCatalog.Enterprise, n => n.Href == "/employer/organization" && n.DesktopOnly);
     }
 

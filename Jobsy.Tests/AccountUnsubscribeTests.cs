@@ -511,6 +511,7 @@ public class AccountUnsubscribeTests
             typeof(PartnerAffiliateProfile),
             typeof(PlatformFeedback),
             typeof(SalesManagerProfile),
+            typeof(SalesSelfBillingConsent),
             typeof(SiteVisit),
             typeof(TalentContactRequest),
             typeof(TrainingClick),

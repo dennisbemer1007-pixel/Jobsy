@@ -86,7 +86,7 @@ public class SalesFoundationUnitTests
 
         var without = SalesNav.VisibleItems(canRecruit: false).Select(i => i.Key).ToHashSet();
         Assert.DoesNotContain("recommend", without);
-        Assert.Equal(5, SalesNav.BottomNavItems(true).Count + 0); // 4 bottom + Meer is UI
-        Assert.Equal(4, SalesNav.BottomNavItems(true).Count);
+        // Available bottom items today: Overzicht, Mijn link, Wallet (Werkgevers arrives in 04). Meer is layout-only.
+        Assert.Equal(3, SalesNav.BottomNavItems(true).Count);
     }
 }
