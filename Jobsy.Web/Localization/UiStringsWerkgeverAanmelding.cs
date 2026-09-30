@@ -335,7 +335,7 @@ internal static class UiStringsWerkgeverAanmelding
         Add("WaProfile.Cultuur.ProfileTitle", "Jullie cultuurprofiel", "Your culture profile", "Wasz profil kultury", "Profilul vostru cultural", "ملف ثقافتكم");
         Add("WaProfile.Cultuur.ProfileLead", "Dezelfde 6 dimensies als de Cultuurscan van kandidaten, plus je top-3 waarden.", "The same 6 dimensions as the candidate Culture scan, plus your top-3 values.", "Te same 6 wymiary co skan kultury, plus top-3 wartości.", "Aceleași 6 dimensiuni ca scanarea culturală, plus top-3.", "نفس الأبعاد الستة لاختبار الثقافة، إضافة إلى أهم 3 قيم.");
         Add("WaProfile.Cultuur.FullHint", "De volledige Cultuurscan (12 vragen) staat later in je dashboard.", "The full Culture scan (12 questions) is later in your dashboard.", "Pełny skan kultury (12 pytań) będzie w panelu.", "Scanarea completă (12 întrebări) e în tablou.", "اختبار الثقافة الكامل (12 سؤالاً) لاحقاً في لوحتك.");
-        Add("WaProfile.Cultuur.Live", "live", "live", "na żywo", "live", "مباشر");
+        Add("WaProfile.Cultuur.Live", "live", "Live", "na żywo", "în direct", "مباشر");
         Add("WaProfile.Cultuur.QuickBanner", "Ingevuld via snelle schuifjes, verfijn met de volledige scan", "Filled via quick sliders — refine with the full scan", "Wypełnione suwakami — doprecyzuj pełnym skanem", "Completat cu glisoare — rafinează cu scanarea completă", "عُبئ عبر المنزلقات السريعة — حسّنه بالاختبار الكامل");
         Add("WaProfile.Cultuur.ShowMore", "+ 2 vragen", "+ 2 questions", "+ 2 pytania", "+ 2 întrebări", "+ سؤالان");
 

@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (129 routes)
+## Table (130 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -142,9 +142,9 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/regional/tokens` | `Pages/Regional/TokenControl.razor` | RegionalManager, EnterpriseManager |
 | `/register` | `Pages/Register.razor` | anonymous |
 | `/register/activate` | `Pages/RegisterActivate.razor` | anonymous |
+| `/register/bedrijf` | `Pages/RegisterBedrijf.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |
 | `/register/koppelen` | `Pages/RegisterKoppelen.razor` | authenticated |
 | `/register/toegang` | `Pages/RegisterToegang.razor` | anonymous |
-| `/register/bedrijf` | `Pages/RegisterBedrijf.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |
 | `/register/verifieren` | `Pages/RegisterVerifieren.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |
 | `/register/verifieren/brief` | `Pages/RegisterVerifierenBrief.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |
 | `/salesmanager` | `Pages/SalesManager/Dashboard.razor` | SalesManager |
