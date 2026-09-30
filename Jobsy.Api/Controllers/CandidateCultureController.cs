@@ -83,5 +83,9 @@ public sealed class CandidateCultureController : ControllerBase
         {
             return TestSaveErrors.FromException(ex);
         }
+        catch (AssessmentAdjustmentLimitException ex)
+        {
+            return Conflict(new { code = ex.Code, remaining = ex.Remaining, max = ex.Max });
+        }
     }
 }

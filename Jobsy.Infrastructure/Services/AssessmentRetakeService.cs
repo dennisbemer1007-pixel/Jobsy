@@ -45,7 +45,8 @@ public sealed class AssessmentRetakeService : IAssessmentRetakeService
             Variant = variant,
             AnswersJson = "{}",
             Status = CandidateAssessmentAttempt.AttemptStatus.Open,
-            StartedAtUtc = DateTime.UtcNow
+            StartedAtUtc = DateTime.UtcNow,
+            Origin = CandidateAssessmentAttempt.AttemptOrigin.Retake
         };
         _db.CandidateAssessmentAttempts.Add(attempt);
         await _db.SaveChangesAsync(cancellationToken);

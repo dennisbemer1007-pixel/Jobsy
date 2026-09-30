@@ -264,6 +264,10 @@ public sealed class DeepAnalysisController : ControllerBase
                 : "invalid_answer";
             return BadRequest(new { code, message = ex.Message });
         }
+        catch (AssessmentAdjustmentLimitException ex)
+        {
+            return Conflict(new { code = ex.Code, remaining = ex.Remaining, max = ex.Max });
+        }
     }
 
     [HttpGet("report")]

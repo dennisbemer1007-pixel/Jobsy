@@ -13,17 +13,20 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
     private readonly IFlexCommercialService _commercial;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly ICandidateInsightsQueue _queue;
+    private readonly AssessmentSaveGuard _saveGuard;
 
     public CandidateCareerInterestService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
         ICandidateMatchSnapshotService matchSnapshots,
-        ICandidateInsightsQueue queue)
+        ICandidateInsightsQueue queue,
+        AssessmentSaveGuard saveGuard)
     {
         _db = db;
         _commercial = commercial;
         _matchSnapshots = matchSnapshots;
         _queue = queue;
+        _saveGuard = saveGuard;
     }
 
     public async Task<CandidateCareerInterestStateDto> GetAsync(
@@ -75,8 +78,27 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             _db.CandidateCareerInterests.Add(row);
         }
 
-        row.AnswersJson = CareerTestCatalog.SerializeAnswers(answers);
+        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status);
+        var answersJson = CareerTestCatalog.SerializeAnswers(answers);
+        var baselineAnswersJson = row.AnswersJson;
+        if (wasCompleted && !complete)
+        {
+            await _saveGuard.SaveDraftAsync(userId, AssessmentKind.Career, AssessmentVariant.Quick, answersJson, baselineAnswersJson, cancellationToken);
+        }
+        else if (wasCompleted && complete)
+        {
+            var noOp = await _saveGuard.CommitCompleteAsync(
+                userId, AssessmentKind.Career, AssessmentVariant.Quick, answersJson, null,
+                previousSnapshotJson: baselineAnswersJson, completedAnswersJson: baselineAnswersJson, cancellationToken);
+            if (noOp)
+            {
+                // identical complete — leave row untouched
+                return await ComposeDtoAsync(userId, row, includeMatches: true, cancellationToken);
+            }
+        }
+        row.AnswersJson = answersJson;
         row.UpdatedAtUtc = now;
+
 
         var preview = CareerTestCatalog.Score(answers);
         if (complete)

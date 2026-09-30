@@ -67,6 +67,13 @@ public static class UiStringsTests
         Add("TestErr.consent_required", "Je moet eerst toestemming geven voor de tests.", "You must consent to the tests first.");
         Add("TestErr.parental_consent_required", "Je ouder of verzorger moet eerst toestemming geven.", "A parent or guardian must consent first.");
         Add("TestErr.Limit", "Je kunt deze test niet meer aanpassen.", "You cannot change this test any more.");
+        Add("TestFlow.DraftBanner",
+            "Je past je antwoorden aan. Pas als je op Afronden drukt, telt het als 1 van je 3 keer. Nog {0} over.",
+            "You are editing answers. Only when you press Finish does it count as 1 of your 3 times. {0} left.");
+        Add("TestFlow.DraftStop", "Stoppen zonder aanpassen", "Stop without changing");
+        Add("TestFlow.QuotaZero",
+            "Je hebt je antwoorden 3 keer aangepast. Dit is je uitslag.",
+            "You have changed your answers 3 times. This is your result.");
 
         Add("TestDepth.First", "Eerste indruk", "First look");
         Add("TestDepth.Deeper", "Iets dieper", "A bit deeper");

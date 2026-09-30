@@ -13,18 +13,21 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
     private readonly ICandidateInsightsQueue _queue;
+    private readonly AssessmentSaveGuard _saveGuard;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
 
     public CandidateCulturePersonalityService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
         ICandidateInsightsQueue queue,
-        ICandidateMatchSnapshotService matchSnapshots)
+        ICandidateMatchSnapshotService matchSnapshots,
+        AssessmentSaveGuard saveGuard)
     {
         _db = db;
         _commercial = commercial;
         _queue = queue;
         _matchSnapshots = matchSnapshots;
+        _saveGuard = saveGuard;
     }
 
     public async Task<CandidateCulturePersonalityStateDto> GetAsync(
@@ -76,7 +79,24 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
             _db.CandidateCulturePersonalityProfiles.Add(row);
         }
 
-        row.AnswersJson = CulturePersonalityCatalog.SerializeAnswers(answers);
+        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status);
+        var answersJson = CulturePersonalityCatalog.SerializeAnswers(answers);
+        var baselineAnswersJson = row.AnswersJson;
+        if (wasCompleted && !complete)
+        {
+            await _saveGuard.SaveDraftAsync(userId, AssessmentKind.Culture, AssessmentVariant.Quick, answersJson, baselineAnswersJson, cancellationToken);
+        }
+        else if (wasCompleted && complete)
+        {
+            var noOp = await _saveGuard.CommitCompleteAsync(
+                userId, AssessmentKind.Culture, AssessmentVariant.Quick, answersJson, null, baselineAnswersJson, baselineAnswersJson, cancellationToken);
+            if (noOp)
+            {
+                var priceNoOp = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Culture);
+                return ToDto(row, priceNoOp);
+            }
+        }
+        row.AnswersJson = answersJson;
         row.UpdatedAtUtc = now;
 
         var preview = CulturePersonalityCatalog.Score(answers);

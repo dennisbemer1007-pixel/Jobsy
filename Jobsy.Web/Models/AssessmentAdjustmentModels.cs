@@ -12,6 +12,8 @@ public sealed class AssessmentAdjustmentState
     public int Used { get; set; }
     public int Remaining { get; set; }
     public int Max { get; set; }
+    public bool HasDraft { get; set; }
+    public DateTime? LastAdjustedAtUtc { get; set; }
 }
 
 public sealed class AssessmentRetakeStartResult

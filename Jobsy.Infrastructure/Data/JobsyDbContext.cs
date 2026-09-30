@@ -931,6 +931,7 @@ public class JobsyDbContext : DbContext
             entity.ToTable("CandidateAssessmentAttempts");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.Origin).HasMaxLength(16).IsRequired();
             entity.Property(e => e.AnswersJson).HasColumnType("text").IsRequired();
             entity.Property(e => e.ScoresJson).HasColumnType("text");
             entity.Property(e => e.ReportJson).HasColumnType("text");

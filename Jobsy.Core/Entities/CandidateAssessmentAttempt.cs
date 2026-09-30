@@ -28,10 +28,19 @@ public class CandidateAssessmentAttempt
     /// <summary>Snapshot of the previous current result at completion time (history).</summary>
     public string? PreviousSnapshotJson { get; set; }
 
+    /// <summary>How this open attempt was started: <c>Edit</c> (draft after completion) or <c>Retake</c>.</summary>
+    public string Origin { get; set; } = "Edit";
+
     public static class AttemptStatus
     {
         public const string Open = "Open";
         public const string Completed = "Completed";
         public const string Abandoned = "Abandoned";
+    }
+
+    public static class AttemptOrigin
+    {
+        public const string Edit = "Edit";
+        public const string Retake = "Retake";
     }
 }

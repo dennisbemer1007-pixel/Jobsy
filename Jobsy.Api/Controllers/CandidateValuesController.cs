@@ -83,5 +83,9 @@ public sealed class CandidateValuesController : ControllerBase
         {
             return TestSaveErrors.FromException(ex);
         }
+        catch (AssessmentAdjustmentLimitException ex)
+        {
+            return Conflict(new { code = ex.Code, remaining = ex.Remaining, max = ex.Max });
+        }
     }
 }

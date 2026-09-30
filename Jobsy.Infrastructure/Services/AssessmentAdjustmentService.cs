@@ -24,7 +24,19 @@ public sealed class AssessmentAdjustmentService : IAssessmentAdjustmentService
         CancellationToken cancellationToken = default)
     {
         var used = await CountUsedAsync(userId, kind, variant, cancellationToken);
-        return ToDto(used);
+        var hasDraft = await _db.CandidateAssessmentAttempts.AsNoTracking()
+            .AnyAsync(
+                a => a.UserId == userId
+                     && a.Kind == kind
+                     && a.Variant == variant
+                     && a.Status == CandidateAssessmentAttempt.AttemptStatus.Open,
+                cancellationToken);
+        var last = await _db.CandidateAssessmentAdjustments.AsNoTracking()
+            .Where(a => a.UserId == userId && a.Kind == kind && a.Variant == variant)
+            .OrderByDescending(a => a.AtUtc)
+            .Select(a => (DateTime?)a.AtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+        return ToDto(used, hasDraft, last);
     }
 
     public async Task EnsureRemainingAsync(
@@ -99,6 +111,6 @@ public sealed class AssessmentAdjustmentService : IAssessmentAdjustmentService
         => _db.CandidateAssessmentAdjustments.AsNoTracking()
             .CountAsync(a => a.UserId == userId && a.Kind == kind && a.Variant == variant, cancellationToken);
 
-    private static AssessmentAdjustmentDto ToDto(int used)
-        => new(used, AssessmentAdjustmentRules.Remaining(used), AssessmentAdjustmentRules.MaxAdjustments);
+    private static AssessmentAdjustmentDto ToDto(int used, bool hasDraft = false, DateTime? last = null)
+        => new(used, AssessmentAdjustmentRules.Remaining(used), AssessmentAdjustmentRules.MaxAdjustments, hasDraft, last);
 }

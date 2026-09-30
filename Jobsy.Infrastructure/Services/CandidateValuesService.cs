@@ -12,18 +12,21 @@ public sealed class CandidateValuesService : ICandidateValuesService
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
     private readonly ICandidateInsightsQueue _queue;
+    private readonly AssessmentSaveGuard _saveGuard;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
 
     public CandidateValuesService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
         ICandidateInsightsQueue queue,
-        ICandidateMatchSnapshotService matchSnapshots)
+        ICandidateMatchSnapshotService matchSnapshots,
+        AssessmentSaveGuard saveGuard)
     {
         _db = db;
         _commercial = commercial;
         _queue = queue;
         _matchSnapshots = matchSnapshots;
+        _saveGuard = saveGuard;
     }
 
     public async Task<CandidateValuesStateDto> GetAsync(
@@ -75,7 +78,24 @@ public sealed class CandidateValuesService : ICandidateValuesService
             _db.CandidateValuesProfiles.Add(row);
         }
 
-        row.AnswersJson = SchwartzValuesCatalog.SerializeAnswers(answers);
+        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status);
+        var answersJson = SchwartzValuesCatalog.SerializeAnswers(answers);
+        var baselineAnswersJson = row.AnswersJson;
+        if (wasCompleted && !complete)
+        {
+            await _saveGuard.SaveDraftAsync(userId, AssessmentKind.Values, AssessmentVariant.Quick, answersJson, baselineAnswersJson, cancellationToken);
+        }
+        else if (wasCompleted && complete)
+        {
+            var noOp = await _saveGuard.CommitCompleteAsync(
+                userId, AssessmentKind.Values, AssessmentVariant.Quick, answersJson, null, baselineAnswersJson, baselineAnswersJson, cancellationToken);
+            if (noOp)
+            {
+                var priceNoOp = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Values);
+                return ToDto(row, priceNoOp);
+            }
+        }
+        row.AnswersJson = answersJson;
         row.UpdatedAtUtc = now;
 
         var preview = SchwartzValuesCatalog.Score(answers);

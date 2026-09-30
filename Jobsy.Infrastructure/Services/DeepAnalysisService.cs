@@ -26,6 +26,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     private readonly IKindDeepReportService? _kindReports;
     private readonly ICandidateInsightsQueue _queue;
     private readonly ILogger<DeepAnalysisService> _logger;
+    private readonly AssessmentSaveGuard _saveGuard;
 
     public DeepAnalysisService(
         JobsyDbContext db,
@@ -34,8 +35,9 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         IConfiguration configuration,
         ICareerCompassGenerationService careerCompass,
         ICompetenceDeepReportService competenceReport,
-        ILogger<DeepAnalysisService> logger)
-        : this(db, commercial, environment, configuration, careerCompass, competenceReport, new CandidateInsightsQueue(), logger, null)
+        ILogger<DeepAnalysisService> logger,
+        AssessmentSaveGuard saveGuard)
+        : this(db, commercial, environment, configuration, careerCompass, competenceReport, new CandidateInsightsQueue(), logger, null, saveGuard)
     {
     }
 
@@ -48,7 +50,8 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         ICompetenceDeepReportService competenceReport,
         ICandidateInsightsQueue queue,
         ILogger<DeepAnalysisService> logger,
-        IKindDeepReportService? kindReports = null)
+        IKindDeepReportService? kindReports,
+        AssessmentSaveGuard saveGuard)
     {
         _db = db;
         _commercial = commercial;
@@ -59,6 +62,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         _kindReports = kindReports;
         _queue = queue;
         _logger = logger;
+        _saveGuard = saveGuard;
     }
 
     public static string FormatUpsellCopy(decimal priceEuro, AssessmentKind kind = AssessmentKind.Competence)
@@ -220,7 +224,24 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         }
 
         var now = DateTime.UtcNow;
-        row.AnswersJson = DeepAnalysisCatalog.SerializeAnswers(answers, kind);
+        var wasCompleted = CandidateDeepAnalysisStatuses.IsCompleted(row.Status);
+        var answersJson = DeepAnalysisCatalog.SerializeAnswers(answers, kind);
+        var baselineAnswersJson = row.AnswersJson;
+        if (wasCompleted && !complete)
+        {
+            await _saveGuard.SaveDraftAsync(userId, kind, AssessmentVariant.Deep, answersJson, baselineAnswersJson, cancellationToken);
+        }
+        else if (wasCompleted && complete)
+        {
+            var noOp = await _saveGuard.CommitCompleteAsync(
+                userId, kind, AssessmentVariant.Deep, answersJson, null, baselineAnswersJson, baselineAnswersJson, cancellationToken);
+            if (noOp)
+            {
+                var commercialNoOp = await _commercial.GetAsync(cancellationToken);
+                return ToDto(kind, row, DeepAnalysisPricing.For(commercialNoOp, kind));
+            }
+        }
+        row.AnswersJson = answersJson;
         row.UpdatedAtUtc = now;
 
         if (complete)

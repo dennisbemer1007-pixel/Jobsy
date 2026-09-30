@@ -85,6 +85,10 @@ public sealed class CandidateCompetenciesController : ControllerBase
         {
             return TestSaveErrors.FromException(ex);
         }
+        catch (AssessmentAdjustmentLimitException ex)
+        {
+            return Conflict(new { code = ex.Code, remaining = ex.Remaining, max = ex.Max });
+        }
     }
 
     [HttpGet("matched-vacancies")]
