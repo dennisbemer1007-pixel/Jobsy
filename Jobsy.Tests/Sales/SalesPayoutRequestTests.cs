@@ -5,6 +5,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Sales;
+using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -272,6 +273,9 @@ public class SalesPayoutRequestTests
 
     private static JobsyDbContext CreateDb()
     {
+        // Avoid racing with WebApplicationFactory tests that dispose a real DataProtection
+        // provider after configuring the static IbanEfProtection hook.
+        IbanEfProtection.Configure(new PassThroughIban());
         var options = new DbContextOptionsBuilder<JobsyDbContext>()
             .UseInMemoryDatabase("sales-payout-req-" + Guid.NewGuid().ToString("N"))
             .Options;
@@ -286,6 +290,13 @@ public class SalesPayoutRequestTests
             Sent.Add(message);
             return Task.FromResult(EmailDeliveryResult.Stub);
         }
+    }
+
+    private sealed class PassThroughIban : IIbanProtector
+    {
+        public bool IsProtected(string? value) => false;
+        public string? Protect(string? plaintext) => plaintext;
+        public string? Unprotect(string? protectedPayload) => protectedPayload;
     }
 
     private sealed class StubHostEnvironment : Microsoft.Extensions.Hosting.IHostEnvironment

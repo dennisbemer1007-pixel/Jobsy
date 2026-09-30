@@ -87,6 +87,8 @@ public class DemoAccountPasswordSeedTests
         credential.PasswordHash = JobsyPasswordHasher.Hash("ChangedPass1!");
         await db.SaveChangesAsync();
 
+        // Re-assert pass-through before the second seed (parallel factory tests may swap the static hook).
+        IbanEfProtection.Configure(new PassThroughIbanProtector());
         await DemoUsersSeeder.SeedUsersAsync(db, NullLogger.Instance);
 
         var restored = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "kandidaat@jobsy.local");
