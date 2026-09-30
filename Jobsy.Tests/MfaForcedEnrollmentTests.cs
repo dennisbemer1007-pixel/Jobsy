@@ -133,20 +133,31 @@ public class MfaForcedEnrollmentTests : IClassFixture<RoleFunctionalWebAppFactor
         var sut = CreateAuthController(db, NewChallenges(), secret: "test-secret");
         sut.ControllerContext = WithProvisionSecret("test-secret");
 
-        foreach (var provider in new[] { "entra", "microsoft", "google", "oidc" })
+        foreach (var provider in new[] { "entra", "microsoft", "oidc" })
         {
             var result = await sut.EnsureExternal(
                 new EnsureExternalUserRequest(
                     user.Email,
                     user.FullName,
                     Provider: provider,
-                    ProviderSubject: "sub-" + provider),
+                    ProviderSubject: "sub-" + provider,
+                    ProviderTenantId: "11111111-1111-1111-1111-111111111111"),
                 CancellationToken.None);
             var body = Assert.IsType<EnsureExternalUserResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
             Assert.False(body.RequiresMfa);
             Assert.True(string.IsNullOrWhiteSpace(body.MfaChallengeToken));
             Assert.StartsWith("external:", body.AuthMethod);
         }
+
+        var blocked = await sut.EnsureExternal(
+            new EnsureExternalUserRequest(
+                user.Email,
+                user.FullName,
+                Provider: "google",
+                ProviderSubject: "sub-google"),
+            CancellationToken.None);
+        var forbidden = Assert.IsType<ObjectResult>(blocked.Result);
+        Assert.Equal(StatusCodes.Status403Forbidden, forbidden.StatusCode);
     }
 
     [Fact]
@@ -199,7 +210,7 @@ public class MfaForcedEnrollmentTests : IClassFixture<RoleFunctionalWebAppFactor
             }
             else
             {
-                Assert.StartsWith("/account/mfa?returnUrl=", context.Response.Headers.Location.ToString());
+                Assert.Contains("/login?error=mfa-required", context.Response.Headers.Location.ToString(), StringComparison.Ordinal);
             }
         }
 

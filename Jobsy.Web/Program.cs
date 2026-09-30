@@ -318,6 +318,7 @@ app.UseLegacyAuthRouteRedirects();
 app.UseLoginProtection();
 app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();
+app.UseAdminProviderGuard();
 app.UseAuthorization();
 app.UseMiddleware<SchoolsFeatureMiddleware>();
 app.UseMiddleware<SalesLegacyRoutesMiddleware>();

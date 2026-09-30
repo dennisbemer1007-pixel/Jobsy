@@ -2,12 +2,15 @@ using System.Security.Claims;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Security;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace Jobsy.Web.Security;
 
 /// <summary>
 /// Blocks privileged local-password sessions that lack <c>MfaVerified</c> from
-/// reaching protected UI or same-origin API proxies before TOTP is confirmed.
+/// reaching protected UI. Stale sessions are signed out and sent to re-login
+/// instead of a dead-end MFA prompt without a challenge cookie.
 /// </summary>
 public sealed class MfaEnforcementMiddleware
 {
@@ -57,9 +60,16 @@ public sealed class MfaEnforcementMiddleware
             return;
         }
 
+        if (context.RequestServices is not null
+            && context.RequestServices.GetService(typeof(IAuthenticationService)) is not null)
+        {
+            await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            DeviceSessionCookie.Clear(context);
+        }
+
         var destination = Uri.EscapeDataString(
             context.Request.Path + context.Request.QueryString);
-        context.Response.Redirect("/account/mfa?returnUrl=" + destination);
+        context.Response.Redirect("/login?error=mfa-required&returnUrl=" + destination);
     }
 
     private static bool IsAllowlisted(PathString path)

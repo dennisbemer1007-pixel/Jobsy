@@ -4,15 +4,17 @@ namespace Jobsy.Core.Security;
 
 public static class MfaPolicy
 {
+    /// <summary>
+    /// Local-password MFA is required for privileged roles. External IdP logins skip Lobsy 2FA.
+    /// Ambassadeur is intentionally out (Dennis D5).
+    /// </summary>
     public static bool IsRequired(UserRole role)
-        => role == UserRole.Admin
-           || role is UserRole.BranchManager
-               or UserRole.RegionalManager
-               or UserRole.EnterpriseManager
-               or UserRole.Intermediary
-           || role is UserRole.SchoolAdmin
-               or UserRole.Teacher
-           || role == UserRole.SalesManager
-           // Ambassadeur is parked (AmbassadorsEnabled = false); 2FA stays required when the role is re-enabled.
-           || role == UserRole.Ambassadeur;
+        => role is UserRole.Admin
+            or UserRole.BranchManager
+            or UserRole.RegionalManager
+            or UserRole.EnterpriseManager
+            or UserRole.Intermediary
+            or UserRole.SchoolAdmin
+            or UserRole.Teacher
+            or UserRole.SalesManager;
 }

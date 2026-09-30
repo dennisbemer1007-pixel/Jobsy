@@ -176,6 +176,14 @@ public static class AuthServiceCollectionExtensions
                         context.HttpContext,
                         context.Principal,
                         context.Properties);
+                    if (context.Properties?.Items.TryGetValue("Jobsy.ExternalBlocked", out var blocked) == true
+                        && !string.IsNullOrWhiteSpace(blocked))
+                    {
+                        context.Fail("External provider not allowed for this role.");
+                        context.HandleResponse();
+                        context.Response.Redirect(
+                            AuthRedirects.AppendReturnUrl($"/login?error={blocked}", context.Properties?.RedirectUri));
+                    }
                 },
                 OnRemoteFailure = context =>
                 {
@@ -237,6 +245,13 @@ public static class AuthServiceCollectionExtensions
                     context.HttpContext,
                     context.Principal,
                     context.Properties);
+                if (context.Properties?.Items.TryGetValue("Jobsy.ExternalBlocked", out var blocked) == true
+                    && !string.IsNullOrWhiteSpace(blocked))
+                {
+                    context.Fail("External provider not allowed for this role.");
+                    context.HttpContext.Response.Redirect(
+                        AuthRedirects.AppendReturnUrl($"/login?error={blocked}", context.Properties?.RedirectUri));
+                }
             };
             options.Events.OnRemoteFailure = context =>
             {
@@ -1629,6 +1644,13 @@ public static class AuthServiceCollectionExtensions
                 SalesReferralCookie.TrySetFirstClick(http, salesRef, maxAgeDays: 30);
             }
 
+            var providerTenantId = identity.FindFirst("tid")?.Value
+                ?? identity.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
+            if (!string.IsNullOrWhiteSpace(providerTenantId))
+            {
+                identity.AddClaim(new Claim("idp_tid", providerTenantId));
+            }
+
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/ensure-external")
             {
                 Content = JsonContent.Create(new
@@ -1637,6 +1659,7 @@ public static class AuthServiceCollectionExtensions
                     fullName,
                     provider,
                     providerSubject,
+                    providerTenantId,
                     referralCode,
                     rememberDevice = true,
                     returnUrl = properties?.RedirectUri,
@@ -1651,6 +1674,22 @@ public static class AuthServiceCollectionExtensions
             using var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    var failBody = await response.Content.ReadAsStringAsync();
+                    var code = failBody.Contains("provider_not_allowed", StringComparison.OrdinalIgnoreCase)
+                        ? "admin-provider"
+                        : "unavailable";
+                    // Do not sign in — clear any provisional identity role and abort.
+                    identity.TryRemoveClaim(identity.FindFirst(ClaimTypes.Role));
+                    properties ??= new AuthenticationProperties();
+                    properties.RedirectUri = AuthRedirects.AppendReturnUrl(
+                        $"/login?error={code}",
+                        properties.RedirectUri);
+                    properties.Items["Jobsy.ExternalBlocked"] = code;
+                    return;
+                }
+
                 ReplaceRoleClaim(identity, "Candidate");
                 return;
             }

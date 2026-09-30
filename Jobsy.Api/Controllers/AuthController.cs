@@ -409,6 +409,17 @@ public class AuthController : ControllerBase
             }
         }
 
+        var allowedTenants = AdminLoginProviderPolicy.ParseAllowedTenants(
+            _configuration["JobsyAuth:AdminAllowedEntraTenants"]);
+        if (!AdminLoginProviderPolicy.IsAllowed(user.Role, provider, request.ProviderTenantId, allowedTenants))
+        {
+            _logger.LogInformation(
+                "auth.external.blocked userId={UserId} provider={Provider}",
+                user.Id,
+                provider);
+            return StatusCode(StatusCodes.Status403Forbidden, new { code = "provider_not_allowed" });
+        }
+
         if (provider is not null && subject is not null)
         {
             // First-time OID bind to an existing privileged account is only allowed when the

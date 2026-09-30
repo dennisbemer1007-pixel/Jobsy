@@ -166,6 +166,8 @@ public record EnsureExternalUserRequest(
     string? Provider = null,
     /// <summary>Stable subject (Entra OID / OIDC sub).</summary>
     string? ProviderSubject = null,
+    /// <summary>Entra tenant id (<c>tid</c>); null for Google.</summary>
+    string? ProviderTenantId = null,
     /// <summary>Optional Ambassadeur tracking code (AM-…) for new candidates.</summary>
     string? ReferralCode = null,
     bool RememberDevice = true,

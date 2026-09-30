@@ -56,3 +56,4 @@ De ASP.NET Core pipeline stuurt standaard:
 - 2FA: 5 wrong codes end the challenge; 10 wrong codes pause MFA for 15 min; TOTP time-steps cannot be reused; recovery-code use is mailed and shows remaining count.
 - Never log passwords, TOTP codes, recovery codes, or challenge tokens.
 - `/register/activate` without a token redirects to `/register`.
+- Admins: Microsoft work/school or password+2FA only (`JobsyAuth:AdminAllowedEntraTenants` optional allow-list). Google and personal Microsoft blocked.

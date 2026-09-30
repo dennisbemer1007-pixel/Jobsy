@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### Security
+- Auth roles/policy (02): SalesManager local MFA required (Ambassadeur not); admins blocked from Google / personal Microsoft; stale privileged sessions without MFA re-login instead of dead-end; device session AuthMethod. Migration `AddDeviceSessionAuthMethod`.
+
 - Auth hotfix: per-visitor trusted client IP for Web→API auth rate limits; typed login/2FA failures (`invalid_credentials`, `locked_out`, `rate_limited`, `invalid_code`, `challenge_expired`, `mfa_locked`); visible “Even pauze” lockout with counter reset and max 1 lockout mail / 24 h; unknown-e-mail lockout parity; dummy-hash timing; 2FA attempt limits + TOTP replay block; recovery-code-used mail; CSP-safe MFA scripts; “Blijf ingelogd” off by default. Migration `AddAuthHardening`.
 
 

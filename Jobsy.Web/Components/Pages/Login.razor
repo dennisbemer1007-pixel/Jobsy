@@ -40,7 +40,7 @@
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
-            <p class="login-error" role="@(_sessionExpiredNotice || _pauseNotice ? "status" : "alert")">@_errorMessage</p>
+            <p class="login-error" role="@(_sessionExpiredNotice || _pauseNotice || _statusNotice ? "status" : "alert")">@_errorMessage</p>
             @if (_pauseNotice)
             {
                 <p class="login-lead">@Culture["Login.ErrorLockedProviders"]</p>
@@ -101,6 +101,11 @@
                 </button>
             }
         </div>
+
+        @if (_adminContext)
+        {
+            <p class="login-lead" role="status">@Culture["Login.AdminProviderHint"]</p>
+        }
 
         <div class="login-divider"><span>@Culture["Login.OrEmail"]</span></div>
 
@@ -163,6 +168,8 @@
     private string? _errorMessage;
     private bool _sessionExpiredNotice;
     private bool _pauseNotice;
+    private bool _statusNotice;
+    private bool _adminContext;
     private string _supportHelpHtml = string.Empty;
     private bool _entraEnabled;
     private bool _googleEnabled;
@@ -204,6 +211,12 @@
             QueryValue(query, "returnUrl"),
             QueryValue(query, "returnTo"),
             QueryValue(query, "redirect"));
+        _adminContext = _returnUrl.StartsWith("/admin", StringComparison.OrdinalIgnoreCase);
+        // Admin context: never offer Google (Dennis D7).
+        if (_adminContext)
+        {
+            _googleEnabled = false;
+        }
 
         // Closing the dialog returns to banenkaart (ON) or ontdek (OFF).
         // (_dismissUrl already set from flags above)
@@ -244,6 +257,8 @@
                 "locked" => FormatPause(Culture["Login.ErrorLocked"], untilRaw),
                 "too-many" => FormatPause(Culture["Login.ErrorTooMany"], untilRaw),
                 "unavailable" => Culture["Login.ErrorUnavailable"],
+                "mfa-required" => Culture["Login.MfaRequired"],
+                "admin-provider" => Culture["Login.ErrorAdminProvider"],
                 "retry" => Culture["Login.ErrorRetry"],
                 "session-expired" => Culture["Login.ErrorSessionExpired"],
                 "entra-not-configured" => Culture["Login.ErrorEntra"],
@@ -254,6 +269,7 @@
                 _ => Culture["Login.ErrorGeneric"]
             };
             _pauseNotice = errorCode is "locked";
+            _statusNotice = errorCode is "mfa-required" or "session-expired";
         }
 
         // Ambassadeur referral cookie (?ref=AM-…) is parked while AmbassadorsEnabled is off (01.10).
