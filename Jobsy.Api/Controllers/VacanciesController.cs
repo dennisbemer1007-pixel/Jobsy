@@ -176,7 +176,7 @@ public class VacanciesController : ControllerBase
             var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is not null)
             {
-                matches = _profileMatch.Score(matchContext, candidates);
+                matches = await _profileMatch.ScoreAsync(matchContext, candidates, cancellationToken);
                 candidates = candidates
                     .Where(c =>
                     {
@@ -280,7 +280,7 @@ public class VacanciesController : ControllerBase
             var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is not null)
             {
-                var scored = _profileMatch.Score(matchContext, [(record, travelMinutes)]);
+                var scored = await _profileMatch.ScoreAsync(matchContext, [(record, travelMinutes)], cancellationToken);
                 if (scored.TryGetValue(id, out var match))
                 {
                     matchPercent = match.TotalPercent;
@@ -339,7 +339,7 @@ public class VacanciesController : ControllerBase
                         return (Record: r, TravelMinutes: travel);
                     })
                     .ToList();
-                matches = _profileMatch.Score(matchContext, scoreInput);
+                matches = await _profileMatch.ScoreAsync(matchContext, scoreInput, cancellationToken);
             }
         }
 
@@ -464,9 +464,10 @@ public class VacanciesController : ControllerBase
             var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is not null)
             {
-                matches = _profileMatch.Score(
+                matches = await _profileMatch.ScoreAsync(
                     matchContext,
-                    candidates.Select(c => (c.Record, c.TravelMinutes)));
+                    candidates.Select(c => (c.Record, c.TravelMinutes)),
+                    cancellationToken);
                 candidates = candidates
                     .Where(c =>
                     {
@@ -698,7 +699,7 @@ public class VacanciesController : ControllerBase
         }
 
         var record = VacancyDiscoveryIndex.ToRecord(vacancy);
-        var matches = _profileMatch.Score(matchContext, [(record, (int?)null)]);
+        var matches = await _profileMatch.ScoreAsync(matchContext, [(record, (int?)null)], cancellationToken);
         if (!matches.TryGetValue(vacancy.Id, out var match) || match.CultureFit is null)
         {
             return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
@@ -2470,7 +2471,7 @@ public class VacanciesController : ControllerBase
         }
 
         var record = VacancyDiscoveryIndex.ToRecord(vacancy);
-        var matches = _profileMatch.Score(matchContext, [(record, travelMinutes)]);
+        var matches = await _profileMatch.ScoreAsync(matchContext, [(record, travelMinutes)], cancellationToken);
         if (!matches.TryGetValue(vacancy.Id, out var match))
         {
             return dto;

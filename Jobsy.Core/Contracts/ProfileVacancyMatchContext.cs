@@ -16,7 +16,6 @@ public sealed class ProfileVacancyMatchContext
     public bool CareerDeepCompleted { get; init; }
     public IReadOnlyList<CareerOccupationMatch> CareerOccupations { get; init; } = [];
     public CulturePersonalityScores? CultureScores { get; init; }
-    public CulturePersonalityScores? CompanyCultureScores { get; init; }
     public SchwartzValuesScores? ValuesScores { get; init; }
 
     /// <summary>True when any assessment score came from wizard/draft answers rather than a completed test.</summary>

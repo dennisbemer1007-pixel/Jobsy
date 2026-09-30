@@ -309,6 +309,7 @@ public static class DependencyInjection
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
         services.AddScoped<ICvExtractionService, CvExtractionService>();
         services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
+        services.AddScoped<ICompanyCultureLookup, CompanyCultureLookup>();
         services.AddHttpClient(CultureFitAiService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(12);

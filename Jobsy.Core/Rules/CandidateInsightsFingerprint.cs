@@ -8,6 +8,12 @@ namespace Jobsy.Core.Rules;
 /// <summary>Fingerprints for derived candidate insights (matches, compass, role-fit).</summary>
 public static class CandidateInsightsFingerprint
 {
+    /// <summary>
+    /// Bumped when match scoring inputs change so cached snapshots recompute
+    /// (e.g. employer culture now blends into competency fit).
+    /// </summary>
+    public const string MatchAlgorithmVersion = "company-culture-v1";
+
     public static string ForMatches(
         CompetencyScores? competencies,
         RiasecScores? career,
@@ -24,7 +30,7 @@ public static class CandidateInsightsFingerprint
         var travel = prefs?.MaxTravelMinutes?.ToString() ?? "";
         var transport = prefs?.PreferredTransport ?? "";
         var roles = string.Join(',', prefs?.Roles ?? []);
-        var payload = $"{whoAmI}|{travel}|{transport}|{roles}|{StableHash(preferencesJson)}";
+        var payload = $"{MatchAlgorithmVersion}|{whoAmI}|{travel}|{transport}|{roles}|{StableHash(preferencesJson)}";
         return ShortHash(payload);
     }
 

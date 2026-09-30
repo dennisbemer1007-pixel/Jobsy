@@ -3,6 +3,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -201,8 +202,13 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
 public sealed class CompanyCultureService : ICompanyCultureService
 {
     private readonly JobsyDbContext _db;
+    private readonly IMemoryCache _cache;
 
-    public CompanyCultureService(JobsyDbContext db) => _db = db;
+    public CompanyCultureService(JobsyDbContext db, IMemoryCache cache)
+    {
+        _db = db;
+        _cache = cache;
+    }
 
     public async Task<CompanyCultureStateDto> GetAsync(
         Guid companyId,
@@ -283,6 +289,7 @@ public sealed class CompanyCultureService : ICompanyCultureService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await EvictCultureCacheAsync(companyId, cancellationToken);
         return ToDto(row);
     }
 
@@ -312,6 +319,19 @@ public sealed class CompanyCultureService : ICompanyCultureService
             row.AgreeablenessPercent,
             row.EmotionalStabilityPercent);
         return scores.Autonomy is not null ? scores : null;
+    }
+
+    private async Task EvictCultureCacheAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        _cache.Remove(CompanyCultureCacheKeys.ForCompany(companyId));
+        var childIds = await _db.Companies.AsNoTracking()
+            .Where(c => c.ParentCompanyId == companyId)
+            .Select(c => c.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var childId in childIds)
+        {
+            _cache.Remove(CompanyCultureCacheKeys.ForCompany(childId));
+        }
     }
 
     private static IReadOnlyDictionary<int, int> PadPersonalityDefaults(IReadOnlyDictionary<int, int> answers)
