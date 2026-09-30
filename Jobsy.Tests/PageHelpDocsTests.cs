@@ -24,7 +24,7 @@ public class PageHelpDocsTests
     [InlineData("/werkgever/organisatie/profiel", "Bedrijfsgegevens")]
     [InlineData("/werkgever/organisatie/vestigingen", "Vestigingen")]
     [InlineData("/admin/instellingen/integraties", "Beheer · Integraties")]
-    [InlineData("/admin/content/emails", "Beheer · Mailtest")]
+    [InlineData("/admin/content/emails", "Beheer · E-mails & meldingen")]
     [InlineData("/admin/feedback", "Beheer · Feedback")]
     [InlineData("/werkgever/vacatures/nieuw", "Vacature plaatsen")]
     [InlineData("/werkgever/vacatures", "Vacatures (werkgever)")]

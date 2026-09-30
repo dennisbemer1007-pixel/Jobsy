@@ -6,14 +6,14 @@ KIND: Essential
 Iemand wil toegang tot Bakkerij De Gouden Korrel
 ================================================
 
-Alex de Tester (tester@example.com) wil Bakkerij De Gouden Korrel ook
+Alex de Tester (alex@voorbeeld.invalid) wil Bakkerij De Gouden Korrel ook
 beheren op Lobsy.
 
 Naam: Alex de Tester
-E-mail: tester@example.com
+E-mail: alex@voorbeeld.invalid
 Vestiging: Bakkerij De Gouden Korrel
 KvK-vestigingsnummer: 000012345678
-Aangevraagd op: 30 september 2026, 17:22
+Aangevraagd op: 30 september 2026, 17:37
 
 Ken je deze persoon niet? Wijs het verzoek dan af.
 

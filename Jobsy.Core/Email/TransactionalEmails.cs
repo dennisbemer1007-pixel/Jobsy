@@ -1,3 +1,4 @@
+using System.Threading;
 using Jobsy.Core.Email.Localization;
 using Jobsy.Core.Email.Model;
 using Jobsy.Core.Privacy;
@@ -51,8 +52,23 @@ public static partial class TransactionalEmails
                 ? throw new ArgumentException("Public web base URL is required.", nameof(baseUrl))
                 : baseUrl));
 
+    private static readonly AsyncLocal<EmailRenderMode> RenderModeOverride = new();
+
+    /// <summary>Temporarily force preview render mode (admin dark preview).</summary>
+    public static IDisposable UseRenderMode(EmailRenderMode mode)
+    {
+        var previous = RenderModeOverride.Value;
+        RenderModeOverride.Value = mode;
+        return new RenderModeScope(() => RenderModeOverride.Value = previous);
+    }
+
+    private sealed class RenderModeScope(Action onDispose) : IDisposable
+    {
+        public void Dispose() => onDispose();
+    }
+
     private static ComposedEmail Finish(EmailDocument doc, string? baseUrl)
-        => ComposedEmail.Render(doc, Brand(baseUrl));
+        => ComposedEmail.Render(doc, Brand(baseUrl), mode: RenderModeOverride.Value);
 
     private static EmailDocument Doc(
         string key,

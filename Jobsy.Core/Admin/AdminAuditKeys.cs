@@ -34,6 +34,7 @@ public static class AdminAuditKeys
     public const string PrivacyRetentionRun = "privacy.retention.run";
     public const string PrivacyAccountDeleted = "privacy.account.deleted";
     public const string AuthAdminLoginFailed = "auth.admin.login-failed";
+    public const string EmailTestSend = "email.test-send";
 
     public static class Results
     {
@@ -62,5 +63,6 @@ public static class AdminAuditKeys
         public const string Takeover = "takeover";
         public const string Retention = "retention";
         public const string Account = "account";
+        public const string EmailTemplate = "email-template";
     }
 }

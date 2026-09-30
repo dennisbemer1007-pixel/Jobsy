@@ -122,7 +122,11 @@ public sealed class TransactionalMailer : ITransactionalMailer
             ["Auto-Submitted"] = "auto-generated"
         };
 
-        if (def.Kind == EmailKind.Optional)
+        if (options.IsTest)
+        {
+            headers["X-Lobsy-Test"] = "1";
+        }
+        else if (def.Kind == EmailKind.Optional)
         {
             var unsubUrl = _unsubscribe.BuildUnsubscribeUrl(features.PublicWebBaseUrl, to, def.Key);
             html = ApplyUnsubscribeUrlHtml(html, unsubUrl);
@@ -141,6 +145,10 @@ public sealed class TransactionalMailer : ITransactionalMailer
             ("lang", SanitizeTag(mail.Language)),
             ("kind", SanitizeTag(KindTag(def.Kind)))
         };
+        if (options.IsTest)
+        {
+            tags.Add(("test", "true"));
+        }
 
         var delivery = await _email.SendAsync(
             new EmailMessage(to, mail.Subject, html, mail.Category)

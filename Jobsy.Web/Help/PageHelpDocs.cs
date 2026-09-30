@@ -764,9 +764,9 @@ public static class PageHelpDocs
             "Werkgevers overtuigen met een logo-first flyer zonder designbureau."),
 
         ["/admin/content/emails"] = new(
-            "Beheer · Mailtest",
-            "Elk transactioneel mailtype als test versturen naar een adres naar keuze.",
-            "Vul een e-mailadres in en verstuur één type of alle types. De HTML is dezelfde als productie; knoppen linken naar echte Lobsy-pagina’s. OTP’s en wachtwoorden in testmails zijn voorbeelden en activeren geen accountactie.",
+            "Beheer · E-mails & meldingen",
+            "Elk transactioneel mailtype bekijken (5 talen, licht/donker) en beperkt testen naar jezelf.",
+            "Kies links een mailtype; rechts zie je HTML/tekst/headers met voorbeelddata. Stuur een test of alles naar je eigen adres (of allow-list). OTP’s in testmails activeren geen accountactie.",
             "Visueel en functioneel nalopen van alle uitgaande mails zonder echte gebruikers te mailen."),
 
         ["/admin/instellingen/integraties"] = new(

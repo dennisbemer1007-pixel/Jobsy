@@ -11,7 +11,7 @@ You are invited
 
 Filiaalmanager :Role
 Bakkerij De Gouden Korrel :الشركة
-tester@example.com :Your email address
+alex@voorbeeld.invalid :Your email address
 7 أكتوبر 2026 :الرابط صالح حتى
 
 You can also sign in with Google or Microsoft with this email address.

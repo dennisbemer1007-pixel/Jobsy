@@ -12,7 +12,7 @@ Joris nodigt je uit als Filiaalmanager bij Bakkerij De Gouden Korrel.
 
 Rol: Filiaalmanager
 Bedrijf: Bakkerij De Gouden Korrel
-Je e-mailadres: tester@example.com
+Je e-mailadres: alex@voorbeeld.invalid
 Link geldig tot: 7 oktober 2026
 
 Je kunt ook inloggen met Google of Microsoft met dit e-mailadres.

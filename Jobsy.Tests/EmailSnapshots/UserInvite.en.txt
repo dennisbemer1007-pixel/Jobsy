@@ -12,7 +12,7 @@ Joris invites you as Filiaalmanager at Bakkerij De Gouden Korrel.
 
 Role: Filiaalmanager
 Company: Bakkerij De Gouden Korrel
-Your email address: tester@example.com
+Your email address: alex@voorbeeld.invalid
 Link valid until: 7 October 2026
 
 You can also sign in with Google or Microsoft with this email address.

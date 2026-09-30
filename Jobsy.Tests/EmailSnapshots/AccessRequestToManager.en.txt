@@ -8,8 +8,8 @@ New access request
 
 There is an access request for Bakkerij De Gouden Korrel.
 
-Applicant: Alex de Tester (Filiaalmanager) - tester@example.com. Requested
-role: Filiaalmanager.
+Applicant: Alex de Tester (Filiaalmanager) - alex@voorbeeld.invalid.
+Requested role: Filiaalmanager.
 
 View access requests: https://lobsy.nl/werkgever/overnames
 

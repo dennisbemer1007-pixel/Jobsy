@@ -2,11 +2,11 @@ using System.Text.RegularExpressions;
 using Jobsy.Core.Email;
 using Jobsy.Core.Email.Model;
 using Jobsy.Core.Interfaces;
-using Jobsy.Infrastructure.Data;
+using Jobsy.Core.Options;
 using Jobsy.Infrastructure.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Tests;
 
@@ -27,6 +27,9 @@ public class TransactionalEmailCatalogTests
         "TakeoverSubmitted", "TakeoverApproved", "TakeoverRejected", "SalesManagerInvite", "AmbassadeurInvite",
         "AccountLockout", "SupportAccessRequested", "MailTest"
     ];
+
+    public TransactionalEmailCatalogTests()
+        => EmailCatalogService.ResetForTests();
 
     [Fact]
     public void Catalog_contains_at_least_section_M_keys()
@@ -144,33 +147,50 @@ public class TransactionalEmailCatalogTests
     [Fact]
     public async Task Catalog_service_rejects_invalid_email_and_unknown_key()
     {
-        await using var db = CreateDb();
-        var sut = CreateSut(db, new RecordingMailer());
+        var sut = CreateSut(new RecordingMailer());
 
-        var invalid = await sut.SendAsync("MailTest", "nope");
+        var invalid = await sut.SendAsync("MailTest", "nl", "nope", null);
         Assert.False(invalid.Ok);
-        Assert.Contains("geldig", invalid.Message, StringComparison.OrdinalIgnoreCase);
 
-        var unknown = await sut.SendAsync("NotARealMail", "tester@example.com");
+        var unknown = await sut.SendAsync("NotARealMail", "nl", "tester@example.com", null);
         Assert.False(unknown.Ok);
         Assert.Contains("Onbekend", unknown.Message, StringComparison.OrdinalIgnoreCase);
+
+        var foreign = await sut.SendAsync("MailTest", "nl", "admin@lobsy.nl", "other@example.com");
+        Assert.False(foreign.Ok);
+        Assert.Contains("allow-list", foreign.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public async Task Catalog_service_sends_all_types_and_redacts_recipient()
+    public async Task Catalog_service_sends_to_admin_and_redacts_recipient()
     {
-        await using var db = CreateDb();
+        var audit = new RecordingAudit();
         var mailer = new RecordingMailer();
-        var sut = CreateSut(db, mailer);
+        var sut = CreateSut(mailer, audit);
 
-        var results = await sut.SendAllAsync("reviewer@lobsy.nl");
+        var result = await sut.SendAsync("MailTest", "nl", "reviewer@lobsy.nl", null);
+        Assert.True(result.Ok);
+        Assert.StartsWith("[Test] ", result.Subject, StringComparison.Ordinal);
+        Assert.Single(mailer.Sent);
+        Assert.Equal("reviewer@lobsy.nl", mailer.Sent[0].To);
+        Assert.True(mailer.Sent[0].Options?.IsTest);
+        var entry = Assert.Single(audit.Entries);
+        Assert.DoesNotContain("reviewer@lobsy.nl", entry.DetailsJson ?? "");
+        Assert.Contains("r***@lobsy.nl", entry.DetailsJson ?? "");
+    }
 
-        Assert.Equal(TransactionalEmails.Templates.Count, results.Count);
-        Assert.All(results, r => Assert.True(r.Ok));
-        Assert.Equal(TransactionalEmails.Templates.Count, mailer.Sent.Count);
-        Assert.All(mailer.Sent, m => Assert.Equal("reviewer@lobsy.nl", m.To));
-        Assert.DoesNotContain(db.PlatformLogs, l => l.Message.Contains("reviewer@lobsy.nl"));
-        Assert.Contains(db.PlatformLogs, l => l.Category == "EmailCatalogTest" && l.Message.Contains("r***@lobsy.nl"));
+    [Fact]
+    public void Preview_uses_fake_data_only_no_db_vacancies()
+    {
+        var sut = CreateSut(new RecordingMailer());
+        var preview = sut.Preview("ApplicationConfirmation", "nl", "light", "https://lobsy.nl");
+        Assert.False(string.IsNullOrWhiteSpace(preview.Html));
+        Assert.False(string.IsNullOrWhiteSpace(preview.Text));
+        Assert.Contains("Bakkerij De Gouden Korrel", preview.Html, StringComparison.Ordinal);
+        Assert.Equal("ltr", preview.Dir);
+
+        var ar = sut.Preview("ApplicationConfirmation", "ar", "dark", "https://lobsy.nl");
+        Assert.Equal("rtl", ar.Dir);
     }
 
     [Fact]
@@ -182,26 +202,25 @@ public class TransactionalEmailCatalogTests
         Assert.Contains("/admin/content/emails", nav);
         Assert.Contains("/admin/mail-test", nav);
         Assert.Contains("[Authorize(Roles = \"Admin\")]", page);
-        Assert.Contains("SendAllEmailTemplatesAsync", page);
+        Assert.Contains("sandbox=\"\"", page);
+        Assert.Contains("GetEmailTemplatePreviewAsync", page);
     }
 
-    private static EmailCatalogService CreateSut(JobsyDbContext db, ITransactionalMailer mailer)
-        => new(
-            mailer,
-            new FakeFeatures(),
-            db,
-            new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["PublicApiBaseUrl"] = "https://api.lobsy.nl"
-            }).Build(),
-            NullLogger<EmailCatalogService>.Instance);
-
-    private static JobsyDbContext CreateDb()
+    private static EmailCatalogService CreateSut(RecordingMailer mailer, RecordingAudit? audit = null)
     {
-        var options = new DbContextOptionsBuilder<JobsyDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        return new JobsyDbContext(options);
+        var services = new ServiceCollection();
+        services.AddSingleton<ITransactionalMailer>(mailer);
+        services.AddSingleton<IPlatformFeatureService>(new FakeFeatures());
+        services.AddSingleton<IAdminAuditLog>(audit ?? new RecordingAudit());
+        services.AddSingleton(Options.Create(new MailOptions()));
+        services.AddSingleton<IEmailCatalogService>(sp => new EmailCatalogService(
+            sp.GetRequiredService<ITransactionalMailer>(),
+            sp.GetRequiredService<IPlatformFeatureService>(),
+            sp.GetRequiredService<IAdminAuditLog>(),
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            sp.GetRequiredService<IOptions<MailOptions>>(),
+            NullLogger<EmailCatalogService>.Instance));
+        return (EmailCatalogService)services.BuildServiceProvider().GetRequiredService<IEmailCatalogService>();
     }
 
     private static string FindRepoRoot()
@@ -231,9 +250,22 @@ public class TransactionalEmailCatalogTests
             => GetAsync(cancellationToken);
     }
 
+    private sealed class RecordingAudit : IAdminAuditLog
+    {
+        public List<AdminAuditEntry> Entries { get; } = [];
+
+        public Task WriteAsync(AdminAuditEntry entry, CancellationToken cancellationToken = default)
+        {
+            Entries.Add(entry);
+            return Task.CompletedTask;
+        }
+
+        public void Stage(AdminAuditEntry entry) => Entries.Add(entry);
+    }
+
     private sealed class RecordingMailer : ITransactionalMailer
     {
-        public List<(ComposedEmail Mail, string To)> Sent { get; } = [];
+        public List<(ComposedEmail Mail, string To, EmailSendOptions? Options)> Sent { get; } = [];
 
         public Task<EmailSendOutcome> SendAsync(
             ComposedEmail mail,
@@ -241,7 +273,7 @@ public class TransactionalEmailCatalogTests
             EmailSendOptions? options = null,
             CancellationToken cancellationToken = default)
         {
-            Sent.Add((mail, to));
+            Sent.Add((mail, to, options));
             return Task.FromResult(new EmailSendOutcome(true, false, null, EmailDeliveryKind.Stub));
         }
     }

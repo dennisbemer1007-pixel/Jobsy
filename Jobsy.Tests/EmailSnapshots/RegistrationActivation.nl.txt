@@ -8,8 +8,7 @@ Hallo Alex,
 Je code
 =======
 
-Vul deze code in om Bakkerij De Gouden Korrel — Delft aan te melden op
-Lobsy.
+Vul deze code in om Bakkerij De Gouden Korrel aan te melden op Lobsy.
 
 
 123456

@@ -43,6 +43,12 @@ public sealed class MailOptions
     /// <summary>Cache-busting query for hosted email PNGs.</summary>
     public string? AssetVersion { get; set; } = DefaultAssetVersion;
 
+    /// <summary>Optional extra recipients allowed for admin test sends (besides the admin's own address).</summary>
+    public string[] TestRecipientAllowList { get; set; } = [];
+
+    /// <summary>Max admin catalog test sends (single + send-all) per admin per Amsterdam day.</summary>
+    public int TestDailyCap { get; set; } = 100;
+
     public bool MissingLegalFooter
         => string.IsNullOrWhiteSpace(LegalAddress) || string.IsNullOrWhiteSpace(KvkNumber);
 }

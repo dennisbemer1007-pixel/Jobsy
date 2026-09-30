@@ -20,7 +20,11 @@ public sealed record EmailSendOptions(
     /// </summary>
     string? IdempotencyKey = null,
     /// <summary>Recipient culture used for tags/lang; compose already baked the copy.</summary>
-    EmailCulture? Culture = null);
+    EmailCulture? Culture = null,
+    /// <summary>
+    /// Admin catalog test send: no List-Unsubscribe, header <c>X-Lobsy-Test: 1</c>, tag <c>test=true</c>.
+    /// </summary>
+    bool IsTest = false);
 
 public sealed record EmailSendOutcome(
     bool Sent,

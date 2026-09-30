@@ -92,6 +92,31 @@ public sealed class EmailTemplateItem
     public string Audience { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
+    public string Kind { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    public bool HasMascot { get; set; }
+    public bool Parked { get; set; }
+    public List<string> Languages { get; set; } = [];
+    public bool RequiresEmployers { get; set; }
+}
+
+public sealed class EmailCatalogTestOptionsItem
+{
+    public List<string> TestRecipientAllowList { get; set; } = [];
+    public int TestDailyCap { get; set; } = 100;
+}
+
+public sealed class EmailTemplatePreviewItem
+{
+    public string Key { get; set; } = string.Empty;
+    public string Subject { get; set; } = string.Empty;
+    public string Preheader { get; set; } = string.Empty;
+    public string Html { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
+    public string Kind { get; set; } = string.Empty;
+    public string Language { get; set; } = string.Empty;
+    public string Dir { get; set; } = "ltr";
+    public Dictionary<string, string> Headers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 public sealed class EmailCatalogSendResultItem
@@ -103,6 +128,22 @@ public sealed class EmailCatalogSendResultItem
     public bool Ok { get; set; }
     public bool DeliveredViaProvider { get; set; }
     public string Message { get; set; } = string.Empty;
+}
+
+public sealed class EmailCatalogSendAllAcceptedItem
+{
+    public Guid RunId { get; set; }
+    public int Total { get; set; }
+}
+
+public sealed class EmailCatalogSendAllStatusItem
+{
+    public Guid RunId { get; set; }
+    public int Total { get; set; }
+    public int Sent { get; set; }
+    public int Failed { get; set; }
+    public bool Done { get; set; }
+    public string? Error { get; set; }
 }
 
 public sealed class IntegrationCredentialItem

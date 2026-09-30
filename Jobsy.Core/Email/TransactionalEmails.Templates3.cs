@@ -331,9 +331,9 @@ public sealed record EmailSampleContext(
             SetPasswordUrl: baseUrl + TransactionalEmails.SampleSetPasswordPath,
             SampleRevealUrl: baseUrl + TransactionalEmails.SampleRevealPath,
             RoleLabel: "Filiaalmanager",
-            EstablishmentName: "Bakkerij De Gouden Korrel — Delft",
-            ContactEmail: string.IsNullOrWhiteSpace(contactEmail) ? "tester@example.com" : contactEmail.Trim(),
+            EstablishmentName: "Bakkerij De Gouden Korrel",
+            ContactEmail: string.IsNullOrWhiteSpace(contactEmail) ? "alex@voorbeeld.invalid" : contactEmail.Trim(),
             KvkEstablishmentId: "000012345678",
-            ApiBaseUrl: "https://api.lobsy.nl");
+            ApiBaseUrl: "https://api.voorbeeld.invalid");
     }
 }

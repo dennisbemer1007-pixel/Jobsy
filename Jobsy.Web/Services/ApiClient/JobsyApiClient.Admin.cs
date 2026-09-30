@@ -1012,14 +1012,36 @@ public sealed partial class JobsyApiClient
     public async Task<IReadOnlyList<EmailTemplateItem>> GetEmailTemplatesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<EmailTemplateItem>>("api/settings/email-templates", ct) ?? [];
 
+    public async Task<EmailCatalogTestOptionsItem?> GetEmailTemplateOptionsAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<EmailCatalogTestOptionsItem>("api/settings/email-templates/options", ct);
+
+    public async Task<EmailTemplatePreviewItem?> GetEmailTemplatePreviewAsync(
+        string key,
+        string lang = "nl",
+        string theme = "light",
+        CancellationToken ct = default)
+    {
+        var url =
+            $"api/settings/email-templates/{Uri.EscapeDataString(key)}/preview?lang={Uri.EscapeDataString(lang)}&theme={Uri.EscapeDataString(theme)}";
+        var response = await _http.GetAsync(url, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<EmailTemplatePreviewItem>(cancellationToken: ct);
+    }
+
     public async Task<EmailCatalogSendResultItem?> SendEmailTemplateAsync(
         string key,
-        string to,
+        string? to = null,
+        string lang = "nl",
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync(
             $"api/settings/email-templates/{Uri.EscapeDataString(key)}/send",
-            new { to },
+            new { to, lang },
             ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -1030,13 +1052,14 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<EmailCatalogSendResultItem>(cancellationToken: ct);
     }
 
-    public async Task<IReadOnlyList<EmailCatalogSendResultItem>> SendAllEmailTemplatesAsync(
-        string to,
+    public async Task<EmailCatalogSendAllAcceptedItem?> StartSendAllEmailTemplatesAsync(
+        string? to = null,
+        string lang = "nl",
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync(
             "api/settings/email-templates/send-all",
-            new { to },
+            new { to, lang },
             ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -1044,9 +1067,14 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<List<EmailCatalogSendResultItem>>(cancellationToken: ct)
-               ?? [];
+        return await response.Content.ReadFromJsonAsync<EmailCatalogSendAllAcceptedItem>(cancellationToken: ct);
     }
+
+    public async Task<EmailCatalogSendAllStatusItem?> GetSendAllEmailTemplatesStatusAsync(
+        Guid runId,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<EmailCatalogSendAllStatusItem>(
+            $"api/settings/email-templates/send-all/{runId:D}", ct);
 
     public async Task<SendTestMailResultItem?> SendTestMailAsync(string to, CancellationToken ct = default)
     {

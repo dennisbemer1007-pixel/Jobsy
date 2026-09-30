@@ -8,8 +8,8 @@ Nieuw toegangsverzoek
 
 Er is een toegangsverzoek voor Bakkerij De Gouden Korrel.
 
-Aanvrager: Alex de Tester (Filiaalmanager) - tester@example.com. Gevraagde
-rol: Filiaalmanager.
+Aanvrager: Alex de Tester (Filiaalmanager) - alex@voorbeeld.invalid.
+Gevraagde rol: Filiaalmanager.
 
 Bekijk toegangsverzoeken: https://lobsy.nl/werkgever/overnames
 

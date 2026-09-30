@@ -6,14 +6,14 @@ KIND: Essential
 Someone wants access to Bakkerij De Gouden Korrel
 =================================================
 
-Alex de Tester (tester@example.com) also wants to manage Bakkerij De Gouden
-Korrel on Lobsy.
+Alex de Tester (alex@voorbeeld.invalid) also wants to manage Bakkerij De
+Gouden Korrel on Lobsy.
 
 Name: Alex de Tester
-Email: tester@example.com
+Email: alex@voorbeeld.invalid
 Branch: Bakkerij De Gouden Korrel
 Chamber of Commerce branch number: 000012345678
-Requested on: 30 September 2026, 17:22
+Requested on: 30 September 2026, 17:37
 
 Do you not know this person? Then reject the request.
 

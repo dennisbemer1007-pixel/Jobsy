@@ -7,8 +7,8 @@ KIND: Essential
 
 هناك طلب وصول إلى ⁨Bakkerij De Gouden Korrel⁩.
 
-مقدّم الطلب: ⁨Alex de Tester⁩ (Filiaalmanager) - ⁨tester@example.com⁩. الدور
-المطلوب: ⁨Filiaalmanager⁩.
+مقدّم الطلب: ⁨Alex de Tester⁩ (Filiaalmanager) - ⁨alex@voorbeeld.invalid⁩.
+الدور المطلوب: ⁨Filiaalmanager⁩.
 
 عرض طلبات الوصول: https://lobsy.nl/werkgever/overnames
 

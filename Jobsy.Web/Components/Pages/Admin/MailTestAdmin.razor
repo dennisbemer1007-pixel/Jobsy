@@ -19,81 +19,212 @@
     }
     else
     {
-        <section class="panel-section">
-            <article class="company-card platform-features-card">
-                <label>
-                    @Culture["Admin.MailTestTo"]
-                    <input type="email"
-                           autocomplete="email"
-                           placeholder="@Culture["Admin.MailTestToPlaceholder"]"
-                           @bind="_to"
-                           @bind:event="oninput" />
-                </label>
-                <p class="muted">@Culture["Admin.MailTestHint"]</p>
-                <div class="inline-actions" style="margin-top:0.75rem">
+        <div class="mail-preview-layout">
+            <aside class="mail-preview-list">
+                @foreach (var group in _groups)
+                {
+                    <h3 class="mail-preview-group">@group.Label</h3>
+                    @foreach (var template in group.Items)
+                    {
+                        <button type="button"
+                                class="mail-preview-item @(_selectedKey == template.Key ? "is-active" : null)"
+                                @onclick="() => SelectAsync(template.Key)">
+                            <strong>@template.Title</strong>
+                            <span class="muted">@template.Key</span>
+                            <span class="mail-preview-badges">
+                                @if (string.Equals(template.Kind, "O", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge">@Culture["Admin.MailTestBadgeOptional"]</span>
+                                }
+                                else if (string.Equals(template.Kind, "S", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge">@Culture["Admin.MailTestBadgeCode"]</span>
+                                }
+                                @if (template.Parked)
+                                {
+                                    <span class="badge">@Culture["Admin.MailTestBadgeParked"]</span>
+                                }
+                            </span>
+                        </button>
+                    }
+                }
+            </aside>
+
+            <section class="mail-preview-pane">
+                <div class="mail-preview-toolbar">
+                    <label>
+                        @Culture["Admin.MailTestLanguage"]
+                        <select @bind="_lang" @bind:after="ReloadPreviewAsync">
+                            <option value="nl">nl</option>
+                            <option value="en">en</option>
+                            <option value="pl">pl</option>
+                            <option value="ro">ro</option>
+                            <option value="ar">ar (RTL)</option>
+                        </select>
+                    </label>
+                    <label>
+                        @Culture["Admin.MailTestTheme"]
+                        <select @bind="_theme" @bind:after="ReloadPreviewAsync">
+                            <option value="light">@Culture["Admin.MailTestThemeLight"]</option>
+                            <option value="dark">@Culture["Admin.MailTestThemeDark"]</option>
+                        </select>
+                    </label>
+                    <label>
+                        @Culture["Admin.MailTestWidth"]
+                        <select @bind="_width">
+                            <option value="600">600</option>
+                            <option value="375">375</option>
+                        </select>
+                    </label>
+                    <div class="inline-actions">
+                        <button type="button" class="@TabClass("html")" @onclick='() => _tab = "html"'>HTML</button>
+                        <button type="button" class="@TabClass("text")" @onclick='() => _tab = "text"'>@Culture["Admin.MailTestTabText"]</button>
+                        <button type="button" class="@TabClass("headers")" @onclick='() => _tab = "headers"'>@Culture["Admin.MailTestTabHeaders"]</button>
+                    </div>
+                </div>
+
+                @if (_allowList.Count > 0)
+                {
+                    <label class="mail-preview-recipient">
+                        @Culture["Admin.MailTestTo"]
+                        <select @bind="_to">
+                            <option value="">@Culture["Admin.MailTestToSelf"]</option>
+                            @foreach (var addr in _allowList)
+                            {
+                                <option value="@addr">@addr</option>
+                            }
+                        </select>
+                    </label>
+                }
+
+                <div class="inline-actions" style="margin:0.75rem 0">
                     <button class="btn-compact btn-compact--primary"
                             type="button"
-                            disabled="@(_busy || string.IsNullOrWhiteSpace(_to))"
-                            @onclick="SendAllAsync">
+                            disabled="@(_busy || string.IsNullOrWhiteSpace(_selectedKey))"
+                            @onclick="SendOneAsync">
+                        @Culture["Admin.MailTestSendOne"]
+                    </button>
+                    <button class="btn-compact"
+                            type="button"
+                            disabled="@_busy"
+                            @onclick="ConfirmSendAllAsync">
                         @Culture["Admin.MailTestSendAll"]
                     </button>
                 </div>
-            </article>
-        </section>
 
-        <section class="panel-section">
-            <div class="table-list">
-                @foreach (var template in _templates)
+                @if (_confirmSendAll)
                 {
-                    var result = _results.GetValueOrDefault(template.Key);
-                    <div class="table-row">
-                        <div style="flex:1">
-                            <strong>@template.Title</strong>
-                            <span class="muted">@template.Key</span>
-                            <div class="muted">@Culture["Admin.MailTestAudience"]: @template.Audience — @template.Description</div>
-                            @if (result is not null)
-                            {
-                                <p class="state-message @(result.Ok ? null : "error")" style="margin:0.35rem 0 0">
-                                    @result.Message
-                                    @if (result.Ok && !string.IsNullOrWhiteSpace(result.Subject))
-                                    {
-                                        <span class="muted"> · @result.Subject</span>
-                                    }
-                                </p>
-                            }
-                        </div>
+                    <div class="panel-inline-error" role="dialog">
+                        <p class="panel-inline-error__text">
+                            @string.Format(Culture["Admin.MailTestSendAllConfirm"], _templates.Count(t => !t.Parked), _dailyCap)
+                        </p>
                         <div class="inline-actions">
-                            <button class="btn-compact"
-                                    type="button"
-                                    disabled="@(_busy || string.IsNullOrWhiteSpace(_to))"
-                                    @onclick="() => SendOneAsync(template.Key)">
-                                @Culture["Admin.MailTestSendOne"]
-                            </button>
+                            <button class="btn-compact btn-compact--primary" type="button" @onclick="SendAllAsync">@Culture["Common.Confirm"]</button>
+                            <button class="btn-compact" type="button" @onclick="() => _confirmSendAll = false">@Culture["Common.Cancel"]</button>
                         </div>
                     </div>
                 }
-            </div>
-        </section>
 
-        @if (_busy)
-        {
-            <p class="state-message">@Culture["Admin.MailTestSending"]</p>
-        }
-        else if (!string.IsNullOrEmpty(_message))
-        {
-            <p class="state-message">@_message</p>
-        }
+                @if (_previewBusy)
+                {
+                    <p class="state-message">@Culture["Common.Loading"]</p>
+                }
+                else if (_preview is not null)
+                {
+                    <p class="muted"><strong>@_preview.Subject</strong> · @_preview.Preheader</p>
+                    @if (_tab == "html")
+                    {
+                        <iframe class="mail-preview-frame"
+                                title="@Culture["Admin.MailTestPreview"]"
+                                sandbox=""
+                                style="width:@(_width)px;height:720px;max-width:100%;border:1px solid var(--border);background:#fff"
+                                srcdoc="@_preview.Html"></iframe>
+                        <p class="muted">@Culture["Admin.MailTestLinksDisabled"]</p>
+                    }
+                    else if (_tab == "text")
+                    {
+                        <pre class="mail-preview-text">@_preview.Text</pre>
+                    }
+                    else
+                    {
+                        <dl class="mail-preview-headers">
+                            @foreach (var h in _preview.Headers)
+                            {
+                                <dt>@h.Key</dt>
+                                <dd>@h.Value</dd>
+                            }
+                        </dl>
+                    }
+                }
+
+                @if (_busy)
+                {
+                    <p class="state-message">@Culture["Admin.MailTestSending"]</p>
+                }
+                else if (!string.IsNullOrEmpty(_message))
+                {
+                    <p class="state-message">@_message</p>
+                }
+
+                @if (_sendAllStatus is not null)
+                {
+                    <p class="muted">
+                        @Culture["Admin.MailTestSendAllProgress"]:
+                        @_sendAllStatus.Sent/@_sendAllStatus.Total
+                        @if (_sendAllStatus.Failed > 0)
+                        {
+                            <span> (@_sendAllStatus.Failed @Culture["Admin.MailTestFailed"])</span>
+                        }
+                        @if (_sendAllStatus.Done)
+                        {
+                            <span> — @Culture["Admin.MailTestSendAllDone"]</span>
+                        }
+                    </p>
+                }
+            </section>
+        </div>
     }
 </AdminPageShell>
 
+<style>
+.mail-preview-layout { display:grid; grid-template-columns:minmax(220px,280px) 1fr; gap:1rem; align-items:start; }
+.mail-preview-list { max-height:80vh; overflow:auto; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); padding:0.5rem; }
+.mail-preview-group { margin:0.75rem 0.35rem 0.35rem; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); }
+.mail-preview-item { display:flex; flex-direction:column; align-items:flex-start; gap:0.15rem; width:100%; text-align:left; border:0; background:transparent; padding:0.55rem 0.6rem; border-radius:8px; cursor:pointer; color:inherit; }
+.mail-preview-item:hover, .mail-preview-item.is-active { background:var(--accent-soft); }
+.mail-preview-badges { display:flex; flex-wrap:wrap; gap:0.25rem; }
+.mail-preview-badges .badge { font-size:0.7rem; padding:0.1rem 0.4rem; border-radius:999px; background:var(--pearl-mid); }
+.mail-preview-toolbar { display:flex; flex-wrap:wrap; gap:0.75rem; align-items:end; }
+.mail-preview-toolbar label, .mail-preview-recipient { display:flex; flex-direction:column; gap:0.25rem; font-size:0.85rem; }
+.mail-preview-text { white-space:pre-wrap; background:var(--pearl); padding:1rem; border-radius:var(--radius-sm); max-height:720px; overflow:auto; }
+.mail-preview-headers { display:grid; grid-template-columns:auto 1fr; gap:0.35rem 1rem; }
+.mail-preview-headers dt { font-weight:600; }
+@@media (max-width:900px) {
+  .mail-preview-layout { grid-template-columns:1fr; }
+  .mail-preview-list { max-height:240px; }
+}
+</style>
+
 @code {
     private readonly List<EmailTemplateItem> _templates = [];
-    private readonly Dictionary<string, EmailCatalogSendResultItem> _results = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<string> _allowList = [];
+    private readonly List<(string Label, List<EmailTemplateItem> Items)> _groups = [];
+    private string? _selectedKey;
+    private EmailTemplatePreviewItem? _preview;
+    private EmailCatalogSendAllStatusItem? _sendAllStatus;
+    private string _lang = "nl";
+    private string _theme = "light";
+    private string _width = "600";
+    private string _tab = "html";
     private string _to = "";
+    private int _dailyCap = 100;
     private bool _loading = true;
+    private bool _previewBusy;
     private bool _busy;
+    private bool _confirmSendAll;
     private string? _error;
     private string? _message;
+    private CancellationTokenSource? _pollCts;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -102,13 +233,29 @@
         => InvokeAsync(StateHasChanged);
 
     public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    {
+        Culture.Changed -= OnCultureChanged;
+        _pollCts?.Cancel();
+        _pollCts?.Dispose();
+    }
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             _templates.AddRange(await Api.GetEmailTemplatesAsync());
+            var options = await Api.GetEmailTemplateOptionsAsync();
+            if (options is not null)
+            {
+                _allowList.AddRange(options.TestRecipientAllowList ?? []);
+                _dailyCap = options.TestDailyCap > 0 ? options.TestDailyCap : 100;
+            }
+
+            BuildGroups();
+            if (_templates.Count > 0)
+            {
+                await SelectAsync(_templates[0].Key);
+            }
         }
         catch (Exception ex)
         {
@@ -120,27 +267,94 @@
         }
     }
 
-    private async Task SendOneAsync(string key)
+    private void BuildGroups()
     {
+        _groups.Clear();
+        string GroupOf(EmailTemplateItem t)
+        {
+            var cat = t.Category ?? "";
+            if (cat.Contains("Kandidaat", StringComparison.OrdinalIgnoreCase)
+                || cat.Contains("Candidate", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(t.Audience, "Kandidaat", StringComparison.OrdinalIgnoreCase))
+            {
+                return Culture["Admin.MailTestGroupCandidate"];
+            }
+
+            if (cat.Contains("Werkgever", StringComparison.OrdinalIgnoreCase)
+                || cat.Contains("Employer", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(t.Audience, "Werkgever", StringComparison.OrdinalIgnoreCase))
+            {
+                return Culture["Admin.MailTestGroupEmployer"];
+            }
+
+            if (cat.Contains("Registratie", StringComparison.OrdinalIgnoreCase)
+                || cat.Contains("Account", StringComparison.OrdinalIgnoreCase)
+                || cat.Contains("Invite", StringComparison.OrdinalIgnoreCase))
+            {
+                return Culture["Admin.MailTestGroupAccount"];
+            }
+
+            return Culture["Admin.MailTestGroupInternal"];
+        }
+
+        foreach (var g in _templates.GroupBy(GroupOf))
+        {
+            _groups.Add((g.Key, g.ToList()));
+        }
+    }
+
+    private string TabClass(string tab)
+        => _tab == tab ? "btn-compact btn-compact--primary" : "btn-compact";
+
+    private async Task SelectAsync(string key)
+    {
+        _selectedKey = key;
+        await ReloadPreviewAsync();
+    }
+
+    private async Task ReloadPreviewAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedKey))
+        {
+            return;
+        }
+
+        _previewBusy = true;
+        _message = null;
+        try
+        {
+            _preview = await Api.GetEmailTemplatePreviewAsync(_selectedKey, _lang, _theme);
+        }
+        catch (Exception ex)
+        {
+            _preview = null;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _previewBusy = false;
+        }
+    }
+
+    private async Task SendOneAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedKey))
+        {
+            return;
+        }
+
         _busy = true;
         _message = null;
         try
         {
-            var result = await Api.SendEmailTemplateAsync(key, _to);
+            var result = await Api.SendEmailTemplateAsync(_selectedKey, string.IsNullOrWhiteSpace(_to) ? null : _to, _lang);
             if (result is not null)
             {
-                _results[key] = result;
                 _message = result.Message;
             }
         }
         catch (Exception ex)
         {
-            _results[key] = new EmailCatalogSendResultItem
-            {
-                Key = key,
-                Ok = false,
-                Message = ex.Message
-            };
             _message = ex.Message;
         }
         finally
@@ -149,26 +363,30 @@
         }
     }
 
+    private Task ConfirmSendAllAsync()
+    {
+        _confirmSendAll = true;
+        return Task.CompletedTask;
+    }
+
     private async Task SendAllAsync()
     {
+        _confirmSendAll = false;
         _busy = true;
         _message = null;
         try
         {
-            var results = await Api.SendAllEmailTemplatesAsync(_to);
-            _results.Clear();
-            foreach (var result in results)
+            var accepted = await Api.StartSendAllEmailTemplatesAsync(
+                string.IsNullOrWhiteSpace(_to) ? null : _to,
+                _lang);
+            if (accepted is null)
             {
-                if (!string.IsNullOrWhiteSpace(result.Key))
-                {
-                    _results[result.Key] = result;
-                }
+                _message = Culture["Admin.MailTestSendAllFailed"];
+                return;
             }
 
-            var ok = results.Count(r => r.Ok);
-            var viaProvider = results.Count(r => r.DeliveredViaProvider);
-            _message = $"{ok}/{results.Count} types verstuurd" +
-                       (viaProvider > 0 ? $" ({viaProvider} via Resend/SMTP)." : " (stub/PlatformLog).");
+            _message = Culture["Admin.MailTestSendAllStarted"];
+            await PollSendAllAsync(accepted.RunId);
         }
         catch (Exception ex)
         {
@@ -177,6 +395,25 @@
         finally
         {
             _busy = false;
+        }
+    }
+
+    private async Task PollSendAllAsync(Guid runId)
+    {
+        _pollCts?.Cancel();
+        _pollCts?.Dispose();
+        _pollCts = new CancellationTokenSource();
+        var ct = _pollCts.Token;
+        for (var i = 0; i < 120 && !ct.IsCancellationRequested; i++)
+        {
+            _sendAllStatus = await Api.GetSendAllEmailTemplatesStatusAsync(runId, ct);
+            await InvokeAsync(StateHasChanged);
+            if (_sendAllStatus?.Done == true)
+            {
+                break;
+            }
+
+            await Task.Delay(1000, ct);
         }
     }
 }
