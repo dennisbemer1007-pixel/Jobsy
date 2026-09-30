@@ -144,9 +144,19 @@ public class FeatureFlagFoundationTests
         Assert.Equal(FeatureRoutes.CandidateProfilePath, FeatureRoutes.HomeFor(candidate, off));
 
         var passportOn = new FeatureFlagSnapshot(true, true);
-        Assert.Equal(FeatureRoutes.CandidatePassportPath, FeatureRoutes.HomeFor(candidate, passportOn));
+        Assert.Equal(
+            FeatureRoutes.CandidateDiscoveryPath,
+            FeatureRoutes.HomeFor(candidate, passportOn, passportReady: false));
+        Assert.Equal(
+            FeatureRoutes.CandidatePassportPath,
+            FeatureRoutes.HomeFor(candidate, passportOn, passportReady: true));
         var passportEmployersOff = new FeatureFlagSnapshot(false, true);
-        Assert.Equal(FeatureRoutes.CandidatePassportPath, FeatureRoutes.HomeFor(candidate, passportEmployersOff));
+        Assert.Equal(
+            FeatureRoutes.CandidateDiscoveryPath,
+            FeatureRoutes.HomeFor(candidate, passportEmployersOff, passportReady: false));
+        Assert.Equal(
+            FeatureRoutes.CandidatePassportPath,
+            FeatureRoutes.HomeFor(candidate, passportEmployersOff, passportReady: true));
 
         var employer = Principal(JobsyRoles.BranchManager);
         Assert.Equal(FeatureRoutes.EmployersOffAccessDeniedPath, FeatureRoutes.HomeFor(employer, off));
@@ -207,8 +217,10 @@ public class RoleNavCatalogFeatureFlagTests
         var flags = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: false);
         var items = RoleNavCatalog.CandidateItems(flags);
         Assert.Equal(5, items.Count);
-        Assert.Equal(["/", "/candidate/liked", "/candidate/applications", "/carriere", "/candidate/profile"],
+        Assert.Equal(
+            ["/banenkaart", "/candidate/liked", "/candidate/applications", "/carriere", "/candidate/profile"],
             items.Select(i => i.Href).ToArray());
+        Assert.Equal("Nav.Search", items[0].TitleKey);
         Assert.True(RoleNavCatalog.ShowsSavedInNav(flags));
     }
 
@@ -220,11 +232,12 @@ public class RoleNavCatalogFeatureFlagTests
         Assert.Equal(5, items.Count);
         Assert.True(items.Count <= 5);
         Assert.Equal(
-            ["/candidate/ontdekkingsreis", "/candidate/paspoort", "/", "/candidate/applications", "/carriere"],
+            ["/candidate/ontdekkingsreis", "/candidate/paspoort", "/carriere", "/banenkaart", "/candidate/applications"],
             items.Select(i => i.Href).ToArray());
-        Assert.Equal("Nav.Discovery", items[0].TitleKey);
-        Assert.Equal("Nav.Passport", items[1].TitleKey);
-        Assert.Contains("/candidate/liked", items[3].ExtraActivePaths ?? []);
+        Assert.Equal(
+            ["Nav.Discovery", "Nav.Passport", "Nav.CareerPath", "Nav.Banenkaart", "Nav.Applications"],
+            items.Select(i => i.TitleKey).ToArray());
+        Assert.Contains("/candidate/liked", items[4].ExtraActivePaths ?? []);
         Assert.False(RoleNavCatalog.ShowsSavedInNav(flags));
     }
 
@@ -247,7 +260,9 @@ public class RoleNavCatalogFeatureFlagTests
         Assert.Equal(
             ["/candidate/ontdekkingsreis", "/candidate/paspoort", "/carriere"],
             items.Select(i => i.Href).ToArray());
-        Assert.Equal("Nav.Discovery", items[0].TitleKey);
+        Assert.Equal(
+            ["Nav.Discovery", "Nav.Passport", "Nav.CareerPath"],
+            items.Select(i => i.TitleKey).ToArray());
         Assert.False(RoleNavCatalog.ShowsSavedInNav(flags));
     }
 
@@ -259,9 +274,10 @@ public class RoleNavCatalogFeatureFlagTests
             [new Claim(ClaimTypes.Role, JobsyRoles.BranchManager)], "t"));
         Assert.Empty(RoleNavCatalog.ForUser(branch, flags));
 
+        // Admin bottom-nav catalog is intentionally empty (AdminNav sidebar owns chrome).
         var admin = new ClaimsPrincipal(new ClaimsIdentity(
             [new Claim(ClaimTypes.Role, JobsyRoles.Admin)], "t"));
-        Assert.NotEmpty(RoleNavCatalog.ForUser(admin, flags));
+        Assert.Empty(RoleNavCatalog.ForUser(admin, flags));
     }
 }
 

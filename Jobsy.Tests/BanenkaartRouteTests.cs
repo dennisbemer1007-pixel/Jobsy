@@ -29,16 +29,15 @@ public class BanenkaartRouteTests
         Assert.Equal(PublicRoutes.Banenkaart, AuthRedirects.BanenkaartPath);
         Assert.Equal("/banenkaart", AuthRedirects.CandidatePostLoginUrl(false));
 
+        // Passport OFF legacy order keeps Nav.Search; passport ON uses Nav.Banenkaart.
         Assert.Contains(RoleNavCatalog.Candidate, i => i.TitleKey == "Nav.Search" && i.Href == "/banenkaart");
-        Assert.Contains(RoleNavCatalog.Admin, i => i.TitleKey == "Nav.JobMap" && i.Href == "/banenkaart");
-        Assert.Contains(RoleNavCatalog.Branch, i => i.TitleKey == "Nav.JobMap" && i.Href == "/banenkaart");
-        Assert.Contains(RoleNavCatalog.Enterprise, i => i.TitleKey == "Nav.JobMap" && i.Href == "/banenkaart");
-        Assert.Contains(RoleNavCatalog.Regional, i => i.TitleKey == "Nav.JobMap" && i.Href == "/banenkaart");
-        Assert.Contains(RoleNavCatalog.Intermediary, i => i.TitleKey == "Nav.JobMap" && i.Href == "/banenkaart");
+        Assert.Equal("/banenkaart", RoleNavCatalog.BanenkaartItem.Href);
+        Assert.Equal("Nav.Banenkaart", RoleNavCatalog.BanenkaartItem.TitleKey);
 
         var search = RoleNavCatalog.Candidate.First(i => i.TitleKey == "Nav.Search");
         Assert.True(RoleNavCatalog.IsActive(search, "/banenkaart"));
         Assert.True(RoleNavCatalog.IsActive(search, "/"));
+        Assert.True(RoleNavCatalog.IsActive(RoleNavCatalog.BanenkaartItem, "/banenkaart"));
     }
 
     [Fact]

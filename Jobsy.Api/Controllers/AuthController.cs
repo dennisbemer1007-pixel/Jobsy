@@ -6,6 +6,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
@@ -1036,9 +1037,29 @@ public class AuthController : ControllerBase
             && await _db.Companies.AsNoTracking()
                 .AnyAsync(c => c.Id == companyId && c.ReferredBySalesManagerUserId != null, cancellationToken);
 
-        // Eerste login ooit → Hoe werkt Lobsy; daarna → banenkaart (nav blijft beschikbaar).
-        var isFirstLogin = user.LastLoginAtUtc is null;
-        var showHowTo = user.Role == UserRole.Candidate && isFirstLogin;
+        bool showHowTo;
+        if (user.Role == UserRole.Candidate)
+        {
+            var features = await _features.GetAsync(cancellationToken);
+            if (features.CandidatePassportEnabled)
+            {
+                // Paspoort ON: showHowTo = not passport-ready (CompletedAtUtc).
+                var completedAt = await _db.CandidateOnboardings.AsNoTracking()
+                    .Where(o => o.UserId == user.Id)
+                    .Select(o => o.CompletedAtUtc)
+                    .FirstOrDefaultAsync(cancellationToken);
+                showHowTo = !CandidateLanding.IsPassportReady(completedAt);
+            }
+            else
+            {
+                // Eerste login ooit → Hoe werkt Lobsy; daarna → banenkaart (nav blijft beschikbaar).
+                showHowTo = user.LastLoginAtUtc is null;
+            }
+        }
+        else
+        {
+            showHowTo = false;
+        }
 
         user.LastLoginAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);

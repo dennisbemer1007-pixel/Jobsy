@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Features;
 using Jobsy.Web.Features;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Seo;
@@ -24,7 +25,7 @@ public sealed class LandingRedirectMiddleware(RequestDelegate next)
 
         if (context.User.Identity?.IsAuthenticated == true)
         {
-            var home = HomeFor(context.User);
+            var home = await HomeForAsync(context);
             context.Response.StatusCode = StatusCodes.Status302Found;
             context.Response.Headers.Location = home;
             return;
@@ -70,8 +71,36 @@ public sealed class LandingRedirectMiddleware(RequestDelegate next)
                || string.Equals(path.Value, "", StringComparison.Ordinal));
 
     /// <summary>
-    /// Dependencies A absent: candidate → banenkaart; everyone else → /home.
-    /// When FeatureRoutes.HomeFor lands (werkgevers-actief), prefer that.
+    /// Candidate → <see cref="FeatureRoutes.HomeFor"/> (paspoort ON) or banenkaart (paspoort OFF).
+    /// Everyone else → /home.
+    /// </summary>
+    public static async Task<string> HomeForAsync(HttpContext context)
+    {
+        var user = context.User;
+        if (!RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+        {
+            return AuthRedirects.PostLoginUrl("/");
+        }
+
+        var flagsSvc = context.RequestServices.GetService<IFeatureFlags>();
+        var flags = flagsSvc is null
+            ? FeatureFlagSnapshot.Defaults
+            : await flagsSvc.GetAsync(context.RequestAborted);
+
+        if (!flags.CandidatePassportEnabled)
+        {
+            // Flag OFF: keep today's logo/landing redirect to the banenkaart.
+            return AuthRedirects.BanenkaartPath;
+        }
+
+        return FeatureRoutes.HomeFor(
+            user,
+            flags,
+            passportReady: AuthRedirects.PassportReadyFromClaims(user));
+    }
+
+    /// <summary>
+    /// Sync helper for unit tests (passport OFF / defaults). Prefer <see cref="HomeForAsync"/>.
     /// </summary>
     public static string HomeFor(ClaimsPrincipal user)
     {

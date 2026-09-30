@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
@@ -265,7 +266,7 @@ public sealed class DeviceSessionService : IDeviceSessionService
             companyIds.Insert(0, home);
         }
 
-        var showHowTo = ShouldShowCandidateOnboarding(user);
+        var showHowTo = await ResolveShowCandidateHowToAsync(user, cancellationToken);
         var hasApps = await _db.Applications.AsNoTracking()
             .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
         var hasSales = user.CompanyId is Guid cid
@@ -458,7 +459,7 @@ public sealed class DeviceSessionService : IDeviceSessionService
             companyIds.Insert(0, home);
         }
 
-        var showHowTo = ShouldShowCandidateOnboarding(user);
+        var showHowTo = await ResolveShowCandidateHowToAsync(user, cancellationToken);
         var hasApps = await _db.Applications.AsNoTracking()
             .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
         var hasSales = user.CompanyId is Guid cid
@@ -562,6 +563,33 @@ public sealed class DeviceSessionService : IDeviceSessionService
         => string.IsNullOrWhiteSpace(value)
             ? null
             : value.Length <= max ? value.Trim() : value.Trim()[..max];
+
+    /// <summary>
+    /// Paspoort ON: not ready when <see cref="CandidateOnboarding.CompletedAtUtc"/> is null
+    /// (feeds <see cref="FeatureRoutes.HomeFor"/> via ShowCandidateHowTo).
+    /// Paspoort OFF: classic how-to heuristic.
+    /// </summary>
+    private async Task<bool> ResolveShowCandidateHowToAsync(User user, CancellationToken cancellationToken)
+    {
+        if (user.Role != UserRole.Candidate)
+        {
+            return false;
+        }
+
+        var passportOn = await _db.PlatformFeatureSettings.AsNoTracking()
+            .Select(s => (bool?)s.CandidatePassportEnabled)
+            .FirstOrDefaultAsync(cancellationToken) ?? false;
+        if (passportOn)
+        {
+            var completedAt = await _db.CandidateOnboardings.AsNoTracking()
+                .Where(o => o.UserId == user.Id)
+                .Select(o => o.CompletedAtUtc)
+                .FirstOrDefaultAsync(cancellationToken);
+            return !CandidateLanding.IsPassportReady(completedAt);
+        }
+
+        return ShouldShowCandidateOnboarding(user);
+    }
 
     /// <summary>
     /// New candidates without how-to/wizard completion see <c>/candidate/start</c>.

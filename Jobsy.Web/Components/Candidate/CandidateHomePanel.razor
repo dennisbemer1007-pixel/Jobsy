@@ -1,12 +1,15 @@
 @namespace Jobsy.Web.Components.Pages.Candidate
 @using Jobsy.Core.Features
+@using Jobsy.Web.Auth
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IFeatureFlags FeatureFlags
+@inject AuthenticationStateProvider AuthState
 @implements IDisposable
 
 @if (_redirecting)
@@ -105,8 +108,19 @@ else
             var flags = await FeatureFlags.GetAsync();
             if (flags.CandidatePassportEnabled)
             {
+                var auth = await AuthState.GetAuthenticationStateAsync();
+                var onboarding = await Api.GetMyOnboardingAsync();
+                var ready = CandidateLanding.IsPassportReady(onboarding?.CompletedAtUtc);
+                // Fall back to claim when onboarding has not been fetched yet.
+                if (onboarding is null)
+                {
+                    ready = AuthRedirects.PassportReadyFromClaims(auth.User);
+                }
+
                 _redirecting = true;
-                Navigation.NavigateTo(FeatureRoutes.CandidatePassportPath, replace: true);
+                Navigation.NavigateTo(
+                    FeatureRoutes.HomeFor(auth.User, flags, passportReady: ready),
+                    replace: true);
                 return;
             }
         }

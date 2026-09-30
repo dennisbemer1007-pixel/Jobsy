@@ -44,10 +44,11 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Paspoort landing + nav order:** candidate default landing via `FeatureRoutes.HomeFor` when the paspoort flag is ON (not ready → `/candidate/ontdekkingsreis`, ready → `/candidate/paspoort`); nav order Discovery · Passport · Career · Banenkaart · Sollicitaties; `Nav.Banenkaart` label (legacy `Nav.Search` kept for flag OFF).
 - **De ontdekkingsreis (08):** tests 7–10 with deeper question sets (5/10/25, Cultuur 18), “Weer een laag eraf” shed moment, end screen (`?stap=klaar`) with mini passport + `CompleteMyOnboardingAsync`, Discovery nav slot + short labels, “Verder ontdekken” overview, `OnboardingRoutes.StartPath` for flag-aware entry points. Old wizard kept for flag OFF.
 - **De ontdekkingsreis (07a):** `/candidate/ontdekkingsreis` behind CandidatePassport flag; journey shell (scene, lobster plates, progress rail, save status); wizard v3 step maps; Start + steps 1–2; extracted shared onboarding step components. Steps 3–10 deferred to 07b.
 - **Mijn Paspoort · Mijn tests:** depth rows, quota line, locked-report preview, Groei verder course slots (curated `ShowInPassport`); TrainingOffer passport fields + admin; no demo course seeds in production.
-- **Mijn Paspoort (flag ON):** `/candidate/paspoort` with overview (DNA ring + stats), tab shell, Mijn DNA tab, derived schalen; nav order Passport · Zoeken · Sollicitaties · Carrière; Bewaard as tab inside Sollicitaties; classic profile kept when flag OFF.
+- **Mijn Paspoort (flag ON):** `/candidate/paspoort` with overview (DNA ring + stats), tab shell, Mijn DNA tab, derived schalen; nav order Discovery · Passport · Career · Banenkaart · Sollicitaties; Bewaard as tab inside Sollicitaties; classic profile kept when flag OFF.
 - **Kandidaat banen E2E + stack report (09):** Playwright S1–S13 (desktop 1440 + mobile 390) for banenkaart, lijst, vacature, sollicitaties, bewaard en Match; soft-skip zonder `JOBSY_E2E_BASE_URL`; docs + stack-eindrapport.
 - **Match refresh (08):** calibrated fit pill, "Waarom jij past" per DNA dimension, Hierna column with fit + travel; "Laten schieten" defers to end of deck (D12, never hides); keyboard hints; mobile header with mascot + progress.
 - **Sollicitaties + Bewaard (07):** statusgeschiedenis met datum, tijdlijn + "Wat nu?", "Niet gekozen" met vergelijkbare banen; Bewaard-kaarten met statuspillen, unsave+undo.

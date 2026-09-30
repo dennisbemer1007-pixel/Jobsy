@@ -21,12 +21,30 @@ public static partial class AuthRedirects
     public const string DefaultLandingPath = "/home";
     public const string EmployerLandingPath = "/werkgever";
 
-    /// <summary>Post-login landing for a candidate based on first-login how-to flag.</summary>
+    /// <summary>
+    /// Synthetic candidate principal for <see cref="FeatureRoutes.HomeFor"/> from post-login helpers.
+    /// </summary>
+    private static readonly ClaimsPrincipal CandidatePrincipal = new(
+        new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "jobsy"));
+
+    /// <summary>
+    /// Post-login landing for a candidate. Paspoort ON: delegates to
+    /// <see cref="FeatureRoutes.HomeFor"/> (<paramref name="showCandidateHowTo"/> means not ready).
+    /// Paspoort OFF: classic how-to / banenkaart (or profile when employers OFF).
+    /// </summary>
     public static string CandidatePostLoginUrl(bool showCandidateHowTo)
         => CandidatePostLoginUrl(showCandidateHowTo, FeatureFlagSnapshot.Defaults);
 
     public static string CandidatePostLoginUrl(bool showCandidateHowTo, FeatureFlagSnapshot flags)
     {
+        if (flags.CandidatePassportEnabled)
+        {
+            return FeatureRoutes.HomeFor(
+                CandidatePrincipal,
+                flags,
+                passportReady: !showCandidateHowTo);
+        }
+
         if (showCandidateHowTo)
         {
             return OnboardingRoutes.StartPath(flags);
@@ -34,6 +52,13 @@ public static partial class AuthRedirects
 
         return flags.EmployersEnabled ? BanenkaartPath : FeatureRoutes.CandidateProfilePath;
     }
+
+    /// <summary>
+    /// When paspoort is ON, <c>show_candidate_how_to</c> means not passport-ready.
+    /// Absent claim → treat as ready (returning sessions after completion).
+    /// </summary>
+    public static bool PassportReadyFromClaims(ClaimsPrincipal? user)
+        => user?.HasClaim(c => c.Type == "show_candidate_how_to" && c.Value == "1") != true;
 
     /// <summary>Default authenticated landing for a principal (D13: admin → /admin).</summary>
     public static string DefaultLandingFor(ClaimsPrincipal? user)
@@ -79,8 +104,8 @@ public static partial class AuthRedirects
     }
 
     /// <summary>
-    /// Generic landings that may be replaced by the candidate how-to / banenkaart.
-    /// Vacancy (and other explicit) returnUrls are kept when employers are ON.
+    /// Generic landings that may be replaced by the candidate home (how-to / discovery /
+    /// passport / banenkaart). Vacancy (and other explicit) returnUrls are kept when employers are ON.
     /// </summary>
     public static bool IsGenericPostLoginLanding(string? url)
     {
@@ -90,7 +115,16 @@ public static partial class AuthRedirects
         }
 
         var path = url.Split('?', '#')[0];
-        return path is "/" or "/home" or "/banen" or "/banenkaart" or "/login" or "/ontdek" or "/candidate/profile";
+        return path is "/"
+            or "/home"
+            or "/banen"
+            or "/banenkaart"
+            or "/login"
+            or "/ontdek"
+            or "/candidate/profile"
+            or "/candidate/paspoort"
+            or "/candidate/ontdekkingsreis"
+            or "/candidate/start";
     }
 
     /// <summary>
