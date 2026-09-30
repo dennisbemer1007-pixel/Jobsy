@@ -519,9 +519,9 @@ public sealed class SalesEmployerReadService : ISalesEmployerReadService, ISales
             .Where(e => e.SalesManagerUserId == beneficiaryUserId
                         && e.CompanyId != null
                         && branchIds.Contains(e.CompanyId.Value)
-                        && e.Kind is CommissionEntryKind.TokenCommission
-                            or CommissionEntryKind.IndirectTokenCommission
-                            or CommissionEntryKind.FounderBonus)
+                        && (e.Kind == CommissionEntryKind.TokenCommission
+                            || e.Kind == CommissionEntryKind.IndirectTokenCommission
+                            || e.Kind == CommissionEntryKind.FounderBonus))
             .OrderByDescending(e => e.CreatedAt)
             .Take(50)
             .Select(e => new

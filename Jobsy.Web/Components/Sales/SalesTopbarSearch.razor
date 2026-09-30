@@ -56,31 +56,27 @@
     private List<SalesEmployerDto> _results = [];
     private System.Threading.Timer? _debounce;
     private ElementReference _input;
-    private DotNetObjectReference<SalesTopbarSearch>? _self;
+    private bool _hooked;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
+        if (_hooked || !firstRender)
         {
             return;
         }
 
-        _self = DotNetObjectReference.Create(this);
+        _hooked = true;
         try
         {
-            await Js.InvokeVoidAsync("eval", """
-                window.__spSearchFocus = (el) => {
-                  document.addEventListener('keydown', (e) => {
-                    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
-                      e.preventDefault();
-                      el && el.focus();
-                    }
-                  });
-                };
-                """);
-            await Js.InvokeVoidAsync("eval", "window.__spSearchFocus && window.__spSearchFocus(document.querySelector('.sp-search__field input'))");
+            await _input.FocusAsync();
+            await Js.InvokeVoidAsync(
+                "eval",
+                "document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&(e.key==='k'||e.key==='K')){e.preventDefault();var el=document.querySelector('.sp-search__field input');if(el)el.focus();}});");
         }
-        catch { /* prerender / js unavailable */ }
+        catch
+        {
+            /* prerender / js unavailable */
+        }
     }
 
     private void OnInput(ChangeEventArgs e)
@@ -143,9 +139,5 @@
         Navigation.NavigateTo($"/sales/werkgevers?open={companyId:D}");
     }
 
-    public void Dispose()
-    {
-        _debounce?.Dispose();
-        _self?.Dispose();
-    }
+    public void Dispose() => _debounce?.Dispose();
 }

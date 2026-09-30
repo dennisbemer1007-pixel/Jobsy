@@ -139,10 +139,13 @@ public class SalesCommissionEngineTests
         Assert.NotNull(org.CommissionStartsAtUtc);
         Assert.Null((await db.Companies.SingleAsync(c => c.Id == branchId)).CommissionStartsAtUtc);
 
-        var units = await new SalesEmployerReadService(db).ListUnitsAsync(smId);
+        var units = await new SalesEmployerReadService(
+            db,
+            new SalesWalletReadService(db),
+            new SalesBeneficiaryService(db, new AlwaysOnFeatures())).ListUnitsAsync(smId);
         Assert.Single(units);
         Assert.Equal(orgId, units[0].RootCompanyId);
-        Assert.Equal(2, units[0].BranchCount);
+        Assert.Equal(1, units[0].BranchCount); // vestigingen only (not counting the root)
     }
 
     [Fact]
