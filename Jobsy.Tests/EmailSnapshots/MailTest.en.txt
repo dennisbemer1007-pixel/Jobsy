@@ -1,0 +1,29 @@
+KEY: MailTest
+SUBJECT: Lobsy test email
+PREHEADER: This is a test email from Lobsy.
+KIND: Essential
+--- TEXT ---
+Test email
+==========
+
+This is a test email from Lobsy.
+
+If you see this message, outgoing mail is configured correctly.
+
+Go to emails: https://lobsy.nl/admin/content/emails
+
+Team Lobsy
+
+You receive this email as a Lobsy administrator.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Test email
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Go to emails -> https://lobsy.nl/admin/content/emails
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

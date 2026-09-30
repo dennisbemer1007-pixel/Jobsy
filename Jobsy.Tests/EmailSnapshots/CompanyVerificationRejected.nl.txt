@@ -3,7 +3,7 @@ SUBJECT: Verificatie afgewezen — Lobsy
 PREHEADER: Verificatie afgewezen
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Verificatie afgewezen
 =====================

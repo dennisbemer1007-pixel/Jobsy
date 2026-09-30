@@ -3,7 +3,7 @@ SUBJECT: Overname afgewezen — Lobsy
 PREHEADER: Overname afgewezen
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Overname afgewezen
 ==================

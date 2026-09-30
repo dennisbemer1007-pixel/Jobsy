@@ -3,7 +3,7 @@ SUBJECT: Registratie verwijderd — Lobsy
 PREHEADER: Niet-geverifieerde registratie verwijderd
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Registratie verwijderd
 ======================

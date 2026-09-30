@@ -22,24 +22,27 @@ public class EmailSnapshotTests
 
         foreach (var def in EmailTemplateRegistry.All)
         {
-            var mail = TransactionalEmails.Compose(def.Key, ctx);
-            var snapshot = await BuildSnapshotAsync(mail);
-            var path = Path.Combine(dir, $"{def.Key}.nl.txt");
-            if (UpdateSnapshots || !File.Exists(path))
+            foreach (var lang in new[] { "nl", "en", "ar" })
             {
-                await File.WriteAllTextAsync(path, snapshot);
-                if (!UpdateSnapshots)
+                var mail = TransactionalEmails.Compose(def.Key, ctx, EmailCulture.ForLanguage(lang));
+                var snapshot = await BuildSnapshotAsync(mail);
+                var path = Path.Combine(dir, $"{def.Key}.{lang}.txt");
+                if (UpdateSnapshots || !File.Exists(path))
                 {
-                    missing.Add(def.Key);
+                    await File.WriteAllTextAsync(path, snapshot);
+                    if (!UpdateSnapshots)
+                    {
+                        missing.Add($"{def.Key}.{lang}");
+                    }
+
+                    continue;
                 }
 
-                continue;
-            }
-
-            var existing = await File.ReadAllTextAsync(path);
-            if (!string.Equals(Normalize(existing), Normalize(snapshot), StringComparison.Ordinal))
-            {
-                mismatches.Add(def.Key);
+                var existing = await File.ReadAllTextAsync(path);
+                if (!string.Equals(Normalize(existing), Normalize(snapshot), StringComparison.Ordinal))
+                {
+                    mismatches.Add($"{def.Key}.{lang}");
+                }
             }
         }
 
@@ -104,7 +107,7 @@ public class EmailSnapshotTests
         // Invite / takeover sample composers still stamp "today+7" into notes — collapse for stability.
         normalized = System.Text.RegularExpressions.Regex.Replace(
             normalized,
-            @"\d{1,2} (januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december) \d{4}(?:, \d{2}:\d{2})?",
+            @"\d{1,2} (januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december|January|February|March|April|May|June|July|August|September|October|November|December|يناير|فبراير|مارس|أبريل|مايو|يونيو|يوليو|أغسطس|سبتمبر|أكتوبر|نوفمبر|ديسمبر) \d{4}(?:, \d{2}:\d{2})?",
             "<DATE>",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         return normalized.TrimEnd() + "\n";

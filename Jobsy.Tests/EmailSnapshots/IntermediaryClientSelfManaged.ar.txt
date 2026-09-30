@@ -1,0 +1,26 @@
+KEY: IntermediaryClientSelfManaged
+SUBJECT: العميل يدير بنفسه — Lobsy
+PREHEADER: العميل يدير بنفسه — الرابط يبقى
+KIND: Essential
+--- TEXT ---
+العميل يدير الآن بنفسه
+
+⁨Bakkerij De Gouden Korrel⁩ يدير الآن حسابه على Lobsy؛ يبقى ربطكم.
+
+إلى Lobsy: https://lobsy.nl/login
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تدير شركة على Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: العميل يدير الآن بنفسه
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: إلى Lobsy -> https://lobsy.nl/login
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

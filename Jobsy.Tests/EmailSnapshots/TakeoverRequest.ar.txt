@@ -1,0 +1,32 @@
+KEY: TakeoverRequest
+SUBJECT: طلب استحواذ موقع — Lobsy
+PREHEADER: طلب استحواذ موقع
+KIND: Essential
+--- TEXT ---
+طلب استحواذ
+
+هناك طلب استحواذ على ⁨Bakkerij De Gouden Korrel⁩ (⁨000012345678⁩).
+
+مقدّم الطلب: ⁨Alex de Tester⁩ (⁨tester@example.com⁩).
+
+اعرض الطلبات في Lobsy ضمن الاستحواذات
+(https://lobsy.nl/werkgever/overnames).
+
+عرض الاستحواذات: https://lobsy.nl/werkgever/overnames
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تدير هذا الموقع.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: طلب استحواذ
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: عرض الاستحواذات -> https://lobsy.nl/werkgever/overnames
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

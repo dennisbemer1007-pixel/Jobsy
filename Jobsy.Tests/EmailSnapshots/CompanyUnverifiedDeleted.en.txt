@@ -1,0 +1,30 @@
+KEY: CompanyUnverifiedDeleted
+SUBJECT: Registration deleted — Lobsy
+PREHEADER: Unverified registration deleted
+KIND: Essential
+--- TEXT ---
+Hello Alex de Tester,
+
+Registration deleted
+====================
+
+Your unverified registration for Bakkerij De Gouden Korrel was deleted after
+60 days. You can start again via Register company.
+
+Register again: https://lobsy.nl/register
+
+Team Lobsy
+
+You receive this email because you manage a company on Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Registration deleted
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Register again -> https://lobsy.nl/register
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

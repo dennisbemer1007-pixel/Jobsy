@@ -1,0 +1,34 @@
+KEY: SalesManagerInvite
+SUBJECT: Lobsy sales manager invitation
+PREHEADER: You were invited as a sales manager on Lobsy.
+KIND: Essential
+--- TEXT ---
+Hello Alex de Tester,
+
+Sales manager invitation
+========================
+
+You were invited as a sales manager on Lobsy.
+
+Sign in with tester@example.com to continue.
+
+After your first sign-in you fill in KvK/VAT/address details and sign the
+mediation agreement to receive your tracking code.
+
+Sign in: https://lobsy.nl/login
+
+Team Lobsy
+
+You receive this email because you were invited to Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Sales manager invitation
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Sign in -> https://lobsy.nl/login
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

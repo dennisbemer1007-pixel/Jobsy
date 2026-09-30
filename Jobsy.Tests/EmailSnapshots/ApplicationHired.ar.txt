@@ -1,0 +1,38 @@
+KEY: ApplicationHired
+SUBJECT: تهانينا! تم توظيفك لـ ⁨Weekendhulp verkoop⁩
+PREHEADER: تم توظيفك — تهانينا!
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+تهانينا — تم توظيفك!
+
+يا للفرحة! تم توظيفك لـ ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden
+Korrel⁩.
+
+بالتوفيق — واستمتع بهذه الخطوة.
+
+هل لديك طلبات أخرى مفتوحة؟ اسحبها حتى يعرف أولئك أصحاب العمل أنك وجدت عملاً.
+عرض طلباتي:
+https://lobsy.nl/candidate/applications
+
+سحب الطلبات الأخرى: https://lobsy.nl/candidate/actions/withdraw-others?hiredApplicationId=22222222-2222-2222-2222-222222222222
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تقدّمت عبر Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: تهانينا — تم توظيفك!
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: عرض طلباتي -> https://lobsy.nl/candidate/applications
+a: سحب الطلبات الأخرى -> https://lobsy.nl/candidate/actions/withdraw-others?hiredApplicationId=22222222-2222-2222-2222-222222222222
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
+img: src=https://lobsy.nl/images/email/mascot-celebrating-128.png?v=20260930-mail2 alt= width=64 height=64

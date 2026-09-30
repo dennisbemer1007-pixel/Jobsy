@@ -3,7 +3,7 @@ SUBJECT: Je bedrijf is geverifieerd — Lobsy
 PREHEADER: Je bedrijf is geverifieerd op Lobsy
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Je bedrijf is geverifieerd
 ==========================

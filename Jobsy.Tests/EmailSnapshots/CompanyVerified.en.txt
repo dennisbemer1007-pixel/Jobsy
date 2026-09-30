@@ -1,0 +1,39 @@
+KEY: CompanyVerified
+SUBJECT: Your company is verified — Lobsy
+PREHEADER: Your company is verified on Lobsy
+KIND: Essential
+--- TEXT ---
+Hello Alex de Tester,
+
+Your company is verified
+========================
+
+Congratulations! Bakkerij De Gouden Korrel is verified and now visible to
+candidates.
+
+Published:
+
+Vacancy 1: Weekendhulp verkoop
+
+You received your welcome token from us — use it to place (or extend) a
+vacancy.
+
+Go to vacancies: https://lobsy.nl/werkgever/vacatures
+
+Team Lobsy
+
+You receive this email because you manage a company on Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Your company is verified
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Go to vacancies -> https://lobsy.nl/werkgever/vacatures
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
+img: src=https://lobsy.nl/images/email/mascot-celebrating-128.png?v=20260930-mail2 alt= width=64 height=64

@@ -3,7 +3,7 @@ SUBJECT: Toegangsverzoek verlopen — Lobsy
 PREHEADER: Toegangsverzoek verlopen
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Toegangsverzoek verlopen
 ========================

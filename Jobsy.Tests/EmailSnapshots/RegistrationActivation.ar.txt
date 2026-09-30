@@ -1,0 +1,35 @@
+KEY: RegistrationActivation
+SUBJECT: رمز التأكيد — Lobsy
+PREHEADER: رمز تأكيد Lobsy
+KIND: Security
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+مرحبًا بك في Lobsy
+
+أكد بريدك لتفعيل تسجيل الشركة لـ ⁨Bakkerij De Gouden Korrel — Delft⁩ (الدور:
+⁨Filiaalmanager⁩⁨، SBI 5610⁩).
+
+بعد التأكيد يمكنك تجهيز شركتك مباشرة: مسودات وظائف وملف وتعريفات. النشر بعد
+التحقق.
+
+رمز التأكيد (صالح 10 دقائق):
+
+
+123456
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تُنهي تسجيلًا في Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: مرحبًا بك في Lobsy
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=code
+marker: div data-lobsy-otp=123456
+a: Lobsy -> https://lobsy.nl
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

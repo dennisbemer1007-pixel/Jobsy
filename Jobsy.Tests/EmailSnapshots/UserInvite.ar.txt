@@ -1,0 +1,34 @@
+KEY: UserInvite
+SUBJECT: دعوة إلى Lobsy (⁨Filiaalmanager⁩)
+PREHEADER: دُعيت كـ Filiaalmanager على Lobsy.
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+دعوة — ⁨Filiaalmanager⁩
+
+دُعيت كـ ⁨Filiaalmanager⁩ على Lobsy.
+
+اقبل الدعوة عبر الزر أدناه لاختيار كلمة مرور لـ ⁨tester@example.com⁩. أو
+سجّل الدخول بـ Google أو Microsoft Entra بنفس البريد.
+
+الرابط صالح حتى 7 أكتوبر 2026. بعد ذلك اطلب دعوة جديدة.
+
+قبول الدعوة: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك دُعيت إلى Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: دعوة — ⁨Filiaalmanager⁩
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: قبول الدعوة -> https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -1,0 +1,30 @@
+KEY: CompanyVerificationReminder
+SUBJECT: تذكير: وثّق شركتك — Lobsy
+PREHEADER: وثّق شركتك على Lobsy
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+وثّق شركتك
+
+قبل أسبوع سجّلت شركتك. وثّقها ليجدك المرشحون.
+
+الشركة: ⁨Bakkerij De Gouden Korrel⁩. حتى ذلك الحين تبقى غير مرئية للمرشحين.
+
+وثّق الآن: https://lobsy.nl/register/verifieren
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تدير شركة على Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: وثّق شركتك
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: وثّق الآن -> https://lobsy.nl/register/verifieren
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

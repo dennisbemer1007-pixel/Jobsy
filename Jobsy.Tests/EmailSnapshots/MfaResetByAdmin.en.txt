@@ -1,0 +1,32 @@
+KEY: MfaResetByAdmin
+SUBJECT: Your two-step verification was reset
+PREHEADER: Your two-step verification was reset by support.
+KIND: Essential
+--- TEXT ---
+Hello Alex de Tester,
+
+Two-step verification reset
+===========================
+
+Your two-step verification was reset by Lobsy support. Sign in again to set
+up 2FA.
+
+Was this not you? Contact us.
+
+Sign in again: https://lobsy.nl/login
+
+Team Lobsy
+
+You receive this email because of a Lobsy security notice.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Two-step verification reset
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Sign in again -> https://lobsy.nl/login
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

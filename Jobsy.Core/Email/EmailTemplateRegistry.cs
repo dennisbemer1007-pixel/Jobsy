@@ -153,25 +153,8 @@ public static class EmailTemplateRegistry
     public static bool AllowsMascot(string? key)
         => !string.IsNullOrWhiteSpace(key) && GoodNewsKeys.Contains(key);
 
-    public static string ReasonText(string reasonKey) => reasonKey switch
-    {
-        "Applied" => "Je ontvangt deze mail omdat je hebt gesolliciteerd via Lobsy.",
-        "ApplyCode" => "Je ontvangt deze mail omdat je een sollicitatie wilt afronden.",
-        "NearbyJobs" => "Je ontvangt deze mail omdat je tips over vacatures in de buurt aan hebt staan.",
-        "AccountRequest" => "Je ontvangt deze mail vanwege een actie op je Lobsy-account.",
-        "ParentAsked" => "Je ontvangt deze mail omdat een minderjarige je toestemming vraagt.",
-        "ManagesVacancies" => "Je ontvangt deze mail omdat je vacatures beheert op Lobsy.",
-        "ManagesCompany" => "Je ontvangt deze mail omdat je een bedrijf beheert op Lobsy.",
-        "ApiKeyRequested" => "Je ontvangt deze mail omdat er een API-sleutel is aangevraagd.",
-        "Invited" => "Je ontvangt deze mail omdat je bent uitgenodigd voor Lobsy.",
-        "Registering" => "Je ontvangt deze mail omdat je een registratie bij Lobsy afrondt.",
-        "Registered" => "Je ontvangt deze mail omdat je account op Lobsy actief is.",
-        "TakeoverRequested" => "Je ontvangt deze mail vanwege een overname- of toegangsverzoek.",
-        "YouManage" => "Je ontvangt deze mail omdat jij deze vestiging beheert.",
-        "Security" => "Je ontvangt deze mail vanwege een beveiligingsmelding op Lobsy.",
-        "AdminNotice" => "Je ontvangt deze mail als Lobsy-beheerder.",
-        _ => "Je ontvangt deze mail vanwege een actie op Lobsy."
-    };
+    public static string ReasonText(string reasonKey)
+        => Localization.EmailStrings.Reason(EmailCulture.Nl, reasonKey);
 
     private static EmailTemplateDefinition Def(
         string key,

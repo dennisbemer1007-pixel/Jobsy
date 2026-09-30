@@ -1,0 +1,33 @@
+KEY: CompanyVerificationReminder
+SUBJECT: Reminder: verify your company — Lobsy
+PREHEADER: Verify your company on Lobsy
+KIND: Essential
+--- TEXT ---
+Hello Alex de Tester,
+
+Verify your company
+===================
+
+A week ago you registered your company. Verify it so candidates can find
+you.
+
+Company: Bakkerij De Gouden Korrel. Until then it stays invisible to
+candidates.
+
+Verify now: https://lobsy.nl/register/verifieren
+
+Team Lobsy
+
+You receive this email because you manage a company on Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Verify your company
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Verify now -> https://lobsy.nl/register/verifieren
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -1,0 +1,29 @@
+KEY: EmailSignInCode
+SUBJECT: رمز تسجيل الدخول إلى Lobsy
+PREHEADER: أدخل هذا الرمز لتسجيل الدخول.
+KIND: Security
+--- TEXT ---
+رمز تسجيل الدخول
+
+استخدم هذا الرمز المكوّن من 6 أرقام لتسجيل الدخول:
+
+
+123456
+
+الرمز صالح لمدة 10 دقائق.
+
+فريق Lobsy
+
+تصلك هذه الرسالة بسبب إجراء على حساب Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: رمز تسجيل الدخول
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=code
+marker: div data-lobsy-otp=123456
+a: Lobsy -> https://lobsy.nl
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

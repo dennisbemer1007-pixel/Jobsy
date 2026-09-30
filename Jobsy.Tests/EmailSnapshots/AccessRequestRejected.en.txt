@@ -1,0 +1,31 @@
+KEY: AccessRequestRejected
+SUBJECT: Access request rejected — Lobsy
+PREHEADER: Access request rejected
+KIND: Essential
+--- TEXT ---
+Hello Alex de Tester,
+
+Access request rejected
+=======================
+
+Your request for access to Bakkerij De Gouden Korrel was rejected.
+
+Reason: Niet goedgekeurd
+
+Request again: https://lobsy.nl/register/toegang
+
+Team Lobsy
+
+You receive this email because of an access or takeover request.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Access request rejected
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Request again -> https://lobsy.nl/register/toegang
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

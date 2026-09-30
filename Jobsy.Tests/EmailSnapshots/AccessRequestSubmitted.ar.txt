@@ -1,0 +1,29 @@
+KEY: AccessRequestSubmitted
+SUBJECT: أُرسل طلب الوصول — Lobsy
+PREHEADER: أُرسل طلب الوصول
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+أُرسل الطلب
+
+أُرسل طلبك. يقرر ⁨Bakkerij De Gouden Korrel⁩؛ بعد 5 أيام عمل يراجع Lobsy
+أيضًا.
+
+إلى Lobsy: https://lobsy.nl/login
+
+فريق Lobsy
+
+تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: أُرسل الطلب
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: إلى Lobsy -> https://lobsy.nl/login
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

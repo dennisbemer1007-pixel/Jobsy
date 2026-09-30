@@ -1,0 +1,39 @@
+KEY: TakeoverApproved
+SUBJECT: وُوفق على الاستحواذ — Lobsy
+PREHEADER: وُوفق على الاستحواذ
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+وُوفق على الاستحواذ
+
+وُوفق على طلب استحواذك على ⁨Bakkerij De Gouden Korrel⁩.
+
+تبقى الرموز والوظائف والسجل مرتبطة بالموقع ضمن المنظمة.
+
+اختر كلمة مرور لـ ⁨tester@example.com⁩ عبر الزر أدناه.
+
+الرابط صالح حتى 7 أكتوبر 2026. بعد ذلك اطلب دعوة جديدة.
+
+سجّل الدخول عبر Lobsy (https://lobsy.nl/login).
+
+اختر كلمة المرور: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+
+فريق Lobsy
+
+تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: وُوفق على الاستحواذ
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: اختر كلمة المرور -> https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
+img: src=https://lobsy.nl/images/email/mascot-celebrating-128.png?v=20260930-mail2 alt= width=64 height=64

@@ -1,0 +1,33 @@
+KEY: EngagementClaimRemoved
+SUBJECT: Feature removed — Lobsy
+PREHEADER: Social feature removed
+KIND: Essential
+--- TEXT ---
+Feature removed
+===============
+
+The feature duurzaamheid of Bakkerij De Gouden Korrel was removed from
+Lobsy.
+
+Reason: Filiaalmanager
+
+You can submit the feature again in 30 days with new evidence, or choose
+another feature.
+
+Go to dashboard: https://lobsy.nl/werkgever
+
+Team Lobsy
+
+You receive this email because you manage a company on Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Feature removed
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Go to dashboard -> https://lobsy.nl/werkgever
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -1,6 +1,7 @@
 using Jobsy.Core.Email.Model;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Time;
 
 namespace Jobsy.Core.Email;
 
@@ -8,263 +9,233 @@ public static partial class TransactionalEmails
 {
     public static ComposedEmail UserInvite(
         string? baseUrl, string fullName, string roleLabel, string email,
-        string? setPasswordUrl, bool promotedFromCandidate)
+        string? setPasswordUrl, bool promotedFromCandidate, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var ctaUrl = setPasswordUrl ?? links.Login;
-        var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Uitnodiging accepteren";
+        var ctaLabel = setPasswordUrl is null ? S(c, "Email.Common.Cta.Login") : S(c, "Email.Common.Cta.AcceptInvite");
         var blocks = new List<EmailBlock>
         {
-            P(Fmt("Je bent uitgenodigd als {0} op Lobsy.", EmailArg.Bold(roleLabel))),
+            P(T(c, "Email.UserInvite.P1", EmailArg.Bold(roleLabel))),
             setPasswordUrl is null
-                ? P(Fmt("Log in met {0} via Google, Microsoft Entra of je bestaande wachtwoord.", EmailArg.Plain(email)))
-                : P(Fmt("Accepteer de uitnodiging via de knop hieronder om een wachtwoord te kiezen voor {0}. Of log in met Google of Microsoft Entra met hetzelfde e-mailadres.", EmailArg.Plain(email)))
+                ? P(T(c, "Email.UserInvite.P2HasPassword", EmailArg.Plain(email)))
+                : P(T(c, "Email.UserInvite.P2SetPassword", EmailArg.Plain(email)))
         };
         if (promotedFromCandidate)
         {
-            blocks.Add(P("Je eerdere sollicitaties blijven zichtbaar (alleen-lezen) in Lobsy."));
+            blocks.Add(P(S(c, "Email.UserInvite.P3Promoted")));
         }
 
         if (setPasswordUrl is not null)
         {
-            blocks.Add(N($"De link werkt tot {Jobsy.Core.Time.AmsterdamTime.FormatDate(DateTime.UtcNow.AddDays(7))}. Daarna vraag je een nieuwe uitnodiging."));
+            blocks.Add(N(Sf(c, "Email.Common.LinkValidUntil", EmailFormat.Date(DateTime.UtcNow.AddDays(7), c))));
         }
 
-        return Finish(Doc("UserInvite", $"Uitnodiging voor Lobsy ({roleLabel})", $"Uitnodiging voor Lobsy ({roleLabel})",
-            $"Uitnodiging — {roleLabel}",
-            blocks, Button(ctaLabel, ctaUrl), greeting: $"Hoi {fullName},"), baseUrl);
+        return Finish(Doc("UserInvite",
+            Sf(c, "Email.UserInvite.Subject", EmailBidi.Isolate(c, roleLabel)),
+            Sf(c, "Email.UserInvite.Preheader", EmailBidi.Isolate(c, roleLabel)),
+            Sf(c, "Email.UserInvite.Heading", EmailBidi.Isolate(c, roleLabel)),
+            blocks, Button(ctaLabel, ctaUrl), greeting: GreetOther(c, fullName), culture: c), baseUrl);
     }
 
     public static ComposedEmail SalesManagerInvite(
-        string? baseUrl, string name, string email, string? setPasswordUrl)
+        string? baseUrl, string name, string email, string? setPasswordUrl, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var ctaUrl = setPasswordUrl ?? links.Login;
-        var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Uitnodiging accepteren";
+        var ctaLabel = setPasswordUrl is null ? S(c, "Email.Common.Cta.Login") : S(c, "Email.Common.Cta.AcceptInvite");
         var blocks = new List<EmailBlock>
         {
-            P("Je bent uitgenodigd als salesmanager op Lobsy."),
+            P(S(c, "Email.SalesManagerInvite.P1")),
             setPasswordUrl is null
-                ? P(Fmt("Log in met {0} om verder te gaan.", EmailArg.Bold(email)))
-                : P(Fmt("Accepteer de uitnodiging voor {0} via de knop hieronder.", EmailArg.Bold(email))),
-            P("Na je eerste login vul je je KvK/BTW/NAW-gegevens in en onderteken je de bemiddelingsovereenkomst om je trackingcode te ontvangen.")
+                ? P(T(c, "Email.SalesManagerInvite.P2HasPassword", EmailArg.Bold(email)))
+                : P(T(c, "Email.SalesManagerInvite.P2SetPassword", EmailArg.Bold(email))),
+            P(S(c, "Email.SalesManagerInvite.P3"))
         };
         if (setPasswordUrl is not null)
         {
-            blocks.Add(N($"De link werkt tot {Jobsy.Core.Time.AmsterdamTime.FormatDate(DateTime.UtcNow.AddDays(7))}. Daarna vraag je een nieuwe uitnodiging."));
-            blocks.Add(N("Na het instellen van je wachtwoord ga je verder met onboarding.",
-                new EmailLink("Start onboarding", links.SalesOnboarding)));
+            blocks.Add(N(Sf(c, "Email.Common.LinkValidUntil", EmailFormat.Date(DateTime.UtcNow.AddDays(7), c))));
+            blocks.Add(N(S(c, "Email.SalesManagerInvite.NoteOnboarding"),
+                new EmailLink(S(c, "Email.SalesManagerInvite.NoteLink"), links.SalesOnboarding)));
         }
 
-        return Finish(Doc("SalesManagerInvite", "Uitnodiging Lobsy salesmanager", "Uitnodiging Lobsy salesmanager", "Uitnodiging salesmanager",
-            blocks, Button(ctaLabel, ctaUrl), greeting: $"Hallo {name},"), baseUrl);
+        return Finish(Doc("SalesManagerInvite", S(c, "Email.SalesManagerInvite.Subject"),
+            S(c, "Email.SalesManagerInvite.Preheader"), S(c, "Email.SalesManagerInvite.Heading"),
+            blocks, Button(ctaLabel, ctaUrl), greeting: GreetOther(c, name), culture: c), baseUrl);
     }
 
     public static ComposedEmail AmbassadeurInvite(
-        string? baseUrl, string name, string email, string? setPasswordUrl)
+        string? baseUrl, string name, string email, string? setPasswordUrl, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var ctaUrl = setPasswordUrl ?? links.Login;
-        var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Uitnodiging accepteren";
+        var ctaLabel = setPasswordUrl is null ? S(c, "Email.Common.Cta.Login") : S(c, "Email.Common.Cta.AcceptInvite");
         var blocks = new List<EmailBlock>
         {
-            P("Je bent uitgenodigd als ambassadeur op Lobsy."),
+            P(S(c, "Email.AmbassadeurInvite.P1")),
             setPasswordUrl is null
-                ? P(Fmt("Log in met {0} om verder te gaan.", EmailArg.Bold(email)))
-                : P(Fmt("Accepteer de uitnodiging voor {0} via de knop hieronder.", EmailArg.Bold(email))),
-            P("Na je eerste login vul je je KvK/BTW/NAW-gegevens in en onderteken je de bemiddelingsovereenkomst om je trackingcode te ontvangen.")
+                ? P(T(c, "Email.AmbassadeurInvite.P2HasPassword", EmailArg.Bold(email)))
+                : P(T(c, "Email.AmbassadeurInvite.P2SetPassword", EmailArg.Bold(email))),
+            P(S(c, "Email.AmbassadeurInvite.P3"))
         };
         if (setPasswordUrl is not null)
         {
-            blocks.Add(N($"De link werkt tot {Jobsy.Core.Time.AmsterdamTime.FormatDate(DateTime.UtcNow.AddDays(7))}. Daarna vraag je een nieuwe uitnodiging."));
-            blocks.Add(N("Na het instellen van je wachtwoord ga je verder met onboarding.",
-                new EmailLink("Start onboarding", links.AmbassadeurOnboarding)));
+            blocks.Add(N(Sf(c, "Email.Common.LinkValidUntil", EmailFormat.Date(DateTime.UtcNow.AddDays(7), c))));
+            blocks.Add(N(S(c, "Email.AmbassadeurInvite.NoteOnboarding"),
+                new EmailLink(S(c, "Email.AmbassadeurInvite.NoteLink"), links.AmbassadeurOnboarding)));
         }
 
-        return Finish(Doc("AmbassadeurInvite", "Uitnodiging Lobsy ambassadeur", "Uitnodiging Lobsy ambassadeur", "Uitnodiging ambassadeur",
-            blocks, Button(ctaLabel, ctaUrl), greeting: $"Hallo {name},"), baseUrl);
+        return Finish(Doc("AmbassadeurInvite", S(c, "Email.AmbassadeurInvite.Subject"),
+            S(c, "Email.AmbassadeurInvite.Preheader"), S(c, "Email.AmbassadeurInvite.Heading"),
+            blocks, Button(ctaLabel, ctaUrl), greeting: GreetOther(c, name), culture: c), baseUrl);
     }
 
     public static ComposedEmail CompanyApiKeyCredentials(
-        string? baseUrl, string companyName, string apiBase, string revealUrl, DateTime expiresAtUtc)
+        string? baseUrl, string companyName, string apiBase, string revealUrl, DateTime expiresAtUtc,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var endpoint = apiBase.TrimEnd('/') + "/api/external/vacancies";
         var swaggerUrl = apiBase.TrimEnd('/') + "/swagger";
-        var expiresLabel = Jobsy.Core.Time.AmsterdamTime.FormatDateTime(expiresAtUtc);
-        return Finish(Doc("CompanyApiKeyCredentials", $"Lobsy API-credentials voor {companyName}",
-            $"API-credentials voor {companyName}", "API-credentials",
+        var expiresLabel = EmailFormat.DateTimeWithoutZone(expiresAtUtc, c);
+        return Finish(Doc("CompanyApiKeyCredentials",
+            Sf(c, "Email.CompanyApiKeyCredentials.Subject", EmailBidi.Isolate(c, companyName)),
+            Sf(c, "Email.CompanyApiKeyCredentials.Preheader", EmailBidi.Isolate(c, companyName)),
+            S(c, "Email.CompanyApiKeyCredentials.Heading"),
             [
-                P(Fmt("Hierbij een link om de API-sleutel voor {0} één keer op te halen.", EmailArg.Bold(companyName))),
+                P(T(c, "Email.CompanyApiKeyCredentials.P1", EmailArg.Bold(companyName))),
                 F([
-                    ("Endpoint", endpoint),
-                    ("Header", "X-API-Key: <jouw-api-key>"),
-                    ("Swagger", swaggerUrl),
-                    ("Geldig tot", expiresLabel)
+                    (S(c, "Email.CompanyApiKeyCredentials.Fact.Endpoint"), endpoint),
+                    (S(c, "Email.CompanyApiKeyCredentials.Fact.Header"), S(c, "Email.CompanyApiKeyCredentials.Fact.HeaderVal")),
+                    (S(c, "Email.CompanyApiKeyCredentials.Fact.Swagger"), swaggerUrl),
+                    (S(c, "Email.CompanyApiKeyCredentials.Fact.Expires"), expiresLabel)
                 ]),
-                P("De link werkt 72 uur en maar één keer. Je huidige sleutel blijft werken tot je de nieuwe ophaalt.")
+                P(S(c, "Email.CompanyApiKeyCredentials.P2"))
             ],
-            Button("API-sleutel ophalen", revealUrl),
-            greeting: "Hallo,"), baseUrl);
+            Button(S(c, "Email.CompanyApiKeyCredentials.Cta"), revealUrl),
+            greeting: GreetOther(c, null), culture: c), baseUrl);
     }
 
     public static ComposedEmail ParentalConsent(
-        string? baseUrl, string? childFirstName, string confirmUrl, DateTime expiresAtUtc)
+        string? baseUrl, string? childFirstName, string confirmUrl, DateTime expiresAtUtc,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var age = CandidateConsentRules.ParentalConsentAge;
         var hasName = !string.IsNullOrWhiteSpace(childFirstName);
         var subject = hasName
-            ? $"{childFirstName!.Trim()} vraagt je toestemming voor Lobsy"
-            : "Je kind vraagt je toestemming voor Lobsy";
-        var bodyName = hasName ? childFirstName!.Trim() : "je kind";
-        var bodyNameCap = hasName ? childFirstName!.Trim() : "Je kind";
-        var expiresLabel = Jobsy.Core.Time.AmsterdamTime.FormatDate(expiresAtUtc);
-        return Finish(Doc("ParentalConsent", subject, "Geef je toestemming voor Lobsy.", "Geef je toestemming?",
+            ? Sf(c, "Email.ParentalConsent.SubjectNamed", EmailBidi.Isolate(c, childFirstName!.Trim()))
+            : S(c, "Email.ParentalConsent.Subject");
+        var bodyName = hasName ? childFirstName!.Trim() : S(c, "Email.ParentalConsent.ChildFallback");
+        var bodyNameCap = hasName ? childFirstName!.Trim() : S(c, "Email.ParentalConsent.ChildFallbackCap");
+        var expiresLabel = EmailFormat.Date(expiresAtUtc, c);
+        return Finish(Doc("ParentalConsent", subject, S(c, "Email.ParentalConsent.Preheader"),
+            S(c, "Email.ParentalConsent.Heading"),
             [
-                P($"{bodyNameCap} wil Lobsy gebruiken: tests doen en een analyse met AI krijgen. Omdat {bodyName} jonger is dan {age} jaar, hebben we toestemming nodig van een ouder of voogd."),
-                N($"Ben je geen ouder of voogd, of weet je hier niets van? Dan hoef je niets te doen. De link werkt tot {expiresLabel}.")
+                P(Sf(c, "Email.ParentalConsent.P1",
+                    EmailBidi.Isolate(c, bodyNameCap), EmailBidi.Isolate(c, bodyName), age)),
+                N(Sf(c, "Email.ParentalConsent.Note", expiresLabel))
             ],
-            Button("Toestemming bekijken", confirmUrl)), baseUrl);
+            Button(S(c, "Email.ParentalConsent.Cta"), confirmUrl), culture: c), baseUrl);
     }
 
     public static ComposedEmail SupportAccessRequested(
-        string? baseUrl, string adminDisplay, string reason, DateTime expiresAtUtc, string scopeLabel)
+        string? baseUrl, string adminDisplay, string reason, DateTime expiresAtUtc, string scopeLabel,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var expiresLabel = Jobsy.Core.Time.AmsterdamTime.FormatDateTime(expiresAtUtc);
-        return Finish(Doc("SupportAccessRequested", "Support-toegang aangevraagd door een admin",
-            "Support-toegang aangevraagd door een admin", "Support-toegang aangevraagd",
+        var expiresLabel = EmailFormat.DateTimeWithoutZone(expiresAtUtc, c);
+        var zone = S(c, "Email.Common.TimeZoneNl");
+        return Finish(Doc("SupportAccessRequested", S(c, "Email.SupportAccessRequested.Subject"),
+            S(c, "Email.SupportAccessRequested.Preheader"), S(c, "Email.SupportAccessRequested.Heading"),
             [
-                P($"{adminDisplay} vroeg tijdelijk toegang tot persoonsgegevens aan."),
+                P(Sf(c, "Email.SupportAccessRequested.P1", EmailBidi.Isolate(c, adminDisplay))),
                 F([
-                    ("Reden", reason),
-                    ("Toegang tot", scopeLabel),
-                    ("Geldig tot", $"{expiresLabel} (Nederlandse tijd)")
+                    (S(c, "Email.SupportAccessRequested.Fact.Reason"), reason),
+                    (S(c, "Email.SupportAccessRequested.Fact.Scope"), scopeLabel),
+                    (S(c, "Email.SupportAccessRequested.Fact.Expires"), Sf(c, "Email.SupportAccessRequested.ExpiresVal", expiresLabel, zone))
                 ])
             ],
-            Button("Bekijk de toegang", links.AdminPersonalDataAccessLog)), baseUrl);
+            Button(S(c, "Email.SupportAccessRequested.Cta"), links.AdminPersonalDataAccessLog), culture: c), baseUrl);
     }
 
-    public static ComposedEmail AccountLockout(string? baseUrl)
+    public static ComposedEmail AccountLockout(string? baseUrl, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var brand = Brand(baseUrl);
-        return Finish(Doc("AccountLockout", "Je Lobsy-account is tijdelijk geblokkeerd",
-            "Er zijn meerdere mislukte inlogpogingen gedaan.", "Account tijdelijk geblokkeerd",
+        return Finish(Doc("AccountLockout", S(c, "Email.AccountLockout.Subject"),
+            S(c, "Email.AccountLockout.Preheader"), S(c, "Email.AccountLockout.Heading"),
             [
-                P("Er zijn meerdere mislukte inlogpogingen gedaan. Je account is tijdelijk geblokkeerd. Was je dit niet zelf? Kies dan na de blokkade een nieuw wachtwoord.")
+                P(S(c, "Email.AccountLockout.P1"))
             ],
-            Button("Neem contact op", $"mailto:{brand.SupportAddress}")), baseUrl);
+            Button(S(c, "Email.AccountLockout.Cta"), $"mailto:{brand.SupportAddress}"), culture: c), baseUrl);
     }
 
     public static ComposedEmail AccountUnsubscribeVerification(
-        string? baseUrl, string fullName, string code, int ttlMinutes)
+        string? baseUrl, string fullName, string code, int ttlMinutes, EmailCulture? culture = null)
     {
-        return Finish(Doc("AccountUnsubscribeVerification", "Verificatiecode voor uitschrijving bij Lobsy",
-            "Je verificatiecode voor uitschrijving", "Bevestig je uitschrijving",
+        var c = culture ?? EmailCulture.Nl;
+        return Finish(Doc("AccountUnsubscribeVerification", S(c, "Email.AccountUnsubscribeVerification.Subject"),
+            S(c, "Email.AccountUnsubscribeVerification.Preheader"), S(c, "Email.AccountUnsubscribeVerification.Heading"),
             [
-                P("Je hebt gevraagd om je Lobsy-account af te melden."),
-                P("Gebruik deze 6-cijferige code om de uitschrijving te bevestigen:"),
-                C(code, $"De code is {ttlMinutes} minuten geldig. Heb je dit niet zelf aangevraagd? Negeer deze mail dan.")
+                P(S(c, "Email.AccountUnsubscribeVerification.P1")),
+                P(S(c, "Email.AccountUnsubscribeVerification.P2")),
+                C(code, Sf(c, "Email.Common.CodeValidMinutes", ttlMinutes))
             ],
-            greeting: $"Hoi {fullName},"), baseUrl);
+            greeting: GreetOther(c, fullName), culture: c), baseUrl);
     }
 
-    public static ComposedEmail MfaResetByAdmin(string? baseUrl, string recipientName)
+    public static ComposedEmail MfaResetByAdmin(string? baseUrl, string recipientName, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = "Je tweestapsverificatie is gereset";
-        return Finish(Doc("MfaResetByAdmin", subject, "Je tweestapsverificatie is gereset door support.", "Tweestapsverificatie gereset",
+        return Finish(Doc("MfaResetByAdmin", S(c, "Email.MfaResetByAdmin.Subject"),
+            S(c, "Email.MfaResetByAdmin.Preheader"), S(c, "Email.MfaResetByAdmin.Heading"),
             [
-                P("Je tweestapsverificatie is gereset door Lobsy-support. Log opnieuw in om 2FA in te stellen."),
-                P("Was jij dit niet? Neem contact op.")
+                P(S(c, "Email.MfaResetByAdmin.P1")),
+                P(S(c, "Email.MfaResetByAdmin.P2"))
             ],
-            Button("Opnieuw inloggen", links.Login),
-            greeting: $"Hoi {recipientName},"), baseUrl);
+            Button(S(c, "Email.MfaResetByAdmin.Cta"), links.Login),
+            greeting: GreetOther(c, recipientName), culture: c), baseUrl);
     }
 
     public static ComposedEmail EmailSignUpCode(string? baseUrl, string code, string? culture)
     {
-        var lang = Jobsy.Core.Localization.JobsyLanguages.Normalize(culture);
-        var (subject, heading, body, ttl, pre) = lang switch
-        {
-            "en" => ("Your Lobsy code: " + code, "Your code for Lobsy",
-                "Use this 6-digit code to create your free account:",
-                "The code is valid for 10 minutes.", "Your Lobsy sign-up code"),
-            "pl" => ("Twój kod Lobsy: " + code, "Twój kod do Lobsy",
-                "Użyj tego 6-cyfrowego kodu, aby utworzyć darmowe konto:",
-                "Kod jest ważny przez 10 minut.", "Twój kod rejestracji Lobsy"),
-            "ro" => ("Codul tău Lobsy: " + code, "Codul tău pentru Lobsy",
-                "Folosește acest cod de 6 cifre pentru a-ți crea contul gratuit:",
-                "Codul este valabil 10 minute.", "Codul tău de înregistrare Lobsy"),
-            "ar" => ("رمز لوبسي: " + code, "رمزك لـ Lobsy",
-                "استخدم هذا الرمز المكوّن من 6 أرقام لإنشاء حسابك المجاني:",
-                "الرمز صالح لمدة 10 دقائق.", "رمز إنشاء حساب Lobsy"),
-            _ => ("Je code voor Lobsy: " + code, "Je code voor Lobsy",
-                "Gebruik deze 6-cijferige code om je gratis account te maken:",
-                "De code is 10 minuten geldig.", "Je Lobsy-aanmeldcode")
-        };
-        return Finish(Doc("EmailSignUpCode", subject, pre, heading,
-            [P(body), C(code, ttl)],
-            culture: EmailCulture.ForLanguage(lang)), baseUrl);
+        var c = EmailCulture.ForLanguage(culture);
+        return Finish(Doc("EmailSignUpCode",
+            Sf(c, "Email.EmailSignUpCode.Subject", code),
+            S(c, "Email.EmailSignUpCode.Preheader"),
+            S(c, "Email.EmailSignUpCode.Heading"),
+            [P(S(c, "Email.EmailSignUpCode.P1")), C(code, S(c, "Email.Common.CodeValid10"))],
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail EmailSignInCode(string? baseUrl, string code, string? culture)
     {
-        var lang = Jobsy.Core.Localization.JobsyLanguages.Normalize(culture);
-        var (subject, heading, body, ttl, pre) = lang switch
-        {
-            "en" => ("Your Lobsy sign-in code", "Your sign-in code",
-                "Use this 6-digit code to sign in:",
-                "The code is valid for 10 minutes.", "Enter this code to sign in."),
-            "pl" => ("Twój kod logowania Lobsy", "Twój kod logowania",
-                "Użyj tego 6-cyfrowego kodu, aby się zalogować:",
-                "Kod jest ważny przez 10 minut.", "Wpisz ten kod, aby się zalogować."),
-            "ro" => ("Codul tău de autentificare Lobsy", "Codul tău de autentificare",
-                "Folosește acest cod de 6 cifre pentru a te autentifica:",
-                "Codul este valabil 10 minute.", "Introdu acest cod pentru autentificare."),
-            "ar" => ("رمز تسجيل الدخول إلى Lobsy", "رمز تسجيل الدخول",
-                "استخدم هذا الرمز المكوّن من 6 أرقام لتسجيل الدخول:",
-                "الرمز صالح لمدة 10 دقائق.", "أدخل هذا الرمز لتسجيل الدخول."),
-            _ => ("Je inlogcode voor Lobsy", "Je inlogcode",
-                "Gebruik deze 6-cijferige code om in te loggen:",
-                "De code is 10 minuten geldig.", "Voer deze code in om in te loggen.")
-        };
-        // Fix preheader != subject for nl/en defaults that previously matched.
-        if (string.Equals(pre, subject, StringComparison.Ordinal))
-        {
-            pre = lang == "en" ? "Enter this code to sign in." : "Voer deze code in om in te loggen.";
-        }
-
-        return Finish(Doc("EmailSignInCode", subject, pre, heading,
-            [P(body), C(code, ttl)],
-            culture: EmailCulture.ForLanguage(lang)), baseUrl);
+        var c = EmailCulture.ForLanguage(culture);
+        return Finish(Doc("EmailSignInCode",
+            S(c, "Email.EmailSignInCode.Subject"),
+            S(c, "Email.EmailSignInCode.Preheader"),
+            S(c, "Email.EmailSignInCode.Heading"),
+            [P(S(c, "Email.EmailSignInCode.P1")), C(code, S(c, "Email.Common.CodeValid10"))],
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail EmailCodeUsePassword(string? baseUrl, string? culture)
     {
         var links = Links(baseUrl);
-        var lang = Jobsy.Core.Localization.JobsyLanguages.Normalize(culture);
-        var (subject, heading, body, cta, pre) = lang switch
-        {
-            "en" => ("Sign in with your password", "Use your password or SSO",
-                "This e-mail belongs to a Lobsy account that signs in with a password or Microsoft/Google. We did not send a one-time code.",
-                "Go to login", "Use your password or Microsoft/Google."),
-            "pl" => ("Zaloguj się hasłem", "Użyj hasła lub SSO",
-                "Ten e-mail należy do konta Lobsy, które loguje się hasłem lub przez Microsoft/Google. Nie wysłaliśmy jednorazowego kodu.",
-                "Przejdź do logowania", "Użyj hasła lub Microsoft/Google."),
-            "ro" => ("Autentifică-te cu parola", "Folosește parola sau SSO",
-                "Acest e-mail aparține unui cont Lobsy care se autentifică cu parolă sau Microsoft/Google. Nu am trimis un cod unic.",
-                "Mergi la autentificare", "Folosește parola sau Microsoft/Google."),
-            "ar" => ("سجّل الدخول بكلمة المرور", "استخدم كلمة المرور أو SSO",
-                "هذا البريد يخص حساب Lobsy يسجّل الدخول بكلمة مرور أو Microsoft/Google. لم نُرسل رمزًا لمرة واحدة.",
-                "الانتقال لتسجيل الدخول", "استخدم كلمة المرور أو Microsoft/Google."),
-            _ => ("Log in met je wachtwoord", "Log in met wachtwoord of SSO",
-                "Dit e-mailadres hoort bij een Lobsy-account dat inlogt met een wachtwoord of Microsoft/Google. We hebben geen eenmalige code gestuurd.",
-                "Naar inloggen", "Gebruik je wachtwoord of Microsoft/Google.")
-        };
-        return Finish(Doc("EmailCodeUsePassword", subject, pre, heading,
-            [P(body)],
-            Button(cta, links.Login),
-            culture: EmailCulture.ForLanguage(lang)), baseUrl);
+        var c = EmailCulture.ForLanguage(culture);
+        return Finish(Doc("EmailCodeUsePassword",
+            S(c, "Email.EmailCodeUsePassword.Subject"),
+            S(c, "Email.EmailCodeUsePassword.Preheader"),
+            S(c, "Email.EmailCodeUsePassword.Heading"),
+            [P(S(c, "Email.EmailCodeUsePassword.P1"))],
+            Button(S(c, "Email.EmailCodeUsePassword.Cta"), links.Login),
+            culture: c), baseUrl);
     }
 }
 
@@ -312,5 +283,3 @@ public sealed record EmailSampleContext(
             ApiBaseUrl: "https://api.lobsy.nl");
     }
 }
-
-// Note: EmailSampleContext is in this file already — AdHoc goes in main partial

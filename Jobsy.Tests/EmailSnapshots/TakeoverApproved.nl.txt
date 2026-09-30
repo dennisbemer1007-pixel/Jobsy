@@ -3,7 +3,7 @@ SUBJECT: Overname goedgekeurd — Lobsy
 PREHEADER: Overname goedgekeurd
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Overname goedgekeurd
 ====================

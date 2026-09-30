@@ -1,0 +1,30 @@
+KEY: TakeoverSubmitted
+SUBJECT: Takeover request submitted — Lobsy
+PREHEADER: Takeover request submitted
+KIND: Essential
+--- TEXT ---
+Hello Alex de Tester,
+
+Request submitted
+=================
+
+Location Bakkerij De Gouden Korrel is already in use. We sent a takeover
+request to the current owner.
+
+Go to Lobsy: https://lobsy.nl/hoe-werkt-lobsy
+
+Team Lobsy
+
+You receive this email because of an access or takeover request.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Request submitted
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Go to Lobsy -> https://lobsy.nl/hoe-werkt-lobsy
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

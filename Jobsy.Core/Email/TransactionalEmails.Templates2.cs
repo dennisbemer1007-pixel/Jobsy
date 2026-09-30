@@ -1,314 +1,368 @@
 using Jobsy.Core.Email.Model;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Time;
 
 namespace Jobsy.Core.Email;
 
 public static partial class TransactionalEmails
 {
     public static ComposedEmail RegistrationActivation(
-        string? baseUrl, string contactName, string establishmentName, string roleLabel, string? sbi, string code)
+        string? baseUrl, string contactName, string establishmentName, string roleLabel, string? sbi, string code,
+        EmailCulture? culture = null)
     {
-        var sbiBit = string.IsNullOrEmpty(sbi) ? "" : $", SBI {sbi}";
-        return Finish(Doc("RegistrationActivation", "Bevestigingscode — Lobsy", "Je Lobsy-bevestigingscode", "Welkom bij Lobsy",
+        var c = culture ?? EmailCulture.Nl;
+        var sbiBit = string.IsNullOrEmpty(sbi) ? "" : Sf(c, "Email.RegistrationActivation.SbiBit", sbi);
+        return Finish(Doc("RegistrationActivation", S(c, "Email.RegistrationActivation.Subject"),
+            S(c, "Email.RegistrationActivation.Preheader"), S(c, "Email.RegistrationActivation.Heading"),
             [
-                P(Fmt("Bevestig je e-mailadres om je bedrijfsregistratie voor {0} te activeren (rol: {1}{2}).",
+                P(T(c, "Email.RegistrationActivation.P1",
                     EmailArg.Bold(establishmentName), EmailArg.Plain(roleLabel), EmailArg.Plain(sbiBit))),
-                P("Na bevestiging kun je direct je bedrijf inrichten: conceptvacatures klaarzetten, het profiel invullen en collega's uitnodigen. Publiceren volgt na verificatie."),
-                P("Je bevestigingscode (geldig 10 minuten):"),
+                P(S(c, "Email.RegistrationActivation.P2")),
+                P(S(c, "Email.RegistrationActivation.P3")),
                 C(code, "")
             ],
-            greeting: $"Hoi {contactName},"), baseUrl);
+            greeting: GreetOther(c, contactName), culture: c), baseUrl);
     }
 
     public static ComposedEmail RegistrationCredentials(
-        string? baseUrl, string contactName, string establishmentName, string contactEmail, string? setPasswordUrl)
+        string? baseUrl, string contactName, string establishmentName, string contactEmail, string? setPasswordUrl,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var ctaUrl = setPasswordUrl ?? links.Login;
-        var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Kies je wachtwoord";
+        var ctaLabel = setPasswordUrl is null ? S(c, "Email.Common.Cta.Login") : S(c, "Email.Common.Cta.SetPassword");
         var blocks = new List<EmailBlock>
         {
-            P(Fmt("Geslaagd! Je account voor {0} is geactiveerd. Je kunt direct aan de slag met concepten, het profiel en uitnodigingen.", EmailArg.Bold(establishmentName))),
-            P("Zodra je bedrijf is geverifieerd, worden klaargezette vacatures gepubliceerd en ontvang je (buiten de gratis-publicatieperiode) je welkomsttoken."),
-            P(Fmt("Je kunt inloggen met e-mail/wachtwoord of met Microsoft Entra / Google op {0}.", EmailArg.Plain(contactEmail))),
+            P(T(c, "Email.RegistrationCredentials.P1", EmailArg.Bold(establishmentName))),
+            P(S(c, "Email.RegistrationCredentials.P2")),
+            P(T(c, "Email.RegistrationCredentials.P3", EmailArg.Plain(contactEmail))),
             setPasswordUrl is null
-                ? P("Log in met het wachtwoord dat je bij registratie hebt gekozen, of via Microsoft Entra / Google met hetzelfde geverifieerde e-mailadres.")
-                : P("Kies een wachtwoord via de knop hieronder. Daarna kun je inloggen met e-mail/wachtwoord of met Microsoft Entra / Google.")
+                ? P(S(c, "Email.RegistrationCredentials.P4HasPassword"))
+                : P(S(c, "Email.RegistrationCredentials.P4SetPassword"))
         };
         if (setPasswordUrl is not null)
         {
-            blocks.Add(N($"De link werkt tot {Jobsy.Core.Time.AmsterdamTime.FormatDate(DateTime.UtcNow.AddDays(7))}. Daarna vraag je een nieuwe uitnodiging."));
+            blocks.Add(N(Sf(c, "Email.Common.LinkValidUntil", EmailFormat.Date(DateTime.UtcNow.AddDays(7), c))));
         }
 
-        blocks.Add(N($"Inloggen via Lobsy ({links.Login})."));
-        return Finish(Doc("RegistrationCredentials", "Geslaagd — je Lobsy-account is actief!", "Je Lobsy-account is actief", "Account actief",
-            blocks, Button(ctaLabel, ctaUrl), greeting: $"Hoi {contactName},", showMascot: true), baseUrl);
+        blocks.Add(N(Sf(c, "Email.Common.LoginViaLobsy", links.Login)));
+        return Finish(Doc("RegistrationCredentials", S(c, "Email.RegistrationCredentials.Subject"),
+            S(c, "Email.RegistrationCredentials.Preheader"), S(c, "Email.RegistrationCredentials.Heading"),
+            blocks, Button(ctaLabel, ctaUrl), greeting: GreetOther(c, contactName), showMascot: true, culture: c), baseUrl);
     }
 
     public static ComposedEmail CompanyVerificationReminder(
-        string? baseUrl, string contactName, string companyName, int day, string? deletionDateLabel)
+        string? baseUrl, string contactName, string companyName, int day, string? deletionDateLabel,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var dayBit = day == 21
-            ? "Al drie weken geleden heb je je bedrijf geregistreerd, maar het is nog niet geverifieerd."
-            : "Een week geleden heb je je bedrijf geregistreerd. Verifieer het zodat kandidaten je kunnen vinden.";
+            ? S(c, "Email.CompanyVerificationReminder.P1Day21")
+            : S(c, "Email.CompanyVerificationReminder.P1Day7");
         var blocks = new List<EmailBlock>
         {
             P(dayBit),
-            P(Fmt("Bedrijf: {0}. Tot die tijd blijft het onzichtbaar voor kandidaten.", EmailArg.Bold(companyName)))
+            P(T(c, "Email.CompanyVerificationReminder.P2", EmailArg.Bold(companyName)))
         };
         if (!string.IsNullOrWhiteSpace(deletionDateLabel))
         {
-            blocks.Add(P(Fmt("Zonder verificatie verwijderen we deze registratie op {0} (60 dagen na aanmelding).", EmailArg.Bold(deletionDateLabel!))));
+            blocks.Add(P(T(c, "Email.CompanyVerificationReminder.P3", EmailArg.Bold(deletionDateLabel!))));
         }
 
         var subject = day == 21
-            ? "Laatste herinnering: verifieer je bedrijf — Lobsy"
-            : "Herinnering: verifieer je bedrijf — Lobsy";
-        return Finish(Doc("CompanyVerificationReminder", subject, "Verifieer je bedrijf op Lobsy", "Verifieer je bedrijf",
-            blocks, Button("Nu verifiëren", links.RegisterVerify), greeting: $"Hoi {contactName},"), baseUrl);
+            ? S(c, "Email.CompanyVerificationReminder.Subject21")
+            : S(c, "Email.CompanyVerificationReminder.Subject7");
+        return Finish(Doc("CompanyVerificationReminder", subject, S(c, "Email.CompanyVerificationReminder.Preheader"),
+            S(c, "Email.CompanyVerificationReminder.Heading"),
+            blocks, Button(S(c, "Email.CompanyVerificationReminder.Cta"), links.RegisterVerify),
+            greeting: GreetOther(c, contactName), culture: c), baseUrl);
     }
 
     public static ComposedEmail CompanyVerified(
-        string? baseUrl, string contactName, string companyName, bool welcomeTokenGranted, IReadOnlyList<string> publishedTitles)
+        string? baseUrl, string contactName, string companyName, bool welcomeTokenGranted, IReadOnlyList<string> publishedTitles,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var blocks = new List<EmailBlock>
         {
-            P(Fmt("Gefeliciteerd! {0} is geverifieerd en nu zichtbaar voor kandidaten.", EmailArg.Bold(companyName)))
+            P(T(c, "Email.CompanyVerified.P1", EmailArg.Bold(companyName)))
         };
         if (publishedTitles.Count == 0)
         {
-            blocks.Add(P("Er stonden geen klaargezette vacatures klaar om te publiceren."));
+            blocks.Add(P(S(c, "Email.CompanyVerified.P2Empty")));
         }
         else
         {
-            blocks.Add(P("Gepubliceerd:"));
-            blocks.Add(F(publishedTitles.Select((t, i) => ($"Vacature {i + 1}", t))));
+            blocks.Add(P(S(c, "Email.CompanyVerified.P2Published")));
+            blocks.Add(F(publishedTitles.Select((t, i) => (Sf(c, "Email.CompanyVerified.VacancyN", i + 1), t))));
         }
 
         blocks.Add(welcomeTokenGranted
-            ? P("Je hebt van ons je welkomsttoken gekregen — daarmee plaats je (of verleng je) een vacature.")
-            : P("Tijdens de gratis-publicatieperiode ontvang je geen welkomsttoken; publiceren is nu gratis."));
+            ? P(S(c, "Email.CompanyVerified.WelcomeToken"))
+            : P(S(c, "Email.CompanyVerified.NoWelcomeToken")));
 
-        return Finish(Doc("CompanyVerified", "Je bedrijf is geverifieerd — Lobsy", "Je bedrijf is geverifieerd op Lobsy", "Je bedrijf is geverifieerd",
-            blocks, Button("Naar vacatures", links.EmployerVacancies),
-            greeting: $"Hoi {contactName},", showMascot: true), baseUrl);
+        return Finish(Doc("CompanyVerified", S(c, "Email.CompanyVerified.Subject"),
+            S(c, "Email.CompanyVerified.Preheader"), S(c, "Email.CompanyVerified.Heading"),
+            blocks, Button(S(c, "Email.CompanyVerified.Cta"), links.EmployerVacancies),
+            greeting: GreetOther(c, contactName), showMascot: true, culture: c), baseUrl);
     }
 
-    public static ComposedEmail CompanyBusinessEmailVerification(string companyName, string code, string? baseUrl)
+    public static ComposedEmail CompanyBusinessEmailVerification(
+        string companyName, string code, string? baseUrl, EmailCulture? culture = null)
     {
-        return Finish(Doc("CompanyBusinessEmailVerification", "Je Lobsy-verificatiecode", "Verificatiecode voor je bedrijf", "Je verificatiecode",
+        var c = culture ?? EmailCulture.Nl;
+        return Finish(Doc("CompanyBusinessEmailVerification", S(c, "Email.CompanyBusinessEmailVerification.Subject"),
+            S(c, "Email.CompanyBusinessEmailVerification.Preheader"), S(c, "Email.CompanyBusinessEmailVerification.Heading"),
             [
-                P(Fmt("Gebruik deze 6-cijferige code om {0} te verifiëren:", EmailArg.Bold(companyName))),
-                C(code, "De code is 10 minuten geldig.")
-            ]), baseUrl);
+                P(T(c, "Email.CompanyBusinessEmailVerification.P1", EmailArg.Bold(companyName))),
+                C(code, S(c, "Email.Common.CodeValid10"))
+            ], culture: c), baseUrl);
     }
 
     public static ComposedEmail CompanyVerificationRejected(
-        string? baseUrl, string contactName, string companyName, string reason)
+        string? baseUrl, string contactName, string companyName, string reason, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("CompanyVerificationRejected", "Verificatie afgewezen — Lobsy", "Verificatie afgewezen", "Verificatie afgewezen",
+        return Finish(Doc("CompanyVerificationRejected", S(c, "Email.CompanyVerificationRejected.Subject"),
+            S(c, "Email.CompanyVerificationRejected.Preheader"), S(c, "Email.CompanyVerificationRejected.Heading"),
             [
-                P(Fmt("We konden {0} niet verifiëren.", EmailArg.Bold(companyName))),
-                P($"Reden: {reason}"),
-                P("Je kunt een brief met code aanvragen of opnieuw een handmatige controle starten.")
+                P(T(c, "Email.CompanyVerificationRejected.P1", EmailArg.Bold(companyName))),
+                P(Sf(c, "Email.Common.ReasonLabel", EmailBidi.Isolate(c, reason))),
+                P(S(c, "Email.CompanyVerificationRejected.P3"))
             ],
-            Button("Opnieuw verifiëren", links.RegisterVerify),
-            greeting: $"Hoi {contactName},"), baseUrl);
+            Button(S(c, "Email.CompanyVerificationRejected.Cta"), links.RegisterVerify),
+            greeting: GreetOther(c, contactName), culture: c), baseUrl);
     }
 
     public static ComposedEmail EngagementClaimRemoved(
-        string? baseUrl, string companyName, string itemLabel, string reason)
+        string? baseUrl, string companyName, string itemLabel, string reason, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("EngagementClaimRemoved", "Kenmerk verwijderd — Lobsy", "Maatschappelijk kenmerk verwijderd", "Kenmerk verwijderd",
+        return Finish(Doc("EngagementClaimRemoved", S(c, "Email.EngagementClaimRemoved.Subject"),
+            S(c, "Email.EngagementClaimRemoved.Preheader"), S(c, "Email.EngagementClaimRemoved.Heading"),
             [
-                P(Fmt("Het kenmerk {0} van {1} is verwijderd van Lobsy.", EmailArg.Bold(itemLabel), EmailArg.Bold(companyName))),
-                P($"Reden: {reason}"),
-                P("Je kunt het kenmerk over 30 dagen opnieuw opgeven met nieuw bewijs, of een ander kenmerk kiezen.")
+                P(T(c, "Email.EngagementClaimRemoved.P1", EmailArg.Bold(itemLabel), EmailArg.Bold(companyName))),
+                P(Sf(c, "Email.Common.ReasonLabel", EmailBidi.Isolate(c, reason))),
+                P(S(c, "Email.EngagementClaimRemoved.P3"))
             ],
-            Button("Naar dashboard", links.EmployerHome)), baseUrl);
+            Button(S(c, "Email.EngagementClaimRemoved.Cta"), links.EmployerHome), culture: c), baseUrl);
     }
 
-    public static ComposedEmail CompanyUnverifiedDeleted(string? baseUrl, string contactName, string companyName)
+    public static ComposedEmail CompanyUnverifiedDeleted(
+        string? baseUrl, string contactName, string companyName, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("CompanyUnverifiedDeleted", "Registratie verwijderd — Lobsy", "Niet-geverifieerde registratie verwijderd", "Registratie verwijderd",
+        return Finish(Doc("CompanyUnverifiedDeleted", S(c, "Email.CompanyUnverifiedDeleted.Subject"),
+            S(c, "Email.CompanyUnverifiedDeleted.Preheader"), S(c, "Email.CompanyUnverifiedDeleted.Heading"),
             [
-                P(Fmt("Je niet-geverifieerde registratie voor {0} is na 60 dagen verwijderd. Je kunt opnieuw beginnen via Bedrijf registreren.", EmailArg.Bold(companyName)))
+                P(T(c, "Email.CompanyUnverifiedDeleted.P1", EmailArg.Bold(companyName)))
             ],
-            Button("Opnieuw registreren", links.Register),
-            greeting: $"Hoi {contactName},"), baseUrl);
+            Button(S(c, "Email.CompanyUnverifiedDeleted.Cta"), links.Register),
+            greeting: GreetOther(c, contactName), culture: c), baseUrl);
     }
 
     public static ComposedEmail TakeoverEmailVerification(
-        string? baseUrl, string contactName, string companyName, string code)
+        string? baseUrl, string contactName, string companyName, string code, EmailCulture? culture = null)
     {
-        return Finish(Doc("TakeoverEmailVerification", "Bevestigingscode overnameverzoek — Lobsy", "Bevestigingscode overnameverzoek", "Bevestig je e-mailadres",
+        var c = culture ?? EmailCulture.Nl;
+        return Finish(Doc("TakeoverEmailVerification", S(c, "Email.TakeoverEmailVerification.Subject"),
+            S(c, "Email.TakeoverEmailVerification.Preheader"), S(c, "Email.TakeoverEmailVerification.Heading"),
             [
-                P(Fmt("Vestiging {0} is al geregistreerd. Bevestig eerst je e-mailadres met deze code (geldig 10 minuten):", EmailArg.Bold(companyName))),
+                P(T(c, "Email.TakeoverEmailVerification.P1", EmailArg.Bold(companyName))),
                 C(code, ""),
-                P("Daarna sturen we het overnameverzoek naar de huidige eigenaar.")
+                P(S(c, "Email.TakeoverEmailVerification.P2"))
             ],
-            greeting: $"Hoi {contactName},"), baseUrl);
+            greeting: GreetOther(c, contactName), culture: c), baseUrl);
     }
 
     public static ComposedEmail TakeoverRequest(
-        string? baseUrl, string companyName, string? kvkEstablishmentId, string applicantName, string applicantEmail)
+        string? baseUrl, string companyName, string? kvkEstablishmentId, string applicantName, string applicantEmail,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var inboxUrl = links.EmployerTakeovers;
-        return Finish(Doc("TakeoverRequest", "Overnameverzoek vestiging — Lobsy", "Overnameverzoek vestiging", "Overnameverzoek",
+        return Finish(Doc("TakeoverRequest", S(c, "Email.TakeoverRequest.Subject"),
+            S(c, "Email.TakeoverRequest.Preheader"), S(c, "Email.TakeoverRequest.Heading"),
             [
-                P(Fmt("Er is een overnameverzoek voor {0} ({1}).", EmailArg.Bold(companyName), EmailArg.Plain(kvkEstablishmentId ?? ""))),
-                P($"Aanvrager: {applicantName} ({applicantEmail})."),
-                N($"Bekijk verzoeken in Lobsy onder Overnames ({inboxUrl}).")
+                P(T(c, "Email.TakeoverRequest.P1", EmailArg.Bold(companyName), EmailArg.Plain(kvkEstablishmentId ?? ""))),
+                P(Sf(c, "Email.TakeoverRequest.P2", EmailBidi.Isolate(c, applicantName), EmailBidi.Isolate(c, applicantEmail))),
+                N(Sf(c, "Email.TakeoverRequest.Note", inboxUrl))
             ],
-            Button("Bekijk overnames", inboxUrl)), baseUrl);
+            Button(S(c, "Email.TakeoverRequest.Cta"), inboxUrl), culture: c), baseUrl);
     }
 
-    public static ComposedEmail TakeoverSubmitted(string? baseUrl, string contactName, string companyName)
+    public static ComposedEmail TakeoverSubmitted(string? baseUrl, string contactName, string companyName, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("TakeoverSubmitted", "Overnameverzoek ingediend — Lobsy", "Overnameverzoek ingediend", "Verzoek ingediend",
+        return Finish(Doc("TakeoverSubmitted", S(c, "Email.TakeoverSubmitted.Subject"),
+            S(c, "Email.TakeoverSubmitted.Preheader"), S(c, "Email.TakeoverSubmitted.Heading"),
             [
-                P(Fmt("Vestiging {0} is al in gebruik. We hebben een overnameverzoek gestuurd naar de huidige eigenaar.", EmailArg.Bold(companyName)))
+                P(T(c, "Email.TakeoverSubmitted.P1", EmailArg.Bold(companyName)))
             ],
-            Button("Naar Lobsy", links.HowLobsyWorks),
-            greeting: $"Hoi {contactName},"), baseUrl);
+            Button(S(c, "Email.TakeoverSubmitted.Cta"), links.HowLobsyWorks),
+            greeting: GreetOther(c, contactName), culture: c), baseUrl);
     }
 
     public static ComposedEmail AccessRequestEmailVerification(
-        string? baseUrl, string contactName, string companyName, string code)
+        string? baseUrl, string contactName, string companyName, string code, EmailCulture? culture = null)
     {
-        return Finish(Doc("AccessRequestEmailVerification", "Bevestigingscode toegangsverzoek — Lobsy", "Bevestigingscode toegangsverzoek", "Bevestig je e-mailadres",
+        var c = culture ?? EmailCulture.Nl;
+        return Finish(Doc("AccessRequestEmailVerification", S(c, "Email.AccessRequestEmailVerification.Subject"),
+            S(c, "Email.AccessRequestEmailVerification.Preheader"), S(c, "Email.AccessRequestEmailVerification.Heading"),
             [
-                P(Fmt("Bevestig je e-mailadres om toegang aan te vragen tot {0}. Code geldig 10 minuten:", EmailArg.Bold(companyName))),
+                P(T(c, "Email.AccessRequestEmailVerification.P1", EmailArg.Bold(companyName))),
                 C(code, "")
             ],
-            greeting: $"Hoi {contactName},"), baseUrl);
+            greeting: GreetOther(c, contactName), culture: c), baseUrl);
     }
 
-    public static ComposedEmail AccessRequestSubmitted(string? baseUrl, string contactName, string companyName)
+    public static ComposedEmail AccessRequestSubmitted(string? baseUrl, string contactName, string companyName, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("AccessRequestSubmitted", "Toegangsverzoek verstuurd — Lobsy", "Toegangsverzoek verstuurd", "Aanvraag verstuurd",
+        return Finish(Doc("AccessRequestSubmitted", S(c, "Email.AccessRequestSubmitted.Subject"),
+            S(c, "Email.AccessRequestSubmitted.Preheader"), S(c, "Email.AccessRequestSubmitted.Heading"),
             [
-                P(Fmt("Je aanvraag is verstuurd. {0} beslist; na 5 werkdagen kijkt Lobsy mee.", EmailArg.Bold(companyName)))
+                P(T(c, "Email.AccessRequestSubmitted.P1", EmailArg.Bold(companyName)))
             ],
-            Button("Naar Lobsy", links.Login),
-            greeting: $"Hoi {contactName},"), baseUrl);
+            Button(S(c, "Email.AccessRequestSubmitted.Cta"), links.Login),
+            greeting: GreetOther(c, contactName), culture: c), baseUrl);
     }
 
     public static ComposedEmail AccessRequestToManager(
         string? baseUrl, string companyName, string requesterName, string? requesterFunction,
-        string requesterEmail, string roleLabel)
+        string requesterEmail, string roleLabel, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var functionBit = string.IsNullOrWhiteSpace(requesterFunction) ? "" : $" ({requesterFunction})";
-        return Finish(Doc("AccessRequestToManager", "Toegangsverzoek — Lobsy", "Toegangsverzoek op Lobsy", "Nieuw toegangsverzoek",
+        return Finish(Doc("AccessRequestToManager", S(c, "Email.AccessRequestToManager.Subject"),
+            S(c, "Email.AccessRequestToManager.Preheader"), S(c, "Email.AccessRequestToManager.Heading"),
             [
-                P(Fmt("Er is een toegangsverzoek voor {0}.", EmailArg.Bold(companyName))),
-                P($"Aanvrager: {requesterName}{functionBit} — {requesterEmail}. Gevraagde rol: {roleLabel}.")
+                P(T(c, "Email.AccessRequestToManager.P1", EmailArg.Bold(companyName))),
+                P(Sf(c, "Email.AccessRequestToManager.P2",
+                    EmailBidi.Isolate(c, requesterName), functionBit, EmailBidi.Isolate(c, requesterEmail),
+                    EmailBidi.Isolate(c, roleLabel)))
             ],
-            Button("Bekijk toegangsverzoeken", links.EmployerTakeovers)), baseUrl);
+            Button(S(c, "Email.AccessRequestToManager.Cta"), links.EmployerTakeovers), culture: c), baseUrl);
     }
 
-    public static ComposedEmail AccessRequestReminder(string? baseUrl, string companyName, string requesterName)
+    public static ComposedEmail AccessRequestReminder(string? baseUrl, string companyName, string requesterName, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("AccessRequestReminder", "Herinnering toegangsverzoek — Lobsy", "Herinnering toegangsverzoek", "Herinnering toegangsverzoek",
+        return Finish(Doc("AccessRequestReminder", S(c, "Email.AccessRequestReminder.Subject"),
+            S(c, "Email.AccessRequestReminder.Preheader"), S(c, "Email.AccessRequestReminder.Heading"),
             [
-                P(Fmt("Er wacht nog een toegangsverzoek van {0} voor {1}.", EmailArg.Plain(requesterName), EmailArg.Bold(companyName)))
+                P(T(c, "Email.AccessRequestReminder.P1", EmailArg.Plain(requesterName), EmailArg.Bold(companyName)))
             ],
-            Button("Bekijk verzoek", links.EmployerTakeovers)), baseUrl);
+            Button(S(c, "Email.AccessRequestReminder.Cta"), links.EmployerTakeovers), culture: c), baseUrl);
     }
 
     public static ComposedEmail AccessRequestRejected(
-        string? baseUrl, string contactName, string companyName, string? reason)
+        string? baseUrl, string contactName, string companyName, string? reason, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var blocks = new List<EmailBlock>
         {
-            P(Fmt("Je verzoek voor toegang tot {0} is afgewezen.", EmailArg.Bold(companyName)))
+            P(T(c, "Email.AccessRequestRejected.P1", EmailArg.Bold(companyName)))
         };
         if (!string.IsNullOrWhiteSpace(reason))
         {
-            blocks.Add(P($"Reden: {reason}"));
+            blocks.Add(P(Sf(c, "Email.Common.ReasonLabel", EmailBidi.Isolate(c, reason!))));
         }
 
-        return Finish(Doc("AccessRequestRejected", "Toegangsverzoek afgewezen — Lobsy", "Toegangsverzoek afgewezen", "Toegangsverzoek afgewezen",
-            blocks, Button("Opnieuw aanvragen", links.RegisterAccess), greeting: $"Hoi {contactName},"), baseUrl);
+        return Finish(Doc("AccessRequestRejected", S(c, "Email.AccessRequestRejected.Subject"),
+            S(c, "Email.AccessRequestRejected.Preheader"), S(c, "Email.AccessRequestRejected.Heading"),
+            blocks, Button(S(c, "Email.AccessRequestRejected.Cta"), links.RegisterAccess),
+            greeting: GreetOther(c, contactName), culture: c), baseUrl);
     }
 
-    public static ComposedEmail AccessRequestExpired(string? baseUrl, string contactName, string companyName)
+    public static ComposedEmail AccessRequestExpired(string? baseUrl, string contactName, string companyName, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("AccessRequestExpired", "Toegangsverzoek verlopen — Lobsy", "Toegangsverzoek verlopen", "Toegangsverzoek verlopen",
+        return Finish(Doc("AccessRequestExpired", S(c, "Email.AccessRequestExpired.Subject"),
+            S(c, "Email.AccessRequestExpired.Preheader"), S(c, "Email.AccessRequestExpired.Heading"),
             [
-                P(Fmt("Je verzoek voor toegang tot {0} is na 30 dagen verlopen.", EmailArg.Bold(companyName)))
+                P(T(c, "Email.AccessRequestExpired.P1", EmailArg.Bold(companyName)))
             ],
-            Button("Opnieuw aanvragen", links.RegisterAccess),
-            greeting: $"Hoi {contactName},"), baseUrl);
+            Button(S(c, "Email.AccessRequestExpired.Cta"), links.RegisterAccess),
+            greeting: GreetOther(c, contactName), culture: c), baseUrl);
     }
 
-    public static ComposedEmail OwnershipTransferManagersNotify(string? baseUrl, string companyName)
+    public static ComposedEmail OwnershipTransferManagersNotify(string? baseUrl, string companyName, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("OwnershipTransferManagersNotify", "Eigendomsoverdracht aangevraagd — Lobsy", "Eigendomsoverdracht aangevraagd", "Eigendomsoverdracht aangevraagd",
+        return Finish(Doc("OwnershipTransferManagersNotify", S(c, "Email.OwnershipTransferManagersNotify.Subject"),
+            S(c, "Email.OwnershipTransferManagersNotify.Preheader"), S(c, "Email.OwnershipTransferManagersNotify.Heading"),
             [
-                P(Fmt("Er is een eigendomsoverdracht aangevraagd voor {0}. Klopt dit niet? Reageer binnen 7 dagen via Lobsy-support.", EmailArg.Bold(companyName)))
+                P(T(c, "Email.OwnershipTransferManagersNotify.P1", EmailArg.Bold(companyName)))
             ],
-            Button("Naar Lobsy", links.EmployerTakeovers)), baseUrl);
+            Button(S(c, "Email.OwnershipTransferManagersNotify.Cta"), links.EmployerTakeovers), culture: c), baseUrl);
     }
 
-    public static ComposedEmail IntermediaryClientSelfManaged(string? baseUrl, string companyName)
+    public static ComposedEmail IntermediaryClientSelfManaged(string? baseUrl, string companyName, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("IntermediaryClientSelfManaged", "Klant beheert zelf — Lobsy", "Klant beheert zelf — koppeling blijft", "Klant beheert nu zelf",
+        return Finish(Doc("IntermediaryClientSelfManaged", S(c, "Email.IntermediaryClientSelfManaged.Subject"),
+            S(c, "Email.IntermediaryClientSelfManaged.Preheader"), S(c, "Email.IntermediaryClientSelfManaged.Heading"),
             [
-                P(Fmt("{0} beheert nu zelf een account op Lobsy; jullie koppeling blijft bestaan.", EmailArg.Bold(companyName)))
+                P(T(c, "Email.IntermediaryClientSelfManaged.P1", EmailArg.Bold(companyName)))
             ],
-            Button("Naar Lobsy", links.Login)), baseUrl);
+            Button(S(c, "Email.IntermediaryClientSelfManaged.Cta"), links.Login), culture: c), baseUrl);
     }
 
     public static ComposedEmail TakeoverApproved(
         string? baseUrl, string contactName, string companyName, string contactEmail,
-        string? setPasswordUrl, bool hasOrganization)
+        string? setPasswordUrl, bool hasOrganization, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var ctaUrl = setPasswordUrl ?? links.Login;
-        var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Kies je wachtwoord";
-        var orgBit = hasOrganization ? " onder de organisatie" : "";
+        var ctaLabel = setPasswordUrl is null ? S(c, "Email.Common.Cta.Login") : S(c, "Email.Common.Cta.SetPassword");
+        var orgBit = hasOrganization ? S(c, "Email.TakeoverApproved.OrgBit") : "";
         var blocks = new List<EmailBlock>
         {
-            P(Fmt("Je overnameverzoek voor {0} is goedgekeurd.", EmailArg.Bold(companyName))),
-            P($"Tokens, vacatures en geschiedenis blijven gekoppeld aan de vestiging{orgBit}."),
+            P(T(c, "Email.TakeoverApproved.P1", EmailArg.Bold(companyName))),
+            P(Sf(c, "Email.TakeoverApproved.P2", orgBit)),
             setPasswordUrl is null
-                ? P("Log in met het wachtwoord dat je bij registratie hebt gekozen, of via Microsoft Entra met hetzelfde geverifieerde e-mailadres.")
-                : P(Fmt("Kies een wachtwoord voor {0} via de knop hieronder.", EmailArg.Plain(contactEmail)))
+                ? P(S(c, "Email.TakeoverApproved.P3HasPassword"))
+                : P(T(c, "Email.TakeoverApproved.P3SetPassword", EmailArg.Plain(contactEmail)))
         };
         if (setPasswordUrl is not null)
         {
-            blocks.Add(N($"De link werkt tot {Jobsy.Core.Time.AmsterdamTime.FormatDate(DateTime.UtcNow.AddDays(7))}. Daarna vraag je een nieuwe uitnodiging."));
+            blocks.Add(N(Sf(c, "Email.Common.LinkValidUntil", EmailFormat.Date(DateTime.UtcNow.AddDays(7), c))));
         }
 
-        blocks.Add(N($"Inloggen via Lobsy ({links.Login})."));
-        return Finish(Doc("TakeoverApproved", "Overname goedgekeurd — Lobsy", "Overname goedgekeurd", "Overname goedgekeurd",
-            blocks, Button(ctaLabel, ctaUrl), greeting: $"Hoi {contactName},", showMascot: true), baseUrl);
+        blocks.Add(N(Sf(c, "Email.Common.LoginViaLobsy", links.Login)));
+        return Finish(Doc("TakeoverApproved", S(c, "Email.TakeoverApproved.Subject"),
+            S(c, "Email.TakeoverApproved.Preheader"), S(c, "Email.TakeoverApproved.Heading"),
+            blocks, Button(ctaLabel, ctaUrl), greeting: GreetOther(c, contactName), showMascot: true, culture: c), baseUrl);
     }
 
-    public static ComposedEmail TakeoverRejected(string? baseUrl, string contactName, string companyName)
+    public static ComposedEmail TakeoverRejected(string? baseUrl, string contactName, string companyName, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var brand = Brand(baseUrl);
-        return Finish(Doc("TakeoverRejected", "Overname afgewezen — Lobsy", "Overname afgewezen", "Overname afgewezen",
+        return Finish(Doc("TakeoverRejected", S(c, "Email.TakeoverRejected.Subject"),
+            S(c, "Email.TakeoverRejected.Preheader"), S(c, "Email.TakeoverRejected.Heading"),
             [
-                P(Fmt("Je overnameverzoek voor {0} is afgewezen.", EmailArg.Bold(companyName)))
+                P(T(c, "Email.TakeoverRejected.P1", EmailArg.Bold(companyName)))
             ],
-            Button("Neem contact op", $"mailto:{brand.SupportAddress}"),
-            greeting: $"Hoi {contactName},"), baseUrl);
+            Button(S(c, "Email.TakeoverRejected.Cta"), $"mailto:{brand.SupportAddress}"),
+            greeting: GreetOther(c, contactName), culture: c), baseUrl);
     }
 }

@@ -1,0 +1,30 @@
+KEY: AccessRequestSubmitted
+SUBJECT: Access request sent — Lobsy
+PREHEADER: Access request sent
+KIND: Essential
+--- TEXT ---
+Hello Alex de Tester,
+
+Request sent
+============
+
+Your request was sent. Bakkerij De Gouden Korrel decides; after 5 working
+days Lobsy reviews too.
+
+Go to Lobsy: https://lobsy.nl/login
+
+Team Lobsy
+
+You receive this email because of an access or takeover request.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Request sent
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Go to Lobsy -> https://lobsy.nl/login
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

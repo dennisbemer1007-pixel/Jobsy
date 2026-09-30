@@ -1,0 +1,38 @@
+KEY: DraftVacancyCleanupWarning
+SUBJECT: Draft vacancy 'Weekendhulp verkoop' will be deleted in 14 days
+PREHEADER: Draft 'Weekendhulp verkoop' will be deleted in 14 days
+KIND: Essential
+--- TEXT ---
+Hello,
+
+Draft will be cleaned up soon
+=============================
+
+Your draft vacancy Weekendhulp verkoop for Bakkerij De Gouden Korrel has
+been a draft for 30 days and was never published.
+
+If you do nothing, Lobsy will automatically remove this draft on 7 October
+2026 (14 days from this email).
+
+Vacancies you did publish always stay saved — even after the deadline.
+
+Sign in to Lobsy → Vacancies to publish or delete this draft.
+
+Open this draft: https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+
+Team Lobsy
+
+You receive this email because you manage vacancies on Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Draft will be cleaned up soon
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Open this draft -> https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -1,0 +1,33 @@
+KEY: EmployerReactionRejected
+SUBJECT: Update on your application: Weekendhulp verkoop
+PREHEADER: An update on your application.
+KIND: Essential
+--- TEXT ---
+Hi Alex de Tester,
+
+Update on your application
+==========================
+
+Thanks for your interest in Weekendhulp verkoop at Bakkerij De Gouden
+Korrel.
+
+Unfortunately you were not selected this time. We wish you every success in
+your search!
+
+Browse other vacancies: https://lobsy.nl/banenkaart
+
+Team Lobsy
+
+You receive this email because you applied via Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Update on your application
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Browse other vacancies -> https://lobsy.nl/banenkaart
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

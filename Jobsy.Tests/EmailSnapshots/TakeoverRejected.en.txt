@@ -1,0 +1,29 @@
+KEY: TakeoverRejected
+SUBJECT: Takeover rejected — Lobsy
+PREHEADER: Takeover rejected
+KIND: Essential
+--- TEXT ---
+Hello Alex de Tester,
+
+Takeover rejected
+=================
+
+Your takeover request for Bakkerij De Gouden Korrel was rejected.
+
+Contact us: mailto:support@lobsy.nl
+
+Team Lobsy
+
+You receive this email because of an access or takeover request.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Takeover rejected
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Contact us -> mailto:support@lobsy.nl
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

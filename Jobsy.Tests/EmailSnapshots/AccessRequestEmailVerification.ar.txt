@@ -1,0 +1,29 @@
+KEY: AccessRequestEmailVerification
+SUBJECT: رمز تأكيد طلب الوصول — Lobsy
+PREHEADER: رمز تأكيد طلب الوصول
+KIND: Security
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+أكد بريدك الإلكتروني
+
+أكد بريدك لطلب الوصول إلى ⁨Bakkerij De Gouden Korrel⁩. الرمز صالح 10 دقائق:
+
+
+123456
+
+فريق Lobsy
+
+تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: أكد بريدك الإلكتروني
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=code
+marker: div data-lobsy-otp=123456
+a: Lobsy -> https://lobsy.nl
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

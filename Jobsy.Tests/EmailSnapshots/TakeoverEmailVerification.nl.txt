@@ -3,7 +3,7 @@ SUBJECT: Bevestigingscode overnameverzoek — Lobsy
 PREHEADER: Bevestigingscode overnameverzoek
 KIND: Security
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Bevestig je e-mailadres
 =======================

@@ -3,7 +3,7 @@ SUBJECT: Bevestigingscode — Lobsy
 PREHEADER: Je Lobsy-bevestigingscode
 KIND: Security
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Welkom bij Lobsy
 ================

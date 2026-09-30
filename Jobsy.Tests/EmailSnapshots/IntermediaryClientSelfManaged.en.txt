@@ -1,0 +1,28 @@
+KEY: IntermediaryClientSelfManaged
+SUBJECT: Client self-managed — Lobsy
+PREHEADER: Client self-managed — link stays
+KIND: Essential
+--- TEXT ---
+Client now self-manages
+=======================
+
+Bakkerij De Gouden Korrel now manages their own account on Lobsy; your link
+remains.
+
+Go to Lobsy: https://lobsy.nl/login
+
+Team Lobsy
+
+You receive this email because you manage a company on Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Client now self-manages
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Go to Lobsy -> https://lobsy.nl/login
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

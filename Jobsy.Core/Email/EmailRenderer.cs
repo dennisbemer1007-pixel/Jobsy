@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using Jobsy.Core.Email.Localization;
 using Jobsy.Core.Email.Model;
 
 namespace Jobsy.Core.Email;
@@ -105,13 +106,13 @@ public static class EmailRenderer
         sb.Append("<!--[if mso]><table role=\"presentation\" width=\"600\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\"><tr><td><![endif]-->");
         sb.Append($"<div style=\"max-width:600px;margin:0 auto;font-family:{font};\" dir=\"{dir}\">");
 
-        // Logo row
+        // Logo row — "Lobsy" stays LTR; mascot/logo sit at inline-start in RTL.
         var logoMargin = rtl ? "margin-right:8px" : "margin-left:8px";
         sb.Append("<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
         sb.Append($"<td class=\"px\" align=\"{align}\" style=\"padding:0 4px 16px 4px;\">");
         sb.Append($"<a href=\"{Escape(brand.PublicWebBaseUrl)}\" style=\"text-decoration:none;\">");
         sb.Append($"<img class=\"logo-img\" src=\"{Escape(brand.LogoUrl)}\" width=\"36\" height=\"36\" alt=\"Lobsy\" style=\"display:inline-block;vertical-align:middle;width:36px;height:36px;\">");
-        sb.Append($"<span class=\"t\" style=\"display:inline-block;vertical-align:middle;{logoMargin};font-size:20px;line-height:36px;font-weight:700;letter-spacing:-0.01em;color:{brandColor};\">Lobsy</span>");
+        sb.Append($"<span class=\"t\" dir=\"ltr\" style=\"display:inline-block;vertical-align:middle;{logoMargin};font-size:20px;line-height:36px;font-weight:700;letter-spacing:-0.01em;color:{brandColor};\">Lobsy</span>");
         sb.Append("</a></td></tr></table>");
 
         // Card
@@ -126,7 +127,7 @@ public static class EmailRenderer
 
         foreach (var block in doc.Blocks)
         {
-            AppendBlock(sb, block, forceDark, text, muted, border, brandColor);
+            AppendBlock(sb, block, forceDark, text, muted, border, brandColor, rtl);
         }
 
         if (doc.Cta is not null)
@@ -143,19 +144,22 @@ public static class EmailRenderer
         sb.Append($"<p class=\"m\" style=\"margin:0 0 8px 0;\">{Escape(doc.ReasonText)}</p>");
         if (doc.Kind == EmailKind.Optional)
         {
-            // 04: move this literal into EmailStrings (Mail.Common.Unsubscribe).
             var unsubHref = string.IsNullOrWhiteSpace(doc.UnsubscribeUrl)
                 ? Absolute(brand.PublicWebBaseUrl, "/mail/afmelden")
                 : doc.UnsubscribeUrl!;
-            sb.Append($"<p class=\"m\" style=\"margin:0 0 8px 0;\"><a href=\"{Escape(unsubHref)}\" data-lobsy-unsub=\"1\" style=\"color:{muted};text-decoration:underline;\">Afmelden voor deze mails</a></p>");
+            var unsubLabel = EmailStrings.Get(doc.Culture, "Email.Common.Unsubscribe");
+            sb.Append($"<p class=\"m\" style=\"margin:0 0 8px 0;\"><a href=\"{Escape(unsubHref)}\" data-lobsy-unsub=\"1\" style=\"color:{muted};text-decoration:underline;\">{Escape(unsubLabel)}</a></p>");
         }
 
+        var helpLabel = EmailStrings.Get(doc.Culture, "Email.Common.Help");
+        var privacyLabel = EmailStrings.Get(doc.Culture, "Email.Common.Privacy");
         sb.Append("<p class=\"m\" style=\"margin:0 0 8px 0;\">");
-        sb.Append($"<a href=\"mailto:{Escape(brand.SupportAddress)}\" style=\"color:{muted};text-decoration:underline;\">Hulp</a>");
-        sb.Append($" &nbsp;·&nbsp; <a href=\"{Escape(Absolute(brand.PublicWebBaseUrl, "/privacy"))}\" style=\"color:{muted};text-decoration:underline;\">Privacy</a>");
+        sb.Append($"<a href=\"mailto:{Escape(brand.SupportAddress)}\" style=\"color:{muted};text-decoration:underline;\">{Escape(helpLabel)}</a>");
+        sb.Append($" &nbsp;·&nbsp; <a href=\"{Escape(Absolute(brand.PublicWebBaseUrl, "/privacy"))}\" style=\"color:{muted};text-decoration:underline;\">{Escape(privacyLabel)}</a>");
         if (doc.Kind == EmailKind.Optional)
         {
-            sb.Append($" &nbsp;·&nbsp; <a href=\"{Escape(Absolute(brand.PublicWebBaseUrl, "/account/mail-instellingen"))}\" style=\"color:{muted};text-decoration:underline;\">Mail-instellingen</a>");
+            var mailSettingsLabel = EmailStrings.Get(doc.Culture, "Email.Common.MailSettings");
+            sb.Append($" &nbsp;·&nbsp; <a href=\"{Escape(Absolute(brand.PublicWebBaseUrl, "/account/mail-instellingen"))}\" style=\"color:{muted};text-decoration:underline;\">{Escape(mailSettingsLabel)}</a>");
         }
 
         sb.Append("</p>");
@@ -186,12 +190,24 @@ public static class EmailRenderer
 
         if (doc.ShowMascot)
         {
-            var side = rtl ? "left" : "right";
+            // Mascot at inline-start in RTL (matches em-d09).
             sb.Append("<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
-            sb.Append($"<td valign=\"top\">{eyebrowHtml}{heading}</td>");
-            sb.Append($"<td width=\"72\" valign=\"top\" align=\"{side}\" style=\"width:72px;\">");
-            sb.Append($"<img src=\"{Escape(brand.MascotUrl)}\" width=\"64\" height=\"64\" alt=\"\" style=\"display:block;width:64px;height:64px;\">");
-            sb.Append("</td></tr></table>");
+            if (rtl)
+            {
+                sb.Append("<td width=\"72\" valign=\"top\" align=\"right\" style=\"width:72px;\">");
+                sb.Append($"<img src=\"{Escape(brand.MascotUrl)}\" width=\"64\" height=\"64\" alt=\"\" style=\"display:block;width:64px;height:64px;\">");
+                sb.Append("</td>");
+                sb.Append($"<td valign=\"top\">{eyebrowHtml}{heading}</td>");
+            }
+            else
+            {
+                sb.Append($"<td valign=\"top\">{eyebrowHtml}{heading}</td>");
+                sb.Append("<td width=\"72\" valign=\"top\" align=\"right\" style=\"width:72px;\">");
+                sb.Append($"<img src=\"{Escape(brand.MascotUrl)}\" width=\"64\" height=\"64\" alt=\"\" style=\"display:block;width:64px;height:64px;\">");
+                sb.Append("</td>");
+            }
+
+            sb.Append("</tr></table>");
         }
         else
         {
@@ -216,7 +232,8 @@ public static class EmailRenderer
         string text,
         string muted,
         string border,
-        string brandColor)
+        string brandColor,
+        bool rtl)
     {
         switch (block)
         {
@@ -224,10 +241,10 @@ public static class EmailRenderer
                 AppendParagraphHtml(sb, p.Text, text, muted: false);
                 break;
             case FactsBlock f:
-                AppendFacts(sb, f, forceDark, text, muted, border);
+                AppendFacts(sb, f, forceDark, text, muted, border, rtl);
                 break;
             case StepsBlock s:
-                AppendSteps(sb, s, forceDark, text, brandColor);
+                AppendSteps(sb, s, forceDark, text, brandColor, rtl);
                 break;
             case CodeBlock c:
                 AppendCode(sb, c, forceDark, text);
@@ -258,17 +275,21 @@ public static class EmailRenderer
             switch (seg)
             {
                 case PlainSegment p:
-                    sb.Append(Escape(p.Text));
+                    sb.Append(WrapBdi(Escape(p.Text), p.Isolate));
                     break;
                 case BoldSegment b:
-                    sb.Append("<strong>").Append(Escape(b.Text)).Append("</strong>");
+                    sb.Append("<strong>").Append(WrapBdi(Escape(b.Text), b.Isolate)).Append("</strong>");
                     break;
                 case LinkSegment l:
-                    sb.Append($"<a href=\"{Escape(l.Url)}\" style=\"color:{color};text-decoration:underline;\">{Escape(l.Label)}</a>");
+                    var label = WrapBdi(Escape(l.Label), l.IsolateLabel);
+                    sb.Append($"<a href=\"{Escape(l.Url)}\" style=\"color:{color};text-decoration:underline;\">{label}</a>");
                     break;
             }
         }
     }
+
+    private static string WrapBdi(string escaped, bool isolate)
+        => isolate ? $"<bdi>{escaped}</bdi>" : escaped;
 
     private static void AppendFacts(
         StringBuilder sb,
@@ -276,7 +297,8 @@ public static class EmailRenderer
         bool forceDark,
         string text,
         string muted,
-        string border)
+        string border,
+        bool rtl)
     {
         var bg = EmailTheme.ToneBackground(facts.Tone, forceDark);
         var toneClass = EmailTheme.ToneClass(facts.Tone);
@@ -292,10 +314,22 @@ public static class EmailRenderer
 
             var bt = i == 0 ? "" : $"border-top:1px solid {border};";
             sb.Append("<tr>");
-            sb.Append($"<td class=\"kv-l m ln\" width=\"150\" valign=\"top\" style=\"width:150px;{bt}padding:10px 0;font-size:14px;line-height:20px;color:{muted};\">{Escape(label)}</td>");
-            sb.Append($"<td class=\"kv-v t ln\" valign=\"top\" style=\"{bt}padding:10px 0 10px 12px;font-size:16px;line-height:22px;font-weight:600;color:{text};\">");
-            AppendInline(sb, value, text);
-            sb.Append("</td></tr>");
+            if (rtl)
+            {
+                sb.Append($"<td class=\"kv-v t ln\" valign=\"top\" style=\"{bt}padding:10px 12px 10px 0;font-size:16px;line-height:22px;font-weight:600;color:{text};\">");
+                AppendInline(sb, value, text);
+                sb.Append("</td>");
+                sb.Append($"<td class=\"kv-l m ln\" width=\"150\" valign=\"top\" style=\"width:150px;{bt}padding:10px 0;font-size:14px;line-height:20px;color:{muted};\">{Escape(label)}</td>");
+            }
+            else
+            {
+                sb.Append($"<td class=\"kv-l m ln\" width=\"150\" valign=\"top\" style=\"width:150px;{bt}padding:10px 0;font-size:14px;line-height:20px;color:{muted};\">{Escape(label)}</td>");
+                sb.Append($"<td class=\"kv-v t ln\" valign=\"top\" style=\"{bt}padding:10px 0 10px 12px;font-size:16px;line-height:22px;font-weight:600;color:{text};\">");
+                AppendInline(sb, value, text);
+                sb.Append("</td>");
+            }
+
+            sb.Append("</tr>");
             i++;
         }
 
@@ -307,7 +341,8 @@ public static class EmailRenderer
         StepsBlock steps,
         bool forceDark,
         string text,
-        string brandColor)
+        string brandColor,
+        bool rtl)
     {
         if (!string.IsNullOrWhiteSpace(steps.Title))
         {
@@ -320,12 +355,26 @@ public static class EmailRenderer
         foreach (var item in steps.Items)
         {
             sb.Append("<tr>");
-            sb.Append("<td width=\"36\" valign=\"top\" style=\"width:36px;padding:0 0 10px 0;\">");
-            sb.Append($"<div class=\"num\" style=\"width:26px;height:26px;border-radius:13px;background:{numBg};color:{brandColor};font-size:14px;line-height:26px;font-weight:700;text-align:center;\">{n}</div>");
-            sb.Append("</td>");
-            sb.Append($"<td class=\"t\" valign=\"top\" style=\"padding:2px 0 10px 0;font-size:16px;line-height:22px;color:{text};\">");
-            AppendInline(sb, item, text);
-            sb.Append("</td></tr>");
+            if (rtl)
+            {
+                sb.Append($"<td class=\"t\" valign=\"top\" style=\"padding:2px 0 10px 0;font-size:16px;line-height:22px;color:{text};\">");
+                AppendInline(sb, item, text);
+                sb.Append("</td>");
+                sb.Append("<td width=\"36\" valign=\"top\" align=\"right\" style=\"width:36px;padding:0 0 10px 0;\">");
+                sb.Append($"<div class=\"num\" style=\"width:26px;height:26px;border-radius:13px;background:{numBg};color:{brandColor};font-size:14px;line-height:26px;font-weight:700;text-align:center;\">{n}</div>");
+                sb.Append("</td>");
+            }
+            else
+            {
+                sb.Append("<td width=\"36\" valign=\"top\" style=\"width:36px;padding:0 0 10px 0;\">");
+                sb.Append($"<div class=\"num\" style=\"width:26px;height:26px;border-radius:13px;background:{numBg};color:{brandColor};font-size:14px;line-height:26px;font-weight:700;text-align:center;\">{n}</div>");
+                sb.Append("</td>");
+                sb.Append($"<td class=\"t\" valign=\"top\" style=\"padding:2px 0 10px 0;font-size:16px;line-height:22px;color:{text};\">");
+                AppendInline(sb, item, text);
+                sb.Append("</td>");
+            }
+
+            sb.Append("</tr>");
             n++;
         }
 
@@ -338,7 +387,7 @@ public static class EmailRenderer
         var digits = Escape(code.Digits);
         sb.Append($"<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" class=\"tone-sky\" data-lobsy-block=\"code\" style=\"background:{bg};border-radius:14px;margin:6px 0 14px 0;\">");
         sb.Append("<tr><td align=\"center\" style=\"padding:22px 12px;\">");
-        sb.Append($"<div class=\"otp t\" data-lobsy-otp=\"{digits}\" style=\"font-family:'SF Mono',Menlo,Consolas,'Roboto Mono',monospace;font-size:40px;line-height:46px;font-weight:700;letter-spacing:10px;color:{text};\">{digits}</div>");
+        sb.Append($"<div class=\"otp t\" dir=\"ltr\" data-lobsy-otp=\"{digits}\" style=\"font-family:'SF Mono',Menlo,Consolas,'Roboto Mono',monospace;font-size:40px;line-height:46px;font-weight:700;letter-spacing:10px;color:{text};\">{digits}</div>");
         sb.Append("</td></tr></table>");
     }
 
@@ -435,19 +484,19 @@ public static class EmailRenderer
             switch (block)
             {
                 case ParagraphBlock p:
-                    lines.Add(WrapText(p.Text.Flatten()));
+                    lines.Add(WrapText(p.Text.Flatten(forRtlText: doc.Culture.IsRightToLeft)));
                     lines.Add("");
                     break;
                 case FactsBlock f:
                     foreach (var (label, value) in f.Rows)
                     {
-                        var flat = value.Flatten();
+                        var flat = value.Flatten(forRtlText: doc.Culture.IsRightToLeft);
                         if (string.IsNullOrWhiteSpace(flat))
                         {
                             continue;
                         }
 
-                        lines.Add(WrapText($"{label}: {flat}"));
+                        lines.Add(WrapText(doc.Culture.IsRightToLeft ? $"{flat} :{label}" : $"{label}: {flat}"));
                     }
 
                     lines.Add("");
@@ -461,7 +510,8 @@ public static class EmailRenderer
                     var n = 1;
                     foreach (var item in s.Items)
                     {
-                        lines.Add(WrapText($"{n}. {item.Flatten()}"));
+                        var flat = item.Flatten(forRtlText: doc.Culture.IsRightToLeft);
+                        lines.Add(WrapText(doc.Culture.IsRightToLeft ? $"{flat} .{n}" : $"{n}. {flat}"));
                         n++;
                     }
 
@@ -479,7 +529,7 @@ public static class EmailRenderer
 
                     break;
                 case NoteBlock note:
-                    var noteLine = note.Text.Flatten();
+                    var noteLine = note.Text.Flatten(forRtlText: doc.Culture.IsRightToLeft);
                     if (note.Link is not null)
                     {
                         noteLine = string.IsNullOrWhiteSpace(noteLine)
@@ -504,18 +554,21 @@ public static class EmailRenderer
         lines.Add(doc.ReasonText);
         if (doc.Kind == EmailKind.Optional)
         {
-            // 04: EmailStrings
             var unsubHref = string.IsNullOrWhiteSpace(doc.UnsubscribeUrl)
                 ? Absolute(brand.PublicWebBaseUrl, "/mail/afmelden")
                 : doc.UnsubscribeUrl!;
-            lines.Add($"Afmelden voor deze mails: {unsubHref}");
+            var unsubLabel = EmailStrings.Get(doc.Culture, "Email.Common.Unsubscribe");
+            lines.Add($"{unsubLabel}: {unsubHref}");
         }
 
-        lines.Add($"Hulp: mailto:{brand.SupportAddress}");
-        lines.Add($"Privacy: {Absolute(brand.PublicWebBaseUrl, "/privacy")}");
+        var helpLabel = EmailStrings.Get(doc.Culture, "Email.Common.Help");
+        var privacyLabel = EmailStrings.Get(doc.Culture, "Email.Common.Privacy");
+        lines.Add($"{helpLabel}: mailto:{brand.SupportAddress}");
+        lines.Add($"{privacyLabel}: {Absolute(brand.PublicWebBaseUrl, "/privacy")}");
         if (doc.Kind == EmailKind.Optional)
         {
-            lines.Add($"Mail-instellingen: {Absolute(brand.PublicWebBaseUrl, "/account/mail-instellingen")}");
+            var mailSettingsLabel = EmailStrings.Get(doc.Culture, "Email.Common.MailSettings");
+            lines.Add($"{mailSettingsLabel}: {Absolute(brand.PublicWebBaseUrl, "/account/mail-instellingen")}");
         }
 
         if (!string.IsNullOrWhiteSpace(brand.LegalLine))

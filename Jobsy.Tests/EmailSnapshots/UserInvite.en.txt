@@ -1,0 +1,36 @@
+KEY: UserInvite
+SUBJECT: Invitation to Lobsy (Filiaalmanager)
+PREHEADER: You were invited as Filiaalmanager on Lobsy.
+KIND: Essential
+--- TEXT ---
+Hello Alex de Tester,
+
+Invitation — Filiaalmanager
+===========================
+
+You were invited as Filiaalmanager on Lobsy.
+
+Accept the invitation with the button below to choose a password for
+tester@example.com. Or sign in with Google or Microsoft Entra with the same
+email.
+
+The link works until 7 October 2026. After that, ask for a new invitation.
+
+Accept invitation: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+
+Team Lobsy
+
+You receive this email because you were invited to Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Invitation — Filiaalmanager
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Accept invitation -> https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

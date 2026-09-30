@@ -1,0 +1,32 @@
+KEY: CompanyVerificationRejected
+SUBJECT: رُفض التوثيق — Lobsy
+PREHEADER: رُفض التوثيق
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+رُفض التوثيق
+
+تعذر علينا توثيق ⁨Bakkerij De Gouden Korrel⁩.
+
+السبب: ⁨Filiaalmanager⁩
+
+يمكنك طلب رسالة برمز أو بدء مراجعة يدوية من جديد.
+
+وثّق مجددًا: https://lobsy.nl/register/verifieren
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تدير شركة على Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: رُفض التوثيق
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: وثّق مجددًا -> https://lobsy.nl/register/verifieren
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -3,7 +3,7 @@ SUBJECT: Herinnering: verifieer je bedrijf — Lobsy
 PREHEADER: Verifieer je bedrijf op Lobsy
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Verifieer je bedrijf
 ====================

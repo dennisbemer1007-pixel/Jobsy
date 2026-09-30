@@ -1,0 +1,30 @@
+KEY: AccessRequestRejected
+SUBJECT: رُفض طلب الوصول — Lobsy
+PREHEADER: رُفض طلب الوصول
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+رُفض طلب الوصول
+
+رُفض طلب وصولك إلى ⁨Bakkerij De Gouden Korrel⁩.
+
+السبب: ⁨Niet goedgekeurd⁩
+
+اطلب مجددًا: https://lobsy.nl/register/toegang
+
+فريق Lobsy
+
+تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: رُفض طلب الوصول
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: اطلب مجددًا -> https://lobsy.nl/register/toegang
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

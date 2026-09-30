@@ -1,0 +1,28 @@
+KEY: AccountLockout
+SUBJECT: Your Lobsy account is temporarily locked
+PREHEADER: There were several failed sign-in attempts.
+KIND: Essential
+--- TEXT ---
+Account temporarily locked
+==========================
+
+There were several failed sign-in attempts. Your account is temporarily
+locked. If this was not you, choose a new password after the lockout.
+
+Contact us: mailto:support@lobsy.nl
+
+Team Lobsy
+
+You receive this email because of a Lobsy security notice.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Account temporarily locked
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Contact us -> mailto:support@lobsy.nl
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

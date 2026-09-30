@@ -1,0 +1,31 @@
+KEY: AccessRequestEmailVerification
+SUBJECT: Access request confirmation code — Lobsy
+PREHEADER: Access request confirmation code
+KIND: Security
+--- TEXT ---
+Hello Alex de Tester,
+
+Confirm your email address
+==========================
+
+Confirm your email to request access to Bakkerij De Gouden Korrel. Code
+valid 10 minutes:
+
+
+123456
+
+Team Lobsy
+
+You receive this email because of an access or takeover request.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Confirm your email address
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=code
+marker: div data-lobsy-otp=123456
+a: Lobsy -> https://lobsy.nl
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

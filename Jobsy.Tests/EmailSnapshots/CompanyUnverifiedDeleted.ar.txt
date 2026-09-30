@@ -1,0 +1,29 @@
+KEY: CompanyUnverifiedDeleted
+SUBJECT: حُذف التسجيل — Lobsy
+PREHEADER: حُذف تسجيل غير موثّق
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+حُذف التسجيل
+
+حُذف تسجيلك غير الموثّق لـ ⁨Bakkerij De Gouden Korrel⁩ بعد 60 يومًا. يمكنك
+البدء من جديد عبر تسجيل شركة.
+
+سجّل مجددًا: https://lobsy.nl/register
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تدير شركة على Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: حُذف التسجيل
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: سجّل مجددًا -> https://lobsy.nl/register
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

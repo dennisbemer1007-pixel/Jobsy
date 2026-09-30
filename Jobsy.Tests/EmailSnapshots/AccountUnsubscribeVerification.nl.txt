@@ -3,7 +3,7 @@ SUBJECT: Verificatiecode voor uitschrijving bij Lobsy
 PREHEADER: Je verificatiecode voor uitschrijving
 KIND: Security
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Bevestig je uitschrijving
 =========================

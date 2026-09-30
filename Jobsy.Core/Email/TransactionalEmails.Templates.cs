@@ -6,277 +6,321 @@ namespace Jobsy.Core.Email;
 
 public static partial class TransactionalEmails
 {
-    public static ComposedEmail MailTest(string? baseUrl)
+    public static ComposedEmail MailTest(string? baseUrl, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("MailTest", "Lobsy testmail", "Dit is een testmail van Lobsy.", "Testmail",
-            [P("Dit is een testmail van Lobsy."), P("Als je dit bericht ziet, werkt de uitgaande mailconfiguratie.")],
-            Button("Naar e-mails", links.AdminEmails)), baseUrl);
+        return Finish(Doc("MailTest", S(c, "Email.MailTest.Subject"), S(c, "Email.MailTest.Preheader"), S(c, "Email.MailTest.Heading"),
+            [P(S(c, "Email.MailTest.P1")), P(S(c, "Email.MailTest.P2"))],
+            Button(S(c, "Email.MailTest.Cta"), links.AdminEmails), culture: c), baseUrl);
     }
 
     public static ComposedEmail ApplicationConfirmation(
-        string? baseUrl, string candidateName, string vacancyTitle, string companyName, bool authenticatorStubUsed)
+        string? baseUrl, string candidateName, string vacancyTitle, string companyName, bool authenticatorStubUsed,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = $"Sollicitatie bevestigd: {vacancyTitle}";
+        var subject = Sf(c, "Email.ApplicationConfirmation.Subject", EmailBidi.Isolate(c, vacancyTitle));
         var blocks = new List<EmailBlock>
         {
-            P(Fmt("Je sollicitatie op {0} bij {1} is ontvangen. Top!", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
-            P("Je kunt de status volgen onder Mijn sollicitaties.")
+            P(T(c, "Email.ApplicationConfirmation.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
+            P(S(c, "Email.ApplicationConfirmation.P2"))
         };
         if (authenticatorStubUsed)
         {
-            blocks.Add(N("Authenticator stub: verificatie gesimuleerd."));
+            blocks.Add(N(S(c, "Email.ApplicationConfirmation.NoteStub")));
         }
 
-        return Finish(Doc("ApplicationConfirmation", subject, "Je sollicitatie is ontvangen.", "Sollicitatie verstuurd!",
-            blocks, Button("Bekijk mijn sollicitaties", links.CandidateApplications),
-            greeting: $"Hoi {candidateName},"), baseUrl);
+        return Finish(Doc("ApplicationConfirmation", subject, S(c, "Email.ApplicationConfirmation.Preheader"),
+            S(c, "Email.ApplicationConfirmation.Heading"),
+            blocks, Button(S(c, "Email.ApplicationConfirmation.Cta"), links.CandidateApplications),
+            greeting: GreetCandidate(c, candidateName), culture: c), baseUrl);
     }
 
     public static ComposedEmail ApplicationVerificationCode(
-        string? baseUrl, string candidateName, string vacancyTitle, Guid vacancyId, string code)
+        string? baseUrl, string candidateName, string vacancyTitle, Guid vacancyId, string code,
+        EmailCulture? culture = null)
     {
-        var subject = $"Verificatiecode voor sollicitatie: {vacancyTitle}";
-        return Finish(Doc("ApplicationVerificationCode", subject, "Je Lobsy-verificatiecode", "Je verificatiecode",
+        var c = culture ?? EmailCulture.Nl;
+        var subject = Sf(c, "Email.ApplicationVerificationCode.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        return Finish(Doc("ApplicationVerificationCode", subject, S(c, "Email.ApplicationVerificationCode.Preheader"),
+            S(c, "Email.ApplicationVerificationCode.Heading"),
             [
-                P("Gebruik deze 6-cijferige code om je sollicitatie af te ronden:"),
-                C(code, "De code is 10 minuten geldig.")
+                P(S(c, "Email.ApplicationVerificationCode.P1")),
+                C(code, S(c, "Email.Common.CodeValid10"))
             ],
-            greeting: $"Hoi {candidateName},"), baseUrl);
+            greeting: GreetCandidate(c, candidateName), culture: c), baseUrl);
     }
 
     public static ComposedEmail EmployerReactionAccepted(
-        string? baseUrl, string candidateName, string vacancyTitle, string companyName)
+        string? baseUrl, string candidateName, string vacancyTitle, string companyName,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = $"Je sollicitatie is geaccepteerd: {vacancyTitle}";
-        return Finish(Doc("EmployerReactionAccepted", subject, "Je sollicitatie is geaccepteerd.", "Goed nieuws!",
+        var subject = Sf(c, "Email.EmployerReactionAccepted.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        return Finish(Doc("EmployerReactionAccepted", subject, S(c, "Email.EmployerReactionAccepted.Preheader"),
+            S(c, "Email.EmployerReactionAccepted.Heading"),
             [
-                P(Fmt("Het bedrijf heeft je sollicitatie voor {0} bij {1} geaccepteerd.", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
-                P("Wellicht nemen ze binnenkort contact met je op. Houd je telefoon en mail in de gaten.")
+                P(T(c, "Email.EmployerReactionAccepted.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
+                P(S(c, "Email.EmployerReactionAccepted.P2"))
             ],
-            Button("Bekijk mijn sollicitaties", links.CandidateApplications),
-            greeting: $"Hoi {candidateName},", showMascot: true), baseUrl);
+            Button(S(c, "Email.EmployerReactionAccepted.Cta"), links.CandidateApplications),
+            greeting: GreetCandidate(c, candidateName), showMascot: true, culture: c), baseUrl);
     }
 
     public static ComposedEmail EmployerReactionRejected(
-        string? baseUrl, string candidateName, string vacancyTitle, string companyName)
+        string? baseUrl, string candidateName, string vacancyTitle, string companyName,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = $"Update op je sollicitatie: {vacancyTitle}";
-        return Finish(Doc("EmployerReactionRejected", subject, "Update op je sollicitatie.", "Update op je sollicitatie",
+        var subject = Sf(c, "Email.EmployerReactionRejected.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        return Finish(Doc("EmployerReactionRejected", subject, S(c, "Email.EmployerReactionRejected.Preheader"),
+            S(c, "Email.EmployerReactionRejected.Heading"),
             [
-                P(Fmt("Bedankt voor je interesse in {0} bij {1}.", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
-                P("Helaas is de keuze dit keer niet op jou gevallen. We wensen je veel succes met je verdere zoektocht!")
+                P(T(c, "Email.EmployerReactionRejected.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
+                P(S(c, "Email.EmployerReactionRejected.P2"))
             ],
-            Button("Bekijk andere vacatures", links.Map),
-            greeting: $"Hoi {candidateName},"), baseUrl);
+            Button(S(c, "Email.EmployerReactionRejected.Cta"), links.Map),
+            greeting: GreetCandidate(c, candidateName), culture: c), baseUrl);
     }
 
-    public static ComposedEmail EmployerContacting(string? baseUrl, string vacancyTitle)
+    public static ComposedEmail EmployerContacting(string? baseUrl, string vacancyTitle, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = $"Werkgever neemt contact op: {vacancyTitle}";
-        return Finish(Doc("EmployerContacting", subject, "De werkgever neemt contact op.", "De werkgever neemt contact op",
+        var subject = Sf(c, "Email.EmployerContacting.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        return Finish(Doc("EmployerContacting", subject, S(c, "Email.EmployerContacting.Preheader"),
+            S(c, "Email.EmployerContacting.Heading"),
             [
-                P(Fmt("Goed nieuws! De werkgever van {0} neemt contact met je op.", EmailArg.Bold(vacancyTitle))),
-                P("Houd je telefoon, mail of WhatsApp in de gaten.")
+                P(T(c, "Email.EmployerContacting.P1", EmailArg.Bold(vacancyTitle))),
+                P(S(c, "Email.EmployerContacting.P2"))
             ],
-            Button("Bekijk mijn sollicitaties", links.CandidateApplications),
-            showMascot: true), baseUrl);
+            Button(S(c, "Email.EmployerContacting.Cta"), links.CandidateApplications),
+            showMascot: true, culture: c), baseUrl);
     }
 
     public static ComposedEmail ApplicationHired(
         string? baseUrl, string candidateName, string vacancyTitle, string companyName,
-        Guid hiredApplicationId, string? withdrawAbsoluteUrl = null)
+        Guid hiredApplicationId, string? withdrawAbsoluteUrl = null, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = $"Gefeliciteerd! Je bent aangenomen voor {vacancyTitle}";
+        var subject = Sf(c, "Email.ApplicationHired.Subject", EmailBidi.Isolate(c, vacancyTitle));
         var blocks = new List<EmailBlock>
         {
-            P(EmailText.Join(Bold("Wat een feest! "), Fmt("Je bent aangenomen voor {0} bij {1}.", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName)))),
-            P("Heel veel succes — en geniet van deze stap.")
+            P(EmailText.Join(Bold(S(c, "Email.ApplicationHired.P1Lead")),
+                T(c, "Email.ApplicationHired.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName)))),
+            P(S(c, "Email.ApplicationHired.P2"))
         };
         EmailCta cta;
         if (!string.IsNullOrWhiteSpace(withdrawAbsoluteUrl))
         {
-            cta = Button("Andere sollicitaties netjes intrekken", withdrawAbsoluteUrl!);
+            cta = Button(S(c, "Email.ApplicationHired.CtaWithdraw"), withdrawAbsoluteUrl!);
             blocks.Add(N(
-                "Heb je nog andere sollicitaties lopen? Trek ze in, zodat die werkgevers weten dat je al bent voorzien.",
-                new EmailLink("Bekijk mijn sollicitaties", links.CandidateApplications)));
+                S(c, "Email.ApplicationHired.NoteWithdraw"),
+                new EmailLink(S(c, "Email.ApplicationHired.NoteLink"), links.CandidateApplications)));
         }
         else
         {
-            cta = Button("Bekijk mijn sollicitaties", links.CandidateApplications);
+            cta = Button(S(c, "Email.ApplicationHired.Cta"), links.CandidateApplications);
         }
 
-        return Finish(Doc("ApplicationHired", subject, "Je bent aangenomen — gefeliciteerd!", "Gefeliciteerd — je bent aangenomen!",
-            blocks, cta, greeting: $"Hoi {candidateName},", showMascot: true), baseUrl);
+        return Finish(Doc("ApplicationHired", subject, S(c, "Email.ApplicationHired.Preheader"),
+            S(c, "Email.ApplicationHired.Heading"),
+            blocks, cta, greeting: GreetCandidate(c, candidateName), showMascot: true, culture: c), baseUrl);
     }
 
     public static ComposedEmail ApplicationFilledElsewhere(
-        string? baseUrl, string candidateName, string vacancyTitle, string companyName)
+        string? baseUrl, string candidateName, string vacancyTitle, string companyName,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = $"Update sollicitatie: {vacancyTitle}";
-        return Finish(Doc("ApplicationFilledElsewhere", subject, "Update op je sollicitatie.", "Update op je sollicitatie",
+        var subject = Sf(c, "Email.ApplicationFilledElsewhere.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        return Finish(Doc("ApplicationFilledElsewhere", subject, S(c, "Email.ApplicationFilledElsewhere.Preheader"),
+            S(c, "Email.ApplicationFilledElsewhere.Heading"),
             [
-                P(Fmt("Bedankt voor je sollicitatie op {0} bij {1}.", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
-                P("Helaas is de keuze op een andere kandidaat gevallen. We wensen je veel succes!")
+                P(T(c, "Email.ApplicationFilledElsewhere.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
+                P(S(c, "Email.ApplicationFilledElsewhere.P2"))
             ],
-            Button("Bekijk andere vacatures", links.Map),
-            greeting: $"Hoi {candidateName},"), baseUrl);
+            Button(S(c, "Email.ApplicationFilledElsewhere.Cta"), links.Map),
+            greeting: GreetCandidate(c, candidateName), culture: c), baseUrl);
     }
 
-    public static ComposedEmail EmployerNewApplication(string? baseUrl, string vacancyTitle)
+    public static ComposedEmail EmployerNewApplication(string? baseUrl, string vacancyTitle, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = $"Nieuwe sollicitatie: {vacancyTitle}";
-        return Finish(Doc("EmployerNewApplication", subject, "Er is een nieuwe sollicitatie.", "Nieuwe sollicitatie",
+        var subject = Sf(c, "Email.EmployerNewApplication.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        return Finish(Doc("EmployerNewApplication", subject, S(c, "Email.EmployerNewApplication.Preheader"),
+            S(c, "Email.EmployerNewApplication.Heading"),
             [
-                P(Fmt("Er is een nieuwe sollicitatie ontvangen voor {0}.", EmailArg.Bold(vacancyTitle))),
-                P("Log in op Lobsy om de kandidaat te bekijken en te reageren.")
+                P(T(c, "Email.EmployerNewApplication.P1", EmailArg.Bold(vacancyTitle))),
+                P(S(c, "Email.EmployerNewApplication.P2"))
             ],
-            Button("Bekijk sollicitaties", links.EmployerApplications())), baseUrl);
+            Button(S(c, "Email.EmployerNewApplication.Cta"), links.EmployerApplications()), culture: c), baseUrl);
     }
 
-    public static ComposedEmail CandidateWithdrawn(string? baseUrl, string vacancyTitle)
+    public static ComposedEmail CandidateWithdrawn(string? baseUrl, string vacancyTitle, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = $"Sollicitatie ingetrokken: {vacancyTitle}";
-        return Finish(Doc("CandidateWithdrawn", subject, "Een sollicitatie is ingetrokken.", "Sollicitatie ingetrokken",
-            [P(Fmt("Een kandidaat heeft de sollicitatie op {0} ingetrokken.", EmailArg.Bold(vacancyTitle)))],
-            Button("Open sollicitaties", links.EmployerApplications())), baseUrl);
+        var subject = Sf(c, "Email.CandidateWithdrawn.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        return Finish(Doc("CandidateWithdrawn", subject, S(c, "Email.CandidateWithdrawn.Preheader"),
+            S(c, "Email.CandidateWithdrawn.Heading"),
+            [P(T(c, "Email.CandidateWithdrawn.P1", EmailArg.Bold(vacancyTitle)))],
+            Button(S(c, "Email.CandidateWithdrawn.Cta"), links.EmployerApplications()), culture: c), baseUrl);
     }
 
-    public static ComposedEmail CandidateWithdrawnOtherJob(string? baseUrl, string vacancyTitle)
+    public static ComposedEmail CandidateWithdrawnOtherJob(string? baseUrl, string vacancyTitle, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = $"Sollicitatie ingetrokken: {vacancyTitle}";
-        return Finish(Doc("CandidateWithdrawnOtherJob", subject, "Een sollicitatie is ingetrokken.", "Sollicitatie ingetrokken",
+        var subject = Sf(c, "Email.CandidateWithdrawnOtherJob.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        return Finish(Doc("CandidateWithdrawnOtherJob", subject, S(c, "Email.CandidateWithdrawnOtherJob.Preheader"),
+            S(c, "Email.CandidateWithdrawnOtherJob.Heading"),
             [
-                P(Fmt("Goed om te weten: de kandidaat heeft de sollicitatie op {0} ingetrokken.", EmailArg.Bold(vacancyTitle))),
-                P("Reden: de kandidaat heeft inmiddels een andere baan gevonden.")
+                P(T(c, "Email.CandidateWithdrawnOtherJob.P1", EmailArg.Bold(vacancyTitle))),
+                P(S(c, "Email.CandidateWithdrawnOtherJob.P2"))
             ],
-            Button("Open sollicitaties", links.EmployerApplications()),
-            greeting: "Hoi,"), baseUrl);
+            Button(S(c, "Email.CandidateWithdrawnOtherJob.Cta"), links.EmployerApplications()),
+            greeting: GreetOther(c, null), culture: c), baseUrl);
     }
 
     public static ComposedEmail PushBom(
         string? baseUrl, string candidateName, string vacancyTitle, string companyName, Guid vacancyId,
         string? locationLabel, double distanceKm, int travelMinutes, decimal? hourlyWage, string wageNote,
-        string? setUnavailableAbsoluteUrl = null)
+        string? setUnavailableAbsoluteUrl = null, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var facts = new List<(string, string)> { ("Functie", vacancyTitle), ("Bedrijf", companyName) };
+        var facts = new List<(string, string)>
+        {
+            (S(c, "Email.Common.Fact.Function"), vacancyTitle),
+            (S(c, "Email.Common.Fact.Company"), companyName)
+        };
         if (!string.IsNullOrWhiteSpace(locationLabel))
         {
-            facts.Add(("Locatie", locationLabel!));
+            facts.Add((S(c, "Email.Common.Fact.Location"), locationLabel!));
         }
 
-        facts.Add(("Afstand", EmailFormat.FormatKm(distanceKm)));
-        facts.Add(("Reistijd", $"{travelMinutes} min"));
-        if (hourlyWage is decimal w && !string.IsNullOrWhiteSpace(wageNote))
+        facts.Add((S(c, "Email.Common.Fact.Distance"), EmailFormat.Km(distanceKm, c)));
+        facts.Add((S(c, "Email.Common.Fact.TravelTime"), EmailFormat.Minutes(travelMinutes, c)));
+        if (hourlyWage is decimal w)
         {
-            facts.Add((wageNote, EmailFormat.FormatEuro(w)));
+            var label = string.IsNullOrWhiteSpace(wageNote) ? S(c, "Email.PushBom.WageNote") : wageNote;
+            facts.Add((label, EmailFormat.Money(w, c)));
         }
 
-        var subject = $"Nieuwe vacature bij jou in de buurt: {vacancyTitle}";
+        var subject = Sf(c, "Email.PushBom.Subject", EmailBidi.Isolate(c, vacancyTitle));
         var setUnavailable = string.IsNullOrWhiteSpace(setUnavailableAbsoluteUrl)
             ? links.SetUnavailable
             : setUnavailableAbsoluteUrl!;
-        return Finish(Doc("PushBom", subject,
-            $"{vacancyTitle} bij {companyName} — {EmailFormat.FormatKm(distanceKm)} van jou",
-            "Iets moois bij jou in de buurt",
+        var preheader = Sf(c, "Email.PushBom.Preheader",
+            EmailBidi.Isolate(c, vacancyTitle), EmailBidi.Isolate(c, companyName), EmailFormat.Km(distanceKm, c));
+        return Finish(Doc("PushBom", subject, preheader, S(c, "Email.PushBom.Heading"),
             [
-                P("Er staat een passende vacature open — op fiets- of reistijd-afstand van jou."),
+                P(S(c, "Email.PushBom.P1")),
                 F(facts),
-                N("Niet meer op zoek naar werk?", new EmailLink("Zet je status op Niet beschikbaar", setUnavailable))
+                N(S(c, "Email.PushBom.Note"), new EmailLink(S(c, "Email.PushBom.NoteLink"), setUnavailable))
             ],
-            Button("Klik hier", links.Vacancy(vacancyId)),
-            greeting: $"Hoi {candidateName},"), baseUrl);
+            Button(S(c, "Email.PushBom.Cta"), links.Vacancy(vacancyId)),
+            greeting: GreetCandidate(c, candidateName), culture: c), baseUrl);
     }
 
-    public static ComposedEmail PendingApproval(string? baseUrl, string vacancyTitle, string companyName)
+    public static ComposedEmail PendingApproval(string? baseUrl, string vacancyTitle, string companyName, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = $"Publicatieaanvraag: {vacancyTitle}";
-        return Finish(Doc("PendingApproval", subject, "Er wacht een publicatieaanvraag.", "Publicatieaanvraag",
+        var subject = Sf(c, "Email.PendingApproval.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        return Finish(Doc("PendingApproval", subject, S(c, "Email.PendingApproval.Preheader"),
+            S(c, "Email.PendingApproval.Heading"),
             [
-                P(Fmt("Vacature {0} bij {1} wacht op goedkeuring (onvoldoende tokens).", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
-                P("Log in op Lobsy om de aanvraag te beoordelen onder Vacatures.")
+                P(T(c, "Email.PendingApproval.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
+                P(S(c, "Email.PendingApproval.P2"))
             ],
-            Button("Beoordeel de aanvraag", links.EmployerTokens)), baseUrl);
+            Button(S(c, "Email.PendingApproval.Cta"), links.EmployerTokens), culture: c), baseUrl);
     }
 
     public static ComposedEmail VacancyEngagementReminder(
         string? baseUrl, string vacancyTitle, Guid vacancyId, int impressions, int views, int shares,
-        int saved, int applications, string tip, string? companyName = null)
+        int saved, int applications, string tip, string? companyName = null, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = $"Even checken: {vacancyTitle} staat {VacancyEngagementReminderRules.OpenDaysBeforeReminder} dagen open";
-        var companyBit = string.IsNullOrWhiteSpace(companyName) ? "" : $" bij {companyName}";
-        return Finish(Doc("VacancyEngagementReminder", subject,
-            $"{vacancyTitle}: {impressions} zoek · {views} bekeken · {applications} sollicitaties",
-            "Even checken — je vacature staat 14 dagen open",
+        var subject = Sf(c, "Email.VacancyEngagementReminder.Subject",
+            EmailBidi.Isolate(c, vacancyTitle), VacancyEngagementReminderRules.OpenDaysBeforeReminder);
+        var companyBit = string.IsNullOrWhiteSpace(companyName)
+            ? ""
+            : Sf(c, "Email.VacancyEngagementReminder.CompanyBit", EmailBidi.Isolate(c, companyName));
+        var preheader = Sf(c, "Email.VacancyEngagementReminder.Preheader",
+            EmailBidi.Isolate(c, vacancyTitle), impressions, views, applications);
+        return Finish(Doc("VacancyEngagementReminder", subject, preheader,
+            S(c, "Email.VacancyEngagementReminder.Heading"),
             [
-                P(Fmt("Je vacature {0}{1} staat al {2} dagen open. Tijd voor een korte check-in.",
+                P(T(c, "Email.VacancyEngagementReminder.P1",
                     EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyBit),
-                    EmailArg.Plain(VacancyEngagementReminderRules.OpenDaysBeforeReminder.ToString()))),
-                P(Bold("Dit zien we tot nu toe:")),
+                    EmailArg.Plain(VacancyEngagementReminderRules.OpenDaysBeforeReminder.ToString(), isolate: false))),
+                P(Bold(S(c, "Email.VacancyEngagementReminder.StatsLead"))),
                 F([
-                    ("In zoekresultaten", impressions.ToString()),
-                    ("Bekeken", views.ToString()),
-                    ("Gedeeld", shares.ToString()),
-                    ("Bewaard", saved.ToString()),
-                    ("Sollicitaties", applications.ToString())
+                    (S(c, "Email.VacancyEngagementReminder.Fact.Impressions"), impressions.ToString()),
+                    (S(c, "Email.VacancyEngagementReminder.Fact.Views"), views.ToString()),
+                    (S(c, "Email.VacancyEngagementReminder.Fact.Shares"), shares.ToString()),
+                    (S(c, "Email.VacancyEngagementReminder.Fact.Saved"), saved.ToString()),
+                    (S(c, "Email.VacancyEngagementReminder.Fact.Applications"), applications.ToString())
                 ]),
-                P(EmailText.Join(Bold("Tip van Lobsy: "), Plain(tip))),
-                P($"Pas de vacature aan vóór de einddatum. Bij een update verlengen we de deadline als goodwill met {VacancyEngagementReminderRules.GoodwillExtendDays} dagen — zo geef je je tekst nog even de ruimte."),
-                N("Highlight en PushBom openen je vacatureoverzicht, waar je de actie met één klik kunt afronden (tokens vereist).",
-                    new EmailLink("Highlight deze vacature", links.EmployerVacancyBoostHighlight(vacancyId)))
+                P(EmailText.Join(Bold(S(c, "Email.VacancyEngagementReminder.TipLead")), Plain(tip))),
+                P(Sf(c, "Email.VacancyEngagementReminder.P3", VacancyEngagementReminderRules.GoodwillExtendDays)),
+                N(S(c, "Email.VacancyEngagementReminder.Note"),
+                    new EmailLink(S(c, "Email.VacancyEngagementReminder.NoteLink"), links.EmployerVacancyBoostHighlight(vacancyId)))
             ],
-            Button("Vacature nu verbeteren", links.EmployerVacancyEdit(vacancyId)),
-            greeting: "Hoi,"), baseUrl);
+            Button(S(c, "Email.VacancyEngagementReminder.Cta"), links.EmployerVacancyEdit(vacancyId)),
+            greeting: GreetOther(c, null), culture: c), baseUrl);
     }
 
     public static ComposedEmail DraftVacancyCleanupWarning(
-        string? baseUrl, string vacancyTitle, string companyName, Guid vacancyId, DateTime deleteOnUtc)
+        string? baseUrl, string vacancyTitle, string companyName, Guid vacancyId, DateTime deleteOnUtc,
+        EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var deleteLabel = deleteOnUtc.ToString("dd-MM-yyyy");
-        var subject = $"Concept-vacature '{vacancyTitle}' wordt over 14 dagen verwijderd";
+        var deleteLabel = EmailFormat.Date(deleteOnUtc, c);
+        var subject = Sf(c, "Email.DraftVacancyCleanupWarning.Subject", EmailBidi.Isolate(c, vacancyTitle));
         return Finish(Doc("DraftVacancyCleanupWarning", subject,
-            $"Concept '{vacancyTitle}' wordt over 14 dagen verwijderd",
-            "Concept wordt binnenkort opgeruimd",
+            Sf(c, "Email.DraftVacancyCleanupWarning.Preheader", EmailBidi.Isolate(c, vacancyTitle)),
+            S(c, "Email.DraftVacancyCleanupWarning.Heading"),
             [
-                P(Fmt("Je concept-vacature {0} voor {1} staat al {2} dagen als concept en is nog nooit gepubliceerd.",
+                P(T(c, "Email.DraftVacancyCleanupWarning.P1",
                     EmailArg.Bold(vacancyTitle), EmailArg.Bold(companyName),
-                    EmailArg.Plain(DraftVacancyCleanupRules.WarningAfterDays.ToString()))),
-                P(Fmt("Als je niets doet, ruimt Lobsy dit concept automatisch op op {0} (14 dagen vanaf deze mail).", EmailArg.Bold(deleteLabel))),
-                P("Vacatures die je wél hebt gepubliceerd blijven altijd bewaard — ook na de deadline."),
-                N("Log in op Lobsy → Vacatures om dit concept te publiceren of te verwijderen.")
+                    EmailArg.Plain(DraftVacancyCleanupRules.WarningAfterDays.ToString(), isolate: false))),
+                P(T(c, "Email.DraftVacancyCleanupWarning.P2", EmailArg.Bold(deleteLabel))),
+                P(S(c, "Email.DraftVacancyCleanupWarning.P3")),
+                N(S(c, "Email.DraftVacancyCleanupWarning.Note"))
             ],
-            Button("Open dit concept", links.EmployerVacancyEdit(vacancyId)),
-            greeting: "Hallo,"), baseUrl);
+            Button(S(c, "Email.DraftVacancyCleanupWarning.Cta"), links.EmployerVacancyEdit(vacancyId)),
+            greeting: GreetOther(c, null), culture: c), baseUrl);
     }
 
-    public static ComposedEmail CompanyReEngagement(string? baseUrl, string companyName)
+    public static ComposedEmail CompanyReEngagement(string? baseUrl, string companyName, EmailCulture? culture = null)
     {
+        var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        return Finish(Doc("CompanyReEngagement", "We missen je bij Lobsy", "Je tools staan nog klaar op Lobsy.", "We missen je",
+        return Finish(Doc("CompanyReEngagement", S(c, "Email.CompanyReEngagement.Subject"),
+            S(c, "Email.CompanyReEngagement.Preheader"), S(c, "Email.CompanyReEngagement.Heading"),
             [
-                P(Fmt("Hallo team {0},", EmailArg.Bold(companyName))),
-                P("Het is al een tijdje stil op Lobsy — geen actieve vacatures, geen inlog, geen API-call en geen CSV-upload."),
-                P("Goed nieuws: jullie tools staan nog klaar:"),
+                P(T(c, "Email.CompanyReEngagement.P1", EmailArg.Bold(companyName))),
+                P(S(c, "Email.CompanyReEngagement.P2")),
+                P(S(c, "Email.CompanyReEngagement.P3")),
                 F([
-                    ("CSV Batch Import", "Veel vacatures in één keer als concept"),
-                    ("Externe API", "Koppel je ATS met een API-key"),
-                    ("Publiceren", "Tokens pas bij publicatie in Lobsy")
+                    (S(c, "Email.CompanyReEngagement.Fact.Csv"), S(c, "Email.CompanyReEngagement.Fact.CsvVal")),
+                    (S(c, "Email.CompanyReEngagement.Fact.Api"), S(c, "Email.CompanyReEngagement.Fact.ApiVal")),
+                    (S(c, "Email.CompanyReEngagement.Fact.Publish"), S(c, "Email.CompanyReEngagement.Fact.PublishVal"))
                 ]),
-                N("Log in op Lobsy wanneer je weer wilt starten.")
+                N(S(c, "Email.CompanyReEngagement.Note"))
             ],
-            Button("Inloggen op Lobsy", links.EmployerHome)), baseUrl);
+            Button(S(c, "Email.CompanyReEngagement.Cta"), links.EmployerHome), culture: c), baseUrl);
     }
 }

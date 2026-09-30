@@ -1,0 +1,28 @@
+KEY: TakeoverRejected
+SUBJECT: رُفض الاستحواذ — Lobsy
+PREHEADER: رُفض الاستحواذ
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+رُفض الاستحواذ
+
+رُفض طلب استحواذك على ⁨Bakkerij De Gouden Korrel⁩.
+
+تواصل معنا: mailto:support@lobsy.nl
+
+فريق Lobsy
+
+تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: رُفض الاستحواذ
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: تواصل معنا -> mailto:support@lobsy.nl
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

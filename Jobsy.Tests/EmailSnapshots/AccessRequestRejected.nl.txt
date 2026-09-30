@@ -3,7 +3,7 @@ SUBJECT: Toegangsverzoek afgewezen — Lobsy
 PREHEADER: Toegangsverzoek afgewezen
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Toegangsverzoek afgewezen
 =========================

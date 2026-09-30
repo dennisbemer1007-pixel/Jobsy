@@ -1,0 +1,44 @@
+KEY: CompanyReEngagement
+SUBJECT: We miss you at Lobsy
+PREHEADER: Your tools are still ready on Lobsy.
+KIND: Optional
+--- TEXT ---
+We miss you
+===========
+
+Hello team Bakkerij De Gouden Korrel,
+
+It has been quiet on Lobsy for a while — no active vacancies, no sign-in, no
+API call and no CSV upload.
+
+Good news: your tools are still ready:
+
+CSV Batch Import: Many vacancies at once as drafts
+External API: Connect your ATS with an API key
+Publishing: Tokens only when publishing in Lobsy
+
+Sign in to Lobsy whenever you want to start again.
+
+Sign in to Lobsy: https://lobsy.nl/werkgever
+
+Team Lobsy
+
+You receive this email because you manage a company on Lobsy.
+Unsubscribe from these emails: https://lobsy.nl/mail/afmelden
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail settings: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: We miss you
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Sign in to Lobsy -> https://lobsy.nl/werkgever
+a: Unsubscribe from these emails -> https://lobsy.nl/mail/afmelden
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail settings -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

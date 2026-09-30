@@ -1,0 +1,33 @@
+KEY: TakeoverRequest
+SUBJECT: Location takeover request — Lobsy
+PREHEADER: Location takeover request
+KIND: Essential
+--- TEXT ---
+Takeover request
+================
+
+There is a takeover request for Bakkerij De Gouden Korrel (000012345678).
+
+Applicant: Alex de Tester (tester@example.com).
+
+View requests in Lobsy under Takeovers
+(https://lobsy.nl/werkgever/overnames).
+
+View takeovers: https://lobsy.nl/werkgever/overnames
+
+Team Lobsy
+
+You receive this email because you manage this location.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Takeover request
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: View takeovers -> https://lobsy.nl/werkgever/overnames
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

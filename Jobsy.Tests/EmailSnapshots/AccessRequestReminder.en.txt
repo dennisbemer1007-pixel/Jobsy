@@ -1,0 +1,28 @@
+KEY: AccessRequestReminder
+SUBJECT: Access request reminder — Lobsy
+PREHEADER: Access request reminder
+KIND: Essential
+--- TEXT ---
+Access request reminder
+=======================
+
+An access request from Alex de Tester for Bakkerij De Gouden Korrel is still
+waiting.
+
+View request: https://lobsy.nl/werkgever/overnames
+
+Team Lobsy
+
+You receive this email because you manage this location.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Access request reminder
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: View request -> https://lobsy.nl/werkgever/overnames
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

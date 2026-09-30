@@ -1,3 +1,5 @@
+using Jobsy.Core.Localization;
+
 namespace Jobsy.Core.Email.Model;
 
 public enum EmailKind
@@ -23,13 +25,17 @@ public enum EmailRenderMode
 
 public sealed record EmailCulture(string Language, bool IsRightToLeft)
 {
-    public static EmailCulture Nl { get; } = new("nl", false);
-    public static EmailCulture Ar { get; } = new("ar", true);
+    public static EmailCulture Nl { get; } = ForLanguage(JobsyLanguages.Default);
+    public static EmailCulture En { get; } = ForLanguage("en");
+    public static EmailCulture Pl { get; } = ForLanguage("pl");
+    public static EmailCulture Ro { get; } = ForLanguage("ro");
+    public static EmailCulture Ar { get; } = ForLanguage("ar");
 
     public static EmailCulture ForLanguage(string? language)
     {
-        var lang = string.IsNullOrWhiteSpace(language) ? "nl" : language.Trim().ToLowerInvariant();
-        return new EmailCulture(lang, lang is "ar");
+        var lang = JobsyLanguages.Normalize(language);
+        var opt = JobsyLanguages.Get(lang);
+        return new EmailCulture(opt.Code, opt.IsRightToLeft);
     }
 }
 

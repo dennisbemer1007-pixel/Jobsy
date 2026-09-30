@@ -1,0 +1,29 @@
+KEY: EmailSignUpCode
+SUBJECT: رمز لوبسي: 123456
+PREHEADER: رمز إنشاء حساب Lobsy
+KIND: Security
+--- TEXT ---
+رمزك لـ Lobsy
+
+استخدم هذا الرمز المكوّن من 6 أرقام لإنشاء حسابك المجاني:
+
+
+123456
+
+الرمز صالح لمدة 10 دقائق.
+
+فريق Lobsy
+
+تصلك هذه الرسالة بسبب إجراء على حساب Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: رمزك لـ Lobsy
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=code
+marker: div data-lobsy-otp=123456
+a: Lobsy -> https://lobsy.nl
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

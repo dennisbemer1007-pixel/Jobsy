@@ -1,0 +1,33 @@
+KEY: AmbassadeurInvite
+SUBJECT: دعوة سفير Lobsy
+PREHEADER: دُعيت كسفير على Lobsy.
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+دعوة سفير
+
+دُعيت كسفير على Lobsy.
+
+سجّل الدخول بـ ⁨tester@example.com⁩ للمتابعة.
+
+بعد أول دخول تملأ بيانات KvK/الضريبة/العنوان وتوقّع اتفاقية الوساطة لاستلام
+رمز التتبع.
+
+تسجيل الدخول: https://lobsy.nl/login
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك دُعيت إلى Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: دعوة سفير
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: تسجيل الدخول -> https://lobsy.nl/login
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

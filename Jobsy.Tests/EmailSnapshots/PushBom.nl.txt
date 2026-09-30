@@ -14,7 +14,7 @@ Functie: Weekendhulp verkoop
 Bedrijf: Bakkerij De Gouden Korrel
 Locatie: Delft
 Afstand: 3,4 km
-Reistijd: 12 min
+Reistijd: 12 minuten
 Uurloon: € 14,50
 
 Niet meer op zoek naar werk? Zet je status op Niet beschikbaar:

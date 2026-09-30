@@ -3,7 +3,7 @@ SUBJECT: Even checken: Weekendhulp verkoop staat 14 dagen open
 PREHEADER: Weekendhulp verkoop: 42 zoek · 18 bekeken · 2 sollicitaties
 KIND: Optional
 --- TEXT ---
-Hoi,
+Hallo,
 
 Even checken — je vacature staat 14 dagen open
 ==============================================

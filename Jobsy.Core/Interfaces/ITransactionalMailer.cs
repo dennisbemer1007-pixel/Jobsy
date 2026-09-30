@@ -18,7 +18,9 @@ public sealed record EmailSendOptions(
     /// Optional Resend/SMTP idempotency key. Hosted jobs should pass
     /// <c>{key}:{entityId}:{yyyyMMdd}</c> so retries cannot double-send.
     /// </summary>
-    string? IdempotencyKey = null);
+    string? IdempotencyKey = null,
+    /// <summary>Recipient culture used for tags/lang; compose already baked the copy.</summary>
+    EmailCulture? Culture = null);
 
 public sealed record EmailSendOutcome(
     bool Sent,

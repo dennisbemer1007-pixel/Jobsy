@@ -1,0 +1,29 @@
+KEY: EmployerContacting
+SUBJECT: صاحب العمل يتواصل: ⁨Weekendhulp verkoop⁩
+PREHEADER: صاحب العمل سيتواصل معك.
+KIND: Essential
+--- TEXT ---
+صاحب العمل يتواصل معك
+
+أخبار سارة! سيتواصل معك صاحب عمل ⁨Weekendhulp verkoop⁩.
+
+راقب هاتفك أو بريدك أو واتساب.
+
+عرض طلباتي: https://lobsy.nl/candidate/applications
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تقدّمت عبر Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: صاحب العمل يتواصل معك
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: عرض طلباتي -> https://lobsy.nl/candidate/applications
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
+img: src=https://lobsy.nl/images/email/mascot-celebrating-128.png?v=20260930-mail2 alt= width=64 height=64

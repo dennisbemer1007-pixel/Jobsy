@@ -1,27 +1,32 @@
 using System.Text;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Core.Email.Model;
 
 public abstract record EmailSegment;
 
-public sealed record PlainSegment(string Text) : EmailSegment;
+public sealed record PlainSegment(string Text, bool Isolate = false) : EmailSegment;
 
-public sealed record BoldSegment(string Text) : EmailSegment;
+public sealed record BoldSegment(string Text, bool Isolate = false) : EmailSegment;
 
-public sealed record LinkSegment(string Label, string Url) : EmailSegment;
+public sealed record LinkSegment(string Label, string Url, bool IsolateLabel = false) : EmailSegment;
 
 public abstract record EmailArg
 {
-    public static EmailArg Plain(string value) => new PlainArg(value);
-    public static EmailArg Bold(string value) => new BoldArg(value);
-    public static EmailArg Link(string label, string url) => new LinkArg(label, url);
+    /// <summary>User-data values default to bidi isolation.</summary>
+    public static EmailArg Plain(string value, bool isolate = true) => new PlainArg(value, isolate);
+
+    public static EmailArg Bold(string value, bool isolate = true) => new BoldArg(value, isolate);
+
+    public static EmailArg Link(string label, string url, bool isolateLabel = false)
+        => new LinkArg(label, url, isolateLabel);
 }
 
-public sealed record PlainArg(string Value) : EmailArg;
+public sealed record PlainArg(string Value, bool Isolate = true) : EmailArg;
 
-public sealed record BoldArg(string Value) : EmailArg;
+public sealed record BoldArg(string Value, bool Isolate = true) : EmailArg;
 
-public sealed record LinkArg(string Label, string Url) : EmailArg;
+public sealed record LinkArg(string Label, string Url, bool IsolateLabel = false) : EmailArg;
 
 /// <summary>Rich text without HTML. Templates never write markup.</summary>
 public sealed class EmailText
@@ -33,14 +38,14 @@ public sealed class EmailText
 
     public static EmailText Empty { get; } = new([]);
 
-    public static EmailText Plain(string text)
-        => new([new PlainSegment(text ?? string.Empty)]);
+    public static EmailText Plain(string text, bool isolate = false)
+        => new([new PlainSegment(text ?? string.Empty, isolate)]);
 
-    public static EmailText Bold(string text)
-        => new([new BoldSegment(text ?? string.Empty)]);
+    public static EmailText Bold(string text, bool isolate = false)
+        => new([new BoldSegment(text ?? string.Empty, isolate)]);
 
-    public static EmailText Link(string label, string url)
-        => new([new LinkSegment(label ?? string.Empty, url ?? string.Empty)]);
+    public static EmailText Link(string label, string url, bool isolateLabel = false)
+        => new([new LinkSegment(label ?? string.Empty, url ?? string.Empty, isolateLabel)]);
 
     public static EmailText Join(params EmailText[] parts)
     {
@@ -100,13 +105,13 @@ public sealed class EmailText
 
     private static IEnumerable<EmailSegment> ArgToSegments(EmailArg arg) => arg switch
     {
-        BoldArg b => [new BoldSegment(b.Value ?? string.Empty)],
-        LinkArg l => [new LinkSegment(l.Label ?? string.Empty, l.Url ?? string.Empty)],
-        PlainArg p => [new PlainSegment(p.Value ?? string.Empty)],
+        BoldArg b => [new BoldSegment(b.Value ?? string.Empty, b.Isolate)],
+        LinkArg l => [new LinkSegment(l.Label ?? string.Empty, l.Url ?? string.Empty, l.IsolateLabel)],
+        PlainArg p => [new PlainSegment(p.Value ?? string.Empty, p.Isolate)],
         _ => [new PlainSegment(string.Empty)]
     };
 
-    public string Flatten()
+    public string Flatten(bool forRtlText = false)
     {
         var sb = new StringBuilder();
         foreach (var seg in Segments)
@@ -114,13 +119,14 @@ public sealed class EmailText
             switch (seg)
             {
                 case PlainSegment p:
-                    sb.Append(p.Text);
+                    sb.Append(forRtlText && p.Isolate ? EmailBidiWrap(p.Text) : p.Text);
                     break;
                 case BoldSegment b:
-                    sb.Append(b.Text);
+                    sb.Append(forRtlText && b.Isolate ? EmailBidiWrap(b.Text) : b.Text);
                     break;
                 case LinkSegment l:
-                    sb.Append(l.Label);
+                    var label = forRtlText && l.IsolateLabel ? EmailBidiWrap(l.Label) : l.Label;
+                    sb.Append(label);
                     if (!string.IsNullOrWhiteSpace(l.Url))
                     {
                         sb.Append(" (").Append(l.Url).Append(')');
@@ -132,4 +138,9 @@ public sealed class EmailText
 
         return sb.ToString();
     }
+
+    public string Flatten() => Flatten(forRtlText: false);
+
+    private static string EmailBidiWrap(string text)
+        => EmailBidi.FirstStrongIsolate + text + EmailBidi.PopDirectionalIsolate;
 }

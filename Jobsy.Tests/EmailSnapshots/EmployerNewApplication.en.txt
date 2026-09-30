@@ -1,0 +1,29 @@
+KEY: EmployerNewApplication
+SUBJECT: New application: Weekendhulp verkoop
+PREHEADER: There is a new application.
+KIND: Essential
+--- TEXT ---
+New application
+===============
+
+A new application was received for Weekendhulp verkoop.
+
+Sign in to Lobsy to view the candidate and respond.
+
+View applications: https://lobsy.nl/werkgever/sollicitaties
+
+Team Lobsy
+
+You receive this email because you manage vacancies on Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: New application
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: View applications -> https://lobsy.nl/werkgever/sollicitaties
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

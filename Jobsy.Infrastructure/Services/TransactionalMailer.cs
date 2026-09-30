@@ -22,7 +22,7 @@ public sealed class TransactionalMailer : ITransactionalMailer
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly Regex UnsubTextLine = new(
-        @"^Afmelden voor deze mails:.*$",
+        @"^(?<label>[^\r\n:]+):\s*\S*mail/afmelden\S*$",
         RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.CultureInvariant);
 
     private readonly IEmailService _email;
@@ -184,7 +184,7 @@ public sealed class TransactionalMailer : ITransactionalMailer
 
         if (UnsubTextLine.IsMatch(text))
         {
-            return UnsubTextLine.Replace(text, $"Afmelden voor deze mails: {unsubscribeUrl}");
+            return UnsubTextLine.Replace(text, m => $"{m.Groups["label"].Value}: {unsubscribeUrl}");
         }
 
         return text;

@@ -3,7 +3,7 @@ SUBJECT: Sollicitatie ingetrokken: Weekendhulp verkoop
 PREHEADER: Een sollicitatie is ingetrokken.
 KIND: Essential
 --- TEXT ---
-Hoi,
+Hallo,
 
 Sollicitatie ingetrokken
 ========================

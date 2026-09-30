@@ -1,0 +1,30 @@
+KEY: PendingApproval
+SUBJECT: Publication request: Weekendhulp verkoop
+PREHEADER: A publication request is waiting.
+KIND: Essential
+--- TEXT ---
+Publication request
+===================
+
+Vacancy Weekendhulp verkoop at Bakkerij De Gouden Korrel is waiting for
+approval (not enough tokens).
+
+Sign in to Lobsy to review the request under Vacancies.
+
+Review the request: https://lobsy.nl/werkgever/tokens
+
+Team Lobsy
+
+You receive this email because you manage a company on Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Publication request
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Review the request -> https://lobsy.nl/werkgever/tokens
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

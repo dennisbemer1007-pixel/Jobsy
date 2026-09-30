@@ -3,7 +3,7 @@ SUBJECT: Uitnodiging voor Lobsy (Filiaalmanager)
 PREHEADER: Je bent uitgenodigd als Filiaalmanager op Lobsy.
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Uitnodiging — Filiaalmanager
 ============================

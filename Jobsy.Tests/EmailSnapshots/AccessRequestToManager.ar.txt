@@ -1,0 +1,29 @@
+KEY: AccessRequestToManager
+SUBJECT: طلب وصول — Lobsy
+PREHEADER: طلب وصول على Lobsy
+KIND: Essential
+--- TEXT ---
+طلب وصول جديد
+
+هناك طلب وصول إلى ⁨Bakkerij De Gouden Korrel⁩.
+
+مقدّم الطلب: ⁨Alex de Tester⁩ (Filiaalmanager) — ⁨tester@example.com⁩. الدور
+المطلوب: ⁨Filiaalmanager⁩.
+
+عرض طلبات الوصول: https://lobsy.nl/werkgever/overnames
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تدير هذا الموقع.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: طلب وصول جديد
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: عرض طلبات الوصول -> https://lobsy.nl/werkgever/overnames
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

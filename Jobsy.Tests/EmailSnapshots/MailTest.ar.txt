@@ -1,0 +1,28 @@
+KEY: MailTest
+SUBJECT: بريد اختبار Lobsy
+PREHEADER: هذه رسالة اختبار من Lobsy.
+KIND: Essential
+--- TEXT ---
+رسالة اختبار
+
+هذه رسالة اختبار من Lobsy.
+
+إذا رأيت هذه الرسالة، فإعداد البريد الصادر يعمل.
+
+إلى الرسائل: https://lobsy.nl/admin/content/emails
+
+فريق Lobsy
+
+تصلك هذه الرسالة كمسؤول Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: رسالة اختبار
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: إلى الرسائل -> https://lobsy.nl/admin/content/emails
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

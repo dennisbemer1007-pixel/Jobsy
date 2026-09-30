@@ -3,7 +3,7 @@ SUBJECT: Toegangsverzoek verstuurd — Lobsy
 PREHEADER: Toegangsverzoek verstuurd
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Aanvraag verstuurd
 ==================

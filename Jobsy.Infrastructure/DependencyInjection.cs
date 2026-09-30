@@ -1,4 +1,5 @@
 using Jobsy.Core.Admin;
+using Jobsy.Core.Email;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Enums;
@@ -295,6 +296,7 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<IEmailPreferenceService, EmailPreferenceService>();
         services.AddSingleton<IMailUnsubscribeTokenService, MailUnsubscribeTokenService>();
+        services.AddScoped<IEmailLanguageResolver, EmailLanguageResolver>();
         services.AddScoped<ITransactionalMailer, TransactionalMailer>();
         services.AddScoped<IEmailCatalogService, EmailCatalogService>();
         services.AddHostedService<MailLegalFooterWarningHostedService>();

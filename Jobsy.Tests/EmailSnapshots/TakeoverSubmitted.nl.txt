@@ -3,7 +3,7 @@ SUBJECT: Overnameverzoek ingediend — Lobsy
 PREHEADER: Overnameverzoek ingediend
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hallo Alex de Tester,
 
 Verzoek ingediend
 =================

@@ -1,0 +1,43 @@
+KEY: CompanyReEngagement
+SUBJECT: نفتقدك في Lobsy
+PREHEADER: أدواتك ما زالت جاهزة على Lobsy.
+KIND: Optional
+--- TEXT ---
+نفتقدك
+
+مرحبًا فريق ⁨Bakkerij De Gouden Korrel⁩،
+
+كان الهدوء على Lobsy لفترة — بلا وظائف نشطة ولا دخول ولا استدعاء API ولا رفع
+CSV.
+
+أخبار سارة: أدواتكم ما زالت جاهزة:
+
+وظائف كثيرة دفعة واحدة كمسودات :استيراد CSV دفعي
+اربط نظام التوظيف بمفتاح API :واجهة API خارجية
+الرموز فقط عند النشر في Lobsy :النشر
+
+سجّل الدخول إلى Lobsy عندما تريد البدء مجددًا.
+
+تسجيل الدخول إلى Lobsy: https://lobsy.nl/werkgever
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تدير شركة على Lobsy.
+إلغاء الاشتراك من هذه الرسائل: https://lobsy.nl/mail/afmelden
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+إعدادات البريد: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: نفتقدك
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: تسجيل الدخول إلى Lobsy -> https://lobsy.nl/werkgever
+a: إلغاء الاشتراك من هذه الرسائل -> https://lobsy.nl/mail/afmelden
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+a: إعدادات البريد -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

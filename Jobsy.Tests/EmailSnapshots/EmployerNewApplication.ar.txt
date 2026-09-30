@@ -1,0 +1,28 @@
+KEY: EmployerNewApplication
+SUBJECT: طلب جديد: ⁨Weekendhulp verkoop⁩
+PREHEADER: هناك طلب جديد.
+KIND: Essential
+--- TEXT ---
+طلب جديد
+
+تم استلام طلب جديد لـ ⁨Weekendhulp verkoop⁩.
+
+سجّل الدخول إلى Lobsy لمراجعة المرشح والرد.
+
+عرض الطلبات: https://lobsy.nl/werkgever/sollicitaties
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تدير وظائف على Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: طلب جديد
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: عرض الطلبات -> https://lobsy.nl/werkgever/sollicitaties
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

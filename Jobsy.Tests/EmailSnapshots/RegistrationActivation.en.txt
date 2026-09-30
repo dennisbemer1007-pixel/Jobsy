@@ -1,0 +1,37 @@
+KEY: RegistrationActivation
+SUBJECT: Confirmation code — Lobsy
+PREHEADER: Your Lobsy confirmation code
+KIND: Security
+--- TEXT ---
+Hello Alex de Tester,
+
+Welcome to Lobsy
+================
+
+Confirm your email address to activate your company registration for
+Bakkerij De Gouden Korrel — Delft (role: Filiaalmanager, SBI 5610).
+
+After confirmation you can set up your company right away: prepare draft
+vacancies, fill in the profile and invite colleagues. Publishing follows
+after verification.
+
+Your confirmation code (valid for 10 minutes):
+
+
+123456
+
+Team Lobsy
+
+You receive this email because you are finishing a Lobsy registration.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Welcome to Lobsy
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=code
+marker: div data-lobsy-otp=123456
+a: Lobsy -> https://lobsy.nl
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

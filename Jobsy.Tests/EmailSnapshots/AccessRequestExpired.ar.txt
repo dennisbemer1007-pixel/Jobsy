@@ -1,0 +1,28 @@
+KEY: AccessRequestExpired
+SUBJECT: انتهت صلاحية طلب الوصول — Lobsy
+PREHEADER: انتهت صلاحية طلب الوصول
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+انتهت صلاحية طلب الوصول
+
+انتهت صلاحية طلب وصولك إلى ⁨Bakkerij De Gouden Korrel⁩ بعد 30 يومًا.
+
+اطلب مجددًا: https://lobsy.nl/register/toegang
+
+فريق Lobsy
+
+تصلك هذه الرسالة بسبب طلب وصول أو استحواذ.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: انتهت صلاحية طلب الوصول
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: اطلب مجددًا -> https://lobsy.nl/register/toegang
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

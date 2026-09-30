@@ -1,0 +1,30 @@
+KEY: CompanyBusinessEmailVerification
+SUBJECT: Your Lobsy verification code
+PREHEADER: Verification code for your company
+KIND: Security
+--- TEXT ---
+Your verification code
+======================
+
+Use this 6-digit code to verify Bakkerij De Gouden Korrel:
+
+
+123456
+
+The code is valid for 10 minutes.
+
+Team Lobsy
+
+You receive this email because you are finishing a Lobsy registration.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Your verification code
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=code
+marker: div data-lobsy-otp=123456
+a: Lobsy -> https://lobsy.nl
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

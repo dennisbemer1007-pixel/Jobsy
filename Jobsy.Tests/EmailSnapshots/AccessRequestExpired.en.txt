@@ -1,0 +1,29 @@
+KEY: AccessRequestExpired
+SUBJECT: Access request expired — Lobsy
+PREHEADER: Access request expired
+KIND: Essential
+--- TEXT ---
+Hello Alex de Tester,
+
+Access request expired
+======================
+
+Your request for access to Bakkerij De Gouden Korrel expired after 30 days.
+
+Request again: https://lobsy.nl/register/toegang
+
+Team Lobsy
+
+You receive this email because of an access or takeover request.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Access request expired
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Request again -> https://lobsy.nl/register/toegang
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -1,0 +1,30 @@
+KEY: ApplicationFilledElsewhere
+SUBJECT: تحديث الطلب: ⁨Weekendhulp verkoop⁩
+PREHEADER: تحديث على طلبك.
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex de Tester⁩،
+
+تحديث على طلبك
+
+شكرًا لتقديمك على ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden Korrel⁩.
+
+للأسف تم اختيار مرشح آخر. نتمنى لك التوفيق!
+
+عرض وظائف أخرى: https://lobsy.nl/banenkaart
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تقدّمت عبر Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: تحديث على طلبك
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: عرض وظائف أخرى -> https://lobsy.nl/banenkaart
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
