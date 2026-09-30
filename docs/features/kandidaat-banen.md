@@ -66,3 +66,12 @@ Shared foundation for the candidate jobs stack (banenkaart, lijst, vacature, sol
 - Desktop ≥900: Kaart/Lijst radio toggle (`?weergave=lijst` + `sessionStorage jobsy.kb.weergave`). List mode hides the map canvas, full-width `KbListRow` + right rail (≥1024: mini map + how we sort).
 - Mobile list: compact `KbListRow` + floating **Kaart** FAB above bottom nav (`ToggleMobileView`).
 - Vacancy detail: fit panel, key facts grid, travel card (transport switch Fiets/Auto/Lopen/OV with “ongeveer” for OV), one `.btn--primary` Solliciteer (rail ≥1024 / sticky apply bar &lt;1024). Dep B blocks still absent. Route/Street View secondary links only when not hidden mode.
+
+
+## Sollicitaties + Bewaard (file 07)
+
+- `ApplicationStatusHistory` + migration `AddApplicationStatusHistory`; single writer `IApplicationStatusRecorder` / `ApplicationStatusTransitions`.
+- Candidate timeline via `ApplicationTimelineBuilder` (D4: no invented history for older apps).
+- "Gezien door werkgever" = first `EmployerViewed` (detail open / CV download / react / contact); list does not count; support access never records.
+- **Dep C ABSENT:** `/candidate/liked` redesigned in place (`h1` Bewaard), **no** `CandidateJobListTabs`, **no** nav change.
+- Bewaard cards: `KbSavedJobState` (Open / Sluit over n / Fulfilled / Closed), unsave+undo, apply / view / similar.

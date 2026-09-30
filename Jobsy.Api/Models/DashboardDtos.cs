@@ -97,7 +97,17 @@ public record ApplicationDto(
     DateTime? RespondedAt = null,
     string? LocationLabel = null,
     string? PictureUrl = null,
-    string? PictureKind = null);
+    string? PictureKind = null,
+    IReadOnlyList<ApplicationTimelineStepDto>? Timeline = null,
+    string? NextStepKey = null,
+    bool LegacyNoHistory = false);
+
+/// <summary>Candidate timeline step (no actor ids).</summary>
+public record ApplicationTimelineStepDto(
+    string Key,
+    string State,
+    DateTime? OccurredAtUtc,
+    string LabelKey);
 
 public record ApplyRequest(
     Guid VacancyId,

@@ -96,4 +96,6 @@ public class Application
 
     public DateTime CreatedAt { get; set; }
     public DateTime? RespondedAt { get; set; }
+
+    public ICollection<ApplicationStatusHistory> StatusHistory { get; set; } = new List<ApplicationStatusHistory>();
 }

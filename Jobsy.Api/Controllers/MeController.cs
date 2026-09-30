@@ -4,6 +4,8 @@ using System.Security.Cryptography;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
@@ -402,15 +404,23 @@ public class MeController : ControllerBase
                 ImageUrl = a.Vacancy.ImageUrl,
                 WorkTypes = a.Vacancy.WorkTypes,
                 WorkTypeLabels = a.Vacancy.WorkTypeLabels,
+                CategoryId = a.Vacancy.CategoryId,
                 a.CandidateName,
                 a.CandidateEmail,
                 a.PreferredTransport,
                 a.EstimatedTravelMinutes,
                 a.CreatedAt,
-                Status = a.Status.ToString(),
+                Status = a.Status,
                 a.RespondedAt
             })
             .ToListAsync(cancellationToken);
+
+        var appIds = rows.Select(r => r.Id).ToList();
+        var historyByApp = await _db.ApplicationStatusHistories.AsNoTracking()
+            .Where(h => appIds.Contains(h.ApplicationId))
+            .OrderBy(h => h.OccurredAtUtc)
+            .ToListAsync(cancellationToken);
+        var historyLookup = historyByApp.ToLookup(h => h.ApplicationId);
 
         var items = rows.Select(row =>
         {
@@ -428,6 +438,17 @@ public class MeController : ControllerBase
             var workType = WorkTypeLabels.ResolveLabels(row.WorkTypes, row.WorkTypeLabels).FirstOrDefault();
             var pictureUrl = VacancyImageUrls.ForCard(row.ImageUrl, logo, row.VacancyId, workType);
             var pictureKind = VacancyImageUrls.ForCardKind(pictureUrl, logo);
+            var history = historyLookup[row.Id].ToList();
+            var timeline = ApplicationTimelineBuilder.Build(
+                row.CreatedAt,
+                row.Status,
+                row.RespondedAt,
+                history);
+            var timelineDto = timeline.Steps.Select(s => new ApplicationTimelineStepDto(
+                s.Key.ToString(),
+                s.State.ToString(),
+                s.OccurredAtUtc,
+                s.LabelKey)).ToList();
             return new ApplicationDto(
                 row.Id,
                 row.VacancyId,
@@ -438,11 +459,14 @@ public class MeController : ControllerBase
                 row.PreferredTransport,
                 row.EstimatedTravelMinutes,
                 row.CreatedAt,
-                row.Status,
+                row.Status.ToString(),
                 row.RespondedAt,
                 location,
                 pictureUrl,
-                pictureKind);
+                pictureKind,
+                timelineDto,
+                ApplicationTimelineBuilder.NextStepKey(row.Status),
+                timeline.LegacyNoHistory);
         }).ToList();
 
         var lang = await ResolveTargetLanguageAsync(user, cancellationToken);
@@ -496,19 +520,87 @@ public class MeController : ControllerBase
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
 
-        var items = await _db.VacancyLikes.AsNoTracking()
+        var likeRows = await _db.VacancyLikes.AsNoTracking()
             .Where(l => l.UserId == user.Id)
             .OrderByDescending(l => l.CreatedAt)
-            .Select(l => new CandidateVacancyEngagementDto(
+            .Select(l => new
+            {
                 l.Id,
                 l.VacancyId,
-                l.Vacancy.Title,
-                l.Vacancy.Company.Name,
+                Title = l.Vacancy.Title,
+                CompanyName = l.Vacancy.Company.Name,
+                CompanyAddress = l.Vacancy.Company.Address,
+                l.CreatedAt,
+                ImageUrl = l.Vacancy.ImageUrl,
+                LogoUrl = l.Vacancy.Company.LogoUrl,
+                Status = l.Vacancy.Status,
+                EndDate = l.Vacancy.EndDate,
+                ClosedAtUtc = l.Vacancy.ClosedAtUtc,
+                MinHours = l.Vacancy.MinHoursPerWeek,
+                MaxHours = l.Vacancy.MaxHoursPerWeek,
+                CategoryId = l.Vacancy.CategoryId,
+                WorkTypes = l.Vacancy.WorkTypes,
+                WorkTypeLabels = l.Vacancy.WorkTypeLabels,
+                IntermediaryName = l.Vacancy.IntermediaryCompany != null ? l.Vacancy.IntermediaryCompany.Name : null,
+                IntermediaryAddress = l.Vacancy.IntermediaryCompany != null ? l.Vacancy.IntermediaryCompany.Address : null,
+                ShowClient = l.Vacancy.ShowClientAddressOnMap,
+                HasIntermediary = l.Vacancy.IntermediaryCompanyId != null
+            })
+            .ToListAsync(cancellationToken);
+
+        var likedVacancyIds = likeRows.Select(l => l.VacancyId).ToList();
+        var applied = await _db.Applications.AsNoTracking()
+            .Where(a => a.CandidateUserId == user.Id
+                        && a.EmailVerifiedAt != null
+                        && likedVacancyIds.Contains(a.VacancyId)
+                        && a.Status != ApplicationStatus.Withdrawn)
+            .Select(a => new { a.VacancyId, a.Id })
+            .ToListAsync(cancellationToken);
+        var appliedByVacancy = applied
+            .GroupBy(a => a.VacancyId)
+            .ToDictionary(g => g.Key, g => g.First().Id);
+
+        var now = DateTime.UtcNow;
+        var items = likeRows.Select(l =>
+        {
+            var (companyName, location) = CandidateApplicationLocation.ForPublicCard(
+                l.HasIntermediary,
+                l.ShowClient,
+                l.CompanyName,
+                l.CompanyAddress,
+                l.IntermediaryName,
+                l.IntermediaryAddress);
+            var state = KbSavedJobStateResolver.Resolve(l.Status, l.EndDate, l.ClosedAtUtc, now);
+            var workType = WorkTypeLabels.ResolveLabels(l.WorkTypes, l.WorkTypeLabels).FirstOrDefault();
+            appliedByVacancy.TryGetValue(l.VacancyId, out var appId);
+            var hasApplied = appliedByVacancy.ContainsKey(l.VacancyId);
+            return new CandidateVacancyEngagementDto(
+                l.Id,
+                l.VacancyId,
+                l.Title,
+                companyName,
                 l.CreatedAt,
                 null,
-                l.Vacancy.ImageUrl,
-                l.Vacancy.Company.LogoUrl))
-            .ToListAsync(cancellationToken);
+                l.ImageUrl,
+                l.LogoUrl,
+                l.Status.ToString(),
+                l.EndDate,
+                l.ClosedAtUtc,
+                location,
+                l.MinHours is null ? null : (int?)decimal.ToInt32(l.MinHours.Value),
+                l.MaxHours is null ? null : (int?)decimal.ToInt32(l.MaxHours.Value),
+                l.CategoryId,
+                workType,
+                HasApplied: hasApplied,
+                ApplicationId: hasApplied ? appId : null,
+                FitPercent: null,
+                FitBand: null,
+                WhyLineKey: null,
+                FitGateClosed: true,
+                SavedStateKind: state.Kind.ToString(),
+                DaysUntilEnd: state.DaysUntilEnd,
+                SavedStateLabelKey: state.LabelKey);
+        }).ToList();
 
         return Ok(SlimEngagementMedia(await TranslateEngagementTitlesAsync(items, user, cancellationToken)));
     }
@@ -526,18 +618,30 @@ public class MeController : ControllerBase
         var items = await _db.VacancyShares.AsNoTracking()
             .Where(s => s.UserId == user.Id)
             .OrderByDescending(s => s.CreatedAt)
-            .Select(s => new CandidateVacancyEngagementDto(
+            .Select(s => new
+            {
                 s.Id,
                 s.VacancyId,
-                s.Vacancy.Title,
-                s.Vacancy.Company.Name,
+                Title = s.Vacancy.Title,
+                CompanyName = s.Vacancy.Company.Name,
                 s.CreatedAt,
-                s.Channel.ToString(),
-                s.Vacancy.ImageUrl,
-                s.Vacancy.Company.LogoUrl))
+                Channel = s.Channel.ToString(),
+                ImageUrl = s.Vacancy.ImageUrl,
+                LogoUrl = s.Vacancy.Company.LogoUrl
+            })
             .ToListAsync(cancellationToken);
 
-        return Ok(SlimEngagementMedia(await TranslateEngagementTitlesAsync(items, user, cancellationToken)));
+        var mapped = items.Select(s => new CandidateVacancyEngagementDto(
+            s.Id,
+            s.VacancyId,
+            s.Title,
+            s.CompanyName,
+            s.CreatedAt,
+            s.Channel,
+            s.ImageUrl,
+            s.LogoUrl)).ToList();
+
+        return Ok(SlimEngagementMedia(await TranslateEngagementTitlesAsync(mapped, user, cancellationToken)));
     }
 
     private static List<CandidateVacancyEngagementDto> SlimEngagementMedia(

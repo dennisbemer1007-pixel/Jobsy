@@ -353,6 +353,23 @@ public sealed class CandidateEngagementItem
     public string? Channel { get; set; }
     public string? ImageUrl { get; set; }
     public string? CompanyLogoUrl { get; set; }
+    public string? VacancyStatus { get; set; }
+    public DateOnly? EndDate { get; set; }
+    public DateTime? ClosedAtUtc { get; set; }
+    public string? LocationLabel { get; set; }
+    public int? HoursPerWeekMin { get; set; }
+    public int? HoursPerWeekMax { get; set; }
+    public Guid? CategoryId { get; set; }
+    public string? WorkTypeLabel { get; set; }
+    public bool HasApplied { get; set; }
+    public Guid? ApplicationId { get; set; }
+    public int? FitPercent { get; set; }
+    public string? FitBand { get; set; }
+    public string? WhyLineKey { get; set; }
+    public bool FitGateClosed { get; set; }
+    public string? SavedStateKind { get; set; }
+    public int? DaysUntilEnd { get; set; }
+    public string? SavedStateLabelKey { get; set; }
 }
 
 public sealed class VacancyMapViewResponse

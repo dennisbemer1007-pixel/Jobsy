@@ -51,4 +51,22 @@ public record CandidateVacancyEngagementDto(
     DateTime CreatedAt,
     string? Channel = null,
     string? ImageUrl = null,
-    string? CompanyLogoUrl = null);
+    string? CompanyLogoUrl = null,
+    // Bewaard enrichment (likes only; null on shares)
+    string? VacancyStatus = null,
+    DateOnly? EndDate = null,
+    DateTime? ClosedAtUtc = null,
+    string? LocationLabel = null,
+    int? HoursPerWeekMin = null,
+    int? HoursPerWeekMax = null,
+    Guid? CategoryId = null,
+    string? WorkTypeLabel = null,
+    bool HasApplied = false,
+    Guid? ApplicationId = null,
+    int? FitPercent = null,
+    string? FitBand = null,
+    string? WhyLineKey = null,
+    bool FitGateClosed = false,
+    string? SavedStateKind = null,
+    int? DaysUntilEnd = null,
+    string? SavedStateLabelKey = null);

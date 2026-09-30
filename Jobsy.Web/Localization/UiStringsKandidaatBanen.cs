@@ -214,17 +214,179 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Timeline.StatusChanged",
             "Status bijgewerkt", "Status updated",
             "Status zaktualizowany", "Status actualizat", "تم تحديث الحالة");
+        Add("Kb.Timeline.WithdrawnOn",
+            "Ingetrokken op {0}", "Withdrawn on {0}",
+            "Wycofano {0}", "Retras pe {0}", "تم السحب في {0}");
+        Add("Kb.Timeline.LegacySub",
+            "Eerdere stappen zijn niet bewaard", "Earlier steps were not saved",
+            "Wcześniejsze kroki nie zostały zapisane", "Pașii anteriori nu au fost salvați", "الخطوات السابقة غير محفوظة");
+        Add("Kb.Timeline.TapForSteps",
+            "Gezien op {0} · tik voor alle stappen", "Seen on {0} · tap for all steps",
+            "Widziane {0} · dotknij, by zobaczyć kroki", "Văzut pe {0} · atinge pentru pași", "شوهد في {0} · اضغط لكل الخطوات");
+        Add("Kb.Timeline.FinishedOn",
+            "Afgerond op {0}", "Finished on {0}",
+            "Zakończono {0}", "Finalizat pe {0}", "اكتمل في {0}");
+        Add("Kb.Timeline.AfterInterview",
+            "Na het gesprek", "After the interview",
+            "Po rozmowie", "După interviu", "بعد المقابلة");
+
+        // Wat nu? (07)
+        Add("Kb.Next.Title",
+            "Wat nu?", "What's next?",
+            "Co dalej?", "Ce urmează?", "ماذا الآن؟");
+        Add("Kb.Next.Pending",
+            "Je hoort het hier zodra de werkgever reageert.",
+            "You'll hear here as soon as the employer responds.",
+            "Dowiesz się tutaj, gdy pracodawca odpowie.",
+            "Afli aici de îndată ce angajatorul răspunde.",
+            "ستعلم هنا فور رد صاحب العمل.");
+        Add("Kb.Next.Accepted",
+            "De werkgever heeft je gegevens. Houd je telefoon en mail in de gaten.",
+            "The employer has your details. Keep an eye on your phone and email.",
+            "Pracodawca ma Twoje dane. Sprawdzaj telefon i e-mail.",
+            "Angajatorul are datele tale. Urmărește telefonul și e-mailul.",
+            "صاحب العمل لديه بياناتك. راقب هاتفك وبريدك.");
+        Add("Kb.Next.EmployerContacting",
+            "Oefen je gesprek met Lobsy",
+            "Practice your interview with Lobsy",
+            "Poćwicz rozmowę z Lobsy",
+            "Exersează interviul cu Lobsy",
+            "تدرّب على مقابلتك مع Lobsy");
+        Add("Kb.Next.Practice",
+            "Oefenen", "Practice",
+            "Ćwicz", "Exersează", "تدرّب");
+        Add("Kb.Next.Hired",
+            "Gefeliciteerd! Spreek je startdatum af met de werkgever.",
+            "Congratulations! Agree a start date with the employer.",
+            "Gratulacje! Uzgodnij datę startu z pracodawcą.",
+            "Felicitări! Stabilește data de început cu angajatorul.",
+            "تهانينا! اتفق على تاريخ البدء مع صاحب العمل.");
+        Add("Kb.Next.Rejected",
+            "Jammer. Dit zegt niets over wie jij bent. Er zijn banen die hierop lijken.",
+            "Sorry. This says nothing about who you are. There are similar jobs.",
+            "Szkoda. To nic nie mówi o Tobie. Są podobne oferty.",
+            "Păcat. Asta nu spune nimic despre tine. Există joburi asemănătoare.",
+            "للأسف. هذا لا يقول شيئًا عنك. هناك وظائف مشابهة.");
+        Add("Kb.Next.FilledElsewhere",
+            "Jammer. Dit zegt niets over wie jij bent. Er zijn banen die hierop lijken.",
+            "Sorry. This says nothing about who you are. There are similar jobs.",
+            "Szkoda. To nic nie mówi o Tobie. Są podobne oferty.",
+            "Păcat. Asta nu spune nimic despre tine. Există joburi asemănătoare.",
+            "للأسف. هذا لا يقول شيئًا عنك. هناك وظائف مشابهة.");
+        Add("Kb.Next.ViewSimilar",
+            "Bekijk ze", "View them",
+            "Zobacz je", "Vezi-le", "اعرضها");
+
+        // Steps legend (07)
+        Add("Kb.Steps.Title",
+            "Wat betekenen de stappen?", "What do the steps mean?",
+            "Co oznaczają kroki?", "Ce înseamnă pașii?", "ماذا تعني الخطوات؟");
+        Add("Kb.Steps.Sent",
+            "Je sollicitatie is verstuurd naar de werkgever.",
+            "Your application was sent to the employer.",
+            "Twoja aplikacja została wysłana do pracodawcy.",
+            "Aplicația ta a fost trimisă angajatorului.",
+            "أُرسل طلبك إلى صاحب العمل.");
+        Add("Kb.Steps.Seen",
+            "De werkgever heeft je sollicitatie geopend.",
+            "The employer opened your application.",
+            "Pracodawca otworzył Twoją aplikację.",
+            "Angajatorul a deschis aplicația ta.",
+            "فتح صاحب العمل طلبك.");
+        Add("Kb.Steps.Interview",
+            "Je bent uitgenodigd voor een gesprek.",
+            "You were invited for an interview.",
+            "Zaproszono Cię na rozmowę.",
+            "Ai fost invitat la un interviu.",
+            "دُعيت إلى مقابلة.");
+        Add("Kb.Steps.Outcome",
+            "De uitslag: aangenomen, niet gekozen, of vergeven.",
+            "The outcome: hired, not selected, or filled elsewhere.",
+            "Wynik: zatrudnienie, nie wybrano lub obsadzono.",
+            "Rezultatul: angajat, neselectat sau ocupat.",
+            "النتيجة: توظيف أو لم تُختر أو شُغلت.");
+
+        // Filters (07)
+        Add("Kb.Apps.FilterAll",
+            "Alles", "All",
+            "Wszystkie", "Toate", "الكل");
+        Add("Kb.Apps.FilterRunning",
+            "Loopt nog", "In progress",
+            "W toku", "În curs", "جارٍ");
+        Add("Kb.Apps.FilterDone",
+            "Afgerond", "Finished",
+            "Zakończone", "Finalizate", "مكتمل");
 
         // Saved (07)
         Add("Kb.Saved.State",
             "Bewaard", "Saved",
             "Zapisane", "Salvat", "محفوظ");
         Add("Kb.Saved.Applied",
-            "Gesolliciteerd", "Applied",
-            "Aplikowano", "Aplicat", "تم التقديم");
+            "Je hebt gesolliciteerd", "You have applied",
+            "Aplikowano", "Ai aplicat", "لقد تقدّمت");
         Add("Kb.Saved.Closed",
             "Gesloten", "Closed",
             "Zamknięte", "Închis", "مغلق");
+        Add("Kb.Saved.Open",
+            "Open", "Open",
+            "Otwarte", "Deschis", "مفتوح");
+        Add("Kb.Saved.ClosingSoon",
+            "Sluit over {0} dagen", "Closes in {0} days",
+            "Zamyka się za {0} dni", "Se închide în {0} zile", "يُغلق خلال {0} أيام");
+        Add("Kb.Saved.Fulfilled",
+            "Baan is al vergeven", "Job already filled",
+            "Oferta już obsadzona", "Jobul e deja ocupat", "الوظيفة مشغولة");
+        Add("Kb.Saved.Title",
+            "Bewaard", "Saved",
+            "Zapisane", "Salvate", "محفوظ");
+        Add("Kb.Saved.Lead",
+            "Banen die je wilt onthouden. Ook de banen die je in Match bewaarde.",
+            "Jobs you want to remember. Including jobs you saved in Match.",
+            "Oferty, które chcesz zapamiętać. Także z Match.",
+            "Joburi pe care vrei să le ții minte. Inclusiv din Match.",
+            "وظائف تريد تذكّرها. بما فيها من Match.");
+        Add("Kb.Saved.FilterAll",
+            "Alles", "All",
+            "Wszystkie", "Toate", "الكل");
+        Add("Kb.Saved.FilterOpen",
+            "Nog open", "Still open",
+            "Jeszcze otwarte", "Încă deschise", "ما زالت مفتوحة");
+        Add("Kb.Saved.FilterClosed",
+            "Gesloten", "Closed",
+            "Zamknięte", "Închise", "مغلقة");
+        Add("Kb.Saved.SortBestFit",
+            "Past het best", "Best fit",
+            "Najlepsze dopasowanie", "Cea mai bună potrivire", "الأفضل ملاءمة");
+        Add("Kb.Saved.SortNewest",
+            "Laatst bewaard", "Recently saved",
+            "Ostatnio zapisane", "Salvate recent", "آخر المحفوظات");
+        Add("Kb.Saved.SortClosing",
+            "Sluit het eerst", "Closing soonest",
+            "Najszybciej zamykane", "Se închid cele mai curând", "الأقرب للإغلاق");
+        Add("Kb.Saved.Apply",
+            "Solliciteer", "Apply",
+            "Aplikuj", "Aplică", "قدّم");
+        Add("Kb.Saved.View",
+            "Bekijk", "View",
+            "Zobacz", "Vezi", "عرض");
+        Add("Kb.Saved.Similar",
+            "Zoek banen die hierop lijken", "Find similar jobs",
+            "Szukaj podobnych ofert", "Caută joburi asemănătoare", "ابحث عن وظائف مشابهة");
+        Add("Kb.Saved.Remove",
+            "Weg", "Remove",
+            "Usuń", "Elimină", "إزالة");
+        Add("Kb.Saved.SavedOn",
+            "Bewaard {0}", "Saved {0}",
+            "Zapisano {0}", "Salvat {0}", "حُفظ في {0}");
+        Add("Kb.Saved.UndoToast",
+            "Verwijderd uit bewaard. Ongedaan maken?",
+            "Removed from saved. Undo?",
+            "Usunięto z zapisanych. Cofnąć?",
+            "Eliminat din salvate. Anulezi?",
+            "أُزيل من المحفوظات. تراجع؟");
+        Add("Kb.Saved.Undo",
+            "Ongedaan maken", "Undo",
+            "Cofnij", "Anulează", "تراجع");
 
         // Moved from VacancyDiscovery / VacancyDetail hardcoded Dutch (02.7)
         Add("Kb.Legend.Hide",

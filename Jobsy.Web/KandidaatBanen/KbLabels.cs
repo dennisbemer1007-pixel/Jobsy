@@ -1,5 +1,6 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Web.Localization;
 
 namespace Jobsy.Web.KandidaatBanen;
@@ -32,7 +33,7 @@ public static class KbLabels
         return status;
     }
 
-    /// <summary>CSS modifier for status pills (file 07 migrates Applications.razor here).</summary>
+    /// <summary>CSS modifier for status pills.</summary>
     public static string StatusModifier(ApplicationStatus status) => status switch
     {
         ApplicationStatus.Pending => "pending",
@@ -69,26 +70,60 @@ public static class KbLabels
     public static string TransportVerb(CultureState culture, string transport)
         => UiLabels.TransportVerb(culture, transport);
 
-    /// <summary>Timeline step keys (file 07 fills the history kinds).</summary>
     public static string TimelineStep(CultureState culture, string stepKey) => stepKey switch
     {
         "Created" or "Sent" => culture["Kb.Timeline.Sent"],
-        "EmployerViewed" => culture["Kb.Timeline.Seen"],
+        "EmployerViewed" or "Seen" => culture["Kb.Timeline.Seen"],
         "Interview" or "Gesprek" => culture["Kb.Timeline.Interview"],
         "Outcome" or "Uitslag" => culture["Kb.Timeline.Outcome"],
         _ => culture["Kb.Timeline.StatusChanged"]
     };
 
-    /// <summary>Saved-job state labels (file 07).</summary>
+    public static string TimelineStep(CultureState culture, ApplicationTimelineStepKey key) => key switch
+    {
+        ApplicationTimelineStepKey.Sent => culture["Kb.Timeline.Sent"],
+        ApplicationTimelineStepKey.Seen => culture["Kb.Timeline.Seen"],
+        ApplicationTimelineStepKey.Interview => culture["Kb.Timeline.Interview"],
+        ApplicationTimelineStepKey.Outcome => culture["Kb.Timeline.Outcome"],
+        _ => culture["Kb.Timeline.StatusChanged"]
+    };
+
     public static string SavedState(CultureState culture, string stateKey) => stateKey switch
     {
-        "Saved" => culture["Kb.Saved.State"],
+        "Open" or "Saved" => culture["Kb.Saved.Open"],
+        "ClosingSoon" => culture["Kb.Saved.ClosingSoon"],
+        "Fulfilled" => culture["Kb.Saved.Fulfilled"],
         "Applied" => culture["Kb.Saved.Applied"],
-        "Closed" => culture["Kb.Saved.Closed"],
+        "Closed" or "Hidden" => culture["Kb.Saved.Closed"],
         _ => stateKey
     };
 
-    /// <summary>All enum values that must have a non-empty label in every UI language.</summary>
+    public static string SavedStateLabel(CultureState culture, string? kind, int? daysUntilEnd)
+    {
+        if (string.Equals(kind, nameof(KbSavedJobStateKind.ClosingSoon), StringComparison.OrdinalIgnoreCase)
+            && daysUntilEnd is int n)
+        {
+            return string.Format(culture["Kb.Saved.ClosingSoon"], n);
+        }
+
+        return kind switch
+        {
+            nameof(KbSavedJobStateKind.Open) => culture["Kb.Saved.Open"],
+            nameof(KbSavedJobStateKind.Fulfilled) => culture["Kb.Saved.Fulfilled"],
+            nameof(KbSavedJobStateKind.Closed) => culture["Kb.Saved.Closed"],
+            nameof(KbSavedJobStateKind.Hidden) => culture["Kb.Saved.Closed"],
+            _ => SavedState(culture, kind ?? "Closed")
+        };
+    }
+
+    public static string SavedStateCss(string? kind) => kind switch
+    {
+        nameof(KbSavedJobStateKind.Open) => "open",
+        nameof(KbSavedJobStateKind.ClosingSoon) => "soon",
+        nameof(KbSavedJobStateKind.Fulfilled) => "fulfilled",
+        _ => "closed"
+    };
+
     public static IReadOnlyList<ApplicationStatus> AllApplicationStatuses { get; } =
         Enum.GetValues<ApplicationStatus>();
 
@@ -99,8 +134,11 @@ public static class KbLabels
         [TransportLabels.Bike, TransportLabels.Car, TransportLabels.Walking, TransportLabels.PublicTransport];
 
     public static IReadOnlyList<string> AllTimelineSteps { get; } =
-        ["Created", "EmployerViewed", "Interview", "Outcome", "StatusChanged"];
+        ["Created", "Sent", "EmployerViewed", "Seen", "Interview", "Outcome", "StatusChanged"];
 
     public static IReadOnlyList<string> AllSavedStates { get; } =
-        ["Saved", "Applied", "Closed"];
+        ["Saved", "Applied", "Closed", "Open", "ClosingSoon", "Fulfilled", "Hidden"];
+
+    public static IReadOnlyList<ApplicationStatusEventKind> AllStatusEventKinds { get; } =
+        Enum.GetValues<ApplicationStatusEventKind>();
 }

@@ -38,6 +38,7 @@ public class ApplicationsController : ControllerBase
     private readonly IWhoAmIService _whoAmI;
     private readonly IPersonalDataAccessLogger _accessLog;
     private readonly ISupportAccessService _supportAccess;
+    private readonly IApplicationStatusRecorder _statusRecorder;
 
     public ApplicationsController(
         JobsyDbContext db,
@@ -52,7 +53,8 @@ public class ApplicationsController : ControllerBase
         IVacancyDiscoveryIndex discoveryIndex,
         IWhoAmIService whoAmI,
         IPersonalDataAccessLogger accessLog,
-        ISupportAccessService supportAccess)
+        ISupportAccessService supportAccess,
+        IApplicationStatusRecorder statusRecorder)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -67,6 +69,7 @@ public class ApplicationsController : ControllerBase
         _whoAmI = whoAmI;
         _accessLog = accessLog;
         _supportAccess = supportAccess;
+        _statusRecorder = statusRecorder;
     }
 
     [HttpGet]
@@ -439,6 +442,7 @@ public class ApplicationsController : ControllerBase
             });
         }
 
+        await MaybeRecordEmployerViewedAsync(application, caller.Id, DateTime.UtcNow, cancellationToken);
         var employerModel = LobsyCvModelFactory.FromApplicationForDownload(
             application,
             includePii: true,
@@ -512,6 +516,11 @@ public class ApplicationsController : ControllerBase
                 code = "cv_not_verified",
                 message = "Bevestig eerst je sollicitatie voordat je het geüploade CV kunt downloaden."
             });
+        }
+
+        if (!isOwner)
+        {
+            await MaybeRecordEmployerViewedAsync(application, caller.Id, DateTime.UtcNow, cancellationToken);
         }
 
         if (application.UploadedCv is null || application.UploadedCv.Content.Length == 0)
@@ -732,16 +741,22 @@ public class ApplicationsController : ControllerBase
             CandidateUserId = candidate.Id,
             CandidateName = candidate.FullName,
             CandidateEmail = candidate.Email,
-            CreatedAt = DateTime.UtcNow,
-            Status = ApplicationStatus.Pending
+            CreatedAt = DateTime.UtcNow
         };
 
         if (existing is not null && ApplicationRules.CanReuseWithdrawnApplication(existing.Status))
         {
             // Reopen withdrawn application instead of blocking re-apply.
-            application.Status = ApplicationStatus.Pending;
-            application.RespondedAt = null;
-            application.CreatedAt = DateTime.UtcNow;
+            var reopenNow = DateTime.UtcNow;
+            _statusRecorder.SetStatus(
+                application,
+                ApplicationStatus.Pending,
+                ApplicationStatusActorKind.Candidate,
+                candidate.Id,
+                reopenNow,
+                setRespondedAt: false,
+                clearRespondedAt: true);
+            application.CreatedAt = reopenNow;
             application.CandidateUserId = candidate.Id;
             application.CandidateEmail = candidate.Email;
         }
@@ -829,7 +844,11 @@ public class ApplicationsController : ControllerBase
                 application.EmailVerificationCode = null;
                 application.EmailVerificationExpiresAt = null;
                 application.EmailVerificationFailedAttempts = 0;
-                application.Status = ApplicationStatus.Pending;
+                _statusRecorder.RecordCreated(
+                    application,
+                    ApplicationStatusActorKind.Candidate,
+                    candidate.Id,
+                    DateTime.UtcNow);
                 if (existing is null)
                 {
                     _db.Applications.Add(application);
@@ -891,7 +910,11 @@ public class ApplicationsController : ControllerBase
             }
 
             application.EmailVerifiedAt = null;
-            application.Status = ApplicationStatus.Pending;
+            _statusRecorder.RecordCreated(
+                application,
+                ApplicationStatusActorKind.Candidate,
+                candidate.Id,
+                DateTime.UtcNow);
             if (existing is null)
             {
                 _db.Applications.Add(application);
@@ -1130,8 +1153,12 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Alleen open sollicitaties kunnen worden ingetrokken." });
         }
 
-        application.Status = ApplicationStatus.Withdrawn;
-        application.RespondedAt = DateTime.UtcNow;
+        _statusRecorder.SetStatus(
+            application,
+            ApplicationStatus.Withdrawn,
+            ApplicationStatusActorKind.Candidate,
+            user.Id,
+            DateTime.UtcNow);
         await ApplicationPrivacyCleanup.RemoveUploadedCvSnapshotsAsync(_db, [application.Id], cancellationToken);
         ApplicationRules.ScrubPersonalDataOnWithdraw(application);
         await _db.SaveChangesAsync(cancellationToken);
@@ -1184,33 +1211,17 @@ public class ApplicationsController : ControllerBase
         }
 
         var respondedAt = DateTime.UtcNow;
-        if (_db.Database.IsRelational())
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        await MaybeRecordEmployerViewedAsync(application, actor?.Id, respondedAt, cancellationToken);
+        var reacted = await _statusRecorder.TryReactAsync(
+            application,
+            request.Status,
+            actor?.Id,
+            respondedAt,
+            cancellationToken);
+        if (!reacted)
         {
-            // Atomic Pending→react on Postgres (race-safe).
-            var updated = await _db.Applications
-                .Where(a => a.Id == id && a.Status == ApplicationStatus.Pending)
-                .ExecuteUpdateAsync(
-                    s => s
-                        .SetProperty(a => a.Status, request.Status)
-                        .SetProperty(a => a.RespondedAt, respondedAt),
-                    cancellationToken);
-            if (updated == 0)
-            {
-                return BadRequest(new { message = "Op deze sollicitatie is al gereageerd." });
-            }
-
-            // Keep the tracked graph in sync for e-mail / push below.
-            application.Status = request.Status;
-            application.RespondedAt = respondedAt;
-            _db.Entry(application).Property(a => a.Status).IsModified = false;
-            _db.Entry(application).Property(a => a.RespondedAt).IsModified = false;
-        }
-        else
-        {
-            // InMemory test provider has no ExecuteUpdate — tracked update is enough there.
-            application.Status = request.Status;
-            application.RespondedAt = respondedAt;
-            await _db.SaveChangesAsync(cancellationToken);
+            return BadRequest(new { message = "Op deze sollicitatie is al gereageerd." });
         }
 
         var appsLink = await BuildDeepLinkAsync("/candidate/applications", cancellationToken);
@@ -1276,6 +1287,33 @@ public class ApplicationsController : ControllerBase
         return Ok(MapEmployerDto(application));
     }
 
+    /// <summary>
+    /// Records the first employer view of an applicant (idempotent). List endpoint does not count.
+    /// // KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands
+    /// </summary>
+    [HttpPost("{id:guid}/viewed")]
+    [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
+    public async Task<IActionResult> MarkViewed(Guid id, CancellationToken cancellationToken)
+    {
+        var application = await _db.Applications
+            .Include(a => a.Vacancy)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+        if (application is null)
+        {
+            return NotFound();
+        }
+
+        var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        if (!CanAccessApplicationCompany(application, accessible))
+        {
+            return Forbid();
+        }
+
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        await MaybeRecordEmployerViewedAsync(application, actor?.Id, DateTime.UtcNow, cancellationToken);
+        return NoContent();
+    }
+
     [HttpPost("{id:guid}/contact")]
     [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
     public async Task<ActionResult<EmployerApplicationDto>> MarkEmployerContact(Guid id, CancellationToken cancellationToken)
@@ -1299,8 +1337,15 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Contact kan alleen na acceptatie." });
         }
 
-        application.Status = ApplicationStatus.EmployerContacting;
-        application.RespondedAt = DateTime.UtcNow;
+        var contactNow = DateTime.UtcNow;
+        var contactActor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        await MaybeRecordEmployerViewedAsync(application, contactActor?.Id, contactNow, cancellationToken);
+        _statusRecorder.SetStatus(
+            application,
+            ApplicationStatus.EmployerContacting,
+            ApplicationStatusActorKind.Employer,
+            contactActor?.Id,
+            contactNow);
         await _db.SaveChangesAsync(cancellationToken);
 
         var appsLink = await BuildDeepLinkAsync("/candidate/applications", cancellationToken);
@@ -1378,13 +1423,19 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Matchen kan pas na acceptatie van de kandidaat." });
         }
 
-        chosen.Status = ApplicationStatus.Hired;
-        chosen.RespondedAt = DateTime.UtcNow;
+        var fulfillNow = DateTime.UtcNow;
+        var fulfillActor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        _statusRecorder.SetStatus(
+            chosen,
+            ApplicationStatus.Hired,
+            ApplicationStatusActorKind.Employer,
+            fulfillActor?.Id,
+            fulfillNow);
 
         if (closeVacancy)
         {
             vacancy.Status = VacancyStatus.Fulfilled;
-            vacancy.ClosedAtUtc ??= DateTime.UtcNow;
+            vacancy.ClosedAtUtc ??= fulfillNow;
             vacancy.FulfilledByApplicationId = chosen.Id;
         }
 
@@ -1402,8 +1453,12 @@ public class ApplicationsController : ControllerBase
                 .ToListAsync(cancellationToken);
             foreach (var other in others)
             {
-                other.Status = ApplicationStatus.FilledElsewhere;
-                other.RespondedAt = DateTime.UtcNow;
+                _statusRecorder.SetStatus(
+                    other,
+                    ApplicationStatus.FilledElsewhere,
+                    ApplicationStatusActorKind.Employer,
+                    fulfillActor?.Id,
+                    fulfillNow);
             }
         }
 
@@ -1834,5 +1889,42 @@ public class ApplicationsController : ControllerBase
     {
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
         return CanAccessApplicationCompany(application, accessible);
+    }
+
+    /// <summary>
+    /// First employer (non-support) view of an application. Candidates and support access never record.
+    /// </summary>
+    private async Task MaybeRecordEmployerViewedAsync(
+        Application application,
+        Guid? actorUserId,
+        DateTime nowUtc,
+        CancellationToken cancellationToken)
+    {
+        if (actorUserId is null)
+        {
+            return;
+        }
+
+        if (application.CandidateUserId is Guid candidateId && candidateId == actorUserId.Value)
+        {
+            return;
+        }
+
+        // Admin support access must never record a candidate-facing "Gezien" event.
+        if (await _supportAccess.FindActiveGrantIdAsync(
+                actorUserId.Value,
+                application.CandidateUserId,
+                null,
+                SupportAccessScope.Applications,
+                cancellationToken) is not null)
+        {
+            return;
+        }
+
+        await _statusRecorder.TryRecordEmployerViewedAsync(
+            application.Id,
+            actorUserId,
+            nowUtc,
+            cancellationToken);
     }
 }

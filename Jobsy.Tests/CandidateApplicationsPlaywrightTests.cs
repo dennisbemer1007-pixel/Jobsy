@@ -72,39 +72,33 @@ public class CandidateApplicationsPlaywrightTests
 
         await AssertNoOverflowAsync(page, width);
 
-        var openBtn = page.Locator(".application-counters__btn").Nth(0);
+        // Timeline visible on active card (kb-timeline).
+        await Assertions.Expect(page.Locator(".kb-timeline").First).ToBeVisibleAsync(new() { Timeout = 10_000 });
+        // Dep C ABSENT: no CandidateJobListTabs.
+        Assert.Equal(0, await page.Locator(".candidate-job-list-tabs, .kb-job-tabs").CountAsync());
+
+        var allBtn = page.Locator(".application-counters__btn").Nth(0);
         var runningBtn = page.Locator(".application-counters__btn").Nth(1);
-        var rejectedBtn = page.Locator(".application-counters__btn").Nth(2);
-        var openN = int.Parse((await openBtn.Locator(".application-counters__n").InnerTextAsync()).Trim());
+        var doneBtn = page.Locator(".application-counters__btn").Nth(2);
+        var allN = int.Parse((await allBtn.Locator(".application-counters__n").InnerTextAsync()).Trim());
         var runningN = int.Parse((await runningBtn.Locator(".application-counters__n").InnerTextAsync()).Trim());
-        var rejectedN = int.Parse((await rejectedBtn.Locator(".application-counters__n").InnerTextAsync()).Trim());
-        Assert.True(openN >= 1, "expected at least one Open application");
-        Assert.True(runningN >= 1, "expected at least one Lopend application");
-        Assert.True(rejectedN >= 1, "expected at least one Afgewezen application");
+        var doneN = int.Parse((await doneBtn.Locator(".application-counters__n").InnerTextAsync()).Trim());
+        Assert.True(allN >= 1, "expected at least one application");
+        Assert.True(runningN >= 1, "expected at least one Loopt nog application");
+        Assert.True(doneN >= 1, "expected at least one Afgerond application");
 
-        await openBtn.ClickAsync();
-        await Assertions.Expect(page.Locator(".application-card")).ToHaveCountAsync(openN, new() { Timeout = 5_000 });
-        foreach (var pill in await page.Locator(".application-card__pill").AllAsync())
-        {
-            var text = (await pill.InnerTextAsync()).Trim();
-            Assert.Contains("Gesolliciteerd", text, StringComparison.OrdinalIgnoreCase);
-        }
-
-        await openBtn.ClickAsync(); // clear
-        var allCount = await page.Locator(".application-card").CountAsync();
-        Assert.True(allCount >= openN + runningN);
+        var allCount = await page.Locator(".application-card, .kb-apps__compact").CountAsync();
+        Assert.True(allCount >= runningN);
 
         await runningBtn.ClickAsync();
-        await Assertions.Expect(page.Locator(".application-card")).ToHaveCountAsync(runningN, new() { Timeout = 5_000 });
-        await page.Locator(".application-counters__show-all").ClickAsync();
-        await Assertions.Expect(page.Locator(".application-card")).ToHaveCountAsync(allCount, new() { Timeout = 5_000 });
+        await Assertions.Expect(page.Locator(".application-card, .kb-apps__compact")).ToHaveCountAsync(runningN, new() { Timeout = 5_000 });
+        await allBtn.ClickAsync();
+        await Assertions.Expect(page.Locator(".application-card, .kb-apps__compact")).ToHaveCountAsync(allCount, new() { Timeout = 5_000 });
 
-        await rejectedBtn.ClickAsync();
-        await Assertions.Expect(page.Locator(".application-card")).ToHaveCountAsync(rejectedN, new() { Timeout = 5_000 });
+        await doneBtn.ClickAsync();
+        await Assertions.Expect(page.Locator(".application-card, .kb-apps__compact")).ToHaveCountAsync(doneN, new() { Timeout = 5_000 });
 
-        // Hired is in the "Lopend" (running) group — open that filter explicitly.
-        await runningBtn.ClickAsync();
-        await Assertions.Expect(page.Locator(".application-card")).ToHaveCountAsync(runningN, new() { Timeout = 5_000 });
+        // Hired is in Afgerond (done).
         var hiredCard = page.Locator(".application-card--hired, .application-card:has(.application-card__pill--hired)").First;
         try
         {
@@ -113,12 +107,12 @@ public class CandidateApplicationsPlaywrightTests
         catch (TimeoutException)
         {
             var statuses = await page.Locator(".application-card__pill").AllInnerTextsAsync();
-            Assert.Fail("expected a hired card in Lopend; pills=" + string.Join(" | ", statuses));
+            Assert.Fail("expected a hired card in Afgerond; pills=" + string.Join(" | ", statuses));
         }
 
         // Back to full list for Pending menu / withdraw flows.
-        await page.Locator(".application-counters__show-all").ClickAsync();
-        await Assertions.Expect(page.Locator(".application-card")).ToHaveCountAsync(allCount, new() { Timeout = 5_000 });
+        await allBtn.ClickAsync();
+        await Assertions.Expect(page.Locator(".application-card, .kb-apps__compact")).ToHaveCountAsync(allCount, new() { Timeout = 5_000 });
 
         // Menu: open / Esc
         var pendingCard = page.Locator(".application-card").Filter(new()
@@ -159,9 +153,10 @@ public class CandidateApplicationsPlaywrightTests
         }
 
         // Withdraw confirm cancel then confirm
-        var openBefore = int.Parse((await page.Locator(".application-counters__btn").Nth(0)
+        // Counters: [0]=Alles, [1]=Loopt nog, [2]=Afgerond
+        var runningBefore = int.Parse((await page.Locator(".application-counters__btn").Nth(1)
             .Locator(".application-counters__n").InnerTextAsync()).Trim());
-        var rejectedBefore = int.Parse((await page.Locator(".application-counters__btn").Nth(2)
+        var doneBefore = int.Parse((await page.Locator(".application-counters__btn").Nth(2)
             .Locator(".application-counters__n").InnerTextAsync()).Trim());
 
         pendingCard = page.Locator(".application-card").Filter(new()
@@ -181,18 +176,15 @@ public class CandidateApplicationsPlaywrightTests
             new Regex("ingetrokken|withdrawn|wycofa", RegexOptions.IgnoreCase),
             new() { Timeout = 15_000 });
 
-        var openAfter = int.Parse((await page.Locator(".application-counters__btn").Nth(0)
+        var runningAfter = int.Parse((await page.Locator(".application-counters__btn").Nth(1)
             .Locator(".application-counters__n").InnerTextAsync()).Trim());
-        var rejectedAfter = int.Parse((await page.Locator(".application-counters__btn").Nth(2)
+        var doneAfter = int.Parse((await page.Locator(".application-counters__btn").Nth(2)
             .Locator(".application-counters__n").InnerTextAsync()).Trim());
-        Assert.Equal(openBefore - 1, openAfter);
-        Assert.Equal(rejectedBefore + 1, rejectedAfter);
+        Assert.Equal(runningBefore - 1, runningAfter);
+        Assert.Equal(doneBefore + 1, doneAfter);
 
-        // Withdraw absent on Hired (list may still be unfiltered after withdraw).
-        if (await page.Locator(".application-counters__show-all").CountAsync() > 0)
-        {
-            await page.Locator(".application-counters__show-all").ClickAsync();
-        }
+        // Withdraw absent on Hired.
+        await allBtn.ClickAsync();
 
         hiredCard = page.Locator(".application-card--hired, .application-card:has(.application-card__pill--hired)").First;
         await hiredCard.Locator(".application-card__menu-toggle").ClickAsync();

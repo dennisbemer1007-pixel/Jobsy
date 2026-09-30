@@ -1,11 +1,16 @@
 @page "/candidate/applications"
-@* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands *@
+@* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands; no CandidateJobListTabs *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using System.Security.Claims
 @using Jobsy.Core.Authorization
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
+@using Jobsy.Core.Rules.KandidaatBanen
+@using Jobsy.Web.Components
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Models
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Authorization
@@ -19,7 +24,7 @@
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 
-<div class="panel-page apps-page" @onkeydown="OnPageKeyDown">
+<div class="panel-page apps-page kb-apps" @onkeydown="OnPageKeyDown">
     <header class="panel-header">
         <div>
             <h1>@Culture["Nav.MyApplications"]</h1>
@@ -40,38 +45,29 @@
         </div>
     </header>
 
-    <div class="application-counters" role="group" aria-label="@Culture["Nav.MyApplications"]">
+    <div class="kb-apps__filters application-counters" role="group" aria-label="@Culture["Nav.MyApplications"]">
         <button type="button"
-                class="application-counters__btn @(_filter == "open" ? "is-selected" : null)"
-                aria-pressed="@(_filter == "open" ? "true" : "false")"
-                aria-label="@($"{_countOpen} {Culture["Apps.TabOpen"]}")"
-                @onclick='() => ToggleFilter("open")'>
-            <span class="application-counters__n">@_countOpen</span>
-            <span class="application-counters__label">@Culture["Apps.TabOpen"]</span>
+                class="application-counters__btn @(_filter == "all" || string.IsNullOrEmpty(_filter) ? "is-selected" : null)"
+                aria-pressed="@((_filter == "all" || string.IsNullOrEmpty(_filter)) ? "true" : "false")"
+                @onclick='() => SetFilter("all")'>
+            <span class="application-counters__n">@_items.Count</span>
+            <span class="application-counters__label">@Culture["Kb.Apps.FilterAll"]</span>
         </button>
         <button type="button"
                 class="application-counters__btn application-counters__btn--running @(_filter == "running" ? "is-selected" : null)"
                 aria-pressed="@(_filter == "running" ? "true" : "false")"
-                aria-label="@($"{_countRunning} {Culture["Apps.TabRunning"]}")"
-                @onclick='() => ToggleFilter("running")'>
+                @onclick='() => SetFilter("running")'>
             <span class="application-counters__n">@_countRunning</span>
-            <span class="application-counters__label">@Culture["Apps.TabRunning"]</span>
+            <span class="application-counters__label">@Culture["Kb.Apps.FilterRunning"]</span>
         </button>
         <button type="button"
-                class="application-counters__btn @(_filter == "rejected" ? "is-selected" : null)"
-                aria-pressed="@(_filter == "rejected" ? "true" : "false")"
-                aria-label="@($"{_countRejected} {Culture["Apps.TabRejected"]}")"
-                @onclick='() => ToggleFilter("rejected")'>
-            <span class="application-counters__n">@_countRejected</span>
-            <span class="application-counters__label">@Culture["Apps.TabRejected"]</span>
+                class="application-counters__btn @(_filter == "done" ? "is-selected" : null)"
+                aria-pressed="@(_filter == "done" ? "true" : "false")"
+                @onclick='() => SetFilter("done")'>
+            <span class="application-counters__n">@_countDone</span>
+            <span class="application-counters__label">@Culture["Kb.Apps.FilterDone"]</span>
         </button>
     </div>
-    @if (!string.IsNullOrEmpty(_filter))
-    {
-        <button type="button" class="application-counters__show-all" @onclick="ClearFilter">
-            @Culture["Apps.TabAll"]
-        </button>
-    }
 
     @if (_loading)
     {
@@ -86,7 +82,7 @@
                     @Culture["Apps.Empty"]
                     @if (!_readOnly)
                     {
-                        <text> <a href="/">@Culture["Apps.BrowseMap"]</a>.</text>
+                        <text> <a href="@KbRoutes.Map">@Culture["Apps.BrowseMap"]</a>.</text>
                     }
                 }
                 else
@@ -98,156 +94,29 @@
     }
     else
     {
-        <div class="application-card-list">
-            @foreach (var a in _filtered)
-            {
-                var rejectedTrack = ApplicationStatusWizard.IsRejectedTrack(a.Status);
-                var hired = string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase);
-                var current = ApplicationStatusWizard.CurrentStepIndex(a.Status);
-                var menuOpen = _openMenuId == a.Id;
-                var vacancyHref = $"/vacancies/{a.VacancyId}";
-                var pictureKind = a.PictureKind ?? "placeholder";
-                var pictureUrl = string.IsNullOrWhiteSpace(a.PictureUrl)
-                    ? Jobsy.Core.Media.VacancyImageUrls.Placeholder(Guid.Empty, "flex")
-                    : a.PictureUrl;
-                <article class="application-card @(hired ? "application-card--hired" : "") @(rejectedTrack ? "application-card--closed" : "") @(menuOpen ? "is-menu-open" : "")">
-                    <a class="application-card__img-link"
-                       href="@vacancyHref"
-                       tabindex="-1"
-                       aria-hidden="true">
-                        <img class="application-card__img @(pictureKind == "logo" ? "application-card__img--logo" : null)"
-                             src="@pictureUrl"
-                             alt=""
-                             width="84"
-                             height="84"
-                             loading="lazy"
-                             decoding="async" />
-                    </a>
-                    <div class="application-card__body">
-                        <a class="application-card__link" href="@vacancyHref">
-                            <h2 class="application-card__title">@a.VacancyTitle</h2>
-                        </a>
-                        <p class="application-card__company">@a.CompanyName</p>
-                        <span class="visually-hidden">@string.Format(Culture["Apps.StatusNow"], StatusPillLabel(a.Status))</span>
-                        <div class="application-card__footer">
-                            <div class="application-card__status">
-                                <span class="application-card__pill application-card__pill--@PillModifier(a.Status)">
-                                    <span class="application-card__pill-dot" aria-hidden="true"></span>
-                                    @StatusPillLabel(a.Status)
-                                </span>
-                                <span class="application-card__progress" aria-hidden="true">
-                                    @if (rejectedTrack)
-                                    {
-                                        <span class="application-card__seg"></span>
-                                        <span class="application-card__seg"></span>
-                                    }
-                                    else
-                                    {
-                                        @for (var i = 0; i < 4; i++)
-                                        {
-                                            <span class="application-card__seg @(i <= current ? "is-done" : null)"></span>
-                                        }
-                                    }
-                                </span>
-                            </div>
-                            <time class="application-card__date"
-                                  datetime="@a.CreatedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")"
-                                  title="@AppliedOnFullLabel(a.CreatedAt)"
-                                  aria-label="@AppliedOnFullLabel(a.CreatedAt)">
-                                @AppliedOnShortLabel(a.CreatedAt)
-                            </time>
-                        </div>
-                    </div>
-
-                    <div class="application-card__menu">
-                        @{
-                            var bindToggleRef = menuOpen || _focusMenuButtonId == a.Id;
-                            var menuSlot = 0;
-                            var vacancySlot = !_readOnly ? 1 : 0;
-                            var withdrawSlot = vacancySlot + 1;
-                            if (menuOpen)
-                            {
-                                _menuItemCount = (!_readOnly ? 1 : 0)
-                                    + 1
-                                    + (!_readOnly && CanWithdraw(a.Status) ? 1 : 0);
-                            }
-                        }
-                        @if (bindToggleRef)
-                        {
-                            <button type="button"
-                                    class="icon-btn application-card__menu-toggle @(menuOpen ? "is-open" : null)"
-                                    aria-haspopup="menu"
-                                    aria-expanded="@(menuOpen ? "true" : "false")"
-                                    data-app-menu-btn="@a.Id"
-                                    aria-label="@string.Format(Culture["Apps.ActionsFor"], a.VacancyTitle)"
-                                    @ref="_menuToggleRef"
-                                    @onclick="() => ToggleMenu(a.Id)"
-                                    @onclick:stopPropagation="true">
-                                @((MarkupString)ActionIcons.MoreHorizontal)
-                            </button>
-                        }
-                        else
-                        {
-                            <button type="button"
-                                    class="icon-btn application-card__menu-toggle"
-                                    aria-haspopup="menu"
-                                    aria-expanded="false"
-                                    data-app-menu-btn="@a.Id"
-                                    aria-label="@string.Format(Culture["Apps.ActionsFor"], a.VacancyTitle)"
-                                    @onclick="() => ToggleMenu(a.Id)"
-                                    @onclick:stopPropagation="true">
-                                @((MarkupString)ActionIcons.MoreHorizontal)
-                            </button>
-                        }
-                        @if (menuOpen)
-                        {
-                            <button type="button"
-                                    class="application-card__menu-backdrop"
-                                    tabindex="-1"
-                                    aria-hidden="true"
-                                    @onclick="CloseMenu"
-                                    @onclick:stopPropagation="true"></button>
-                            <div class="application-card__menu-panel"
-                                 role="menu"
-                                 data-app-menu-panel="@a.Id"
-                                 @onkeydown="e => OnMenuKeyDown(e, a)">
-                                @if (!_readOnly)
-                                {
-                                    <button type="button"
-                                            role="menuitem"
-                                            class="application-card__menu-item"
-                                            disabled="@(_busyId == a.Id)"
-                                            @ref="_menuItemRefs[menuSlot]"
-                                            @onclick="() => OnMenuCvAsync(a)">
-                                        <span class="application-card__menu-icon" aria-hidden="true">@((MarkupString)ActionIcons.Document)</span>
-                                        @(_busyId == a.Id && _pdfBusy ? "…" : Culture["Apps.MenuCv"])
-                                    </button>
-                                }
-                                <a role="menuitem"
-                                   class="application-card__menu-item"
-                                   href="@vacancyHref"
-                                   @ref="_menuItemRefs[vacancySlot]"
-                                   @onclick="CloseMenu">
-                                    <span class="application-card__menu-icon" aria-hidden="true">@((MarkupString)ActionIcons.ExternalLink)</span>
-                                    @Culture["Apps.MenuVacancy"]
-                                </a>
-                                @if (!_readOnly && CanWithdraw(a.Status))
-                                {
-                                    <hr class="application-card__menu-divider" />
-                                    <button type="button"
-                                            role="menuitem"
-                                            class="application-card__menu-item application-card__menu-item--danger"
-                                            @ref="_menuItemRefs[withdrawSlot]"
-                                            @onclick="() => OpenWithdrawConfirm(a)">
-                                        <span class="application-card__menu-icon" aria-hidden="true">@((MarkupString)ActionIcons.Withdraw)</span>
-                                        @Culture["Apps.MenuWithdraw"]
-                                    </button>
-                                }
-                            </div>
-                        }
-                    </div>
-                </article>
-            }
+        <div class="kb-apps__layout">
+            <div class="kb-apps__list application-card-list">
+                @{
+                    var primary = _filtered[0];
+                    var rest = _filtered.Skip(1).ToList();
+                }
+                @RenderActiveCard(primary)
+                @foreach (var a in rest)
+                {
+                    @RenderCompactCard(a)
+                }
+            </div>
+            <aside class="kb-apps__rail" aria-label="@Culture["Kb.Steps.Title"]">
+                <div class="kb-apps__rail-card">
+                    <h2>@Culture["Kb.Steps.Title"]</h2>
+                    <dl class="kb-apps__steps-legend">
+                        <div><dt>@Culture["Kb.Timeline.Sent"]</dt><dd>@Culture["Kb.Steps.Sent"]</dd></div>
+                        <div><dt>@Culture["Kb.Timeline.Seen"]</dt><dd>@Culture["Kb.Steps.Seen"]</dd></div>
+                        <div><dt>@Culture["Kb.Timeline.Interview"]</dt><dd>@Culture["Kb.Steps.Interview"]</dd></div>
+                        <div><dt>@Culture["Kb.Timeline.Outcome"]</dt><dd>@Culture["Kb.Steps.Outcome"]</dd></div>
+                    </dl>
+                </div>
+            </aside>
         </div>
     }
 
@@ -256,6 +125,24 @@
         <p class="state-message apps-page__message">@_message</p>
     }
 </div>
+
+@if (_expandedId is Guid expandId)
+{
+    var expanded = _items.FirstOrDefault(x => x.Id == expandId);
+    if (expanded is not null)
+    {
+        <div class="kb-apps__sheet-backdrop" @onclick="CloseExpanded"></div>
+        <div class="kb-apps__sheet" role="dialog" aria-modal="true" aria-label="@expanded.VacancyTitle">
+            <button type="button" class="kb-apps__sheet-close" @onclick="CloseExpanded">@Culture["Common.Close"]</button>
+            @RenderActiveCard(expanded, forceVertical: true)
+        </div>
+    }
+}
+
+@if (_mockVacancy is not null)
+{
+    <MockInterviewModal IsOpen="true" Vacancy="_mockVacancy" OnClose="CloseMockInterview" />
+}
 
 <LobsyFriendlyDialog IsOpen="@(_withdrawTarget is not null)"
                      Title="@Culture["Apps.WithdrawConfirm"]"
@@ -282,16 +169,17 @@
     private bool _disposed;
     private bool _restored;
     private bool _readOnly;
-    private string? _filter;
+    private string? _filter = "all";
     private string? _givenName;
     private Guid? _busyId;
     private Guid? _openMenuId;
+    private Guid? _expandedId;
+    private VacancyListItem? _mockVacancy;
     private bool _pdfBusy;
     private string? _message;
     private ApplicationItem? _withdrawTarget;
-    private int _countOpen;
     private int _countRunning;
-    private int _countRejected;
+    private int _countDone;
     private Guid? _focusMenuOnRender;
     private Guid? _focusMenuButtonId;
     private ElementReference _menuToggleRef;
@@ -300,6 +188,177 @@
     private int _menuFocusIndex;
     private PersistingComponentStateSubscription _persistSubscription;
     private static readonly System.Globalization.CultureInfo Dutch = new("nl-NL");
+
+    private RenderFragment RenderActiveCard(ApplicationItem a, bool forceVertical = false) => __builder =>
+    {
+        var rejected = IsRejected(a.Status);
+        var hired = string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase);
+        var menuOpen = _openMenuId == a.Id;
+        var vacancyHref = $"/vacancies/{a.VacancyId}";
+        var pictureUrl = string.IsNullOrWhiteSpace(a.PictureUrl)
+            ? Jobsy.Core.Media.VacancyImageUrls.Placeholder(Guid.Empty, "flex")
+            : a.PictureUrl!;
+        var steps = a.Timeline ?? [];
+        <article class="application-card kb-apps__card @(hired ? "application-card--hired" : "") @(rejected ? "application-card--closed" : "") @(menuOpen ? "is-menu-open" : "")">
+            <div class="kb-apps__card-top">
+                <a class="application-card__img-link" href="@vacancyHref" tabindex="-1" aria-hidden="true">
+                    <img class="application-card__img" src="@pictureUrl" alt="" width="84" height="84" loading="lazy" decoding="async" />
+                </a>
+                <div class="application-card__body">
+                    <a class="application-card__link" href="@vacancyHref">
+                        <h2 class="application-card__title">@a.VacancyTitle</h2>
+                    </a>
+                    <p class="application-card__company">@CompanyLine(a)</p>
+                    <span class="application-card__pill application-card__pill--@KbLabels.StatusModifier(a.Status)">
+                        <span class="application-card__pill-dot" aria-hidden="true"></span>
+                        @KbLabels.Status(Culture, a.Status)
+                    </span>
+                </div>
+                @RenderMenu(a, vacancyHref)
+            </div>
+            <ol class="kb-timeline @(forceVertical ? "kb-timeline--vertical" : "kb-timeline--horizontal")">
+                @foreach (var step in steps)
+                {
+                    <li class="kb-timeline__step kb-timeline__step--@step.State.ToLowerInvariant()">
+                        <span class="kb-timeline__dot" aria-hidden="true"></span>
+                        <span class="kb-timeline__label">@Culture[step.LabelKey]</span>
+                        @if (step.OccurredAtUtc is DateTime at)
+                        {
+                            <time class="kb-timeline__date" datetime="@at.ToUniversalTime().ToString("yyyy-MM-dd")">@ShortDate(at)</time>
+                        }
+                        else if (string.Equals(step.Key, "Outcome", StringComparison.OrdinalIgnoreCase)
+                                 && string.Equals(a.Status, "EmployerContacting", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="kb-timeline__date">@Culture["Kb.Timeline.AfterInterview"]</span>
+                        }
+                    </li>
+                }
+            </ol>
+            @if (a.LegacyNoHistory)
+            {
+                <p class="kb-timeline__legacy">@Culture["Kb.Timeline.LegacySub"]</p>
+            }
+            @RenderNextStep(a)
+        </article>
+    };
+
+    private RenderFragment RenderCompactCard(ApplicationItem a) => __builder =>
+    {
+        var steps = a.Timeline ?? [];
+        var doneCount = steps.Count(s => string.Equals(s.State, "Done", StringComparison.OrdinalIgnoreCase)
+                                         || string.Equals(s.State, "Current", StringComparison.OrdinalIgnoreCase)
+                                         || string.Equals(s.State, "Skipped", StringComparison.OrdinalIgnoreCase));
+        var seenAt = steps.FirstOrDefault(s => string.Equals(s.Key, "Seen", StringComparison.OrdinalIgnoreCase))?.OccurredAtUtc
+                     ?? a.RespondedAt
+                     ?? a.CreatedAt;
+        var finished = IsFinished(a.Status);
+        <article class="kb-apps__compact application-card @(IsRejected(a.Status) ? "application-card--closed" : "") @(string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase) ? "application-card--hired" : "")">
+            <div class="kb-apps__compact-row">
+                <button type="button" class="kb-apps__compact-btn" @onclick="() => OpenExpanded(a.Id)">
+                    <img class="application-card__img" src="@(a.PictureUrl ?? Jobsy.Core.Media.VacancyImageUrls.Placeholder(Guid.Empty, "flex"))" alt="" width="56" height="56" loading="lazy" />
+                    <div class="kb-apps__compact-body">
+                        <h2 class="application-card__title">@a.VacancyTitle</h2>
+                        <p class="application-card__company">@CompanyLine(a)</p>
+                        <span class="application-card__pill application-card__pill--@KbLabels.StatusModifier(a.Status)">
+                            @KbLabels.Status(Culture, a.Status)
+                        </span>
+                        <span class="application-card__progress" aria-hidden="true">
+                            @for (var i = 0; i < 4; i++)
+                            {
+                                <span class="application-card__seg @(i < doneCount ? "is-done" : null) @(i == doneCount - 1 && !finished ? "is-current" : null)"></span>
+                            }
+                        </span>
+                        <p class="kb-apps__compact-hint">
+                            @(finished
+                                ? string.Format(Culture["Kb.Timeline.FinishedOn"], ShortDate(a.RespondedAt ?? a.CreatedAt))
+                                : string.Format(Culture["Kb.Timeline.TapForSteps"], ShortDate(seenAt)))
+                        </p>
+                    </div>
+                </button>
+                @RenderMenu(a, $"/vacancies/{a.VacancyId}")
+            </div>
+        </article>
+    };
+
+    private RenderFragment RenderNextStep(ApplicationItem a) => __builder =>
+    {
+        if (string.IsNullOrWhiteSpace(a.NextStepKey))
+        {
+            return;
+        }
+
+        <div class="kb-next">
+            <p class="kb-next__title">@Culture["Kb.Next.Title"]</p>
+            <p class="kb-next__text">@Culture[a.NextStepKey]</p>
+            @if (string.Equals(a.Status, "EmployerContacting", StringComparison.OrdinalIgnoreCase) && !_readOnly)
+            {
+                <button type="button" class="btn-compact kb-next__action" @onclick="() => OpenMockInterview(a.VacancyId)">
+                    @Culture["Kb.Next.Practice"]
+                </button>
+            }
+            else if (IsRejected(a.Status))
+            {
+                <a class="kb-next__link" href="@KbRoutes.Map">@Culture["Kb.Next.ViewSimilar"]</a>
+            }
+        </div>
+    };
+
+    private RenderFragment RenderMenu(ApplicationItem a, string vacancyHref) => __builder =>
+    {
+        var menuOpen = _openMenuId == a.Id;
+        var bindToggleRef = menuOpen || _focusMenuButtonId == a.Id;
+        var menuSlot = 0;
+        var vacancySlot = !_readOnly ? 1 : 0;
+        var withdrawSlot = vacancySlot + 1;
+        if (menuOpen)
+        {
+            _menuItemCount = (!_readOnly ? 1 : 0) + 1 + (!_readOnly && CanWithdraw(a.Status) ? 1 : 0);
+        }
+        <div class="application-card__menu">
+            @if (bindToggleRef)
+            {
+                <button type="button" class="icon-btn application-card__menu-toggle @(menuOpen ? "is-open" : null)"
+                        aria-haspopup="menu" aria-expanded="@(menuOpen ? "true" : "false")"
+                        aria-label="@string.Format(Culture["Apps.ActionsFor"], a.VacancyTitle)"
+                        @ref="_menuToggleRef" @onclick="() => ToggleMenu(a.Id)" @onclick:stopPropagation="true">
+                    @((MarkupString)ActionIcons.MoreHorizontal)
+                </button>
+            }
+            else
+            {
+                <button type="button" class="icon-btn application-card__menu-toggle"
+                        aria-haspopup="menu" aria-expanded="false"
+                        aria-label="@string.Format(Culture["Apps.ActionsFor"], a.VacancyTitle)"
+                        @onclick="() => ToggleMenu(a.Id)" @onclick:stopPropagation="true">
+                    @((MarkupString)ActionIcons.MoreHorizontal)
+                </button>
+            }
+            @if (menuOpen)
+            {
+                <button type="button" class="application-card__menu-backdrop" tabindex="-1" aria-hidden="true"
+                        @onclick="CloseMenu" @onclick:stopPropagation="true"></button>
+                <div class="application-card__menu-panel" role="menu" @onkeydown="e => OnMenuKeyDown(e, a)">
+                    @if (!_readOnly)
+                    {
+                        <button type="button" role="menuitem" class="application-card__menu-item"
+                                disabled="@(_busyId == a.Id)" @ref="_menuItemRefs[menuSlot]" @onclick="() => OnMenuCvAsync(a)">
+                            @(_busyId == a.Id && _pdfBusy ? "…" : Culture["Apps.MenuCv"])
+                        </button>
+                    }
+                    <a role="menuitem" class="application-card__menu-item" href="@vacancyHref" @ref="_menuItemRefs[vacancySlot]" @onclick="CloseMenu">
+                        @Culture["Apps.MenuVacancy"]
+                    </a>
+                    @if (!_readOnly && CanWithdraw(a.Status))
+                    {
+                        <button type="button" role="menuitem" class="application-card__menu-item application-card__menu-item--danger"
+                                @ref="_menuItemRefs[withdrawSlot]" @onclick="() => OpenWithdrawConfirm(a)">
+                            @Culture["Apps.MenuWithdraw"]
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    };
 
     protected override void OnInitialized()
     {
@@ -327,12 +386,7 @@
         _readOnly = !RoleClaimMatching.HasRole(state.User, JobsyRoles.Candidate);
         _givenName = state.User.FindFirst(ClaimTypes.GivenName)?.Value
                      ?? state.User.FindFirst("given_name")?.Value;
-
-        if (_restored)
-        {
-            return;
-        }
-
+        if (_restored) return;
         try
         {
             _items = (await Api.GetMyApplicationsAsync()).ToList();
@@ -345,10 +399,7 @@
             _filtered = [];
             RefreshCounts();
         }
-        finally
-        {
-            _loading = false;
-        }
+        finally { _loading = false; }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -359,23 +410,11 @@
             _menuFocusIndex = 0;
             await FocusMenuItemAsync(0);
         }
-
         if (_focusMenuButtonId is not null)
         {
             _focusMenuButtonId = null;
-            try
-            {
-                await _menuToggleRef.FocusAsync();
-            }
-            catch (JSDisconnectedException)
-            {
-            }
-            catch (ObjectDisposedException)
-            {
-            }
-            catch (InvalidOperationException)
-            {
-            }
+            try { await _menuToggleRef.FocusAsync(); }
+            catch { /* ignore */ }
         }
     }
 
@@ -383,29 +422,13 @@
     {
         try
         {
-            if (_disposed)
-            {
-                return;
-            }
-
+            if (_disposed) return;
             _items = (await Api.GetMyApplicationsAsync()).ToList();
             RefreshCounts();
             ApplyFilter();
-            if (!_disposed)
-            {
-                await InvokeAsync(StateHasChanged);
-            }
+            if (!_disposed) await InvokeAsync(StateHasChanged);
         }
-        catch (ObjectDisposedException)
-        {
-        }
-        catch (JSDisconnectedException)
-        {
-        }
-        catch
-        {
-            // keep current list
-        }
+        catch { /* keep */ }
     }
 
     public void Dispose()
@@ -415,17 +438,10 @@
         _persistSubscription.Dispose();
     }
 
-    private void ToggleFilter(string filter)
+    private void SetFilter(string filter)
     {
         CloseMenu();
-        _filter = string.Equals(_filter, filter, StringComparison.Ordinal) ? null : filter;
-        ApplyFilter();
-    }
-
-    private void ClearFilter()
-    {
-        CloseMenu();
-        _filter = null;
+        _filter = filter;
         ApplyFilter();
     }
 
@@ -433,37 +449,56 @@
     {
         _filtered = _filter switch
         {
-            "open" => _items.Where(a => ApplicationStatusWizard.IsOpen(a.Status)).ToList(),
-            "running" => _items.Where(a => ApplicationStatusWizard.IsRunning(a.Status)).ToList(),
-            "rejected" => _items.Where(a => ApplicationStatusWizard.IsRejectedFilter(a.Status)).ToList(),
+            "running" => _items.Where(a => IsRunning(a.Status)).ToList(),
+            "done" => _items.Where(a => IsFinished(a.Status)).ToList(),
             _ => _items.ToList()
         };
     }
 
     private void RefreshCounts()
     {
-        _countOpen = _items.Count(a => ApplicationStatusWizard.IsOpen(a.Status));
-        _countRunning = _items.Count(a => ApplicationStatusWizard.IsRunning(a.Status));
-        _countRejected = _items.Count(a => ApplicationStatusWizard.IsRejectedFilter(a.Status));
+        _countRunning = _items.Count(a => IsRunning(a.Status));
+        _countDone = _items.Count(a => IsFinished(a.Status));
     }
 
-    private static bool CanWithdraw(string status)
-        => status == "Pending";
+    private static bool IsRunning(string status)
+        => status is "Pending" or "Accepted" or "EmployerContacting";
+
+    private static bool IsFinished(string status)
+        => status is "Hired" or "Rejected" or "FilledElsewhere" or "Withdrawn";
+
+    private static bool IsRejected(string status)
+        => status is "Rejected" or "FilledElsewhere";
+
+    private static bool CanWithdraw(string status) => status == "Pending";
+
+    private static string CompanyLine(ApplicationItem a)
+        => string.IsNullOrWhiteSpace(a.LocationLabel) ? a.CompanyName : $"{a.CompanyName} · {a.LocationLabel}";
+
+    private void OpenExpanded(Guid id) => _expandedId = id;
+    private void CloseExpanded() => _expandedId = null;
+    private void OpenMockInterview(Guid vacancyId)
+    {
+        var app = _items.FirstOrDefault(x => x.VacancyId == vacancyId);
+        if (app is null) return;
+        _mockVacancy = new VacancyListItem
+        {
+            Id = app.VacancyId,
+            Title = app.VacancyTitle,
+            CompanyName = app.CompanyName
+        };
+    }
+
+    private void CloseMockInterview() => _mockVacancy = null;
 
     private void ToggleMenu(Guid id)
     {
-        if (_openMenuId == id)
-        {
-            _openMenuId = null;
-            return;
-        }
-
+        if (_openMenuId == id) { _openMenuId = null; return; }
         _openMenuId = id;
         _focusMenuOnRender = id;
     }
 
-    private void CloseMenu()
-        => _openMenuId = null;
+    private void CloseMenu() => _openMenuId = null;
 
     private async Task OnPageKeyDown(KeyboardEventArgs e)
     {
@@ -471,6 +506,10 @@
         {
             CloseMenu();
             await FocusMenuButtonAsync(id);
+        }
+        else if (e.Key == "Escape" && _expandedId is not null)
+        {
+            CloseExpanded();
         }
     }
 
@@ -482,12 +521,7 @@
             await FocusMenuButtonAsync(a.Id);
             return;
         }
-
-        if (e.Key is not ("ArrowDown" or "ArrowUp") || _menuItemCount <= 0)
-        {
-            return;
-        }
-
+        if (e.Key is not ("ArrowDown" or "ArrowUp") || _menuItemCount <= 0) return;
         var next = e.Key == "ArrowDown"
             ? (_menuFocusIndex + 1) % _menuItemCount
             : (_menuFocusIndex - 1 + _menuItemCount) % _menuItemCount;
@@ -496,37 +530,22 @@
 
     private async Task FocusMenuItemAsync(int index)
     {
-        if (index < 0 || index >= _menuItemCount || index >= _menuItemRefs.Length)
-        {
-            return;
-        }
-
         _menuFocusIndex = index;
-        try
-        {
-            await _menuItemRefs[index].FocusAsync();
-        }
-        catch (JSDisconnectedException)
-        {
-        }
-        catch (ObjectDisposedException)
-        {
-        }
-        catch (InvalidOperationException)
-        {
-        }
+        try { await _menuItemRefs[index].FocusAsync(); }
+        catch { /* ignore */ }
     }
 
-    private Task FocusMenuButtonAsync(Guid id)
+    private async Task FocusMenuButtonAsync(Guid id)
     {
         _focusMenuButtonId = id;
-        return Task.CompletedTask;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnMenuCvAsync(ApplicationItem a)
     {
         CloseMenu();
         await DownloadCvAsync(a);
+        await FocusMenuButtonAsync(a.Id);
     }
 
     private void OpenWithdrawConfirm(ApplicationItem a)
@@ -535,72 +554,36 @@
         _withdrawTarget = a;
     }
 
-    private void CancelWithdraw()
-        => _withdrawTarget = null;
+    private void CancelWithdraw() => _withdrawTarget = null;
 
     private async Task ConfirmWithdrawAsync()
     {
-        if (_withdrawTarget is null)
-        {
-            return;
-        }
-
+        if (_withdrawTarget is null) return;
         var target = _withdrawTarget;
         _withdrawTarget = null;
         await WithdrawAsync(target);
     }
 
-    private string StatusPillLabel(string status) => status switch
+    private string ShortDate(DateTime dt)
     {
-        "Pending" => Culture["Apps.Wizard.Applied"],
-        "Accepted" => Culture["Apps.Wizard.InReview"],
-        "EmployerContacting" => Culture["Apps.Wizard.Contact"],
-        "Hired" => Culture["Apps.Wizard.Matched"],
-        _ => UiLabels.ApplicationStatus(Culture, status)
-    };
-
-    private static string PillModifier(string status) => status switch
-    {
-        "Pending" => "pending",
-        "Accepted" => "review",
-        "EmployerContacting" => "contact",
-        "Hired" => "hired",
-        _ => "closed"
-    };
-
-    private string AppliedOnFullLabel(DateTime createdAt)
-    {
-        var local = createdAt.ToLocalTime();
+        var local = dt.ToLocalTime();
         var culture = CultureInfoForUi();
-        var date = local.ToString("d MMM yyyy", culture).Replace(".", "");
-        return string.Format(Culture["Apps.AppliedOn"], date);
-    }
-
-    private string AppliedOnShortLabel(DateTime createdAt)
-    {
-        var local = createdAt.ToLocalTime();
-        var culture = CultureInfoForUi();
-        var now = DateTime.Now;
-        var format = local.Year == now.Year ? "d MMM" : "d MMM yyyy";
+        var format = local.Year == DateTime.Now.Year ? "ddd d MMM" : "ddd d MMM yyyy";
         return local.ToString(format, culture).Replace(".", "");
     }
 
     private System.Globalization.CultureInfo CultureInfoForUi() => Culture.Language switch
     {
-        "en" => new System.Globalization.CultureInfo("en-GB"),
-        "pl" => new System.Globalization.CultureInfo("pl-PL"),
-        "ro" => new System.Globalization.CultureInfo("ro-RO"),
-        "ar" => new System.Globalization.CultureInfo("ar-SA"),
+        "en" => new("en-GB"),
+        "pl" => new("pl-PL"),
+        "ro" => new("ro-RO"),
+        "ar" => new("ar-SA"),
         _ => Dutch
     };
 
     private async Task WithdrawAsync(ApplicationItem item)
     {
-        if (_readOnly)
-        {
-            return;
-        }
-
+        if (_readOnly) return;
         _busyId = item.Id;
         _pdfBusy = false;
         _message = null;
@@ -608,42 +591,23 @@
         {
             await Api.WithdrawApplicationAsync(item.Id);
             item.Status = "Withdrawn";
+            item.NextStepKey = null;
             RefreshCounts();
             ApplyFilter();
             _message = Culture["Apps.WithdrawnMsg"];
         }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busyId = null;
-        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busyId = null; }
     }
 
     private async Task DownloadCvAsync(ApplicationItem item)
     {
-        if (_readOnly)
-        {
-            return;
-        }
-
+        if (_readOnly) return;
         _busyId = item.Id;
         _pdfBusy = true;
         _message = null;
-        try
-        {
-            await Api.DownloadApplicationLobsyCvPdfAsync(item.Id, Js);
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busyId = null;
-            _pdfBusy = false;
-        }
+        try { await Api.DownloadApplicationLobsyCvPdfAsync(item.Id, Js); }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busyId = null; _pdfBusy = false; }
     }
 }

@@ -217,10 +217,120 @@ internal static class ApplicationsAndWagesSeeder
         }
 
         await db.SaveChangesAsync();
+        await EnsureDemoApplicationHistoryAsync(db, mine);
         logger.LogInformation(
             "Ensured demo candidate application cards for fotokaarten UI (pending={Pending}, hired={Hired}).",
             mine.Count(a => a.Status == ApplicationStatus.Pending && a.EmailVerifiedAt != null),
             mine.Count(a => a.Status == ApplicationStatus.Hired && a.EmailVerifiedAt != null));
+    }
+
+    /// <summary>
+    /// Idempotently adds dated history for seed demo applications only (never real apps).
+    /// Uses the seeder's existing CreatedAt / RespondedAt dates (D4 — no invented backfill for non-seed).
+    /// </summary>
+    private static async Task EnsureDemoApplicationHistoryAsync(JobsyDbContext db, List<Application> mine)
+    {
+        foreach (var app in mine.Where(a => a.EmailVerifiedAt != null))
+        {
+            var existingKinds = await db.ApplicationStatusHistories
+                .Where(h => h.ApplicationId == app.Id)
+                .Select(h => h.Kind)
+                .ToListAsync();
+
+            if (!existingKinds.Contains(ApplicationStatusEventKind.Created))
+            {
+                db.ApplicationStatusHistories.Add(new ApplicationStatusHistory
+                {
+                    Id = Guid.NewGuid(),
+                    ApplicationId = app.Id,
+                    Kind = ApplicationStatusEventKind.Created,
+                    FromStatus = null,
+                    ToStatus = ApplicationStatus.Pending,
+                    OccurredAtUtc = app.CreatedAt,
+                    ActorKind = ApplicationStatusActorKind.Candidate,
+                    ActorUserId = app.CandidateUserId
+                });
+            }
+
+            if ((app.Status is ApplicationStatus.Accepted
+                    or ApplicationStatus.EmployerContacting
+                    or ApplicationStatus.Hired
+                    or ApplicationStatus.Rejected
+                    or ApplicationStatus.FilledElsewhere)
+                && !existingKinds.Contains(ApplicationStatusEventKind.EmployerViewed))
+            {
+                db.ApplicationStatusHistories.Add(new ApplicationStatusHistory
+                {
+                    Id = Guid.NewGuid(),
+                    ApplicationId = app.Id,
+                    Kind = ApplicationStatusEventKind.EmployerViewed,
+                    OccurredAtUtc = app.CreatedAt.AddHours(2),
+                    ActorKind = ApplicationStatusActorKind.Employer,
+                    ActorUserId = null
+                });
+            }
+
+            void AddChange(ApplicationStatus from, ApplicationStatus to, DateTime at)
+            {
+                var already = db.ApplicationStatusHistories.Local.Any(h =>
+                    h.ApplicationId == app.Id
+                    && h.Kind == ApplicationStatusEventKind.StatusChanged
+                    && h.ToStatus == to);
+                if (already)
+                {
+                    return;
+                }
+
+                var inDb = db.ApplicationStatusHistories.Any(h =>
+                    h.ApplicationId == app.Id
+                    && h.Kind == ApplicationStatusEventKind.StatusChanged
+                    && h.ToStatus == to);
+                if (inDb)
+                {
+                    return;
+                }
+
+                db.ApplicationStatusHistories.Add(new ApplicationStatusHistory
+                {
+                    Id = Guid.NewGuid(),
+                    ApplicationId = app.Id,
+                    Kind = ApplicationStatusEventKind.StatusChanged,
+                    FromStatus = from,
+                    ToStatus = to,
+                    OccurredAtUtc = at,
+                    ActorKind = ApplicationStatusActorKind.Employer,
+                    ActorUserId = null
+                });
+            }
+
+            var responded = app.RespondedAt ?? app.CreatedAt.AddHours(6);
+            switch (app.Status)
+            {
+                case ApplicationStatus.Accepted:
+                    AddChange(ApplicationStatus.Pending, ApplicationStatus.Accepted, responded);
+                    break;
+                case ApplicationStatus.EmployerContacting:
+                    AddChange(ApplicationStatus.Pending, ApplicationStatus.Accepted, app.CreatedAt.AddHours(4));
+                    AddChange(ApplicationStatus.Accepted, ApplicationStatus.EmployerContacting, responded);
+                    break;
+                case ApplicationStatus.Hired:
+                    AddChange(ApplicationStatus.Pending, ApplicationStatus.Accepted, app.CreatedAt.AddHours(4));
+                    AddChange(ApplicationStatus.Accepted, ApplicationStatus.EmployerContacting, app.CreatedAt.AddHours(5));
+                    AddChange(ApplicationStatus.EmployerContacting, ApplicationStatus.Hired, responded);
+                    break;
+                case ApplicationStatus.Rejected:
+                    AddChange(ApplicationStatus.Pending, ApplicationStatus.Rejected, responded);
+                    break;
+                case ApplicationStatus.FilledElsewhere:
+                    AddChange(ApplicationStatus.Pending, ApplicationStatus.FilledElsewhere, responded);
+                    break;
+                case ApplicationStatus.Withdrawn:
+                    AddChange(ApplicationStatus.Pending, ApplicationStatus.Withdrawn, responded);
+                    break;
+            }
+        }
+
+        await db.SaveChangesAsync();
     }
 
     /// <summary>

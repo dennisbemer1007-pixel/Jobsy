@@ -376,11 +376,21 @@
         _ => 2
     };
 
-    private void ToggleExpanded(Guid id)
+    private async Task ToggleExpanded(Guid id)
     {
         if (!_expandedIds.Add(id))
         {
             _expandedIds.Remove(id);
+            return;
+        }
+
+        try
+        {
+            await Api.MarkApplicationViewedAsync(id);
+        }
+        catch
+        {
+            // Viewing is best-effort; expanding still works.
         }
     }
 
