@@ -432,9 +432,9 @@ internal static class UiStringsWerkgeverAanmelding
         Add("AdminWa.Engage.Reset", "Terug naar opgegeven", "Back to self-declared", "Wróć do podanego", "Înapoi la declarat", "العودة إلى المصرّح");
         Add("AdminWa.Engage.Reason", "Reden (verplicht)", "Reason (required)", "Powód (wymagany)", "Motiv (obligatoriu)", "السبب (مطلوب)");
 
-        Add("AdminWa.Tab.Waadi", "Waadi", "Waadi", "Waadi", "Waadi", "Waadi");
-        Add("AdminWa.Waadi.Bureau", "Bureau", "Bureau", "Biuro", "Birou", "المكتب");
-        Add("AdminWa.Waadi.Status", "Status", "Status", "Status", "Status", "الحالة");
+        Add("AdminWa.Tab.Waadi", "Waadi", "Waadi check", "Kontrola Waadi", "Verificare Waadi", "فحص Waadi");
+        Add("AdminWa.Waadi.Bureau", "Bureau", "Agency", "Biuro", "Birou", "المكتب");
+        Add("AdminWa.Waadi.Status", "Status", "State", "Stan", "Stare", "الحالة");
         Add("AdminWa.Waadi.Source", "Bron", "Source", "Źródło", "Sursă", "المصدر");
         Add("AdminWa.Waadi.Reference", "Referentie", "Reference", "Numer referencyjny", "Referință", "المرجع");
         Add("AdminWa.Waadi.ValidUntil", "Geldig tot", "Valid until", "Ważne do", "Valabil până", "صالح حتى");
@@ -443,8 +443,8 @@ internal static class UiStringsWerkgeverAanmelding
         Add("AdminWa.Waadi.Confirm", "Bevestigen", "Confirm", "Potwierdź", "Confirmă", "تأكيد");
         Add("AdminWa.Waadi.Reject", "Afwijzen", "Reject", "Odrzuć", "Respinge", "رفض");
         Add("AdminWa.Waadi.RejectReason", "Notitie (verplicht bij afwijzen)", "Note (required when rejecting)", "Notatka (wymagana przy odrzuceniu)", "Notă (obligatorie la respingere)", "ملاحظة (مطلوبة عند الرفض)");
-        Add("AdminWa.Waadi.Source.WaadiKvk", "Waadi via KvK", "Waadi via KvK", "Waadi przez KvK", "Waadi via KvK", "Waadi عبر KvK");
-        Add("AdminWa.Waadi.Source.WttaNau", "Wtta", "Wtta", "Wtta", "Wtta", "Wtta");
+        Add("AdminWa.Waadi.Source.WaadiKvk", "Waadi via KvK", "Waadi via Chamber of Commerce", "Waadi przez KvK", "Waadi prin registrul KvK", "Waadi عبر KvK");
+        Add("AdminWa.Waadi.Source.WttaNau", "Wtta", "Wtta register", "Rejestr Wtta", "Registru Wtta", "سجل Wtta");
         Add("AdminWa.Waadi.Source.AdminManual", "Handmatig", "Manual", "Ręcznie", "Manual", "يدوي");
         Add("AdminWa.Waadi.Empty", "Geen openstaande uitleenregistraties.", "No pending lender registrations.", "Brak oczekujących rejestracji.", "Nicio înregistrare în așteptare.", "لا تسجيلات إعارة معلّقة.");
 
