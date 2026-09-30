@@ -1,0 +1,80 @@
+@namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Core.Rules
+@inject CultureState Culture
+
+<LobsyFriendlyDialog IsOpen="@IsOpen"
+                     Title="@Culture["DeepPay.Title"]"
+                     TitleId="deep-test-order-title"
+                     OnClose="CloseAsync">
+    <p>@Culture.Format("DeepPay.What", TestName)</p>
+    <p class="muted">@Culture.Format("DeepPay.Questions", QuestionCount)</p>
+    <ul>
+        <li>@Culture["DeepPay.Get.1"]</li>
+        <li>@Culture["DeepPay.Get.2"]</li>
+        <li>@Culture["DeepPay.Get.3"]</li>
+        <li>@Culture["DeepPay.Get.4"]</li>
+    </ul>
+    <p class="deep-pay-price">
+        <strong>€ @PriceLabel</strong>
+        <span class="muted">@Culture["DeepPay.PriceOnce"]</span>
+    </p>
+    <p class="muted">
+        @Culture["DeepPay.Methods"]:
+        @string.Join(" · ", MolliePaymentMethods.PrimaryMethods.Select(MolliePaymentMethods.DisplayName))
+    </p>
+    <label class="deep-pay-waiver">
+        <input type="checkbox" @bind="_waiverAccepted" />
+        @Culture["DeepPay.Waiver"]
+    </label>
+    <p class="muted">@Culture["DeepPay.FreeKeeps"]</p>
+    @if (!string.IsNullOrWhiteSpace(ErrorKey))
+    {
+        <p class="state-message error" role="alert">@Culture[ErrorKey]</p>
+    }
+    @if (PaymentMode == "mollie")
+    {
+        <p class="muted">@Culture["DeepPay.SecureMollie"]</p>
+    }
+    else if (PaymentMode == "stub")
+    {
+        <p class="muted">@Culture["DeepPay.StubHint"]</p>
+    }
+    <div class="lobsy-dialog__actions">
+        <button type="button" class="btn-secondary" @onclick="CloseAsync" disabled="@Busy">@Culture["DeepPay.NotNow"]</button>
+        <button type="button"
+                class="btn-primary"
+                disabled="@(!_waiverAccepted || Busy || PaymentMode == "unavailable")"
+                @onclick="PayAsync">
+            @Culture.Format("DeepPay.PayCta", PriceLabel)
+        </button>
+    </div>
+    <p><a href="/legal/terms" target="_blank" rel="noopener noreferrer">@Culture["DeepPay.Terms"]</a></p>
+</LobsyFriendlyDialog>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public string TestName { get; set; } = "";
+    [Parameter] public int QuestionCount { get; set; }
+    [Parameter] public decimal PriceEuro { get; set; }
+    [Parameter] public string PaymentMode { get; set; } = "unavailable";
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string? ErrorKey { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnPay { get; set; }
+
+    private bool _waiverAccepted;
+
+    private string PriceLabel => PriceEuro.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+
+    protected override void OnParametersSet()
+    {
+        if (!IsOpen)
+        {
+            _waiverAccepted = false;
+        }
+    }
+
+    private Task CloseAsync() => OnClose.InvokeAsync();
+
+    private Task PayAsync() => OnPay.InvokeAsync(_waiverAccepted);
+}

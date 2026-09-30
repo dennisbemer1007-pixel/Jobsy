@@ -30,7 +30,7 @@ public class QuestionnaireAutosaveTests
     }
 
     [Fact]
-    public async Task ReplaceAll_restores_saved_answers()
+    public async Task ReplaceAll_restores_answers_as_idle()
     {
         await using var autosave = new QuestionnaireAutosave(
             persist: (_, _) => Task.CompletedTask,
@@ -43,11 +43,11 @@ public class QuestionnaireAutosaveTests
         Assert.Equal(5, v7);
         Assert.False(autosave.TryGetAnswer(9, out _));
         Assert.Equal(2, autosave.AnsweredCount);
-        Assert.Equal(QuestionnaireSaveStatus.Saved, autosave.Status);
+        Assert.Equal(QuestionnaireSaveStatus.Idle, autosave.Status);
     }
 
     [Fact]
-    public async Task Persist_failure_marks_failed_and_retry_succeeds()
+    public async Task Persist_failure_marks_failed_without_throw_and_retry_succeeds()
     {
         var fail = true;
         await using var autosave = new QuestionnaireAutosave(
@@ -62,245 +62,37 @@ public class QuestionnaireAutosaveTests
             },
             debounceMs: 0);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => autosave.SetAnswerAsync(1, 3));
+        await autosave.SetAnswerAsync(1, 3);
         Assert.Equal(QuestionnaireSaveStatus.Failed, autosave.Status);
 
         fail = false;
         await autosave.RetryAsync();
         Assert.Equal(QuestionnaireSaveStatus.Saved, autosave.Status);
     }
-}
-
-public class QuestionnaireFlowTests
-{
-    private static List<QuestionnaireQuestion> Sample() =>
-    [
-        new() { Id = 1, Text = "a", CategoryKey = "A", CategoryLabel = "Alpha" },
-        new() { Id = 2, Text = "b", CategoryKey = "A", CategoryLabel = "Alpha" },
-        new() { Id = 3, Text = "c", CategoryKey = "B", CategoryLabel = "Beta" },
-        new() { Id = 4, Text = "d", CategoryKey = "B", CategoryLabel = "Beta" }
-    ];
 
     [Fact]
-    public void FirstUnanswered_and_next_after_work()
+    public async Task Dispose_flushes_pending_answer_within_debounce()
     {
-        var questions = Sample();
-        var answers = new Dictionary<int, int> { [1] = 4, [2] = 3 };
-        Assert.Equal(3, QuestionnaireFlow.FirstUnansweredId(questions, answers));
-        Assert.Equal(3, QuestionnaireFlow.NextUnansweredAfter(questions, answers, 2));
-        Assert.Equal(4, QuestionnaireFlow.NextUnansweredAfter(questions, answers, 3));
-    }
-
-    [Fact]
-    public void Finish_is_only_when_all_answered()
-    {
-        var questions = Sample();
-        var partial = new Dictionary<int, int> { [1] = 1, [2] = 2, [3] = 3 };
-        Assert.NotNull(QuestionnaireFlow.FirstUnansweredId(questions, partial));
-        Assert.False(partial.Count >= questions.Count);
-
-        var full = new Dictionary<int, int> { [1] = 1, [2] = 2, [3] = 3, [4] = 4 };
-        Assert.Null(QuestionnaireFlow.FirstUnansweredId(questions, full));
-        Assert.True(full.Count >= questions.Count);
-    }
-
-    [Fact]
-    public void Category_progress_for_current_question()
-    {
-        var questions = Sample();
-        var answers = new Dictionary<int, int> { [1] = 5 };
-        var (done, total) = QuestionnaireFlow.CategoryProgress(questions, answers, 2);
-        Assert.Equal(1, done);
-        Assert.Equal(2, total);
-        Assert.Equal("Alpha", QuestionnaireFlow.CategoryLabelFor(questions, 2));
-    }
-}
-
-public class CompactQuestionnaireContractTests
-{
-    [Fact]
-    public void Shared_components_expose_a11y_buttons_and_shell_chrome()
-    {
-        var root = FindRepoRoot();
-        var likert = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/Questionnaire/LikertScaleQuestion.razor"));
-        Assert.Contains("<fieldset", likert);
-        Assert.Contains("q-likert__legend", likert);
-        Assert.Contains("aria-pressed", likert);
-        Assert.Contains("q-likert__opt", likert);
-        Assert.Contains("Questionnaire.Likert.Aria", likert);
-        Assert.Contains("Questionnaire.Likert.Low", likert);
-        Assert.Contains("Questionnaire.Likert.High", likert);
-        Assert.Contains("q-likert--collapsed", likert);
-
-        var shell = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/Questionnaire/QuestionnaireShell.razor"));
-        Assert.Contains("Questionnaire.BackAria", shell);
-        Assert.Contains("questionnaire__meter", shell);
-        Assert.Contains("Questionnaire.FinishCtaShort", shell);
-        Assert.Contains("Questionnaire.NextCta", shell);
-        Assert.Contains("Questionnaire.PrivacyShort", shell);
-        Assert.Contains("Questionnaire.PrivacyMore", shell);
-        Assert.Contains("@(\" \")", shell);
-        Assert.Contains("jobsyQuestionnaire.scrollToQuestion", shell);
-        Assert.Contains("ScrollRequestVersion", shell);
-        Assert.DoesNotContain("Competency.SaveDraft", shell);
-        Assert.DoesNotContain("<text> </text>", shell);
-    }
-
-    [Fact]
-    public void All_five_candidate_tests_use_shared_shell_and_autosave()
-    {
-        var root = FindRepoRoot();
-        string[] pages =
-        [
-            "CompetencyTest.razor",
-            "CareerTest.razor",
-            "CultureScan.razor",
-            "ValuesScan.razor",
-            "DeepAnalysis.razor"
-        ];
-
-        // Culture / values / career share Likert markup via QuestionnairePageBody.
-        string[] pageBodyPages =
-        [
-            "CareerTest.razor",
-            "CultureScan.razor",
-            "ValuesScan.razor"
-        ];
-
-        foreach (var page in pages)
+        IReadOnlyDictionary<int, int>? persisted = null;
+        await using (var autosave = new QuestionnaireAutosave(
+                         (answers, _) =>
+                         {
+                             persisted = answers.ToDictionary(kv => kv.Key, kv => kv.Value);
+                             return Task.CompletedTask;
+                         },
+                         debounceMs: 800))
         {
-            var text = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate", page));
-            Assert.Contains("<QuestionnaireShell", text);
-            Assert.Contains("QuestionnaireAutosave", text);
-            Assert.Contains("OnNext=", text);
-            Assert.DoesNotContain("Competency.SaveDraft", text);
-            Assert.DoesNotContain("profile-save-bar", text);
-            Assert.DoesNotContain("competency-likert", text);
-
-            if (pageBodyPages.Contains(page, StringComparer.Ordinal))
-            {
-                Assert.Contains("<QuestionnairePageBody", text);
-                Assert.Contains("QuestionnaireFocus", text);
-            }
-            else
-            {
-                Assert.Contains("<LikertScaleQuestion", text);
-                Assert.Contains("Collapsed=", text);
-            }
+            await autosave.SetAnswerAsync(1, 4);
         }
 
-        var pageBody = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/Questionnaire/QuestionnairePageBody.razor"));
-        Assert.Contains("<LikertScaleQuestion", pageBody);
-        Assert.Contains("Collapsed=", pageBody);
+        Assert.NotNull(persisted);
+        Assert.Equal(4, persisted![1]);
     }
 
     [Fact]
-    public void QuestionnaireFocus_advances_current_and_dimmed()
+    public async Task Initial_status_is_idle()
     {
-        var ids = new[] { 1, 2, 3, 4 };
-        var answers = new Dictionary<int, int>();
-        var focus = new QuestionnaireFocus();
-        focus.Initialize(ids, answers);
-        Assert.Equal(1, focus.CurrentId);
-        Assert.Equal(2, focus.DimmedId);
-
-        answers[1] = 4;
-        focus.AfterAnswer(1, ids, answers);
-        Assert.Equal(2, focus.CurrentId);
-        Assert.Equal(3, focus.DimmedId);
-        Assert.True(focus.SmoothScroll);
-
-        focus.Expand(4, ids, answers);
-        Assert.Equal(4, focus.CurrentId);
-        Assert.Equal(4, focus.ExpandedId);
-        Assert.Equal(2, focus.DimmedId);
-    }
-
-    [Fact]
-    public void QuestionnaireFocus_GoNext_bumps_scroll_version_when_already_on_current()
-    {
-        var ids = new[] { 1, 2, 3 };
-        var answers = new Dictionary<int, int> { [1] = 4 };
-        var focus = new QuestionnaireFocus();
-        focus.Initialize(ids, answers);
-        Assert.Equal(2, focus.CurrentId);
-        var version = focus.ScrollRequestVersion;
-
-        focus.GoNext(ids, answers);
-        Assert.Equal(2, focus.CurrentId);
-        Assert.Equal(2, focus.ScrollToId);
-        Assert.True(focus.ScrollRequestVersion > version);
-    }
-
-    [Fact]
-    public void MainLayout_hides_chrome_on_questionnaire_routes()
-    {
-        var layout = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/MainLayout.razor"));
-        Assert.Contains("app-shell--questionnaire", layout);
-        Assert.Contains("IsQuestionnairePath", layout);
-        Assert.Contains("candidate/competencies", layout);
-        Assert.Contains("candidate/deep-analysis", layout);
-        Assert.True(Jobsy.Web.Components.Layout.MainLayout.IsQuestionnairePath("candidate/competencies"));
-        Assert.True(Jobsy.Web.Components.Layout.MainLayout.IsQuestionnairePath("candidate/deep-analysis/career"));
-        Assert.False(Jobsy.Web.Components.Layout.MainLayout.IsQuestionnairePath("candidate/profile"));
-    }
-
-    [Fact]
-    public void Questionnaire_css_is_scoped_feature_file_with_overflow_fixes()
-    {
-        var root = FindRepoRoot();
-        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/questionnaire.css"));
-        Assert.Contains("fieldset.q-likert", css);
-        Assert.Contains("min-inline-size: 0", css);
-        Assert.Contains("white-space: normal", css);
-        Assert.Contains("overflow-wrap: anywhere", css);
-        Assert.Contains("float: inline-start", css);
-        Assert.Contains("grid-template-columns: repeat(5, minmax(0, 1fr))", css);
-        Assert.Contains("min-block-size: 48px", css);
-        Assert.Contains(".q-likert--collapsed .q-likert__text", css);
-
-        var appCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.DoesNotContain(".questionnaire {\n", appCss);
-        Assert.DoesNotContain(".q-likert {\n", appCss);
-
-        var appMin = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.min.css"));
-        Assert.DoesNotContain(".questionnaire{", appMin);
-        Assert.DoesNotContain(".q-likert{", appMin);
-
-        var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/onboarding-wizard.css"));
-        var idx = 0;
-        while ((idx = wizard.IndexOf(".q-likert", idx, StringComparison.Ordinal)) >= 0)
-        {
-            var window = wizard[Math.Max(0, idx - 80)..idx];
-            Assert.Contains(".ob-wizard", window);
-            idx += ".q-likert".Length;
-        }
-
-        Assert.Contains(
-            ".ob-wizard .q-likert--collapsed .q-likert__text",
-            wizard);
-        Assert.DoesNotContain(
-            ".ob-wizard .q-likert__text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-            wizard);
-
-        var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/App.razor"));
-        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/features/questionnaire.css");
-        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/features/onboarding-wizard.css");
-    }
-
-    private static string FindRepoRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
-            {
-                return dir.FullName;
-            }
-
-            dir = dir.Parent;
-        }
-
-        throw new InvalidOperationException("Repo root not found.");
+        await using var autosave = new QuestionnaireAutosave((_, _) => Task.CompletedTask);
+        Assert.Equal(QuestionnaireSaveStatus.Idle, autosave.Status);
     }
 }

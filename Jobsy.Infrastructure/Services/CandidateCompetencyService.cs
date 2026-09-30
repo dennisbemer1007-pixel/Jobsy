@@ -30,7 +30,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
     {
         var row = await _db.CandidateCompetencies.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var price = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Competence);
         return ToDto(row, price);
     }
 
@@ -117,7 +117,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             _queue.TryEnqueue(userId);
         }
 
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var price = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Competence);
         return ToDto(row, price);
     }
 

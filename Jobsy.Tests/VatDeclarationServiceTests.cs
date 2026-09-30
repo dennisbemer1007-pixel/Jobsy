@@ -224,6 +224,71 @@ public class VatDeclarationServiceTests
         Assert.Equal(0, closed.TokenInvoiceCount);
     }
 
+    [Fact]
+    public async Task Preview_includes_consumer_kandidaat_aankopen_in_rubriek1()
+    {
+        await using var db = CreateDb();
+        SeedPlatform(db);
+
+        var userId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = "k@test.nl",
+            FullName = "K",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        var checkoutId = Guid.NewGuid();
+        var (ex, vat, total) = TokenVatPricing.SplitInclVatEuros(2.99m);
+        db.DeepAnalysisCheckouts.Add(new DeepAnalysisCheckout
+        {
+            Id = checkoutId,
+            UserId = userId,
+            Kind = AssessmentKind.Competence,
+            PaymentId = "tr_c1",
+            AmountEuro = 2.99m,
+            AmountExVatCents = ex,
+            VatAmountCents = vat,
+            TotalAmountCents = total,
+            Status = DeepAnalysisCheckoutStatus.Paid,
+            PaidAtUtc = new DateTime(2026, 2, 12, 0, 0, 0, DateTimeKind.Utc),
+            CreatedAtUtc = new DateTime(2026, 2, 12, 0, 0, 0, DateTimeKind.Utc),
+            WaiverAcceptedAtUtc = DateTime.UtcNow,
+            WaiverTextVersion = "2026-09"
+        });
+        db.ConsumerPurchaseInvoices.Add(new ConsumerPurchaseInvoice
+        {
+            Id = Guid.NewGuid(),
+            InvoiceNumber = "LOB-KT-2026-0001",
+            DeepAnalysisCheckoutId = checkoutId,
+            UserId = userId,
+            CustomerName = "K",
+            CustomerEmail = "k@test.nl",
+            Description = "Uitgebreide test",
+            Kind = AssessmentKind.Competence,
+            AmountExVatCents = ex,
+            VatAmountCents = vat,
+            TotalAmountCents = total,
+            MolliePaymentId = "tr_c1",
+            IssuedAt = new DateTime(2026, 2, 12, 0, 0, 0, DateTimeKind.Utc),
+            CreatedAt = new DateTime(2026, 2, 12, 0, 0, 0, DateTimeKind.Utc)
+        });
+        await db.SaveChangesAsync();
+
+        var sut = new VatDeclarationService(db, new PlatformCompanySettingsService(db));
+        var preview = await sut.PreviewAsync(2026, 1);
+        Assert.Equal(1, preview.ConsumerInvoiceCount);
+        Assert.Equal(ex, preview.ConsumerOmzetExVatCents);
+        Assert.Equal(vat, preview.ConsumerVatCents);
+        Assert.Equal(vat, preview.Rubriek1VatCents);
+
+        var declaration = await sut.GenerateAndConfirmAsync(2026, 1);
+        var inv = await db.ConsumerPurchaseInvoices.SingleAsync();
+        Assert.Equal(declaration.Id, inv.VatDeclarationId);
+        Assert.Contains("Verwerkt in aangifte", inv.VatDeclarationStatusLabel);
+    }
+
     private static void SeedPlatform(JobsyDbContext db)
     {
         db.PlatformCompanySettings.Add(new PlatformCompanySettings

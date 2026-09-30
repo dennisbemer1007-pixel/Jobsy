@@ -409,5 +409,17 @@ internal static class EmailStringsPl
         ["Email.VacancyEngagementReminder.Tip.ManyViewsFewApplications"] = "Many views, few applications. Sharpen the benefits and check if hard requirements are too strict.",
         ["Email.VacancyEngagementReminder.Tip.NotShared"] = "Share the vacancy actively. That increases repeat visits.",
         ["Email.VacancyEngagementReminder.Tip.ViewsNoApplications"] = "There is interest, but no applications yet. Make requirements more realistic or clarify the wage.",
+
+        ["Email.DeepTestReceipt.Subject"] = "Your extended test is ready",
+        ["Email.DeepTestReceipt.Preheader"] = "Paid — you can start with question 1",
+        ["Email.DeepTestReceipt.Heading"] = "Paid. You can start",
+        ["Email.DeepTestReceipt.Eyebrow"] = "Extended test",
+        ["Email.DeepTestReceipt.P1"] = "Paid: Extended test {0}",
+        ["Email.DeepTestReceipt.Fact.Amount"] = "Amount (incl. VAT)",
+        ["Email.DeepTestReceipt.Fact.Date"] = "Date",
+        ["Email.DeepTestReceipt.Fact.Invoice"] = "Invoice number",
+        ["Email.DeepTestReceipt.Waiver"] = "You chose to start right away. That means you cannot cancel within 14 days.",
+        ["Email.DeepTestReceipt.Cta"] = "Start with question 1",
+        ["Email.DeepTestReceipt.Support"] = "Questions about your payment? Email support@lobsy.nl.",
     };
 }

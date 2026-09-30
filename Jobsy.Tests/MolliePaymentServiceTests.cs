@@ -177,12 +177,16 @@ public class MolliePaymentServiceTests
         var http = new NamedHttpClientFactory(handler ?? new StubMollieHandler(_ =>
             new HttpResponseMessage(HttpStatusCode.InternalServerError)));
 
-        return new MolliePaymentService(
-            db,
+        var mollie = new MollieApiClient(
             credentials,
-            features,
             http,
             config,
+            new FakeHostEnvironment(isDevelopment),
+            NullLogger<MollieApiClient>.Instance);
+        return new MolliePaymentService(
+            db,
+            features,
+            mollie,
             new FakeHostEnvironment(isDevelopment),
             stub,
             NullLogger<MolliePaymentService>.Instance);

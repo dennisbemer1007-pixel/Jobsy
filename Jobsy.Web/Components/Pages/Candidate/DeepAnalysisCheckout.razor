@@ -2,48 +2,208 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Enums
+@using System.Globalization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@implements IAsyncDisposable
 
 <PageTitle>@Culture["Deep.Checkout"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <article class="detail-card">
-        <h1>@Culture["Deep.Checkout"]</h1>
-        <p class="login-lead">@_message</p>
+        @if (_state == "loading" || _state == "pending")
+        {
+            <div role="status">
+                <h1>@Culture["DeepPay.Checking"]</h1>
+                <p class="login-lead">@(_timedOut ? Culture["DeepPay.CheckingLong"] : Culture["DeepPay.CheckingLead"])</p>
+                @if (_timedOut && !string.IsNullOrWhiteSpace(_testSlug))
+                {
+                    <p><a href="@($"/profiel/tests/{_testSlug}")">@Culture["DeepPay.BackToTest"]</a></p>
+                }
+            </div>
+            @if (_isStub && _checkoutId is Guid stubId)
+            {
+                <button type="button" class="engagement-btn" disabled="@_busy" @onclick="() => StubPayAsync(stubId)">
+                    @Culture["DeepPay.StubFinish"]
+                </button>
+            }
+        }
+        else if (_state == "paid")
+        {
+            <h1>@Culture["DeepPay.PaidTitle"]</h1>
+            <dl class="deep-pay-receipt">
+                <div><dt>@Culture["DeepPay.Fact.What"]</dt><dd>@Culture.Format("DeepPay.What", _testName)</dd></div>
+                <div><dt>@Culture["DeepPay.Fact.Amount"]</dt><dd>€ @_amountLabel</dd></div>
+                <div><dt>@Culture["DeepPay.Fact.Date"]</dt><dd>@_paidLocal</dd></div>
+                @if (!string.IsNullOrWhiteSpace(_invoiceNumber))
+                {
+                    <div><dt>@Culture["DeepPay.Fact.Invoice"]</dt><dd>@_invoiceNumber</dd></div>
+                }
+            </dl>
+            <p>@Culture["DeepPay.PaidMail"]</p>
+            <p>
+                <a class="engagement-btn" href="@($"/candidate/deep-analysis/{_testSlug}")">@Culture["DeepPay.StartQ1"]</a>
+            </p>
+            <p><a href="@($"/profiel/tests/{_testSlug}")">@Culture["DeepPay.Later"]</a></p>
+        }
+        else if (_state is "failed" or "cancelled" or "expired")
+        {
+            <h1>@Culture["DeepPay.FailedTitle"]</h1>
+            <p class="login-lead">@Culture["DeepPay.FailedLead"]</p>
+            <p>
+                <a class="engagement-btn" href="@($"/profiel/tests/{_testSlug}?buy=1")">@Culture["DeepPay.RetryPay"]</a>
+            </p>
+            <p><a href="@($"/profiel/tests/{_testSlug}")">@Culture["DeepPay.BackToTest"]</a></p>
+        }
+        else
+        {
+            <h1>@Culture["DeepPay.NotFound"]</h1>
+            <p><a href="/profiel">@Culture["DeepPay.ToMyTests"]</a></p>
+        }
     </article>
 </div>
 
 @code {
+    [SupplyParameterFromQuery] public Guid? CheckoutId { get; set; }
     [SupplyParameterFromQuery] public string? PaymentId { get; set; }
     [SupplyParameterFromQuery] public string? Kind { get; set; }
 
-    private string _message = "";
+    private string _state = "loading";
+    private string _testSlug = "competence";
+    private string _testName = "";
+    private string _amountLabel = "";
+    private string? _invoiceNumber;
+    private string _paidLocal = "";
+    private bool _isStub;
+    private bool _busy;
+    private bool _timedOut;
+    private Guid? _checkoutId;
+    private CancellationTokenSource? _pollCts;
 
     protected override async Task OnInitializedAsync()
     {
-        _message = Culture["Common.Loading"];
-        if (string.IsNullOrWhiteSpace(PaymentId))
-        {
-            _message = Culture["Deep.CheckoutMissing"];
-            return;
-        }
-
+        _pollCts = new CancellationTokenSource();
         try
         {
-            await Api.CompleteDeepAnalysisCheckoutAsync(PaymentId);
-            var slug = AssessmentKindLabels.ToSlug(AssessmentKindLabels.ParseOrDefault(Kind));
-            Navigation.NavigateTo($"/profiel/tests/{slug}");
+            if (CheckoutId is Guid id)
+            {
+                _checkoutId = id;
+            }
+            else if (!string.IsNullOrWhiteSpace(PaymentId))
+            {
+                var shim = await Api.GetDeepAnalysisCheckoutByPaymentIdAsync(PaymentId);
+                if (shim is null)
+                {
+                    _state = "not_found";
+                    return;
+                }
+
+                _checkoutId = shim.CheckoutId;
+            }
+            else
+            {
+                _state = "not_found";
+                return;
+            }
+
+            await RefreshAsync(_pollCts.Token);
+            if (_state == "pending")
+            {
+                _ = PollAsync(_pollCts.Token);
+            }
         }
         catch (Exception ex)
         {
-            var slug = AssessmentKindLabels.ToSlug(AssessmentKindLabels.ParseOrDefault(Kind));
-            var msg = string.IsNullOrWhiteSpace(ex.Message)
-                ? Culture["Tests.PaymentFailed"]
-                : ex.Message;
-            _message = msg;
-            Navigation.NavigateTo($"/profiel/tests/{slug}?paymentError=1");
+            // Never show raw exception text.
+            Console.WriteLine(ex);
+            _state = "not_found";
         }
+    }
+
+    private async Task PollAsync(CancellationToken ct)
+    {
+        var started = DateTime.UtcNow;
+        while (!ct.IsCancellationRequested && _state == "pending")
+        {
+            if (DateTime.UtcNow - started > TimeSpan.FromSeconds(60))
+            {
+                _timedOut = true;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            try
+            {
+                await Task.Delay(2000, ct);
+                await RefreshAsync(ct);
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return;
+            }
+        }
+    }
+
+    private async Task RefreshAsync(CancellationToken ct)
+    {
+        if (_checkoutId is not Guid id)
+        {
+            _state = "not_found";
+            return;
+        }
+
+        var status = await Api.GetDeepAnalysisCheckoutStatusAsync(id, ct);
+        if (status is null)
+        {
+            _state = "not_found";
+            return;
+        }
+
+        _state = status.Status;
+        _testSlug = status.TestSlug;
+        _testName = AssessmentKindLabels.ToDutch(AssessmentKindLabels.ParseOrDefault(status.TestSlug));
+        _amountLabel = (status.TotalCents / 100m).ToString("0.00", CultureInfo.GetCultureInfo("nl-NL"));
+        _invoiceNumber = status.InvoiceNumber;
+        _isStub = status.IsStub;
+        if (status.PaidAtUtc is DateTime paid)
+        {
+            var amsterdam = TimeZoneInfo.FindSystemTimeZoneById(
+                OperatingSystem.IsWindows() ? "W. Europe Standard Time" : "Europe/Amsterdam");
+            _paidLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(paid, DateTimeKind.Utc), amsterdam)
+                .ToString("dd-MM-yyyy HH:mm", CultureInfo.GetCultureInfo("nl-NL"));
+        }
+    }
+
+    private async Task StubPayAsync(Guid checkoutId)
+    {
+        _busy = true;
+        try
+        {
+            await Api.StubPayDeepAnalysisCheckoutAsync(checkoutId);
+            await RefreshAsync(CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            _state = "failed";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _pollCts?.Cancel();
+        _pollCts?.Dispose();
+        return ValueTask.CompletedTask;
     }
 }

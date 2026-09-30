@@ -74,7 +74,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         var career = await _career.GetCompletedScoresAsync(userId, cancellationToken);
         var unlocked = competence is { IsComplete: true } && career is { IsComplete: true };
         var deep = await HasCompletedDeepAsync(userId, cancellationToken);
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var price = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Competence);
         var last = await _db.CandidateRoleFitChecks.AsNoTracking()
             .FirstOrDefaultAsync(r => r.UserId == userId, cancellationToken);
 
@@ -150,7 +150,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         var fingerprint = CandidateInsightsFingerprint.ForRoleFit(
             title, vacancy?.Id, competence, career, cultureScores, prefs);
         var fromDeep = await HasCompletedDeepAsync(userId, cancellationToken);
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var price = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Competence);
 
         var existing = await _db.CandidateRoleFitChecks.FirstOrDefaultAsync(r => r.UserId == userId, cancellationToken);
         if (existing is not null

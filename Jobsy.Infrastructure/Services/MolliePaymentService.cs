@@ -1,16 +1,10 @@
 using System.Globalization;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Jobsy.Core;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -25,36 +19,24 @@ public sealed class MolliePaymentService : IPaymentService
     public const string HttpClientName = "Mollie";
     public const string DefaultApiBaseUrl = "https://api.mollie.com/v2/";
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
-
     private readonly JobsyDbContext _db;
-    private readonly IIntegrationCredentialService _credentials;
     private readonly IPlatformFeatureService _features;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
+    private readonly IMollieApiClient _mollie;
     private readonly IHostEnvironment _environment;
     private readonly MolliePaymentStub _stub;
     private readonly ILogger<MolliePaymentService> _logger;
 
     public MolliePaymentService(
         JobsyDbContext db,
-        IIntegrationCredentialService credentials,
         IPlatformFeatureService features,
-        IHttpClientFactory httpClientFactory,
-        IConfiguration configuration,
+        IMollieApiClient mollie,
         IHostEnvironment environment,
         MolliePaymentStub stub,
         ILogger<MolliePaymentService> logger)
     {
         _db = db;
-        _credentials = credentials;
         _features = features;
-        _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
+        _mollie = mollie;
         _environment = environment;
         _stub = stub;
         _logger = logger;
@@ -66,7 +48,7 @@ public sealed class MolliePaymentService : IPaymentService
         string? paymentMethod = null,
         CancellationToken cancellationToken = default)
     {
-        if (!await TryGetApiKeyAsync(cancellationToken))
+        if (!await _mollie.TryGetApiKeyAsync(cancellationToken))
         {
             if (_environment.IsDevelopment())
             {
@@ -94,7 +76,7 @@ public sealed class MolliePaymentService : IPaymentService
         var features = await _features.GetAsync(cancellationToken);
         var webBase = features.PublicWebBaseUrl.TrimEnd('/');
         var redirectUrl = $"{webBase}/tokens/checkout-return?checkoutId={checkoutId:D}";
-        var webhookUrl = ResolveWebhookUrl();
+        var webhookUrl = _mollie.ResolveWebhookUrl();
 
         var amountValue = price.ToString("0.00", CultureInfo.InvariantCulture);
         var metadata = new Dictionary<string, string>
@@ -108,41 +90,27 @@ public sealed class MolliePaymentService : IPaymentService
             metadata["paymentMethod"] = resolvedMethod;
         }
 
-        var createBody = new Dictionary<string, object?>
-        {
-            ["amount"] = new Dictionary<string, string>
-            {
-                ["currency"] = "EUR",
-                ["value"] = amountValue
-            },
-            ["description"] = $"Lobsy tokens ({packSize})",
-            ["redirectUrl"] = redirectUrl,
-            ["metadata"] = metadata
-        };
-        // String = skip to that method; array = Mollie shows only iDEAL + creditcard.
-        createBody["method"] = resolvedMethod is not null
-            ? resolvedMethod
-            : MolliePaymentMethods.PrimaryMethods.ToArray();
-
-        if (!string.IsNullOrWhiteSpace(webhookUrl))
-        {
-            // Required for instant token credit after paid (incl. credit card) without waiting for redirect.
-            createBody["webhookUrl"] = webhookUrl;
-        }
-        else
+        if (string.IsNullOrWhiteSpace(webhookUrl))
         {
             _logger.LogWarning(
                 "Mollie webhook URL unavailable for company {CompanyId}; fulfillment relies on redirect return.",
                 companyId);
         }
 
-        MolliePaymentResponse payment;
+        MolliePaymentSnapshot payment;
         try
         {
-            payment = await SendMollieAsync<MolliePaymentResponse>(
-                HttpMethod.Post,
-                "payments",
-                createBody,
+            payment = await _mollie.CreatePaymentAsync(
+                new MollieCreatePaymentRequest(
+                    amountValue,
+                    $"Lobsy tokens ({packSize})",
+                    redirectUrl,
+                    webhookUrl,
+                    resolvedMethod is not null
+                        ? [resolvedMethod]
+                        : MolliePaymentMethods.PrimaryMethods.ToArray(),
+                    Locale: null,
+                    metadata),
                 cancellationToken);
         }
         catch (Exception ex)
@@ -157,8 +125,7 @@ public sealed class MolliePaymentService : IPaymentService
             throw new InvalidOperationException("Mollie gaf geen payment-id terug.");
         }
 
-        var checkoutUrl = payment.Links?.Checkout?.Href;
-        if (string.IsNullOrWhiteSpace(checkoutUrl))
+        if (string.IsNullOrWhiteSpace(payment.CheckoutUrl))
         {
             throw new InvalidOperationException("Mollie gaf geen checkout-URL terug.");
         }
@@ -186,7 +153,7 @@ public sealed class MolliePaymentService : IPaymentService
 
         return new PaymentCheckoutResult(
             payment.Id,
-            checkoutUrl,
+            payment.CheckoutUrl,
             packSize,
             price,
             IsStub: false,
@@ -219,7 +186,7 @@ public sealed class MolliePaymentService : IPaymentService
             ? session.AmountEuro
             : TokenVatPricing.FromCents(session.TotalAmountCents);
 
-        if (!await TryGetApiKeyAsync(cancellationToken))
+        if (!await _mollie.TryGetApiKeyAsync(cancellationToken))
         {
             var localPaid = session.Status is TokenPurchaseCheckoutStatus.Paid
                 or TokenPurchaseCheckoutStatus.Credited;
@@ -231,14 +198,10 @@ public sealed class MolliePaymentService : IPaymentService
                 AmountEuro: sessionAmount);
         }
 
-        MolliePaymentResponse payment;
+        MolliePaymentSnapshot payment;
         try
         {
-            payment = await SendMollieAsync<MolliePaymentResponse>(
-                HttpMethod.Get,
-                $"payments/{Uri.EscapeDataString(paymentId)}",
-                body: null,
-                cancellationToken);
+            payment = await _mollie.FetchPaymentAsync(paymentId, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -250,11 +213,11 @@ public sealed class MolliePaymentService : IPaymentService
         var isPaid = status is "paid"
                      || session.Status is TokenPurchaseCheckoutStatus.Paid or TokenPurchaseCheckoutStatus.Credited;
         var method = MolliePaymentMethods.NormalizeOrNull(payment.Method);
-        var amountEuro = ParseMollieAmount(payment.Amount) is decimal liveAmount && liveAmount > 0
+        var amountEuro = ParseMollieAmount(payment.AmountValue) is decimal liveAmount && liveAmount > 0
             ? liveAmount
             : sessionAmount;
-        var amountRefunded = ParseMollieAmount(payment.AmountRefunded) ?? 0m;
-        var amountChargedBack = ParseMollieAmount(payment.AmountChargedBack) ?? 0m;
+        var amountRefunded = ParseMollieAmount(payment.AmountRefundedValue) ?? 0m;
+        var amountChargedBack = ParseMollieAmount(payment.AmountChargedBackValue) ?? 0m;
         var dirty = false;
 
         if (method is not null && !string.Equals(session.PaymentMethod, method, StringComparison.Ordinal))
@@ -290,15 +253,15 @@ public sealed class MolliePaymentService : IPaymentService
             AmountChargedBackEuro: amountChargedBack);
     }
 
-    private static decimal? ParseMollieAmount(MollieAmountDto? amount)
+    private static decimal? ParseMollieAmount(string? value)
     {
-        if (amount?.Value is null)
+        if (value is null)
         {
             return null;
         }
 
         return decimal.TryParse(
-            amount.Value,
+            value,
             NumberStyles.Number,
             CultureInfo.InvariantCulture,
             out var parsed)
@@ -333,152 +296,5 @@ public sealed class MolliePaymentService : IPaymentService
             100 => 300.00m,
             _ => packSize * 5.00m
         };
-    }
-
-    private async Task<bool> TryGetApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mollie, cancellationToken);
-        var apiKey = secrets?.ApiKey?.Trim();
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            return false;
-        }
-
-        EnsureLiveKeyOutsideDevelopment(apiKey);
-        return true;
-    }
-
-    /// <summary>
-    /// Mollie <c>test_</c> keys must never run outside Development (fail closed).
-    /// </summary>
-    private void EnsureLiveKeyOutsideDevelopment(string apiKey)
-    {
-        if (_environment.IsDevelopment())
-        {
-            return;
-        }
-
-        if (apiKey.StartsWith("test_", StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException(
-                "Mollie test-mode keys (test_…) zijn niet toegestaan buiten Development. Gebruik een live_ key in Production.");
-        }
-    }
-
-    private string? ResolveWebhookUrl()
-    {
-        var apiBase = FirstNonEmpty(
-            _configuration["PublicApiBaseUrl"],
-            _configuration["RENDER_EXTERNAL_URL"]);
-        if (string.IsNullOrWhiteSpace(apiBase))
-        {
-            // Localhost webhooks are unreachable for Mollie; redirect-return still verifies status.
-            return null;
-        }
-
-        var origin = JobsyPublicUrl.NormalizeOrigin(apiBase);
-        if (string.IsNullOrWhiteSpace(origin))
-        {
-            return null;
-        }
-
-        if (origin.Contains("localhost", StringComparison.OrdinalIgnoreCase)
-            || origin.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        return origin.TrimEnd('/') + "/api/webhooks/mollie";
-    }
-
-    private async Task<T> SendMollieAsync<T>(
-        HttpMethod method,
-        string relativePath,
-        object? body,
-        CancellationToken cancellationToken)
-    {
-        var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mollie, cancellationToken)
-            ?? throw new InvalidOperationException("Geen Mollie API-key geconfigureerd.");
-        var apiKey = secrets.ApiKey?.Trim()
-            ?? throw new InvalidOperationException("Geen Mollie API-key geconfigureerd.");
-        EnsureLiveKeyOutsideDevelopment(apiKey);
-
-        var rawBase = string.IsNullOrWhiteSpace(secrets.BaseUrl) ? DefaultApiBaseUrl : secrets.BaseUrl;
-        if (!IntegrationEndpointUrl.TryNormalizeBaseUrl(rawBase, out var baseUrl, out var error)
-            || string.IsNullOrWhiteSpace(baseUrl))
-        {
-            // Allow default Mollie host even when admin BaseUrl empty; block private hosts otherwise.
-            if (string.IsNullOrWhiteSpace(secrets.BaseUrl))
-            {
-                baseUrl = DefaultApiBaseUrl;
-            }
-            else
-            {
-                throw new InvalidOperationException(error ?? "Ongeldige Mollie Base URL.");
-            }
-        }
-
-        var client = _httpClientFactory.CreateClient(HttpClientName);
-        using var request = new HttpRequestMessage(method, new Uri(new Uri(baseUrl), relativePath));
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        if (body is not null)
-        {
-            request.Content = JsonContent.Create(body, options: JsonOptions);
-        }
-
-        using var response = await client.SendAsync(request, cancellationToken);
-        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            var detail = raw.Length > 240 ? raw[..240] : raw;
-            throw new InvalidOperationException(
-                $"Mollie {(int)response.StatusCode}: {detail}");
-        }
-
-        var parsed = JsonSerializer.Deserialize<T>(raw, JsonOptions);
-        return parsed ?? throw new InvalidOperationException("Lege Mollie-response.");
-    }
-
-    private static string? FirstNonEmpty(params string?[] values)
-    {
-        foreach (var value in values)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                return value.Trim();
-            }
-        }
-
-        return null;
-    }
-
-    private sealed class MolliePaymentResponse
-    {
-        public string? Id { get; set; }
-        public string? Status { get; set; }
-        public string? Method { get; set; }
-        public MollieAmountDto? Amount { get; set; }
-        public MollieAmountDto? AmountRefunded { get; set; }
-        public MollieAmountDto? AmountChargedBack { get; set; }
-
-        [JsonPropertyName("_links")]
-        public MollieLinks? Links { get; set; }
-    }
-
-    private sealed class MollieAmountDto
-    {
-        public string? Currency { get; set; }
-        public string? Value { get; set; }
-    }
-
-    private sealed class MollieLinks
-    {
-        public MollieLink? Checkout { get; set; }
-    }
-
-    private sealed class MollieLink
-    {
-        public string? Href { get; set; }
     }
 }

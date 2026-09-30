@@ -502,23 +502,57 @@ public sealed partial class JobsyApiClient
         }
     }
 
-    public async Task<DeepAnalysisCheckout> StartDeepAnalysisCheckoutAsync(string kind, CancellationToken ct = default)
+    public async Task<DeepAnalysisCheckout> StartDeepAnalysisCheckoutAsync(
+        string kind,
+        bool waiverAccepted,
+        string? locale = null,
+        CancellationToken ct = default)
     {
-        var response = await _http.PostAsync(
+        var response = await _http.PostAsJsonAsync(
             $"api/me/deep-analysis/checkout?kind={Uri.EscapeDataString(kind)}",
-            null,
+            new { waiverAccepted, locale },
             ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Checkout starten mislukt.");
+            var code = ExtractCode(body);
+            throw new DeepPayClientException(code ?? "error", ExtractMessage(body) ?? "Checkout starten mislukt.");
         }
 
         return await response.Content.ReadFromJsonAsync<DeepAnalysisCheckout>(cancellationToken: ct)
                ?? new DeepAnalysisCheckout();
     }
 
-    public async Task<DeepAnalysisState> CompleteDeepAnalysisCheckoutAsync(string paymentId, CancellationToken ct = default)
+    public async Task<string> GetDeepAnalysisPaymentModeAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var dto = await _http.GetFromJsonAsync<DeepPayModeDto>("api/me/deep-analysis/payment-mode", ct);
+            return dto?.Mode ?? "unavailable";
+        }
+        catch
+        {
+            return "unavailable";
+        }
+    }
+
+    public async Task<DeepTestCheckoutStatus?> GetDeepAnalysisCheckoutStatusAsync(
+        Guid checkoutId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/me/deep-analysis/checkout/{checkoutId:D}", ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<DeepTestCheckoutStatus>(cancellationToken: ct);
+    }
+
+    public async Task<DeepTestCheckoutStatus?> GetDeepAnalysisCheckoutByPaymentIdAsync(
+        string paymentId,
+        CancellationToken ct = default)
     {
         var response = await _http.PostAsync(
             $"api/me/deep-analysis/checkout/{Uri.EscapeDataString(paymentId)}/complete",
@@ -526,13 +560,53 @@ public sealed partial class JobsyApiClient
             ct);
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Betaling afronden mislukt.");
+            return null;
         }
 
-        return await response.Content.ReadFromJsonAsync<DeepAnalysisState>(cancellationToken: ct)
-               ?? new DeepAnalysisState();
+        return await response.Content.ReadFromJsonAsync<DeepTestCheckoutStatus>(cancellationToken: ct);
     }
+
+    public async Task StubPayDeepAnalysisCheckoutAsync(Guid checkoutId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/me/deep-analysis/checkout/{checkoutId:D}/stub-pay",
+            null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new DeepPayClientException(ExtractCode(body) ?? "error", ExtractMessage(body) ?? "Stub-pay mislukt.");
+        }
+    }
+
+    [Obsolete("Use StartDeepAnalysisCheckoutAsync with waiver.")]
+    public Task<DeepAnalysisState> CompleteDeepAnalysisCheckoutAsync(string paymentId, CancellationToken ct = default)
+        => throw new NotSupportedException("Complete checkout shim no longer unlocks; use status polling.");
+
+    private static string? ExtractCode(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("code", out var code))
+            {
+                return code.GetString();
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        return null;
+    }
+
+    private sealed record DeepPayModeDto(string Mode);
 
     public async Task<DeepAnalysisState> SaveDeepAnalysisAsync(
         string kind,

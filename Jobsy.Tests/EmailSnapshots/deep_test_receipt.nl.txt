@@ -1,0 +1,41 @@
+KEY: deep_test_receipt
+SUBJECT: Je uitgebreide test staat klaar
+PREHEADER: Betaald — je kunt met vraag 1 beginnen
+KIND: Essential
+--- TEXT ---
+Hoi Alex,
+
+Betaald. Je kunt beginnen
+=========================
+
+Betaald: Uitgebreide test Competenties
+
+Bedrag (incl. btw): € 2,99
+Datum: 30 september 2026, 18:19
+Factuurnummer: LOB-KT-2026-0001
+
+Je koos ervoor om meteen te beginnen. Daarom kun je niet binnen 14 dagen
+annuleren.
+
+Vragen over je betaling? Mail support@lobsy.nl.
+
+Begin met vraag 1: https://lobsy.nl/candidate/deep-analysis/competence
+
+Team Lobsy
+
+Je krijgt deze mail omdat je via Lobsy hebt gesolliciteerd.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Betaald. Je kunt beginnen
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Begin met vraag 1 -> https://lobsy.nl/candidate/deep-analysis/competence
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
+img: src=https://lobsy.nl/images/email/mascot-celebrating-128.png?v=20260930-mail2 alt= width=64 height=64

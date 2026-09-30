@@ -2941,6 +2941,100 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CompanyVerificationLetters");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.ConsumerPurchaseInvoice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AmountExVatCents")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CustomerCountry")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("CustomerEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("DeepAnalysisCheckoutId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<bool>("IsStub")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("IssuedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MolliePaymentId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("TotalAmountCents")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("VatAmountCents")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("VatDeclarationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VatDeclarationStatusLabel")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<decimal>("VatRate")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("numeric(5,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeepAnalysisCheckoutId")
+                        .IsUnique();
+
+                    b.HasIndex("InvoiceNumber")
+                        .IsUnique();
+
+                    b.HasIndex("IssuedAt");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("VatDeclarationId");
+
+                    b.ToTable("ConsumerPurchaseInvoices", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.DeepAnalysisCheckout", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2951,11 +3045,31 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<int>("AmountExVatCents")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FailedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("InvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsStub")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Locale")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
 
                     b.Property<DateTime?>("PaidAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -2965,18 +3079,47 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("ProviderStatus")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("ReceiptSendAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReceiptSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalAmountCents")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("VatAmountCents")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("WaiverAcceptedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WaiverTextVersion")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PaymentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"PaymentId\" <> ''");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("Status", "CreatedAtUtc");
 
                     b.HasIndex("UserId", "Kind", "Status");
 
@@ -3341,6 +3484,22 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(10,2)");
 
                     b.Property<decimal>("DeepAnalysisPriceEuro")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal>("DeepTestPriceCareerEuro")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal>("DeepTestPriceCompetenceEuro")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal>("DeepTestPriceCultureEuro")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal>("DeepTestPriceValuesEuro")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
@@ -7198,6 +7357,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("AmountCents")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("ConsumerPurchaseInvoiceId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -7221,17 +7383,22 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("TokenPurchaseInvoiceId")
+                    b.Property<Guid?>("TokenPurchaseInvoiceId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ConsumerPurchaseInvoiceId")
+                        .IsUnique()
+                        .HasFilter("\"ConsumerPurchaseInvoiceId\" IS NOT NULL");
 
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("Status");
 
                     b.HasIndex("TokenPurchaseInvoiceId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"TokenPurchaseInvoiceId\" IS NOT NULL");
 
                     b.ToTable("VatBufferTransfers");
                 });
@@ -8072,6 +8239,31 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("RequestedByUser");
 
                     b.Navigation("ResendOfLetter");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.ConsumerPurchaseInvoice", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.DeepAnalysisCheckout", "Checkout")
+                        .WithMany()
+                        .HasForeignKey("DeepAnalysisCheckoutId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.VatDeclaration", "VatDeclaration")
+                        .WithMany()
+                        .HasForeignKey("VatDeclarationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Checkout");
+
+                    b.Navigation("User");
+
+                    b.Navigation("VatDeclaration");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.DeepAnalysisCheckout", b =>
@@ -8952,11 +9144,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Jobsy.Core.Entities.VatBufferTransfer", b =>
                 {
+                    b.HasOne("Jobsy.Core.Entities.ConsumerPurchaseInvoice", "ConsumerInvoice")
+                        .WithMany()
+                        .HasForeignKey("ConsumerPurchaseInvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Jobsy.Core.Entities.TokenPurchaseInvoice", "Invoice")
                         .WithMany("VatBufferTransfers")
                         .HasForeignKey("TokenPurchaseInvoiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("ConsumerInvoice");
 
                     b.Navigation("Invoice");
                 });

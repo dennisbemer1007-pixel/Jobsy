@@ -205,6 +205,9 @@ public static partial class TransactionalEmails
             "accessrequestexpired" => AccessRequestExpired(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, c),
             "ownershiptransfermanagersnotify" => OwnershipTransferManagersNotify(ctx.PublicWebBaseUrl, ctx.CompanyName, c),
             "intermediaryclientselfmanaged" => IntermediaryClientSelfManaged(ctx.PublicWebBaseUrl, ctx.CompanyName, c),
+            "deep_test_receipt" => DeepTestReceipt(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, "Competenties", 2.99m, DateTime.UtcNow,
+                "LOB-KT-2026-0001", "competence", c),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };
     }

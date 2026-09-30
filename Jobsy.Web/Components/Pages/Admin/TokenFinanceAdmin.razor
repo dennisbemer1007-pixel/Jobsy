@@ -163,6 +163,47 @@
             </div>
         }
     }
+    else if (_tab == "kandidaat")
+    {
+        <div class="panel-section" style="margin-bottom:1rem">
+            <strong>Kandidaat-aankopen</strong>
+            <p class="muted" style="margin:0.25rem 0 0">Uitgebreide tests — factuurnummer, datum, bedrag en testtype (geen antwoorden).</p>
+        </div>
+        @if (_consumerPurchases.Count == 0)
+        {
+            <p class="state-message">Geen kandidaat-aankopen in deze periode.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>@Culture["AdminFinance.Col.Date"]</th>
+                            <th>@Culture["AdminFinance.Col.Invoice"]</th>
+                            <th>Test</th>
+                            <th>Totaal</th>
+                            <th>Methode</th>
+                            <th>Aangifte-status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _consumerPurchases)
+                        {
+                            <tr>
+                                <td>@row.IssuedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                                <td><code class="admin-mono">@row.InvoiceNumber</code></td>
+                                <td>@row.TestName</td>
+                                <td>€ @row.TotalAmountEuro.ToString("0.00")</td>
+                                <td>@(row.IsStub ? "TEST" : (row.PaymentMethod ?? "—"))</td>
+                                <td class="muted">@(row.VatDeclarationStatusLabel ?? "Openstaand")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
     else
     {
         @if (_declarations.Count == 0)
@@ -240,7 +281,7 @@
                     {
                         <option value="@($"{p.Year}-{p.Quarter}")">
                             @p.PeriodLabel
-                            @(p.HasOpenItems ? $" ({p.OpenTokenInvoiceCount} verkopen / {p.OpenSalesManagerInvoiceCount} SM)" : " — geen openstaande regels")
+                            @(p.HasOpenItems ? $" ({p.OpenTokenInvoiceCount} verkopen / {p.OpenConsumerInvoiceCount} kandidaat / {p.OpenSalesManagerInvoiceCount} SM)" : " — geen openstaande regels")
                         </option>
                     }
                 </select>
@@ -249,7 +290,11 @@
             @if (_wizardPreview is not null)
             {
                 <div class="panel-section" style="background:var(--accent-soft);padding:0.75rem;border-radius:var(--radius-sm)">
-                    <p style="margin:0"><strong>Rubriek 1</strong> — omzet ex. BTW € @CentsToEuro(_wizardPreview.Rubriek1OmzetExVatCents), verschuldigde BTW € @CentsToEuro(_wizardPreview.Rubriek1VatCents) (@_wizardPreview.TokenInvoiceCount facturen)</p>
+                    <p style="margin:0"><strong>Rubriek 1</strong> — omzet ex. BTW € @CentsToEuro(_wizardPreview.Rubriek1OmzetExVatCents), verschuldigde BTW € @CentsToEuro(_wizardPreview.Rubriek1VatCents) (@_wizardPreview.TokenInvoiceCount token · @_wizardPreview.ConsumerInvoiceCount kandidaat-aankopen)</p>
+                    @if (_wizardPreview.ConsumerInvoiceCount > 0)
+                    {
+                        <p style="margin:0.35rem 0 0"><strong>Kandidaat-aankopen</strong> — omzet ex. BTW € @CentsToEuro(_wizardPreview.ConsumerOmzetExVatCents), BTW € @CentsToEuro(_wizardPreview.ConsumerVatCents)</p>
+                    }
                     <p style="margin:0.35rem 0 0"><strong>Rubriek 5</strong> — voorbelasting € @CentsToEuro(_wizardPreview.Rubriek5VoorbelastingCents) (@_wizardPreview.SalesManagerInvoiceCount uitbetalingen)</p>
                     <p style="margin:0.35rem 0 0">Goodwill in periode: @_wizardPreview.GoodwillCount</p>
                     <p style="margin:0.5rem 0 0">
@@ -262,7 +307,7 @@
                     {
                         <p class="state-message" style="margin:0.5rem 0 0">Alle openstaande BTW-regels voor deze periode zijn al verwerkt.</p>
                     }
-                    else if (_wizardPreview.TokenInvoiceCount == 0 && _wizardPreview.SalesManagerInvoiceCount == 0)
+                    else if (_wizardPreview.TokenInvoiceCount == 0 && _wizardPreview.ConsumerInvoiceCount == 0 && _wizardPreview.SalesManagerInvoiceCount == 0)
                     {
                         <p class="muted" style="margin:0.5rem 0 0">Geen openstaande verkoop- of inkoopregels om te verwerken@( _wizardPreview.GoodwillCount > 0 ? $" ({_wizardPreview.GoodwillCount} goodwill, geen omzet)." : ".")</p>
                     }
@@ -276,7 +321,7 @@
 
             <div class="inline-actions" style="margin-top:0.5rem">
                 <button type="button" class="btn-compact btn-compact--primary"
-                        disabled="@(_wizardBusy || _wizardPreview is null || _wizardPreview.AlreadyDeclared || (_wizardPreview.TokenInvoiceCount == 0 && _wizardPreview.SalesManagerInvoiceCount == 0))"
+                        disabled="@(_wizardBusy || _wizardPreview is null || _wizardPreview.AlreadyDeclared || (_wizardPreview.TokenInvoiceCount == 0 && _wizardPreview.ConsumerInvoiceCount == 0 && _wizardPreview.SalesManagerInvoiceCount == 0))"
                         @onclick="ConfirmWizardAsync">
                     @(_wizardBusy ? "Genereren…" : "Genereer")
                 </button>
@@ -300,6 +345,7 @@
     private List<VatBufferTransferItem> _vatTransfers = [];
     private List<SalesManagerCostFinanceItem> _smCosts = [];
     private List<VatDeclarationListItem> _declarations = [];
+    private List<ConsumerPurchaseFinanceItem> _consumerPurchases = [];
     private int _parkedCount;
     private decimal _parkedTotal;
 
@@ -314,6 +360,7 @@
     {
         "vat" => _vatTransfers.Count,
         "smcosts" => _smCosts.Count,
+        "kandidaat" => _consumerPurchases.Count,
         "declarations" => _declarations.Count,
         _ => 0
     };
@@ -324,6 +371,7 @@
         _tabs =
         [
             new("uitbetalingen", Culture["AdminFinance.Tab.Payouts"]),
+            new("kandidaat", "Kandidaat-aankopen"),
             new("smcosts", Culture["AdminFinance.Tab.SmCosts"]),
             new("vat", Culture["AdminFinance.Tab.VatBuffer"]),
             new("declarations", Culture["AdminFinance.Tab.VatFiling"]),
@@ -411,6 +459,10 @@
             if (_tab == "smcosts")
             {
                 _smCosts = (await Api.GetSalesManagerCostsAsync(year, quarter)).ToList();
+            }
+            else if (_tab == "kandidaat")
+            {
+                _consumerPurchases = (await Api.GetConsumerPurchasesAsync(year, quarter)).ToList();
             }
             else if (_tab == "declarations")
             {

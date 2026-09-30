@@ -3,7 +3,6 @@ using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Reports.Culture;
 using Jobsy.Core.Reports.Values;
-using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Interfaces;
 
@@ -17,21 +16,6 @@ public interface IDeepAnalysisService
     Task<IReadOnlyDictionary<AssessmentKind, DeepAnalysisStateDto>> GetStatesAsync(
         Guid userId,
         IReadOnlyList<AssessmentKind> kinds,
-        CancellationToken cancellationToken = default);
-
-    Task<DeepAnalysisCheckoutResult> StartCheckoutAsync(
-        Guid userId,
-        AssessmentKind kind,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Marks a pending stub checkout as paid (Development / AllowStubPayments only) and unlocks.
-    /// When <paramref name="expectedUserId"/> is set, the checkout must belong to that user.
-    /// </summary>
-    Task<bool> TryFulfillPaidCheckoutAsync(
-        string paymentId,
-        Guid? expectedUserId = null,
-        bool allowDevStubMarkPaid = false,
         CancellationToken cancellationToken = default);
 
     Task UnlockForUserAsync(
@@ -77,6 +61,7 @@ public sealed record DeepAnalysisQuestionDto(
     string ExampleNl = "",
     string DomainLabel = "");
 
+/// <summary>Kept for API JSON shape compatibility with older Web clients.</summary>
 public sealed record DeepAnalysisCheckoutResult(
     Guid CheckoutId,
     string PaymentId,

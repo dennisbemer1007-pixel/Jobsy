@@ -12,6 +12,8 @@ public interface ITransactionalMailer
         CancellationToken cancellationToken = default);
 }
 
+public sealed record EmailAttachment(string FileName, string ContentType, byte[] Content);
+
 public sealed record EmailSendOptions(
     bool BypassSuppression = false,
     /// <summary>
@@ -24,7 +26,8 @@ public sealed record EmailSendOptions(
     /// <summary>
     /// Admin catalog test send: no List-Unsubscribe, header <c>X-Lobsy-Test: 1</c>, tag <c>test=true</c>.
     /// </summary>
-    bool IsTest = false);
+    bool IsTest = false,
+    IReadOnlyList<EmailAttachment>? Attachments = null);
 
 public sealed record EmailSendOutcome(
     bool Sent,

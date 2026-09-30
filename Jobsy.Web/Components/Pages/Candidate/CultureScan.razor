@@ -107,7 +107,7 @@
         catch (Exception ex)
         {
             _loadFailed = true;
-            _message = ex.Message;
+            _message = Culture["Common.Error"];
         }
         finally
         {
@@ -161,7 +161,7 @@
         }
         catch (Exception ex)
         {
-            _banner = ex.Message;
+            _banner = Culture["Common.Error"];
         }
     }
 
@@ -188,7 +188,7 @@
         }
         catch (Exception ex)
         {
-            _banner = ex.Message;
+            _banner = Culture["Common.Error"];
         }
     }
 
@@ -213,7 +213,7 @@
         }
         catch (Exception ex)
         {
-            _banner = ex.Message;
+            _banner = Culture["Common.Error"];
         }
         finally
         {

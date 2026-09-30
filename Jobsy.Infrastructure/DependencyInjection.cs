@@ -278,7 +278,10 @@ public static class DependencyInjection
 
         // Real Mollie when API key is configured; Development falls back to stub without a key.
         services.AddScoped<MolliePaymentStub>();
+        services.AddScoped<IMollieApiClient, MollieApiClient>();
         services.AddScoped<IPaymentService, MolliePaymentService>();
+        services.AddScoped<IDeepTestPaymentService, DeepTestPaymentService>();
+        services.AddScoped<IConsumerInvoiceService, ConsumerInvoiceService>();
 
         // Live KVK when API key is configured (Admin Integraties or Kvk__ApiKey); otherwise demo stub.
         services.AddScoped<KvkServiceStub>();
@@ -564,6 +567,7 @@ public static class DependencyInjection
         services.AddHostedService<VacancyEngagementReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();
         services.AddHostedService<TokenCheckoutReconcileHostedService>();
+        services.AddHostedService<DeepTestCheckoutReconcileHostedService>();
         services.AddHostedService<KvkVerificationRetryHostedService>();
         services.AddHostedService<VestigingSuggestionHostedService>();
 

@@ -60,6 +60,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateAssessmentAttempt> CandidateAssessmentAttempts => Set<CandidateAssessmentAttempt>();
     public DbSet<AssessmentNormSnapshot> AssessmentNormSnapshots => Set<AssessmentNormSnapshot>();
     public DbSet<DeepAnalysisCheckout> DeepAnalysisCheckouts => Set<DeepAnalysisCheckout>();
+    public DbSet<ConsumerPurchaseInvoice> ConsumerPurchaseInvoices => Set<ConsumerPurchaseInvoice>();
     public DbSet<TalentContactRequest> TalentContactRequests => Set<TalentContactRequest>();
     public DbSet<FlexCommercialSettings> FlexCommercialSettings => Set<FlexCommercialSettings>();
     public DbSet<AgencyAnnualSubscription> AgencyAnnualSubscriptions => Set<AgencyAnnualSubscription>();
@@ -955,13 +956,51 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.PaymentId).HasMaxLength(128).IsRequired();
             entity.Property(e => e.AmountEuro).HasPrecision(10, 2);
-            entity.HasIndex(e => e.PaymentId).IsUnique();
-            entity.HasIndex(e => e.UserId);
+            entity.Property(e => e.PaymentMethod).HasMaxLength(32);
+            entity.Property(e => e.ProviderStatus).HasMaxLength(32);
+            entity.Property(e => e.WaiverTextVersion).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.Locale).HasMaxLength(8).IsRequired();
+            entity.HasIndex(e => e.PaymentId)
+                .IsUnique()
+                .HasFilter("\"PaymentId\" <> ''");
             entity.HasIndex(e => new { e.UserId, e.Kind, e.Status });
+            entity.HasIndex(e => new { e.Status, e.CreatedAtUtc });
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.Ignore(e => e.Invoice);
+        });
+
+        modelBuilder.Entity<ConsumerPurchaseInvoice>(entity =>
+        {
+            entity.ToTable("ConsumerPurchaseInvoices");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.InvoiceNumber).HasMaxLength(40).IsRequired();
+            entity.Property(e => e.CustomerName).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.CustomerEmail).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.CustomerCountry).HasMaxLength(2);
+            entity.Property(e => e.Description).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.MolliePaymentId).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.PaymentMethod).HasMaxLength(32);
+            entity.Property(e => e.VatRate).HasPrecision(5, 4);
+            entity.Property(e => e.VatDeclarationStatusLabel).HasMaxLength(80);
+            entity.HasIndex(e => e.InvoiceNumber).IsUnique();
+            entity.HasIndex(e => e.DeepAnalysisCheckoutId).IsUnique();
+            entity.HasIndex(e => e.IssuedAt);
+            entity.HasIndex(e => e.VatDeclarationId);
+            entity.HasOne(e => e.Checkout)
+                .WithMany()
+                .HasForeignKey(e => e.DeepAnalysisCheckoutId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.VatDeclaration)
+                .WithMany()
+                .HasForeignKey(e => e.VatDeclarationId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<TalentContactRequest>(entity =>
@@ -999,6 +1038,10 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.MarginPerHourEuro).HasPrecision(10, 2);
             entity.Property(e => e.DeepAnalysisPriceEuro).HasPrecision(10, 2);
+            entity.Property(e => e.DeepTestPriceCompetenceEuro).HasPrecision(10, 2);
+            entity.Property(e => e.DeepTestPriceCareerEuro).HasPrecision(10, 2);
+            entity.Property(e => e.DeepTestPriceValuesEuro).HasPrecision(10, 2);
+            entity.Property(e => e.DeepTestPriceCultureEuro).HasPrecision(10, 2);
             entity.Property(e => e.AgencyAnnualPriceEuro).HasPrecision(12, 2);
             entity.Property(e => e.ContactUnlockCostTokens).HasPrecision(10, 2);
             entity.Property(e => e.BackofficePartnerName).HasMaxLength(128).IsRequired();
@@ -1612,10 +1655,19 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Note).HasMaxLength(512);
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => e.CreatedAt);
-            entity.HasIndex(e => e.TokenPurchaseInvoiceId).IsUnique();
+            entity.HasIndex(e => e.TokenPurchaseInvoiceId)
+                .IsUnique()
+                .HasFilter("\"TokenPurchaseInvoiceId\" IS NOT NULL");
+            entity.HasIndex(e => e.ConsumerPurchaseInvoiceId)
+                .IsUnique()
+                .HasFilter("\"ConsumerPurchaseInvoiceId\" IS NOT NULL");
             entity.HasOne(e => e.Invoice)
                 .WithMany(i => i.VatBufferTransfers)
                 .HasForeignKey(e => e.TokenPurchaseInvoiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ConsumerInvoice)
+                .WithMany()
+                .HasForeignKey(e => e.ConsumerPurchaseInvoiceId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

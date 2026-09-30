@@ -18,7 +18,10 @@ public class LobsyCommercialSettingsTests
         var updated = await sut.UpdateAsync(new FlexCommercialSettingsUpdate(
             MarginPerHourEuro: 2.50m,
             BackofficePartnerName: "Partner X",
-            DeepAnalysisPriceEuro: 4.95m,
+            DeepTestPriceCompetenceEuro: 4.95m,
+            DeepTestPriceCareerEuro: 4.95m,
+            DeepTestPriceValuesEuro: 4.95m,
+            DeepTestPriceCultureEuro: 4.95m,
             AgencyAnnualPriceEuro: 3500m,
             ContactUnlockCostTokens: 2m));
 
@@ -56,7 +59,7 @@ public class LobsyCommercialSettingsTests
 
         var sut = new FlexCommercialService(db);
         await sut.UpdateAsync(new FlexCommercialSettingsUpdate(
-            2m, "Yellowstone", 2.99m, 4500m, 1m));
+            2m, "Yellowstone", 2.99m, 2.99m, 2.99m, 2.99m, 4500m, 1m));
 
         var sub = await sut.ActivateAgencySubscriptionAsync(
             Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));

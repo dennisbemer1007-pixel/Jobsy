@@ -26,17 +26,27 @@ public interface IFlexCommercialService
 public sealed record FlexCommercialSettingsUpdate(
     decimal MarginPerHourEuro,
     string BackofficePartnerName,
-    decimal DeepAnalysisPriceEuro,
+    decimal DeepTestPriceCompetenceEuro,
+    decimal DeepTestPriceCareerEuro,
+    decimal DeepTestPriceValuesEuro,
+    decimal DeepTestPriceCultureEuro,
     decimal AgencyAnnualPriceEuro,
     decimal ContactUnlockCostTokens);
 
 public sealed record FlexCommercialSettingsDto(
     decimal MarginPerHourEuro,
     string BackofficePartnerName,
-    decimal DeepAnalysisPriceEuro,
+    decimal DeepTestPriceCompetenceEuro,
+    decimal DeepTestPriceCareerEuro,
+    decimal DeepTestPriceValuesEuro,
+    decimal DeepTestPriceCultureEuro,
     decimal AgencyAnnualPriceEuro,
     decimal ContactUnlockCostTokens,
-    DateTime UpdatedAtUtc);
+    DateTime UpdatedAtUtc)
+{
+    /// <summary>Legacy alias — competence price (kept for landing/DTO compatibility).</summary>
+    public decimal DeepAnalysisPriceEuro => DeepTestPriceCompetenceEuro;
+}
 
 public sealed record AgencySubscriptionDto(
     Guid Id,

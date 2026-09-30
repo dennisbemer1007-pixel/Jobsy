@@ -4,6 +4,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Components.Pages.Candidate.DeepReport
 @inject JobsyApiClient Api
@@ -42,11 +43,21 @@ else if (_state is { IsUnlocked: false })
         </header>
         <div class="questionnaire__body">
             <p class="login-lead">@_upsell</p>
-            <button class="login-submit" type="button" disabled="@_saving" @onclick="StartCheckoutAsync">
+            <button class="login-submit" type="button" disabled="@_saving" @onclick="OpenOrderDialogAsync">
                 @Culture["Competency.DeepUnlock"]
             </button>
         </div>
     </div>
+
+    <DeepTestOrderDialog IsOpen="_orderOpen"
+                         TestName="@Culture[_titleKey]"
+                         QuestionCount="@(_state?.QuestionCount ?? 150)"
+                         PriceEuro="@(_state?.PriceEuro ?? 2.99m)"
+                         PaymentMode="_paymentMode"
+                         Busy="_saving"
+                         ErrorKey="_orderErrorKey"
+                         OnClose="() => _orderOpen = false"
+                         OnPay="ConfirmOrderAsync" />
 }
 else if (_state is { IsCompleted: true } completedState)
 {
@@ -212,6 +223,9 @@ else
 
     private bool _loading = true;
     private bool _saving;
+    private bool _orderOpen;
+    private string? _orderErrorKey;
+    private string _paymentMode = "unavailable";
     private bool _completing;
     private bool _loadFailed;
     private bool _smoothScroll;
@@ -368,7 +382,7 @@ else
         catch (Exception ex)
         {
             _loadFailed = true;
-            _message = ex.Message;
+            _message = Culture["Common.Error"];
         }
         finally
         {
@@ -414,7 +428,7 @@ else
         }
         catch (Exception ex)
         {
-            _banner = ex.Message;
+            _banner = Culture["Common.Error"];
         }
     }
 
@@ -427,17 +441,46 @@ else
     private static string Slug(string value)
         => string.Concat((value ?? "").Where(char.IsLetterOrDigit)).ToLowerInvariant();
 
-    private async Task StartCheckoutAsync()
+    private async Task OpenOrderDialogAsync()
+    {
+        _orderErrorKey = null;
+        _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
+        if (_paymentMode == "unavailable")
+        {
+            _message = Culture["DeepPay.Err.payments_unavailable"];
+            return;
+        }
+
+        _orderOpen = true;
+    }
+
+    private async Task ConfirmOrderAsync(bool waiverAccepted)
     {
         _saving = true;
+        _orderErrorKey = null;
         try
         {
-            var checkout = await Api.StartDeepAnalysisCheckoutAsync(_slug);
-            Navigation.NavigateTo(checkout.CheckoutUrl);
+            var checkout = await Api.StartDeepAnalysisCheckoutAsync(_slug, waiverAccepted, Culture.Language);
+            _orderOpen = false;
+            Navigation.NavigateTo(
+                checkout.CheckoutUrl,
+                forceLoad: checkout.CheckoutUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase));
         }
-        catch (Exception ex)
+        catch (DeepPayClientException ex)
         {
-            _message = ex.Message;
+            _orderErrorKey = ex.Code switch
+            {
+                "waiver_required" => "DeepPay.Err.waiver_required",
+                "already_unlocked" => "DeepPay.Err.already_unlocked",
+                "payments_unavailable" => "DeepPay.Err.payments_unavailable",
+                "consent_required" or "parental_consent_required" or "test_consent_required"
+                    => "DeepPay.Err.consent_required",
+                _ => "Common.Error"
+            };
+        }
+        catch (Exception)
+        {
+            _orderErrorKey = "Common.Error";
         }
         finally
         {
@@ -455,7 +498,7 @@ else
         }
         catch (Exception ex)
         {
-            _banner = ex.Message;
+            _banner = Culture["Common.Error"];
         }
         finally
         {
@@ -477,7 +520,7 @@ else
         }
         catch (Exception ex)
         {
-            _banner = ex.Message;
+            _banner = Culture["Common.Error"];
         }
     }
 
@@ -520,7 +563,7 @@ else
         }
         catch (Exception ex)
         {
-            _banner = ex.Message;
+            _banner = Culture["Common.Error"];
         }
         finally
         {

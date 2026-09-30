@@ -141,6 +141,15 @@ public sealed partial class JobsyApiClient
         return await _http.GetFromJsonAsync<List<TokenPurchaseFinanceItem>>(url, ct) ?? [];
     }
 
+    public async Task<IReadOnlyList<ConsumerPurchaseFinanceItem>> GetConsumerPurchasesAsync(
+        int? year = null,
+        int? quarter = null,
+        CancellationToken ct = default)
+    {
+        var url = BuildTokenFinanceUrl("api/tokens/finance/consumer-purchases", year, quarter);
+        return await _http.GetFromJsonAsync<List<ConsumerPurchaseFinanceItem>>(url, ct) ?? [];
+    }
+
     public async Task<IReadOnlyList<TokenGoodwillFinanceItem>> GetTokenGoodwillAsync(
         int? year = null,
         int? quarter = null,

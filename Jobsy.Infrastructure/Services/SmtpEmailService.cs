@@ -211,6 +211,24 @@ public sealed class SmtpEmailService : IEmailService
                 HtmlBody = message.BodyHtml,
                 TextBody = message.BodyText ?? string.Empty
             };
+            if (message.Attachments is { Count: > 0 })
+            {
+                foreach (var attachment in message.Attachments)
+                {
+                    if (attachment.Content.Length == 0 || string.IsNullOrWhiteSpace(attachment.FileName))
+                    {
+                        continue;
+                    }
+
+                    builder.Attachments.Add(
+                        attachment.FileName,
+                        attachment.Content,
+                        ContentType.Parse(string.IsNullOrWhiteSpace(attachment.ContentType)
+                            ? "application/octet-stream"
+                            : attachment.ContentType));
+                }
+            }
+
             mime.Body = builder.ToMessageBody();
 
             using var client = new SmtpClient();
@@ -472,7 +490,15 @@ public sealed class SmtpEmailService : IEmailService
             Text = message.BodyText,
             ReplyTo = string.IsNullOrWhiteSpace(message.ReplyTo) ? null : message.ReplyTo.Trim(),
             Headers = headers,
-            Tags = tags
+            Tags = tags,
+            Attachments = message.Attachments is { Count: > 0 }
+                ? message.Attachments.Select(a => new ResendAttachment
+                {
+                    Filename = a.FileName,
+                    Content = Convert.ToBase64String(a.Content),
+                    ContentType = string.IsNullOrWhiteSpace(a.ContentType) ? "application/octet-stream" : a.ContentType
+                }).ToList()
+                : null
             // Intentionally no tracking / click options (D6).
         };
     }
@@ -579,6 +605,23 @@ public sealed class SmtpEmailService : IEmailService
         [JsonPropertyName("tags")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<ResendTag>? Tags { get; init; }
+
+        [JsonPropertyName("attachments")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<ResendAttachment>? Attachments { get; init; }
+    }
+
+    internal sealed class ResendAttachment
+    {
+        [JsonPropertyName("filename")]
+        public required string Filename { get; init; }
+
+        [JsonPropertyName("content")]
+        public required string Content { get; init; }
+
+        [JsonPropertyName("content_type")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? ContentType { get; init; }
     }
 
     internal sealed class ResendTag

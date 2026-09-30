@@ -212,12 +212,16 @@ public class MolliePaymentMethodTests
         var stub = new MolliePaymentStub(db, features, NullLogger<MolliePaymentStub>.Instance);
         var http = new NamedHttpClientFactory(handler);
 
-        return new MolliePaymentService(
-            db,
+        var mollie = new MollieApiClient(
             credentials,
-            features,
             http,
             config,
+            new FakeHostEnvironment(),
+            NullLogger<MollieApiClient>.Instance);
+        return new MolliePaymentService(
+            db,
+            features,
+            mollie,
             new FakeHostEnvironment(),
             stub,
             NullLogger<MolliePaymentService>.Instance);

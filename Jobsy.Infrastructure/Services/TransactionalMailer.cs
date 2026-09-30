@@ -157,7 +157,8 @@ public sealed class TransactionalMailer : ITransactionalMailer
                 ReplyTo = replyTo,
                 Headers = headers,
                 Tags = tags,
-                IdempotencyKey = options.IdempotencyKey
+                IdempotencyKey = options.IdempotencyKey,
+                Attachments = options.Attachments
             },
             cancellationToken);
 

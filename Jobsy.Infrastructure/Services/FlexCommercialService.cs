@@ -49,10 +49,10 @@ public sealed class FlexCommercialService : IFlexCommercialService
             throw new ArgumentOutOfRangeException(nameof(update), "Flex-marge moet tussen € 0 en € 100 liggen.");
         }
 
-        if (update.DeepAnalysisPriceEuro is < 0 or > 500)
-        {
-            throw new ArgumentOutOfRangeException(nameof(update), "Diepte-analyse prijs moet tussen € 0 en € 500 liggen.");
-        }
+        ValidateDeepPrice(update.DeepTestPriceCompetenceEuro, nameof(update.DeepTestPriceCompetenceEuro));
+        ValidateDeepPrice(update.DeepTestPriceCareerEuro, nameof(update.DeepTestPriceCareerEuro));
+        ValidateDeepPrice(update.DeepTestPriceValuesEuro, nameof(update.DeepTestPriceValuesEuro));
+        ValidateDeepPrice(update.DeepTestPriceCultureEuro, nameof(update.DeepTestPriceCultureEuro));
 
         if (update.AgencyAnnualPriceEuro is < 0 or > 1_000_000)
         {
@@ -72,7 +72,13 @@ public sealed class FlexCommercialService : IFlexCommercialService
         var settings = await EnsureSettingsAsync(cancellationToken);
         settings.MarginPerHourEuro = Math.Round(update.MarginPerHourEuro, 2, MidpointRounding.AwayFromZero);
         settings.BackofficePartnerName = update.BackofficePartnerName.Trim();
-        settings.DeepAnalysisPriceEuro = Math.Round(update.DeepAnalysisPriceEuro, 2, MidpointRounding.AwayFromZero);
+        settings.DeepTestPriceCompetenceEuro = RoundPrice(update.DeepTestPriceCompetenceEuro);
+        settings.DeepTestPriceCareerEuro = RoundPrice(update.DeepTestPriceCareerEuro);
+        settings.DeepTestPriceValuesEuro = RoundPrice(update.DeepTestPriceValuesEuro);
+        settings.DeepTestPriceCultureEuro = RoundPrice(update.DeepTestPriceCultureEuro);
+#pragma warning disable CS0618
+        settings.DeepAnalysisPriceEuro = settings.DeepTestPriceCompetenceEuro;
+#pragma warning restore CS0618
         settings.AgencyAnnualPriceEuro = Math.Round(update.AgencyAnnualPriceEuro, 2, MidpointRounding.AwayFromZero);
         settings.ContactUnlockCostTokens = Math.Round(update.ContactUnlockCostTokens, 2, MidpointRounding.AwayFromZero);
         settings.UpdatedAtUtc = DateTime.UtcNow;
@@ -138,6 +144,17 @@ public sealed class FlexCommercialService : IFlexCommercialService
         return MapSubscription(row);
     }
 
+    private static void ValidateDeepPrice(decimal price, string paramName)
+    {
+        if (price is <= 0 or > 100)
+        {
+            throw new ArgumentException("invalid_price", paramName);
+        }
+    }
+
+    private static decimal RoundPrice(decimal price)
+        => Math.Round(price, 2, MidpointRounding.AwayFromZero);
+
     private async Task SyncContactUnlockSpendCostAsync(decimal costTokens, CancellationToken cancellationToken)
     {
         var row = await _db.TokenSpendCosts
@@ -165,6 +182,7 @@ public sealed class FlexCommercialService : IFlexCommercialService
             .FirstOrDefaultAsync(cancellationToken);
         if (settings is not null)
         {
+            EnsurePerKindDefaults(settings);
             return settings;
         }
 
@@ -173,7 +191,13 @@ public sealed class FlexCommercialService : IFlexCommercialService
             Id = SettingsSingletonId,
             MarginPerHourEuro = FlexCommercialSettings.DefaultMarginPerHourEuro,
             BackofficePartnerName = FlexCommercialSettings.DefaultBackofficePartnerName,
+#pragma warning disable CS0618
             DeepAnalysisPriceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+#pragma warning restore CS0618
+            DeepTestPriceCompetenceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+            DeepTestPriceCareerEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+            DeepTestPriceValuesEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+            DeepTestPriceCultureEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
             AgencyAnnualPriceEuro = FlexCommercialSettings.DefaultAgencyAnnualPriceEuro,
             ContactUnlockCostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens,
             UpdatedAtUtc = DateTime.UtcNow
@@ -183,13 +207,48 @@ public sealed class FlexCommercialService : IFlexCommercialService
         return settings;
     }
 
-    private static FlexCommercialSettingsDto MapSettings(FlexCommercialSettings settings) => new(
-        settings.MarginPerHourEuro,
-        settings.BackofficePartnerName,
-        settings.DeepAnalysisPriceEuro,
-        settings.AgencyAnnualPriceEuro,
-        settings.ContactUnlockCostTokens,
-        settings.UpdatedAtUtc);
+    private static void EnsurePerKindDefaults(FlexCommercialSettings settings)
+    {
+#pragma warning disable CS0618
+        var legacy = settings.DeepAnalysisPriceEuro > 0
+            ? settings.DeepAnalysisPriceEuro
+            : FlexCommercialSettings.DefaultDeepAnalysisPriceEuro;
+#pragma warning restore CS0618
+        if (settings.DeepTestPriceCompetenceEuro <= 0)
+        {
+            settings.DeepTestPriceCompetenceEuro = legacy;
+        }
+
+        if (settings.DeepTestPriceCareerEuro <= 0)
+        {
+            settings.DeepTestPriceCareerEuro = legacy;
+        }
+
+        if (settings.DeepTestPriceValuesEuro <= 0)
+        {
+            settings.DeepTestPriceValuesEuro = legacy;
+        }
+
+        if (settings.DeepTestPriceCultureEuro <= 0)
+        {
+            settings.DeepTestPriceCultureEuro = legacy;
+        }
+    }
+
+    private static FlexCommercialSettingsDto MapSettings(FlexCommercialSettings settings)
+    {
+        EnsurePerKindDefaults(settings);
+        return new(
+            settings.MarginPerHourEuro,
+            settings.BackofficePartnerName,
+            settings.DeepTestPriceCompetenceEuro,
+            settings.DeepTestPriceCareerEuro,
+            settings.DeepTestPriceValuesEuro,
+            settings.DeepTestPriceCultureEuro,
+            settings.AgencyAnnualPriceEuro,
+            settings.ContactUnlockCostTokens,
+            settings.UpdatedAtUtc);
+    }
 
     private static AgencySubscriptionDto MapSubscription(AgencyAnnualSubscription row) => new(
         row.Id,

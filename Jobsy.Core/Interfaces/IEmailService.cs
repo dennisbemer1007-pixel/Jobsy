@@ -23,6 +23,7 @@ public record EmailMessage(
     public IReadOnlyDictionary<string, string>? Headers { get; init; }
     public IReadOnlyList<(string Name, string Value)>? Tags { get; init; }
     public string? IdempotencyKey { get; init; }
+    public IReadOnlyList<EmailAttachment>? Attachments { get; init; }
 }
 
 public enum EmailDeliveryKind

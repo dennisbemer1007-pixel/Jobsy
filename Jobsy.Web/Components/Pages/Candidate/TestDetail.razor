@@ -14,6 +14,7 @@
 @using Jobsy.Core.Options
 @using Jobsy.Web.Components.Candidate.TestResult
 @using Jobsy.Web.Components.Pages.Candidate.DeepReport
+@using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Components.Shared
 @using Microsoft.Extensions.Options
 @inject JobsyApiClient Api
@@ -304,28 +305,53 @@
         </section>
 
         <div class="test-detail__choices">
-            <button type="button"
-                    class="btn-gold btn-gold--split"
-                    disabled="@_busy"
-                    @onclick="StartExtendedAsync">
-                <span>@Culture["Tests.ExtendedLabel"]</span>
-                <span class="btn-gold__meta">@Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))</span>
-            </button>
+            @if (_paymentMode != "unavailable")
+            {
+                <button type="button"
+                        class="btn-gold btn-gold--split"
+                        disabled="@_busy"
+                        @onclick="OpenOrderDialogAsync">
+                    <span>@Culture["Tests.ExtendedLabel"]</span>
+                    <span class="btn-gold__meta">@Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))</span>
+                </button>
+            }
             <a class="btn-outline-brand btn-outline-brand--split" href="@_def.FreeStartHref">
                 <span>@Culture["Tests.StartFree"]</span>
                 <span class="btn-outline-brand__meta">@Culture.Format("Tests.FreeMeta", _def.FreeQuestionCount)</span>
             </a>
         </div>
-        <p class="test-detail__secure muted">
-            <span aria-hidden="true">🔒</span>
-            @Culture["Tests.SecureMollie"]
-        </p>
+        @if (_paymentMode == "mollie")
+        {
+            <p class="test-detail__secure muted">
+                <span aria-hidden="true">🔒</span>
+                @Culture["DeepPay.SecureMollie"]
+            </p>
+        }
+        else if (_paymentMode == "stub")
+        {
+            <p class="test-detail__secure muted">@Culture["DeepPay.StubHint"]</p>
+        }
+        else if (_paymentMode == "unavailable")
+        {
+            <p class="test-detail__secure muted">@Culture["DeepPay.Err.payments_unavailable"]</p>
+        }
     }
 </div>
+
+<DeepTestOrderDialog IsOpen="_orderOpen"
+                     TestName="@(_def is null ? "" : Culture[_def.TitleKey])"
+                     QuestionCount="@(_def?.DeepQuestionCount ?? 0)"
+                     PriceEuro="_priceEuro"
+                     PaymentMode="_paymentMode"
+                     Busy="_busy"
+                     ErrorKey="_orderErrorKey"
+                     OnClose="CloseOrderDialog"
+                     OnPay="ConfirmOrderAsync" />
 
 @code {
     [Parameter] public string? TestKey { get; set; }
     [SupplyParameterFromQuery] public string? PaymentError { get; set; }
+    [SupplyParameterFromQuery] public string? Buy { get; set; }
 
     private const string PersistKeyPrefix = "candidateTestDetail:";
     private bool _loading = true;
@@ -336,6 +362,9 @@
     private bool _deepCompleted;
     private decimal _priceEuro = 2.99m;
     private string? _payError;
+    private string _paymentMode = "unavailable";
+    private bool _orderOpen;
+    private string? _orderErrorKey;
     private string? _headline;
     private string? _headlineLead;
     private string? _completedMeta;
@@ -400,7 +429,7 @@
     public void Dispose()
         => _persistSubscription.Dispose();
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
         if (!string.IsNullOrWhiteSpace(PaymentError))
         {
@@ -408,6 +437,11 @@
         }
 
         _def = AssessmentTestCatalog.TryGetByKey(TestKey);
+        _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
+        if (string.Equals(Buy, "1", StringComparison.Ordinal))
+        {
+            await OpenOrderDialogAsync();
+        }
         if (_def is null)
         {
             _loading = false;
@@ -415,7 +449,6 @@
 
         // Heavy report/career payloads load after the circuit is interactive
         // (see OnAfterRenderAsync) so prerender HTML and StartCircuit stay small.
-        return Task.CompletedTask;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -485,7 +518,7 @@
         catch (Exception ex)
         {
             // Keep any payment query error; surface load failures without wiping completed results.
-            _payError ??= ex.Message;
+            _payError ??= Culture["Common.Error"];
         }
         finally
         {
@@ -719,7 +752,7 @@
         }
         catch (Exception ex)
         {
-            _payError = ex.Message;
+            _payError = Culture["Common.Error"];
         }
         finally
         {
@@ -727,7 +760,37 @@
         }
     }
 
-    private async Task StartExtendedAsync()
+    private async Task OpenOrderDialogAsync()
+    {
+        if (_def is null)
+        {
+            return;
+        }
+
+        if (_deepUnlocked && !_deepCompleted)
+        {
+            Navigation.NavigateTo(_def.DeepStartHref);
+            return;
+        }
+
+        _orderErrorKey = null;
+        _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
+        if (_paymentMode == "unavailable")
+        {
+            _payError = Culture["DeepPay.Err.payments_unavailable"];
+            return;
+        }
+
+        _orderOpen = true;
+    }
+
+    private void CloseOrderDialog()
+    {
+        _orderOpen = false;
+        _orderErrorKey = null;
+    }
+
+    private async Task ConfirmOrderAsync(bool waiverAccepted)
     {
         if (_def is null)
         {
@@ -735,29 +798,40 @@
         }
 
         _busy = true;
+        _orderErrorKey = null;
         _payError = null;
         try
         {
-            if (_deepUnlocked && !_deepCompleted)
-            {
-                Navigation.NavigateTo(_def.DeepStartHref);
-                return;
-            }
-
-            var checkout = await Api.StartDeepAnalysisCheckoutAsync(_def.Key);
-            Navigation.NavigateTo(checkout.CheckoutUrl);
+            var checkout = await Api.StartDeepAnalysisCheckoutAsync(
+                _def.Key,
+                waiverAccepted,
+                Culture.Language);
+            _orderOpen = false;
+            Navigation.NavigateTo(checkout.CheckoutUrl, forceLoad: checkout.CheckoutUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase));
         }
-        catch (Exception ex)
+        catch (DeepPayClientException ex)
         {
-            _payError = string.IsNullOrWhiteSpace(ex.Message)
-                ? Culture["Tests.PaymentFailed"]
-                : ex.Message;
+            _orderErrorKey = ex.Code switch
+            {
+                "waiver_required" => "DeepPay.Err.waiver_required",
+                "already_unlocked" => "DeepPay.Err.already_unlocked",
+                "payments_unavailable" => "DeepPay.Err.payments_unavailable",
+                "consent_required" or "parental_consent_required" or "test_consent_required"
+                    => "DeepPay.Err.consent_required",
+                _ => "Common.Error"
+            };
+        }
+        catch (Exception)
+        {
+            _orderErrorKey = "Common.Error";
         }
         finally
         {
             _busy = false;
         }
     }
+
+    private Task StartExtendedAsync() => OpenOrderDialogAsync();
 
     private async Task DownloadPdfAsync()
     {
@@ -773,7 +847,7 @@
         }
         catch (Exception ex)
         {
-            _payError = ex.Message;
+            _payError = Culture["Common.Error"];
         }
         finally
         {
@@ -810,7 +884,7 @@
         }
         catch (Exception ex)
         {
-            _payError = ex.Message;
+            _payError = Culture["Common.Error"];
             _samplePdfOpen = false;
         }
         finally
@@ -839,7 +913,7 @@
         }
         catch (Exception ex)
         {
-            _payError = ex.Message;
+            _payError = Culture["Common.Error"];
         }
         finally
         {

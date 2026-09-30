@@ -122,14 +122,36 @@ public class SettingsController : ControllerBase
                 new FlexCommercialSettingsUpdate(
                     request.MarginPerHourEuro,
                     request.BackofficePartnerName ?? "",
-                    request.DeepAnalysisPriceEuro,
+                    request.DeepTestPriceCompetenceEuro > 0
+                        ? request.DeepTestPriceCompetenceEuro
+                        : request.DeepAnalysisPriceEuro,
+                    request.DeepTestPriceCareerEuro > 0
+                        ? request.DeepTestPriceCareerEuro
+                        : (request.DeepAnalysisPriceEuro > 0
+                            ? request.DeepAnalysisPriceEuro
+                            : request.DeepTestPriceCompetenceEuro),
+                    request.DeepTestPriceValuesEuro > 0
+                        ? request.DeepTestPriceValuesEuro
+                        : (request.DeepAnalysisPriceEuro > 0
+                            ? request.DeepAnalysisPriceEuro
+                            : request.DeepTestPriceCompetenceEuro),
+                    request.DeepTestPriceCultureEuro > 0
+                        ? request.DeepTestPriceCultureEuro
+                        : (request.DeepAnalysisPriceEuro > 0
+                            ? request.DeepAnalysisPriceEuro
+                            : request.DeepTestPriceCompetenceEuro),
                     request.AgencyAnnualPriceEuro,
                     request.ContactUnlockCostTokens),
                 cancellationToken));
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            var code = string.Equals(ex.Message, "invalid_price", StringComparison.Ordinal)
+                ? "invalid_price"
+                : null;
+            return BadRequest(code is null
+                ? new { message = ex.Message }
+                : new { code, message = ex.Message });
         }
     }
 
@@ -815,6 +837,10 @@ public sealed record UpdateMarketingFlyerRequest(
 public sealed record UpdateLobsyCommercialRequest(
     decimal MarginPerHourEuro,
     string? BackofficePartnerName,
-    decimal DeepAnalysisPriceEuro,
-    decimal AgencyAnnualPriceEuro,
-    decimal ContactUnlockCostTokens);
+    decimal DeepAnalysisPriceEuro = 0,
+    decimal DeepTestPriceCompetenceEuro = 0,
+    decimal DeepTestPriceCareerEuro = 0,
+    decimal DeepTestPriceValuesEuro = 0,
+    decimal DeepTestPriceCultureEuro = 0,
+    decimal AgencyAnnualPriceEuro = 0,
+    decimal ContactUnlockCostTokens = 0);

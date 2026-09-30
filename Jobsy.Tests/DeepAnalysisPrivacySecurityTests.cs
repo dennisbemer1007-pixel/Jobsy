@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -15,66 +16,49 @@ namespace Jobsy.Tests;
 public class DeepAnalysisPrivacySecurityTests
 {
     [Fact]
-    public async Task Complete_checkout_requires_stub_gate_and_matching_user()
+    public async Task Stub_fulfill_requires_stub_gate_and_matching_user()
     {
         await using var db = CreateDb();
         var userId = Guid.NewGuid();
         var otherId = Guid.NewGuid();
-        db.Users.Add(new User
-        {
-            Id = userId,
-            Email = "deep@test.nl",
-            FullName = "Deep",
-            Role = UserRole.Candidate,
-            IsActive = true
-        });
+        db.Users.Add(ConsentedUser(userId, "deep@test.nl", "Deep"));
         await db.SaveChangesAsync();
 
-        var sut = CreateSut(db, isDevelopment: true, allowStub: false);
-        var checkout = await sut.StartCheckoutAsync(userId, AssessmentKind.Competence);
+        var payments = CreatePayments(db, isDevelopment: true, allowStub: false);
+        var checkout = await payments.CreateCheckoutAsync(
+            userId, AssessmentKind.Competence, waiverAccepted: true, locale: "nl");
 
-        Assert.False(await sut.TryFulfillPaidCheckoutAsync(
-            checkout.PaymentId,
-            expectedUserId: otherId,
-            allowDevStubMarkPaid: true));
+        Assert.Equal("pending", (await payments.GetStatusAsync(userId, checkout.CheckoutId)).Status);
 
-        Assert.False(await sut.TryFulfillPaidCheckoutAsync(
-            checkout.PaymentId,
-            expectedUserId: userId,
-            allowDevStubMarkPaid: false));
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => payments.GetStatusAsync(otherId, checkout.CheckoutId));
 
-        var production = CreateSut(db, isDevelopment: false, allowStub: false);
-        Assert.False(await production.TryFulfillPaidCheckoutAsync(
-            checkout.PaymentId,
-            expectedUserId: userId,
-            allowDevStubMarkPaid: true));
+        var noop = await payments.TryFulfillAsync(checkout.CheckoutId, DeepTestFulfillSource.Return);
+        Assert.Equal("pending", noop.Status);
 
-        Assert.True(await sut.TryFulfillPaidCheckoutAsync(
-            checkout.PaymentId,
-            expectedUserId: userId,
-            allowDevStubMarkPaid: true));
+        var production = CreatePayments(db, isDevelopment: false, allowStub: false);
+        var prodNoop = await production.TryFulfillAsync(checkout.CheckoutId, DeepTestFulfillSource.Stub);
+        Assert.Equal("pending", prodNoop.Status);
 
-        var state = await sut.GetStateAsync(userId, AssessmentKind.Competence);
+        Assert.True((await payments.TryFulfillAsync(checkout.CheckoutId, DeepTestFulfillSource.Stub)).Unlocked);
+
+        var deep = CreateDeep(db);
+        var state = await deep.GetStateAsync(userId, AssessmentKind.Competence);
         Assert.True(state.IsUnlocked);
     }
 
     [Fact]
-    public async Task Start_checkout_blocked_when_stub_payments_disabled()
+    public async Task Create_checkout_unavailable_when_stub_and_mollie_disabled()
     {
         await using var db = CreateDb();
         var userId = Guid.NewGuid();
-        db.Users.Add(new User
-        {
-            Id = userId,
-            Email = "nostub@test.nl",
-            FullName = "No Stub",
-            Role = UserRole.Candidate,
-            IsActive = true
-        });
+        db.Users.Add(ConsentedUser(userId, "nostub@test.nl", "No Stub"));
         await db.SaveChangesAsync();
 
-        var sut = CreateSut(db, isDevelopment: false, allowStub: false);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.StartCheckoutAsync(userId, AssessmentKind.Competence));
+        var sut = CreatePayments(db, isDevelopment: false, allowStub: false);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => sut.CreateCheckoutAsync(userId, AssessmentKind.Competence, true, "nl"));
+        Assert.Equal(DeepTestPaymentService.PaymentsUnavailableCode, ex.Message);
     }
 
     [Fact]
@@ -103,7 +87,7 @@ public class DeepAnalysisPrivacySecurityTests
         });
         await db.SaveChangesAsync();
 
-        var sut = CreateSut(db, isDevelopment: true, allowStub: false);
+        var sut = CreateDeep(db);
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => sut.SaveAsync(userId, AssessmentKind.Competence, new Dictionary<int, int>(), complete: false));
 
@@ -116,9 +100,6 @@ public class DeepAnalysisPrivacySecurityTests
     {
         await using var db = CreateDb();
         var userId = Guid.NewGuid();
-        // High Big Five scores for competence match tags. Q21–Q25 still map to the
-        // legacy compact RIASEC probes (R/I/A/S/E); keep only R and S at ≥4 so
-        // Take(3) cannot crowd Social out alphabetically.
         var answers = Enumerable.Range(1, 25).ToDictionary(
             i => i,
             i => CompetencyTestCatalog.Questions.First(q => q.Id == i).Reverse ? 1 : 5);
@@ -155,22 +136,153 @@ public class DeepAnalysisPrivacySecurityTests
         Assert.Contains(CompetencyTestCatalog.RiasecSocial, CareerTestCatalog.ParseTagsJson(career.RiasecTagsJson));
     }
 
-    private static DeepAnalysisService CreateSut(JobsyDbContext db, bool isDevelopment, bool allowStub)
+    private static User ConsentedUser(Guid id, string email, string name) => new()
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["JobsyAuth:AllowStubPayments"] = allowStub ? "true" : "false"
-            })
-            .Build();
+        Id = id,
+        Email = email,
+        FullName = name,
+        Role = UserRole.Candidate,
+        IsActive = true,
+        ConsentVersion = PrivacyConstants.CurrentConsentVersion,
+        TestAiConsentAt = DateTime.UtcNow,
+        TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion
+    };
+
+    private static DeepAnalysisService CreateDeep(JobsyDbContext db)
+    {
+        var config = new ConfigurationBuilder().Build();
         return new DeepAnalysisService(
             db,
             new FlexCommercialService(db),
-            new FakeHostEnvironment(isDevelopment ? Environments.Development : Environments.Production),
+            new FakeHostEnvironment(Environments.Development),
             config,
             new StubCareerCompass(),
             new StubCompetenceDeepReportService(),
             NullLogger<DeepAnalysisService>.Instance);
+    }
+
+    private static DeepTestPaymentService CreatePayments(JobsyDbContext db, bool isDevelopment, bool allowStub)
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JobsyAuth:AllowStubPayments"] = allowStub ? "true" : "false",
+                ["PublicWebBaseUrl"] = "https://lobsy.test"
+            })
+            .Build();
+        var env = new FakeHostEnvironment(isDevelopment ? Environments.Development : Environments.Production);
+        return new DeepTestPaymentService(
+            db,
+            new FlexCommercialService(db),
+            CreateDeep(db),
+            new StubMollie(),
+            new StubFeatures(),
+            new StubInvoices(db),
+            new StubVatBuffer(),
+            new StubMailer(),
+            env,
+            config,
+            NullLogger<DeepTestPaymentService>.Instance);
+    }
+
+    private sealed class StubMollie : IMollieApiClient
+    {
+        public Task<bool> TryGetApiKeyAsync(CancellationToken cancellationToken = default) => Task.FromResult(false);
+        public string? ResolveWebhookUrl() => null;
+        public string? ResolvePublicWebBaseUrl(string? configuredPublicWebBaseUrl) => configuredPublicWebBaseUrl;
+        public Task<MolliePaymentSnapshot> FetchPaymentAsync(string paymentId, CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("no mollie");
+        public Task<MolliePaymentSnapshot> CreatePaymentAsync(MollieCreatePaymentRequest request, CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("no mollie");
+        public Task TryCancelPaymentAsync(string paymentId, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class StubFeatures : IPlatformFeatureService
+    {
+        public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new PlatformFeatureSnapshot(
+                VacancyContentModerationEnabled: false,
+                AuthenticatorEnabled: false,
+                ExposeRegistrationActivationLinks: false,
+                PublicWebBaseUrl: "https://lobsy.test",
+                UpdatedAtUtc: DateTime.UtcNow));
+
+        public Task<PlatformFeatureSnapshot> UpdateAsync(
+            PlatformFeatureUpdate update,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+    }
+
+    private sealed class StubInvoices(JobsyDbContext db) : IConsumerInvoiceService
+    {
+        public Task<ConsumerPurchaseInvoice> CreateForDeepCheckoutAsync(Guid checkoutId, CancellationToken cancellationToken = default)
+        {
+            var existing = db.ConsumerPurchaseInvoices.FirstOrDefault(i => i.DeepAnalysisCheckoutId == checkoutId);
+            if (existing is not null)
+            {
+                return Task.FromResult(existing);
+            }
+
+            var checkout = db.DeepAnalysisCheckouts.First(c => c.Id == checkoutId);
+            var inv = new ConsumerPurchaseInvoice
+            {
+                Id = Guid.NewGuid(),
+                InvoiceNumber = "LOB-KT-2026-0001",
+                DeepAnalysisCheckoutId = checkoutId,
+                UserId = checkout.UserId,
+                CustomerName = "Deep",
+                CustomerEmail = "deep@test.nl",
+                Description = "test",
+                Kind = checkout.Kind,
+                AmountExVatCents = checkout.AmountExVatCents,
+                VatAmountCents = checkout.VatAmountCents,
+                TotalAmountCents = checkout.TotalAmountCents,
+                MolliePaymentId = checkout.PaymentId,
+                IssuedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.ConsumerPurchaseInvoices.Add(inv);
+            checkout.InvoiceId = inv.Id;
+            db.SaveChanges();
+            return Task.FromResult(inv);
+        }
+
+        public Task<ConsumerPurchaseInvoice?> GetAsync(Guid invoiceId, CancellationToken cancellationToken = default)
+            => Task.FromResult(db.ConsumerPurchaseInvoices.FirstOrDefault(i => i.Id == invoiceId));
+
+        public Task<IReadOnlyList<ConsumerPurchaseInvoice>> ListAsync(
+            int? year = null,
+            int? quarter = null,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<ConsumerPurchaseInvoice>>(
+                db.ConsumerPurchaseInvoices.OrderByDescending(i => i.IssuedAt).ToList());
+
+        public Task<byte[]> RenderPdfAsync(Guid invoiceId, string? culture = null, CancellationToken cancellationToken = default)
+            => Task.FromResult(Array.Empty<byte>());
+    }
+
+    private sealed class StubVatBuffer : IVatBufferTransferService
+    {
+        public Task<VatBufferTransfer> QueueForInvoiceAsync(TokenPurchaseInvoice invoice, CancellationToken cancellationToken = default)
+            => Task.FromResult(new VatBufferTransfer { Id = Guid.NewGuid(), InvoiceNumber = invoice.InvoiceNumber });
+
+        public Task<VatBufferTransfer> QueueForInvoiceAsync(ConsumerPurchaseInvoice invoice, CancellationToken cancellationToken = default)
+            => Task.FromResult(new VatBufferTransfer { Id = Guid.NewGuid(), InvoiceNumber = invoice.InvoiceNumber });
+
+        public Task<int> ProcessPendingAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+
+        public Task<IReadOnlyList<VatBufferTransfer>> ListAsync(int? year = null, int? quarter = null, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<VatBufferTransfer>>([]);
+    }
+
+    private sealed class StubMailer : ITransactionalMailer
+    {
+        public Task<EmailSendOutcome> SendAsync(
+            Jobsy.Core.Email.ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new EmailSendOutcome(true, false, null));
     }
 
     private sealed class StubCompetenceDeepReportService : ICompetenceDeepReportService

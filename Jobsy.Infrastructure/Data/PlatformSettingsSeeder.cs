@@ -288,6 +288,10 @@ internal static class PlatformSettingsSeeder
                 MarginPerHourEuro = FlexCommercialSettings.DefaultMarginPerHourEuro,
                 BackofficePartnerName = FlexCommercialSettings.DefaultBackofficePartnerName,
                 DeepAnalysisPriceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                DeepTestPriceCompetenceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                DeepTestPriceCareerEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                DeepTestPriceValuesEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                DeepTestPriceCultureEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
                 AgencyAnnualPriceEuro = FlexCommercialSettings.DefaultAgencyAnnualPriceEuro,
                 ContactUnlockCostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens,
                 UpdatedAtUtc = DateTime.UtcNow

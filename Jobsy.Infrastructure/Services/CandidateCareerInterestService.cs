@@ -167,7 +167,8 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         bool includeMatches,
         CancellationToken cancellationToken)
     {
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var commercial = await _commercial.GetAsync(cancellationToken);
+        var price = DeepAnalysisPricing.For(commercial, AssessmentKind.Career);
         IReadOnlyList<CandidateMatchedVacancyDto> matches = [];
         var matchStatus = InsightsStatuses.Ready;
         if (includeMatches)

@@ -291,6 +291,43 @@ public static partial class TransactionalEmails
             Button(S(c, "Email.EmailCodeUsePassword.Cta"), links.Login),
             culture: c), baseUrl);
     }
+
+    public static ComposedEmail DeepTestReceipt(
+        string? baseUrl,
+        string candidateName,
+        string testName,
+        decimal amountInclVat,
+        DateTime paidAtUtc,
+        string invoiceNumber,
+        string testSlug,
+        EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var links = Links(baseUrl);
+        var amount = amountInclVat.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo(
+            c.Language == "nl" ? "nl-NL" : "en-US"));
+        var when = EmailFormat.DateTimeWithoutZone(paidAtUtc, c);
+        var startUrl = links.Absolute($"/candidate/deep-analysis/{Uri.EscapeDataString(testSlug)}");
+        return Finish(Doc("deep_test_receipt",
+            S(c, "Email.DeepTestReceipt.Subject"),
+            S(c, "Email.DeepTestReceipt.Preheader"),
+            S(c, "Email.DeepTestReceipt.Heading"),
+            [
+                P(T(c, "Email.DeepTestReceipt.P1", EmailArg.Bold(testName))),
+                F([
+                    (S(c, "Email.DeepTestReceipt.Fact.Amount"), $"€ {amount}"),
+                    (S(c, "Email.DeepTestReceipt.Fact.Date"), when),
+                    (S(c, "Email.DeepTestReceipt.Fact.Invoice"), invoiceNumber)
+                ]),
+                N(S(c, "Email.DeepTestReceipt.Waiver")),
+                P(S(c, "Email.DeepTestReceipt.Support"))
+            ],
+            Button(S(c, "Email.DeepTestReceipt.Cta"), startUrl),
+            greeting: GreetCandidate(c, candidateName),
+            eyebrow: new EmailEyebrow(S(c, "Email.DeepTestReceipt.Eyebrow"), EmailTone.Peach),
+            showMascot: true,
+            culture: c), baseUrl);
+    }
 }
 
 public sealed record EmailSampleContext(

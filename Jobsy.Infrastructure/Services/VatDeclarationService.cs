@@ -35,6 +35,11 @@ public sealed class VatDeclarationService : IVatDeclarationService
             .Select(i => i.IssuedAt)
             .ToListAsync(cancellationToken);
 
+        var consumerDates = await _db.ConsumerPurchaseInvoices.AsNoTracking()
+            .Where(i => i.VatDeclarationId == null)
+            .Select(i => i.IssuedAt)
+            .ToListAsync(cancellationToken);
+
         var smDates = await _db.SelfBillingInvoices.AsNoTracking()
             .Where(i => i.VatDeclarationId == null
                         && i.Status == SelfBillingInvoiceStatus.Paid
@@ -42,7 +47,7 @@ public sealed class VatDeclarationService : IVatDeclarationService
             .Select(i => i.PaidAt!.Value)
             .ToListAsync(cancellationToken);
 
-        var periods = tokenDates.Concat(smDates)
+        var periods = tokenDates.Concat(consumerDates).Concat(smDates)
             .Select(ToLocalYearQuarter)
             .Distinct()
             .OrderByDescending(p => p.Year)
@@ -60,13 +65,14 @@ public sealed class VatDeclarationService : IVatDeclarationService
         foreach (var (year, quarter) in periods.OrderByDescending(p => p.Year).ThenByDescending(p => p.Quarter))
         {
             var preview = await PreviewAsync(year, quarter, cancellationToken);
-            var hasOpen = preview.TokenInvoiceCount > 0 || preview.SalesManagerInvoiceCount > 0;
+            var hasOpen = preview.TokenInvoiceCount > 0 || preview.ConsumerInvoiceCount > 0 || preview.SalesManagerInvoiceCount > 0;
             result.Add(new VatOpenPeriodDto(
                 year,
                 quarter,
                 preview.PeriodLabel,
                 preview.TokenInvoiceCount,
                 preview.SalesManagerInvoiceCount,
+                preview.ConsumerInvoiceCount,
                 hasOpen));
         }
 
@@ -87,6 +93,11 @@ public sealed class VatDeclarationService : IVatDeclarationService
                         && i.IssuedAt >= start && i.IssuedAt < end)
             .ToListAsync(cancellationToken);
 
+        var consumers = await _db.ConsumerPurchaseInvoices.AsNoTracking()
+            .Where(i => i.VatDeclarationId == null
+                        && i.IssuedAt >= start && i.IssuedAt < end)
+            .ToListAsync(cancellationToken);
+
         var goodwillCount = await _db.TokenTransactions.AsNoTracking()
             .CountAsync(t => t.Kind == TokenTransactionKind.Goodwill
                              && t.CreatedAt >= start && t.CreatedAt < end, cancellationToken);
@@ -103,10 +114,12 @@ public sealed class VatDeclarationService : IVatDeclarationService
                            && d.Status == VatDeclarationStatus.Confirmed, cancellationToken);
 
         // AlreadyDeclared = fully closed (confirmed + no remaining open VAT lines).
-        var already = hasConfirmed && tokens.Count == 0 && smInvoices.Count == 0;
+        var already = hasConfirmed && tokens.Count == 0 && consumers.Count == 0 && smInvoices.Count == 0;
 
-        var r1Ex = tokens.Sum(t => t.AmountExVatCents);
-        var r1Vat = tokens.Sum(t => t.VatAmountCents);
+        var consumerEx = consumers.Sum(c => c.AmountExVatCents);
+        var consumerVat = consumers.Sum(c => c.VatAmountCents);
+        var r1Ex = tokens.Sum(t => t.AmountExVatCents) + consumerEx;
+        var r1Vat = tokens.Sum(t => t.VatAmountCents) + consumerVat;
 
         var r5Ex = 0;
         var r5Vat = 0;
@@ -126,6 +139,9 @@ public sealed class VatDeclarationService : IVatDeclarationService
             r1Ex,
             r1Vat,
             tokens.Count,
+            consumers.Count,
+            consumerEx,
+            consumerVat,
             goodwillCount,
             r5Vat,
             r5Ex,
@@ -150,6 +166,11 @@ public sealed class VatDeclarationService : IVatDeclarationService
                         && i.IssuedAt >= start && i.IssuedAt < end)
             .ToListAsync(cancellationToken);
 
+        var consumers = await _db.ConsumerPurchaseInvoices
+            .Where(i => i.VatDeclarationId == null
+                        && i.IssuedAt >= start && i.IssuedAt < end)
+            .ToListAsync(cancellationToken);
+
         var smInvoices = await _db.SelfBillingInvoices
             .Where(i => i.VatDeclarationId == null
                         && i.Status == SelfBillingInvoiceStatus.Paid
@@ -161,7 +182,7 @@ public sealed class VatDeclarationService : IVatDeclarationService
             .CountAsync(t => t.Kind == TokenTransactionKind.Goodwill
                              && t.CreatedAt >= start && t.CreatedAt < end, cancellationToken);
 
-        if (tokens.Count == 0 && smInvoices.Count == 0)
+        if (tokens.Count == 0 && consumers.Count == 0 && smInvoices.Count == 0)
         {
             throw new InvalidOperationException(
                 $"Geen openstaande BTW-regels voor {baseLabel}.");
@@ -174,8 +195,8 @@ public sealed class VatDeclarationService : IVatDeclarationService
         var label = priorCount == 0 ? baseLabel : $"{baseLabel}-{priorCount + 1}";
 
         var platform = await _companySettings.GetAsync(cancellationToken);
-        var r1Ex = tokens.Sum(t => t.AmountExVatCents);
-        var r1Vat = tokens.Sum(t => t.VatAmountCents);
+        var r1Ex = tokens.Sum(t => t.AmountExVatCents) + consumers.Sum(c => c.AmountExVatCents);
+        var r1Vat = tokens.Sum(t => t.VatAmountCents) + consumers.Sum(c => c.VatAmountCents);
         var r5Ex = 0;
         var r5Vat = 0;
         foreach (var inv in smInvoices)
@@ -221,13 +242,25 @@ public sealed class VatDeclarationService : IVatDeclarationService
             inv.VatDeclarationStatusLabel = statusLabel;
         }
 
+        
+        foreach (var inv in consumers)
+        {
+            inv.VatDeclarationId = declarationId;
+            inv.VatDeclarationStatusLabel = statusLabel;
+        }
+
         foreach (var inv in smInvoices)
         {
             inv.VatDeclarationId = declarationId;
             inv.VatDeclarationStatusLabel = statusLabel;
         }
 
-        declaration.PdfBytes = RenderPdf(declaration, platform);
+        declaration.PdfBytes = RenderPdf(
+            declaration,
+            platform,
+            consumers.Count,
+            consumers.Sum(c => c.AmountExVatCents),
+            consumers.Sum(c => c.VatAmountCents));
         _db.VatDeclarations.Add(declaration);
         await _db.SaveChangesAsync(cancellationToken);
         return declaration;
@@ -331,7 +364,12 @@ public sealed class VatDeclarationService : IVatDeclarationService
         }
     }
 
-    private byte[] RenderPdf(VatDeclaration d, PlatformCompanySnapshot platform)
+    private byte[] RenderPdf(
+        VatDeclaration d,
+        PlatformCompanySnapshot platform,
+        int consumerInvoiceCount,
+        int consumerOmzetExVatCents,
+        int consumerVatCents)
     {
         var logo = _companySettings.GetBrandLogoPng();
         var watermark = _companySettings.GetBrandWatermarkPng();
@@ -382,7 +420,7 @@ public sealed class VatDeclarationService : IVatDeclarationService
                         $"Periode: {d.PeriodLabel} · Gegenereerd: {d.GeneratedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm", culture)}"
                         + (string.IsNullOrWhiteSpace(d.GeneratedByName) ? "" : $" · Door: {d.GeneratedByName}"));
 
-                    col.Item().PaddingTop(14).Text("Rubriek 1 — Prestaties binnenland (tokenverkopen)").SemiBold()
+                    col.Item().PaddingTop(14).Text("Rubriek 1 — Prestaties binnenland (tokenverkopen + kandidaat-aankopen)").SemiBold()
                         .FontColor(Color.FromHex("#0F766E"));
                     col.Item().PaddingTop(4).Table(table =>
                     {
@@ -393,7 +431,10 @@ public sealed class VatDeclarationService : IVatDeclarationService
                         });
                         AddRow(table, "Omzet excl. BTW", Euro(d.Rubriek1OmzetExVatCents, culture));
                         AddRow(table, "Verschuldigde BTW (21%)", Euro(d.Rubriek1VatCents, culture));
-                        AddRow(table, "Aantal verkoopfacturen", d.TokenInvoiceCount.ToString(culture));
+                        AddRow(table, "Aantal token-verkoopfacturen", d.TokenInvoiceCount.ToString(culture));
+                        AddRow(table, "Kandidaat-aankopen (aantal)", consumerInvoiceCount.ToString(culture));
+                        AddRow(table, "Kandidaat-aankopen omzet excl. BTW", Euro(consumerOmzetExVatCents, culture));
+                        AddRow(table, "Kandidaat-aankopen BTW", Euro(consumerVatCents, culture));
                         AddRow(table, "Goodwill-/compensatietokens (geen omzet)", d.GoodwillCount.ToString(culture));
                     });
 

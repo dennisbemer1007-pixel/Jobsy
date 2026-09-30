@@ -23,6 +23,7 @@ public sealed class MollieWebhooksController : ControllerBase
 {
     private readonly IPaymentService _payments;
     private readonly ITokenPurchaseFulfillmentService _fulfillment;
+    private readonly IDeepTestPaymentService _deepPayments;
     private readonly ISalesCorrectionService _corrections;
     private readonly JobsyDbContext _db;
     private readonly ILogger<MollieWebhooksController> _logger;
@@ -30,12 +31,14 @@ public sealed class MollieWebhooksController : ControllerBase
     public MollieWebhooksController(
         IPaymentService payments,
         ITokenPurchaseFulfillmentService fulfillment,
+        IDeepTestPaymentService deepPayments,
         ISalesCorrectionService corrections,
         JobsyDbContext db,
         ILogger<MollieWebhooksController> logger)
     {
         _payments = payments;
         _fulfillment = fulfillment;
+        _deepPayments = deepPayments;
         _corrections = corrections;
         _db = db;
         _logger = logger;
@@ -70,7 +73,19 @@ public sealed class MollieWebhooksController : ControllerBase
 
             if (checkout is null)
             {
-                // Unknown payment id (not a token checkout we track) — acknowledge.
+                var deepCheckout = await _db.DeepAnalysisCheckouts.AsNoTracking()
+                    .Where(c => c.PaymentId == paymentId)
+                    .Select(c => new { c.Id })
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (deepCheckout is not null)
+                {
+                    await _deepPayments.TryFulfillAsync(
+                        deepCheckout.Id,
+                        DeepTestFulfillSource.Webhook,
+                        cancellationToken);
+                }
+
+                // Unknown payment id (not a token or deep checkout we track) — acknowledge.
                 return Ok();
             }
 

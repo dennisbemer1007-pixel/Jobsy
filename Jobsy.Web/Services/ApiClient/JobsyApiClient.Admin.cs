@@ -909,6 +909,10 @@ public sealed partial class JobsyApiClient
                 settings.MarginPerHourEuro,
                 settings.BackofficePartnerName,
                 settings.DeepAnalysisPriceEuro,
+                settings.DeepTestPriceCompetenceEuro,
+                settings.DeepTestPriceCareerEuro,
+                settings.DeepTestPriceValuesEuro,
+                settings.DeepTestPriceCultureEuro,
                 settings.AgencyAnnualPriceEuro,
                 settings.ContactUnlockCostTokens
             },

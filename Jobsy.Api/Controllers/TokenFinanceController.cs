@@ -18,6 +18,7 @@ public sealed class TokenFinanceController : ControllerBase
 {
     private readonly ITokenFinanceQueryService _finance;
     private readonly ITokenPurchaseInvoiceService _invoices;
+    private readonly IConsumerInvoiceService _consumerInvoices;
     private readonly IVatBufferTransferService _vatBuffer;
     private readonly IUserLookupService _users;
     private readonly IPersonalDataAccessLogger _accessLog;
@@ -25,12 +26,14 @@ public sealed class TokenFinanceController : ControllerBase
     public TokenFinanceController(
         ITokenFinanceQueryService finance,
         ITokenPurchaseInvoiceService invoices,
+        IConsumerInvoiceService consumerInvoices,
         IVatBufferTransferService vatBuffer,
         IUserLookupService users,
         IPersonalDataAccessLogger accessLog)
     {
         _finance = finance;
         _invoices = invoices;
+        _consumerInvoices = consumerInvoices;
         _vatBuffer = vatBuffer;
         _users = users;
         _accessLog = accessLog;
@@ -44,6 +47,27 @@ public sealed class TokenFinanceController : ControllerBase
     {
         var rows = await _finance.GetPurchasesAsync(year, quarter, cancellationToken);
         return Ok(rows.Select(ToDto));
+    }
+
+    /// <summary>Kandidaat-aankopen (uitgebreide tests) — number, date, amount, test type; no answers.</summary>
+    [HttpGet("finance/consumer-purchases")]
+    public async Task<ActionResult<IEnumerable<ConsumerPurchaseFinanceDto>>> GetConsumerPurchases(
+        [FromQuery] int? year = null,
+        [FromQuery] int? quarter = null,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _consumerInvoices.ListAsync(year, quarter, cancellationToken);
+        return Ok(rows.Select(i => new ConsumerPurchaseFinanceDto(
+            i.Id,
+            i.InvoiceNumber,
+            i.IssuedAt,
+            i.TotalAmountCents,
+            TokenVatPricing.FromCents(i.TotalAmountCents),
+            i.Kind.ToString(),
+            DeepAnalysisPricing.DescriptionNl(i.Kind),
+            i.PaymentMethod,
+            i.VatDeclarationStatusLabel,
+            i.IsStub)));
     }
 
     [HttpGet("finance/goodwill")]
@@ -224,7 +248,7 @@ public sealed record TokenGoodwillFinanceDto(
 
 public sealed record VatBufferTransferDto(
     Guid Id,
-    Guid InvoiceId,
+    Guid? InvoiceId,
     string InvoiceNumber,
     string DestinationIbanMasked,
     int AmountCents,

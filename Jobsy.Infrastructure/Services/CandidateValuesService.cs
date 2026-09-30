@@ -1,3 +1,4 @@
+using Jobsy.Core.Enums;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -31,7 +32,7 @@ public sealed class CandidateValuesService : ICandidateValuesService
     {
         var row = await _db.CandidateValuesProfiles.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var price = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Values);
         return ToDto(row, price);
     }
 
@@ -109,7 +110,7 @@ public sealed class CandidateValuesService : ICandidateValuesService
             _queue.TryEnqueue(userId);
         }
 
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var price = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Values);
         return ToDto(row, price);
     }
 

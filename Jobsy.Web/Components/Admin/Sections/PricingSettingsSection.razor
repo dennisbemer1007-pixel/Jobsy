@@ -56,8 +56,20 @@ else
                 <article class="company-card platform-features-card" style="margin-bottom:1rem">
                     <div class="inline-actions" style="flex-wrap:wrap;gap:0.75rem;align-items:end">
                         <label>
-                            Diepte-analyse (€)
-                            <input type="number" min="0" max="500" step="0.01" @bind="_lobsyCommercial.DeepAnalysisPriceEuro" style="width:6rem" />
+                            Uitgebreide test Competenties (incl. btw)
+                            <input type="number" min="0.01" max="100" step="0.01" @bind="_lobsyCommercial.DeepTestPriceCompetenceEuro" style="width:6rem" />
+                        </label>
+                        <label>
+                            Uitgebreide test Beroepen (incl. btw)
+                            <input type="number" min="0.01" max="100" step="0.01" @bind="_lobsyCommercial.DeepTestPriceCareerEuro" style="width:6rem" />
+                        </label>
+                        <label>
+                            Uitgebreide test Waarden (incl. btw)
+                            <input type="number" min="0.01" max="100" step="0.01" @bind="_lobsyCommercial.DeepTestPriceValuesEuro" style="width:6rem" />
+                        </label>
+                        <label>
+                            Uitgebreide test Cultuur (incl. btw)
+                            <input type="number" min="0.01" max="100" step="0.01" @bind="_lobsyCommercial.DeepTestPriceCultureEuro" style="width:6rem" />
                         </label>
                         <label>
                             Flex-marge (€/uur)

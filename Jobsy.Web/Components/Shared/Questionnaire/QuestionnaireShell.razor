@@ -32,7 +32,11 @@
                 }
             </div>
             <span class="questionnaire__header-save @SaveStatusClass" aria-live="polite">
-                @if (SaveStatus == QuestionnaireSaveStatus.Saved)
+                @if (SaveStatus == QuestionnaireSaveStatus.Idle)
+                {
+                    @* Nothing until a real save succeeds *@
+                }
+                else if (SaveStatus == QuestionnaireSaveStatus.Saved)
                 {
                     <span class="questionnaire__save-icon" aria-hidden="true">✓</span>
                     <span>@(SaveStatusText ?? Culture["Questionnaire.Saved"])</span>
@@ -213,6 +217,7 @@
 
     private string SaveStatusClass => SaveStatus switch
     {
+        QuestionnaireSaveStatus.Idle => "is-idle",
         QuestionnaireSaveStatus.Saving => "is-saving",
         QuestionnaireSaveStatus.Failed => "is-failed",
         _ => "is-saved"

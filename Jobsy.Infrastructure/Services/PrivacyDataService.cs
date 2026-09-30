@@ -592,11 +592,23 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 {
                     c.Id,
                     Kind = c.Kind.ToString(),
-                    c.PaymentId,
                     c.AmountEuro,
+                    c.TotalAmountCents,
                     Status = c.Status.ToString(),
                     c.CreatedAtUtc,
                     c.PaidAtUtc
+                })
+                .ToListAsync(cancellationToken),
+            ConsumerPurchaseInvoices = await _db.ConsumerPurchaseInvoices.AsNoTracking()
+                .Where(i => i.UserId == user.Id)
+                .OrderByDescending(i => i.IssuedAt)
+                .Select(i => new
+                {
+                    i.Id,
+                    i.InvoiceNumber,
+                    i.TotalAmountCents,
+                    i.IssuedAt,
+                    Kind = i.Kind.ToString()
                 })
                 .ToListAsync(cancellationToken),
             TalentContactRequests = await _db.TalentContactRequests.AsNoTracking()
@@ -1361,6 +1373,15 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (deepCheckouts.Count > 0)
         {
             _db.DeepAnalysisCheckouts.RemoveRange(deepCheckouts);
+        }
+
+        var consumerInvoices = await _db.ConsumerPurchaseInvoices
+            .Where(i => i.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var invoice in consumerInvoices)
+        {
+            // Fiscal retention: keep invoice, anonymise candidate link.
+            invoice.UserId = null;
         }
 
         var talentAsCandidate = await _db.TalentContactRequests

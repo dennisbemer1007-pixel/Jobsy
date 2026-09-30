@@ -72,6 +72,7 @@ public sealed class VatOpenPeriodItem
     public string PeriodLabel { get; set; } = string.Empty;
     public int OpenTokenInvoiceCount { get; set; }
     public int OpenSalesManagerInvoiceCount { get; set; }
+    public int OpenConsumerInvoiceCount { get; set; }
     public bool HasOpenItems { get; set; }
 }
 
@@ -83,12 +84,29 @@ public sealed class VatDeclarationPreviewItem
     public int Rubriek1OmzetExVatCents { get; set; }
     public int Rubriek1VatCents { get; set; }
     public int TokenInvoiceCount { get; set; }
+    public int ConsumerInvoiceCount { get; set; }
+    public int ConsumerOmzetExVatCents { get; set; }
+    public int ConsumerVatCents { get; set; }
     public int GoodwillCount { get; set; }
     public int Rubriek5VoorbelastingCents { get; set; }
     public int Rubriek5CostExVatCents { get; set; }
     public int SalesManagerInvoiceCount { get; set; }
     public int AmountDueCents { get; set; }
     public bool AlreadyDeclared { get; set; }
+}
+
+public sealed class ConsumerPurchaseFinanceItem
+{
+    public Guid InvoiceId { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public DateTime IssuedAt { get; set; }
+    public int TotalAmountCents { get; set; }
+    public decimal TotalAmountEuro { get; set; }
+    public string Kind { get; set; } = string.Empty;
+    public string TestName { get; set; } = string.Empty;
+    public string? PaymentMethod { get; set; }
+    public string? VatDeclarationStatusLabel { get; set; }
+    public bool IsStub { get; set; }
 }
 
 public sealed class VatDeclarationListItem

@@ -409,5 +409,17 @@ internal static class EmailStringsNl
         ["Email.VacancyEngagementReminder.Tip.ManyViewsFewApplications"] = "Veel bekeken, weinig sollicitaties. Scherp de voordelen aan en check of harde eisen te streng zijn.",
         ["Email.VacancyEngagementReminder.Tip.NotShared"] = "Deel de vacature actief. Dat vergroot herhaald bezoek.",
         ["Email.VacancyEngagementReminder.Tip.ViewsNoApplications"] = "Er is interesse, maar nog geen sollicitaties. Maak eisen realistischer of verduidelijk het uurloon.",
+
+        ["Email.DeepTestReceipt.Subject"] = "Je uitgebreide test staat klaar",
+        ["Email.DeepTestReceipt.Preheader"] = "Betaald — je kunt met vraag 1 beginnen",
+        ["Email.DeepTestReceipt.Heading"] = "Betaald. Je kunt beginnen",
+        ["Email.DeepTestReceipt.Eyebrow"] = "Uitgebreide test",
+        ["Email.DeepTestReceipt.P1"] = "Betaald: Uitgebreide test {0}",
+        ["Email.DeepTestReceipt.Fact.Amount"] = "Bedrag (incl. btw)",
+        ["Email.DeepTestReceipt.Fact.Date"] = "Datum",
+        ["Email.DeepTestReceipt.Fact.Invoice"] = "Factuurnummer",
+        ["Email.DeepTestReceipt.Waiver"] = "Je koos ervoor om meteen te beginnen. Daarom kun je niet binnen 14 dagen annuleren.",
+        ["Email.DeepTestReceipt.Cta"] = "Begin met vraag 1",
+        ["Email.DeepTestReceipt.Support"] = "Vragen over je betaling? Mail support@lobsy.nl.",
     };
 }

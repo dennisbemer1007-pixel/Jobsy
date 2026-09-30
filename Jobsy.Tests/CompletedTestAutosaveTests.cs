@@ -284,6 +284,9 @@ public class CompletedTestAutosaveTests
                 0,
                 "test",
                 FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
                 0,
                 0,
                 DateTime.UtcNow));

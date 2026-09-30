@@ -282,6 +282,30 @@ public sealed class DeepAnalysisCheckout
     public string Kind { get; set; } = "Competence";
 }
 
+public sealed class DeepTestCheckoutStatus
+{
+    public string Status { get; set; } = "pending";
+    public string Kind { get; set; } = "Competence";
+    public string TestSlug { get; set; } = "competence";
+    public int TotalCents { get; set; }
+    public DateTime? PaidAtUtc { get; set; }
+    public string? InvoiceNumber { get; set; }
+    public Guid? InvoiceId { get; set; }
+    public bool IsStub { get; set; }
+    public string? PaymentMethod { get; set; }
+    public Guid CheckoutId { get; set; }
+}
+
+public sealed class DeepPayClientException : Exception
+{
+    public DeepPayClientException(string code, string message) : base(message)
+    {
+        Code = code;
+    }
+
+    public string Code { get; }
+}
+
 public sealed class RoleFitCheckState
 {
     public bool IsUnlocked { get; set; }

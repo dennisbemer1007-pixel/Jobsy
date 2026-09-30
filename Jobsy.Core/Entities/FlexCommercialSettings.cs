@@ -20,8 +20,17 @@ public class FlexCommercialSettings
     /// <summary>Display name of the NEN 4400-1 backoffice partner.</summary>
     public string BackofficePartnerName { get; set; } = DefaultBackofficePartnerName;
 
-    /// <summary>Price to unlock the 150-question deep analysis (default € 2,99).</summary>
+    /// <summary>
+    /// Legacy single deep-analysis price. Kept for one release; no longer read.
+    /// Prefer <see cref="DeepTestPriceCompetenceEuro"/> etc.
+    /// </summary>
+    [Obsolete("Use DeepTestPrice*Euro per kind. Removed in tests stack file 07.")]
     public decimal DeepAnalysisPriceEuro { get; set; } = DefaultDeepAnalysisPriceEuro;
+
+    public decimal DeepTestPriceCompetenceEuro { get; set; } = DefaultDeepAnalysisPriceEuro;
+    public decimal DeepTestPriceCareerEuro { get; set; } = DefaultDeepAnalysisPriceEuro;
+    public decimal DeepTestPriceValuesEuro { get; set; } = DefaultDeepAnalysisPriceEuro;
+    public decimal DeepTestPriceCultureEuro { get; set; } = DefaultDeepAnalysisPriceEuro;
 
     /// <summary>Annual uitzendbureau carte-blanche subscription (default € 4.000).</summary>
     public decimal AgencyAnnualPriceEuro { get; set; } = DefaultAgencyAnnualPriceEuro;

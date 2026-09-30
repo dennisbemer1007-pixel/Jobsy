@@ -101,7 +101,6 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             .Where(d => d.UserId == userId && distinct.Contains(d.Kind))
             .ToListAsync(cancellationToken);
         var commercial = await _commercial.GetAsync(cancellationToken);
-        var price = commercial.DeepAnalysisPriceEuro;
         var result = new Dictionary<AssessmentKind, DeepAnalysisStateDto>(distinct.Count);
         foreach (var kind in distinct)
         {
@@ -112,7 +111,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
                 competenceReport = await LoadOrBuildCompetenceReportAsync(userId, kind, row, cancellationToken);
             }
 
-            result[kind] = ToDto(kind, row, price, competenceReport);
+            result[kind] = ToDto(kind, row, DeepAnalysisPricing.For(commercial, kind), competenceReport);
         }
 
         return result;
@@ -150,121 +149,6 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             _logger.LogWarning(ex, "Competence deep-report build-on-read failed for {UserId}.", userId);
             return null;
         }
-    }
-
-    public async Task<DeepAnalysisCheckoutResult> StartCheckoutAsync(
-        Guid userId,
-        AssessmentKind kind,
-        CancellationToken cancellationToken = default)
-    {
-        if (!DeepAnalysisCatalog.SupportsDeepAnalysis(kind))
-        {
-            throw new InvalidOperationException("Deze test ondersteunt geen diepte-analyse.");
-        }
-
-        _ = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
-            ?? throw new KeyNotFoundException("Gebruiker niet gevonden.");
-
-        var existing = await _db.CandidateDeepAnalyses
-            .FirstOrDefaultAsync(d => d.UserId == userId && d.Kind == kind, cancellationToken);
-        if (existing is not null && CandidateDeepAnalysisStatuses.IsUnlocked(existing.Status))
-        {
-            throw new InvalidOperationException("Diepte-analyse is al ontgrendeld.");
-        }
-
-        if (!AllowStubPayments())
-        {
-            throw new InvalidOperationException(
-                "Diepte-analyse-betalingen zijn buiten Development alleen beschikbaar met Mollie of AllowStubPayments.");
-        }
-
-        var commercial = await _commercial.GetAsync(cancellationToken);
-        var price = commercial.DeepAnalysisPriceEuro;
-
-        var open = await _db.DeepAnalysisCheckouts
-            .Where(c => c.UserId == userId && c.Kind == kind && c.Status == DeepAnalysisCheckoutStatus.Pending)
-            .ToListAsync(cancellationToken);
-        foreach (var prior in open)
-        {
-            prior.Status = DeepAnalysisCheckoutStatus.Cancelled;
-        }
-
-        var slug = AssessmentKindLabels.ToSlug(kind);
-        var paymentId = $"stub_deep_{slug}_{Guid.NewGuid():N}";
-        var checkout = new DeepAnalysisCheckout
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            Kind = kind,
-            PaymentId = paymentId,
-            AmountEuro = price,
-            Status = DeepAnalysisCheckoutStatus.Pending,
-            CreatedAtUtc = DateTime.UtcNow
-        };
-        _db.DeepAnalysisCheckouts.Add(checkout);
-        await _db.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation(
-            "Deep analysis ({Kind}) checkout for user {UserId}: €{Amount} ({PaymentId})",
-            kind, userId, price, paymentId);
-
-        return new DeepAnalysisCheckoutResult(
-            checkout.Id,
-            paymentId,
-            $"/candidate/deep-analysis/checkout?kind={Uri.EscapeDataString(slug)}&paymentId={Uri.EscapeDataString(paymentId)}",
-            price,
-            IsStub: true,
-            kind);
-    }
-
-    public async Task<bool> TryFulfillPaidCheckoutAsync(
-        string paymentId,
-        Guid? expectedUserId = null,
-        bool allowDevStubMarkPaid = false,
-        CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(paymentId))
-        {
-            return false;
-        }
-
-        var checkout = await _db.DeepAnalysisCheckouts
-            .FirstOrDefaultAsync(c => c.PaymentId == paymentId, cancellationToken);
-        if (checkout is null)
-        {
-            return false;
-        }
-
-        if (expectedUserId is Guid uid && checkout.UserId != uid)
-        {
-            return false;
-        }
-
-        if (checkout.Status == DeepAnalysisCheckoutStatus.Paid)
-        {
-            await UnlockForUserAsync(checkout.UserId, checkout.Kind, cancellationToken);
-            return true;
-        }
-
-        if (checkout.Status != DeepAnalysisCheckoutStatus.Pending)
-        {
-            return false;
-        }
-
-        var canStubMarkPaid = allowDevStubMarkPaid
-            && AllowStubPayments()
-            && paymentId.StartsWith("stub_deep_", StringComparison.Ordinal);
-
-        if (!canStubMarkPaid)
-        {
-            return false;
-        }
-
-        checkout.Status = DeepAnalysisCheckoutStatus.Paid;
-        checkout.PaidAtUtc = DateTime.UtcNow;
-        await _db.SaveChangesAsync(cancellationToken);
-        await UnlockForUserAsync(checkout.UserId, checkout.Kind, cancellationToken);
-        return true;
     }
 
     public async Task UnlockForUserAsync(
@@ -326,7 +210,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             }
 
             var commercialEmpty = await _commercial.GetAsync(cancellationToken);
-            return ToDto(kind, row, commercialEmpty.DeepAnalysisPriceEuro);
+            return ToDto(kind, row, DeepAnalysisPricing.For(commercialEmpty, kind));
         }
 
         var error = DeepAnalysisCatalog.ValidateAnswers(answers, complete, kind);
@@ -389,7 +273,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         }
 
         var commercial = await _commercial.GetAsync(cancellationToken);
-        return ToDto(kind, row, commercial.DeepAnalysisPriceEuro, competenceReport);
+        return ToDto(kind, row, DeepAnalysisPricing.For(commercial, kind), competenceReport);
     }
 
     private async Task MergeTagsIntoQuickScanAsync(
@@ -556,10 +440,6 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         quick.MatchTagsJson = CompetencyTestCatalog.SerializeTags(competenceTags);
         quick.UpdatedAtUtc = now;
     }
-
-    private bool AllowStubPayments() =>
-        _environment.IsDevelopment()
-        || _configuration.GetValue("JobsyAuth:AllowStubPayments", false);
 
     private static DeepAnalysisStateDto ToDto(
         AssessmentKind kind,

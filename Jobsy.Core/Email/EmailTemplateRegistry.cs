@@ -125,6 +125,10 @@ public static class EmailTemplateRegistry
         // —— Dependencies G ——
         Def("MfaResetByAdmin", "MfaResetByAdmin", "Account", EmailKind.Essential, "Security", false,
             "2FA gereset door support", "Authenticator ontkoppeld door Lobsy-support; opnieuw instellen bij login."),
+
+        // —— Candidate tests (01 hotfix) ——
+        Def("deep_test_receipt", "DeepTestReceipt", "Kandidaat", EmailKind.Essential, "Applied", true,
+            "Uitgebreide test betaald", "Ontvangstbevestiging + factuur na betaling van de uitgebreide test."),
     ];
 
     private static readonly HashSet<string> GoodNewsKeys = new(
