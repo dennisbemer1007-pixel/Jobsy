@@ -17,7 +17,7 @@
 <PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) · Lobsy</PageTitle>
 <PageSeo Title="@SeoTitle"
          Description="@SeoDescription"
-         Index="@(_vacancy is not null)"
+         Index="@(_vacancy is not null && !_vacancy.IsPreview)"
          ImageUrl="@SeoImage"
          OgType="article"
          JsonLd="@SeoJsonLd" />
@@ -98,6 +98,11 @@
                     </button>
                 </div>
             </div>
+
+            @if (_vacancy.IsPreview)
+            {
+                <p class="wa-banner__preview-line" role="status">@Culture["WaBanner.PreviewLine"]</p>
+            }
 
             <div class="detail-card__top detail-card__top--before-media">
                 <div>
@@ -773,7 +778,8 @@
                 _vacancy.MinHoursPerWeek,
                 _vacancy.MaxHoursPerWeek,
                 pageUrl,
-                origin);
+                origin,
+                isPreview: _vacancy.IsPreview);
         }
     }
     private bool ShowsSuitableFor65Plus =>

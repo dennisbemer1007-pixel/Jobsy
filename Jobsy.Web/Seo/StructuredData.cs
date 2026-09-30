@@ -159,8 +159,15 @@ public static class StructuredData
         decimal? minHoursPerWeek,
         decimal? maxHoursPerWeek,
         string pageUrl,
-        string origin)
+        string origin,
+        bool isPreview = false)
     {
+        // Employer-only previews of non-public vacancies must never emit JobPosting JSON-LD.
+        if (isPreview)
+        {
+            return null;
+        }
+
         if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(companyName))
         {
             return null;

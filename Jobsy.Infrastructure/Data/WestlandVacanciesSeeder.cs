@@ -113,7 +113,11 @@ internal static class WestlandVacanciesSeeder
                 Address = c.Address,
                 LogoUrl = null,
                 Type = CompanyType.Employer,
-                Location = new GeoPoint(c.Lat, c.Lng)
+                Location = new GeoPoint(c.Lat, c.Lng),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             });
 
             db.TokenTransactions.Add(new TokenTransaction

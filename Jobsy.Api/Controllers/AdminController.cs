@@ -207,7 +207,11 @@ public class AdminController : ControllerBase
             Address = match.Address,
             Location = new GeoPoint(match.Latitude, match.Longitude),
             Type = request.Type,
-            ParentCompanyId = request.ParentCompanyId
+            ParentCompanyId = request.ParentCompanyId,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
 
         _db.Companies.Add(company);

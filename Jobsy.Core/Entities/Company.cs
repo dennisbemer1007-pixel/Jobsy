@@ -24,6 +24,21 @@ public class Company
     public DateTime? KvkLastVerificationAttemptAtUtc { get; set; }
     public int KvkVerificationAttempts { get; set; }
 
+    /// <summary>
+    /// Whether the company has proven it is real on Lobsy (public visibility gate).
+    /// No C# initializer — every creation path sets this explicitly.
+    /// </summary>
+    public CompanyVerificationStatus VerificationStatus { get; set; }
+
+    /// <summary>How <see cref="VerificationStatus"/> was last set.</summary>
+    public CompanyVerificationMethod VerificationMethod { get; set; }
+
+    /// <summary>When the company first became <see cref="CompanyVerificationStatus.Verified"/>.</summary>
+    public DateTime? VerifiedAtUtc { get; set; }
+
+    /// <summary>When verification status or method last changed.</summary>
+    public DateTime? VerificationUpdatedAtUtc { get; set; }
+
     public string Address { get; set; } = string.Empty;
     public string? LogoUrl { get; set; }
     public GeoPoint Location { get; set; } = null!;

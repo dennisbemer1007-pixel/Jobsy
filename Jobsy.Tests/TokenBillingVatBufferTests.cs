@@ -34,7 +34,11 @@ public class TokenBillingVatBufferTests
             Name = "Test BV",
             KvkNumber = "123",
             Address = "Straat 1",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -61,7 +65,11 @@ public class TokenBillingVatBufferTests
             Name = "Test BV",
             KvkNumber = "123",
             Address = "Straat 1",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -81,7 +89,11 @@ public class TokenBillingVatBufferTests
             Name = "Betaal BV",
             KvkNumber = "999",
             Address = "Laan 2",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.PlatformCompanySettings.Add(new PlatformCompanySettings
         {

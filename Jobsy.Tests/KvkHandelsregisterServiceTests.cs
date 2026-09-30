@@ -41,7 +41,11 @@ public class KvkHandelsregisterServiceTests
             KvkEstablishmentId = CompanyPublicPaths.BuildEstablishmentId("69599084", "000038509658"),
             Address = "Old",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 

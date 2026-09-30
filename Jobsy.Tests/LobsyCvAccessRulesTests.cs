@@ -69,7 +69,12 @@ public class LobsyCvAccessRulesTests
             Vacancy = new Vacancy
             {
                 Title = "Magazijnmedewerker",
-                Company = new Company { Name = "Demo BV", Address = "Industrieweg 1" },
+                Company = new Company { Name = "Demo BV", Address = "Industrieweg 1",
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
                 Location = new GeoPoint(51.99, 4.21)
             }
         };

@@ -129,7 +129,11 @@ public class SalesManagerReferralHierarchyTests
             Address = "A",
             Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4),
             ReferredBySalesManagerUserId = childId,
-            FirstYearStartedAt = now.AddMonths(-2)
+            FirstYearStartedAt = now.AddMonths(-2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -185,7 +189,11 @@ public class SalesManagerReferralHierarchyTests
             Address = "A",
             Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4),
             ReferredBySalesManagerUserId = smId,
-            FirstYearStartedAt = started
+            FirstYearStartedAt = started,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 

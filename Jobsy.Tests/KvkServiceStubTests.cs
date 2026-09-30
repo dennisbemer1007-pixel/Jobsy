@@ -57,7 +57,11 @@ public class KvkServiceStubTests
             KvkEstablishmentId = "11223344_0001",
             Address = "Frederik Hendriklaan 88, Den Haag",
             Location = new GeoPoint(52.0910, 4.2815),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 

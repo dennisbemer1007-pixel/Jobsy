@@ -50,7 +50,11 @@ public class PrepaidTokenCheckoutTests
             Name = "Exact Co",
             KvkNumber = "11112222",
             Address = "Test",
-            Location = new GeoPoint(52.0, 4.3)
+            Location = new GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -200,7 +204,11 @@ public class PrepaidTokenCheckoutTests
             Name = "Prepaid Co",
             KvkNumber = "12345678",
             Address = "Westland",
-            Location = new GeoPoint(51.99, 4.22)
+            Location = new GeoPoint(51.99, 4.22),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         db.Vacancies.Add(new Vacancy

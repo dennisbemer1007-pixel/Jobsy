@@ -25,7 +25,11 @@ public class Sprint6AdminSuiteTests
             KvkNumber = "11111111",
             Address = "A",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Companies.Add(new Company
         {
@@ -34,7 +38,11 @@ public class Sprint6AdminSuiteTests
             KvkNumber = "22222222",
             Address = "B",
             Location = new GeoPoint(52.1, 4.1),
-            Type = CompanyType.Intermediary
+            Type = CompanyType.Intermediary,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.PlatformLogs.Add(new PlatformLog
         {
@@ -80,7 +88,11 @@ public class Sprint6AdminSuiteTests
             KvkNumber = "11111111",
             Address = "A",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenTransactions.AddRange(
             new TokenTransaction
@@ -124,7 +136,11 @@ public class Sprint6AdminSuiteTests
             KvkEstablishmentId = "55667788_0001",
             Address = "Binckhorstlaan 36, Den Haag",
             Type = CompanyType.Intermediary,
-            Location = new GeoPoint(52.0680, 4.3350)
+            Location = new GeoPoint(52.0680, 4.3350),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 

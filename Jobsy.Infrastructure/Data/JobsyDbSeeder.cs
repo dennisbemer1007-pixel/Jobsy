@@ -68,6 +68,15 @@ public static class JobsyDbSeeder
         {
             logger.LogWarning(ex, "ATS scrape source seed after migrate failed; continuing.");
         }
+
+        try
+        {
+            await CompanyVerificationBackfillLog.EnsureLoggedAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Company verification backfill PlatformLog failed; continuing.");
+        }
     }
 
     public static async Task SeedDataAsync(IServiceProvider services)

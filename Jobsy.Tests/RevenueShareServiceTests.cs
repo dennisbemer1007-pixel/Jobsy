@@ -45,7 +45,11 @@ public class RevenueShareServiceTests
             Address = "A",
             Location = new GeoPoint(52, 4),
             ReferredBySalesManagerUserId = smId,
-            FirstYearStartedAt = DateTime.UtcNow.AddMonths(-1)
+            FirstYearStartedAt = DateTime.UtcNow.AddMonths(-1),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 

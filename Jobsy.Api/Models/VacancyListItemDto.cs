@@ -97,7 +97,12 @@ public record VacancyListItemDto(
     IReadOnlyList<string>? BarrierCertifications = null,
     int? BarrierMinExperienceYears = null,
     int? BarrierMinExperienceHours = null,
-    IReadOnlyList<string>? BarrierHardChecks = null);
+    IReadOnlyList<string>? BarrierHardChecks = null,
+    /// <summary>
+    /// True when the response is an employer-only preview of a non-public vacancy
+    /// (draft, unverified publisher, etc.). Suppresses indexation and JSON-LD.
+    /// </summary>
+    bool IsPreview = false);
 
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);

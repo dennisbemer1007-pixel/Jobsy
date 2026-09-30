@@ -23,7 +23,11 @@ public class VatDeclarationServiceTests
             Name = "Klant BV",
             KvkNumber = "1",
             Address = "a",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         var smUserId = Guid.NewGuid();
@@ -133,7 +137,11 @@ public class VatDeclarationServiceTests
             Name = "Klant BV",
             KvkNumber = "1",
             Address = "a",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         var checkout1 = Guid.NewGuid();

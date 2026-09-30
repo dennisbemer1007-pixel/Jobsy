@@ -569,6 +569,7 @@ public class ApplicationsController : ControllerBase
         var vacancy = await _db.Vacancies
             .Include(v => v.Company)
                 .ThenInclude(c => c.ParentCompany)
+            .Include(v => v.IntermediaryCompany)
             .Include(v => v.ExclusivitySetting!)
                 .ThenInclude(s => s.Educations)
             .FirstOrDefaultAsync(v => v.Id == request.VacancyId, cancellationToken);

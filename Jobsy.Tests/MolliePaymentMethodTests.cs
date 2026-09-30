@@ -242,7 +242,11 @@ public class MolliePaymentMethodTests
             Address = "Test",
             Location = new GeoPoint(52, 4),
             Type = CompanyType.Employer,
-            PreferredPaymentMethod = preferred
+            PreferredPaymentMethod = preferred,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenPricings.Add(new TokenPricing
         {

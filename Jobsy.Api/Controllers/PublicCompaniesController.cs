@@ -40,7 +40,9 @@ public sealed class PublicCompaniesController : ControllerBase
         var companies = await QueryPublicRows(_db, kvk)
             .ToListAsync(cancellationToken);
 
-        if (companies.Count == 0)
+        // Organisation page requires a verified organisation shell (ParentCompanyId null).
+        // A verified vestiging under an unverified org must not surface the KvK-wide page.
+        if (companies.Count == 0 || companies.All(c => c.ParentCompanyId is not null))
         {
             return NotFound(new { message = "Ondernemer niet gevonden." });
         }
@@ -137,6 +139,7 @@ public sealed class PublicCompaniesController : ControllerBase
 
     private static IQueryable<CompanyPublicRow> QueryPublicRows(JobsyDbContext db, string kvk)
         => db.Companies.AsNoTracking()
+            .Where(PublicVisibility.CompanyIsPublic)
             .Where(c => c.KvkNumber == kvk)
             .Select(c => new CompanyPublicRow(
                 c.Id,

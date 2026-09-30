@@ -83,7 +83,11 @@ public class AmbassadeurAttributionTests
             KvkNumber = "87654321",
             Address = "X",
             Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.3),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -155,7 +159,11 @@ public class AmbassadeurAttributionTests
             Name = "Co",
             KvkNumber = "11111111",
             Address = "A",
-            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.3)
+            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var vacancyId = Guid.NewGuid();
         db.Vacancies.Add(new Vacancy

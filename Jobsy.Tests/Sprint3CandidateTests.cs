@@ -62,7 +62,11 @@ public class Sprint3CandidateTests
             Name = "Demo BV",
             Address = "Straat 1",
             KvkNumber = "123",
-            Location = new GeoPoint(52.0, 4.3)
+            Location = new GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.AddRange(
             new User { Id = candidateId, Email = "a@test.nl", FullName = "A", Role = UserRole.Candidate, IsActive = true },

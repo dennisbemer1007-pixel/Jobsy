@@ -45,6 +45,13 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
 
     public void Invalidate() => _dirty = true;
 
+    public Task InvalidateCompanyAsync(Guid companyId, CancellationToken cancellationToken = default)
+    {
+        _ = companyId;
+        Invalidate();
+        return Task.CompletedTask;
+    }
+
     public async Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(
         CancellationToken cancellationToken = default)
     {
@@ -123,6 +130,7 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
                 v.Status == VacancyStatus.Active
                 && v.StartDate <= today
                 && v.EndDate >= today)
+            .Where(PublicVisibility.VacancyPublisherIsPublic)
             .OrderBy(v => v.Title)
             .ToListAsync(cancellationToken);
 
@@ -217,7 +225,10 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             vacancy.ContentModerationPassed,
             vacancy.RequireEmailVerification,
             vacancy.MinimumReferences,
-            CulturePillarCatalog.Deserialize(vacancy.CulturePillarsJson));
+            CulturePillarCatalog.Deserialize(vacancy.CulturePillarsJson),
+            PublisherVerified: PublicVisibility.IsCompanyPublic(vacancy.Company)
+                && (vacancy.IntermediaryCompanyId is null
+                    || PublicVisibility.IsCompanyPublic(vacancy.IntermediaryCompany)));
     }
 
     private static IReadOnlyList<VacancyDiscoveryRecord> VisibleToday(

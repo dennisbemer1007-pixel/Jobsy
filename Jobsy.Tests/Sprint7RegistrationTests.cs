@@ -141,7 +141,11 @@ public class Sprint7RegistrationTests
             KvkEstablishmentId = "99990002_0001",
             Address = "A",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -410,7 +414,11 @@ public class Sprint7RegistrationTests
             KvkEstablishmentId = "99990003_0001",
             Address = "Teststraat 1",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenTransactions.Add(new TokenTransaction
         {
@@ -499,7 +507,11 @@ public class Sprint7RegistrationTests
             KvkEstablishmentId = "99990005_0001",
             Address = "X",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var bmId = Guid.NewGuid();
         db.Users.Add(new User
@@ -561,8 +573,12 @@ public class Sprint7RegistrationTests
                 KvkNumber = "99990006",
                 Address = "HQ",
                 Location = new GeoPoint(52, 4),
-                Type = CompanyType.Employer
-            },
+                Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = branchId,
@@ -572,8 +588,12 @@ public class Sprint7RegistrationTests
                 Address = "Branch",
                 Location = new GeoPoint(52.1, 4.1),
                 Type = CompanyType.Employer,
-                ParentCompanyId = parentId
-            });
+                ParentCompanyId = parentId,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
         var emId = Guid.NewGuid();
         db.Users.Add(new User
         {
@@ -620,8 +640,12 @@ public class Sprint7RegistrationTests
                 KvkNumber = "99990078",
                 Address = "HQ",
                 Location = new GeoPoint(52, 4),
-                Type = CompanyType.Employer
-            },
+                Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = branchId,
@@ -631,8 +655,12 @@ public class Sprint7RegistrationTests
                 Address = "Branch",
                 Location = new GeoPoint(52.1, 4.1),
                 Type = CompanyType.Employer,
-                ParentCompanyId = parentId
-            });
+                ParentCompanyId = parentId,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
         var bmId = Guid.NewGuid();
         db.Users.Add(new User
         {

@@ -300,7 +300,11 @@ public sealed class VacancyCultureFitTranslationFactory : WebApplicationFactory<
             Name = "Cultuur Fit BV",
             KvkNumber = "11223344",
             Address = "Teststraat 1, Den Haag",
-            Location = new GeoPoint(52.09, 4.31)
+            Location = new GeoPoint(52.09, 4.31),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {

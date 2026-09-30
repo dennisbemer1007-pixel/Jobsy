@@ -714,7 +714,11 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                     KvkEstablishmentId = null,
                     Address = kvkCompany?.Address ?? registration.EstablishmentAddress,
                     Location = target.Location,
-                    Type = CompanyType.Employer
+                    Type = CompanyType.Employer,
+                    VerificationStatus = target.VerificationStatus,
+                    VerificationMethod = target.VerificationMethod,
+                    VerifiedAtUtc = target.VerifiedAtUtc,
+                    VerificationUpdatedAtUtc = DateTime.UtcNow
                 };
                 _db.Companies.Add(org);
                 target.ParentCompanyId = org.Id;
@@ -920,7 +924,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = registration.KvkEstablishmentId,
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
-                Type = CompanyType.Intermediary
+                Type = CompanyType.Intermediary,
+                VerificationStatus = CompanyVerificationStatus.Unverified,
+                VerificationMethod = CompanyVerificationMethod.None,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             ApplyKvkVerificationState(branch, registration);
             _db.Companies.Add(branch);
@@ -937,7 +944,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = null,
                 Address = kvkCompany?.Address ?? registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
-                Type = CompanyType.Employer
+                Type = CompanyType.Employer,
+                VerificationStatus = CompanyVerificationStatus.Unverified,
+                VerificationMethod = CompanyVerificationMethod.None,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             ApplyKvkVerificationState(org, registration);
             _db.Companies.Add(org);
@@ -953,7 +963,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
                 Type = CompanyType.Employer,
-                ParentCompanyId = org.Id
+                ParentCompanyId = org.Id,
+                VerificationStatus = CompanyVerificationStatus.Unverified,
+                VerificationMethod = CompanyVerificationMethod.None,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             ApplyKvkVerificationState(branch, registration);
             _db.Companies.Add(branch);
@@ -976,7 +989,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = registration.KvkEstablishmentId,
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
-                Type = CompanyType.Employer
+                Type = CompanyType.Employer,
+                VerificationStatus = CompanyVerificationStatus.Unverified,
+                VerificationMethod = CompanyVerificationMethod.None,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             ApplyKvkVerificationState(branch, registration);
             _db.Companies.Add(branch);
@@ -1066,7 +1082,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 Type = CompanyType.Employer,
                 ParentCompanyId = orgId,
                 KvkVerificationStatus = KvkVerificationStatus.Verified,
-                KvkVerifiedAtUtc = DateTime.UtcNow
+                KvkVerifiedAtUtc = DateTime.UtcNow,
+                VerificationStatus = CompanyVerificationStatus.Unverified,
+                VerificationMethod = CompanyVerificationMethod.None,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             _db.Companies.Add(sibling);
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, sibling.Id, cancellationToken);

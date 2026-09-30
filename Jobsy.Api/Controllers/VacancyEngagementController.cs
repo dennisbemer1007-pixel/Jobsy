@@ -206,6 +206,8 @@ public class VacancyEngagementController : ControllerBase
     private async Task<bool> IsPubliclyVisibleAsync(Guid vacancyId, CancellationToken cancellationToken)
     {
         var vacancy = await _db.Vacancies.AsNoTracking()
+            .Include(v => v.Company)
+            .Include(v => v.IntermediaryCompany)
             .FirstOrDefaultAsync(v => v.Id == vacancyId, cancellationToken);
         if (vacancy is null)
         {

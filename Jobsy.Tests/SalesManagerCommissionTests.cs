@@ -304,7 +304,11 @@ public class SalesManagerCommissionTests
             KvkEstablishmentId = "11112222_0001",
             Address = "A",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -436,7 +440,11 @@ public class SalesManagerCommissionTests
             KvkEstablishmentId = "55556666_0001",
             Address = "A",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -466,7 +474,11 @@ public class SalesManagerCommissionTests
             KvkEstablishmentId = "55556666_0002",
             Address = "B",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         Assert.False(await partners.ApplyReferralAsync(target, "BM-SELF23"));
         Assert.Null(target.ReferredByPartnerUserId);
@@ -675,7 +687,11 @@ public class SalesManagerCommissionTests
             Type = CompanyType.Employer,
             ReferredBySalesManagerUserId = smId,
             FirstYearSupplierSlot = slot,
-            FirstYearStartedAt = now
+            FirstYearStartedAt = now,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
         return (smId, companyId);
@@ -696,7 +712,11 @@ public class SalesManagerCommissionTests
             KvkEstablishmentId = "12345678_0001",
             Address = "Partnerstraat 1",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -731,7 +751,11 @@ public class SalesManagerCommissionTests
             PartnerReferredAtUtc = now,
             WelcomeTokenLedgerCredited = true,
             HasReceivedWelcomeToken = true,
-            FirstYearStartedAt = now
+            FirstYearStartedAt = now,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenTransactions.Add(new TokenTransaction
         {

@@ -592,17 +592,18 @@ public class VacanciesController : ControllerBase
         if (VacancyVisibilityRules.IsPubliclyVisible(vacancy, today))
         {
             var showWage = age is not null || await CanViewerSeeWageAsync(cancellationToken);
-            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage, age, cancellationToken));
+            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage, age, isPreview: false, cancellationToken));
         }
 
-        // Drafts / pending / archived: only for authenticated employers with company access (or admin).
+        // Drafts / pending / archived / unverified publisher: only for authenticated employers with company access (or admin).
         // Intermediaries may also access via IntermediaryCompanyId (end-client CompanyId alone is insufficient).
         if (User.Identity?.IsAuthenticated == true
             && (_companyAuth.IsAdmin(User) || _companyAuth.IsEmployer(User))
             && await CanManageVacancyAsync(vacancy, cancellationToken))
         {
-            // Employers always see wage on managed vacancies.
-            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage: true, age, cancellationToken));
+            // Employers always see wage on managed vacancies. Preview is noindex.
+            Response.Headers["X-Robots-Tag"] = "noindex";
+            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage: true, age, isPreview: true, cancellationToken));
         }
 
         return NotFound();
@@ -627,25 +628,19 @@ public class VacanciesController : ControllerBase
             return BadRequest();
         }
 
-        var row = await _db.Vacancies
+        var vacancy = await _db.Vacancies
             .AsNoTracking()
-            .Where(v => v.Id == id)
-            .Select(v => new
-            {
-                v.Status,
-                v.StartDate,
-                v.EndDate,
-                v.Location
-            })
-            .FirstOrDefaultAsync(cancellationToken);
+            .Include(v => v.Company)
+            .Include(v => v.IntermediaryCompany)
+            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 
-        if (row is null)
+        if (vacancy is null)
         {
             return NotFound();
         }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        if (!VacancyVisibilityRules.IsPubliclyVisible(row.Status, row.StartDate, row.EndDate, today))
+        if (!VacancyVisibilityRules.IsPubliclyVisible(vacancy, today))
         {
             return NotFound();
         }
@@ -653,8 +648,8 @@ public class VacanciesController : ControllerBase
         var (minutes, km) = await TryExactRouteAsync(
             originLat,
             originLng,
-            row.Location.Latitude,
-            row.Location.Longitude,
+            vacancy.Location.Latitude,
+            vacancy.Location.Longitude,
             transport,
             cancellationToken);
         return Ok(new VacancyTravelDto(minutes, km));
@@ -686,8 +681,16 @@ public class VacanciesController : ControllerBase
         }
 
         var vacancy = await _db.Vacancies.AsNoTracking()
+            .Include(v => v.Company)
+            .Include(v => v.IntermediaryCompany)
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
         if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (!VacancyVisibilityRules.IsPubliclyVisible(vacancy, today))
         {
             return NotFound();
         }
@@ -1680,6 +1683,7 @@ public class VacanciesController : ControllerBase
         string? transport,
         bool showWage,
         int? ageYears = null,
+        bool isPreview = false,
         CancellationToken cancellationToken = default)
     {
         var targetLanguage = await ResolveTargetLanguageAsync(cancellationToken);
@@ -1704,6 +1708,7 @@ public class VacanciesController : ControllerBase
             ageYears,
             travelMinutes: travelMinutes,
             distanceKm: distanceKm,
+            isPreview: isPreview,
             cancellationToken: cancellationToken);
 
         return await AttachCandidateMatchAsync(dto, vacancy, travelMinutes, cancellationToken);
@@ -1889,9 +1894,17 @@ public class VacanciesController : ControllerBase
         int? travelMinutes = null,
         double? distanceKm = null,
         bool includeDescription = true,
+        bool isPreview = false,
         CancellationToken cancellationToken = default)
     {
-        var dto = MapToDto(v, showWage, ageYears, travelMinutes, distanceKm, includeDescription: includeDescription);
+        var dto = MapToDto(
+            v,
+            showWage,
+            ageYears,
+            travelMinutes,
+            distanceKm,
+            includeDescription: includeDescription,
+            isPreview: isPreview);
         return await TranslateDtoAsync(dto, targetLanguage, cancellationToken);
     }
 
@@ -2039,7 +2052,8 @@ public class VacanciesController : ControllerBase
         int likeCount = 0,
         bool includeCategoryInternals = false,
         DateOnly? freePublishUntil = null,
-        string? moderationWarning = null)
+        string? moderationWarning = null,
+        bool isPreview = false)
     {
         decimal? hourly = null;
         IReadOnlyList<WageByAgeDto>? wageByAge = null;
@@ -2188,7 +2202,8 @@ public class VacanciesController : ControllerBase
             BarrierCertifications: barrier.Certs,
             BarrierMinExperienceYears: barrier.Years,
             BarrierMinExperienceHours: barrier.Hours,
-            BarrierHardChecks: barrier.HardChecks);
+            BarrierHardChecks: barrier.HardChecks,
+            IsPreview: isPreview);
     }
 
     private static (string? Kind, IReadOnlyList<string>? Diplomas, IReadOnlyList<string>? Certs, int? Years, int? Hours, IReadOnlyList<string>? HardChecks)

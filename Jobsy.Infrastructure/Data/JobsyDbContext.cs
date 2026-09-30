@@ -213,6 +213,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.Location).HasMethod("GIST");
             entity.HasIndex(e => e.KvkEstablishmentId).IsUnique();
             entity.HasIndex(e => e.KvkVerificationStatus);
+            entity.HasIndex(e => e.VerificationStatus);
             entity.HasOne(e => e.ParentCompany)
                 .WithMany(c => c.ChildCompanies)
                 .HasForeignKey(e => e.ParentCompanyId)

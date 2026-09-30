@@ -99,6 +99,8 @@ public class VacancyListItem
     public int? BarrierMinExperienceYears { get; set; }
     public int? BarrierMinExperienceHours { get; set; }
     public List<string> BarrierHardChecks { get; set; } = [];
+    /// <summary>Employer-only preview of a non-public vacancy (noindex, no JSON-LD).</summary>
+    public bool IsPreview { get; set; }
 }
 
 public sealed class WageByAgeItem

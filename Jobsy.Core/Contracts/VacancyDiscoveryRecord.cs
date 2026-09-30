@@ -64,4 +64,9 @@ public sealed record VacancyDiscoveryRecord(
     bool ContentModerationPassed,
     bool RequireEmailVerification,
     int? MinimumReferences = null,
-    IReadOnlyList<string>? CulturePillars = null);
+    IReadOnlyList<string>? CulturePillars = null,
+    /// <summary>
+    /// True when the vacancy company (and intermediary, if any) is Verified.
+    /// Set at index build; used by <see cref="Rules.PublicVisibility"/>.
+    /// </summary>
+    bool PublisherVerified = true);

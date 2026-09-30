@@ -275,7 +275,11 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
             Address = "Straat 1",
             Location = new GeoPoint(52.07, 4.30),
             ParentCompanyId = parentId,
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         db.Companies.Add(company);
         return company;

@@ -364,7 +364,11 @@ public sealed class AtsVacancyModerationService : IAtsVacancyModerationService
             KvkVerificationStatus = KvkVerificationStatus.Pending,
             Address = Truncate(listing.LocationLabel, 256) ?? listing.Source?.DefaultLocationLabel ?? "Nederland",
             Location = new GeoPoint(lat, lng),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         _db.Companies.Add(company);
         return company;

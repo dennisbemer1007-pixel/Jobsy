@@ -284,7 +284,11 @@ public class MollieWebhookCommissionSettlementTests
             CommissionIndirectRateSnapshot = SalesCommissionRules.DefaultIndirectCommissionRate,
             CommissionDurationDaysSnapshot = SalesCommissionRules.DefaultCommissionDurationDays,
             CommissionTermsSnapshottedAtUtc = firstYearStartedAt,
-            FirstYearStartedAt = firstYearStartedAt
+            FirstYearStartedAt = firstYearStartedAt,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
     }
 

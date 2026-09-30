@@ -215,7 +215,11 @@ public class PlatformRobustnessTests
             CommissionDirectRateSnapshot = 0.15m,
             CommissionIndirectRateSnapshot = 0.03m,
             CommissionDurationDaysSnapshot = 365,
-            CommissionTermsSnapshottedAtUtc = DateTime.UtcNow.AddMonths(-1)
+            CommissionTermsSnapshottedAtUtc = DateTime.UtcNow.AddMonths(-1),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -250,7 +254,11 @@ public class PlatformRobustnessTests
             Name = "Org",
             KvkNumber = "12345678",
             Address = "Straat",
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -293,8 +301,18 @@ public class PlatformRobustnessTests
         var b = Guid.NewGuid();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         db.Companies.AddRange(
-            new Company { Id = a, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(52, 4) },
-            new Company { Id = b, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52, 4) });
+            new Company { Id = a, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
+            new Company { Id = b, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
         db.Vacancies.AddRange(
             new Vacancy
             {

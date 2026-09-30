@@ -16,7 +16,12 @@ public class IntermediaryVacancyRulesTests
     [Fact]
     public void ValidateEndClientKvk_requires_kvk_and_establishment()
     {
-        var missing = new Company { Id = Guid.NewGuid(), Name = "X", Address = "a", Location = new GeoPoint(1, 2) };
+        var missing = new Company { Id = Guid.NewGuid(), Name = "X", Address = "a", Location = new GeoPoint(1, 2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        };
         Assert.Contains("KVK", IntermediaryVacancyRules.ValidateEndClientKvk(missing, true)!, StringComparison.OrdinalIgnoreCase);
 
         missing.KvkNumber = "12345678";
@@ -34,7 +39,11 @@ public class IntermediaryVacancyRulesTests
             Id = Guid.NewGuid(),
             Name = "Opdrachtgever BV",
             Address = "Klantstraat 1",
-            Location = new GeoPoint(52.1, 4.3)
+            Location = new GeoPoint(52.1, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         var intermediary = new Company
         {
@@ -42,7 +51,11 @@ public class IntermediaryVacancyRulesTests
             Name = "Uitzendbureau",
             Address = "Bureauweg 9",
             Location = new GeoPoint(52.0, 4.2),
-            Type = CompanyType.Intermediary
+            Type = CompanyType.Intermediary,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         var vacancy = new Vacancy
         {
@@ -74,7 +87,11 @@ public class IntermediaryVacancyRulesTests
             Id = Guid.NewGuid(),
             Name = "Opdrachtgever BV",
             Address = "Klantstraat 1",
-            Location = new GeoPoint(52.1, 4.3)
+            Location = new GeoPoint(52.1, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         var intermediary = new Company
         {
@@ -82,7 +99,11 @@ public class IntermediaryVacancyRulesTests
             Name = "Uitzendbureau",
             Address = "Bureauweg 9",
             Location = new GeoPoint(52.0, 4.2),
-            Type = CompanyType.Intermediary
+            Type = CompanyType.Intermediary,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         var vacancy = new Vacancy
         {
@@ -111,7 +132,11 @@ public class IntermediaryVacancyRulesTests
             Id = Guid.NewGuid(),
             Name = "Opdrachtgever BV",
             Address = "Klantstraat 1",
-            Location = new GeoPoint(52.1, 4.3)
+            Location = new GeoPoint(52.1, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         var intermediary = new Company
         {
@@ -119,7 +144,11 @@ public class IntermediaryVacancyRulesTests
             Name = "Uitzendbureau",
             Address = "Bureauweg 9",
             Location = new GeoPoint(52.0, 4.2),
-            Type = CompanyType.Intermediary
+            Type = CompanyType.Intermediary,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         var vacancy = new Vacancy
         {

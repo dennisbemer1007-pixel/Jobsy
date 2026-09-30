@@ -342,7 +342,11 @@ public class CoreFunctionalFlowE2ETests
             CommissionIndirectRateSnapshot = SalesCommissionRules.DefaultIndirectCommissionRate,
             CommissionDurationDaysSnapshot = SalesCommissionRules.DefaultCommissionDurationDays,
             CommissionTermsSnapshottedAtUtc = started,
-            FirstYearStartedAt = started
+            FirstYearStartedAt = started,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -393,7 +397,11 @@ public class CoreFunctionalFlowE2ETests
             KvkNumber = "66660001",
             Address = "Delft",
             Location = new GeoPoint(52.01, 4.36),
-            PreferredPaymentMethod = MolliePaymentMethods.CreditCard
+            PreferredPaymentMethod = MolliePaymentMethods.CreditCard,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var vacancy = await SeedDraftVacancyAsync(db, companyId, "Highlight me");
         vacancy.Status = VacancyStatus.Active;
