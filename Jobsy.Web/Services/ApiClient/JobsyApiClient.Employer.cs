@@ -49,6 +49,45 @@ public sealed partial class JobsyApiClient
                ?? new CompanyCultureState();
     }
 
+    public async Task<CompanyProfileExtras?> GetCompanyProfileExtrasAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CompanyProfileExtras>(
+                $"api/companies/{companyId}/profile-extras", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CompanyProfileExtras> SaveCompanyProfileExtrasAsync(
+        Guid companyId,
+        IReadOnlyList<string>? workTypeLabels = null,
+        IReadOnlyDictionary<string, int>? cultureSliders = null,
+        IReadOnlyList<string>? valueCardIds = null,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            workTypeLabels,
+            cultureSliders,
+            valueCardIds
+        };
+        var response = await _http.PutAsJsonAsync($"api/companies/{companyId}/profile-extras", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Profiel opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanyProfileExtras>(cancellationToken: ct)
+               ?? new CompanyProfileExtras();
+    }
+
     public async Task<IReadOnlyList<MetricCount>> GetMyMetricsSummaryAsync(string period = "week", CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<MetricCount>>($"api/me/metrics/summary?period={Uri.EscapeDataString(period)}", ct) ?? [];
 

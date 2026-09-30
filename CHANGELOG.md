@@ -1,6 +1,7 @@
 # Changelog: Jobsy
 ## Unreleased
 
+- Over je bedrijf (08): company branches (max 4, SBI prefill), Zo werken wij sliders → Cultuurscan answers (`Source=Quick`), 3 kernwaarden → `CompanyValuesProfile` in Match; vacancy inherits with per-team pillar override; `/register/bedrijf` + `api/companies/{id}/profile-extras`.
 - Access requests (07): `/register/toegang`, BM inbox + day-3 reminder / day-5 admin escalation, ownership transfer = letter + admin, claim unmanaged (intermediary-only) companies, intermediaries keep client link on takeover/claim. Dependencies G still ABSENT.
 - Employer verification (06): business e-mail domain match or Pingen/stub letter code, manual check + admin queue `/admin/werkgeververificatie`, FreeMailDomains blocklist.
 - Employer registration wizard (search → vestigingen → account + code) with WA theme fallback, referral resolver, geocode-safe manual entry, Microsoft/Google sign-up, and §B review fixes.

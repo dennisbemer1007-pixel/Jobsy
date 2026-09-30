@@ -18,11 +18,11 @@ public sealed class CompanyCultureLookup : ICompanyCultureLookup
         _cache = cache;
     }
 
-    public async Task<IReadOnlyDictionary<Guid, CulturePersonalityScores>> GetForCompaniesAsync(
+    public async Task<IReadOnlyDictionary<Guid, CompanyCultureLookupResult>> GetForCompaniesAsync(
         IReadOnlyCollection<Guid> companyIds,
         CancellationToken cancellationToken = default)
     {
-        var result = new Dictionary<Guid, CulturePersonalityScores>();
+        var result = new Dictionary<Guid, CompanyCultureLookupResult>();
         if (companyIds.Count == 0)
         {
             return result;
@@ -32,9 +32,9 @@ public sealed class CompanyCultureLookup : ICompanyCultureLookup
         var missing = new List<Guid>(distinct.Count);
         foreach (var id in distinct)
         {
-            if (_cache.TryGetValue(CompanyCultureCacheKeys.ForCompany(id), out CulturePersonalityScores? cached))
+            if (_cache.TryGetValue(CompanyCultureCacheKeys.ForCompany(id), out CompanyCultureLookupResult? cached))
             {
-                if (cached is not null)
+                if (cached is not null && (cached.Culture is not null || cached.Values is not null))
                 {
                     result[id] = cached;
                 }
@@ -50,7 +50,6 @@ public sealed class CompanyCultureLookup : ICompanyCultureLookup
             return result;
         }
 
-        // One query for the requested companies (parent ids), one for all relevant profiles.
         var parents = await _db.Companies.AsNoTracking()
             .Where(c => missing.Contains(c.Id))
             .Select(c => new { c.Id, c.ParentCompanyId })
@@ -64,40 +63,63 @@ public sealed class CompanyCultureLookup : ICompanyCultureLookup
             .ToList();
         var profileIds = missing.Concat(parentIds).Distinct().ToList();
 
-        var rows = await _db.CompanyCultureProfiles.AsNoTracking()
+        var cultureRows = await _db.CompanyCultureProfiles.AsNoTracking()
             .Where(p => profileIds.Contains(p.CompanyId)
                         && p.Status == CandidateCompetencyStatuses.Completed)
             .ToListAsync(cancellationToken);
 
-        var scoresByCompany = new Dictionary<Guid, CulturePersonalityScores>();
-        foreach (var row in rows)
+        var valuesRows = await _db.CompanyValuesProfiles.AsNoTracking()
+            .Where(p => profileIds.Contains(p.CompanyId))
+            .ToListAsync(cancellationToken);
+
+        var cultureByCompany = new Dictionary<Guid, CulturePersonalityScores>();
+        foreach (var row in cultureRows)
         {
-            var scores = ToScores(row);
+            var scores = ToCultureScores(row);
             if (scores is null)
             {
                 continue;
             }
 
-            scoresByCompany[row.CompanyId] = scores;
-            _cache.Set(CompanyCultureCacheKeys.ForCompany(row.CompanyId), scores, CompanyCultureCacheKeys.Ttl);
+            cultureByCompany[row.CompanyId] = scores;
+        }
+
+        var valuesByCompany = new Dictionary<Guid, SchwartzValuesScores>();
+        foreach (var row in valuesRows)
+        {
+            valuesByCompany[row.CompanyId] = CompanyValueCards.ToScores(row);
         }
 
         foreach (var id in missing)
         {
-            CulturePersonalityScores? resolved = null;
-            if (scoresByCompany.TryGetValue(id, out var own))
+            CulturePersonalityScores? culture = null;
+            SchwartzValuesScores? values = null;
+
+            if (cultureByCompany.TryGetValue(id, out var ownCulture))
             {
-                resolved = own;
+                culture = ownCulture;
             }
             else if (parentByChild.TryGetValue(id, out var parentId)
                      && parentId is Guid pid
-                     && scoresByCompany.TryGetValue(pid, out var parent))
+                     && cultureByCompany.TryGetValue(pid, out var parentCulture))
             {
-                resolved = parent;
+                culture = parentCulture;
             }
 
+            if (valuesByCompany.TryGetValue(id, out var ownValues))
+            {
+                values = ownValues;
+            }
+            else if (parentByChild.TryGetValue(id, out var parentId2)
+                     && parentId2 is Guid pid2
+                     && valuesByCompany.TryGetValue(pid2, out var parentValues))
+            {
+                values = parentValues;
+            }
+
+            var resolved = new CompanyCultureLookupResult(culture, values);
             _cache.Set(CompanyCultureCacheKeys.ForCompany(id), resolved, CompanyCultureCacheKeys.Ttl);
-            if (resolved is not null)
+            if (culture is not null || values is not null)
             {
                 result[id] = resolved;
             }
@@ -106,7 +128,7 @@ public sealed class CompanyCultureLookup : ICompanyCultureLookup
         return result;
     }
 
-    private static CulturePersonalityScores? ToScores(CompanyCultureProfile row)
+    private static CulturePersonalityScores? ToCultureScores(CompanyCultureProfile row)
     {
         var scores = new CulturePersonalityScores(
             row.AutonomyPercent,

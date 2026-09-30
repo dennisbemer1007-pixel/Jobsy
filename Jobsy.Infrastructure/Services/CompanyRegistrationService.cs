@@ -1028,6 +1028,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             ApplyKvkVerificationState(org, registration);
+            await PrefillWorkTypesFromSbiAsync(org, registration, kvkCompany?.EffectiveSbiCodes, cancellationToken);
             _db.Companies.Add(org);
             orgId = org.Id;
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, org.Id, cancellationToken);
@@ -1075,6 +1076,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             ApplyKvkVerificationState(branch, registration);
+            await PrefillWorkTypesFromSbiAsync(branch, registration, sbiCodes: null, cancellationToken);
             _db.Companies.Add(branch);
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, branch.Id, cancellationToken);
         }
@@ -2088,6 +2090,46 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         company.LocationSource = ResolveLocationSource(registration);
+    }
+
+    /// <summary>
+    /// Prefills company branches from KVK SBI codes when empty (D12). Stored on the root organisation.
+    /// </summary>
+    private async Task PrefillWorkTypesFromSbiAsync(
+        Company root,
+        CompanyRegistration registration,
+        IReadOnlyList<string>? sbiCodes,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(root.WorkTypeLabels))
+        {
+            return;
+        }
+
+        var codes = sbiCodes;
+        if (codes is null || codes.Count == 0)
+        {
+            try
+            {
+                var kvk = await _kvk.GetByKvkNumberAsync(registration.KvkNumber, cancellationToken);
+                codes = kvk?.EffectiveSbiCodes;
+            }
+            catch
+            {
+                codes = null;
+            }
+        }
+
+        if ((codes is null || codes.Count == 0) && !string.IsNullOrWhiteSpace(registration.PrimarySbiCode))
+        {
+            codes = [registration.PrimarySbiCode!];
+        }
+
+        var labels = SbiWorkTypeMap.Map(codes);
+        if (labels.Count > 0)
+        {
+            root.WorkTypeLabels = WorkTypeLabels.CombineStoredForCompany(labels);
+        }
     }
 
     private static CompanyLocationSource ResolveLocationSource(CompanyRegistration registration)

@@ -35,6 +35,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateCulturePersonalityProfile> CandidateCulturePersonalityProfiles => Set<CandidateCulturePersonalityProfile>();
     public DbSet<CandidateValuesProfile> CandidateValuesProfiles => Set<CandidateValuesProfile>();
     public DbSet<CompanyCultureProfile> CompanyCultureProfiles => Set<CompanyCultureProfile>();
+    public DbSet<CompanyValuesProfile> CompanyValuesProfiles => Set<CompanyValuesProfile>();
     public DbSet<CandidateWhoAmIProfile> CandidateWhoAmIProfiles => Set<CandidateWhoAmIProfile>();
     public DbSet<CandidateCareerPlan> CandidateCareerPlans => Set<CandidateCareerPlan>();
     public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
@@ -206,6 +207,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.KvkEstablishmentId).HasMaxLength(40);
             entity.Property(e => e.Address).HasMaxLength(512).IsRequired();
             entity.Property(e => e.LogoUrl).HasMaxLength(1024);
+            entity.Property(e => e.WorkTypeLabels).HasMaxLength(512);
             entity.Property(e => e.ContactEmail).HasMaxLength(256);
             entity.Property(e => e.ContactPhone).HasMaxLength(64);
             entity.Property(e => e.ContactWhatsApp).HasMaxLength(64);
@@ -604,7 +606,20 @@ public class JobsyDbContext : DbContext
             entity.ToTable("CompanyCultureProfiles");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.Source).HasMaxLength(16).IsRequired().HasDefaultValue(CompanyCultureSources.Full);
             entity.Property(e => e.AnswersJson).HasMaxLength(4000).IsRequired();
+            entity.HasIndex(e => e.CompanyId).IsUnique();
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CompanyValuesProfile>(entity =>
+        {
+            entity.ToTable("CompanyValuesProfiles");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CardIdsJson).HasMaxLength(512).IsRequired();
             entity.HasIndex(e => e.CompanyId).IsUnique();
             entity.HasOne(e => e.Company)
                 .WithMany()

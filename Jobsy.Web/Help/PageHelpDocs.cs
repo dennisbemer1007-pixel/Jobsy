@@ -110,6 +110,12 @@ public static class PageHelpDocs
             "Bevestig je e-mail; de bedrijfsmanager beslist. Na 5 werkdagen kijkt Lobsy-support mee.",
             "Samenwerken in één bedrijfsaccount zonder tweede eigenaar te worden."),
 
+        ["/register/bedrijf"] = new(
+            "Over je bedrijf",
+            "Optioneel: branches, Zo werken wij (cultuurschuifjes) en kernwaarden.",
+            "Alles is optioneel (± 3 minuten). Overslaan brengt je naar verifiëren.",
+            "Zelfde taal als Cultuurscan en Waardentest zodat Match beter werkt."),
+
         ["/admin/werkgeververificatie"] = new(
             "Werkgeververificatie",
             "Admin-wachtrij voor handmatige controles, gemarkeerde registraties, geblokkeerde brieven en geëscaleerde toegangsverzoeken.",

@@ -269,6 +269,7 @@ public sealed class CompanyCultureService : ICompanyCultureService
         if (complete && preview is not null)
         {
             row.Status = CandidateCompetencyStatuses.Completed;
+            row.Source = CompanyCultureSources.Full;
             row.AutonomyPercent = preview.Autonomy;
             row.InformalPercent = preview.Informal;
             row.CollaborationPercent = preview.Collaboration;
@@ -353,7 +354,8 @@ public sealed class CompanyCultureService : ICompanyCultureService
                 CandidateCompetencyStatuses.Draft,
                 new Dictionary<int, int>(),
                 null,
-                null);
+                null,
+                CompanyCultureSources.Full);
         }
 
         var scores = new CulturePersonalityScores(
@@ -373,6 +375,7 @@ public sealed class CompanyCultureService : ICompanyCultureService
             row.Status,
             CulturePersonalityCatalog.ParseAnswers(row.AnswersJson),
             row.Status == CandidateCompetencyStatuses.Completed ? scores : null,
-            row.CompletedAtUtc);
+            row.CompletedAtUtc,
+            row.Source);
     }
 }

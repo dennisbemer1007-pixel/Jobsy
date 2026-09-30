@@ -414,22 +414,72 @@
                 </div>
             </fieldset>
             <fieldset class="profile-roles vacancy-culture">
-                <legend>@Culture["Employer.Culture.Legend"]</legend>
-                <p class="muted vacancy-field-hint">@Culture["Employer.Culture.Hint"]</p>
-                <div class="profile-min-employers__options" role="group" aria-label="@Culture["Employer.Culture.Legend"]">
-                    @foreach (var pillar in CulturePillarCatalog.All)
-                    {
-                        <label>
-                            <input type="checkbox"
-                                   checked="@_selectedCulturePillars.Contains(pillar.Id)"
-                                   @onchange="e => ToggleCulturePillar(pillar.Id, e)" />
-                            @Culture[pillar.LabelKey]
-                        </label>
-                    }
-                </div>
-                @if (_cultureError)
+                <legend>@Culture["WaProfile.Vacancy.Section"]</legend>
+                @if (_companyCultureSummary is null && !_teamOverride)
                 {
-                    <p class="state-message error">@Culture["Employer.Culture.Error"]</p>
+                    <p class="muted vacancy-field-hint">
+                        @Culture["WaProfile.Vacancy.NoProfile"]
+                        <a href="/register/bedrijf?stap=cultuur">@Culture["WaProfile.Vacancy.EditLink"]</a>
+                    </p>
+                }
+                else if (!_teamOverride)
+                {
+                    <label class="vacancy-toggle-row">
+                        <input type="checkbox" checked="@(!_teamOverride)" @onchange="e => SetTeamOverride(!(e.Value as bool? ?? false))" />
+                        <span>
+                            <strong>@string.Format(Culture["WaProfile.Vacancy.InheritTitle"], _companyCultureName)</strong>
+                            <span class="muted">@Culture["WaProfile.Vacancy.InheritHint"]</span>
+                        </span>
+                    </label>
+                    @if (_companyCultureSummary is not null)
+                    {
+                        <div class="wa-prof vacancy-culture__summary" aria-label="@Culture["WaProfile.Cultuur.ProfileTitle"]">
+                            @foreach (var (label, pct) in _companyCultureSummary)
+                            {
+                                <div><b>@pct%</b>@label</div>
+                            }
+                        </div>
+                        @if (_companyValueLabels.Count > 0)
+                        {
+                            <div class="wa-toprow wa-toprow--gap">
+                                @foreach (var v in _companyValueLabels)
+                                {
+                                    <span class="wa-pill">@v</span>
+                                }
+                                <a class="wa-link" href="/employer/culture">@Culture["WaProfile.Vacancy.EditLink"]</a>
+                            </div>
+                        }
+                    }
+                    <button type="button" class="btn ghost" @onclick="() => SetTeamOverride(true)">
+                        @Culture["WaProfile.Vacancy.Override"]
+                        <span class="pill">@Culture["WaProfile.Vacancy.Optional"]</span>
+                    </button>
+                }
+                else
+                {
+                    <label class="vacancy-toggle-row">
+                        <input type="checkbox" checked="@_teamOverride" @onchange="e => SetTeamOverride(e.Value as bool? ?? false)" />
+                        <span>
+                            <strong>@Culture["WaProfile.Vacancy.Override"]</strong>
+                            <span class="muted">@Culture["WaProfile.Vacancy.OverrideHint"]</span>
+                        </span>
+                    </label>
+                    <p class="muted vacancy-field-hint">@Culture["Employer.Culture.Hint"]</p>
+                    <div class="profile-min-employers__options" role="group" aria-label="@Culture["Employer.Culture.Legend"]">
+                        @foreach (var pillar in CulturePillarCatalog.All)
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@_selectedCulturePillars.Contains(pillar.Id)"
+                                       @onchange="e => ToggleCulturePillar(pillar.Id, e)" />
+                                @Culture[pillar.LabelKey]
+                            </label>
+                        }
+                    </div>
+                    @if (_cultureError)
+                    {
+                        <p class="state-message error">@Culture["Employer.Culture.Error"]</p>
+                    }
                 }
             </fieldset>
 
@@ -762,6 +812,10 @@
     private int? _barrierHours;
     private HashSet<string> _selectedCulturePillars = new(StringComparer.OrdinalIgnoreCase);
     private bool _cultureError;
+    private bool _teamOverride;
+    private string _companyCultureName = "";
+    private List<(string Label, int Percent)>? _companyCultureSummary;
+    private List<string> _companyValueLabels = [];
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
     private List<string> _educationOptions = EducationLevelLabels.VacancyAll.ToList();
@@ -943,8 +997,89 @@
         {
             await PrefillFromAsync(sourceId, duplicate: true);
         }
+        else
+        {
+            await LoadCompanyCultureAsync();
+            await PrefillDefaultBranchAsync();
+        }
 
         await LoadSalaryTablesAsync();
+    }
+
+    private async Task PrefillDefaultBranchAsync()
+    {
+        if (_selectedWorkTypes.Count > 0 || _companyId == Guid.Empty)
+        {
+            return;
+        }
+
+        try
+        {
+            var extras = await Api.GetCompanyProfileExtrasAsync(_companyId);
+            var first = extras?.WorkTypeLabels?.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(first))
+            {
+                _selectedWorkTypes.Add(first);
+            }
+        }
+        catch
+        {
+            // Optional prefill — vacancy create still requires an explicit choice if empty.
+        }
+    }
+
+    private async Task LoadCompanyCultureAsync()
+    {
+        _companyCultureSummary = null;
+        _companyValueLabels = [];
+        var company = _companies.FirstOrDefault(c => c.Id == _companyId);
+        _companyCultureName = company?.Name ?? "";
+        if (_companyId == Guid.Empty)
+        {
+            return;
+        }
+
+        try
+        {
+            var extras = await Api.GetCompanyProfileExtrasAsync(_companyId);
+            if (extras?.CultureScores is { } scores
+                && scores.Autonomy is int a)
+            {
+                _companyCultureSummary =
+                [
+                    ("Zelfstandig", scores.Autonomy ?? 0),
+                    ("Informeel", scores.Informal ?? 0),
+                    ("Samenwerken", scores.Collaboration ?? 0),
+                    ("Flexibel", scores.Flexibility ?? 0),
+                    ("Vernieuwend", scores.Innovation ?? 0),
+                    ("Mensen voorop", scores.PeopleFirst ?? 0)
+                ];
+            }
+
+            if (extras?.ValueCardIds is { Count: > 0 } cards)
+            {
+                _companyValueLabels = cards
+                    .Select(id => CompanyValueCards.TryGet(id, out var c) ? DimensionLabels.For(c.DriverCode) : null)
+                    .Where(x => x is not null)
+                    .Cast<string>()
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+        }
+        catch
+        {
+            // Inherit UI falls back to the empty-profile message.
+        }
+    }
+
+    private void SetTeamOverride(bool enabled)
+    {
+        _teamOverride = enabled;
+        if (!enabled)
+        {
+            _selectedCulturePillars.Clear();
+            _cultureError = false;
+        }
     }
 
     private async Task OnClientSearchSelectedAsync(KvkSearchHitItem hit)
@@ -1219,6 +1354,8 @@
                 : null;
             _selectedCulturePillars = CulturePillarCatalog.Normalize(source.CulturePillars)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            _teamOverride = CulturePillarCatalog.HasProfile(_selectedCulturePillars);
+            await LoadCompanyCultureAsync();
             _barrierHigh = string.Equals(source.BarrierKind, "High", StringComparison.OrdinalIgnoreCase);
             _barrierDiplomas = string.Join(Environment.NewLine, source.BarrierDiplomas ?? []);
             _barrierCerts.Clear();
@@ -1718,11 +1855,16 @@
             return;
         }
 
-        if (!CulturePillarCatalog.HasProfile(_selectedCulturePillars))
+        if (_teamOverride && !CulturePillarCatalog.HasProfile(_selectedCulturePillars))
         {
             _cultureError = true;
             _message = Culture["Employer.Culture.Error"];
             return;
+        }
+
+        if (!_teamOverride)
+        {
+            _selectedCulturePillars.Clear();
         }
 
         _saving = true;

@@ -299,5 +299,82 @@ internal static class UiStringsWerkgeverAanmelding
         Add("Employer.Access.Grant", "Toegang geven", "Grant access", "Przyznaj dostęp", "Acordă acces", "منح الوصول");
         Add("Employer.Access.Reject", "Afwijzen", "Reject", "Odrzuć", "Respinge", "رفض");
         Add("Employer.Access.Empty", "Geen openstaande toegangsverzoeken.", "No open access requests.", "Brak otwartych próśb o dostęp.", "Nicio cerere de acces deschisă.", "لا توجد طلبات وصول مفتوحة.");
+
+        // Step 4 — Over je bedrijf (WaProfile.*)
+        Add("WaProfile.Eyebrow.Branche", "Stap 4 · Over je bedrijf · 1 van 3", "Step 4 · About your company · 1 of 3", "Krok 4 · O firmie · 1 z 3", "Pasul 4 · Despre firmă · 1 din 3", "الخطوة 4 · عن شركتك · 1 من 3");
+        Add("WaProfile.Eyebrow.Cultuur", "Stap 4 · Over je bedrijf · 2 van 3", "Step 4 · About your company · 2 of 3", "Krok 4 · O firmie · 2 z 3", "Pasul 4 · Despre firmă · 2 din 3", "الخطوة 4 · عن شركتك · 2 من 3");
+        Add("WaProfile.Eyebrow.Betrokkenheid", "Stap 4 · Over je bedrijf · 3 van 3", "Step 4 · About your company · 3 of 3", "Krok 4 · O firmie · 3 z 3", "Pasul 4 · Despre firmă · 3 din 3", "الخطوة 4 · عن شركتك · 3 من 3");
+        Add("WaProfile.Optional", "optioneel", "optional", "opcjonalne", "opțional", "اختياري");
+        Add("WaProfile.OptionalMinute", "optioneel · 1 minuut", "optional · 1 minute", "opcjonalne · 1 min", "opțional · 1 min", "اختياري · دقيقة");
+        Add("WaProfile.Mini.Branche", "Branche", "Industry", "Branża", "Industrie", "القطاع");
+        Add("WaProfile.Mini.Cultuur", "Zo werken wij", "How we work", "Jak pracujemy", "Cum lucrăm", "كيف نعمل");
+        Add("WaProfile.Mini.Betrokkenheid", "Betrokkenheid", "Engagement", "Zaangażowanie", "Implicare", "المشاركة");
+        Add("WaProfile.Mini.Hint", "≈ 3 minuten, alles optioneel", "≈ 3 minutes, all optional", "≈ 3 min, wszystko opcjonalne", "≈ 3 min, tot opțional", "≈ 3 دقائق، كله اختياري");
+        Add("WaProfile.Skip", "Later invullen", "Fill in later", "Uzupełnij później", "Completează mai târziu", "أكمل لاحقاً");
+        Add("WaProfile.Next", "Verder →", "Next →", "Dalej →", "Mai departe →", "التالي →");
+        Add("WaProfile.SaveNext", "Opslaan en verder", "Save and continue", "Zapisz i dalej", "Salvează și continuă", "احفظ وتابع");
+        Add("WaProfile.Speech.Branche", "Wat doen jullie? Dit heb ik bij KVK gevonden. Klopt het? Tik gerust meer aan.", "What do you do? I found this at KVK. Does it look right? Tap more if you like.", "Czym się zajmujecie? Znalazłem to w KVK. Pasuje? Dodaj więcej.", "Ce faceți? Am găsit asta la KVK. E corect? Adaugă mai multe.", "ماذا تفعلون؟ وجدت هذا في KVK. هل صحيح؟ اختر المزيد.");
+        Add("WaProfile.Speech.Cultuur", "Kandidaten doen dezelfde test. Hoe eerlijker jij kiest, hoe beter de match.", "Candidates take the same test. The more honest you are, the better the match.", "Kandydaci robią ten sam test. Im szczerzej, tym lepszy match.", "Candidații fac același test. Cu cât ești mai sincer, cu atât match-ul e mai bun.", "المرشحون يؤدون نفس الاختبار. كلّما كنت أصدق تحسّن التطابق.");
+        Add("WaProfile.Speech.Betrokkenheid", "Maak niets mooier dan het is. Wat wij niet kunnen controleren, noemen we ‘door werkgever opgegeven’.", "Don't overstate. What we can't verify, we label ‘provided by employer’.", "Nie upiększaj. Czego nie sprawdzimy, oznaczymy ‘podane przez pracodawcę’.", "Nu înfrumuseța. Ce nu verificăm e ‘declarat de angajator’.", "لا تبالغ. ما لا نتحقق منه نسميه ‘مقدّم من صاحب العمل’.");
+
+        Add("WaProfile.Branche.Title", "In welke branche werken jullie?", "Which industries do you work in?", "W jakiej branży pracujecie?", "În ce industrie lucrați?", "في أي قطاع تعملون؟");
+        Add("WaProfile.Branche.Lead", "Kies alles wat past. We hebben alvast ingevuld wat bij KVK staat. Kandidaten vinden je zo op de banenkaart en in Match.", "Choose everything that fits. We prefilled what KVK lists. Candidates find you on the job map and in Match.", "Wybierz co pasuje. Wypełniliśmy dane z KVK. Kandydaci znajdą cię na mapie i w Match.", "Alege ce se potrivește. Am completat din KVK. Candidații te găsesc pe hartă și în Match.", "اختر كل ما يناسب. عبّأنا ما لدى KVK. يجدك المرشحون على الخريطة وفي Match.");
+        Add("WaProfile.Branche.FromKvk", "Uit KvK", "From KvK", "Z KvK", "Din KvK", "من KvK");
+        Add("WaProfile.Branche.Suggested", "voorgesteld op basis van je KvK-inschrijving", "suggested from your KvK registration", "zaproponowane z rejestracji KvK", "sugerat din înregistrarea KvK", "مقترح من تسجيل KvK");
+        Add("WaProfile.Branche.Count", "{0} gekozen · max. {1}", "{0} selected · max. {1}", "{0} wybrano · max. {1}", "{0} alese · max. {1}", "{0} مختارة · حد أقصى {1}");
+        Add("WaProfile.Branche.HintTitle", "Per vacature kies je er straks 1 of 2", "Per vacancy you will choose 1 or 2 later", "Przy ofercie wybierzesz 1 lub 2", "La fiecare ofertă alegi 1 sau 2", "لكل وظيفة تختار 1 أو 2 لاحقاً");
+        Add("WaProfile.Branche.HintBody", "Het bedrijf mag meerdere branches hebben. Een vacature krijgt automatisch de eerste; je kunt dat per vacature aanpassen.", "The company may have several industries. A vacancy gets the first one automatically; you can change that per vacancy.", "Firma może mieć kilka branż. Oferta dostaje pierwszą automatycznie; możesz zmienić.", "Firma poate avea mai multe industrii. Oferta primește prima automat; poți schimba.", "يمكن للشركة أن تملك عدة قطاعات. تحصل الوظيفة تلقائياً على الأول؛ يمكنك التعديل.");
+        Add("WaProfile.Branche.SbiLine", "Uit het Handelsregister:", "From the Trade Register:", "Z rejestru:", "Din registru:", "من السجل التجاري:");
+
+        Add("WaProfile.Cultuur.Title", "Zo werken wij", "How we work", "Jak pracujemy", "Cum lucrăm", "كيف نعمل");
+        Add("WaProfile.Cultuur.Lead", "Zet de bolletjes waar jullie écht staan, niet waar je graag zou willen staan. Kandidaten met dezelfde voorkeuren komen dan hoger in je lijst.", "Set the dots where you really are, not where you'd like to be. Candidates with the same preferences rank higher.", "Ustaw kropki tam, gdzie naprawdę jesteście. Kandydaci z tymi samymi preferencjami będą wyżej.", "Pune punctele unde sunteți cu adevărat. Candidații cu aceleași preferințe urcă.", "ضع النقاط حيث أنتم فعلاً، لا حيث تودّون. المرشحون بنفس التفضيلات يرتفعون.");
+        Add("WaProfile.Cultuur.SlidersTitle", "Hoe gaat het bij jullie?", "How does it work at yours?", "Jak u was wygląda?", "Cum e la voi?", "كيف يسير الأمر لديكم؟");
+        Add("WaProfile.Cultuur.CardsTitle", "Kies 3 kernwaarden", "Choose 3 core values", "Wybierz 3 wartości", "Alege 3 valori", "اختر 3 قيم أساسية");
+        Add("WaProfile.Cultuur.CardsLead", "Wat vinden jullie het belangrijkst? Elke kaart hoort bij een van de 5 werkwaarden uit de Waardentest.", "What matters most? Each card maps to one of the 5 workplace values from the Values test.", "Co jest najważniejsze? Każda karta należy do 5 wartości z testu.", "Ce contează cel mai mult? Fiecare card e una din 5 valori.", "ما الأهم لديكم؟ كل بطاقة ترتبط بإحدى قيم العمل الخمس.");
+        Add("WaProfile.Cultuur.CardsCount", "{0} van {1}", "{0} of {1}", "{0} z {1}", "{0} din {1}", "{0} من {1}");
+        Add("WaProfile.Cultuur.ProfileTitle", "Jullie cultuurprofiel", "Your culture profile", "Wasz profil kultury", "Profilul vostru cultural", "ملف ثقافتكم");
+        Add("WaProfile.Cultuur.ProfileLead", "Dezelfde 6 dimensies als de Cultuurscan van kandidaten, plus je top-3 waarden.", "The same 6 dimensions as the candidate Culture scan, plus your top-3 values.", "Te same 6 wymiary co skan kultury, plus top-3 wartości.", "Aceleași 6 dimensiuni ca scanarea culturală, plus top-3.", "نفس الأبعاد الستة لاختبار الثقافة، إضافة إلى أهم 3 قيم.");
+        Add("WaProfile.Cultuur.FullHint", "De volledige Cultuurscan (12 vragen) staat later in je dashboard.", "The full Culture scan (12 questions) is later in your dashboard.", "Pełny skan kultury (12 pytań) będzie w panelu.", "Scanarea completă (12 întrebări) e în tablou.", "اختبار الثقافة الكامل (12 سؤالاً) لاحقاً في لوحتك.");
+        Add("WaProfile.Cultuur.Live", "live", "live", "na żywo", "live", "مباشر");
+        Add("WaProfile.Cultuur.QuickBanner", "Ingevuld via snelle schuifjes, verfijn met de volledige scan", "Filled via quick sliders — refine with the full scan", "Wypełnione suwakami — doprecyzuj pełnym skanem", "Completat cu glisoare — rafinează cu scanarea completă", "عُبئ عبر المنزلقات السريعة — حسّنه بالاختبار الكامل");
+        Add("WaProfile.Cultuur.ShowMore", "+ 2 vragen", "+ 2 questions", "+ 2 pytania", "+ 2 întrebări", "+ سؤالان");
+
+        Add("WaProfile.Slider.Autonomy.Low", "Duidelijke kaders", "Clear frameworks", "Jasne ramy", "Cadre clare", "أطر واضحة");
+        Add("WaProfile.Slider.Autonomy.High", "Zelfstandig werken", "Working independently", "Samodzielna praca", "Lucru independent", "عمل مستقل");
+        Add("WaProfile.Slider.Informal.Low", "Formeel", "Formal", "Formalnie", "Formal", "رسمي");
+        Add("WaProfile.Slider.Informal.High", "Informeel", "Informal", "Nieformalnie", "Informal", "غير رسمي");
+        Add("WaProfile.Slider.Collaboration.Low", "Ieder z’n eigen taken", "Everyone their own tasks", "Każdy swoje zadania", "Fiecare cu sarcinile lui", "كلٌّ بمهامه");
+        Add("WaProfile.Slider.Collaboration.High", "Veel samenwerken", "Lots of collaboration", "Dużo współpracy", "Multă colaborare", "تعاون كثير");
+        Add("WaProfile.Slider.Flexibility.Low", "Vaste structuur", "Fixed structure", "Stała struktura", "Structură fixă", "هيكل ثابت");
+        Add("WaProfile.Slider.Flexibility.High", "Flexibel meebewegen", "Moving flexibly", "Elastyczne dostosowanie", "Flexibilitate", "مرونة في التكيّف");
+        Add("WaProfile.Slider.Innovation.Low", "Beproefd en stabiel", "Proven and stable", "Sprawdzone i stabilne", "Probat și stabil", "مجرّب ومستقر");
+        Add("WaProfile.Slider.Innovation.High", "Nieuwe dingen proberen", "Trying new things", "Próbowanie nowego", "Încercăm lucruri noi", "تجربة أشياء جديدة");
+        Add("WaProfile.Slider.PeopleFirst.Low", "Resultaat voorop", "Results first", "Wynik na pierwszym miejscu", "Rezultatul întâi", "النتيجة أولاً");
+        Add("WaProfile.Slider.PeopleFirst.High", "Mensen voorop", "People first", "Ludzie na pierwszym miejscu", "Oamenii întâi", "الناس أولاً");
+
+        Add("WaProfile.Card.vrijheid", "Vrijheid in hoe je je werk doet", "Freedom in how you do your work", "Wolność w sposobie pracy", "Libertate în cum lucrezi", "حرية في كيفية أداء عملك");
+        Add("WaProfile.Card.uitdaging", "Elke dag iets nieuws leren", "Learn something new every day", "Codziennie uczyć się nowego", "Înveți ceva nou zilnic", "تعلّم شيئاً جديداً كل يوم");
+        Add("WaProfile.Card.teamgevoel", "Een hecht team", "A close-knit team", "Zgrany zespół", "O echipă unită", "فريق متماسك");
+        Add("WaProfile.Card.zorg", "We zorgen voor elkaar en onze klanten", "We care for each other and our customers", "Dbamy o siebie i klientów", "Avem grijă unii de alții și de clienți", "نعتني ببعضنا وبعملائنا");
+        Add("WaProfile.Card.groei", "Doorgroeien en beter worden", "Grow and get better", "Rozwijać się i być lepszym", "Crești și te îmbunătățești", "التطوّر والتحسّن");
+        Add("WaProfile.Card.resultaat", "Samen resultaat halen", "Achieve results together", "Wspólnie osiągać wyniki", "Obținem rezultate împreună", "تحقيق النتائج معاً");
+        Add("WaProfile.Card.zekerheid", "Vaste afspraken en zekerheid", "Clear agreements and security", "Stałe ustalenia i pewność", "Acorduri clare și siguranță", "اتفاقيات ثابتة وأمان");
+        Add("WaProfile.Card.vakmanschap", "Degelijk vakmanschap", "Solid craftsmanship", "Solidne rzemiosło", "Meșteșug solid", "حرفية متينة");
+        Add("WaProfile.Card.betekenis", "Werk dat ertoe doet", "Work that matters", "Praca, która ma znaczenie", "Muncă ce contează", "عمل له معنى");
+        Add("WaProfile.Card.eerlijk", "Eerlijk en duurzaam ondernemen", "Fair and sustainable business", "Uczciwy i zrównoważony biznes", "Afaceri corecte și durabile", "أعمال عادلة ومستدامة");
+
+        Add("WaProfile.Engage.Coming", "Volgt", "Coming soon", "Wkrótce", "În curând", "قريباً");
+        Add("WaProfile.Engage.Title", "Waar staan jullie voor?", "What do you stand for?", "Za czym stoicie?", "Pentru ce sunteți?", "بماذا تقفون؟");
+        Add("WaProfile.Engage.Lead", "Maatschappelijke betrokkenheid volgt in een volgende stap. Je kunt dit nu overslaan.", "Social engagement follows in a later step. You can skip this for now.", "Zaangażowanie społeczne będzie w kolejnym kroku. Możesz pominąć.", "Implicarea socială urmează. Poți sări peste.", "المشاركة المجتمعية تأتي لاحقاً. يمكنك التخطي الآن.");
+        Add("WaProfile.Engage.NextVerify", "Verder naar verifiëren", "Continue to verify", "Dalej do weryfikacji", "Continuă la verificare", "متابعة إلى التحقق");
+
+        Add("WaProfile.Vacancy.InheritTitle", "Cultuurprofiel van {0} gebruiken", "Use the culture profile of {0}", "Użyj profilu kultury {0}", "Folosește profilul cultural al {0}", "استخدم ملف ثقافة {0}");
+        Add("WaProfile.Vacancy.InheritHint", "Standaard gebruikt elke vacature het cultuurprofiel van het bedrijf. Werkt dit team anders? Pas het dan alleen hier aan.", "By default every vacancy uses the company culture profile. Does this team work differently? Adjust it here only.", "Domyślnie oferta używa profilu firmy. Ten zespół działa inaczej? Zmień tylko tutaj.", "Implicit oferta folosește profilul firmei. Echipa lucrează altfel? Ajustează doar aici.", "افتراضياً تستخدم كل وظيفة ملف الشركة. هل يعمل هذا الفريق بشكل مختلف؟ عدّل هنا فقط.");
+        Add("WaProfile.Vacancy.Override", "Dit team werkt anders", "This team works differently", "Ten zespół działa inaczej", "Această echipă lucrează altfel", "هذا الفريق يعمل بشكل مختلف");
+        Add("WaProfile.Vacancy.OverrideHint", "Kies 3 tot 5 kenmerken voor dit team. Die gaan dan vóór het bedrijfsprofiel.", "Choose 3 to 5 traits for this team. They override the company profile.", "Wybierz 3–5 cech. Nadpiszą profil firmy.", "Alege 3–5 trăsături. Ele au prioritate față de profil.", "اختر 3 إلى 5 سمات. تتقدّم على ملف الشركة.");
+        Add("WaProfile.Vacancy.Optional", "optioneel", "optional", "opcjonalne", "opțional", "اختياري");
+        Add("WaProfile.Vacancy.NoProfile", "Nog geen cultuurprofiel. Vul ‘Zo werken wij’ in (1 minuut).", "No culture profile yet. Fill in ‘How we work’ (1 minute).", "Brak profilu kultury. Uzupełnij ‘Jak pracujemy’ (1 min).", "Niciun profil cultural. Completează ‘Cum lucrăm’ (1 min).", "لا ملف ثقافة بعد. عبّئ ‘كيف نعمل’ (دقيقة).");
+        Add("WaProfile.Vacancy.EditLink", "Aanpassen", "Edit", "Edytuj", "Editează", "تعديل");
+        Add("WaProfile.Vacancy.Section", "Cultuur van dit team", "This team's culture", "Kultura tego zespołu", "Cultura acestei echipe", "ثقافة هذا الفريق");
     }
 }

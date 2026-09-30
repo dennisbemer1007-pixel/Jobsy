@@ -193,7 +193,7 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
         await db.SaveChangesAsync();
 
         var stale = await lookup.GetForCompaniesAsync([child.Id]);
-        Assert.Equal(FittingCompany.Autonomy, stale[child.Id].Autonomy);
+        Assert.Equal(FittingCompany.Autonomy, stale[child.Id].Culture!.Autonomy);
 
         var cultureService = new CompanyCultureService(db, cache);
         await cultureService.SaveAsync(
@@ -202,8 +202,8 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
             complete: true);
 
         var refreshed = await lookup.GetForCompaniesAsync([child.Id, org.Id]);
-        Assert.NotEqual(FittingCompany.Autonomy, refreshed[org.Id].Autonomy);
-        Assert.Equal(refreshed[org.Id].Autonomy, refreshed[child.Id].Autonomy);
+        Assert.NotEqual(FittingCompany.Autonomy, refreshed[org.Id].Culture!.Autonomy);
+        Assert.Equal(refreshed[org.Id].Culture!.Autonomy, refreshed[child.Id].Culture!.Autonomy);
     }
 
     [Fact]
@@ -228,7 +228,7 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
     [Fact]
     public void Match_fingerprint_includes_company_culture_algorithm_version()
     {
-        Assert.Equal("company-culture-v1", CandidateInsightsFingerprint.MatchAlgorithmVersion);
+        Assert.Equal("company-values-v1", CandidateInsightsFingerprint.MatchAlgorithmVersion);
         var withVersion = CandidateInsightsFingerprint.ForMatches(
             Competencies,
             new RiasecScores(20, 30, 25, 95, 40, 35),

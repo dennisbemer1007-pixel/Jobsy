@@ -51,6 +51,14 @@ public class Company
 
     public string Address { get; set; } = string.Empty;
     public string? LogoUrl { get; set; }
+
+    /// <summary>
+    /// Company-level branches (max 4), stored like <see cref="Vacancy.WorkTypeLabels"/> via
+    /// <see cref="Rules.WorkTypeLabels.CombineStoredForCompany"/>. Root organisation only;
+    /// vestigingen inherit from the root.
+    /// </summary>
+    public string? WorkTypeLabels { get; set; }
+
     public GeoPoint Location { get; set; } = null!;
 
     /// <summary>

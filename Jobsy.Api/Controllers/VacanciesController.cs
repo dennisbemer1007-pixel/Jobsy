@@ -937,6 +937,24 @@ public class VacanciesController : ControllerBase
         }
 
         var branchLabels = NormalizeBranchLabels(request.WorkTypes);
+        if (branchLabels.Length == 0 && existing is null)
+        {
+            // New vacancy defaults to the company's first branche (D12).
+            var rootId = company.ParentCompanyId ?? company.Id;
+            var rootLabels = rootId == company.Id
+                ? company.WorkTypeLabels
+                : await _db.Companies.AsNoTracking()
+                    .Where(c => c.Id == rootId)
+                    .Select(c => c.WorkTypeLabels)
+                    .FirstOrDefaultAsync(cancellationToken);
+            var first = WorkTypeLabels.NormalizeCompanyLabels(WorkTypeLabels.SplitStored(rootLabels))
+                .FirstOrDefault();
+            if (first is not null)
+            {
+                branchLabels = [first];
+            }
+        }
+
         if (branchLabels.Length is < 1 or > WorkTypeLabels.MaxPerVacancy)
         {
             return BadRequest(new { message = $"Kies 1 of {WorkTypeLabels.MaxPerVacancy} branches." });

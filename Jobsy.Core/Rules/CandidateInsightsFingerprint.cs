@@ -12,7 +12,7 @@ public static class CandidateInsightsFingerprint
     /// Bumped when match scoring inputs change so cached snapshots recompute
     /// (e.g. employer culture now blends into competency fit).
     /// </summary>
-    public const string MatchAlgorithmVersion = "company-culture-v1";
+    public const string MatchAlgorithmVersion = "company-values-v1";
 
     public static string ForMatches(
         CompetencyScores? competencies,

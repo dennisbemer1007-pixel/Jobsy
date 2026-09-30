@@ -51,7 +51,9 @@ public static class ProfileVacancyMatchCalculator
         if (input.CandidateValuesScores is { IsComplete: true } valuesScores)
         {
             var values01 = SchwartzValuesFitRules.Fit01(
-                valuesScores, input.VacancyTitle, input.VacancyDescription);
+                valuesScores,
+                input.CompanyValuesScores
+                ?? SchwartzValuesFitRules.InferVacancyDrivers(input.VacancyTitle, input.VacancyDescription));
             competency01 = competency01 is not null
                 ? 0.78 * competency01.Value + 0.22 * values01
                 : values01;
@@ -697,6 +699,8 @@ public sealed class ProfileVacancyMatchInput
     public CulturePersonalityScores? CandidateCultureScores { get; init; }
     public CulturePersonalityScores? CompanyCultureScores { get; init; }
     public SchwartzValuesScores? CandidateValuesScores { get; init; }
+    /// <summary>Employer kernwaarden scores; keyword inference is the fallback when null.</summary>
+    public SchwartzValuesScores? CompanyValuesScores { get; init; }
 }
 
 public sealed class ProfileVacancyMatch
