@@ -7,7 +7,7 @@ public static class RoleNavCatalog
 {
     public static readonly NavItem[] Anonymous = [];
 
-/// <summary>
+    /// <summary>
     /// Admin uses <see cref="AdminNav"/> + <c>AdminLayout</c> sidebar; no bottom nav (D1).
     /// Scholen admin pages live under <see cref="AdminNav"/> (Organisaties group).
     /// </summary>
@@ -15,7 +15,7 @@ public static class RoleNavCatalog
 
     public static readonly NavItem[] Candidate =
     [
-        new("Nav.Search", "/", NavIcons.Search),
+        new("Nav.Search", "/banenkaart", NavIcons.Search, ["/"]),
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]),
         new("Nav.Applications", "/candidate/applications", NavIcons.Applications),
         new("Nav.CareerPath", "/carriere", NavIcons.Career),
@@ -166,7 +166,17 @@ public static class RoleNavCatalog
             return false;
         }
 
-        return item.ExtraActivePaths.Any(p => MatchesPathOrPrefix(path, NormalizePath(p)));
+        return item.ExtraActivePaths.Any(p =>
+        {
+            var candidate = NormalizePath(p);
+            // Exact "/" is allowed as ExtraActivePath (map dual-route during landing 04).
+            if (candidate is "/")
+            {
+                return string.Equals(path, "/", StringComparison.OrdinalIgnoreCase);
+            }
+
+            return MatchesPathOrPrefix(path, candidate);
+        });
     }
 
     public static string TokensHrefFor(ClaimsPrincipal user)

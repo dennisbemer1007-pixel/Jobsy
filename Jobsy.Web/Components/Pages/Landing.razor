@@ -1,0 +1,48 @@
+@page "/"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout PublicLayout
+@using Jobsy.Web.Components.Landing
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Seo
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject LandingVariantResolver VariantResolver
+@inject LandingStatsClient Stats
+@inject LandingPriceClient Prices
+@inject PageSeoContext Seo
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["Landing.Seo.Title"]</PageTitle>
+
+<div class="pub-landing" data-variant="@(_variant == LandingVariant.Zw ? "zw" : "on")">
+    <LandingHero Variant="_variant" VacancyCount="_vacancyDisplay" />
+    <LandingWhatIs Variant="_variant" />
+    <LandingKreeft Variant="_variant" />
+    <LandingWhatYouGet Variant="_variant" PriceEuro="_priceEuro" />
+    <LandingForWhom Variant="_variant" />
+    <LandingPrivacy Variant="_variant" />
+    <LandingFaq Variant="_variant" PriceEuro="_priceEuro" />
+    <LandingClosing Variant="_variant" />
+</div>
+
+@code {
+    private LandingVariant _variant = LandingVariant.On;
+    private int? _vacancyDisplay;
+    private decimal? _priceEuro;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
+        _variant = await VariantResolver.GetAsync();
+        var raw = await Stats.GetActiveVacanciesAsync();
+        _vacancyDisplay = LandingVacancyCount.RoundDownToTens(raw);
+        _priceEuro = await Prices.GetDeepAnalysisPriceEuroAsync();
+
+        var faqPairs = LandingFaq.BuildPairs(_variant, Culture.Language, _priceEuro);
+        Seo.Set(new PageSeoOverride(JsonLd: StructuredData.FaqPage(faqPairs)));
+    }
+}

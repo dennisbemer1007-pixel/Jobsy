@@ -118,11 +118,12 @@ public static class FeedbackPromptFormatter
             ];
         }
 
-        if (path is "/" or "/banen" || path.StartsWith("/vacancies", StringComparison.OrdinalIgnoreCase))
+        if (path is "/" or "/banen" or "/banenkaart"
+            || path.StartsWith("/vacancies", StringComparison.OrdinalIgnoreCase))
         {
             return
             [
-                "Jobsy.Web/Components/Pages/Banen.razor",
+                "Jobsy.Web/Components/Pages/Banenkaart.razor",
                 "Jobsy.Web/wwwroot/js/jobMap.js",
                 "Jobsy.Api/Controllers/VacanciesController.cs"
             ];

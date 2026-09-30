@@ -73,6 +73,29 @@ builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeState>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeBootstrap>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.WerkgeverCountsState>();
 builder.Services.AddScoped<PageSeoContext>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IEmployersSwitch, Jobsy.Web.Features.AlwaysOnEmployersSwitch>();
+builder.Services.AddScoped<Jobsy.Web.Features.LandingVariantResolver>();
+builder.Services.AddSingleton<Jobsy.Web.Services.LandingStatsClient>();
+builder.Services.AddSingleton<Jobsy.Web.Services.LandingPriceClient>();
+builder.Services.AddHttpClient(Jobsy.Web.Services.LandingStatsClient.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromMilliseconds(400);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyLanding/1.0");
+});
+builder.Services.AddHttpClient(Jobsy.Web.Services.LandingPriceClient.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromMilliseconds(400);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyLanding/1.0");
+});
+builder.Services.AddSingleton<Jobsy.Web.Services.ICookieConsentTokenService, Jobsy.Web.Services.CookieConsentTokenService>();
 builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();
 builder.Services.AddScoped<TokenBalanceCache>();
@@ -228,12 +251,17 @@ app.UseMiddleware<SalesLegacyRoutesMiddleware>();
 app.UseMiddleware<AmbassadorsFeatureMiddleware>();
 app.UseMfaEnforcement();
 app.UseAntiforgery();
+app.UseRegisterOntdekRedirect();
+app.UseBanenRedirect();
+app.UseLandingRedirect();
 
 // Legacy /employer|/branch|/regional → /werkgever (GET/HEAD 301). Needs auth for /home.
 app.UseMiddleware<Jobsy.Web.Middleware.WerkgeverLegacyRedirectMiddleware>();
 
 app.MapJobsyAuthEndpoints();
 app.MapPupilAuthEndpoints();
+app.MapLanguageEndpoints();
+app.MapCookieConsentEndpoints();
 app.MapSeoEndpoints();
 app.MapSalesReferralEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.

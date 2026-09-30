@@ -428,7 +428,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             snapshot.Gaps,
             snapshot.ActionSteps,
             snapshot.SearchKeys,
-            $"/?q={query}",
+            $"/banenkaart?q={query}",
             snapshot.FromDeepAnalysis,
             snapshot.FromOpenAi,
             snapshot.ShowDeepUpsell,

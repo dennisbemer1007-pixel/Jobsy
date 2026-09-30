@@ -11,7 +11,7 @@ public static partial class AuthRedirects
 
     /// <summary>Guide remains reachable from the (i) menu.</summary>
     public const string CandidateHowToGuidePath = "/candidate/hoe-werkt-lobsy";
-    public const string BanenkaartPath = "/";
+    public const string BanenkaartPath = "/banenkaart";
     public const string AdminLandingPath = "/admin";
     public const string DefaultLandingPath = "/home";
     public const string EmployerLandingPath = "/werkgever";
@@ -75,7 +75,7 @@ public static partial class AuthRedirects
         }
 
         var path = url.Split('?', '#')[0];
-        return path is "/" or "/home" or "/banen" or "/login";
+        return path is "/" or "/home" or "/banen" or "/banenkaart" or "/login";
     }
 
     /// <summary>
@@ -192,6 +192,13 @@ public static partial class AuthRedirects
 
         return url;
     }
+
+    /// <summary>
+    /// True when <paramref name="url"/> is a same-origin relative path safe for redirects
+    /// (no scheme, no <c>//</c>, no backslash). Empty/null → false.
+    /// </summary>
+    public static bool IsLocalReturnUrl(string? url)
+        => !string.IsNullOrWhiteSpace(url) && IsSafeLocalPath(url.Trim());
 
     private static bool IsSafeLocalPath(string url)
     {

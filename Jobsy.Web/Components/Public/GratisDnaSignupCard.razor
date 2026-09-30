@@ -1,0 +1,117 @@
+@namespace Jobsy.Web.Components.Public
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject IExternalAuthCredentialSource ExternalAuth
+
+<aside class="gd-signup @CssClass" id="@DomId" data-testid="gd-signup" aria-labelledby="@($"{DomId}-title")">
+    <h2 id="@($"{DomId}-title")" class="gd-signup__title">
+        @Culture["GratisDna.Signup.Title"]
+        <PubEmoji Glyph="🎁" />
+    </h2>
+    <p class="gd-signup__sub">@Culture["GratisDna.Signup.Sub"]</p>
+
+    <ul class="gd-signup__unlock">
+        <li><PubEmoji Glyph="🧬" /> @Culture["GratisDna.Signup.Unlock.Passport"]</li>
+        <li><PubEmoji Glyph="✅" /> @Culture["GratisDna.Signup.Unlock.Fit"]</li>
+        <li><PubEmoji Glyph="🗺️" /> @Culture["GratisDna.Signup.Unlock.Map"]</li>
+        <li><PubEmoji Glyph="⭐" /> @Culture["GratisDna.Signup.Unlock.Match"]</li>
+    </ul>
+
+    <div class="gd-signup__providers">
+        @if (_googleEnabled)
+        {
+            <a class="gd-signup__btn"
+               href="@GoogleHref"
+               data-kpi="ResultCtaSignup"
+               data-kpi-target="google"
+               data-testid="gd-signup-google">
+                <span class="gd-signup__icon gd-signup__icon--google" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" width="16" height="16">
+                        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
+                        <path fill="#FF3D00" d="M6.3 14.7 12.9 19.6C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
+                        <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8h-6.6v5.1C9.5 39.6 16.2 44 24 44z"/>
+                        <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l.1-.1 6.3 5.2C39.2 40.3 44 34.7 44 24c0-1.3-.1-2.5-.4-3.5z"/>
+                    </svg>
+                </span>
+                @Culture["Signup.Google"]
+            </a>
+        }
+
+        @if (_entraEnabled)
+        {
+            <a class="gd-signup__btn"
+               href="@MicrosoftHref"
+               data-kpi="ResultCtaSignup"
+               data-kpi-target="microsoft"
+               data-testid="gd-signup-microsoft">
+                <span class="gd-signup__icon" aria-hidden="true">
+                    <svg viewBox="0 0 23 23" width="16" height="16"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
+                </span>
+                @Culture["Signup.Microsoft"]
+            </a>
+        }
+
+        <a class="gd-signup__btn"
+           href="@EmailHref"
+           data-kpi="ResultCtaSignup"
+           data-kpi-target="email"
+           data-testid="gd-signup-email">
+            <span class="gd-signup__icon" aria-hidden="true">✉</span>
+            @Culture["Signup.ContinueEmail"]
+        </a>
+    </div>
+
+    <p class="gd-signup__carry">
+        <span aria-hidden="true">✓</span>
+        @Culture["GratisDna.Signup.Carry"]
+    </p>
+
+    <p class="gd-signup__login">
+        @Culture["Signup.HaveAccount"]
+        <a href="@LoginHref">@Culture["Signup.Login"]</a>
+        @if (ShowLater)
+        {
+            <span aria-hidden="true"> · </span>
+            <button type="button" class="gd-signup__later" @onclick="OnLater">@Culture["GratisDna.Sticky.Dismiss"]</button>
+        }
+    </p>
+</aside>
+
+@code {
+    [Parameter] public string DomId { get; set; } = "gd-signup";
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public bool ShowLater { get; set; }
+    [Parameter] public EventCallback OnLater { get; set; }
+
+    private bool _googleEnabled = true;
+    private bool _entraEnabled = true;
+    private bool _checked;
+
+    private static string ReturnUrl => Uri.EscapeDataString(AuthRedirects.BanenkaartPath);
+    private string GoogleHref => $"/account/external/google?returnUrl={ReturnUrl}&van=ontdek";
+    private string MicrosoftHref => $"/account/external/entra?returnUrl={ReturnUrl}&van=ontdek";
+    private string EmailHref => PublicRoutes.CreateAccountFromTest + "#email";
+    private string LoginHref => $"/login?returnUrl={ReturnUrl}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_checked)
+        {
+            return;
+        }
+
+        _checked = true;
+        try
+        {
+            _googleEnabled = await ExternalAuth.IsGoogleConfiguredAsync();
+            _entraEnabled = await ExternalAuth.IsEntraConfiguredAsync();
+        }
+        catch
+        {
+            _googleEnabled = false;
+            _entraEnabled = false;
+        }
+    }
+}

@@ -1,0 +1,219 @@
+@page "/account-maken"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.WebUtilities
+@inject IExternalAuthCredentialSource ExternalAuth
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IEmployersSwitch Employers
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["Signup.Title"] · Lobsy</PageTitle>
+
+<section class="pub-section pub-signup" aria-labelledby="signup-title">
+    <div class="pub-card pub-signup__card">
+        <div class="pub-signup__mascot">
+            <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Medium" Alt="" />
+        </div>
+        <h1 id="signup-title" class="pub-signup__title">@Culture["Signup.Title"]</h1>
+        <p class="pub-signup__lead">@Culture["Signup.Lead"]</p>
+
+        @if (_fromTest)
+        {
+            <GratisDnaRegisterBox ForceVisible="true" ForceAnswerCount="20" />
+        }
+
+        @if (_fromUnder16)
+        {
+            <p class="pub-signup__note" role="note">@Culture["Signup.Under16"]</p>
+        }
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <p class="login-error" role="alert">@_errorMessage</p>
+        }
+
+        <div class="login-providers pub-signup__providers">
+            @if (_googleEnabled)
+            {
+                <a class="provider-btn provider-btn--google"
+                   href="@($"/account/external/google?returnUrl={Uri.EscapeDataString(_returnUrl)}")"
+                   data-kpi="SignupStart"
+                   data-kpi-target="google">
+                    <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" width="16" height="16">
+                            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
+                            <path fill="#FF3D00" d="M6.3 14.7 12.9 19.6C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
+                            <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8h-6.6v5.1C9.5 39.6 16.2 44 24 44z"/>
+                            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l.1-.1 6.3 5.2C39.2 40.3 44 34.7 44 24c0-1.3-.1-2.5-.4-3.5z"/>
+                        </svg>
+                    </span>
+                    @Culture["Signup.Google"]
+                </a>
+            }
+
+            @if (_entraEnabled)
+            {
+                <a class="provider-btn provider-btn--entra"
+                   href="@($"/account/external/entra?returnUrl={Uri.EscapeDataString(_returnUrl)}")"
+                   data-kpi="SignupStart"
+                   data-kpi-target="microsoft">
+                    <span class="provider-btn__icon" aria-hidden="true">
+                        <svg viewBox="0 0 23 23" width="16" height="16"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
+                    </span>
+                    @Culture["Signup.Microsoft"]
+                </a>
+            }
+        </div>
+
+        <form method="post" action="/account/email-code/start" class="login-form pub-signup__form" data-enhance="false" data-kpi="SignupStart" data-kpi-target="email">
+            <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+            <input type="hidden" name="returnUrl" value="@_returnUrl" />
+            @if (!string.IsNullOrEmpty(_van))
+            {
+                <input type="hidden" name="van" value="@_van" />
+            }
+            <label>
+                @Culture["Signup.Email"]
+                <input type="email"
+                       id="email"
+                       name="email"
+                       class="w-full px-4 py-3"
+                       required
+                       autocomplete="email"
+                       inputmode="email"
+                       autocapitalize="none"
+                       autocorrect="off"
+                       spellcheck="false"
+                       maxlength="320"
+                       placeholder="naam@voorbeeld.nl" />
+            </label>
+            <label>
+                <span>@Culture["Signup.FirstName"] <span class="muted">(@Culture["Signup.FirstNameOptional"])</span></span>
+                <input type="text"
+                       name="firstName"
+                       class="w-full px-4 py-3"
+                       autocomplete="given-name"
+                       maxlength="60" />
+            </label>
+            <button type="submit" class="login-submit" disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">
+                @Culture["Signup.SendCode"]
+            </button>
+        </form>
+
+        <p class="pub-signup__consent">
+            @((MarkupString)string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                Culture["Signup.Consent"],
+                $"<a class=\"auth-link\" href=\"{PublicRoutes.UsageTerms}\">{Culture["Signup.ConsentTerms"]}</a>",
+                $"<a class=\"auth-link\" href=\"{PublicRoutes.Privacy}\">{Culture["Signup.ConsentPrivacy"]}</a>"))
+        </p>
+
+        <div class="pub-signup__footer">
+            <p>
+                @Culture["Signup.HaveAccount"]
+                <a class="auth-link" href="@($"/login?returnUrl={Uri.EscapeDataString(_returnUrl)}")">@Culture["Signup.Login"]</a>
+            </p>
+            @if (_employersOn)
+            {
+                <p>
+                    @Culture["Signup.EmployerLead"]
+                    <a class="auth-link" href="@PublicRoutes.CompanyRegister">@Culture["Signup.EmployerCta"]</a>
+                </p>
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    private string _returnUrl = AuthRedirects.BanenkaartPath;
+    private string? _van;
+    private string? _errorMessage;
+    private bool _fromTest;
+    private bool _fromUnder16;
+    private bool _entraEnabled;
+    private bool _googleEnabled;
+    private bool _employersOn = true;
+    private string _antiforgeryFieldName = string.Empty;
+    private string _antiforgeryToken = string.Empty;
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContext ?? HttpContextAccessor.HttpContext;
+        if (http?.User.Identity?.IsAuthenticated == true)
+        {
+            http.Response.Redirect(AuthRedirects.BanenkaartPath);
+            return;
+        }
+
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryFieldName = tokens.FormFieldName;
+            _antiforgeryToken = tokens.RequestToken ?? string.Empty;
+        }
+
+        _entraEnabled = await ExternalAuth.IsEntraConfiguredAsync();
+        _googleEnabled = await ExternalAuth.IsGoogleConfiguredAsync();
+        _employersOn = await Employers.IsEnabledAsync();
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        _returnUrl = AuthRedirects.SafeLocalUrl(
+            AuthRedirects.ResolveRequestedReturnUrl(
+                QueryValue(query, "returnUrl"),
+                QueryValue(query, "returnTo"),
+                QueryValue(query, "redirect")));
+        _van = QueryValue(query, "van");
+        _fromTest = string.Equals(_van, "ontdek", StringComparison.OrdinalIgnoreCase);
+        _fromUnder16 = string.Equals(_van, "onder16", StringComparison.OrdinalIgnoreCase);
+
+        var error = QueryValue(query, "error");
+        _errorMessage = error switch
+        {
+            "retry" => Culture["Signup.ErrorRetry"],
+            "email" => Culture["Signup.ErrorEmail"],
+            "too_many" => Culture["Signup.ErrorTooMany"],
+            "expired" => Culture["Signup.ErrorExpired"],
+            _ => null
+        };
+
+        if (query.TryGetValue("ref", out var refValues) && http is not null)
+        {
+            var refCode = refValues.FirstOrDefault()?.Trim().ToUpperInvariant() ?? "";
+            if (Jobsy.Core.Rules.AmbassadeurCommissionRules.IsAmbassadeurTrackingCode(refCode))
+            {
+                http.Response.Cookies.Append(
+                    "lobsy_ambassadeur_ref",
+                    refCode,
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        IsEssential = true,
+                        SameSite = SameSiteMode.Lax,
+                        Secure = JobsyCookie.ShouldMarkSecure(http),
+                        MaxAge = TimeSpan.FromDays(30),
+                        Path = "/"
+                    });
+            }
+        }
+    }
+
+    private static string? QueryValue(
+        Dictionary<string, Microsoft.Extensions.Primitives.StringValues> query,
+        string key)
+        => query.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value)
+            ? value.ToString()
+            : null;
+}

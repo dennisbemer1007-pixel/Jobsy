@@ -54,7 +54,7 @@ public class NavFeedbackPlaywrightTests
             return;
         }
 
-        await page.GotoAsync(baseUrl + "/", new()
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new()
         {
             WaitUntil = WaitUntilState.DOMContentLoaded,
             Timeout = 60_000
@@ -142,7 +142,7 @@ public class NavFeedbackPlaywrightTests
         {
             using var handler = new SocketsHttpHandler { AllowAutoRedirect = true };
             using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(8) };
-            using var response = await client.GetAsync(baseUrl + "/");
+            using var response = await client.GetAsync(baseUrl + E2eRoutes.Banenkaart);
             return (int)response.StatusCode is >= 200 and < 500;
         }
         catch

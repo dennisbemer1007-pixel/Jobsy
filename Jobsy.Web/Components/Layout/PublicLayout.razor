@@ -1,0 +1,73 @@
+@inherits LayoutComponentBase
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject LandingVariantResolver VariantResolver
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<PageSeoHead />
+<div class="pub-theme @(_compact ? "pub-theme--test" : null)"
+     dir="@(Culture.IsRightToLeft ? "rtl" : null)"
+     lang="@Culture.Language">
+    <a class="pub-skip" href="#main">@Culture["PublicNav.SkipToContent"]</a>
+    <PublicHeader Variant="_variant" Compact="_compact" />
+    <main id="main" class="pub-main @(_compact ? "pub-main--test" : null)">
+        @Body
+    </main>
+    @if (!_compact)
+    {
+        <PublicFooter Variant="_variant" />
+    }
+    <CookieConsentBanner Mode="_cookieMode" />
+</div>
+
+@code {
+    private LandingVariant _variant = LandingVariant.On;
+    private CookieConsentBanner.CookieConsentMode _cookieMode = CookieConsentBanner.CookieConsentMode.Interactive;
+    private bool _compact;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        var http = HttpContextAccessor.HttpContext;
+        Culture.InitializeFromRequest(http);
+        _variant = await VariantResolver.GetAsync();
+        _compact = IsTestPath(Navigation.Uri, http);
+        var interactive = http?.AcceptsInteractiveRouting() == true;
+        _cookieMode = interactive
+            ? CookieConsentBanner.CookieConsentMode.Interactive
+            : CookieConsentBanner.CookieConsentMode.Static;
+        await Culture.InitializeAsync();
+        await Culture.SyncDocumentAsync();
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    private static bool IsTestPath(string navigationUri, HttpContext? http)
+    {
+        try
+        {
+            var path = new Uri(navigationUri).AbsolutePath;
+            if (IsOntdekPath(path))
+            {
+                return true;
+            }
+        }
+        catch
+        {
+            // fall through to request path
+        }
+
+        var requestPath = http?.Request.Path.Value;
+        return IsOntdekPath(requestPath);
+    }
+
+    private static bool IsOntdekPath(string? path)
+        => string.Equals(path, PublicRoutes.Test, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(path, "/dna", StringComparison.OrdinalIgnoreCase);
+}

@@ -30,6 +30,11 @@ public static class PageSeoResolver
         var canonicalPath = overlay?.CanonicalPath;
         if (string.IsNullOrWhiteSpace(canonicalPath))
         {
+            canonicalPath = entry.CanonicalPath;
+        }
+
+        if (string.IsNullOrWhiteSpace(canonicalPath))
+        {
             canonicalPath = path;
         }
 

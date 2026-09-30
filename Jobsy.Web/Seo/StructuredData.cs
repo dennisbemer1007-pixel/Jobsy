@@ -41,7 +41,7 @@ public static class StructuredData
                     ["potentialAction"] = new Dictionary<string, object?>
                     {
                         ["@type"] = "SearchAction",
-                        ["target"] = root + "/?q={search_term_string}",
+                        ["target"] = root + "/banenkaart?q={search_term_string}",
                         ["query-input"] = "required name=search_term_string"
                     }
                 }
@@ -97,6 +97,32 @@ public static class StructuredData
             ["name"] = "Vacatures op de Lobsy-banenkaart",
             ["numberOfItems"] = items.Count,
             ["itemListElement"] = items
+        };
+        return Serialize(payload);
+    }
+
+    /// <summary>FAQPage JSON-LD from the exact (question, answer) pairs rendered on the page.</summary>
+    public static string FaqPage(IEnumerable<(string Question, string Answer)> items)
+    {
+        var entities = items
+            .Where(i => !string.IsNullOrWhiteSpace(i.Question) && !string.IsNullOrWhiteSpace(i.Answer))
+            .Select(i => new Dictionary<string, object?>
+            {
+                ["@type"] = "Question",
+                ["name"] = i.Question.Trim(),
+                ["acceptedAnswer"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Answer",
+                    ["text"] = i.Answer.Trim()
+                }
+            })
+            .ToList();
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "FAQPage",
+            ["mainEntity"] = entities
         };
         return Serialize(payload);
     }

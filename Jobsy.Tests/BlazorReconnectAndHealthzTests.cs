@@ -29,7 +29,7 @@ public class BlazorReconnectAndHealthzTests
         Assert.DoesNotContain("Blazor.start(", app, StringComparison.Ordinal);
 
         var bootIdx = app.IndexOf("js/blazor-boot.js", StringComparison.Ordinal);
-        var frameworkIdx = app.IndexOf("blazor.web.js", StringComparison.Ordinal);
+        var frameworkIdx = app.IndexOf("src=\"_framework/blazor.web.js", StringComparison.Ordinal);
         Assert.True(frameworkIdx >= 0 && bootIdx > frameworkIdx, "blazor-boot.js must load after blazor.web.js");
 
         var frameworkTagEnd = app.IndexOf(">", frameworkIdx, StringComparison.Ordinal);
@@ -113,7 +113,7 @@ public class BlazorReconnectAndHealthzTests
         });
 
         var page = await context.NewPageAsync();
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await page.WaitForFunctionAsync(
             "() => !!(window.Blazor && typeof Blazor.reconnect === 'function')",
             null,
@@ -175,7 +175,7 @@ public class BlazorReconnectAndHealthzTests
         var ws = await page.RunAndWaitForWebSocketAsync(
             async () =>
             {
-                await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
             },
             new()
             {

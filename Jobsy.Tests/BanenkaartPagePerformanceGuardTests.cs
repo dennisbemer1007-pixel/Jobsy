@@ -6,7 +6,7 @@ namespace Jobsy.Tests;
 /// Guards the homepage against the TBT/DOM regression: prerendering every job card
 /// (~6k nodes) and a late cookie-banner LCP.
 /// </summary>
-public class HomepagePerformanceGuardTests
+public class BanenkaartPagePerformanceGuardTests
 {
     [Fact]
     public void First_paint_app_css_is_render_blocking_and_versioned()
@@ -22,7 +22,7 @@ public class HomepagePerformanceGuardTests
         Assert.DoesNotContain("onload=", appCssLink);
         Assert.Contains("?v=", appCssLink);
 
-        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
+        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Banenkaart.razor"));
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", home);
         Assert.DoesNotContain("rel=\"preload\"", home);
 
@@ -245,7 +245,7 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("css/app.min.css", appRazor);
         Assert.DoesNotContain("href=\"css/app.css?", appRazor);
 
-        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Home.razor"));
+        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Banenkaart.razor"));
         Assert.DoesNotContain("rel=\"preload\"", home);
         Assert.DoesNotContain("lib/maplibre/", home);
         Assert.DoesNotContain("jobMap.min.js", home);

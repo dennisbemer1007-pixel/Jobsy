@@ -123,7 +123,7 @@ public class BanenkaartMapReusePlaywrightTests
             string? pageError = null;
             page.PageError += (_, error) => { pageError ??= error; };
 
-            await page.GotoAsync(baseUrl + "/", new()
+            await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new()
             {
                 WaitUntil = WaitUntilState.DOMContentLoaded,
                 Timeout = 90_000

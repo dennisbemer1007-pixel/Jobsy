@@ -159,7 +159,7 @@ public sealed class CareerPathPlanGenerationService : ICareerPathPlanGenerationS
             {
                 0 => "/candidate/profile",
                 1 => "/candidate/profile?tab=fit",
-                _ => "/?q=" + query
+                _ => "/banenkaart?q=" + query
             };
             // Content only — status and StepMatchPercent are resolved on read from progress + certificates.
             steps.Add(new HorizonCareerPathStep(

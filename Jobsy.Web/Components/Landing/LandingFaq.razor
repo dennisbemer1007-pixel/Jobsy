@@ -1,0 +1,76 @@
+@namespace Jobsy.Web.Components.Landing
+@using Jobsy.Core.Entities
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<section class="pub-landing__section" id="faq">
+    <div class="pub-landing__wrap pub-landing__faqg">
+        <div>
+            <div class="pub-landing__eyebrow">@LandingText.For("Landing.Faq.Eyebrow", Variant)</div>
+            <h2 class="pub-landing__h2">@LandingText.For("Landing.Faq.Title", Variant)</h2>
+            <p class="pub-landing__lead">@LandingText.For("Landing.Faq.Lead", Variant)</p>
+            <div class="pub-landing__help">
+                <LobsyMascot Pose="MascotPose.Default" Size="MascotSize.Medium" Alt="" />
+                <div>
+                    <b>@LandingText.For("Landing.Faq.HelpTitle", Variant)</b>
+                    <p>@LandingText.For("Landing.Faq.HelpBody", Variant)</p>
+                    <a class="pub-landing__lnk" href="@PublicRoutes.HowItWorks">@LandingText.For("Landing.Faq.HelpCta", Variant)</a>
+                </div>
+            </div>
+        </div>
+        <div class="pub-landing__faq">
+            @{
+                var pairs = BuildPairs(Variant, Culture.Language, PriceEuro);
+                var first = true;
+            }
+            @foreach (var (q, a) in pairs)
+            {
+                <details class="pub-landing__fq" open="@first">
+                    <summary>@q</summary>
+                    <p>@a</p>
+                </details>
+                first = false;
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+    [Parameter] public decimal? PriceEuro { get; set; }
+
+    /// <summary>Same keys + culture formatting used for visible FAQ and JSON-LD.</summary>
+    public static IReadOnlyList<(string Question, string Answer)> BuildPairs(
+        LandingVariant variant,
+        string language,
+        decimal? priceEuro)
+    {
+        var price = priceEuro ?? FlexCommercialSettings.DefaultDeepAnalysisPriceEuro;
+        var priceText = "€ " + price.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+        var keys = new[]
+        {
+            ("Landing.Faq.Q1", "Landing.Faq.A1"),
+            ("Landing.Faq.Q2", "Landing.Faq.A2"),
+            ("Landing.Faq.Q3", "Landing.Faq.A3"),
+            ("Landing.Faq.Q4", "Landing.Faq.A4"),
+            ("Landing.Faq.Q5", "Landing.Faq.A5"),
+            ("Landing.Faq.Q6", "Landing.Faq.A6"),
+            ("Landing.Faq.Q7", "Landing.Faq.A7"),
+        };
+        var list = new List<(string, string)>(keys.Length);
+        foreach (var (qk, ak) in keys)
+        {
+            var q = LandingText.For(qk, variant, language);
+            var aRaw = LandingText.For(ak, variant, language);
+            var a = ak == "Landing.Faq.A1"
+                ? string.Format(System.Globalization.CultureInfo.InvariantCulture, aRaw, priceText)
+                : aRaw;
+            list.Add((q, a));
+        }
+
+        return list;
+    }
+}

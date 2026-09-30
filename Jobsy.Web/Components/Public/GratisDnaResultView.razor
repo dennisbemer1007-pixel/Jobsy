@@ -1,126 +1,175 @@
+@namespace Jobsy.Web.Components.Public
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
 @inject CultureState Culture
+@inject IJSRuntime Js
+@implements IAsyncDisposable
 
-<section class="gd-result" aria-labelledby="gd-result-title" data-testid="gd-result">
-    <p class="gd-result__badge" data-testid="gd-result-badge">@Culture["GratisDna.Result.Badge"]</p>
-    <h1 id="gd-result-title" class="visually-hidden">@Culture["GratisDna.Landing.Title"]</h1>
-    <div class="gd-tiles" data-testid="gd-tiles">
-        @if (!string.IsNullOrWhiteSpace(StrengthSentence))
-        {
-            <article class="gd-tile" data-testid="gd-tile-strength">
-                <h3>@Culture["GratisDna.Tile.Title.Strength"]</h3>
-                <p>@StrengthSentence</p>
-            </article>
-        }
-        @if (!string.IsNullOrWhiteSpace(RiasecSentence))
-        {
-            <article class="gd-tile" data-testid="gd-tile-riasec">
-                <h3>@Culture["GratisDna.Tile.Title.Riasec"]</h3>
-                <p>@RiasecSentence</p>
-            </article>
-        }
-        @if (!string.IsNullOrWhiteSpace(CultureSentence))
-        {
-            <article class="gd-tile" data-testid="gd-tile-culture">
-                <h3>@Culture["GratisDna.Tile.Title.Culture"]</h3>
-                <p>@CultureSentence</p>
-            </article>
-        }
-        @if (!string.IsNullOrWhiteSpace(ValueSentence))
-        {
-            <article class="gd-tile" data-testid="gd-tile-value">
-                <h3>@Culture["GratisDna.Tile.Title.Value"]</h3>
-                <p>@ValueSentence</p>
-            </article>
-        }
-    </div>
-    <p class="gd-hero__lead">@Culture["GratisDna.Result.Disclaimer"]</p>
+<section class="gd-result gd-result--warm" aria-labelledby="gd-result-title" data-testid="gd-result">
+    <div class="gd-result__grid">
+        <div class="gd-result__main">
+            <p class="gd-result__badge" data-testid="gd-result-badge">@Culture["GratisDna.Result.Badge"]</p>
+            <div class="gd-result__head">
+                <LobsyMascot Pose="MascotPose.Celebrating" Size="MascotSize.Medium" Alt="" Class="gd-result__mascot" />
+                <h1 id="gd-result-title">
+                    @Culture["GratisDna.Result.Title"]
+                    <PubEmoji Glyph="🎉" />
+                </h1>
+            </div>
+            <p class="gd-result__lead">@Culture["GratisDna.Result.Lead"]</p>
 
-    <a class="gd-jobs-teaser" href="@RegisterHref" data-testid="gd-jobs-teaser">
-        <h3>@Culture["GratisDna.JobsTeaser.Title"]</h3>
-        <p>@Culture["GratisDna.JobsTeaser.Lead"]</p>
-        <div class="gd-jobs-teaser__rows" aria-hidden="true">
-            <div>🔒 @Culture["GratisDna.JobsTeaser.Title"]</div>
-            <div>🔒 ——— ———</div>
-            <div>🔒 ——— ———</div>
+            <div class="gd-tiles" data-testid="gd-tiles">
+                @if (!string.IsNullOrWhiteSpace(StrengthSentence))
+                {
+                    <article class="gd-tile gd-tile--peach" data-testid="gd-tile-strength">
+                        <div class="gd-tile__top t-peach"><PubEmoji Glyph="🤝" /><small>@Culture["GratisDna.Tile.Title.Strength"]</small></div>
+                        <div class="gd-tile__body">
+                            <h3>@(StrengthLabel ?? Culture["GratisDna.Tile.Title.Strength"])</h3>
+                            <p>@StrengthSentence</p>
+                            @ChipRow(StrengthChips)
+                        </div>
+                    </article>
+                }
+                @if (!string.IsNullOrWhiteSpace(RiasecSentence))
+                {
+                    <article class="gd-tile gd-tile--sun" data-testid="gd-tile-riasec">
+                        <div class="gd-tile__top t-sun"><PubEmoji Glyph="💛" /><small>@Culture["GratisDna.Tile.Title.Riasec"]</small></div>
+                        <div class="gd-tile__body">
+                            <h3>@(RiasecLabel ?? Culture["GratisDna.Tile.Title.Riasec"])</h3>
+                            <p>@RiasecSentence</p>
+                            @ChipRow(RiasecChips)
+                        </div>
+                    </article>
+                }
+                @if (!string.IsNullOrWhiteSpace(CultureSentence))
+                {
+                    <article class="gd-tile gd-tile--mint" data-testid="gd-tile-culture">
+                        <div class="gd-tile__top t-mint"><PubEmoji Glyph="🏡" /><small>@Culture["GratisDna.Tile.Title.Culture"]</small></div>
+                        <div class="gd-tile__body">
+                            <h3>@(CultureLabel ?? Culture["GratisDna.Tile.Title.Culture"])</h3>
+                            <p>@CultureSentence</p>
+                            @ChipRow(CultureChips)
+                        </div>
+                    </article>
+                }
+                @if (!string.IsNullOrWhiteSpace(ValueSentence))
+                {
+                    <article class="gd-tile gd-tile--sky" data-testid="gd-tile-value">
+                        <div class="gd-tile__top t-sky"><PubEmoji Glyph="🧭" /><small>@Culture["GratisDna.Tile.Title.Value"]</small></div>
+                        <div class="gd-tile__body">
+                            <h3>@(ValueLabel ?? Culture["GratisDna.Tile.Title.Value"])</h3>
+                            <p>@ValueSentence</p>
+                            @ChipRow(ValueChips)
+                        </div>
+                    </article>
+                }
+            </div>
+
+            <div class="gd-lockd" aria-hidden="true" data-testid="gd-passport-teaser">
+                <div class="gd-lockd__blur">
+                    <div class="gd-lockd__tabs">
+                        <span class="is-on">@Culture["GratisDna.Passport.TabDna"]</span>
+                        <span>@Culture["GratisDna.Passport.TabTests"]</span>
+                        <span>@Culture["GratisDna.Passport.TabFit"]</span>
+                        <span>@Culture["GratisDna.Passport.TabCareer"]</span>
+                        <span>@Culture["GratisDna.Passport.TabProof"]</span>
+                    </div>
+                    <div class="gd-lockd__bars">
+                        <div class="gd-lockd__bar"><span>Samenwerken</span><b class="gd-lockd__fill" data-fill="86"></b></div>
+                        <div class="gd-lockd__bar t2"><span>Doorzetten</span><b class="gd-lockd__fill" data-fill="74"></b></div>
+                        <div class="gd-lockd__bar t3"><span>Rust onder druk</span><b class="gd-lockd__fill" data-fill="61"></b></div>
+                    </div>
+                </div>
+                <p class="gd-lockd__pill">
+                    <PubEmoji Glyph="🔐" />
+                    @Culture["GratisDna.Passport.Locked"]
+                </p>
+            </div>
+
+            <a class="gd-jobs-teaser" href="@RegisterHref" data-testid="gd-jobs-teaser">
+                <h3>@Culture["GratisDna.JobsTeaser.Title"]</h3>
+                <p>@Culture["GratisDna.JobsTeaser.Lead"]</p>
+                <div class="gd-jobs-teaser__rows" aria-hidden="true">
+                    <div>🔒 @Culture["GratisDna.JobsTeaser.Title"]</div>
+                    <div>🔒 ——— ———</div>
+                    <div>🔒 ——— ———</div>
+                </div>
+            </a>
+
+            <div class="gd-rfoot">
+                <div class="gd-share" data-testid="gd-share">
+                    <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("whatsapp")'>
+                        <PubEmoji Glyph="💬" /> @Culture["GratisDna.Share.WhatsApp"]
+                    </button>
+                    <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("instagram")'>@Culture["GratisDna.Share.Instagram"]</button>
+                    <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("generic")'>@Culture["GratisDna.Share.Generic"]</button>
+                </div>
+                @if (!string.IsNullOrEmpty(ShareMessage))
+                {
+                    <p class="gd-footnote">@ShareMessage</p>
+                }
+
+                <a class="gd-quiet-link" href="@RegisterHref" data-kpi="ResultCtaSignup" data-kpi-target="email">
+                    @Culture["GratisDna.SharperLink"]
+                </a>
+
+                <div class="gd-wipe" data-testid="gd-wipe">
+                    @if (WipeConfirm)
+                    {
+                        <p>@Culture["GratisDna.Wipe.Confirm"]</p>
+                        <button type="button" class="gd-cta" @onclick="OnWipeConfirmed">@Culture["GratisDna.Wipe.Yes"]</button>
+                        <button type="button" class="gd-cta gd-cta--ghost" @onclick="OnWipeCancel">@Culture["GratisDna.Wipe.No"]</button>
+                    }
+                    else
+                    {
+                        <button type="button" data-testid="gd-wipe-link" @onclick="OnWipeRequest">
+                            <PubEmoji Glyph="🧹" /> @Culture["GratisDna.Wipe.Link"]
+                        </button>
+                    }
+                </div>
+            </div>
         </div>
-    </a>
 
-    <div class="gd-share" data-testid="gd-share">
-        <h3>@Culture["GratisDna.Share.Title"]</h3>
-        <div class="gd-share__row">
-            <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("whatsapp")'>@Culture["GratisDna.Share.WhatsApp"]</button>
-            <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("instagram")'>@Culture["GratisDna.Share.Instagram"]</button>
-            <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("generic")'>@Culture["GratisDna.Share.Generic"]</button>
+        <div class="gd-result__aside" data-gd-signup-inline>
+            <GratisDnaSignupCard DomId="gd-signup-inline" />
         </div>
-        @if (!string.IsNullOrEmpty(ShareMessage))
-        {
-            <p class="gd-footnote">@ShareMessage</p>
-        }
-    </div>
-
-    <div class="gd-preciezer">
-        <h3>@Culture["GratisDna.Preciezer.Title"]</h3>
-        <ul>
-            <li>
-                <a href="@RegisterHref">
-                    <span>
-                        <strong>@Culture["GratisDna.Preciezer.FinishTests"]</strong>
-                        <small>@Culture["GratisDna.Preciezer.FinishTestsMeta"]</small>
-                    </span>
-                    <span class="gd-tag">@Culture["GratisDna.Tag.Free"]</span>
-                </a>
-            </li>
-            <li>
-                <a href="@RegisterHref">
-                    <span>
-                        <strong>@Culture["GratisDna.Preciezer.Deep"]</strong>
-                        <small>@Culture["GratisDna.Preciezer.DeepMeta"]</small>
-                    </span>
-                    <span class="gd-tag">@Culture["GratisDna.Tag.Paid"]</span>
-                </a>
-            </li>
-            <li>
-                <a href="@RegisterHref">
-                    <span>
-                        <strong>@Culture["GratisDna.Preciezer.Jobs"]</strong>
-                    </span>
-                    <span class="gd-tag">@Culture["GratisDna.Tag.Free"]</span>
-                </a>
-            </li>
-        </ul>
-    </div>
-
-    <a class="gd-quiet-link" href="@RegisterHref">@Culture["GratisDna.SharperLink"]</a>
-
-    <div class="gd-wipe" data-testid="gd-wipe">
-        @if (WipeConfirm)
-        {
-            <p>@Culture["GratisDna.Wipe.Confirm"]</p>
-            <button type="button" class="gd-cta" @onclick="OnWipeConfirmed">@Culture["GratisDna.Wipe.Yes"]</button>
-            <button type="button" class="gd-cta gd-cta--ghost" @onclick="OnWipeCancel">@Culture["GratisDna.Wipe.No"]</button>
-        }
-        else
-        {
-            <button type="button" data-testid="gd-wipe-link" @onclick="OnWipeRequest">@Culture["GratisDna.Wipe.Link"]</button>
-        }
     </div>
 </section>
 
 @if (ShowSticky)
 {
-    <div class="gd-sticky" data-testid="gd-sticky">
-        <a class="gd-cta" href="@RegisterHref" data-testid="gd-sticky-cta">@Culture["GratisDna.Sticky.Cta"]</a>
+    <div class="gd-sticky pub-fixed-bottom @(_stickyHiddenByCard ? "is-card-visible" : null)" data-testid="gd-sticky" data-gd-sticky>
+        <button type="button"
+                class="gd-cta"
+                data-testid="gd-sticky-cta"
+                @onclick="OpenSheetAsync">
+            @Culture["GratisDna.Sticky.Cta"]
+        </button>
         <button type="button" class="gd-cta gd-cta--ghost" @onclick="OnStickyDismiss">@Culture["GratisDna.Sticky.Dismiss"]</button>
     </div>
 }
 
+<dialog class="gd-sheet" data-testid="gd-sheet" data-gd-sheet>
+    <div class="gd-sheet__grab" aria-hidden="true"></div>
+    <GratisDnaSignupCard DomId="gd-signup-sheet" ShowLater="true" OnLater="CloseSheetAsync" />
+    <button type="button" class="gd-sheet__close" @onclick="CloseSheetAsync">@Culture["Common.Close"]</button>
+</dialog>
+
 @code {
-    [Parameter] public string RegisterHref { get; set; } = "/register?van=ontdek";
+    [Parameter] public string RegisterHref { get; set; } = PublicRoutes.CreateAccountFromTest;
     [Parameter] public string? StrengthSentence { get; set; }
     [Parameter] public string? RiasecSentence { get; set; }
     [Parameter] public string? CultureSentence { get; set; }
     [Parameter] public string? ValueSentence { get; set; }
+    [Parameter] public string? StrengthLabel { get; set; }
+    [Parameter] public string? RiasecLabel { get; set; }
+    [Parameter] public string? CultureLabel { get; set; }
+    [Parameter] public string? ValueLabel { get; set; }
+    [Parameter] public IReadOnlyList<string>? StrengthChips { get; set; }
+    [Parameter] public IReadOnlyList<string>? RiasecChips { get; set; }
+    [Parameter] public IReadOnlyList<string>? CultureChips { get; set; }
+    [Parameter] public IReadOnlyList<string>? ValueChips { get; set; }
     [Parameter] public string? ShareMessage { get; set; }
     [Parameter] public bool WipeConfirm { get; set; }
     [Parameter] public bool ShowSticky { get; set; } = true;
@@ -129,4 +178,104 @@
     [Parameter] public EventCallback OnWipeConfirmed { get; set; }
     [Parameter] public EventCallback OnWipeCancel { get; set; }
     [Parameter] public EventCallback OnStickyDismiss { get; set; }
+
+    private bool _stickyHiddenByCard;
+    private bool _wired;
+    private DotNetObjectReference<GratisDnaResultView>? _self;
+
+    private RenderFragment ChipRow(IReadOnlyList<string>? chips) => builder =>
+    {
+        if (chips is not { Count: > 0 })
+        {
+            return;
+        }
+
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "gd-tile__chips");
+        var seq = 2;
+        foreach (var chip in chips.Take(2))
+        {
+            builder.OpenElement(seq++, "span");
+            builder.AddAttribute(seq++, "class", "gd-tile__chip");
+            builder.AddContent(seq++, chip);
+            builder.CloseElement();
+        }
+
+        builder.CloseElement();
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _wired)
+        {
+            return;
+        }
+
+        _wired = true;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyEnsureGratisDna");
+            _self = DotNetObjectReference.Create(this);
+            await Js.InvokeVoidAsync("jobsyGratisDna.bindResultChrome", _self);
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    [JSInvokable]
+    public Task SetStickyHiddenByCard(bool hidden)
+    {
+        if (_stickyHiddenByCard == hidden)
+        {
+            return Task.CompletedTask;
+        }
+
+        _stickyHiddenByCard = hidden;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OpenSheetAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyGratisDna.openSheet");
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    private async Task CloseSheetAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyGratisDna.closeSheet");
+        }
+        catch (JSException)
+        {
+        }
+
+        if (OnStickyDismiss.HasDelegate)
+        {
+            await OnStickyDismiss.InvokeAsync();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyGratisDna.unbindResultChrome");
+        }
+        catch
+        {
+            // ignore dispose races
+        }
+
+        _self?.Dispose();
+    }
 }

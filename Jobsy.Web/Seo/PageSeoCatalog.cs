@@ -51,6 +51,7 @@ public static partial class PageSeoCatalog
     public static IReadOnlyList<string> StaticIndexablePaths { get; } =
     [
         "/",
+        "/banenkaart",
         "/login",
         "/register",
         "/privacy",
@@ -96,9 +97,11 @@ public static partial class PageSeoCatalog
     public static IReadOnlyDictionary<string, PageSeoEntry> Exact { get; } =
         new Dictionary<string, PageSeoEntry>(StringComparer.OrdinalIgnoreCase)
         {
-            ["/"] = Public("Page.JobMapTitle", "Seo.HomeDescription"),
-            ["/banen"] = Private("Page.JobMapTitle", "Seo.HomeDescription"),
+            ["/"] = Public("Landing.Seo.Title", "Landing.Seo.Description", hreflang: true),
+            ["/banenkaart"] = Public("Page.JobMapTitle", "Seo.HomeDescription"),
             ["/login"] = Public("Login.Title", "Seo.LoginDescription"),
+            ["/account-maken"] = Private("Signup.Seo.Title", "Signup.Seo.Description"),
+            ["/account-maken/code"] = Private("Signup.Code.Title", "Signup.Seo.Description"),
             ["/register"] = Public("Page.RegisterTitle", "Seo.RegisterDescription"),
             ["/register/activate"] = Private("Page.ActivateTitle", "Seo.ActivateDescription"),
             ["/privacy"] = Public("Legal.Privacy", "Seo.PrivacyDescription"),
@@ -107,8 +110,8 @@ public static partial class PageSeoCatalog
             ["/wie-zijn-wij"] = Public("Legal.About", "Seo.AboutDescription"),
             ["/westland"] = Public("Seo.WestlandTitle", "Seo.WestlandDescription"),
             ["/lancering"] = Public("Seo.WestlandTitle", "Seo.WestlandDescription"),
-            ["/ontdek"] = Public("GratisDna.Seo.Title", "GratisDna.Seo.Description"),
-            ["/dna"] = Public("GratisDna.Seo.Title", "GratisDna.Seo.Description"),
+            ["/ontdek"] = Public("GratisDna.Seo.Title", "GratisDna.Seo.Description", hreflang: true),
+            ["/dna"] = Public("GratisDna.Seo.Title", "GratisDna.Seo.Description", hreflang: true, CanonicalPath: "/ontdek"),
             ["/partner"] = Public("Partner.Title", "Seo.PartnerDescription"),
             ["/company"] = Public("BranchPage.Title", "Seo.CompanyFallbackDescription"),
             ["/access-denied"] = Private("Page.AccessDeniedTitle", "Seo.PrivateDescription"),
@@ -252,8 +255,13 @@ public static partial class PageSeoCatalog
         ("/tokens/", Private("Seo.SiteName", "Seo.PrivateDescription")),
     ];
 
-    private static PageSeoEntry Public(string titleKey, string descriptionKey, string ogType = "website")
-        => new(titleKey, descriptionKey, Indexable: true, ogType);
+    private static PageSeoEntry Public(
+        string titleKey,
+        string descriptionKey,
+        string ogType = "website",
+        bool hreflang = false,
+        string? CanonicalPath = null)
+        => new(titleKey, descriptionKey, Indexable: true, ogType, Hreflang: hreflang, CanonicalPath: CanonicalPath);
 
     private static PageSeoEntry Private(string titleKey, string descriptionKey)
         => new(titleKey, descriptionKey, Indexable: false);

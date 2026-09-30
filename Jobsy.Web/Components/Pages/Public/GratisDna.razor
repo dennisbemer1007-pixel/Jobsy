@@ -1,27 +1,30 @@
 @page "/ontdek"
 @page "/dna"
-@layout TeaserLayout
+@layout PublicLayout
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @using System.Security.Claims
 @using Jobsy.Core.Privacy
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Feedback
 @using Jobsy.Web.Components.Public
-@using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
+@using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.JSInterop
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
 @inject GratisDnaStorage Storage
 @inject IJSRuntime Js
-@implements IDisposable
+@implements IAsyncDisposable
 
 <PageTitle>@Culture["GratisDna.Seo.Title"] · Lobsy</PageTitle>
 
 <HeadContent>
-    <link rel="stylesheet" href="css/features/gratis-dna.css?v=20260927-gratis-dna" />
+    <link rel="stylesheet" href="css/features/gratis-dna.css?v=20260930-landing-6" />
     <script>
         window.jobsyEnsureGratisDna = function () {
             if (window.jobsyGratisDna) {
@@ -35,7 +38,7 @@
                     return;
                 }
                 var s = document.createElement('script');
-                s.src = '/js/gratis-dna.js?v=20260927-gratis-dna';
+                s.src = '/js/gratis-dna.js?v=20260930-landing-6';
                 s.defer = true;
                 s.dataset.gratisDna = 'true';
                 s.onload = function () { resolve(); };
@@ -46,7 +49,7 @@
     </script>
 </HeadContent>
 
-<div class="gd-page" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+<div class="gd-page gd-page--warm" dir="@(Culture.IsRightToLeft ? "rtl" : null)" data-gd-page>
     <div class="gd-page__inner">
         @if (_hydrating)
         {
@@ -58,110 +61,180 @@
         }
         else if (_state == FlowState.Landing)
         {
-            <section class="gd-hero" aria-labelledby="gd-landing-title">
-                <p class="gd-badge">@Culture["GratisDna.Landing.Badge"]</p>
-                <h1 id="gd-landing-title">@Culture["GratisDna.Landing.Title"]</h1>
-                <p class="gd-hero__lead">@Culture["GratisDna.Landing.Lead"]</p>
-                <div class="gd-meta">
-                    <span>@Culture["GratisDna.Landing.MetaMinutes"]</span>
-                    <span>@Culture.Format("GratisDna.Landing.MetaQuestions", _totalQuestions)</span>
-                </div>
-                @if (_employerView)
-                {
-                    <p class="gd-note">@Culture["GratisDna.Landing.EmployerNote"]</p>
-                }
-                <div class="gd-preview" aria-hidden="true">
-                    <p class="gd-preview__title">@Culture["GratisDna.Landing.PreviewTitle"]</p>
-                    <div class="gd-preview__grid">
-                        <span>@Culture["GratisDna.Tile.Title.Strength"]</span>
-                        <span>@Culture["GratisDna.Tile.Title.Riasec"]</span>
-                        <span>@Culture["GratisDna.Tile.Title.Culture"]</span>
-                        <span>@Culture["GratisDna.Tile.Title.Value"]</span>
+            <div class="gd-start">
+                <section class="gd-start__card" aria-labelledby="gd-landing-title" data-testid="gd-start">
+                    <p class="gd-badge">
+                        <PubEmoji Glyph="👋" />
+                        @Culture["GratisDna.Landing.Badge"]
+                    </p>
+                    <h1 id="gd-landing-title">@Culture["GratisDna.Landing.Title"]</h1>
+                    <p class="gd-hero__lead">@Culture["GratisDna.Landing.Lead"]</p>
+                    @if (_showOwnLanguageHint)
+                    {
+                        <p class="gd-lang-hint">
+                            <a href="#pub-lang" @onclick="OpenLangMenu" @onclick:preventDefault="false">
+                                @Culture["GratisDna.Landing.OwnLanguage"]
+                            </a>
+                        </p>
+                    }
+                    <div class="gd-meta">
+                        <span><PubEmoji Glyph="📝" /> @Culture.Format("GratisDna.Landing.MetaQuestions", _totalQuestions)</span>
+                        <span><PubEmoji Glyph="⏱️" /> @Culture["GratisDna.Landing.MetaMinutes"]</span>
+                        <span><PubEmoji Glyph="📱" /> @Culture["GratisDna.Landing.MetaDevice"]</span>
                     </div>
-                </div>
-                <ol class="gd-steps">
-                    <li><strong>1</strong><span>@Culture["GratisDna.Landing.Step1"]</span></li>
-                    <li><strong>2</strong><span>@Culture["GratisDna.Landing.Step2"]</span></li>
-                    <li><strong>3</strong><span>@Culture["GratisDna.Landing.Step3"]</span></li>
-                </ol>
-                @if (_needsConsentRenew)
-                {
-                    <p class="gd-note">@Culture["GratisDna.Consent.Renew"]</p>
-                }
-                <div class="gd-age" role="group" aria-label="@Culture["GratisDna.Landing.Age16"]">
-                    <button type="button" class="gd-pill @(_age16Plus == true ? "is-on" : null)" @onclick="() => ChooseAge(true)">
-                        @Culture["GratisDna.Landing.Age16"]
-                    </button>
-                    <button type="button" class="gd-pill @(_age16Plus == false ? "is-on" : null)" @onclick="() => ChooseAge(false)">
-                        @Culture["GratisDna.Landing.AgeUnder16"]
-                    </button>
-                </div>
-                @if (_age16Plus == true)
-                {
-                    <label class="gd-consent">
-                        <input type="checkbox" @bind="_consentChecked" />
-                        <span>
-                            @Culture["GratisDna.Landing.Consent"]
-                            <a href="/privacy">@Culture["Legal.Privacy"]</a>
-                        </span>
-                    </label>
-                }
-                @if (_resumeAvailable)
-                {
-                    <button type="button" class="gd-cta gd-cta--ghost" @onclick="ResumeAsync">@Culture["GratisDna.Landing.Resume"]</button>
-                }
-                <button type="button" class="gd-cta" disabled="@(!CanStart)" @onclick="StartAsync">
-                    @Culture["GratisDna.Landing.StartCta"] →
-                </button>
-                <p class="gd-footnote">
-                    @Culture["GratisDna.Landing.Footer"]
-                    <a href="/privacy">@Culture["Legal.Privacy"]</a>
-                </p>
-            </section>
-        }
-        else if (_state == FlowState.Questions && _payload is not null)
-        {
-            <div class="gd-questions">
-                <QuestionnaireShell Title="@CurrentTestTitle"
-                                    Subtitle="@Culture.Format("GratisDna.Questions.Progress", _currentIndex + 1, _totalQuestions)"
-                                    AnsweredCount="@AnsweredCount"
-                                    TotalCount="@_totalQuestions"
-                                    SaveStatus="@_saveStatus"
-                                    SaveStatusText="@Culture["GratisDna.Questions.SavedOnDevice"]"
-                                    ShowPrivacyNote="false"
-                                    OnBack="BackAsync"
-                                    OnNext="NextQuestionAsync">
-                    <HeaderExtra>
-                        <div class="gd-test-tabs" aria-hidden="false">
-                            @foreach (var tab in _testTabs)
-                            {
-                                var done = tab.Index < CurrentTestIndex;
-                                var current = tab.Index == CurrentTestIndex;
-                                <span class="@(current ? "is-current" : done ? "is-done" : null)">@Culture[tab.TitleKey]</span>
-                            }
-                        </div>
-                    </HeaderExtra>
-                    <ChildContent>
-                        @foreach (var q in VisibleQuestions)
+                    @if (_employerView)
+                    {
+                        <p class="gd-note">@Culture["GratisDna.Landing.EmployerNote"]</p>
+                    }
+                    <div class="gd-blocks">
+                        @foreach (var block in _blocks)
                         {
-                            var index = _questions.IndexOf(q);
-                            var answered = TryGetAnswer(q, out var value);
-                            <LikertScaleQuestion QuestionId="@(1000 + index)"
-                                                 Text="@QuestionText(q)"
-                                                 Value="@(answered ? value : null)"
-                                                 Collapsed="@(answered && index != _currentIndex)"
-                                                 Dimmed="@(index > _currentIndex)"
-                                                 Interactive="@(index <= _currentIndex)"
-                                                 IsCurrent="@(index == _currentIndex)"
-                                                 Index="@(index + 1)"
-                                                 Total="@_totalQuestions"
-                                                 HighLabel="@Culture["Onboarding.Likert.High"]"
-                                                 LowLabel="@Culture["Onboarding.Likert.Low"]"
-                                                 ValueChanged="v => AnswerAsync(q, v)"
-                                                 Expanded="() => ExpandQuestion(index)" />
+                            <div class="gd-blk">
+                                <span class="gd-blk__emo t-@block.Tint"><PubEmoji Glyph="@block.Emoji" /></span>
+                                <div>
+                                    <h2>@Culture[block.TitleKey]</h2>
+                                    <p>@Culture[block.LeadKey]</p>
+                                </div>
+                            </div>
                         }
-                    </ChildContent>
-                </QuestionnaireShell>
+                    </div>
+                    @if (_needsConsentRenew)
+                    {
+                        <p class="gd-note">@Culture["GratisDna.Consent.Renew"]</p>
+                    }
+                    <label class="gd-consent gd-consent--check">
+                        <input type="checkbox"
+                               data-testid="gd-age16"
+                               checked="@(_age16Plus == true)"
+                               @onchange="OnAgeCheckbox" />
+                        <span>@Culture["GratisDna.Landing.Age16"]</span>
+                    </label>
+                    @if (_age16Plus == true)
+                    {
+                        <label class="gd-consent gd-consent--check">
+                            <input type="checkbox" data-testid="gd-consent" @bind="_consentChecked" />
+                            <span>
+                                @Culture["GratisDna.Landing.Consent"]
+                                <a href="@PublicRoutes.Privacy">@Culture["GratisDna.Landing.PrivacyLink"]</a>
+                            </span>
+                        </label>
+                    }
+                    else
+                    {
+                        <p class="gd-under16-link">
+                            <button type="button" class="gd-linkish" data-testid="gd-under16-choice" @onclick="() => ChooseAge(false)">
+                                @Culture["GratisDna.Landing.AgeUnder16"]
+                            </button>
+                        </p>
+                    }
+                    @if (_resumeAvailable)
+                    {
+                        <button type="button" class="gd-cta gd-cta--ghost" @onclick="ResumeAsync">@Culture["GratisDna.Landing.Resume"]</button>
+                    }
+                    <div class="gd-start__actions">
+                        <button type="button" class="gd-cta" disabled="@(!CanStart)" @onclick="StartAsync" data-testid="gd-start-cta">
+                            @Culture["GratisDna.Landing.StartCta"] →
+                        </button>
+                        <p class="gd-start__login">
+                            @Culture["Signup.HaveAccount"]
+                            <a href="@PublicRoutes.Login">@Culture["Signup.Login"]</a>
+                        </p>
+                    </div>
+                </section>
+
+                <aside class="gd-side-scene" aria-hidden="true">
+                    <div class="gd-bubble">@Culture["GratisDna.Landing.Bubble"]</div>
+                    <div class="gd-side-scene__art">
+                        <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Large" Alt="" />
+                    </div>
+                    <div class="gd-after">
+                        <h2><PubEmoji Glyph="🎁" /> @Culture["GratisDna.Landing.AfterTitle"]</h2>
+                        <p>@Culture["GratisDna.Landing.AfterLead"]</p>
+                    </div>
+                </aside>
+            </div>
+        }
+        else if (_state == FlowState.Questions && _payload is not null && CurrentQuestion is not null)
+        {
+            var q = CurrentQuestion;
+            var blockIdx = CurrentTestIndex;
+            var block = _blocks[blockIdx];
+            var inBlock = (_currentIndex % 5) + 1;
+            var answered = TryGetAnswer(q, out var currentValue);
+            <div class="gd-questions gd-questions--warm"
+                 data-testid="gd-questions"
+                 tabindex="0"
+                 @onkeydown="OnQuestionKeyDown"
+                 @ref="_questionRoot">
+                <div class="gd-qtop">
+                    <button type="button" class="gd-qtop__nav" @onclick="BackAsync">← @Culture["GratisDna.Questions.Previous"]</button>
+                    <p class="gd-qtop__progress" id="gd-q-progress">
+                        @Culture.Format("GratisDna.Questions.ProgressCheer", _currentIndex + 1, _totalQuestions, EncourageFor(_currentIndex))
+                    </p>
+                    <a class="gd-qtop__nav" href="@PublicRoutes.Landing">@Culture["GratisDna.Questions.Later"]</a>
+                </div>
+
+                <div class="gd-prog" aria-hidden="true">
+                    @for (var i = 0; i < _blocks.Length; i++)
+                    {
+                        var pct = BlockProgressPercent(i);
+                        <div class="@(i == blockIdx ? "is-on" : null)">
+                            <b style="--pct:@(pct)%"></b>
+                            <span class="gd-prog__label"><PubEmoji Glyph="@_blocks[i].Emoji" /> @Culture[_blocks[i].TitleKey]</span>
+                        </div>
+                    }
+                </div>
+
+                <section class="gd-qcard" aria-labelledby="gd-q-heading">
+                    <div class="gd-qcard__lab">
+                        <span class="gd-blk__emo t-@block.Tint"><PubEmoji Glyph="@block.Emoji" /></span>
+                        <div>
+                            <strong>@Culture[block.TitleKey]</strong>
+                            <div class="gd-qcard__sub">@Culture.Format("GratisDna.Questions.OfBlock", inBlock, 5)</div>
+                        </div>
+                    </div>
+                    <h2 id="gd-q-heading" tabindex="-1">@QuestionText(q)</h2>
+                    <div class="gd-lik" role="group" aria-labelledby="gd-q-heading">
+                        @for (var value = 1; value <= 5; value++)
+                        {
+                            var v = value;
+                            var face = Faces[v - 1];
+                            var selected = answered && currentValue == v;
+                            var aria = v == 1
+                                ? Culture.Format("GratisDna.Likert.AriaLow", v)
+                                : v == 5
+                                    ? Culture.Format("GratisDna.Likert.AriaHigh", v)
+                                    : Culture.Format("GratisDna.Likert.Aria", v);
+                            <button type="button"
+                                    class="gd-lik__opt @(selected ? "is-on" : null)"
+                                    aria-pressed="@(selected ? "true" : "false")"
+                                    aria-label="@aria"
+                                    data-testid="@($"gd-likert-{v}")"
+                                    @onclick="() => AnswerAsync(q, v)">
+                                <span class="gd-lik__face" aria-hidden="true">@face</span>
+                                <span class="gd-lik__num" aria-hidden="true">@v</span>
+                            </button>
+                        }
+                    </div>
+                    <div class="gd-lik__labels" aria-hidden="true">
+                        <span>@Culture["Questionnaire.Likert.Low"]</span>
+                        <span>@Culture["Questionnaire.Likert.High"]</span>
+                    </div>
+                    <div class="gd-tip">
+                        <LobsyMascot Pose="MascotPose.Default" Size="MascotSize.Tiny" Alt="" />
+                        <span>@Culture["GratisDna.Questions.Hint"]</span>
+                    </div>
+                </section>
+
+                <div class="gd-mnav">
+                    <button type="button" class="gd-cta gd-cta--ghost" @onclick="BackAsync">← @Culture["GratisDna.Questions.Previous"]</button>
+                    <button type="button" class="gd-cta" disabled="@(!answered)" @onclick="NextQuestionAsync">@Culture["GratisDna.Questions.Next"] →</button>
+                </div>
+
+                <p class="gd-qfoot">
+                    <PubEmoji Glyph="🔒" />
+                    @Culture["GratisDna.Questions.Privacy"]
+                </p>
             </div>
         }
         else if (_state == FlowState.Result && _payload is not null)
@@ -171,6 +244,14 @@
                                  RiasecSentence="@(_riasecTile is null ? null : TileSentence("Riasec", _riasecTile.Code))"
                                  CultureSentence="@(_cultureTile is null ? null : TileSentence("Culture", _cultureTile.Code))"
                                  ValueSentence="@(_valueTile is null ? null : TileSentence("Value", _valueTile.Code))"
+                                 StrengthLabel="@(_strengthTile?.Label)"
+                                 RiasecLabel="@(_riasecTile?.Label)"
+                                 CultureLabel="@(_cultureTile?.Label)"
+                                 ValueLabel="@(_valueTile?.Label)"
+                                 StrengthChips="@_strengthChips"
+                                 RiasecChips="@_riasecChips"
+                                 CultureChips="@_cultureChips"
+                                 ValueChips="@_valueChips"
                                  ShareMessage="@_shareMessage"
                                  WipeConfirm="@_wipeConfirm"
                                  ShowSticky="@(!_stickyDismissed)"
@@ -183,19 +264,31 @@
     </div>
 </div>
 
+<FeedbackWidget />
+
 @code {
     private enum FlowState { Landing, Questions, Result, Under16 }
     private enum TestKind { Competency, Career, Culture, Values }
 
     private sealed record DnaQuestion(TestKind Kind, int Id, string TextKey);
-    private sealed record TestTab(int Index, string TitleKey);
+    private sealed record BlockDef(string Emoji, string Tint, string TitleKey, string LeadKey);
 
-    private static readonly TestTab[] _testTabs =
+    private static readonly string[] Faces = ["😟", "😕", "😐", "🙂", "😄"];
+    private static readonly string[] EncourageKeys =
     [
-        new(0, "Onboarding.Test.Competency"),
-        new(1, "Onboarding.Test.Career"),
-        new(2, "Onboarding.Test.Culture"),
-        new(3, "Onboarding.Test.Values")
+        "GratisDna.Questions.Cheer.0",
+        "GratisDna.Questions.Cheer.1",
+        "GratisDna.Questions.Cheer.2",
+        "GratisDna.Questions.Cheer.3",
+        "GratisDna.Questions.Cheer.4"
+    ];
+
+    private static readonly BlockDef[] _blocks =
+    [
+        new("🤝", "peach", "GratisDna.Tile.Title.Strength", "GratisDna.Landing.Block.Strength"),
+        new("💛", "sun", "GratisDna.Tile.Title.Riasec", "GratisDna.Landing.Block.Riasec"),
+        new("🏡", "mint", "GratisDna.Tile.Title.Culture", "GratisDna.Landing.Block.Culture"),
+        new("🧭", "sky", "GratisDna.Tile.Title.Value", "GratisDna.Landing.Block.Value")
     ];
 
     private readonly List<DnaQuestion> _questions = BuildQuestions();
@@ -210,18 +303,24 @@
     private bool _consentChecked;
     private bool _needsConsentRenew;
     private bool _resumeAvailable;
+    private bool _showOwnLanguageHint;
     private int _currentIndex;
-    private QuestionnaireSaveStatus _saveStatus = QuestionnaireSaveStatus.Saved;
     private bool _wipeConfirm;
     private bool _stickyDismissed;
     private string? _shareMessage;
+    private ElementReference _questionRoot;
+    private bool _chromeBound;
 
     private OnboardingImpressionCoreItem? _strengthTile;
     private OnboardingImpressionCoreItem? _riasecTile;
     private OnboardingImpressionCoreItem? _cultureTile;
     private OnboardingImpressionCoreItem? _valueTile;
+    private IReadOnlyList<string>? _strengthChips;
+    private IReadOnlyList<string>? _riasecChips;
+    private IReadOnlyList<string>? _cultureChips;
+    private IReadOnlyList<string>? _valueChips;
 
-    private string RegisterHref => "/register?van=ontdek";
+    private string RegisterHref => PublicRoutes.CreateAccountFromTest;
 
     private bool CanStart => _age16Plus == true && _consentChecked && !_storageDisabled;
 
@@ -239,73 +338,123 @@
     private DnaQuestion? CurrentQuestion =>
         _currentIndex >= 0 && _currentIndex < _questions.Count ? _questions[_currentIndex] : null;
 
-    private string CurrentTestTitle => CurrentQuestion?.Kind switch
+    protected override void OnInitialized()
     {
-        TestKind.Competency => Culture["Onboarding.Test.Competency"],
-        TestKind.Career => Culture["Onboarding.Test.Career"],
-        TestKind.Culture => Culture["Onboarding.Test.Culture"],
-        TestKind.Values => Culture["Onboarding.Test.Values"],
-        _ => Culture["GratisDna.Landing.Title"]
-    };
-
-    private IEnumerable<DnaQuestion> VisibleQuestions
-    {
-        get
-        {
-            var take = Math.Min(_currentIndex + 2, _questions.Count);
-            return _questions.Take(take);
-        }
+        Culture.Changed += OnCultureChanged;
+        TryReadVoorHint();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
+        if (firstRender)
         {
-            return;
-        }
-
-        var auth = await AuthState.GetAuthenticationStateAsync();
-        var user = auth.User;
-        if (user.Identity?.IsAuthenticated == true && user.IsInRole("Candidate"))
-        {
-            Navigation.NavigateTo("/candidate/start", replace: true);
-            return;
-        }
-
-        _employerView = user.Identity?.IsAuthenticated == true && !user.IsInRole("Candidate");
-        _storageDisabled = _employerView;
-
-        try
-        {
-            await Storage.EnsureModuleAsync();
-            if (!_storageDisabled)
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var user = auth.User;
+            if (user.Identity?.IsAuthenticated == true && user.IsInRole("Candidate"))
             {
-                _payload = await Storage.LoadAsync();
+                Navigation.NavigateTo("/candidate/start", replace: true);
+                return;
             }
 
-            ApplyLoadedState();
+            _employerView = user.Identity?.IsAuthenticated == true && !user.IsInRole("Candidate");
+            _storageDisabled = _employerView;
+
+            try
+            {
+                await Storage.EnsureModuleAsync();
+                if (!_storageDisabled)
+                {
+                    _payload = await Storage.LoadAsync();
+                }
+
+                ApplyLoadedState();
+            }
+            catch (JSException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
+            }
+            finally
+            {
+                _hydrating = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+
+        if (_state == FlowState.Questions && !_chromeBound)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyEnsureGratisDna");
+                await Js.InvokeVoidAsync("jobsyGratisDna.bindQuestionChrome");
+                _chromeBound = true;
+            }
+            catch (JSException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+
+        if (_state == FlowState.Questions)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyGratisDna.focusQuestionHeading");
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+    }
+
+    private void TryReadVoorHint()
+    {
+        try
+        {
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var query = QueryHelpers.ParseQuery(uri.Query);
+            if (query.TryGetValue("voor", out var values))
+            {
+                _showOwnLanguageHint = string.Equals(values.FirstOrDefault(), "nieuw", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+        catch
+        {
+            _showOwnLanguageHint = false;
+        }
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnAgeCheckbox(ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b
+                 || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(e.Value?.ToString(), "on", StringComparison.OrdinalIgnoreCase);
+        if (on)
+        {
+            _age16Plus = true;
+            return;
+        }
+
+        _age16Plus = null;
+        _consentChecked = false;
+    }
+
+    private async Task OpenLangMenu()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyGratisDna.openLangMenu");
         }
         catch (JSException)
         {
         }
-        catch (InvalidOperationException)
-        {
-        }
-        finally
-        {
-            _hydrating = false;
-            await InvokeAsync(StateHasChanged);
-        }
     }
-
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
 
     private void ApplyLoadedState()
     {
@@ -385,12 +534,14 @@
 
         _currentIndex = FirstUnansweredIndex();
         _state = FlowState.Questions;
+        _chromeBound = false;
     }
 
     private Task ResumeAsync()
     {
         _state = FlowState.Questions;
         _currentIndex = FirstUnansweredIndex();
+        _chromeBound = false;
         return Task.CompletedTask;
     }
 
@@ -402,9 +553,7 @@
         }
 
         SetAnswer(question, value);
-        _saveStatus = QuestionnaireSaveStatus.Saving;
         await PersistAsync();
-        _saveStatus = QuestionnaireSaveStatus.Saved;
 
         if (AnsweredCount >= _totalQuestions)
         {
@@ -456,7 +605,42 @@
         return Task.CompletedTask;
     }
 
-    private void ExpandQuestion(int index) => _currentIndex = index;
+    private async Task OnQuestionKeyDown(KeyboardEventArgs e)
+    {
+        if (CurrentQuestion is null)
+        {
+            return;
+        }
+
+        if (e.Key is "1" or "2" or "3" or "4" or "5")
+        {
+            await AnswerAsync(CurrentQuestion, e.Key[0] - '0');
+            return;
+        }
+
+        if (e.Key is "ArrowLeft" or "Left")
+        {
+            await BackAsync();
+        }
+    }
+
+    private int BlockProgressPercent(int blockIndex)
+    {
+        var start = blockIndex * 5;
+        var answeredInBlock = 0;
+        for (var i = 0; i < 5 && start + i < _questions.Count; i++)
+        {
+            if (TryGetAnswer(_questions[start + i], out _))
+            {
+                answeredInBlock++;
+            }
+        }
+
+        return answeredInBlock * 20;
+    }
+
+    private string EncourageFor(int questionIndex)
+        => Culture[EncourageKeys[questionIndex % EncourageKeys.Length]];
 
     private void BuildResultTiles()
     {
@@ -470,6 +654,10 @@
         _riasecTile = core.RiasecTop.FirstOrDefault();
         _cultureTile = core.CultureHighlight;
         _valueTile = core.TopValue;
+        _strengthChips = core.Strengths.Select(x => x.Label).Take(2).ToArray();
+        _riasecChips = core.RiasecTop.Select(x => x.Label).Take(2).ToArray();
+        _cultureChips = _cultureTile is null ? null : new[] { _cultureTile.Label };
+        _valueChips = _valueTile is null ? null : new[] { _valueTile.Label };
     }
 
     private string TileSentence(string group, string code)
@@ -618,6 +806,19 @@
                 Values = new Dictionary<int, int>(source.Answers.Values)
             }
         };
+
+    public async ValueTask DisposeAsync()
+    {
+        Culture.Changed -= OnCultureChanged;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyGratisDna.unbindQuestionChrome");
+        }
+        catch
+        {
+            // ignore
+        }
+    }
 
     private sealed class ShareResult
     {

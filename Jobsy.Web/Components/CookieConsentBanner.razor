@@ -1,7 +1,9 @@
+@namespace Jobsy.Web.Components
+
 @using Jobsy.Core.Privacy
-@using Jobsy.Core.Security
+@using Jobsy.Web.Services
 @inject IJSRuntime Js
-@inject IConfiguration Configuration
+@inject ICookieConsentTokenService ConsentTokens
 
 @if (_visible)
 {
@@ -16,19 +18,38 @@
                 </p>
             </div>
             <div class="cookie-consent__actions">
-                <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => SaveAsync(false)">
-                    Alleen noodzakelijk
-                </button>
-                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="() => SaveAsync(true)">
-                    Accepteer cookies
-                </button>
+                @if (Mode == CookieConsentMode.Static)
+                {
+                    <button type="button" class="btn-compact" data-consent="necessary">
+                        Alleen noodzakelijk
+                    </button>
+                    <button type="button" class="btn-compact btn-compact--primary" data-consent="analytics">
+                        Accepteer cookies
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => SaveAsync(false)">
+                        Alleen noodzakelijk
+                    </button>
+                    <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="() => SaveAsync(true)">
+                        Accepteer cookies
+                    </button>
+                }
             </div>
         </div>
     </div>
 }
 
 @code {
+    public enum CookieConsentMode
+    {
+        Interactive,
+        Static
+    }
+
     [Parameter] public EventCallback OnConsentChanged { get; set; }
+    [Parameter] public CookieConsentMode Mode { get; set; } = CookieConsentMode.Interactive;
 
     // Visible in prerender so first paint has a compact banner (not a late LCP text block).
     // Returning visitors are hidden before paint via html.cookie-consent-known.
@@ -38,7 +59,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _checked)
+        if (Mode == CookieConsentMode.Static || !firstRender || _checked)
         {
             return;
         }
@@ -51,7 +72,7 @@
             {
                 if (existing.Equals(CookieConsentNames.AnalyticsValue, StringComparison.OrdinalIgnoreCase))
                 {
-                    await Js.InvokeVoidAsync("jobsyCookieConsent.set", MintAnalyticsToken());
+                    await Js.InvokeVoidAsync("jobsyCookieConsent.set", ConsentTokens.MintAnalyticsToken());
                 }
 
                 _visible = false;
@@ -72,7 +93,7 @@
         {
             var saved = await Js.InvokeAsync<bool>(
                 "jobsyCookieConsent.set",
-                analyticsAllowed ? MintAnalyticsToken() : CookieConsentNames.NecessaryValue);
+                analyticsAllowed ? ConsentTokens.MintAnalyticsToken() : CookieConsentNames.NecessaryValue);
             if (!saved)
             {
                 // Storage blocked — keep the banner visible so the user can retry.
@@ -107,11 +128,12 @@
         }
     }
 
-    private string MintAnalyticsToken()
+    /// <summary>Same format as interactive mode — prefer <see cref="ICookieConsentTokenService"/>.</summary>
+    public static string MintAnalyticsToken(IConfiguration configuration)
     {
-        var key = JobsyLocalSessionToken.ResolveSigningKey(
-            Configuration["JobsyAuth:LocalSessionSigningKey"],
-            Configuration["JobsyAuth:DevelopmentAuthSecret"]);
+        var key = Jobsy.Core.Security.JobsyLocalSessionToken.ResolveSigningKey(
+            configuration["JobsyAuth:LocalSessionSigningKey"],
+            configuration["JobsyAuth:DevelopmentAuthSecret"]);
         return string.IsNullOrWhiteSpace(key)
             ? CookieConsentNames.AnalyticsValue
             : CookieConsentToken.Create(key);

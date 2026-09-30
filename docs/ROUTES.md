@@ -14,10 +14,16 @@ Guard: `Jobsy.Tests/RoutesDocFreshnessTests`.
 ## NL / EN mix
 
 Routes intentionally mix Dutch and English segments (`/profiel`, `/carriere`,
-`/banen`, `/hoe-werkt-lobsy`, `/candidate/...`, `/employer/...`, `/vacancies/...`).
+`/banenkaart`, `/hoe-werkt-lobsy`, `/candidate/...`, `/employer/...`, `/vacancies/...`).
 **Do not rename routes** for cosmetics — bookmarks, QR landings, and emails depend on them.
 Product narrative per role: [`ROLES_AND_VIEWS.md`](../ROLES_AND_VIEWS.md).
 Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
+
+## Landing + banenkaart (landing 04–05)
+
+- `/` — public landing page (static SSR, no MapLibre / no Blazor runtime; indexed). Signed-in users are **302** → role home (`/banenkaart` for candidates). Legacy map deep-link query on `/` → **301** `/banenkaart?…`.
+- `/banenkaart` — public job map (indexed).
+- `/banen` — legacy; **301** → `/banenkaart` (query preserved; middleware, not a Blazor page).
 
 ## Access column
 
@@ -32,8 +38,10 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 
 | Route | Component | Access |
 |-------|-----------|--------|
-| `/` | `Pages/Home.razor` | anonymous |
+| `/` | `Pages/Landing.razor` | anonymous |
 | `/access-denied` | `Pages/AccessDenied.razor` | anonymous |
+| `/account-maken` | `Pages/Public/AccountMaken.razor` | anonymous |
+| `/account-maken/code` | `Pages/Public/AccountMakenCode.razor` | anonymous |
 | `/account/mfa` | `Pages/Account/MfaPrompt.razor` | anonymous |
 | `/account/mfa/recovery-codes` | `Pages/Account/MfaRecoveryCodes.razor` | anonymous |
 | `/account/mfa/setup` | `Pages/Account/MfaSetup.razor` | anonymous |
@@ -105,7 +113,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/ambassadeur/payout-checkout` | `Pages/Ambassadeur/PayoutCheckoutStub.razor` | Ambassadeur |
 | `/ambassadeur/ref/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
 | `/ambassadeur/toolkit` | `Pages/Ambassadeur/Toolkit.razor` | Ambassadeur |
-| `/banen` | `Pages/Banen.razor` | anonymous |
+| `/banenkaart` | `Pages/Banenkaart.razor` | anonymous |
 | `/branch` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/branch/applicants` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/branch/culture` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
@@ -283,3 +291,16 @@ for at least one release. Source: `WerkgeverLegacyRoutes.Table`.
 |---------|------------|
 | `/home` (employer roles only) | 301 → `/werkgever` |
 | `/employer/onboarding-checkout`, `/tokens/checkout-return`, `/tokens/checkout-stub` | **unchanged** (payment return URLs) |
+
+## Minimal API (public shell)
+
+Not Blazor `@page` routes — documented here for discoverability (landing stack).
+
+| Route | Notes |
+|-------|-------|
+| `/taal/{lang}` | Sets `Jobsy.Culture` cookie; 302 to local `returnUrl` only; `noindex` |
+| `/account/cookie-consent/analytics-token` | POST; same-origin analytics consent token for static cookie banner |
+| `/account/email-code/start` | POST; antiforgery; starts passwordless e-mail code (Web → API) |
+| `/account/email-code/verify` | POST; antiforgery; verifies code and signs in |
+| `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |
+| `/banen` | GET/HEAD; **301** → `/banenkaart` (+ query) |

@@ -41,7 +41,7 @@ public class BanenkaartCookiePaddingPlaywrightTests
             return;
         }
 
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await page.WaitForSelectorAsync("#job-map canvas", new() { Timeout = 60_000 });
 
         // Case A: cookies NOT accepted — hide banner visually but leave storage empty.

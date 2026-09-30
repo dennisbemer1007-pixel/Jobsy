@@ -60,7 +60,7 @@ public static class SitemapXml
             sb.Append("  <url><loc>");
             sb.Append(System.Net.WebUtility.HtmlEncode(loc));
             sb.Append("</loc><changefreq>");
-            sb.Append(normalized is "/" ? "hourly" : "daily");
+            sb.Append(normalized is "/" or "/banenkaart" ? "hourly" : "daily");
             sb.Append("</changefreq><lastmod>");
             sb.Append(stamp);
             sb.AppendLine("</lastmod></url>");

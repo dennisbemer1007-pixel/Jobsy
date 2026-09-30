@@ -1,0 +1,61 @@
+@namespace Jobsy.Web.Components.Landing
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@inject CultureState Culture
+
+<div class="pub-landing__scene" aria-hidden="false">
+    <div class="pub-landing__blobs" aria-hidden="true">
+        <svg class="pub-landing__blob pub-landing__blob--sun" viewBox="-100 -100 200 200" preserveAspectRatio="none"><path d="M60,-60C78,-42,92,-21,92,0C92,21,78,42,60,58C42,74,21,84,-2,86C-25,88,-50,82,-66,66C-82,50,-90,25,-88,2C-86,-21,-74,-42,-58,-60C-42,-78,-21,-92,0,-92C21,-92,42,-78,60,-60Z" fill="color-mix(in srgb, var(--gold) 40%, var(--surface))"/></svg>
+        <svg class="pub-landing__blob pub-landing__blob--peach" viewBox="-100 -100 200 200" preserveAspectRatio="none"><path d="M55,-68C70,-54,80,-35,84,-15C88,5,86,26,75,43C64,60,44,73,22,80C0,87,-24,88,-43,78C-62,68,-76,47,-83,24C-90,1,-90,-24,-79,-43C-68,-62,-46,-75,-24,-80C-2,-85,40,-82,55,-68Z" fill="color-mix(in srgb, var(--coral) 18%, var(--surface))"/></svg>
+    </div>
+    <span class="pub-pill-sample">@Culture["Public.Sample"]</span>
+    <div class="pub-landing__disc" aria-hidden="true">
+        <svg viewBox="0 0 580 540" class="pub-landing__disc-svg">
+            <defs><clipPath id="pub-disc-clip"><circle cx="300" cy="270" r="205"/></clipPath></defs>
+            <circle cx="300" cy="270" r="205" fill="var(--surface)"/>
+            <g clip-path="url(#pub-disc-clip)">
+                <rect x="95" y="360" width="410" height="205" fill="color-mix(in srgb, var(--accent-soft) 70%, var(--surface))"/>
+                <circle cx="200" cy="180" r="45" fill="color-mix(in srgb, var(--success) 22%, var(--surface))"/>
+                <path d="M95 290 C 200 240, 400 310, 505 260" stroke="var(--surface)" stroke-width="7" fill="none" stroke-linecap="round"/>
+                <path d="M260 65 C 290 160, 330 280, 310 475" stroke="var(--surface)" stroke-width="7" fill="none" stroke-linecap="round"/>
+            </g>
+            <circle cx="300" cy="270" r="195" fill="none" stroke="var(--coral)" stroke-opacity=".35" stroke-width="2" stroke-dasharray="3 8"/>
+            <circle cx="300" cy="270" r="135" fill="none" stroke="var(--coral)" stroke-opacity=".45" stroke-width="2" stroke-dasharray="3 8"/>
+            <circle cx="300" cy="270" r="78" fill="none" stroke="var(--coral)" stroke-opacity=".6" stroke-width="2"/>
+            @foreach (var (dx, dy) in new (int, int)[] { (-120, -60), (95, -110), (130, 60), (-90, 110), (-160, 30), (40, 150), (160, -30) })
+            {
+                <circle cx="@(300 + dx)" cy="@(270 + dy)" r="7" fill="var(--map-pin)" stroke="var(--surface)" stroke-width="3"/>
+            }
+        </svg>
+    </div>
+    <span class="pub-landing__shell-tag">@LandingText.For("Landing.Hero.OldShell", Variant)</span>
+    <div class="pub-landing__mascot">
+        <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Hero" Priority="true" Alt="" Class="pub-landing__mascot-img" />
+        <div class="pub-landing__bubble">@LandingText.For("Landing.Hero.Bubble", Variant)</div>
+    </div>
+    <div class="pub-landing__float pub-landing__float--bike">
+        <PubEmoji Glyph="🚲" />
+        <div>
+            <strong>@LandingText.For("Landing.Hero.JobBike", Variant)</strong>
+            <small>@LandingText.For("Landing.Hero.JobBikeMeta", Variant)</small>
+        </div>
+    </div>
+    <div class="pub-landing__float pub-landing__float--bus">
+        <PubEmoji Glyph="🚌" />
+        <div>
+            <strong>@LandingText.For("Landing.Hero.JobBus", Variant)</strong>
+            <small>@LandingText.For("Landing.Hero.JobBusMeta", Variant)</small>
+        </div>
+    </div>
+    <div class="pub-landing__you-card">
+        <h4>@LandingText.For("Landing.Hero.ThisIsYou", Variant) <span class="pub-pill-sample">@Culture["Public.Sample"]</span></h4>
+        <div class="pub-landing__bar"><span>@LandingText.For("Landing.Hero.BarTeam", Variant)</span><b style="--pct:86%"></b></div>
+        <div class="pub-landing__bar pub-landing__bar--2"><span>@LandingText.For("Landing.Hero.BarPersist", Variant)</span><b style="--pct:74%"></b></div>
+        <div class="pub-landing__bar pub-landing__bar--3"><span>@LandingText.For("Landing.Hero.BarCalm", Variant)</span><b style="--pct:61%"></b></div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+}

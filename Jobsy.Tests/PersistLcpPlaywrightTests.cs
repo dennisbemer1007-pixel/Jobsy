@@ -36,7 +36,7 @@ public class PersistLcpPlaywrightTests
         var page = await context.NewPageAsync();
 
         // Find a vacancy with a photo from the home list (or a known seed path).
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         string? detailPath = null;
         try
         {

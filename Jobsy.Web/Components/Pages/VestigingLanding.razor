@@ -21,7 +21,7 @@
         {
             var route = await Api.GetBranchFlyerRouteAsync(CompanyId);
             var path = string.IsNullOrWhiteSpace(route?.RedirectPath)
-                ? $"/?company={CompanyId:D}"
+                ? $"/banenkaart?company={CompanyId:D}"
                 : route.RedirectPath;
 
             _message = "Je wordt doorgestuurd naar de vacatures…";
@@ -31,7 +31,7 @@
         catch
         {
             _message = "Doorsturen naar de vacaturekaart…";
-            Navigation.NavigateTo($"/?company={CompanyId:D}", replace: true);
+            Navigation.NavigateTo($"/banenkaart?company={CompanyId:D}", replace: true);
         }
     }
 }

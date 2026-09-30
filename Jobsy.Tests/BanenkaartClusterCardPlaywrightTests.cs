@@ -51,7 +51,7 @@ public class BanenkaartClusterCardPlaywrightTests
             return;
         }
 
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
 
         // Soft-skip Acc (or any host) that has not deployed the taller sheet / cache bump yet.
         var hasV3b = await page.EvaluateAsync<bool>("""

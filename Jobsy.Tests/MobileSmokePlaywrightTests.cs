@@ -15,7 +15,7 @@ public class MobileSmokePlaywrightTests
     private const string DefaultPassword = "Jobsy123!";
     private static readonly string[] CandidateTabs =
     [
-        "/",
+        "/banenkaart",
         "/candidate/liked",
         "/candidate/applications",
         "/carriere",
@@ -58,7 +58,7 @@ public class MobileSmokePlaywrightTests
             r => r.Url.Contains("/api/vacancies/pins", StringComparison.OrdinalIgnoreCase)
                  && r.Status is >= 200 and < 400,
             new() { Timeout = 90_000 });
-        await mobilePage.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await mobilePage.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await ExpectMapReadyAsync(mobilePage, mobilePinsWait);
         await mobilePage.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, "01-anonymous-map-mobile.png"), FullPage = true });
         await TapPinOrClusterAsync(mobilePage);
@@ -88,7 +88,7 @@ public class MobileSmokePlaywrightTests
             r => r.Url.Contains("/api/vacancies/pins", StringComparison.OrdinalIgnoreCase)
                  && r.Status is >= 200 and < 400,
             new() { Timeout = 90_000 });
-        await desktopPage.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await desktopPage.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await ExpectMapReadyAsync(desktopPage, desktopPinsWait);
         await desktopPage.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, "05-anonymous-map-desktop.png"), FullPage = true });
         await AssertNoFatalUiAsync(desktopPage);
@@ -103,7 +103,7 @@ public class MobileSmokePlaywrightTests
         var candidate = await candidateCtx.NewPageAsync();
         var candGuard = AttachGuards(candidate);
         await LoginAsync(candidate, baseUrl, "kandidaat@jobsy.local");
-        await candidate.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        await candidate.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
         await candidate.WaitForTimeoutAsync(600);
         await candidate.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, "06-candidate-home.png"), FullPage = true });
 

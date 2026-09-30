@@ -41,6 +41,12 @@ public static class UatScriptRunner
         "/admin/launch"
     };
 
+    /// <summary>Server redirects (middleware / Minimal API) — no Blazor <c>@page</c>.</summary>
+    private static readonly HashSet<string> KnownRedirectRoutes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "/banen"
+    };
+
     public static void Execute(UatScenario scenario)
     {
         var blob = scenario.Scenario + " " + scenario.Expected;
@@ -351,6 +357,12 @@ var available = AdminNav.AvailableItems().ToList();
             }
 
             if (KnownMissingRoutes.Contains(path))
+            {
+                Assert.Null(Routes.Value.Find(path));
+                continue;
+            }
+
+            if (KnownRedirectRoutes.Contains(path))
             {
                 Assert.Null(Routes.Value.Find(path));
                 continue;
@@ -682,6 +694,11 @@ var available = AdminNav.AvailableItems().ToList();
         }
 
         if (KnownMissingRoutes.Contains(path))
+        {
+            return;
+        }
+
+        if (KnownRedirectRoutes.Contains(path))
         {
             return;
         }

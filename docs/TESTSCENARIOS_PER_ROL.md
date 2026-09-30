@@ -179,7 +179,7 @@ Start in een private window. Cookie-banner nog niet beantwoord. Geen bottom-navi
 | Gast | Direct `/candidate/shared`. | Login-challenge. |
 | Gast | Open `/candidate/liked` als gast. | Gate: doorgaan via Google / Apple(→login) / e-mail-login met returnUrl; géén liked-data. |
 | Gast | Liked-gate: kies e-mail/login. | `/login` met returnUrl `/candidate/liked`. |
-| Gast | Open `/banen`. | Redirect naar `/`. |
+| Gast | Open `/banen`. | 301 naar `/banenkaart` (query behouden). |
 | Gast | Open `/register` stap 1: lege KVK zoeken. | Validatie required. |
 | Gast | Register: ongeldig KVK-nummer. | Fout of lege vestigingen; geen crash. |
 | Gast | Register: stub KVK `12345678` (werkgever) **Zoek vestigingen**. | Lijst vestigingen; bezette tonen ‘in gebruik’ zonder eigenaar-PII. |
@@ -218,7 +218,7 @@ Voer deze set **eenmaal per rol** uit (Kandidaat, Filiaalmanager, Regiomanager, 
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
-| Alle ingelogde rollen | Na login vanaf `/` of `/banen`. | Redirect naar `/home` (role dashboard). Andere local returnUrls blijven behouden. |
+| Alle ingelogde rollen | Na login vanaf `/` of `/banen`. | Redirect naar `/home` (role dashboard). `/banenkaart` blijft de kaart. Andere local returnUrls blijven behouden. |
 | Alle ingelogde rollen | Klik header **Uitloggen**. | POST logout + antiforgery; landt op `/`; sessie weg. |
 | Alle ingelogde rollen | Uitloggen en daarna Back-button naar `/home`. | Opnieuw login-challenge; geen cached dashboard-PII. |
 | Alle ingelogde rollen | Klik elke footer-link (Privacy, Voorwaarden, Gebruik, Wie zijn wij, Westland). | Pagina’s laden; sessie blijft; terug-nav werkt. |
@@ -947,7 +947,7 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Filiaalmanager | Create-vacancy rich-text **Link** met `javascript:` URL. | Gesaneerd of geblokkeerd. |
 | Admin | About-page link-tool `javascript:` / img onerror. | Sanitized op `/wie-zijn-wij`. |
 | Alle rollen | Language Arabic: bottom-nav, dialogs, map controls nog klikbaar. | RTL layout zonder overlapping die knoppen onbereikbaar maakt. |
-| Gast | `/banen` bookmark na login. | Gedrag: `/` → `/home` post-login regel. |
+| Gast | `/banen` bookmark na login. | `/banen` → 301 `/banenkaart`; post-login `/`/`/banen` → `/home`. |
 | Kandidaat | Vacature met video ontbreekt vs aanwezig. | Knop alleen indien URL. |
 | Kandidaat | Vacature zonder Street View/route mogelijk (geen coördinaten). | Foutmelding i.p.v. dode knop-crash. |
 | Bedrijfsmanager | Invite BM op vestiging + login als die user (mail-link stub). | Role BranchManager scoped; ziet niet hele org-users. |
