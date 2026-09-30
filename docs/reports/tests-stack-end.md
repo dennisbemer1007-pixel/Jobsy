@@ -12,7 +12,7 @@ Stack: candidate tests redesign (`docs/prompts/tests/01`–`07`). Base for 02+: 
 | 04 testpaginas | `cursor/tests-4` | `8dfe10a5` | `/tmp/tests-04-pr-body.md` | Done; A–E PRESENT |
 | 05 uitgebreide test | `cursor/tests-5` | `4514acb7` | `/tmp/tests-05-pr-body.md` | Done; A–E PRESENT |
 | 06 talen-rtl | `cursor/tests-6` | `13660b03` | `/tmp/tests-06-pr-body.md` | Done |
-| 07 e2e-rapport | `cursor/tests-7` | *(this tip)* | `/tmp/tests-07-pr-body.md` | Done (E2E soft-skip without `JOBSY_E2E_BASE_URL`) |
+| 07 e2e-rapport | `cursor/tests-7` | `70cc8d7f34aca82735dd13b48d84df46812f0a16` | `/tmp/tests-07-pr-body.md` | Done (E2E soft-skip without `JOBSY_E2E_BASE_URL`) |
 
 ## Dependencies A–E
 
