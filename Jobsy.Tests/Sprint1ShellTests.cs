@@ -351,18 +351,33 @@ public class VacancyVisibilityRulesUnitTests
         Assert.False(VacancyVisibilityRules.CanAcceptApplications(vacancy, today, 2));
     }
 
-    private static Vacancy Vacancy(VacancyStatus status, DateOnly start, DateOnly end) => new()
+    private static Vacancy Vacancy(VacancyStatus status, DateOnly start, DateOnly end)
     {
-        Id = Guid.NewGuid(),
-        Title = "t",
-        Description = "d",
-        HourlyWage = 14,
-        StartDate = start,
-        EndDate = end,
-        Status = status,
-        CompanyId = Guid.NewGuid(),
-        Location = new GeoPoint(52, 4),
-        RequiredTransport = TransportMode.Bike,
-        MaxApplications = 5
-    };
+        var company = new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = "Test",
+            KvkNumber = "12345678",
+            Address = "Straat 1",
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow
+        };
+        return new Vacancy
+        {
+            Id = Guid.NewGuid(),
+            Title = "t",
+            Description = "d",
+            HourlyWage = 14,
+            StartDate = start,
+            EndDate = end,
+            Status = status,
+            CompanyId = company.Id,
+            Company = company,
+            Location = new GeoPoint(52, 4),
+            RequiredTransport = TransportMode.Bike,
+            MaxApplications = 5
+        };
+    }
 }

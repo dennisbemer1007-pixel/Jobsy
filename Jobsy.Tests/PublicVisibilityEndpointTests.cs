@@ -187,8 +187,7 @@ public class PublicVisibilityEndpointTests : IClassFixture<RoleFunctionalWebAppF
 
         // Apply must reject (visibility gate).
         var applyClient = _factory.CreateClient();
-        applyClient.DefaultRequestHeaders.Add("X-Test-User", _factory.CandidateEmail);
-        applyClient.DefaultRequestHeaders.Add("X-Test-Role", "Candidate");
+        JobsyTestAuth.Authorize(applyClient, _factory.CandidateId);
         var apply = await applyClient.PostAsJsonAsync("api/applications", new
         {
             vacancyId = unverifiedVacancyId,
@@ -225,26 +224,23 @@ public class PublicVisibilityEndpointTests : IClassFixture<RoleFunctionalWebAppF
     {
         var (_, unverifiedVacancyId, _, _) = await SeedUnverifiedWithActiveVacancyAsync();
 
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-Test-User", _factory.EmployerEmail);
-        client.DefaultRequestHeaders.Add("X-Test-Role", "BranchManager");
-
         // Employer of a *different* company must not see it.
-        var forbidden = await client.GetAsync($"api/vacancies/{unverifiedVacancyId}");
+        var foreignClient = _factory.CreateClient();
+        JobsyTestAuth.Authorize(foreignClient, _factory.EmployerId);
+        var forbidden = await foreignClient.GetAsync($"api/vacancies/{unverifiedVacancyId}");
         Assert.Equal(HttpStatusCode.NotFound, forbidden.StatusCode);
 
         // Seed a manager on the unverified company and preview.
-        string managerEmail;
+        Guid managerId;
         await using (var scope = _factory.Services.CreateAsyncScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
             var vacancy = await db.Vacancies.AsNoTracking().FirstAsync(v => v.Id == unverifiedVacancyId);
-            var managerId = Guid.NewGuid();
-            managerEmail = $"preview-{managerId:N}@jobsy.local";
+            managerId = Guid.NewGuid();
             db.Users.Add(new User
             {
                 Id = managerId,
-                Email = managerEmail,
+                Email = $"preview-{managerId:N}@jobsy.local",
                 FullName = "Preview Manager",
                 Role = UserRole.BranchManager,
                 IsActive = true,
@@ -255,8 +251,7 @@ public class PublicVisibilityEndpointTests : IClassFixture<RoleFunctionalWebAppF
         }
 
         var previewClient = _factory.CreateClient();
-        previewClient.DefaultRequestHeaders.Add("X-Test-User", managerEmail);
-        previewClient.DefaultRequestHeaders.Add("X-Test-Role", "BranchManager");
+        JobsyTestAuth.Authorize(previewClient, managerId);
         var preview = await previewClient.GetAsync($"api/vacancies/{unverifiedVacancyId}");
         Assert.Equal(HttpStatusCode.OK, preview.StatusCode);
         Assert.Contains("noindex", preview.Headers.GetValues("X-Robots-Tag").FirstOrDefault() ?? "", StringComparison.OrdinalIgnoreCase);

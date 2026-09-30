@@ -665,21 +665,6 @@ public class VacanciesController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        if (!_companyAuth.IsCandidate(User))
-        {
-            return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
-        }
-
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
-        }
-        if (!CandidateConsentRules.CanUseCandidateFeatures(user))
-        {
-            return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
-        }
-
         var vacancy = await _db.Vacancies.AsNoTracking()
             .Include(v => v.Company)
             .Include(v => v.IntermediaryCompany)
@@ -693,6 +678,21 @@ public class VacanciesController : ControllerBase
         if (!VacancyVisibilityRules.IsPubliclyVisible(vacancy, today))
         {
             return NotFound();
+        }
+
+        if (!_companyAuth.IsCandidate(User))
+        {
+            return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
+        }
+
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
+        }
+        if (!CandidateConsentRules.CanUseCandidateFeatures(user))
+        {
+            return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
         }
 
         var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
