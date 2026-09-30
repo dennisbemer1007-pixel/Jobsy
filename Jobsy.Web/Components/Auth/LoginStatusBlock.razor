@@ -1,0 +1,86 @@
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (State == LoginState.None)
+{
+    return;
+}
+
+@if (State == LoginState.Locked)
+{
+    return;
+}
+
+@{
+    var (tint, role, titleKey, body, icon) = Resolve();
+}
+
+<div id="@Id"
+     class="au-alert au-alert--@tint"
+     role="@role"
+     aria-live="@(role == "alert" ? "assertive" : "polite")">
+    <span class="au-alert__icon" aria-hidden="true">@icon</span>
+    <div class="au-alert__body">
+        @if (!string.IsNullOrEmpty(titleKey))
+        {
+            <strong class="au-alert__title">@Culture[titleKey]</strong>
+        }
+        <p class="au-alert__text">@body</p>
+    </div>
+</div>
+
+@code {
+    public const string DefaultId = "login-status";
+
+    [Parameter] public LoginState State { get; set; }
+    [Parameter] public string? UntilLocalHhMm { get; set; }
+    [Parameter] public string Id { get; set; } = DefaultId;
+
+    private (string Tint, string Role, string? TitleKey, string Body, string Icon) Resolve()
+        => State switch
+        {
+            LoginState.Invalid => (
+                "danger", "alert", "Login.ErrorInvalidTitle", Culture["Login.ErrorInvalid"], "⚠️"),
+            LoginState.TooMany => (
+                "sun", "status", null,
+                FormatPause(Culture["Login.ErrorTooMany"]), "⏳"),
+            LoginState.Unavailable => (
+                "sky", "status", null, Culture["Login.ErrorUnavailable"], "ℹ️"),
+            LoginState.SessionExpired => (
+                "sky", "status", null, Culture["Login.ErrorSessionExpired"], "ℹ️"),
+            LoginState.MfaRequired => (
+                "sky", "status", null, Culture["Login.MfaRequired"], "ℹ️"),
+            LoginState.AdminProvider => (
+                "sun", "status", null, Culture["Login.ErrorAdminProvider"], "ℹ️"),
+            LoginState.Retry => (
+                "sky", "status", null, Culture["Login.ErrorRetry"], "ℹ️"),
+            LoginState.SetupDone => (
+                "mint", "status", null, Culture["Login.SetupDone"], "✅"),
+            LoginState.EntraNotConfigured => (
+                "sky", "status", null, Culture["Login.ErrorEntra"], "ℹ️"),
+            LoginState.EntraFailed => (
+                "danger", "alert", null, Culture["Login.ErrorEntraFailed"], "⚠️"),
+            LoginState.GoogleNotConfigured => (
+                "sky", "status", null, Culture["Login.ErrorGoogle"], "ℹ️"),
+            LoginState.GoogleFailed => (
+                "danger", "alert", null, Culture["Login.ErrorGoogleFailed"], "⚠️"),
+            LoginState.UnknownProvider => (
+                "sky", "status", null, Culture["Login.ErrorProvider"], "ℹ️"),
+            _ => (
+                "sky", "status", null, Culture["Login.ErrorGeneric"], "ℹ️")
+        };
+
+    private string FormatPause(string template)
+    {
+        if (!string.IsNullOrWhiteSpace(UntilLocalHhMm))
+        {
+            return string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                template,
+                UntilLocalHhMm);
+        }
+
+        return Culture["Login.ErrorLockedFallback"];
+    }
+}

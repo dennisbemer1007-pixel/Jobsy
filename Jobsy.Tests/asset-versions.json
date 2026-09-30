@@ -15,6 +15,10 @@
     "sha256": "08e8ccce5618f81b8e728a073d7630c2e9c6759ae09a2552c936bad4910e713d",
     "v": "20260927-apps-clamp"
   },
+  "css/features/auth.css": {
+    "sha256": "3a5a3e8796623edd4ca39267b87545fd858e9c2e81b891b72044d09310d901d2",
+    "v": "20260930-auth03"
+  },
   "css/features/banenkaart.css": {
     "sha256": "a83c0048d9a4fcea8e0008499db6b00e81d3d1f825a723481fe3e0f05119731f",
     "v": "20260930-kb3"
@@ -130,6 +134,10 @@
   "js/features/account-mfa.js": {
     "sha256": "97c0254f1829c02225c2e4fcef37933e4421ca93f95f63ee7661b535b6c23f7d",
     "v": "20260930-auth01"
+  },
+  "js/features/auth.js": {
+    "sha256": "abe562c0ae9e57649701c7512e6cddf34476ccd519d48caf51eff2677ab5a456",
+    "v": "20260930-auth03"
   },
   "js/features/kandidaatinzichten-map.js": {
     "sha256": "54ad7d6c5ef51bb5ddcfff758509d7e96a597ad11d897c2454badaf2944a6a5b",

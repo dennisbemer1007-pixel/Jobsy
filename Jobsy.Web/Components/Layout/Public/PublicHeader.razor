@@ -5,19 +5,38 @@
 @inject CultureState Culture
 @inject NavigationManager Navigation
 
-<header class="pub-header @(Compact ? "pub-header--compact" : null)">
+<header class="pub-header @(Compact ? "pub-header--compact" : null) @(AuthShell ? "pub-header--auth" : null)">
     <div class="pub-header__inner">
         <a class="pub-header__brand" href="@PublicRoutes.Landing" aria-label="Lobsy">
             <LobsyLogo Class="pub-header__logo" Alt="" Animate="false" />
             <span class="pub-header__name">Lobsy</span>
         </a>
 
-        @if (Compact)
+        @if (AuthShell)
+        {
+            <div class="pub-header__actions">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <a class="pub-btn pub-btn--primary pub-header__auth-cta"
+                   href="@PublicRoutes.CreateAccount">@Culture["PublicNav.CreateAccount"]</a>
+            </div>
+            <div class="pub-header__mobile pub-header__mobile--auth">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+            </div>
+        }
+        else if (Compact)
         {
             <span class="pub-header__chip" aria-hidden="false">
                 <PubEmoji Glyph="🧪" />
                 @Culture["PublicNav.TestChip"]
             </span>
+            <div class="pub-header__actions">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+            </div>
+            <div class="pub-header__mobile pub-header__mobile--compact">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+            </div>
         }
         else
         {
@@ -27,19 +46,13 @@
                     <a class="pub-nav__link" href="@item.Href">@Culture[item.LabelKey]</a>
                 }
             </nav>
-        }
 
-        <div class="pub-header__actions">
-            <PublicLangMenu ReturnPath="@ReturnPath" />
-            <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
-            @if (!Compact)
-            {
+            <div class="pub-header__actions">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
                 <a class="pub-btn pub-btn--primary pub-header__cta" href="@PublicRoutes.Test">@Culture["PublicNav.TakeFreeTest"]</a>
-            }
-        </div>
+            </div>
 
-        @if (!Compact)
-        {
             <div class="pub-header__mobile">
                 <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
                 <details class="pub-menu" id="pub-menu">
@@ -59,19 +72,14 @@
                 </details>
             </div>
         }
-        else
-        {
-            <div class="pub-header__mobile pub-header__mobile--compact">
-                <PublicLangMenu ReturnPath="@ReturnPath" />
-                <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
-            </div>
-        }
     </div>
 </header>
 
 @code {
     [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
     [Parameter] public bool Compact { get; set; }
+    /// <summary>Auth pages: logo + language + desktop "Account maken" only.</summary>
+    [Parameter] public bool AuthShell { get; set; }
 
     private string ReturnPath => PublicLangMenu.SanitizeReturnPath(Navigation.Uri);
 }

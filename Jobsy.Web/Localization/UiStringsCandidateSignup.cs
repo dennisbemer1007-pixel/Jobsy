@@ -113,7 +113,7 @@ public static class UiStringsCandidateSignup
 
         Add("Login.CreateAccountLead", "Nieuw bij Lobsy?", "New to Lobsy?",
             "Nowy w Lobsy?", "Nou pe Lobsy?", "جديد على Lobsy؟");
-        Add("Login.CreateAccountCta", "Maak gratis account", "Create a free account",
+        Add("Login.CreateAccountCta", "Maak gratis een account", "Create a free account",
             "Utwórz darmowe konto", "Creează un cont gratuit", "أنشئ حسابًا مجانيًا");
     }
 }

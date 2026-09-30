@@ -1,11 +1,18 @@
 @page "/login"
 @attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
 @using Jobsy.Core.Features
 @using Jobsy.Web.Auth
+@using Jobsy.Web.Components.Auth
+@using Jobsy.Web.Components.Brand
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Security
 @using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.DataProtection
 @using Microsoft.AspNetCore.WebUtilities
 @inject IExternalAuthCredentialSource ExternalAuth
 @inject IAntiforgery Antiforgery
@@ -13,169 +20,255 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IEmployersSwitch Employers
 @inject CultureState Culture
-@inject IJSRuntime Js
 @inject IFeatureFlags FeatureFlags
+@inject IDataProtectionProvider DataProtection
 @implements IDisposable
+
+@{
+    var nonce = HttpContextAccessor.HttpContext is null
+        ? ""
+        : CspNonce.GetOrCreate(HttpContextAccessor.HttpContext);
+    var isPause = _state == LoginState.Locked;
+    var showProviders = _entraEnabled || _googleEnabled;
+    var passwordInvalid = _state == LoginState.Invalid;
+}
 
 <PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
 
-<div class="login-modal login-modal--compact" role="dialog" aria-modal="true" aria-labelledby="login-title">
-    <a class="login-modal__backdrop"
-       href="@_dismissUrl"
-       tabindex="-1"
-       aria-label="@Culture["Login.Close"]"></a>
+<section class="au-stage" data-au-login @attributes="_stageAttrs">
+    <div class="au-blob au-blob--a" aria-hidden="true"></div>
+    <div class="au-blob au-blob--b" aria-hidden="true"></div>
+    <div class="au-blob au-blob--c" aria-hidden="true"></div>
 
-    <div class="login-modal__dialog login-card">
-        <div class="login-modal__header">
-            <h1 id="login-title">@Culture["Login.Title"]</h1>
-            <a class="login-modal__close"
-               href="@_dismissUrl"
-               aria-label="@Culture["Login.Close"]"
-               title="@Culture["Login.Close"]">×</a>
-        </div>
+    <div class="au-col">
+        <div class="au-card @(isPause ? "au-pause" : null)">
+            <div class="au-card__mascot" aria-hidden="true">
+                <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Small" Alt="" />
+            </div>
 
-        <p class="login-lead">@Culture["Login.Lead"]</p>
-
-        <GratisDnaRegisterBox />
-
-        @if (!string.IsNullOrEmpty(_errorMessage))
-        {
-            <p class="login-error" role="@(_sessionExpiredNotice || _pauseNotice || _statusNotice ? "status" : "alert")">@_errorMessage</p>
-            @if (_pauseNotice)
+            @if (isPause)
             {
-                <p class="login-lead">@Culture["Login.ErrorLockedProviders"]</p>
-                <p class="muted">@((MarkupString)_supportHelpHtml)</p>
-            }
-        }
+                <div class="au-emo" aria-hidden="true">⏸️</div>
+                <h1 class="au-title">@Culture["Login.PauseTitle"]</h1>
+                <p class="au-lead">@Culture["Login.ErrorLocked"]</p>
+                <div class="au-pause__retry" role="status">
+                    @FormatPauseRetry()
+                </div>
 
-        <div class="login-providers">
-            @if (_entraEnabled)
-            {
-                <a class="provider-btn provider-btn--entra"
-                   href="@($"/account/external/entra?returnUrl={Uri.EscapeDataString(_returnUrl)}")">
-                    <span class="provider-btn__icon" aria-hidden="true">
-                        <svg viewBox="0 0 23 23" width="16" height="16"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
-                    </span>
-                    @Culture["Login.Microsoft"]
-                </a>
+                @if (AuthFeatures.PasswordResetAvailable)
+                {
+                    <p>
+                        <a class="au-submit" href="/wachtwoord-vergeten">@Culture["Login.ChooseNewPassword"]</a>
+                    </p>
+                }
+
+                @if (showProviders)
+                {
+                    <p class="au-lead">@Culture["Login.ErrorLockedProviders"]</p>
+                    <div class="au-stack">
+                        @if (_entraEnabled)
+                        {
+                            <a class="au-provider"
+                               href="@($"/account/external/entra?returnUrl={Uri.EscapeDataString(_returnUrl)}")">
+                                <span class="au-provider__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 23 23" width="20" height="20"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
+                                </span>
+                                @Culture["Login.Microsoft"]
+                            </a>
+                        }
+                        @if (_googleEnabled)
+                        {
+                            <a class="au-provider"
+                               href="@($"/account/external/google?returnUrl={Uri.EscapeDataString(_returnUrl)}")">
+                                <span class="au-provider__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 48 48" width="20" height="20">
+                                        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
+                                        <path fill="#FF3D00" d="M6.3 14.7 12.9 19.6C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
+                                        <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8h-6.6v5.1C9.5 39.6 16.2 44 24 44z"/>
+                                        <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l.1-.1 6.3 5.2C39.2 40.3 44 34.7 44 24c0-1.3-.1-2.5-.4-3.5z"/>
+                                    </svg>
+                                </span>
+                                @Culture["Login.Google"]
+                            </a>
+                        }
+                    </div>
+                }
+
+                <div class="au-pause__footer">
+                    <p>@Culture["Login.PauseNotYou"]</p>
+                    <p>@((MarkupString)_supportHelpHtml)</p>
+                    <p>
+                        <a href="@LoginHrefKeepingReturn()">@Culture["Login.BackToLogin"]</a>
+                    </p>
+                </div>
             }
             else
             {
-                <button type="button" class="provider-btn provider-btn--entra is-disabled" disabled
-                        title="@Culture["Login.EntraNotConfigured"]">
-                    <span class="provider-btn__icon" aria-hidden="true">
-                        <svg viewBox="0 0 23 23" width="16" height="16"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
-                    </span>
-                    @Culture["Login.Microsoft"]
-                </button>
-            }
+                <p class="au-eyebrow">@Culture["Login.Eyebrow"]</p>
+                <h1 id="login-title" class="au-title">@Culture["Login.Title"]</h1>
+                <p class="au-lead">@Culture["Login.Lead"]</p>
 
-            @if (_googleEnabled)
-            {
-                <a class="provider-btn provider-btn--google"
-                   href="@($"/account/external/google?returnUrl={Uri.EscapeDataString(_returnUrl)}")">
-                    <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">
-                        <svg viewBox="0 0 48 48" width="16" height="16">
-                            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
-                            <path fill="#FF3D00" d="M6.3 14.7 12.9 19.6C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
-                            <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8h-6.6v5.1C9.5 39.6 16.2 44 24 44z"/>
-                            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l.1-.1 6.3 5.2C39.2 40.3 44 34.7 44 24c0-1.3-.1-2.5-.4-3.5z"/>
-                        </svg>
-                    </span>
-                    @Culture["Login.Google"]
-                </a>
-            }
-            else
-            {
-                <button type="button" class="provider-btn provider-btn--google is-disabled" disabled
-                        title="@Culture["Login.GoogleNotConfigured"]">
-                    <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">
-                        <svg viewBox="0 0 48 48" width="16" height="16">
-                            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
-                            <path fill="#FF3D00" d="M6.3 14.7 12.9 19.6C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
-                            <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8h-6.6v5.1C9.5 39.6 16.2 44 24 44z"/>
-                            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l.1-.1 6.3 5.2C39.2 40.3 44 34.7 44 24c0-1.3-.1-2.5-.4-3.5z"/>
-                        </svg>
-                    </span>
-                    @Culture["Login.Google"]
-                </button>
+                <GratisDnaRegisterBox />
+
+                <LoginStatusBlock State="_state" UntilLocalHhMm="_untilLocal" />
+
+                @if (showProviders)
+                {
+                    <div class="au-stack">
+                        @if (_entraEnabled)
+                        {
+                            <a class="au-provider"
+                               href="@($"/account/external/entra?returnUrl={Uri.EscapeDataString(_returnUrl)}")">
+                                <span class="au-provider__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 23 23" width="20" height="20"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
+                                </span>
+                                @Culture["Login.Microsoft"]
+                            </a>
+                        }
+                        @if (_googleEnabled)
+                        {
+                            <a class="au-provider"
+                               href="@($"/account/external/google?returnUrl={Uri.EscapeDataString(_returnUrl)}")">
+                                <span class="au-provider__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 48 48" width="20" height="20">
+                                        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
+                                        <path fill="#FF3D00" d="M6.3 14.7 12.9 19.6C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
+                                        <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8h-6.6v5.1C9.5 39.6 16.2 44 24 44z"/>
+                                        <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l.1-.1 6.3 5.2C39.2 40.3 44 34.7 44 24c0-1.3-.1-2.5-.4-3.5z"/>
+                                    </svg>
+                                </span>
+                                @Culture["Login.Google"]
+                            </a>
+                        }
+                    </div>
+                    @if (_adminContext)
+                    {
+                        <p class="au-admin-hint" role="status">@Culture["Login.AdminProviderHint"]</p>
+                    }
+                    <div class="au-divider"><span>@Culture["Login.OrEmail"]</span></div>
+                }
+
+                <form method="post" action="/account/login" class="au-form" data-enhance="false" novalidate>
+                    <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                    <input type="hidden" name="returnUrl" value="@_returnUrl" />
+
+                    <div class="au-field">
+                        <label class="au-field__label" for="login-email">@Culture["Login.Email"]</label>
+                        <div class="au-input-wrap">
+                            @* type=text (not email): bare usernames like "twalieb" must keep working (LoginIdentityTests). *@
+                            <input id="login-email"
+                                   class="au-input"
+                                   type="text"
+                                   name="email"
+                                   value="@_emailHint"
+                                   required
+                                   autocomplete="username"
+                                   inputmode="email"
+                                   autocapitalize="none"
+                                   autocorrect="off"
+                                   spellcheck="false"
+                                   dir="ltr"
+                                   placeholder="naam@voorbeeld.nl" />
+                        </div>
+                    </div>
+
+                    <div class="au-field">
+                        <div class="au-field__label-row">
+                            <label class="au-field__label" for="login-password">@Culture["Login.Password"]</label>
+                            @if (AuthFeatures.PasswordResetAvailable)
+                            {
+                                <a href="/wachtwoord-vergeten">@Culture["Login.ForgotPassword"]</a>
+                            }
+                        </div>
+                        <div class="au-input-wrap @(passwordInvalid ? "au-input-wrap--invalid" : null)">
+                            <input id="login-password"
+                                   class="au-input"
+                                   type="password"
+                                   name="password"
+                                   required
+                                   autocomplete="current-password"
+                                   dir="ltr"
+                                   @attributes="_passwordAttrs"
+                                   placeholder="••••••••" />
+                            <button type="button"
+                                    class="au-input-wrap__toggle"
+                                    data-au-password-toggle
+                                    aria-pressed="false"
+                                    aria-controls="login-password"
+                                    data-label-show="@Culture["Login.ShowPassword"]"
+                                    data-label-hide="@Culture["Login.HidePassword"]"
+                                    hidden>
+                                @Culture["Login.ShowPassword"]
+                            </button>
+                        </div>
+                    </div>
+
+                    <label class="au-remember">
+                        <input type="checkbox" name="rememberDevice" value="true" />
+                        <span>
+                            @Culture["Login.RememberDevice"]
+                            <span class="au-remember__hint">@Culture["Login.RememberDeviceHint"]</span>
+                        </span>
+                    </label>
+
+                    <button type="submit"
+                            class="au-submit"
+                            disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">
+                        @Culture["Login.Submit"]
+                    </button>
+                    @if (string.IsNullOrEmpty(_antiforgeryToken))
+                    {
+                        <p class="au-alert au-alert--sky" role="status">@Culture["Login.ErrorRetry"]</p>
+                    }
+                </form>
+
+                <div class="au-foot">
+                    <p>
+                        @Culture["Login.CreateAccountLead"]
+                        <a href="@CreateAccountHref">@Culture["Login.CreateAccountCta"]</a>
+                    </p>
+                    @if (_employersOn)
+                    {
+                        <p>
+                            @Culture["Login.EmployersLead"]
+                            <a href="/register">@Culture["Login.RegisterCta"]</a>
+                        </p>
+                    }
+                </div>
             }
         </div>
 
-        @if (_adminContext)
-        {
-            <p class="login-lead" role="status">@Culture["Login.AdminProviderHint"]</p>
-        }
-
-        <div class="login-divider"><span>@Culture["Login.OrEmail"]</span></div>
-
-        <form method="post" action="/account/login" class="login-form" data-enhance="false">
-            <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
-            <input type="hidden" name="returnUrl" value="@_returnUrl" />
-            <label>
-                @Culture["Login.Email"]
-                <input type="text"
-                       name="email"
-                       class="w-full px-4 py-3"
-                       required
-                       autocomplete="username"
-                       inputmode="email"
-                       autocapitalize="none"
-                       autocorrect="off"
-                       spellcheck="false"
-                       placeholder="naam@voorbeeld.nl" />
-            </label>
-            <label>
-                @Culture["Login.Password"]
-                <input type="password" name="password" class="w-full px-4 py-3" required autocomplete="current-password" placeholder="••••••••" />
-            </label>
-            <label class="login-remember">
-                <input type="checkbox" name="rememberDevice" value="true" />
-                <span>@Culture["Login.RememberDevice"]</span>
-                <span class="muted login-remember__hint">@Culture["Login.RememberDeviceHint"]</span>
-            </label>
-            <button type="submit" class="login-submit" disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">@Culture["Login.Submit"]</button>
-            @if (string.IsNullOrEmpty(_antiforgeryToken))
-            {
-                <p class="login-error">@Culture["Login.ErrorRetry"]</p>
-            }
-        </form>
-
-        <div class="login-register">
-            <p class="login-register__lead login-register__lead--primary">
-                @Culture["Login.CreateAccountLead"]
-                <a class="login-register__cta" href="@CreateAccountHref">@Culture["Login.CreateAccountCta"]</a>
+        <div class="au-below">
+            <p>
+                <a href="@_dismissUrl">@Culture["Login.BackToMap"]</a>
             </p>
-            @if (_employersOn)
-            {
-                <p class="login-register__lead">
-                    @Culture["Login.RegisterLead"]
-                    <a class="login-register__cta" href="/register">@Culture["Login.RegisterCta"]</a>
-                </p>
-            }
-            <a class="login-register__back" href="@_dismissUrl">@Culture["Login.BackToMap"]</a>
-            <p class="login-register__lead gd-quiet-link-wrap">
+            <p class="gd-quiet-link-wrap">
                 @Culture["GratisDna.QuietLink.Lead"]
                 <a class="auth-link" href="/ontdek">@Culture["GratisDna.QuietLink.Cta"]</a>
             </p>
         </div>
     </div>
-</div>
+</section>
+
+<script src="js/features/auth.js?v=20260930-auth03" nonce="@nonce" defer></script>
 
 @code {
     private string _returnUrl = "/home";
     private string _dismissUrl = AuthRedirects.BanenkaartPath;
-    private string? _errorMessage;
-    private bool _sessionExpiredNotice;
-    private bool _pauseNotice;
-    private bool _statusNotice;
+    private LoginState _state = LoginState.None;
+    private string? _untilLocal;
     private bool _adminContext;
+    private bool _clearDrafts;
+    private bool _focusPassword;
+    private string? _emailHint;
     private string _supportHelpHtml = string.Empty;
     private bool _entraEnabled;
     private bool _googleEnabled;
     private bool _employersOn = true;
     private string _antiforgeryFieldName = string.Empty;
     private string _antiforgeryToken = string.Empty;
+    private Dictionary<string, object>? _stageAttrs;
+    private Dictionary<string, object>? _passwordAttrs;
 
     private string CreateAccountHref
         => $"{PublicRoutes.CreateAccount}?returnUrl={Uri.EscapeDataString(_returnUrl)}";
@@ -193,6 +286,7 @@
             var tokens = Antiforgery.GetAndStoreTokens(http);
             _antiforgeryFieldName = tokens.FormFieldName;
             _antiforgeryToken = tokens.RequestToken ?? string.Empty;
+            _emailHint = LoginHintCookie.TryReadAndClear(http, DataProtection);
         }
 
         _entraEnabled = await ExternalAuth.IsEntraConfiguredAsync();
@@ -212,87 +306,85 @@
             QueryValue(query, "returnTo"),
             QueryValue(query, "redirect"));
         _adminContext = _returnUrl.StartsWith("/admin", StringComparison.OrdinalIgnoreCase);
-        // Admin context: never offer Google (Dennis D7).
         if (_adminContext)
         {
             _googleEnabled = false;
         }
-
-        // Closing the dialog returns to banenkaart (ON) or ontdek (OFF).
-        // (_dismissUrl already set from flags above)
 
         var errorCode = query.TryGetValue("error", out var error) ? error.ToString() : null;
         var sessionExpired = string.Equals(errorCode, "session-expired", StringComparison.OrdinalIgnoreCase);
         var setupDone = query.TryGetValue("setup", out var setup) &&
                         string.Equals(setup.ToString(), "done", StringComparison.OrdinalIgnoreCase);
 
-        // Do not bounce authenticated users away when session-expired is set — a sticky
-        // Jobsy.Auth cookie with a cleared LastActivity used to cause /home↔/login loops.
         if (http?.User.Identity?.IsAuthenticated == true && !sessionExpired)
         {
             Navigation.NavigateTo(_returnUrl, forceLoad: true);
             return;
         }
 
-        if (setupDone)
-        {
-            _errorMessage = Culture["SetPassword.Done"];
-        }
-        else if (!string.IsNullOrEmpty(errorCode))
-        {
-            _sessionExpiredNotice = sessionExpired;
-            var untilRaw = QueryValue(query, "until");
-            var config = http?.RequestServices.GetService<IConfiguration>();
-            var support = config?["Support:Email"]
-                ?? config?["Mail:SupportAddress"]
-                ?? "support@lobsy.nl";
-            _supportHelpHtml = string.Format(
-                System.Globalization.CultureInfo.InvariantCulture,
-                Culture["Login.ErrorLockedSupport"],
-                $"<a href=\"mailto:{support}\">{support}</a>");
+        var untilRaw = QueryValue(query, "until");
+        _untilLocal = FormatUntilLocal(untilRaw);
+        _state = LoginStateMapping.FromQuery(errorCode, setupDone);
+        _clearDrafts = sessionExpired;
+        _focusPassword = _state is LoginState.Invalid or LoginState.TooMany
+            || !string.IsNullOrEmpty(_emailHint);
 
-            _errorMessage = errorCode switch
-            {
-                "invalid" => Culture["Login.ErrorInvalid"],
-                "locked" => FormatPause(Culture["Login.ErrorLocked"], untilRaw),
-                "too-many" => FormatPause(Culture["Login.ErrorTooMany"], untilRaw),
-                "unavailable" => Culture["Login.ErrorUnavailable"],
-                "mfa-required" => Culture["Login.MfaRequired"],
-                "admin-provider" => Culture["Login.ErrorAdminProvider"],
-                "retry" => Culture["Login.ErrorRetry"],
-                "session-expired" => Culture["Login.ErrorSessionExpired"],
-                "entra-not-configured" => Culture["Login.ErrorEntra"],
-                "entra-failed" => Culture["Login.ErrorEntraFailed"],
-                "google-not-configured" => Culture["Login.ErrorGoogle"],
-                "google-failed" => Culture["Login.ErrorGoogleFailed"],
-                "unknown-provider" => Culture["Login.ErrorProvider"],
-                _ => Culture["Login.ErrorGeneric"]
-            };
-            _pauseNotice = errorCode is "locked";
-            _statusNotice = errorCode is "mfa-required" or "session-expired";
+        if (_clearDrafts)
+        {
+            _stageAttrs = new Dictionary<string, object> { ["data-clear-drafts"] = true };
         }
 
-        // Ambassadeur referral cookie (?ref=AM-…) is parked while AmbassadorsEnabled is off (01.10).
-        // Re-enable with a features check when the Ambassadeur stack returns.
+        _passwordAttrs = new Dictionary<string, object>();
+        if (_state == LoginState.Invalid)
+        {
+            _passwordAttrs["aria-invalid"] = "true";
+            _passwordAttrs["aria-describedby"] = LoginStatusBlock.DefaultId;
+        }
+
+        if (_focusPassword)
+        {
+            _passwordAttrs["autofocus"] = true;
+        }
+
+        var config = http?.RequestServices.GetService<IConfiguration>();
+        var support = config?["Support:Email"]
+            ?? config?["Mail:SupportAddress"]
+            ?? "support@lobsy.nl";
+        _supportHelpHtml = string.Format(
+            System.Globalization.CultureInfo.InvariantCulture,
+            Culture["Login.ErrorLockedSupport"],
+            $"<a href=\"mailto:{support}\">{support}</a>");
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private string LoginHrefKeepingReturn()
+        => "/login?returnUrl=" + Uri.EscapeDataString(_returnUrl);
+
+    private string FormatPauseRetry()
     {
-        if (!firstRender || !_sessionExpiredNotice)
+        if (!string.IsNullOrWhiteSpace(_untilLocal))
         {
-            return;
+            return string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                Culture["Login.PauseRetry"],
+                _untilLocal);
         }
 
-        try
+        return Culture["Login.ErrorLockedFallback"];
+    }
+
+    private static string? FormatUntilLocal(string? untilUnix)
+    {
+        if (long.TryParse(untilUnix, out var unix))
         {
-            // Shared-browser hygiene: drop any prior draft blobs after forced expiry.
-            await JobsyJs.EnsureExtrasAsync(Js);
-            await Js.InvokeVoidAsync("lobsySessionIdle.clearDrafts");
+            var utc = DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime;
+            if (utc > DateTime.UtcNow)
+            {
+                var local = Jobsy.Core.Time.AmsterdamTime.ToLocal(utc);
+                return local.ToString("HH:mm");
+            }
         }
-        catch
-        {
-            // Script may not be ready on static render.
-        }
+
+        return null;
     }
 
     private static string? QueryValue(
@@ -301,21 +393,6 @@
         => query.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value)
             ? value.ToString()
             : null;
-
-    private string FormatPause(string template, string? untilUnix)
-    {
-        if (long.TryParse(untilUnix, out var unix))
-        {
-            var utc = DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime;
-            if (utc > DateTime.UtcNow)
-            {
-                var local = Jobsy.Core.Time.AmsterdamTime.ToLocal(utc);
-                return string.Format(template, local.ToString("HH:mm"));
-            }
-        }
-
-        return Culture["Login.ErrorLockedFallback"];
-    }
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);

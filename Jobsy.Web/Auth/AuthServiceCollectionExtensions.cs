@@ -334,7 +334,8 @@ public static class AuthServiceCollectionExtensions
             HttpContext http,
             DemoUserStore users,
             IConfiguration configuration,
-            IAntiforgery antiforgery) =>
+            IAntiforgery antiforgery,
+            IDataProtectionProvider dataProtection) =>
         {
             var form = await http.Request.ReadFormAsync();
             var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
@@ -376,6 +377,11 @@ public static class AuthServiceCollectionExtensions
                         LocalLoginFailureKind.Unavailable => "unavailable",
                         _ => "invalid"
                     };
+                    if (error is "invalid" or "locked" or "too-many")
+                    {
+                        LoginHintCookie.Set(http, dataProtection, email);
+                    }
+
                     var until = outcome.RetryAtUtc is DateTime retry
                         ? $"&until={new DateTimeOffset(DateTime.SpecifyKind(retry, DateTimeKind.Utc)).ToUnixTimeSeconds()}"
                         : string.Empty;
@@ -400,6 +406,7 @@ public static class AuthServiceCollectionExtensions
 
             if (principal is null)
             {
+                LoginHintCookie.Set(http, dataProtection, email);
                 return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(safeReturn)}");
             }
 

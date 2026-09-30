@@ -460,12 +460,13 @@ public class CoreFunctionalFlowE2ETests
         // UI contract: login explains timeout; client script preserves opt-in form drafts.
         var root = FindRepoRoot();
         var loginSource = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Login.razor"));
-        var uiStrings = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Localization", "UiStrings.cs"));
+        var uiStrings = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Localization", "UiStrings.cs"))
+            + File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Localization", "UiStringsAuth.cs"));
         var idleJs = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-extras.js"));
 
         Assert.Contains("session-expired", loginSource, StringComparison.Ordinal);
         Assert.Contains("Login.ErrorSessionExpired", uiStrings, StringComparison.Ordinal);
-        Assert.Contains("form drafts", uiStrings, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("data-clear-drafts", loginSource, StringComparison.Ordinal);
         Assert.Contains("data-session-draft", idleJs, StringComparison.Ordinal);
         Assert.Contains("saveCriticalDrafts", idleJs, StringComparison.Ordinal);
         Assert.Contains("sessionStorage", idleJs, StringComparison.Ordinal);
