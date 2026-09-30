@@ -280,26 +280,16 @@ public sealed class KvkServiceStub : IKvkService
         }
         else
         {
-            var needle = NormalizeSearch(text);
+            var tokens = NormalizeSearch(text)
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             groups = Catalog
                 .Where(c =>
                 {
                     var name = LegalNames.TryGetValue(c.KvkNumber, out var legal) ? legal : c.Name;
                     var hay = NormalizeSearch(name + " " + c.Name);
-                    if (!hay.Contains(needle, StringComparison.Ordinal))
-                    {
-                        return false;
-                    }
-
-                    if (place is null)
-                    {
-                        return true;
-                    }
-
-                    return c.Place.Contains(place, StringComparison.OrdinalIgnoreCase)
-                           || Catalog.Any(x =>
-                               x.KvkNumber == c.KvkNumber
-                               && x.Place.Contains(place, StringComparison.OrdinalIgnoreCase));
+                    // All query tokens must appear (so "groen en zorg" matches Groenzorg / Zorgschoon Groen).
+                    return tokens.All(t => t is "en" or "de" or "het" or "van"
+                        || hay.Contains(t, StringComparison.Ordinal));
                 })
                 .GroupBy(c => c.KvkNumber, StringComparer.Ordinal);
         }
@@ -311,13 +301,18 @@ public sealed class KvkServiceStub : IKvkService
             var kvk = group.Key;
             var legal = LegalNames.TryGetValue(kvk, out var n) ? n : group.First().Name;
             var hq = group.FirstOrDefault(g => g.Type == "Hoofdvestiging") ?? group.First();
+            // Soft place preference: keep all name hits; boost matching plaats to the top.
             var type = group.Count() > 1
                 ? "Hoofdvestiging"
                 : (hq.Type ?? "Rechtspersoon");
+            var displayPlace = place is not null
+                && group.Any(g => g.Place.Contains(place, StringComparison.OrdinalIgnoreCase))
+                ? group.First(g => g.Place.Contains(place, StringComparison.OrdinalIgnoreCase)).Place
+                : hq.Place;
             allHits.Add(new KvkSearchHit(
                 kvk,
                 legal,
-                hq.Place,
+                displayPlace,
                 type,
                 group.Count(),
                 false));

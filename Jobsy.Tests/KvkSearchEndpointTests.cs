@@ -1,12 +1,14 @@
 using System.Net;
 using System.Text.Json;
 using Jobsy.Api;
+using Jobsy.Api.Security;
 using Jobsy.Core.Authorization;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
