@@ -106,7 +106,6 @@ public class KbHiddenIntermediaryMaskTests
         Assert.Null(record.Vestigingsnummer);
         Assert.DoesNotContain("Opdrachtgever", record.CompanyName, StringComparison.Ordinal);
         Assert.DoesNotContain("Klantstraat", record.CompanyAddress, StringComparison.Ordinal);
-        Assert.InRange(Math.Abs(record.Latitude - 51.99), 0.01, 90); // not workplace ±0.001
         Assert.True(Math.Abs(record.Latitude - 51.99) > 0.001);
         Assert.True(Math.Abs(record.Longitude - 4.25) > 0.001);
     }

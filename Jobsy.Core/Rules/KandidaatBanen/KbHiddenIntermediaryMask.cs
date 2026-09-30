@@ -15,10 +15,18 @@ namespace Jobsy.Core.Rules.KandidaatBanen;
 public static class KbHiddenIntermediaryMask
 {
     public static bool IsHidden(Vacancy vacancy) =>
-        vacancy.IntermediaryCompanyId is not null && !vacancy.ShowClientAddressOnMap;
+        !vacancy.ShowClientAddressOnMap
+        && (vacancy.IntermediaryCompanyId is not null || vacancy.IntermediaryCompany is not null);
 
     public static bool IsHidden(Guid? intermediaryCompanyId, bool showClientAddressOnMap) =>
         intermediaryCompanyId is not null && !showClientAddressOnMap;
+
+    /// <summary>
+    /// Hidden when an intermediary company object is present and the map flag is masked
+    /// (used by <see cref="IntermediaryVacancyRules.ResolvePublicDisplay"/> when FK may be unset in tests).
+    /// </summary>
+    public static bool IsMaskedByIntermediary(Company? intermediary, bool showClientAddressOnMap) =>
+        intermediary is not null && !showClientAddressOnMap;
 
     /// <summary>
     /// Bureau organisation used for public pin/travel: walk to the loaded root parent when present.

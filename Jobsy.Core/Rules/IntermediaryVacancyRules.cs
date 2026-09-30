@@ -59,13 +59,13 @@ public static class IntermediaryVacancyRules
         var workplaceLat = vacancy.Location?.Latitude;
         var workplaceLng = vacancy.Location?.Longitude;
 
-        if (intermediary is not null && KbHiddenIntermediaryMask.IsHidden(vacancy))
+        if (KbHiddenIntermediaryMask.IsMaskedByIntermediary(intermediary, vacancy.ShowClientAddressOnMap))
         {
             // D3: pin / travel use the bureau. No fallback to workplace or end-client coords.
             // OfferedByLabel is null — candidate UI formats Kb.Via.Bureau from DisplayName.
             var bureauLoc = KbHiddenIntermediaryMask.ResolveBureauLocation(intermediary);
             return (
-                intermediary.Name,
+                intermediary!.Name,
                 intermediary.Address,
                 intermediary.LogoUrl,
                 bureauLoc?.Latitude ?? 0,

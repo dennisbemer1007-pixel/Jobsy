@@ -67,9 +67,10 @@ public class KbHiddenModePrivacyAndUiTests
 
         // Hidden mode: Route/Street View gated; honest via label + map note.
         Assert.Contains("KbIntermediaryDisplay.HideRouteAndStreetView", detail, StringComparison.Ordinal);
-        Assert.Contains("Kb.Via.Bureau", detail, StringComparison.Ordinal);
+        Assert.Contains("KbIntermediaryDisplay.CompanyLine", detail, StringComparison.Ordinal);
         Assert.Contains("Kb.Map.ShowsBureau", detail, StringComparison.Ordinal);
         Assert.Contains("Kb.Hidden.Info", detail, StringComparison.Ordinal);
+        Assert.Contains("kb-via-bureau", markup, StringComparison.Ordinal);
         Assert.Contains("kb-hidden-info", markup, StringComparison.Ordinal);
 
         // Dep B ABSENT: do not render branche / kernwaarden / engagement employer blocks.
