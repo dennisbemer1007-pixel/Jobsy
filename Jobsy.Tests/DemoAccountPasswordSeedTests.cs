@@ -96,9 +96,19 @@ public class DemoAccountPasswordSeedTests
 
     private static JobsyDbContext CreateDb()
     {
+        // Avoid racing with WebApplicationFactory tests that dispose a real DataProtection
+        // provider after configuring the static IbanEfProtection hook.
+        IbanEfProtection.Configure(new PassThroughIbanProtector());
         var options = new DbContextOptionsBuilder<JobsyDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         return new JobsyDbContext(options);
+    }
+
+    private sealed class PassThroughIbanProtector : IIbanProtector
+    {
+        public bool IsProtected(string? value) => false;
+        public string? Protect(string? plaintext) => plaintext;
+        public string? Unprotect(string? protectedPayload) => protectedPayload;
     }
 }

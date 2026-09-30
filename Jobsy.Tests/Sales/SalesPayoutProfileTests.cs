@@ -331,6 +331,7 @@ public class SalesPayoutProfileServiceTests
 
     private static JobsyDbContext CreateDb()
     {
+        IbanEfProtection.Configure(PassThroughIban.Instance);
         var options = new DbContextOptionsBuilder<JobsyDbContext>()
             .UseInMemoryDatabase("sales-profile-" + Guid.NewGuid().ToString("N"))
             .Options;

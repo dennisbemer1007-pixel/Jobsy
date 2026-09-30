@@ -510,6 +510,7 @@ public class AccountUnsubscribeTests
             typeof(LocalAuthCredential),
             typeof(PartnerAffiliateProfile),
             typeof(PlatformFeedback),
+            typeof(SalesIbanChangePending),
             typeof(SalesManagerProfile),
             typeof(SalesSelfBillingConsent),
             typeof(SiteVisit),

@@ -84,8 +84,9 @@ public class SalesFoundationUnitTests
     {
         var withRecruit = SalesNav.VisibleItems(canRecruit: true).Select(i => i.Key).ToHashSet();
         Assert.Contains("recommend", withRecruit);
-        Assert.Contains("employers", withRecruit); // available since 04
-        Assert.DoesNotContain("profile", withRecruit);
+        Assert.Contains("employers", withRecruit);
+        Assert.Contains("profile", withRecruit); // available since 06
+        Assert.Contains("help", withRecruit);
 
         var without = SalesNav.VisibleItems(canRecruit: false).Select(i => i.Key).ToHashSet();
         Assert.DoesNotContain("recommend", without);
