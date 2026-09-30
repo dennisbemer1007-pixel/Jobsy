@@ -84,7 +84,7 @@ internal static class UiStringsWerkgeverAanmelding
             "صفحة شركتك والوظائف والخريطة وMatch وGoogle لا تظهر {0} بعد. بعد إدخال الرمز تُنشر الوظائف الجاهزة تلقائياً.");
         Add("WaBanner.Cta.Verify", "Verifieer nu", "Verify now", "Zweryfikuj teraz", "Verifică acum", "تحقّق الآن");
         Add("WaBanner.Cta.LetterCode", "Code uit de brief invoeren", "Enter the letter code", "Wpisz kod z listu", "Introdu codul din scrisoare", "أدخل رمز الخطاب");
-        Add("WaBanner.Cta.Email", "Via e-mail", "Via e-mail", "E-mailem", "Prin e-mail", "عبر البريد");
+        Add("WaBanner.Cta.Email", "Via e-mail", "By e-mail", "E-mailem", "Prin e-mail", "عبر البريد");
         Add("WaBanner.Manual.Reply",
             "We reageren vóór {0}",
             "We reply before {0}",
@@ -147,7 +147,7 @@ internal static class UiStringsWerkgeverAanmelding
         Add("WaBanner.Visibility.Title", "Wat ziet een kandidaat?", "What does a candidate see?", "Co widzi kandydat?", "Ce vede candidatul?", "ماذا يرى المرشح؟");
         Add("WaBanner.Visibility.CompanyPage", "Bedrijfspagina", "Company page", "Strona firmy", "Pagina firmei", "صفحة الشركة");
         Add("WaBanner.Visibility.Map", "Vacatures op de kaart", "Vacancies on the map", "Oferty na mapie", "Posturi pe hartă", "وظائف على الخريطة");
-        Add("WaBanner.Visibility.Matches", "Matches", "Matches", "Dopasowania", "Potriviri", "التطابقات");
+        Add("WaBanner.Visibility.Matches", "Matches", "Job matches", "Dopasowania", "Potriviri", "التطابقات");
         Add("WaBanner.Visibility.Search", "Zoekmachines", "Search engines", "Wyszukiwarki", "Motoare de căutare", "محركات البحث");
         Add("WaBanner.Visibility.Hidden", "Nog verborgen", "Still hidden", "Jeszcze ukryte", "Încă ascuns", "لا يزال مخفياً");
         Add("WaBanner.Visibility.Visible", "Zichtbaar", "Visible", "Widoczne", "Vizibil", "مرئي");

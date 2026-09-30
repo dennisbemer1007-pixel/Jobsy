@@ -258,6 +258,7 @@ public class EmployerOnboardingStatus11Tests
             Title = "Zorg",
             Description = "x",
             Status = VacancyStatus.Active,
+            Location = new GeoPoint(52.09, 5.12),
             PublishOnVerification = false,
             CreatedAtUtc = DateTime.UtcNow
         });
