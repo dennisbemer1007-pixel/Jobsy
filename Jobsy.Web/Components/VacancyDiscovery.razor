@@ -1217,12 +1217,33 @@
         {
             await _matchDeck.LoadAsync(MatchProfile, MatchVacancies, take: 24, orderByMatch: true);
         }
-        catch
+        catch (Exception ex)
         {
             // Tile stays hidden on failure.
+            Logger.LogWarning(ex, "Desktop match deck load failed.");
         }
 
         await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Fire-and-forget guard: await the work, log failures (no PII), never rethrow into the circuit.
+    /// </summary>
+    private void RunDetachedAsync(Func<Task> work, string what)
+    {
+        _ = RunDetachedCoreAsync(work, what);
+    }
+
+    private async Task RunDetachedCoreAsync(Func<Task> work, string what)
+    {
+        try
+        {
+            await work();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Logger.LogWarning(ex, "Detached task failed: {What}", what);
+        }
     }
 
     private Task OpenMatchDialogAsync()
@@ -1252,14 +1273,18 @@
         }
     }
 
+    /// <summary>
+    /// Attributes must be added before the component reference capture;
+    /// capture first caused InvalidOperationException and the desktop circuit ErrorBoundary.
+    /// </summary>
     private RenderFragment TopMatchLeadingFragment => builder =>
     {
         builder.OpenComponent<TopMatchTile>(0);
-        builder.AddComponentReferenceCapture(1, inst => _topMatchTile = (TopMatchTile)inst);
-        builder.AddAttribute(2, "Model", _matchDeck.Current);
-        builder.AddAttribute(3, "TravelText", FormatTopMatchTravel(_matchDeck.Current));
-        builder.AddAttribute(4, "IsOpen", _matchDialogOpen);
-        builder.AddAttribute(5, "OnOpen", EventCallback.Factory.Create(this, OpenMatchDialogAsync));
+        builder.AddAttribute(1, "Model", _matchDeck.Current);
+        builder.AddAttribute(2, "TravelText", FormatTopMatchTravel(_matchDeck.Current));
+        builder.AddAttribute(3, "IsOpen", _matchDialogOpen);
+        builder.AddAttribute(4, "OnOpen", EventCallback.Factory.Create(this, OpenMatchDialogAsync));
+        builder.AddComponentReferenceCapture(5, inst => _topMatchTile = (TopMatchTile)inst);
         builder.CloseComponent();
     };
 
@@ -1939,7 +1964,7 @@
                 await InvokeAsync(StateHasChanged);
                 if (_wideViewport)
                 {
-                    _ = EnsureDesktopMatchDeckAsync();
+                    RunDetachedAsync(EnsureDesktopMatchDeckAsync, "EnsureDesktopMatchDeckAsync(viewport)");
                 }
             }
         }
@@ -2244,7 +2269,7 @@
 
                 _mapPainted = true;
                 await InvokeAsync(StateHasChanged);
-                _ = EnsureDesktopMatchDeckAsync();
+                RunDetachedAsync(EnsureDesktopMatchDeckAsync, "EnsureDesktopMatchDeckAsync(map)");
                 _ = RefreshMapSizeAsync();
                 _ = TryFocusCompanyOnMapAsync();
             }

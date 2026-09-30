@@ -218,6 +218,104 @@ public class MatchDesktopBunitTests : TestContext
     }
 
     [Fact]
+    public void TopMatchLeadingFragment_attributes_before_reference_capture_renders()
+    {
+        // Regression for InvalidOperationException: "Attributes may only be added immediately
+        // after frames of type Element or Component" when AddComponentReferenceCapture ran
+        // before AddAttribute (desktop banenkaart circuit crash for complete profiles).
+        TopMatchTile? captured = null;
+        var model = new SwipeViewModel
+        {
+            VacancyId = Guid.Parse("a1000000-0000-4000-8000-000000000036"),
+            JobTitle = "Helpende Zorg & Welzijn",
+            CompanyName = "Groenhof Wateringen",
+            MatchPercentage = 92,
+            ShowMatchPercentage = true,
+            TravelTimeMinutes = 14,
+            Tags = ["informeel & handen uit de mouwen", "Zorg"]
+        };
+
+        RenderFragment leading = builder =>
+        {
+            builder.OpenComponent<TopMatchTile>(0);
+            builder.AddAttribute(1, "Model", model);
+            builder.AddAttribute(2, "TravelText", "14 min fietsen");
+            builder.AddAttribute(3, "IsOpen", false);
+            builder.AddAttribute(4, "OnOpen", EventCallback.Factory.Create(Receiver.Instance, () => Task.CompletedTask));
+            builder.AddComponentReferenceCapture(5, inst => captured = (TopMatchTile)inst);
+            builder.CloseComponent();
+        };
+
+        var cut = Render(builder =>
+        {
+            builder.OpenComponent<HighlightVacancyCarousel>(0);
+            builder.AddAttribute(1, "Vacancies", Array.Empty<VacancyListItem>());
+            builder.AddAttribute(2, "LeadingItem", leading);
+            builder.CloseComponent();
+        });
+
+        Assert.Contains("Jouw top-match", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Helpende Zorg", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("92%", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("14 min fietsen", cut.Markup, StringComparison.Ordinal);
+        Assert.NotNull(captured);
+    }
+
+    [Fact]
+    public void TopMatchLeadingFragment_reference_capture_before_attributes_throws()
+    {
+        // Documents the pre-fix crash shape (capture then attributes).
+        RenderFragment broken = builder =>
+        {
+            builder.OpenComponent<TopMatchTile>(0);
+            builder.AddComponentReferenceCapture(1, _ => { });
+            builder.AddAttribute(2, "Model", new SwipeViewModel
+            {
+                VacancyId = Guid.NewGuid(),
+                JobTitle = "X",
+                CompanyName = "Y",
+                MatchPercentage = 80,
+                ShowMatchPercentage = true
+            });
+            builder.CloseComponent();
+        };
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+        {
+            Render(builder =>
+            {
+                builder.OpenComponent<HighlightVacancyCarousel>(0);
+                builder.AddAttribute(1, "Vacancies", Array.Empty<VacancyListItem>());
+                builder.AddAttribute(2, "LeadingItem", broken);
+                builder.CloseComponent();
+            });
+        });
+        Assert.Contains("Attributes may only be added", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Match_format_keys_accept_argument_counts_in_five_languages()
+    {
+        var cases = new (string Key, object[] Args)[]
+        {
+            ("Match.TopMatchAria", [83, "Barista", "Café Delft"]),
+            ("Match.DialogProgress", [1, 12])
+        };
+
+        foreach (var lang in new[] { "nl", "en", "pl", "ro", "ar" })
+        {
+            foreach (var (key, args) in cases)
+            {
+                var template = UiStrings.Get(key, lang);
+                Assert.False(string.IsNullOrWhiteSpace(template), $"{lang}:{key}");
+                var formatted = string.Format(System.Globalization.CultureInfo.InvariantCulture, template, args);
+                Assert.False(string.IsNullOrWhiteSpace(formatted), $"{lang}:{key} format");
+                Assert.DoesNotContain("{0}", formatted, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
     public void Match_keys_exist_in_five_languages()
     {
         string[] keys =

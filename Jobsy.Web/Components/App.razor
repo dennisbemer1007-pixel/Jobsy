@@ -112,33 +112,37 @@
                 };
             }
             try {
-                var add = EventTarget.prototype.addEventListener;
-                var remove = EventTarget.prototype.removeEventListener;
-                var wrapped = typeof WeakMap === "function" ? new WeakMap() : null;
-                EventTarget.prototype.addEventListener = function (type, listener, options) {
-                    if (type === "unload") {
-                        type = "pagehide";
-                        if (wrapped && typeof listener === "function" && !listener.__jobsyPagehideMapped) {
-                            var mapped = wrapped.get(listener);
-                            if (!mapped) {
-                                mapped = function (ev) { return listener.call(this, ev); };
-                                mapped.__jobsyPagehideMapped = true;
-                                wrapped.set(listener, mapped);
+                // Idempotent: enhanced navigation re-runs this inline script; never wrap twice.
+                if (!window.__jobsyPagehideShim) {
+                    window.__jobsyPagehideShim = true;
+                    var add = EventTarget.prototype.addEventListener;
+                    var remove = EventTarget.prototype.removeEventListener;
+                    var wrapped = typeof WeakMap === "function" ? new WeakMap() : null;
+                    EventTarget.prototype.addEventListener = function (type, listener, options) {
+                        if (type === "unload") {
+                            type = "pagehide";
+                            if (wrapped && typeof listener === "function" && !listener.__jobsyPagehideMapped) {
+                                var mapped = wrapped.get(listener);
+                                if (!mapped) {
+                                    mapped = function (ev) { return listener.call(this, ev); };
+                                    mapped.__jobsyPagehideMapped = true;
+                                    wrapped.set(listener, mapped);
+                                }
+                                listener = mapped;
                             }
-                            listener = mapped;
                         }
-                    }
-                    return add.call(this, type, listener, options);
-                };
-                EventTarget.prototype.removeEventListener = function (type, listener, options) {
-                    if (type === "unload") {
-                        type = "pagehide";
-                        if (wrapped && typeof listener === "function") {
-                            listener = wrapped.get(listener) || listener;
+                        return add.call(this, type, listener, options);
+                    };
+                    EventTarget.prototype.removeEventListener = function (type, listener, options) {
+                        if (type === "unload") {
+                            type = "pagehide";
+                            if (wrapped && typeof listener === "function") {
+                                listener = wrapped.get(listener) || listener;
+                            }
                         }
-                    }
-                    return remove.call(this, type, listener, options);
-                };
+                        return remove.call(this, type, listener, options);
+                    };
+                }
             } catch (e) { }
             try {
                 if (localStorage.getItem("Jobsy.CookieConsent")) {
