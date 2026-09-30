@@ -1,0 +1,199 @@
+@inject CultureState Culture
+@using Jobsy.Web.Services
+
+<div class="kb-address @CssClass @(_originSet ? "kb-address--with-clear" : null)">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label class="kb-address__label" for="@InputId">@Label</label>
+    }
+    else
+    {
+        <label class="visually-hidden" for="@InputId">@Culture["Discovery.Address"]</label>
+    }
+    <div class="kb-address__field">
+        <input id="@InputId"
+               type="text"
+               role="combobox"
+               autocomplete="off"
+               aria-autocomplete="list"
+               aria-expanded="@(_showSuggestions ? "true" : "false")"
+               aria-controls="@(_showSuggestions ? ListboxId : null)"
+               aria-activedescendant="@(_activeIndex >= 0 ? OptionId(_activeIndex) : null)"
+               placeholder="@Placeholder"
+               @bind="_query"
+               @bind:event="oninput"
+               @bind:after="OnQueryChangedAsync"
+               @onfocus="OnFocus"
+               @onblur="OnBlur"
+               @onkeydown="OnKeyDown" />
+        @if (ShowLocate)
+        {
+            <button type="button"
+                    class="kb-address__geo"
+                    title="@Culture["Discovery.UseMyLocation"]"
+                    disabled="@Locating"
+                    @onclick="OnLocate.InvokeAsync"
+                    aria-label="@Culture["Discovery.UseMyLocation"]"
+                    aria-busy="@(Locating ? "true" : "false")">
+                <span class="kb-address__geo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <circle cx="12" cy="12" r="7"/>
+                        <path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21"/>
+                    </svg>
+                </span>
+            </button>
+        }
+        @if (_originSet)
+        {
+            <button type="button"
+                    class="kb-address__clear"
+                    title="@Culture["Common.Clear"]"
+                    @onclick="OnClear.InvokeAsync"
+                    aria-label="@Culture["Common.Clear"]">
+                @Culture["Common.Clear"]
+            </button>
+        }
+    </div>
+    @if (_showSuggestions)
+    {
+        <ul id="@ListboxId" class="address-suggestions" role="listbox">
+            @if (Suggesting)
+            {
+                <li class="address-suggestions__status" role="option">@Culture["Common.Loading"]</li>
+            }
+            else if (Suggestions.Count == 0 && _query.Trim().Length >= 3)
+            {
+                <li class="address-suggestions__status" role="option">@Culture["Discovery.AddressNoResults"]</li>
+            }
+            else
+            {
+                @{
+                    var i = 0;
+                }
+                @foreach (var suggestion in Suggestions)
+                {
+                    var index = i;
+                    <li id="@OptionId(index)" role="option" aria-selected="@(index == _activeIndex ? "true" : "false")">
+                        <button type="button"
+                                class="address-suggestions__item @(index == _activeIndex ? "is-active" : null)"
+                                @onclick="() => SelectAsync(suggestion)">
+                            @suggestion.Label
+                        </button>
+                    </li>
+                    i++;
+                }
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter] public string InputId { get; set; } = "kb-address";
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string CssClass { get; set; } = string.Empty;
+    [Parameter] public string Query { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> QueryChanged { get; set; }
+    [Parameter] public IReadOnlyList<AddressSuggestion> Suggestions { get; set; } = [];
+    [Parameter] public bool Suggesting { get; set; }
+    [Parameter] public bool ShowSuggestions { get; set; }
+    [Parameter] public EventCallback<bool> ShowSuggestionsChanged { get; set; }
+    [Parameter] public bool OriginSet { get; set; }
+    [Parameter] public bool ShowLocate { get; set; } = true;
+    [Parameter] public bool Locating { get; set; }
+    [Parameter] public EventCallback OnLocate { get; set; }
+    [Parameter] public EventCallback OnClear { get; set; }
+    [Parameter] public EventCallback<AddressSuggestion> OnSelect { get; set; }
+    [Parameter] public EventCallback<string> OnQueryInput { get; set; }
+
+    private string _query = string.Empty;
+    private bool _showSuggestions;
+    private bool _originSet;
+    private int _activeIndex = -1;
+    private bool _focused;
+    private string ListboxId => InputId + "-listbox";
+
+    private string OptionId(int index) => InputId + "-opt-" + index;
+
+    protected override void OnParametersSet()
+    {
+        // Input is source of truth while focused — ignore stale parent Query.
+        if (!_focused && !string.Equals(_query, Query, StringComparison.Ordinal))
+        {
+            _query = Query ?? string.Empty;
+        }
+
+        _showSuggestions = ShowSuggestions;
+        _originSet = OriginSet;
+        if (_activeIndex >= Suggestions.Count)
+        {
+            _activeIndex = -1;
+        }
+    }
+
+    private async Task OnQueryChangedAsync()
+    {
+        _activeIndex = -1;
+        await QueryChanged.InvokeAsync(_query);
+        await OnQueryInput.InvokeAsync(_query);
+    }
+
+    private async Task OnFocus()
+    {
+        _focused = true;
+        if (Suggestions.Count > 0 || (_query.Trim().Length >= 3 && Suggesting))
+        {
+            _showSuggestions = true;
+            await ShowSuggestionsChanged.InvokeAsync(true);
+        }
+    }
+
+    private void OnBlur()
+    {
+        _focused = false;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _showSuggestions = false;
+            _activeIndex = -1;
+            await ShowSuggestionsChanged.InvokeAsync(false);
+            return;
+        }
+
+        if (!_showSuggestions || Suggestions.Count == 0)
+        {
+            return;
+        }
+
+        if (e.Key == "ArrowDown")
+        {
+            _activeIndex = Math.Min(_activeIndex + 1, Suggestions.Count - 1);
+            return;
+        }
+
+        if (e.Key == "ArrowUp")
+        {
+            _activeIndex = Math.Max(_activeIndex - 1, 0);
+            return;
+        }
+
+        if (e.Key is "Enter" && _activeIndex >= 0 && _activeIndex < Suggestions.Count)
+        {
+            await SelectAsync(Suggestions[_activeIndex]);
+        }
+    }
+
+    private async Task SelectAsync(AddressSuggestion suggestion)
+    {
+        _query = suggestion.Label;
+        _showSuggestions = false;
+        _activeIndex = -1;
+        await QueryChanged.InvokeAsync(_query);
+        await ShowSuggestionsChanged.InvokeAsync(false);
+        await OnSelect.InvokeAsync(suggestion);
+    }
+}

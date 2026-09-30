@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "73aa9ab5c920e654104f6125c42295ecca2b10a9f8c0467aaed9e2ed1fa46b6d",
-    "v": "20260930-kb-focus"
+    "sha256": "923542aeca05b288fd649d23fded26cd2239c81c3b0167a6817b0603eb53bf50",
+    "v": "20260930-kb3"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -12,16 +12,16 @@
     "v": "20260927-apps-clamp"
   },
   "css/features/banenkaart.css": {
-    "sha256": "5f6d5967ef32e2f8a98346aae3d729470b048d1c9310c79f750af1ec49138aa2",
-    "v": "20260927-banenkaart-v3b"
+    "sha256": "a83c0048d9a4fcea8e0008499db6b00e81d3d1f825a723481fe3e0f05119731f",
+    "v": "20260930-kb3"
   },
   "css/features/gratis-dna.css": {
     "sha256": "3ffb5af664b48f4edb1a38bfae8917a65f2e123844638d9d1d599e04532260a7",
     "v": "20260927-gratis-dna"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "54b4b9217da198ce9b023a7ecbb91ac0482d3dc69be267e3a9a5a5d2a029441a",
-    "v": "20260930-kb"
+    "sha256": "c5d823e4de7a07a3c10aaced7cf3daf27b37f25073ea53b5bfff7b165cd84e02",
+    "v": "20260930-kb3"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "1693816b0b407c89dc96ccf53cf8ab37f4c38794b75c9b411bc986be5e17bd11",
@@ -64,8 +64,8 @@
     "v": "20260925-coral"
   },
   "js/app-core.js": {
-    "sha256": "5b8db0c45b67b1219c94c76619921ded36b5ee68a97bb68785bae081cca8cc93",
-    "v": "20260930-kb"
+    "sha256": "12d515b5d81af08243c87f4cb6544060bd78f2f4748c41badc9c738a9c113056",
+    "v": "20260930-kb3"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -92,12 +92,12 @@
     "v": "20260927-gratis-dna"
   },
   "js/jobMap.min.js": {
-    "sha256": "6a6392537a435d8f6c2b8f75528328c9e68c894073eb30609a393d695e5f3566",
-    "v": "20260930-kb"
+    "sha256": "99b3d9a39ac326ccd507fa33a5f522e81e324ce91b6fb4eb44633d700ba1ebbe",
+    "v": "20260930-kb3"
   },
   "js/jobsyMapLibre.min.js": {
-    "sha256": "0bd8f0e24e1af41385fcfac63ae64147cc660fc50dea151b0e6cae7a06bd6ff5",
-    "v": "20260926-mapfix9"
+    "sha256": "5a57ef318f0c8c7de80e960d6da0a64a51ca0eef0bfcde9b2f3c236b1c7fade5",
+    "v": "20260930-kb3"
   },
   "js/lobsyPush.js": {
     "sha256": "8784b68ede39d40c60bdc370eecc5a461b61a6e7eea787415b3d0d6e064fd01a",

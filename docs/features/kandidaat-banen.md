@@ -32,3 +32,12 @@ Shared foundation for the candidate jobs stack (banenkaart, lijst, vacature, sol
 - CSS: `wwwroot/css/features/kandidaat-banen.css` (BEM `kb-`)
 - Card parts: `KbFitPill`, `KbWhyLine`, `KbBadgeRow`, `KbTravelTime`
 - Category colour: `KbCategoryColor.Style(hex)` — only allowed `style=` helper on candidate job surfaces
+
+## Banenkaart (file 03)
+
+- Map start: `KbMapStart.Resolve` — URL/state → session (`jobsy.kb.origin`) → profile home (Fiets · 20) → stored → location prompt
+- Address field: `KbAddressField` (bind oninput; focused value wins over stale suggestions)
+- Geocoder: `PdokGeocodingClient` first, Nominatim `layer=address` fallback via `CompositeGeocodingClient`
+- Filter badge: `KbFilterDefaults` / `KbFilterBadge` — fresh page is 0 (D13)
+- Split view from **900 px**; docked popup for pin + cluster; stronger rings + `data-iso-mode`; Open Sans → Noto Sans glyph rewrite
+- `KbRoutes.Map = "/"` (KB-FALLBACK(E))

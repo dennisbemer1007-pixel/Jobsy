@@ -3,6 +3,7 @@
 /* === geo.js === */
 window.jobsyGeo = (function () {
     const STORAGE_KEY = "jobsy.origin";
+    const SESSION_ORIGIN_KEY = "jobsy.kb.origin";
     const ANON_KEY = "jobsy.anonymousKey";
     const CLICKED_KEY = "jobsy.clickedVacancies";
     const SITE_VISIT_KEY = "jobsy.siteVisitClaimed";
@@ -43,6 +44,63 @@ window.jobsyGeo = (function () {
 
     function clearStoredOrigin() {
         localStorage.removeItem(STORAGE_KEY);
+    }
+
+    function getSessionOrigin() {
+        try {
+            const raw = sessionStorage.getItem(SESSION_ORIGIN_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            const lat = Number(parsed.lat);
+            const lng = Number(parsed.lng);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+            const label = typeof parsed.label === "string" && parsed.label.trim()
+                ? parsed.label.trim()
+                : null;
+            const transport = typeof parsed.transport === "string" && parsed.transport.trim()
+                ? parsed.transport.trim()
+                : null;
+            const maxMinutes = Number(parsed.maxMinutes);
+            return {
+                lat: lat,
+                lng: lng,
+                label: label,
+                transport: transport,
+                maxMinutes: Number.isFinite(maxMinutes) ? maxMinutes : null
+            };
+        } catch {
+            return null;
+        }
+    }
+
+    function setSessionOrigin(lat, lng, label, transport, maxMinutes) {
+        try {
+            const payload = {
+                lat: Number(lat),
+                lng: Number(lng),
+                at: new Date().toISOString()
+            };
+            if (typeof label === "string" && label.trim()) {
+                payload.label = label.trim();
+            }
+            if (typeof transport === "string" && transport.trim()) {
+                payload.transport = transport.trim();
+            }
+            if (maxMinutes != null && Number.isFinite(Number(maxMinutes))) {
+                payload.maxMinutes = Math.round(Number(maxMinutes));
+            }
+            sessionStorage.setItem(SESSION_ORIGIN_KEY, JSON.stringify(payload));
+        } catch {
+            // ignore
+        }
+    }
+
+    function clearSessionOrigin() {
+        try {
+            sessionStorage.removeItem(SESSION_ORIGIN_KEY);
+        } catch {
+            // ignore
+        }
     }
 
     function wasLocationPrompted() {
@@ -313,6 +371,9 @@ window.jobsyGeo = (function () {
         getStoredOrigin,
         setStoredOrigin,
         clearStoredOrigin,
+        getSessionOrigin,
+        setSessionOrigin,
+        clearSessionOrigin,
         getStoredAge,
         setStoredAge,
         clearStoredAge,
@@ -400,7 +461,8 @@ window.jobsyCulture = {
 
     window.jobsyViewport = {
         isWide: function () {
-            return window.matchMedia("(min-width: 769px)").matches;
+            // Design-system breakpoint (file 03): split view from 900px.
+            return window.matchMedia("(min-width: 900px)").matches;
         },
         isKompasWide: function () {
             return window.matchMedia("(min-width: 1024px)").matches;
@@ -488,10 +550,10 @@ window.jobsyMaps = (function () {
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20260926-mapfix9"
+        "/js/jobsyMapLibre.min.js?v=20260930-kb3"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260930-kb"
+        "/js/jobMap.min.js?v=20260930-kb3"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20260928-perf"

@@ -8,7 +8,7 @@ window.jobMap = (function () {
     let originMarker = null;
     let travelRingLayers = [];
     let travelRingGeo = null;
-    let travelOptions = { maxMinutes: 30, transport: "Fiets", radiusKm: 15 };
+    let travelOptions = { maxMinutes: 20, transport: "Fiets", radiusKm: 15 };
     let activeClusterPopup = null;
     let openCallback = null;
     let outsideClickCloserBound = false;
@@ -194,7 +194,8 @@ window.jobMap = (function () {
     }
 
     function isNarrowViewport() {
-        return (window.innerWidth || 0) <= 768;
+        // DS breakpoints: mobile layout below 900px (file 03).
+        return (window.innerWidth || 0) < 900;
     }
 
     // Center-anchored pins: 34px job / 44px cluster. Tip sits on the top of the marker.
@@ -1938,54 +1939,8 @@ window.jobMap = (function () {
         if (!map || !record) {
             return;
         }
-        closeActivePopup();
-        recordForRetry = record;
-        let v = normalizePin(record.options.jobData) || record.options.jobData;
-        record.options.jobData = v;
-        const opts = Object.assign({}, jobPopupOptions(isFeaturedVacancy(v)));
-        const needsDetail = !v._detailLoaded || !v.title;
-        // Skeleton / chrome first (fixed size) so the tap feels instant.
-        activeClusterPopup = popupFromOpts(
-            opts,
-            [record.lng, record.lat],
-            needsDetail ? skeletonPopupHtml(v) : buildPopupHtml(v));
-        syncFeaturedPopupClass(activeClusterPopup, v);
-        if (needsDetail) {
-            // Pan after first paint; fill card body on the next frame once detail arrives.
-            afterFirstPaint(function () {
-                if (activeClusterPopup) {
-                    centerPopupInView(activeClusterPopup);
-                }
-            });
-            fetchVacancyCard(v.id).then(function (card) {
-                if (!activeClusterPopup || !record) {
-                    return;
-                }
-                afterFirstPaint(function () {
-                    if (!activeClusterPopup || !record) {
-                        return;
-                    }
-                    if (card) {
-                        const full = mapCardToPopup(card, v);
-                        record.options.jobData = full;
-                        activeClusterPopup.setHTML(buildPopupHtml(full));
-                        syncFeaturedPopupClass(activeClusterPopup, full);
-                        bindSinglePopupEl(activeClusterPopup, full);
-                    } else {
-                        activeClusterPopup.setHTML(unavailablePopupHtml(v.id));
-                        bindSinglePopupEl(activeClusterPopup, v);
-                    }
-                });
-            });
-            return;
-        }
-        afterFirstPaint(function () {
-            if (!activeClusterPopup) {
-                return;
-            }
-            bindSinglePopupEl(activeClusterPopup, v);
-            notifyOpen(v.id);
-        });
+        // Same docked card as a cluster (one item, no pager) — file 03.
+        openClusterList([record], [record.lng, record.lat]);
     }
 
     function openClusterList(childMarkers, lngLat) {
@@ -2005,21 +1960,20 @@ window.jobMap = (function () {
         const sheetHtml = chromeHtml.replace(
             "data-cluster-viewport\"></div>",
             "data-cluster-viewport\">" + skeletonCard + "</div>");
-        const docked = isNarrowViewport();
         const visibleCount = Object.keys(markersById).length;
 
         setSelectedCluster(ll, pageCount);
         setClusterOpenChrome(true, visibleCount);
         bindClusterEscape();
 
-        if (docked) {
-            activeClusterPopup = createDockedClusterController(sheetHtml);
-        } else {
-            const opts = Object.assign({}, clusterPopupOptions(isFeaturedVacancy(firstJob)));
-            opts.closeButton = false;
-            activeClusterPopup = popupFromOpts(opts, ll, sheetHtml);
-            syncFeaturedPopupClass(activeClusterPopup, firstJob);
-        }
+        // Always docked (pin + cluster) — file 03 one docked popup.
+        activeClusterPopup = createDockedClusterController(sheetHtml);
+        try {
+            const el = activeClusterPopup.getElement();
+            if (el && el.classList) {
+                el.classList.add("map-popup--docked");
+            }
+        } catch (e) { }
 
         const root = activeClusterPopup.getElement();
         const cardRoot = root.querySelector("[data-cluster-card]") || root;
@@ -2030,7 +1984,7 @@ window.jobMap = (function () {
             childMarkers: childMarkers,
             root: cardRoot,
             viewport: cardRoot.querySelector("[data-cluster-viewport]"),
-            docked: docked,
+            docked: true,
             lngLat: ll
         };
 
@@ -2392,11 +2346,50 @@ window.jobMap = (function () {
         });
     }
 
+    function readCssToken(name, fallback) {
+        try {
+            const v = getComputedStyle(document.documentElement).getPropertyValue(name);
+            if (v && v.trim()) {
+                return v.trim();
+            }
+        } catch (e) { }
+        return fallback;
+    }
+
+    function ringBrandColors() {
+        const brand = readCssToken("--brand", "#0f2d5c");
+        const brandDeep = readCssToken("--brand-deep", brand);
+        return { fill: brand, line: brandDeep || brand };
+    }
+
+    function setIsoMode(mode) {
+        try {
+            const host = map && map.getContainer ? map.getContainer() : null;
+            if (!host) {
+                return;
+            }
+            host.setAttribute("data-iso-mode", mode === "real" ? "real" : "approx");
+            const pane = host.closest ? host.closest(".map-pane") : null;
+            if (pane) {
+                pane.setAttribute("data-iso-mode", mode === "real" ? "real" : "approx");
+            }
+            if (typeof onIsoModeChange === "function") {
+                onIsoModeChange(mode === "real" ? "real" : "approx");
+            }
+            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
+                openCallback.invokeMethodAsync("OnIsoModeChanged", mode === "real" ? "real" : "approx");
+            }
+        } catch (e) { }
+    }
+
+    let onIsoModeChange = null;
+
     function ensureTravelRingLayers(sourceId) {
         const fillId = sourceId + "-fill";
         const haloId = sourceId + "-halo";
         const lineId = sourceId + "-line";
         const beforeId = map.getLayer(PIN_LAYER_CLUSTERS) ? PIN_LAYER_CLUSTERS : undefined;
+        const colors = ringBrandColors();
 
         if (!map.getLayer(fillId)) {
             map.addLayer({
@@ -2404,13 +2397,14 @@ window.jobMap = (function () {
                 type: "fill",
                 source: sourceId,
                 paint: {
-                    "fill-color": "#2563eb",
+                    "fill-color": colors.fill,
                     "fill-opacity": [
                         "match", ["get", "minutes"],
-                        10, 0.16,
-                        20, 0.11,
-                        30, 0.07,
-                        0.09
+                        10, 0.22,
+                        20, 0.14,
+                        30, 0.09,
+                        45, 0.06,
+                        0.10
                     ]
                 }
             }, beforeId);
@@ -2420,11 +2414,15 @@ window.jobMap = (function () {
                 id: haloId,
                 type: "line",
                 source: sourceId,
-                filter: ["==", ["get", "chosen"], 1],
                 paint: {
                     "line-color": "#ffffff",
-                    "line-width": 8,
-                    "line-opacity": 0.8
+                    "line-width": [
+                        "case",
+                        ["==", ["get", "chosen"], 1],
+                        10,
+                        7
+                    ],
+                    "line-opacity": 0.85
                 }
             }, beforeId);
         }
@@ -2434,16 +2432,27 @@ window.jobMap = (function () {
                 type: "line",
                 source: sourceId,
                 paint: {
-                    "line-color": "#1d4ed8",
+                    "line-color": colors.line,
                     "line-width": [
                         "case",
                         ["==", ["get", "chosen"], 1],
-                        5,
-                        3
+                        5.5,
+                        3.5
                     ],
-                    "line-opacity": 1
+                    "line-opacity": 1,
+                    "line-dasharray": [
+                        "case",
+                        [">=", ["get", "minutes"], 30],
+                        ["literal", [1.2, 1.6]],
+                        ["literal", [1, 0]]
+                    ]
                 }
             }, beforeId);
+        } else {
+            try {
+                map.setPaintProperty(lineId, "line-color", colors.line);
+                map.setPaintProperty(fillId, "fill-color", colors.fill);
+            } catch (e) { }
         }
         // Rings must never capture clicks.
         [fillId, haloId, lineId].forEach(function (id) {
@@ -2476,6 +2485,12 @@ window.jobMap = (function () {
             travelRingGeo = { sourceId: sourceId, ids: ids };
             ringRedrawTries = 0;
             placeTravelRingLabels(lat, lng, features);
+            try {
+                const pinSrc = map.getSource(PIN_SOURCE);
+                if (pinSrc && typeof pinSrc.setData === "function") {
+                    pinSrc.setData(pinsGeoJson());
+                }
+            } catch (e) { }
         } catch (e) {
             scheduleTravelRingRedraw();
         }
@@ -2497,6 +2512,7 @@ window.jobMap = (function () {
             return;
         }
         applyTravelRingData(circleFeatures, lat, lng);
+        setIsoMode("approx");
 
         const drawGen = ++ringRedrawTries;
         fetchIsochrones(lat, lng).then(function (fc) {
@@ -2506,13 +2522,16 @@ window.jobMap = (function () {
             }
             if (!fc) {
                 try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
+                setIsoMode("approx");
                 return;
             }
             const isoFeatures = featuresFromIsochroneFc(fc);
             if (!isoFeatures.length) {
+                setIsoMode("approx");
                 return;
             }
             applyTravelRingData(isoFeatures, lat, lng);
+            setIsoMode("real");
             ringRedrawTries = Math.min(ringRedrawTries, drawGen);
         });
     }
@@ -2852,11 +2871,20 @@ window.jobMap = (function () {
     }
 
     function pinsGeoJson() {
+        const origin = lastOrigin;
+        const outerM = origin ? maxRingRadiusMeters() : 0;
         return {
             type: "FeatureCollection",
             features: Object.keys(markersById).map(function (id) {
                 const record = markersById[id];
                 const v = record.options.jobData || {};
+                let outside = 0;
+                if (origin && outerM > 0) {
+                    const d = haversineMeters(origin.lat, origin.lng, record.lat, record.lng);
+                    if (d > outerM * 1.02) {
+                        outside = 1;
+                    }
+                }
                 return {
                     type: "Feature",
                     id: id,
@@ -2868,11 +2896,22 @@ window.jobMap = (function () {
                         glyph: workTypeGlyph(workTypeOf(v)),
                         colour: v.categoryColor || v.colour || "",
                         matchPercent: v.matchPercent == null ? -1 : Number(v.matchPercent),
-                        matchBand: v.matchColorBand || "orange"
+                        matchBand: v.matchColorBand || "orange",
+                        outside: outside
                     }
                 };
             })
         };
+    }
+
+    function haversineMeters(lat1, lng1, lat2, lng2) {
+        const toRad = Math.PI / 180;
+        const dLat = (lat2 - lat1) * toRad;
+        const dLng = (lng2 - lng1) * toRad;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
     function ensurePinImages() {
@@ -3018,7 +3057,12 @@ window.jobMap = (function () {
                         ["==", ["feature-state", "selected"], true], "#f54a1b",
                         "#ffffff"
                     ],
-                    "circle-opacity": 0.95
+                    "circle-opacity": [
+                        "case",
+                        ["==", ["get", "outside"], 1],
+                        0.35,
+                        0.95
+                    ]
                 }
             });
             map.addLayer({
@@ -3031,6 +3075,14 @@ window.jobMap = (function () {
                     "text-size": 10,
                     "text-allow-overlap": true,
                     "text-ignore-placement": true
+                },
+                paint: {
+                    "text-opacity": [
+                        "case",
+                        ["==", ["get", "outside"], 1],
+                        0.35,
+                        1
+                    ]
                 }
             });
         }

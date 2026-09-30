@@ -3457,7 +3457,7 @@ html[dir="rtl"] .account-menu__panel {
     transition: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 899px) {
     .map-pane,
     .map-stage,
     .job-map,
@@ -3478,7 +3478,7 @@ html[dir="rtl"] .account-menu__panel {
     }
 }
 
-@media (min-width: 769px) {
+@media (min-width: 900px) {
     .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
     .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage,
     .jobsy-discovery:not(.jobsy-discovery--branch) #job-map,
@@ -4818,8 +4818,11 @@ a.map-popup__apply.map-popup__cta:visited {
         display: none;
     }
 
-    .app-shell:has(.jobsy-discovery) .app-main {
+    .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main {
         padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+    }
+    .app-shell:not(.has-bottom-nav):has(.jobsy-discovery) .app-main {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     .jobsy-discovery,
@@ -15214,8 +15217,11 @@ html.cookie-consent-known .cookie-consent {
         padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
     }
 
-    .app-shell:has(.jobsy-discovery) .app-main {
+    .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main {
         padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+    }
+    .app-shell:not(.has-bottom-nav):has(.jobsy-discovery) .app-main {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     .lobsy-assistant.has-bottom-nav {
@@ -20184,8 +20190,12 @@ html:not(.cookie-consent-known) .app-shell:has(.bottom-nav) .app-main {
    The rule above is more specific than .app-shell:has(.jobsy-discovery) .app-main and
    otherwise leaves ~125px empty gap above the nav. */
 @media (max-width: 1024px) {
-    html:not(.cookie-consent-known) .app-shell:has(.jobsy-discovery) .app-main {
+    /* Only reserve bottom-nav space when the nav is actually present (anonymous has no nav). */
+    html:not(.cookie-consent-known) .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main {
         padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+    }
+    html:not(.cookie-consent-known) .app-shell:not(.has-bottom-nav):has(.jobsy-discovery) .app-main {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 }
 

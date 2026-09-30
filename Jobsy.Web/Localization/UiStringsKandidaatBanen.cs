@@ -154,5 +154,106 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Map.VacancyFallback",
             "Vacature", "Vacancy",
             "Oferta", "Ofertă", "وظيفة");
+
+        // Banenkaart start / location prompt (03)
+        Add("Kb.Start.Title",
+            "Waar woon je?", "Where do you live?",
+            "Gdzie mieszkasz?", "Unde locuiești?", "أين تسكن؟");
+        Add("Kb.Start.Hint",
+            "We tonen banen binnen 20 minuten fietsen vanaf jouw adres.",
+            "We show jobs within a 20-minute bike ride from your address.",
+            "Pokazujemy oferty w zasięgu 20 minut rowerem od Twojego adresu.",
+            "Îți arătăm joburi la 20 de minute cu bicicleta de acasă.",
+            "نعرض وظائف على بُعد 20 دقيقة بالدراجة من عنوانك.");
+        Add("Kb.Start.UseMyLocation",
+            "Gebruik mijn locatie", "Use my location",
+            "Użyj mojej lokalizacji", "Folosește locația mea", "استخدم موقعي");
+        Add("Kb.Start.Later",
+            "Later", "Later",
+            "Później", "Mai târziu", "لاحقاً");
+        Add("Kb.Start.AddressPlaceholder",
+            "Straat en plaats", "Street and place",
+            "Ulica i miejscowość", "Stradă și localitate", "الشارع والمدينة");
+
+        // Filter bar chips (03)
+        Add("Kb.Filter.TravelChip",
+            "{0} min {1}", "{0} min {1}",
+            "{0} min {1}", "{0} min {1}", "{0} د {1}");
+        Add("Kb.Filter.TravelChipBike",
+            "{0} min fietsen", "{0} min by bike",
+            "{0} min rowerem", "{0} min cu bicicleta", "{0} د بالدراجة");
+        Add("Kb.Filter.WorkType",
+            "Soort werk", "Type of work",
+            "Rodzaj pracy", "Tip de muncă", "نوع العمل");
+        Add("Kb.Filter.Hours",
+            "Uren", "Hours",
+            "Godziny", "Ore", "ساعات");
+        Add("Kb.Filter.Wage",
+            "Loon", "Wage",
+            "Wynagrodzenie", "Salariu", "الأجر");
+        Add("Kb.Filter.SearchPlaceholder",
+            "Zoek op functie of bedrijf", "Search by role or company",
+            "Szukaj stanowiska lub firmy", "Caută după rol sau firmă", "ابحث عن وظيفة أو شركة");
+        Add("Kb.Filter.More",
+            "Meer filters", "More filters",
+            "Więcej filtrów", "Mai multe filtre", "المزيد من الفلاتر");
+        Add("Kb.Filter.Clear",
+            "Wis filters", "Clear filters",
+            "Wyczyść filtry", "Șterge filtrele", "مسح الفلاتر");
+        Add("Kb.Filter.MinutesPreset",
+            "{0} min", "{0} min",
+            "{0} min", "{0} min", "{0} د");
+        Add("Kb.Filter.Exact",
+            "Precies…", "Exact…",
+            "Dokładnie…", "Exact…", "بالضبط…");
+        Add("Kb.Filter.HoursAny",
+            "Alle uren", "Any hours",
+            "Wszystkie godziny", "Orice ore", "أي ساعات");
+        Add("Kb.Filter.WageAny",
+            "Elk loon", "Any wage",
+            "Każda stawka", "Orice salariu", "أي أجر");
+
+        // Side list / bottom sheet header (03; fit sub-line lands in 04)
+        Add("Kb.List.Header",
+            "{0} banen · {1} min {2}", "{0} jobs · {1} min {2}",
+            "{0} ofert · {1} min {2}", "{0} joburi · {1} min {2}", "{0} وظائف · {1} د {2}");
+        Add("Kb.List.HeaderWithin",
+            "{0} banen binnen {1} min", "{0} jobs within {1} min",
+            "{0} ofert w {1} min", "{0} joburi în {1} min", "{0} وظائف خلال {1} د");
+        Add("Kb.List.SubBestFirst",
+            "Beste match bovenaan.", "Best match on top.",
+            "Najlepsze dopasowanie na górze.", "Cea mai bună potrivire sus.", "أفضل تطابق في الأعلى.");
+        Add("Kb.List.SubSwipe",
+            "Beste match bovenaan · veeg omhoog voor meer",
+            "Best match on top · swipe up for more",
+            "Najlepsze dopasowanie na górze · przeciągnij w górę",
+            "Cea mai bună potrivire sus · glisează în sus",
+            "أفضل تطابق في الأعلى · اسحب لأعلى للمزيد");
+
+        // Travel rings legend (03)
+        Add("Kb.Legend.TravelTitle",
+            "Reistijd met de {0}", "Travel time by {0}",
+            "Czas dojazdu {0}", "Timp de deplasare cu {0}", "وقت الوصول ب{0}");
+        Add("Kb.Legend.TravelReal",
+            "Echte reistijd over de weg", "Real travel time on the road",
+            "Rzeczywisty czas po drogach", "Timp real pe drum", "وقت وصول حقيقي عبر الطريق");
+        Add("Kb.Legend.TravelRealHint",
+            "Over echte wegen en fietspaden, geen cirkel.",
+            "Along real roads and bike paths — not a circle.",
+            "Po prawdziwych drogach i ścieżkach — nie okrąg.",
+            "Pe drumuri și piste reale — nu un cerc.",
+            "عبر طرق ومسارات حقيقية — وليس دائرة.");
+        Add("Kb.Legend.TravelApprox",
+            "Reistijd ongeveer (cirkel)", "Travel time approximate (circle)",
+            "Czas orientacyjny (okrąg)", "Timp aproximativ (cerc)", "وقت تقريبي (دائرة)");
+        Add("Kb.Legend.TravelApproxHint",
+            "Ongeveer — echte OV-routes volgen we nog niet.",
+            "Approximate — we do not follow real transit routes yet.",
+            "Orientacyjnie — nie śledzimy jeszcze tras komunikacji.",
+            "Aproximativ — încă nu urmărim rutele de transport.",
+            "تقريبي — لا نتبع مسارات المواصلات بعد.");
+        Add("Kb.Legend.RingMinutes",
+            "{0} min", "{0} min",
+            "{0} min", "{0} min", "{0} د");
     }
 }

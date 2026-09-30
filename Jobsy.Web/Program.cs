@@ -108,7 +108,7 @@ builder.Services.AddHttpClient(Jobsy.Web.Branding.PlatformBrandingState.HttpClie
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 });
 
-builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(client =>
+builder.Services.AddHttpClient<NominatimGeocodingClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(8);
     client.DefaultRequestHeaders.TryAddWithoutValidation(
@@ -116,6 +116,15 @@ builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(clien
         "Lobsy/1.0 (demo; contact@jobsy.local)");
     client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "nl");
 });
+builder.Services.AddHttpClient<PdokGeocodingClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(3);
+    client.DefaultRequestHeaders.TryAddWithoutValidation(
+        "User-Agent",
+        "Lobsy/1.0 (demo; contact@jobsy.local)");
+    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "nl");
+});
+builder.Services.AddScoped<IGeocodingClient, CompositeGeocodingClient>();
 
 // Scoped (circuit) registration — do not use IHttpClientFactory + message handler here.
 // That resolves AuthenticationStateProvider outside the Razor component scope.

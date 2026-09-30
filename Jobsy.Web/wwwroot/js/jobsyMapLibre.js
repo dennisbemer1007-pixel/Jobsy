@@ -61,6 +61,62 @@ window.jobsyMapLibre = (function () {
         }, { passive: false });
     }
 
+    function rewriteBasemapTextFonts(map) {
+        if (!map || typeof map.getStyle !== "function") {
+            return;
+        }
+        var style;
+        try {
+            style = map.getStyle();
+        } catch (e) {
+            return;
+        }
+        if (!style || !Array.isArray(style.layers)) {
+            return;
+        }
+        for (var i = 0; i < style.layers.length; i++) {
+            var layer = style.layers[i];
+            if (!layer || layer.type !== "symbol" || !layer.layout) {
+                continue;
+            }
+            var fonts = layer.layout["text-font"];
+            if (!fonts) {
+                continue;
+            }
+            var next = rewriteFontStack(fonts);
+            if (next) {
+                try {
+                    map.setLayoutProperty(layer.id, "text-font", next);
+                } catch (e) { }
+            }
+        }
+    }
+
+    /** Map Open Sans* glyph requests (404 on OpenFreeMap) onto Noto Sans stacks the server serves. */
+    function rewriteFontStack(fonts) {
+        var list = null;
+        if (Array.isArray(fonts)) {
+            list = fonts.slice();
+        } else if (typeof fonts === "string") {
+            list = [fonts];
+        } else {
+            return null;
+        }
+        var changed = false;
+        for (var i = 0; i < list.length; i++) {
+            var name = String(list[i] || "");
+            if (/open\s*sans/i.test(name)) {
+                changed = true;
+                if (/bold|black|semi|heavy/i.test(name)) {
+                    list[i] = "Noto Sans Bold";
+                } else {
+                    list[i] = "Noto Sans Regular";
+                }
+            }
+        }
+        return changed ? list : null;
+    }
+
     function hideChrome(map) {
         if (!map) {
             return;
@@ -299,12 +355,14 @@ window.jobsyMapLibre = (function () {
 
         map.on("load", function () {
             hideChrome(map);
+            rewriteBasemapTextFonts(map);
             if (spec.threeD) {
                 ensureBuildingsLayer(map);
             }
         });
         map.on("styledata", function () {
             hideChrome(map);
+            rewriteBasemapTextFonts(map);
         });
 
         return map;
@@ -320,6 +378,7 @@ window.jobsyMapLibre = (function () {
         createMap: createMap,
         setStyle: setStyle,
         hideChrome: hideChrome,
-        lockTouch: lockTouch
+        lockTouch: lockTouch,
+        rewriteBasemapTextFonts: rewriteBasemapTextFonts
     };
 })();
