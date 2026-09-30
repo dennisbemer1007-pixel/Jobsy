@@ -741,4 +741,70 @@ public sealed partial class JobsyApiClient
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Sales.SalesEmployerDetailDto>(cancellationToken: ct);
     }
+
+    public async Task<Jobsy.Core.Sales.SalesLinkToolkitDto?> GetSalesLinkToolkitAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/link", ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesLinkToolkitDto>(cancellationToken: ct);
+    }
+
+    public async Task<byte[]?> GetSalesQrPngAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/materials/qr.png", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    public async Task DownloadSalesQrPngAsync(IJSRuntime js, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/materials/qr.png", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "QR downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                       ?? "lobsy-qr.png";
+        var base64 = Convert.ToBase64String(bytes);
+        await SendBrowserDownloadAsync(js, fileName, base64, "image/png");
+    }
+
+    public async Task DownloadSalesMaterialPdfAsync(
+        IJSRuntime js,
+        string kind,
+        string? trackingCode,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/sales/me/materials/{Uri.EscapeDataString(kind)}.pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Materiaal downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var code = string.IsNullOrWhiteSpace(trackingCode) ? "code" : trackingCode.Trim().ToUpperInvariant();
+        var fileName = kind.Trim().ToLowerInvariant() switch
+        {
+            "flyer" => $"lobsy-flyer-{code}.pdf",
+            "visitekaartje" or "visitekaartjes" or "cards" => $"lobsy-visitekaartje-{code}.pdf",
+            "prijskaart" or "prices" => $"lobsy-prijskaart-{code}.pdf",
+            "presentatie" or "presentation" => $"lobsy-presentatie-{code}.pdf",
+            _ => $"lobsy-materiaal-{code}.pdf"
+        };
+        var base64 = Convert.ToBase64String(bytes);
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
+    }
 }

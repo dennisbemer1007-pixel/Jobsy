@@ -83,7 +83,7 @@ public partial class SalesCommercialController : ControllerBase
         });
     }
 
-    /// <summary>Printable A4 flyer PDF with optional salesmanager tracking code.</summary>
+    /// <summary>Printable A4 flyer PDF. Generic (no code) is public; personal code only when active.</summary>
     [HttpGet("flyer.pdf")]
     [AllowAnonymous]
     [EnableRateLimiting("public-pdf")]
@@ -97,9 +97,21 @@ public partial class SalesCommercialController : ControllerBase
             return BadRequest(new { message = "Ongeldige salescode. Gebruik het formaat SM-, BM- of IM-XXXXXX." });
         }
 
+        if (normalized is not null)
+        {
+            var active = await _attribution.ResolveActiveReferralAsync(normalized, cancellationToken);
+            if (active is null)
+            {
+                return NotFound(new { message = "Deze code kennen we niet." });
+            }
+        }
+
         var bytes = await _flyerPdf.RenderAsync(normalized, cancellationToken);
         // Fixed download name — never embed untrusted query text in Content-Disposition.
-        return File(bytes, "application/pdf", "lobsy-partner-flyer.pdf");
+        var fileName = normalized is null
+            ? "lobsy-partner-flyer.pdf"
+            : $"lobsy-flyer-{normalized}.pdf";
+        return File(bytes, "application/pdf", fileName);
     }
 
     [HttpGet("admin")]

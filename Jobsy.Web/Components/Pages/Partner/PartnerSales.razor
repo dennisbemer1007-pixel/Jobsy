@@ -19,7 +19,7 @@
         <h1>@Culture["Partner.Headline"]</h1>
         <p class="login-lead">@Culture["Partner.Lead"]</p>
         <div class="partner-sales__cta">
-            <a class="login-submit" href="@RegisterHref" style="display:inline-block;text-decoration:none;text-align:center">
+            <a class="login-submit" href="@RegisterHref">
                 @Culture["Partner.RegisterCta"]
             </a>
             <button class="btn-compact btn-compact--primary" type="button" disabled="@_flyerBusy" @onclick="DownloadFlyerAsync">
@@ -57,7 +57,7 @@
         <section class="panel-section">
             <h2>@Culture["Partner.RatesTitle"]</h2>
             <p class="muted">
-                @Culture.Format("Partner.TokenValue", _catalog.BaseTokenValueEuro.ToString("0.00"))
+                @Culture.Format("Partner.TokenValueFrom", _catalog.BaseTokenValueEuro.ToString("0.00"))
                 · Highlight @_catalog.HighlightCarouselDays d: @_catalog.HighlightCarouselTokens.ToString("0.##") tokens
                 · Pulse: @_catalog.HighlightPulseTokens.ToString("0.##") tokens
             </p>
@@ -71,7 +71,7 @@
                         </div>
                         <div>
                             <strong>@cost.CostTokens.ToString("0.##") tokens</strong>
-                            <span class="muted">≈ € @cost.PriceEuro.ToString("0.00")</span>
+                            <span class="muted">≈ @SalesMoney.FormatPlain(cost.PriceEuro)</span>
                         </div>
                     </div>
                 }
@@ -94,7 +94,7 @@
                                     <div class="muted">@pack.Description</div>
                                 }
                             </div>
-                            <strong>€ @pack.PriceEuro.ToString("0.00")</strong>
+                            <strong>@SalesMoney.FormatPlain(pack.PriceEuro)</strong>
                         </div>
                     }
                 </div>
@@ -115,6 +115,7 @@
     [Parameter] public string? TrackingCode { get; set; }
     [SupplyParameterFromQuery(Name = "ref")] public string? RefCode { get; set; }
     [SupplyParameterFromQuery(Name = "b")] public string? Channel { get; set; }
+    [SupplyParameterFromQuery(Name = "preview")] public string? Preview { get; set; }
 
     private PartnerSalesCatalog? _catalog;
     private string? _trackingCode;
@@ -122,6 +123,10 @@
     private bool _flyerBusy;
     private string? _error;
     private bool _visitRecorded;
+
+    private bool IsPreview =>
+        string.Equals(Preview, "1", StringComparison.Ordinal)
+        || string.Equals(Preview, "true", StringComparison.OrdinalIgnoreCase);
 
     private string RegisterHref => string.IsNullOrWhiteSpace(_trackingCode)
         ? "/register"
@@ -182,8 +187,8 @@
             var visit = await Api.RecordSalesReferralVisitAsync(
                 code,
                 Channel,
-                countClick: !isBot && !sameDay);
-            if (visit is { Active: true })
+                countClick: !IsPreview && !isBot && !sameDay);
+            if (visit is { Active: true } && !IsPreview)
             {
                 SalesReferralCookie.TrySetFirstClick(http, code, visit.CookieDays);
             }

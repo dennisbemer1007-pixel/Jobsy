@@ -43,6 +43,9 @@ public static class SalesReferralEndpoints
         var isBot = BotUserAgents.IsBot(http.Request.Headers.UserAgent.ToString());
         var isHead = HttpMethods.IsHead(http.Request.Method);
         var sameDayRepeat = SalesReferralCookie.AlreadyHoldsCodeToday(http, normalized);
+        var isPreview = http.Request.Query.TryGetValue("preview", out var previewVal)
+                        && (previewVal == "1"
+                            || string.Equals(previewVal.ToString(), "true", StringComparison.OrdinalIgnoreCase));
 
         SalesReferralVisitResult? visit = null;
         try
@@ -50,7 +53,7 @@ public static class SalesReferralEndpoints
             visit = await api.RecordSalesReferralVisitAsync(
                 normalized,
                 channel.ToString(),
-                countClick: !isBot && !isHead && !sameDayRepeat,
+                countClick: !isPreview && !isBot && !isHead && !sameDayRepeat,
                 cancellationToken);
         }
         catch
@@ -60,11 +63,26 @@ public static class SalesReferralEndpoints
 
         if (visit is { Active: true })
         {
-            SalesReferralCookie.TrySetFirstClick(http, normalized, visit.CookieDays);
+            if (!isPreview)
+            {
+                SalesReferralCookie.TrySetFirstClick(http, normalized, visit.CookieDays);
+            }
+
             var target = $"/partner/{Uri.EscapeDataString(normalized)}";
+            var qs = new List<string>();
             if (!string.IsNullOrWhiteSpace(channelQuery))
             {
-                target += $"?b={Uri.EscapeDataString(channelQuery)}";
+                qs.Add($"b={Uri.EscapeDataString(channelQuery)}");
+            }
+
+            if (isPreview)
+            {
+                qs.Add("preview=1");
+            }
+
+            if (qs.Count > 0)
+            {
+                target += "?" + string.Join('&', qs);
             }
 
             return Results.Redirect(target, permanent: false);

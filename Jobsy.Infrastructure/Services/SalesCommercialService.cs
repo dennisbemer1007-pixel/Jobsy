@@ -2,7 +2,9 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Sales;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Infrastructure.Services;
@@ -13,11 +15,19 @@ public sealed class SalesCommercialService : ISalesCommercialService
 
     private readonly JobsyDbContext _db;
     private readonly ITokenLedgerService _tokens;
+    private readonly ISalesPriceQuote _priceQuote;
 
-    public SalesCommercialService(JobsyDbContext db, ITokenLedgerService tokens)
+    public SalesCommercialService(JobsyDbContext db, ITokenLedgerService tokens, ISalesPriceQuote priceQuote)
     {
         _db = db;
         _tokens = tokens;
+        _priceQuote = priceQuote;
+    }
+
+    // Backward-compatible ctor for older tests that don't inject the quote yet.
+    public SalesCommercialService(JobsyDbContext db, ITokenLedgerService tokens)
+        : this(db, tokens, new SalesPriceQuoteService(db))
+    {
     }
 
     public async Task<SalesCommercialSettings> GetSettingsAsync(CancellationToken cancellationToken = default)
@@ -69,8 +79,12 @@ public sealed class SalesCommercialService : ISalesCommercialService
             .ThenBy(p => p.Name)
             .ToListAsync(cancellationToken);
 
+        // D14: public € amounts come from active TokenPricing packs via SalesPriceQuote.
+        var quote = await _priceQuote.GetAsync(cancellationToken);
+        var perToken = quote.MinPricePerToken;
+
         return new PartnerSalesCatalogDto(
-            settings.BaseTokenValueEuro,
+            perToken,
             settings.HighlightCarouselTokens,
             settings.HighlightPulseTokens,
             settings.HighlightCarouselDays,
@@ -79,7 +93,7 @@ public sealed class SalesCommercialService : ISalesCommercialService
                 c.Kind.ToString(),
                 VacancyKindLabels.ToDutch(c.Kind),
                 c.CostTokens,
-                Math.Round(c.CostTokens * settings.BaseTokenValueEuro, 2),
+                Math.Round(c.CostTokens * perToken, 2, MidpointRounding.AwayFromZero),
                 c.IsActive)).ToList(),
             packages.Select(MapPackage).ToList());
     }

@@ -20,9 +20,9 @@ public class SalesCommercialServiceTests
 
         var catalog = await sut.GetPublicCatalogAsync();
 
-        Assert.Equal(25m, catalog.BaseTokenValueEuro);
+        Assert.Equal(3m, catalog.BaseTokenValueEuro);
         Assert.Equal(2m, catalog.HighlightCarouselTokens);
-        Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Regular" && c.CostTokens == 1m);
+        Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Regular" && c.CostTokens == 1m && c.PriceEuro == 3m);
         Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Internship" && c.CostTokens == 0m);
         Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Volunteer" && c.CostTokens == 0m);
         Assert.Contains(catalog.Packages, p => p.Name == "Gold");
@@ -168,7 +168,8 @@ public class SalesCommercialServiceTests
         var text = System.Text.Encoding.Latin1.GetString(bytes);
         Assert.DoesNotContain("lobsy.nl/register", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/register?ref=", text, StringComparison.OrdinalIgnoreCase);
-    }
+        Assert.Contains("/p/SM-DEMO01", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("SM-DEMO01", text, StringComparison.Ordinal);
 
     private sealed class FlyerFakeFeatures : IPlatformFeatureService
     {
@@ -318,6 +319,13 @@ public class SalesCommercialServiceTests
             IsActive = true,
             SortOrder = 20
         });
+        db.TokenPricings.AddRange(
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 1, PriceEuro = 5.00m, IsActive = true },
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 5, PriceEuro = 22.50m, IsActive = true },
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 10, PriceEuro = 40.00m, IsActive = true },
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 50, PriceEuro = 175.00m, IsActive = true },
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 100, PriceEuro = 300.00m, IsActive = true },
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 999, PriceEuro = 1.00m, IsActive = false });
         db.PlatformCompanySettings.Add(new PlatformCompanySettings
         {
             Id = PlatformCompanySettingsService.SingletonId,

@@ -1,8 +1,8 @@
 using System.Globalization;
 using Jobsy.Core;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Rules;
-using QRCoder;
+using Jobsy.Core.Sales;
+using Jobsy.Infrastructure.Sales;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -59,8 +59,8 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
         var baseUrl = JobsyPublicUrl.NormalizeOrigin(features.PublicWebBaseUrl).TrimEnd('/');
         var qrTarget = code is null
             ? $"{baseUrl}/register"
-            : $"{baseUrl}/register?ref={Uri.EscapeDataString(code)}";
-        var qrPng = RenderQrPng(qrTarget);
+            : $"{baseUrl}/p/{Uri.EscapeDataString(code)}?b=flyer";
+        var qrPng = SalesQr.Png(qrTarget);
         var packages = catalog.Packages.Take(4).ToList();
         var costs = catalog.VacancyTypeCosts.Take(3).ToList();
         var bonus = catalog.StartHighlightBonusTokens.ToString("0.##", culture);
@@ -247,14 +247,6 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
             System.Text.RegularExpressions.RegexOptions.CultureInvariant)
             ? normalized
             : null;
-    }
-
-    private static byte[] RenderQrPng(string payload)
-    {
-        using var generator = new QRCodeGenerator();
-        using var data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
-        var png = new PngByteQRCode(data);
-        return png.GetGraphic(8);
     }
 
     private sealed class NullFeatures : IPlatformFeatureService

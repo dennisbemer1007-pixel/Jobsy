@@ -253,5 +253,71 @@ public static class UiStringsSales
         // —— Auth / parked sign-in ——
         nl["Sales.Ambassadors.ParkedLogin"] =
             "Het ambassadeursprogramma is gepauzeerd. Je gegevens en je tegoed blijven bewaard. Vragen? Mail support@lobsy.nl.";
+
+        // —— Mijn link & materiaal ——
+        nl["Sales.Link.Title"] = "Mijn link & materiaal";
+        nl["Sales.Link.Lead"] =
+            "Deel de link. Meldt een werkgever zich aan? Dan hoort hij bij jou en krijg je commissie op zijn aankopen.";
+        nl["Sales.Link.MobileTitle"] = "Mijn link";
+        nl["Sales.Link.MobileLead"] = "Laat de klant scannen of stuur je link";
+        nl["Sales.Link.PersonalTitle"] = "Jouw persoonlijke link";
+        nl["Sales.Link.Copy"] = "Kopieer";
+        nl["Sales.Link.Copied"] = "Gekopieerd";
+        nl["Sales.Link.OrCode"] = "Of geef je code:";
+        nl["Sales.Link.Active"] = "Actief";
+        nl["Sales.Link.WhatsApp"] = "WhatsApp";
+        nl["Sales.Link.Mail"] = "Mail";
+        nl["Sales.Link.QrDownload"] = "QR downloaden";
+        nl["Sales.Link.Preview"] = "Bekijk wat de werkgever ziet";
+        nl["Sales.Link.QrCaption"] = "Scan voor {0}";
+        nl["Sales.Link.Info"] =
+            "Zo tellen we een aanmelding voor jou. Klikt iemand op je link? Dan onthouden we dat {0} dagen. Of de werkgever vult je code in bij het aanmelden.";
+        nl["Sales.Link.EmployerGift"] =
+            "Voor de werkgever: de eerste vacature wordt gratis uitgelicht";
+        nl["Sales.Link.Materials"] = "Materiaal";
+        nl["Sales.Link.MaterialsLead"] = "Alles staat al klaar met jouw code";
+        nl["Sales.Link.MaterialsAll"] = "Alles";
+        nl["Sales.Link.TypePdf"] = "PDF";
+        nl["Sales.Link.TypeText"] = "Tekst";
+        nl["Sales.Link.Download"] = "Download";
+        nl["Sales.Link.Share"] = "Delen";
+        nl["Sales.Link.Mat.Flyer"] = "Flyer A4 met QR";
+        nl["Sales.Link.Mat.FlyerHelp"] = "Persoonlijke flyer met jouw code, QR en actuele prijzen.";
+        nl["Sales.Link.Mat.Cards"] = "Visitekaartje met QR";
+        nl["Sales.Link.Mat.CardsHelp"] = "Voor op tafel of in je tas. 10 per A4.";
+        nl["Sales.Link.Mat.Pres"] = "Presentatie voor een klant";
+        nl["Sales.Link.Mat.PresHelp"] = "7 pagina's: wat Lobsy doet, wat het kost, zo start u.";
+        nl["Sales.Link.Mat.Email"] = "E-mail om te sturen";
+        nl["Sales.Link.Mat.EmailHelp"] = "Korte tekst met jouw link erin. Klaar om te plakken.";
+        nl["Sales.Link.Mat.Price"] = "Prijskaart";
+        nl["Sales.Link.Mat.PriceHelp"] = "Tokenpakketten en wat een vacature kost.";
+        nl["Sales.Link.Mat.WhatsApp"] = "WhatsApp-bericht";
+        nl["Sales.Link.Mat.WhatsAppHelp"] = "Klaar om te sturen. Jouw link staat erin.";
+        nl["Sales.Link.Mat.PitchMobile"] = "Pitch in 60 seconden";
+        nl["Sales.Link.Mat.PitchMobileHelp"] = "4 zinnen om te oefenen";
+        nl["Sales.Link.PitchTitle"] = "Pitch in 60 seconden";
+        nl["Sales.Pitch.Step1Title"] = "Het probleem";
+        nl["Sales.Pitch.Step1Body"] = "Lange vacatureteksten die niemand leest.";
+        nl["Sales.Pitch.Step2Title"] = "Wat Lobsy doet";
+        nl["Sales.Pitch.Step2Body"] = "Toont je vacature op de banenkaart, dichtbij huis.";
+        nl["Sales.Pitch.Step3Title"] = "Wat het kost";
+        nl["Sales.Pitch.Step4Title"] = "Zo start u";
+        nl["Sales.Pitch.Step4Body"] = "Aanmelden via mijn link; eerste vacature gratis highlight.";
+        nl["Sales.Pitch.Tip"] = "Tip: laat de banenkaart even zien op je telefoon.";
+        nl["Sales.Link.EmployerGets"] = "Wat krijgt de werkgever?";
+        nl["Sales.Link.EmployerGets.Highlight"] =
+            "Gratis start-highlight op de eerste vacature ({0} tokens)";
+        nl["Sales.Link.EmployerGets.Contact"] = "Eén vast aanspreekpunt: jij";
+        nl["Sales.Link.EmployerGets.NoSub"] = "Geen abonnement";
+        nl["Sales.Link.Commission"] = "Jouw commissie";
+        nl["Sales.Link.CommissionYear"] = "Jaar {0}";
+        nl["Sales.Link.CommissionSub"] =
+            "Over elke tokenaankoop van jouw werkgevers, excl. btw. Jaar 1 start bij de eerste aankoop.";
+        nl["Sales.Link.Onboarding"] = "Rond eerst je onboarding af om een trackingcode te ontvangen.";
+        nl["Sales.Link.OnboardingCta"] = "Start onboarding";
+        nl["Sales.Link.NeedsCode"] = "Nog geen code. Rond onboarding af.";
+
+        nl["SalesAdmin.Settings.BaseTokenHint"] =
+            "Wordt niet meer getoond aan werkgevers of salesmanagers; prijzen komen uit de tokenpakketten.";
     }
 }

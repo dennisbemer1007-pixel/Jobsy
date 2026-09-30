@@ -167,7 +167,7 @@ public static partial class PageSeoCatalog
             ["/intermediary"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),
             ["/intermediary/team"] = Private("Seo.SiteName", "Seo.PrivateDescription"),
             ["/sales"] = Private("Sales.Dashboard", "Seo.PrivateDescription"),
-            ["/sales/link"] = Private("Sales.Toolkit", "Seo.PrivateDescription"),
+            ["/sales/link"] = Private("Sales.Link.Title", "Seo.PrivateDescription"),
             ["/sales/aanbevelen"] = Private("Sales.Referrals", "Seo.PrivateDescription"),
             ["/sales/start"] = Private("Sales.Onboarding", "Seo.PrivateDescription"),
             ["/sales/wallet"] = Private("Sales.Invoices", "Seo.PrivateDescription"),

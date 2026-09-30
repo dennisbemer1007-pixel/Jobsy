@@ -328,10 +328,10 @@ public static class PageHelpDocs
             "Werkgevers opvolgen zonder contact- of vacaturegegevens te zien."),
 
         ["/sales/link"] = new(
-            "Sales-toolkit",
-            "Materialen en links om ondernemers te werven met jouw trackingcode.",
-            "Kopieer je partnerlink, deel materialen en volg hoe prospects instappen.",
-            "Acquisitie versnellen met consistente Lobsy-boodschap."),
+            "Mijn link & materiaal",
+            "Persoonlijke link, QR, pitch en materialen met jouw salescode.",
+            "Kopieer je link, download flyer/QR/presentatie en deel klaar-staande teksten.",
+            "Acquisitie versnellen met consistente Lobsy-boodschap en echte tokenprijzen."),
 
         ["/sales/aanbevelen"] = new(
             "Sales-aanbevelingen",

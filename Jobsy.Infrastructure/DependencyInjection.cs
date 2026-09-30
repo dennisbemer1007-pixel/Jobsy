@@ -397,6 +397,9 @@ public static class DependencyInjection
             sp.GetRequiredService<IDashboardCache>(),
             sp.GetRequiredService<IDashboardLiveOverlay>()));
         services.AddScoped<ISalesCommercialService, SalesCommercialService>();
+        services.AddScoped<ISalesPriceQuote, SalesPriceQuoteService>();
+        services.AddScoped<ISalesMaterialsPdfService, SalesMaterialsPdfService>();
+        services.AddScoped<ISalesLinkToolkitService, SalesLinkToolkitService>();
         services.AddScoped<IPartnerAffiliateService, PartnerAffiliateService>();
         services.AddScoped<IVacancyCategoryService, VacancyCategoryService>();
         services.AddScoped<IPartnerFlyerPdfService, PartnerFlyerPdfService>();

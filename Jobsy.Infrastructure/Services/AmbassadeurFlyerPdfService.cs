@@ -4,7 +4,7 @@ using Jobsy.Core;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using QRCoder;
+using Jobsy.Infrastructure.Sales;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -82,7 +82,7 @@ public sealed class AmbassadeurFlyerPdfService : IAmbassadeurFlyerPdfService
 
     private static byte[] RenderCandidateFlyer(string brand, byte[]? logo, string code, string baseUrl)
     {
-        var qrPng = RenderQrPng($"{baseUrl}/werven/{Uri.EscapeDataString(code)}");
+        var qrPng = SalesQr.Png($"{baseUrl}/werven/{Uri.EscapeDataString(code)}");
         var culture = CultureInfo.GetCultureInfo("nl-NL");
 
         return Document.Create(container =>
@@ -194,7 +194,7 @@ public sealed class AmbassadeurFlyerPdfService : IAmbassadeurFlyerPdfService
         CancellationToken cancellationToken)
     {
         var catalog = await _sales.GetPublicCatalogAsync(cancellationToken);
-        var qrPng = RenderQrPng($"{baseUrl}/register?ref={Uri.EscapeDataString(code)}");
+        var qrPng = SalesQr.Png($"{baseUrl}/register?ref={Uri.EscapeDataString(code)}");
         var culture = CultureInfo.GetCultureInfo("nl-NL");
         var packages = catalog.Packages.Where(p => p.IsActive).OrderBy(p => p.SortOrder).Take(4).ToList();
         var costs = catalog.VacancyTypeCosts.Where(c => c.IsActive).Take(3).ToList();
@@ -360,13 +360,5 @@ public sealed class AmbassadeurFlyerPdfService : IAmbassadeurFlyerPdfService
 
         var code = trackingCode.Trim().ToUpperInvariant();
         return CodeRegex.IsMatch(code) ? code : null;
-    }
-
-    private static byte[] RenderQrPng(string payload)
-    {
-        using var generator = new QRCodeGenerator();
-        using var data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
-        var png = new PngByteQRCode(data);
-        return png.GetGraphic(8);
     }
 }
