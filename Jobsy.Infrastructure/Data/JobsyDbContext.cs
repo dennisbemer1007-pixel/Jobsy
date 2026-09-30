@@ -109,6 +109,7 @@ public class JobsyDbContext : DbContext
     public DbSet<SelfBillingInvoiceLine> SelfBillingInvoiceLines => Set<SelfBillingInvoiceLine>();
     public DbSet<SalesManagerPayoutCheckout> SalesManagerPayoutCheckouts => Set<SalesManagerPayoutCheckout>();
     public DbSet<SalesSelfBillingConsent> SalesSelfBillingConsents => Set<SalesSelfBillingConsent>();
+    public DbSet<SalesIbanChangePending> SalesIbanChangePendings => Set<SalesIbanChangePending>();
     public DbSet<SalesPayoutRequest> SalesPayoutRequests => Set<SalesPayoutRequest>();
     public DbSet<SalesPayoutRun> SalesPayoutRuns => Set<SalesPayoutRun>();
     public DbSet<SalesAttributionChange> SalesAttributionChanges => Set<SalesAttributionChange>();
@@ -1695,6 +1696,22 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.RunDate)
                 .IsUnique()
                 .HasFilter("\"IsExtra\" = FALSE");
+        });
+
+        modelBuilder.Entity<SalesIbanChangePending>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EncryptedIban).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.HolderName).HasMaxLength(70).IsRequired();
+            entity.Property(e => e.Method).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.EmailTokenHash).HasMaxLength(64);
+            entity.Property(e => e.LastAcceptedTotpCodeHash).HasMaxLength(64);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.EmailTokenHash);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<SalesPayoutRequest>(entity =>

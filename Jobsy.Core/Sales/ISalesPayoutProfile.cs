@@ -15,6 +15,7 @@ public interface ISalesPayoutProfile
     string? Country { get; set; }
     string? Iban { get; set; }
     Jobsy.Core.Entities.SalesManagerVatTreatment VatTreatment { get; set; }
+    DateTime? VatTreatmentChangedAtUtc { get; set; }
     string? PayoutAccountHolderName { get; set; }
     DateTime? IbanChangedAtUtc { get; set; }
     DateTime? IbanPayoutHoldUntilUtc { get; set; }

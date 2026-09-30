@@ -355,7 +355,9 @@ public sealed class SalesDashboardReadService : ISalesDashboardReadService
 
         var hasConsent = await _db.SalesSelfBillingConsents.AsNoTracking()
             .AnyAsync(
-                c => c.UserId == beneficiaryUserId && c.RevokedAtUtc == null,
+                c => c.UserId == beneficiaryUserId
+                     && c.Version == SalesSelfBilling.CurrentVersion
+                     && c.RevokedAtUtc == null,
                 cancellationToken);
         if (!hasConsent)
         {
@@ -430,7 +432,11 @@ public sealed class SalesDashboardReadService : ISalesDashboardReadService
         }
 
         var hasConsent = await _db.SalesSelfBillingConsents.AsNoTracking()
-            .AnyAsync(c => c.UserId == beneficiaryUserId && c.RevokedAtUtc == null, cancellationToken);
+            .AnyAsync(
+                c => c.UserId == beneficiaryUserId
+                     && c.Version == SalesSelfBilling.CurrentVersion
+                     && c.RevokedAtUtc == null,
+                cancellationToken);
         if (!hasConsent)
         {
             return (false, "Sales.Payout.NeedsConsent");

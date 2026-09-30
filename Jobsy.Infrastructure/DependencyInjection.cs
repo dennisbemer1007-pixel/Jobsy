@@ -286,6 +286,7 @@ public static class DependencyInjection
         services.AddScoped<ISalesManagerInviteService, SalesManagerInviteService>();
         services.AddScoped<ISalesManagerApplicationService, SalesManagerApplicationService>();
         services.AddScoped<ISalesManagerOnboardingService, SalesManagerOnboardingService>();
+        services.AddScoped<ISalesPayoutProfileService, SalesPayoutProfileService>();
         services.AddScoped<IAmbassadeurInviteService, AmbassadeurInviteService>();
         services.AddScoped<IAmbassadeurOnboardingService, AmbassadeurOnboardingService>();
         services.AddScoped<IAmbassadeurSettingsService, AmbassadeurSettingsService>();

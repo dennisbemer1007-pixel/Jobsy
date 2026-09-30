@@ -5,6 +5,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,7 @@ public class SalesManagersController : ControllerBase
     private readonly ISalesManagerInviteService _invite;
     private readonly ISalesManagerApplicationService _applications;
     private readonly ISalesManagerOnboardingService _onboarding;
+    private readonly ISalesPayoutProfileService _payoutProfile;
     private readonly ISalesManagerDashboardService _dashboard;
     private readonly ISelfBillingInvoiceService _invoices;
     private readonly ISalesManagerPayoutService _payouts;
@@ -30,6 +32,7 @@ public class SalesManagersController : ControllerBase
         ISalesManagerInviteService invite,
         ISalesManagerApplicationService applications,
         ISalesManagerOnboardingService onboarding,
+        ISalesPayoutProfileService payoutProfile,
         ISalesManagerDashboardService dashboard,
         ISelfBillingInvoiceService invoices,
         ISalesManagerPayoutService payouts,
@@ -42,6 +45,7 @@ public class SalesManagersController : ControllerBase
         _invite = invite;
         _applications = applications;
         _onboarding = onboarding;
+        _payoutProfile = payoutProfile;
         _dashboard = dashboard;
         _invoices = invoices;
         _payouts = payouts;
@@ -283,7 +287,7 @@ public class SalesManagersController : ControllerBase
 
     [HttpPut("me/profile")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerProfileDto>> UpdateMyProfile(
+    public async Task<IActionResult> UpdateMyProfile(
         [FromBody] UpdateSalesManagerProfileRequest request,
         CancellationToken cancellationToken)
     {
@@ -295,19 +299,43 @@ public class SalesManagersController : ControllerBase
 
         try
         {
-            var profile = await _onboarding.UpdateProfileAsync(
+            var portal = await _payoutProfile.UpdateLegacyProfileAsync(
                 user.Id,
-                new SalesManagerProfileUpdateRequest(
+                new SalesCompanyUpdateRequest(
                     request.CompanyName,
                     request.KvkNumber,
                     request.VatNumber,
                     request.Address,
                     request.PostalCode,
                     request.City,
-                    request.Country,
-                    request.Iban),
+                    request.Country),
+                request.Iban,
+                holderName: null,
                 cancellationToken);
-            return Ok(profile);
+
+            // Keep the legacy shape for older clients, plus explicit IBAN warnings.
+            return Ok(new
+            {
+                portal.UserId,
+                portal.Email,
+                portal.FullName,
+                portal.CompanyName,
+                portal.KvkNumber,
+                portal.VatNumber,
+                portal.Address,
+                portal.PostalCode,
+                portal.City,
+                portal.Country,
+                Iban = portal.MaskedIban,
+                portal.TrackingCode,
+                portal.AgreementSignedAt,
+                portal.AgreementVersion,
+                portal.OnboardingCompletedAt,
+                portal.IsOnboardingComplete,
+                portal.CanRecruitSalesManagers,
+                portal.ReferredBySalesManagerUserId,
+                warnings = portal.Warnings
+            });
         }
         catch (ArgumentException ex)
         {
