@@ -135,6 +135,11 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
             var sbiCodes = kvkCompany?.EffectiveSbiCodes.Count > 0
                 ? kvkCompany.EffectiveSbiCodes
                 : match.EffectiveSbiCodes;
+            if (kvkCompany?.LegalForm is not null)
+            {
+                company.LegalForm = kvkCompany.LegalForm;
+            }
+
             await ApplyVerifiedSbiClassificationAsync(company, sbiCodes, cancellationToken);
 
             if (company.ParentCompanyId is Guid orgId)
@@ -148,6 +153,10 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
                     {
                         org.Name = kvkCompany.Name;
                         org.Address = kvkCompany.Address;
+                        if (kvkCompany.LegalForm is not null)
+                        {
+                            org.LegalForm = kvkCompany.LegalForm;
+                        }
                     }
 
                     await _registration.ClaimSiblingEstablishmentsForOrgAsync(

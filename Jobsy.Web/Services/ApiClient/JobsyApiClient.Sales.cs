@@ -5,6 +5,7 @@ using System.Text.Json;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.Models;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
@@ -15,6 +16,24 @@ public sealed partial class JobsyApiClient
 {
     public async Task<PartnerSalesCatalog?> GetPartnerSalesCatalogAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<PartnerSalesCatalog>("api/sales-commercial/catalog", ct);
+
+    public async Task<SalesReferralVisitResult?> RecordSalesReferralVisitAsync(
+        string code,
+        string? channel,
+        bool countClick,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/sales-commercial/referral/visit",
+            new { code, channel, countClick },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesReferralVisitResult>(cancellationToken: ct);
+    }
 
     public async Task UpdateSalesCommercialSettingsAsync(
         decimal baseTokenValueEuro,

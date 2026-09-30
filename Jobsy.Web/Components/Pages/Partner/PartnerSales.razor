@@ -2,10 +2,13 @@
 @page "/partner/{TrackingCode?}"
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Core.Sales
+@using Jobsy.Web.Sales
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <PageTitle>@Culture["Partner.Title"] · Lobsy</PageTitle>
@@ -111,12 +114,14 @@
 @code {
     [Parameter] public string? TrackingCode { get; set; }
     [SupplyParameterFromQuery(Name = "ref")] public string? RefCode { get; set; }
+    [SupplyParameterFromQuery(Name = "b")] public string? Channel { get; set; }
 
     private PartnerSalesCatalog? _catalog;
     private string? _trackingCode;
     private bool _loading = true;
     private bool _flyerBusy;
     private string? _error;
+    private bool _visitRecorded;
 
     private string RegisterHref => string.IsNullOrWhiteSpace(_trackingCode)
         ? "/register"
@@ -137,10 +142,17 @@
     {
         Culture.Changed += OnCultureChanged;
         var raw = FirstNonEmpty(TrackingCode, RefCode)?.Trim().ToUpperInvariant();
-        _trackingCode = raw is not null
-                        && System.Text.RegularExpressions.Regex.IsMatch(raw, @"^(SM|BM|IM)-[A-Z0-9]{6}$")
-            ? raw
+        _trackingCode = SalesTrackingCodes.Normalize(raw) is { } code
+                        && !SalesTrackingCodes.IsAmbassadeur(code)
+            ? code
             : null;
+
+        if (_trackingCode is not null && !_visitRecorded)
+        {
+            await TryRecordVisitAndCookieAsync(_trackingCode);
+            _visitRecorded = true;
+        }
+
         try
         {
             _catalog = await Api.GetPartnerSalesCatalogAsync();
@@ -152,6 +164,33 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task TryRecordVisitAndCookieAsync(string code)
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        var isBot = BotUserAgents.IsBot(http.Request.Headers.UserAgent.ToString());
+        var sameDay = SalesReferralCookie.AlreadyHoldsCodeToday(http, code);
+        try
+        {
+            var visit = await Api.RecordSalesReferralVisitAsync(
+                code,
+                Channel,
+                countClick: !isBot && !sameDay);
+            if (visit is { Active: true })
+            {
+                SalesReferralCookie.TrySetFirstClick(http, code, visit.CookieDays);
+            }
+        }
+        catch
+        {
+            // Landing still works without visit telemetry.
         }
     }
 

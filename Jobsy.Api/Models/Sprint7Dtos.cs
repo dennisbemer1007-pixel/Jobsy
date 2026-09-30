@@ -20,7 +20,8 @@ public record SubmitRegistrationRequest(
     string? ManualEstablishmentNumber = null,
     double? ManualLatitude = null,
     double? ManualLongitude = null,
-    bool? ManualIsIntermediarySbi = null);
+    bool? ManualIsIntermediarySbi = null,
+    string? CookieTrackingCode = null);
 
 public record KvkEstablishmentsLookupResponse(
     string Status,

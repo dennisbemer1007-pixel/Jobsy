@@ -145,6 +145,16 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Short referral redirects (/p/{code}) — same envelope as API public-write.
+    options.AddPolicy("public-redirect", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 var app = builder.Build();
@@ -196,6 +206,7 @@ app.UseAntiforgery();
 
 app.MapJobsyAuthEndpoints();
 app.MapSeoEndpoints();
+app.MapSalesReferralEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.
 app.MapGet("/healthz", () => Results.Text("ok"));
 // Banenkaart same-origin API proxies — must be before MapRazorComponents.

@@ -7,9 +7,11 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -33,6 +35,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     private readonly ITokenLedgerService _ledger;
     private readonly IPlatformFeatureService _features;
     private readonly IPartnerAffiliateService _partnerAffiliates;
+    private readonly ISalesAttributionResolver _attribution;
     private readonly ILogger<CompanyRegistrationService> _logger;
 
     public CompanyRegistrationService(
@@ -52,6 +55,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 db,
                 ledger,
                 features),
+            new SalesAttributionResolver(
+                db,
+                features,
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<SalesAttributionResolver>.Instance),
             logger)
     {
     }
@@ -64,6 +71,30 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         IPlatformFeatureService features,
         IPartnerAffiliateService partnerAffiliates,
         ILogger<CompanyRegistrationService> logger)
+        : this(
+            db,
+            kvk,
+            email,
+            ledger,
+            features,
+            partnerAffiliates,
+            new SalesAttributionResolver(
+                db,
+                features,
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<SalesAttributionResolver>.Instance),
+            logger)
+    {
+    }
+
+    public CompanyRegistrationService(
+        JobsyDbContext db,
+        IKvkService kvk,
+        IEmailService email,
+        ITokenLedgerService ledger,
+        IPlatformFeatureService features,
+        IPartnerAffiliateService partnerAffiliates,
+        ISalesAttributionResolver attribution,
+        ILogger<CompanyRegistrationService> logger)
     {
         _db = db;
         _kvk = kvk;
@@ -71,6 +102,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         _ledger = ledger;
         _features = features;
         _partnerAffiliates = partnerAffiliates;
+        _attribution = attribution;
         _logger = logger;
     }
 
@@ -100,36 +132,58 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         string? trackingCode = null;
         string? partnerTrackingCode = null;
-        if (!string.IsNullOrWhiteSpace(request.SalesManagerTrackingCode))
+        SalesAttributionSource? attributionSource = null;
+
+        // Typed field may hold SM/AM or BM/IM; cookie is a separate candidate (typed wins).
+        var typedRaw = FirstNonEmpty(request.SalesManagerTrackingCode, request.PartnerTrackingCode);
+        var resolution = await _attribution.ResolveAtRegistrationAsync(
+            typedRaw,
+            request.CookieTrackingCode,
+            email,
+            kvkNumber,
+            registeringUserId: null,
+            cancellationToken);
+
+        if (resolution.Kind == SalesResolvedCodeKind.SalesManager && resolution.Code is not null)
         {
-            trackingCode = request.SalesManagerTrackingCode.Trim().ToUpperInvariant();
-            if (PartnerAffiliateService.IsPartnerTrackingCode(trackingCode))
+            trackingCode = resolution.Code;
+            attributionSource = resolution.Source;
+        }
+        else if (resolution.Kind == SalesResolvedCodeKind.Partner && resolution.Code is not null)
+        {
+            partnerTrackingCode = resolution.Code;
+        }
+        else if (!resolution.IsBlocked
+                 && !string.IsNullOrWhiteSpace(typedRaw)
+                 && SalesTrackingCodes.Normalize(typedRaw) is { } normalizedTyped
+                 && !SalesTrackingCodes.IsAmbassadeur(normalizedTyped))
+        {
+            // Preserve today's validation error for an explicitly typed unknown/inactive code.
+            if (PartnerAffiliateService.IsPartnerTrackingCode(normalizedTyped))
             {
-                partnerTrackingCode = trackingCode;
-                trackingCode = null;
+                if (await _partnerAffiliates.ResolveByTrackingCodeAsync(normalizedTyped, cancellationToken) is null)
+                {
+                    throw new ArgumentException(
+                        "Deze trackingcode is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
+                }
+            }
+            else
+            {
+                await ValidateSalesOrAmbassadeurTrackingCodeAsync(normalizedTyped, cancellationToken);
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(request.PartnerTrackingCode))
+        if (trackingCode is null && partnerTrackingCode is null
+            && !string.IsNullOrWhiteSpace(request.PartnerTrackingCode)
+            && string.IsNullOrWhiteSpace(request.SalesManagerTrackingCode)
+            && string.IsNullOrWhiteSpace(request.CookieTrackingCode))
         {
-            if (partnerTrackingCode is not null || trackingCode is not null)
-            {
-                throw new ArgumentException("Vul maximaal één trackingcode in.");
-            }
-
             partnerTrackingCode = request.PartnerTrackingCode.Trim().ToUpperInvariant();
-        }
-
-        if (trackingCode is not null)
-        {
-            await ValidateSalesOrAmbassadeurTrackingCodeAsync(trackingCode, cancellationToken);
-        }
-
-        if (partnerTrackingCode is not null
-            && await _partnerAffiliates.ResolveByTrackingCodeAsync(partnerTrackingCode, cancellationToken) is null)
-        {
-            throw new ArgumentException(
-                "Deze trackingcode is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
+            if (await _partnerAffiliates.ResolveByTrackingCodeAsync(partnerTrackingCode, cancellationToken) is null)
+            {
+                throw new ArgumentException(
+                    "Deze trackingcode is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
+            }
         }
 
         var lookup = await _kvk.LookupEstablishmentsAsync(kvkNumber, cancellationToken);
@@ -246,6 +300,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             ConsentVersion = PrivacyConstants.CurrentConsentVersion,
             SalesManagerTrackingCode = trackingCode,
             PartnerTrackingCode = partnerTrackingCode,
+            SalesAttributionSource = attributionSource,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -714,7 +769,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                     KvkEstablishmentId = null,
                     Address = kvkCompany?.Address ?? registration.EstablishmentAddress,
                     Location = target.Location,
-                    Type = CompanyType.Employer
+                    Type = CompanyType.Employer,
+                    LegalForm = kvkCompany?.LegalForm
                 };
                 _db.Companies.Add(org);
                 target.ParentCompanyId = org.Id;
@@ -920,7 +976,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = registration.KvkEstablishmentId,
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
-                Type = CompanyType.Intermediary
+                Type = CompanyType.Intermediary,
+                LegalForm = kvkCompany?.LegalForm
             };
             ApplyKvkVerificationState(branch, registration);
             _db.Companies.Add(branch);
@@ -937,7 +994,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = null,
                 Address = kvkCompany?.Address ?? registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
-                Type = CompanyType.Employer
+                Type = CompanyType.Employer,
+                LegalForm = kvkCompany?.LegalForm
             };
             ApplyKvkVerificationState(org, registration);
             _db.Companies.Add(org);
@@ -953,7 +1011,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
                 Type = CompanyType.Employer,
-                ParentCompanyId = org.Id
+                ParentCompanyId = org.Id,
+                LegalForm = kvkCompany?.LegalForm
             };
             ApplyKvkVerificationState(branch, registration);
             _db.Companies.Add(branch);
@@ -968,6 +1027,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
         else
         {
+            var kvkCompany = await _kvk.GetByKvkNumberAsync(registration.KvkNumber, cancellationToken);
             branch = new Company
             {
                 Id = Guid.NewGuid(),
@@ -976,7 +1036,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = registration.KvkEstablishmentId,
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
-                Type = CompanyType.Employer
+                Type = CompanyType.Employer,
+                LegalForm = kvkCompany?.LegalForm
             };
             ApplyKvkVerificationState(branch, registration);
             _db.Companies.Add(branch);
@@ -1555,7 +1616,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         // Founder-slot / start-highlight still use FirstYearStartedAt when set (onboarding payment or legacy).
         branch.PendingStartHighlightBonus = true;
         branch.SalesAttributedAtUtc ??= DateTime.UtcNow;
-        branch.SalesAttributionSource ??= SalesAttributionSource.TypedCode;
+        branch.SalesAttributionSource ??= registration.SalesAttributionSource
+                                          ?? SalesAttributionSource.TypedCode;
 
         if (orgId is Guid oid)
         {
@@ -1565,7 +1627,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             {
                 org.ReferredBySalesManagerUserId = profile.UserId;
                 org.SalesAttributedAtUtc ??= DateTime.UtcNow;
-                org.SalesAttributionSource ??= SalesAttributionSource.TypedCode;
+                org.SalesAttributionSource ??= registration.SalesAttributionSource
+                                              ?? SalesAttributionSource.TypedCode;
             }
         }
 
@@ -1698,6 +1761,19 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             company.KvkLastVerificationAttemptAtUtc = DateTime.UtcNow;
             company.KvkVerificationAttempts = 0;
         }
+    }
+
+    private static string? FirstNonEmpty(params string?[] values)
+    {
+        foreach (var v in values)
+        {
+            if (!string.IsNullOrWhiteSpace(v))
+            {
+                return v;
+            }
+        }
+
+        return null;
     }
 
     private static KvkEstablishmentResult BuildPendingEstablishmentSnapshot(

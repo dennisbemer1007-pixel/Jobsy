@@ -380,6 +380,10 @@ public static class DependencyInjection
         services.AddScoped<ISalesEmployerReadService, SalesEmployerReadService>();
         services.AddScoped<ISalesCorrectionService, SalesCorrectionService>();
         services.AddScoped<ISalesParkedBalanceService, SalesParkedBalanceService>();
+        services.AddScoped<ISalesAttributionResolver, SalesAttributionResolver>();
+        services.AddScoped<ISalesLinkClickService, SalesLinkClickService>();
+        services.AddScoped<ISalesAttributionAdminService, SalesAttributionAdminService>();
+        services.AddScoped<ISalesFunnelReadService, SalesFunnelReadService>();
         services.AddScoped<IRevenueShareService, RevenueShareService>();
         services.AddScoped<ISupplierOnboardingPaymentService, SupplierOnboardingPaymentService>();
         services.AddScoped<ISelfBillingInvoiceService, SelfBillingInvoiceService>();

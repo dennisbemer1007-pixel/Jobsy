@@ -72,6 +72,9 @@ public class CompanyRegistration
     /// <summary>Optional partner affiliate tracking code (BM-/IM-) captured at submit.</summary>
     public string? PartnerTrackingCode { get; set; }
 
+    /// <summary>How the sales attribution was resolved (typed vs cookie). Partner-only stays null.</summary>
+    public SalesAttributionSource? SalesAttributionSource { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? ActivatedAt { get; set; }
 

@@ -21,6 +21,9 @@ public static class PrivacyConstants
     public const int CancelledRegistrationRetentionDays = 30;
     public const int EngagementEventRetentionDays = 365;
 
+    /// <summary>Sales link click daily counters (no personal data) — §P / D13.</summary>
+    public const int SalesLinkClickRetentionMonths = 25;
+
     /// <summary>In-app notifications older than this are purged (AVG retention).</summary>
     public const int UserNotificationRetentionDays = 365;
 

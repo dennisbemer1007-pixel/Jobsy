@@ -20,6 +20,11 @@ public record UpdateSalesCommercialSettingsRequest(
     int? IbanChangeHoldDays = null,
     int? AttributionCookieDays = null);
 
+public record SalesReferralVisitRequest(
+    string Code,
+    string? Channel = null,
+    bool CountClick = true);
+
 public record UpdateVacancyTypeCostRequest(
     VacancyKind Kind,
     decimal CostTokens,
