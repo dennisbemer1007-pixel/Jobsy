@@ -51,6 +51,10 @@
     "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",
     "v": "20260928-q-scroll"
   },
+  "css/features/scholen.css": {
+    "sha256": "8d277fc4394c5508d518bded26248e9994fd462ee7514beb9b8e4317acd01f23",
+    "v": "20260930-scholen"
+  },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
     "v": "20260929-testresultaten-b2"

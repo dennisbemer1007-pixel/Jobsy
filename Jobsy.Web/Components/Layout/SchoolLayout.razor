@@ -1,0 +1,234 @@
+@namespace Jobsy.Web.Components.Layout
+@using System.Text.RegularExpressions
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
+@inherits LayoutComponentBase
+@inject CultureState Culture
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthState
+@inject IPlatformFeatureService Features
+@inject JobsyApiClient Api
+
+<div class="sch-shell" lang="nl">
+    <header class="sch-topbar">
+        <a class="sch-topbar__brand" href="@HomeHref">@Culture["School.ProductLabel"]</a>
+        <div class="sch-topbar__scope">
+            @if (_isTeacher && _assigned.Count > 0)
+            {
+                <EntScopeChip Label="@_scopeLabel"
+                              SubLabel="@_roleLabel"
+                              SelectedKey="@_currentClassId?.ToString("D")"
+                              Options="@_scopeOptions"
+                              OnSelected="OnClassSelected" />
+            }
+            else
+            {
+                <EntScopeChip Label="@_scopeLabel" SubLabel="@_roleLabel" />
+            }
+        </div>
+        <div class="sch-topbar__account">
+            <span class="sch-topbar__role">@_roleLabel</span>
+            <a class="sch-topbar__link" href="/account/logout">@Culture["Auth.Logout"]</a>
+        </div>
+    </header>
+
+    <div class="sch-body">
+        <aside class="sch-sidebar" aria-label="@Culture["Nav.Main"]">
+            @foreach (var group in _groups)
+            {
+                var visible = group.Items.Where(i => i.IsAvailable).ToList();
+                if (visible.Count == 0)
+                {
+                    continue;
+                }
+                <p class="sch-sidebar__group">@Culture[group.LabelKey]</p>
+                <ul class="sch-sidebar__list">
+                    @foreach (var item in visible)
+                    {
+                        var active = IsActive(item.Href);
+                        var label = !string.IsNullOrEmpty(item.FixedLabel)
+                            ? item.FixedLabel
+                            : Culture[item.LabelKey];
+                        <li>
+                            <a class="sch-sidebar__link @(active ? "is-active" : null)"
+                               href="@item.Href"
+                               aria-current="@(active ? "page" : null)">@label</a>
+                        </li>
+                    }
+                </ul>
+            }
+            <div class="sch-sidebar__footer">
+                <p class="sch-sidebar__help">@Culture["School.Nav.Help"]</p>
+                <p class="sch-sidebar__note">@Culture["School.Footer.NoNames"]</p>
+            </div>
+        </aside>
+
+        <main class="sch-main">
+            @if (_featureOff)
+            {
+                <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+            }
+            else
+            {
+                @Body
+            }
+        </main>
+    </div>
+
+    <nav class="sch-bottom-nav" aria-label="@Culture["Nav.Main"]">
+        @foreach (var item in _bottom)
+        {
+            var active = IsActive(item.Href);
+            <a class="sch-bottom-nav__item @(active ? "is-active" : null)" href="@item.Href">@Culture[item.LabelKey]</a>
+        }
+    </nav>
+</div>
+
+@code {
+    private static readonly Regex ClassIdInPath = new(
+        @"^/leraar/klas/([0-9a-fA-F-]{36})",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private IReadOnlyList<ScholenNav.ScholenNavGroup> _groups = ScholenNav.SchoolGroups;
+    private (string LabelKey, string Href)[] _bottom = ScholenNav.SchoolBottomNav;
+    private string HomeHref = "/school";
+    private string _scopeLabel = "";
+    private string _roleLabel = "";
+    private bool _featureOff;
+    private bool _isTeacher;
+    private Guid? _currentClassId;
+    private IReadOnlyList<TeacherAssignedClassDto> _assigned = [];
+    private IReadOnlyList<EntScopeChip.ScopeOption> _scopeOptions = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _featureOff = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var user = state.User;
+        _isTeacher = RoleClaimMatching.HasRole(user, JobsyRoles.Teacher)
+                     || RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin);
+        // SchoolLayout is used for both; prefer teacher chrome when on /leraar*
+        var path = CurrentPath();
+        var onTeacherRoute = path.StartsWith("/leraar", StringComparison.OrdinalIgnoreCase);
+        if (onTeacherRoute)
+        {
+            HomeHref = "/leraar";
+            _roleLabel = Culture["Leraar.RoleChip"];
+            if (!_featureOff)
+            {
+                try
+                {
+                    _assigned = await Api.GetTeacherClassesAsync();
+                }
+                catch
+                {
+                    _assigned = [];
+                }
+            }
+
+            _currentClassId = ExtractClassId(path) ?? _assigned.FirstOrDefault()?.Id;
+            RefreshTeacherNav();
+        }
+        else if (RoleClaimMatching.HasRole(user, JobsyRoles.Teacher)
+                 && !RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin))
+        {
+            _groups = ScholenNav.TeacherGroups;
+            _bottom = ScholenNav.TeacherBottomNav;
+            HomeHref = "/leraar";
+            _roleLabel = Culture["Leraar.RoleChip"];
+            _scopeLabel = user.Identity?.Name ?? _roleLabel;
+        }
+        else
+        {
+            _roleLabel = Culture["School.RoleChip"];
+            _scopeLabel = user.Identity?.Name ?? _roleLabel;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (!_isTeacher || !CurrentPath().StartsWith("/leraar", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var path = CurrentPath();
+        var id = ExtractClassId(path);
+        if (id != _currentClassId)
+        {
+            _currentClassId = id ?? _assigned.FirstOrDefault()?.Id;
+            RefreshTeacherNav();
+        }
+    }
+
+    private void RefreshTeacherNav()
+    {
+        var pairs = _assigned.Select(c => (c.Id, c.ClassName)).ToList();
+        if (_currentClassId is Guid cid)
+        {
+            _groups = ScholenNav.TeacherGroupsForClass(cid, pairs);
+            _bottom = ScholenNav.TeacherBottomNavForClass(cid);
+            var cls = _assigned.FirstOrDefault(c => c.Id == cid);
+            _scopeLabel = cls is null ? Culture["Leraar.RoleChip"] : $"Klas {cls.ClassName}";
+        }
+        else
+        {
+            _groups = ScholenNav.TeacherGroups;
+            _bottom = ScholenNav.TeacherBottomNav;
+            _scopeLabel = Culture["Leraar.RoleChip"];
+        }
+
+        _scopeOptions = _assigned
+            .Select(c => new EntScopeChip.ScopeOption(c.Id.ToString("D"), $"Klas {c.ClassName}", $"{c.Level} {c.Year}"))
+            .ToList();
+    }
+
+    private void OnClassSelected(EntScopeChip.ScopeOption opt)
+    {
+        if (!Guid.TryParse(opt.Key, out var id))
+        {
+            return;
+        }
+
+        var path = CurrentPath();
+        var match = ClassIdInPath.Match(path);
+        if (match.Success)
+        {
+            var rest = path[match.Length..];
+            Nav.NavigateTo($"/leraar/klas/{id:D}{rest}");
+        }
+        else
+        {
+            Nav.NavigateTo($"/leraar/klas/{id:D}");
+        }
+    }
+
+    private string CurrentPath()
+    {
+        var relative = Nav.ToBaseRelativePath(Nav.Uri).Split('?', 2)[0].Trim('/');
+        return string.IsNullOrEmpty(relative) ? "/" : "/" + relative;
+    }
+
+    private static Guid? ExtractClassId(string path)
+    {
+        var m = ClassIdInPath.Match(path);
+        return m.Success && Guid.TryParse(m.Groups[1].Value, out var id) ? id : null;
+    }
+
+    private bool IsActive(string href)
+    {
+        var path = CurrentPath();
+        if (path == "/")
+        {
+            path = HomeHref;
+        }
+
+        return string.Equals(path, href, StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
+    }
+}

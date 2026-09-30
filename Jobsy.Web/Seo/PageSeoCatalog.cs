@@ -211,6 +211,18 @@ public static partial class PageSeoCatalog
             ["/admin/content/opleidingen"] = Private("AdminNav.Training", "Seo.PrivateDescription"),
             ["/werkgever"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),
             ["/werkgever/te-doen"] = Private("WgNav.Todo", "Seo.PrivateDescription"),
+            ["/admin/scholen"] = Private("AdminScholen.ListTitle", "Seo.PrivateDescription"),
+            ["/admin/scholen/rapportage"] = Private("AdminScholen.Report.Title", "Seo.PrivateDescription"),
+            ["/school"] = Private("School.DashboardTitle", "Seo.PrivateDescription"),
+            ["/leraar"] = Private("Leraar.DashboardTitle", "Seo.PrivateDescription"),
+            ["/leerling"] = Private("Leerling.LoginTitle", "Seo.PrivateDescription"),
+            ["/leerling/start"] = Private("Leerling.Start.Title", "Seo.PrivateDescription"),
+            ["/leerling/reis"] = Private("Leerling.Reis.Title", "Seo.PrivateDescription"),
+            ["/leerling/eiland"] = Private("Leerling.Island.Title", "Seo.PrivateDescription"),
+            ["/leerling/stop"] = Private("Leerling.Stop.Title", "Seo.PrivateDescription"),
+            ["/leerling/dit-ben-jij"] = Private("LeerlingStory.Title", "Seo.PrivateDescription"),
+            ["/leerling/droombaan"] = Private("LeerlingDroom.Title", "Seo.PrivateDescription"),
+            ["/leerling/pdf"] = Private("LeerlingStory.Pdf", "Seo.PrivateDescription"),
         };
 
     private static readonly (string Prefix, PageSeoEntry Entry)[] Prefixes =
@@ -228,6 +240,9 @@ public static partial class PageSeoCatalog
         ("/candidate/", Private("Seo.DashboardTitle", "Seo.PrivateDescription")),
         ("/salesmanager/", Private("Sales.Dashboard", "Seo.PrivateDescription")),
         ("/ambassadeur/", Private("Ambassadeur.Dashboard", "Seo.PrivateDescription")),
+        ("/school/", Private("School.DashboardTitle", "Seo.PrivateDescription")),
+        ("/leraar/", Private("Leraar.DashboardTitle", "Seo.PrivateDescription")),
+        ("/leerling/", Private("Leerling.LoginTitle", "Seo.PrivateDescription")),
         ("/intermediary/", Private("Seo.DashboardTitle", "Seo.PrivateDescription")),
         ("/tokens/", Private("Seo.SiteName", "Seo.PrivateDescription")),
     ];

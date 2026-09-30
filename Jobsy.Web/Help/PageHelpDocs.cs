@@ -501,6 +501,132 @@ public static class PageHelpDocs
             "Zet moderatie, sessie-timeout, support-meldingen en demo-flags aan of uit. Wijzigingen gaan via één opslaan-balk. Prijzen staan onder Financiën › Prijzen.",
             "Gedrag van Lobsy afstemmen zonder code-deploys."),
 
+        ["/admin/scholen"] = new(
+            "Beheer · Scholen",
+            "Scholen aanmaken, verwerkersovereenkomst en schoolbeheerders.",
+            "Maak een school aan, registreer de verwerkersovereenkomst en nodig de eerste schoolbeheerder uit. Leerlingnamen worden niet opgeslagen.",
+            "Scholen veilig onboarding geven zonder leerling-PII."),
+
+        ["/admin/scholen/rapportage"] = new(
+            "Beheer · Scholen-rapportage",
+            "Anonieme totalen (k≥5) en bewaartermijn-runs.",
+            "Bekijk aggregaten per schooljaar, exporteer CSV en bekijk of proefdraai de bewaartermijn. Geen koppeling naar codes.",
+            "Platformrapportage zonder leerling-PII."),
+
+        ["/admin/scholen/{schoolId}"] = new(
+            "Beheer · School",
+            "Schoolgegevens, overeenkomst, schoolbeheerders en totalen.",
+            "Bewerk schoolgegevens, registreer de verwerkersovereenkomst, nodig schoolbeheerders uit of bekijk totalen (geen per-code data).",
+            "Eén school beheren als Lobsy-admin."),
+
+        ["/school"] = new(
+            "School · Dashboard",
+            "Klassen, codes, leraren en openstaande acties.",
+            "Bekijk KPI’s, tests per klas, te-doen-lijst en interesses (vanaf 5 afgeronde tests). Lobsy kent geen leerlingnamen.",
+            "Startpunt voor schoolbeheer."),
+
+        ["/school/te-doen"] = new(
+            "School · Te doen",
+            "Openstaande acties voor de schoolbeheerder.",
+            "Ouderbevestiging, leraren zonder klas, openstaande uitnodigingen en bewaartermijn.",
+            "Niets missen vóór het testvenster."),
+
+        ["/school/klassen"] = new(
+            "School · Klassen & codes",
+            "Klassen aanmaken en codes beheren.",
+            "Maak een klas met N codes, print de codelijst (lege naamkolom) en beheer het testvenster.",
+            "Leerlingcodes uitdelen zonder namen in Lobsy."),
+
+        ["/school/klassen/{classId}"] = new(
+            "School · Klasdetail",
+            "Codes, ouders en testvenster van één klas.",
+            "Print codelijst, bevestig ouders, open/sluit het testvenster, reset of verwijder codes.",
+            "Eén klas veilig beheren."),
+
+        ["/school/resultaten"] = new(
+            "School · Resultaten",
+            "Totalen per klas; per code alleen als de setting aan staat.",
+            "Bekijk groepsresultaten vanaf 5 leerlingen. Per-code korte uitkomsten alleen als Lobsy-beheer dat toestaat.",
+            "Inzicht zonder namen of losse antwoorden."),
+
+        ["/school/leraren"] = new(
+            "School · Leraren",
+            "Leraren uitnodigen met verplichte 2FA.",
+            "Nodig leraren uit, koppel eigen klassen en volg 2FA-status. Geen rolkeuze: altijd leraar.",
+            "Team toegang geven tot alleen hun klassen."),
+
+        ["/school/gegevens"] = new(
+            "School · Schoolgegevens",
+            "Alleen-lezen schoolgegevens.",
+            "Bekijk naam, plaats, BRIN en e-maildomeinen. Wijzigen via Lobsy.",
+            "Controleer of schoolgegevens kloppen."),
+
+        ["/school/privacy"] = new(
+            "School · Privacy & ouders",
+            "Verwerkersovereenkomst, bewaartermijn en ouderbrief.",
+            "Bekijk overeenkomststatus, bevestigingen per klas en download de ouderbrief-voorbeeldtekst.",
+            "AVG-plichten van school nalopen."),
+
+        ["/school/materiaal"] = new(
+            "School · Lesbrief & materiaal",
+            "Lesbrief en inlogstappen voor leerlingen.",
+            "Open de lesbrief en leg uit hoe leerlingen inloggen met school, klas en code.",
+            "Lesmateriaal klaarzetten."),
+
+        ["/leraar"] = new(
+            "Leraar · Dashboard",
+            "Startpunt: door naar je eerste toegewezen klas of een lege staat.",
+            "Als je klassen hebt, ga je naar het klasoverzicht. Anders vraag je je schoolbeheerder om je te koppelen.",
+            "Startpunt voor leraren."),
+
+        ["/leerling"] = new(
+            "Leerling · Inloggen",
+            "Log in met school, klas en code van je kaartje. Geen naam nodig.",
+            "Kies je school en klas, typ de code en start je reis.",
+            "Leerlingen starten de ontdekkingsreis zonder account."),
+
+        ["/leerling/start"] = new(
+            "Leerling · Zo werkt het",
+            "Korte uitleg over de 4 werelden voordat je begint.",
+            "Lees hoe de reis werkt en klik op Beginnen.",
+            "Introductiescherm voor de leerlingwizard."),
+
+        ["/leerling/reis"] = new(
+            "Leerling · Reis",
+            "Beantwoord vragen; Lobsy bewaart elk antwoord.",
+            "Kies een antwoord met de knoppen of toetsen 1–5. Pauze mag altijd.",
+            "Vragen beantwoorden in de leerlingwizard."),
+
+        ["/leerling/eiland"] = new(
+            "Leerling · Pauze-eiland",
+            "Kies hobby’s en wat je niet leuk vindt (chips).",
+            "Tik op knoppen; typ geen namen. Klaar, verder! mag ook leeg.",
+            "Hobby-chips halverwege de reis."),
+
+        ["/leerling/stop"] = new(
+            "Leerling · Pauze",
+            "Je sessie is beëindigd; antwoorden blijven bewaard.",
+            "Log later opnieuw in met dezelfde code om verder te gaan.",
+            "Sessie afsluiten op een gedeelde Chromebook."),
+
+        ["/leerling/dit-ben-jij"] = new(
+            "Leerling · Dit ben jij",
+            "Jouw verhaal uit vaste sjablonen — positief en kort.",
+            "Bekijk je tegels, hobby's en beroepen om eens te bekijken. Download de PDF of check je droombaan.",
+            "Resultaat na 60 vragen, zonder AI of vacatures."),
+
+        ["/leerling/droombaan"] = new(
+            "Leerling · Droombaan-checker",
+            "Kies een beroep uit de vaste lijst en zie wat je al hebt.",
+            "Geen AI, geen links naar opleidingen of vacatures — alleen een schoolroute in gewone taal.",
+            "Droombaan checken en bewaren als PDF."),
+
+        ["/leerling/pdf"] = new(
+            "Leerling · PDF",
+            "Download je ontdekkingsreis als PDF.",
+            "Een lege naamregel voor op papier. Lobsy bewaart geen namen.",
+            "PDF voor jou en je leraar."),
+
         ["/admin/instellingen/algemeen"] = new(
             "Beheer · Bedrijfsgegevens",
             "NAW, KvK en BTW van Lobsy.",
@@ -629,6 +755,12 @@ public static class PageHelpDocs
             "Details van één vacature op de banenkaart.",
             "Bekijk eisen, loon, uren/dagdelen en locatie. Solliciteer als kandidaat (met eventuele harde eisen en wettelijke checks), of bewaar/deel. Managers zien geen solliciteer-CTA.",
             "Een baan beoordelen en solliciteren of delen.")),
+
+        ("/leraar/klas/", new(
+            "Leraar · Klas",
+            "Overzicht, codes, groepsresultaten en droombaan per eigen klas.",
+            "Bekijk voortgang, open het testvenster, print de codelijst en bekijk groeps- of codedetails (geen namen, geen ruwe antwoorden).",
+            "Les voorbereiden en nabespreken.")),
 
         ("/home/metrics/", new(
             "Metric detail",

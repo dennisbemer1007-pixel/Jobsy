@@ -3385,8 +3385,13 @@ public static class UiStrings
         UiStringsCandidateInsights.MergeAll(nl, en, pl, ro, ar);
         UiStringsMatch.MergeAll(nl, en, pl, ro, ar);
         UiStringsMfa.MergeAll(nl, en, pl, ro, ar);
-        UiStringsAdmin.MergeAll(nl, en, pl, ro, ar);
+UiStringsAdmin.MergeAll(nl, en, pl, ro, ar);
         UiStringsWerkgever.MergeAll(nl, en, pl, ro, ar);
+        UiStringsEnterprise.MergeAll(nl, en, pl, ro, ar);
+        // D12: Scholen strings are nl-only; other languages fall back via UiStrings.Get.
+        UiStringsScholen.MergeNl(nl);
+        UiStringsLeerlingVragen.MergeNl(nl);
+        UiStringsLeerlingVerhaal.MergeNl(nl);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

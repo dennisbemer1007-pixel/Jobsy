@@ -159,6 +159,15 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    options.AddPolicy("pupil-login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 var app = builder.Build();
@@ -204,6 +213,7 @@ app.UseLoginProtection();
 app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();
 app.UseAuthorization();
+app.UseMiddleware<SchoolsFeatureMiddleware>();
 app.UseMfaEnforcement();
 app.UseAntiforgery();
 
@@ -211,6 +221,7 @@ app.UseAntiforgery();
 app.UseMiddleware<Jobsy.Web.Middleware.WerkgeverLegacyRedirectMiddleware>();
 
 app.MapJobsyAuthEndpoints();
+app.MapPupilAuthEndpoints();
 app.MapSeoEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.
 app.MapGet("/healthz", () => Results.Text("ok"));

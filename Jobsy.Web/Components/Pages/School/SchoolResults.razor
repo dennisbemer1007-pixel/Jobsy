@@ -1,0 +1,165 @@
+@page "/school/resultaten"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IPlatformFeatureService Features
+
+<PageTitle>@Culture["School.Results.Title"] · Lobsy</PageTitle>
+
+<header class="sch-page-header">
+    <h1>@Culture["School.Results.Title"]</h1>
+    <p class="muted">@Culture["School.Results.Lead"]</p>
+</header>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else
+{
+    <div class="sch-tabs">
+        @foreach (var c in _classes)
+        {
+            <button type="button"
+                    class="sch-tabs__item @(c.Id == _selected ? "is-active" : null)"
+                    @onclick="() => SelectClass(c.Id)">@c.ClassName</button>
+        }
+    </div>
+
+    @if (_results is null)
+    {
+        <p class="muted">@Culture["School.Results.PickClass"]</p>
+    }
+    else
+    {
+        <div class="sch-results-layout">
+            <div>
+                <section class="sch-card">
+                    <h2>@Culture["School.Results.Totals"]</h2>
+                    @if (!_results.Totals.TotalsVisible)
+                    {
+                        <p class="muted">@Culture["School.Results.TotalsHidden"]</p>
+                    }
+                    else
+                    {
+                        <p>@Culture["School.Col.Completed"]: <strong class="tabular">@_results.Totals.CompletedCount / @_results.Totals.TotalCodes</strong>
+                            (@_results.Totals.CompletionPercent.ToString("0")%)</p>
+                        <h3>@Culture["School.Results.Riasec"]</h3>
+                        <ul class="sch-riasec">
+                            @foreach (var n in _results.Totals.RiasecTop3)
+                            {
+                                <li><span>@n.Key</span> <strong class="tabular">@n.Count</strong></li>
+                            }
+                        </ul>
+                        <h3>@Culture["School.Results.Values"]</h3>
+                        <ul class="sch-riasec">
+                            @foreach (var n in _results.Totals.TopValues)
+                            {
+                                <li><span>@n.Key</span> <strong class="tabular">@n.Count</strong></li>
+                            }
+                        </ul>
+                        <h3>@Culture["School.Results.DreamJobs"]</h3>
+                        <ul class="sch-riasec">
+                            @foreach (var n in _results.Totals.DreamJobs)
+                            {
+                                <li><span>@n.Key</span> <strong class="tabular">@n.Count</strong></li>
+                            }
+                        </ul>
+                    }
+                </section>
+
+                @if (_results.PerCodeEnabled && _results.PerCode is not null)
+                {
+                    <section class="sch-card">
+                        <h2>@Culture["School.Results.PerCode"]</h2>
+                        <EntDataTable Loading="false" Empty="@(_results.PerCode.Count == 0)" EmptyText="—">
+                            <Header>
+                                <th scope="col">@Culture["School.Col.Code"]</th>
+                                <th scope="col">@Culture["School.Col.Status"]</th>
+                                <th scope="col">@Culture["School.Results.Interest"]</th>
+                                <th scope="col">@Culture["School.Results.TopValue"]</th>
+                                <th scope="col">@Culture["School.Results.DreamJob"]</th>
+                            </Header>
+                            <Rows>
+                                @foreach (var row in _results.PerCode)
+                                {
+                                    <tr class="ent-data-table__row">
+                                        <td><span class="sch-code">@row.DisplayCode</span></td>
+                                        <td>@row.Status</td>
+                                        <td>@(row.InterestCode ?? "—")</td>
+                                        <td>@(row.TopValue ?? "—")</td>
+                                        <td>@(row.DreamJobKey ?? "—")</td>
+                                    </tr>
+                                }
+                            </Rows>
+                        </EntDataTable>
+                    </section>
+                }
+            </div>
+
+            <aside class="sch-card">
+                <h2>@Culture["School.Results.WhatSchoolSees"]</h2>
+                @if (_results.PerCodeEnabled)
+                {
+                    <span class="sch-pill sch-pill--ok">@Culture["School.Results.PerCodeOn"]</span>
+                    <p class="muted">@Culture["School.Results.PerCodeOnNote"]</p>
+                    <p class="muted">@Culture["School.Results.TeacherOnlyNote"]</p>
+                }
+                else
+                {
+                    <span class="sch-pill sch-pill--muted">@Culture["School.Results.PerCodeOff"]</span>
+                    <p class="muted">@Culture["School.Results.PerCodeOffNote"]</p>
+                }
+            </aside>
+        </div>
+    }
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "klas")] public Guid? Klas { get; set; }
+
+    private bool _disabled;
+    private bool _loading = true;
+    private Guid? _selected;
+    private List<SchoolPortalClassListItemDto> _classes = [];
+    private SchoolPortalResultsDto? _results;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (_disabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        _classes = (await Api.GetSchoolClassesAsync()).ToList();
+        var pick = Klas ?? _classes.FirstOrDefault()?.Id;
+        if (pick is Guid id)
+        {
+            await SelectClass(id);
+        }
+
+        _loading = false;
+    }
+
+    private async Task SelectClass(Guid id)
+    {
+        _selected = id;
+        _results = await Api.GetSchoolClassResultsAsync(id);
+        Nav.NavigateTo($"/school/resultaten?klas={id}", replace: true);
+    }
+}

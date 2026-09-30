@@ -1,0 +1,231 @@
+@page "/school/klassen"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IPlatformFeatureService Features
+
+<PageTitle>@Culture["School.Class.Title"] · Lobsy</PageTitle>
+
+<header class="sch-page-header">
+    <h1>@Culture["School.Class.Title"]</h1>
+    <p class="muted">@Culture["School.Class.Lead"]</p>
+    <div class="sch-admin-toolbar">
+        <button type="button" class="btn-primary" @onclick="() => _drawerOpen = true">@Culture["School.Class.New"]</button>
+    </div>
+</header>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error">@_error</p>
+}
+else
+{
+    <EntDataTable Loading="false" Empty="@(_rows.Count == 0)" EmptyText="@Culture["School.Class.Empty"]">
+        <Header>
+            <th scope="col">@Culture["School.Col.Class"]</th>
+            <th scope="col">@Culture["School.Col.Level"]</th>
+            <th scope="col">@Culture["School.Col.Year"]</th>
+            <th scope="col">@Culture["School.Col.Teacher"]</th>
+            <th scope="col">@Culture["School.Col.Codes"]</th>
+            <th scope="col">@Culture["School.Col.Completed"]</th>
+            <th scope="col">@Culture["School.Col.Parents"]</th>
+            <th scope="col">@Culture["School.Col.Window"]</th>
+        </Header>
+        <Rows>
+            @foreach (var row in _rows)
+            {
+                <tr class="ent-data-table__row" @onclick="() => OpenClass(row.Id)">
+                    <td>@row.ClassName</td>
+                    <td>@row.Level</td>
+                    <td class="tabular">@row.Year</td>
+                    <td>@(row.TeacherNames.Count == 0 ? "—" : string.Join(", ", row.TeacherNames))</td>
+                    <td class="tabular">@row.CodeCount</td>
+                    <td class="tabular">@row.CompletedCount</td>
+                    <td>
+                        @if (row.ParentalInfoConfirmed)
+                        {
+                            <span class="sch-pill sch-pill--ok">@Culture["School.Parents.Confirmed"]</span>
+                        }
+                        else
+                        {
+                            <span class="sch-pill sch-pill--warn">@Culture["School.Parents.Pending"]</span>
+                        }
+                    </td>
+                    <td><span class="sch-pill @WindowPill(row.TestWindow)">@WindowLabel(row)</span></td>
+                </tr>
+            }
+        </Rows>
+    </EntDataTable>
+}
+
+<EntDrawer @bind-Open="_drawerOpen" Title="@Culture["School.Class.New"]">
+    <EditForm Model="_create" OnValidSubmit="CreateAsync">
+        <label>
+            @Culture["School.Class.Field.Name"]
+            <InputText class="input" @bind-Value="_create.ClassName" />
+        </label>
+        <label>
+            @Culture["School.Class.Field.Level"]
+            <InputSelect class="input" @bind-Value="_create.Level">
+                @foreach (SchoolLevel level in Enum.GetValues<SchoolLevel>())
+                {
+                    <option value="@level">@level</option>
+                }
+            </InputSelect>
+        </label>
+        <label>
+            @Culture["School.Class.Field.Year"]
+            <InputNumber class="input" @bind-Value="_create.Year" />
+        </label>
+        <label>
+            @Culture["School.Class.Field.Count"]
+            <InputNumber class="input" @bind-Value="_create.PupilCount" />
+        </label>
+        <p class="muted">@Culture["School.Class.CodesNote"]</p>
+        @if (_teachers.Count > 0)
+        {
+            <fieldset class="sch-check-list">
+                <legend>@Culture["School.Class.Field.Teachers"]</legend>
+                @foreach (var t in _teachers)
+                {
+                    <label class="filter-check">
+                        <input type="checkbox" checked="@_selectedTeachers.Contains(t.UserId)"
+                               @onchange="e => ToggleTeacher(t.UserId, (bool)(e.Value ?? false))" />
+                        @t.DisplayName
+                    </label>
+                }
+            </fieldset>
+        }
+        @if (!string.IsNullOrEmpty(_drawerError))
+        {
+            <p class="state-message error">@_drawerError</p>
+        }
+        <div class="sch-drawer-actions">
+            <button type="button" class="btn-compact" @onclick="() => _drawerOpen = false">@Culture["School.Cancel"]</button>
+            <button type="submit" class="btn-primary" disabled="@_busy">@Culture["School.Save"]</button>
+        </div>
+    </EditForm>
+</EntDrawer>
+
+@code {
+    private bool _disabled;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _drawerOpen;
+    private string? _error;
+    private string? _drawerError;
+    private List<SchoolPortalClassListItemDto> _rows = [];
+    private List<SchoolPortalTeacherListItemDto> _teachers = [];
+    private readonly HashSet<Guid> _selectedTeachers = [];
+    private CreateForm _create = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (!_disabled)
+        {
+            await ReloadAsync();
+        }
+        else
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _rows = (await Api.GetSchoolClassesAsync()).ToList();
+            _teachers = (await Api.GetSchoolTeachersAsync()).ToList();
+            _error = null;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenClass(Guid id) => Nav.NavigateTo($"/school/klassen/{id}");
+
+    private void ToggleTeacher(Guid id, bool on)
+    {
+        if (on) _selectedTeachers.Add(id);
+        else _selectedTeachers.Remove(id);
+    }
+
+    private async Task CreateAsync()
+    {
+        _busy = true;
+        _drawerError = null;
+        try
+        {
+            var created = await Api.CreateSchoolClassAsync(new CreateSchoolClassRequest(
+                _create.ClassName,
+                _create.Level,
+                _create.Year,
+                _create.PupilCount,
+                null,
+                _selectedTeachers.ToList()));
+            _drawerOpen = false;
+            if (created is not null)
+            {
+                Nav.NavigateTo($"/school/klassen/{created.Id}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _drawerError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string WindowLabel(SchoolPortalClassListItemDto row) => row.TestWindow switch
+    {
+        TestWindowState.Open when row.TestWindowClosesOn is DateOnly d
+            => $"{Culture["School.TestWindow.StatusOpen"]} t/m {d:dd-MM}",
+        TestWindowState.Open => Culture["School.TestWindow.StatusOpen"],
+        TestWindowState.Closed => Culture["School.TestWindow.StatusClosed"],
+        _ => Culture["School.TestWindow.StatusNotOpen"]
+    };
+
+    private static string WindowPill(TestWindowState s) => s switch
+    {
+        TestWindowState.Open => "sch-pill--ok",
+        TestWindowState.Closed => "sch-pill--muted",
+        _ => "sch-pill--warn"
+    };
+
+    private sealed class CreateForm
+    {
+        public string ClassName { get; set; } = "";
+        public SchoolLevel Level { get; set; } = SchoolLevel.Havo;
+        public int Year { get; set; } = 2;
+        public int PupilCount { get; set; } = 28;
+    }
+}

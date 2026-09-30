@@ -231,7 +231,7 @@ public static class UatScriptRunner
         if (string.Equals(jobsyRole, JobsyRoles.Admin, StringComparison.Ordinal)
             && Contains(blob, "Settings-subnav", "settings-subnav", "16 modules", "sidebar", "AdminNav"))
         {
-            var available = AdminNav.AvailableItems().ToList();
+var available = AdminNav.AvailableItems().ToList();
             Assert.True(available.Count >= 10, $"{scenario.Id}: expected available admin nav items");
             foreach (var item in available)
             {

@@ -1,0 +1,18 @@
+@page "/leerling/stop"
+@layout LeerlingLayout
+@attribute [AllowAnonymous]
+@inject CultureState Culture
+
+<PageTitle>@Culture["Leerling.Stop.Title"] · Lobsy</PageTitle>
+
+<section class="ll-card ll-stop">
+    <h1>@Culture["Leerling.Stop.Title"]</h1>
+    <p>@Culture["Leerling.Stop.Body"]</p>
+    <a class="btn-primary" href="/leerling">@Culture["Leerling.Stop.Again"]</a>
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "done")] public string? Done { get; set; }
+
+    protected override async Task OnInitializedAsync() => await Culture.SetLanguageAsync("nl");
+}

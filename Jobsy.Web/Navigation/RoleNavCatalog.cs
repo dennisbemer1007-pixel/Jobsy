@@ -7,8 +7,9 @@ public static class RoleNavCatalog
 {
     public static readonly NavItem[] Anonymous = [];
 
-    /// <summary>
+/// <summary>
     /// Admin uses <see cref="AdminNav"/> + <c>AdminLayout</c> sidebar; no bottom nav (D1).
+    /// Scholen admin pages live under <see cref="AdminNav"/> (Organisaties group).
     /// </summary>
     public static readonly NavItem[] Admin = [];
 
@@ -58,6 +59,10 @@ public static class RoleNavCatalog
         new("Nav.Onboarding", "/ambassadeur/onboarding", NavIcons.Users)
     ];
 
+    public static readonly NavItem[] SchoolAdmin = [];
+
+    public static readonly NavItem[] Teacher = [];
+
     public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user)
     {
         if (user?.Identity?.IsAuthenticated != true)
@@ -68,6 +73,15 @@ public static class RoleNavCatalog
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Admin))
         {
             return Admin;
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin)
+            || RoleClaimMatching.HasRole(user, JobsyRoles.Teacher))
+        {
+            // School/teacher chrome comes from ScholenNav + SchoolLayout (not bottom-nav catalog).
+            return RoleClaimMatching.HasRole(user, JobsyRoles.Teacher) && !RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin)
+                ? Teacher
+                : SchoolAdmin;
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))

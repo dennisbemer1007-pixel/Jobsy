@@ -6,7 +6,7 @@
             class="ent-scope-chip__btn"
             aria-haspopup="listbox"
             aria-expanded="@_open"
-            aria-label="@Culture["WgShell.ScopeChip"]"
+aria-label="@Culture["EntUi.ScopeChip"]"
             disabled="@(!CanSwitch)"
             @onclick="Toggle">
         @if (!string.IsNullOrEmpty(IconSvg))
@@ -27,14 +27,14 @@
     </button>
     @if (ShowReadOnlyPill)
     {
-        <span class="ent-scope-chip__ro" title="@Culture["WgShell.ReadOnly"]">
+        <span class="ent-scope-chip__ro" title="@Culture["EntUi.ReadOnly"]">
             <span class="ent-scope-chip__ro-icon" aria-hidden="true">@((MarkupString)EyeSvg)</span>
-            @Culture["WgShell.ReadOnly"]
+            @Culture["EntUi.ReadOnly"]
         </span>
     }
     @if (_open && CanSwitch)
     {
-        <div class="ent-scope-chip__popover" role="listbox" aria-label="@Culture["WgShell.ScopeChip"]">
+<div class="ent-scope-chip__popover" role="listbox" aria-label="@Culture["EntUi.ScopeChip"]">
             @if (ShowSearch)
             {
                 <label class="ent-scope-chip__search">

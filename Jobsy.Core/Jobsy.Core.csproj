@@ -3,6 +3,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Data\Norms\big-five-norms.json" />
     <EmbeddedResource Include="Data\SampleReports\*.json" />
+    <EmbeddedResource Include="Scholen\Resources\dutch-first-names.txt" />
   </ItemGroup>
 
   <ItemGroup>

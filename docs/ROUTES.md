@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (201 routes)
+## Table (228 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -95,6 +95,9 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/vacatures/categorieen` | `Pages/Admin/CategorieenSalarisPage.razor` | Admin |
 | `/admin/vacatures/moderatie` | `Pages/Admin/VacanciesModerationPage.razor` | Admin |
 | `/admin/wages` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
+| `/admin/scholen` | `Pages/Admin/Scholen/ScholenList.razor` | Admin |
+| `/admin/scholen/rapportage` | `Pages/Admin/Scholen/ScholenRapportage.razor` | Admin |
+| `/admin/scholen/{SchoolId:guid}` | `Pages/Admin/Scholen/ScholenDetail.razor` | Admin |
 | `/algemene-voorwaarden` | `Pages/Legal/AlgemeneVoorwaarden.razor` | anonymous |
 | `/ambassadeur` | `Pages/Ambassadeur/Dashboard.razor` | Ambassadeur |
 | `/ambassadeur/finance` | `Pages/Ambassadeur/Finance.razor` | Ambassadeur |
@@ -156,6 +159,21 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/intermediary` | `Pages/Intermediary/IntermediaryDashboard.razor` | Intermediary |
 | `/intermediary/team` | `Pages/Intermediary/Team.razor` | Intermediary |
 | `/lancering` | `Pages/WestlandTeaser.razor` | anonymous |
+| `/leerling` | `Pages/Leerling/LeerlingLogin.razor` | anonymous |
+| `/leerling/dit-ben-jij` | `Pages/Leerling/LeerlingDitBenJij.razor` | authenticated |
+| `/leerling/droombaan` | `Pages/Leerling/LeerlingDroombaan.razor` | authenticated |
+| `/leerling/eiland` | `Pages/Leerling/LeerlingEiland.razor` | authenticated |
+| `/leerling/reis` | `Pages/Leerling/LeerlingReis.razor` | authenticated |
+| `/leerling/start` | `Pages/Leerling/LeerlingStart.razor` | authenticated |
+| `/leerling/stop` | `Pages/Leerling/LeerlingStop.razor` | anonymous |
+| `/leraar` | `Pages/Leraar/LeraarDashboard.razor` | Teacher, SchoolAdmin |
+| `/leraar/klas/{ClassId:guid}` | `Pages/Leraar/LeraarKlasOverview.razor` | Teacher, SchoolAdmin |
+| `/leraar/klas/{ClassId:guid}/code/{CodeId:guid}` | `Pages/Leraar/LeraarCodeDetail.razor` | Teacher, SchoolAdmin |
+| `/leraar/klas/{ClassId:guid}/codes` | `Pages/Leraar/LeraarCodes.razor` | Teacher, SchoolAdmin |
+| `/leraar/klas/{ClassId:guid}/droombanen` | `Pages/Leraar/LeraarDreamJobs.razor` | Teacher, SchoolAdmin |
+| `/leraar/klas/{ClassId:guid}/groep` | `Pages/Leraar/LeraarGroup.razor` | Teacher, SchoolAdmin |
+| `/leraar/klas/{ClassId:guid}/materiaal` | `Pages/Leraar/LeraarMaterials.razor` | Teacher, SchoolAdmin |
+| `/leraar/klas/{ClassId:guid}/testvenster` | `Pages/Leraar/LeraarTestWindow.razor` | Teacher, SchoolAdmin |
 | `/login` | `Pages/Login.razor` | anonymous |
 | `/ontdek` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/partner` | `Pages/Partner/PartnerSales.razor` | anonymous |
@@ -175,6 +193,15 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/salesmanager/payout-checkout` | `Pages/SalesManager/PayoutCheckoutStub.razor` | SalesManager |
 | `/salesmanager/referrals` | `Pages/SalesManager/Referrals.razor` | SalesManager |
 | `/salesmanager/toolkit` | `Pages/SalesManager/SalesToolkit.razor` | SalesManager |
+| `/school` | `Pages/School/SchoolDashboard.razor` | SchoolAdmin |
+| `/school/gegevens` | `Pages/School/SchoolDetails.razor` | SchoolAdmin |
+| `/school/klassen` | `Pages/School/SchoolClasses.razor` | SchoolAdmin |
+| `/school/klassen/{ClassId:guid}` | `Pages/School/SchoolClassDetail.razor` | SchoolAdmin |
+| `/school/leraren` | `Pages/School/SchoolTeachers.razor` | SchoolAdmin |
+| `/school/materiaal` | `Pages/School/SchoolMaterials.razor` | SchoolAdmin |
+| `/school/privacy` | `Pages/School/SchoolPrivacy.razor` | SchoolAdmin |
+| `/school/resultaten` | `Pages/School/SchoolResults.razor` | SchoolAdmin |
+| `/school/te-doen` | `Pages/School/SchoolTodos.razor` | SchoolAdmin |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |

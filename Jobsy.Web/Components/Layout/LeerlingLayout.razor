@@ -1,0 +1,65 @@
+@namespace Jobsy.Web.Components.Layout
+@using System.Security.Claims
+@using Jobsy.Core.Authorization
+@using Microsoft.AspNetCore.Authentication
+@inherits LayoutComponentBase
+@inject CultureState Culture
+@inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
+
+<div class="ll-shell" lang="nl">
+    <header class="ll-topbar">
+        <a class="ll-topbar__brand" href="/leerling">
+            <img class="ll-topbar__logo" src="/images/brand/mascot-256.webp" width="28" height="28" alt="" />
+            <span>Lobsy</span>
+        </a>
+        @if (!string.IsNullOrEmpty(_chip))
+        {
+            <span class="ll-topbar__chip">@_chip</span>
+        }
+        @if (_showPause)
+        {
+            <form method="post" action="/leerling/stop" class="ll-topbar__pause-form">
+                <AntiforgeryToken />
+                <button type="submit" class="ll-topbar__pause">@Culture["Leerling.Pause"]</button>
+            </form>
+        }
+    </header>
+    <main class="ll-main">
+        @Body
+    </main>
+</div>
+
+@code {
+    private string _chip = "";
+    private bool _showPause;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _chip = "";
+        _showPause = false;
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        http.Response.Headers.CacheControl = "no-store";
+        var auth = await http.AuthenticateAsync(PupilAuthDefaults.Scheme);
+        if (auth.Succeeded && auth.Principal?.Identity?.IsAuthenticated == true)
+        {
+            var cls = auth.Principal.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
+            var code = auth.Principal.FindFirst(PupilClaimTypes.CodeDisplay)?.Value;
+            if (!string.IsNullOrWhiteSpace(cls) && !string.IsNullOrWhiteSpace(code))
+            {
+                _chip = $"{cls} · {code}";
+            }
+
+            var path = Nav.ToBaseRelativePath(Nav.Uri);
+            _showPause = !path.Equals("leerling", StringComparison.OrdinalIgnoreCase)
+                         && !path.StartsWith("leerling?", StringComparison.OrdinalIgnoreCase)
+                         && !path.StartsWith("leerling/stop", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+}

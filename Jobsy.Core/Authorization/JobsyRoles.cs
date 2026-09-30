@@ -15,6 +15,11 @@ public static class JobsyRoles
     public const string Admin = nameof(UserRole.Admin);
     public const string SalesManager = nameof(UserRole.SalesManager);
     public const string Ambassadeur = nameof(UserRole.Ambassadeur);
+    public const string SchoolAdmin = nameof(UserRole.SchoolAdmin);
+    public const string Teacher = nameof(UserRole.Teacher);
+
+    /// <summary>SchoolAdmin and Teacher — school staff (not employer).</summary>
+    public const string SchoolStaff = $"{SchoolAdmin},{Teacher}";
 
     public static readonly string[] EmployerRoles =
     [
@@ -29,6 +34,9 @@ public static class JobsyRoles
             or UserRole.RegionalManager
             or UserRole.EnterpriseManager
             or UserRole.Intermediary;
+
+    public static bool IsSchoolStaff(UserRole role) =>
+        role is UserRole.SchoolAdmin or UserRole.Teacher;
 
     /// <summary>
     /// Branch, enterprise, intermediary and admin may create/publish/highlight/pushbom/extend/deactivate.

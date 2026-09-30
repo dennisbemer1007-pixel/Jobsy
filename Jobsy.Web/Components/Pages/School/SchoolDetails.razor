@@ -1,0 +1,59 @@
+@page "/school/gegevens"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IPlatformFeatureService Features
+
+<PageTitle>@Culture["School.Details.Title"] · Lobsy</PageTitle>
+
+<header class="sch-page-header">
+    <h1>@Culture["School.Details.Title"]</h1>
+    <p class="muted">@Culture["School.Details.Lead"]</p>
+</header>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_profile is not null)
+{
+    <section class="sch-card">
+        <dl class="sch-dl">
+            <div><dt>@Culture["School.Details.Name"]</dt><dd>@_profile.Name</dd></div>
+            <div><dt>@Culture["School.Details.City"]</dt><dd>@_profile.City</dd></div>
+            <div><dt>@Culture["School.Details.Brin"]</dt><dd>@(_profile.BrinCode ?? "—")</dd></div>
+            <div>
+                <dt>@Culture["School.Details.Domains"]</dt>
+                <dd>@(string.Join(", ", _profile.AllowedEmailDomains))</dd>
+            </div>
+        </dl>
+        <p class="muted">@Culture["School.Details.ContactLobsy"]</p>
+    </section>
+}
+
+@code {
+    private bool _disabled;
+    private bool _loading = true;
+    private SchoolProfileDto? _profile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (!_disabled)
+        {
+            _profile = await Api.GetSchoolProfileAsync();
+        }
+
+        _loading = false;
+    }
+}

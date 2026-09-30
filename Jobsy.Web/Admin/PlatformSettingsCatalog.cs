@@ -56,11 +56,13 @@ public static class PlatformSettingsCatalog
     public const string GroupSecurity = "security";
     public const string GroupDemo = "demo";
     public const string GroupGeneral = "general";
+    public const string GroupScholen = "scholen";
 
     public static readonly IReadOnlyList<(string Key, string TitleKey, string DescriptionKey)> Groups =
     [
         (GroupPlatformMode, "AdminSettings.Group.PlatformMode", "AdminSettings.Group.PlatformMode.Desc"),
         (GroupVacancies, "AdminSettings.Group.Vacancies", "AdminSettings.Group.Vacancies.Desc"),
+        (GroupScholen, "AdminSettings.Group.Scholen", "AdminSettings.Group.Scholen.Desc"),
         (GroupSecurity, "AdminSettings.Group.Security", "AdminSettings.Group.Security.Desc"),
         (GroupDemo, "AdminSettings.Group.Demo", "AdminSettings.Group.Demo.Desc"),
         (GroupGeneral, "AdminSettings.Group.General", "AdminSettings.Group.General.Desc"),
@@ -69,7 +71,7 @@ public static class PlatformSettingsCatalog
     /// <summary>Functies page groups (excludes Algemeen).</summary>
     public static readonly IReadOnlyList<string> FeaturesGroupKeys =
     [
-        GroupPlatformMode, GroupVacancies, GroupSecurity, GroupDemo
+        GroupPlatformMode, GroupVacancies, GroupScholen, GroupSecurity, GroupDemo
     ];
 
     public static readonly IReadOnlyList<string> GeneralGroupKeys = [GroupGeneral];
@@ -184,6 +186,51 @@ public static class PlatformSettingsCatalog
             Kind: PlatformSettingKind.Bool,
             Read: s => s.CandidateInsightsUnlockPerBranch,
             Write: v => new PlatformFeatureUpdate(CandidateInsightsUnlockPerBranch: ToBool(v))));
+
+        // --- Scholen ---
+        list.Add(new PlatformSettingDescriptor(
+            Key: "SchoolsEnabled",
+            Group: GroupScholen,
+            TitleKey: "AdminSettings.Schools.Enabled.Title",
+            DescriptionKey: "AdminSettings.Schools.Enabled.Desc",
+            Kind: PlatformSettingKind.Bool,
+            Read: s => s.SchoolsEnabled,
+            Write: v => new PlatformFeatureUpdate(SchoolsEnabled: ToBool(v)),
+            ImpactKey: "AdminSettings.Schools.Enabled.ImpactOff",
+            ImpactLevel: PlatformSettingImpactLevel.Warn,
+            ConfirmOnChange: true,
+            ShowOnDashboard: true));
+
+        list.Add(new PlatformSettingDescriptor(
+            Key: "SchoolPerCodeResultsEnabled",
+            Group: GroupScholen,
+            TitleKey: "AdminSettings.Schools.PerCode.Title",
+            DescriptionKey: "AdminSettings.Schools.PerCode.Desc",
+            Kind: PlatformSettingKind.Bool,
+            Read: s => s.SchoolPerCodeResultsEnabled,
+            Write: v => new PlatformFeatureUpdate(SchoolPerCodeResultsEnabled: ToBool(v))));
+
+        list.Add(new PlatformSettingDescriptor(
+            Key: "SchoolRetentionCutoffMonth",
+            Group: GroupScholen,
+            TitleKey: "AdminSettings.Schools.RetentionMonth.Title",
+            DescriptionKey: "AdminSettings.Schools.RetentionMonth.Desc",
+            Kind: PlatformSettingKind.Int,
+            Read: s => s.SchoolRetentionCutoffMonth,
+            Write: v => new PlatformFeatureUpdate(SchoolRetentionCutoffMonth: ToInt(v)),
+            Min: 1,
+            Max: 12));
+
+        list.Add(new PlatformSettingDescriptor(
+            Key: "SchoolRetentionCutoffDay",
+            Group: GroupScholen,
+            TitleKey: "AdminSettings.Schools.RetentionDay.Title",
+            DescriptionKey: "AdminSettings.Schools.RetentionDay.Desc",
+            Kind: PlatformSettingKind.Int,
+            Read: s => s.SchoolRetentionCutoffDay,
+            Write: v => new PlatformFeatureUpdate(SchoolRetentionCutoffDay: ToInt(v)),
+            Min: 1,
+            Max: 31));
 
         // --- Beveiliging ---
         list.Add(new PlatformSettingDescriptor(
@@ -306,6 +353,10 @@ public static class PlatformSettingsCatalog
         bool? insightsEnabled = null;
         int? insightsUnlockDays = null;
         bool? insightsPerBranch = null;
+        bool? schoolsEnabled = null;
+        bool? schoolPerCode = null;
+        int? schoolRetentionMonth = null;
+        int? schoolRetentionDay = null;
 
         foreach (var p in parts)
         {
@@ -331,6 +382,10 @@ public static class PlatformSettingsCatalog
             if (p.CandidateInsightsEnabled is not null) insightsEnabled = p.CandidateInsightsEnabled;
             if (p.CandidateInsightsUnlockDays is not null) insightsUnlockDays = p.CandidateInsightsUnlockDays;
             if (p.CandidateInsightsUnlockPerBranch is not null) insightsPerBranch = p.CandidateInsightsUnlockPerBranch;
+            if (p.SchoolsEnabled is not null) schoolsEnabled = p.SchoolsEnabled;
+            if (p.SchoolPerCodeResultsEnabled is not null) schoolPerCode = p.SchoolPerCodeResultsEnabled;
+            if (p.SchoolRetentionCutoffMonth is not null) schoolRetentionMonth = p.SchoolRetentionCutoffMonth;
+            if (p.SchoolRetentionCutoffDay is not null) schoolRetentionDay = p.SchoolRetentionCutoffDay;
         }
 
         return new PlatformFeatureUpdate(
@@ -346,6 +401,10 @@ public static class PlatformSettingsCatalog
             SupportAccessNotifySubject: notifySubject,
             CandidateInsightsEnabled: insightsEnabled,
             CandidateInsightsUnlockDays: insightsUnlockDays,
-            CandidateInsightsUnlockPerBranch: insightsPerBranch);
+            CandidateInsightsUnlockPerBranch: insightsPerBranch,
+            SchoolsEnabled: schoolsEnabled,
+            SchoolPerCodeResultsEnabled: schoolPerCode,
+            SchoolRetentionCutoffMonth: schoolRetentionMonth,
+            SchoolRetentionCutoffDay: schoolRetentionDay);
     }
 }

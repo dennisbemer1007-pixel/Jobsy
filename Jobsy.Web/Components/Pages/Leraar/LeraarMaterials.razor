@@ -1,0 +1,103 @@
+@page "/leraar/klas/{ClassId:guid}/materiaal"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IJSRuntime Js
+@inject IPlatformFeatureService Features
+
+<PageTitle>@Culture["Leraar.Material.Title"] · Lobsy</PageTitle>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_notFound)
+{
+    <p class="state-message error">@Culture["Leraar.Class.NotFound"]</p>
+}
+else
+{
+    <header class="sch-page-header">
+        <p class="sch-breadcrumb"><a href="@($"/leraar/klas/{ClassId:D}")">@Culture["Leraar.Nav.Overview"]</a> / @Culture["Leraar.Material.Title"]</p>
+        <h1>@Culture["Leraar.Material.Title"]</h1>
+    </header>
+
+    <section class="sch-card">
+        <h2>@Culture["School.CodeList.Pdf"]</h2>
+        <div class="sch-admin-toolbar">
+            <button type="button" class="btn-primary" disabled="@_busy" @onclick="DownloadPdf">@Culture["School.CodeList.Pdf"]</button>
+            <button type="button" class="btn-compact" disabled="@_busy" @onclick="DownloadCsv">@Culture["School.CodeList.Csv"]</button>
+        </div>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+    </section>
+
+    <section class="sch-card">
+        <h2>@Culture["School.Material.Lesbrief"]</h2>
+        <p>@Culture["School.Material.LesbriefBody"]</p>
+        <a class="btn-compact" href="/docs/scholen/lesbrief-lobsy.html" target="_blank" rel="noopener">@Culture["School.Material.OpenLesbrief"]</a>
+    </section>
+
+    <section class="sch-card">
+        <h2>@Culture["Leraar.Material.HowItWorks"]</h2>
+        <ol class="sch-steps">
+            <li>@Culture["Leraar.Material.Step1"]</li>
+            <li>@Culture["Leraar.Material.Step2"]</li>
+            <li>@Culture["Leraar.Material.Step3"]</li>
+        </ol>
+    </section>
+}
+
+@code {
+    [Parameter] public Guid ClassId { get; set; }
+
+    private bool _disabled;
+    private bool _notFound;
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (_disabled)
+        {
+            return;
+        }
+
+        try
+        {
+            var overview = await Api.GetTeacherOverviewAsync(ClassId);
+            _notFound = overview is null;
+        }
+        catch
+        {
+            _notFound = true;
+        }
+    }
+
+    private async Task DownloadPdf()
+    {
+        _busy = true;
+        _error = null;
+        try { await Api.DownloadTeacherCodeListPdfAsync(Js, ClassId); }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task DownloadCsv()
+    {
+        _busy = true;
+        _error = null;
+        try { await Api.DownloadTeacherCodeListCsvAsync(Js, ClassId); }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
+    }
+}

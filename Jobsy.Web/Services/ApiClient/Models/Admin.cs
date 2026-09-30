@@ -153,6 +153,11 @@ public sealed class PlatformFeatureItem
     public bool CandidateInsightsEnabled { get; set; } = true;
     public int CandidateInsightsUnlockDays { get; set; } = 90;
     public bool CandidateInsightsUnlockPerBranch { get; set; }
+    // moves into PlatformSettingsCatalog group "Scholen"
+    public bool SchoolsEnabled { get; set; }
+    public bool SchoolPerCodeResultsEnabled { get; set; } = true;
+    public int SchoolRetentionCutoffMonth { get; set; } = 7;
+    public int SchoolRetentionCutoffDay { get; set; } = 31;
 }
 
 /// <summary>Partial PUT body for platform features (null = keep).</summary>
@@ -168,6 +173,13 @@ public sealed class PlatformFeaturePatch
     public bool ClearFreePublishUntil { get; set; }
     public bool? SupportAccessNotifyAdmins { get; set; }
     public bool? SupportAccessNotifySubject { get; set; }
+    public bool? CandidateInsightsEnabled { get; set; }
+    public int? CandidateInsightsUnlockDays { get; set; }
+    public bool? CandidateInsightsUnlockPerBranch { get; set; }
+    public bool? SchoolsEnabled { get; set; }
+    public bool? SchoolPerCodeResultsEnabled { get; set; }
+    public int? SchoolRetentionCutoffMonth { get; set; }
+    public int? SchoolRetentionCutoffDay { get; set; }
     public string? Reason { get; set; }
 }
 

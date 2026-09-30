@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
@@ -93,6 +94,16 @@ public class JobsyDbContext : DbContext
     public DbSet<PersonalDataAccessLog> PersonalDataAccessLogs => Set<PersonalDataAccessLog>();
     public DbSet<AdminAuditEvent> AdminAuditEvents => Set<AdminAuditEvent>();
     public DbSet<SupportAccessGrant> SupportAccessGrants => Set<SupportAccessGrant>();
+    public DbSet<School> Schools => Set<School>();
+    public DbSet<SchoolClass> SchoolClasses => Set<SchoolClass>();
+    public DbSet<TeacherClassAssignment> TeacherClassAssignments => Set<TeacherClassAssignment>();
+    public DbSet<PupilCode> PupilCodes => Set<PupilCode>();
+    public DbSet<PupilProgress> PupilProgresses => Set<PupilProgress>();
+    public DbSet<PupilResult> PupilResults => Set<PupilResult>();
+    public DbSet<SchoolClassAggregate> SchoolClassAggregates => Set<SchoolClassAggregate>();
+    public DbSet<SchoolYearAggregate> SchoolYearAggregates => Set<SchoolYearAggregate>();
+    public DbSet<SchoolRetentionRun> SchoolRetentionRuns => Set<SchoolRetentionRun>();
+    public DbSet<SchoolStaffInvite> SchoolStaffInvites => Set<SchoolStaffInvite>();
     public DbSet<TokenPurchaseCheckout> TokenPurchaseCheckouts => Set<TokenPurchaseCheckout>();
     public DbSet<PendingTokenAction> PendingTokenActions => Set<PendingTokenAction>();
     public DbSet<TokenPurchaseInvoice> TokenPurchaseInvoices => Set<TokenPurchaseInvoice>();
@@ -154,6 +165,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.HomeLocation).HasMethod("GIST");
             entity.HasIndex(e => e.Email).IsUnique();
             entity.HasIndex(e => e.ReferredByAmbassadeurUserId);
+            entity.HasIndex(e => e.SchoolId);
             // PushBom + OpenForWork metrics hot path.
             entity.HasIndex(e => new { e.OpenForWork, e.IsActive, e.Role })
                 .HasDatabaseName("IX_Users_OpenForWork_IsActive_Role")
@@ -166,6 +178,10 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.ReferredByAmbassadeurUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne<School>()
+                .WithMany()
+                .HasForeignKey(e => e.SchoolId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<UserExternalLogin>(entity =>
@@ -1604,6 +1620,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.OccurredAt);
             entity.HasIndex(e => e.ActorUserId);
             entity.HasIndex(e => e.SubjectUserId);
+            entity.HasIndex(e => e.SubjectPupilCodeId);
             entity.HasIndex(e => new { e.Resource, e.OccurredAt });
         });
 
@@ -1896,6 +1913,150 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.Click)
                 .WithMany(c => c.Conversions)
                 .HasForeignKey(e => e.ClickId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        ConfigureScholen(modelBuilder);
+    }
+
+    private static void ConfigureScholen(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<School>(entity =>
+        {
+            entity.ToTable("Schools");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.City).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.BrinCode).HasMaxLength(16);
+            entity.Property(e => e.AllowedEmailDomains).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.ProcessorAgreementVersion).HasMaxLength(64);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.Name);
+        });
+
+        modelBuilder.Entity<SchoolClass>(entity =>
+        {
+            entity.ToTable("SchoolClasses");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(12).IsRequired();
+            entity.Property(e => e.Level).HasConversion<int>();
+            entity.Property(e => e.TestWindow).HasConversion<int>();
+            entity.Property(e => e.ParentalInfoTextVersion).HasMaxLength(64);
+            entity.HasIndex(e => new { e.SchoolId, e.SchoolYearStart, e.Name }).IsUnique();
+            entity.HasIndex(e => e.TestWindow);
+            entity.HasOne(e => e.School)
+                .WithMany(s => s.Classes)
+                .HasForeignKey(e => e.SchoolId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TeacherClassAssignment>(entity =>
+        {
+            entity.ToTable("TeacherClassAssignments");
+            entity.HasKey(e => new { e.TeacherUserId, e.SchoolClassId });
+            entity.HasOne(e => e.SchoolClass)
+                .WithMany(c => c.TeacherAssignments)
+                .HasForeignKey(e => e.SchoolClassId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.TeacherUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PupilCode>(entity =>
+        {
+            entity.ToTable("PupilCodes");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CodeLookupHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.CodeProtected).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.Status).HasConversion<int>();
+            entity.HasIndex(e => new { e.SchoolClassId, e.CodeLookupHash }).IsUnique();
+            entity.HasOne(e => e.SchoolClass)
+                .WithMany(c => c.PupilCodes)
+                .HasForeignKey(e => e.SchoolClassId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PupilProgress>(entity =>
+        {
+            entity.ToTable("PupilProgresses");
+            entity.HasKey(e => e.PupilCodeId);
+            entity.Property(e => e.AnswersJson).IsRequired();
+            entity.Property(e => e.LikesJson).IsRequired();
+            entity.Property(e => e.DislikesJson).IsRequired();
+            entity.Property(e => e.LikeOtherWord).HasMaxLength(24);
+            entity.Property(e => e.DislikeOtherWord).HasMaxLength(24);
+            entity.Property(e => e.DreamJobKey).HasMaxLength(64);
+            entity.HasOne(e => e.PupilCode)
+                .WithOne(c => c.Progress)
+                .HasForeignKey<PupilProgress>(e => e.PupilCodeId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PupilResult>(entity =>
+        {
+            entity.ToTable("PupilResults");
+            entity.HasKey(e => e.PupilCodeId);
+            entity.Property(e => e.HollandCode).HasMaxLength(8);
+            entity.Property(e => e.TopValue).HasMaxLength(64);
+            entity.Property(e => e.TopCulture).HasMaxLength(64);
+            entity.Property(e => e.ScoringVersion).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.StoryTemplateVersion).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.DreamJobKey).HasMaxLength(64);
+            entity.HasIndex(e => e.SchoolClassId);
+            entity.HasOne(e => e.PupilCode)
+                .WithOne(c => c.Result)
+                .HasForeignKey<PupilResult>(e => e.PupilCodeId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SchoolClassAggregate>(entity =>
+        {
+            entity.ToTable("SchoolClassAggregates");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ClassLabel).HasMaxLength(12).IsRequired();
+            entity.Property(e => e.Level).HasConversion<int>();
+            entity.HasIndex(e => new { e.SchoolId, e.SchoolYearStart });
+            entity.HasOne<School>()
+                .WithMany()
+                .HasForeignKey(e => e.SchoolId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<SchoolYearAggregate>(entity =>
+        {
+            entity.ToTable("SchoolYearAggregates");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.SchoolId, e.SchoolYearStart });
+            entity.HasOne<School>()
+                .WithMany()
+                .HasForeignKey(e => e.SchoolId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<SchoolRetentionRun>(entity =>
+        {
+            entity.ToTable("SchoolRetentionRuns");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Outcome).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.RanAtUtc);
+        });
+
+        modelBuilder.Entity<SchoolStaffInvite>(entity =>
+        {
+            entity.ToTable("SchoolStaffInvites");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.FullName).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Role).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.ClassIdsJson).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.TokenHash).HasMaxLength(128).IsRequired();
+            entity.HasIndex(e => e.TokenHash);
+            entity.HasIndex(e => new { e.SchoolId, e.Email });
+            entity.HasOne(e => e.School)
+                .WithMany()
+                .HasForeignKey(e => e.SchoolId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

@@ -51,6 +51,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
         ApplyAccessToken(request, user, httpContext);
         ApplyTrustedClientIp(request, httpContext);
+        ApplyPupilCookie(request, httpContext);
 
         try
         {
@@ -107,8 +108,40 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         retry.Options.Set(new HttpRequestOptionsKey<bool>("jobsy-retried"), true);
         ApplyAccessToken(retry, user, httpContext);
         ApplyTrustedClientIp(retry, httpContext);
+        ApplyPupilCookie(retry, httpContext);
         retry.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         return await base.SendAsync(retry, cancellationToken);
+    }
+
+    /// <summary>
+    /// Forwards the non-persistent <c>Lobsy.Leerling</c> cookie to <c>api/pupil/*</c>
+    /// so the API Pupil scheme can authorize progress saves.
+    /// </summary>
+    private static void ApplyPupilCookie(HttpRequestMessage request, HttpContext? httpContext)
+    {
+        var path = request.RequestUri?.AbsolutePath ?? "";
+        if (!path.Contains("/api/pupil", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (httpContext?.Request.Cookies.TryGetValue(PupilAuthDefaults.CookieName, out var cookie) != true
+            || string.IsNullOrWhiteSpace(cookie))
+        {
+            return;
+        }
+
+        if (request.Headers.TryGetValues("Cookie", out var existing))
+        {
+            request.Headers.Remove("Cookie");
+            request.Headers.TryAddWithoutValidation(
+                "Cookie",
+                string.Join("; ", existing.Append($"{PupilAuthDefaults.CookieName}={cookie}")));
+        }
+        else
+        {
+            request.Headers.TryAddWithoutValidation("Cookie", $"{PupilAuthDefaults.CookieName}={cookie}");
+        }
     }
 
     private void ApplyAccessToken(HttpRequestMessage request, ClaimsPrincipal user, HttpContext? httpContext)

@@ -50,6 +50,8 @@ public static class AdminNav
                 ["/admin/cnames"], IsAvailable: true),
             new("requests", "AdminNav.Requests", "/admin/organisaties/aanvragen", NavIcons.Applications,
                 [], IsAvailable: true, CountKey: "org-requests"),
+            new("scholen", "Nav.Scholen", "/admin/scholen", NavIcons.Companies,
+                ["/admin/scholen/rapportage"], IsAvailable: true),
         ]),
         new("candidates", "AdminNav.Group.Candidates",
         [

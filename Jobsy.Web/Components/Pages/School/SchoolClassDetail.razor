@@ -1,0 +1,314 @@
+@page "/school/klassen/{ClassId:guid}"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.School
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IJSRuntime Js
+@inject IPlatformFeatureService Features
+
+<PageTitle>@( _detail?.ClassName ?? Culture["School.Class.Title"]) · Lobsy</PageTitle>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_detail is null)
+{
+    <p class="state-message error">@Culture["School.Class.NotFound"]</p>
+}
+else
+{
+    <header class="sch-page-header">
+        <p class="sch-breadcrumb"><a href="/school/klassen">@Culture["School.Nav.Classes"]</a> / @_detail.ClassName</p>
+        <h1>@_detail.ClassName</h1>
+        <p class="muted">@_detail.Level · @_detail.Year · @_detail.SchoolYearLabel</p>
+        <div class="sch-admin-toolbar sch-toolbar-wrap">
+            <button type="button" class="btn-compact" @onclick="DownloadPdf" disabled="@_busy">@Culture["School.CodeList.Pdf"]</button>
+            <button type="button" class="btn-compact" @onclick="DownloadCsv" disabled="@_busy">@Culture["School.CodeList.Csv"]</button>
+            <button type="button" class="btn-compact" @onclick="AddCodes" disabled="@_busy">@Culture["School.CodeList.Add"]</button>
+            <button type="button" class="btn-primary" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
+        </div>
+        @if (!string.IsNullOrEmpty(_actionError))
+        {
+            <p class="state-message error">@_actionError</p>
+        }
+    </header>
+
+    <section class="sch-card sch-card--parents">
+        <h2>@Culture["School.Parents.Title"]</h2>
+        <p>@Culture["School.Parents.Body"]</p>
+        <p><a href="/school/privacy#ouderbrief">@Culture["School.Parents.LetterLink"]</a></p>
+        @if (_detail.ParentalInfoConfirmed)
+        {
+            <p class="sch-pill sch-pill--ok">
+                @Culture["School.Parents.ConfirmedOn"]
+                @_detail.ParentalInfoConfirmedAtUtc?.ToLocalTime().ToString("dd-MM-yyyy")
+                @if (!string.IsNullOrEmpty(_detail.ParentalInfoConfirmedByName))
+                {
+                    <span> @Culture["School.Parents.By"] @_detail.ParentalInfoConfirmedByName</span>
+                }
+            </p>
+            @if (_detail.TestWindow == TestWindowState.NotOpen)
+            {
+                <button type="button" class="btn-compact" @onclick="() => ConfirmParents(false)" disabled="@_busy">
+                    @Culture["School.Parents.Withdraw"]
+                </button>
+            }
+        }
+        else
+        {
+            <label class="filter-check">
+                <input type="checkbox" @bind="_parentsCheck" />
+                @string.Format(Culture["School.Parents.ConfirmCheckbox"], _detail.ClassName)
+            </label>
+            <button type="button" class="btn-primary" disabled="@(!_parentsCheck || _busy)" @onclick="() => ConfirmParents(true)">
+                @Culture["School.Parents.Confirm"]
+            </button>
+        }
+    </section>
+
+    <section class="sch-card">
+        <h2>@Culture["School.Codes.Title"]</h2>
+        <EntDataTable Loading="false" Empty="@(_detail.Codes.Count == 0)" EmptyText="@Culture["School.Codes.Empty"]">
+            <Header>
+                <th scope="col">#</th>
+                <th scope="col">@Culture["School.Col.Code"]</th>
+                <th scope="col">@Culture["School.Col.Status"]</th>
+                <th scope="col">@Culture["School.Col.LastActive"]</th>
+                <th scope="col"></th>
+            </Header>
+            <Rows>
+                @foreach (var codeRow in _detail.Codes)
+                {
+                    <tr class="ent-data-table__row">
+                        <td class="tabular">@codeRow.Number</td>
+                        <td><span class="sch-code">@codeRow.DisplayCode</span></td>
+                        <td><span class="sch-pill @StatusPill(codeRow.Status)">@StatusLabel(codeRow)</span></td>
+                        <td>@(codeRow.LastSeenAtUtc is DateTime t ? Relative(t) : "—")</td>
+                        <td class="sch-row-actions">
+                            <button type="button" class="btn-compact" @onclick="() => ReplaceCode(codeRow.Id)" disabled="@_busy">
+                                @Culture["School.Codes.Replace"]
+                            </button>
+                            <button type="button" class="btn-outline-danger" @onclick="() => DeleteCode(codeRow.Id)" disabled="@_busy">
+                                @Culture["School.Codes.Delete"]
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </Rows>
+        </EntDataTable>
+    </section>
+
+    <section class="sch-card">
+        <h2>@Culture["School.Class.Danger"]</h2>
+        <label>
+            @Culture["School.Class.DeleteConfirm"]
+            <InputText class="input" @bind-Value="_deleteConfirm" />
+        </label>
+        <button type="button" class="btn-outline-danger" disabled="@_busy" @onclick="DeleteClass">
+            @Culture["School.Class.Delete"]
+        </button>
+    </section>
+}
+
+<TestWindowDialog @bind-Open="_windowOpen"
+                  State="@(_detail?.TestWindow ?? TestWindowState.NotOpen)"
+                  ClosesOn="_detail?.TestWindowClosesOn"
+                  Busy="_busy"
+                  Error="_windowError"
+                  FixHref="_windowFix"
+                  OnAction="OnWindowAction" />
+
+@code {
+    [Parameter] public Guid ClassId { get; set; }
+
+    private bool _disabled;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _windowOpen;
+    private bool _parentsCheck;
+    private string? _actionError;
+    private string? _windowError;
+    private string? _windowFix;
+    private string _deleteConfirm = "";
+    private SchoolPortalClassDetailDto? _detail;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (!_disabled)
+        {
+            await ReloadAsync();
+        }
+        else
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _detail = await Api.GetSchoolClassAsync(ClassId);
+            _actionError = null;
+        }
+        catch (Exception ex)
+        {
+            _actionError = ex.Message;
+            _detail = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task DownloadPdf()
+    {
+        _busy = true;
+        try { await Api.DownloadSchoolCodeListPdfAsync(Js, ClassId); }
+        catch (Exception ex) { _actionError = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task DownloadCsv()
+    {
+        _busy = true;
+        try { await Api.DownloadSchoolCodeListCsvAsync(Js, ClassId); }
+        catch (Exception ex) { _actionError = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task AddCodes()
+    {
+        _busy = true;
+        try
+        {
+            _detail = await Api.AddSchoolClassCodesAsync(ClassId, 1);
+        }
+        catch (Exception ex) { _actionError = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task ConfirmParents(bool confirmed)
+    {
+        _busy = true;
+        try
+        {
+            _detail = await Api.ConfirmSchoolParentalAsync(ClassId, confirmed);
+            _parentsCheck = false;
+        }
+        catch (Exception ex) { _actionError = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task OnWindowAction((string Action, DateOnly? ClosesOn) args)
+    {
+        _busy = true;
+        _windowError = null;
+        _windowFix = null;
+        try
+        {
+            _detail = await Api.SetSchoolTestWindowAsync(ClassId, args.Action, args.ClosesOn);
+            _windowOpen = false;
+        }
+        catch (Exception ex)
+        {
+            _windowError = ex.Message;
+            if (ex.Message.Contains("parental", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("ouders", StringComparison.OrdinalIgnoreCase))
+            {
+                _windowFix = $"/school/klassen/{ClassId}";
+            }
+            else if (ex.Message.Contains("processor", StringComparison.OrdinalIgnoreCase)
+                     || ex.Message.Contains("verwerker", StringComparison.OrdinalIgnoreCase))
+            {
+                _windowFix = "/school/privacy";
+            }
+        }
+        finally { _busy = false; }
+    }
+
+    private async Task ReplaceCode(Guid codeId)
+    {
+        if (!await Js.InvokeAsync<bool>("confirm", Culture["School.Codes.ReplaceConfirm"]))
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Api.ReplaceSchoolCodeAsync(ClassId, codeId);
+            await ReloadAsync();
+        }
+        catch (Exception ex) { _actionError = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task DeleteCode(Guid codeId)
+    {
+        if (!await Js.InvokeAsync<bool>("confirm", Culture["School.Codes.DeleteConfirm"]))
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Api.DeleteSchoolCodeAsync(ClassId, codeId);
+            await ReloadAsync();
+        }
+        catch (Exception ex) { _actionError = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task DeleteClass()
+    {
+        _busy = true;
+        try
+        {
+            await Api.DeleteSchoolClassAsync(ClassId, _deleteConfirm);
+            Nav.NavigateTo("/school/klassen");
+        }
+        catch (Exception ex) { _actionError = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private string StatusLabel(SchoolPortalCodeRowDto code) => code.Status switch
+    {
+        PupilCodeStatus.Completed => Culture["School.Status.Completed"],
+        PupilCodeStatus.InProgress => string.Format(Culture["School.Status.InProgress"], code.ProgressCurrent, code.ProgressTotal),
+        _ => Culture["School.Status.NotStarted"]
+    };
+
+    private static string StatusPill(PupilCodeStatus s) => s switch
+    {
+        PupilCodeStatus.Completed => "sch-pill--ok",
+        PupilCodeStatus.InProgress => "sch-pill--warn",
+        _ => "sch-pill--muted"
+    };
+
+    private static string Relative(DateTime utc)
+    {
+        var delta = DateTime.UtcNow - utc;
+        if (delta.TotalMinutes < 60) return $"{(int)delta.TotalMinutes} min";
+        if (delta.TotalHours < 24) return $"{(int)delta.TotalHours} u";
+        return utc.ToLocalTime().ToString("dd-MM");
+    }
+}

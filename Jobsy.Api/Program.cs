@@ -104,6 +104,8 @@ builder.Services.AddRateLimiter(options =>
         ?? (isProduction ? 30 : 10_000);
     var publicWriteLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicWritePermitLimit")
         ?? 60;
+    var pupilLimit = builder.Configuration.GetValue<int?>("RateLimiting:PupilPermitLimit")
+        ?? (isProduction ? 60 : 10_000);
     var internalClientIpSecret = builder.Configuration[RateLimitPartitioning.ConfigKey];
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -199,6 +201,16 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Global pupil API partition: 60 req/min per IP (HMAC partition in production).
+    options.AddPolicy("pupil", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = pupilLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 builder.Services.AddHsts(options =>
@@ -283,6 +295,7 @@ app.UseAuthentication();
 app.UseRateLimiter();
 app.UseLoginProtection();
 app.UseAuthorization();
+app.UseMiddleware<Jobsy.Api.Security.SchoolsFeatureMiddleware>();
 
 app.MapGet("/health", () => Results.Ok(new
     {

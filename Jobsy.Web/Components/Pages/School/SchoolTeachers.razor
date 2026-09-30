@@ -1,0 +1,293 @@
+@page "/school/leraren"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IPlatformFeatureService Features
+
+<PageTitle>@Culture["School.Teachers.Title"] · Lobsy</PageTitle>
+
+<header class="sch-page-header">
+    <h1>@Culture["School.Teachers.Title"]</h1>
+    <p class="muted">@Culture["School.Teachers.Lead"]</p>
+    <div class="sch-admin-toolbar">
+        <button type="button" class="btn-primary" @onclick="OpenInvite">@Culture["School.Teachers.Invite"]</button>
+    </div>
+</header>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else
+{
+    <div class="sch-filter-row">
+        <label>
+            @Culture["School.Col.Class"]
+            <select class="input" @bind="_filterClass">
+                <option value="">@Culture["School.Filter.All"]</option>
+                @foreach (var c in _classes)
+                {
+                    <option value="@c.Id">@c.ClassName</option>
+                }
+            </select>
+        </label>
+    </div>
+
+    <EntDataTable Loading="false" Empty="@(Filtered.Count == 0)" EmptyText="@Culture["School.Teachers.Empty"]">
+        <Header>
+            <th scope="col">@Culture["School.Teachers.Col.Name"]</th>
+            <th scope="col">@Culture["School.Teachers.Col.Email"]</th>
+            <th scope="col">@Culture["School.Teachers.Col.Classes"]</th>
+            <th scope="col">@Culture["School.Teachers.Col.Mfa"]</th>
+            <th scope="col">@Culture["School.Teachers.Col.Status"]</th>
+            <th scope="col">@Culture["School.Teachers.Col.LastLogin"]</th>
+            <th scope="col"></th>
+        </Header>
+        <Rows>
+            @foreach (var t in Filtered)
+            {
+                <tr class="ent-data-table__row">
+                    <td>@t.DisplayName</td>
+                    <td>@t.Email</td>
+                    <td>
+                        @foreach (var c in t.Classes)
+                        {
+                            <span class="sch-chip">@c.ClassName</span>
+                        }
+                    </td>
+                    <td>
+                        @if (t.AuthenticatorEnabled)
+                        {
+                            <span class="sch-pill sch-pill--ok">@Culture["School.Teachers.MfaOn"]</span>
+                        }
+                        else
+                        {
+                            <span class="sch-pill sch-pill--warn">@Culture["School.Teachers.MfaOff"]</span>
+                        }
+                    </td>
+                    <td>
+                        @(t.InvitePending
+                            ? Culture["School.Teachers.StatusInvited"]
+                            : Culture["School.Teachers.StatusActive"])
+                    </td>
+                    <td>@(t.LastLoginAtUtc?.ToLocalTime().ToString("dd-MM") ?? "—")</td>
+                    <td class="sch-row-actions">
+                        <button type="button" class="btn-compact" @onclick="() => OpenAssign(t)">@Culture["School.Teachers.Assign"]</button>
+                        <button type="button" class="btn-compact" @onclick="() => Resend(t.UserId)" disabled="@_busy">@Culture["School.Teachers.Resend"]</button>
+                        <button type="button" class="btn-outline-danger" @onclick="() => Remove(t.UserId)" disabled="@_busy">@Culture["School.Teachers.Remove"]</button>
+                    </td>
+                </tr>
+            }
+        </Rows>
+    </EntDataTable>
+}
+
+<EntDrawer @bind-Open="_inviteOpen" Title="@Culture["School.Teachers.Invite"]">
+    <p class="muted">@Culture["School.Teachers.InviteLead"]</p>
+    <label>
+        @Culture["School.Teachers.Field.Name"]
+        <InputText class="input" @bind-Value="_inviteName" />
+    </label>
+    <label>
+        @Culture["School.Teachers.Field.Email"]
+        <InputText class="input" @bind-Value="_inviteEmail" />
+    </label>
+    @if (!string.IsNullOrEmpty(_domainHint))
+    {
+        <p class="muted">@string.Format(Culture["School.Teachers.DomainHint"], _domainHint)</p>
+    }
+    <div class="sch-info-box">@Culture["School.Teachers.ScopeNote"]</div>
+    <fieldset class="sch-check-list">
+        <legend>@Culture["School.Teachers.Field.Classes"]</legend>
+        @foreach (var c in _classes)
+        {
+            <label class="filter-check">
+                <input type="checkbox" checked="@_inviteClasses.Contains(c.Id)"
+                       @onchange="e => ToggleInviteClass(c.Id, (bool)(e.Value ?? false))" />
+                @c.ClassName
+            </label>
+        }
+    </fieldset>
+    <div class="sch-info-box sch-info-box--locked">
+        <strong>@Culture["School.Teachers.MfaLocked"]</strong>
+        <p>@Culture["School.Teachers.MfaLockedHelp"]</p>
+    </div>
+    @if (!string.IsNullOrEmpty(_drawerError))
+    {
+        <p class="state-message error">@_drawerError</p>
+    }
+    <div class="sch-drawer-actions">
+        <button type="button" class="btn-compact" @onclick="() => _inviteOpen = false">@Culture["School.Cancel"]</button>
+        <button type="button" class="btn-primary" disabled="@_busy" @onclick="SendInvite">@Culture["School.Teachers.SendInvite"]</button>
+    </div>
+</EntDrawer>
+
+<EntDrawer @bind-Open="_assignOpen" Title="@Culture["School.Teachers.Assign"]">
+    @if (_assignTarget is not null)
+    {
+        <p>@_assignTarget.DisplayName</p>
+        <fieldset class="sch-check-list">
+            @foreach (var c in _classes)
+            {
+                <label class="filter-check">
+                    <input type="checkbox" checked="@_assignClasses.Contains(c.Id)"
+                           @onchange="e => ToggleAssignClass(c.Id, (bool)(e.Value ?? false))" />
+                    @c.ClassName
+                </label>
+            }
+        </fieldset>
+        @if (!string.IsNullOrEmpty(_drawerError))
+        {
+            <p class="state-message error">@_drawerError</p>
+        }
+        <div class="sch-drawer-actions">
+            <button type="button" class="btn-compact" @onclick="() => _assignOpen = false">@Culture["School.Cancel"]</button>
+            <button type="button" class="btn-primary" disabled="@_busy" @onclick="SaveAssign">@Culture["School.Save"]</button>
+        </div>
+    }
+</EntDrawer>
+
+@code {
+    private bool _disabled;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _inviteOpen;
+    private bool _assignOpen;
+    private string _filterClass = "";
+    private string? _drawerError;
+    private string? _domainHint;
+    private string _inviteName = "";
+    private string _inviteEmail = "";
+    private List<SchoolPortalTeacherListItemDto> _teachers = [];
+    private List<SchoolPortalClassListItemDto> _classes = [];
+    private readonly HashSet<Guid> _inviteClasses = [];
+    private readonly HashSet<Guid> _assignClasses = [];
+    private SchoolPortalTeacherListItemDto? _assignTarget;
+
+    private IReadOnlyList<SchoolPortalTeacherListItemDto> Filtered
+    {
+        get
+        {
+            if (!Guid.TryParse(_filterClass, out var id))
+            {
+                return _teachers;
+            }
+
+            return _teachers.Where(t => t.Classes.Any(c => c.ClassId == id)).ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (!_disabled)
+        {
+            await ReloadAsync();
+            var profile = await Api.GetSchoolProfileAsync();
+            _domainHint = profile?.AllowedEmailDomains.FirstOrDefault();
+        }
+        else
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _teachers = (await Api.GetSchoolTeachersAsync()).ToList();
+        _classes = (await Api.GetSchoolClassesAsync()).ToList();
+        _loading = false;
+    }
+
+    private void OpenInvite()
+    {
+        _inviteName = "";
+        _inviteEmail = "";
+        _inviteClasses.Clear();
+        _drawerError = null;
+        _inviteOpen = true;
+    }
+
+    private void ToggleInviteClass(Guid id, bool on)
+    {
+        if (on) _inviteClasses.Add(id); else _inviteClasses.Remove(id);
+    }
+
+    private void ToggleAssignClass(Guid id, bool on)
+    {
+        if (on) _assignClasses.Add(id); else _assignClasses.Remove(id);
+    }
+
+    private async Task SendInvite()
+    {
+        _busy = true;
+        _drawerError = null;
+        try
+        {
+            await Api.InviteSchoolTeacherAsync(new InviteTeacherRequest(
+                _inviteName, _inviteEmail, _inviteClasses.ToList()));
+            _inviteOpen = false;
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _drawerError = ex.Message;
+        }
+        finally { _busy = false; }
+    }
+
+    private void OpenAssign(SchoolPortalTeacherListItemDto t)
+    {
+        _assignTarget = t;
+        _assignClasses.Clear();
+        foreach (var c in t.Classes)
+        {
+            _assignClasses.Add(c.ClassId);
+        }
+
+        _drawerError = null;
+        _assignOpen = true;
+    }
+
+    private async Task SaveAssign()
+    {
+        if (_assignTarget is null) return;
+        _busy = true;
+        try
+        {
+            await Api.AssignSchoolTeacherClassesAsync(_assignTarget.UserId, _assignClasses.ToList());
+            _assignOpen = false;
+            await ReloadAsync();
+        }
+        catch (Exception ex) { _drawerError = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task Resend(Guid id)
+    {
+        _busy = true;
+        try { await Api.ResendSchoolTeacherInviteAsync(id); await ReloadAsync(); }
+        catch { /* surface via reload */ }
+        finally { _busy = false; }
+    }
+
+    private async Task Remove(Guid id)
+    {
+        _busy = true;
+        try { await Api.RemoveSchoolTeacherAsync(id); await ReloadAsync(); }
+        catch { }
+        finally { _busy = false; }
+    }
+}

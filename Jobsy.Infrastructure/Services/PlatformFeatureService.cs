@@ -88,7 +88,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.SupportAccessNotifySubject = notifySubject;
         }
 
-        if (update.CandidateInsightsEnabled is bool insightsEnabled)
+if (update.CandidateInsightsEnabled is bool insightsEnabled)
         {
             row.CandidateInsightsEnabled = insightsEnabled;
         }
@@ -105,6 +105,25 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         if (update.CandidateInsightsUnlockPerBranch is bool perBranch)
         {
             row.CandidateInsightsUnlockPerBranch = perBranch;
+        }
+
+        if (update.SchoolsEnabled is bool schoolsEnabled)
+        {
+            row.SchoolsEnabled = schoolsEnabled;
+        }
+
+        if (update.SchoolPerCodeResultsEnabled is bool perCode)
+        {
+            row.SchoolPerCodeResultsEnabled = perCode;
+        }
+
+        if (update.SchoolRetentionCutoffMonth is int || update.SchoolRetentionCutoffDay is int)
+        {
+            var month = update.SchoolRetentionCutoffMonth ?? row.SchoolRetentionCutoffMonth;
+            var day = update.SchoolRetentionCutoffDay ?? row.SchoolRetentionCutoffDay;
+            Jobsy.Core.Scholen.SchoolYear.ValidateCutoff(month, day);
+            row.SchoolRetentionCutoffMonth = month;
+            row.SchoolRetentionCutoffDay = day;
         }
 
         // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
@@ -221,10 +240,18 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MinimumSessionVersion ?? 0,
             row?.SupportAccessNotifyAdmins ?? false,
             row?.SupportAccessNotifySubject ?? false,
-            row?.CandidateInsightsEnabled ?? true,
+row?.CandidateInsightsEnabled ?? true,
             row is null
                 ? CandidateInsightsAccess.DefaultUnlockDays
                 : CandidateInsightsAccess.ClampUnlockDays(row.CandidateInsightsUnlockDays),
-            row?.CandidateInsightsUnlockPerBranch ?? false);
+            row?.CandidateInsightsUnlockPerBranch ?? false,
+            row?.SchoolsEnabled ?? false,
+            row?.SchoolPerCodeResultsEnabled ?? true,
+            row?.SchoolRetentionCutoffMonth is >= 1 and <= 12
+                ? row.SchoolRetentionCutoffMonth
+                : 7,
+            row?.SchoolRetentionCutoffDay is >= 1 and <= 31
+                ? row.SchoolRetentionCutoffDay
+                : 31);
     }
 }

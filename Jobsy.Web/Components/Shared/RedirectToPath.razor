@@ -1,0 +1,13 @@
+@inject NavigationManager Nav
+
+@code {
+    [Parameter] public string Path { get; set; } = "/";
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrWhiteSpace(Path))
+        {
+            Nav.NavigateTo(Path, forceLoad: false);
+        }
+    }
+}

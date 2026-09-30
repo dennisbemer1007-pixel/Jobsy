@@ -30,6 +30,11 @@ public class User
     public Guid? CompanyId { get; set; }
     public Company? Company { get; set; }
 
+    /// <summary>
+    /// School for SchoolAdmin and Teacher. One school per staff account. Null for all other roles.
+    /// </summary>
+    public Guid? SchoolId { get; set; }
+
     public DateOnly? DateOfBirth { get; set; }
     public bool OpenForWork { get; set; }
 

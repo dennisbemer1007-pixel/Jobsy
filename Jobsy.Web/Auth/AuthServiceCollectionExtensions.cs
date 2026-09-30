@@ -77,6 +77,49 @@ public static class AuthServiceCollectionExtensions
                     return Task.CompletedTask;
                 };
                 options.Events.OnValidatePrincipal = ValidatePrincipalSessionVersionAsync;
+            })
+            .AddCookie(PupilAuthDefaults.Scheme, options =>
+            {
+                options.Cookie.Name = PupilAuthDefaults.CookieName;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.Cookie.SecurePolicy = secureAlways
+                    ? CookieSecurePolicy.Always
+                    : CookieSecurePolicy.SameAsRequest;
+                options.Cookie.Path = "/";
+                options.SlidingExpiration = true;
+                options.ExpireTimeSpan = PupilAuthDefaults.IdleTimeout;
+                options.LoginPath = "/leerling";
+                options.AccessDeniedPath = "/leerling";
+                options.Events.OnSigningIn = context =>
+                {
+                    context.Properties.IsPersistent = false;
+                    context.Properties.AllowRefresh = true;
+                    context.Properties.ExpiresUtc = null;
+                    return Task.CompletedTask;
+                };
+                options.Events.OnValidatePrincipal = async context =>
+                {
+                    var principal = context.Principal;
+                    if (principal?.Identity?.IsAuthenticated != true)
+                    {
+                        return;
+                    }
+
+                    if (!long.TryParse(principal.FindFirst(PupilClaimTypes.IssuedAt)?.Value, out var iatUnix))
+                    {
+                        context.RejectPrincipal();
+                        await context.HttpContext.SignOutAsync(PupilAuthDefaults.Scheme);
+                        return;
+                    }
+
+                    if (DateTimeOffset.UtcNow - DateTimeOffset.FromUnixTimeSeconds(iatUnix)
+                        > PupilAuthDefaults.AbsoluteTimeout)
+                    {
+                        context.RejectPrincipal();
+                        await context.HttpContext.SignOutAsync(PupilAuthDefaults.Scheme);
+                    }
+                };
             });
 
         // Always register schemes so Integraties credentials can activate login without env vars.
@@ -208,7 +251,19 @@ public static class AuthServiceCollectionExtensions
             };
         });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy(JobsyPolicies.PupilSession, policy =>
+            {
+                policy.AddAuthenticationSchemes(PupilAuthDefaults.Scheme);
+                policy.RequireAuthenticatedUser();
+                policy.RequireClaim(PupilClaimTypes.PupilCodeId);
+                policy.RequireClaim(PupilClaimTypes.ClassId);
+                policy.RequireClaim(PupilClaimTypes.SchoolId);
+                policy.RequireClaim(PupilClaimTypes.SessionVersion);
+                policy.RequireClaim(PupilClaimTypes.IssuedAt);
+            });
+        });
         services.AddCascadingAuthenticationState();
         services.AddHttpContextAccessor();
         services.AddAntiforgery(options =>
@@ -1307,6 +1362,11 @@ public static class AuthServiceCollectionExtensions
             identity.RemoveClaim(existing);
         }
 
+        foreach (var existing in identity.FindAll(JobsyClaimTypes.SchoolId).ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
         foreach (var existing in identity.FindAll(JobsyClaimTypes.HasCandidateApplications).ToList())
         {
             identity.RemoveClaim(existing);
@@ -1337,6 +1397,11 @@ public static class AuthServiceCollectionExtensions
             identity.AddClaim(new Claim(
                 JobsyClaimTypes.CompanyIds,
                 string.Join(',', profile.CompanyIds)));
+        }
+
+        if (profile.SchoolId is Guid schoolId)
+        {
+            identity.AddClaim(new Claim(JobsyClaimTypes.SchoolId, schoolId.ToString()));
         }
 
         if (profile.HasCandidateApplications)
@@ -1407,6 +1472,7 @@ public static class AuthServiceCollectionExtensions
         public string Role { get; set; } = "Candidate";
         public Guid? CompanyId { get; set; }
         public List<Guid>? CompanyIds { get; set; }
+        public Guid? SchoolId { get; set; }
         public bool ShowCandidateHowTo { get; set; }
         public bool HasCandidateApplications { get; set; }
         public bool HasSalesReferral { get; set; }
@@ -1434,6 +1500,8 @@ public static class AuthServiceCollectionExtensions
         "admin" or "administrator" => "Admin",
         "salesmanager" or "sales" => "SalesManager",
         "ambassadeur" or "ambassador" => "Ambassadeur",
+        "schooladmin" or "schoolbeheerder" => "SchoolAdmin",
+        "teacher" or "leraar" => "Teacher",
         _ => "Candidate"
     };
 }

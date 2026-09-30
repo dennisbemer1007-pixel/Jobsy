@@ -1,0 +1,212 @@
+@page "/leerling/droombaan"
+@layout LeerlingLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Rules
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+<PageTitle>@Culture["LeerlingDroom.Title"] · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_result is null)
+{
+    <section class="ll-card">
+        <p class="state-message error">@Culture["Leerling.Session.Lost"]</p>
+    </section>
+}
+else
+{
+    <div class="ll-reis ll-dream" data-testid="leerling-droombaan">
+        <div class="ll-result__mascot">
+            <LeerlingLobster PlatesShed="10" Size="96" />
+            <p class="ll-bubble">@LobsterLine</p>
+        </div>
+
+        <section class="ll-card">
+            <p class="ll-question__world">@Culture["LeerlingDroom.Title"]</p>
+            <h1>@Culture["LeerlingDroom.Lead"]</h1>
+
+            <label class="ll-field">
+                <span class="visually-hidden">@Culture["LeerlingDroom.Search"]</span>
+                <input type="search"
+                       value="@_search"
+                       @oninput="OnSearch"
+                       placeholder="@Culture["LeerlingDroom.Search"]"
+                       autocomplete="off" />
+            </label>
+
+            @if (_matches.Count > 0)
+            {
+                <ul class="ll-dream__matches">
+                    @foreach (var job in _matches)
+                    {
+                        <li>
+                            <button type="button" class="ll-dream__pick" @onclick="() => SelectJob(job.Key)">
+                                @job.TitleNl
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+
+            <button type="button" class="btn-secondary ll-dream__undecided" @onclick="() => SelectJob(PupilDreamJobFit.UndecidedKey)">
+                @Culture["LeerlingDroom.Undecided"]
+            </button>
+
+            @if (_dream is not null && !string.IsNullOrWhiteSpace(_dream.JobKey)
+                 && !string.Equals(_dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
+            {
+                <p class="ll-dream__progress">
+                    @string.Format(Culture["LeerlingDroom.Progress"], _dream.HaveCount)
+                </p>
+                <div class="ll-stars" aria-hidden="true">
+                    @for (var i = 0; i < 5; i++)
+                    {
+                        <span class="ll-star @(i < _dream.HaveCount ? "is-on" : null)">★</span>
+                    }
+                </div>
+
+                <h2 class="ll-result__sub">@Culture["LeerlingDroom.HaveTitle"]</h2>
+                <ul class="ll-dream__list ll-dream__list--have">
+                    @foreach (var item in _dream.HaveItems)
+                    {
+                        <li>@item</li>
+                    }
+                </ul>
+
+                @if (_dream.LearnItems.Count > 0)
+                {
+                    <h2 class="ll-result__sub">@Culture["LeerlingDroom.NeedTitle"]</h2>
+                    <ul class="ll-dream__list ll-dream__list--need">
+                        @foreach (var item in _dream.LearnItems)
+                        {
+                            <li>@item</li>
+                        }
+                    </ul>
+                }
+
+                <ol class="ll-stepper">
+                    @{ var n = 1; }
+                    @foreach (var step in _dream.RouteSteps)
+                    {
+                        var isGoal = n == _dream.RouteSteps.Count;
+                        <li class="@(isGoal ? "is-goal" : null)">
+                            <span class="ll-stepper__n">@(isGoal ? "★" : n.ToString())</span>
+                            <span>@step</span>
+                        </li>
+                        n++;
+                    }
+                </ol>
+
+                @if (!string.IsNullOrWhiteSpace(_dream.Encouragement))
+                {
+                    <p class="ll-dream__cheer">@_dream.Encouragement</p>
+                }
+            }
+            else if (string.Equals(_dream?.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
+            {
+                <h2 class="ll-result__sub">@Culture["LeerlingStory.JobsTitle"]</h2>
+                <div class="ll-chips__row">
+                    @foreach (var job in _result.Story.JobIdeas)
+                    {
+                        <span class="ll-job-idea">@job</span>
+                    }
+                </div>
+                <p>@Culture["LeerlingDroom.UndecidedHint"]</p>
+            }
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="ll-error" role="alert">@_error</p>
+            }
+        </section>
+
+        <div class="ll-result__actions">
+            <a class="btn-secondary" href="/leerling/dit-ben-jij">@Culture["LeerlingDroom.OtherJob"]</a>
+            <a class="btn-primary" href="/leerling/pdf">@Culture["LeerlingDroom.SavePdf"]</a>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private PupilResultPageDto? _result;
+    private DreamJobRouteStubDto? _dream;
+    private string _search = "";
+    private IReadOnlyList<DreamJob> _matches = [];
+    private string? _error;
+
+    private string LobsterLine =>
+        !string.IsNullOrWhiteSpace(_dream?.JobTitle)
+            ? $"{_dream.JobTitle}? Wauw!"
+            : Culture["LeerlingDroom.Lobster.Generic"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        try
+        {
+            _result = await Api.GetPupilResultAsync();
+            _dream = _result?.DreamJob;
+            if (!string.IsNullOrWhiteSpace(_result?.DreamJobKey)
+                && !string.Equals(_result.DreamJobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
+            {
+                var job = DreamJobCatalog.All.FirstOrDefault(j =>
+                    string.Equals(j.Key, _result.DreamJobKey, StringComparison.OrdinalIgnoreCase));
+                if (job is not null)
+                {
+                    _search = job.TitleNl;
+                }
+            }
+        }
+        catch
+        {
+            _result = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OnSearch(ChangeEventArgs e)
+    {
+        _search = e.Value?.ToString() ?? "";
+        _matches = string.IsNullOrWhiteSpace(_search) ? [] : DreamJobCatalog.Search(_search, 8);
+    }
+
+    private async Task SelectJob(string key)
+    {
+        _error = null;
+        try
+        {
+            var resp = await Api.SavePupilDreamJobAsync(key);
+            if (resp is null)
+            {
+                _error = "Kon droombaan niet bewaren.";
+                return;
+            }
+
+            _dream = resp.DreamJob;
+            if (!string.Equals(key, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
+            {
+                _search = resp.DreamJob.JobTitle ?? _search;
+            }
+
+            _matches = [];
+        }
+        catch
+        {
+            _error = "Kon droombaan niet bewaren.";
+        }
+    }
+}

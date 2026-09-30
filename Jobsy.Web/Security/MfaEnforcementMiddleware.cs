@@ -78,7 +78,8 @@ public sealed class MfaEnforcementMiddleware
            || path.StartsWithSegments("/media")
            || path.StartsWithSegments("/favicon")
            || path.StartsWithSegments("/manifest")
-           || path.StartsWithSegments("/service-worker");
+           || path.StartsWithSegments("/service-worker")
+           || path.StartsWithSegments("/leerling");
 }
 
 public static class MfaEnforcementMiddlewareExtensions

@@ -49,7 +49,7 @@ public class PlatformFeatureSettings
     /// </summary>
     public bool SupportAccessNotifySubject { get; set; }
 
-    /// <summary>When false, Kandidaatinzichten nav/API are hidden/404 (D18). Default true.</summary>
+/// <summary>When false, Kandidaatinzichten nav/API are hidden/404 (D18). Default true.</summary>
     public bool CandidateInsightsEnabled { get; set; } = true;
 
     /// <summary>Paid unlock duration in days (7–365). Default 90. Snapshot on purchase.</summary>
@@ -60,6 +60,20 @@ public class PlatformFeatureSettings
     /// When false (default), unlock is organisation-wide (BM only).
     /// </summary>
     public bool CandidateInsightsUnlockPerBranch { get; set; }
+
+    // —— Scholen (moves into PlatformSettingsCatalog group "Scholen") ——
+
+    /// <summary>Master switch for school/teacher/pupil surfaces. Retention always runs. Default false.</summary>
+    public bool SchoolsEnabled { get; set; }
+
+    /// <summary>When true, schoolbeheerders see per-code short results. Default true.</summary>
+    public bool SchoolPerCodeResultsEnabled { get; set; } = true;
+
+    /// <summary>Retention cutoff month (1–12). Default 7 (July).</summary>
+    public int SchoolRetentionCutoffMonth { get; set; } = 7;
+
+    /// <summary>Retention cutoff day. Default 31.</summary>
+    public int SchoolRetentionCutoffDay { get; set; } = 31
 
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

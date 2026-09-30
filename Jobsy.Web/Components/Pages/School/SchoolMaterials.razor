@@ -1,0 +1,49 @@
+@page "/school/materiaal"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SchoolAdmin")]
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@inject CultureState Culture
+@inject IPlatformFeatureService Features
+
+<PageTitle>@Culture["School.Material.Title"] · Lobsy</PageTitle>
+
+<header class="sch-page-header">
+    <h1>@Culture["School.Material.Title"]</h1>
+    <p class="muted">@Culture["School.Material.Lead"]</p>
+</header>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else
+{
+    <section class="sch-card">
+        <h2>@Culture["School.Material.Lesbrief"]</h2>
+        <p>@Culture["School.Material.LesbriefBody"]</p>
+        <a class="btn-primary" href="/docs/scholen/lesbrief-lobsy.html" target="_blank" rel="noopener">@Culture["School.Material.OpenLesbrief"]</a>
+        <p class="muted">@Culture["School.Material.OnDemandNote"]</p>
+    </section>
+
+    <section class="sch-card">
+        <h2>@Culture["School.Material.LoginSteps"]</h2>
+        <ol class="sch-steps">
+            <li>@Culture["School.Material.Step1"]</li>
+            <li>@Culture["School.Material.Step2"]</li>
+            <li>@Culture["School.Material.Step3"]</li>
+            <li>@Culture["School.Material.Step4"]</li>
+        </ol>
+    </section>
+}
+
+@code {
+    private bool _disabled;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+    }
+}

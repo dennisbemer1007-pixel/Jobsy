@@ -22,9 +22,13 @@ public sealed record PlatformFeatureSnapshot(
     int MinimumSessionVersion = 0,
     bool SupportAccessNotifyAdmins = false,
     bool SupportAccessNotifySubject = false,
-    bool CandidateInsightsEnabled = true,
+bool CandidateInsightsEnabled = true,
     int CandidateInsightsUnlockDays = 90,
-    bool CandidateInsightsUnlockPerBranch = false);
+    bool CandidateInsightsUnlockPerBranch = false,
+    bool SchoolsEnabled = false,
+    bool SchoolPerCodeResultsEnabled = true,
+    int SchoolRetentionCutoffMonth = 7,
+    int SchoolRetentionCutoffDay = 31);
 
 /// <summary>
 /// Partial platform-feature update. Null fields keep the current value (nullable = keep).
@@ -46,6 +50,14 @@ public sealed record PlatformFeatureUpdate(
     int? MinimumSessionVersion = null,
     bool? SupportAccessNotifyAdmins = null,
     bool? SupportAccessNotifySubject = null,
-    bool? CandidateInsightsEnabled = null,
+bool? CandidateInsightsEnabled = null,
     int? CandidateInsightsUnlockDays = null,
-    bool? CandidateInsightsUnlockPerBranch = null);
+    bool? CandidateInsightsUnlockPerBranch = null,
+    /// <summary>Null = keep existing.</summary>
+    bool? SchoolsEnabled = null,
+    /// <summary>Null = keep existing.</summary>
+    bool? SchoolPerCodeResultsEnabled = null,
+    /// <summary>Null = keep existing.</summary>
+    int? SchoolRetentionCutoffMonth = null,
+    /// <summary>Null = keep existing.</summary>
+    int? SchoolRetentionCutoffDay = null);

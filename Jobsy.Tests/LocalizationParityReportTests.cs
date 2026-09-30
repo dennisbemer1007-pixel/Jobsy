@@ -29,7 +29,10 @@ public sealed class LocalizationParityReportTests
         foreach (var lang in Languages)
         {
             Assert.True(catalog.ContainsKey(lang), $"Missing language catalog: {lang}");
-            var missing = nlKeys.Where(k => !catalog[lang].ContainsKey(k)).ToList();
+            // D12: Scholen module keys are nl-only; other languages fall back via UiStrings.Get.
+            var missing = nlKeys
+                .Where(k => !UiStringsScholen.IsNlOnlyPrefix(k) && !catalog[lang].ContainsKey(k))
+                .ToList();
             Assert.True(
                 missing.Count == 0,
                 $"Language {lang} missing {missing.Count} keys. First: {string.Join(", ", missing.Take(10))}");
@@ -56,6 +59,12 @@ public sealed class LocalizationParityReportTests
             var exempt = 0;
             foreach (var (key, nlValue) in nl)
             {
+                if (UiStringsScholen.IsNlOnlyPrefix(key))
+                {
+                    // D12: Dutch-only Scholen modules — not counted toward identical-to-nl debt.
+                    continue;
+                }
+
                 if (!map.TryGetValue(key, out var value) || value != nlValue)
                 {
                     continue;

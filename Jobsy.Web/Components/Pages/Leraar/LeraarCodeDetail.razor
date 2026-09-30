@@ -1,0 +1,221 @@
+@page "/leraar/klas/{ClassId:guid}/code/{CodeId:guid}"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IPlatformFeatureService Features
+@inject IJSRuntime Js
+
+<PageTitle>@(_detail?.DisplayCode ?? Culture["Leraar.Detail.Title"]) · Lobsy</PageTitle>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_detail is null)
+{
+    <p class="state-message error">@Culture["Leraar.Class.NotFound"]</p>
+}
+else if (_detail.Status != PupilCodeStatus.Completed)
+{
+    <header class="sch-page-header">
+        <p class="sch-breadcrumb">
+            <a href="@($"/leraar/klas/{ClassId:D}")">Klas @_detail.ClassName</a> /
+            <a href="@($"/leraar/klas/{ClassId:D}/codes")">@Culture["Leraar.Codes.Title"]</a> /
+            @_detail.DisplayCode
+        </p>
+        <h1>@_detail.DisplayCode</h1>
+    </header>
+    <p class="sch-empty-state panel-section">
+        @string.Format(Culture["Leraar.Detail.InProgress"], _detail.ProgressCurrent, _detail.ProgressTotal)
+    </p>
+}
+else
+{
+    <header class="sch-page-header" data-testid="leraar-code-detail">
+        <p class="sch-breadcrumb">
+            <a href="@($"/leraar/klas/{ClassId:D}")">Klas @_detail.ClassName</a> /
+            <a href="@($"/leraar/klas/{ClassId:D}/codes")">@Culture["Leraar.Codes.Title"]</a> /
+            @_detail.DisplayCode
+        </p>
+        <h1>@_detail.DisplayCode</h1>
+        <p class="muted">
+            Klas @_detail.ClassName
+            @if (_detail.CompletedAtUtc is DateTime done)
+            {
+                <span> · @Culture["Leraar.Detail.CompletedOn"] @done.ToLocalTime().ToString("dd-MM-yyyy")</span>
+            }
+            · @_detail.ProgressCurrent @_detail.ProgressTotal @Culture["Leraar.Detail.Questions"]
+            @if (_detail.DurationMinutes is int mins)
+            {
+                <span> · @mins min</span>
+            }
+        </p>
+        <div class="sch-admin-toolbar">
+            <button type="button" class="btn-primary" disabled="@_pdfBusy" @onclick="DownloadPdf">
+                @Culture["Leraar.Detail.Pdf"]
+            </button>
+        </div>
+        <p class="sch-banner-info">@Culture["Leraar.Detail.NoNameNote"]</p>
+        <p class="muted">@Culture["Leraar.Detail.OwnListHint"]</p>
+    </header>
+
+    <div class="sch-detail-grid">
+        <div>
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Detail.StoryTitle"]</h2>
+                @if (_detail.Story is not null)
+                {
+                    <p>@_detail.Story.Body</p>
+                    <div class="sch-tile-grid">
+                        @foreach (var tile in _detail.Story.Tiles)
+                        {
+                            <div class="sch-tile">
+                                <p class="sch-tile__label">@tile.KidLabel</p>
+                                <p class="sch-tile__value">@tile.Explanation</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Detail.Likes"]</h2>
+                <div class="sch-chip-list">
+                    @foreach (var chip in _detail.Likes)
+                    {
+                        <span class="sch-chip">@chip</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_detail.LikeOtherWord))
+                    {
+                        <span class="sch-chip">@_detail.LikeOtherWord</span>
+                    }
+                </div>
+                <h2>@Culture["Leraar.Detail.Dislikes"]</h2>
+                <div class="sch-chip-list">
+                    @foreach (var chip in _detail.Dislikes)
+                    {
+                        <span class="sch-chip">@chip</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_detail.DislikeOtherWord))
+                    {
+                        <span class="sch-chip">@_detail.DislikeOtherWord</span>
+                    }
+                </div>
+            </section>
+
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Detail.Starters"]</h2>
+                <ul class="sch-prompt-list">
+                    @foreach (var line in _detail.ConversationStarterKeys)
+                    {
+                        <li>@line</li>
+                    }
+                </ul>
+            </section>
+        </div>
+
+        <aside>
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Detail.DreamTitle"]</h2>
+                <p class="muted">@Culture["Leraar.Detail.DreamLead"]</p>
+                @if (_detail.DreamJob is null || string.IsNullOrWhiteSpace(_detail.DreamJob.JobKey)
+                     || string.Equals(_detail.DreamJob.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
+                {
+                    <p>@Culture["Leraar.DreamJobs.Undecided"]</p>
+                }
+                else
+                {
+                    <p class="sch-dream-title">@(_detail.DreamJob.JobTitle ?? _detail.DreamJob.JobKey)</p>
+                    <p class="muted">
+                        @string.Format(Culture["Leraar.Detail.DreamProgress"], _detail.DreamJob.HaveCount, _detail.DreamJob.TotalCount)
+                    </p>
+                    @if (_detail.DreamJob.HaveItems.Count > 0)
+                    {
+                        <h3 class="sch-subhead">@Culture["LeerlingDroom.HaveTitle"]</h3>
+                        <ul class="sch-prompt-list">
+                            @foreach (var item in _detail.DreamJob.HaveItems)
+                            {
+                                <li>@item</li>
+                            }
+                        </ul>
+                    }
+                    @if (_detail.DreamJob.LearnItems.Count > 0)
+                    {
+                        <h3 class="sch-subhead">@Culture["LeerlingDroom.NeedTitle"]</h3>
+                        <ul class="sch-prompt-list">
+                            @foreach (var item in _detail.DreamJob.LearnItems)
+                            {
+                                <li>@item</li>
+                            }
+                        </ul>
+                    }
+                    @if (_detail.DreamJob.RouteSteps.Count > 0)
+                    {
+                        <ol class="sch-prompt-list">
+                            @foreach (var step in _detail.DreamJob.RouteSteps)
+                            {
+                                <li>@step</li>
+                            }
+                        </ol>
+                    }
+                    <p class="muted">@Culture["Leraar.Detail.NoLinksNote"]</p>
+                }
+            </section>
+        </aside>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid ClassId { get; set; }
+    [Parameter] public Guid CodeId { get; set; }
+
+    private bool _disabled;
+    private bool _loading = true;
+    private bool _pdfBusy;
+    private TeacherCodeDetailDto? _detail;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (_disabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        _loading = true;
+        try { _detail = await Api.GetTeacherCodeDetailAsync(ClassId, CodeId); }
+        catch { _detail = null; }
+        finally { _loading = false; }
+    }
+
+    private async Task DownloadPdf()
+    {
+        if (_detail is null || _pdfBusy)
+        {
+            return;
+        }
+
+        _pdfBusy = true;
+        try
+        {
+            await Api.DownloadTeacherPupilReportPdfAsync(Js, ClassId, CodeId, _detail.ClassName);
+        }
+        finally
+        {
+            _pdfBusy = false;
+        }
+    }
+}

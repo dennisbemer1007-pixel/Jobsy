@@ -385,9 +385,13 @@ public class SettingsController : ControllerBase
                     request.ClearFreePublishUntil,
                     SupportAccessNotifyAdmins: request.SupportAccessNotifyAdmins,
                     SupportAccessNotifySubject: request.SupportAccessNotifySubject,
-                    CandidateInsightsEnabled: request.CandidateInsightsEnabled,
+CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     CandidateInsightsUnlockDays: request.CandidateInsightsUnlockDays,
-                    CandidateInsightsUnlockPerBranch: request.CandidateInsightsUnlockPerBranch),
+                    CandidateInsightsUnlockPerBranch: request.CandidateInsightsUnlockPerBranch,
+                    SchoolsEnabled: request.SchoolsEnabled,
+                    SchoolPerCodeResultsEnabled: request.SchoolPerCodeResultsEnabled,
+                    SchoolRetentionCutoffMonth: request.SchoolRetentionCutoffMonth,
+                    SchoolRetentionCutoffDay: request.SchoolRetentionCutoffDay),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -451,6 +455,10 @@ public class SettingsController : ControllerBase
         Add("CandidateInsightsEnabled", before.CandidateInsightsEnabled.ToString(), after.CandidateInsightsEnabled.ToString());
         Add("CandidateInsightsUnlockDays", before.CandidateInsightsUnlockDays.ToString(), after.CandidateInsightsUnlockDays.ToString());
         Add("CandidateInsightsUnlockPerBranch", before.CandidateInsightsUnlockPerBranch.ToString(), after.CandidateInsightsUnlockPerBranch.ToString());
+        Add("SchoolsEnabled", before.SchoolsEnabled.ToString(), after.SchoolsEnabled.ToString());
+        Add("SchoolPerCodeResultsEnabled", before.SchoolPerCodeResultsEnabled.ToString(), after.SchoolPerCodeResultsEnabled.ToString());
+        Add("SchoolRetentionCutoffMonth", before.SchoolRetentionCutoffMonth.ToString(), after.SchoolRetentionCutoffMonth.ToString());
+        Add("SchoolRetentionCutoffDay", before.SchoolRetentionCutoffDay.ToString(), after.SchoolRetentionCutoffDay.ToString());
         return list;
     }
 
@@ -672,9 +680,13 @@ public class SettingsController : ControllerBase
             snap.FreePublishUntil,
             snap.SupportAccessNotifyAdmins,
             snap.SupportAccessNotifySubject,
-            snap.CandidateInsightsEnabled,
+snap.CandidateInsightsEnabled,
             snap.CandidateInsightsUnlockDays,
-            snap.CandidateInsightsUnlockPerBranch);
+            snap.CandidateInsightsUnlockPerBranch,
+            snap.SchoolsEnabled,
+            snap.SchoolPerCodeResultsEnabled,
+            snap.SchoolRetentionCutoffMonth,
+            snap.SchoolRetentionCutoffDay);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

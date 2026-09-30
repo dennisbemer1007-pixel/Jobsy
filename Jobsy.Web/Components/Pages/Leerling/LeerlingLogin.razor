@@ -1,0 +1,134 @@
+@page "/leerling"
+@layout LeerlingLayout
+@attribute [AllowAnonymous]
+@using System.Security.Claims
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Nav
+
+<PageTitle>@Culture["Leerling.LoginTitle"] · Lobsy</PageTitle>
+
+<div class="ll-login">
+    <LeerlingScene Depth="0" IsMobile="true" />
+    <div class="ll-login__intro">
+        <LeerlingLobster PlatesShed="0" Mobile="true" Size="88" Label="Lobsy" />
+        <p class="ll-bubble">@Culture["Leerling.Login.Bubble"]</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_staffBlock))
+    {
+        <div class="ll-card ll-card--warn" role="alert">
+            <p>@_staffBlock</p>
+        </div>
+    }
+    else
+    {
+        <section class="ll-card">
+            <h1>@Culture["Leerling.Login.Heading"]</h1>
+            <p class="muted">@Culture["Leerling.Login.Lead"]</p>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="ll-error" role="alert">@_error</p>
+            }
+
+            <form method="get" action="/leerling" class="ll-form ll-form--cascade">
+                <label class="ll-field">
+                    <span>@Culture["Leerling.Login.School"]</span>
+                    <select name="schoolId" required onchange="this.form.submit()">
+                        <option value="">@Culture["Leerling.Login.SchoolPlaceholder"]</option>
+                        @foreach (var s in _schools)
+                        {
+                            <option value="@s.Id" selected="@(s.Id == SchoolId)">@s.SchoolName · @s.City</option>
+                        }
+                    </select>
+                </label>
+            </form>
+
+            <form method="post" action="/leerling/login" class="ll-form">
+                <AntiforgeryToken />
+                <input type="hidden" name="schoolId" value="@SchoolId" />
+                <label class="ll-field">
+                    <span>@Culture["Leerling.Login.Class"]</span>
+                    <select name="classId" required disabled="@(_classes.Count == 0 || SchoolId is null)">
+                        <option value="">@Culture["Leerling.Login.ClassPlaceholder"]</option>
+                        @foreach (var c in _classes)
+                        {
+                            <option value="@c.Id">@c.Label</option>
+                        }
+                    </select>
+                </label>
+                <label class="ll-field">
+                    <span>@Culture["Leerling.Login.Code"]</span>
+                    <input name="code"
+                           type="text"
+                           maxlength="7"
+                           autocomplete="off"
+                           autocapitalize="characters"
+                           spellcheck="false"
+                           inputmode="text"
+                           placeholder="K7Q-M2P"
+                           required />
+                </label>
+                <p class="ll-privacy">@Culture["Leerling.Login.NoName"]</p>
+                <button type="submit" class="btn-primary ll-login__submit" disabled="@(SchoolId is null)">@Culture["Leerling.Login.Start"]</button>
+            </form>
+        </section>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "error")] public string? ErrorQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "schoolId")] public Guid? SchoolId { get; set; }
+
+    private List<PupilSchoolOptionDto> _schools = [];
+    private List<PupilClassOptionDto> _classes = [];
+    private string? _error;
+    private string? _staffBlock;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            http.Response.Headers.CacheControl = "no-store";
+            var staff = await http.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            if (staff.Succeeded && staff.Principal?.Identity?.IsAuthenticated == true)
+            {
+                var role = staff.Principal.FindFirst(ClaimTypes.Role)?.Value ?? "gebruiker";
+                _staffBlock = string.Format(
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    Culture["Leerling.Login.StaffBusy"],
+                    role);
+                return;
+            }
+        }
+
+        _error = ErrorQuery switch
+        {
+            "invalid" => Culture["Leerling.Login.Error.Invalid"],
+            "cooldown" => Culture["Leerling.Login.Error.Cooldown"],
+            "window" => Culture["Leerling.Login.Error.Window"],
+            "staff" => Culture["Leerling.Login.Error.Staff"],
+            "retry" => Culture["Leerling.Login.Error.Retry"],
+            _ => null
+        };
+
+        try { _schools = (await Api.GetPupilSchoolsAsync()).ToList(); }
+        catch { _schools = []; }
+
+        if (SchoolId is Guid sid)
+        {
+            try { _classes = (await Api.GetPupilClassesAsync(sid) ?? []).ToList(); }
+            catch { _classes = []; }
+        }
+    }
+}

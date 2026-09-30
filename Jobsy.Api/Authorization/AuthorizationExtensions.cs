@@ -9,6 +9,7 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -118,6 +119,11 @@ public static class AuthorizationExtensions
                         claims.Add(new Claim(JobsyClaimTypes.CompanyId, primaryCompany.ToString("D")));
                     }
 
+                    if (dbUser.SchoolId is Guid schoolId)
+                    {
+                        claims.Add(new Claim(JobsyClaimTypes.SchoolId, schoolId.ToString("D")));
+                    }
+
                     var membershipIds = dbUser.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
                     if (membershipIds.Count > 0)
                     {
@@ -155,6 +161,102 @@ public static class AuthorizationExtensions
         authBuilder.AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
             ApiKeyAuthDefaults.AuthenticationScheme,
             _ => { });
+
+        // Pupil session cookie (separate from JobsyJwt / Jobsy.Auth).
+        var secureAlways = !environment.IsDevelopment();
+        authBuilder.AddCookie(PupilAuthDefaults.Scheme, options =>
+        {
+            options.Cookie.Name = PupilAuthDefaults.CookieName;
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SameSite = SameSiteMode.Strict;
+            options.Cookie.SecurePolicy = secureAlways
+                ? CookieSecurePolicy.Always
+                : CookieSecurePolicy.SameAsRequest;
+            options.Cookie.Path = "/";
+            options.SlidingExpiration = true;
+            options.ExpireTimeSpan = PupilAuthDefaults.IdleTimeout;
+            options.Events.OnSigningIn = context =>
+            {
+                context.Properties.IsPersistent = false;
+                context.Properties.AllowRefresh = true;
+                context.Properties.ExpiresUtc = null;
+                return Task.CompletedTask;
+            };
+            options.Events.OnRedirectToLogin = context =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                }
+
+                context.Response.Redirect(context.RedirectUri);
+                return Task.CompletedTask;
+            };
+            options.Events.OnRedirectToAccessDenied = context =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                }
+
+                context.Response.Redirect(context.RedirectUri);
+                return Task.CompletedTask;
+            };
+            options.Events.OnValidatePrincipal = async context =>
+            {
+                var principal = context.Principal;
+                if (principal?.Identity?.IsAuthenticated != true)
+                {
+                    return;
+                }
+
+                if (!long.TryParse(principal.FindFirst(PupilClaimTypes.IssuedAt)?.Value, out var iatUnix)
+                    || !Guid.TryParse(principal.FindFirst(PupilClaimTypes.PupilCodeId)?.Value, out var codeId)
+                    || !int.TryParse(principal.FindFirst(PupilClaimTypes.SessionVersion)?.Value, out var claimVersion))
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(PupilAuthDefaults.Scheme);
+                    return;
+                }
+
+                var clock = context.HttpContext.RequestServices.GetService(typeof(TimeProvider)) as TimeProvider
+                            ?? TimeProvider.System;
+                if (clock.GetUtcNow() - DateTimeOffset.FromUnixTimeSeconds(iatUnix) > PupilAuthDefaults.AbsoluteTimeout)
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(PupilAuthDefaults.Scheme);
+                    return;
+                }
+
+                var cache = context.HttpContext.RequestServices.GetRequiredService<IMemoryCache>();
+                var cacheKey = $"pupil-sv:{codeId:D}";
+                if (!cache.TryGetValue(cacheKey, out int dbVersion))
+                {
+                    var db = context.HttpContext.RequestServices.GetRequiredService<JobsyDbContext>();
+                    var row = await db.PupilCodes.AsNoTracking()
+                        .Where(c => c.Id == codeId)
+                        .Select(c => new { c.SessionVersion, Active = c.SchoolClass!.School!.IsActive })
+                        .FirstOrDefaultAsync();
+                    if (row is null || !row.Active)
+                    {
+                        context.RejectPrincipal();
+                        await context.HttpContext.SignOutAsync(PupilAuthDefaults.Scheme);
+                        return;
+                    }
+
+                    dbVersion = row.SessionVersion;
+                    cache.Set(cacheKey, dbVersion, TimeSpan.FromSeconds(30));
+                }
+
+                if (dbVersion != claimVersion)
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(PupilAuthDefaults.Scheme);
+                }
+            };
+        });
 
         services.AddAuthorization(options =>
         {
@@ -194,6 +296,18 @@ public static class AuthorizationExtensions
                 policy.RequireAuthenticatedUser()
                     .RequireRole(JobsyRoles.Admin, JobsyRoles.Ambassadeur));
 
+            options.AddPolicy(JobsyPolicies.RequireSchoolAdmin, policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(JobsyRoles.SchoolAdmin));
+
+            options.AddPolicy(JobsyPolicies.RequireTeacher, policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(JobsyRoles.Teacher));
+
+            options.AddPolicy(JobsyPolicies.RequireSchoolStaff, policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(JobsyRoles.SchoolAdmin, JobsyRoles.Teacher));
+
             options.AddPolicy(JobsyPolicies.RequireDashboardAccess, policy =>
                 policy.RequireAuthenticatedUser()
                     .RequireRole(
@@ -208,6 +322,12 @@ public static class AuthorizationExtensions
             options.AddPolicy(JobsyPolicies.RequireApiKey, policy =>
                 policy.AddAuthenticationSchemes(ApiKeyAuthDefaults.AuthenticationScheme)
                     .RequireAuthenticatedUser());
+
+            options.AddPolicy(JobsyPolicies.PupilSession, policy =>
+            {
+                policy.AddAuthenticationSchemes(PupilAuthDefaults.Scheme);
+                policy.Requirements.Add(new Jobsy.Infrastructure.Scholen.PupilSessionRequirement());
+            });
         });
 
         services.AddScoped<CompanyScopeFilter>();

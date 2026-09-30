@@ -95,7 +95,8 @@ public record LocalLoginResponse(
     bool MfaEnrolled = false,
     string? MfaChallengeToken = null,
     bool MfaVerified = false,
-    IReadOnlyList<string>? RecoveryCodes = null);
+    IReadOnlyList<string>? RecoveryCodes = null,
+    Guid? SchoolId = null);
 
 public record MfaEnrollmentRequest(string ChallengeToken);
 

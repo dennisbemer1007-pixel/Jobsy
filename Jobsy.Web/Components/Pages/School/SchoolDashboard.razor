@@ -1,0 +1,183 @@
+@page "/school"
+@layout SchoolLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SchoolAdmin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IPlatformFeatureService Features
+
+<PageTitle>@Culture["School.DashboardTitle"] · Lobsy</PageTitle>
+
+@if (_disabled)
+{
+    <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error">@_error</p>
+}
+else if (_dash is not null)
+{
+    @if (!string.IsNullOrWhiteSpace(_dash.RetentionBanner))
+    {
+        <p class="sch-banner-info">@_dash.RetentionBanner</p>
+    }
+    <header class="sch-page-header">
+        <h1>@Culture["School.DashboardTitle"]</h1>
+        <p class="muted">@Culture["School.DashboardIntro"]</p>
+        <p class="sch-page-meta">@_dash.SchoolName · @_dash.SchoolYearLabel · @_dash.ClassCount @Culture["School.Kpi.Classes"]</p>
+        <div class="sch-admin-toolbar">
+            <a class="btn-primary" href="/school/klassen">@Culture["School.Class.New"]</a>
+        </div>
+    </header>
+
+    <div class="sch-kpi-row">
+        <EntKpiCard Label="@Culture["School.Kpi.Classes"]" Value="@_dash.ClassCount.ToString()" />
+        <EntKpiCard Label="@Culture["School.Kpi.Codes"]" Value="@_dash.CodeCount.ToString()" Delta="@Culture["School.Kpi.CodesNote"]" />
+        <EntKpiCard Label="@Culture["School.Kpi.Completed"]" Value="@_dash.CompletedCount.ToString()"
+                    Delta="@($"{_dash.CompletedPercent:0}%")" DeltaTone="positive" />
+        <EntKpiCard Label="@Culture["School.Kpi.Teachers"]" Value="@_dash.TeacherCount.ToString()"
+                    Delta="@(_dash.TeachersWithoutMfa > 0 ? string.Format(Culture["School.Kpi.TeachersNoMfa"], _dash.TeachersWithoutMfa) : null)"
+                    DeltaTone="@(_dash.TeachersWithoutMfa > 0 ? "warn" : "neutral")" />
+    </div>
+
+    <div class="sch-dash-grid">
+        <section class="sch-card">
+            <h2>@Culture["School.Dash.TestsPerClass"]</h2>
+            <EntDataTable Loading="false" Empty="@(_dash.Classes.Count == 0)" EmptyText="@Culture["School.Class.Empty"]">
+                <Header>
+                    <th scope="col">@Culture["School.Col.Class"]</th>
+                    <th scope="col">@Culture["School.Col.Teacher"]</th>
+                    <th scope="col">@Culture["School.Col.Codes"]</th>
+                    <th scope="col">@Culture["School.Col.Started"]</th>
+                    <th scope="col">@Culture["School.Col.Completed"]</th>
+                    <th scope="col">@Culture["School.Col.Progress"]</th>
+                    <th scope="col">@Culture["School.Col.Window"]</th>
+                </Header>
+                <Rows>
+                    @foreach (var row in _dash.Classes)
+                    {
+                        <tr class="ent-data-table__row" @onclick="() => OpenClass(row.Id)">
+                            <td>@row.ClassName</td>
+                            <td>@(row.TeacherNames ?? "—")</td>
+                            <td class="tabular">@row.CodeCount</td>
+                            <td class="tabular">@row.StartedCount</td>
+                            <td class="tabular">@row.CompletedCount</td>
+                            <td>
+                                <span class="tabular">@row.CompletionPercent.ToString("0")%</span>
+                            </td>
+                            <td><span class="sch-pill @WindowPill(row.TestWindow)">@WindowLabel(row)</span></td>
+                        </tr>
+                    }
+                </Rows>
+            </EntDataTable>
+        </section>
+
+        <aside class="sch-dash-side">
+            <section class="sch-card">
+                <div class="sch-card__head">
+                    <h2>@Culture["School.Dash.Todo"]</h2>
+                    <a href="/school/te-doen">@Culture["School.Dash.TodoAll"]</a>
+                </div>
+                @if (_dash.Todos.Count == 0)
+                {
+                    <p class="muted">@Culture["School.Todo.Empty"]</p>
+                }
+                else
+                {
+                    <ul class="sch-todo-list">
+                        @foreach (var t in _dash.Todos)
+                        {
+                            <li>
+                                @if (!string.IsNullOrEmpty(t.Href))
+                                {
+                                    <a href="@t.Href">@t.Title</a>
+                                }
+                                else
+                                {
+                                    <span>@t.Title</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+
+            <section class="sch-card">
+                <h2>@Culture["School.Dash.Interests"]</h2>
+                @if (_dash.SchoolRiasecTop3 is null || _dash.SchoolRiasecTop3.Count == 0)
+                {
+                    <p class="muted">@Culture["School.Dash.InterestsEmpty"]</p>
+                }
+                else
+                {
+                    <ul class="sch-riasec">
+                        @foreach (var n in _dash.SchoolRiasecTop3)
+                        {
+                            <li><span>@n.Key</span> <strong class="tabular">@n.Count</strong></li>
+                        }
+                    </ul>
+                }
+            </section>
+        </aside>
+    </div>
+}
+
+@code {
+    private bool _disabled;
+    private bool _loading = true;
+    private string? _error;
+    private SchoolDashboardDto? _dash;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
+        if (_disabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            _dash = await Api.GetSchoolDashboardAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenClass(Guid id) => Nav.NavigateTo($"/school/klassen/{id}");
+
+    private string WindowLabel(SchoolDashboardClassRowDto row) => row.TestWindow switch
+    {
+        TestWindowState.Open when row.TestWindowClosesOn is DateOnly d
+            => $"{Culture["School.TestWindow.StatusOpen"]} t/m {d:dd-MM}",
+        TestWindowState.Open => Culture["School.TestWindow.StatusOpen"],
+        TestWindowState.Closed => Culture["School.TestWindow.StatusClosed"],
+        _ => Culture["School.TestWindow.StatusNotOpen"]
+    };
+
+    private static string WindowPill(TestWindowState s) => s switch
+    {
+        TestWindowState.Open => "sch-pill--ok",
+        TestWindowState.Closed => "sch-pill--muted",
+        _ => "sch-pill--warn"
+    };
+}

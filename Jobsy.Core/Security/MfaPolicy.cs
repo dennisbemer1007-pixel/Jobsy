@@ -9,5 +9,7 @@ public static class MfaPolicy
            || role is UserRole.BranchManager
                or UserRole.RegionalManager
                or UserRole.EnterpriseManager
-               or UserRole.Intermediary;
+               or UserRole.Intermediary
+           || role is UserRole.SchoolAdmin
+               or UserRole.Teacher;
 }
