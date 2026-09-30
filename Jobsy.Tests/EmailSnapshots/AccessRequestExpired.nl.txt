@@ -1,9 +1,9 @@
 KEY: AccessRequestExpired
-SUBJECT: Toegangsverzoek verlopen — Lobsy
+SUBJECT: Toegangsverzoek verlopen - Lobsy
 PREHEADER: Toegangsverzoek verlopen
 KIND: Essential
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Toegangsverzoek verlopen
 ========================

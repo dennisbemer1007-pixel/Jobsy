@@ -1,6 +1,6 @@
 KEY: IntermediaryClientSelfManaged
-SUBJECT: Klant beheert zelf — Lobsy
-PREHEADER: Klant beheert zelf — koppeling blijft
+SUBJECT: Klant beheert zelf - Lobsy
+PREHEADER: Klant beheert zelf - koppeling blijft
 KIND: Essential
 --- TEXT ---
 Klant beheert nu zelf

@@ -1,5 +1,5 @@
 KEY: OwnershipTransferManagersNotify
-SUBJECT: Ownership transfer requested — Lobsy
+SUBJECT: Ownership transfer requested - Lobsy
 PREHEADER: Ownership transfer requested
 KIND: Essential
 --- TEXT ---

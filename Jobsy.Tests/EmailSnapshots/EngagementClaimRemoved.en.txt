@@ -1,5 +1,5 @@
 KEY: EngagementClaimRemoved
-SUBJECT: Feature removed — Lobsy
+SUBJECT: Feature removed - Lobsy
 PREHEADER: Social feature removed
 KIND: Essential
 --- TEXT ---

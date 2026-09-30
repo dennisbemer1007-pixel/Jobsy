@@ -1,5 +1,5 @@
 KEY: TakeoverRequest
-SUBJECT: طلب استحواذ موقع — Lobsy
+SUBJECT: طلب استحواذ موقع - Lobsy
 PREHEADER: طلب استحواذ موقع
 KIND: Essential
 --- TEXT ---

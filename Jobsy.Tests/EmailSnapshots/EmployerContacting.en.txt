@@ -1,29 +1,30 @@
 KEY: EmployerContacting
-SUBJECT: Employer is contacting you: Weekendhulp verkoop
-PREHEADER: The employer is getting in touch.
+SUBJECT: Bakkerij De Gouden Korrel is contacting you
+PREHEADER: Keep an eye on your phone and email.
 KIND: Essential
 --- TEXT ---
-The employer is contacting you
-==============================
+Hi Alex,
 
-Good news! The employer for Weekendhulp verkoop will contact you.
+Bakkerij De Gouden Korrel is contacting you
+===========================================
 
-Keep an eye on your phone, email or WhatsApp.
+Bakkerij De Gouden Korrel wants to talk with you about Weekendhulp verkoop.
+You will hear from them soon by phone, email or WhatsApp.
 
-View my applications: https://lobsy.nl/candidate/applications
+View your application: https://lobsy.nl/candidate/applications
 
 Team Lobsy
 
-You receive this email because you applied via Lobsy.
+You get this email because you applied via Lobsy.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: The employer is contacting you
+h1: Bakkerij De Gouden Korrel is contacting you
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: View my applications -> https://lobsy.nl/candidate/applications
+a: View your application -> https://lobsy.nl/candidate/applications
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

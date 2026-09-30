@@ -1,9 +1,9 @@
 KEY: TakeoverApproved
-SUBJECT: Overname goedgekeurd — Lobsy
+SUBJECT: Overname goedgekeurd - Lobsy
 PREHEADER: Overname goedgekeurd
 KIND: Essential
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Overname goedgekeurd
 ====================

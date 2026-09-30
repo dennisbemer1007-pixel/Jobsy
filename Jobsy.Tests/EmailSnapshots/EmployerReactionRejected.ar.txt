@@ -1,15 +1,14 @@
 KEY: EmployerReactionRejected
-SUBJECT: تحديث على طلبك: ⁨Weekendhulp verkoop⁩
-PREHEADER: تحديث على طلبك.
+SUBJECT: أخبار عن طلبك لدى ⁨Bakkerij De Gouden Korrel⁩
+PREHEADER: هناك وظائف أخرى بالقرب منك.
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
-تحديث على طلبك
+ليس هذه المرة
 
-شكرًا لاهتمامك بـ ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden Korrel⁩.
-
-للأسف لم يتم اختيارك هذه المرة. نتمنى لك التوفيق في بحثك!
+شكرًا لتقديمك على ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden Korrel⁩.
+اختاروا شخصًا آخر هذه المرة. هذا مؤسف. ما زالت هناك وظائف قريبة.
 
 عرض وظائف أخرى: https://lobsy.nl/banenkaart
 
@@ -20,7 +19,7 @@ KIND: Essential
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: تحديث على طلبك
+h1: ليس هذه المرة
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl

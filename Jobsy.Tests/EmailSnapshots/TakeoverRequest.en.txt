@@ -1,5 +1,5 @@
 KEY: TakeoverRequest
-SUBJECT: Location takeover request — Lobsy
+SUBJECT: Location takeover request - Lobsy
 PREHEADER: Location takeover request
 KIND: Essential
 --- TEXT ---

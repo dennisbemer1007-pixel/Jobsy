@@ -1003,7 +1003,7 @@ public class ApplicationsController : ControllerBase
 
             var code = VerificationCodes.CreateNumericCode();
             application.EmailVerificationCode = VerificationCodes.Hash(code);
-            application.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
+            application.EmailVerificationExpiresAt = DateTime.UtcNow.Add(ApplicationRules.EmailVerificationCodeLifetime);
             // Do not reset failed attempts on resend — prevents lockout bypass via spam resend.
             if (existing is null || existing.EmailVerificationFailedAttempts >= VerificationCodes.MaxFailedAttempts)
             {
@@ -1448,7 +1448,9 @@ public class ApplicationsController : ControllerBase
         var contactBody = $"{application.Vacancy.Company.Name} neemt contact op over {application.Vacancy.Title}";
         var contactMail = TransactionalEmails.EmployerContacting(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            application.Vacancy.Title);
+            application.Vacancy.Title,
+            application.CandidateEmail,
+            application.Vacancy.Company.Name);
         await _mailer.SendAsync(contactMail, application.CandidateEmail, cancellationToken: cancellationToken);
         await _push.SendAsync(new PushMessage(
             application.CandidateEmail,
@@ -1716,14 +1718,14 @@ public class ApplicationsController : ControllerBase
         bool authenticatorStubUsed,
         CancellationToken cancellationToken)
     {
+        _ = authenticatorStubUsed; // logged by callers if needed; never shown in mail (05.3)
         var subject = $"Sollicitatie bevestigd: {vacancy.Title}";
         var body = $"Je sollicitatie op {vacancy.Title} bij {vacancy.Company.Name} is ontvangen.";
         var mail = TransactionalEmails.ApplicationConfirmation(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
             candidate.FullName,
             vacancy.Title,
-            vacancy.Company.Name,
-            authenticatorStubUsed);
+            vacancy.Company.Name);
         await _mailer.SendAsync(mail, candidate.Email, cancellationToken: cancellationToken);
 
         await NotifyCandidateAsync(

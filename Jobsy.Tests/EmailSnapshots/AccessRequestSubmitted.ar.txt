@@ -1,9 +1,9 @@
 KEY: AccessRequestSubmitted
-SUBJECT: أُرسل طلب الوصول — Lobsy
+SUBJECT: أُرسل طلب الوصول - Lobsy
 PREHEADER: أُرسل طلب الوصول
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 أُرسل الطلب
 

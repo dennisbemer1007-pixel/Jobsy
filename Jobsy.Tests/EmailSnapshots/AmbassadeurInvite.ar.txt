@@ -3,7 +3,7 @@ SUBJECT: دعوة سفير Lobsy
 PREHEADER: دُعيت كسفير على Lobsy.
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 دعوة سفير
 

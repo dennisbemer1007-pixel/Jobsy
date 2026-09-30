@@ -37,6 +37,12 @@ public static class ApplicationRules
     public static bool IsListedForCandidate(DateTime? emailVerifiedAt)
         => emailVerifiedAt is not null;
 
+    /// <summary>OTP lifetime for application e-mail verification (controller + mail copy).</summary>
+    public static TimeSpan EmailVerificationCodeLifetime { get; set; } = TimeSpan.FromMinutes(10);
+
+    public static int EmailVerificationCodeMinutes
+        => Math.Max(1, (int)Math.Round(EmailVerificationCodeLifetime.TotalMinutes));
+
     /// <summary>Employer sees candidate name / CV after Accept. Direct contact is separate.</summary>
     public static bool IsPiiRevealed(ApplicationStatus status)
         => LobsyCvAccessRules.IsPiiRevealed(status);

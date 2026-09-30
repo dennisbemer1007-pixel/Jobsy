@@ -19,7 +19,7 @@ public static partial class TransactionalEmails
                 P(T(c, "Email.RegistrationActivation.P1",
                     EmailArg.Bold(establishmentName), EmailArg.Plain(roleLabel), EmailArg.Plain(sbiBit))),
                 P(S(c, "Email.RegistrationActivation.P2")),
-                P(S(c, "Email.RegistrationActivation.P3")),
+                P(Sf(c, "Email.RegistrationActivation.P3", ApplicationRules.EmailVerificationCodeMinutes)),
                 C(code, "")
             ],
             greeting: GreetOther(c, contactName), culture: c), baseUrl);
@@ -69,7 +69,7 @@ public static partial class TransactionalEmails
         };
         if (!string.IsNullOrWhiteSpace(deletionDateLabel))
         {
-            blocks.Add(P(T(c, "Email.CompanyVerificationReminder.P3", EmailArg.Bold(deletionDateLabel!))));
+            blocks.Add(P(T(c, "Email.CompanyVerificationReminder.P3", EmailArg.Bold(deletionDateLabel!), EmailArg.Plain("60", isolate: false))));
         }
 
         var subject = day == 21
@@ -119,7 +119,7 @@ public static partial class TransactionalEmails
             S(c, "Email.CompanyBusinessEmailVerification.Preheader"), S(c, "Email.CompanyBusinessEmailVerification.Heading"),
             [
                 P(T(c, "Email.CompanyBusinessEmailVerification.P1", EmailArg.Bold(companyName))),
-                C(code, S(c, "Email.Common.CodeValid10"))
+                C(code, Sf(c, "Email.Common.CodeValid10", ApplicationRules.EmailVerificationCodeMinutes))
             ], culture: c), baseUrl);
     }
 
@@ -149,7 +149,7 @@ public static partial class TransactionalEmails
             [
                 P(T(c, "Email.EngagementClaimRemoved.P1", EmailArg.Bold(itemLabel), EmailArg.Bold(companyName))),
                 P(Sf(c, "Email.Common.ReasonLabel", EmailBidi.Isolate(c, reason))),
-                P(S(c, "Email.EngagementClaimRemoved.P3"))
+                P(Sf(c, "Email.EngagementClaimRemoved.P3", 30))
             ],
             Button(S(c, "Email.EngagementClaimRemoved.Cta"), links.EmployerHome), culture: c), baseUrl);
     }
@@ -162,7 +162,7 @@ public static partial class TransactionalEmails
         return Finish(Doc("CompanyUnverifiedDeleted", S(c, "Email.CompanyUnverifiedDeleted.Subject"),
             S(c, "Email.CompanyUnverifiedDeleted.Preheader"), S(c, "Email.CompanyUnverifiedDeleted.Heading"),
             [
-                P(T(c, "Email.CompanyUnverifiedDeleted.P1", EmailArg.Bold(companyName)))
+                P(T(c, "Email.CompanyUnverifiedDeleted.P1", EmailArg.Bold(companyName), EmailArg.Plain("60", isolate: false)))
             ],
             Button(S(c, "Email.CompanyUnverifiedDeleted.Cta"), links.Register),
             greeting: GreetOther(c, contactName), culture: c), baseUrl);
@@ -175,7 +175,7 @@ public static partial class TransactionalEmails
         return Finish(Doc("TakeoverEmailVerification", S(c, "Email.TakeoverEmailVerification.Subject"),
             S(c, "Email.TakeoverEmailVerification.Preheader"), S(c, "Email.TakeoverEmailVerification.Heading"),
             [
-                P(T(c, "Email.TakeoverEmailVerification.P1", EmailArg.Bold(companyName))),
+                P(T(c, "Email.TakeoverEmailVerification.P1", EmailArg.Bold(companyName), EmailArg.Plain(ApplicationRules.EmailVerificationCodeMinutes.ToString(), isolate: false))),
                 C(code, ""),
                 P(S(c, "Email.TakeoverEmailVerification.P2"))
             ],
@@ -219,7 +219,7 @@ public static partial class TransactionalEmails
         return Finish(Doc("AccessRequestEmailVerification", S(c, "Email.AccessRequestEmailVerification.Subject"),
             S(c, "Email.AccessRequestEmailVerification.Preheader"), S(c, "Email.AccessRequestEmailVerification.Heading"),
             [
-                P(T(c, "Email.AccessRequestEmailVerification.P1", EmailArg.Bold(companyName))),
+                P(T(c, "Email.AccessRequestEmailVerification.P1", EmailArg.Bold(companyName), EmailArg.Plain(ApplicationRules.EmailVerificationCodeMinutes.ToString(), isolate: false))),
                 C(code, "")
             ],
             greeting: GreetOther(c, contactName), culture: c), baseUrl);
@@ -295,7 +295,7 @@ public static partial class TransactionalEmails
         return Finish(Doc("AccessRequestExpired", S(c, "Email.AccessRequestExpired.Subject"),
             S(c, "Email.AccessRequestExpired.Preheader"), S(c, "Email.AccessRequestExpired.Heading"),
             [
-                P(T(c, "Email.AccessRequestExpired.P1", EmailArg.Bold(companyName)))
+                P(T(c, "Email.AccessRequestExpired.P1", EmailArg.Bold(companyName), EmailArg.Plain("30", isolate: false)))
             ],
             Button(S(c, "Email.AccessRequestExpired.Cta"), links.RegisterAccess),
             greeting: GreetOther(c, contactName), culture: c), baseUrl);
@@ -308,7 +308,7 @@ public static partial class TransactionalEmails
         return Finish(Doc("OwnershipTransferManagersNotify", S(c, "Email.OwnershipTransferManagersNotify.Subject"),
             S(c, "Email.OwnershipTransferManagersNotify.Preheader"), S(c, "Email.OwnershipTransferManagersNotify.Heading"),
             [
-                P(T(c, "Email.OwnershipTransferManagersNotify.P1", EmailArg.Bold(companyName)))
+                P(T(c, "Email.OwnershipTransferManagersNotify.P1", EmailArg.Bold(companyName), EmailArg.Plain("7", isolate: false)))
             ],
             Button(S(c, "Email.OwnershipTransferManagersNotify.Cta"), links.EmployerTakeovers), culture: c), baseUrl);
     }

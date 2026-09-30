@@ -16,41 +16,62 @@ public static partial class TransactionalEmails
     }
 
     public static ComposedEmail ApplicationConfirmation(
-        string? baseUrl, string candidateName, string vacancyTitle, string companyName, bool authenticatorStubUsed,
-        EmailCulture? culture = null)
+        string? baseUrl, string candidateName, string vacancyTitle, string companyName,
+        EmailCulture? culture = null, string? placeLabel = null, DateTime? sentAtUtc = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var subject = Sf(c, "Email.ApplicationConfirmation.Subject", EmailBidi.Isolate(c, vacancyTitle));
-        var blocks = new List<EmailBlock>
+        var facts = new List<(string, string)>
         {
-            P(T(c, "Email.ApplicationConfirmation.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
-            P(S(c, "Email.ApplicationConfirmation.P2"))
+            (S(c, "Email.Common.Fact.Vacancy"), vacancyTitle),
+            (S(c, "Email.Common.Fact.Company"), companyName)
         };
-        if (authenticatorStubUsed)
+        if (!string.IsNullOrWhiteSpace(placeLabel))
         {
-            blocks.Add(N(S(c, "Email.ApplicationConfirmation.NoteStub")));
+            facts.Add((S(c, "Email.Common.Fact.Place"), placeLabel!));
         }
 
-        return Finish(Doc("ApplicationConfirmation", subject, S(c, "Email.ApplicationConfirmation.Preheader"),
+        facts.Add((S(c, "Email.Common.Fact.SentOn"), EmailFormat.Date(sentAtUtc ?? DateTime.UtcNow, c)));
+        var blocks = new List<EmailBlock>
+        {
+            P(T(c, "Email.ApplicationConfirmation.P1", EmailArg.Bold(vacancyTitle), EmailArg.Bold(companyName))),
+            F(facts),
+            new StepsBlock(S(c, "Email.ApplicationConfirmation.StepsTitle"),
+            [
+                T(c, "Email.ApplicationConfirmation.Step1", EmailArg.Plain(companyName)),
+                EmailText.Plain(S(c, "Email.ApplicationConfirmation.Step2")),
+                EmailText.Plain(S(c, "Email.ApplicationConfirmation.Step3"))
+            ])
+        };
+        return Finish(Doc("ApplicationConfirmation", subject,
+            Sf(c, "Email.ApplicationConfirmation.Preheader", EmailBidi.Isolate(c, companyName)),
             S(c, "Email.ApplicationConfirmation.Heading"),
             blocks, Button(S(c, "Email.ApplicationConfirmation.Cta"), links.CandidateApplications),
-            greeting: GreetCandidate(c, candidateName), culture: c), baseUrl);
+            greeting: GreetCandidate(c, candidateName),
+            eyebrow: new EmailEyebrow(S(c, "Email.ApplicationConfirmation.Eyebrow"), EmailTone.Peach),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail ApplicationVerificationCode(
         string? baseUrl, string candidateName, string vacancyTitle, Guid vacancyId, string code,
-        EmailCulture? culture = null)
+        EmailCulture? culture = null, bool codeInSubject = true)
     {
         var c = culture ?? EmailCulture.Nl;
-        var subject = Sf(c, "Email.ApplicationVerificationCode.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        var minutes = ApplicationRules.EmailVerificationCodeMinutes;
+        var subject = codeInSubject
+            ? Sf(c, "Email.ApplicationVerificationCode.SubjectWithCode", code)
+            : S(c, "Email.ApplicationVerificationCode.Subject");
         return Finish(Doc("ApplicationVerificationCode", subject, S(c, "Email.ApplicationVerificationCode.Preheader"),
             S(c, "Email.ApplicationVerificationCode.Heading"),
             [
-                P(S(c, "Email.ApplicationVerificationCode.P1")),
-                C(code, S(c, "Email.Common.CodeValid10"))
+                P(T(c, "Email.ApplicationVerificationCode.P1", EmailArg.Bold(vacancyTitle))),
+                C(code, Sf(c, "Email.Common.CodeWorksMinutes", minutes)),
+                N(S(c, "Email.ApplicationVerificationCode.Note"))
             ],
-            greeting: GreetCandidate(c, candidateName), culture: c), baseUrl);
+            greeting: GreetCandidate(c, candidateName),
+            eyebrow: new EmailEyebrow(S(c, "Email.ApplicationVerificationCode.Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail EmployerReactionAccepted(
@@ -59,15 +80,17 @@ public static partial class TransactionalEmails
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = Sf(c, "Email.EmployerReactionAccepted.Subject", EmailBidi.Isolate(c, vacancyTitle));
-        return Finish(Doc("EmployerReactionAccepted", subject, S(c, "Email.EmployerReactionAccepted.Preheader"),
-            S(c, "Email.EmployerReactionAccepted.Heading"),
+        return Finish(Doc("EmployerReactionAccepted",
+            Sf(c, "Email.EmployerReactionAccepted.Subject", EmailBidi.Isolate(c, companyName)),
+            Sf(c, "Email.EmployerReactionAccepted.Preheader", EmailBidi.Isolate(c, companyName)),
+            Sf(c, "Email.EmployerReactionAccepted.Heading", EmailBidi.Isolate(c, companyName)),
             [
-                P(T(c, "Email.EmployerReactionAccepted.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
-                P(S(c, "Email.EmployerReactionAccepted.P2"))
+                P(T(c, "Email.EmployerReactionAccepted.P1", EmailArg.Plain(companyName), EmailArg.Bold(vacancyTitle)))
             ],
             Button(S(c, "Email.EmployerReactionAccepted.Cta"), links.CandidateApplications),
-            greeting: GreetCandidate(c, candidateName), showMascot: true, culture: c), baseUrl);
+            greeting: GreetCandidate(c, candidateName), showMascot: true,
+            eyebrow: new EmailEyebrow(S(c, "Email.EmployerReactionAccepted.Eyebrow"), EmailTone.Mint),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail EmployerReactionRejected(
@@ -76,30 +99,37 @@ public static partial class TransactionalEmails
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = Sf(c, "Email.EmployerReactionRejected.Subject", EmailBidi.Isolate(c, vacancyTitle));
-        return Finish(Doc("EmployerReactionRejected", subject, S(c, "Email.EmployerReactionRejected.Preheader"),
+        return Finish(Doc("EmployerReactionRejected",
+            Sf(c, "Email.EmployerReactionRejected.Subject", EmailBidi.Isolate(c, companyName)),
+            S(c, "Email.EmployerReactionRejected.Preheader"),
             S(c, "Email.EmployerReactionRejected.Heading"),
             [
-                P(T(c, "Email.EmployerReactionRejected.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
-                P(S(c, "Email.EmployerReactionRejected.P2"))
+                P(T(c, "Email.EmployerReactionRejected.P1", EmailArg.Bold(vacancyTitle), EmailArg.Bold(companyName)))
             ],
             Button(S(c, "Email.EmployerReactionRejected.Cta"), links.Map),
-            greeting: GreetCandidate(c, candidateName), culture: c), baseUrl);
+            greeting: GreetCandidate(c, candidateName),
+            eyebrow: new EmailEyebrow(S(c, "Email.EmployerReactionRejected.Eyebrow"), EmailTone.Peach),
+            culture: c), baseUrl);
     }
 
-    public static ComposedEmail EmployerContacting(string? baseUrl, string vacancyTitle, EmailCulture? culture = null)
+    public static ComposedEmail EmployerContacting(
+        string? baseUrl, string vacancyTitle, string? candidateName = null, string? companyName = null,
+        EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = Sf(c, "Email.EmployerContacting.Subject", EmailBidi.Isolate(c, vacancyTitle));
-        return Finish(Doc("EmployerContacting", subject, S(c, "Email.EmployerContacting.Preheader"),
-            S(c, "Email.EmployerContacting.Heading"),
+        var company = companyName ?? "";
+        return Finish(Doc("EmployerContacting",
+            Sf(c, "Email.EmployerContacting.Subject", EmailBidi.Isolate(c, company)),
+            S(c, "Email.EmployerContacting.Preheader"),
+            Sf(c, "Email.EmployerContacting.Heading", EmailBidi.Isolate(c, company)),
             [
-                P(T(c, "Email.EmployerContacting.P1", EmailArg.Bold(vacancyTitle))),
-                P(S(c, "Email.EmployerContacting.P2"))
+                P(T(c, "Email.EmployerContacting.P1", EmailArg.Plain(company), EmailArg.Bold(vacancyTitle)))
             ],
             Button(S(c, "Email.EmployerContacting.Cta"), links.CandidateApplications),
-            showMascot: true, culture: c), baseUrl);
+            greeting: GreetCandidate(c, candidateName), showMascot: true,
+            eyebrow: new EmailEyebrow(S(c, "Email.EmployerContacting.Eyebrow"), EmailTone.Mint),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail ApplicationHired(
@@ -108,12 +138,9 @@ public static partial class TransactionalEmails
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = Sf(c, "Email.ApplicationHired.Subject", EmailBidi.Isolate(c, vacancyTitle));
         var blocks = new List<EmailBlock>
         {
-            P(EmailText.Join(Bold(S(c, "Email.ApplicationHired.P1Lead")),
-                T(c, "Email.ApplicationHired.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName)))),
-            P(S(c, "Email.ApplicationHired.P2"))
+            P(T(c, "Email.ApplicationHired.P1", EmailArg.Bold(vacancyTitle), EmailArg.Bold(companyName)))
         };
         EmailCta cta;
         if (!string.IsNullOrWhiteSpace(withdrawAbsoluteUrl))
@@ -128,9 +155,13 @@ public static partial class TransactionalEmails
             cta = Button(S(c, "Email.ApplicationHired.Cta"), links.CandidateApplications);
         }
 
-        return Finish(Doc("ApplicationHired", subject, S(c, "Email.ApplicationHired.Preheader"),
+        return Finish(Doc("ApplicationHired",
+            Sf(c, "Email.ApplicationHired.Subject", EmailBidi.Isolate(c, companyName)),
+            Sf(c, "Email.ApplicationHired.Preheader", EmailBidi.Isolate(c, vacancyTitle)),
             S(c, "Email.ApplicationHired.Heading"),
-            blocks, cta, greeting: GreetCandidate(c, candidateName), showMascot: true, culture: c), baseUrl);
+            blocks, cta, greeting: GreetCandidate(c, candidateName), showMascot: true,
+            eyebrow: new EmailEyebrow(S(c, "Email.ApplicationHired.Eyebrow"), EmailTone.Mint),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail ApplicationFilledElsewhere(
@@ -139,15 +170,17 @@ public static partial class TransactionalEmails
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
-        var subject = Sf(c, "Email.ApplicationFilledElsewhere.Subject", EmailBidi.Isolate(c, vacancyTitle));
-        return Finish(Doc("ApplicationFilledElsewhere", subject, S(c, "Email.ApplicationFilledElsewhere.Preheader"),
+        return Finish(Doc("ApplicationFilledElsewhere",
+            Sf(c, "Email.ApplicationFilledElsewhere.Subject", EmailBidi.Isolate(c, companyName)),
+            S(c, "Email.ApplicationFilledElsewhere.Preheader"),
             S(c, "Email.ApplicationFilledElsewhere.Heading"),
             [
-                P(T(c, "Email.ApplicationFilledElsewhere.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
-                P(S(c, "Email.ApplicationFilledElsewhere.P2"))
+                P(T(c, "Email.ApplicationFilledElsewhere.P1", EmailArg.Bold(vacancyTitle), EmailArg.Bold(companyName)))
             ],
             Button(S(c, "Email.ApplicationFilledElsewhere.Cta"), links.Map),
-            greeting: GreetCandidate(c, candidateName), culture: c), baseUrl);
+            greeting: GreetCandidate(c, candidateName),
+            eyebrow: new EmailEyebrow(S(c, "Email.ApplicationFilledElsewhere.Eyebrow"), EmailTone.Peach),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail EmployerNewApplication(string? baseUrl, string vacancyTitle, EmailCulture? culture = null)
@@ -199,16 +232,16 @@ public static partial class TransactionalEmails
         var links = Links(baseUrl);
         var facts = new List<(string, string)>
         {
-            (S(c, "Email.Common.Fact.Function"), vacancyTitle),
+            (S(c, "Email.Common.Fact.Vacancy"), vacancyTitle),
             (S(c, "Email.Common.Fact.Company"), companyName)
         };
         if (!string.IsNullOrWhiteSpace(locationLabel))
         {
-            facts.Add((S(c, "Email.Common.Fact.Location"), locationLabel!));
+            facts.Add((S(c, "Email.Common.Fact.Place"), locationLabel!));
         }
 
         facts.Add((S(c, "Email.Common.Fact.Distance"), EmailFormat.Km(distanceKm, c)));
-        facts.Add((S(c, "Email.Common.Fact.TravelTime"), EmailFormat.Minutes(travelMinutes, c)));
+        facts.Add((S(c, "Email.Common.Fact.TravelTime"), Sf(c, "Email.Common.TravelMinutesShort", travelMinutes)));
         if (hourlyWage is decimal w)
         {
             var label = string.IsNullOrWhiteSpace(wageNote) ? S(c, "Email.PushBom.WageNote") : wageNote;
@@ -220,7 +253,7 @@ public static partial class TransactionalEmails
             ? links.SetUnavailable
             : setUnavailableAbsoluteUrl!;
         var preheader = Sf(c, "Email.PushBom.Preheader",
-            EmailBidi.Isolate(c, vacancyTitle), EmailBidi.Isolate(c, companyName), EmailFormat.Km(distanceKm, c));
+            EmailBidi.Isolate(c, companyName), EmailFormat.Km(distanceKm, c));
         return Finish(Doc("PushBom", subject, preheader, S(c, "Email.PushBom.Heading"),
             [
                 P(S(c, "Email.PushBom.P1")),
@@ -228,7 +261,9 @@ public static partial class TransactionalEmails
                 N(S(c, "Email.PushBom.Note"), new EmailLink(S(c, "Email.PushBom.NoteLink"), setUnavailable))
             ],
             Button(S(c, "Email.PushBom.Cta"), links.Vacancy(vacancyId)),
-            greeting: GreetCandidate(c, candidateName), culture: c), baseUrl);
+            greeting: GreetCandidate(c, candidateName),
+            eyebrow: new EmailEyebrow(S(c, "Email.PushBom.Eyebrow"), EmailTone.Sun),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail PendingApproval(string? baseUrl, string vacancyTitle, string companyName, EmailCulture? culture = null)
@@ -259,7 +294,7 @@ public static partial class TransactionalEmails
         var preheader = Sf(c, "Email.VacancyEngagementReminder.Preheader",
             EmailBidi.Isolate(c, vacancyTitle), impressions, views, applications);
         return Finish(Doc("VacancyEngagementReminder", subject, preheader,
-            S(c, "Email.VacancyEngagementReminder.Heading"),
+            Sf(c, "Email.VacancyEngagementReminder.Heading", VacancyEngagementReminderRules.OpenDaysBeforeReminder),
             [
                 P(T(c, "Email.VacancyEngagementReminder.P1",
                     EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyBit),
@@ -288,15 +323,15 @@ public static partial class TransactionalEmails
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var deleteLabel = EmailFormat.Date(deleteOnUtc, c);
-        var subject = Sf(c, "Email.DraftVacancyCleanupWarning.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        var subject = Sf(c, "Email.DraftVacancyCleanupWarning.Subject", EmailBidi.Isolate(c, vacancyTitle), 14);
         return Finish(Doc("DraftVacancyCleanupWarning", subject,
-            Sf(c, "Email.DraftVacancyCleanupWarning.Preheader", EmailBidi.Isolate(c, vacancyTitle)),
+            Sf(c, "Email.DraftVacancyCleanupWarning.Preheader", EmailBidi.Isolate(c, vacancyTitle), 14),
             S(c, "Email.DraftVacancyCleanupWarning.Heading"),
             [
                 P(T(c, "Email.DraftVacancyCleanupWarning.P1",
                     EmailArg.Bold(vacancyTitle), EmailArg.Bold(companyName),
                     EmailArg.Plain(DraftVacancyCleanupRules.WarningAfterDays.ToString(), isolate: false))),
-                P(T(c, "Email.DraftVacancyCleanupWarning.P2", EmailArg.Bold(deleteLabel))),
+                P(T(c, "Email.DraftVacancyCleanupWarning.P2", EmailArg.Bold(deleteLabel), EmailArg.Plain("14", isolate: false))),
                 P(S(c, "Email.DraftVacancyCleanupWarning.P3")),
                 N(S(c, "Email.DraftVacancyCleanupWarning.Note"))
             ],

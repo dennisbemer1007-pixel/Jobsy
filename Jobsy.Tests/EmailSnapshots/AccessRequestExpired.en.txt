@@ -1,9 +1,9 @@
 KEY: AccessRequestExpired
-SUBJECT: Access request expired — Lobsy
+SUBJECT: Access request expired - Lobsy
 PREHEADER: Access request expired
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Access request expired
 ======================

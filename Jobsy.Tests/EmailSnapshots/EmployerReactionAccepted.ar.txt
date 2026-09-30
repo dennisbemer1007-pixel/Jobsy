@@ -1,17 +1,16 @@
 KEY: EmployerReactionAccepted
-SUBJECT: تم قبول طلبك: ⁨Weekendhulp verkoop⁩
-PREHEADER: تم قبول طلبك.
+SUBJECT: أخبار سارة عن طلبك لدى ⁨Bakkerij De Gouden Korrel⁩
+PREHEADER: ⁨Bakkerij De Gouden Korrel⁩ يريد المتابعة معك.
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
-أخبار سارة!
+⁨Bakkerij De Gouden Korrel⁩ يريد المتابعة معك
 
-قبلت الشركة طلبك لـ ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden Korrel⁩.
+قبل ⁨Bakkerij De Gouden Korrel⁩ طلبك على ⁨Weekendhulp verkoop⁩. سيتواصلون
+معك قريبًا. راقب هاتفك وبريدك.
 
-قد يتواصلون معك قريبًا. راقب هاتفك وبريدك.
-
-عرض طلباتي: https://lobsy.nl/candidate/applications
+عرض طلبك: https://lobsy.nl/candidate/applications
 
 فريق Lobsy
 
@@ -20,11 +19,11 @@ KIND: Essential
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: أخبار سارة!
+h1: ⁨Bakkerij De Gouden Korrel⁩ يريد المتابعة معك
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: عرض طلباتي -> https://lobsy.nl/candidate/applications
+a: عرض طلبك -> https://lobsy.nl/candidate/applications
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

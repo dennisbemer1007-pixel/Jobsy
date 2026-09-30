@@ -1,9 +1,9 @@
 KEY: TakeoverRejected
-SUBJECT: Takeover rejected — Lobsy
+SUBJECT: Takeover rejected - Lobsy
 PREHEADER: Takeover rejected
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Takeover rejected
 =================

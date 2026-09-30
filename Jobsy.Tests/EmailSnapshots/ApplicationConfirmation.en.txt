@@ -1,32 +1,40 @@
 KEY: ApplicationConfirmation
-SUBJECT: Application confirmed: Weekendhulp verkoop
-PREHEADER: Your application was received.
+SUBJECT: Your application was sent: Weekendhulp verkoop
+PREHEADER: Bakkerij De Gouden Korrel can now see your application.
 KIND: Essential
 --- TEXT ---
-Hi Alex de Tester,
+Hi Alex,
 
-Application sent!
-=================
+Your application was sent
+=========================
 
-Your application for Weekendhulp verkoop at Bakkerij De Gouden Korrel was
-received. Great!
+You applied for Weekendhulp verkoop at Bakkerij De Gouden Korrel.
 
-You can follow the status under My applications.
+Vacancy: Weekendhulp verkoop
+Company: Bakkerij De Gouden Korrel
+Sent on: 30 September 2026
 
-View my applications: https://lobsy.nl/candidate/applications
+What happens next?
+1. Bakkerij De Gouden Korrel reviews your application.
+2. You get an email when there is news.
+3. You always see the status in Lobsy.
+
+View your application: https://lobsy.nl/candidate/applications
 
 Team Lobsy
 
-You receive this email because you applied via Lobsy.
+You get this email because you applied via Lobsy.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Application sent!
+h1: Your application was sent
 marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=steps
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: View my applications -> https://lobsy.nl/candidate/applications
+a: View your application -> https://lobsy.nl/candidate/applications
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -1,9 +1,9 @@
 KEY: CompanyVerified
-SUBJECT: تم توثيق شركتك — Lobsy
+SUBJECT: تم توثيق شركتك - Lobsy
 PREHEADER: تم توثيق شركتك على Lobsy
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 تم توثيق شركتك
 
@@ -13,7 +13,7 @@ KIND: Essential
 
 Weekendhulp verkoop :وظيفة 1
 
-حصلت على رمز الترحيب — به تنشر (أو تمدد) وظيفة.
+حصلت على رمز الترحيب - به تنشر (أو تمدد) وظيفة.
 
 إلى الوظائف: https://lobsy.nl/werkgever/vacatures
 

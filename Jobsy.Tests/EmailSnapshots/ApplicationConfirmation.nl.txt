@@ -1,32 +1,40 @@
 KEY: ApplicationConfirmation
-SUBJECT: Sollicitatie bevestigd: Weekendhulp verkoop
-PREHEADER: Je sollicitatie is ontvangen.
+SUBJECT: Je sollicitatie is verstuurd: Weekendhulp verkoop
+PREHEADER: Bakkerij De Gouden Korrel krijgt je sollicitatie nu te zien.
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hoi Alex,
 
-Sollicitatie verstuurd!
-=======================
+Je sollicitatie is verstuurd
+============================
 
-Je sollicitatie op Weekendhulp verkoop bij Bakkerij De Gouden Korrel is
-ontvangen. Top!
+Je hebt gesolliciteerd op Weekendhulp verkoop bij Bakkerij De Gouden Korrel.
 
-Je kunt de status volgen onder Mijn sollicitaties.
+Vacature: Weekendhulp verkoop
+Bedrijf: Bakkerij De Gouden Korrel
+Verstuurd op: 30 september 2026
 
-Bekijk mijn sollicitaties: https://lobsy.nl/candidate/applications
+Wat gebeurt er nu?
+1. Bakkerij De Gouden Korrel bekijkt je sollicitatie.
+2. Je krijgt een mail als er nieuws is.
+3. Je ziet de status altijd in Lobsy.
+
+Bekijk je sollicitatie: https://lobsy.nl/candidate/applications
 
 Team Lobsy
 
-Je ontvangt deze mail omdat je hebt gesolliciteerd via Lobsy.
+Je krijgt deze mail omdat je via Lobsy hebt gesolliciteerd.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Sollicitatie verstuurd!
+h1: Je sollicitatie is verstuurd
 marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=steps
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Bekijk mijn sollicitaties -> https://lobsy.nl/candidate/applications
+a: Bekijk je sollicitatie -> https://lobsy.nl/candidate/applications
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

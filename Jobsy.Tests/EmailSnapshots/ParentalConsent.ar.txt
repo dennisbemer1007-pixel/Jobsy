@@ -1,27 +1,34 @@
 KEY: ParentalConsent
 SUBJECT: ⁨Sanne⁩ يطلب موافقتك لـ Lobsy
-PREHEADER: امنح موافقتك لـ Lobsy.
+PREHEADER: اطلع على ما يطلب ⁨Sanne⁩ موافقتك من أجله.
 KIND: Essential
 --- TEXT ---
-هل تمنح موافقتك؟
+⁨Sanne⁩ يطلب موافقتك
 
-يريد ⁨Sanne⁩ استخدام Lobsy: اختبارات وتحليل بالذكاء الاصطناعي. ولأن ⁨Sanne⁩
-أصغر من 16 سنة، نحتاج موافقة ولي الأمر.
+مرحبًا،
 
-إذا لم تكن ولي أمر أو لا تعرف شيئًا عن هذا، لا داعي لأي إجراء. الرابط صالح
-حتى 7 أكتوبر 2026.
+⁨Sanne⁩ أصغر من 16 سنة ويريد استخدام Lobsy للتقدّم. نحتاج موافقتك لذلك.
+
+Sanne :الاسم
+7 أكتوبر 2026 :الرابط صالح حتى
+
+في الصفحة تقرأ ما يفعله Lobsy وتمنح الموافقة بزر واحد.
+
+لا تعرف ما الموضوع؟ لا داعي لأي إجراء. بدون موافقة لا يستطيع ⁨Sanne⁩
+التقدّم.
 
 عرض الموافقة: https://lobsy.nl/toestemming?t=voorbeeld
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأن قاصرًا يطلب موافقتك.
+تصلك هذه الرسالة لأن ⁨Sanne⁩ أعطى بريدك كولي أمر.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: هل تمنح موافقتك؟
+h1: ⁨Sanne⁩ يطلب موافقتك
 marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl

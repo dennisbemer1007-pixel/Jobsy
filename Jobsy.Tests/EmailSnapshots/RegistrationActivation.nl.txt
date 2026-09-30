@@ -1,9 +1,9 @@
 KEY: RegistrationActivation
-SUBJECT: Bevestigingscode — Lobsy
+SUBJECT: Bevestigingscode - Lobsy
 PREHEADER: Je Lobsy-bevestigingscode
 KIND: Security
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Welkom bij Lobsy
 ================

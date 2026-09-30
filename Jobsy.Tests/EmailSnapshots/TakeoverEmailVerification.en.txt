@@ -1,9 +1,9 @@
 KEY: TakeoverEmailVerification
-SUBJECT: Takeover confirmation code — Lobsy
+SUBJECT: Takeover confirmation code - Lobsy
 PREHEADER: Takeover confirmation code
 KIND: Security
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Confirm your email address
 ==========================

@@ -3,9 +3,9 @@ SUBJECT: دعوة إلى Lobsy (⁨Filiaalmanager⁩)
 PREHEADER: دُعيت كـ Filiaalmanager على Lobsy.
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
-دعوة — ⁨Filiaalmanager⁩
+دعوة - ⁨Filiaalmanager⁩
 
 دُعيت كـ ⁨Filiaalmanager⁩ على Lobsy.
 
@@ -23,7 +23,7 @@ KIND: Essential
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: دعوة — ⁨Filiaalmanager⁩
+h1: دعوة - ⁨Filiaalmanager⁩
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=

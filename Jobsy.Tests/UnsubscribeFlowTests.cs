@@ -74,7 +74,7 @@ public class UnsubscribeFlowTests
 
         email.Sent.Clear();
         var essential = TransactionalEmails.ApplicationConfirmation(
-            "https://lobsy.nl", "Alex", "Functie", "Bedrijf", false);
+            "https://lobsy.nl", "Alex", "Functie", "Bedrijf");
         await prefs.OptOutAsync("alex@example.com", "PushBom", "Page");
         var still = await mailer.SendAsync(essential, "alex@example.com");
         Assert.True(still.Sent);

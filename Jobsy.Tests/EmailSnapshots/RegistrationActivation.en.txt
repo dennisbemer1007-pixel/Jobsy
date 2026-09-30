@@ -1,9 +1,9 @@
 KEY: RegistrationActivation
-SUBJECT: Confirmation code — Lobsy
+SUBJECT: Confirmation code - Lobsy
 PREHEADER: Your Lobsy confirmation code
 KIND: Security
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Welcome to Lobsy
 ================

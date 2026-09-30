@@ -1,9 +1,9 @@
 KEY: TakeoverRejected
-SUBJECT: رُفض الاستحواذ — Lobsy
+SUBJECT: رُفض الاستحواذ - Lobsy
 PREHEADER: رُفض الاستحواذ
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 رُفض الاستحواذ
 

@@ -1,9 +1,9 @@
 KEY: TakeoverSubmitted
-SUBJECT: Overnameverzoek ingediend — Lobsy
+SUBJECT: Overnameverzoek ingediend - Lobsy
 PREHEADER: Overnameverzoek ingediend
 KIND: Essential
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Verzoek ingediend
 =================

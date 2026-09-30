@@ -1,43 +1,43 @@
 KEY: PushBom
 SUBJECT: وظيفة جديدة بالقرب منك: ⁨Weekendhulp verkoop⁩
-PREHEADER: ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden Korrel⁩ — 3٫4 كم منك
+PREHEADER: ⁨Bakkerij De Gouden Korrel⁩، 3٫4 كم منك.
 KIND: Optional
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
-شيء جميل بالقرب منك
+وظيفة بالقرب منك
 
-هناك وظيفة مناسبة مفتوحة — ضمن مسافة الدراجة أو التنقل منك.
+هذه الوظيفة تناسبك.
 
-Weekendhulp verkoop :المسمى
+Weekendhulp verkoop :الوظيفة
 Bakkerij De Gouden Korrel :الشركة
-Delft :الموقع
+Delft :المكان
 3٫4 كم :المسافة
-12 دقائق :وقت التنقل
+12 دق :وقت التنقل
 € 14٫50 :Uurloon
 
 لم تعد تبحث عن عمل؟ اضبط حالتك على غير متاح:
 https://lobsy.nl/candidate/actions/set-unavailable
 
-انقر هنا: https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
+عرض الوظيفة: https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأن نصائح الوظائف القريبة مفعّلة.
+تصلك هذه الرسالة لأنك تريد وظائف قريبة.
 إلغاء الاشتراك من هذه الرسائل: https://lobsy.nl/mail/afmelden
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 إعدادات البريد: https://lobsy.nl/account/mail-instellingen
 Lobsy
 --- STRUCTURE ---
-h1: شيء جميل بالقرب منك
+h1: وظيفة بالقرب منك
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=facts
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: اضبط حالتك على غير متاح -> https://lobsy.nl/candidate/actions/set-unavailable
-a: انقر هنا -> https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
+a: عرض الوظيفة -> https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
 a: إلغاء الاشتراك من هذه الرسائل -> https://lobsy.nl/mail/afmelden
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy

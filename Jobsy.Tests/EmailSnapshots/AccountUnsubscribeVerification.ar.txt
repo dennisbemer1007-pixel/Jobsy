@@ -1,32 +1,33 @@
 KEY: AccountUnsubscribeVerification
-SUBJECT: رمز التحقق لإلغاء الاشتراك في Lobsy
-PREHEADER: رمز التحقق لإلغاء الاشتراك
+SUBJECT: رمزك لحذف حسابك: 123456
+PREHEADER: أدخل هذا الرمز لحذف حسابك.
 KIND: Security
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
-أكد إلغاء الاشتراك
+رمزك
 
-طلبت إغلاق حساب Lobsy.
-
-استخدم هذا الرمز المكوّن من 6 أرقام لتأكيد إلغاء الاشتراك:
+طلبت حذف حساب Lobsy. أدخل هذا الرمز للتأكيد.
 
 
 123456
 
-الرمز صالح لمدة 10 دقائق. إذا لم تطلب ذلك، تجاهل هذه الرسالة.
+الرمز يعمل لمدة 10 دقائق.
+
+ألم تطلب هذا بنفسك؟ تجاهل الرسالة. يبقى حسابك كما هو.
 
 فريق Lobsy
 
-تصلك هذه الرسالة بسبب إجراء على حساب Lobsy.
+تصلك هذه الرسالة لأنك طلبت ذلك في Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: أكد إلغاء الاشتراك
+h1: رمزك
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=code
 marker: div data-lobsy-otp=123456
+marker: table data-lobsy-block=note
 a: Lobsy -> https://lobsy.nl
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy

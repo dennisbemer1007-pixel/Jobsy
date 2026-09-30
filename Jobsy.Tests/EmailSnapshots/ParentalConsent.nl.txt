@@ -1,29 +1,36 @@
 KEY: ParentalConsent
 SUBJECT: Sanne vraagt je toestemming voor Lobsy
-PREHEADER: Geef je toestemming voor Lobsy.
+PREHEADER: Bekijk waarvoor Sanne je toestemming vraagt.
 KIND: Essential
 --- TEXT ---
-Geef je toestemming?
-====================
+Sanne vraagt je toestemming
+===========================
 
-Sanne wil Lobsy gebruiken: tests doen en een analyse met AI krijgen. Omdat
-Sanne jonger is dan 16 jaar, hebben we toestemming nodig van een ouder of
-voogd.
+Hallo,
 
-Ben je geen ouder of voogd, of weet je hier niets van? Dan hoef je niets te
-doen. De link werkt tot 7 oktober 2026.
+Sanne is jonger dan 16 jaar en wil Lobsy gebruiken om te solliciteren.
+Daarvoor is jouw toestemming nodig.
+
+Naam: Sanne
+Link geldig tot: 7 oktober 2026
+
+Op de pagina lees je wat Lobsy doet en geef je toestemming met één knop.
+
+Weet je niet waar dit over gaat? Dan hoef je niets te doen. Zonder
+toestemming kan Sanne niet solliciteren.
 
 Toestemming bekijken: https://lobsy.nl/toestemming?t=voorbeeld
 
 Team Lobsy
 
-Je ontvangt deze mail omdat een minderjarige je toestemming vraagt.
+Je krijgt deze mail omdat Sanne je e-mailadres heeft opgegeven als ouder of verzorger.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Geef je toestemming?
+h1: Sanne vraagt je toestemming
 marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl

@@ -1,5 +1,5 @@
 KEY: AccessRequestReminder
-SUBJECT: Access request reminder — Lobsy
+SUBJECT: Access request reminder - Lobsy
 PREHEADER: Access request reminder
 KIND: Essential
 --- TEXT ---

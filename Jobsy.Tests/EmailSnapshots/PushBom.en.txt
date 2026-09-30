@@ -1,44 +1,44 @@
 KEY: PushBom
 SUBJECT: New vacancy near you: Weekendhulp verkoop
-PREHEADER: Weekendhulp verkoop at Bakkerij De Gouden Korrel — 3.4 km from you
+PREHEADER: Bakkerij De Gouden Korrel, 3.4 km from you.
 KIND: Optional
 --- TEXT ---
-Hi Alex de Tester,
+Hi Alex,
 
-Something nice near you
-=======================
+A vacancy near you
+==================
 
-A matching vacancy is open — within bike or travel distance of you.
+This vacancy matches you.
 
-Role: Weekendhulp verkoop
+Vacancy: Weekendhulp verkoop
 Company: Bakkerij De Gouden Korrel
-Location: Delft
+Place: Delft
 Distance: 3.4 km
-Travel time: 12 minutes
+Travel time: 12 mins
 Uurloon: € 14.50
 
 No longer looking for work? Set your status to Unavailable:
 https://lobsy.nl/candidate/actions/set-unavailable
 
-Click here: https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
+View the vacancy: https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
 
 Team Lobsy
 
-You receive this email because nearby vacancy tips are on.
+You get this email because you want nearby vacancies.
 Unsubscribe from these emails: https://lobsy.nl/mail/afmelden
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Mail settings: https://lobsy.nl/account/mail-instellingen
 Lobsy
 --- STRUCTURE ---
-h1: Something nice near you
+h1: A vacancy near you
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=facts
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: Set your status to Unavailable -> https://lobsy.nl/candidate/actions/set-unavailable
-a: Click here -> https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
+a: View the vacancy -> https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
 a: Unsubscribe from these emails -> https://lobsy.nl/mail/afmelden
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy

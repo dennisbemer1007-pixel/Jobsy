@@ -1,5 +1,5 @@
 KEY: AccessRequestReminder
-SUBJECT: تذكير بطلب الوصول — Lobsy
+SUBJECT: تذكير بطلب الوصول - Lobsy
 PREHEADER: تذكير بطلب الوصول
 KIND: Essential
 --- TEXT ---

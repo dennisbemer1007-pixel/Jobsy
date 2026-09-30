@@ -1,9 +1,9 @@
 KEY: TakeoverApproved
-SUBJECT: Takeover approved — Lobsy
+SUBJECT: Takeover approved - Lobsy
 PREHEADER: Takeover approved
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Takeover approved
 =================

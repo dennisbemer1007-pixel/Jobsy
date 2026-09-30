@@ -1,5 +1,5 @@
 KEY: OwnershipTransferManagersNotify
-SUBJECT: Eigendomsoverdracht aangevraagd — Lobsy
+SUBJECT: Eigendomsoverdracht aangevraagd - Lobsy
 PREHEADER: Eigendomsoverdracht aangevraagd
 KIND: Essential
 --- TEXT ---

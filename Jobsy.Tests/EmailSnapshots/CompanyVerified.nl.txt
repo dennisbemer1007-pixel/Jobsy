@@ -1,9 +1,9 @@
 KEY: CompanyVerified
-SUBJECT: Je bedrijf is geverifieerd — Lobsy
+SUBJECT: Je bedrijf is geverifieerd - Lobsy
 PREHEADER: Je bedrijf is geverifieerd op Lobsy
 KIND: Essential
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Je bedrijf is geverifieerd
 ==========================
@@ -15,7 +15,7 @@ Gepubliceerd:
 
 Vacature 1: Weekendhulp verkoop
 
-Je hebt van ons je welkomsttoken gekregen — daarmee plaats je (of verleng
+Je hebt van ons je welkomsttoken gekregen - daarmee plaats je (of verleng
 je) een vacature.
 
 Naar vacatures: https://lobsy.nl/werkgever/vacatures

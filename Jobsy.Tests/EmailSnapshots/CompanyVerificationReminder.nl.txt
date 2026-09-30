@@ -1,9 +1,9 @@
 KEY: CompanyVerificationReminder
-SUBJECT: Herinnering: verifieer je bedrijf — Lobsy
+SUBJECT: Herinnering: verifieer je bedrijf - Lobsy
 PREHEADER: Verifieer je bedrijf op Lobsy
 KIND: Essential
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Verifieer je bedrijf
 ====================

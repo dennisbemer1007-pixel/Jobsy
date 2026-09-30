@@ -3,7 +3,7 @@ SUBJECT: Lobsy ambassador invitation
 PREHEADER: You were invited as an ambassador on Lobsy.
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Ambassador invitation
 =====================

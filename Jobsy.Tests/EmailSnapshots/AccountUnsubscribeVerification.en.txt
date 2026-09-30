@@ -1,34 +1,35 @@
 KEY: AccountUnsubscribeVerification
-SUBJECT: Verification code for unsubscribing from Lobsy
-PREHEADER: Your verification code for unsubscribing
+SUBJECT: Your code to delete your account: 123456
+PREHEADER: Enter this code to delete your account.
 KIND: Security
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
-Confirm your unsubscribe
-========================
+Your code
+=========
 
-You asked to close your Lobsy account.
-
-Use this 6-digit code to confirm unsubscribing:
+You asked to delete your Lobsy account. Enter this code to confirm.
 
 
 123456
 
-The code is valid for 10 minutes. If you did not ask for this, ignore this
-email.
+The code works for 10 minutes.
+
+Did you not ask for this yourself? Ignore this email. Your account then
+stays as it is.
 
 Team Lobsy
 
-You receive this email because of an action on your Lobsy account.
+You get this email because you requested this in Lobsy.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Confirm your unsubscribe
+h1: Your code
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=code
 marker: div data-lobsy-otp=123456
+marker: table data-lobsy-block=note
 a: Lobsy -> https://lobsy.nl
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy

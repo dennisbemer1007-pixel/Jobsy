@@ -1,9 +1,9 @@
 KEY: CompanyVerificationReminder
-SUBJECT: Reminder: verify your company — Lobsy
+SUBJECT: Reminder: verify your company - Lobsy
 PREHEADER: Verify your company on Lobsy
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Verify your company
 ===================

@@ -65,7 +65,8 @@ public static partial class TransactionalEmails
         EmailEyebrow? eyebrow = null,
         bool showMascot = false,
         string? signOff = null,
-        EmailCulture? culture = null)
+        EmailCulture? culture = null,
+        string? reasonText = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var def = EmailTemplateRegistry.GetRequired(key);
@@ -77,7 +78,7 @@ public static partial class TransactionalEmails
             Preheader: preheader,
             Heading: heading,
             Blocks: blocks,
-            ReasonText: EmailStrings.Reason(c, def.ReasonKey),
+            ReasonText: reasonText ?? EmailStrings.Reason(c, def.ReasonKey),
             SignOff: signOff ?? EmailStrings.Get(c, "Email.Common.SignOff"),
             Eyebrow: eyebrow,
             Greeting: greeting,
@@ -89,13 +90,20 @@ public static partial class TransactionalEmails
     private static string Sf(EmailCulture c, string key, params object[] args) => EmailStrings.FormatRaw(c, key, args);
     private static EmailText T(EmailCulture c, string key, params EmailArg[] args) => EmailStrings.Format(c, key, args);
     private static string GreetCandidate(EmailCulture c, string? name)
-        => string.IsNullOrWhiteSpace(name)
+    {
+        var first = NameParts.FirstName(name);
+        return string.IsNullOrWhiteSpace(first)
             ? S(c, "Email.Common.GreetingCandidateFallback")
-            : Sf(c, "Email.Common.GreetingCandidate", EmailBidi.Isolate(c, name.Trim()));
+            : Sf(c, "Email.Common.GreetingCandidate", EmailBidi.Isolate(c, first));
+    }
+
     private static string GreetOther(EmailCulture c, string? name)
-        => string.IsNullOrWhiteSpace(name)
+    {
+        var first = NameParts.FirstName(name);
+        return string.IsNullOrWhiteSpace(first)
             ? S(c, "Email.Common.GreetingOtherFallback")
-            : Sf(c, "Email.Common.GreetingOther", EmailBidi.Isolate(c, name.Trim()));
+            : Sf(c, "Email.Common.GreetingOther", EmailBidi.Isolate(c, first));
+    }
 
     private static EmailText Plain(string text) => EmailText.Plain(text);
     private static EmailText Bold(string text) => EmailText.Bold(text);
@@ -121,11 +129,11 @@ public static partial class TransactionalEmails
         return key.ToLowerInvariant() switch
         {
             "mailtest" => MailTest(ctx.PublicWebBaseUrl, c),
-            "applicationconfirmation" => ApplicationConfirmation(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, false, c),
+            "applicationconfirmation" => ApplicationConfirmation(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
             "applicationverificationcode" => ApplicationVerificationCode(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.VacancyId, ctx.OtpCode, c),
             "employerreactionaccepted" => EmployerReactionAccepted(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
             "employerreactionrejected" => EmployerReactionRejected(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
-            "employercontacting" => EmployerContacting(ctx.PublicWebBaseUrl, ctx.VacancyTitle, c),
+            "employercontacting" => EmployerContacting(ctx.PublicWebBaseUrl, ctx.VacancyTitle, ctx.RecipientName, ctx.CompanyName, c),
             "applicationhired" => ApplicationHired(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, ctx.ApplicationId, links.WithdrawOthers(ctx.ApplicationId), c),
             "applicationfilledelsewhere" => ApplicationFilledElsewhere(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
             "employernewapplication" => EmployerNewApplication(ctx.PublicWebBaseUrl, ctx.VacancyTitle, c),

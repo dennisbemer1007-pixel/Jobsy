@@ -3,7 +3,7 @@ SUBJECT: Your two-step verification was reset
 PREHEADER: Your two-step verification was reset by support.
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Two-step verification reset
 ===========================

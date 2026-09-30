@@ -126,20 +126,29 @@ public static partial class TransactionalEmails
         var c = culture ?? EmailCulture.Nl;
         var age = CandidateConsentRules.ParentalConsentAge;
         var hasName = !string.IsNullOrWhiteSpace(childFirstName);
+        var child = hasName ? childFirstName!.Trim() : S(c, "Email.ParentalConsent.ChildFallback");
+        var childCap = hasName ? childFirstName!.Trim() : S(c, "Email.ParentalConsent.ChildFallbackCap");
         var subject = hasName
-            ? Sf(c, "Email.ParentalConsent.SubjectNamed", EmailBidi.Isolate(c, childFirstName!.Trim()))
+            ? Sf(c, "Email.ParentalConsent.SubjectNamed", EmailBidi.Isolate(c, child))
             : S(c, "Email.ParentalConsent.Subject");
-        var bodyName = hasName ? childFirstName!.Trim() : S(c, "Email.ParentalConsent.ChildFallback");
-        var bodyNameCap = hasName ? childFirstName!.Trim() : S(c, "Email.ParentalConsent.ChildFallbackCap");
         var expiresLabel = EmailFormat.Date(expiresAtUtc, c);
-        return Finish(Doc("ParentalConsent", subject, S(c, "Email.ParentalConsent.Preheader"),
-            S(c, "Email.ParentalConsent.Heading"),
+        return Finish(Doc("ParentalConsent", subject,
+            Sf(c, "Email.ParentalConsent.Preheader", EmailBidi.Isolate(c, child)),
+            Sf(c, "Email.ParentalConsent.Heading", EmailBidi.Isolate(c, childCap)),
             [
-                P(Sf(c, "Email.ParentalConsent.P1",
-                    EmailBidi.Isolate(c, bodyNameCap), EmailBidi.Isolate(c, bodyName), age)),
-                N(Sf(c, "Email.ParentalConsent.Note", expiresLabel))
+                P(EmailText.Plain(S(c, "Email.Common.GreetingOtherFallback"))),
+                P(Sf(c, "Email.ParentalConsent.P1", EmailBidi.Isolate(c, childCap), age)),
+                F([
+                    (S(c, "Email.Common.Fact.Name"), childCap),
+                    (S(c, "Email.Common.Fact.LinkValidUntil"), expiresLabel)
+                ]),
+                P(S(c, "Email.ParentalConsent.P2")),
+                N(Sf(c, "Email.ParentalConsent.Note", EmailBidi.Isolate(c, child)))
             ],
-            Button(S(c, "Email.ParentalConsent.Cta"), confirmUrl), culture: c), baseUrl);
+            Button(S(c, "Email.ParentalConsent.Cta"), confirmUrl),
+            eyebrow: new EmailEyebrow(S(c, "Email.ParentalConsent.Eyebrow"), EmailTone.Peach),
+            culture: c,
+            reasonText: Sf(c, "Email.Reason.ParentAsked", EmailBidi.Isolate(c, childCap))), baseUrl);
     }
 
     public static ComposedEmail SupportAccessRequested(
@@ -176,17 +185,23 @@ public static partial class TransactionalEmails
     }
 
     public static ComposedEmail AccountUnsubscribeVerification(
-        string? baseUrl, string fullName, string code, int ttlMinutes, EmailCulture? culture = null)
+        string? baseUrl, string fullName, string code, int ttlMinutes, EmailCulture? culture = null,
+        bool codeInSubject = true)
     {
         var c = culture ?? EmailCulture.Nl;
-        return Finish(Doc("AccountUnsubscribeVerification", S(c, "Email.AccountUnsubscribeVerification.Subject"),
+        var subject = codeInSubject
+            ? Sf(c, "Email.AccountUnsubscribeVerification.SubjectWithCode", code)
+            : S(c, "Email.AccountUnsubscribeVerification.Subject");
+        return Finish(Doc("AccountUnsubscribeVerification", subject,
             S(c, "Email.AccountUnsubscribeVerification.Preheader"), S(c, "Email.AccountUnsubscribeVerification.Heading"),
             [
                 P(S(c, "Email.AccountUnsubscribeVerification.P1")),
-                P(S(c, "Email.AccountUnsubscribeVerification.P2")),
-                C(code, Sf(c, "Email.Common.CodeValidMinutes", ttlMinutes))
+                C(code, Sf(c, "Email.Common.CodeWorksMinutes", ttlMinutes)),
+                N(S(c, "Email.AccountUnsubscribeVerification.Note"))
             ],
-            greeting: GreetOther(c, fullName), culture: c), baseUrl);
+            greeting: GreetOther(c, fullName),
+            eyebrow: new EmailEyebrow(S(c, "Email.AccountUnsubscribeVerification.Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail MfaResetByAdmin(string? baseUrl, string recipientName, EmailCulture? culture = null)
@@ -210,7 +225,7 @@ public static partial class TransactionalEmails
             Sf(c, "Email.EmailSignUpCode.Subject", code),
             S(c, "Email.EmailSignUpCode.Preheader"),
             S(c, "Email.EmailSignUpCode.Heading"),
-            [P(S(c, "Email.EmailSignUpCode.P1")), C(code, S(c, "Email.Common.CodeValid10"))],
+            [P(S(c, "Email.EmailSignUpCode.P1")), C(code, Sf(c, "Email.Common.CodeValid10", ApplicationRules.EmailVerificationCodeMinutes))],
             culture: c), baseUrl);
     }
 
@@ -221,7 +236,7 @@ public static partial class TransactionalEmails
             S(c, "Email.EmailSignInCode.Subject"),
             S(c, "Email.EmailSignInCode.Preheader"),
             S(c, "Email.EmailSignInCode.Heading"),
-            [P(S(c, "Email.EmailSignInCode.P1")), C(code, S(c, "Email.Common.CodeValid10"))],
+            [P(S(c, "Email.EmailSignInCode.P1")), C(code, Sf(c, "Email.Common.CodeValid10", ApplicationRules.EmailVerificationCodeMinutes))],
             culture: c), baseUrl);
     }
 

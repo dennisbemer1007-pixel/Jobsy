@@ -1,9 +1,9 @@
 KEY: AccessRequestSubmitted
-SUBJECT: Toegangsverzoek verstuurd — Lobsy
+SUBJECT: Toegangsverzoek verstuurd - Lobsy
 PREHEADER: Toegangsverzoek verstuurd
 KIND: Essential
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Aanvraag verstuurd
 ==================

@@ -1,9 +1,9 @@
 KEY: AccessRequestSubmitted
-SUBJECT: Access request sent — Lobsy
+SUBJECT: Access request sent - Lobsy
 PREHEADER: Access request sent
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Request sent
 ============

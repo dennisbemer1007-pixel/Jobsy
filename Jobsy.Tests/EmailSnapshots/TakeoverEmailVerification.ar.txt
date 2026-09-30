@@ -1,9 +1,9 @@
 KEY: TakeoverEmailVerification
-SUBJECT: رمز تأكيد طلب الاستحواذ — Lobsy
+SUBJECT: رمز تأكيد طلب الاستحواذ - Lobsy
 PREHEADER: رمز تأكيد الاستحواذ
 KIND: Security
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 أكد بريدك الإلكتروني
 

@@ -1,31 +1,35 @@
 KEY: ApplicationVerificationCode
-SUBJECT: Verificatiecode voor sollicitatie: Weekendhulp verkoop
-PREHEADER: Je Lobsy-verificatiecode
+SUBJECT: Je code voor je sollicitatie: 123456
+PREHEADER: Vul deze code in om je sollicitatie te versturen.
 KIND: Security
 --- TEXT ---
-Hoi Alex de Tester,
+Hoi Alex,
 
-Je verificatiecode
-==================
+Je code
+=======
 
-Gebruik deze 6-cijferige code om je sollicitatie af te ronden:
+Vul deze code in op Lobsy om je sollicitatie op Weekendhulp verkoop te
+versturen.
 
 
 123456
 
-De code is 10 minuten geldig.
+De code werkt 10 minuten.
+
+Heb je dit niet zelf gedaan? Dan kun je deze mail negeren.
 
 Team Lobsy
 
-Je ontvangt deze mail omdat je een sollicitatie wilt afronden.
+Je krijgt deze mail omdat iemand met dit e-mailadres wil solliciteren via Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Je verificatiecode
+h1: Je code
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=code
 marker: div data-lobsy-otp=123456
+marker: table data-lobsy-block=note
 a: Lobsy -> https://lobsy.nl
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy

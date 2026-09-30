@@ -1,9 +1,9 @@
 KEY: CompanyVerificationReminder
-SUBJECT: تذكير: وثّق شركتك — Lobsy
+SUBJECT: تذكير: وثّق شركتك - Lobsy
 PREHEADER: وثّق شركتك على Lobsy
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 وثّق شركتك
 

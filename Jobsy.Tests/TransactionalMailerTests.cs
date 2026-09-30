@@ -19,7 +19,7 @@ public class TransactionalMailerTests
         var email = new RecordingEmail();
         var mailer = CreateMailer(db, email, employersEnabled: false, ambassadorsEnabled: false);
         var mail = TransactionalEmails.ApplicationConfirmation(
-            "https://lobsy.nl", "Alex", "Functie", "Bedrijf", false);
+            "https://lobsy.nl", "Alex", "Functie", "Bedrijf");
         var outcome = await mailer.SendAsync(mail, "alex@example.com");
         Assert.True(outcome.Suppressed);
         Assert.Equal("employers disabled", outcome.Reason);

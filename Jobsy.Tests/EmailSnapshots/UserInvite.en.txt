@@ -3,9 +3,9 @@ SUBJECT: Invitation to Lobsy (Filiaalmanager)
 PREHEADER: You were invited as Filiaalmanager on Lobsy.
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
-Invitation — Filiaalmanager
+Invitation - Filiaalmanager
 ===========================
 
 You were invited as Filiaalmanager on Lobsy.
@@ -25,7 +25,7 @@ Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Invitation — Filiaalmanager
+h1: Invitation - Filiaalmanager
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=

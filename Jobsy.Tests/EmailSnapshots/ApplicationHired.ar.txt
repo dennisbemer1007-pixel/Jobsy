@@ -1,19 +1,17 @@
 KEY: ApplicationHired
-SUBJECT: تهانينا! تم توظيفك لـ ⁨Weekendhulp verkoop⁩
-PREHEADER: تم توظيفك — تهانينا!
+SUBJECT: تهانينا، تم توظيفك لدى ⁨Bakkerij De Gouden Korrel⁩
+PREHEADER: وظيفتك الجديدة: ⁨Weekendhulp verkoop⁩.
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
-تهانينا — تم توظيفك!
+تم توظيفك
 
-يا للفرحة! تم توظيفك لـ ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden
-Korrel⁩.
+تم توظيفك لـ ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden Korrel⁩. بالتوفيق
+في عملك الجديد.
 
-بالتوفيق — واستمتع بهذه الخطوة.
-
-هل لديك طلبات أخرى مفتوحة؟ اسحبها حتى يعرف أولئك أصحاب العمل أنك وجدت عملاً.
-عرض طلباتي:
+هل لديك طلبات أخرى؟ اسحبها. حينها يعرف أولئك أصحاب العمل أن لديك عملًا. عرض
+طلبك:
 https://lobsy.nl/candidate/applications
 
 سحب الطلبات الأخرى: https://lobsy.nl/candidate/actions/withdraw-others?hiredApplicationId=22222222-2222-2222-2222-222222222222
@@ -25,12 +23,12 @@ https://lobsy.nl/candidate/applications
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: تهانينا — تم توظيفك!
+h1: تم توظيفك
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: عرض طلباتي -> https://lobsy.nl/candidate/applications
+a: عرض طلبك -> https://lobsy.nl/candidate/applications
 a: سحب الطلبات الأخرى -> https://lobsy.nl/candidate/actions/withdraw-others?hiredApplicationId=22222222-2222-2222-2222-222222222222
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy

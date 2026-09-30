@@ -1,9 +1,9 @@
 KEY: CompanyVerificationRejected
-SUBJECT: Verification rejected — Lobsy
+SUBJECT: Verification rejected - Lobsy
 PREHEADER: Verification rejected
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Verification rejected
 =====================

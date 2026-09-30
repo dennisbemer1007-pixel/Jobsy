@@ -1,33 +1,31 @@
 KEY: EmployerReactionAccepted
-SUBJECT: Je sollicitatie is geaccepteerd: Weekendhulp verkoop
-PREHEADER: Je sollicitatie is geaccepteerd.
+SUBJECT: Goed nieuws over je sollicitatie bij Bakkerij De Gouden Korrel
+PREHEADER: Bakkerij De Gouden Korrel wil verder met je.
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hoi Alex,
 
-Goed nieuws!
-============
+Bakkerij De Gouden Korrel wil verder met je
+===========================================
 
-Het bedrijf heeft je sollicitatie voor Weekendhulp verkoop bij Bakkerij De
-Gouden Korrel geaccepteerd.
+Bakkerij De Gouden Korrel heeft je sollicitatie op Weekendhulp verkoop
+geaccepteerd. Ze nemen snel contact met je op. Houd je telefoon en je mail
+in de gaten.
 
-Wellicht nemen ze binnenkort contact met je op. Houd je telefoon en mail in
-de gaten.
-
-Bekijk mijn sollicitaties: https://lobsy.nl/candidate/applications
+Bekijk je sollicitatie: https://lobsy.nl/candidate/applications
 
 Team Lobsy
 
-Je ontvangt deze mail omdat je hebt gesolliciteerd via Lobsy.
+Je krijgt deze mail omdat je via Lobsy hebt gesolliciteerd.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Goed nieuws!
+h1: Bakkerij De Gouden Korrel wil verder met je
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Bekijk mijn sollicitaties -> https://lobsy.nl/candidate/applications
+a: Bekijk je sollicitatie -> https://lobsy.nl/candidate/applications
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -1,27 +1,27 @@
 KEY: ApplicationFilledElsewhere
-SUBJECT: Application update: Weekendhulp verkoop
-PREHEADER: An update on your application.
+SUBJECT: News about your application at Bakkerij De Gouden Korrel
+PREHEADER: There are more vacancies near you.
 KIND: Essential
 --- TEXT ---
-Hi Alex de Tester,
+Hi Alex,
 
-Update on your application
-==========================
+This vacancy is filled
+======================
 
 Thanks for applying for Weekendhulp verkoop at Bakkerij De Gouden Korrel.
-
-Unfortunately another candidate was chosen. We wish you every success!
+Bakkerij De Gouden Korrel hired someone else. There are still plenty of
+other vacancies near you.
 
 Browse other vacancies: https://lobsy.nl/banenkaart
 
 Team Lobsy
 
-You receive this email because you applied via Lobsy.
+You get this email because you applied via Lobsy.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Update on your application
+h1: This vacancy is filled
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl

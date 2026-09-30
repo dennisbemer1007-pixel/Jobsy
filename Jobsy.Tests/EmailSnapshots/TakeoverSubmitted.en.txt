@@ -1,9 +1,9 @@
 KEY: TakeoverSubmitted
-SUBJECT: Takeover request submitted — Lobsy
+SUBJECT: Takeover request submitted - Lobsy
 PREHEADER: Takeover request submitted
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Request submitted
 =================

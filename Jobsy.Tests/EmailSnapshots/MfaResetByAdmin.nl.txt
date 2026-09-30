@@ -3,7 +3,7 @@ SUBJECT: Je tweestapsverificatie is gereset
 PREHEADER: Je tweestapsverificatie is gereset door support.
 KIND: Essential
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Tweestapsverificatie gereset
 ============================

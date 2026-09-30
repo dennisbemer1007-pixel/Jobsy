@@ -143,7 +143,7 @@ public class EmailRendererRtlTests
     public void Arabic_render_has_rtl_bdi_and_ltr_code()
     {
         var mail = TransactionalEmails.ApplicationConfirmation(
-            "https://lobsy.nl", "Alex", "Weekendhulp", "Bakkerij De Gouden Korrel", false, EmailCulture.Ar);
+            "https://lobsy.nl", "Alex", "Weekendhulp", "Bakkerij De Gouden Korrel", EmailCulture.Ar);
         Assert.Contains("dir=\"rtl\"", mail.Html, StringComparison.Ordinal);
         Assert.Contains("lang=\"ar\"", mail.Html, StringComparison.Ordinal);
         Assert.Contains("<bdi>", mail.Html, StringComparison.Ordinal);
@@ -160,7 +160,7 @@ public class EmailRendererRtlTests
     public void Non_arabic_text_has_no_bidi_isolates()
     {
         var mail = TransactionalEmails.ApplicationConfirmation(
-            "https://lobsy.nl", "Alex", "Weekendhulp", "Bakkerij", false, EmailCulture.En);
+            "https://lobsy.nl", "Alex", "Weekendhulp", "Bakkerij", EmailCulture.En);
         Assert.DoesNotContain(EmailBidi.FirstStrongIsolate, mail.Text);
         Assert.Contains("dir=\"ltr\"", mail.Html, StringComparison.Ordinal);
         Assert.Contains("<bdi>", mail.Html, StringComparison.Ordinal); // user data still isolated in HTML

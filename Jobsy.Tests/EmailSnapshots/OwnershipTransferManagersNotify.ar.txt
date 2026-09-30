@@ -1,5 +1,5 @@
 KEY: OwnershipTransferManagersNotify
-SUBJECT: طُلب نقل الملكية — Lobsy
+SUBJECT: طُلب نقل الملكية - Lobsy
 PREHEADER: طُلب نقل الملكية
 KIND: Essential
 --- TEXT ---

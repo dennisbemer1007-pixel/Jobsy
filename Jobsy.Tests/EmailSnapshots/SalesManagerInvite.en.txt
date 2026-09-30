@@ -3,7 +3,7 @@ SUBJECT: Lobsy sales manager invitation
 PREHEADER: You were invited as a sales manager on Lobsy.
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Sales manager invitation
 ========================

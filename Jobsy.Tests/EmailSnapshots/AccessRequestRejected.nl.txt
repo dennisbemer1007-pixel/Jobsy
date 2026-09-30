@@ -1,9 +1,9 @@
 KEY: AccessRequestRejected
-SUBJECT: Toegangsverzoek afgewezen — Lobsy
+SUBJECT: Toegangsverzoek afgewezen - Lobsy
 PREHEADER: Toegangsverzoek afgewezen
 KIND: Essential
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Toegangsverzoek afgewezen
 =========================

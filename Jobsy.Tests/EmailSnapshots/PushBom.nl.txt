@@ -1,44 +1,44 @@
 KEY: PushBom
 SUBJECT: Nieuwe vacature bij jou in de buurt: Weekendhulp verkoop
-PREHEADER: Weekendhulp verkoop bij Bakkerij De Gouden Korrel — 3,4 km van jou
+PREHEADER: Bakkerij De Gouden Korrel, 3,4 km van jou.
 KIND: Optional
 --- TEXT ---
-Hoi Alex de Tester,
+Hoi Alex,
 
-Iets moois bij jou in de buurt
-==============================
+Een vacature bij jou in de buurt
+================================
 
-Er staat een passende vacature open — op fiets- of reistijd-afstand van jou.
+Deze vacature past bij jou.
 
-Functie: Weekendhulp verkoop
+Vacature: Weekendhulp verkoop
 Bedrijf: Bakkerij De Gouden Korrel
-Locatie: Delft
+Plaats: Delft
 Afstand: 3,4 km
-Reistijd: 12 minuten
+Reistijd: 12 min
 Uurloon: € 14,50
 
-Niet meer op zoek naar werk? Zet je status op Niet beschikbaar:
+Zoek je geen werk meer? Zet je status op Niet beschikbaar:
 https://lobsy.nl/candidate/actions/set-unavailable
 
-Klik hier: https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
+Bekijk de vacature: https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
 
 Team Lobsy
 
-Je ontvangt deze mail omdat je tips over vacatures in de buurt aan hebt staan.
+Je krijgt deze mail omdat je vacatures in de buurt wilt ontvangen.
 Afmelden voor deze mails: https://lobsy.nl/mail/afmelden
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Mail-instellingen: https://lobsy.nl/account/mail-instellingen
 Lobsy
 --- STRUCTURE ---
-h1: Iets moois bij jou in de buurt
+h1: Een vacature bij jou in de buurt
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=facts
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: Zet je status op Niet beschikbaar -> https://lobsy.nl/candidate/actions/set-unavailable
-a: Klik hier -> https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
+a: Bekijk de vacature -> https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
 a: Afmelden voor deze mails -> https://lobsy.nl/mail/afmelden
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy

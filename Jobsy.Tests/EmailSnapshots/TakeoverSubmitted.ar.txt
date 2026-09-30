@@ -1,9 +1,9 @@
 KEY: TakeoverSubmitted
-SUBJECT: قُدّم طلب الاستحواذ — Lobsy
+SUBJECT: قُدّم طلب الاستحواذ - Lobsy
 PREHEADER: قُدّم طلب الاستحواذ
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 قُدّم الطلب
 

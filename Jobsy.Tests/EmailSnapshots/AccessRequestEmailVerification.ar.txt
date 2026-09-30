@@ -1,9 +1,9 @@
 KEY: AccessRequestEmailVerification
-SUBJECT: رمز تأكيد طلب الوصول — Lobsy
+SUBJECT: رمز تأكيد طلب الوصول - Lobsy
 PREHEADER: رمز تأكيد طلب الوصول
 KIND: Security
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 أكد بريدك الإلكتروني
 

@@ -1,9 +1,9 @@
 KEY: CompanyUnverifiedDeleted
-SUBJECT: حُذف التسجيل — Lobsy
+SUBJECT: حُذف التسجيل - Lobsy
 PREHEADER: حُذف تسجيل غير موثّق
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 حُذف التسجيل
 

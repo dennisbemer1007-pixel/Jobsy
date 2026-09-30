@@ -3,7 +3,7 @@ SUBJECT: دعوة مدير مبيعات Lobsy
 PREHEADER: دُعيت كمدير مبيعات على Lobsy.
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 دعوة مدير مبيعات
 

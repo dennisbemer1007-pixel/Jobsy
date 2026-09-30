@@ -1,37 +1,35 @@
 KEY: ApplicationHired
-SUBJECT: Congratulations! You got the job for Weekendhulp verkoop
-PREHEADER: You got the job — congratulations!
+SUBJECT: Congratulations, you got the job at Bakkerij De Gouden Korrel
+PREHEADER: Your new job: Weekendhulp verkoop.
 KIND: Essential
 --- TEXT ---
-Hi Alex de Tester,
+Hi Alex,
 
-Congratulations — you got the job!
-==================================
+You got the job
+===============
 
-What a celebration! You got the job for Weekendhulp verkoop at Bakkerij De
-Gouden Korrel.
+You got the job for Weekendhulp verkoop at Bakkerij De Gouden Korrel. Good
+luck in your new role.
 
-All the best — and enjoy this step.
-
-Do you still have other applications open? Withdraw them so those employers
-know you are already placed. View my applications:
+Do you still have other applications? Withdraw them. Then those employers
+know you already have a job. View your application:
 https://lobsy.nl/candidate/applications
 
 Withdraw other applications: https://lobsy.nl/candidate/actions/withdraw-others?hiredApplicationId=22222222-2222-2222-2222-222222222222
 
 Team Lobsy
 
-You receive this email because you applied via Lobsy.
+You get this email because you applied via Lobsy.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Congratulations — you got the job!
+h1: You got the job
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: View my applications -> https://lobsy.nl/candidate/applications
+a: View your application -> https://lobsy.nl/candidate/applications
 a: Withdraw other applications -> https://lobsy.nl/candidate/actions/withdraw-others?hiredApplicationId=22222222-2222-2222-2222-222222222222
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy

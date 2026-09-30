@@ -1,15 +1,16 @@
 KEY: EmployerContacting
-SUBJECT: صاحب العمل يتواصل: ⁨Weekendhulp verkoop⁩
-PREHEADER: صاحب العمل سيتواصل معك.
+SUBJECT: ⁨Bakkerij De Gouden Korrel⁩ يتواصل معك
+PREHEADER: راقب هاتفك وبريدك.
 KIND: Essential
 --- TEXT ---
-صاحب العمل يتواصل معك
+مرحبًا ⁨Alex⁩،
 
-أخبار سارة! سيتواصل معك صاحب عمل ⁨Weekendhulp verkoop⁩.
+⁨Bakkerij De Gouden Korrel⁩ يتواصل معك
 
-راقب هاتفك أو بريدك أو واتساب.
+يريد ⁨Bakkerij De Gouden Korrel⁩ التحدث معك عن ⁨Weekendhulp verkoop⁩. ستسمع
+منهم قريبًا عبر الهاتف أو البريد أو واتساب.
 
-عرض طلباتي: https://lobsy.nl/candidate/applications
+عرض طلبك: https://lobsy.nl/candidate/applications
 
 فريق Lobsy
 
@@ -18,11 +19,11 @@ KIND: Essential
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: صاحب العمل يتواصل معك
+h1: ⁨Bakkerij De Gouden Korrel⁩ يتواصل معك
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: عرض طلباتي -> https://lobsy.nl/candidate/applications
+a: عرض طلبك -> https://lobsy.nl/candidate/applications
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

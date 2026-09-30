@@ -1,9 +1,9 @@
 KEY: AccessRequestRejected
-SUBJECT: Access request rejected — Lobsy
+SUBJECT: Access request rejected - Lobsy
 PREHEADER: Access request rejected
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Access request rejected
 =======================

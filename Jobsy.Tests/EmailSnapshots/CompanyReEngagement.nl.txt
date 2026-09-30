@@ -8,7 +8,7 @@ We missen je
 
 Hallo team Bakkerij De Gouden Korrel,
 
-Het is al een tijdje stil op Lobsy — geen actieve vacatures, geen inlog,
+Het is al een tijdje stil op Lobsy - geen actieve vacatures, geen inlog,
 geen API-call en geen CSV-upload.
 
 Goed nieuws: jullie tools staan nog klaar:

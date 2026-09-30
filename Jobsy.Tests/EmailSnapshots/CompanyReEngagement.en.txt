@@ -8,7 +8,7 @@ We miss you
 
 Hello team Bakkerij De Gouden Korrel,
 
-It has been quiet on Lobsy for a while — no active vacancies, no sign-in, no
+It has been quiet on Lobsy for a while - no active vacancies, no sign-in, no
 API call and no CSV upload.
 
 Good news: your tools are still ready:

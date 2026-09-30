@@ -1,5 +1,5 @@
 KEY: TakeoverRequest
-SUBJECT: Overnameverzoek vestiging — Lobsy
+SUBJECT: Overnameverzoek vestiging - Lobsy
 PREHEADER: Overnameverzoek vestiging
 KIND: Essential
 --- TEXT ---

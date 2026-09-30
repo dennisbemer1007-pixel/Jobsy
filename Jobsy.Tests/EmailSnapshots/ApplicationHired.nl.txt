@@ -1,38 +1,36 @@
 KEY: ApplicationHired
-SUBJECT: Gefeliciteerd! Je bent aangenomen voor Weekendhulp verkoop
-PREHEADER: Je bent aangenomen — gefeliciteerd!
+SUBJECT: Gefeliciteerd, je bent aangenomen bij Bakkerij De Gouden Korrel
+PREHEADER: Je nieuwe baan: Weekendhulp verkoop.
 KIND: Essential
 --- TEXT ---
-Hoi Alex de Tester,
+Hoi Alex,
 
-Gefeliciteerd — je bent aangenomen!
-===================================
+Je bent aangenomen
+==================
 
-Wat een feest! Je bent aangenomen voor Weekendhulp verkoop bij Bakkerij De
-Gouden Korrel.
+Je bent aangenomen voor Weekendhulp verkoop bij Bakkerij De Gouden Korrel.
+Veel succes met je nieuwe baan.
 
-Heel veel succes — en geniet van deze stap.
-
-Heb je nog andere sollicitaties lopen? Trek ze in, zodat die werkgevers
-weten dat je al bent voorzien. Bekijk mijn sollicitaties:
+Heb je nog andere sollicitaties? Trek ze in. Dan weten die werkgevers dat je
+al werk hebt. Bekijk je sollicitatie:
 https://lobsy.nl/candidate/applications
 
-Andere sollicitaties netjes intrekken: https://lobsy.nl/candidate/actions/withdraw-others?hiredApplicationId=22222222-2222-2222-2222-222222222222
+Andere sollicitaties intrekken: https://lobsy.nl/candidate/actions/withdraw-others?hiredApplicationId=22222222-2222-2222-2222-222222222222
 
 Team Lobsy
 
-Je ontvangt deze mail omdat je hebt gesolliciteerd via Lobsy.
+Je krijgt deze mail omdat je via Lobsy hebt gesolliciteerd.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Gefeliciteerd — je bent aangenomen!
+h1: Je bent aangenomen
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Bekijk mijn sollicitaties -> https://lobsy.nl/candidate/applications
-a: Andere sollicitaties netjes intrekken -> https://lobsy.nl/candidate/actions/withdraw-others?hiredApplicationId=22222222-2222-2222-2222-222222222222
+a: Bekijk je sollicitatie -> https://lobsy.nl/candidate/applications
+a: Andere sollicitaties intrekken -> https://lobsy.nl/candidate/actions/withdraw-others?hiredApplicationId=22222222-2222-2222-2222-222222222222
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

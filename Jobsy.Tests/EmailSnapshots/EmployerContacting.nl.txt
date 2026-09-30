@@ -1,29 +1,30 @@
 KEY: EmployerContacting
-SUBJECT: Werkgever neemt contact op: Weekendhulp verkoop
-PREHEADER: De werkgever neemt contact op.
+SUBJECT: Bakkerij De Gouden Korrel neemt contact met je op
+PREHEADER: Houd je telefoon en je mail in de gaten.
 KIND: Essential
 --- TEXT ---
-De werkgever neemt contact op
-=============================
+Hoi Alex,
 
-Goed nieuws! De werkgever van Weekendhulp verkoop neemt contact met je op.
+Bakkerij De Gouden Korrel neemt contact met je op
+=================================================
 
-Houd je telefoon, mail of WhatsApp in de gaten.
+Bakkerij De Gouden Korrel wil met je praten over Weekendhulp verkoop. Je
+hoort snel van ze, via telefoon, mail of WhatsApp.
 
-Bekijk mijn sollicitaties: https://lobsy.nl/candidate/applications
+Bekijk je sollicitatie: https://lobsy.nl/candidate/applications
 
 Team Lobsy
 
-Je ontvangt deze mail omdat je hebt gesolliciteerd via Lobsy.
+Je krijgt deze mail omdat je via Lobsy hebt gesolliciteerd.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: De werkgever neemt contact op
+h1: Bakkerij De Gouden Korrel neemt contact met je op
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Bekijk mijn sollicitaties -> https://lobsy.nl/candidate/applications
+a: Bekijk je sollicitatie -> https://lobsy.nl/candidate/applications
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

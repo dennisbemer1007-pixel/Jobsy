@@ -1,9 +1,9 @@
 KEY: CompanyVerificationRejected
-SUBJECT: رُفض التوثيق — Lobsy
+SUBJECT: رُفض التوثيق - Lobsy
 PREHEADER: رُفض التوثيق
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 رُفض التوثيق
 

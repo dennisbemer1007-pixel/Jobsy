@@ -1,9 +1,9 @@
 KEY: CompanyVerificationRejected
-SUBJECT: Verificatie afgewezen — Lobsy
+SUBJECT: Verificatie afgewezen - Lobsy
 PREHEADER: Verificatie afgewezen
 KIND: Essential
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Verificatie afgewezen
 =====================

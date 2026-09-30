@@ -1,9 +1,9 @@
 KEY: AccessRequestEmailVerification
-SUBJECT: Access request confirmation code — Lobsy
+SUBJECT: Access request confirmation code - Lobsy
 PREHEADER: Access request confirmation code
 KIND: Security
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Confirm your email address
 ==========================

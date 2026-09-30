@@ -1,32 +1,30 @@
 KEY: EmployerReactionAccepted
-SUBJECT: Your application was accepted: Weekendhulp verkoop
-PREHEADER: Your application was accepted.
+SUBJECT: Good news about your application at Bakkerij De Gouden Korrel
+PREHEADER: Bakkerij De Gouden Korrel wants to continue with you.
 KIND: Essential
 --- TEXT ---
-Hi Alex de Tester,
+Hi Alex,
 
-Good news!
-==========
+Bakkerij De Gouden Korrel wants to continue with you
+====================================================
 
-The company accepted your application for Weekendhulp verkoop at Bakkerij De
-Gouden Korrel.
+Bakkerij De Gouden Korrel accepted your application for Weekendhulp verkoop.
+They will contact you soon. Keep an eye on your phone and email.
 
-They may contact you soon. Keep an eye on your phone and email.
-
-View my applications: https://lobsy.nl/candidate/applications
+View your application: https://lobsy.nl/candidate/applications
 
 Team Lobsy
 
-You receive this email because you applied via Lobsy.
+You get this email because you applied via Lobsy.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Good news!
+h1: Bakkerij De Gouden Korrel wants to continue with you
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: View my applications -> https://lobsy.nl/candidate/applications
+a: View your application -> https://lobsy.nl/candidate/applications
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

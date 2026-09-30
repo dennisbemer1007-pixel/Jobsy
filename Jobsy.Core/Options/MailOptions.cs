@@ -37,6 +37,9 @@ public sealed class MailOptions
     /// <summary>KvK number for the footer. Dennis must provide this (D14).</summary>
     public string? KvkNumber { get; set; }
 
+    /// <summary>When true, OTP code mails put the code in the subject (default on).</summary>
+    public bool CodeInSubject { get; set; } = true;
+
     /// <summary>Cache-busting query for hosted email PNGs.</summary>
     public string? AssetVersion { get; set; } = DefaultAssetVersion;
 

@@ -1,9 +1,9 @@
 KEY: RegistrationActivation
-SUBJECT: رمز التأكيد — Lobsy
+SUBJECT: رمز التأكيد - Lobsy
 PREHEADER: رمز تأكيد Lobsy
 KIND: Security
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 مرحبًا بك في Lobsy
 

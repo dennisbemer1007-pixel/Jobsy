@@ -1,9 +1,9 @@
 KEY: TakeoverApproved
-SUBJECT: وُوفق على الاستحواذ — Lobsy
+SUBJECT: وُوفق على الاستحواذ - Lobsy
 PREHEADER: وُوفق على الاستحواذ
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 وُوفق على الاستحواذ
 

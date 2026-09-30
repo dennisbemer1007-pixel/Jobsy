@@ -1,9 +1,9 @@
 KEY: TakeoverEmailVerification
-SUBJECT: Bevestigingscode overnameverzoek — Lobsy
+SUBJECT: Bevestigingscode overnameverzoek - Lobsy
 PREHEADER: Bevestigingscode overnameverzoek
 KIND: Security
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Bevestig je e-mailadres
 =======================

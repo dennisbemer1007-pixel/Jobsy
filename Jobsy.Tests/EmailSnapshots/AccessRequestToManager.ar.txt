@@ -1,5 +1,5 @@
 KEY: AccessRequestToManager
-SUBJECT: طلب وصول — Lobsy
+SUBJECT: طلب وصول - Lobsy
 PREHEADER: طلب وصول على Lobsy
 KIND: Essential
 --- TEXT ---
@@ -7,7 +7,7 @@ KIND: Essential
 
 هناك طلب وصول إلى ⁨Bakkerij De Gouden Korrel⁩.
 
-مقدّم الطلب: ⁨Alex de Tester⁩ (Filiaalmanager) — ⁨tester@example.com⁩. الدور
+مقدّم الطلب: ⁨Alex de Tester⁩ (Filiaalmanager) - ⁨tester@example.com⁩. الدور
 المطلوب: ⁨Filiaalmanager⁩.
 
 عرض طلبات الوصول: https://lobsy.nl/werkgever/overnames

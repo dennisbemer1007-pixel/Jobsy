@@ -1,9 +1,9 @@
 KEY: CompanyVerified
-SUBJECT: Your company is verified — Lobsy
+SUBJECT: Your company is verified - Lobsy
 PREHEADER: Your company is verified on Lobsy
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Your company is verified
 ========================
@@ -15,7 +15,7 @@ Published:
 
 Vacancy 1: Weekendhulp verkoop
 
-You received your welcome token from us — use it to place (or extend) a
+You received your welcome token from us - use it to place (or extend) a
 vacancy.
 
 Go to vacancies: https://lobsy.nl/werkgever/vacatures

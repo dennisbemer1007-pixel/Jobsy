@@ -1,18 +1,24 @@
 KEY: ApplicationConfirmation
-SUBJECT: تم تأكيد الطلب: ⁨Weekendhulp verkoop⁩
-PREHEADER: تم استلام طلبك.
+SUBJECT: أُرسل طلبك: ⁨Weekendhulp verkoop⁩
+PREHEADER: ⁨Bakkerij De Gouden Korrel⁩ يرى طلبك الآن.
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
-تم إرسال الطلب!
+أُرسل طلبك
 
-تم استلام طلبك لـ ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden Korrel⁩.
-رائع!
+تقدّمت على ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden Korrel⁩.
 
-يمكنك متابعة الحالة ضمن طلباتي.
+Weekendhulp verkoop :الوظيفة
+Bakkerij De Gouden Korrel :الشركة
+30 سبتمبر 2026 :أُرسل في
 
-عرض طلباتي: https://lobsy.nl/candidate/applications
+ماذا بعد؟
+⁨Bakkerij De Gouden Korrel⁩ يراجع طلبك. .1
+تصلك رسالة عند وجود أخبار. .2
+ترى الحالة دائمًا في Lobsy. .3
+
+عرض طلبك: https://lobsy.nl/candidate/applications
 
 فريق Lobsy
 
@@ -21,11 +27,13 @@ KIND: Essential
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: تم إرسال الطلب!
+h1: أُرسل طلبك
 marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=steps
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: عرض طلباتي -> https://lobsy.nl/candidate/applications
+a: عرض طلبك -> https://lobsy.nl/candidate/applications
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

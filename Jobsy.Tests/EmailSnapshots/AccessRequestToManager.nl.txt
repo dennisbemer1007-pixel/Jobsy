@@ -1,5 +1,5 @@
 KEY: AccessRequestToManager
-SUBJECT: Toegangsverzoek — Lobsy
+SUBJECT: Toegangsverzoek - Lobsy
 PREHEADER: Toegangsverzoek op Lobsy
 KIND: Essential
 --- TEXT ---
@@ -8,7 +8,7 @@ Nieuw toegangsverzoek
 
 Er is een toegangsverzoek voor Bakkerij De Gouden Korrel.
 
-Aanvrager: Alex de Tester (Filiaalmanager) — tester@example.com. Gevraagde
+Aanvrager: Alex de Tester (Filiaalmanager) - tester@example.com. Gevraagde
 rol: Filiaalmanager.
 
 Bekijk toegangsverzoeken: https://lobsy.nl/werkgever/overnames

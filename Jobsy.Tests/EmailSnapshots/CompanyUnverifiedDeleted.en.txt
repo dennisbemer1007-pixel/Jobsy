@@ -1,9 +1,9 @@
 KEY: CompanyUnverifiedDeleted
-SUBJECT: Registration deleted — Lobsy
+SUBJECT: Registration deleted - Lobsy
 PREHEADER: Unverified registration deleted
 KIND: Essential
 --- TEXT ---
-Hello Alex de Tester,
+Hello Alex,
 
 Registration deleted
 ====================

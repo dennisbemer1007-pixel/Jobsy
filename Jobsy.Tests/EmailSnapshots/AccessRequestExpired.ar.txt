@@ -1,9 +1,9 @@
 KEY: AccessRequestExpired
-SUBJECT: انتهت صلاحية طلب الوصول — Lobsy
+SUBJECT: انتهت صلاحية طلب الوصول - Lobsy
 PREHEADER: انتهت صلاحية طلب الوصول
 KIND: Essential
 --- TEXT ---
-مرحبًا ⁨Alex de Tester⁩،
+مرحبًا ⁨Alex⁩،
 
 انتهت صلاحية طلب الوصول
 

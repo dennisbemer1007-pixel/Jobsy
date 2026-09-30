@@ -1,9 +1,9 @@
 KEY: AccessRequestEmailVerification
-SUBJECT: Bevestigingscode toegangsverzoek — Lobsy
+SUBJECT: Bevestigingscode toegangsverzoek - Lobsy
 PREHEADER: Bevestigingscode toegangsverzoek
 KIND: Security
 --- TEXT ---
-Hallo Alex de Tester,
+Hallo Alex,
 
 Bevestig je e-mailadres
 =======================
