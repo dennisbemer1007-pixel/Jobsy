@@ -1,6 +1,5 @@
 using System.IO.Compression;
 using System.Text;
-using System.Text.RegularExpressions;
 using Bunit;
 using Jobsy.Web.Components.Landing;
 using Jobsy.Web.Components.Layout;
@@ -126,6 +125,25 @@ public class LandingBunitTests : TestContext
         Assert.False(string.IsNullOrWhiteSpace(desc));
         Assert.True(LandingFeatureAvailability.ShowPassportSoon);
         Assert.True(LandingFeatureAvailability.ShowDiscoverySoon);
+    }
+
+    [Fact]
+    public void Landing_markup_under_60kb_gzip()
+    {
+        var cut = RenderComponent<PublicLayout>(p => p
+            .Add(c => c.Body, (RenderFragment)(b =>
+            {
+                b.OpenComponent<Landing>(0);
+                b.CloseComponent();
+            })));
+        var bytes = Encoding.UTF8.GetBytes(cut.Markup);
+        using var ms = new MemoryStream();
+        using (var gz = new GZipStream(ms, CompressionLevel.SmallestSize, leaveOpen: true))
+        {
+            gz.Write(bytes);
+        }
+
+        Assert.True(ms.Length <= 60 * 1024, $"landing markup gzip is {ms.Length} bytes (budget 60 KB)");
     }
 
     [Fact]
