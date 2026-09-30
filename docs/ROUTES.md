@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (134 routes)
+## Table (135 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -39,7 +39,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/account/mfa/setup` | `Pages/Account/MfaSetup.razor` | anonymous |
 | `/admin` | `Pages/Admin/AdminIndex.razor` | Admin |
 | `/admin/about` | `Pages/Admin/AboutPageAdmin.razor` | Admin |
-| `/admin/ambassadeurs` | `Pages/Admin/AmbassadeursAdmin.razor` | Admin · **geparkeerd** |
+| `/admin/ambassadeurs` | `Pages/Admin/AmbassadeursAdmin.razor` | Admin |
 | `/admin/api-keys` | `Pages/Admin/ApiKeysAdmin.razor` | Admin |
 | `/admin/ats-vacancies` | `Pages/Admin/AtsVacanciesAdmin.razor` | Admin |
 | `/admin/cnames` | `Pages/Admin/CnamesAdmin.razor` | Admin |
@@ -68,12 +68,12 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/vacancy-categories` | `Pages/Admin/VacancyCategoriesAdmin.razor` | Admin |
 | `/admin/wages` | `Pages/Admin/WageAdmin.razor` | Admin |
 | `/algemene-voorwaarden` | `Pages/Legal/AlgemeneVoorwaarden.razor` | anonymous |
-| `/ambassadeur` | `Pages/Ambassadeur/Dashboard.razor` | Ambassadeur · **geparkeerd** |
-| `/ambassadeur/finance` | `Pages/Ambassadeur/Finance.razor` | Ambassadeur · **geparkeerd** |
-| `/ambassadeur/onboarding` | `Pages/Ambassadeur/Onboarding.razor` | Ambassadeur · **geparkeerd** |
-| `/ambassadeur/payout-checkout` | `Pages/Ambassadeur/PayoutCheckoutStub.razor` | Ambassadeur · **geparkeerd** |
-| `/ambassadeur/ref/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous · **geparkeerd** |
-| `/ambassadeur/toolkit` | `Pages/Ambassadeur/Toolkit.razor` | Ambassadeur · **geparkeerd** |
+| `/ambassadeur` | `Pages/Ambassadeur/Dashboard.razor` | Ambassadeur |
+| `/ambassadeur/finance` | `Pages/Ambassadeur/Finance.razor` | Ambassadeur |
+| `/ambassadeur/onboarding` | `Pages/Ambassadeur/Onboarding.razor` | Ambassadeur |
+| `/ambassadeur/payout-checkout` | `Pages/Ambassadeur/PayoutCheckoutStub.razor` | Ambassadeur |
+| `/ambassadeur/ref/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
+| `/ambassadeur/toolkit` | `Pages/Ambassadeur/Toolkit.razor` | Ambassadeur |
 | `/banen` | `Pages/Banen.razor` | anonymous |
 | `/branch` | `Pages/Branch/BranchDashboard.razor` | BranchManager, EnterpriseManager |
 | `/branch/applicants` | `Pages/Branch/Applicants.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
@@ -143,6 +143,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/register/activate` | `Pages/RegisterActivate.razor` | anonymous |
 | `/sales` | `Pages/Sales/Dashboard.razor` | SalesManager |
 | `/sales/aanbevelen` | `Pages/Sales/Recommend.razor` | SalesManager |
+| `/sales/aanbevelen/bezwaar` | `Pages/Sales/RecommendObject.razor` | anonymous |
 | `/sales/hulp` | `Pages/Sales/Help.razor` | SalesManager |
 | `/sales/link` | `Pages/Sales/Link.razor` | SalesManager |
 | `/sales/profiel` | `Pages/Sales/Profile.razor` | SalesManager |
@@ -151,13 +152,12 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/sales/wallet` | `Pages/Sales/Wallet.razor` | SalesManager |
 | `/sales/wallet/uitbetalen` | `Pages/Sales/Wallet.razor` | SalesManager |
 | `/sales/werkgevers` | `Pages/Sales/Employers.razor` | SalesManager |
-| `/salesmanager` | 301 → `/sales` (`SalesLegacyRoutes`) | SalesManager |
-| `/salesmanager/invoices` | 301 → `/sales/wallet?tab=facturen` | SalesManager |
-| `/salesmanager/onboarding` | 301 → `/sales/start` | SalesManager |
-| `/salesmanager/payout-checkout` | 301 → `/sales/wallet/uitbetalen` | SalesManager |
-| `/salesmanager/referrals` | 301 → `/sales/aanbevelen` | SalesManager |
-| `/salesmanager/toolkit` | 301 → `/sales/link` | SalesManager |
-| `/sales/aanbevelen/bezwaar` | `Pages/Sales/RecommendObject.razor` | anonymous |
+| `/salesmanager` | `Pages/Sales/LegacySalesmanagerRedirect.razor` | SalesManager |
+| `/salesmanager/invoices` | `Pages/Sales/LegacyInvoicesRedirect.razor` | SalesManager |
+| `/salesmanager/onboarding` | `Pages/Sales/LegacyOnboardingRedirect.razor` | SalesManager |
+| `/salesmanager/payout-checkout` | `Pages/Sales/LegacyPayoutRedirect.razor` | SalesManager |
+| `/salesmanager/referrals` | `Pages/Sales/LegacyReferralsRedirect.razor` | SalesManager |
+| `/salesmanager/toolkit` | `Pages/Sales/LegacyToolkitRedirect.razor` | SalesManager |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |

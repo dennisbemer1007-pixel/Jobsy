@@ -1,0 +1,8 @@
+@page "/salesmanager/referrals"
+@attribute [Authorize(Roles = "SalesManager")]
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+        => Navigation.NavigateTo("/sales/aanbevelen", replace: true);
+}

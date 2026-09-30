@@ -46,7 +46,7 @@ public class SalesWalletChipV2Tests : TestContext
         cut.WaitForAssertion(
             () => Assert.Contains("sp-wallet-chip", cut.Markup, StringComparison.Ordinal),
             TimeSpan.FromSeconds(2));
-        Assert.Equal(1, counter.DashboardCalls);
+        Assert.Equal(2, counter.DashboardCalls);
         Assert.Contains("€ 12,50", cut.Markup, StringComparison.Ordinal);
     }
 
@@ -118,7 +118,9 @@ public class SalesWalletChipV2Tests : TestContext
             CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
-            if (path.Contains("sales-managers/me/dashboard", StringComparison.OrdinalIgnoreCase))
+            if (path.Contains("sales/me/profile", StringComparison.OrdinalIgnoreCase)
+                || path.Contains("sales/me/wallet", StringComparison.OrdinalIgnoreCase)
+                || path.Contains("sales-managers/me/dashboard", StringComparison.OrdinalIgnoreCase))
             {
                 DashboardCalls++;
                 if (!dashboardOk)
@@ -126,10 +128,23 @@ public class SalesWalletChipV2Tests : TestContext
                     return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized));
                 }
 
+                if (path.Contains("wallet", StringComparison.OrdinalIgnoreCase))
+                {
+                    var walletJson = JsonSerializer.Serialize(new { available = 12.5m });
+                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(walletJson, System.Text.Encoding.UTF8, "application/json")
+                    });
+                }
+
                 var json = JsonSerializer.Serialize(new
                 {
-                    UninvoicedExVat = 12.5m,
-                    BalanceExVat = 12.5m
+                    userId = Guid.NewGuid(),
+                    email = "sm@jobsy.local",
+                    fullName = "SM",
+                    isOnboardingComplete = true,
+                    canRecruitSalesManagers = true,
+                    trackingCode = "SM-TEST01"
                 });
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
                 {
