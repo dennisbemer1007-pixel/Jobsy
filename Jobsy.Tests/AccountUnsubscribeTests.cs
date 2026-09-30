@@ -118,6 +118,16 @@ public class AccountUnsubscribeTests
             ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
             CreatedAtUtc = DateTime.UtcNow
         });
+        db.OneTimeLinks.Add(new OneTimeLink
+        {
+            Id = Guid.NewGuid(),
+            Purpose = OneTimeLinkPurpose.SetPassword,
+            TokenHash = VerificationCodes.Hash("set-password-token"),
+            UserId = candidateId,
+            Email = email,
+            CreatedAtUtc = DateTime.UtcNow,
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(7)
+        });
         db.CandidateCompetencies.Add(new CandidateCompetency
         {
             Id = Guid.NewGuid(),
@@ -188,6 +198,7 @@ public class AccountUnsubscribeTests
         Assert.Equal(0, await db.LocalAuthCredentials.CountAsync(c => c.UserId == candidateId));
         Assert.Equal(0, await db.UserNotifications.CountAsync(n => n.UserId == candidateId));
         Assert.Equal(0, await db.CandidateActionTokens.CountAsync(t => t.UserId == candidateId));
+        Assert.Equal(0, await db.OneTimeLinks.CountAsync(l => l.UserId == candidateId));
         Assert.Equal(0, await db.CandidateCompetencies.CountAsync(c => c.UserId == candidateId));
 
         var confirmLog = await db.PlatformLogs
@@ -517,6 +528,7 @@ public class AccountUnsubscribeTests
             typeof(DeepAnalysisCheckout),
             typeof(DeviceLoginHandoff),
             typeof(LocalAuthCredential),
+            typeof(OneTimeLink),
             typeof(PartnerAffiliateProfile),
             typeof(PlatformFeedback),
             typeof(SalesIbanChangePending),

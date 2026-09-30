@@ -1129,6 +1129,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateActionTokens.RemoveRange(actionTokens);
         }
 
+        var oneTimeLinks = await _db.OneTimeLinks
+            .Where(l => l.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (oneTimeLinks.Count > 0)
+        {
+            _db.OneTimeLinks.RemoveRange(oneTimeLinks);
+        }
+
         var feedbackRows = await _db.PlatformFeedbacks
             .Where(f => f.UserId == user.Id)
             .ToListAsync(cancellationToken);
