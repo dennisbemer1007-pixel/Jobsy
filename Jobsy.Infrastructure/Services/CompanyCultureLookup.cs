@@ -34,7 +34,10 @@ public sealed class CompanyCultureLookup : ICompanyCultureLookup
         {
             if (_cache.TryGetValue(CompanyCultureCacheKeys.ForCompany(id), out CompanyCultureLookupResult? cached))
             {
-                if (cached is not null && (cached.Culture is not null || cached.Values is not null))
+                if (cached is not null
+                    && (cached.Culture is not null
+                        || cached.Values is not null
+                        || cached.Engagement is { Count: > 0 }))
                 {
                     result[id] = cached;
                 }
@@ -72,6 +75,11 @@ public sealed class CompanyCultureLookup : ICompanyCultureLookup
             .Where(p => profileIds.Contains(p.CompanyId))
             .ToListAsync(cancellationToken);
 
+        var engagementRows = await _db.CompanyEngagementClaims.AsNoTracking()
+            .Where(p => profileIds.Contains(p.CompanyId)
+                        && p.Status != CompanyEngagementStatuses.Removed)
+            .ToListAsync(cancellationToken);
+
         var cultureByCompany = new Dictionary<Guid, CulturePersonalityScores>();
         foreach (var row in cultureRows)
         {
@@ -90,10 +98,19 @@ public sealed class CompanyCultureLookup : ICompanyCultureLookup
             valuesByCompany[row.CompanyId] = CompanyValueCards.ToScores(row);
         }
 
+        var engagementByCompany = engagementRows
+            .GroupBy(r => r.CompanyId)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<CompanyEngagementMatchItem>)g
+                    .Select(r => new CompanyEngagementMatchItem(r.ItemId, r.Status))
+                    .ToList());
+
         foreach (var id in missing)
         {
             CulturePersonalityScores? culture = null;
             SchwartzValuesScores? values = null;
+            IReadOnlyList<CompanyEngagementMatchItem>? engagement = null;
 
             if (cultureByCompany.TryGetValue(id, out var ownCulture))
             {
@@ -117,9 +134,20 @@ public sealed class CompanyCultureLookup : ICompanyCultureLookup
                 values = parentValues;
             }
 
-            var resolved = new CompanyCultureLookupResult(culture, values);
+            if (engagementByCompany.TryGetValue(id, out var ownEngagement))
+            {
+                engagement = ownEngagement;
+            }
+            else if (parentByChild.TryGetValue(id, out var parentId3)
+                     && parentId3 is Guid pid3
+                     && engagementByCompany.TryGetValue(pid3, out var parentEngagement))
+            {
+                engagement = parentEngagement;
+            }
+
+            var resolved = new CompanyCultureLookupResult(culture, values, engagement);
             _cache.Set(CompanyCultureCacheKeys.ForCompany(id), resolved, CompanyCultureCacheKeys.Ttl);
-            if (culture is not null || values is not null)
+            if (culture is not null || values is not null || engagement is { Count: > 0 })
             {
                 result[id] = resolved;
             }

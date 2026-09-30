@@ -9,6 +9,7 @@
 @inject PersistentComponentState Persist
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Components.Authorization
@@ -156,6 +157,10 @@
                         }
                     </p>
                     <p class="address">@_vacancy.CompanyAddress</p>
+                    @if (_vacancy.EngagementItems is { Count: > 0 })
+                    {
+                        <EngagementBadges Items="@(_vacancy.EngagementItems.Select(e => new EngagementBadges.EngageBadgeItem(e.ItemId, e.Checked)).ToList())" />
+                    }
                     @if (!string.IsNullOrWhiteSpace(_vacancy.OfferedByLabel))
                     {
                         <p class="muted" style="margin:0.25rem 0 0">@_vacancy.OfferedByLabel</p>

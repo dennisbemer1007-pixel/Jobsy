@@ -663,3 +663,119 @@ a.wa-link { display: inline; }
   .wa-prof { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .wa-chs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* —— Maatschappelijke betrokkenheid (09) —— */
+.wa-engage {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0 1.25rem;
+}
+.wa-engage__card {
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: #fff;
+  padding: 0.75rem 0.85rem;
+  display: grid;
+  gap: 0.55rem;
+}
+.wa-engage__card.is-on {
+  border-color: color-mix(in srgb, var(--wa-coral) 45%, var(--border));
+  background: color-mix(in srgb, var(--wa-coral) 10%, #fff);
+}
+.wa-engage__toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  width: 100%;
+  text-align: start;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  min-height: 44px;
+}
+.wa-engage__toggle:focus-visible {
+  outline: 2px solid var(--wa-coral);
+  outline-offset: 2px;
+}
+.wa-engage__ck {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 0.35rem;
+  border: 1.5px solid var(--border);
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  font-size: 0.85rem;
+  margin-top: 0.15rem;
+  background: #fff;
+}
+.wa-engage__card.is-on .wa-engage__ck {
+  background: var(--wa-coral);
+  border-color: var(--wa-coral);
+  color: #fff;
+}
+.wa-engage__toggle strong { display: block; font-size: 0.98rem; }
+.wa-engage__toggle small { color: var(--muted); font-size: 0.8rem; }
+.wa-engage__proof {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+.wa-engage__proof input {
+  min-height: 44px;
+  border-radius: 0.65rem;
+  border: 1px solid var(--border);
+  padding: 0.55rem 0.75rem;
+  width: 100%;
+  background: #fff;
+}
+
+.engage-badges {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.engage-badges__item,
+.engage-badges__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--border, #d6d0c8);
+  background: color-mix(in srgb, var(--surface, #fff) 92%, #f3efe8);
+  padding: 0.28rem 0.55rem;
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+.engage-badges__item.is-checked {
+  border-color: color-mix(in srgb, var(--success, #1b7a4a) 35%, var(--border, #d6d0c8));
+  background: color-mix(in srgb, var(--success, #1b7a4a) 12%, #fff);
+}
+.engage-badges__title { font-weight: 600; }
+.engage-badges__label {
+  color: var(--muted, #6b655c);
+  font-size: 0.72rem;
+}
+.engage-badges--card .engage-badges__label { display: none; }
+.engage-what {
+  margin-top: 0.45rem;
+  font-size: 0.85rem;
+}
+.engage-what summary { cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; }
+.engage-report {
+  margin-top: 0.55rem;
+  display: grid;
+  gap: 0.4rem;
+}
+.engage-report textarea {
+  min-height: 88px;
+  width: 100%;
+  border-radius: 0.65rem;
+  border: 1px solid var(--border, #d6d0c8);
+  padding: 0.55rem 0.75rem;
+}

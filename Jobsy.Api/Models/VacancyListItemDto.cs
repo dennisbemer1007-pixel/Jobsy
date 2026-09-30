@@ -103,7 +103,10 @@ public record VacancyListItemDto(
     /// (draft, unverified publisher, etc.). Suppresses indexation and JSON-LD.
     /// </summary>
     bool IsPreview = false,
-    bool PublishOnVerification = false);
+    bool PublishOnVerification = false,
+    IReadOnlyList<VacancyEngagementBadgeDto>? EngagementItems = null);
+
+public sealed record VacancyEngagementBadgeDto(string ItemId, bool Checked);
 
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);

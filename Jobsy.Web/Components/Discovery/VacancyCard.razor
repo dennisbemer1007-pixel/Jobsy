@@ -1,5 +1,6 @@
 @namespace Jobsy.Web.Components.Discovery
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @inject CultureState Culture
@@ -72,6 +73,12 @@
     <div class="job-card__footer">
         <p class="job-card__company">@(string.IsNullOrWhiteSpace(Vacancy.OfferedByLabel) ? Vacancy.CompanyName : Vacancy.OfferedByLabel)</p>
         <p class="job-card__location">@Vacancy.CompanyAddress</p>
+        @if (Vacancy.EngagementItems is { Count: > 0 })
+        {
+            <EngagementBadges CssClass="engage-badges--card"
+                              MaxVisible="2"
+                              Items="@(Vacancy.EngagementItems.Select(e => new EngagementBadges.EngageBadgeItem(e.ItemId, e.Checked)).ToList())" />
+        }
     </div>
 </article>
 

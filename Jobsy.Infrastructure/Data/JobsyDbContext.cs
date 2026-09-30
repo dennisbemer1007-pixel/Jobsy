@@ -36,6 +36,8 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateValuesProfile> CandidateValuesProfiles => Set<CandidateValuesProfile>();
     public DbSet<CompanyCultureProfile> CompanyCultureProfiles => Set<CompanyCultureProfile>();
     public DbSet<CompanyValuesProfile> CompanyValuesProfiles => Set<CompanyValuesProfile>();
+    public DbSet<CompanyEngagementClaim> CompanyEngagementClaims => Set<CompanyEngagementClaim>();
+    public DbSet<CompanyEngagementReport> CompanyEngagementReports => Set<CompanyEngagementReport>();
     public DbSet<CandidateWhoAmIProfile> CandidateWhoAmIProfiles => Set<CandidateWhoAmIProfile>();
     public DbSet<CandidateCareerPlan> CandidateCareerPlans => Set<CandidateCareerPlan>();
     public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
@@ -624,6 +626,43 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.Company)
                 .WithMany()
                 .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CompanyEngagementClaim>(entity =>
+        {
+            entity.ToTable("CompanyEngagementClaims");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ItemId).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.ProofUrl).HasMaxLength(500);
+            entity.Property(e => e.ProofText).HasMaxLength(300);
+            entity.Property(e => e.Status).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.CheckedSource).HasMaxLength(16);
+            entity.Property(e => e.RemovedReason).HasMaxLength(500);
+            entity.HasIndex(e => new { e.CompanyId, e.ItemId }).IsUnique();
+            entity.HasIndex(e => e.Status);
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.CheckedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.CheckedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CompanyEngagementReport>(entity =>
+        {
+            entity.ToTable("CompanyEngagementReports");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ItemId).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.ReporterEmail).HasMaxLength(200);
+            entity.Property(e => e.Message).HasMaxLength(500).IsRequired();
+            entity.HasIndex(e => e.ClaimId);
+            entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasOne(e => e.Claim)
+                .WithMany()
+                .HasForeignKey(e => e.ClaimId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

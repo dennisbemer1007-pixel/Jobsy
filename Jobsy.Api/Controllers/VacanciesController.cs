@@ -2205,7 +2205,10 @@ public class VacanciesController : ControllerBase
             EngagementReminderTip: null,
             EngagementReminderSentAtUtc: null,
             MinimumReferences: compact ? null : r.MinimumReferences,
-            CulturePillars: r.CulturePillars is { Count: > 0 } ? r.CulturePillars.ToList() : null);
+            CulturePillars: r.CulturePillars is { Count: > 0 } ? r.CulturePillars.ToList() : null,
+            EngagementItems: r.EngagementItems is { Count: > 0 }
+                ? r.EngagementItems.Select(e => new VacancyEngagementBadgeDto(e.ItemId, e.Checked)).ToList()
+                : null);
     }
 
     private static VacancyListItemDto MapToDto(
@@ -2712,6 +2715,7 @@ public class VacanciesController : ControllerBase
             CompetencyScore01 = match.CompetencyScore01,
             InterestScore01 = match.InterestScore01,
             CultureFit = culture,
+            EngagementBonus = match.EngagementBonus,
             IsBroadMatch = match.IsBroadMatch,
             MatchRationale = match.MatchRationale,
             Why = why,

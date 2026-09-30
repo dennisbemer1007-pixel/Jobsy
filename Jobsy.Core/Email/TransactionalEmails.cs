@@ -49,6 +49,7 @@ public static class TransactionalEmails
         new("CompanyVerified", "Bedrijf geverifieerd", "Werkgever", "Bevestiging na verificatie + gepubliceerde vacatures.", "CompanyVerified"),
         new("CompanyBusinessEmailVerification", "Verificatiecode zakelijk e-mail", "Werkgever", "6-cijferige code om bedrijf via zakelijk e-mail te verifiëren.", "CompanyBusinessEmailVerification"),
         new("CompanyVerificationRejected", "Verificatie afgewezen", "Werkgever", "Admin wees de handmatige controle af met reden.", "CompanyVerificationRejected"),
+        new("EngagementClaimRemoved", "Betrokkenheid verwijderd", "Werkgever", "Admin verwijderde een maatschappelijk kenmerk met reden.", "EngagementClaimRemoved"),
         new("CompanyUnverifiedDeleted", "Registratie verwijderd", "Werkgever", "Day-60 opruiming van niet-geverifieerde registratie.", "CompanyUnverifiedDeleted"),
         new("TakeoverEmailVerification", "Bevestigingscode overname", "Registratie", "OTP voordat een overnameverzoek de eigenaar bereikt.", "TakeoverEmailVerification"),
         new("TakeoverRequest", "Overnameverzoek (eigenaar)", "Werkgever", "Inbox-mail voor de huidige vestigingseigenaar.", "TakeoverRequest"),
@@ -127,6 +128,8 @@ public static class TransactionalEmails
                 ctx.CompanyName, ctx.OtpCode, ctx.PublicWebBaseUrl),
             "companyverificationrejected" => CompanyVerificationRejected(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.RoleLabel),
+            "engagementclaimremoved" => EngagementClaimRemoved(
+                ctx.CompanyName, "duurzaamheid", ctx.RoleLabel),
             "companyunverifieddeleted" => CompanyUnverifiedDeleted(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName),
             "takeoveremailverification" => TakeoverEmailVerification(
@@ -698,6 +701,28 @@ public static class TransactionalEmails
             preheader: "Verificatie afgewezen");
         return new("CompanyVerificationRejected", "CompanyVerificationRejected",
             "Verificatie afgewezen — Lobsy", html);
+    }
+
+    public static ComposedEmail EngagementClaimRemoved(
+        string companyName,
+        string itemLabel,
+        string reason)
+    {
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Kenmerk verwijderd")}
+             {EmailLayout.Paragraph(
+                 $"Het kenmerk <strong>{EmailLayout.Escape(itemLabel)}</strong> van " +
+                 $"<strong>{EmailLayout.Escape(companyName)}</strong> is verwijderd van Lobsy.")}
+             {EmailLayout.Paragraph($"Reden: {EmailLayout.Escape(reason)}")}
+             {EmailLayout.Paragraph(
+                 "Je kunt het kenmerk over 30 dagen opnieuw opgeven met nieuw bewijs, " +
+                 "of een ander kenmerk kiezen.")}
+             """,
+            null,
+            preheader: "Maatschappelijk kenmerk verwijderd");
+        return new("EngagementClaimRemoved", "EngagementClaimRemoved",
+            "Kenmerk verwijderd — Lobsy", html);
     }
 
     public static ComposedEmail CompanyUnverifiedDeleted(

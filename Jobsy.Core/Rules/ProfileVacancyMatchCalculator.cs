@@ -145,8 +145,16 @@ public static class ProfileVacancyMatchCalculator
         var rationale = BroadMatchRationaleBuilder.TryBuild(
             input, experience01, competency01, interest01, occupationFit, isBroadMatch);
 
+        var engagementBonus = EngagementCatalog.ComputeBonus(
+            input.CandidateValuesScores,
+            input.CompanyEngagement);
+        if (engagementBonus > 0)
+        {
+            total = Math.Min(100, total + engagementBonus);
+        }
+
         var (why, gaps) = BuildExplanation(
-            input, core, experience01, competency01, interest01, occupationFit, culture, total);
+            input, core, experience01, competency01, interest01, occupationFit, culture, total, engagementBonus);
         return new ProfileVacancyMatch
         {
             VacancyId = input.VacancyId,
@@ -157,6 +165,7 @@ public static class ProfileVacancyMatchCalculator
             CompetencyScore01 = competency01,
             InterestScore01 = interest01,
             CultureFit = culture,
+            EngagementBonus = engagementBonus,
             IsBroadMatch = isBroadMatch,
             MatchRationale = rationale,
             Why = why,
@@ -204,6 +213,7 @@ public static class ProfileVacancyMatchCalculator
         "experience" => "Branche sluit aan",
         "competency" => "Sterke competentie-match",
         "culture" => "Cultuur & teamfit",
+        "engagement" => "Maatschappelijke betrokkenheid",
         "occupation" => "Beroepen-kompas past",
         "interest" => "Beroepsinteresse past",
         "broad" => "Brede match",
@@ -320,7 +330,8 @@ public static class ProfileVacancyMatchCalculator
             double? interest01,
             VacancyOccupationMatch.Fit? occupationFit,
             CultureFitResult? culture,
-            int total)
+            int total,
+            int engagementBonus = 0)
     {
         var why = new List<ProfileMatchExplainPoint>();
         var gaps = new List<ProfileMatchExplainPoint>();
@@ -336,6 +347,25 @@ public static class ProfileVacancyMatchCalculator
             {
                 why.Add(point);
             }
+        }
+
+        if (engagementBonus > 0)
+        {
+            var labels = EngagementCatalog.MatchingItemLabelsNl(
+                input.CandidateValuesScores,
+                input.CompanyEngagement);
+            var joined = labels.Count switch
+            {
+                0 => "maatschappelijke betrokkenheid",
+                1 => labels[0],
+                2 => $"{labels[0]} en {labels[1]}",
+                _ => string.Join(", ", labels.Take(labels.Count - 1)) + " en " + labels[^1]
+            };
+            var company = string.IsNullOrWhiteSpace(input.CompanyName) ? "dit bedrijf" : input.CompanyName;
+            why.Insert(0, new(
+                "engagement",
+                engagementBonus.ToString(),
+                $"Bonus +{engagementBonus}: {company} zet zich in voor {joined}, en dat vind jij belangrijk."));
         }
 
         if (core.TravelWithinPreference == true)
@@ -576,14 +606,15 @@ public static class ProfileVacancyMatchCalculator
             .OrderBy(p => p.Kind switch
             {
                 "culture" => 0,
-                "travel" => 1,
-                "competency" => 2,
-                "occupation" => 3,
-                "interest" => 4,
-                "hours" => 5,
-                "experience" => 6,
-                "dayparts" => 7,
-                _ => 8
+                "engagement" => 1,
+                "travel" => 2,
+                "competency" => 3,
+                "occupation" => 4,
+                "interest" => 5,
+                "hours" => 6,
+                "experience" => 7,
+                "dayparts" => 8,
+                _ => 9
             })
             .Take(3)
             .ToList();
@@ -701,6 +732,10 @@ public sealed class ProfileVacancyMatchInput
     public SchwartzValuesScores? CandidateValuesScores { get; init; }
     /// <summary>Employer kernwaarden scores; keyword inference is the fallback when null.</summary>
     public SchwartzValuesScores? CompanyValuesScores { get; init; }
+    /// <summary>Non-removed engagement claims for the match bonus (D13).</summary>
+    public IReadOnlyList<CompanyEngagementMatchItem>? CompanyEngagement { get; init; }
+    /// <summary>Company display name for the engagement bonus explanation line.</summary>
+    public string? CompanyName { get; init; }
 }
 
 public sealed class ProfileVacancyMatch
@@ -713,6 +748,8 @@ public sealed class ProfileVacancyMatch
     public double? CompetencyScore01 { get; init; }
     public double? InterestScore01 { get; init; }
     public CultureFitResult? CultureFit { get; init; }
+    /// <summary>Points added for matching maatschappelijke betrokkenheid (0–5).</summary>
+    public int EngagementBonus { get; init; }
     /// <summary>True when the vacancy fits holistically without an exact functietitel hit.</summary>
     public bool IsBroadMatch { get; init; }
     /// <summary>Short AI-style onderbouwing for broader matches (opleiding, drijfveren, transferable).</summary>

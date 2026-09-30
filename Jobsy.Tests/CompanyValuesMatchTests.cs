@@ -105,7 +105,7 @@ public class CompanyValuesMatchTests
     [Fact]
     public void Snapshot_version_bumped_for_company_values()
     {
-        Assert.Equal("company-values-v1", CandidateInsightsFingerprint.MatchAlgorithmVersion);
+        Assert.Equal("company-engagement-v1", CandidateInsightsFingerprint.MatchAlgorithmVersion);
     }
 
     private static ProfileVacancyMatchInput BaseInput(

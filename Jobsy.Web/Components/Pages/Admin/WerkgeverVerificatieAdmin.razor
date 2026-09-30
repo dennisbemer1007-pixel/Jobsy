@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Models
 @using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -15,7 +16,8 @@
         <button type="button" class="@TabClass("gemarkeerd")" @onclick="ShowFlaggedTab">@Culture["AdminWa.Tab.Flagged"]</button>
         <button type="button" class="@TabClass("brieven")" @onclick="ShowLettersTab">@Culture["AdminWa.Tab.Letters"]</button>
         <button type="button" class="@TabClass("toegang")" @onclick="ShowAccessTab">@Culture["AdminWa.Tab.Access"]</button>
-        <span class="muted">@(_tab == "toegang" ? _access.Count + _ownership.Count : _items.Count)</span>
+        <button type="button" class="@TabClass("betrokkenheid")" @onclick="ShowEngageTab">@Culture["AdminWa.Tab.Engagement"]</button>
+        <span class="muted">@(CountLabel())</span>
     </div>
 
     @if (_loading)
@@ -25,6 +27,77 @@
     else if (!string.IsNullOrEmpty(_error))
     {
         <p class="state-message error">@_error</p>
+    }
+    else if (_tab == "betrokkenheid")
+    {
+        <div class="filter-bar">
+            <button type="button" class="@EngageFilterClass("queue")" @onclick='() => SetEngageFilter("queue")'>@Culture["AdminWa.Engage.Queue"]</button>
+            <button type="button" class="@EngageFilterClass("noproof")" @onclick='() => SetEngageFilter("noproof")'>@Culture["AdminWa.Engage.NoProof"]</button>
+            <button type="button" class="@EngageFilterClass("checked")" @onclick='() => SetEngageFilter("checked")'>@Culture["AdminWa.Engage.Checked"]</button>
+            <button type="button" class="@EngageFilterClass("removed")" @onclick='() => SetEngageFilter("removed")'>@Culture["AdminWa.Engage.Removed"]</button>
+            <button type="button" class="@EngageFilterClass("reports")" @onclick='() => SetEngageFilter("reports")'>@Culture["AdminWa.Engage.Reports"]</button>
+            <input class="filter-bar__search" @bind="_engageSearch" @bind:event="oninput" placeholder="@Culture["AdminWa.Engage.Search"]" />
+            <button type="button" class="btn-compact" @onclick="ReloadAsync">@Culture["AdminWa.Engage.Go"]</button>
+        </div>
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Bedrijf</th>
+                        <th>Kenmerk</th>
+                        <th>Status</th>
+                        <th>Bewijs</th>
+                        <th>Meldingen</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _engageItems)
+                    {
+                        <tr>
+                            <td class="data-table__col--wrap">
+                                <strong>@item.CompanyName</strong>
+                                <div class="muted">@item.KvkNumber</div>
+                            </td>
+                            <td>@item.ItemId</td>
+                            <td>@item.Status @(item.CheckedSource is null ? "" : $"· {item.CheckedSource}")</td>
+                            <td class="data-table__col--wrap">
+                                @if (!string.IsNullOrWhiteSpace(item.ProofUrl))
+                                {
+                                    <a href="@item.ProofUrl" target="_blank" rel="nofollow ugc noopener">@item.ProofUrl</a>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(item.ProofText))
+                                {
+                                    <div>@item.ProofText</div>
+                                }
+                            </td>
+                            <td>@item.OpenReportCount</td>
+                            <td>
+                                <div class="inline-actions">
+                                    <button class="btn-compact" type="button" @onclick="() => CheckEngageAsync(item)">@Culture["AdminWa.Engage.Check"]</button>
+                                    <button class="btn-compact" type="button" @onclick="() => BeginEngageRemove(item)">@Culture["AdminWa.Engage.Remove"]</button>
+                                    <button class="btn-compact" type="button" @onclick="() => ResetEngageAsync(item)">@Culture["AdminWa.Engage.Reset"]</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (_engageRemoveTarget is not null)
+        {
+            <div class="panel admin-wa-reject">
+                <h3>@Culture["AdminWa.Engage.Remove"] — @_engageRemoveTarget.CompanyName / @_engageRemoveTarget.ItemId</h3>
+                <label>
+                    @Culture["AdminWa.Engage.Reason"]
+                    <input @bind="_engageRemoveReason" maxlength="500" />
+                </label>
+                <div class="inline-actions">
+                    <button class="btn-compact" type="button" @onclick="ConfirmEngageRemoveAsync">@Culture["AdminWa.Engage.Remove"]</button>
+                    <button class="btn-compact" type="button" @onclick="() => _engageRemoveTarget = null">@Culture["Common.Cancel"]</button>
+                </div>
+            </div>
+        }
     }
     else if (_tab == "toegang")
     {
@@ -179,6 +252,11 @@
     private List<AdminCompanyVerificationItem> _items = [];
     private List<AccessRequestAdminItemModel> _access = [];
     private List<OwnershipTransferAdminItemModel> _ownership = [];
+    private List<AdminEngagementItem> _engageItems = [];
+    private string _engageFilter = "queue";
+    private string _engageSearch = "";
+    private AdminEngagementItem? _engageRemoveTarget;
+    private string _engageRemoveReason = "";
     private bool _loading = true;
     private string? _error;
     private AdminCompanyVerificationItem? _rejectTarget;
@@ -188,6 +266,17 @@
 
     private string TabClass(string tab)
         => "btn-compact" + (_tab == tab ? " is-active" : "");
+
+    private string EngageFilterClass(string filter)
+        => "btn-compact" + (_engageFilter == filter ? " is-active" : "");
+
+    private string CountLabel()
+        => _tab switch
+        {
+            "toegang" => (_access.Count + _ownership.Count).ToString(),
+            "betrokkenheid" => _engageItems.Count.ToString(),
+            _ => _items.Count.ToString()
+        };
 
     protected override void OnInitialized()
     {
@@ -199,6 +288,7 @@
                 "toegang" or "access" => "toegang",
                 "brieven" or "letters" => "brieven",
                 "gemarkeerd" or "flagged" => "gemarkeerd",
+                "betrokkenheid" or "engagement" => "betrokkenheid",
                 _ => "handmatig"
             };
         }
@@ -213,6 +303,13 @@
     private async Task ShowFlaggedTab() => await SwitchTab("gemarkeerd");
     private async Task ShowLettersTab() => await SwitchTab("brieven");
     private async Task ShowAccessTab() => await SwitchTab("toegang");
+    private async Task ShowEngageTab() => await SwitchTab("betrokkenheid");
+
+    private async Task SetEngageFilter(string filter)
+    {
+        _engageFilter = filter;
+        await ReloadAsync();
+    }
 
     private async Task SwitchTab(string tab)
     {
@@ -231,12 +328,21 @@
                 _access = (await Api.GetAdminEscalatedAccessRequestsAsync()).ToList();
                 _ownership = (await Api.GetAdminOwnershipTransfersAsync()).ToList();
                 _items = [];
+                _engageItems = [];
+            }
+            else if (_tab == "betrokkenheid")
+            {
+                _engageItems = (await Api.GetAdminEngagementQueueAsync(_engageFilter, _engageSearch)).ToList();
+                _items = [];
+                _access = [];
+                _ownership = [];
             }
             else
             {
                 _items = (await Api.GetAdminCompanyVerificationQueueAsync(_tab)).ToList();
                 _access = [];
                 _ownership = [];
+                _engageItems = [];
             }
         }
         catch (Exception ex)
@@ -247,6 +353,36 @@
         {
             _loading = false;
         }
+    }
+
+    private async Task CheckEngageAsync(AdminEngagementItem item)
+    {
+        await Api.AdminCheckEngagementAsync(item.ClaimId);
+        await ReloadAsync();
+    }
+
+    private void BeginEngageRemove(AdminEngagementItem item)
+    {
+        _engageRemoveTarget = item;
+        _engageRemoveReason = "";
+    }
+
+    private async Task ConfirmEngageRemoveAsync()
+    {
+        if (_engageRemoveTarget is null || string.IsNullOrWhiteSpace(_engageRemoveReason))
+        {
+            return;
+        }
+
+        await Api.AdminRemoveEngagementAsync(_engageRemoveTarget.ClaimId, _engageRemoveReason);
+        _engageRemoveTarget = null;
+        await ReloadAsync();
+    }
+
+    private async Task ResetEngageAsync(AdminEngagementItem item)
+    {
+        await Api.AdminResetEngagementAsync(item.ClaimId);
+        await ReloadAsync();
     }
 
     private async Task ApproveAsync(AdminCompanyVerificationItem item)

@@ -365,8 +365,54 @@ internal static class UiStringsWerkgeverAanmelding
 
         Add("WaProfile.Engage.Coming", "Volgt", "Coming soon", "Wkrótce", "În curând", "قريباً");
         Add("WaProfile.Engage.Title", "Waar staan jullie voor?", "What do you stand for?", "Za czym stoicie?", "Pentru ce sunteți?", "بماذا تقفون؟");
-        Add("WaProfile.Engage.Lead", "Maatschappelijke betrokkenheid volgt in een volgende stap. Je kunt dit nu overslaan.", "Social engagement follows in a later step. You can skip this for now.", "Zaangażowanie społeczne będzie w kolejnym kroku. Możesz pominąć.", "Implicarea socială urmează. Poți sări peste.", "المشاركة المجتمعية تأتي لاحقاً. يمكنك التخطي الآن.");
+        Add("WaProfile.Engage.Lead", "Kies wat klopt. Wat wij niet kunnen controleren, noemen we ‘door werkgever opgegeven’. Kandidaten zien dit op je bedrijfspagina en vacatures.", "Choose what fits. What we can't verify is labelled ‘provided by employer’. Candidates see this on your company page and vacancies.", "Wybierz co pasuje. Czego nie sprawdzimy: ‘podane przez pracodawcę’. Kandydaci zobaczą to na stronie i ofertach.", "Alege ce se potrivește. Ce nu verificăm e ‘declarat de angajator’. Candidații văd asta pe pagină și oferte.", "اختر ما يناسب. ما لا نتحقق منه يُسمّى ‘مقدّم من صاحب العمل’. يراه المرشحون على صفحتك والوظائف.");
         Add("WaProfile.Engage.NextVerify", "Verder naar verifiëren", "Continue to verify", "Dalej do weryfikacji", "Continuă la verificare", "متابعة إلى التحقق");
+        Add("WaProfile.Engage.ProofLabel", "Bewijs (link of korte toelichting)", "Proof (link or short note)", "Dowód (link lub krótki opis)", "Dovadă (link sau notă scurtă)", "إثبات (رابط أو ملاحظة قصيرة)");
+        Add("WaProfile.Engage.ProofPlaceholder", "https://… of korte toelichting", "https://… or short note", "https://… lub krótki opis", "https://… sau notă scurtă", "https://… أو ملاحظة قصيرة");
+        Add("WaProfile.Engage.PreviewTitle", "Zo zien kandidaten het", "How candidates see it", "Tak widzą to kandydaci", "Cum văd candidații", "كيف يراه المرشحون");
+        Add("WaProfile.Engage.MatchHintTitle", "Telt mee in de match", "Counts in the match", "Liczy się w matchu", "Contează în match", "يُحسب في التطابق");
+        Add("WaProfile.Engage.MatchHintBody", "Kandidaten voor wie Impact & rechtvaardigheid of Verbinding & zorg zwaar weegt in de Waardentest, zien jullie vacatures iets hoger.", "Candidates who score high on Impact & fairness or Connection & care in the Values test see your vacancies a bit higher.", "Kandydaci z wysokim Impact lub Connection w teście wartości zobaczą oferty wyżej.", "Candidații cu Impact sau Connection ridicat văd ofertele mai sus.", "المرشحون ذوو Impact أو Connection العالي يرون وظائفك أعلى قليلاً.");
+
+        Add("WaEngage.Item.duurzaam", "Duurzaam en CO2-bewust", "Sustainable and CO₂-conscious", "Zrównoważony i CO₂", "Sustenabil și CO₂", "مستدام وواعٍ بالكربون");
+        Add("WaEngage.Item.werk-voor-iedereen", "Werk voor iedereen", "Work for everyone", "Praca dla wszystkich", "Muncă pentru toți", "عمل للجميع");
+        Add("WaEngage.Item.leerbedrijf", "Erkend leerbedrijf (SBB)", "Recognised training company (SBB)", "Uznany zakład szkoleniowy (SBB)", "Companie de practică recunoscută (SBB)", "شركة تدريب معتمدة (SBB)");
+        Add("WaEngage.Item.lokaal", "Lokaal betrokken", "Locally involved", "Zaangażowanie lokalne", "Implicare locală", "مشاركة محلية");
+        Add("WaEngage.Item.diversiteit", "Diversiteit en inclusie", "Diversity and inclusion", "Różnorodność i inkluzja", "Diversitate și incluziune", "التنوع والشمول");
+        Add("WaEngage.Item.eerlijk-loon", "Eerlijk loon en cao", "Fair pay and CLA", "Uczciwa płaca i układ", "Salariu corect și CCM", "أجر عادل واتفاق جماعي");
+        Add("WaEngage.Hint.duurzaam", "bijv. CO2-Prestatieladder of B Corp-pagina", "e.g. CO₂ performance ladder or B Corp page", "np. strona CO₂ lub B Corp", "ex. pagină CO₂ sau B Corp", "مثل صفحة سلم أداء الكربون أو B Corp");
+        Add("WaEngage.Hint.werk-voor-iedereen", "bijv. Participatiewet/banenafspraak, Social Enterprise NL", "e.g. social hiring agreement, Social Enterprise NL", "np. umowa o zatrudnienie socjalne", "ex. angajare socială", "مثل اتفاقية التوظيف الاجتماعي");
+        Add("WaEngage.Hint.leerbedrijf", "de SBB/stagemarkt-pagina", "the SBB / apprenticeship market page", "strona SBB/stagemarkt", "pagina SBB/stagemarkt", "صفحة SBB/سوق التدريب");
+        Add("WaEngage.Hint.lokaal", "een lokale sponsor- of vrijwilligerspagina", "a local sponsor or volunteer page", "lokalna strona sponsora/wolontariatu", "pagină locală de sponsorizare", "صفحة راعٍ أو تطوع محلي");
+        Add("WaEngage.Hint.diversiteit", "bijv. Charter Diversiteit", "e.g. Diversity Charter", "np. Karta różnorodności", "ex. Carta diversității", "مثل ميثاق التنوع");
+        Add("WaEngage.Hint.eerlijk-loon", "de cao-naam", "the collective agreement name", "nazwa układu zbiorowego", "numele CCM", "اسم الاتفاق الجماعي");
+        Add("WaEngage.Label.SelfDeclared", "Door werkgever opgegeven", "Provided by employer", "Podane przez pracodawcę", "Declarat de angajator", "مقدّم من صاحب العمل");
+        Add("WaEngage.Label.CheckedAdmin", "Gecontroleerd door Lobsy", "Checked by Lobsy", "Sprawdzone przez Lobsy", "Verificat de Lobsy", "تم التحقق من لوبسي");
+        Add("WaEngage.Label.CheckedSbb", "Gecontroleerd bij SBB", "Checked at SBB", "Sprawdzone w SBB", "Verificat la SBB", "تم التحقق لدى SBB");
+        Add("WaEngage.Label.LinkAdded", "Link toegevoegd · door werkgever opgegeven", "Link added · provided by employer", "Dodano link · podane przez pracodawcę", "Link adăugat · declarat de angajator", "أُضيف رابط · مقدّم من صاحب العمل");
+        Add("WaEngage.WhatMeans", "Wat betekent dit?", "What does this mean?", "Co to znaczy?", "Ce înseamnă?", "ماذا يعني هذا؟");
+        Add("WaEngage.WhatMeansBody", "‘Door werkgever opgegeven’ betekent dat het bedrijf dit zelf heeft aangegeven. ‘Gecontroleerd’ betekent dat Lobsy (of SBB) het bewijs heeft bekeken.", "‘Provided by employer’ means the company stated this itself. ‘Checked’ means Lobsy (or SBB) reviewed the proof.", "‘Podane przez pracodawcę’ = firma sama to podała. ‘Sprawdzone’ = Lobsy/SBB sprawdziło dowód.", "‘Declarat de angajator’ = firma a declarat. ‘Verificat’ = Lobsy/SBB a verificat dovada.", "‘مقدّم من صاحب العمل’ يعني أن الشركة صرّحت بذلك. ‘تم التحقق’ يعني أن لوبسي (أو SBB) راجع الإثبات.");
+        Add("WaEngage.Report", "Klopt dit niet?", "Is this wrong?", "To nieprawda?", "Nu e corect?", "هل هذا غير صحيح؟");
+        Add("WaEngage.ReportSend", "Meld dit", "Report this", "Zgłoś", "Semnalează", "بلّغ");
+        Add("WaEngage.ReportThanks", "Bedankt, we kijken ernaar.", "Thanks, we'll look into it.", "Dzięki, sprawdzimy.", "Mulțumim, verificăm.", "شكراً، سنراجع ذلك.");
+        Add("WaEngage.ReportPlaceholder", "Korte toelichting", "Short explanation", "Krótki opis", "Scurtă explicație", "توضيح قصير");
+        Add("WaEngage.More", "+{0}", "+{0}", "+{0}", "+{0}", "+{0}");
+        Add("WaEngage.MatchBonus", "Bonus +{0}: {1} zet zich in voor {2}, en dat vind jij belangrijk.", "Bonus +{0}: {1} stands for {2}, and that matters to you.", "Bonus +{0}: {1} stawia na {2}, a to dla ciebie ważne.", "Bonus +{0}: {1} susține {2}, iar asta contează pentru tine.", "مكافأة +{0}: {1} يلتزم بـ {2}، وهذا يهمّك.");
+        Add("WaEngage.OrgSection", "Maatschappelijke betrokkenheid", "Social engagement", "Zaangażowanie społeczne", "Implicare socială", "المشاركة المجتمعية");
+        Add("WaEngage.OrgLead", "Optioneel. Eerlijke labels: wat wij niet controleren heet ‘door werkgever opgegeven’.", "Optional. Honest labels: what we don't check is ‘provided by employer’.", "Opcjonalne. Uczciwe etykiety.", "Opțional. Etichete oneste.", "اختياري. تسميات صادقة.");
+        Add("WaEngage.Save", "Opslaan", "Save", "Zapisz", "Salvează", "حفظ");
+
+        Add("AdminWa.Tab.Engagement", "Betrokkenheid", "Engagement", "Zaangażowanie", "Implicare", "المشاركة");
+        Add("AdminWa.Engage.Queue", "Te controleren (met bewijs)", "To check (with proof)", "Do sprawdzenia (z dowodem)", "De verificat (cu dovadă)", "للتحقق (مع إثبات)");
+        Add("AdminWa.Engage.NoProof", "Zonder bewijs", "Without proof", "Bez dowodu", "Fără dovadă", "بدون إثبات");
+        Add("AdminWa.Engage.Checked", "Gecontroleerd", "Checked", "Sprawdzone", "Verificate", "تم التحقق");
+        Add("AdminWa.Engage.Removed", "Verwijderd", "Removed", "Usunięte", "Eliminate", "محذوف");
+        Add("AdminWa.Engage.Reports", "Meldingen", "Reports", "Zgłoszenia", "Semnalări", "بلاغات");
+        Add("AdminWa.Engage.Search", "Zoek bedrijf, KvK of kenmerk", "Search company, KvK or item", "Szukaj firmy, KvK lub cechy", "Caută firmă, KvK sau item", "ابحث عن شركة أو KvK أو بند");
+        Add("AdminWa.Engage.Go", "Zoeken", "Search", "Szukaj", "Caută", "بحث");
+        Add("AdminWa.Engage.Check", "Controleren", "Check", "Sprawdź", "Verifică", "تحقق");
+        Add("AdminWa.Engage.Remove", "Verwijderen", "Remove", "Usuń", "Elimină", "حذف");
+        Add("AdminWa.Engage.Reset", "Terug naar opgegeven", "Back to self-declared", "Wróć do podanego", "Înapoi la declarat", "العودة إلى المصرّح");
+        Add("AdminWa.Engage.Reason", "Reden (verplicht)", "Reason (required)", "Powód (wymagany)", "Motiv (obligatoriu)", "السبب (مطلوب)");
 
         Add("WaProfile.Vacancy.InheritTitle", "Cultuurprofiel van {0} gebruiken", "Use the culture profile of {0}", "Użyj profilu kultury {0}", "Folosește profilul cultural al {0}", "استخدم ملف ثقافة {0}");
         Add("WaProfile.Vacancy.InheritHint", "Standaard gebruikt elke vacature het cultuurprofiel van het bedrijf. Werkt dit team anders? Pas het dan alleen hier aan.", "By default every vacancy uses the company culture profile. Does this team work differently? Adjust it here only.", "Domyślnie oferta używa profilu firmy. Ten zespół działa inaczej? Zmień tylko tutaj.", "Implicit oferta folosește profilul firmei. Echipa lucrează altfel? Ajustează doar aici.", "افتراضياً تستخدم كل وظيفة ملف الشركة. هل يعمل هذا الفريق بشكل مختلف؟ عدّل هنا فقط.");

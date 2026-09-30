@@ -88,6 +88,122 @@ public sealed partial class JobsyApiClient
                ?? new CompanyProfileExtras();
     }
 
+    public async Task<CompanyEngagementState?> GetCompanyEngagementAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CompanyEngagementState>(
+                $"api/companies/{companyId}/engagement", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CompanyEngagementState> SaveCompanyEngagementAsync(
+        Guid companyId,
+        IEnumerable<CompanyEngagementClaimEdit> claims,
+        CancellationToken ct = default)
+    {
+        var payload = new { claims };
+        var response = await _http.PutAsJsonAsync($"api/companies/{companyId}/engagement", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Betrokkenheid opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanyEngagementState>(cancellationToken: ct)
+               ?? new CompanyEngagementState();
+    }
+
+    public async Task<IReadOnlyList<PublicEngagementBadge>> GetPublicEngagementAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<PublicEngagementBadge>>(
+                       $"api/public/companies/{companyId}/engagement", ct)
+                   ?? [];
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
+    public async Task ReportEngagementAsync(
+        Guid companyId,
+        string itemId,
+        string message,
+        string? reporterEmail = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/public/companies/{companyId}/engagement/report",
+            new { itemId, message, reporterEmail },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Melding mislukt.");
+        }
+    }
+
+    public async Task<IReadOnlyList<AdminEngagementItem>> GetAdminEngagementQueueAsync(
+        string? filter = null,
+        string? q = null,
+        CancellationToken ct = default)
+    {
+        var url = "api/admin/engagement";
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            qs.Add($"filter={Uri.EscapeDataString(filter)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            qs.Add($"q={Uri.EscapeDataString(q)}");
+        }
+
+        if (qs.Count > 0)
+        {
+            url += "?" + string.Join('&', qs);
+        }
+
+        return await _http.GetFromJsonAsync<List<AdminEngagementItem>>(url, ct) ?? [];
+    }
+
+    public async Task AdminCheckEngagementAsync(Guid claimId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/engagement/{claimId}/check", null, ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task AdminRemoveEngagementAsync(Guid claimId, string reason, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/engagement/{claimId}/remove",
+            new { reason },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Verwijderen mislukt.");
+        }
+    }
+
+    public async Task AdminResetEngagementAsync(Guid claimId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/engagement/{claimId}/reset", null, ct);
+        response.EnsureSuccessStatusCode();
+    }
+
     public async Task<IReadOnlyList<MetricCount>> GetMyMetricsSummaryAsync(string period = "week", CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<MetricCount>>($"api/me/metrics/summary?period={Uri.EscapeDataString(period)}", ct) ?? [];
 

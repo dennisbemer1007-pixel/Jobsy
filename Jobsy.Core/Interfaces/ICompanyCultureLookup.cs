@@ -13,7 +13,8 @@ public interface ICompanyCultureLookup
         CancellationToken cancellationToken = default);
 }
 
-/// <summary>Resolved employer culture and/or kernwaarden for one company (vestiging → org fallback).</summary>
+/// <summary>Resolved employer culture, kernwaarden and engagement for one company (vestiging → org fallback).</summary>
 public sealed record CompanyCultureLookupResult(
     CulturePersonalityScores? Culture,
-    SchwartzValuesScores? Values);
+    SchwartzValuesScores? Values,
+    IReadOnlyList<CompanyEngagementMatchItem>? Engagement = null);

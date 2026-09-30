@@ -228,7 +228,7 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
     [Fact]
     public void Match_fingerprint_includes_company_culture_algorithm_version()
     {
-        Assert.Equal("company-values-v1", CandidateInsightsFingerprint.MatchAlgorithmVersion);
+        Assert.Equal("company-engagement-v1", CandidateInsightsFingerprint.MatchAlgorithmVersion);
         var withVersion = CandidateInsightsFingerprint.ForMatches(
             Competencies,
             new RiasecScores(20, 30, 25, 95, 40, 35),

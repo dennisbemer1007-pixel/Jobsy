@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "EnterpriseManager,BranchManager,Intermediary,Admin")]
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Components.Registration
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
@@ -193,7 +194,67 @@
             {
                 <h1>@Culture["WaProfile.Engage.Title"]</h1>
                 <p class="wa-lead">@Culture["WaProfile.Engage.Lead"]</p>
-                <p class="wa-chip">@Culture["WaProfile.Engage.Coming"]</p>
+
+                <div class="wa-engage" role="group" aria-label="@Culture["WaProfile.Mini.Betrokkenheid"]">
+                    @foreach (var item in EngagementCatalog.All)
+                    {
+                        var on = _engageSelected.Contains(item.Id);
+                        var draft = _engageDrafts.GetValueOrDefault(item.Id) ?? new EngageDraft();
+                        <div class="wa-engage__card @(on ? "is-on" : null)">
+                            <button type="button" class="wa-engage__toggle" @onclick="() => ToggleEngage(item.Id)">
+                                <span class="wa-engage__ck" aria-hidden="true">@(on ? "✓" : "")</span>
+                                <span class="pub-emoji" aria-hidden="true">@item.Emoji</span>
+                                <span>
+                                    <strong>@Culture[item.TitleKey]</strong>
+                                    <small>@Culture[item.HintKey]</small>
+                                </span>
+                            </button>
+                            @if (on)
+                            {
+                                @if (string.Equals(draft.Status, CompanyEngagementStatuses.Checked, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="wa-chip wa-chip--ok">
+                                        @(string.Equals(draft.CheckedSource, CompanyEngagementCheckedSources.Sbb, StringComparison.OrdinalIgnoreCase)
+                                            ? Culture["WaEngage.Label.CheckedSbb"]
+                                            : Culture["WaEngage.Label.CheckedAdmin"])
+                                    </span>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(draft.Proof))
+                                {
+                                    <span class="wa-chip">@Culture["WaEngage.Label.LinkAdded"]</span>
+                                }
+                                else
+                                {
+                                    <span class="wa-chip">@Culture["WaEngage.Label.SelfDeclared"]</span>
+                                }
+                                <label class="wa-engage__proof">
+                                    <span>@Culture["WaProfile.Engage.ProofLabel"]</span>
+                                    <input type="text"
+                                           maxlength="500"
+                                           placeholder="@Culture["WaProfile.Engage.ProofPlaceholder"]"
+                                           value="@draft.Proof"
+                                           @oninput="e => SetEngageProof(item.Id, e.Value?.ToString())" />
+                                </label>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if (_engageSelected.Count > 0)
+                {
+                    <div class="wa-sec">
+                        <h3>@Culture["WaProfile.Engage.PreviewTitle"]</h3>
+                        <EngagementBadges Items="@PreviewBadges()" />
+                    </div>
+                }
+
+                <div class="wa-nb">
+                    <span class="pub-emoji" aria-hidden="true">🎯</span>
+                    <div>
+                        <strong>@Culture["WaProfile.Engage.MatchHintTitle"]</strong>
+                        <p>@Culture["WaProfile.Engage.MatchHintBody"]</p>
+                    </div>
+                </div>
             }
 
             <div class="wa-actions">
@@ -224,6 +285,8 @@
     private List<string> _suggested = [];
     private Dictionary<string, int> _sliders = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedCards = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _engageSelected = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, EngageDraft> _engageDrafts = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, int>? _previewPercents;
     private static readonly (string Code, string Label)[] _previewLabels =
     [
@@ -311,6 +374,23 @@
                 foreach (var code in CulturePersonalityCatalog.CultureDimensionCodes)
                 {
                     _sliders[code] = 3;
+                }
+            }
+
+            var engagement = await Api.GetCompanyEngagementAsync(_companyId);
+            _engageSelected.Clear();
+            _engageDrafts.Clear();
+            if (engagement?.Claims is { Count: > 0 })
+            {
+                foreach (var claim in engagement.Claims)
+                {
+                    _engageSelected.Add(claim.ItemId);
+                    _engageDrafts[claim.ItemId] = new EngageDraft
+                    {
+                        Proof = claim.ProofUrl ?? claim.ProofText ?? "",
+                        Status = claim.Status,
+                        CheckedSource = claim.CheckedSource
+                    };
                 }
             }
 
@@ -446,6 +526,34 @@
                         cultureSliders: _sliders,
                         valueCardIds: _selectedCards.Count == 0 ? [] : _selectedCards.ToArray());
                 }
+                else if (_stap == "betrokkenheid")
+                {
+                    var claims = _engageSelected.Select(id =>
+                    {
+                        var proof = _engageDrafts.GetValueOrDefault(id)?.Proof?.Trim();
+                        string? url = null;
+                        string? text = null;
+                        if (!string.IsNullOrWhiteSpace(proof))
+                        {
+                            if (proof.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                            {
+                                url = proof;
+                            }
+                            else
+                            {
+                                text = proof;
+                            }
+                        }
+
+                        return new CompanyEngagementClaimEdit
+                        {
+                            ItemId = id,
+                            ProofUrl = url,
+                            ProofText = text
+                        };
+                    }).ToList();
+                    await Api.SaveCompanyEngagementAsync(_companyId, claims);
+                }
             }
 
             var next = _stap switch
@@ -483,5 +591,46 @@
         {
             Navigation.NavigateTo("/register/verifieren");
         }
+    }
+
+    private void ToggleEngage(string id)
+    {
+        if (_engageSelected.Contains(id))
+        {
+            _engageSelected.Remove(id);
+        }
+        else
+        {
+            _engageSelected.Add(id);
+            _engageDrafts.TryAdd(id, new EngageDraft());
+        }
+    }
+
+    private void SetEngageProof(string id, string? value)
+    {
+        if (!_engageDrafts.TryGetValue(id, out var draft))
+        {
+            draft = new EngageDraft();
+            _engageDrafts[id] = draft;
+        }
+
+        draft.Proof = value ?? "";
+    }
+
+    private IReadOnlyList<EngagementBadges.EngageBadgeItem> PreviewBadges()
+        => _engageSelected
+            .Select(id =>
+            {
+                var d = _engageDrafts.GetValueOrDefault(id);
+                var checkedFlag = string.Equals(d?.Status, CompanyEngagementStatuses.Checked, StringComparison.OrdinalIgnoreCase);
+                return new EngagementBadges.EngageBadgeItem(id, checkedFlag, d?.CheckedSource);
+            })
+            .ToList();
+
+    private sealed class EngageDraft
+    {
+        public string Proof { get; set; } = "";
+        public string Status { get; set; } = CompanyEngagementStatuses.SelfDeclared;
+        public string? CheckedSource { get; set; }
     }
 }

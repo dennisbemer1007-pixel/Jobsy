@@ -69,4 +69,9 @@ public sealed record VacancyDiscoveryRecord(
     /// True when the vacancy company (and intermediary, if any) is Verified.
     /// Set at index build; used by <see cref="Rules.PublicVisibility"/>.
     /// </summary>
-    bool PublisherVerified = true);
+    bool PublisherVerified = true,
+    /// <summary>Non-removed engagement claims (ids + checked) for badges and match bonus.</summary>
+    IReadOnlyList<VacancyEngagementItem>? EngagementItems = null);
+
+/// <summary>Discovery snapshot of one engagement claim (no proof text / URLs).</summary>
+public sealed record VacancyEngagementItem(string ItemId, bool Checked);

@@ -10,6 +10,7 @@
 @inject ILogger<CompanyPublicPage> Logger
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Hosting
 @using Microsoft.AspNetCore.Http
 @implements IAsyncDisposable
@@ -65,6 +66,35 @@
                                 <span>@Culture.Format("BranchPage.OrgVacancyCount", _vacancies.Count)</span>
                             }
                         </p>
+                        @if (_engagement.Count > 0)
+                        {
+                            <EngagementBadges Items="@_engagement" />
+                            <details class="engage-what">
+                                <summary>@Culture["WaEngage.WhatMeans"]</summary>
+                                <p>@Culture["WaEngage.WhatMeansBody"]</p>
+                            </details>
+                            @if (_reportItemId is null)
+                            {
+                                <button type="button" class="wa-link" @onclick="() => _reportItemId = _engagement[0].ItemId">@Culture["WaEngage.Report"]</button>
+                            }
+                            else
+                            {
+                                <div class="engage-report">
+                                    <label>
+                                        @Culture["WaEngage.Report"]
+                                        <textarea maxlength="500" @bind="_reportMessage" placeholder="@Culture["WaEngage.ReportPlaceholder"]"></textarea>
+                                    </label>
+                                    <div class="inline-actions">
+                                        <button type="button" class="btn-compact" disabled="@_reportBusy" @onclick="SubmitReportAsync">@Culture["WaEngage.ReportSend"]</button>
+                                        <button type="button" class="btn-compact" @onclick="() => _reportItemId = null">@Culture["Common.Cancel"]</button>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(_reportMessageStatus))
+                                    {
+                                        <p class="state-message">@_reportMessageStatus</p>
+                                    }
+                                </div>
+                            }
+                        }
                     </div>
                 </div>
             }
@@ -216,6 +246,12 @@
     private ElementReference _mapElement;
     private PublicCompanyPage? _page;
     private List<VacancyListItem> _vacancies = [];
+    private List<EngagementBadges.EngageBadgeItem> _engagement = [];
+    private Guid _engagementCompanyId;
+    private string? _reportItemId;
+    private string _reportMessage = "";
+    private string? _reportMessageStatus;
+    private bool _reportBusy;
     private bool _loading = true;
     private string? _error;
     private bool showMapOnMobile;
@@ -234,6 +270,11 @@
         _error = null;
         _page = null;
         _vacancies = [];
+        _engagement = [];
+        _engagementCompanyId = Guid.Empty;
+        _reportItemId = null;
+        _reportMessage = "";
+        _reportMessageStatus = null;
         _mapReady = false;
         _mapInitScheduled = false;
 
@@ -260,6 +301,15 @@
                 MarkNotFound();
                 return;
             }
+
+            _engagementCompanyId = _page.CompanyIds[0];
+            var badges = await Api.GetPublicEngagementAsync(_engagementCompanyId);
+            _engagement = badges
+                .Select(b => new EngagementBadges.EngageBadgeItem(
+                    b.ItemId,
+                    string.Equals(b.Status, CompanyEngagementStatuses.Checked, StringComparison.OrdinalIgnoreCase),
+                    b.CheckedSource))
+                .ToList();
 
             _vacancies = (await Api.DiscoverVacanciesAsync(
                 originLat: null,
@@ -425,6 +475,32 @@
 
     private static bool ShowsSuitableFor65Plus(VacancyListItem vacancy)
         => VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(vacancy.CategoryId, vacancy.SuitableFor65Plus);
+
+    private async Task SubmitReportAsync()
+    {
+        if (_engagementCompanyId == Guid.Empty || string.IsNullOrWhiteSpace(_reportItemId))
+        {
+            return;
+        }
+
+        _reportBusy = true;
+        _reportMessageStatus = null;
+        try
+        {
+            await Api.ReportEngagementAsync(_engagementCompanyId, _reportItemId, _reportMessage);
+            _reportMessageStatus = Culture["WaEngage.ReportThanks"];
+            _reportMessage = "";
+            _reportItemId = null;
+        }
+        catch (Exception ex)
+        {
+            _reportMessageStatus = ex.Message;
+        }
+        finally
+        {
+            _reportBusy = false;
+        }
+    }
 
     private static (string? Label, string? ColorHex) ResolveTypeBadge(VacancyListItem vacancy)
     {

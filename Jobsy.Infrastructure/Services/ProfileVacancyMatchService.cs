@@ -89,7 +89,9 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 CandidateCultureScores = context.CultureScores,
                 CompanyCultureScores = overridesCulture ? null : companyProfile?.Culture,
                 CandidateValuesScores = context.ValuesScores,
-                CompanyValuesScores = companyProfile?.Values
+                CompanyValuesScores = companyProfile?.Values,
+                CompanyEngagement = companyProfile?.Engagement,
+                CompanyName = record.CompanyName
             });
             result[record.Id] = match;
         }
