@@ -1,4 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate.Contacts
+@using System.Globalization
+@using Jobsy.Core.Localization
 @using Jobsy.Web.Components.Candidate.Discovery
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
@@ -144,10 +146,14 @@
             ? Culture["TalentC.Company.Unknown"]
             : row.CompanyName!;
 
+    /// <summary>The UI language decides the date wording, not the server or browser locale (§3).</summary>
+    private CultureInfo Formatting
+        => CultureInfo.GetCultureInfo(JobsyLanguages.ToCultureName(Culture.Language));
+
     private string WhenLine(TalentContactRow row) => row.State switch
     {
         TalentContactState.Open =>
-            Culture.Format("TalentC.When.Before", LobsyTime.Deadline(row.RespondByUtc)),
+            Culture.Format("TalentC.When.Before", LobsyTime.Deadline(row.RespondByUtc, Formatting)),
         TalentContactState.OpenLate => Culture["TalentC.When.Late"],
         TalentContactState.Shared =>
             Culture.Format("TalentC.Shared.Line", Day(row.HistoryUtc)),
@@ -163,8 +169,8 @@
             : line;
     }
 
-    private static string Day(DateTime? utc)
-        => utc is DateTime value ? LobsyTime.Day(value) : "";
+    private string Day(DateTime? utc)
+        => utc is DateTime value ? LobsyTime.Day(value, Formatting) : "";
 
     private static string PillClass(TalentContactState state) => state switch
     {
