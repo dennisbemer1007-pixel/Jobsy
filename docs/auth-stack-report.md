@@ -35,7 +35,7 @@
 | 05 | `cursor/auth-5` | `6ff9a164` | Wachtwoord vergeten (PasswordReset purpose, 30 min) |
 | 06 | `cursor/auth-6` | `7522a244` | Remove `/register/activate` + activation links; 301 |
 | 07 | `cursor/auth-7` | `6ace57f4` | pl/ro/ar MFA+login, a11y/CSS/i18n guards |
-| 08 | `cursor/auth-8` | *(this)* | Playwright E2E classes + this report |
+| 08 | `cursor/auth-8` | *72edbdea* | Playwright E2E classes + this report |
 
 ## Dependency cases
 
