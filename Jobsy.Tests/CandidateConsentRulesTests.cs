@@ -22,7 +22,7 @@ public class CandidateConsentRulesTests
             string.Concat("[", "BEDRIJFS", "NAAM]"),
             string.Concat("[", "KVK-", "NUMMER]"),
             string.Concat("[", "AD", "RES]"),
-            string.Concat("[", "CONTACT E-MAIL ", "PRIVACY]"),
+            string.Concat("[", "CONTACT", " E-MAIL ", "PRIVACY]"),
             string.Concat("Platform", "Legal", "Identity")
         };
         var hits = new List<string>();
