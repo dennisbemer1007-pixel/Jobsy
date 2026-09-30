@@ -276,12 +276,12 @@ public class SalesRightsMatrixTests
         var forbidden = new[] { "Kvk", "Address", "Email", "Phone", "Contact", "Vacancy", "Candidate" };
         foreach (var prop in typeof(SalesEmployerDto).GetProperties())
         {
-            Assert.DoesNotContain(forbidden, f => prop.Name.Contains(f, StringComparison.OrdinalIgnoreCase));
+            Assert.False(forbidden.Any(f => prop.Name.Contains(f, StringComparison.OrdinalIgnoreCase)), prop.Name);
         }
 
         foreach (var prop in typeof(SalesEmployerDetailDto).GetProperties())
         {
-            Assert.DoesNotContain(forbidden, f => prop.Name.Contains(f, StringComparison.OrdinalIgnoreCase));
+            Assert.False(forbidden.Any(f => prop.Name.Contains(f, StringComparison.OrdinalIgnoreCase)), prop.Name);
         }
     }
 }

@@ -119,8 +119,8 @@ else
                     <a class="sp-card__link sp-dash__hi-desktop" href="/sales/wallet">@Culture["Sales.Dash.AllMutations"]</a>
                 </header>
                 @{
-                    var bars = Mobile ? _dash.Monthly.TakeLast(6).ToList() : _dash.Monthly.ToList();
-                    var max = Math.Max(1m, bars.Max(b => b.AmountExVat));
+                    var bars = _dash.Monthly.ToList();
+                    var max = Math.Max(1m, bars.Count == 0 ? 1m : bars.Max(b => b.AmountExVat));
                 }
                 <div class="sp-bars" role="img" aria-label="@Culture["Sales.Dash.MonthlyTitle"]">
                     @foreach (var bar in bars)
@@ -280,7 +280,6 @@ else
     private bool _loading = true;
     private string _period = "year";
     private string? _toast;
-    private bool Mobile => false; // CSS handles layout; bars use full 12 on desktop via media.
 
     protected override async Task OnInitializedAsync()
     {
