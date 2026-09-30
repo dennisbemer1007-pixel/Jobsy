@@ -101,7 +101,7 @@ public sealed class WerkgeverTokenRequestsController : ControllerBase
             return Forbid();
         }
 
-        IReadOnlyList<Guid> scope = accessible.ToList();
+        List<Guid> scope = accessible.ToList();
         if (companyIds is { Count: > 0 })
         {
             scope = companyIds.Where(accessible.Contains).Distinct().ToList();

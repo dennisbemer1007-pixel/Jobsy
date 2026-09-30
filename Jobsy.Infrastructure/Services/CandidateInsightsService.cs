@@ -247,7 +247,7 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         InsightsDistribution? priorities = null;
         InsightsDistribution? workKinds = null;
         IReadOnlyList<DensityCell> density = [];
-        IReadOnlyList<VacancyReach> vacancyReach = [];
+        List<VacancyReach> vacancyReach = [];
         InsightsTrend? trend = null;
 
         if (isFullAccess)
@@ -680,7 +680,7 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
             dims.Select(d => Bucket(d.Key, d.Key, counts[d.Key], cohortSize)).ToList());
     }
 
-    private static IReadOnlyList<string> BuildTipKeys(InsightsDistribution priorities)
+    private static List<string> BuildTipKeys(InsightsDistribution priorities)
     {
         var tips = new List<string>();
         foreach (var bucket in priorities.Buckets
@@ -709,7 +709,7 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         return tips;
     }
 
-    private static int Percentile(IReadOnlyList<int> sortedAscending, double p)
+    private static int Percentile(List<int> sortedAscending, double p)
     {
         if (sortedAscending.Count == 0)
         {
@@ -720,7 +720,7 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         return sortedAscending[Math.Clamp(idx, 0, sortedAscending.Count - 1)];
     }
 
-    private static IReadOnlyList<CandidateMatchedVacancyDto> ParseMatches(string? json)
+    private static List<CandidateMatchedVacancyDto> ParseMatches(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -738,7 +738,7 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
     }
 
     private async Task<List<User>> LoadCohortUsersAsync(
-        IReadOnlyList<GeoPoint> origins,
+        List<GeoPoint> origins,
         int radiusKm,
         DateTime periodStart,
         CancellationToken cancellationToken)

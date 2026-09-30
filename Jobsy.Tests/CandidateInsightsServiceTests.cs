@@ -28,7 +28,7 @@ public class CandidateInsightsServiceTests
 
         var svc = CreateService(db, out var tokens);
         tokens.Balance = 10;
-        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 20, 90);
+        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager), company.Id, 20, 90);
 
         Assert.Equal(CandidateInsightsPrivacy.StatusInsufficient, dto.Kpis.CandidatesInRadius.Status);
         Assert.Null(dto.Kpis.CandidatesInRadius.Value);
@@ -62,7 +62,7 @@ public class CandidateInsightsServiceTests
         tokens.Balance = 5;
         SeedUnlock(db, company);
         await db.SaveChangesAsync();
-        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 20, 90);
+        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager), company.Id, 20, 90);
 
         Assert.Equal(CandidateInsightsPrivacy.StatusOk, dto.Kpis.CandidatesInRadius.Status);
         Assert.Equal(10, dto.Kpis.CandidatesInRadius.Value); // 12 → rounded to 10? 12 rounds to 10
@@ -84,7 +84,7 @@ public class CandidateInsightsServiceTests
         tokens.Balance = 1;
         SeedUnlock(db, company);
         await db.SaveChangesAsync();
-        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 20, 90);
+        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager), company.Id, 20, 90);
         Assert.NotEmpty(dto.Density);
         Assert.All(dto.Density, c => Assert.InRange(c.Band, 1, 3));
     }
@@ -102,8 +102,8 @@ public class CandidateInsightsServiceTests
 
         var svc = CreateService(db, out var tokens);
         tokens.Balance = 1;
-        var at10 = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 10, 90);
-        var at20 = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 20, 90);
+        var at10 = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager), company.Id, 10, 90);
+        var at20 = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager), company.Id, 20, 90);
 
         Assert.Equal(CandidateInsightsPrivacy.StatusOk, at10.Kpis.CandidatesInRadius.Status);
         Assert.Equal(CandidateInsightsPrivacy.StatusOk, at20.Kpis.CandidatesInRadius.Status);
@@ -126,7 +126,7 @@ public class CandidateInsightsServiceTests
 
         var svc = CreateService(db, out var tokens);
         tokens.Balance = 1;
-        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 20, 90);
+        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager), company.Id, 20, 90);
         Assert.Equal(10, dto.Kpis.CandidatesInRadius.Value); // 12 rounded
     }
 
@@ -153,7 +153,7 @@ public class CandidateInsightsServiceTests
         await db.SaveChangesAsync();
         var svc = CreateService(db, out var tokens);
         tokens.Balance = 100; // balance alone no longer unlocks
-        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, company.Id), company.Id, 20, 90);
+        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager), company.Id, 20, 90);
 
         Assert.False(dto.Scope.IsFullAccess);
         Assert.Equal(Jobsy.Core.Contracts.InsightsLockedKeys.All.Count, dto.LockedSections.Count);
@@ -204,7 +204,7 @@ public class CandidateInsightsServiceTests
         var svc = CreateService(db, out var tokens);
         tokens.Balances[parent.Id] = 3;
         tokens.Balances[branch.Id] = 0;
-        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager, branch.Id), branch.Id, 20, 90);
+        var dto = await svc.GetInsightsAsync(Principal(JobsyRoles.BranchManager), branch.Id, 20, 90);
         Assert.True(dto.Scope.IsFullAccess);
     }
 
@@ -219,7 +219,7 @@ public class CandidateInsightsServiceTests
 
         var svc = CreateService(db, out var tokens);
         tokens.Balance = 1;
-        var principal = Principal(JobsyRoles.BranchManager, company.Id);
+        var principal = Principal(JobsyRoles.BranchManager);
         var first = await svc.GetInsightsAsync(principal, company.Id, 20, 90);
 
         // Mutate cohort after cache fill — second call must return the cached DTO.
@@ -247,7 +247,7 @@ public class CandidateInsightsServiceTests
         await db10.SaveChangesAsync();
         var s10 = CreateService(db10, out var t10);
         t10.Balance = 1;
-        var d10 = await s10.GetInsightsAsync(Principal(JobsyRoles.BranchManager, c10.Id), c10.Id, 20, 90);
+        var d10 = await s10.GetInsightsAsync(Principal(JobsyRoles.BranchManager), c10.Id, 20, 90);
         Assert.Equal(CandidateInsightsPrivacy.StatusOk, d10.Kpis.CandidatesInRadius.Status);
 
         await using var db200 = CreateDb();
@@ -257,7 +257,7 @@ public class CandidateInsightsServiceTests
         await db200.SaveChangesAsync();
         var s200 = CreateService(db200, out var t200);
         t200.Balance = 1;
-        var d200 = await s200.GetInsightsAsync(Principal(JobsyRoles.BranchManager, c200.Id), c200.Id, 20, 90);
+        var d200 = await s200.GetInsightsAsync(Principal(JobsyRoles.BranchManager), c200.Id, 20, 90);
         Assert.Equal(CandidateInsightsPrivacy.StatusOk, d200.Kpis.CandidatesInRadius.Status);
         Assert.True((d200.Kpis.CandidatesInRadius.Value ?? 0) >= (d10.Kpis.CandidatesInRadius.Value ?? 0));
     }
@@ -309,7 +309,7 @@ public class CandidateInsightsServiceTests
         public Task<int> MarkAllReadAsync(Guid userId, CancellationToken cancellationToken = default) => Task.FromResult(0);
     }
 
-    private static ClaimsPrincipal Principal(string role, Guid companyId)
+    private static ClaimsPrincipal Principal(string role)
     {
         var id = new ClaimsIdentity("test");
         id.AddClaim(new Claim(ClaimTypes.Role, role));

@@ -169,12 +169,12 @@ public static class OrgTreeBuilder
     {
         if (string.IsNullOrWhiteSpace(key))
         {
-            return roots.FirstOrDefault();
+            return roots.Count > 0 ? roots[0] : null;
         }
 
         if (string.Equals(key, "org", StringComparison.OrdinalIgnoreCase))
         {
-            return roots.FirstOrDefault();
+            return roots.Count > 0 ? roots[0] : null;
         }
 
         foreach (var root in roots)
@@ -186,7 +186,7 @@ public static class OrgTreeBuilder
             }
         }
 
-        return roots.FirstOrDefault();
+        return roots.Count > 0 ? roots[0] : null;
     }
 
     private static OrgTreeNode? FindRecursive(OrgTreeNode node, string key)

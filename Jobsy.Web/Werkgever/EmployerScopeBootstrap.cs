@@ -10,7 +10,7 @@ namespace Jobsy.Web.Werkgever;
 /// <summary>
 /// Loads companies (+ regions when allowed) into <see cref="EmployerScopeState"/> once per circuit.
 /// </summary>
-public sealed class EmployerScopeBootstrap
+public sealed class EmployerScopeBootstrap : IDisposable
 {
     private readonly JobsyApiClient _api;
     private readonly EmployerScopeState _scope;
@@ -18,6 +18,7 @@ public sealed class EmployerScopeBootstrap
     private readonly NavigationManager _nav;
     private bool _loaded;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private bool _disposed;
 
     public EmployerScopeBootstrap(
         JobsyApiClient api,
@@ -33,6 +34,8 @@ public sealed class EmployerScopeBootstrap
 
     public async Task EnsureLoadedAsync(CancellationToken ct = default)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         if (_loaded && _scope.CompanyIds.Count > 0)
         {
             return;
@@ -92,7 +95,7 @@ public sealed class EmployerScopeBootstrap
             {
                 var allIds = companies.Select(c => c.Id).ToList();
                 var orgLabel = companies.FirstOrDefault(c => c.ParentCompanyId is null)?.Name
-                               ?? companies.FirstOrDefault()?.Name
+                               ?? (companies.Count > 0 ? companies[0].Name : null)
                                ?? "Organisatie";
                 var org = new EmployerScopeOption(
                     EmployerScopeKind.Organisation,
@@ -124,7 +127,7 @@ public sealed class EmployerScopeBootstrap
                 var allIds = companies.Select(c => c.Id).ToList();
                 var opt = new EmployerScopeOption(
                     EmployerScopeKind.Region,
-                    companies.FirstOrDefault()?.Id,
+                    companies.Count > 0 ? companies[0].Id : null,
                     "Mijn regio",
                     $"{allIds.Count} vestigingen");
                 options.Add(opt);
@@ -160,5 +163,16 @@ public sealed class EmployerScopeBootstrap
         {
             _gate.Release();
         }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _gate.Dispose();
     }
 }

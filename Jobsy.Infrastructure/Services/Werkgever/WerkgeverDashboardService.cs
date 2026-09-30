@@ -390,7 +390,7 @@ public sealed class WerkgeverDashboardService : IWerkgeverDashboardService
         return (decimal)rows.Average(x => (x.RespondedAt - x.CreatedAt).TotalHours);
     }
 
-    private static IReadOnlyList<decimal> BuildTokenSpark(
+    private static decimal[] BuildTokenSpark(
         List<(DateTime CreatedAtUtc, decimal Amount)> spend,
         DateTime start,
         DateTime end)

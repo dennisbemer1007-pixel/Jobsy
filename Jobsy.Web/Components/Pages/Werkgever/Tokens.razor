@@ -28,9 +28,9 @@
         }
         @if (_canPurchase)
         {
-            <button type="button" class="btn-compact btn-compact--primary" @onclick="() => _buyOpen = true">
+            <a class="btn-compact btn-compact--primary" href="#wg-tok-buy-title">
                 @Culture["WgTok.BuyTokens"]
-            </button>
+            </a>
         }
         else if (Role == EmployerRole.Vestigingsmanager)
         {
@@ -313,7 +313,6 @@
     private bool _canAllocate;
     private bool _purchaseAgreed;
     private bool _rememberPaymentMethod;
-    private bool _buyOpen;
     private bool _costsOpen;
     private bool _allocateOpen;
     private bool _requestOpen;

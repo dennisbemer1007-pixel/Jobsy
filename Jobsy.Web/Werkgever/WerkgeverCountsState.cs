@@ -6,12 +6,13 @@ namespace Jobsy.Web.Werkgever;
 /// <summary>
 /// Sidebar / bottom-nav badge counts from te-doen (refreshed on navigation, ≤ once per 60 s).
 /// </summary>
-public sealed class WerkgeverCountsState
+public sealed class WerkgeverCountsState : IDisposable
 {
     private readonly JobsyApiClient _api;
     private readonly EmployerScopeState _scope;
     private DateTime _lastFetchUtc = DateTime.MinValue;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private bool _disposed;
 
     public IReadOnlyDictionary<string, int> Counts { get; private set; } =
         new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -26,6 +27,8 @@ public sealed class WerkgeverCountsState
 
     public async Task RefreshIfStaleAsync(CancellationToken ct = default)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         if (DateTime.UtcNow - _lastFetchUtc < TimeSpan.FromSeconds(60) && Counts.Count > 0)
         {
             return;
@@ -36,6 +39,8 @@ public sealed class WerkgeverCountsState
 
     public async Task ForceRefreshAsync(CancellationToken ct = default)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         if (_scope.CompanyIds.Count == 0)
         {
             return;
@@ -80,5 +85,16 @@ public sealed class WerkgeverCountsState
         {
             _gate.Release();
         }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _gate.Dispose();
     }
 }

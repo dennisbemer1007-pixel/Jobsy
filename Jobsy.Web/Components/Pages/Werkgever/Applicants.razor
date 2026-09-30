@@ -373,7 +373,6 @@
     private bool _hireRejectOthers = true;
     private bool _hireCloseVacancy = true;
     private bool _bulkRejectOpen;
-    private bool _queryApplied;
 
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
     private bool CanWrite => ApplicationPipelineRules.CanAct(Role);
@@ -573,7 +572,6 @@
             _vacancies = (await Api.GetManagedVacanciesAsync(Scope.CompanyIds.Count > 0 ? Scope.CompanyIds : null)).ToList();
             await ReloadAsync();
             ApplyQuery();
-            _queryApplied = true;
         }
         catch (Exception ex)
         {

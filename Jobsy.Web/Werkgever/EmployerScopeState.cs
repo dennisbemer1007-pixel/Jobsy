@@ -125,7 +125,7 @@ public sealed class EmployerScopeState
         if (AvailableScopes.All(a => a.Key != option.Key))
         {
             ScopeDeniedToast = true;
-            option = DefaultFor(Role ?? EmployerRole.Bedrijfsmanager, AvailableScopes);
+            option = DefaultFor(Role ?? EmployerRole.Bedrijfsmanager, AvailableScopes) ?? option;
         }
 
         SetCurrent(option);

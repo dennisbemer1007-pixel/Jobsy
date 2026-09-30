@@ -1,9 +1,14 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using Jobsy.Core.Interfaces;
 
 namespace Jobsy.Infrastructure.Services;
 
 /// <summary>Channel-backed queue with in-flight deduplication per userId.</summary>
+[SuppressMessage(
+    "Naming",
+    "CA1711:Identifiers should not have incorrect suffix",
+    Justification = "Domain work-queue (Channel-backed), same naming as CultureFitRefineQueue; not System.Collections.Queue.")]
 public sealed class CandidateInsightsQueue : ICandidateInsightsQueue
 {
     private readonly Channel<Guid> _channel = Channel.CreateUnbounded<Guid>(new UnboundedChannelOptions
