@@ -1,3 +1,5 @@
+using Jobsy.Web.Navigation;
+
 namespace Jobsy.Web.Components.Candidate.Journey;
 
 /// <summary>Which of Dennis' five stones a row on <c>/candidate/hoe-werkt-lobsy</c> represents (05 §2, D15).</summary>
@@ -35,8 +37,8 @@ public sealed record CandidateHowStone(
 /// </summary>
 public static class CandidateHowStones
 {
-    public const string DiscoveryHref = "/candidate/ontdekkingsreis";
-    public const string OnboardingHref = "/candidate/start";
+    public const string DiscoveryHref = OnboardingRoutes.DiscoveryPath;
+    public const string OnboardingHref = OnboardingRoutes.ClassicStartPath;
     public const string PassportHref = "/candidate/paspoort";
     public const string ProfileHref = "/candidate/profile";
     public const string CareerHref = "/carriere";
