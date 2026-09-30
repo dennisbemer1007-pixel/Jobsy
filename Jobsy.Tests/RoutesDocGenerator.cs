@@ -81,6 +81,10 @@ public static class RoutesDocGenerator
         }
 
         sb.AppendLine();
+        sb.AppendLine("## Notes");
+        sb.AppendLine();
+        sb.AppendLine("- **Admin redesign 06.4 must host `PayoutRunsSection` in a tab Rondes** on `/admin/financien/uitbetalingen` and keep mark-paid closing payout requests. Until then the fallback is `/admin/sales-managers?tab=uitbetalingen`.");
+        sb.AppendLine();
         return sb.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
     }
 

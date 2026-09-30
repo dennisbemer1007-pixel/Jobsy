@@ -59,7 +59,6 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/personal-data-access-log` | `Pages/Admin/PersonalDataAccessLogAdmin.razor` | Admin |
 | `/admin/sales` | `Pages/Admin/SalesCommercialPage.razor` | Admin |
 | `/admin/sales-managers` | `Pages/Admin/SalesManagersAdmin.razor` | Admin |
-| `/admin/sales-managers?tab=uitbetalingen` | `Pages/Admin/SalesManagersAdmin.razor` (+ `Components/Admin/Sales/PayoutRunsSection`) | Admin — fallback until admin redesign 06.4 hosts `PayoutRunsSection` in tab **Rondes** on `/admin/financien/uitbetalingen` and keeps mark-paid closing payout requests |
 | `/admin/settings` | `Pages/Admin/SettingsAdmin.razor` | Admin |
 | `/admin/token-finance` | `Pages/Admin/TokenFinanceAdmin.razor` | Admin |
 | `/admin/tokens` | `Pages/Admin/TokenAdmin.razor` | Admin |
@@ -167,3 +166,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/wie-zijn-wij` | `Pages/Legal/WieZijnWij.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
+
+## Notes
+
+- **Admin redesign 06.4 must host `PayoutRunsSection` in a tab Rondes** on `/admin/financien/uitbetalingen` and keep mark-paid closing payout requests. Until then the fallback is `/admin/sales-managers?tab=uitbetalingen`.
