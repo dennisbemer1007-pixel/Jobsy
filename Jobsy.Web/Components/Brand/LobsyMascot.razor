@@ -1,0 +1,161 @@
+@namespace Jobsy.Web.Components.Brand
+@using Jobsy.Web.Media
+@*
+  One public mascot component. Fallback = today's BrandImages mascot + CSS pose approx.
+  Designer art = file swap in MascotAssets (docs/brand/mascot-assets.md). No JS.
+*@
+
+<span class="@RootClass"
+      @attributes="RootAttributes">
+@if (Source.IsVector)
+{
+    <img class="pub-mascot__img"
+         src="@Abs(Source.Src)"
+         width="@BoxPx"
+         height="@BoxPx"
+         alt="@AltText"
+         loading="@Loading"
+         decoding="@Decoding"
+         fetchpriority="@FetchPriority"
+         draggable="false" />
+}
+else if (!Source.IsFallback && Source.AvifSrcSet is not null)
+{
+    <picture>
+        <source type="image/avif" srcset="@AbsSrcSet(Source.AvifSrcSet)" sizes="@Sizes" />
+        <img class="pub-mascot__img"
+             src="@Abs(Source.Src)"
+             srcset="@(Source.SrcSet is null ? null : AbsSrcSet(Source.SrcSet))"
+             sizes="@Sizes"
+             width="@BoxPx"
+             height="@BoxPx"
+             alt="@AltText"
+             loading="@Loading"
+             decoding="@Decoding"
+             fetchpriority="@FetchPriority"
+             draggable="false" />
+    </picture>
+}
+else
+{
+    <img class="pub-mascot__img"
+         src="@Abs(Source.Src)"
+         srcset="@(Source.SrcSet is null ? null : AbsSrcSet(Source.SrcSet))"
+         sizes="@Sizes"
+         width="@BoxPx"
+         height="@BoxPx"
+         alt="@AltText"
+         loading="@Loading"
+         decoding="@Decoding"
+         fetchpriority="@FetchPriority"
+         draggable="false" />
+}
+</span>
+
+@code {
+    [Parameter] public MascotPose Pose { get; set; } = MascotPose.Default;
+    [Parameter] public MascotSize Size { get; set; } = MascotSize.Medium;
+    [Parameter] public bool Mirror { get; set; }
+    /// <summary>When true: eager + fetchpriority=high. Else lazy + async decode.</summary>
+    [Parameter] public bool Priority { get; set; }
+    /// <summary>Empty = decorative (aria-hidden). Non-empty = accessible name.</summary>
+    [Parameter] public string Alt { get; set; } = "";
+    [Parameter] public string? Class { get; set; }
+
+    private MascotSource Source => MascotAssets.Resolve(Pose);
+    private int BoxPx => (int)Size;
+    private string Sizes => MascotAssets.SizesAttribute(Size);
+    private string AltText => Alt ?? "";
+    private bool IsDecorative => string.IsNullOrEmpty(AltText);
+    private string Loading => Priority ? "eager" : "lazy";
+    private const string Decoding = "async";
+    private string? FetchPriority => Priority ? "high" : null;
+
+    private string RootClass
+    {
+        get
+        {
+            var parts = new List<string> { "pub-mascot", MascotAssets.SizeCssClass(Size) };
+            if (Mirror)
+            {
+                parts.Add("pub-mascot--mirror");
+            }
+
+            if (Source.IsFallback && !string.IsNullOrEmpty(Source.FallbackTransformClass))
+            {
+                parts.Add(Source.FallbackTransformClass);
+            }
+
+            if (!string.IsNullOrWhiteSpace(Class))
+            {
+                parts.Add(Class.Trim());
+            }
+
+            return string.Join(' ', parts);
+        }
+    }
+
+    private Dictionary<string, object> RootAttributes
+    {
+        get
+        {
+            var attrs = new Dictionary<string, object>();
+            if (IsDecorative)
+            {
+                attrs["aria-hidden"] = "true";
+            }
+            else
+            {
+                attrs["role"] = "img";
+                attrs["aria-label"] = AltText;
+            }
+
+            return attrs;
+        }
+    }
+
+    private static string Abs(string path)
+        => path.StartsWith('/') ? path : "/" + path;
+
+    private static string AbsSrcSet(string srcSet)
+    {
+        // "a.webp?v=x 64w, b.webp?v=y 128w" → leading slash on each URL.
+        return string.Join(", ",
+            srcSet.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .Select(part =>
+                {
+                    var space = part.IndexOf(' ');
+                    if (space < 0)
+                    {
+                        return Abs(part);
+                    }
+
+                    return Abs(part[..space]) + part[space..];
+                }));
+    }
+
+    /// <summary>
+    /// Preload link for HeadContent (landing hero). Prefer calling with the same pose/size as the visible mascot.
+    /// </summary>
+    public static MarkupString PreloadLink(MascotPose pose, MascotSize size)
+    {
+        var source = MascotAssets.Resolve(pose);
+        var sizes = MascotAssets.SizesAttribute(size);
+        if (source.IsVector)
+        {
+            return new MarkupString(
+                $"""<link rel="preload" as="image" href="{Abs(source.Src)}" fetchpriority="high" />""");
+        }
+
+        var srcset = source.SrcSet is null ? Abs(source.Src) : AbsSrcSet(source.SrcSet);
+        if (source.AvifSrcSet is not null)
+        {
+            // Browsers that understand imagesrcset pick the best candidate; include WebP set (AVIF via picture at render).
+            return new MarkupString(
+                $"""<link rel="preload" as="image" imagesrcset="{srcset}" imagesizes="{sizes}" fetchpriority="high" />""");
+        }
+
+        return new MarkupString(
+            $"""<link rel="preload" as="image" imagesrcset="{srcset}" imagesizes="{sizes}" fetchpriority="high" />""");
+    }
+}

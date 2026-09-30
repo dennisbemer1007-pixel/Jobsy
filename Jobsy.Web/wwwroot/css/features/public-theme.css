@@ -541,11 +541,80 @@ html:not(.cookie-consent-known) .pub-theme .pub-fixed-bottom {
   display: none;
 }
 
+/* —— LobsyMascot (fallback pose approximations until designer art lands) —— */
+.pub-theme .pub-mascot {
+  --pub-mascot-size: 8rem;
+  display: inline-block;
+  width: var(--pub-mascot-size);
+  height: var(--pub-mascot-size);
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.pub-theme .pub-mascot--tiny { --pub-mascot-size: 2.5rem; }
+.pub-theme .pub-mascot--small { --pub-mascot-size: 4rem; }
+.pub-theme .pub-mascot--medium { --pub-mascot-size: 8rem; }
+.pub-theme .pub-mascot--large { --pub-mascot-size: 12.5rem; }
+.pub-theme .pub-mascot--hero { --pub-mascot-size: 16rem; }
+
+.pub-theme .pub-mascot__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: 50% 90%;
+}
+
+.pub-theme .pub-mascot--mirror {
+  transform: scaleX(-1);
+}
+
+.pub-theme[dir="rtl"] .pub-mascot--mirror {
+  transform: none;
+}
+
+.pub-theme .pub-mascot--ghost .pub-mascot__img {
+  filter: brightness(0);
+  opacity: 0.09;
+}
+
+.pub-theme .pub-mascot--fb-diving .pub-mascot__img {
+  transform: rotate(128deg);
+}
+
+.pub-theme .pub-mascot--fb-sitting .pub-mascot__img {
+  transform: translateY(4%);
+}
+
+.pub-theme .pub-mascot--fb-waving .pub-mascot__img {
+  animation: pub-mascot-wave 2.6s ease-in-out infinite;
+}
+
+.pub-theme .pub-mascot--fb-celebrating .pub-mascot__img {
+  animation: pub-mascot-bounce 1.8s ease-in-out infinite;
+}
+
+@keyframes pub-mascot-wave {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-7deg); }
+  70% { transform: rotate(7deg); }
+}
+
+@keyframes pub-mascot-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pub-theme .pub-btn--primary,
   .pub-theme .pub-nav__link,
   .pub-theme .pub-menu__panel,
   .pub-theme .pub-lang__menu {
     transition: none;
+  }
+
+  .pub-theme .pub-mascot--fb-waving .pub-mascot__img,
+  .pub-theme .pub-mascot--fb-celebrating .pub-mascot__img {
+    animation: none;
   }
 }

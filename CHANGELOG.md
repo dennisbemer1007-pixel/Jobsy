@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Landing mascot (02):** `LobsyMascot` + `MascotAssets` manifest (all poses `Fallback` → today's mascot + CSS transforms), asset contract `docs/brand/mascot-assets.md`, guard/bUnit tests. No new art files.
 - **Landing public theme shell (01):** `PublicLayout` + `.pub-theme` (`features/public-theme.css`), `UiStringsLanding` (nl/en/pl/ro/ar), `PublicNavCatalog` ON/OFF, SSR culture (`?lang=` + `/taal/{lang}`), `IEmployersSwitch` seam (`AlwaysOnEmployersSwitch` until feature flags land), static cookie-banner mode, TeaserLayout funnel links → `/` and `/account-maken`.
 
 ### Fixed
