@@ -75,6 +75,18 @@ public static class PageHelpDocs
             "Kies hoe je wilt inloggen. Bij Google of Microsoft ga je kort naar die dienst en kom je daarna terug. Met e-mail vul je je adres en wachtwoord in.",
             "Na het inloggen kun je solliciteren, vacatures bekijken en je profiel bijhouden."),
 
+        ["/account-maken"] = new(
+            "Account maken",
+            "Gratis kandidaat-account met Google, Microsoft of een e-mailcode (zonder wachtwoord).",
+            "Kies Google of Microsoft, of vul je e-mail in om een 6-cijferige code te ontvangen. Na bevestigen ben je ingelogd en gaan eventuele testantwoorden mee.",
+            "Snel een account maken om je resultaat te bewaren en verder te gaan."),
+
+        ["/account-maken/code"] = new(
+            "Code invoeren",
+            "Bevestig je e-mailadres met de 6-cijferige code uit je inbox.",
+            "Vul de code in die we hebben gestuurd. Klopt die, dan ben je meteen ingelogd.",
+            "Afronden van account maken of inloggen zonder wachtwoord."),
+
         ["/register"] = new(
             "Bedrijf registreren",
             "Nieuwe werkgever of intermediair aanmelden via KVK-gegevens.",

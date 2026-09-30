@@ -55,6 +55,9 @@ public static class TransactionalEmails
         new("AmbassadeurInvite", "Uitnodiging ambassadeur", "Ambassadeur", "Uitnodiging + tijdelijk wachtwoord + onboarding.", "AmbassadeurInvite"),
         new("CompanyApiKeyCredentials", "API-credentials", "Werkgever", "Eenmalige API-key (in testmails een voorbeeldkey).", "CompanyApiKeyCredentials"),
         new("AccountUnsubscribeVerification", "Uitschrijfcode", "Account", "OTP om uitschrijving / right-to-be-forgotten te bevestigen.", "AccountUnsubscribeVerification"),
+        new("EmailSignUpCode", "Code voor account maken", "Kandidaat", "6-cijferige code om een gratis kandidaat-account te maken.", "EmailSignUpCode"),
+        new("EmailSignInCode", "Inlogcode", "Kandidaat", "6-cijferige code om in te loggen zonder wachtwoord.", "EmailSignInCode"),
+        new("EmailCodeUsePassword", "Log in met wachtwoord", "Account", "Account bestaat al als werkgever/staff — wijst naar wachtwoord-/SSO-login.", "EmailCodeUsePassword"),
     ];
 
     public static bool TryGet(string? key, out EmailTemplateInfo info)
@@ -133,6 +136,9 @@ public static class TransactionalEmails
                 ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.ApiBaseUrl, ctx.SampleApiKey, "lobsy_test"),
             "accountunsubscribeverification" => AccountUnsubscribeVerification(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.OtpCode, ttlMinutes: 10),
+            "emailsignupcode" => EmailSignUpCode(ctx.PublicWebBaseUrl, ctx.OtpCode, "nl"),
+            "emailsignincode" => EmailSignInCode(ctx.PublicWebBaseUrl, ctx.OtpCode, "nl"),
+            "emailcodeusepassword" => EmailCodeUsePassword(ctx.PublicWebBaseUrl, "nl"),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };
     }
@@ -803,6 +809,107 @@ public static class TransactionalEmails
             preheader: "Je verificatiecode voor uitschrijving");
         return new("AccountUnsubscribeVerification", "AccountUnsubscribeVerification",
             "Verificatiecode voor uitschrijving bij Lobsy", html);
+    }
+
+    public static ComposedEmail EmailSignUpCode(string? baseUrl, string code, string? culture)
+    {
+        var lang = Jobsy.Core.Localization.JobsyLanguages.Normalize(culture);
+        var (subject, heading, body, ttl, pre) = lang switch
+        {
+            "en" => ("Your Lobsy code: " + code, "Your code for Lobsy",
+                "Use this 6-digit code to create your free account:",
+                "The code is valid for 10 minutes.", "Your Lobsy sign-up code"),
+            "pl" => ("Twój kod Lobsy: " + code, "Twój kod do Lobsy",
+                "Użyj tego 6-cyfrowego kodu, aby utworzyć darmowe konto:",
+                "Kod jest ważny przez 10 minut.", "Twój kod rejestracji Lobsy"),
+            "ro" => ("Codul tău Lobsy: " + code, "Codul tău pentru Lobsy",
+                "Folosește acest cod de 6 cifre pentru a-ți crea contul gratuit:",
+                "Codul este valabil 10 minute.", "Codul tău de înregistrare Lobsy"),
+            "ar" => ("رمز لوبسي: " + code, "رمزك لـ Lobsy",
+                "استخدم هذا الرمز المكوّن من 6 أرقام لإنشاء حسابك المجاني:",
+                "الرمز صالح لمدة 10 دقائق.", "رمز إنشاء حساب Lobsy"),
+            _ => ("Je code voor Lobsy: " + code, "Je code voor Lobsy",
+                "Gebruik deze 6-cijferige code om je gratis account te maken:",
+                "De code is 10 minuten geldig.", "Je Lobsy-aanmeldcode")
+        };
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading(heading)}
+             {EmailLayout.Paragraph(body)}
+             {EmailLayout.OtpBlock(code)}
+             {EmailLayout.Paragraph(ttl)}
+             {EmailLayout.PrimaryButton(EmailLayout.Absolute(baseUrl, "/account-maken/code"), lang == "en" ? "Enter code" : lang == "pl" ? "Wpisz kod" : lang == "ro" ? "Introdu codul" : lang == "ar" ? "أدخل الرمز" : "Code invoeren")}
+             """,
+            baseUrl,
+            preheader: pre);
+        return new("EmailSignUpCode", "EmailSignUpCode", subject, html);
+    }
+
+    public static ComposedEmail EmailSignInCode(string? baseUrl, string code, string? culture)
+    {
+        var lang = Jobsy.Core.Localization.JobsyLanguages.Normalize(culture);
+        var (subject, heading, body, ttl, pre) = lang switch
+        {
+            "en" => ("Your Lobsy sign-in code", "Your sign-in code",
+                "Use this 6-digit code to sign in:",
+                "The code is valid for 10 minutes.", "Your Lobsy sign-in code"),
+            "pl" => ("Twój kod logowania Lobsy", "Twój kod logowania",
+                "Użyj tego 6-cyfrowego kodu, aby się zalogować:",
+                "Kod jest ważny przez 10 minut.", "Twój kod logowania Lobsy"),
+            "ro" => ("Codul tău de autentificare Lobsy", "Codul tău de autentificare",
+                "Folosește acest cod de 6 cifre pentru a te autentifica:",
+                "Codul este valabil 10 minute.", "Codul tău de autentificare Lobsy"),
+            "ar" => ("رمز تسجيل الدخول إلى Lobsy", "رمز تسجيل الدخول",
+                "استخدم هذا الرمز المكوّن من 6 أرقام لتسجيل الدخول:",
+                "الرمز صالح لمدة 10 دقائق.", "رمز تسجيل الدخول إلى Lobsy"),
+            _ => ("Je inlogcode voor Lobsy", "Je inlogcode",
+                "Gebruik deze 6-cijferige code om in te loggen:",
+                "De code is 10 minuten geldig.", "Je Lobsy-inlogcode")
+        };
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading(heading)}
+             {EmailLayout.Paragraph(body)}
+             {EmailLayout.OtpBlock(code)}
+             {EmailLayout.Paragraph(ttl)}
+             {EmailLayout.PrimaryButton(EmailLayout.Absolute(baseUrl, "/account-maken/code"), lang == "en" ? "Enter code" : lang == "pl" ? "Wpisz kod" : lang == "ro" ? "Introdu codul" : lang == "ar" ? "أدخل الرمز" : "Code invoeren")}
+             """,
+            baseUrl,
+            preheader: pre);
+        return new("EmailSignInCode", "EmailSignInCode", subject, html);
+    }
+
+    public static ComposedEmail EmailCodeUsePassword(string? baseUrl, string? culture)
+    {
+        var lang = Jobsy.Core.Localization.JobsyLanguages.Normalize(culture);
+        var loginUrl = EmailLayout.LoginUrl(baseUrl);
+        var (subject, heading, body, cta, pre) = lang switch
+        {
+            "en" => ("Sign in with your password", "Use your password or SSO",
+                "This e-mail belongs to a Lobsy account that signs in with a password or Microsoft/Google. We did not send a one-time code.",
+                "Go to login", "Sign in with your password"),
+            "pl" => ("Zaloguj się hasłem", "Użyj hasła lub SSO",
+                "Ten e-mail należy do konta Lobsy, które loguje się hasłem lub przez Microsoft/Google. Nie wysłaliśmy jednorazowego kodu.",
+                "Przejdź do logowania", "Zaloguj się hasłem"),
+            "ro" => ("Autentifică-te cu parola", "Folosește parola sau SSO",
+                "Acest e-mail aparține unui cont Lobsy care se autentifică cu parolă sau Microsoft/Google. Nu am trimis un cod unic.",
+                "Mergi la autentificare", "Autentifică-te cu parola"),
+            "ar" => ("سجّل الدخول بكلمة المرور", "استخدم كلمة المرور أو SSO",
+                "هذا البريد يخص حساب Lobsy يسجّل الدخول بكلمة مرور أو Microsoft/Google. لم نُرسل رمزًا لمرة واحدة.",
+                "الانتقال لتسجيل الدخول", "سجّل الدخول بكلمة المرور"),
+            _ => ("Log in met je wachtwoord", "Log in met wachtwoord of SSO",
+                "Dit e-mailadres hoort bij een Lobsy-account dat inlogt met een wachtwoord of Microsoft/Google. We hebben geen eenmalige code gestuurd.",
+                "Naar inloggen", "Log in met je wachtwoord")
+        };
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading(heading)}
+             {EmailLayout.Paragraph(body)}
+             {EmailLayout.PrimaryButton(loginUrl, cta)}
+             """,
+            baseUrl,
+            preheader: pre);
+        return new("EmailCodeUsePassword", "EmailCodeUsePassword", subject, html);
     }
 }
 

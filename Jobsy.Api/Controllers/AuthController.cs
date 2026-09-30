@@ -3,9 +3,11 @@ using System.Text;
 using Jobsy.Api.Models;
 using Jobsy.Api.Security;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
@@ -248,7 +250,9 @@ public class AuthController : ControllerBase
                 Email = email,
                 FullName = fullName,
                 Role = UserRole.Candidate,
-                IsActive = true
+                IsActive = true,
+                // Same acceptance stamp as passwordless e-mail sign-up (external IdP consent covers terms).
+                TermsAcceptedAt = DateTime.UtcNow
             };
             _db.Users.Add(user);
             await _db.SaveChangesAsync(cancellationToken);
@@ -345,6 +349,306 @@ public class AuthController : ControllerBase
             handoffCode,
             user.Id,
             AuthMethod: authMethod));
+    }
+
+    /// <summary>
+    /// Starts a passwordless e-mail code challenge for candidate sign-up / sign-in.
+    /// Response shape is identical for new, candidate, non-candidate and invalid addresses.
+    /// </summary>
+    [HttpPost("email-code/start")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<EmailCodeStartResponse>> StartEmailCode(
+        [FromBody] EmailCodeStartRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!IsTrustedProvisionCaller())
+        {
+            return Unauthorized(new { message = "Ongeldige provision-secret." });
+        }
+
+        var email = LoginIdentity.Normalize(request.Email);
+        var dummy = new EmailCodeStartResponse(Guid.NewGuid());
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@', StringComparison.Ordinal))
+        {
+            return Accepted(dummy);
+        }
+
+        var now = DateTime.UtcNow;
+        var stale = await _db.EmailSignInChallenges
+            .Where(c => c.CreatedAtUtc < now.AddHours(-24))
+            .ToListAsync(cancellationToken);
+        if (stale.Count > 0)
+        {
+            _db.EmailSignInChallenges.RemoveRange(stale);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        var window15 = now.AddMinutes(-15);
+        var dayStart = now.AddHours(-24);
+        var starts15 = await _db.EmailSignInChallenges.AsNoTracking()
+            .CountAsync(c => c.EmailNormalized == email && c.CreatedAtUtc >= window15, cancellationToken);
+        var startsDay = await _db.EmailSignInChallenges.AsNoTracking()
+            .CountAsync(c => c.EmailNormalized == email && c.CreatedAtUtc >= dayStart, cancellationToken);
+        // Count non-candidate reminder attempts via PlatformLogs would be heavy; instead track
+        // throttle rows even when we only send a password reminder (dummy challenges without hash).
+        if (starts15 >= 3 || startsDay >= 10)
+        {
+            return Conflict(new { message = "too_many_codes" });
+        }
+
+        var culture = JobsyLanguages.Normalize(request.Culture);
+        var baseUrl = string.IsNullOrWhiteSpace(_configuration["PublicWebBaseUrl"])
+            ? "https://lobsy.nl"
+            : _configuration["PublicWebBaseUrl"]!.Trim();
+        var firstName = string.IsNullOrWhiteSpace(request.FirstName)
+            ? null
+            : request.FirstName.Trim();
+        if (firstName is { Length: > 60 })
+        {
+            firstName = firstName[..60];
+        }
+
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
+
+        if (user is not null && user.Role != UserRole.Candidate)
+        {
+            // Throttle row without a usable code (cannot verify).
+            _db.EmailSignInChallenges.Add(new EmailSignInChallenge
+            {
+                Id = Guid.NewGuid(),
+                EmailNormalized = email,
+                CodeHash = VerificationCodes.Hash(Guid.NewGuid().ToString("N")[..6]),
+                Purpose = EmailSignInPurpose.SignIn,
+                CreatedAtUtc = now,
+                ExpiresAtUtc = now.AddMinutes(10),
+                ConsumedAtUtc = now // burned immediately — not verifiable
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+
+            try
+            {
+                var mail = TransactionalEmails.EmailCodeUsePassword(baseUrl, culture);
+                await _email.SendAsync(
+                    new EmailMessage(email, mail.Subject, mail.Html, mail.Category),
+                    cancellationToken);
+            }
+            catch
+            {
+                // Delivery must not change the identical 202 response.
+            }
+
+            return Accepted(dummy);
+        }
+
+        var purpose = user is null ? EmailSignInPurpose.SignUp : EmailSignInPurpose.SignIn;
+        var code = VerificationCodes.CreateNumericCode();
+        var challenge = new EmailSignInChallenge
+        {
+            Id = Guid.NewGuid(),
+            EmailNormalized = email,
+            CodeHash = VerificationCodes.Hash(code),
+            Purpose = purpose,
+            FirstName = firstName,
+            ReferralCode = string.IsNullOrWhiteSpace(request.ReferralCode)
+                ? null
+                : request.ReferralCode.Trim(),
+            ReturnUrl = string.IsNullOrWhiteSpace(request.ReturnUrl) ? null : request.ReturnUrl.Trim(),
+            CreatedAtUtc = now,
+            ExpiresAtUtc = now.AddMinutes(10)
+        };
+        _db.EmailSignInChallenges.Add(challenge);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            var mail = purpose == EmailSignInPurpose.SignUp
+                ? TransactionalEmails.EmailSignUpCode(baseUrl, code, culture)
+                : TransactionalEmails.EmailSignInCode(baseUrl, code, culture);
+            await _email.SendAsync(
+                new EmailMessage(email, mail.Subject, mail.Html, mail.Category),
+                cancellationToken);
+        }
+        catch
+        {
+            // Challenge stays; user can request a new code.
+        }
+
+        return Accepted(new EmailCodeStartResponse(challenge.Id));
+    }
+
+    /// <summary>Verifies a passwordless e-mail code and returns the local-login profile shape.</summary>
+    [HttpPost("email-code/verify")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<LocalLoginResponse>> VerifyEmailCode(
+        [FromBody] EmailCodeVerifyRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!IsTrustedProvisionCaller())
+        {
+            return Unauthorized(new { message = "Ongeldige provision-secret." });
+        }
+
+        var code = (request.Code ?? string.Empty).Trim();
+        if (request.ChallengeId == Guid.Empty || code.Length != 6)
+        {
+            return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+        }
+
+        var challenge = await _db.EmailSignInChallenges
+            .FirstOrDefaultAsync(c => c.Id == request.ChallengeId, cancellationToken);
+        var now = DateTime.UtcNow;
+        if (challenge is null
+            || challenge.ConsumedAtUtc is not null
+            || challenge.ExpiresAtUtc <= now
+            || challenge.FailedAttempts >= VerificationCodes.MaxFailedAttempts)
+        {
+            return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+        }
+
+        if (!VerificationCodes.MatchesHash(challenge.CodeHash, code))
+        {
+            var attempts = challenge.FailedAttempts;
+            var burned = VerificationCodes.RegisterFailedAttempt(ref attempts);
+            challenge.FailedAttempts = attempts;
+            if (burned)
+            {
+                challenge.ConsumedAtUtc = now;
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return burned
+                ? StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" })
+                : Unauthorized(new
+                {
+                    message = "invalid_code",
+                    attemptsLeft = VerificationCodes.MaxFailedAttempts - challenge.FailedAttempts
+                });
+        }
+
+        // Race: reload and consume only if still open (second parallel verify loses).
+        await _db.Entry(challenge).ReloadAsync(cancellationToken);
+        if (challenge.ConsumedAtUtc is not null || challenge.ExpiresAtUtc <= now)
+        {
+            return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+        }
+
+        challenge.ConsumedAtUtc = now;
+        challenge.Version++;
+        try
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+        }
+
+        User user;
+        if (challenge.Purpose == EmailSignInPurpose.SignUp)
+        {
+            var existing = await _db.Users
+                .Include(u => u.CompanyMemberships)
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == challenge.EmailNormalized, cancellationToken);
+            if (existing is not null)
+            {
+                if (existing.Role != UserRole.Candidate || !existing.IsActive)
+                {
+                    return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+                }
+
+                user = existing;
+            }
+            else
+            {
+                var fullName = !string.IsNullOrWhiteSpace(challenge.FirstName)
+                    ? challenge.FirstName.Trim()
+                    : challenge.EmailNormalized.Split('@')[0];
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = challenge.EmailNormalized,
+                    FullName = fullName,
+                    FirstName = string.IsNullOrWhiteSpace(challenge.FirstName)
+                        ? null
+                        : challenge.FirstName.Trim(),
+                    Role = UserRole.Candidate,
+                    IsActive = true,
+                    TermsAcceptedAt = now
+                };
+                _db.Users.Add(user);
+                await _db.SaveChangesAsync(cancellationToken);
+
+                if (!string.IsNullOrWhiteSpace(challenge.ReferralCode))
+                {
+                    await _ambassadeurAttribution.TryAttributeCandidateAsync(
+                        user.Id, challenge.ReferralCode, cancellationToken);
+                }
+            }
+        }
+        else
+        {
+            var existing = await _db.Users
+                .Include(u => u.CompanyMemberships)
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == challenge.EmailNormalized, cancellationToken);
+            if (existing is null || !existing.IsActive || existing.Role != UserRole.Candidate)
+            {
+                return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+            }
+
+            user = existing;
+        }
+
+        if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
+        {
+            return Ok(new LocalLoginResponse(
+                user.Email,
+                user.FullName,
+                user.Role.ToString(),
+                user.CompanyId,
+                [],
+                RequiresMfa: true,
+                MfaEnrolled: user.AuthenticatorEnabled,
+                MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice, localPassword: true),
+                UserId: user.Id));
+        }
+
+        var flags = await BuildFlagsAsync(user, cancellationToken);
+        var sessionToken = CreateLocalSessionToken(user.Email, user.Id);
+        Guid? deviceSessionId = null;
+        string? deviceRefresh = null;
+        DateTime? deviceExpires = null;
+        if (request.RememberDevice)
+        {
+            var device = await _deviceSessions.CreateAsync(
+                user.Id,
+                request.UserAgent ?? Request.Headers.UserAgent.ToString(),
+                cancellationToken);
+            deviceSessionId = device.DeviceSessionId;
+            deviceRefresh = device.RefreshToken;
+            deviceExpires = device.ExpiresAtUtc;
+        }
+
+        user.LastLoginAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(new LocalLoginResponse(
+            user.Email,
+            user.FullName,
+            user.Role.ToString(),
+            user.CompanyId,
+            flags.CompanyIds,
+            flags.ShowCandidateHowTo,
+            flags.HasCandidateApplications,
+            flags.HasSalesReferral,
+            sessionToken,
+            user.SessionVersion,
+            deviceSessionId,
+            deviceRefresh,
+            deviceExpires,
+            user.Id));
     }
 
     private string? CreateLocalSessionToken(string email, Guid userId)

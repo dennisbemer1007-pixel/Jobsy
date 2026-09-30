@@ -28,12 +28,14 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (124 routes)
+## Table (126 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
 | `/` | `Pages/Home.razor` | anonymous |
 | `/access-denied` | `Pages/AccessDenied.razor` | anonymous |
+| `/account-maken` | `Pages/Public/AccountMaken.razor` | anonymous |
+| `/account-maken/code` | `Pages/Public/AccountMakenCode.razor` | anonymous |
 | `/account/mfa` | `Pages/Account/MfaPrompt.razor` | anonymous |
 | `/account/mfa/recovery-codes` | `Pages/Account/MfaRecoveryCodes.razor` | anonymous |
 | `/account/mfa/setup` | `Pages/Account/MfaSetup.razor` | anonymous |
@@ -165,3 +167,6 @@ Not Blazor `@page` routes — documented here for discoverability (landing stack
 |-------|-------|
 | `/taal/{lang}` | Sets `Jobsy.Culture` cookie; 302 to local `returnUrl` only; `noindex` |
 | `/account/cookie-consent/analytics-token` | POST; same-origin analytics consent token for static cookie banner |
+| `/account/email-code/start` | POST; antiforgery; starts passwordless e-mail code (Web → API) |
+| `/account/email-code/verify` | POST; antiforgery; verifies code and signs in |
+| `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |

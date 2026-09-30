@@ -97,6 +97,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CompanyRegistration> CompanyRegistrations => Set<CompanyRegistration>();
     public DbSet<EstablishmentTakeoverRequest> EstablishmentTakeoverRequests => Set<EstablishmentTakeoverRequest>();
     public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
+    public DbSet<EmailSignInChallenge> EmailSignInChallenges => Set<EmailSignInChallenge>();
     public DbSet<SalesManagerProfile> SalesManagerProfiles => Set<SalesManagerProfile>();
     public DbSet<AmbassadeurProfile> AmbassadeurProfiles => Set<AmbassadeurProfile>();
     public DbSet<PartnerAffiliateProfile> PartnerAffiliateProfiles => Set<PartnerAffiliateProfile>();
@@ -949,6 +950,21 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EmailSignInChallenge>(entity =>
+        {
+            entity.ToTable("EmailSignInChallenges");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EmailNormalized).HasMaxLength(320).IsRequired();
+            entity.Property(e => e.CodeHash).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Purpose).HasConversion<string>().HasMaxLength(16).IsRequired();
+            entity.Property(e => e.FirstName).HasMaxLength(60);
+            entity.Property(e => e.ReferralCode).HasMaxLength(64);
+            entity.Property(e => e.ReturnUrl).HasMaxLength(2048);
+            entity.Property(e => e.Version).IsConcurrencyToken();
+            entity.HasIndex(e => new { e.EmailNormalized, e.CreatedAtUtc });
+            entity.HasIndex(e => e.ExpiresAtUtc);
         });
 
         modelBuilder.Entity<CandidateActionToken>(entity =>

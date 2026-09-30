@@ -19,13 +19,16 @@ public class TransactionalEmailCatalogTests
     public void Catalog_covers_every_known_transactional_type()
     {
         var keys = TransactionalEmails.Templates.Select(t => t.Key).ToList();
-        Assert.Equal(28, keys.Count);
+        Assert.Equal(31, keys.Count);
         Assert.Equal(keys.Count, keys.Distinct(StringComparer.OrdinalIgnoreCase).Count());
         Assert.Contains("ApplicationConfirmation", keys);
         Assert.Contains("PushBom", keys);
         Assert.Contains("AccountUnsubscribeVerification", keys);
         Assert.Contains("CompanyApiKeyCredentials", keys);
         Assert.Contains("VacancyEngagementReminder", keys);
+        Assert.Contains("EmailSignUpCode", keys);
+        Assert.Contains("EmailSignInCode", keys);
+        Assert.Contains("EmailCodeUsePassword", keys);
     }
 
     [Fact]

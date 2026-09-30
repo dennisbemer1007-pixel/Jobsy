@@ -7,6 +7,8 @@ public static class PublicRoutes
     public const string Test = "/ontdek";
     public const string CreateAccount = "/account-maken";
     public const string CreateAccountFromTest = "/account-maken?van=ontdek";
+    public const string CreateAccountFromUnder16 = "/account-maken?van=onder16";
+    public const string CreateAccountCode = "/account-maken/code";
     public const string Banenkaart = "/banenkaart";
     public const string Employers = "/werkgevers";
     public const string Schools = "/scholen";

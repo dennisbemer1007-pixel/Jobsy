@@ -605,6 +605,80 @@ html:not(.cookie-consent-known) .pub-theme .pub-fixed-bottom {
   50% { transform: translateY(-6%); }
 }
 
+/* —— Candidate sign-up (/account-maken) —— */
+.pub-theme .pub-signup {
+  display: grid;
+  place-items: center;
+  min-height: min(70vh, 40rem);
+  padding-block: 2rem 3rem;
+}
+
+.pub-theme .pub-signup__card {
+  width: min(100%, 28rem);
+  padding: 2rem 1.5rem 1.75rem;
+  text-align: center;
+}
+
+.pub-theme .pub-signup__mascot {
+  display: grid;
+  place-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.pub-theme .pub-signup__title {
+  margin: 0 0 0.5rem;
+  font-size: var(--pub-text-h2, 1.75rem);
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.pub-theme .pub-signup__lead,
+.pub-theme .pub-signup__note,
+.pub-theme .pub-signup__consent,
+.pub-theme .pub-signup__footer {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.pub-theme .pub-signup__note {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--pub-radius-card, 1.5rem);
+  background: var(--pub-coral-soft, var(--coral-soft));
+  color: var(--text);
+  text-align: start;
+}
+
+.pub-theme .pub-signup__providers {
+  margin: 1.25rem 0 1rem;
+}
+
+.pub-theme .pub-signup__form {
+  text-align: start;
+  margin-top: 0.5rem;
+}
+
+.pub-theme .pub-signup__consent {
+  margin: 1rem 0 0;
+}
+
+.pub-theme .pub-signup__footer {
+  margin-top: 1.25rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.pub-theme .pub-signup__linkbtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+  text-decoration: underline;
+  min-height: 2.75rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pub-theme .pub-btn--primary,
   .pub-theme .pub-nav__link,

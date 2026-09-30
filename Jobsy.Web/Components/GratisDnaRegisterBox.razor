@@ -26,13 +26,28 @@
         "Onboarding.Test.Values"
     ];
 
+    /// <summary>SSR pages (e.g. <c>/account-maken?van=ontdek</c>) cannot read localStorage.</summary>
+    [Parameter] public bool ForceVisible { get; set; }
+
+    [Parameter] public int ForceAnswerCount { get; set; } = 20;
+
     private bool _visible;
     private int _answerCount;
     private bool _loaded;
 
+    protected override void OnParametersSet()
+    {
+        if (ForceVisible)
+        {
+            _visible = true;
+            _answerCount = ForceAnswerCount > 0 ? ForceAnswerCount : 20;
+            _loaded = true;
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _loaded)
+        if (!firstRender || _loaded || ForceVisible)
         {
             return;
         }

@@ -285,7 +285,7 @@ public static class UiStrings
             ["Login.RememberDevice"] = "Blijf ingelogd op dit apparaat",
             ["Login.Submit"] = "Inloggen",
             ["Login.RegisterLead"] = "Nieuw bedrijf op Lobsy?",
-            ["Login.RegisterCta"] = "Registreer via KVK",
+            ["Login.RegisterCta"] = "Bedrijf registreren (KvK)",
             ["Login.DemoTitle"] = "Demo-accounts — klik om in te loggen",
             ["Login.DemoHint"] = "Tijdelijk voor lokale demo — één klik, geen typen.",
             ["Login.EntraNotConfigured"] = "Vul Entra ClientId/Secret in Integraties (of appsettings)",
@@ -954,7 +954,7 @@ public static class UiStrings
             ["Login.RememberDevice"] = "Stay signed in on this device",
             ["Login.Submit"] = "Sign in",
             ["Login.RegisterLead"] = "New company on Lobsy?",
-            ["Login.RegisterCta"] = "Register via Chamber of Commerce (KVK)",
+            ["Login.RegisterCta"] = "Register company (KvK)",
             ["Login.DemoTitle"] = "Demo accounts — click to sign in",
             ["Login.DemoHint"] = "Temporary for local demo — one click, no typing.",
             ["Login.EntraNotConfigured"] = "Set Entra ClientId/Secret in Integrations (or appsettings)",
@@ -1623,7 +1623,7 @@ public static class UiStrings
             ["Login.RememberDevice"] = "Pozostań zalogowany na tym urządzeniu",
             ["Login.Submit"] = "Zaloguj",
             ["Login.RegisterLead"] = "Nowa firma na Lobsy?",
-            ["Login.RegisterCta"] = "Zarejestruj przez KVK",
+            ["Login.RegisterCta"] = "Zarejestruj firmę (KvK)",
             ["Login.DemoTitle"] = "Konta demo — kliknij, aby się zalogować",
             ["Login.DemoHint"] = "Tymczasowo do lokalnego demo — jedno kliknięcie, bez wpisywania.",
             ["Login.EntraNotConfigured"] = "Uzupełnij Entra ClientId/Secret w appsettings.json",
@@ -2292,7 +2292,7 @@ public static class UiStrings
             ["Login.RememberDevice"] = "Rămâi conectat pe acest dispozitiv",
             ["Login.Submit"] = "Autentificare",
             ["Login.RegisterLead"] = "Companie nouă pe Lobsy?",
-            ["Login.RegisterCta"] = "Înregistrează-te via KVK",
+            ["Login.RegisterCta"] = "Înregistrează compania (KvK)",
             ["Login.DemoTitle"] = "Conturi demo — apasă pentru autentificare",
             ["Login.DemoHint"] = "Temporar pentru demo local — un click, fără tastare.",
             ["Login.EntraNotConfigured"] = "Completează Entra ClientId/Secret în appsettings.json",
@@ -2961,7 +2961,7 @@ public static class UiStrings
             ["Login.RememberDevice"] = "البقاء مسجّل الدخول على هذا الجهاز",
             ["Login.Submit"] = "تسجيل الدخول",
             ["Login.RegisterLead"] = "شركة جديدة على Lobsy؟",
-            ["Login.RegisterCta"] = "التسجيل عبر KVK",
+            ["Login.RegisterCta"] = "تسجيل الشركة (KvK)",
             ["Login.DemoTitle"] = "حسابات تجريبية — انقر لتسجيل الدخول",
             ["Login.DemoHint"] = "مؤقت للتجربة المحلية — نقرة واحدة بدون كتابة.",
             ["Login.EntraNotConfigured"] = "أكمل Entra ClientId/Secret في appsettings.json",
@@ -3386,6 +3386,7 @@ public static class UiStrings
         UiStringsMatch.MergeAll(nl, en, pl, ro, ar);
         UiStringsMfa.MergeAll(nl, en, pl, ro, ar);
         UiStringsLanding.MergeAll(nl, en, pl, ro, ar);
+        UiStringsCandidateSignup.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

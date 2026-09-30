@@ -116,7 +116,7 @@
 }
 
 @code {
-    [Parameter] public string RegisterHref { get; set; } = "/register?van=ontdek";
+    [Parameter] public string RegisterHref { get; set; } = Jobsy.Web.Navigation.PublicRoutes.CreateAccountFromTest;
     [Parameter] public string? StrengthSentence { get; set; }
     [Parameter] public string? RiasecSentence { get; set; }
     [Parameter] public string? CultureSentence { get; set; }

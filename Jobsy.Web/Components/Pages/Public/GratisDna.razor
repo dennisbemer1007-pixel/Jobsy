@@ -221,7 +221,7 @@
     private OnboardingImpressionCoreItem? _cultureTile;
     private OnboardingImpressionCoreItem? _valueTile;
 
-    private string RegisterHref => "/register?van=ontdek";
+    private string RegisterHref => Jobsy.Web.Navigation.PublicRoutes.CreateAccountFromTest;
 
     private bool CanStart => _age16Plus == true && _consentChecked && !_storageDisabled;
 

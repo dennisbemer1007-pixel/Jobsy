@@ -200,11 +200,11 @@ public static class UiStringsGratisDna
         ro["GratisDna.Under16.Lead"] = en["GratisDna.Under16.Lead"];
         ar["GratisDna.Under16.Lead"] = en["GratisDna.Under16.Lead"];
 
-        nl["GratisDna.Under16.Cta"] = "Naar registreren";
-        en["GratisDna.Under16.Cta"] = "Go to sign up";
-        pl["GratisDna.Under16.Cta"] = en["GratisDna.Under16.Cta"];
-        ro["GratisDna.Under16.Cta"] = en["GratisDna.Under16.Cta"];
-        ar["GratisDna.Under16.Cta"] = en["GratisDna.Under16.Cta"];
+        nl["GratisDna.Under16.Cta"] = "Account maken";
+        en["GratisDna.Under16.Cta"] = "Create account";
+        pl["GratisDna.Under16.Cta"] = "Utwórz konto";
+        ro["GratisDna.Under16.Cta"] = "Creează cont";
+        ar["GratisDna.Under16.Cta"] = "إنشاء حساب";
 
         nl["GratisDna.Questions.Progress"] = "Vraag {0} van {1}";
         en["GratisDna.Questions.Progress"] = "Question {0} of {1}";

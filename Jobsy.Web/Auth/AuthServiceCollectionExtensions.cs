@@ -7,6 +7,7 @@ using Jobsy.Core;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
+using Jobsy.Web.Localization;
 using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
@@ -313,41 +314,170 @@ public static class AuthServiceCollectionExtensions
                 return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(safeReturn)}");
             }
 
-            var showHowTo = principal.HasClaim(c =>
-                c.Type == "show_candidate_how_to" && c.Value == "1");
-            if (showHowTo
-                || principal.IsInRole("Candidate")
-                || principal.HasClaim(ClaimTypes.Role, "Candidate"))
-            {
-                returnUrl = AuthRedirects.ResolveCandidateReturnUrl(returnUrl, showHowTo);
-            }
-
-            if (principal.Identity is ClaimsIdentity identity)
-            {
-                if (apiProfile?.DeviceSessionId is Guid deviceId
-                    && !string.IsNullOrWhiteSpace(apiProfile.DeviceRefreshToken)
-                    && apiProfile.DeviceExpiresAtUtc is DateTime deviceExp)
-                {
-                    AuthPrincipalFactory.StampDeviceClaims(identity, deviceId, apiProfile.SessionVersion);
-                    DeviceSessionCookie.Set(http, apiProfile.DeviceRefreshToken, deviceExp);
-                }
-                else if (rememberDevice)
-                {
-                    await TryAttachProvisionedDeviceSessionAsync(http, configuration, identity, email);
-                }
-                else
-                {
-                    AuthPrincipalFactory.StampSessionVersion(identity, apiProfile?.SessionVersion ?? 0);
-                }
-            }
-
-            await http.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
+            return await SignInFromApiProfileAsync(
+                http,
+                configuration,
                 principal,
-                CreateSessionAuthProperties());
-            StampLastActivity(http);
+                apiProfile,
+                returnUrl,
+                rememberDevice,
+                email,
+                attachDemoDeviceFallback: true);
+        }).RequireRateLimiting("auth");
 
-            return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
+        app.MapPost("/account/email-code/start", async (
+            HttpContext http,
+            IConfiguration configuration,
+            IAntiforgery antiforgery,
+            IDataProtectionProvider dataProtection,
+            IHttpClientFactory httpClientFactory) =>
+        {
+            var form = await http.Request.ReadFormAsync();
+            var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
+                form["returnUrl"], form["returnTo"], form["redirect"]);
+            var safeReturn = AuthRedirects.SafeLocalUrl(returnUrl);
+            var van = form["van"].ToString();
+            var email = LoginIdentity.Normalize(form["email"].ToString());
+            var firstName = form["firstName"].ToString();
+
+            if (!await antiforgery.IsRequestValidAsync(http))
+            {
+                return Results.Redirect(
+                    AppendSignupQuery("/account-maken?error=retry", safeReturn, van));
+            }
+
+            if (string.IsNullOrWhiteSpace(email) || !email.Contains('@', StringComparison.Ordinal))
+            {
+                return Results.Redirect(
+                    AppendSignupQuery("/account-maken?error=email", safeReturn, van));
+            }
+
+            var culture = http.Request.Cookies.TryGetValue(CultureState.CookieName, out var lang)
+                && !string.IsNullOrWhiteSpace(lang)
+                ? lang
+                : "nl";
+            string? referralCode = null;
+            if (http.Request.Cookies.TryGetValue("lobsy_ambassadeur_ref", out var cookieRef)
+                && !string.IsNullOrWhiteSpace(cookieRef))
+            {
+                referralCode = cookieRef.Trim();
+            }
+
+            var (status, challengeId, error) = await TryEmailCodeStartAsync(
+                configuration,
+                httpClientFactory,
+                email,
+                firstName,
+                referralCode,
+                safeReturn,
+                culture);
+
+            if (status == 409 || string.Equals(error, "too_many_codes", StringComparison.Ordinal))
+            {
+                return Results.Redirect(
+                    AppendSignupQuery("/account-maken?error=too_many", safeReturn, van));
+            }
+
+            if (challengeId is null)
+            {
+                return Results.Redirect(
+                    AppendSignupQuery("/account-maken?error=retry", safeReturn, van));
+            }
+
+            EmailCodeCookie.Set(
+                http,
+                dataProtection,
+                new EmailCodeCookie.Payload(challengeId.Value, email, safeReturn, van));
+
+            var codeUrl = "/account-maken/code?returnUrl=" + Uri.EscapeDataString(safeReturn);
+            if (!string.IsNullOrWhiteSpace(van))
+            {
+                codeUrl += "&van=" + Uri.EscapeDataString(van);
+            }
+
+            return Results.Redirect(codeUrl);
+        }).RequireRateLimiting("auth");
+
+        app.MapPost("/account/email-code/verify", async (
+            HttpContext http,
+            IConfiguration configuration,
+            IAntiforgery antiforgery,
+            IDataProtectionProvider dataProtection,
+            IHttpClientFactory httpClientFactory) =>
+        {
+            var form = await http.Request.ReadFormAsync();
+            var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
+                form["returnUrl"], form["returnTo"], form["redirect"]);
+            var safeReturn = AuthRedirects.SafeLocalUrl(returnUrl);
+            var van = form["van"].ToString();
+            var code = form["code"].ToString().Trim();
+            var rememberDevice = string.Equals(
+                form["rememberDevice"].ToString(),
+                "true",
+                StringComparison.OrdinalIgnoreCase);
+
+            if (!await antiforgery.IsRequestValidAsync(http))
+            {
+                return Results.Redirect(
+                    AppendSignupQuery("/account-maken/code?error=retry", safeReturn, van));
+            }
+
+            var payload = EmailCodeCookie.TryRead(http, dataProtection);
+            if (payload is null)
+            {
+                return Results.Redirect(
+                    AppendSignupQuery("/account-maken?error=expired", safeReturn, van));
+            }
+
+            var (profile, verifyError, attemptsLeft) = await TryEmailCodeVerifyAsync(
+                configuration,
+                httpClientFactory,
+                payload.ChallengeId,
+                code,
+                rememberDevice,
+                http.Request.Headers.UserAgent.ToString());
+
+            if (profile?.RequiresMfa == true && !string.IsNullOrWhiteSpace(profile.MfaChallengeToken))
+            {
+                SetMfaChallengeCookies(http, profile.MfaChallengeToken, payload.ReturnUrl ?? safeReturn);
+                EmailCodeCookie.Clear(http);
+                var mfaPath = profile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup";
+                return Results.Redirect(mfaPath);
+            }
+
+            if (profile is null)
+            {
+                var err = verifyError switch
+                {
+                    "code_expired" => "expired",
+                    "too_many_codes" => "too_many",
+                    _ => "invalid"
+                };
+                var q = AppendSignupQuery($"/account-maken/code?error={err}", safeReturn, van);
+                if (attemptsLeft is int left && left >= 0 && err == "invalid")
+                {
+                    q += "&left=" + left;
+                }
+
+                if (err == "expired")
+                {
+                    EmailCodeCookie.Clear(http);
+                }
+
+                return Results.Redirect(q);
+            }
+
+            EmailCodeCookie.Clear(http);
+            var principal = CreatePrincipalFromProfile(profile, "email-code");
+            return await SignInFromApiProfileAsync(
+                http,
+                configuration,
+                principal,
+                profile,
+                payload.ReturnUrl ?? safeReturn,
+                rememberDevice,
+                profile.Email,
+                attachDemoDeviceFallback: false);
         }).RequireRateLimiting("auth");
 
         app.MapPost("/account/mfa/verify", async (
@@ -792,6 +922,179 @@ public static class AuthServiceCollectionExtensions
         }
 
         return new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
+    }
+
+    private static string AppendSignupQuery(string path, string returnUrl, string? van)
+    {
+        var sep = path.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+        var url = $"{path}{sep}returnUrl={Uri.EscapeDataString(returnUrl)}";
+        if (!string.IsNullOrWhiteSpace(van))
+        {
+            url += "&van=" + Uri.EscapeDataString(van);
+        }
+
+        return url;
+    }
+
+    private static async Task<IResult> SignInFromApiProfileAsync(
+        HttpContext http,
+        IConfiguration configuration,
+        ClaimsPrincipal principal,
+        LocalApiLoginProfile? apiProfile,
+        string returnUrl,
+        bool rememberDevice,
+        string email,
+        bool attachDemoDeviceFallback)
+    {
+        var showHowTo = principal.HasClaim(c =>
+            c.Type == "show_candidate_how_to" && c.Value == "1");
+        if (showHowTo
+            || principal.IsInRole("Candidate")
+            || principal.HasClaim(ClaimTypes.Role, "Candidate"))
+        {
+            returnUrl = AuthRedirects.ResolveCandidateReturnUrl(returnUrl, showHowTo);
+        }
+
+        if (principal.Identity is ClaimsIdentity identity)
+        {
+            if (apiProfile?.DeviceSessionId is Guid deviceId
+                && !string.IsNullOrWhiteSpace(apiProfile.DeviceRefreshToken)
+                && apiProfile.DeviceExpiresAtUtc is DateTime deviceExp)
+            {
+                AuthPrincipalFactory.StampDeviceClaims(identity, deviceId, apiProfile.SessionVersion);
+                DeviceSessionCookie.Set(http, apiProfile.DeviceRefreshToken, deviceExp);
+            }
+            else if (rememberDevice && attachDemoDeviceFallback)
+            {
+                await TryAttachProvisionedDeviceSessionAsync(http, configuration, identity, email);
+            }
+            else
+            {
+                AuthPrincipalFactory.StampSessionVersion(identity, apiProfile?.SessionVersion ?? 0);
+            }
+        }
+
+        await http.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principal,
+            CreateSessionAuthProperties());
+        StampLastActivity(http);
+
+        return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
+    }
+
+    private static async Task<(int Status, Guid? ChallengeId, string? Error)> TryEmailCodeStartAsync(
+        IConfiguration configuration,
+        IHttpClientFactory httpClientFactory,
+        string email,
+        string? firstName,
+        string? referralCode,
+        string returnUrl,
+        string culture)
+    {
+        try
+        {
+            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
+                configuration["ApiBaseUrl"],
+                "http://localhost:5200/");
+            var client = httpClientFactory.CreateClient("JobsyAuthProvision");
+            client.BaseAddress = new Uri(apiBase);
+            client.Timeout = TimeSpan.FromSeconds(10);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/email-code/start")
+            {
+                Content = JsonContent.Create(new
+                {
+                    email,
+                    firstName,
+                    referralCode,
+                    returnUrl,
+                    culture
+                })
+            };
+            var secret = configuration["JobsyAuth:ExternalProvisionSecret"];
+            if (!string.IsNullOrWhiteSpace(secret))
+            {
+                request.Headers.TryAddWithoutValidation("X-Jobsy-Provision-Secret", secret);
+            }
+
+            using var response = await client.SendAsync(request);
+            if ((int)response.StatusCode == 409)
+            {
+                return (409, null, "too_many_codes");
+            }
+
+            if (!response.IsSuccessStatusCode && response.StatusCode != System.Net.HttpStatusCode.Accepted)
+            {
+                return ((int)response.StatusCode, null, "retry");
+            }
+
+            var body = await response.Content.ReadFromJsonAsync<EmailCodeStartDto>();
+            return ((int)response.StatusCode, body?.ChallengeId, null);
+        }
+        catch
+        {
+            return (500, null, "retry");
+        }
+    }
+
+    private static async Task<(LocalApiLoginProfile? Profile, string? Error, int? AttemptsLeft)> TryEmailCodeVerifyAsync(
+        IConfiguration configuration,
+        IHttpClientFactory httpClientFactory,
+        Guid challengeId,
+        string code,
+        bool rememberDevice,
+        string userAgent)
+    {
+        try
+        {
+            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
+                configuration["ApiBaseUrl"],
+                "http://localhost:5200/");
+            var client = httpClientFactory.CreateClient("JobsyAuthProvision");
+            client.BaseAddress = new Uri(apiBase);
+            client.Timeout = TimeSpan.FromSeconds(10);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/email-code/verify")
+            {
+                Content = JsonContent.Create(new
+                {
+                    challengeId,
+                    code,
+                    rememberDevice,
+                    userAgent
+                })
+            };
+            var secret = configuration["JobsyAuth:ExternalProvisionSecret"];
+            if (!string.IsNullOrWhiteSpace(secret))
+            {
+                request.Headers.TryAddWithoutValidation("X-Jobsy-Provision-Secret", secret);
+            }
+
+            using var response = await client.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                var profile = await response.Content.ReadFromJsonAsync<LocalApiLoginProfile>();
+                return (profile, null, null);
+            }
+
+            var errBody = await response.Content.ReadFromJsonAsync<EmailCodeErrorDto>();
+            var message = errBody?.Message ?? "invalid_code";
+            return (null, message, errBody?.AttemptsLeft);
+        }
+        catch
+        {
+            return (null, "retry", null);
+        }
+    }
+
+    private sealed class EmailCodeStartDto
+    {
+        public Guid ChallengeId { get; set; }
+    }
+
+    private sealed class EmailCodeErrorDto
+    {
+        public string? Message { get; set; }
+        public int? AttemptsLeft { get; set; }
     }
 
     private static async Task<LocalApiLoginProfile?> TryLocalApiLoginProfileAsync(

@@ -27,7 +27,7 @@ public class GratisDnaBunitTests : TestContext
         var cut = Render(builder =>
         {
             builder.OpenComponent<GratisDnaResultView>(0);
-            builder.AddAttribute(1, "RegisterHref", "/register?van=ontdek");
+            builder.AddAttribute(1, "RegisterHref", "/account-maken?van=ontdek");
             builder.AddAttribute(2, "StrengthSentence", OnboardingImpressionLibrary.StrengthSentence(CompetencyTestCatalog.Samenwerken));
             builder.AddAttribute(3, "RiasecSentence", OnboardingImpressionLibrary.RiasecSentence(CareerTestCatalog.Social));
             builder.AddAttribute(4, "CultureSentence", OnboardingImpressionLibrary.CultureSentence(CulturePersonalityCatalog.Collaboration));
@@ -47,7 +47,8 @@ public class GratisDnaBunitTests : TestContext
         Assert.Contains("Instagram", markup, StringComparison.Ordinal);
         Assert.Contains("Wis mijn antwoorden van dit apparaat", markup, StringComparison.Ordinal);
         Assert.Contains("Bewaar je DNA – maak gratis account", markup, StringComparison.Ordinal);
-        Assert.Contains("/register?van=ontdek", markup, StringComparison.Ordinal);
+        Assert.Contains("/account-maken?van=ontdek", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("/register", markup, StringComparison.Ordinal);
         Assert.DoesNotContain("%", markup, StringComparison.Ordinal);
     }
 
@@ -58,7 +59,7 @@ public class GratisDnaBunitTests : TestContext
 
         Assert.Contains("Leuk dat je mee wilt doen!", cut.Markup, StringComparison.Ordinal);
         var cta = cut.Find("[data-testid=gd-under16-cta]");
-        Assert.Equal("/register", cta.GetAttribute("href"));
+        Assert.Equal("/account-maken?van=onder16", cta.GetAttribute("href"));
 
         // ChooseAge(false) on the page only flips FlowState — no Storage.Create/Save/Clear.
         var page = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Public", "GratisDna.razor"));

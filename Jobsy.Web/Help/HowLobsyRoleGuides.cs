@@ -60,11 +60,11 @@ public static class HowLobsyRoleGuides
         [
             new("HowLobsy.Guest.Step1Title", "HowLobsy.Guest.Step1Body", [new("/", "Nav.JobMap")]),
             new("HowLobsy.Guest.Step2Title", "HowLobsy.Guest.Step2Body", [new("/ontdek", "HowLobsy.Guest.DnaLabel")]),
-            new("HowLobsy.Guest.Step3Title", "HowLobsy.Guest.Step3Body", [new("/register", "Nav.Register")]),
+            new("HowLobsy.Guest.Step3Title", "HowLobsy.Guest.Step3Body", [new(Jobsy.Web.Navigation.PublicRoutes.CreateAccount, "PublicNav.CreateAccount")]),
             new("HowLobsy.Guest.Step4Title", "HowLobsy.Guest.Step4Body", [])
         ],
         new("/ontdek", "HowLobsy.Guest.PrimaryCta"),
-        new("/register", "HowLobsy.Guest.SecondaryCta"));
+        new(Jobsy.Web.Navigation.PublicRoutes.CreateAccount, "PublicNav.CreateAccount"));
 
     public static readonly Guide Branch = new(
         "HowLobsy.Branch.Title",

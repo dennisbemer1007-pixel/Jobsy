@@ -89,6 +89,9 @@ public static class RoutesDocGenerator
         sb.AppendLine("|-------|-------|");
         sb.AppendLine("| `/taal/{lang}` | Sets `Jobsy.Culture` cookie; 302 to local `returnUrl` only; `noindex` |");
         sb.AppendLine("| `/account/cookie-consent/analytics-token` | POST; same-origin analytics consent token for static cookie banner |");
+        sb.AppendLine("| `/account/email-code/start` | POST; antiforgery; starts passwordless e-mail code (Web → API) |");
+        sb.AppendLine("| `/account/email-code/verify` | POST; antiforgery; verifies code and signs in |");
+        sb.AppendLine("| `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |");
         sb.AppendLine();
 
         return sb.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);

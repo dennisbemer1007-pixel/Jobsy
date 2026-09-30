@@ -152,3 +152,18 @@ public record ExternalProviderConfigResponse(
     string ClientId,
     string ClientSecret,
     string? TenantId);
+
+public record EmailCodeStartRequest(
+    string Email,
+    string? FirstName = null,
+    string? ReferralCode = null,
+    string? ReturnUrl = null,
+    string? Culture = null);
+
+public record EmailCodeStartResponse(Guid ChallengeId);
+
+public record EmailCodeVerifyRequest(
+    Guid ChallengeId,
+    string Code,
+    bool RememberDevice = true,
+    string? UserAgent = null);
