@@ -28,7 +28,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("preloadScripts", maps);
         Assert.Contains("fetchpriority\", \"high\"", maps);
         Assert.Contains("jobMap.boot", maps);
-        Assert.Contains("mapfix9", maps);
+        Assert.Contains("jobsyMapLibre.min.js?v=", maps);
         Assert.DoesNotContain("warmDiscovery", maps);
         Assert.DoesNotContain("jobsyMapsAfterFirstPaint", maps);
     }
@@ -293,13 +293,16 @@ public class JobMapPrerenderGuardTests
         var firstInit = afterRenderFn.IndexOf("await TryInitJobMapAsync();", StringComparison.Ordinal);
         var extraInit = afterRenderFn.IndexOf("await TryInitJobMapAsync();", firstInit + 1, StringComparison.Ordinal);
         Assert.True(measureCall >= 0 && firstInit > measureCall && extraInit < 0);
-        var geoHydrate = discovery.IndexOf("ensureLocationOnLaunch", afterRender, StringComparison.Ordinal);
+        var geoHydrate = discovery.IndexOf("ResolveLaunchOriginAsync", afterRender, StringComparison.Ordinal);
         Assert.True(geoHydrate > afterRender);
         var launchDone = discovery.IndexOf("_launchHydrationDone = true", geoHydrate, StringComparison.Ordinal);
         Assert.True(launchDone > geoHydrate);
         Assert.DoesNotContain("CenterMapOnFilledLocationAsync", discovery[geoHydrate..launchDone]);
-        var hydrateCatch = discovery.IndexOf("catch (JSException)", geoHydrate, StringComparison.Ordinal);
-        Assert.True(hydrateCatch > geoHydrate);
+        // Session/home/stored origin resolution (and ensureLocationOnLaunch) lives in ResolveLaunchOriginAsync.
+        Assert.Contains("jobsyGeo.ensureLocationOnLaunch", discovery, StringComparison.Ordinal);
+        Assert.Contains("jobsyGeo.getSessionOrigin", discovery, StringComparison.Ordinal);
+        var hydrateCatch = discovery.IndexOf("catch (JSException)", launchDone, StringComparison.Ordinal);
+        Assert.True(hydrateCatch > launchDone);
         var hydrateSlice = discovery[hydrateCatch..(hydrateCatch + 180)];
         Assert.DoesNotContain("return;", hydrateSlice);
 

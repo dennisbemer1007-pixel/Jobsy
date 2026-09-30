@@ -141,7 +141,7 @@
             }
             <AuthorizeView>
                 <Authorized>
-                    <a class="kb-chip kb-chip--match" href="/candidate/match">@Culture["Nav.Match"]</a>
+                    <a class="kb-chip kb-chip--match jobsy-action--match" href="/candidate/match">@Culture["Nav.Match"]</a>
                 </Authorized>
             </AuthorizeView>
             <button type="button" class="kb-chip kb-chip--toggle" @onclick="ToggleMobileView">
@@ -179,6 +179,7 @@
                 <button type="button" class="kb-chip-preset" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
             </div>
         }
+    </div>
 
     <aside class="vacancy-pane">
         <div class="discovery-toolbar discovery-toolbar--desktop kb-desktop-toolbar" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
@@ -2659,6 +2660,149 @@
         }
 
         return "/api/vacancies/pins?" + string.Join("&", qs);
+    }
+
+    private async Task ResolveLaunchOriginAsync()
+    {
+        KbMapStart.OriginPoint? urlOrigin = null;
+        if (_origin is not null)
+        {
+            urlOrigin = new KbMapStart.OriginPoint(_origin.Latitude, _origin.Longitude, _addressQuery);
+        }
+
+        KbMapStart.OriginPoint? sessionOrigin = null;
+        string? sessionTransport = null;
+        int? sessionMinutes = null;
+        try
+        {
+            var session = await Js.InvokeAsync<SessionOriginDto?>("jobsyGeo.getSessionOrigin");
+            if (session is not null && IsFinite(session.Lat) && IsFinite(session.Lng))
+            {
+                sessionOrigin = new KbMapStart.OriginPoint(session.Lat, session.Lng, session.Label);
+                sessionTransport = session.Transport;
+                sessionMinutes = session.MaxMinutes;
+            }
+        }
+        catch (JSException) { }
+        catch (InvalidOperationException) { }
+
+        KbMapStart.OriginPoint? storedOrigin = null;
+        try
+        {
+            var stored = await Js.InvokeAsync<StoredOrigin?>("jobsyGeo.ensureLocationOnLaunch");
+            if (stored is not null && IsFinite(stored.Lat) && IsFinite(stored.Lng))
+            {
+                storedOrigin = new KbMapStart.OriginPoint(stored.Lat, stored.Lng, stored.Label);
+            }
+        }
+        catch (JSException) { }
+        catch (InvalidOperationException) { }
+
+        double? homeLat = null;
+        double? homeLng = null;
+        string? homeLabel = null;
+        if (_isCandidate)
+        {
+            try
+            {
+                var profile = await Api.GetMyProfileAsync();
+                if (profile is not null)
+                {
+                    homeLat = profile.HomeLatitude;
+                    homeLng = profile.HomeLongitude;
+                    homeLabel = string.IsNullOrWhiteSpace(profile.Preferences.HomeAddress)
+                        ? null
+                        : profile.Preferences.HomeAddress.Trim();
+                }
+            }
+            catch { }
+        }
+
+        var resolved = KbMapStart.Resolve(new KbMapStart.Input(
+            UrlOrStateOrigin: urlOrigin,
+            SessionOrigin: sessionOrigin,
+            HomeLatitude: homeLat,
+            HomeLongitude: homeLng,
+            HomeAddressLabel: homeLabel,
+            StoredOrigin: storedOrigin,
+            IsLoggedInCandidate: _isCandidate));
+
+        if (resolved.Origin is { } origin)
+        {
+            _origin = new OriginPoint { Latitude = origin.Latitude, Longitude = origin.Longitude };
+            _addressQuery = origin.Label ?? _addressQuery;
+            if (string.Equals(resolved.Source, "session", StringComparison.Ordinal)
+                && !string.IsNullOrWhiteSpace(sessionTransport))
+            {
+                _selectedTransport = TransportLabels.Canonical(sessionTransport);
+            }
+            else
+            {
+                _selectedTransport = resolved.Transport;
+            }
+
+            if (string.Equals(resolved.Source, "session", StringComparison.Ordinal)
+                && sessionMinutes is int sm)
+            {
+                _maxTravelMinutes = Math.Clamp(sm, 5, 90);
+            }
+            else
+            {
+                _maxTravelMinutes = resolved.MaxTravelMinutes;
+            }
+
+            if (!_sortChosenByUser && _sortMode is not "type" and not "recent" and not "match")
+            {
+                _sortMode = "distance";
+            }
+
+            if (string.IsNullOrWhiteSpace(_addressQuery))
+            {
+                _ = ResolveLaunchAddressAsync(origin.Latitude, origin.Longitude);
+            }
+
+            _showStartPrompt = false;
+        }
+        else
+        {
+            _showStartPrompt = resolved.ShowLocationPrompt && !_startPromptDismissed;
+        }
+    }
+
+    private sealed class SessionOriginDto
+    {
+        public double Lat { get; set; }
+        public double Lng { get; set; }
+        public string? Label { get; set; }
+        public string? Transport { get; set; }
+        public int? MaxMinutes { get; set; }
+    }
+
+    private async Task PersistSessionOriginAsync()
+    {
+        if (_origin is null)
+        {
+            try { await Js.InvokeVoidAsync("jobsyGeo.clearSessionOrigin"); } catch { }
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync(
+                "jobsyGeo.setSessionOrigin",
+                _origin.Latitude,
+                _origin.Longitude,
+                string.IsNullOrWhiteSpace(_addressQuery) ? null : _addressQuery,
+                _selectedTransport,
+                _maxTravelMinutes);
+        }
+        catch { }
+    }
+
+    private void DismissStartPrompt()
+    {
+        _startPromptDismissed = true;
+        _showStartPrompt = false;
     }
 
     private async Task OnAddressInputAsync(string value)

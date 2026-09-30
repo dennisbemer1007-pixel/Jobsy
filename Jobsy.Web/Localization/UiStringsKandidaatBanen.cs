@@ -169,7 +169,7 @@ public static class UiStringsKandidaatBanen
             "Gebruik mijn locatie", "Use my location",
             "Użyj mojej lokalizacji", "Folosește locația mea", "استخدم موقعي");
         Add("Kb.Start.Later",
-            "Later", "Later",
+            "Later", "Not now",
             "Później", "Mai târziu", "لاحقاً");
         Add("Kb.Start.AddressPlaceholder",
             "Straat en plaats", "Street and place",
@@ -177,8 +177,8 @@ public static class UiStringsKandidaatBanen
 
         // Filter bar chips (03)
         Add("Kb.Filter.TravelChip",
-            "{0} min {1}", "{0} min {1}",
-            "{0} min {1}", "{0} min {1}", "{0} د {1}");
+            "{0} min {1}", "{0} mins {1}",
+            "{0} min. {1}", "{0} min. {1}", "{0} د {1}");
         Add("Kb.Filter.TravelChipBike",
             "{0} min fietsen", "{0} min by bike",
             "{0} min rowerem", "{0} min cu bicicleta", "{0} د بالدراجة");
@@ -201,8 +201,8 @@ public static class UiStringsKandidaatBanen
             "Wis filters", "Clear filters",
             "Wyczyść filtry", "Șterge filtrele", "مسح الفلاتر");
         Add("Kb.Filter.MinutesPreset",
-            "{0} min", "{0} min",
-            "{0} min", "{0} min", "{0} د");
+            "{0} min", "{0} mins",
+            "{0} minut", "{0} min.", "{0} د");
         Add("Kb.Filter.Exact",
             "Precies…", "Exact…",
             "Dokładnie…", "Exact…", "بالضبط…");
@@ -253,7 +253,7 @@ public static class UiStringsKandidaatBanen
             "Aproximativ — încă nu urmărim rutele de transport.",
             "تقريبي — لا نتبع مسارات المواصلات بعد.");
         Add("Kb.Legend.RingMinutes",
-            "{0} min", "{0} min",
-            "{0} min", "{0} min", "{0} د");
+            "{0} min", "{0} mins",
+            "{0} minut", "{0} min.", "{0} د");
     }
 }

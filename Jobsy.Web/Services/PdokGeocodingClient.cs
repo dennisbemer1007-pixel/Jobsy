@@ -58,7 +58,7 @@ public sealed class PdokGeocodingClient(HttpClient http)
             .ToList();
     }
 
-    internal static IReadOnlyList<AddressSuggestion> OrderFixtureDocs(
+    public static IReadOnlyList<AddressSuggestion> OrderFixtureDocs(
         IEnumerable<(string Label, string Type, double Lon, double Lat, double Score)> docs)
     {
         return docs
