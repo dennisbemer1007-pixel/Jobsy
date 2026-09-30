@@ -52,6 +52,7 @@ public class SalesFoundationUnitTests
                 var key = type.Name switch
                 {
                     nameof(CommissionEntryKind) => SalesLabels.Key((CommissionEntryKind)value),
+                    nameof(CommissionEntryState) => SalesLabels.Key((CommissionEntryState)value),
                     nameof(SalesPayoutRequestStatus) => SalesLabels.Key((SalesPayoutRequestStatus)value),
                     nameof(SalesPayoutRunStatus) => SalesLabels.Key((SalesPayoutRunStatus)value),
                     nameof(SelfBillingInvoiceStatus) => SalesLabels.Key((SelfBillingInvoiceStatus)value),

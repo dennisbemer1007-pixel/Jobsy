@@ -32,6 +32,7 @@ public class SalesLabelsCompletenessTests
     {
         nameof(Jobsy.Core.Entities.CommissionEntryKind) =>
             SalesLabels.Key((Jobsy.Core.Entities.CommissionEntryKind)value),
+        nameof(CommissionEntryState) => SalesLabels.Key((CommissionEntryState)value),
         nameof(SalesPayoutRequestStatus) => SalesLabels.Key((SalesPayoutRequestStatus)value),
         nameof(SalesPayoutRunStatus) => SalesLabels.Key((SalesPayoutRunStatus)value),
         nameof(Jobsy.Core.Entities.SelfBillingInvoiceStatus) =>
