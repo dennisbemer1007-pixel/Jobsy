@@ -179,9 +179,9 @@ public static class PageHelpDocs
 
         ["/candidate/hoe-werkt-lobsy"] = new(
             "Hoe werkt Lobsy (kandidaat)",
-            "Stapsgewijze uitleg voor kandidaten: banenkaart, profiel, bewaren, solliciteren en opvolging.",
-            "Lees de stappen en ga daarna door naar de banenkaart of je profiel. Eerste keer afronden markeert de uitleg als gezien.",
-            "Weten hoe je een baan vindt en solliciteert zonder te verdwalen."),
+            "Lobsy als vijf stenen: de ontdekkingsreis, Mijn Paspoort, Carrière, Banenkaart en Sollicitaties, met per steen of die al klaar is.",
+            "Kies zelf een steen en ga daar verder; de kreeft staat op de steen waar je nu bent. ‘Ik snap het’ markeert de uitleg als gezien en je blijft op de pagina.",
+            "In twintig seconden zien wat Lobsy voor je doet en waar je verder kunt."),
 
         ["/candidate/liked"] = new(
             "Bewaard",

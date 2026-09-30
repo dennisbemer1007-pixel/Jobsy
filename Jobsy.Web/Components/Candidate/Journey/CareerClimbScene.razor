@@ -6,7 +6,7 @@
      aria-hidden="true">
     @((MarkupString)_svg)
 
-    @if (Variant != ClimbVariant.Stones && _points.Count > 0)
+    @if ((Variant != ClimbVariant.Stones || ShowLobster) && _points.Count > 0)
     {
         <div class="career-scene__lob" style="--x:@(LobsterX)%;--y:@(LobsterY)%;--size:@(LobsterSize)px">
             <JourneyLobster PlatesShed="@PlatesShed"
@@ -39,6 +39,10 @@
     private IReadOnlyList<CareerClimbGeometry.Point> _points = [];
 
     [Parameter] public ClimbVariant Variant { get; set; } = ClimbVariant.Climb;
+
+    /// <summary>05 §2: the stones scene can still carry the lobster on the <c>now</c> stone.</summary>
+    [Parameter] public bool ShowLobster { get; set; }
+
     [Parameter] public bool Mobile { get; set; }
     [Parameter] public IReadOnlyList<ClimbStone> Stones { get; set; } = [];
     [Parameter] public int CurrentIndex { get; set; }

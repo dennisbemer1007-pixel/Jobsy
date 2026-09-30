@@ -1,40 +1,240 @@
 @page "/candidate/hoe-werkt-lobsy"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
-@using Jobsy.Web.Help
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Components.Candidate.Journey
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject AuthenticationStateProvider AuthState
+@inject ILogger<HowLobsyWorks> Logger
 
-<PageTitle>@Culture[HowLobsyRoleGuides.Candidate.TitleKey] · Lobsy</PageTitle>
+<PageTitle>@Culture["HowC.Eyebrow"] · Lobsy</PageTitle>
 
-<HowLobsyGuidePanel Guide="HowLobsyRoleGuides.Candidate"
-                    Busy="_busy"
-                    Message="_message"
-                    OnPrimaryClick="FinishAsync" />
+<div class="journey-page career-page how-page">
+    <CareerStage Variant="ClimbVariant.Stones"
+                 ShowLobster="true"
+                 DesktopStones="@SceneStones"
+                 CurrentIndex="@TargetIndex"
+                 PlatesShed="6"
+                 LobsterSizeDesktop="130"
+                 LobsterSizeMobile="70"
+                 BubbleDesktop="@BubbleDesktop"
+                 BubbleMobile="@BubbleMobile">
+        <RailContent>
+            <CandidateHowSafeCard EmployersOn="@_employersOn" AssistantOn="@_assistantOn" />
+        </RailContent>
+        <ChildContent>
+            <section class="career-card how-card" aria-labelledby="how-title">
+                <p class="career-card__eyebrow">@Culture["HowC.Eyebrow"]</p>
+                <h1 id="how-title" tabindex="-1" @ref="_heading">@Title</h1>
+                <p class="career-card__lead">@Culture["HowC.Lead"]</p>
+
+                <CandidateHowList Rows="@_rows" />
+
+                @if (_acknowledged)
+                {
+                    <p class="how-card__ack" role="status">
+                        <span class="how-safe__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m5 13 4 4 10-10" />
+                            </svg>
+                        </span>
+                        <span>@Culture["HowC.Ack.Done"]</span>
+                    </p>
+                }
+
+                @if (_error is not null)
+                {
+                    <p class="career-card__error" role="alert">@_error</p>
+                }
+
+                <div class="career-card__actions career-card__actions--sticky">
+                    @if (Target is { } target)
+                    {
+                        <button type="button"
+                                class="career-btn career-btn--primary"
+                                disabled="@_busy"
+                                @onclick="() => ContinueAsync(target)">
+                            @Culture.Format("HowC.Primary", Culture[target.Stone.TitleKey])
+                        </button>
+                    }
+                    <button type="button"
+                            class="career-btn career-btn--text"
+                            disabled="@_busy"
+                            @onclick="AcknowledgeAsync">
+                        @Culture["HowC.Ack"]
+                    </button>
+                </div>
+            </section>
+
+            <CandidateHowSafeCard AsDisclosure="true"
+                                  EmployersOn="@_employersOn"
+                                  AssistantOn="@_assistantOn" />
+        </ChildContent>
+    </CareerStage>
+</div>
 
 @code {
+    private ElementReference _heading;
+    private IReadOnlyList<CandidateHowStone> _stones = [];
+    private IReadOnlyList<CandidateHowRow> _rows = [];
+    private CandidateJourneySummaryApiModel? _summary;
+    private string? _error;
     private bool _busy;
-    private string? _message;
+    private bool _acknowledged;
+    private bool _focused;
+    private bool _employersOn = true;
+    private bool _passportOn;
+    private bool _assistantOn = true;
 
-    private async Task FinishAsync()
+    private int DoneCount => CandidateHowRows.DoneCount(_rows);
+
+    private CandidateHowRow? Target => CandidateHowRows.Target(_rows);
+
+    private int TargetIndex => Math.Max(0, (Target?.Number ?? 1) - 1);
+
+    private bool AllDone => _rows.Count > 0 && _rows.All(r => r.Done);
+
+    private string Title => Culture.Format("HowC.Title", Culture[CountKey(_rows.Count)]);
+
+    private string BubbleDesktop => DoneCount == 0
+        ? Culture["HowC.Say.Zero"]
+        : AllDone
+            ? Culture["HowC.Say.All"]
+            : Culture.Format("HowC.Say", DoneCount);
+
+    private string BubbleMobile => DoneCount == 0
+        ? Culture["HowC.Say.Zero"]
+        : AllDone
+            ? Culture["HowC.Say.All"]
+            : Culture.Format("HowC.Say.Short", DoneCount, DoneCount + 1);
+
+    /// <summary>Short names only; the SVG itself is aria-hidden.</summary>
+    private IReadOnlyList<ClimbStone> SceneStones => _rows
+        .Select(r => new ClimbStone(
+            Culture[r.Stone.ShortKey],
+            r.Done ? ClimbStoneState.Done : r.IsNow ? ClimbStoneState.Now : ClimbStoneState.Todo))
+        .ToList();
+
+    protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            var flags = await FeatureFlags.GetAsync();
+            _employersOn = flags.EmployersEnabled;
+            _passportOn = flags.CandidatePassportEnabled;
+        }
+        catch (Exception)
+        {
+            _employersOn = true;
+        }
+
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            _assistantOn = AssistantChatHost.IsAvailableFor(state.User);
+        }
+        catch (Exception)
+        {
+            _assistantOn = true;
+        }
+
+        _stones = CandidateHowStones.Build(
+            _employersOn,
+            _passportOn,
+            onDropped: href => Logger.LogWarning("Dropped how-to stone: route {Href} does not exist.", href));
+        _rows = CandidateHowRows.Build(_stones, _summary);
+
+        try
+        {
+            _summary = await Api.GetMyJourneySummaryAsync();
+        }
+        catch (Exception ex)
+        {
+            // The stones still render; only their done state is unknown.
+            Logger.LogWarning(ex, "Journey summary unavailable for the candidate how-to guide.");
+        }
+
+        _rows = CandidateHowRows.Build(_stones, _summary);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focused || _rows.Count == 0)
+        {
+            return;
+        }
+
+        _focused = true;
+        try
+        {
+            await _heading.FocusAsync();
+        }
+        catch (Exception)
+        {
+            // Focus is a nicety; a detached element must not break the page.
+        }
+    }
+
+    /// <summary>"Ik snap het" stays on the page and surfaces a save failure inline (H2).</summary>
+    private async Task AcknowledgeAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
         _busy = true;
-        _message = null;
+        _error = null;
+        try
+        {
+            await Api.CompleteCandidateHowToAsync();
+            _acknowledged = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Marking the candidate how-to as completed failed.");
+            _error = Culture["HowC.Err.Save"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    /// <summary>The primary walks on even when the completion call fails (only logged).</summary>
+    private async Task ContinueAsync(CandidateHowRow target)
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
         try
         {
             await Api.CompleteCandidateHowToAsync();
         }
         catch (Exception ex)
         {
-            // Still allow navigation; how-to can be completed later.
-            _message = ex.Message;
+            Logger.LogWarning(ex, "Marking the candidate how-to as completed failed.");
         }
         finally
         {
             _busy = false;
         }
 
-        Navigation.NavigateTo("/banenkaart");
+        Navigation.NavigateTo(target.Stone.Href);
     }
+
+    private static string CountKey(int count)
+        => $"HowC.Count.{Math.Clamp(count, 1, 5)}";
 }

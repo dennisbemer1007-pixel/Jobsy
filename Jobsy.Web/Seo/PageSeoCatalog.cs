@@ -154,7 +154,7 @@ public static partial class PageSeoCatalog
             ["/error"] = Private("Seo.ErrorTitle", "Seo.PrivateDescription"),
             ["/home"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),
             ["/hoe-werkt-lobsy"] = Public("HowLobsy.Guest.Title", "HowLobsy.Guest.Lead"),
-            ["/candidate/hoe-werkt-lobsy"] = Private("Nav.HowLobsyWorks", "Seo.PrivateDescription"),
+            ["/candidate/hoe-werkt-lobsy"] = Private("HowC.Eyebrow", "Seo.PrivateDescription"),
             ["/candidate/liked"] = Private("Saved.Title", "Seo.PrivateDescription"),
             ["/candidate/shared"] = Private("Saved.TabShared", "Seo.PrivateDescription"),
             ["/candidate/vacancies"] = Private("Nav.Vacancies", "Seo.PrivateDescription"),
