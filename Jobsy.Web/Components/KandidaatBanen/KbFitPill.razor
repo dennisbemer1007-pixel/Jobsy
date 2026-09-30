@@ -1,4 +1,4 @@
-@namespace Jobsy.Web.KandidaatBanen
+@namespace Jobsy.Web.Components.KandidaatBanen
 @inject CultureState Culture
 
 @if (Fit is null)
@@ -9,7 +9,7 @@ else if (!Fit.GateOpen)
     <a class="kb-fit kb-fit--gate"
        href="@KbRoutes.PaspoortTests"
        title="@Culture["Kb.Fit.GateHint"]">
-        <span class="kb-fit__icon" aria-hidden="true">@SparkleSvg</span>
+        <span class="kb-fit__icon" aria-hidden="true">@KbIcons.Sparkle</span>
         <span class="kb-fit__label">@Culture["Kb.Fit.Gate"]</span>
     </a>
 }
@@ -17,7 +17,7 @@ else if (Fit.Percent is int percent && Fit.Band is KbFitBand band)
 {
     var mod = KbLabels.FitBandCss(band);
     <span class="kb-fit kb-fit--@mod" title="@(band == KbFitBand.Strong ? Culture["Kb.Fit.Strong"] : null)">
-        <span class="kb-fit__icon" aria-hidden="true">@SparkleSvg</span>
+        <span class="kb-fit__icon" aria-hidden="true">@KbIcons.Sparkle</span>
         <span class="kb-fit__label">@string.Format(Culture["Kb.Fit.Percent"], percent)</span>
         <span class="visually-hidden">@KbLabels.FitBand(Culture, band)</span>
     </span>
@@ -25,7 +25,4 @@ else if (Fit.Percent is int percent && Fit.Band is KbFitBand band)
 
 @code {
     [Parameter] public KbFitView? Fit { get; set; }
-
-    private static readonly MarkupString SparkleSvg = new(
-        """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" focusable="false"><path d="M8 1.2l1.1 3.4L12.5 6 9.1 7.4 8 10.8 6.9 7.4 3.5 6l3.4-1.4L8 1.2zm4.8 7.2l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6.6-1.8z"/></svg>""");
 }

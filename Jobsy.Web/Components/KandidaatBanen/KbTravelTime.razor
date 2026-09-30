@@ -1,4 +1,4 @@
-@namespace Jobsy.Web.KandidaatBanen
+@namespace Jobsy.Web.Components.KandidaatBanen
 @inject CultureState Culture
 
 @if (Minutes is int mins and > 0)
@@ -8,7 +8,7 @@
     var modeWord = KbLabels.Transport(Culture, mode);
     <span class="kb-travel @(ToBureau ? "kb-travel--bureau" : null)"
           aria-label="@string.Format(Culture["Kb.Travel.Aria"], mins, verb)">
-        <span class="kb-travel__icon" aria-hidden="true">@ModeIcon(mode)</span>
+        <span class="kb-travel__icon" aria-hidden="true">@KbIcons.Transport(TransportLabels.Canonical(mode))</span>
         @if (Approx)
         {
             <span class="kb-travel__approx">@Culture["Kb.Travel.Approx"]</span>
@@ -28,23 +28,4 @@
     [Parameter] public bool Approx { get; set; }
     [Parameter] public bool ToBureau { get; set; }
     [Parameter] public string? BureauRegion { get; set; }
-
-    private static MarkupString ModeIcon(string mode)
-    {
-        var canonical = TransportLabels.Canonical(mode);
-        // Simple geometric glyphs — no decorative emoji (design system).
-        var path = canonical switch
-        {
-            TransportLabels.Car =>
-                """<path d="M2.5 9.5h11l-.8-2.4A1.5 1.5 0 0 0 11.3 6H4.7a1.5 1.5 0 0 0-1.4 1.1L2.5 9.5zm1.2 1.2a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zm8.6 0a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2z"/>""",
-            TransportLabels.Walking =>
-                """<path d="M8.2 2.2a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2zM6.2 5.2h3.2l1.4 3.2-1.1.5-.9-2.1-.4 1.3 2.1 2.4-.9.8-1.7-2-1.1 3.4H5.2l1.5-4.6-1.2-1.2.7-.7z"/>""",
-            TransportLabels.PublicTransport =>
-                """<path d="M4 3.5h8a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 12 12.5H4A1.5 1.5 0 0 1 2.5 11V5A1.5 1.5 0 0 1 4 3.5zm1.2 7.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm5.6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM4 5.5h8v3.2H4V5.5z"/>""",
-            _ => // bike / e-bike
-                """<path d="M4.2 10.2a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4zm7.6 0a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4zM5.6 11.2h2.1l1.2-3.1h2.2l.9 2.2h-1.5l-.4-1h-1.3L7.4 11.2H9l.6 1.5H5.6v-1.5zM9.8 4.2l1.1 2.6H8.5L7.6 4.2h2.2z"/>"""
-        };
-        return new MarkupString(
-            $"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" fill=\"currentColor\" focusable=\"false\">{path}</svg>");
-    }
 }

@@ -205,6 +205,12 @@ internal static class LocalizationParityAllowList
             return true;
         }
 
+        // Badge overflow "+n" / "+{0}" is language-neutral.
+        if (Regex.IsMatch(v, @"^\+\{\d+\}$"))
+        {
+            return true;
+        }
+
         if (Regex.IsMatch(v, @"^[A-Z] - [A-Z]$"))
         {
             return true;

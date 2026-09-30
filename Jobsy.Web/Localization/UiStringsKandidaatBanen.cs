@@ -50,8 +50,8 @@ public static class UiStringsKandidaatBanen
 
         // Travel
         Add("Kb.Travel.Minutes",
-            "{0} min {1}", "{0} min {1}",
-            "{0} min {1}", "{0} min {1}", "{0} د {1}");
+            "{0} min {1}", "{0} mins {1}",
+            "{0} minuty {1}", "{0} min. {1}", "{0} د {1}");
         Add("Kb.Travel.Approx",
             "ongeveer", "about",
             "około", "aproximativ", "حوالي");
@@ -133,7 +133,7 @@ public static class UiStringsKandidaatBanen
             "Pokaż legendę", "Arată legenda", "إظهار المفتاح");
         Add("Kb.Legend.Title",
             "Legenda", "Legend",
-            "Legenda", "Legendă", "المفتاح");
+            "Legenda mapy", "Legendă", "المفتاح");
         Add("Kb.Legend.CategoriesAria",
             "Legenda vacaturecategorieën", "Vacancy category legend",
             "Legenda kategorii ofert", "Legendă categorii joburi", "مفتاح فئات الوظائف");

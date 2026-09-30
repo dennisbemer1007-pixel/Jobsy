@@ -10,7 +10,7 @@ namespace Jobsy.Web.KandidaatBanen;
 /// </summary>
 public static class KbLabels
 {
-    public static string ApplicationStatus(CultureState culture, ApplicationStatus status) => status switch
+    public static string Status(CultureState culture, ApplicationStatus status) => status switch
     {
         ApplicationStatus.Pending => culture["Kb.Status.Pending"],
         ApplicationStatus.Accepted => culture["Kb.Status.Accepted"],
@@ -22,18 +22,18 @@ public static class KbLabels
         _ => status.ToString()
     };
 
-    public static string ApplicationStatus(CultureState culture, string status)
+    public static string Status(CultureState culture, string status)
     {
         if (Enum.TryParse<ApplicationStatus>(status, ignoreCase: true, out var parsed))
         {
-            return ApplicationStatus(culture, parsed);
+            return Status(culture, parsed);
         }
 
         return status;
     }
 
     /// <summary>CSS modifier for status pills (file 07 migrates Applications.razor here).</summary>
-    public static string ApplicationStatusModifier(ApplicationStatus status) => status switch
+    public static string StatusModifier(ApplicationStatus status) => status switch
     {
         ApplicationStatus.Pending => "pending",
         ApplicationStatus.Accepted => "review",
@@ -42,9 +42,9 @@ public static class KbLabels
         _ => "closed"
     };
 
-    public static string ApplicationStatusModifier(string status)
+    public static string StatusModifier(string status)
         => Enum.TryParse<ApplicationStatus>(status, ignoreCase: true, out var parsed)
-            ? ApplicationStatusModifier(parsed)
+            ? StatusModifier(parsed)
             : "closed";
 
     public static string FitBand(CultureState culture, KbFitBand band) => band switch

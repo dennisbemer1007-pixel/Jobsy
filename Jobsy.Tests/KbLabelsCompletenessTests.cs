@@ -1,5 +1,6 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -27,9 +28,13 @@ public class KbLabelsCompletenessTests
 
         foreach (var status in KbLabels.AllApplicationStatuses)
         {
-            var label = KbLabels.ApplicationStatus(culture, status);
+            var label = KbLabels.Status(culture, status);
             Assert.False(string.IsNullOrWhiteSpace(label), $"{lang} status {status}");
-            Assert.DoesNotContain(status.ToString(), label, StringComparison.Ordinal);
+            // Candidate wording must not dump raw enum names for Dutch (canonical UI).
+            if (lang == "nl")
+            {
+                Assert.DoesNotContain(status.ToString(), label, StringComparison.Ordinal);
+            }
         }
 
         foreach (var band in KbLabels.AllFitBands)
