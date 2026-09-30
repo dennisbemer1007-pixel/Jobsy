@@ -69,6 +69,8 @@ builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddHttpClient("JobsySessionSecurity");
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddScoped<CultureState>();
+builder.Services.AddSingleton<Jobsy.Core.Rules.KandidaatBanen.IKbDislikeSource>(
+    Jobsy.Core.Rules.KandidaatBanen.KbNoDislikeSource.Instance); // KB-FALLBACK(D)
 builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();

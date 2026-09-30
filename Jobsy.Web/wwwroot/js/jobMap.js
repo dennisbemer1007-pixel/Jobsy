@@ -101,6 +101,26 @@ window.jobMap = (function () {
         Lopend: "lopen"
     };
 
+    function transportVerb(mode) {
+        const t = canonicalTransport(mode);
+        if (t === "Auto") return (uiLabels && uiLabels.transportCar) || TRANSPORT_LABEL.Auto;
+        if (t === "OV") return (uiLabels && uiLabels.transportTransit) || TRANSPORT_LABEL.OV;
+        if (t === "Lopend") return (uiLabels && uiLabels.transportWalk) || TRANSPORT_LABEL.Lopend;
+        return (uiLabels && uiLabels.transportBike) || TRANSPORT_LABEL.Fiets;
+    }
+
+    function travelFallbackVerb() {
+        return (uiLabels && uiLabels.transportDefault) || "reistijd";
+    }
+
+    function vacancyFallbackTitle() {
+        return (uiLabels && uiLabels.vacancyFallback) || "Vacature";
+    }
+
+    function noVacanciesLabel() {
+        return (uiLabels && uiLabels.noVacancies) || "Geen vacatures";
+    }
+
     function canonicalTransport(t) {
         const raw = String(t || "").trim();
         const compact = raw.toLowerCase().replace(/[\s-]/g, "");
@@ -309,7 +329,7 @@ window.jobMap = (function () {
         if (v.travelMinutes == null) {
             return "<p class=\"map-popup__travel map-popup__travel--empty\" aria-hidden=\"true\"></p>";
         }
-        const transport = String(v.transportLabel || TRANSPORT_LABEL[canonicalTransport(v.transport)] || "reistijd");
+        const transport = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
         return (
             "<p class=\"map-popup__travel\">" +
                 specIcon("travel") +
@@ -526,7 +546,7 @@ window.jobMap = (function () {
                     "<div class=\"map-popup__body\">" +
                         "<div class=\"map-popup__header\">" +
                             "<a class=\"map-popup__title map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                                escapeHtml(v.title || "Vacature") +
+                                escapeHtml(v.title || vacancyFallbackTitle()) +
                             "</a>" +
                             (v.address
                                 ? "<p class=\"map-popup__address\">" + escapeHtml(v.address) + "</p>"
@@ -690,7 +710,7 @@ window.jobMap = (function () {
     function buildClusterPinHtml(job) {
         if (!job) {
             return "<div class=\"map-popup\"><div class=\"map-popup__main\"><div class=\"map-popup__body\">" +
-                "<p class=\"map-popup__company\">Geen vacatures</p></div></div></div>";
+                "<p class=\"map-popup__company\">" + escapeHtml(noVacanciesLabel()) + "</p></div></div></div>";
         }
         if (job._detailLoaded) {
             return buildPopupHtml(job);
@@ -699,7 +719,7 @@ window.jobMap = (function () {
             return unavailablePopupHtml(job.id);
         }
         const pinView = Object.assign({}, job, {
-            title: job.title || "Vacature",
+            title: job.title || vacancyFallbackTitle(),
             company: job.company || "",
             address: job.address || "",
             imageUrl: job.imageUrl || null,
@@ -1624,7 +1644,7 @@ window.jobMap = (function () {
         const workTypes = Array.isArray(card.workTypes) ? card.workTypes : [];
         const thumb = card.thumbnailUrl || card.imageUrl || null;
         return Object.assign({}, pin, {
-            title: card.title || pin.title || "Vacature",
+            title: card.title || pin.title || vacancyFallbackTitle(),
             company: card.companyName || pin.company || "",
             companyHref: card.kvkNumber && card.vestigingsnummer
                 ? "/" + card.kvkNumber + "/" + card.vestigingsnummer
@@ -2343,7 +2363,7 @@ window.jobMap = (function () {
             return;
         }
         const transport = canonicalTransport(travelOptions.transport || "Fiets");
-        const labelVerb = TRANSPORT_LABEL[transport] || "reistijd";
+        const labelVerb = transportVerb(transport) || travelFallbackVerb();
         const chosen = chosenRingMinutes();
         const list = features || buildTravelRingFeatures(lat, lng);
         list.forEach(function (feature, index) {

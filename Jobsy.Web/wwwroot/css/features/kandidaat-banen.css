@@ -1,0 +1,178 @@
+/* Kandidaat banen — shared card parts (fit pill, why line, badges, travel). BEM: kb- */
+
+.kb-fit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  max-width: 100%;
+}
+
+.kb-fit__icon {
+  flex-shrink: 0;
+  width: 0.85rem;
+  height: 0.85rem;
+  color: currentColor;
+}
+
+.kb-fit__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kb-fit--gate {
+  color: var(--muted);
+  font-weight: 400;
+  border-color: var(--border);
+  background: var(--pearl-mid, var(--hover));
+}
+
+.kb-fit--gate:hover,
+.kb-fit--gate:focus-visible {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+.kb-fit--strong {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: transparent;
+}
+
+.kb-fit--good {
+  color: var(--brand);
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.kb-fit--some {
+  color: var(--warn);
+  background: var(--warn-soft);
+  border-color: transparent;
+}
+
+.kb-why {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1, 0.25rem);
+  margin: var(--space-1, 0.25rem) 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.kb-why__icon {
+  flex-shrink: 0;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-top: 0.1rem;
+  color: var(--brand);
+}
+
+.kb-why__text {
+  margin: 0;
+}
+
+.kb-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kb-badges__item {
+  margin: 0;
+}
+
+.kb-badges__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.kb-badges__more {
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--hover);
+  border-color: transparent;
+  cursor: default;
+}
+
+.kb-travel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.kb-travel__icon {
+  flex-shrink: 0;
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--brand);
+}
+
+.kb-travel__approx {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.kb-travel--bureau {
+  flex-wrap: wrap;
+}
+
+.kb-travel__bureau {
+  flex-basis: 100%;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* VacancyDetail: replace former inline style= helpers (02.6) */
+.kb-detail-badge-soft {
+  display: inline-block;
+  margin: 0.35rem 0 0;
+}
+
+.kb-detail-offered-by {
+  margin: 0.25rem 0 0;
+}
+
+.kb-detail-login-as {
+  text-decoration: none;
+  display: inline-flex;
+}
+
+.kb-detail-direct-contact {
+  margin-bottom: 0.5rem;
+}
+
+.kb-detail-safety-net {
+  margin-bottom: 0.75rem;
+}
+
+.kb-detail-safety-actions {
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+

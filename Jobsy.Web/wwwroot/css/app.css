@@ -20056,7 +20056,10 @@ body {
 }
 
 /* ==== mobile-candidate-a11y-polish ==== */
-h1:focus:not(:focus-visible) {
+/* FocusOnNavigate focuses h1 with tabindex="-1"; hide the programmatic box only.
+   Keyboard :focus-visible rings on real controls stay intact (documented exception:
+   this single rule lives in app.css next to global focus polish). */
+h1[tabindex="-1"]:focus:not(:focus-visible) {
     outline: none;
 }
 

@@ -93,7 +93,7 @@ internal static class Sprint8MetricsSeeder
             RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
             WorkTypes = WorkType.Winkel,
             MaxApplications = 10,
-            ImageUrl = MockVacancyMedia.ImageUrl(IntermediaryVacancyId),
+            ImageUrl = MockVacancyMedia.SeedImageUrl(0, WorkType.Winkel),
             VideoUrl = MockVacancyMedia.VideoUrl(IntermediaryVacancyId),
             CategoryId = VacancyCategoryDefaults.UitzendbureauId,
             Kind = VacancyKind.Regular
@@ -129,7 +129,7 @@ internal static class Sprint8MetricsSeeder
                 RequiredTransport = TransportMode.Bike | TransportMode.Car,
                 WorkTypes = WorkType.Tuinbouw,
                 MaxApplications = 5,
-                ImageUrl = MockVacancyMedia.ImageUrl(DraftVacancyId),
+                ImageUrl = MockVacancyMedia.SeedImageUrl(1, WorkType.Tuinbouw),
                 VideoUrl = MockVacancyMedia.VideoUrl(DraftVacancyId),
                 CategoryId = VacancyCategoryDefaults.VolunteerId,
                 Kind = VacancyKind.Volunteer
@@ -160,7 +160,7 @@ internal static class Sprint8MetricsSeeder
                 RequestedHighlight = true,
                 RequestedPushBom = true,
                 MaxApplications = 5,
-                ImageUrl = MockVacancyMedia.ImageUrl(PendingVacancyId),
+                ImageUrl = MockVacancyMedia.SeedImageUrl(2),
                 VideoUrl = MockVacancyMedia.VideoUrl(PendingVacancyId),
                 CategoryId = VacancyCategoryDefaults.HighlightId,
                 Kind = VacancyKind.Regular
@@ -190,7 +190,7 @@ internal static class Sprint8MetricsSeeder
                 RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Horeca,
                 MaxApplications = 5,
-                ImageUrl = MockVacancyMedia.ImageUrl(ArchivedVacancyId),
+                ImageUrl = MockVacancyMedia.SeedImageUrl(3),
                 VideoUrl = MockVacancyMedia.VideoUrl(ArchivedVacancyId),
                 CategoryId = VacancyCategoryDefaults.SeniorLightId,
                 Kind = VacancyKind.Regular

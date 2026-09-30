@@ -1,4 +1,5 @@
 @page "/candidate/match"
+@* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using Jobsy.Web.Components.Match
@@ -38,7 +39,7 @@
              aria-label="@(_deck.Gate.IsProfileComplete ? "Match swipen" : "Match ontgrendelen")">
         @if (_loading)
         {
-            <PageContentSkeleton Variant="match" LoadingLabel="Bezig met laden…" />
+            <PageContentSkeleton Variant="match" />
         }
         else if (!_deck.Gate.IsProfileComplete)
         {

@@ -26,8 +26,120 @@ internal static class MockVacancyMedia
         return VacancyImageUrls.Placeholder(vacancyId, workTypes);
     }
 
+    /// <summary>
+    /// Deterministic seed photo from the local category WebP pool so neighbouring
+    /// seeded cards (and vacancies of the same company) do not share one image.
+    /// Does not change the app-side <see cref="VacancyImageUrls.Placeholder"/> fallback.
+    /// </summary>
+    public static string SeedImageUrl(int stableIndex, WorkType preferredWorkTypes = WorkType.None)
+    {
+        _ = preferredWorkTypes; // reserved for future preferred-first rotation
+        var pool = SeedPhotoSlugs;
+        var idx = Math.Abs(stableIndex) % pool.Length;
+        return $"{VacancyImageUrls.LocalPrefix}{pool[idx]}{VacancyImageUrls.FallbackExtension}";
+    }
+
+    /// <summary>
+    /// Per-company sequential index so no two seed vacancies of the same company share a photo
+    /// when the company has ≤ <see cref="SeedPhotoSlugs"/>.Length vacancies.
+    /// </summary>
+    public static string SeedImageUrlForCompany(Guid companyId, int indexWithinCompany, WorkType preferredWorkTypes = WorkType.None)
+    {
+        // Mix company salt so neighbouring companies with the same local index differ.
+        unchecked
+        {
+            var salt = companyId.GetHashCode() & 0x7fffffff;
+            return SeedImageUrl(salt + indexWithinCompany, preferredWorkTypes);
+        }
+    }
+
+    /// <summary>Local category WebP slugs under <c>/images/vacancies/</c> (excluding -400 companions).</summary>
+    public static readonly string[] SeedPhotoSlugs =
+    [
+        "bouw", "flex", "horeca", "kantoor", "logistiek", "onderwijs",
+        "productie", "schoonmaak", "tuinbouw", "winkel", "zorg"
+    ];
+
     public static string ImageUrl(string seed) =>
         VacancyImageUrls.Placeholder(Guid.Empty, seed);
+
+    /// <summary>
+    /// Ensures seeded vacancies: unique ImageUrl per company (while count ≤ pool size),
+    /// and no shared ImageUrl for same-category neighbours within ~1 km.
+    /// </summary>
+    public static void EnsureUniqueSeedPhotos(IReadOnlyList<Jobsy.Core.Entities.Vacancy> vacancies)
+    {
+        if (vacancies.Count == 0)
+        {
+            return;
+        }
+
+        var pool = SeedPhotoSlugs;
+        var byCompany = vacancies
+            .GroupBy(v => v.CompanyId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(v => v.Id).ToList());
+
+        foreach (var (_, list) in byCompany)
+        {
+            for (var i = 0; i < list.Count; i++)
+            {
+                list[i].ImageUrl = SeedImageUrlForCompany(list[i].CompanyId, i, list[i].WorkTypes);
+            }
+        }
+
+        // Resolve same-category neighbours within 1 km that still share a photo.
+        for (var i = 0; i < vacancies.Count; i++)
+        {
+            for (var j = i + 1; j < vacancies.Count; j++)
+            {
+                var a = vacancies[i];
+                var b = vacancies[j];
+                if (a.WorkTypes != b.WorkTypes
+                    || a.Location is null
+                    || b.Location is null
+                    || string.IsNullOrWhiteSpace(a.ImageUrl)
+                    || !string.Equals(a.ImageUrl, b.ImageUrl, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (HaversineKm(a.Location.Latitude, a.Location.Longitude, b.Location.Latitude, b.Location.Longitude) > 1.0)
+                {
+                    continue;
+                }
+
+                // Pick the next unused slug for b within its company when possible.
+                var companyUrls = byCompany[b.CompanyId]
+                    .Where(v => v.Id != b.Id)
+                    .Select(v => v.ImageUrl)
+                    .ToHashSet(StringComparer.Ordinal);
+                for (var k = 0; k < pool.Length; k++)
+                {
+                    var candidate = $"{VacancyImageUrls.LocalPrefix}{pool[k]}{VacancyImageUrls.FallbackExtension}";
+                    if (companyUrls.Contains(candidate)
+                        || string.Equals(candidate, a.ImageUrl, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    b.ImageUrl = candidate;
+                    break;
+                }
+            }
+        }
+    }
+
+    private static double HaversineKm(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double R = 6371.0;
+        static double Rad(double d) => d * Math.PI / 180.0;
+        var dLat = Rad(lat2 - lat1);
+        var dLon = Rad(lon2 - lon1);
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
+                + Math.Cos(Rad(lat1)) * Math.Cos(Rad(lat2))
+                * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        return 2 * R * Math.Asin(Math.Min(1, Math.Sqrt(a)));
+    }
 
     public static string VideoUrl(int index) =>
         DemoVideos[Math.Abs(index) % DemoVideos.Length];

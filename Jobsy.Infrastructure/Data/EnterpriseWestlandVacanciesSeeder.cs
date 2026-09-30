@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Media;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Services;
@@ -29,6 +30,7 @@ internal static class EnterpriseWestlandVacanciesSeeder
         if (await db.PlatformLogs.AnyAsync(l =>
                 l.Category == "Seed" && l.Message == SeedMarker))
         {
+            await ReassignSeedPhotosAsync(db, logger);
             return;
         }
 
@@ -36,6 +38,7 @@ internal static class EnterpriseWestlandVacanciesSeeder
         {
             db.PlatformLogs.Add(NewMarker());
             await db.SaveChangesAsync();
+            await ReassignSeedPhotosAsync(db, logger);
             return;
         }
 
@@ -59,6 +62,42 @@ internal static class EnterpriseWestlandVacanciesSeeder
         logger.LogInformation(
             "Enterprise Westland seed: {Count} active vacancies for Westland Fresh (enterprise@jobsy.local).",
             vacancies.Length);
+    }
+
+    private static async Task ReassignSeedPhotosAsync(JobsyDbContext db, ILogger logger)
+    {
+        var seedIds = Enumerable.Range(1, VacancyCount).Select(VacancyId).ToList();
+        var vacancies = await db.Vacancies
+            .Where(v => seedIds.Contains(v.Id))
+            .OrderBy(v => v.Id)
+            .ToListAsync();
+        if (vacancies.Count == 0)
+        {
+            return;
+        }
+
+        var changed = 0;
+        for (var i = 0; i < vacancies.Count; i++)
+        {
+            var v = vacancies[i];
+            var next = MockVacancyMedia.SeedImageUrl(i, v.WorkTypes);
+            if (!string.Equals(v.ImageUrl, next, StringComparison.Ordinal)
+                && (string.IsNullOrWhiteSpace(v.ImageUrl)
+                    || VacancyImageUrls.IsLocalVacancyFallbackPhoto(v.ImageUrl)
+                    || VacancyImageUrls.IsLocalVacancySvg(v.ImageUrl)
+                    || VacancyImageUrls.IsPicsum(v.ImageUrl)
+                    || VacancyImageUrls.IsBrokenUnsplash(v.ImageUrl)))
+            {
+                v.ImageUrl = next;
+                changed++;
+            }
+        }
+
+        if (changed > 0)
+        {
+            await db.SaveChangesAsync();
+            logger.LogInformation("Enterprise Westland seed photo reassignment: {Count} ImageUrl updates.", changed);
+        }
     }
 
     private static PlatformLog NewMarker() => new()
@@ -162,7 +201,7 @@ internal static class EnterpriseWestlandVacanciesSeeder
                 RequiredTransport = transport,
                 WorkTypes = role.WorkTypes,
                 WorkTypeLabels = string.Join(", ", WorkTypeLabels.Expand(role.WorkTypes).Take(2)),
-                ImageUrl = MockVacancyMedia.ImageUrl(vacancyId, role.WorkTypes),
+                ImageUrl = MockVacancyMedia.SeedImageUrl(i, role.WorkTypes),
                 VideoUrl = MockVacancyMedia.VideoUrl(i + 50),
                 MaxApplications = 8,
                 SalaryTableId = salaryTableId,
@@ -174,6 +213,7 @@ internal static class EnterpriseWestlandVacanciesSeeder
             list.Add(vacancy);
         }
 
+        MockVacancyMedia.EnsureUniqueSeedPhotos(list);
         return list.ToArray();
     }
 

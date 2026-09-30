@@ -1,4 +1,5 @@
 @page "/candidate/applications"
+@* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using System.Security.Claims
