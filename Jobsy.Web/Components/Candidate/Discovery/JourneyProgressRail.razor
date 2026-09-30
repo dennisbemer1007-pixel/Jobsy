@@ -1,0 +1,119 @@
+@namespace Jobsy.Web.Components.Candidate.Discovery
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<aside class="journey-rail card" aria-labelledby="journey-rail-title">
+    <h2 id="journey-rail-title">@Culture["Discovery.Rail.Title"]</h2>
+    <p class="journey-rail__count">@CountText</p>
+    <ol class="journey-rail__route" aria-label="@Culture["Discovery.Rail.Aria"]">
+        <li class="journey-rail__step @BeachClass">
+            @if (CurrentStep == 0)
+            {
+                <span class="journey-rail__marker">
+                    <JourneyLobster PlatesShed="0" Size="30" Label="" />
+                </span>
+            }
+            else
+            {
+                <span class="journey-rail__dot" aria-hidden="true">✓</span>
+            }
+            <div>
+                <b>@Culture["Discovery.Zone.Beach"]</b>
+                <small>@Culture["Discovery.Rail.Start"]</small>
+            </div>
+        </li>
+        @{
+            string? zone = null;
+        }
+        @foreach (var step in JourneyCatalog.Steps)
+        {
+            if (zone != step.ZoneKey)
+            {
+                zone = step.ZoneKey;
+                <li class="journey-rail__zone" aria-hidden="true">@Culture[JourneyCatalog.ZoneKeys[zone]]</li>
+            }
+            var state = StepClass(step.Number);
+            <li class="journey-rail__step @state" aria-current="@(CurrentStep == step.Number ? "step" : null)">
+                @if (CurrentStep == step.Number)
+                {
+                    <span class="journey-rail__marker">
+                        <JourneyLobster PlatesShed="@(step.Number - 1)" Size="30" Label="" />
+                    </span>
+                }
+                else if (CurrentStep > step.Number || IsEnd)
+                {
+                    <span class="journey-rail__dot" aria-hidden="true">✓</span>
+                }
+                else
+                {
+                    <span class="journey-rail__dot">@step.Number</span>
+                }
+                <div>
+                    <b>@Culture[step.TitleKey]</b>
+                    <small>@(CurrentStep > step.Number || IsEnd
+                        ? Culture.Format("Discovery.Rail.LayerOff", step.Number)
+                        : Culture[step.SubKey])</small>
+                </div>
+            </li>
+        }
+        <li class="journey-rail__step @(IsEnd ? "is-current" : "is-todo is-end")">
+            <span class="journey-rail__dot" aria-hidden="true">☼</span>
+            <div>
+                <b>@Culture["Discovery.Zone.Light"]</b>
+                <small>@Culture["Discovery.Rail.NewShell"]</small>
+            </div>
+        </li>
+    </ol>
+    <div class="journey-rail__layers" aria-label="@Culture.Format("Discovery.Rail.LayersAria", LayersOff)">
+        <span class="journey-rail__segs">
+            @for (var k = 0; k < 10; k++)
+            {
+                <i class="@(k < LayersOff ? "is-off" : null)"></i>
+            }
+        </span>
+        <span>@Culture.Format("Discovery.Rail.LayersCount", LayersOff)</span>
+    </div>
+    @if (CurrentStep > 0 || IsEnd)
+    {
+        <p class="journey-rail__saved @SaveClass" aria-live="polite">@SaveText</p>
+    }
+</aside>
+
+@code {
+    [Parameter] public int CurrentStep { get; set; }
+    [Parameter] public bool IsEnd { get; set; }
+    [Parameter] public string SaveStatus { get; set; } = "idle"; // idle|saving|saved|error
+
+    private int LayersOff => IsEnd ? 10 : Math.Max(CurrentStep - 1, 0);
+
+    private string CountText => IsEnd
+        ? Culture["Discovery.Rail.DoneCount"]
+        : CurrentStep == 0
+            ? Culture["Discovery.Rail.StartCount"]
+            : Culture.Format("Discovery.Rail.StepCount", CurrentStep);
+
+    private string BeachClass => CurrentStep == 0 && !IsEnd ? "is-current" : "is-done";
+
+    private string StepClass(int number)
+    {
+        if (IsEnd || CurrentStep > number) return "is-done";
+        if (CurrentStep == number) return "is-current";
+        return "is-todo";
+    }
+
+    private string SaveClass => SaveStatus switch
+    {
+        "error" => "is-error",
+        "saving" => "is-saving",
+        "saved" => "is-saved",
+        _ => ""
+    };
+
+    private string SaveText => SaveStatus switch
+    {
+        "saving" => Culture["Discovery.Saved.Saving"],
+        "error" => Culture["Discovery.Saved.Error"],
+        "saved" => Culture["Discovery.Saved.Ok"],
+        _ => ""
+    };
+}

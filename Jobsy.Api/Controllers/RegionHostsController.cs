@@ -3,6 +3,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
@@ -20,6 +21,7 @@ public sealed class RegionHostsController : ControllerBase
     /// <summary>Resolve active regional branding for the current (or queried) hostname.</summary>
     [HttpGet("resolve")]
     [AllowAnonymous]
+    [RequiresFeature(PlatformFeature.Employers)]
     public async Task<ActionResult<RegionHostDto>> Resolve(
         [FromQuery] string? host,
         CancellationToken cancellationToken)

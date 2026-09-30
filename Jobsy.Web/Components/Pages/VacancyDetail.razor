@@ -4,6 +4,8 @@
 @* Dep B: branche / kernwaarden / engagement available after werkgever-aanmelding 08/09 *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject IJSRuntime Js

@@ -203,6 +203,7 @@ public class MailTestSendTests
             db,
             new FakeHttpClientFactory(),
             new FakeHostEnvironment { EnvironmentName = Environments.Development },
+            new AlwaysOnFeatureFlags(),
             NullLogger<SmtpEmailService>.Instance);
         return new IntegrationHealthStub(
             credentials,

@@ -136,10 +136,7 @@ public sealed partial class JobsyApiClient
 
         try
         {
-            return JsonSerializer.Deserialize<T>(body, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            return JsonSerializer.Deserialize<T>(body, CaseInsensitiveJson);
         }
         catch (JsonException)
         {

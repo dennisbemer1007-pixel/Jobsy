@@ -5,7 +5,9 @@ public sealed record NavItem(
     string Href,
     string Svg,
     string[]? ExtraActivePaths = null,
-    bool DesktopOnly = false);
+    bool DesktopOnly = false,
+    /// <summary>Optional shorter label for widths below 640 px (e.g. Reis / Paspoort).</summary>
+    string? ShortTitleKey = null);
 
 public static class NavIcons
 {
@@ -152,6 +154,38 @@ public static class NavIcons
 
     public const string More =
         "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"5\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"12\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"19\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/></svg>";
+    /// <summary>Shell outline — passport tagline / schalen.</summary>
+    public const string Shell =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3c4.5 2.2 7 6.2 7 11a7 7 0 0 1-14 0c0-4.8 2.5-8.8 7-11Z\"/><path d=\"M12 7v10\"/><path d=\"M8.5 10.5c1.2.8 2.4 1.2 3.5 1.2s2.3-.4 3.5-1.2\"/><path d=\"M7.5 14c1.5.9 3 1.4 4.5 1.4s3-.5 4.5-1.4\"/></svg>";
+
+    public const string Claw =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 14c0 2.5 1.5 5 4 6\"/><path d=\"M12 4v10\"/><path d=\"M12 8c2.5-1 5-.5 6.5 1.5\"/><path d=\"M12 12c2.2-.4 4.5.6 5.5 2.5\"/><path d=\"M7 9c-1.5 1-2 3-1.5 4.5\"/></svg>";
+
+    public const string Antenna =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"18\" r=\"3\"/><path d=\"M12 15V8\"/><path d=\"m12 8 4-4\"/><path d=\"m12 8-4-4\"/><circle cx=\"16\" cy=\"4\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"8\" cy=\"4\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/></svg>";
+
+    public const string Wave =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0\"/><path d=\"M3 17c2-3 4-3 6 0s4 3 6 0 4-3 6 0\"/></svg>";
+
+    /// <summary>Compass — De ontdekkingsreis nav slot.</summary>
+    public const string Compass =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m15.5 8.5-2 5-5 2 2-5z\"/></svg>";
+
+    public const string DnaHelix =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 4c4 4 8 4 12 0\"/><path d=\"M6 20c4-4 8-4 12 0\"/><path d=\"M6 4v16\"/><path d=\"M18 4v16\"/><path d=\"M6 12h12\"/></svg>";
+
+    public const string Target =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><circle cx=\"12\" cy=\"12\" r=\"4\"/><circle cx=\"12\" cy=\"12\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/></svg>";
+
+    public const string Stone =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 16c2-5 5-8 8-8s6 3 8 8\"/><path d=\"M6 16h12\"/><path d=\"M8 12c1.5-2 3-3 4-3s2.5 1 4 3\"/></svg>";
+
+    public const string HomeHeart =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 11.5 12 4l9 7.5\"/><path d=\"M5 10.5V20h14v-9.5\"/><path d=\"M12 14.2 9.8 16a2 2 0 0 0 2.8 2.8l.2-.2.2.2a2 2 0 0 0 2.8-2.8Z\"/></svg>";
+
+    /// <summary>Bicycle — travel / preferences accordion.</summary>
+    public const string Transport =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"6.5\" cy=\"17.5\" r=\"2.5\"/><circle cx=\"17.5\" cy=\"17.5\" r=\"2.5\"/><path d=\"M6.5 17.5 10 8h3l2 5h3\"/><path d=\"M12 8V6\"/><path d=\"m14 13-3.5 0\"/></svg>";
 }
 
 /// <summary>Inline action icons for list rows (edit / delete / view / etc.).</summary>

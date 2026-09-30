@@ -34,7 +34,8 @@ public static class TrainingTracking
         string candidateHash,
         Guid clickId,
         string campaign,
-        string medium)
+        string medium,
+        string? affiliateCode = null)
     {
         if (string.IsNullOrWhiteSpace(baseUrl))
         {
@@ -64,10 +65,18 @@ public static class TrainingTracking
         Set("utm_source", Ref);
         Set("utm_medium", mediumValue);
         Set("utm_campaign", campaignValue);
+        if (!string.IsNullOrWhiteSpace(affiliateCode))
+        {
+            Set("aff", affiliateCode.Trim());
+        }
 
         builder.Query = string.Join('&', pairs);
         return builder.Uri.ToString();
     }
+
+    /// <summary>Outbound link rel for passport course cards.</summary>
+    public static string RelFor(bool isPartner)
+        => isPartner ? "sponsored noopener noreferrer" : "noopener";
 
     public static bool LooksSafeOutbound(string url)
     {

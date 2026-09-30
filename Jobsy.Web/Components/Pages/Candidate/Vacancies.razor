@@ -2,6 +2,8 @@
 @page "/candidate/vacancies"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Core.Rules
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Localization

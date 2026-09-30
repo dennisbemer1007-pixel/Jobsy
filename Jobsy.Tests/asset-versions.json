@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "e81118cc577d67aa6543dda5981179ef0cf73fe02fc329f8dc3123699c2f5e91",
+    "sha256": "1ddeb818618343052df88a2d4092102fa9c19dd293f6fdeaf8efd9a6c21c8f6b",
     "v": "20260930-kb9"
   },
   "css/features/account-mfa.css": {
@@ -47,13 +47,21 @@
     "sha256": "dc4132dd0ecb72d496a433bdb015caf8baf98cd6c1fe576358cd574c1d63fcdf",
     "v": "20260930-dna-overflow"
   },
+  "css/features/mijn-paspoort.css": {
+    "sha256": "299c0863e6a1abf7fa094820262565f5e5c93be064bdf0d7aace263199a5e3ec",
+    "v": "20260929-discovery-1"
+  },
   "css/features/nav-feedback.css": {
-    "sha256": "bcca67f50643f55b0d169df00fb48e97b6aa468af59443acb8de732fa409fd55",
+    "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",
     "v": "20260928-nav-fb"
   },
   "css/features/onboarding-wizard.css": {
     "sha256": "5ee04db60aae5c26eaadf67dc9333bca45ddfac643be966643445c55f88becad",
     "v": "20260927-dna-c"
+  },
+  "css/features/ontdekkingsreis.css": {
+    "sha256": "ae6b4e42acec649ea1465fe3f18c931d63881d4cf136d0a52b371944be286a46",
+    "v": "20260929-or-08"
   },
   "css/features/public-theme.css": {
     "sha256": "dae311dc566e1532c210e13d2d532ba15f39e458d1d01fd737937b7a136352cd",

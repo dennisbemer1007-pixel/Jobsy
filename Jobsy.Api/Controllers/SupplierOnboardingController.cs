@@ -2,12 +2,14 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/companies/{companyId:guid}/onboarding")]
 [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public class SupplierOnboardingController : ControllerBase
 {
     private readonly ISupplierOnboardingPaymentService _onboarding;

@@ -1,0 +1,258 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
+@inject CareerPathService CareerPaths
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<div class="passport-career">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_view is null || !_view.HasPlan)
+    {
+        <section class="detail-card passport-career__empty" aria-labelledby="passport-career-empty-title">
+            <h3 id="passport-career-empty-title" class="passport-fit__h">@Culture["Passport.Career.EmptyTitle"]</h3>
+            <p class="login-lead">@Culture["Passport.Career.EmptyLead"]</p>
+            <a class="btn-compact btn-compact--primary" href="/carriere">@Culture["Passport.Career.EmptyCta"]</a>
+        </section>
+    }
+    else
+    {
+        <div class="passport-career__toolbar">
+            <a class="btn-compact" href="/carriere">@Culture["Passport.Career.ChangeDream"]</a>
+        </div>
+
+        <section class="detail-card passport-career__dream" aria-labelledby="passport-career-dream-title">
+            <header class="passport-fit__head">
+                <h3 id="passport-career-dream-title" class="passport-fit__h">@Culture["Passport.Career.DreamTitle"]</h3>
+                <a class="passport-card__fill-link" href="/carriere">@Culture["Passport.Career.OpenPlan"]</a>
+            </header>
+            <p class="passport-career__dream-name">@_view.DreamRoleTitle</p>
+
+            <nav class="passport-career__shells" aria-label="@Culture["CareerDash.PlanTitle"]">
+                <ol class="passport-career__shell-list">
+                    @foreach (var shell in _view.Shells)
+                    {
+                        var sizeClass = ShellSizeClass(shell);
+                        <li class="passport-career__shell @ShellKindClass(shell.Kind) @sizeClass">
+                            <span class="passport-career__shell-node" aria-hidden="true">
+                                @if (shell.Kind == CareerPlanViewBuilder.ShellKind.Done)
+                                {
+                                    <span class="passport-career__shell-check">✓</span>
+                                }
+                                else if (shell.Kind == CareerPlanViewBuilder.ShellKind.Goal)
+                                {
+                                    <span class="passport-career__shell-goal">★</span>
+                                }
+                                else if (shell.Kind == CareerPlanViewBuilder.ShellKind.Current)
+                                {
+                                    <span class="passport-career__shell-num">@shell.Order</span>
+                                }
+                                else
+                                {
+                                    <span class="passport-career__shell-num">@shell.Order</span>
+                                }
+                            </span>
+                            <span class="passport-career__shell-cap">
+                                @if (shell.IsGoal)
+                                {
+                                    @Culture["CareerDash.StepperGoal"]
+                                }
+                                else if (shell.Kind == CareerPlanViewBuilder.ShellKind.Done && shell.Order == 1)
+                                {
+                                    @Culture["Passport.Career.ShellNow"]
+                                }
+                                else if (shell.Kind == CareerPlanViewBuilder.ShellKind.Current)
+                                {
+                                    @Culture["Passport.Career.ShellGrowing"]
+                                }
+                                else
+                                {
+                                    @Culture.Format("Passport.Career.ShellStep", shell.Order)
+                                }
+                            </span>
+                            <span class="passport-career__shell-title">@shell.Title</span>
+                        </li>
+                    }
+                </ol>
+            </nav>
+        </section>
+
+        <div class="passport-career__grid">
+            <section class="detail-card passport-career__panel" aria-labelledby="passport-career-gaps-title">
+                <h3 id="passport-career-gaps-title" class="passport-fit__h">@Culture["Passport.Career.GapsTitle"]</h3>
+                <p class="passport-fit__sub">
+                    <span class="passport-fit__sub-icon" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+                    @Culture["Passport.Career.GapsSub"]
+                </p>
+                @if (_view.Gaps.Count == 0)
+                {
+                    <p class="muted">@Culture["CareerDash.MinRequirementsNone"]</p>
+                }
+                else
+                {
+                    <ul class="passport-career__gaps">
+                        @foreach (var gap in _view.Gaps)
+                        {
+                            <li class="passport-career__gap @(gap.Met ? "is-met" : "is-gap")">
+                                @if (gap.Met)
+                                {
+                                    <span class="passport-career__gap-icon" aria-hidden="true">✓</span>
+                                    <span>@gap.Text: @Culture["Passport.Career.AlreadyHave"]</span>
+                                }
+                                else
+                                {
+                                    <span class="passport-career__gap-icon passport-career__gap-icon--warn" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+                                    <span>@gap.Text</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+
+            <section class="detail-card passport-career__panel" aria-labelledby="passport-career-course-title">
+                <h3 id="passport-career-course-title" class="passport-fit__h">@Culture["Passport.Career.CourseTitle"]</h3>
+                @if (_courseSlots.Count == 0)
+                {
+                    <p class="muted">@Culture["Passport.Career.CourseEmpty"]</p>
+                }
+                else
+                {
+                    <CourseSuggestionBlock EyebrowKey="Passport.Course.GrowFurther"
+                                           SkillLabel="@_courseSkill"
+                                           Slots="_courseSlots"
+                                           Campaign="@TrainingTracking.CampaignCompetence" />
+                }
+            </section>
+
+            <section class="detail-card passport-career__panel" aria-labelledby="passport-career-match-title">
+                <h3 id="passport-career-match-title" class="passport-fit__h">@Culture["Passport.Career.MatchTitle"]</h3>
+                <p class="passport-career__eyebrow">@Culture["Passport.Career.MatchEyebrow"]</p>
+                <p class="passport-fit__sub">
+                    <span class="passport-fit__sub-icon" aria-hidden="true">@((MarkupString)NavIcons.Stone)</span>
+                    @Culture["Passport.Career.MatchStone"]
+                </p>
+                @if (!string.IsNullOrWhiteSpace(_view.StepBandLabelKey) && _view.FocusStep is { } focus)
+                {
+                    <p class="passport-career__match-text">
+                        @Culture.Format("Passport.Career.MatchBand", Culture[_view.StepBandLabelKey!], focus.Title)
+                    </p>
+                }
+                <FeatureVisible Feature="PlatformFeature.Employers">
+                    <a class="passport-card__fill-link" href="@_view.VacanciesHref">@Culture["Passport.Career.VacanciesLink"]</a>
+                </FeatureVisible>
+            </section>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Active { get; set; }
+
+    private bool _loading = true;
+    private bool _loaded;
+    private bool _wasActive;
+    private CareerPlanViewBuilder.PassportCareerView? _view;
+    private List<PassportCourseCard> _courseSlots = [];
+    private string _courseSkill = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Active)
+        {
+            return;
+        }
+
+        var opening = !_wasActive;
+        _wasActive = Active;
+        if (opening || !_loaded)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var saved = await Api.GetCareerPathAsync();
+            if (saved is not null && saved.Steps.Count > 0)
+            {
+                var model = CareerPaths.FromApi(saved);
+                _view = CareerPlanViewBuilder.BuildPassport(model);
+                await LoadCoursesAsync(_view);
+            }
+            else
+            {
+                _view = CareerPlanViewBuilder.BuildPassport(CareerPaths.EmptyDashboard());
+                _courseSlots = [];
+            }
+
+            _loaded = true;
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _view = CareerPlanViewBuilder.BuildPassport(null);
+            _courseSlots = [];
+            _loaded = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadCoursesAsync(CareerPlanViewBuilder.PassportCareerView view)
+    {
+        _courseSlots = [];
+        _courseSkill = view.FocusStep?.Title ?? view.DreamRoleTitle;
+        if (view.CourseSearchKeys.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var blob = string.Join(' ', view.CourseSearchKeys);
+            _courseSlots = await Api.GetPassportTrainingOffersAsync(blob);
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _courseSlots = [];
+        }
+    }
+
+    private static string ShellKindClass(CareerPlanViewBuilder.ShellKind kind) => kind switch
+    {
+        CareerPlanViewBuilder.ShellKind.Done => "is-done",
+        CareerPlanViewBuilder.ShellKind.Current => "is-current",
+        CareerPlanViewBuilder.ShellKind.Goal => "is-goal",
+        _ => "is-future"
+    };
+
+    private static string ShellSizeClass(CareerPlanViewBuilder.ShellStep shell)
+    {
+        if (shell.IsGoal)
+        {
+            return "passport-career__shell--lg";
+        }
+
+        return shell.Order switch
+        {
+            1 => "passport-career__shell--sm",
+            2 => "passport-career__shell--md",
+            _ => "passport-career__shell--lg"
+        };
+    }
+}

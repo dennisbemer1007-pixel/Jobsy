@@ -7,7 +7,9 @@
         <a href="/algemene-voorwaarden">@Culture["Footer.Terms"]</a>
         <a href="/gebruiksvoorwaarden">@Culture["Footer.Usage"]</a>
         <a href="/wie-zijn-wij">@Culture["Footer.About"]</a>
-        <a href="/westland">@Culture["Footer.Westland"]</a>
+        <FeatureVisible Feature="PlatformFeature.Employers">
+            <a href="/westland">@Culture["Footer.Westland"]</a>
+        </FeatureVisible>
     </nav>
     <p class="app-footer__copy">© @DateTime.UtcNow.Year Lobsy</p>
 </footer>

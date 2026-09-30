@@ -1,0 +1,44 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
+@inject CultureState Culture
+
+@using Microsoft.AspNetCore.Components.Forms
+                            <fieldset class="profile-employers">
+                                <legend>@Culture["Profile.OwnCv"]</legend>
+                                <p class="profile-employers__hint">@Culture["Profile.OwnCvLead"]</p>
+                                @if (Editor.UploadedCv is not null)
+                                {
+                                    <p class="profile-cv__file">@Culture.Format("Profile.OwnCvPresent", Editor.UploadedCv.FileName)</p>
+                                }
+                                <div class="profile-cv__actions">
+                                    <label class="engagement-btn">
+                                        @(Editor.CvBusy ? Culture["Profile.CvUploading"] : Editor.UploadedCv is null ? Culture["Profile.UploadCv"] : Culture["Profile.ReplaceCv"])
+                                        <InputFile OnChange="Editor.OnCvSelectedAsync" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                                    </label>
+                                    @if (Editor.UploadedCv is not null)
+                                    {
+                                        <button class="engagement-btn" type="button" disabled="@Editor.CvBusy" @onclick="Editor.DownloadOwnCvAsync">
+                                            @Culture["Profile.DownloadOwnCv"]
+                                        </button>
+                                        <button class="engagement-btn" type="button" disabled="@Editor.CvBusy" @onclick="Editor.DeleteOwnCvAsync">
+                                            @Culture["Profile.RemoveOwnCv"]
+                                        </button>
+                                    }
+                                </div>
+                            </fieldset>
+
+                            @if (Editor.AuthenticatorEnabled)
+                            {
+                                <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
+                            }
+
+                            <button class="engagement-btn" type="button" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">
+                                @(Editor.PdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
+                            </button>
+                            <p class="profile-address__hint">@Culture["Profile.LobsyCvHint"]</p>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+}

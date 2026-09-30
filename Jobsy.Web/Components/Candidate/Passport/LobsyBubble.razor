@@ -1,0 +1,15 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+
+<div class="passport-bubble" role="note">
+    <img class="passport-bubble__mascot"
+         src="/images/brand/mascot-64.webp"
+         width="40"
+         height="40"
+         alt=""
+         aria-hidden="true" />
+    <p class="passport-bubble__text">@Text</p>
+</div>
+
+@code {
+    [Parameter] public string Text { get; set; } = "";
+}

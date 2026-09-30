@@ -1,6 +1,7 @@
 @page "/admin/content/opleidingen"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Enums
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -75,10 +76,99 @@
                 <ul>
                     @foreach (var offer in provider.Offers)
                     {
-                        <li>@offer.Title (@offer.FieldsCsv)</li>
+                        <li>
+                            <button type="button" class="training-offers__link" @onclick="() => BeginEdit(offer)">
+                                @offer.Title
+                            </button>
+                            (@offer.FieldsCsv)
+                            @if (offer.ShowInPassport)
+                            {
+                                <span class="status-pill">paspoort</span>
+                            }
+                            @if (offer.IsFree)
+                            {
+                                <span class="status-pill">@Culture["Admin.Training.IsFree"]</span>
+                            }
+                            @if (offer.IsPartner)
+                            {
+                                <span class="status-pill">@Culture["Admin.Training.IsPartner"]</span>
+                            }
+                        </li>
                     }
                 </ul>
             </article>
+        }
+
+        @if (_edit is not null)
+        {
+            <section class="detail-card" aria-labelledby="training-offer-edit-title">
+                <h3 id="training-offer-edit-title">@Culture["Admin.Training.EditOffer"]</h3>
+                <p><strong>@_edit.Title</strong></p>
+                <div class="masterdata-row__fields">
+                    <label>
+                        @Culture["Admin.Training.Type"]
+                        <select @bind="_editType">
+                            <option value="Opleiding">Opleiding</option>
+                            <option value="Cursus">Cursus</option>
+                            <option value="Workshop">Workshop</option>
+                        </select>
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.Duration"]
+                        <input type="number" min="1" @bind="_editDurationValue" />
+                    </label>
+                    <label>
+                        Eenheid
+                        <select @bind="_editDurationUnit">
+                            <option value="">—</option>
+                            <option value="Hours">uren</option>
+                            <option value="Days">dagen</option>
+                            <option value="Weeks">weken</option>
+                            <option value="Months">maanden</option>
+                            <option value="Years">jaren</option>
+                        </select>
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.Delivery"]
+                        <select @bind="_editDelivery">
+                            <option value="Online">Online</option>
+                            <option value="OnSite">Op locatie</option>
+                            <option value="Blended">Blended</option>
+                        </select>
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.Location"]
+                        <input @bind="_editLocation" />
+                    </label>
+                    <label>
+                        Deeplink
+                        <input @bind="_editPath" />
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editIsFree" />
+                        @Culture["Admin.Training.IsFree"]
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editIsPartner" />
+                        @Culture["Admin.Training.IsPartner"]
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.AffiliateCode"]
+                        <input @bind="_editAffiliate" />
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editShowInPassport" />
+                        @Culture["Admin.Training.ShowInPassport"]
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editIsActive" />
+                        Actief
+                    </label>
+                </div>
+                <button type="button" class="login-submit" disabled="@_busy" @onclick="SaveOfferAsync">
+                    @Culture["Admin.Training.SaveOffer"]
+                </button>
+            </section>
         }
     }
 </AdminPageShell>
@@ -94,6 +184,19 @@
     private string _candidateHash = "";
     private string _email = "";
     private string _kind = "0";
+
+    private TrainingOfferAdmin? _edit;
+    private string _editType = "Cursus";
+    private int? _editDurationValue;
+    private string _editDurationUnit = "";
+    private string _editDelivery = "Online";
+    private string _editLocation = "";
+    private string _editPath = "";
+    private bool _editIsFree;
+    private bool _editIsPartner;
+    private string _editAffiliate = "";
+    private bool _editShowInPassport;
+    private bool _editIsActive = true;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -121,6 +224,72 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private void BeginEdit(TrainingOfferAdmin offer)
+    {
+        _edit = offer;
+        _editType = string.IsNullOrWhiteSpace(offer.Type) ? "Cursus" : offer.Type;
+        _editDurationValue = offer.DurationValue;
+        _editDurationUnit = offer.DurationUnit ?? "";
+        _editDelivery = string.IsNullOrWhiteSpace(offer.Delivery) ? "Online" : offer.Delivery;
+        _editLocation = offer.Location ?? "";
+        _editPath = offer.ExternalPath ?? "";
+        _editIsFree = offer.IsFree;
+        _editIsPartner = offer.IsPartner;
+        _editAffiliate = offer.AffiliateCode ?? "";
+        _editShowInPassport = offer.ShowInPassport;
+        _editIsActive = offer.IsActive;
+        _message = null;
+    }
+
+    private async Task SaveOfferAsync()
+    {
+        if (_edit is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            Enum.TryParse<TrainingOfferType>(_editType, true, out var type);
+            TrainingDurationUnit? unit = Enum.TryParse<TrainingDurationUnit>(_editDurationUnit, true, out var u) ? u : null;
+            Enum.TryParse<TrainingDeliveryMode>(_editDelivery, true, out var delivery);
+
+            await Api.UpsertTrainingOfferAdminAsync(new
+            {
+                id = _edit.Id,
+                providerId = _edit.ProviderId,
+                title = _edit.Title,
+                fieldsCsv = _edit.FieldsCsv,
+                keysCsv = _edit.KeysCsv,
+                externalPath = _editPath,
+                isActive = _editIsActive,
+                sortOrder = _edit.SortOrder,
+                type = type.ToString(),
+                durationValue = _editDurationValue,
+                durationUnit = unit?.ToString(),
+                delivery = delivery.ToString(),
+                location = string.IsNullOrWhiteSpace(_editLocation) ? null : _editLocation,
+                isFree = _editIsFree,
+                isPartner = _editIsPartner,
+                affiliateCode = string.IsNullOrWhiteSpace(_editAffiliate) ? null : _editAffiliate,
+                showInPassport = _editShowInPassport
+            });
+            _message = "Opgeslagen.";
+            _edit = null;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = string.IsNullOrWhiteSpace(ex.Message) ? Culture["Common.Error"] : ex.Message;
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

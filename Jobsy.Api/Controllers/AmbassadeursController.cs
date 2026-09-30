@@ -7,11 +7,13 @@ using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/ambassadeurs")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class AmbassadeursController : ControllerBase
 {
     private readonly IAmbassadeurInviteService _invite;

@@ -2,12 +2,15 @@
 @* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands; no CandidateJobListTabs *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using System.Security.Claims
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @using Jobsy.Core.Rules.KandidaatBanen
 @using Jobsy.Web.Components
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
@@ -44,6 +47,8 @@
             </p>
         </div>
     </header>
+
+    <CandidateJobListTabs />
 
     <div class="kb-apps__filters application-counters" role="group" aria-label="@Culture["Nav.MyApplications"]">
         <button type="button"

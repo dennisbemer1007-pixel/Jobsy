@@ -256,7 +256,9 @@ public record UpdatePlatformFeatureRequest(
     int? SchoolRetentionCutoffMonth = null,
     int? SchoolRetentionCutoffDay = null,
     string? Reason = null,
-    bool? AmbassadorsEnabled = null);
+    bool? AmbassadorsEnabled = null,
+    bool? EmployersEnabled = null,
+    bool? CandidatePassportEnabled = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -276,7 +278,9 @@ public record PlatformFeatureDto(
     bool SchoolPerCodeResultsEnabled = true,
     int SchoolRetentionCutoffMonth = 7,
     int SchoolRetentionCutoffDay = 31,
-    bool AmbassadorsEnabled = false);
+    bool AmbassadorsEnabled = false,
+    bool EmployersEnabled = true,
+    bool CandidatePassportEnabled = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

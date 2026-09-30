@@ -2,8 +2,10 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using MailKit.Net.Smtp;
@@ -29,6 +31,7 @@ public sealed class SmtpEmailService : IEmailService
     private readonly JobsyDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHostEnvironment _environment;
+    private readonly IFeatureFlags _featureFlags;
     private readonly ILogger<SmtpEmailService> _logger;
 
     public SmtpEmailService(
@@ -37,6 +40,7 @@ public sealed class SmtpEmailService : IEmailService
         JobsyDbContext db,
         IHttpClientFactory httpClientFactory,
         IHostEnvironment environment,
+        IFeatureFlags featureFlags,
         ILogger<SmtpEmailService> logger)
     {
         _credentials = credentials;
@@ -44,11 +48,20 @@ public sealed class SmtpEmailService : IEmailService
         _db = db;
         _httpClientFactory = httpClientFactory;
         _environment = environment;
+        _featureFlags = featureFlags;
         _logger = logger;
     }
 
     public async Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
     {
+        if (await ShouldSuppressEmployersAsync(message, cancellationToken))
+        {
+            _logger.LogInformation(
+                "Email suppressed: employers disabled (category={Category}).",
+                message.Category ?? "(none)");
+            return EmailDeliveryResult.Stub;
+        }
+
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
         if (TryResolveResend(secrets, out var resend))
         {
@@ -420,6 +433,28 @@ public sealed class SmtpEmailService : IEmailService
             CreatedAt = DateTime.UtcNow
         });
         await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async ValueTask<bool> ShouldSuppressEmployersAsync(
+        EmailMessage message,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(message.Category))
+        {
+            return false;
+        }
+
+        var cat = message.Category.Trim();
+        var requires = TransactionalEmails.Templates.Any(t =>
+            t.RequiresEmployers
+            && (string.Equals(t.Category, cat, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(t.Key, cat, StringComparison.OrdinalIgnoreCase)));
+        if (!requires)
+        {
+            return false;
+        }
+
+        return !await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
     }
 
     internal sealed record ResendSettings(string ApiKey, string FromAddress);

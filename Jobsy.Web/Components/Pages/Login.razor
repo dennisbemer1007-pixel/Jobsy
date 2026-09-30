@@ -1,5 +1,6 @@
 @page "/login"
 @attribute [AllowAnonymous]
+@using Jobsy.Core.Features
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
@@ -13,6 +14,7 @@
 @inject IEmployersSwitch Employers
 @inject CultureState Culture
 @inject IJSRuntime Js
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
@@ -182,6 +184,12 @@
         _googleEnabled = await ExternalAuth.IsGoogleConfiguredAsync();
         _employersOn = await Employers.IsEnabledAsync();
 
+        var flags = await FeatureFlags.GetAsync();
+        _employersOn = flags.EmployersEnabled;
+        _dismissUrl = flags.EmployersEnabled
+            ? AuthRedirects.BanenkaartPath
+            : FeatureRoutes.OntdekPath;
+
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
         _returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
@@ -189,8 +197,8 @@
             QueryValue(query, "returnTo"),
             QueryValue(query, "redirect"));
 
-        // Closing the dialog always returns to the banenkaart (not a protected returnUrl).
-        _dismissUrl = AuthRedirects.BanenkaartPath;
+        // Closing the dialog returns to banenkaart (ON) or ontdek (OFF).
+        // (_dismissUrl already set from flags above)
 
         var errorCode = query.TryGetValue("error", out var error) ? error.ToString() : null;
         var sessionExpired = string.Equals(errorCode, "session-expired", StringComparison.OrdinalIgnoreCase);

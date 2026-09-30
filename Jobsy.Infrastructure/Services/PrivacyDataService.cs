@@ -460,6 +460,15 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     c.UpdatedAtUtc
                 })
                 .FirstOrDefaultAsync(cancellationToken),
+            PrivatePreferences = await _db.CandidatePrivatePreferences.AsNoTracking()
+                .Where(p => p.UserId == user.Id)
+                .Select(p => new
+                {
+                    p.DislikesJson,
+                    p.CustomDislikesJson,
+                    p.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
             CareerInterests = await _db.CandidateCareerInterests.AsNoTracking()
                 .Where(c => c.UserId == user.Id)
                 .Select(c => new
@@ -1215,6 +1224,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (whoAmI.Count > 0)
         {
             _db.CandidateWhoAmIProfiles.RemoveRange(whoAmI);
+        }
+
+        var privatePrefs = await _db.CandidatePrivatePreferences
+            .Where(p => p.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (privatePrefs.Count > 0)
+        {
+            _db.CandidatePrivatePreferences.RemoveRange(privatePrefs);
         }
 
         var careers = await _db.CandidateCareerInterests

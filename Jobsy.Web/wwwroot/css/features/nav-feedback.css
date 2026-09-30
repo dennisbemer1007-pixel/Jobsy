@@ -65,3 +65,20 @@
         opacity: 0.85;
     }
 }
+
+/* Short nav labels below 640 px (Discovery / Passport).
+   Must beat app.css `.bottom-nav__label { display: block !important }` at ≤768px
+   so full+short never stack (that grew the nav ~18px and left a map gap). */
+.bottom-nav__label--short {
+    display: none !important;
+}
+
+@media (max-width: 639px) {
+    .bottom-nav__label--full {
+        display: none !important;
+    }
+
+    .bottom-nav__label--short {
+        display: block !important;
+    }
+}

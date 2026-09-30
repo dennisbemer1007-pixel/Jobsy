@@ -3397,6 +3397,9 @@ public static class UiStrings
         UiStringsCandidateSignup.MergeAll(nl, en, pl, ro, ar);
         UiStringsWerkgeverAanmelding.MergeAll(nl, en, pl, ro, ar);
         UiStringsKandidaatBanen.MergeAll(nl, en, pl, ro, ar);
+        UiStringsFeatureFlags.MergeAll(nl, en, pl, ro, ar);
+        UiStringsPassport.MergeAll(nl, en, pl, ro, ar);
+        UiStringsDiscovery.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

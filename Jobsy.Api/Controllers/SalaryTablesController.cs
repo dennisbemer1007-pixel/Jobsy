@@ -11,12 +11,14 @@ using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/salary-tables")]
 [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public class SalaryTablesController : ControllerBase
 {
     private readonly JobsyDbContext _db;

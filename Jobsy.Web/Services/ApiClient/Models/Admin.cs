@@ -247,6 +247,8 @@ public sealed class SalesParkedBalanceApiItem
     public string MaskedDisplayName { get; set; } = "";
     public decimal OpenBalanceExVat { get; set; }
     public DateTime? LastLineAtUtc { get; set; }
+    public bool EmployersEnabled { get; set; } = true;
+    public bool CandidatePassportEnabled { get; set; }
 }
 
 public sealed class PlatformCompanyItem

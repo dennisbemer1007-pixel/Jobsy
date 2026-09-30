@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
@@ -44,6 +45,7 @@ public sealed class AssistantChatService : IAssistantChatService
     private readonly ICandidateMetricsQueryService _candidateMetrics;
     private readonly ISalesManagerDashboardService _salesDashboard;
     private readonly IOpenAiEndpointResolver _openAi;
+    private readonly IFeatureFlags _featureFlags;
     private readonly ILogger<AssistantChatService> _logger;
 
     public AssistantChatService(
@@ -53,6 +55,7 @@ public sealed class AssistantChatService : IAssistantChatService
         ICandidateMetricsQueryService candidateMetrics,
         ISalesManagerDashboardService salesDashboard,
         IOpenAiEndpointResolver openAi,
+        IFeatureFlags featureFlags,
         ILogger<AssistantChatService> logger)
     {
         _db = db;
@@ -61,6 +64,7 @@ public sealed class AssistantChatService : IAssistantChatService
         _candidateMetrics = candidateMetrics;
         _salesDashboard = salesDashboard;
         _openAi = openAi;
+        _featureFlags = featureFlags;
         _logger = logger;
     }
 
@@ -150,8 +154,10 @@ public sealed class AssistantChatService : IAssistantChatService
             var maxTravelMinutes = DetectMaxTravelMinutes(text);
             var transport = DetectTransport(text);
             var jobQuery = ExtractJobSearchQuery(lastUser, workType);
-            if (IsVacancySearchIntent(text, workType, jobQuery)
-                || (workType is not null && (maxTravelMinutes is not null || transport is not null)))
+            var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+            if (employersOn
+                && (IsVacancySearchIntent(text, workType, jobQuery)
+                    || (workType is not null && (maxTravelMinutes is not null || transport is not null))))
             {
                 return await CandidateVacancySearchAsync(
                     context, workType, jobQuery, maxTravelMinutes, transport, cancellationToken);

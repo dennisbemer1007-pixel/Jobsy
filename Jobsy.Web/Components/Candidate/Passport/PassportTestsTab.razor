@@ -1,0 +1,406 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Candidate.TestResult
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<div class="passport-tests">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_loadFailed)
+    {
+        <div class="panel-inline-error" role="alert">
+            <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
+            <button type="button" class="btn-compact" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
+        </div>
+    }
+    else if (_model is not null)
+    {
+        <div class="passport-tests__depth" aria-hidden="true">
+            <span>@Culture["Passport.Tests.Surface"]</span>
+            <div class="passport-tests__depth-track">
+                <span class="passport-tests__depth-seg passport-tests__depth-seg--1"></span>
+                <span class="passport-tests__depth-seg passport-tests__depth-seg--2"></span>
+                <span class="passport-tests__depth-seg passport-tests__depth-seg--3"></span>
+            </div>
+            <span>@Culture["Passport.Tests.Deep"]</span>
+        </div>
+
+        <div class="passport-tests__layout">
+            <div class="passport-tests__rows" role="list">
+                @foreach (var tile in _model.Tiles)
+                {
+                    var selected = _model.HighlightKind == tile.Kind;
+                    var (quick, extended, report, reportLocked) = TestsOverviewBuilder.ProgressSegments(tile);
+                    var showGrow = tile.Kind == AssessmentKind.Competence
+                                   && tile.FreeDone
+                                   && _courseSlots.Count > 0;
+                    <article class="passport-tests__row @(selected ? "passport-tests__row--selected" : null)"
+                             role="listitem">
+                        <div class="passport-tests__row-main">
+                            <div class="passport-tests__row-id">
+                                <span class="passport-tests__row-icon" aria-hidden="true">@((MarkupString)RowIcon(tile.Kind))</span>
+                                <div>
+                                    <h3 class="passport-tests__row-title">@Culture[tile.TitleKey]</h3>
+                                    <p class="passport-tests__row-q muted">@Culture[tile.QuestionKey]</p>
+                                </div>
+                            </div>
+
+                            <a class="btn-compact @(tile.Action is TestsOverviewBuilder.RowAction.Extended ? null : "btn-compact--primary")"
+                               href="@TestsOverviewBuilder.ActionHref(tile)">
+                                @Culture[TestsOverviewBuilder.ActionLabelKey(tile.Action)]
+                            </a>
+                        </div>
+
+                        <div class="passport-tests__progress" aria-label="@Culture["Passport.Tests.DepthAria"]">
+                            <div class="passport-tests__bars">
+                                <span class="passport-tests__bar @FillClass(quick)"
+                                      title="@Culture["Tests.ScanQuick"]"></span>
+                                <span class="passport-tests__bar @FillClass(extended)"
+                                      title="@Culture["Tests.ScanExtended"]"></span>
+                                <span class="passport-tests__bar @FillClass(report) @(reportLocked ? "is-locked" : null)"
+                                      title="@Culture["Passport.Tests.Report"]"></span>
+                            </div>
+                            <div class="passport-tests__bar-labels muted">
+                                <span>@Culture["Tests.ScanQuick"]</span>
+                                <span>@Culture["Tests.ScanExtended"]</span>
+                                <span>@Culture["Passport.Tests.Report"]</span>
+                            </div>
+                        </div>
+
+                        @if (tile.FreeInProgress)
+                        {
+                            <p class="passport-tests__quota muted">
+                                @Culture.Format("Passport.Tests.QuestionsLeft", Math.Max(0, tile.FreeTotal - tile.FreeAnswered), tile.FreeTotal)
+                            </p>
+                        }
+                        else if (_quotas.TryGetValue(tile.Kind, out var adj))
+                        {
+                            @if (adj.Remaining <= 0)
+                            {
+                                <p class="passport-tests__quota passport-tests__quota--zero" role="status">
+                                    <span class="passport-tests__quota-dots" aria-hidden="true">@Dots(0, adj.Max)</span>
+                                    @Culture.Format("TestResult.Quota.Zero", adj.Max)
+                                </p>
+                            }
+                            else if (adj.Remaining == 1)
+                            {
+                                <p class="passport-tests__quota" role="status">
+                                    <span class="passport-tests__quota-dots" aria-hidden="true">@Dots(adj.Remaining, adj.Max)</span>
+                                    @Culture.Format("TestResult.Quota.LineOne", adj.Max)
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="passport-tests__quota" role="status">
+                                    <span class="passport-tests__quota-dots" aria-hidden="true">@Dots(adj.Remaining, adj.Max)</span>
+                                    @Culture.Format("TestResult.Quota.Line", adj.Remaining, adj.Max)
+                                </p>
+                            }
+                        }
+
+                        @if (showGrow)
+                        {
+                            <CourseSuggestionBlock SkillLabel="@_skillLabel"
+                                                   Slots="_courseSlots"
+                                                   Campaign="@TrainingTracking.CampaignCompetence" />
+                        }
+                    </article>
+                }
+
+                <p class="passport-tests__cost">
+                    <a class="passport-card__fill-link" href="/profiel/tests/competentie">@Culture["Passport.Tests.WhatCosts"]</a>
+                </p>
+            </div>
+
+            <aside class="passport-tests__aside">
+                @if (_previewDef is not null)
+                {
+                    <TestResultLockedPreview Kind="_previewDef.Kind"
+                                             TitleKey="@_previewDef.TitleKey"
+                                             QuestionCount="_previewDef.DeepQuestionCount"
+                                             PriceEuro="_priceEuro"
+                                             MinutesApprox="@(_previewDef.Kind == AssessmentKind.Career ? 25 : 20)"
+                                             DeepStartHref="@_previewDef.DeepStartHref"
+                                             IsUnlockedNotCompleted="_previewUnlocked"
+                                             ProgressCurrent="_previewProgress"
+                                             ProgressTotal="_previewDef.DeepQuestionCount"
+                                             ShowSamplePdf="false"
+                                             AllExtendedDone="_model.AllExtendedDone"
+                                             ReportLinks="_reportLinks"
+                                             OnStart="StartExtendedAsync" />
+                }
+            </aside>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Active { get; set; }
+    [Parameter] public CandidateKompasState? Snapshot { get; set; }
+
+    private bool _loading = true;
+    private bool _loaded;
+    private bool _loadFailed;
+    private TestsOverviewBuilder.OverviewModel? _model;
+    private readonly Dictionary<AssessmentKind, AssessmentAdjustmentState> _quotas = new();
+    private List<PassportCourseCard> _courseSlots = [];
+    private string _skillLabel = "";
+    private AssessmentTestDefinition? _previewDef;
+    private bool _previewUnlocked;
+    private int _previewProgress;
+    private decimal _priceEuro = 2.99m;
+    private List<TestResultLockedPreview.ReportLink> _reportLinks = [];
+    private CandidateKompasState? _kompas;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Active)
+        {
+            return;
+        }
+
+        if (Snapshot is not null)
+        {
+            _kompas = Snapshot;
+            _loadFailed = false;
+            await ApplyAsync(Snapshot);
+            return;
+        }
+
+        if (!_loaded)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private Task RetryLoadAsync()
+    {
+        _loaded = false;
+        return LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadFailed = false;
+        try
+        {
+            var result = await Api.GetMyKompasResultAsync();
+            if (result.TemporarilyUnavailable)
+            {
+                _loadFailed = true;
+                return;
+            }
+
+            if (result.Value is not null)
+            {
+                _kompas = result.Value;
+                await ApplyAsync(result.Value);
+                return;
+            }
+
+            var competence = await Api.GetMyCompetenciesAsync();
+            var career = await Api.GetMyCareerInterestsAsync();
+            var culture = await Api.GetMyCultureAsync();
+            var values = await Api.GetMyValuesAsync();
+            var competenceDeep = await Api.GetDeepAnalysisAsync("competence");
+            var careerDeep = await Api.GetDeepAnalysisAsync("career");
+            var cultureDeep = await Api.GetDeepAnalysisAsync("culture");
+            var valuesDeep = await Api.GetDeepAnalysisAsync("values");
+            var model = TestsOverviewBuilder.Paint(
+                competence, career, culture, values,
+                competenceDeep, careerDeep, cultureDeep, valuesDeep);
+            await FinishAsync(model, competence);
+            _loaded = true;
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _loadFailed = true;
+        }
+        finally
+        {
+            _loading = false;
+            _loaded = true;
+        }
+    }
+
+    private async Task ApplyAsync(CandidateKompasState kompas)
+    {
+        _loading = true;
+        try
+        {
+            await FinishAsync(TestsOverviewBuilder.FromKompas(kompas), kompas.Competencies);
+            _loaded = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task FinishAsync(TestsOverviewBuilder.OverviewModel model, CandidateCompetencyState? competence)
+    {
+        _model = model;
+        await LoadQuotasAsync(model);
+        await LoadCoursesAsync(competence);
+        SetupPreview(model);
+    }
+
+    private async Task LoadQuotasAsync(TestsOverviewBuilder.OverviewModel model)
+    {
+        _quotas.Clear();
+        foreach (var tile in model.Tiles)
+        {
+            if (tile.FreeInProgress)
+            {
+                continue;
+            }
+
+            var key = AssessmentKindLabels.ToSlug(tile.Kind);
+            var variant = tile.ExtendedDone || tile.DeepUnlocked ? "deep" : "free";
+            try
+            {
+                var adj = await Api.GetAssessmentAdjustmentsAsync(key, variant)
+                          ?? new AssessmentAdjustmentState
+                          {
+                              Remaining = AssessmentAdjustmentRules.MaxAdjustments,
+                              Max = AssessmentAdjustmentRules.MaxAdjustments
+                          };
+                _quotas[tile.Kind] = adj;
+            }
+            catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+            {
+                _quotas[tile.Kind] = new AssessmentAdjustmentState
+                {
+                    Remaining = AssessmentAdjustmentRules.MaxAdjustments,
+                    Max = AssessmentAdjustmentRules.MaxAdjustments
+                };
+            }
+        }
+    }
+
+    private async Task LoadCoursesAsync(CandidateCompetencyState? competence)
+    {
+        _courseSlots = [];
+        _skillLabel = "";
+        var lowest = TestsOverviewBuilder.LowestCompetence(competence?.Scores);
+        if (lowest is null)
+        {
+            return;
+        }
+
+        _skillLabel = Culture[$"Competency.Cat.{lowest.Value.Category}"];
+        try
+        {
+            var blob = CompetencyTrainingCatalog.SearchBlob(lowest.Value.Category);
+            _courseSlots = await Api.GetPassportTrainingOffersAsync(blob);
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _courseSlots = [];
+        }
+    }
+
+    private void SetupPreview(TestsOverviewBuilder.OverviewModel model)
+    {
+        _reportLinks = model.Tiles
+            .Where(t => t.ExtendedDone)
+            .Select(t => new TestResultLockedPreview.ReportLink(t.TitleKey, t.Href))
+            .ToList();
+
+        var kind = model.AllExtendedDone
+            ? model.Tiles.FirstOrDefault()?.Kind
+            : model.LockedPreviewKind ?? AssessmentKind.Career;
+        if (kind is null)
+        {
+            _previewDef = null;
+            return;
+        }
+
+        _previewDef = AssessmentTestCatalog.TryGet(kind.Value);
+        var tile = model.Tiles.FirstOrDefault(t => t.Kind == kind.Value);
+        _previewUnlocked = tile?.DeepUnlocked == true && tile is { ExtendedDone: false };
+        _previewProgress = tile?.DeepAnswered ?? 0;
+        if (_kompas is not null)
+        {
+            var deep = kind.Value switch
+            {
+                AssessmentKind.Competence => _kompas.CompetenceDeep,
+                AssessmentKind.Career => _kompas.CareerDeep,
+                AssessmentKind.Culture => _kompas.CultureDeep,
+                _ => _kompas.ValuesDeep
+            };
+            if (deep?.PriceEuro > 0)
+            {
+                _priceEuro = deep.PriceEuro;
+            }
+        }
+    }
+
+    private Task StartExtendedAsync()
+    {
+        if (_previewDef is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        Navigation.NavigateTo(_previewDef.DeepStartHref);
+        return Task.CompletedTask;
+    }
+
+    private static string FillClass(double fill)
+    {
+        if (fill >= 1)
+        {
+            return "is-done";
+        }
+
+        if (fill <= 0)
+        {
+            return "";
+        }
+
+        if (fill < 0.35)
+        {
+            return "is-partial is-p25";
+        }
+
+        if (fill < 0.60)
+        {
+            return "is-partial is-p50";
+        }
+
+        return "is-partial is-p75";
+    }
+
+    private static string Dots(int remaining, int max)
+    {
+        max = Math.Clamp(max, 1, 3);
+        remaining = Math.Clamp(remaining, 0, max);
+        var chars = new char[max];
+        for (var i = 0; i < max; i++)
+        {
+            chars[i] = i < remaining ? '\u25CF' : '\u25CB';
+        }
+
+        return new string(chars);
+    }
+
+    private static string RowIcon(AssessmentKind kind) => kind switch
+    {
+        AssessmentKind.Competence => NavIcons.Claw,
+        AssessmentKind.Career => NavIcons.Target,
+        AssessmentKind.Culture => NavIcons.HomeHeart,
+        _ => NavIcons.Stone
+    };
+}

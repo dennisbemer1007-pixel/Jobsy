@@ -99,6 +99,7 @@ public class MatchProfileGateTests
 
         var unlock = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Match/MatchUnlockPanel.razor"));
         Assert.Contains("WizardCompleted", unlock, StringComparison.Ordinal);
-        Assert.Contains("/candidate/start", unlock, StringComparison.Ordinal);
+        Assert.Contains("OnboardingRoutes.StartPath", unlock, StringComparison.Ordinal);
+        Assert.Contains("MatchUnlock.ContinueStart", unlock, StringComparison.Ordinal);
     }
 }

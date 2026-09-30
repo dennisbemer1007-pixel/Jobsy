@@ -1,0 +1,374 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<div class="passport-fit">
+    @if (_session.Loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!_session.IsUnlocked)
+    {
+        <section class="detail-card passport-fit__card">
+            <h3 class="passport-fit__h">@Culture["Passport.Fit.Title"]</h3>
+            <p class="login-lead">@(string.IsNullOrWhiteSpace(_session.LockMessage) ? Culture["Fit.Locked"] : _session.LockMessage)</p>
+            <div class="passport-fit__locked-actions">
+                <a class="btn-compact btn-compact--primary" href="/candidate/competencies">@Culture["Competency.Start"]</a>
+                <a class="btn-compact" href="/candidate/career">@Culture["Career.Start"]</a>
+            </div>
+        </section>
+    }
+    else
+    {
+        <div class="passport-fit__layout">
+            <div class="passport-fit__main">
+                <section class="detail-card passport-fit__card" aria-labelledby="passport-fit-title">
+                    <header class="passport-fit__head">
+                        <h3 id="passport-fit-title" class="passport-fit__h">@Culture["Passport.Fit.Title"]</h3>
+                        @if (_session.LastResult is not null)
+                        {
+                            <button type="button"
+                                    class="passport-card__fill-link"
+                                    @onclick="ToggleFullResult">
+                                @Culture["Passport.Fit.FullResult"]
+                            </button>
+                        }
+                    </header>
+
+                    <p class="passport-fit__sub">
+                        <span class="passport-fit__sub-icon" aria-hidden="true">@((MarkupString)NavIcons.Antenna)</span>
+                        @Culture["Passport.Fit.Subtitle"]
+                    </p>
+
+                    <form class="passport-fit__form" @onsubmit="EvaluateAsync" @onsubmit:preventDefault="true">
+                        <label class="visually-hidden" for="passport-fit-job">@Culture["Fit.JobTitle"]</label>
+                        <input id="passport-fit-job"
+                               class="passport-fit__input"
+                               type="search"
+                               maxlength="80"
+                               autocomplete="off"
+                               placeholder="@Culture["Passport.Fit.Placeholder"]"
+                               @bind="_session.JobTitle"
+                               @bind:event="oninput" />
+                        <button class="btn-compact btn-compact--primary" type="submit" disabled="@_session.Busy">
+                            @Culture["Passport.Fit.Check"]
+                        </button>
+                    </form>
+
+                    @if (!string.IsNullOrWhiteSpace(_session.Message))
+                    {
+                        <p class="state-message" role="alert">@_session.Message</p>
+                    }
+
+                    @if (_session.NeedsRecheck)
+                    {
+                        <p class="state-message" aria-live="polite">@Culture["Fit.NeedsRecheck"]</p>
+                    }
+
+                    @if (_session.LastResult is { } result)
+                    {
+                        <div class="passport-fit__last">
+                            <p class="passport-fit__last-line">
+                                @Culture.Format("Passport.Fit.LastCheck", result.JobTitle)
+                            </p>
+                            @if (result.SimilarRoles.Count > 0)
+                            {
+                                <button type="button"
+                                        class="passport-card__fill-link"
+                                        @onclick="ToggleSimilar">
+                                    @Culture["Passport.Fit.Similar"]
+                                </button>
+                            }
+                        </div>
+
+                        @if (_showSimilar && result.SimilarRoles.Count > 0)
+                        {
+                            <ul class="passport-fit__similar">
+                                @foreach (var role in result.SimilarRoles)
+                                {
+                                    <li>
+                                        <button type="button"
+                                                class="btn-compact"
+                                                disabled="@_session.Busy"
+                                                @onclick="() => EvaluateSimilarAsync(role.Title)">
+                                            @role.Title
+                                        </button>
+                                    </li>
+                                }
+                            </ul>
+                        }
+
+                        @if (_showFull)
+                        {
+                            <p class="passport-fit__pct" aria-label="@Culture["Fit.Match"]">
+                                <strong>@result.MatchPercent%</strong> @Culture["Fit.Match"]
+                            </p>
+                        }
+
+                        <ol class="passport-fit__grid" aria-label="@Culture["Passport.Fit.Title"]">
+                            <li class="passport-fit__cell">
+                                <span class="passport-fit__cell-icon" aria-hidden="true">@((MarkupString)NavIcons.Antenna)</span>
+                                <div>
+                                    <p class="passport-fit__cell-label muted">1 · @Culture["Passport.Fit.Result.Antennas"]</p>
+                                    <p class="passport-fit__cell-value">@Culture[RoleFitBandRules.LabelKey(result.MatchPercent)]</p>
+                                </div>
+                            </li>
+                            <li class="passport-fit__cell">
+                                <span class="passport-fit__cell-icon" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+                                <div>
+                                    <p class="passport-fit__cell-label muted">2 · @Culture["Passport.Fit.Result.Claws"]</p>
+                                    <p class="passport-fit__cell-value">@TopStrengths(result)</p>
+                                </div>
+                            </li>
+                            <li class="passport-fit__cell passport-fit__cell--warn">
+                                <span class="passport-fit__cell-icon" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+                                <div>
+                                    <p class="passport-fit__cell-label muted">3 · @Culture["Passport.Fit.Result.Growing"]</p>
+                                    <p class="passport-fit__cell-value">@FirstOrDash(result.Gaps)</p>
+                                </div>
+                            </li>
+                            <li class="passport-fit__cell">
+                                <span class="passport-fit__cell-icon" aria-hidden="true">@((MarkupString)NavIcons.Wave)</span>
+                                <div>
+                                    <p class="passport-fit__cell-label muted">4 · @Culture["Passport.Fit.Result.Action"]</p>
+                                    <p class="passport-fit__cell-value">@FirstOrDash(result.ActionSteps)</p>
+                                </div>
+                            </li>
+                        </ol>
+
+                        @if (_courseSlots.Count > 0)
+                        {
+                            <CourseSuggestionBlock EyebrowKey="Passport.Fit.CourseEyebrow"
+                                                   SkillLabel="@_courseSkill"
+                                                   Slots="_courseSlots"
+                                                   Campaign="@TrainingTracking.CampaignCompetence" />
+                        }
+                    }
+                </section>
+            </div>
+
+            <aside class="passport-fit__aside">
+                @if (_session.LastResult is { CultureFitLabel: { Length: > 0 } cultureLabel } resultCulture)
+                {
+                    <section class="detail-card passport-fit__culture" aria-labelledby="passport-fit-culture-title">
+                        <p class="passport-fit__culture-icon" aria-hidden="true">@((MarkupString)NavIcons.Antenna)</p>
+                        <h3 id="passport-fit-culture-title" class="passport-fit__h">
+                            @Culture.Format("Passport.Fit.CultureTitle", cultureLabel)
+                        </h3>
+                        <p class="passport-fit__sub muted">@Culture["Passport.Fit.CultureSub"]</p>
+                        @if (resultCulture.CultureFitPercent is int culturePct)
+                        {
+                            <span class="status-pill status-pill--@RoleFitBandRules.CssModifier(culturePct)">
+                                @Culture[RoleFitBandRules.LabelKey(culturePct)]
+                            </span>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(resultCulture.CultureFitLabel))
+                        {
+                            <span class="status-pill">@resultCulture.CultureFitLabel</span>
+                        }
+                    </section>
+                }
+                else
+                {
+                    <p class="passport-fit__culture-cta">
+                        <a class="passport-card__fill-link" href="/candidate/culture">@Culture["Passport.Fit.DoCultureScan"]</a>
+                    </p>
+                }
+
+                <FeatureVisible Feature="PlatformFeature.Employers">
+                    <section class="detail-card passport-fit__vacancies" aria-labelledby="passport-fit-vacancies-title">
+                        <header class="passport-fit__head">
+                            <h3 id="passport-fit-vacancies-title" class="passport-fit__h">@Culture["Passport.Fit.VacanciesTitle"]</h3>
+                            <a class="passport-card__fill-link" href="/">@Culture["Passport.Fit.Top10"]</a>
+                        </header>
+                        <p class="passport-fit__sub">
+                            <span class="passport-fit__sub-icon" aria-hidden="true">@((MarkupString)NavIcons.Stone)</span>
+                            @Culture["Passport.Fit.VacanciesSub"]
+                        </p>
+
+                        @if (_topMatches.Count == 0)
+                        {
+                            <p class="muted">@Culture["Competency.Matches.Empty"]</p>
+                        }
+                        else
+                        {
+                            <ul class="passport-fit__vacancy-list">
+                                @foreach (var match in _topMatches)
+                                {
+                                    <li class="passport-fit__vacancy">
+                                        <span class="passport-fit__logo" aria-hidden="true">@Initial(match.CompanyName)</span>
+                                        <div class="passport-fit__vacancy-body">
+                                            <a href="@($"/vacancies/{match.Id}")" class="passport-fit__vacancy-title">@match.Title</a>
+                                            <p class="muted">@match.CompanyName</p>
+                                        </div>
+                                        <span class="status-pill status-pill--@RoleFitBandRules.CssModifier(match.MatchPercent)">
+                                            @Culture[RoleFitBandRules.LabelKey(match.MatchPercent)]
+                                        </span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+
+                        <div class="passport-fit__contacts">
+                            <div>
+                                <p class="passport-fit__contacts-title">@Culture["Passport.Fit.EmployersWant"]</p>
+                                @if (_newContacts > 0)
+                                {
+                                    <span class="status-pill">@Culture.Format("Passport.Fit.NewCount", _newContacts)</span>
+                                }
+                            </div>
+                            <a class="btn-compact" href="/candidate/talent-contacts">@Culture["Passport.Fit.ViewContacts"]</a>
+                        </div>
+                    </section>
+                </FeatureVisible>
+            </aside>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Active { get; set; }
+    [Parameter] public CandidateKompasState? Snapshot { get; set; }
+
+    private readonly RoleFitCheckSession _session = new();
+    private bool _wasActive;
+    private bool _showFull;
+    private bool _showSimilar;
+    private List<PassportCourseCard> _courseSlots = [];
+    private string _courseSkill = "";
+    private List<CandidateMatchedVacancy> _topMatches = [];
+    private int _newContacts;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Active)
+        {
+            return;
+        }
+
+        var opening = !_wasActive;
+        _wasActive = Active;
+        if (opening || _session.State is null)
+        {
+            await _session.LoadAsync(Api, errorFallback: Culture["Common.Error"]);
+            await LoadSideAsync();
+            if (_session.LastResult is not null)
+            {
+                await LoadCoursesAsync(_session.LastResult);
+            }
+        }
+        else
+        {
+            ApplyMatchesFromSnapshot();
+        }
+    }
+
+    private async Task EvaluateAsync()
+    {
+        await _session.EvaluateAsync(Api, Culture["Common.Error"]);
+        _showFull = false;
+        if (_session.LastResult is not null)
+        {
+            await LoadCoursesAsync(_session.LastResult);
+        }
+    }
+
+    private async Task EvaluateSimilarAsync(string title)
+    {
+        await _session.EvaluateSimilarAsync(Api, title, Culture["Common.Error"]);
+        _showSimilar = false;
+        if (_session.LastResult is not null)
+        {
+            await LoadCoursesAsync(_session.LastResult);
+        }
+    }
+
+    private void ToggleFullResult() => _showFull = !_showFull;
+
+    private void ToggleSimilar() => _showSimilar = !_showSimilar;
+
+    private async Task LoadSideAsync()
+    {
+        ApplyMatchesFromSnapshot();
+        try
+        {
+            var contacts = await Api.ListCandidateTalentContactsAsync() ?? [];
+            _newContacts = contacts.Count(c =>
+                Enum.TryParse<TalentContactStatus>(c.Status, true, out var st)
+                && st == TalentContactStatus.Pending);
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _newContacts = 0;
+        }
+    }
+
+    private void ApplyMatchesFromSnapshot()
+    {
+        var matches = Snapshot?.TopMatches ?? [];
+        _topMatches = matches.Take(3).ToList();
+    }
+
+    private async Task LoadCoursesAsync(RoleFitCheckResult result)
+    {
+        _courseSlots = [];
+        _courseSkill = result.Gaps.FirstOrDefault() ?? result.JobTitle;
+        try
+        {
+            var keys = new List<string>();
+            if (result.Gaps.Count > 0)
+            {
+                keys.Add(result.Gaps[0]);
+            }
+
+            keys.AddRange(result.SearchKeys.Take(4));
+            if (!string.IsNullOrWhiteSpace(result.JobTitle))
+            {
+                keys.Add(result.JobTitle);
+            }
+
+            var blob = string.Join(' ', keys.Where(k => !string.IsNullOrWhiteSpace(k)));
+            if (string.IsNullOrWhiteSpace(blob))
+            {
+                return;
+            }
+
+            _courseSlots = await Api.GetPassportTrainingOffersAsync(blob);
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _courseSlots = [];
+        }
+    }
+
+    private static string TopStrengths(RoleFitCheckResult result)
+    {
+        var parts = result.Strengths.Where(s => !string.IsNullOrWhiteSpace(s)).Take(2).ToList();
+        return parts.Count == 0 ? "—" : string.Join(", ", parts);
+    }
+
+    private static string FirstOrDash(IReadOnlyList<string> lines)
+    {
+        var first = lines.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
+        return string.IsNullOrWhiteSpace(first) ? "—" : first!;
+    }
+
+    private static string Initial(string? company)
+    {
+        if (string.IsNullOrWhiteSpace(company))
+        {
+            return "?";
+        }
+
+        return company.Trim()[..1].ToUpperInvariant();
+    }
+}

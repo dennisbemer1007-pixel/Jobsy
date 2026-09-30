@@ -150,10 +150,13 @@ public class KompasDnaLandingTests
         Assert.Contains("dna-tiles__grid", panel);
         Assert.Contains("dna-carousel", panel);
         Assert.Contains("RadarChart", panel);
-        Assert.Contains("DnaSummarySentences", panel);
         Assert.Contains("Test.Status.Extended", panel);
         Assert.DoesNotContain("dna-summary__item", panel);
         Assert.DoesNotContain("Dna.ViewTests", panel);
+
+        var builder = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Dna/CandidateDnaViewBuilder.cs"));
+        Assert.Contains("DnaSummarySentences", builder);
+        Assert.Contains("CandidateDnaViewBuilder", panel);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/mijn-dna.css"));
         Assert.Contains(".dna-tiles__grid", css);

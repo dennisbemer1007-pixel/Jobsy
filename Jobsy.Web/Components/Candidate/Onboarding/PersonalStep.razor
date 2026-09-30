@@ -1,0 +1,123 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject CultureState Culture
+
+<h1 tabindex="-1">@Culture["Onboarding.Step1.Title"]</h1>
+<p class="ob-wizard__lead">@Culture["Onboarding.Step1.Lead"]</p>
+<div class="ob-wizard__field-row">
+    <label>
+        @Culture["Profile.FirstName"]
+        <input autocomplete="given-name" maxlength="128"
+               @bind="Draft.FirstName" @bind:event="oninput" @bind:after="NotifyAsync" />
+    </label>
+    <label>
+        @Culture["Profile.LastName"]
+        <input autocomplete="family-name" maxlength="128"
+               @bind="Draft.LastName" @bind:event="oninput" @bind:after="NotifyAsync" />
+    </label>
+</div>
+<label>
+    @Culture["Onboarding.Postcode"]
+    <input inputmode="text" autocomplete="postal-code" maxlength="7"
+           @bind="Draft.Postcode" @bind:event="oninput" @bind:after="OnAddressChangedAsync" />
+</label>
+@if (Draft.PostcodeResolved)
+{
+    <p class="ob-wizard__hint">✓ @PostcodeHint</p>
+}
+@if (Draft.PostcodeMissing)
+{
+    <p class="error">
+        @Culture["Onboarding.PostcodeNotFound"]
+        <button type="button" class="ob-wizard__inline-link" @onclick="OnShowCityAsync">
+            @Culture["Onboarding.EnterCity"]
+        </button>
+    </p>
+}
+@if (Draft.ShowCity)
+{
+    <label>
+        @Culture["Onboarding.City"]
+        <input autocomplete="address-level2"
+               @bind="Draft.City" @bind:event="oninput" @bind:after="OnAddressChangedAsync" />
+    </label>
+}
+@if (Draft.Suggestions.Count > 0)
+{
+    <ul class="ob-wizard__suggestions">
+        @foreach (var suggestion in Draft.Suggestions)
+        {
+            <li>
+                <button type="button" @onclick="() => OnSelectAddressAsync(suggestion)">
+                    @suggestion.Label
+                </button>
+            </li>
+        }
+    </ul>
+}
+<fieldset>
+    <legend>@Culture["Onboarding.BirthDate"]</legend>
+    <div class="ob-wizard__birth">
+        <label>
+            @Culture["Onboarding.Day"]
+            <input inputmode="numeric" maxlength="2"
+                   @bind="Draft.BirthDay" @bind:event="oninput" @bind:after="OnBirthDateChangedAsync" />
+        </label>
+        <label>
+            @Culture["Onboarding.Month"]
+            <input inputmode="numeric" maxlength="2"
+                   @bind="Draft.BirthMonth" @bind:event="oninput" @bind:after="OnBirthDateChangedAsync" />
+        </label>
+        <label>
+            @Culture["Onboarding.Year"]
+            <input inputmode="numeric" maxlength="4"
+                   @bind="Draft.BirthYear" @bind:event="oninput" @bind:after="OnBirthDateChangedAsync" />
+        </label>
+    </div>
+    <small>@BirthHint</small>
+</fieldset>
+<label>
+    @Culture["Profile.Phone"] <small>@Culture["Onboarding.Optional"]</small>
+    <input type="tel" autocomplete="tel"
+           @bind="Draft.Phone" @bind:event="oninput" @bind:after="NotifyAsync" />
+</label>
+@if (ShowWhatsApp)
+{
+    <label class="ob-wizard__check">
+        <input type="checkbox"
+               disabled="@string.IsNullOrWhiteSpace(Draft.Phone)"
+               @bind="Draft.WhatsAppAllowed"
+               @bind:after="NotifyAsync" />
+        @Culture["Profile.WhatsAppAllowed"]
+    </label>
+}
+
+@code {
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public EventCallback AddressChanged { get; set; }
+    [Parameter] public EventCallback BirthDateChanged { get; set; }
+    [Parameter] public EventCallback ShowCity { get; set; }
+    [Parameter] public EventCallback<AddressSuggestion> SelectAddress { get; set; }
+    /// <summary>When true, show WhatsApp consent (journey + employers on).</summary>
+    [Parameter] public bool ShowWhatsApp { get; set; }
+    /// <summary>When false, use the parental-consent birth hint instead of job-age wording.</summary>
+    [Parameter] public bool EmployersEnabled { get; set; } = true;
+    /// <summary>When true, postcode hint mentions employers never see the address.</summary>
+    [Parameter] public bool UseDiscoveryPostcodeHint { get; set; }
+
+    private string BirthHint => EmployersEnabled
+        ? Culture["Onboarding.BirthHint"]
+        : Culture["Discovery.Step1.BirthHintEmployersOff"];
+
+    private string PostcodeHint => UseDiscoveryPostcodeHint && !string.IsNullOrWhiteSpace(Draft.City)
+        ? Culture.Format("Discovery.Step1.PostcodeResolved", Draft.City)
+        : Culture.Format("Onboarding.PostcodeResolved", Draft.City);
+
+    private Task NotifyAsync() => Draft.NotifyChangedAsync();
+    private Task OnAddressChangedAsync() => AddressChanged.InvokeAsync();
+    private Task OnBirthDateChangedAsync() => BirthDateChanged.InvokeAsync();
+    private Task OnShowCityAsync() => ShowCity.InvokeAsync();
+    private Task OnSelectAddressAsync(AddressSuggestion suggestion) => SelectAddress.InvokeAsync(suggestion);
+}

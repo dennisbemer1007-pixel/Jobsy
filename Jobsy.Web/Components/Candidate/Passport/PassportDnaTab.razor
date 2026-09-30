@@ -1,0 +1,164 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Dna
+@using Jobsy.Web.Components.Shared.Charts
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<div class="passport-dna">
+    <LobsyBubble Text="@BubbleText" />
+
+    <div class="passport-dna__grid">
+        <section class="detail-card passport-dna__card" aria-labelledby="passport-dna-you-title">
+            <p class="passport-dna__eyebrow">
+                <span aria-hidden="true">@((MarkupString)NavIcons.Shell)</span>
+                @Culture["Passport.Dna.Eyebrow"]
+            </p>
+            <h3 id="passport-dna-you-title" class="passport-dna__h">@Culture["Passport.Dna.YouTitle"]</h3>
+            @if (Highlights.Count == 0)
+            {
+                <p class="login-lead">@Culture["Dna.StoryEmpty"]</p>
+                <button type="button" class="btn-compact btn-compact--primary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
+            }
+            else
+            {
+                <ul class="passport-dna__highlights">
+                    @foreach (var h in Highlights.Take(3))
+                    {
+                        <li class="passport-dna__highlight">
+                            <span class="passport-dna__highlight-icon" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+                            <div>
+                                <p class="passport-dna__highlight-title">@h.Value</p>
+                                <p class="passport-dna__highlight-sub">@Culture[h.LabelKey]</p>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+
+        <section class="detail-card passport-dna__card" aria-labelledby="passport-dna-story-title">
+            <h3 id="passport-dna-story-title" class="passport-dna__h">@Culture["Dna.StoryTitle"]</h3>
+            @if (string.IsNullOrWhiteSpace(Story))
+            {
+                <p class="login-lead">@Culture["Dna.StoryEmpty"]</p>
+                <button type="button" class="btn-compact btn-compact--primary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
+            }
+            else
+            {
+                <div class="passport-dna__story @(_storyExpanded ? "is-expanded" : "is-clamped")">
+                    @foreach (var para in StoryParagraphs(Story))
+                    {
+                        <p>@para</p>
+                    }
+                </div>
+                <button type="button" class="passport-card__fill-link" @onclick="ToggleStory">
+                    @(_storyExpanded ? Culture["Dna.StoryLess"] : Culture["Dna.StoryMore"])
+                </button>
+                @if (Keywords.Count > 0)
+                {
+                    <ul class="passport-dna__chips">
+                        @foreach (var kw in Keywords.Take(3))
+                        {
+                            <li class="kompas-chip">@kw</li>
+                        }
+                    </ul>
+                }
+                @if (StoryGeneratedAt is DateTime generated)
+                {
+                    <p class="passport-dna__meta">@Culture.Format("Dna.StoryUpdated", generated.ToLocalTime().ToString("dd-MM-yyyy"))</p>
+                }
+            }
+            @if (Hobbies.Count > 0)
+            {
+                <div class="passport-dna__joy">
+                    <p class="passport-dna__joy-label">@Culture["Passport.Dna.Joy"]</p>
+                    <ul class="passport-dna__chips">
+                        @foreach (var hobby in Hobbies.Take(4))
+                        {
+                            <li class="kompas-chip">@hobby</li>
+                        }
+                        @if (Hobbies.Count > 4)
+                        {
+                            <li class="kompas-chip">+@(Hobbies.Count - 4)</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </section>
+
+        <section class="detail-card passport-dna__card" aria-labelledby="passport-dna-home-title">
+            <h3 id="passport-dna-home-title" class="passport-dna__h">@Culture["Passport.Dna.Home"]</h3>
+            @if (CultureDetail is null || CultureDetail.IsGhost)
+            {
+                <p class="login-lead">@Culture["Dna.TeaserCulture"]</p>
+                <button type="button" class="btn-compact" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
+            }
+            else
+            {
+                <PoleSliders Items="CultureDetail.Poles.Take(2).ToList()" />
+                <p class="passport-dna__values-head">
+                    @Culture["Passport.Dna.ValuesProvisional"]
+                    <span class="muted">· @CultureDetail.Aside</span>
+                </p>
+                @if (ValuesDetail is not null && ValuesDetail.Bars.Count > 0)
+                {
+                    <ol class="passport-dna__values">
+                        @foreach (var bar in ValuesDetail.Bars.Where(b => b.Percent is not null).Take(3))
+                        {
+                            <li>@bar.Label</li>
+                        }
+                    </ol>
+                }
+            }
+        </section>
+    </div>
+
+    <section class="detail-card passport-shells" aria-labelledby="passport-shells-title">
+        <div class="passport-shells__head">
+            <div>
+                <h3 id="passport-shells-title" class="passport-dna__h">@Culture["Passport.Shells.Title"]</h3>
+                <p class="passport-shells__sub">@Culture.Format("Passport.Shells.Sub", Shells.EarnedCount, Shells.TotalVisible)</p>
+            </div>
+            <div class="passport-shells__aside">
+                <p>@Culture["Passport.Shells.Tagline"]</p>
+                @if (Shells.QuestionsUntilNextShell > 0 && Shells.EarnedCount < Shells.TotalVisible)
+                {
+                    <p class="passport-shells__next">@Culture.Format("Passport.Shells.Next", Shells.QuestionsUntilNextShell)</p>
+                }
+            </div>
+        </div>
+        <ul class="passport-shells__row">
+            @foreach (var shell in Shells.Shells)
+            {
+                <li class="passport-shell @(shell.Earned ? "passport-shell--earned" : "passport-shell--locked")">
+                    <span class="passport-shell__ring" aria-hidden="true">@((MarkupString)NavIcons.Shell)</span>
+                    <span class="passport-shell__label">@Culture[shell.TitleKey]</span>
+                </li>
+            }
+        </ul>
+    </section>
+</div>
+
+@code {
+    [Parameter] public string BubbleText { get; set; } = "";
+    [Parameter] public IReadOnlyList<CandidateDnaViewBuilder.DnaHighlight> Highlights { get; set; } = [];
+    [Parameter] public string? Story { get; set; }
+    [Parameter] public DateTime? StoryGeneratedAt { get; set; }
+    [Parameter] public IReadOnlyList<string> Keywords { get; set; } = [];
+    [Parameter] public IReadOnlyList<string> Hobbies { get; set; } = [];
+    [Parameter] public CandidateDnaViewBuilder.DetailBlock? CultureDetail { get; set; }
+    [Parameter] public CandidateDnaViewBuilder.DetailBlock? ValuesDetail { get; set; }
+    [Parameter] public PassportShellRules.ShellProgress Shells { get; set; } =
+        new([], 0, 0, 0);
+    [Parameter] public EventCallback OnGoTests { get; set; }
+
+    private bool _storyExpanded;
+
+    private void ToggleStory() => _storyExpanded = !_storyExpanded;
+
+    private static IEnumerable<string> StoryParagraphs(string story)
+        => story.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+}

@@ -127,10 +127,34 @@ public static class PlatformSettingsCatalog
         var list = new List<PlatformSettingDescriptor>();
 
         // --- Platform-modus ---
-        // Slot: EmployersEnabled ("Werkgevers actief") — only when the field exists on PlatformFeatureSettings (D7).
-        // if (FieldExists("EmployersEnabled")) { list.Add(... ShowOnDashboard, ConfirmOnChange, Impact warn ...); }
-        // Slot: CandidatePassportEnabled ("Mijn Paspoort") — only when the field exists (D7).
-        // if (FieldExists("CandidatePassportEnabled")) { list.Add(... ShowOnDashboard ...); }
+        if (FieldExists("EmployersEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "EmployersEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.Employers.Enabled.Title",
+                DescriptionKey: "AdminSettings.Employers.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.EmployersEnabled,
+                Write: v => new PlatformFeatureUpdate(EmployersEnabled: ToBool(v)),
+                ImpactKey: "AdminSettings.Employers.Enabled.ImpactOff",
+                ImpactLevel: PlatformSettingImpactLevel.Warn,
+                ShowOnDashboard: true,
+                ConfirmOnChange: true));
+        }
+
+        if (FieldExists("CandidatePassportEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CandidatePassportEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.Passport.Enabled.Title",
+                DescriptionKey: "AdminSettings.Passport.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.CandidatePassportEnabled,
+                Write: v => new PlatformFeatureUpdate(CandidatePassportEnabled: ToBool(v)),
+                ShowOnDashboard: true));
+        }
 
         // --- Vacatures ---
         list.Add(new PlatformSettingDescriptor(
@@ -374,6 +398,8 @@ public static class PlatformSettingsCatalog
         int? schoolRetentionMonth = null;
         int? schoolRetentionDay = null;
         bool? ambassadorsEnabled = null;
+        bool? employersEnabled = null;
+        bool? candidatePassportEnabled = null;
 
         foreach (var p in parts)
         {
@@ -404,6 +430,8 @@ public static class PlatformSettingsCatalog
             if (p.SchoolRetentionCutoffMonth is not null) schoolRetentionMonth = p.SchoolRetentionCutoffMonth;
             if (p.SchoolRetentionCutoffDay is not null) schoolRetentionDay = p.SchoolRetentionCutoffDay;
             if (p.AmbassadorsEnabled is not null) ambassadorsEnabled = p.AmbassadorsEnabled;
+            if (p.EmployersEnabled is not null) employersEnabled = p.EmployersEnabled;
+            if (p.CandidatePassportEnabled is not null) candidatePassportEnabled = p.CandidatePassportEnabled;
         }
 
         return new PlatformFeatureUpdate(
@@ -424,6 +452,8 @@ public static class PlatformSettingsCatalog
             SchoolPerCodeResultsEnabled: schoolPerCode,
             SchoolRetentionCutoffMonth: schoolRetentionMonth,
             SchoolRetentionCutoffDay: schoolRetentionDay,
-            AmbassadorsEnabled: ambassadorsEnabled);
+            AmbassadorsEnabled: ambassadorsEnabled,
+            EmployersEnabled: employersEnabled,
+            CandidatePassportEnabled: candidatePassportEnabled);
     }
 }

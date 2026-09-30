@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -14,6 +15,11 @@ namespace Jobsy.Infrastructure.Services;
 public sealed class TrainingUpskillService : ITrainingUpskillService
 {
     public const string DefaultTrackingSecret = "lobsy-training-tracking-dev";
+
+    private static readonly System.Text.Json.JsonSerializerOptions PreferencesJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     private readonly JobsyDbContext _db;
     private readonly IConfiguration _configuration;
@@ -31,18 +37,29 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
 
     public async Task EnsureDefaultsAsync(CancellationToken cancellationToken = default)
     {
-        if (!await _db.TrainingProviders.AnyAsync(cancellationToken))
+        if (!AllowDemoSeed())
         {
-            foreach (var seed in Seeds())
-            {
-                _db.TrainingProviders.Add(seed);
-            }
-
-            await _db.SaveChangesAsync(cancellationToken);
+            return;
         }
 
-        await EnsureCompetencyWorkshopsAsync(cancellationToken);
-        await EnsureOfferDeepLinksAsync(cancellationToken);
+        await TrainingDemoSeed.EnsureAsync(_db, cancellationToken);
+    }
+
+    private bool AllowDemoSeed()
+    {
+        if (_environment.IsDevelopment())
+        {
+            return true;
+        }
+
+        var name = _environment.EnvironmentName;
+        if (string.Equals(name, "Test", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(name, "Testing", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return _configuration.GetValue("Training:SeedDemoProviders", false);
     }
 
     public async Task<IReadOnlyList<TrainingOfferCardDto>> RecommendAsync(
@@ -84,6 +101,60 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             .ToList();
     }
 
+    public async Task<IReadOnlyList<PassportCourseCardDto>> RecommendPassportAsync(
+        Guid userId,
+        string? searchBlob,
+        IReadOnlyList<string>? searchKeys,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureDefaultsAsync(cancellationToken);
+
+        var keys = searchKeys?.Where(k => !string.IsNullOrWhiteSpace(k)).Select(k => k.Trim()).ToList() ?? [];
+        var learningGoals = await LoadLearningGoalsAsync(userId, cancellationToken);
+        var blob = string.Join(' ', keys.Prepend(searchBlob ?? "").Where(s => !string.IsNullOrWhiteSpace(s)));
+        var fields = TrainingFieldCatalog.Detect(keys.Prepend(searchBlob ?? "").Concat(learningGoals));
+
+        var rows = await _db.TrainingOffers.AsNoTracking()
+            .Include(o => o.Provider)
+            .Where(o => o.IsActive && o.Provider.IsActive && o.ShowInPassport)
+            .ToListAsync(cancellationToken);
+
+        var slots = CourseSlotRules.Pick(
+            rows,
+            new CourseSlotRules.Context(fields, blob, learningGoals));
+        return slots.Select(ToPassportCard).ToList();
+    }
+
+    private async Task<IReadOnlyList<string>> LoadLearningGoalsAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var json = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.PreferencesJson)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            var prefs = System.Text.Json.JsonSerializer.Deserialize<CandidatePreferencesDto>(
+                json,
+                PreferencesJsonOptions);
+            return prefs?.LearningGoals?
+                .Where(g => !string.IsNullOrWhiteSpace(g))
+                .Select(g => g.Trim())
+                .Take(DiscoveryCatalogs.MaxLearningGoals)
+                .ToList() ?? [];
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return [];
+        }
+    }
+
     public async Task<TrainingTrackedLinkDto> TrackAsync(
         Guid userId,
         Guid offerId,
@@ -103,9 +174,17 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         var hash = TrainingTracking.CandidateHash(userId, secret);
         var clickId = Guid.NewGuid();
         var campaignValue = string.IsNullOrWhiteSpace(campaign) ? TrainingTracking.CampaignFit : campaign.Trim();
-        var medium = offer.Provider.Kind == TrainingProviderKind.RegionalPartner ? "partner" : "affiliate";
+        var medium = offer.IsPartner || offer.Provider.Kind == TrainingProviderKind.RegionalPartner
+            ? "partner"
+            : "affiliate";
         var target = TrainingDeepLinkRules.Combine(offer.Provider.BaseUrl, offer.ExternalPath);
-        var outbound = TrainingTracking.AppendParameters(target, hash, clickId, campaignValue, medium);
+        var outbound = TrainingTracking.AppendParameters(
+            target,
+            hash,
+            clickId,
+            campaignValue,
+            medium,
+            offer.AffiliateCode);
         if (!TrainingTracking.LooksSafeOutbound(outbound) || !TrainingDeepLinkRules.IsCourseDeepLink(outbound))
         {
             throw new InvalidOperationException("Ongeldige opleiders-deeplink (geen homepage).");
@@ -232,6 +311,25 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         row.ExternalPath = path;
         row.IsActive = request.IsActive;
         row.SortOrder = request.SortOrder;
+        row.Type = request.Type;
+        row.DurationValue = request.DurationValue;
+        row.DurationUnit = request.DurationUnit;
+        row.Delivery = request.Delivery;
+        row.Location = string.IsNullOrWhiteSpace(request.Location) ? null : request.Location.Trim();
+        row.IsFree = request.IsFree;
+        row.IsPartner = request.IsPartner;
+        row.AffiliateCode = string.IsNullOrWhiteSpace(request.AffiliateCode) ? null : request.AffiliateCode.Trim();
+        row.ShowInPassport = request.ShowInPassport;
+
+        var provider = await _db.TrainingProviders.AsNoTracking()
+            .FirstAsync(p => p.Id == request.ProviderId, cancellationToken);
+        var deepLink = TrainingDeepLinkRules.Combine(provider.BaseUrl, path);
+        var flagError = CourseSlotRules.ValidateFlags(row.IsFree, row.IsPartner, row.AffiliateCode, deepLink);
+        if (flagError is not null)
+        {
+            throw new ArgumentException(flagError);
+        }
+
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
         return ToOfferAdmin(row);
@@ -381,6 +479,23 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             "Zet Training__TrackingSecret op een lange willekeurige geheime waarde.");
     }
 
+    private static PassportCourseCardDto ToPassportCard(CourseSlotRules.Slot slot)
+    {
+        var o = slot.Offer;
+        return new(
+            o.Id,
+            o.Title,
+            o.Provider.Name,
+            o.Type.ToString(),
+            o.DurationValue,
+            o.DurationUnit?.ToString(),
+            o.Delivery.ToString(),
+            o.Location,
+            o.IsFree,
+            o.IsPartner,
+            TrainingTracking.RelFor(o.IsPartner));
+    }
+
     private static TrainingOfferCardDto ToCard(TrainingOffer offer, string? campaign = null)
     {
         var skill = string.Equals(campaign?.Trim(), TrainingTracking.CampaignCompetence, StringComparison.OrdinalIgnoreCase)
@@ -414,359 +529,25 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             provider.Offers.OrderBy(o => o.SortOrder).Select(ToOfferAdmin).ToList());
 
     private static TrainingOfferAdminDto ToOfferAdmin(TrainingOffer offer)
-        => new(offer.Id, offer.ProviderId, offer.Title, offer.FieldsCsv, offer.KeysCsv, offer.ExternalPath, offer.IsActive, offer.SortOrder);
+        => new(
+            offer.Id,
+            offer.ProviderId,
+            offer.Title,
+            offer.FieldsCsv,
+            offer.KeysCsv,
+            offer.ExternalPath,
+            offer.IsActive,
+            offer.SortOrder,
+            offer.Type.ToString(),
+            offer.DurationValue,
+            offer.DurationUnit?.ToString(),
+            offer.Delivery.ToString(),
+            offer.Location,
+            offer.IsFree,
+            offer.IsPartner,
+            offer.AffiliateCode,
+            offer.ShowInPassport);
 
     private static string Csv(string value)
         => "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
-
-    private static IEnumerable<TrainingProvider> Seeds()
-    {
-        var loi = new TrainingProvider
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000001"),
-            Name = "LOI",
-            Kind = TrainingProviderKind.NationalAffiliate,
-            Network = TrainingNetwork.Daisycon,
-            BaseUrl = "https://www.loi.nl/",
-            FieldsCsv = "zorg,techniek,logistiek",
-            Region = "Landelijk",
-            CplEuro = 12m,
-            CpaEuro = 75m,
-            IsActive = true,
-            SortOrder = 10
-        };
-        loi.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000011"),
-            ProviderId = loi.Id,
-            Title = "MBO Zorg & Welzijn (LOI)",
-            FieldsCsv = "zorg",
-            KeysCsv = "zorg,verpleeg,welzijn",
-            ExternalPath = "/opleidingen/mbo/zorg-welzijn",
-            IsActive = true,
-            SortOrder = 1
-        });
-        loi.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000012"),
-            ProviderId = loi.Id,
-            Title = "Techniek & installatie (LOI)",
-            FieldsCsv = "techniek",
-            KeysCsv = "techniek,monteur,install",
-            ExternalPath = "/opleidingen/mbo/techniek-installatie",
-            IsActive = true,
-            SortOrder = 2
-        });
-        loi.Offers.Add(LoiSkillOffer());
-
-        var nti = new TrainingProvider
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000002"),
-            Name = "NTI",
-            Kind = TrainingProviderKind.NationalAffiliate,
-            Network = TrainingNetwork.Awin,
-            BaseUrl = "https://www.nti.nl/",
-            FieldsCsv = "zorg,logistiek,techniek",
-            Region = "Landelijk",
-            CplEuro = 10m,
-            CpaEuro = 70m,
-            IsActive = true,
-            SortOrder = 20
-        };
-        nti.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000021"),
-            ProviderId = nti.Id,
-            Title = "Logistiek & magazijn (NTI)",
-            FieldsCsv = "logistiek",
-            KeysCsv = "logistiek,magazijn,heftruck",
-            ExternalPath = "/opleidingen/logistiek-magazijn",
-            IsActive = true,
-            SortOrder = 1
-        });
-        nti.Offers.Add(NtiSkillOffer());
-
-        var zorg = new TrainingProvider
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000003"),
-            Name = "Zorgcollege Haaglanden",
-            Kind = TrainingProviderKind.RegionalPartner,
-            Network = TrainingNetwork.Direct,
-            BaseUrl = "https://www.rocmondriaan.nl/",
-            FieldsCsv = "zorg",
-            Region = "Den Haag / Westland",
-            IntakeFeeEuro = 35m,
-            StartFeeEuro = 150m,
-            IsActive = true,
-            SortOrder = 1
-        };
-        zorg.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000031"),
-            ProviderId = zorg.Id,
-            Title = "Helpende / Verzorgende IG — Haaglanden",
-            FieldsCsv = "zorg",
-            KeysCsv = "zorg,verpleeg,verzorg,helpende",
-            ExternalPath = "/opleidingen/helpende-verzorgende-ig",
-            IsActive = true,
-            SortOrder = 1
-        });
-
-        var tech = new TrainingProvider
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000004"),
-            Name = "Techniek College Westland",
-            Kind = TrainingProviderKind.RegionalPartner,
-            Network = TrainingNetwork.Direct,
-            BaseUrl = "https://www.technischcollegewestland.nl/",
-            FieldsCsv = "techniek",
-            Region = "Westland",
-            IntakeFeeEuro = 40m,
-            StartFeeEuro = 175m,
-            IsActive = true,
-            SortOrder = 2
-        };
-        tech.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000041"),
-            ProviderId = tech.Id,
-            Title = "Monteur / installatietechniek Westland",
-            FieldsCsv = "techniek",
-            KeysCsv = "techniek,monteur,install,elektro",
-            ExternalPath = "/opleidingen/monteur-installatietechniek",
-            IsActive = true,
-            SortOrder = 1
-        });
-
-        var log = new TrainingProvider
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000005"),
-            Name = "Logistiek Academy Den Haag",
-            Kind = TrainingProviderKind.RegionalPartner,
-            Network = TrainingNetwork.Direct,
-            BaseUrl = "https://www.s-bb.nl/",
-            FieldsCsv = "logistiek",
-            Region = "Den Haag",
-            IntakeFeeEuro = 30m,
-            StartFeeEuro = 140m,
-            IsActive = true,
-            SortOrder = 3
-        };
-        log.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000051"),
-            ProviderId = log.Id,
-            Title = "Magazijn & heftruck — Den Haag",
-            FieldsCsv = "logistiek",
-            KeysCsv = "logistiek,magazijn,heftruck,orderpick",
-            ExternalPath = "/opleidingen/magazijn-heftruck-den-haag",
-            IsActive = true,
-            SortOrder = 1
-        });
-
-        return [zorg, tech, log, SkillsAcademy(), loi, nti];
-    }
-
-    private async Task EnsureCompetencyWorkshopsAsync(CancellationToken cancellationToken)
-    {
-        var academy = SkillsAcademy();
-        if (!await _db.TrainingProviders.AnyAsync(p => p.Id == academy.Id, cancellationToken))
-        {
-            _db.TrainingProviders.Add(academy);
-        }
-        else
-        {
-            var existing = await _db.TrainingOffers
-                .Where(o => o.ProviderId == academy.Id)
-                .Select(o => o.Id)
-                .ToListAsync(cancellationToken);
-            foreach (var offer in academy.Offers)
-            {
-                if (!existing.Contains(offer.Id))
-                {
-                    _db.TrainingOffers.Add(offer);
-                }
-            }
-        }
-
-        await AddOfferIfMissingAsync(LoiSkillOffer(), cancellationToken);
-        await AddOfferIfMissingAsync(NtiSkillOffer(), cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
-    }
-
-    private async Task EnsureOfferDeepLinksAsync(CancellationToken cancellationToken)
-    {
-        var pathById = Seeds()
-            .SelectMany(p => p.Offers)
-            .Concat(SkillsAcademy().Offers)
-            .Concat([LoiSkillOffer(), NtiSkillOffer()])
-            .Where(o => !string.IsNullOrWhiteSpace(o.ExternalPath))
-            .GroupBy(o => o.Id)
-            .ToDictionary(g => g.Key, g => g.First().ExternalPath!);
-
-        var offers = await _db.TrainingOffers
-            .Where(o => o.ExternalPath == null || o.ExternalPath == "" || o.ExternalPath == "/")
-            .ToListAsync(cancellationToken);
-        var dirty = false;
-        foreach (var offer in offers)
-        {
-            if (pathById.TryGetValue(offer.Id, out var path))
-            {
-                offer.ExternalPath = path;
-                offer.UpdatedAtUtc = DateTime.UtcNow;
-                dirty = true;
-            }
-        }
-
-        if (dirty)
-        {
-            await _db.SaveChangesAsync(cancellationToken);
-        }
-    }
-
-    private async Task AddOfferIfMissingAsync(TrainingOffer offer, CancellationToken cancellationToken)
-    {
-        if (await _db.TrainingOffers.AnyAsync(o => o.Id == offer.Id, cancellationToken))
-        {
-            return;
-        }
-
-        if (!await _db.TrainingProviders.AnyAsync(p => p.Id == offer.ProviderId, cancellationToken))
-        {
-            return;
-        }
-
-        _db.TrainingOffers.Add(offer);
-    }
-
-    private static TrainingOffer LoiSkillOffer() => new()
-    {
-        Id = Guid.Parse("a11a0001-0001-4000-8000-000000000013"),
-        ProviderId = Guid.Parse("a11a0001-0001-4000-8000-000000000001"),
-        Title = "Persoonlijke effectiviteit (LOI)",
-        FieldsCsv = TrainingFieldCatalog.Vaardigheden,
-        KeysCsv = "samenwerken,communicatie,resultaatgericht,stressbestendig,innovatie,klantcontact",
-        ExternalPath = "/opleidingen/persoonlijke-effectiviteit",
-        IsActive = true,
-        SortOrder = 3
-    };
-
-    private static TrainingOffer NtiSkillOffer() => new()
-    {
-        Id = Guid.Parse("a11a0001-0001-4000-8000-000000000022"),
-        ProviderId = Guid.Parse("a11a0001-0001-4000-8000-000000000002"),
-        Title = "Communicatie & presenteren (NTI)",
-        FieldsCsv = TrainingFieldCatalog.Vaardigheden,
-        KeysCsv = "communicatie,presenteren,klantcontact,gastvrijheid",
-        ExternalPath = "/opleidingen/communicatie-presenteren",
-        IsActive = true,
-        SortOrder = 2
-    };
-
-    private static TrainingProvider SkillsAcademy()
-    {
-        var academy = new TrainingProvider
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000006"),
-            Name = "Praktijkacademie Haaglanden",
-            Kind = TrainingProviderKind.RegionalPartner,
-            Network = TrainingNetwork.Direct,
-            BaseUrl = "https://www.rocmondriaan.nl/",
-            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
-            Region = "Den Haag / Westland",
-            IntakeFeeEuro = 25m,
-            StartFeeEuro = 90m,
-            IsActive = true,
-            SortOrder = 0
-        };
-        academy.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000061"),
-            ProviderId = academy.Id,
-            Title = "Samenwerken en communiceren op de werkvloer",
-            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
-            KeysCsv = "samenwerken,communicatie,teamoverleg,luisteren",
-            ExternalPath = "/workshops/samenwerken-communiceren",
-            IsActive = true,
-            SortOrder = 1
-        });
-        academy.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000062"),
-            ProviderId = academy.Id,
-            Title = "Afronden en plannen onder druk",
-            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
-            KeysCsv = "resultaatgericht,deadlines,organiseren,afronden",
-            ExternalPath = "/workshops/afronden-plannen",
-            IsActive = true,
-            SortOrder = 2
-        });
-        academy.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000063"),
-            ProviderId = academy.Id,
-            Title = "Kalm blijven bij werkdruk",
-            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
-            KeysCsv = "stressbestendig,weerbaarheid,werkdruk,kalm",
-            ExternalPath = "/workshops/kalm-bij-werkdruk",
-            IsActive = true,
-            SortOrder = 3
-        });
-        academy.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000064"),
-            ProviderId = academy.Id,
-            Title = "Nieuwe manieren van werken",
-            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
-            KeysCsv = "innovatie,probleemoplossen,digitale vaardigheden",
-            ExternalPath = "/workshops/nieuwe-manieren-van-werken",
-            IsActive = true,
-            SortOrder = 4
-        });
-        academy.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000065"),
-            ProviderId = academy.Id,
-            Title = "Klantcontact en presenteren",
-            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
-            KeysCsv = "klantcontact,presenteren,gastvrijheid,verkoop",
-            ExternalPath = "/workshops/klantcontact-presenteren",
-            IsActive = true,
-            SortOrder = 5
-        });
-        academy.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000066"),
-            ProviderId = academy.Id,
-            Title = "Besluiten en tempo op de werkvloer",
-            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
-            KeysCsv = "leiding,besluiten,tempo,aanpakken",
-            ExternalPath = "/workshops/besluiten-tempo",
-            IsActive = true,
-            SortOrder = 6
-        });
-        academy.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000067"),
-            ProviderId = academy.Id,
-            Title = "Kwaliteit en checklists",
-            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
-            KeysCsv = "nauwkeurig,kwaliteit,administratie,checklists",
-            ExternalPath = "/workshops/kwaliteit-checklists",
-            IsActive = true,
-            SortOrder = 7
-        });
-        academy.Offers.Add(new TrainingOffer
-        {
-            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000068"),
-            ProviderId = academy.Id,
-            Title = "Ritme en samenwerken in de ploeg",
-            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
-            KeysCsv = "ritme,samenwerken,teamoverleg,rust",
-            ExternalPath = "/workshops/ritme-samenwerken",
-            IsActive = true,
-            SortOrder = 8
-        });
-        return academy;
-    }
 }

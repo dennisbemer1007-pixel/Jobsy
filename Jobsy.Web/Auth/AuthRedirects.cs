@@ -1,13 +1,18 @@
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Features;
+using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Auth;
 
 public static partial class AuthRedirects
 {
-    /// <summary>First-login onboarding wizard (replaces hoe-werkt-lobsy redirect for new candidates).</summary>
-    public const string CandidateHowToPath = "/candidate/start";
+    /// <summary>
+    /// Classic first-login wizard path (flag OFF). Prefer
+    /// <see cref="OnboardingRoutes.StartPath"/> when flags are known.
+    /// </summary>
+    public const string CandidateHowToPath = OnboardingRoutes.ClassicStartPath;
 
     /// <summary>Guide remains reachable from the (i) menu.</summary>
     public const string CandidateHowToGuidePath = "/candidate/hoe-werkt-lobsy";
@@ -18,7 +23,17 @@ public static partial class AuthRedirects
 
     /// <summary>Post-login landing for a candidate based on first-login how-to flag.</summary>
     public static string CandidatePostLoginUrl(bool showCandidateHowTo)
-        => showCandidateHowTo ? CandidateHowToPath : BanenkaartPath;
+        => CandidatePostLoginUrl(showCandidateHowTo, FeatureFlagSnapshot.Defaults);
+
+    public static string CandidatePostLoginUrl(bool showCandidateHowTo, FeatureFlagSnapshot flags)
+    {
+        if (showCandidateHowTo)
+        {
+            return OnboardingRoutes.StartPath(flags);
+        }
+
+        return flags.EmployersEnabled ? BanenkaartPath : FeatureRoutes.CandidateProfilePath;
+    }
 
     /// <summary>Default authenticated landing for a principal (D13: admin → /admin).</summary>
     public static string DefaultLandingFor(ClaimsPrincipal? user)
@@ -65,7 +80,7 @@ public static partial class AuthRedirects
 
     /// <summary>
     /// Generic landings that may be replaced by the candidate how-to / banenkaart.
-    /// Vacancy (and other explicit) returnUrls are kept.
+    /// Vacancy (and other explicit) returnUrls are kept when employers are ON.
     /// </summary>
     public static bool IsGenericPostLoginLanding(string? url)
     {
@@ -75,21 +90,59 @@ public static partial class AuthRedirects
         }
 
         var path = url.Split('?', '#')[0];
-        return path is "/" or "/home" or "/banen" or "/banenkaart" or "/login";
+        return path is "/" or "/home" or "/banen" or "/banenkaart" or "/login" or "/ontdek" or "/candidate/profile";
+    }
+
+    /// <summary>
+    /// True when the return URL points at an employer/vacancy surface that should fall back
+    /// when employers are OFF.
+    /// </summary>
+    public static bool IsEmployerDependentReturnUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return false;
+        }
+
+        var path = url.Split('?', '#')[0].ToLowerInvariant();
+        return path is "/" or "/banen" or "/banenkaart"
+               || path.StartsWith("/vacancies/", StringComparison.Ordinal)
+               || path.StartsWith("/candidate/match", StringComparison.Ordinal)
+               || path.StartsWith("/candidate/liked", StringComparison.Ordinal)
+               || path.StartsWith("/candidate/shared", StringComparison.Ordinal)
+               || path.StartsWith("/candidate/applications", StringComparison.Ordinal)
+               || path.StartsWith("/candidate/vacancies", StringComparison.Ordinal)
+               || path.StartsWith("/employer/", StringComparison.Ordinal)
+               || path.StartsWith("/werkgever/", StringComparison.Ordinal)
+               || path.StartsWith("/branch/", StringComparison.Ordinal)
+               || path.StartsWith("/register", StringComparison.Ordinal)
+               || path.StartsWith("/vestiging/", StringComparison.Ordinal);
     }
 
     /// <summary>
     /// Preserves an explicit local returnUrl (e.g. <c>/vacancies/{id}</c>).
     /// First-login how-to and the banenkaart only apply for generic landings.
+    /// When employers are OFF, vacancy returnUrls fall back to the home path.
     /// </summary>
     public static string ResolveCandidateReturnUrl(string returnUrl, bool showCandidateHowTo)
+        => ResolveCandidateReturnUrl(returnUrl, showCandidateHowTo, FeatureFlagSnapshot.Defaults);
+
+    public static string ResolveCandidateReturnUrl(
+        string returnUrl,
+        bool showCandidateHowTo,
+        FeatureFlagSnapshot flags)
     {
+        if (!flags.EmployersEnabled && IsEmployerDependentReturnUrl(returnUrl))
+        {
+            return CandidatePostLoginUrl(showCandidateHowTo, flags);
+        }
+
         if (!IsGenericPostLoginLanding(returnUrl))
         {
             return returnUrl;
         }
 
-        return CandidatePostLoginUrl(showCandidateHowTo);
+        return CandidatePostLoginUrl(showCandidateHowTo, flags);
     }
 
     [GeneratedRegex(@"^/[A-Za-z0-9\-._~!$&'()*+,;=:@%/?]*$", RegexOptions.CultureInvariant)]
@@ -106,7 +159,7 @@ public static partial class AuthRedirects
         }
 
         var path = url.Split('?', '#')[0];
-        if (path is "/" or "/banen" or "/login"
+        if (path is "/" or "/banen" or "/login" or "/ontdek"
             || path.StartsWith("/account/login", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/account/logout", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/account/demo-login", StringComparison.OrdinalIgnoreCase))
@@ -202,7 +255,6 @@ public static partial class AuthRedirects
 
     private static bool IsSafeLocalPath(string url)
     {
-        // Must be a single-slash relative path (not protocol-relative //...).
         if (url[0] != '/' || url.StartsWith("//", StringComparison.Ordinal))
         {
             return false;
@@ -214,8 +266,6 @@ public static partial class AuthRedirects
             return false;
         }
 
-        // Reject absolute URLs / scheme tricks before decoding.
-        // Note: on Linux, Uri.TryCreate("/path", Absolute) can succeed as file:// — ignore those.
         if (Uri.TryCreate(url, UriKind.Absolute, out var absolute)
             && absolute.IsAbsoluteUri
             && !string.Equals(absolute.Scheme, "file", StringComparison.OrdinalIgnoreCase))
@@ -228,7 +278,6 @@ public static partial class AuthRedirects
             return false;
         }
 
-        // Reject encoded open-redirect tricks (%2f%2f, %5c, schemes, etc.).
         string decoded;
         try
         {
@@ -256,10 +305,6 @@ public static partial class AuthRedirects
         return !LooksLikeAbsoluteOrScheme(url) && !ContainsEmbeddedScheme(url);
     }
 
-    /// <summary>
-    /// Rejects <c>/javascript:…</c> and similar scheme tricks that are still
-    /// same-origin relative paths but unsafe in HTML attributes.
-    /// </summary>
     private static bool ContainsEmbeddedScheme(string value)
     {
         var trimmed = value.TrimStart('/');

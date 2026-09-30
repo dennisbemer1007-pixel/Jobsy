@@ -42,6 +42,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CompanyEngagementReport> CompanyEngagementReports => Set<CompanyEngagementReport>();
     public DbSet<LenderRegistration> LenderRegistrations => Set<LenderRegistration>();
     public DbSet<CandidateWhoAmIProfile> CandidateWhoAmIProfiles => Set<CandidateWhoAmIProfile>();
+    public DbSet<CandidatePrivatePreferences> CandidatePrivatePreferences => Set<CandidatePrivatePreferences>();
     public DbSet<CandidateCareerPlan> CandidateCareerPlans => Set<CandidateCareerPlan>();
     public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
@@ -746,6 +747,18 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.KeywordsJson).HasMaxLength(1000).IsRequired();
             entity.Property(e => e.InputFingerprint).HasMaxLength(128).IsRequired();
             entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidatePrivatePreferences>(entity =>
+        {
+            entity.ToTable("CandidatePrivatePreferences");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.DislikesJson).HasMaxLength(2000).IsRequired().HasDefaultValue("[]");
+            entity.Property(e => e.CustomDislikesJson).HasMaxLength(2000).IsRequired().HasDefaultValue("[]");
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
@@ -2221,7 +2234,13 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.FieldsCsv).HasMaxLength(200).IsRequired();
             entity.Property(e => e.KeysCsv).HasMaxLength(400).IsRequired();
             entity.Property(e => e.ExternalPath).HasMaxLength(1024);
+            entity.Property(e => e.Location).HasMaxLength(200);
+            entity.Property(e => e.AffiliateCode).HasMaxLength(120);
+            entity.Property(e => e.ShowInPassport).HasDefaultValue(false);
+            entity.Property(e => e.IsFree).HasDefaultValue(false);
+            entity.Property(e => e.IsPartner).HasDefaultValue(false);
             entity.HasIndex(e => e.ProviderId);
+            entity.HasIndex(e => e.ShowInPassport);
             entity.HasOne(e => e.Provider)
                 .WithMany(p => p.Offers)
                 .HasForeignKey(e => e.ProviderId)

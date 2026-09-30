@@ -17,6 +17,11 @@ public sealed partial class JobsyApiClient : IAsyncDisposable
     public const string KompasDnaCacheKey = "me/kompas/dna";
     public const string OnboardingCacheKey = "me/onboarding";
 
+    private static readonly JsonSerializerOptions CaseInsensitiveJson = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly HttpClient _http;
     private readonly MeGetCache? _meCache;
 

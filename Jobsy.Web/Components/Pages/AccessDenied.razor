@@ -1,19 +1,47 @@
 @page "/access-denied"
 @attribute [AllowAnonymous]
+@using Jobsy.Core.Features
+@using Microsoft.AspNetCore.WebUtilities
 @inject CultureState Culture
+@inject NavigationManager Navigation
 
-<PageTitle>@Culture["Page.AccessDeniedTitle"]</PageTitle>
+<PageTitle>@(_employersOff ? Culture["Access.EmployersOffTitle"] : Culture["Page.AccessDeniedTitle"])</PageTitle>
 
 <div class="login-page">
     <div class="login-card">
-        <h1>@Culture["Access.Title"]</h1>
-        <p class="login-lead">
-            @Culture["Access.Lead"]
-        </p>
-        <p>
-            <a class="auth-link" href="/home">@Culture["Access.ToHome"]</a>
-            ·
-            <a class="auth-link" href="/login">@Culture["Auth.Login"]</a>
-        </p>
+        @if (_employersOff)
+        {
+            <h1>@Culture["Access.EmployersOffTitle"]</h1>
+            <p class="login-lead">
+                @Culture["Access.EmployersOffLead"]
+            </p>
+            <p>
+                <a class="auth-link" href="/account/logout">@Culture["Access.EmployersOffLogout"]</a>
+            </p>
+        }
+        else
+        {
+            <h1>@Culture["Access.Title"]</h1>
+            <p class="login-lead">
+                @Culture["Access.Lead"]
+            </p>
+            <p>
+                <a class="auth-link" href="/home">@Culture["Access.ToHome"]</a>
+                ·
+                <a class="auth-link" href="/login">@Culture["Auth.Login"]</a>
+            </p>
+        }
     </div>
 </div>
+
+@code {
+    private bool _employersOff;
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        _employersOff = query.TryGetValue("reason", out var reason)
+                        && string.Equals(reason.ToString(), "employers-off", StringComparison.OrdinalIgnoreCase);
+    }
+}

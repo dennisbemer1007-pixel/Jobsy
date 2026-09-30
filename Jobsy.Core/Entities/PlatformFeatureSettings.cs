@@ -80,6 +80,16 @@ public class PlatformFeatureSettings
     /// Existing data is kept.
     /// </summary>
     public bool AmbassadorsEnabled { get; set; }
+    /// <summary>
+    /// When false, employer/vacancy surfaces are hidden and blocked (self-discovery only). Default true.
+    /// Existing data is never deleted when toggled off.
+    /// </summary>
+    public bool EmployersEnabled { get; set; } = true;
+
+    /// <summary>
+    /// When true, candidates see Mijn Paspoort instead of the classic profile. Default false.
+    /// </summary>
+    public bool CandidatePassportEnabled { get; set; }
 
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

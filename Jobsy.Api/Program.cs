@@ -61,9 +61,11 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddScoped<Jobsy.Api.Admin.IAdminAuditContext, Jobsy.Api.Admin.AdminAuditContext>();
 builder.Services.AddScoped<Jobsy.Api.Admin.AdminAuditFilter>();
+builder.Services.AddScoped<Jobsy.Api.Filters.FeatureGateFilter>();
 builder.Services.AddControllers(options =>
     {
         options.Filters.AddService<Jobsy.Api.Admin.AdminAuditFilter>();
+        options.Filters.AddService<Jobsy.Api.Filters.FeatureGateFilter>();
     })
     .AddJsonOptions(options =>
     {

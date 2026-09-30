@@ -7,12 +7,14 @@ using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/employer/candidate-insights")]
 [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public sealed class CandidateInsightsController : ControllerBase
 {
     private static readonly HashSet<string> ForbiddenIdentityParams = new(StringComparer.OrdinalIgnoreCase)

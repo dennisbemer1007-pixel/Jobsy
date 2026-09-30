@@ -1,0 +1,76 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<fieldset class="profile-roles profile-chip-grid">
+    <legend>@Culture["Profile.Hobbies"]</legend>
+    @foreach (var code in DiscoveryCatalogs.HobbyCodes)
+    {
+        var selected = Editor.Hobbies.Contains(code);
+        <button type="button"
+                class="kompas-chip @(selected ? "is-selected" : null)"
+                aria-pressed="@(selected ? "true" : "false")"
+                @onclick="() => Editor.ToggleHobby(code, !selected)">
+            @Culture[DiscoveryCatalogs.HobbyLabelKey(code)]
+        </button>
+    }
+</fieldset>
+
+<div class="profile-learning-goals">
+    <label>@Culture["Profile.LearningGoals"]</label>
+    @for (var i = 0; i < Editor.LearningGoals.Count; i++)
+    {
+        var index = i;
+        <div class="profile-language-row">
+            <input type="text"
+                   maxlength="@DiscoveryCatalogs.MaxLearningGoalLength"
+                   value="@Editor.LearningGoals[index]"
+                   @oninput="e => OnGoalInput(index, e.Value?.ToString())" />
+            <button type="button" class="btn-compact" @onclick="() => RemoveGoal(index)">×</button>
+        </div>
+    }
+    @if (Editor.LearningGoals.Count < DiscoveryCatalogs.MaxLearningGoals)
+    {
+        <button type="button" class="passport-card__fill-link" @onclick="AddGoal">
+            + @Culture["Profile.LearningGoalPlaceholder"]
+        </button>
+    }
+</div>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    private void AddGoal()
+    {
+        if (Editor.LearningGoals.Count >= DiscoveryCatalogs.MaxLearningGoals)
+        {
+            return;
+        }
+
+        Editor.LearningGoals.Add("");
+        Editor.Notify();
+    }
+
+    private void RemoveGoal(int index)
+    {
+        if (index < 0 || index >= Editor.LearningGoals.Count)
+        {
+            return;
+        }
+
+        Editor.LearningGoals.RemoveAt(index);
+        Editor.Notify();
+    }
+
+    private void OnGoalInput(int index, string? value)
+    {
+        if (index < 0 || index >= Editor.LearningGoals.Count)
+        {
+            return;
+        }
+
+        Editor.LearningGoals[index] = value ?? "";
+        Editor.Notify();
+    }
+}

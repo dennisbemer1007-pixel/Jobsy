@@ -30,7 +30,9 @@ public sealed record PlatformFeatureSnapshot(
     int SchoolRetentionCutoffMonth = 7,
     int SchoolRetentionCutoffDay = 31,
     /// <summary>Default false — Ambassadeur role parked.</summary>
-    bool AmbassadorsEnabled = false);
+    bool AmbassadorsEnabled = false,
+    bool EmployersEnabled = true,
+    bool CandidatePassportEnabled = false);
 
 /// <summary>
 /// Partial platform-feature update. Null fields keep the current value (nullable = keep).
@@ -64,4 +66,6 @@ public sealed record PlatformFeatureUpdate(
     /// <summary>Null = keep existing.</summary>
     int? SchoolRetentionCutoffDay = null,
     /// <summary>Null = keep existing.</summary>
-    bool? AmbassadorsEnabled = null);
+    bool? AmbassadorsEnabled = null,
+    bool? EmployersEnabled = null,
+    bool? CandidatePassportEnabled = null);

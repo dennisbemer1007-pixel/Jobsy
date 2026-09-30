@@ -1,0 +1,155 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+@if (Slots.Count == 0)
+{
+    return;
+}
+
+<section class="passport-course" aria-labelledby="@_titleId">
+    <div class="passport-course__head">
+        <p class="passport-course__eyebrow" id="@_titleId">
+            <span aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+            @Culture[string.IsNullOrWhiteSpace(EyebrowKey) ? "Passport.Course.GrowFurther" : EyebrowKey]
+        </p>
+        @if (Slots.Any(s => s.IsPartner))
+        {
+            <p class="passport-course__note muted">@Culture["Passport.Course.PartnerDisclosure"]</p>
+        }
+    </div>
+
+    <ul class="passport-course__list">
+        @foreach (var slot in Slots)
+        {
+            <li class="passport-course__item @(slot.IsFree ? "passport-course__item--free" : "passport-course__item--partner")">
+                <div class="passport-course__line1">
+                    @if (slot.IsFree)
+                    {
+                        <span class="passport-course__pill passport-course__pill--free">
+                            <span aria-hidden="true">✓</span> @Culture["Passport.Course.Free"]
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="passport-course__pill passport-course__pill--partner">
+                            @Culture["Passport.Course.Partner"]
+                        </span>
+                    }
+                    <strong class="passport-course__title">@slot.Title</strong>
+                </div>
+                <p class="passport-course__meta muted">@FormatMeta(slot)</p>
+                <p class="passport-course__why">
+                    @if (slot.IsFree)
+                    {
+                        <span class="passport-course__why-icon" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+                        @Culture.Format("Passport.Course.FreeWhy", SkillLabel)
+                    }
+                    else
+                    {
+                        <span class="passport-course__why-icon" aria-hidden="true">✓</span>
+                        @Culture["Passport.Course.PartnerWhy"]
+                    }
+                </p>
+                <button type="button"
+                        class="btn-compact @(slot.IsFree ? "btn-compact--primary" : null)"
+                        disabled="@_busy"
+                        rel="@slot.Rel"
+                        @onclick="() => OpenAsync(slot)">
+                    @Culture["Passport.Course.Open"]
+                </button>
+            </li>
+        }
+    </ul>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <p class="state-message" role="alert">@_message</p>
+    }
+</section>
+
+@code {
+    [Parameter] public string EyebrowKey { get; set; } = "Passport.Course.GrowFurther";
+    [Parameter] public string SkillLabel { get; set; } = "";
+    [Parameter] public string Campaign { get; set; } = TrainingTracking.CampaignCompetence;
+    [Parameter] public IReadOnlyList<PassportCourseCard> Slots { get; set; } = [];
+
+    private readonly string _titleId = "passport-course-" + Guid.NewGuid().ToString("N")[..8];
+    private bool _busy;
+    private string? _message;
+
+    private string FormatMeta(PassportCourseCard slot)
+    {
+        var typeKey = Enum.TryParse<TrainingOfferType>(slot.Type, true, out var t)
+            ? TrainingDurationFormat.TypeKey(t)
+            : "Passport.Course.Type.Cursus";
+        var type = Culture[typeKey];
+
+        var duration = "";
+        if (slot.DurationValue is int dv
+            && Enum.TryParse<TrainingDurationUnit>(slot.DurationUnit, true, out var unit))
+        {
+            var unitKey = TrainingDurationFormat.UnitKey(unit);
+            if (unitKey is not null)
+            {
+                duration = Culture.Format(unitKey, dv);
+            }
+        }
+
+        var place = slot.Delivery.Equals("Online", StringComparison.OrdinalIgnoreCase)
+                    || string.IsNullOrWhiteSpace(slot.Location)
+            ? Culture["Passport.Course.Delivery.Online"]
+            : slot.Location!;
+
+        var parts = new List<string> { type };
+        if (!string.IsNullOrWhiteSpace(duration))
+        {
+            parts.Add(duration);
+        }
+
+        parts.Add(place);
+        parts.Add(slot.ProviderName);
+        return string.Join(" · ", parts);
+    }
+
+    private async Task OpenAsync(PassportCourseCard slot)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var tracked = await Api.TrackTrainingOfferAsync(slot.OfferId, Campaign);
+            if (string.IsNullOrWhiteSpace(tracked.Url)
+                || tracked.Url.Contains('@', StringComparison.Ordinal)
+                || !TrainingDeepLinkRules.IsCourseDeepLink(tracked.Url))
+            {
+                _message = Culture["Common.Error"];
+                return;
+            }
+
+            if (slot.IsPartner)
+            {
+                await Js.InvokeVoidAsync("open", tracked.Url, "_blank", "noopener,noreferrer");
+            }
+            else
+            {
+                Navigation.NavigateTo(tracked.Url, forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = string.IsNullOrWhiteSpace(ex.Message) ? Culture["Common.Error"] : ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

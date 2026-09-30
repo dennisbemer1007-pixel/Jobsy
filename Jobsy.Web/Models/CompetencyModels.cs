@@ -488,4 +488,28 @@ public sealed class TrainingOfferAdmin
     public string? ExternalPath { get; set; }
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; }
+    public string Type { get; set; } = "Cursus";
+    public int? DurationValue { get; set; }
+    public string? DurationUnit { get; set; }
+    public string Delivery { get; set; } = "Online";
+    public string? Location { get; set; }
+    public bool IsFree { get; set; }
+    public bool IsPartner { get; set; }
+    public string? AffiliateCode { get; set; }
+    public bool ShowInPassport { get; set; }
+}
+
+public sealed class PassportCourseCard
+{
+    public Guid OfferId { get; set; }
+    public string Title { get; set; } = "";
+    public string ProviderName { get; set; } = "";
+    public string Type { get; set; } = "Cursus";
+    public int? DurationValue { get; set; }
+    public string? DurationUnit { get; set; }
+    public string Delivery { get; set; } = "Online";
+    public string? Location { get; set; }
+    public bool IsFree { get; set; }
+    public bool IsPartner { get; set; }
+    public string Rel { get; set; } = "noopener";
 }

@@ -1,5 +1,7 @@
 @page "/salesmanager"
 @attribute [Authorize(Roles = "SalesManager")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject NavigationManager Navigation
 
 @* Legacy alias — middleware also 301s; thin page keeps UAT/route index green after 09 cleanup. *@

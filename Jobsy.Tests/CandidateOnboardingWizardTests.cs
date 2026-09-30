@@ -220,7 +220,10 @@ public class CandidateOnboardingWizardTests
         Assert.Contains("@page \"/candidate/start\"", wizard, StringComparison.Ordinal);
         Assert.Contains("GratisDnaMerge.TryMergeAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("TryAutoAdvanceEmptyMiniStepAsync", wizard, StringComparison.Ordinal);
-        Assert.Contains("LikertScaleQuestion", wizard, StringComparison.Ordinal);
+        Assert.Contains("OnboardingMiniTest", wizard, StringComparison.Ordinal);
+        Assert.Contains("PersonalStep", wizard, StringComparison.Ordinal);
+        var mini = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Onboarding/OnboardingMiniTest.razor"));
+        Assert.Contains("LikertScaleQuestion", mini, StringComparison.Ordinal);
         Assert.Contains("SaveOnboardingDreamJobAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("CompleteMyOnboardingAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("lobsyPwaInstall", wizard, StringComparison.Ordinal);
@@ -230,6 +233,7 @@ public class CandidateOnboardingWizardTests
 
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Layout/MainLayout.razor"));
         Assert.Contains("candidate/start", layout, StringComparison.Ordinal);
+        Assert.Contains("candidate/ontdekkingsreis", layout, StringComparison.Ordinal);
         Assert.Contains("<GratisDnaMerge", layout, StringComparison.Ordinal);
 
         var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateHomePanel.razor"));

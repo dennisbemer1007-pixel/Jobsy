@@ -1,6 +1,8 @@
 @page "/register/activate"
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture

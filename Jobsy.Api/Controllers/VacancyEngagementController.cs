@@ -9,11 +9,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/vacancies/{vacancyId:guid}")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class VacancyEngagementController : ControllerBase
 {
     private readonly JobsyDbContext _db;

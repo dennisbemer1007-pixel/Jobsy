@@ -1,0 +1,59 @@
+@namespace Jobsy.Web.Components.Pages.Candidate
+@using Jobsy.Core.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+
+@if (_show)
+{
+    <nav class="candidate-job-list-tabs admin-sublinks" aria-label="@Culture["Nav.Applications"]">
+        <a class="admin-sublink @(IsApplications ? "admin-sublink--active" : null)"
+           href="/candidate/applications"
+           aria-current="@(IsApplications ? "page" : null)">
+            @Culture["Nav.ApplicationsTab"]
+        </a>
+        <a class="admin-sublink @(IsSaved ? "admin-sublink--active" : null)"
+           href="/candidate/liked"
+           aria-current="@(IsSaved ? "page" : null)">
+            @Culture["Nav.SavedTab"]
+            @if (SavedCount is int n && n > 0)
+            {
+                <span class="candidate-job-list-tabs__count" aria-hidden="true">@n</span>
+            }
+        </a>
+    </nav>
+}
+
+@code {
+    /// <summary>Optional badge count for the Bewaard tab (moved from the old nav item).</summary>
+    [Parameter] public int? SavedCount { get; set; }
+
+    private bool _show;
+
+    private bool IsApplications
+    {
+        get
+        {
+            var path = Navigation.ToBaseRelativePath(Navigation.Uri).TrimStart('/');
+            return path.StartsWith("candidate/applications", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    private bool IsSaved
+    {
+        get
+        {
+            var path = Navigation.ToBaseRelativePath(Navigation.Uri).TrimStart('/');
+            return path.StartsWith("candidate/liked", StringComparison.OrdinalIgnoreCase)
+                   || path.StartsWith("candidate/shared", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var flags = await FeatureFlags.GetAsync();
+        _show = !RoleNavCatalog.ShowsSavedInNav(flags);
+    }
+}

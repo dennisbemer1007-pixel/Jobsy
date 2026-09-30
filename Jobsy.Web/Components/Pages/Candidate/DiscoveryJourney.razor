@@ -1,0 +1,2246 @@
+@page "/candidate/ontdekkingsreis"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.CandidatePassport, FallbackPath = "/candidate/start")]
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Discovery
+@using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Components.Shared.Questionnaire
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject IGeocodingClient Geocoder
+@inject IFeatureFlags FeatureFlags
+@inject GratisDnaMergeService GratisDnaMerge
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+<PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
+
+<div class="journey">
+    @if (_loading)
+    {
+        <p class="journey__loading" aria-busy="true">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <JourneyScene Depth="_depth" IsMobile="false" />
+        <JourneyScene Depth="_depth" IsMobile="true" />
+
+        <div class="journey-mprog journey-only-mobile" role="group" aria-label="@MobileProgressAria">
+            <p class="journey-mprog__t">
+                <b>@MobileProgressLabel</b>
+                @if (_screen is not "start")
+                {
+                    <span class="muted">· @CurrentStepTitle</span>
+                }
+                <span class="journey-mprog__sp"></span>
+                @if (_saveStatus == "saved" && _screen is not "start")
+                {
+                    <span class="journey-mprog__ok">✓ @Culture["Discovery.Saved.Short"]</span>
+                }
+            </p>
+            <div class="journey-mtrack">
+                @for (var k = 0; k < 10; k++)
+                {
+                    <i class="@(SegmentClass(k))"></i>
+                }
+                <span class="journey-mtrack__mk" style="left:@MarkerLeft%">
+                    <JourneyLobster PlatesShed="@_platesShed" Size="28" Mobile="true" Label="@Culture["Discovery.Lobster.Aria"]" />
+                </span>
+            </div>
+        </div>
+
+        <div class="journey-stage">
+            <div class="journey-only-desktop">
+                <JourneyProgressRail CurrentStep="@RailStep" IsEnd="@IsLightScreen" SaveStatus="@_saveStatus" />
+            </div>
+
+            <section class="journey-step card" aria-live="polite">
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <p class="state-message error">@_error</p>
+                }
+
+                @if (_screen == "start")
+                {
+                    <p class="journey-step__eyebrow">@Culture["Discovery.Eyebrow"]</p>
+                    <h1 tabindex="-1" @ref="_heading">@Culture.Format("Discovery.Start.Title", Draft.FirstName)</h1>
+                    <p class="journey-step__lead">@_startLead</p>
+                    <ul class="journey-zones">
+                        <li>
+                            <div>
+                                <b>@Culture["Discovery.Zone.Coast"]</b>
+                                <small>@Culture["Discovery.Start.CoastLead"]</small>
+                            </div>
+                            <span>@Culture["Discovery.Start.CoastTime"]</span>
+                        </li>
+                        <li>
+                            <div>
+                                <b>@Culture["Discovery.Zone.Rocks"]</b>
+                                <small>@Culture["Discovery.Start.RocksLead"]</small>
+                            </div>
+                            <span>@Culture["Discovery.Start.RocksTime"]</span>
+                        </li>
+                        <li>
+                            <div>
+                                <b>@Culture["Discovery.Zone.Deep"]</b>
+                                <small>@Culture["Discovery.Start.DeepLead"]</small>
+                            </div>
+                            <span>@Culture["Discovery.Start.DeepTime"]</span>
+                        </li>
+                    </ul>
+                    <p class="journey-hint">@Culture["Discovery.Start.HintAnswers"]</p>
+                    <p class="journey-hint">@Culture["Discovery.Start.HintSaved"]</p>
+                    <p class="journey-hint">@Culture["Discovery.Start.HintLanguage"]</p>
+                    <div class="journey-step__foot">
+                        <span class="journey-step__sp"></span>
+                        <button type="button" class="btn-compact btn-compact--primary" @onclick="BeginAsync">
+                            @Culture["Discovery.Start.Cta"]
+                        </button>
+                    </div>
+                }
+                else if (_screen == "toestemming")
+                {
+                    <p class="journey-step__eyebrow">@Culture["Discovery.Consent.Eyebrow"]</p>
+                    <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" />
+                    <div class="journey-step__foot">
+                        <button type="button" class="btn-compact" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                        <span class="journey-step__sp"></span>
+                        <button type="button" class="journey-later" @onclick="DeclineConsentAndFinishAsync">@Culture["Discovery.Consent.Decline"]</button>
+                        <button type="button" class="btn-compact btn-compact--primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
+                            @Culture["Onboarding.Consent.Cta"]
+                        </button>
+                    </div>
+                }
+                else if (_countedStep == 1)
+                {
+                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 1)</p>
+                    <PersonalStep Draft="Draft"
+                                  AddressChanged="AddressChanged"
+                                  BirthDateChanged="BirthDateChanged"
+                                  ShowCity="ShowCity"
+                                  SelectAddress="SelectAddress"
+                                  ShowWhatsApp="_employersEnabled"
+                                  EmployersEnabled="_employersEnabled"
+                                  UseDiscoveryPostcodeHint="true" />
+                    @RenderFooter(showBack: false)
+                }
+                else if (_countedStep == 2)
+                {
+                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 2)</p>
+                    <AvailabilityStep Draft="Draft"
+                                      Presets="PresetItems"
+                                      TogglePreset="TogglePreset"
+                                      ToggleFineTune="ToggleFineTune"
+                                      SetMinHours="SetMinHoursAsync"
+                                      SetMaxHours="SetMaxHoursAsync"
+                                      ManualAvailability="ManualAvailabilityAsync"
+                                      ToggleAvailability="ToggleAvailability"
+                                      ResetPresets="ResetPresets" />
+                    <TransportStep Draft="Draft"
+                                   ShowHeading="false"
+                                   ShowDrivingLicenses="true"
+                                   SelectTransport="SelectTransport"
+                                   SelectTravelTime="SelectTravelTime"
+                                   ShowCustomTravel="ShowCustomTravel"
+                                   ToggleLicense="ToggleLicense" />
+                    @RenderFooter()
+                }
+                else if (_countedStep == 3)
+                {
+                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Rocks"] · @Culture.Format("Discovery.StepOf", 3)</p>
+                    <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step3.Heading"]</h1>
+                    <p class="journey-step__lead">@Culture["Discovery.Step3.Lead"]</p>
+                    <div class="journey-body">
+                        <section>
+                            <h2 class="journey-q">@Culture["Discovery.Step3.Worked"]</h2>
+                            <p class="journey-qs">@Culture["Discovery.Step3.WorkedHint"]</p>
+                            <WorkHistoryStep Draft="Draft"
+                                             ShowHeading="false"
+                                             AddJob="AddJob"
+                                             RemoveJob="RemoveJob"
+                                             SetJobStart="OnSetJobStart"
+                                             SetJobEnd="OnSetJobEnd" />
+                        </section>
+                        <section>
+                            <h2 class="journey-q">@Culture["Discovery.Step3.EmployerWant"]</h2>
+                            <p class="journey-qs">@Culture["Discovery.Step3.EmployerWantHint"]</p>
+                            <div class="journey-chips" role="group" aria-label="@Culture["Discovery.Step3.EmployerWant"]">
+                                @foreach (var code in DiscoveryCatalogs.EmployerPreferenceCodes)
+                                {
+                                    var selected = Draft.EmployerPreferences.Contains(code);
+                                    <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
+                                            aria-pressed="@selected"
+                                            @onclick="() => ToggleEmployerPref(code)">
+                                        @Culture[DiscoveryCatalogs.EmployerLabelKey(code)]
+                                    </button>
+                                }
+                            </div>
+                        </section>
+                        <details class="journey-more">
+                            <summary>
+                                @Culture["Discovery.Step3.Field"]
+                                <span class="journey-more__sp"></span>
+                                <small>@RolesSummary</small>
+                            </summary>
+                            <div class="journey-more__body journey-check-grid">
+                                @foreach (var role in WorkTypeLabels.All)
+                                {
+                                    <label>
+                                        <input type="checkbox"
+                                               checked="@Draft.Roles.Contains(role)"
+                                               @onchange="e => ToggleRole(role, (bool)(e.Value ?? false))" />
+                                        @UiLabels.WorkType(Culture, role)
+                                    </label>
+                                }
+                            </div>
+                        </details>
+                    </div>
+                    @RenderFooter()
+                }
+                else if (_countedStep == 4)
+                {
+                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Rocks"] · @Culture.Format("Discovery.StepOf", 4)</p>
+                    <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step4.Heading"]</h1>
+                    <p class="journey-step__lead">@Culture["Discovery.Step4.Lead"]</p>
+                    <div class="journey-body">
+                        <EducationStep Draft="Draft" ShowHeading="false" SelectEducation="SelectEducation" />
+                        <DreamJobStep Draft="Draft"
+                                      TitleKey="Discovery.Step4.DreamTitle"
+                                      AsSubsection="true"
+                                      ShowLead="false"
+                                      ChooseDream="ChooseDream"
+                                      ChooseOwnDream="ChooseOwnDream"
+                                      DreamKeyDown="DreamKeyDown" />
+                        <section>
+                            <h2 class="journey-q">@Culture["Discovery.Step4.LearnWant"]</h2>
+                            @for (var i = 0; i < Draft.LearningGoals.Count; i++)
+                            {
+                                var index = i;
+                                <div class="journey-goal-row">
+                                    <input maxlength="@DiscoveryCatalogs.MaxLearningGoalLength"
+                                           value="@Draft.LearningGoals[index]"
+                                           placeholder="@Culture["Profile.LearningGoalPlaceholder"]"
+                                           @oninput="e => SetLearningGoal(index, e.Value?.ToString())" />
+                                    <button type="button" class="btn-compact" @onclick="() => RemoveLearningGoal(index)">×</button>
+                                </div>
+                            }
+                            @if (Draft.LearningGoals.Count < DiscoveryCatalogs.MaxLearningGoals)
+                            {
+                                <button type="button" class="journey-chip journey-chip--add" @onclick="AddLearningGoal">
+                                    + @Culture["Profile.LearningGoalPlaceholder"]
+                                </button>
+                            }
+                        </section>
+                        <details class="journey-more">
+                            <summary>
+                                @Culture["Discovery.Step4.CertificatesSummary"]
+                                <span class="journey-more__sp"></span>
+                                <small>@CertificatesSummary</small>
+                            </summary>
+                            <div class="journey-more__body">
+                                @for (var i = 0; i < Draft.Certificates.Count; i++)
+                                {
+                                    var index = i;
+                                    <div class="journey-cert-row">
+                                        <input type="number" min="1950" max="2100"
+                                               placeholder="@Culture["Profile.CertificateYear"]"
+                                               value="@Draft.Certificates[index].Year"
+                                               @onchange="e => SetCertYear(index, e.Value?.ToString())" />
+                                        <input type="text" maxlength="200"
+                                               placeholder="@Culture["Profile.CertificateName"]"
+                                               value="@Draft.Certificates[index].Name"
+                                               @oninput="e => SetCertName(index, e.Value?.ToString())" />
+                                        <button type="button" class="btn-compact" @onclick="() => RemoveCertificate(index)">×</button>
+                                    </div>
+                                }
+                                <button type="button" class="journey-chip journey-chip--add" @onclick="AddCertificate">
+                                    + @Culture["Profile.AddCertificate"]
+                                </button>
+                            </div>
+                        </details>
+                        <details class="journey-more">
+                            <summary>
+                                @Culture["Discovery.Step4.LanguagesSummary"]
+                                <span class="journey-more__sp"></span>
+                                <small>@LanguagesSummary</small>
+                            </summary>
+                            <div class="journey-more__body">
+                                <fieldset>
+                                    <legend class="journey-q">@Culture["Profile.DutchLevel"]</legend>
+                                    @foreach (var level in DiscoveryCatalogs.DutchLevels)
+                                    {
+                                        var levelCode = level;
+                                        <label class="journey-radio-row">
+                                            <input type="radio" name="journey-dutch"
+                                                   checked="@(string.Equals(Draft.DutchLevel, levelCode, StringComparison.OrdinalIgnoreCase))"
+                                                   @onchange="() => SetDutchLevel(levelCode)" />
+                                            <span>
+                                                <strong>@Culture[DiscoveryCatalogs.DutchLabelKey(levelCode)]</strong>
+                                                <span class="muted"> @Culture[DiscoveryCatalogs.DutchExplainKey(levelCode)]</span>
+                                            </span>
+                                        </label>
+                                    }
+                                </fieldset>
+                                <fieldset>
+                                    <legend class="journey-q">@Culture["Profile.SpokenLanguages"]</legend>
+                                    @foreach (var lang in Draft.SpokenLanguages.ToList())
+                                    {
+                                        var code = lang.Code;
+                                        <div class="journey-lang-row">
+                                            <span>@LanguageDisplay(code)</span>
+                                            <select value="@(lang.Level ?? "")"
+                                                    @onchange="e => SetSpokenLevel(code, e.Value?.ToString())">
+                                                <option value="">@Culture["Profile.LanguageLevel"]</option>
+                                                @foreach (var level in DiscoveryCatalogs.DutchLevels)
+                                                {
+                                                    <option value="@level">@Culture[DiscoveryCatalogs.DutchLabelKey(level)]</option>
+                                                }
+                                            </select>
+                                            <button type="button" class="btn-compact" @onclick="() => RemoveSpokenLanguage(code)">×</button>
+                                        </div>
+                                    }
+                                    @if (Draft.SpokenLanguages.Count < DiscoveryCatalogs.MaxSpokenLanguages)
+                                    {
+                                        <label>
+                                            @Culture["Profile.AddLanguage"]
+                                            <select value="" @onchange="OnAddLanguage">
+                                                <option value="">—</option>
+                                                @foreach (var langCode in AvailableLanguageCodes())
+                                                {
+                                                    <option value="@langCode">@LanguageDisplay(langCode)</option>
+                                                }
+                                            </select>
+                                        </label>
+                                    }
+                                </fieldset>
+                            </div>
+                        </details>
+                    </div>
+                    @RenderFooter()
+                }
+                else if (_countedStep == 5)
+                {
+                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Rocks"] · @Culture.Format("Discovery.StepOf", 5)</p>
+                    <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step5.Heading"]</h1>
+                    <p class="journey-step__lead">@Culture["Discovery.Step5.Lead"]</p>
+                    <div class="journey-body">
+                        <section>
+                            <h2 class="journey-q">@Culture["Discovery.Step5.Hobbies"]</h2>
+                            <p class="journey-qs">@Culture["Discovery.Step5.HobbiesHint"]</p>
+                            <div class="journey-chips">
+                                @foreach (var code in DiscoveryCatalogs.HobbyCodes)
+                                {
+                                    var selected = Draft.Hobbies.Contains(code);
+                                    <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
+                                            aria-pressed="@selected"
+                                            @onclick="() => ToggleHobby(code)">
+                                        @Culture[DiscoveryCatalogs.HobbyLabelKey(code)]
+                                    </button>
+                                }
+                                @for (var i = 0; i < Draft.HobbyFreeText.Count; i++)
+                                {
+                                    var index = i;
+                                    <div class="journey-goal-row">
+                                        <input class="journey-custom-input"
+                                               maxlength="@DiscoveryCatalogs.MaxHobbyFreeTextLength"
+                                               value="@Draft.HobbyFreeText[index]"
+                                               placeholder="@Culture["Discovery.Dislike.SomethingElse"]"
+                                               @oninput="e => SetHobbyFree(index, e.Value?.ToString())" />
+                                        <button type="button" class="btn-compact" @onclick="() => RemoveHobbyFree(index)">×</button>
+                                    </div>
+                                }
+                                @if (Draft.HobbyFreeText.Count < 3)
+                                {
+                                    <button type="button" class="journey-chip journey-chip--add" @onclick="AddHobbyFree">
+                                        + @Culture["Discovery.Dislike.SomethingElse"]
+                                    </button>
+                                }
+                            </div>
+                        </section>
+                        <section>
+                            <label>
+                                <span class="journey-q">@Culture["Discovery.Step5.AboutMe"]</span>
+                                <p class="journey-qs">@Culture["Discovery.Step5.AboutMeHint"]</p>
+                                <textarea class="journey-about" maxlength="500" rows="4"
+                                          @bind="Draft.AboutMe" @bind:event="oninput" @bind:after="ScheduleProfileSave"></textarea>
+                                <p class="journey-about-count">@Culture.Format("Discovery.Step5.AboutMeCount", (Draft.AboutMe ?? "").Length)</p>
+                            </label>
+                        </section>
+                    </div>
+                    @RenderFooter()
+                }
+                else if (_countedStep == 6)
+                {
+                    <p class="journey-step__eyebrow">
+                        @Culture["Discovery.Zone.Rocks"] · @Culture.Format("Discovery.StepOf", 6)
+                        <span class="journey-skip-badge">@Culture["Discovery.Step6.SkipBadge"]</span>
+                    </p>
+                    <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step6.Heading"]</h1>
+                    <p class="journey-step__lead">
+                        <FeatureVisible Feature="PlatformFeature.Employers">
+                            @Culture["Discovery.Step6.Lead"]
+                        </FeatureVisible>
+                        <FeatureVisible Feature="PlatformFeature.Employers" WhenEnabled="false">
+                            @Culture["Discovery.Step6.LeadEmployersOff"]
+                        </FeatureVisible>
+                    </p>
+                    <div class="journey-body">
+                        <section>
+                            <h2 class="journey-q">@Culture["Discovery.Step6.Question"]</h2>
+                            <p class="journey-qs">@Culture["Discovery.Step6.QuestionHint"]</p>
+                            <div class="journey-chips" role="group" aria-label="@Culture["Discovery.Step6.Question"]">
+                                @foreach (var code in DiscoveryCatalogs.DislikeCodes)
+                                {
+                                    var selected = Draft.Dislikes.Contains(code);
+                                    <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
+                                            aria-pressed="@selected"
+                                            @onclick="() => ToggleDislike(code)">
+                                        @Culture[DiscoveryCatalogs.DislikeLabelKey(code)]
+                                    </button>
+                                }
+                                @for (var i = 0; i < Draft.CustomDislikes.Count; i++)
+                                {
+                                    var index = i;
+                                    <div class="journey-goal-row">
+                                        <input class="journey-custom-input"
+                                               maxlength="@DiscoveryCatalogs.MaxCustomDislikeLength"
+                                               value="@Draft.CustomDislikes[index]"
+                                               placeholder="@Culture["Discovery.Dislike.CustomPlaceholder"]"
+                                               @oninput="e => SetCustomDislike(index, e.Value?.ToString())" />
+                                        <button type="button" class="btn-compact" @onclick="() => RemoveCustomDislike(index)">×</button>
+                                    </div>
+                                }
+                                @if (Draft.CustomDislikes.Count < DiscoveryCatalogs.MaxCustomDislikes)
+                                {
+                                    <button type="button" class="journey-chip journey-chip--add" @onclick="AddCustomDislike">
+                                        + @Culture["Discovery.Dislike.SomethingElse"]
+                                    </button>
+                                }
+                            </div>
+                        </section>
+                        <p class="journey-private-note">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 3l18 18M10.6 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.5 9.5 7-.4 1-1.2 2.3-2.4 3.6M6.4 6.4C4.5 7.8 3.2 9.8 2.5 12c1 2.5 4.5 7 9.5 7 1.6 0 3-.4 4.3-1.1" />
+                            </svg>
+                            <FeatureVisible Feature="PlatformFeature.Employers">
+                                @Culture["Discovery.Dislike.PrivateNote"]
+                            </FeatureVisible>
+                            <FeatureVisible Feature="PlatformFeature.Employers" WhenEnabled="false">
+                                @Culture["Discovery.Dislike.PrivateNoteEmployersOff"]
+                            </FeatureVisible>
+                        </p>
+                    </div>
+                    @RenderFooter(showSkip: true)
+                }
+                else if (_screen == "overview")
+                {
+                    <JourneyOverview Rows="_overviewRows"
+                                     Tests="_overviewTests"
+                                     OnRowAction="OnOverviewRowAsync"
+                                     OnDeepen="OnOverviewDeepenAsync" />
+                }
+                else if (_screen == "klaar")
+                {
+                    <JourneyEndScreen PartialEnd="_partialEnd"
+                                      Eyebrow="@EndEyebrow"
+                                      Title="@EndTitle"
+                                      Lead="@EndLead"
+                                      Hint="@EndHint"
+                                      DisplayName="@($"{Draft.FirstName} {Draft.LastName}".Trim())"
+                                      Initials="@EndInitials"
+                                      MemberNumber="@_memberNumber"
+                                      StrengthFact="_endStrength"
+                                      WorkFact="_endWork"
+                                      ValueFact="_endValue"
+                                      Deepen="GoToOverviewAsync"
+                                      ViewPassport="GoToPassportAsync" />
+                }
+                else if (_screen == "shed")
+                {
+                    <JourneyShedMoment Step="_shedStep"
+                                       TestName="@ShedTestName"
+                                       ImpressionLines="_shedLines"
+                                       TestTabs="ShedTabs"
+                                       Options="_shedOptions"
+                                       SelectedLevel="_shedSelectedLevel"
+                                       FullyDone="_shedFullyDone"
+                                       PreferReducedMotion="_preferReducedMotion"
+                                       PrimaryLabel="@ShedPrimaryLabel"
+                                       SelectLevel="OnShedSelectLevel"
+                                       Continue="OnShedContinueAsync"
+                                       Later="LaterAsync" />
+                }
+                else if (_countedStep is >= 7 and <= 10)
+                {
+                    <p class="journey-step__eyebrow">
+                        @Culture["Discovery.Zone.Deep"] ·
+                        <span class="journey-only-desktop">@Culture.Format("Discovery.StepOf", _countedStep)</span>
+                        <span class="journey-only-mobile">@Culture.Format("Discovery.TestOf", _countedStep - 6)</span>
+                    </p>
+                    <OnboardingMiniTest Step="_countedStep"
+                                        CurrentQuestion="_currentQuestion"
+                                        TestTabs="MiniTestTabs"
+                                        Questions="_miniQuestions"
+                                        Answers="_miniAnswers"
+                                        InputPrefix="@($"journey-{_countedStep}-")"
+                                        TitleKey="@JourneyTestFlow.TestTitleKey(_countedStep)"
+                                        LeadKey="Discovery.Test.Lead"
+                                        HintKey="@JourneyTestFlow.TestHintKey(_countedStep)"
+                                        ShowHint="@(_targetLevel <= OnboardingWizardCatalog.MiniLevelCount)"
+                                        ShowQuestionCounter="true"
+                                        Answer="OnMiniAnswer"
+                                        ExpandQuestion="ExpandQuestion"
+                                        ResolveQuestionText="QuestionText" />
+                    @RenderFooter(showBack: !_reviewMode)
+                }
+            </section>
+
+            <div class="journey-lz journey-only-desktop @(IsLightScreen ? "is-rising" : null)">
+                <p class="journey-bubble">@LobsterSay</p>
+                <JourneyLobster PlatesShed="@_platesShed"
+                                NewShell="@IsLightScreen"
+                                FallingPlate="@(_screen == "shed" && !_preferReducedMotion ? _shedStep - 1 : null)"
+                                Label="@Culture["Discovery.Lobster.Aria"]" />
+                @if (!IsLightScreen)
+                {
+                    <span class="journey-lz__shadow" aria-hidden="true"></span>
+                }
+            </div>
+            <div class="journey-mlob journey-only-mobile">
+                <JourneyLobster PlatesShed="@_platesShed"
+                                NewShell="@IsLightScreen"
+                                Mobile="true"
+                                Label="@Culture["Discovery.Lobster.Aria"]" />
+                <p class="journey-bubble">@LobsterSay</p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly OnboardingProfileDraft Draft = new();
+    private static readonly AvailabilityStep.Preset[] PresetItems =
+    [
+        new("direct", "Onboarding.Preset.Direct", "Onboarding.Preset.Direct.Lead"),
+        new("school", "Onboarding.Preset.School", "Onboarding.Preset.School.Lead"),
+        new("weekend", "Onboarding.Preset.Weekend", "Onboarding.Preset.Weekend.Lead"),
+        new("evening", "Onboarding.Preset.Evening", "Onboarding.Preset.Evening.Lead"),
+        new("office", "Onboarding.Preset.Office", "Onboarding.Preset.Office.Lead"),
+        new("holiday", "Onboarding.Preset.Holiday", "Onboarding.Preset.Holiday.Lead"),
+        new("parttime", "Onboarding.Preset.Parttime", "Onboarding.Preset.Parttime.Lead"),
+        new("fulltime", "Onboarding.Preset.Fulltime", "Onboarding.Preset.Fulltime.Lead")
+    ];
+    private static readonly TestConsentStep.TestTab[] ConsentTabs =
+    [
+        new(7, "Onboarding.Test.Competency", "Onboarding.Test.Competency.Lead"),
+        new(8, "Onboarding.Test.Career", "Onboarding.Test.Career.Lead"),
+        new(9, "Onboarding.Test.Culture", "Onboarding.Test.Culture.Lead"),
+        new(10, "Onboarding.Test.Values", "Onboarding.Test.Values.Lead")
+    ];
+    private static readonly OnboardingMiniTest.TestTab[] MiniTestTabs = ConsentTabs
+        .Select(t => new OnboardingMiniTest.TestTab(t.Step, t.Title, t.Lead)).ToArray();
+
+    private bool _loading = true;
+    private bool _busy;
+    private bool _employersEnabled = true;
+    private bool _miniArrivedViaBack;
+    private string _screen = "start";
+    private int _countedStep;
+    private int _depth;
+    private int _currentQuestion;
+    private string _saveStatus = "idle";
+    private string? _error;
+    private string _startLead = "";
+    private OnboardingState? _state;
+    private ElementReference _heading;
+    private CancellationTokenSource? _saveCts;
+    private CancellationTokenSource? _privateCts;
+    private CancellationTokenSource? _geocodeCts;
+    private CancellationTokenSource? _dreamCts;
+    private QuestionnaireAutosave? _autosave;
+    private readonly Dictionary<int, int> _miniAnswers = new();
+    private readonly Dictionary<int, int> _serverAnswers = new();
+    private readonly HashSet<int> _lockedIds = [];
+    private List<OnboardingMiniTest.MiniQuestion> _miniQuestions = [];
+    private int _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
+    private bool _reviewMode;
+    private bool _partialEnd;
+    private bool _preferReducedMotion;
+    private bool _shedFullyDone;
+    private int _shedStep = 7;
+    private int _shedSelectedLevel = OnboardingWizardCatalog.MiniLevelCount;
+    private int _answeredCount;
+    private string _memberNumber = "";
+    private string? _endStrength;
+    private string? _endWork;
+    private string? _endValue;
+    private List<string> _shedLines = [];
+    private List<JourneyShedMoment.DepthOption> _shedOptions = [];
+    private List<JourneyOverview.OverviewRow> _overviewRows = [];
+    private List<JourneyOverview.TestRow> _overviewTests = [];
+    private static readonly JourneyShedMoment.TestTab[] ShedTabs =
+    [
+        new(7, "Onboarding.Test.Competency"),
+        new(8, "Onboarding.Test.Career"),
+        new(9, "Onboarding.Test.Culture"),
+        new(10, "Onboarding.Test.Values")
+    ];
+
+    private bool IsLightScreen => _screen is "klaar" or "overview";
+
+    private int _platesShed => IsLightScreen
+        ? 10
+        : _screen == "shed"
+            ? _shedStep
+            : Math.Max(RailStep - 1, 0);
+    private int RailStep => _screen switch
+    {
+        "toestemming" => 6,
+        "shed" => _shedStep + 1,
+        "klaar" or "overview" => 11,
+        _ => _countedStep
+    };
+
+    private string CurrentStepTitle => _screen switch
+    {
+        "toestemming" => Culture["Discovery.Consent.Eyebrow"],
+        "shed" => Culture["Discovery.Shed.Title"],
+        "klaar" => Culture["Discovery.End.Eyebrow"],
+        "overview" => Culture["Discovery.Overview.Title"],
+        _ when _countedStep is >= 1 and <= 10 => Culture[JourneyCatalog.Steps[_countedStep - 1].TitleKey],
+        _ => Culture["Discovery.Eyebrow"]
+    };
+
+    private string LobsterSay => _screen == "shed"
+        ? Culture["Discovery.Shed.Lobster"]
+        : Culture[JourneyCatalog.SayKey(_depth)];
+
+    private string ShedTestName => Culture[OnboardingWizardCatalog.TestNameKey(
+        OnboardingWizardCatalog.TestKindForStep(_shedStep) ?? OnboardingWizardCatalog.OnboardingTestKind.Competency)];
+
+    private string ShedPrimaryLabel
+    {
+        get
+        {
+            if (_shedFullyDone || _shedSelectedLevel <= OnboardingWizardCatalog.ReachedLevel(_answeredCount,
+                    OnboardingWizardCatalog.TestKindForStep(_shedStep)!.Value))
+            {
+                return _shedStep >= 10
+                    ? Culture["Discovery.Shed.ToLight"]
+                    : Culture.Format("Discovery.Shed.NextTest", Culture[OnboardingWizardCatalog.TestNameKey(
+                        OnboardingWizardCatalog.TestKindForStep(_shedStep + 1) ?? OnboardingWizardCatalog.OnboardingTestKind.Career)]);
+            }
+
+            return Culture["Discovery.Shed.DiveDeeper"];
+        }
+    }
+
+    private string EndEyebrow => _partialEnd
+        ? Culture["Discovery.End.PartialEyebrow"]
+        : Culture["Discovery.End.Eyebrow"];
+
+    private string EndTitle => _partialEnd
+        ? Culture.Format("Discovery.End.PartialTitle", Draft.FirstName)
+        : Culture.Format("Discovery.End.Title", Draft.FirstName);
+
+    private string EndLead => _partialEnd
+        ? Culture["Discovery.End.PartialLead"]
+        : _employersEnabled
+            ? Culture["Discovery.End.Lead"]
+            : Culture["Discovery.End.LeadEmployersOff"];
+
+    private string EndHint
+    {
+        get
+        {
+            var count = _state?.Impression?.MatchingVacancyCount ?? 0;
+            if (_employersEnabled && count > 0)
+            {
+                return Culture.Format("Discovery.End.HintMatches", count);
+            }
+
+            return Culture["Discovery.End.HintFirst"];
+        }
+    }
+
+    private string EndInitials
+    {
+        get
+        {
+            var a = string.IsNullOrWhiteSpace(Draft.FirstName) ? "" : Draft.FirstName.Trim()[0].ToString().ToUpperInvariant();
+            var b = string.IsNullOrWhiteSpace(Draft.LastName) ? "" : Draft.LastName.Trim()[0].ToString().ToUpperInvariant();
+            return string.IsNullOrWhiteSpace(a + b) ? "?" : a + b;
+        }
+    }
+
+    private string MobileProgressLabel => _screen switch
+    {
+        "start" => Culture["Discovery.Rail.StartCountShort"],
+        "klaar" or "overview" => Culture["Discovery.Rail.DoneCountShort"],
+        _ => Culture.Format("Discovery.Rail.StepCount", Math.Max(Math.Min(RailStep, 10), 1))
+    };
+
+    private string MobileProgressAria => $"{MobileProgressLabel}, {_platesShed} lagen eraf";
+    private string MarkerLeft => _screen switch
+    {
+        "start" => "2%",
+        "klaar" or "overview" => "95%",
+        _ => $"{(Math.Max(Math.Min(RailStep, 10), 1) - 0.5) / 10 * 100:0.0}%"
+    };
+
+    private string RolesSummary => Draft.Roles.Count == 0
+        ? ""
+        : string.Join(", ", Draft.Roles.Select(r => UiLabels.WorkType(Culture, r)).Take(3));
+
+    private string CertificatesSummary
+    {
+        get
+        {
+            var names = Draft.Certificates.Where(c => !string.IsNullOrWhiteSpace(c.Name)).Select(c => c.Name!).Take(2).ToList();
+            return names.Count == 0 ? "" : string.Join(", ", names);
+        }
+    }
+
+    private string LanguagesSummary
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(Draft.DutchLevel))
+            {
+                parts.Add(Culture[DiscoveryCatalogs.DutchLabelKey(Draft.DutchLevel)]);
+            }
+
+            parts.AddRange(Draft.SpokenLanguages.Select(l => LanguageDisplay(l.Code)).Take(3));
+            return string.Join(", ", parts);
+        }
+    }
+
+    private bool CanNext => _screen == "toestemming"
+        ? Draft.ConsentRequested
+        : _countedStep switch
+        {
+            1 => !string.IsNullOrWhiteSpace(Draft.FirstName)
+                 && !string.IsNullOrWhiteSpace(Draft.LastName)
+                 && Draft.BirthDate is not null
+                 && ((Draft.HomeLat is not null && Draft.HomeLng is not null) || !string.IsNullOrWhiteSpace(Draft.City)),
+            2 => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0
+                 && !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
+            >= 7 and <= 10 => _miniQuestions.All(q => _miniAnswers.ContainsKey(q.Id)),
+            _ => true
+        };
+
+    private RenderFragment RenderFooter(bool showBack = true, bool showSkip = false) => __builder =>
+    {
+        <div class="journey-step__foot">
+            @if (showBack)
+            {
+                <button type="button" class="btn-compact" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+            }
+            <span class="journey-step__sp"></span>
+            @if (showSkip)
+            {
+                <button type="button" class="journey-later" @onclick="SkipAsync">@Culture["Discovery.Skip"]</button>
+            }
+            @if (_reviewMode)
+            {
+                <button type="button" class="journey-later" @onclick="ShowOverviewAsync">@Culture["Discovery.Overview.Back"]</button>
+                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="NextAsync">
+                    @Culture["Discovery.Overview.Save"]
+                </button>
+            }
+            else
+            {
+                <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
+                <button type="button" class="btn-compact btn-compact--primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
+                    @Culture["Onboarding.Next"]
+                </button>
+            }
+        </div>
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            _preferReducedMotion = await Js.InvokeAsync<bool>("eval", "window.matchMedia('(prefers-reduced-motion: reduce)').matches");
+        }
+        catch { /* optional */ }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
+        try
+        {
+            var flags = await FeatureFlags.GetAsync();
+            _employersEnabled = flags.EmployersEnabled;
+        }
+        catch
+        {
+            _employersEnabled = true;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            await GratisDnaMerge.TryMergeAsync();
+            var onboardingTask = Api.GetMyOnboardingAsync();
+            var profileTask = Api.GetMyProfileAsync();
+            var privateTask = Api.GetMyPrivatePreferencesAsync();
+            var dreamTask = Api.GetCareerPathAsync();
+            await Task.WhenAll(onboardingTask, profileTask, privateTask, dreamTask);
+            _state = await onboardingTask ?? new OnboardingState { CurrentStep = 1, ShouldShow = true };
+            ApplyProfile(await profileTask);
+            ApplyPrivate(await privateTask);
+            var dream = await dreamTask;
+            if (!string.IsNullOrWhiteSpace(dream?.DreamTitle))
+            {
+                Draft.Dream = dream!.DreamTitle;
+            }
+
+            _startLead = _employersEnabled
+                ? Culture["Discovery.Start.Lead"]
+                : Culture["Discovery.Start.LeadEmployersOff"];
+
+            ParseQueryOrState();
+            if (_state.IsComplete && !IsLightScreen)
+            {
+                var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(
+                    Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+                if (!q.ContainsKey("stap"))
+                {
+                    await ShowOverviewAsync();
+                    return;
+                }
+            }
+            if (_screen != "start")
+            {
+                await MarkStartedAsync();
+                if (_countedStep is >= 7 and <= 10 && Draft.HasConsent)
+                {
+                    await PrepareMiniAsync();
+                    await TryAutoAdvanceEmptyMiniStepAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ParseQueryOrState()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("stap", out var stapVals))
+        {
+            ApplyScreen(stapVals.FirstOrDefault() ?? "start");
+            return;
+        }
+
+        var step = Math.Clamp(_state?.CurrentStep ?? 1, 1, 10);
+        var showStart = step == 1
+            && (_state?.Steps.Count == 0
+                || _state!.Steps.All(item => item.Step == 1 && item.CompletedAtUtc is null));
+        ApplyScreen(showStart ? "start" : step.ToString());
+    }
+
+    private void ApplyScreen(string stap)
+    {
+        _screen = string.IsNullOrWhiteSpace(stap) ? "start" : stap.Trim().ToLowerInvariant();
+        _reviewMode = false;
+        if (_screen == "start")
+        {
+            _countedStep = 0;
+            _depth = 0;
+            return;
+        }
+
+        if (_screen == "toestemming")
+        {
+            _countedStep = 6;
+            _depth = 6;
+            return;
+        }
+
+        if (_screen == "klaar")
+        {
+            _countedStep = 10;
+            _depth = 11;
+            return;
+        }
+
+        if (_screen == "shed")
+        {
+            _depth = Math.Clamp(_shedStep, 7, 10);
+            return;
+        }
+
+        if (_screen == "overview")
+        {
+            _countedStep = 10;
+            _depth = 11;
+            return;
+        }
+
+        if (int.TryParse(_screen, out var n))
+        {
+            _countedStep = Math.Clamp(n, 1, 10);
+            _screen = _countedStep.ToString();
+            _depth = _countedStep;
+            return;
+        }
+
+        _countedStep = 1;
+        _screen = "1";
+        _depth = 1;
+    }
+
+    private void ApplyProfile(MeProfile? profile)
+    {
+        if (profile is null) return;
+        if (profile.Id != Guid.Empty)
+        {
+            _memberNumber = PassportMemberNumber.Format(profile.Id);
+        }
+        Draft.FirstName = profile.FirstName ?? "";
+        Draft.LastName = profile.LastName ?? "";
+        Draft.Phone = profile.PhoneNumber ?? "";
+        Draft.WhatsAppAllowed = profile.WhatsAppContactAllowed;
+        Draft.BirthDate = profile.DateOfBirth;
+        if (Draft.BirthDate is { } date)
+        {
+            Draft.BirthDay = date.Day.ToString();
+            Draft.BirthMonth = date.Month.ToString();
+            Draft.BirthYear = date.Year.ToString();
+        }
+
+        Draft.HasConsent = profile.TestAiConsentAt is not null;
+        Draft.HomeLat = profile.HomeLatitude;
+        Draft.HomeLng = profile.HomeLongitude;
+        var preferences = profile.Preferences ?? new();
+        SplitAddress(preferences.HomeAddress);
+        Draft.MinHours = preferences.MinHoursPerWeek ?? 8;
+        Draft.MaxHours = preferences.MaxHoursPerWeek ?? 24;
+        Draft.MaxTravel = preferences.MaxTravelMinutes ?? 30;
+        Draft.Transport = preferences.PreferredTransport is null
+            ? ""
+            : TransportLabels.Canonical(preferences.PreferredTransport);
+        Draft.Immediate = profile.AvailableFromDate is null;
+        Draft.AvailableFrom = profile.AvailableFromDate;
+        Draft.Presets.Clear();
+        foreach (var preset in preferences.AvailabilityPresets.Where(AvailabilityPresetRules.IsKnown))
+        {
+            Draft.Presets.Add(preset);
+        }
+
+        Draft.PresetsOverridden = preferences.AvailabilityPresetsOverridden == true;
+        Draft.Availability.Clear();
+        foreach (var (day, parts) in preferences.Availability)
+        {
+            foreach (var part in parts) Draft.Availability.Add($"{day}:{part}");
+        }
+
+        Draft.DrivingLicenses.Clear();
+        foreach (var license in preferences.DrivingLicenses ?? [])
+        {
+            foreach (var code in DrivingLicenseLabels.Split(license))
+            {
+                Draft.DrivingLicenses.Add(code);
+            }
+        }
+
+        Draft.NoWork = preferences.NoWorkExperience == true;
+        Draft.Jobs.Clear();
+        Draft.Jobs.AddRange(preferences.Employers.Take(3));
+        var education = preferences.Educations.FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(education))
+        {
+            var parts = education.Split('–', 2, StringSplitOptions.TrimEntries);
+            Draft.Education = parts[0];
+            Draft.EducationDirection = parts.Length > 1 ? parts[1] : preferences.EducationDirection ?? "";
+        }
+
+        Draft.AboutMe = preferences.AboutMe;
+        Draft.DutchLevel = preferences.DutchLevel;
+        Draft.Certificates.Clear();
+        Draft.Certificates.AddRange(preferences.Certificates ?? []);
+        Draft.LearningGoals.Clear();
+        Draft.LearningGoals.AddRange((preferences.LearningGoals ?? [])
+            .Where(g => !string.IsNullOrWhiteSpace(g))
+            .Take(DiscoveryCatalogs.MaxLearningGoals));
+        Draft.EmployerPreferences.Clear();
+        foreach (var code in preferences.EmployerPreferences ?? [])
+        {
+            if (DiscoveryCatalogs.IsKnownEmployerPreference(code))
+            {
+                Draft.EmployerPreferences.Add(DiscoveryCatalogs.CanonicalEmployer(code)!);
+            }
+        }
+
+        Draft.Roles.Clear();
+        foreach (var role in preferences.Roles ?? [])
+        {
+            var label = WorkTypeLabels.Expand(WorkTypeLabels.Parse(role)).FirstOrDefault()
+                        ?? WorkTypeLabels.All.FirstOrDefault(b => string.Equals(b, role, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(label)) Draft.Roles.Add(label);
+        }
+
+        Draft.Hobbies.Clear();
+        Draft.HobbyFreeText.Clear();
+        foreach (var hobby in preferences.Hobbies ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(hobby)) continue;
+            if (DiscoveryCatalogs.IsKnownHobby(hobby))
+            {
+                Draft.Hobbies.Add(DiscoveryCatalogs.CanonicalHobby(hobby)!);
+            }
+            else
+            {
+                Draft.HobbyFreeText.Add(hobby.Trim());
+            }
+        }
+
+        Draft.SpokenLanguages.Clear();
+        foreach (var lang in preferences.SpokenLanguages ?? [])
+        {
+            var code = DiscoveryCatalogs.CanonicalLanguage(lang.Code);
+            if (code is null) continue;
+            Draft.SpokenLanguages.Add(new CandidateLanguage { Code = code, Level = lang.Level });
+        }
+    }
+
+    private void ApplyPrivate(CandidatePrivatePreferences? prefs)
+    {
+        Draft.Dislikes.Clear();
+        Draft.CustomDislikes.Clear();
+        if (prefs is null) return;
+        foreach (var d in prefs.Dislikes ?? [])
+        {
+            if (DiscoveryCatalogs.IsKnownDislike(d))
+            {
+                Draft.Dislikes.Add(DiscoveryCatalogs.CanonicalDislike(d)!);
+            }
+        }
+
+        Draft.CustomDislikes.AddRange((prefs.CustomDislikes ?? [])
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Take(DiscoveryCatalogs.MaxCustomDislikes));
+    }
+
+    private async Task BeginAsync()
+    {
+        _countedStep = 1;
+        _screen = "1";
+        _depth = 1;
+        NavigateStep("1");
+        await MarkStartedAsync();
+    }
+
+    private async Task MarkStartedAsync()
+    {
+        if (_countedStep < 1 || _screen == "toestemming") return;
+        try
+        {
+            _saveStatus = "saving";
+            _state = await Api.SaveMyOnboardingProgressAsync(_countedStep);
+            _saveStatus = "saved";
+        }
+        catch
+        {
+            _saveStatus = "error";
+        }
+    }
+
+    private async Task NextAsync()
+    {
+        if (!CanNext || _busy) return;
+        _busy = true;
+        _error = null;
+        _miniArrivedViaBack = false;
+        try
+        {
+            if (_screen == "toestemming")
+            {
+                await AcceptConsentAsync();
+                return;
+            }
+
+            await FlushAsync();
+            if (_countedStep == 4) await SaveDreamAsync();
+            if (_countedStep == 6) await FlushPrivateAsync();
+            if (_countedStep is >= 7 and <= 10 && _autosave is not null) await _autosave.FlushAsync();
+
+            if (_countedStep == 6)
+            {
+                _state = await Api.SaveMyOnboardingProgressAsync(6, stepCompleted: true);
+                _saveStatus = "saved";
+                if (!Draft.HasConsent)
+                {
+                    GoToConsent();
+                    return;
+                }
+
+                await GoToCountedStepAsync(7);
+                return;
+            }
+
+            if (_countedStep is >= 7 and <= 10)
+            {
+                if (_reviewMode)
+                {
+                    await FlushTestSaveAsync(completed: false);
+                    await ShowOverviewAsync();
+                    return;
+                }
+
+                await FlushTestSaveAsync(completed: false);
+                await ShowShedAsync(_countedStep);
+                return;
+            }
+
+            var next = Math.Min(10, _countedStep + 1);
+            await GoToCountedStepAsync(next, markPreviousCompleted: true);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _saveStatus = "error";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SkipAsync()
+    {
+        if (_busy || _countedStep != 6) return;
+        _busy = true;
+        try
+        {
+            await FlushPrivateAsync();
+            _state = await Api.SaveMyOnboardingProgressAsync(6, stepSkipped: true);
+            _saveStatus = "saved";
+            if (!Draft.HasConsent)
+            {
+                GoToConsent();
+                return;
+            }
+
+            await GoToCountedStepAsync(7);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _saveStatus = "error";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void GoToConsent()
+    {
+        _screen = "toestemming";
+        _countedStep = 6;
+        _depth = 6;
+        NavigateStep("toestemming");
+    }
+
+    private async Task GoToCountedStepAsync(int step, bool markPreviousCompleted = false)
+    {
+        _countedStep = step;
+        _screen = step.ToString();
+        _depth = step;
+        if (markPreviousCompleted || step >= 1)
+        {
+            _state = await Api.SaveMyOnboardingProgressAsync(step, stepCompleted: true);
+            _saveStatus = "saved";
+        }
+
+        NavigateStep(_screen);
+        if (step is >= 7 and <= 10)
+        {
+            if (!_reviewMode && _targetLevel < OnboardingWizardCatalog.MiniLevelCount)
+            {
+                _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
+            }
+
+            // Fresh step from previous: start at mini unless already deeper from shed.
+            if (markPreviousCompleted)
+            {
+                _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
+            }
+
+            await PrepareMiniAsync();
+            await TryAutoAdvanceEmptyMiniStepAsync();
+        }
+    }
+
+    private async Task ShowShedAsync(int step)
+    {
+        _shedStep = step;
+        _screen = "shed";
+        _depth = step;
+        var kind = OnboardingWizardCatalog.TestKindForStep(step)!.Value;
+        _answeredCount = await CountAnsweredAsync(kind);
+        _shedFullyDone = JourneyTestFlow.IsFullyDone(_answeredCount, kind);
+        _shedSelectedLevel = JourneyTestFlow.DefaultSelectedLevel(_answeredCount, kind);
+        _shedOptions = JourneyTestFlow.BuildDepthOptions(kind, _answeredCount)
+            .Select(o => new JourneyShedMoment.DepthOption(o.Level, o.TitleKey, o.SubKey, o.Dots, o.Disabled))
+            .ToList();
+        await RefreshImpressionAsync();
+        _shedLines = JourneyTestFlow.ImpressionLinesForTest(
+            kind, _state?.Impression, k => Culture[k], " " + Culture["Discovery.Shed.Provisional"]).ToList();
+        NavigateStep("shed");
+        StateHasChanged();
+    }
+
+    private Task OnShedSelectLevel(int level)
+    {
+        _shedSelectedLevel = level;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnShedContinueAsync()
+    {
+        if (_busy) return;
+        _busy = true;
+        try
+        {
+            var kind = OnboardingWizardCatalog.TestKindForStep(_shedStep)!.Value;
+            var reached = OnboardingWizardCatalog.ReachedLevel(_answeredCount, kind);
+            if (!_shedFullyDone && _shedSelectedLevel > reached)
+            {
+                _targetLevel = _shedSelectedLevel;
+                _countedStep = _shedStep;
+                _screen = _shedStep.ToString();
+                _depth = _shedStep;
+                NavigateStep(_screen);
+                await PrepareMiniAsync();
+                return;
+            }
+
+            // Persist completion flag for full depth; partial stays incomplete.
+            await FlushTestSaveAsync(completed: _answeredCount >= OnboardingWizardCatalog.FullLevelCount(kind));
+            _state = await Api.SaveMyOnboardingProgressAsync(_shedStep, stepCompleted: true);
+            if (_shedStep >= 10)
+            {
+                await ShowEndAsync(partial: false);
+                return;
+            }
+
+            await GoToCountedStepAsync(_shedStep + 1);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _saveStatus = "error";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ShowEndAsync(bool partial)
+    {
+        _partialEnd = partial;
+        _screen = "klaar";
+        _depth = 11;
+        _countedStep = partial ? 6 : 10;
+        NavigateStep("klaar");
+        _state = await Api.SaveMyOnboardingProgressAsync(partial ? 6 : 10, stepCompleted: true, finishReached: true);
+        _state = await Api.CompleteMyOnboardingAsync();
+        await RefreshImpressionAsync();
+        var facts = JourneyTestFlow.EndFacts(_state?.Impression);
+        _endStrength = facts.Strength;
+        _endWork = facts.Work;
+        _endValue = facts.Value;
+        StateHasChanged();
+    }
+
+    private async Task DeclineConsentAndFinishAsync()
+    {
+        if (_busy) return;
+        _busy = true;
+        try
+        {
+            await ShowEndAsync(partial: true);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ShowOverviewAsync()
+    {
+        _screen = "overview";
+        _depth = 11;
+        _countedStep = 10;
+        await BuildOverviewAsync();
+        // Overview has no stap — clear query for focus-mode off
+        var uri = Navigation.Uri.Split('?', '#')[0];
+        Navigation.NavigateTo(uri, replace: true);
+        StateHasChanged();
+    }
+
+    private Task GoToOverviewAsync() => ShowOverviewAsync();
+
+    private Task GoToPassportAsync()
+    {
+        Navigation.NavigateTo("/candidate/paspoort?tab=dna");
+        return Task.CompletedTask;
+    }
+
+    private async Task RefreshImpressionAsync()
+    {
+        try
+        {
+            _state = await Api.GetMyOnboardingAsync() ?? _state;
+        }
+        catch { /* keep */ }
+    }
+
+    private async Task<int> CountAnsweredAsync(OnboardingWizardCatalog.OnboardingTestKind kind)
+    {
+        Dictionary<string, int>? answers = kind switch
+        {
+            OnboardingWizardCatalog.OnboardingTestKind.Competency => (await Api.GetMyCompetenciesAsync())?.Answers,
+            OnboardingWizardCatalog.OnboardingTestKind.Career => (await Api.GetMyCareerInterestsAsync())?.Answers,
+            OnboardingWizardCatalog.OnboardingTestKind.Culture => (await Api.GetMyCultureAsync())?.Answers,
+            _ => (await Api.GetMyValuesAsync())?.Answers
+        };
+        return answers?.Count(a => a.Value is >= 1 and <= 5) ?? 0;
+    }
+
+    private async Task FlushTestSaveAsync(bool completed)
+    {
+        if (_autosave is not null) await _autosave.FlushAsync();
+        var merged = new Dictionary<int, int>(_serverAnswers);
+        foreach (var a in _miniAnswers) merged[a.Key] = a.Value;
+        switch (_countedStep)
+        {
+            case 7: await Api.SaveMyCompetenciesAsync(merged, completed); break;
+            case 8: await Api.SaveMyCareerInterestsAsync(merged, completed); break;
+            case 9: await Api.SaveMyCultureAsync(merged, completed); break;
+            case 10: await Api.SaveMyValuesAsync(merged, completed); break;
+        }
+    }
+
+    private async Task BuildOverviewAsync()
+    {
+        _overviewRows = [];
+        foreach (var step in JourneyCatalog.Steps.Take(6))
+        {
+            var ev = _state?.Steps.FirstOrDefault(s => s.Step == step.Number);
+            var isNew = step.Number is >= 3 and <= 6 && ev?.CompletedAtUtc is null && ev?.SkippedAtUtc is null
+                        && (_state?.WizardVersion ?? 3) < OnboardingWizardCatalog.WizardVersionV3;
+            // Completed v2 users: steps 3–6 not filled in v3 terms → Nieuw
+            if (_state?.IsComplete == true && step.Number is >= 3 and <= 6)
+            {
+                var filled = ev?.CompletedAtUtc is not null || ev?.SkippedAtUtc is not null;
+                // Heuristic: if wizard was completed on v2, treat empty discovery fields as Nieuw
+                if (!filled || (_state.WizardVersion < OnboardingWizardCatalog.WizardVersionV3 && !filled))
+                {
+                    isNew = !filled;
+                }
+            }
+
+            string status;
+            string cls;
+            if (ev?.SkippedAtUtc is not null)
+            {
+                status = Culture["Discovery.Overview.Skipped"];
+                cls = "is-skipped";
+            }
+            else if (ev?.CompletedAtUtc is not null)
+            {
+                status = Culture["Discovery.Overview.Done"];
+                cls = "is-done";
+            }
+            else if (isNew)
+            {
+                status = Culture["Discovery.Overview.New"];
+                cls = "is-new";
+            }
+            else
+            {
+                status = Culture["Discovery.Overview.Done"];
+                cls = "is-done";
+            }
+
+            _overviewRows.Add(new JourneyOverview.OverviewRow(
+                step.Number, step.TitleKey, status, cls, Culture["Discovery.Overview.View"]));
+        }
+
+        if (!Draft.HasConsent)
+        {
+            _overviewRows.Add(new JourneyOverview.OverviewRow(
+                0, "Discovery.Overview.Consent", Culture["Discovery.Overview.New"], "is-new",
+                Culture["Discovery.Overview.GiveConsent"], IsConsent: true));
+        }
+
+        _overviewTests = [];
+        foreach (var step in new[] { 7, 8, 9, 10 })
+        {
+            var kind = OnboardingWizardCatalog.TestKindForStep(step)!.Value;
+            var answered = await CountAnsweredAsync(kind);
+            var full = OnboardingWizardCatalog.FullLevelCount(kind);
+            var complete = answered >= full;
+            var next = new List<JourneyOverview.DepthButton>();
+            if (!complete)
+            {
+                if (answered < OnboardingWizardCatalog.DeeperLevelCount)
+                {
+                    next.Add(new(OnboardingWizardCatalog.DeeperLevelCount, Culture["Discovery.Shed.Deeper"]));
+                }
+
+                next.Add(new(full, kind == OnboardingWizardCatalog.OnboardingTestKind.Culture
+                    ? Culture["Discovery.Overview.All18"]
+                    : Culture["Discovery.Shed.Deepest"]));
+            }
+
+            var report = step switch
+            {
+                7 => "/candidate/paspoort?tab=tests",
+                8 => "/candidate/paspoort?tab=tests",
+                9 => "/candidate/paspoort?tab=tests",
+                _ => "/candidate/paspoort?tab=tests"
+            };
+            _overviewTests.Add(new JourneyOverview.TestRow(
+                step,
+                OnboardingWizardCatalog.TestNameKey(kind),
+                Culture.Format("Discovery.Overview.Depth", answered, full),
+                complete,
+                report,
+                next));
+        }
+    }
+
+    private async Task OnOverviewRowAsync(JourneyOverview.OverviewRow row)
+    {
+        if (row.IsConsent)
+        {
+            GoToConsent();
+            return;
+        }
+
+        _reviewMode = true;
+        _countedStep = row.Step;
+        _screen = row.Step.ToString();
+        _depth = row.Step;
+        NavigateStep(_screen);
+        await Task.CompletedTask;
+    }
+
+    private async Task OnOverviewDeepenAsync((int Step, JourneyOverview.DepthButton Level) args)
+    {
+        _reviewMode = false;
+        _targetLevel = args.Level.TargetCount;
+        _countedStep = args.Step;
+        _screen = args.Step.ToString();
+        _depth = args.Step;
+        NavigateStep(_screen);
+        await PrepareMiniAsync();
+    }
+
+    private async Task AcceptConsentAsync()
+    {
+        var profile = await Api.AcceptTestAiConsentAsync();
+        Draft.HasConsent = profile?.TestAiConsentAt is not null;
+        if (!Draft.HasConsent)
+        {
+            _error = Culture["Onboarding.Consent.Failed"];
+            return;
+        }
+
+        await GoToCountedStepAsync(7);
+    }
+
+    private async Task BackAsync()
+    {
+        if (_screen == "toestemming")
+        {
+            await FlushAsync();
+            _countedStep = 6;
+            _screen = "6";
+            _depth = 6;
+            NavigateStep("6");
+            return;
+        }
+
+        if (_countedStep <= 1)
+        {
+            _screen = "start";
+            _countedStep = 0;
+            _depth = 0;
+            NavigateStep("start");
+            return;
+        }
+
+        await FlushAsync();
+        _miniArrivedViaBack = true;
+        if (_countedStep == 7 && !Draft.HasConsent)
+        {
+            GoToConsent();
+            return;
+        }
+
+        _countedStep--;
+        _screen = _countedStep.ToString();
+        _depth = _countedStep;
+        await MarkStartedAsync();
+        NavigateStep(_screen);
+        if (_countedStep is >= 7 and <= 10)
+        {
+            await PrepareMiniAsync();
+        }
+    }
+
+    private async Task LaterAsync()
+    {
+        try
+        {
+            await FlushAsync();
+            if (_countedStep == 6 || _screen == "toestemming") await FlushPrivateAsync();
+            if (_countedStep == 4) await SaveDreamAsync();
+            if (_autosave is not null) await _autosave.FlushAsync();
+            if (_countedStep >= 1 && _screen != "toestemming")
+            {
+                await Api.SaveMyOnboardingProgressAsync(_countedStep);
+            }
+            else if (_screen == "toestemming")
+            {
+                await Api.SaveMyOnboardingProgressAsync(6);
+            }
+        }
+        catch
+        {
+            // best effort
+        }
+
+        Navigation.NavigateTo("/candidate/paspoort");
+    }
+
+    private void NavigateStep(string stap)
+    {
+        var uri = Navigation.GetUriWithQueryParameter("stap", stap);
+        Navigation.NavigateTo(uri, replace: true);
+    }
+
+    private string SegmentClass(int index)
+    {
+        if (IsLightScreen) return "is-done";
+        var step = Math.Max(RailStep, 0);
+        if (step <= 0) return "";
+        if (index < step - 1) return "is-done";
+        if (index == step - 1) return "is-now";
+        return "";
+    }
+
+    private async Task PrepareMiniAsync()
+    {
+        if (_autosave is not null)
+        {
+            await _autosave.DisposeAsync();
+            _autosave = null;
+        }
+
+        _miniAnswers.Clear();
+        _serverAnswers.Clear();
+        _lockedIds.Clear();
+        _miniQuestions = [];
+        _currentQuestion = 0;
+        if (_countedStep is < 7 or > 10 || !Draft.HasConsent) return;
+
+        var kind = OnboardingWizardCatalog.TestKindForStep(_countedStep)!.Value;
+        if (_targetLevel < OnboardingWizardCatalog.MiniLevelCount)
+        {
+            _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
+        }
+
+        Dictionary<string, int>? answers;
+        IEnumerable<(int Id, string Key)> catalog;
+        switch (_countedStep)
+        {
+            case 7:
+                answers = (await Api.GetMyCompetenciesAsync())?.Answers;
+                catalog = CompetencyTestCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                break;
+            case 8:
+                answers = (await Api.GetMyCareerInterestsAsync())?.Answers;
+                catalog = CareerTestCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                break;
+            case 9:
+                answers = (await Api.GetMyCultureAsync())?.Answers;
+                catalog = CulturePersonalityCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                break;
+            default:
+                answers = (await Api.GetMyValuesAsync())?.Answers;
+                catalog = SchwartzValuesCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                break;
+        }
+
+        var questionIds = OnboardingWizardCatalog.QuestionIdsUpTo(kind, _targetLevel);
+
+        foreach (var answer in answers ?? [])
+        {
+            if (int.TryParse(answer.Key, out var id) && answer.Value is >= 1 and <= 5)
+            {
+                _serverAnswers[id] = answer.Value;
+            }
+        }
+
+        foreach (var id in questionIds)
+        {
+            if (_serverAnswers.ContainsKey(id)) _lockedIds.Add(id);
+        }
+
+        _miniQuestions = catalog
+            .Where(item => questionIds.Contains(item.Id) && !_lockedIds.Contains(item.Id))
+            .Select(item => new OnboardingMiniTest.MiniQuestion(item.Id, item.Key))
+            .ToList();
+        _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
+        {
+            var merged = new Dictionary<int, int>(_serverAnswers);
+            foreach (var answer in draft) merged[answer.Key] = answer.Value;
+            switch (_countedStep)
+            {
+                case 7:
+                    await Api.SaveMyCompetenciesAsync(merged, false, cancellationToken);
+                    break;
+                case 8:
+                    await Api.SaveMyCareerInterestsAsync(merged, false, cancellationToken);
+                    break;
+                case 9:
+                    await Api.SaveMyCultureAsync(merged, false, cancellationToken);
+                    break;
+                case 10:
+                    await Api.SaveMyValuesAsync(merged, false, cancellationToken);
+                    break;
+            }
+        }, () => InvokeAsync(StateHasChanged), 150);
+    }
+
+    private async Task TryAutoAdvanceEmptyMiniStepAsync()
+    {
+        if (_miniArrivedViaBack || _screen == "start" || _screen == "toestemming") return;
+        if (_countedStep is < 7 or > 10) return;
+        if (!Draft.HasConsent) return;
+        if (_miniQuestions.Count > 0) return;
+
+        _busy = true;
+        try
+        {
+            // Already answered at/above target → shed (or next if fully done and continuing).
+            await ShowShedAsync(_countedStep);
+            return;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _saveStatus = "error";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string QuestionText(OnboardingMiniTest.MiniQuestion question) => Culture[question.TextKey];
+
+    private async Task AnswerAsync(int id, int value)
+    {
+        _miniAnswers[id] = value;
+        if (_autosave is not null) await _autosave.SetAnswerAsync(id, value);
+        _currentQuestion = Math.Min(_currentQuestion + 1, Math.Max(0, _miniQuestions.Count - 1));
+        _saveStatus = "saved";
+    }
+
+    private void ExpandQuestion(int index) => _currentQuestion = index;
+    private Task OnMiniAnswer((int Id, int Value) args) => AnswerAsync(args.Id, args.Value);
+
+    private void ShowCity() => Draft.ShowCity = true;
+
+    private void SplitAddress(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return;
+        var index = value.Trim().IndexOf(' ');
+        Draft.Postcode = index > 0 ? value[..index].Trim() : value.Trim();
+        Draft.City = index > 0 ? value[(index + 1)..].Trim() : "";
+    }
+
+    private string HomeAddress() => $"{NormalizePostcode(Draft.Postcode)} {Draft.City.Trim()}".Trim();
+
+    private static string NormalizePostcode(string value)
+    {
+        var raw = value.Replace(" ", "").ToUpperInvariant();
+        return raw.Length == 6 ? raw[..4] + " " + raw[4..] : value.Trim().ToUpperInvariant();
+    }
+
+    private void AddressChanged()
+    {
+        Draft.HomeLat = Draft.HomeLng = null;
+        Draft.PostcodeResolved = false;
+        ScheduleProfileSave();
+        _geocodeCts?.Cancel();
+        _geocodeCts = new();
+        _ = GeocodeAsync(_geocodeCts.Token);
+    }
+
+    private async Task GeocodeAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(350, cancellationToken);
+            var postcode = NormalizePostcode(Draft.Postcode);
+            if (!System.Text.RegularExpressions.Regex.IsMatch(postcode, "^[1-9][0-9]{3} [A-Z]{2}$")) return;
+            var result = (await Geocoder.SuggestAsync(postcode, cancellationToken))
+                .FirstOrDefault(item => item.Label.Replace(" ", "")
+                    .StartsWith(postcode.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
+            if (result is null)
+            {
+                Draft.PostcodeMissing = true;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            SelectAddress(result);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch
+        {
+            Draft.PostcodeMissing = true;
+        }
+    }
+
+    private void SelectAddress(AddressSuggestion item)
+    {
+        Draft.HomeLat = item.Latitude;
+        Draft.HomeLng = item.Longitude;
+        SplitAddress(item.Label);
+        Draft.Postcode = NormalizePostcode(Draft.Postcode);
+        Draft.PostcodeResolved = true;
+        Draft.PostcodeMissing = false;
+        ScheduleProfileSave();
+    }
+
+    private void BirthDateChanged()
+    {
+        Draft.BirthDate = int.TryParse(Draft.BirthDay, out var day)
+            && int.TryParse(Draft.BirthMonth, out var month)
+            && int.TryParse(Draft.BirthYear, out var year)
+            && DateOnly.TryParse($"{year:D4}-{month:D2}-{day:D2}", out var date)
+                ? date : null;
+        ScheduleProfileSave();
+    }
+
+    private void ToggleFineTune() => Draft.FineTune = !Draft.FineTune;
+
+    private void TogglePreset(string code)
+    {
+        if (!Draft.Presets.Add(code)) Draft.Presets.Remove(code);
+        if (!Draft.PresetsOverridden) ApplyPresets();
+        ScheduleProfileSave();
+    }
+
+    private void ApplyPresets()
+    {
+        var result = AvailabilityPresetRules.Compute(Draft.Presets, Draft.MinHours, Draft.MaxHours);
+        Draft.MinHours = result.MinHours;
+        Draft.MaxHours = result.MaxHours;
+        Draft.Availability.Clear();
+        foreach (var dayPart in result.DayParts) Draft.Availability.Add(dayPart);
+        Draft.Immediate = result.Immediate;
+        if (Draft.Immediate) Draft.AvailableFrom = null;
+    }
+
+    private void ResetPresets()
+    {
+        Draft.PresetsOverridden = false;
+        ApplyPresets();
+        ScheduleProfileSave();
+    }
+
+    private Task SetMinHoursAsync(int value)
+    {
+        Draft.MinHours = value;
+        return Task.CompletedTask;
+    }
+
+    private Task SetMaxHoursAsync(int value)
+    {
+        Draft.MaxHours = value;
+        return Task.CompletedTask;
+    }
+
+    private Task ManualAvailabilityAsync()
+    {
+        Draft.PresetsOverridden = true;
+        ScheduleProfileSave();
+        return Task.CompletedTask;
+    }
+
+    private void ToggleAvailability(string key)
+    {
+        if (!Draft.Availability.Add(key)) Draft.Availability.Remove(key);
+        Draft.PresetsOverridden = true;
+        ScheduleProfileSave();
+    }
+
+    private void SelectTransport(string transport)
+    {
+        Draft.Transport = transport;
+        ScheduleProfileSave();
+    }
+
+    private void SelectTravelTime(int minutes)
+    {
+        Draft.MaxTravel = minutes;
+        Draft.CustomTravel = false;
+        ScheduleProfileSave();
+    }
+
+    private void ShowCustomTravel() => Draft.CustomTravel = true;
+
+    private void ToggleLicense(string license)
+    {
+        if (!Draft.DrivingLicenses.Add(license)) Draft.DrivingLicenses.Remove(license);
+        ScheduleProfileSave();
+    }
+
+    private void AddJob() => Draft.Jobs.Add(new CandidateEmployerHistory());
+
+    private void RemoveJob(CandidateEmployerHistory job)
+    {
+        Draft.Jobs.Remove(job);
+        ScheduleProfileSave();
+    }
+
+    private void SetJobStart(CandidateEmployerHistory job, string? value)
+    {
+        job.StartMonth = value;
+        ScheduleProfileSave();
+    }
+
+    private void SetJobEnd(CandidateEmployerHistory job, string? value)
+    {
+        job.EndMonth = value;
+        ScheduleProfileSave();
+    }
+
+    private Task OnSetJobStart((CandidateEmployerHistory Job, string? Value) args)
+    {
+        SetJobStart(args.Job, args.Value);
+        return Task.CompletedTask;
+    }
+
+    private Task OnSetJobEnd((CandidateEmployerHistory Job, string? Value) args)
+    {
+        SetJobEnd(args.Job, args.Value);
+        return Task.CompletedTask;
+    }
+
+    private void SelectEducation(string level)
+    {
+        Draft.Education = level == "MBO" ? "MBO 1" : level;
+        if (level == EducationLevelLabels.None) Draft.EducationDirection = "";
+        ScheduleProfileSave();
+    }
+
+    private void ChooseDream(DreamJob job)
+    {
+        Draft.Dream = job.TitleNl;
+        Draft.DreamSearch = "";
+        ScheduleDreamSave();
+    }
+
+    private void ChooseOwnDream()
+    {
+        var dream = Draft.DreamSearch.Trim();
+        Draft.Dream = dream[..Math.Min(128, dream.Length)];
+        Draft.DreamSearch = "";
+        ScheduleDreamSave();
+    }
+
+    private Task DreamKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape") Draft.DreamSearch = "";
+        else if (e.Key == "Enter" && Draft.DreamSearch.Length > 0) ChooseOwnDream();
+        return Task.CompletedTask;
+    }
+
+    private void ScheduleDreamSave()
+    {
+        _dreamCts?.Cancel();
+        _dreamCts = new();
+        _ = DreamDebounceAsync(_dreamCts.Token);
+    }
+
+    private async Task DreamDebounceAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(350, cancellationToken);
+            await SaveDreamAsync();
+            _saveStatus = "saved";
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch
+        {
+            _saveStatus = "error";
+        }
+    }
+
+    private Task SaveDreamAsync()
+        => Api.SaveOnboardingDreamJobAsync(string.IsNullOrWhiteSpace(Draft.Dream) ? null : Draft.Dream.Trim());
+
+    private void ToggleEmployerPref(string code)
+    {
+        if (!Draft.EmployerPreferences.Add(code)) Draft.EmployerPreferences.Remove(code);
+        ScheduleProfileSave();
+    }
+
+    private void ToggleRole(string role, bool selected)
+    {
+        if (selected) Draft.Roles.Add(role);
+        else Draft.Roles.Remove(role);
+        ScheduleProfileSave();
+    }
+
+    private void ToggleHobby(string code)
+    {
+        if (!Draft.Hobbies.Add(code)) Draft.Hobbies.Remove(code);
+        ScheduleProfileSave();
+    }
+
+    private void AddHobbyFree()
+    {
+        if (Draft.HobbyFreeText.Count >= 3) return;
+        Draft.HobbyFreeText.Add("");
+        ScheduleProfileSave();
+    }
+
+    private void RemoveHobbyFree(int index)
+    {
+        if (index < 0 || index >= Draft.HobbyFreeText.Count) return;
+        Draft.HobbyFreeText.RemoveAt(index);
+        ScheduleProfileSave();
+    }
+
+    private void SetHobbyFree(int index, string? value)
+    {
+        if (index < 0 || index >= Draft.HobbyFreeText.Count) return;
+        Draft.HobbyFreeText[index] = value ?? "";
+        ScheduleProfileSave();
+    }
+
+    private void AddLearningGoal()
+    {
+        if (Draft.LearningGoals.Count >= DiscoveryCatalogs.MaxLearningGoals) return;
+        Draft.LearningGoals.Add("");
+        ScheduleProfileSave();
+    }
+
+    private void RemoveLearningGoal(int index)
+    {
+        if (index < 0 || index >= Draft.LearningGoals.Count) return;
+        Draft.LearningGoals.RemoveAt(index);
+        ScheduleProfileSave();
+    }
+
+    private void SetLearningGoal(int index, string? value)
+    {
+        if (index < 0 || index >= Draft.LearningGoals.Count) return;
+        Draft.LearningGoals[index] = value ?? "";
+        ScheduleProfileSave();
+    }
+
+    private void AddCertificate()
+    {
+        Draft.Certificates.Add(new CandidateCertificate());
+        ScheduleProfileSave();
+    }
+
+    private void RemoveCertificate(int index)
+    {
+        if (index < 0 || index >= Draft.Certificates.Count) return;
+        Draft.Certificates.RemoveAt(index);
+        ScheduleProfileSave();
+    }
+
+    private void SetCertName(int index, string? value)
+    {
+        if (index < 0 || index >= Draft.Certificates.Count) return;
+        Draft.Certificates[index].Name = value ?? "";
+        ScheduleProfileSave();
+    }
+
+    private void SetCertYear(int index, string? value)
+    {
+        if (index < 0 || index >= Draft.Certificates.Count) return;
+        Draft.Certificates[index].Year = int.TryParse(value, out var year) ? year : null;
+        ScheduleProfileSave();
+    }
+
+    private void SetDutchLevel(string level)
+    {
+        Draft.DutchLevel = level;
+        ScheduleProfileSave();
+    }
+
+    private IEnumerable<string> AvailableLanguageCodes()
+        => DiscoveryCatalogs.SpokenLanguageCodes
+            .Where(code => !Draft.SpokenLanguages.Any(l =>
+                string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase)));
+
+    private void OnAddLanguage(ChangeEventArgs e)
+    {
+        var code = DiscoveryCatalogs.CanonicalLanguage(e.Value?.ToString());
+        if (code is null || Draft.SpokenLanguages.Count >= DiscoveryCatalogs.MaxSpokenLanguages) return;
+        if (Draft.SpokenLanguages.Any(l => string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase))) return;
+        Draft.SpokenLanguages.Add(new CandidateLanguage { Code = code });
+        ScheduleProfileSave();
+    }
+
+    private void RemoveSpokenLanguage(string code)
+    {
+        Draft.SpokenLanguages.RemoveAll(l => string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase));
+        ScheduleProfileSave();
+    }
+
+    private void SetSpokenLevel(string code, string? level)
+    {
+        var row = Draft.SpokenLanguages.FirstOrDefault(l => string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase));
+        if (row is null) return;
+        row.Level = string.IsNullOrWhiteSpace(level) ? null : level;
+        ScheduleProfileSave();
+    }
+
+    private static string LanguageDisplay(string code)
+    {
+        try
+        {
+            var culture = System.Globalization.CultureInfo.GetCultureInfo(code);
+            var name = culture.NativeName;
+            if (string.IsNullOrWhiteSpace(name) || name.Equals(code, StringComparison.OrdinalIgnoreCase))
+            {
+                name = culture.EnglishName;
+            }
+
+            return string.IsNullOrWhiteSpace(name) ? code.ToUpperInvariant() : char.ToUpper(name[0]) + name[1..];
+        }
+        catch (System.Globalization.CultureNotFoundException)
+        {
+            return code.ToUpperInvariant();
+        }
+    }
+
+    private void ToggleDislike(string code)
+    {
+        if (!Draft.Dislikes.Add(code)) Draft.Dislikes.Remove(code);
+        SchedulePrivateSave();
+    }
+
+    private void AddCustomDislike()
+    {
+        if (Draft.CustomDislikes.Count >= DiscoveryCatalogs.MaxCustomDislikes) return;
+        Draft.CustomDislikes.Add("");
+        SchedulePrivateSave();
+    }
+
+    private void RemoveCustomDislike(int index)
+    {
+        if (index < 0 || index >= Draft.CustomDislikes.Count) return;
+        Draft.CustomDislikes.RemoveAt(index);
+        SchedulePrivateSave();
+    }
+
+    private void SetCustomDislike(int index, string? value)
+    {
+        if (index < 0 || index >= Draft.CustomDislikes.Count) return;
+        Draft.CustomDislikes[index] = value ?? "";
+        SchedulePrivateSave();
+    }
+
+    private void ScheduleProfileSave()
+    {
+        _saveCts?.Cancel();
+        _saveCts = new();
+        _ = SaveDebounceAsync(_saveCts.Token);
+    }
+
+    private void SchedulePrivateSave()
+    {
+        _privateCts?.Cancel();
+        _privateCts = new();
+        _ = PrivateDebounceAsync(_privateCts.Token);
+    }
+
+    private async Task SaveDebounceAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(400, cancellationToken);
+            await FlushAsync();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private async Task PrivateDebounceAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(400, cancellationToken);
+            await FlushPrivateAsync();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private async Task FlushAsync()
+    {
+        _saveStatus = "saving";
+        try
+        {
+            await Api.UpdateMyProfileAsync(
+                firstName: Draft.FirstName.Trim(),
+                lastName: Draft.LastName.Trim(),
+                phoneNumber: string.IsNullOrWhiteSpace(Draft.Phone) ? null : Draft.Phone.Trim(),
+                whatsAppContactAllowed: Draft.WhatsAppAllowed && !string.IsNullOrWhiteSpace(Draft.Phone),
+                dateOfBirth: Draft.BirthDate,
+                homeLatitude: Draft.HomeLat,
+                homeLongitude: Draft.HomeLng,
+                preferences: new CandidatePreferences
+                {
+                    HomeAddress = HomeAddress(),
+                    MinHoursPerWeek = Draft.MinHours,
+                    MaxHoursPerWeek = Draft.MaxHours,
+                    MaxTravelMinutes = Draft.MaxTravel,
+                    PreferredTransport = string.IsNullOrWhiteSpace(Draft.Transport) ? null : Draft.Transport,
+                    AvailabilityPresets = Draft.Presets.ToList(),
+                    AvailabilityPresetsOverridden = Draft.PresetsOverridden,
+                    Availability = BuildAvailability(),
+                    NoWorkExperience = Draft.NoWork,
+                    Employers = Draft.Jobs.ToList(),
+                    Educations = string.IsNullOrWhiteSpace(Draft.Education)
+                        ? []
+                        : [OnboardingWizardCatalog.FormatEducationLine(Draft.Education, Draft.EducationDirection)],
+                    EducationDirection = Draft.EducationDirection,
+                    DrivingLicenses = Draft.DrivingLicenses.OrderBy(x => x).ToList(),
+                    Roles = Draft.Roles.OrderBy(r => r).ToList(),
+                    AboutMe = string.IsNullOrWhiteSpace(Draft.AboutMe) ? null : Draft.AboutMe.Trim(),
+                    Certificates = Draft.Certificates
+                        .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                        .Select(c => new CandidateCertificate { Name = c.Name.Trim(), Year = c.Year })
+                        .ToList(),
+                    SpokenLanguages = Draft.SpokenLanguages
+                        .Where(l => !string.IsNullOrWhiteSpace(l.Code))
+                        .Select(l => new CandidateLanguage { Code = l.Code, Level = l.Level })
+                        .Take(DiscoveryCatalogs.MaxSpokenLanguages)
+                        .ToList(),
+                    DutchLevel = string.IsNullOrWhiteSpace(Draft.DutchLevel) ? null : Draft.DutchLevel.Trim(),
+                    EmployerPreferences = Draft.EmployerPreferences.OrderBy(x => x).ToList(),
+                    LearningGoals = Draft.LearningGoals
+                        .Where(g => !string.IsNullOrWhiteSpace(g))
+                        .Select(g => g.Trim())
+                        .Take(DiscoveryCatalogs.MaxLearningGoals)
+                        .ToList(),
+                    Hobbies = Draft.Hobbies
+                        .Concat(Draft.HobbyFreeText.Where(h => !string.IsNullOrWhiteSpace(h)).Select(h => h.Trim()))
+                        .Take(DiscoveryCatalogs.MaxHobbies)
+                        .ToList()
+                },
+                availableFromDate: Draft.Immediate ? null : Draft.AvailableFrom,
+                clearAvailableFromDate: Draft.Immediate);
+            _saveStatus = "saved";
+        }
+        catch
+        {
+            _saveStatus = "error";
+            throw;
+        }
+    }
+
+    private async Task FlushPrivateAsync()
+    {
+        _saveStatus = "saving";
+        try
+        {
+            await Api.UpdateMyPrivatePreferencesAsync(
+                Draft.Dislikes.OrderBy(x => x).ToList(),
+                Draft.CustomDislikes
+                    .Where(c => !string.IsNullOrWhiteSpace(c))
+                    .Select(c => c.Trim())
+                    .Take(DiscoveryCatalogs.MaxCustomDislikes)
+                    .ToList());
+            _saveStatus = "saved";
+        }
+        catch
+        {
+            _saveStatus = "error";
+            throw;
+        }
+    }
+
+    private Dictionary<string, List<string>> BuildAvailability()
+    {
+        var result = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var key in Draft.Availability)
+        {
+            var pair = key.Split(':', 2);
+            if (pair.Length != 2) continue;
+            if (!result.TryGetValue(pair[0], out var values)) result[pair[0]] = values = [];
+            values.Add(pair[1]);
+        }
+
+        return result;
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public async ValueTask DisposeAsync()
+    {
+        Culture.Changed -= OnCultureChanged;
+        _saveCts?.Cancel();
+        _privateCts?.Cancel();
+        _geocodeCts?.Cancel();
+        _dreamCts?.Cancel();
+        if (_autosave is not null) await _autosave.DisposeAsync();
+    }
+}

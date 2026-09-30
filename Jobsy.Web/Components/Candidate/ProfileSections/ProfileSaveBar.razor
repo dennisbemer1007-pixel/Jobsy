@@ -1,0 +1,19 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
+@inject CultureState Culture
+
+                <div class="profile-save-bar">
+                    <button class="login-submit" type="button" disabled="@Editor.Saving" @onclick="Editor.SaveAsync">
+                        @Culture["Common.Save"]
+                    </button>
+                    @if (!string.IsNullOrEmpty(Editor.Message))
+                    {
+                        <p class="state-message profile-save-bar__message">@Editor.Message</p>
+                    }
+                </div>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+}

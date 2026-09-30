@@ -208,11 +208,10 @@
         }
         else
         {
-            <LockedDeepReportSection Kind="_def.Kind" QuestionCount="_def.DeepQuestionCount" />
-            <TestResultPremiumBlock Kind="_def.Kind"
-                                    TestTitle="@Culture[_def.TitleKey]"
-                                    PriceEuro="_priceEuro"
+            <TestResultLockedPreview Kind="_def.Kind"
+                                    TitleKey="@_def.TitleKey"
                                     QuestionCount="_def.DeepQuestionCount"
+                                    PriceEuro="_priceEuro"
                                     MinutesApprox="@(_def.Kind == AssessmentKind.Career ? 25 : 20)"
                                     Busy="_busy"
                                     IsUnlockedNotCompleted="_deepUnlocked && !_deepCompleted"
@@ -220,6 +219,7 @@
                                     ProgressCurrent="@(_deepState?.AnsweredCount ?? 0)"
                                     ProgressTotal="@_def.DeepQuestionCount"
                                     ShowSamplePdf="_samplePdfEnabled"
+                                    ShowHeading="false"
                                     OnStart="StartExtendedAsync"
                                     OnSamplePdf="OpenSamplePdfAsync" />
         }

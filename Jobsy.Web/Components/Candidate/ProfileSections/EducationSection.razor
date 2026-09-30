@@ -1,0 +1,22 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
+@inject CultureState Culture
+
+                            <fieldset class="profile-roles profile-check-grid">
+                                <legend>@Culture["Profile.Education"]</legend>
+                                @foreach (var level in Editor.EducationOptions)
+                                {
+                                    <label>
+                                        <input type="checkbox"
+                                               checked="@Editor.SelectedEducations.Contains(level)"
+                                               @onchange="e => Editor.ToggleEducation(level, (bool)(e.Value ?? false))" />
+                                        @UiLabels.Education(Culture, level)
+                                    </label>
+                                }
+                            </fieldset>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+}

@@ -1,6 +1,8 @@
 @page "/employer/onboarding-checkout"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "BranchManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthState

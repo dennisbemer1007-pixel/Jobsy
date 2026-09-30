@@ -1,6 +1,8 @@
 @page "/werkgever/vacatures/nieuw"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject IJSRuntime Js

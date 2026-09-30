@@ -301,7 +301,38 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
                 match.MatchRationale));
         }
 
-        return result;
+        var dislikeCodes = await LoadDislikeCodesAsync(userId, cancellationToken);
+        var nightShiftIds = vacancies
+            .Where(v => v.LegalNightShift23To06 == true)
+            .Select(v => v.Id)
+            .ToHashSet();
+        return DislikeMatchRules.DownRankNightShifts(
+            result,
+            dislikeCodes,
+            m => nightShiftIds.Contains(m.Id));
+    }
+
+    private async Task<IReadOnlyList<string>> LoadDislikeCodesAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var json = await _db.CandidatePrivatePreferences.AsNoTracking()
+            .Where(p => p.UserId == userId)
+            .Select(p => p.DislikesJson)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return [];
+        }
     }
 
     public void InvalidateContextCache(Guid userId)

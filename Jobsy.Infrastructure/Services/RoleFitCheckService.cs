@@ -6,6 +6,7 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
     private readonly ICultureFitAiService _cultureFit;
     private readonly IVacancyDiscoveryIndex _discovery;
     private readonly IProfileVacancyMatchService _matches;
+    private readonly IFeatureFlags _featureFlags;
 
     public RoleFitCheckService(
         JobsyDbContext db,
@@ -48,7 +50,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         ITrainingUpskillService training,
         ICultureFitAiService cultureFit,
         IVacancyDiscoveryIndex discovery,
-        IProfileVacancyMatchService matches)
+        IProfileVacancyMatchService matches,
+        IFeatureFlags featureFlags)
     {
         _db = db;
         _competencies = competencies;
@@ -62,6 +65,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         _cultureFit = cultureFit;
         _discovery = discovery;
         _matches = matches;
+        _featureFlags = featureFlags;
     }
 
     public async Task<RoleFitCheckStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -78,7 +82,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         var needsRecheck = false;
         if (last is not null)
         {
-            result = ToStoredResult(last, deep);
+            result = await ToStoredResultAsync(last, deep, cancellationToken);
             if (unlocked && competence is { IsComplete: true } && career is { IsComplete: true })
             {
                 var cultureScores = await _culture.GetCompletedScoresAsync(userId, cancellationToken);
@@ -160,7 +164,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 price,
                 "",
                 RoleFitCheckCopy.DeepUpsell,
-                ToStoredResult(existing, fromDeep),
+                await ToStoredResultAsync(existing, fromDeep, cancellationToken),
                 InsightsStatuses.Ready,
                 NeedsRecheck: false);
         }
@@ -221,7 +225,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             price,
             "",
             RoleFitCheckCopy.DeepUpsell,
-            ToStoredResult(row, fromDeep),
+            await ToStoredResultAsync(row, fromDeep, cancellationToken),
             InsightsStatuses.Ready,
             NeedsRecheck: false);
     }
@@ -386,6 +390,11 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         }
 
         var direct = await ScanDirectVacanciesAsync(userId, fit?.VacancyId, snapshot.JobTitle, cancellationToken);
+        if (!await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken))
+        {
+            direct = [];
+        }
+
         return snapshot with
         {
             TrainingOffers = offers.Select(o => new RoleFitStoredTrainingOffer(
@@ -396,7 +405,10 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
     }
 
     /// <summary>Map stored ResultJson only — no AI or vacancy scoring.</summary>
-    private static RoleFitCheckResultDto ToStoredResult(CandidateRoleFitCheck row, bool deepNow)
+    private async Task<RoleFitCheckResultDto> ToStoredResultAsync(
+        CandidateRoleFitCheck row,
+        bool deepNow,
+        CancellationToken cancellationToken)
     {
         var snapshot = RoleFitCheckJson.TryDeserialize(row.ResultJson, row.JobTitle, row.FromDeepAnalysis || deepNow)
                        ?? new RoleFitCheckSnapshot(
@@ -421,6 +433,13 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             .Select(d => new RoleFitDirectVacancyDto(d.Id, d.Title, d.CompanyName, d.MatchPercent, d.Href))
             .ToList();
 
+        var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        string? mapHref = employersOn ? $"/?q={query}" : null;
+        if (!employersOn)
+        {
+            direct = [];
+        }
+
         return new RoleFitCheckResultDto(
             snapshot.JobTitle,
             snapshot.MatchPercent,
@@ -433,7 +452,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             snapshot.FromOpenAi,
             snapshot.ShowDeepUpsell,
             offers,
-            fit?.VacancyId,
+            employersOn ? fit?.VacancyId : null,
             fit?.BarrierKind,
             fit?.CulturePercent,
             fit?.CultureBand,

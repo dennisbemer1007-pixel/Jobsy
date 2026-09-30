@@ -392,7 +392,9 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     SchoolPerCodeResultsEnabled: request.SchoolPerCodeResultsEnabled,
                     SchoolRetentionCutoffMonth: request.SchoolRetentionCutoffMonth,
                     SchoolRetentionCutoffDay: request.SchoolRetentionCutoffDay,
-                    AmbassadorsEnabled: request.AmbassadorsEnabled),
+                    AmbassadorsEnabled: request.AmbassadorsEnabled,
+                    EmployersEnabled: request.EmployersEnabled,
+                    CandidatePassportEnabled: request.CandidatePassportEnabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -462,6 +464,21 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("SchoolRetentionCutoffDay", before.SchoolRetentionCutoffDay.ToString(), after.SchoolRetentionCutoffDay.ToString());
         Add("AmbassadorsEnabled", before.AmbassadorsEnabled.ToString(), after.AmbassadorsEnabled.ToString());
         return list;
+    }
+
+    /// <summary>
+    /// Public feature-flag snapshot for Web/UI bootstrap (not secrets).
+    /// </summary>
+    [HttpGet("feature-flags")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetFeatureFlags(CancellationToken cancellationToken)
+    {
+        var snap = await _features.GetAsync(cancellationToken);
+        return Ok(new
+        {
+            employersEnabled = snap.EmployersEnabled,
+            candidatePassportEnabled = snap.CandidatePassportEnabled
+        });
     }
 
     /// <summary>
@@ -689,7 +706,9 @@ snap.CandidateInsightsEnabled,
             snap.SchoolPerCodeResultsEnabled,
             snap.SchoolRetentionCutoffMonth,
             snap.SchoolRetentionCutoffDay,
-            snap.AmbassadorsEnabled);
+            snap.AmbassadorsEnabled,
+            snap.EmployersEnabled,
+            snap.CandidatePassportEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

@@ -1,7 +1,21 @@
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Web.Navigation;
+
+/// <summary>
+/// Ordered candidate nav slots. Discovery is reserved (empty until file 08).
+/// </summary>
+public enum CandidateNavSlot
+{
+    Discovery,
+    Passport,
+    Search,
+    Applications,
+    Career,
+    Saved
+}
 
 public static class RoleNavCatalog
 {
@@ -13,6 +27,10 @@ public static class RoleNavCatalog
     /// </summary>
     public static readonly NavItem[] Admin = [];
 
+    /// <summary>
+    /// Legacy candidate array (passport OFF + employers ON). Kept for callers that still
+    /// reference <see cref="Candidate"/>; prefer <see cref="CandidateItems"/>.
+    /// </summary>
     public static readonly NavItem[] Candidate =
     [
         new("Nav.Search", "/banenkaart", NavIcons.Search, ["/"]),
@@ -21,6 +39,38 @@ public static class RoleNavCatalog
         new("Nav.CareerPath", "/carriere", NavIcons.Career),
         new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/profiel", "/home"])
     ];
+
+    public static readonly NavItem SearchItem =
+        new("Nav.Search", "/banenkaart", NavIcons.Search, ["/"]);
+
+
+    public static readonly NavItem SavedItem =
+        new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]);
+
+    public static readonly NavItem ApplicationsItem =
+        new("Nav.Applications", "/candidate/applications", NavIcons.Applications);
+
+    public static readonly NavItem CareerItem =
+        new("Nav.CareerPath", "/carriere", NavIcons.Career);
+
+    public static readonly NavItem ProfileItem =
+        new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/profiel", "/home"]);
+
+    public static readonly NavItem PassportItem =
+        new("Nav.Passport", "/candidate/paspoort", NavIcons.Profile,
+            ["/candidate/profile", "/profiel", "/home"],
+            ShortTitleKey: "Nav.Passport.Short");
+
+    /// <summary>De ontdekkingsreis — filled in file 08 (§N Discovery slot).</summary>
+    public static readonly NavItem DiscoveryItem =
+        new("Nav.Discovery", "/candidate/ontdekkingsreis", NavIcons.Compass,
+            ["/candidate/start"],
+            ShortTitleKey: "Nav.Discovery.Short");
+
+    /// <summary>Sollicitaties with Bewaard URLs as active aliases (passport-ON order).</summary>
+    public static readonly NavItem ApplicationsWithSavedAliases =
+        new("Nav.Applications", "/candidate/applications", NavIcons.Applications,
+            ["/candidate/liked", "/candidate/shared"]);
 
     public static readonly NavItem MyApplicationsReadOnly =
         new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications);
@@ -57,7 +107,47 @@ public static class RoleNavCatalog
 
     public static readonly NavItem[] Teacher = [];
 
+    /// <summary>
+    /// Pure-function candidate nav. Passport OFF keeps today's order; passport ON uses §N slots
+    /// with Discovery first. Employers OFF hides Zoeken / Bewaard / Sollicitaties.
+    /// </summary>
+    public static IReadOnlyList<NavItem> CandidateItems(FeatureFlagSnapshot flags)
+    {
+        _ = CandidateNavSlot.Discovery;
+
+        if (flags.CandidatePassportEnabled)
+        {
+            if (!flags.EmployersEnabled)
+            {
+                // De ontdekkingsreis · Mijn Paspoort · Carrière
+                return [DiscoveryItem, PassportItem, CareerItem];
+            }
+
+            // De ontdekkingsreis · Mijn Paspoort · Zoeken · Sollicitaties · Carrière
+            return [DiscoveryItem, PassportItem, SearchItem, ApplicationsWithSavedAliases, CareerItem];
+        }
+
+        if (!flags.EmployersEnabled)
+        {
+            // Career · Profile
+            return [CareerItem, ProfileItem];
+        }
+
+        // Employers ON + passport OFF: exactly today's order
+        return Candidate;
+    }
+
+    /// <summary>
+    /// True when Bewaard is its own bottom-nav item (legacy order).
+    /// False when passport is ON (Saved moves into Sollicitaties tabs) or employers OFF.
+    /// </summary>
+    public static bool ShowsSavedInNav(FeatureFlagSnapshot flags)
+        => flags.EmployersEnabled && !flags.CandidatePassportEnabled;
+
     public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user)
+        => ForUser(user, FeatureFlagSnapshot.Defaults);
+
+    public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user, FeatureFlagSnapshot flags)
     {
         if (user?.Identity?.IsAuthenticated != true)
         {
@@ -78,6 +168,22 @@ public static class RoleNavCatalog
                 : SchoolAdmin;
         }
 
+        // Employer-side / acquisition catalogs empty when employers OFF (Admin already returned).
+        if (!flags.EmployersEnabled)
+        {
+            if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+            {
+                return CandidateItems(flags);
+            }
+
+            if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager)
+                || RoleClaimMatching.HasRole(user, JobsyRoles.Ambassadeur)
+                || RoleClaimMatching.HasAnyRole(user, JobsyRoles.EmployerRoles))
+            {
+                return Anonymous;
+            }
+        }
+
         if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))
         {
             return SalesManager;
@@ -90,7 +196,7 @@ public static class RoleNavCatalog
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
         {
-            return Candidate;
+            return CandidateItems(flags);
         }
 
         // Employer roles: empty — WerkgeverLayout owns navigation (D1).

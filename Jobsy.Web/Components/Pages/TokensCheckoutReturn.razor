@@ -1,6 +1,8 @@
 @page "/tokens/checkout-return"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject TokenBalanceCache TokenBalances

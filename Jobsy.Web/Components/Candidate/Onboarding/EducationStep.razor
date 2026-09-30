@@ -1,0 +1,61 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (ShowHeading)
+{
+    <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
+    <h1 tabindex="-1">@Culture["Onboarding.Step5.Title"]</h1>
+    <p class="ob-wizard__lead">@Culture["Onboarding.Step5.Lead"]</p>
+}
+<fieldset>
+    <legend class="visually-hidden">@Culture["Profile.Education"]</legend>
+    @foreach (var level in OnboardingWizardCatalog.EducationRadioLevels)
+    {
+        var isSelected = EducationSelected(level);
+        <label class="ob-wizard__radio @(isSelected ? "is-selected" : null)">
+            <input type="radio" name="education" checked="@isSelected"
+                   @onchange="() => SelectEducation.InvokeAsync(level)" />
+            @EducationLabel(level)
+        </label>
+    }
+    @if (Draft.Education.StartsWith("MBO", StringComparison.Ordinal))
+    {
+        <div class="ob-wizard__transport">
+            @foreach (var mboLevel in MboLevels)
+            {
+                var isSelected = MboLevelSelected(mboLevel);
+                <button type="button" aria-pressed="@isSelected"
+                        @onclick="() => SelectEducation.InvokeAsync(MboEducation(mboLevel))">
+                    @mboLevel
+                </button>
+            }
+        </div>
+    }
+</fieldset>
+<label>
+    @Culture["Onboarding.EducationDirection"]
+    <input maxlength="128" @bind="Draft.EducationDirection"
+           @bind:event="oninput" @bind:after="NotifyAsync" />
+</label>
+
+@code {
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public bool ShowHeading { get; set; } = true;
+    [Parameter] public EventCallback<string> SelectEducation { get; set; }
+
+    private static readonly string[] MboLevels = ["1", "2", "3", "4"];
+
+    private bool EducationSelected(string level)
+        => Draft.Education == level || level == "MBO" && Draft.Education.StartsWith("MBO", StringComparison.Ordinal);
+
+    private string EducationLabel(string level)
+        => level == EducationLevelLabels.None ? Culture["Education.None"] : level;
+
+    private static string MboEducation(string level) => $"MBO {level}";
+
+    private bool MboLevelSelected(string level) => Draft.Education == MboEducation(level);
+
+    private Task NotifyAsync() => Draft.NotifyChangedAsync();
+}

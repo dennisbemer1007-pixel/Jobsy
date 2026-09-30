@@ -1,0 +1,193 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
+@inject CultureState Culture
+
+                            <label class="profile-toggle">
+                                <input type="checkbox" @bind="Editor.OpenForWork" />
+                                <span>@Culture["Profile.OpenForWork"]</span>
+                            </label>
+
+                            <fieldset class="profile-contact">
+                                <legend>@Culture["Profile.ContactDetails"]</legend>
+                                <div class="profile-contact__names">
+                                    <label>
+                                        @Culture["Profile.FirstName"]
+                                        <input type="text" maxlength="128" @bind="Editor.FirstName" autocomplete="given-name" />
+                                    </label>
+                                    <label>
+                                        @Culture["Profile.LastName"]
+                                        <input type="text" maxlength="128" @bind="Editor.LastName" autocomplete="family-name" />
+                                    </label>
+                                </div>
+                                <label>
+                                    @Culture["Profile.Phone"]
+                                    <input type="tel"
+                                           maxlength="32"
+                                           placeholder="@Culture["Profile.PhonePlaceholder"]"
+                                           @bind="Editor.PhoneNumber"
+                                           autocomplete="tel" />
+                                </label>
+                                <label class="profile-toggle">
+                                    <input type="checkbox"
+                                           disabled="@string.IsNullOrWhiteSpace(Editor.PhoneNumber)"
+                                           @bind="Editor.WhatsAppAllowed" />
+                                    <span>@Culture["Profile.WhatsAppAllowed"]</span>
+                                </label>
+                                <p class="profile-address__hint">@Culture["Profile.ContactHint"]</p>
+                            </fieldset>
+
+
+                            <label>
+                                @Culture["Profile.DateOfBirth"]
+                                <input type="date" @bind="Editor.DobInput" />
+                            </label>
+
+                            <div class="profile-address">
+                                <label for="profile-home-address">@Culture["Profile.HomeAddress"]</label>
+                                <div class="address-field">
+                                    <input id="profile-home-address"
+                                           type="text"
+                                           autocomplete="off"
+                                           placeholder="@Culture["Discovery.AddressPlaceholder"]"
+                                           value="@Editor.HomeAddress"
+                                           @oninput="Editor.OnAddressInputAsync"
+                                           @onfocus="Editor.OnAddressFocus"
+                                           @onkeydown="Editor.OnAddressKeyDown" />
+                                    @if (!string.IsNullOrWhiteSpace(Editor.HomeAddress) || Editor.HomeLat is not null)
+                                    {
+                                        <button type="button"
+                                                class="engagement-btn address-field__clear"
+                                                @onclick="Editor.ClearHomeAddress">
+                                            @Culture["Common.Clear"]
+                                        </button>
+                                    }
+                                </div>
+                                @if (Editor.ShowSuggestions)
+                                {
+                                    <ul class="address-suggestions" role="listbox">
+                                        @if (Editor.Suggesting)
+                                        {
+                                            <li class="address-suggestions__status">@Culture["Common.Loading"]</li>
+                                        }
+                                        else if (Editor.Suggestions.Count == 0 && Editor.HomeAddress.Trim().Length >= 3)
+                                        {
+                                            <li class="address-suggestions__status">@Culture["Discovery.AddressNoResults"]</li>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var suggestion in Editor.Suggestions)
+                                            {
+                                                <li>
+                                                    <button type="button"
+                                                            class="address-suggestions__item"
+                                                            @onclick="() => Editor.SelectSuggestion(suggestion)">
+                                                        @suggestion.Label
+                                                    </button>
+                                                </li>
+                                            }
+                                        }
+                                    </ul>
+                                }
+                                <p class="profile-address__hint">@Culture["Profile.AddressHint"]</p>
+                                <p class="profile-address__hint">@Culture["Profile.CvMapPrivacyHint"]</p>
+                            </div>
+
+                            @if (ShowDiscoveryFields)
+                            {
+                            <fieldset class="profile-roles">
+                                <legend>@Culture["Profile.DutchLevel"]</legend>
+                                @foreach (var level in DiscoveryCatalogs.DutchLevels)
+                                {
+                                    var levelCode = level;
+                                    <label class="profile-radio-row">
+                                        <input type="radio"
+                                               name="dutch-level"
+                                               checked="@(string.Equals(Editor.DutchLevel, levelCode, StringComparison.OrdinalIgnoreCase))"
+                                               @onchange="() => SetDutchLevel(levelCode)" />
+                                        <span>
+                                            <strong>@Culture[DiscoveryCatalogs.DutchLabelKey(levelCode)]</strong>
+                                            <span class="muted"> @Culture[DiscoveryCatalogs.DutchExplainKey(levelCode)]</span>
+                                        </span>
+                                    </label>
+                                }
+                            </fieldset>
+
+                            <fieldset class="profile-roles">
+                                <legend>@Culture["Profile.SpokenLanguages"]</legend>
+                                @foreach (var lang in Editor.SpokenLanguages.ToList())
+                                {
+                                    var langCode = lang.Code;
+                                    <div class="profile-language-row">
+                                        <span>@LanguageDisplay(langCode)</span>
+                                        <select value="@(lang.Level ?? "")"
+                                                @onchange="e => Editor.SetSpokenLanguageLevel(langCode, e.Value?.ToString())">
+                                            <option value="">@Culture["Profile.LanguageLevel"]</option>
+                                            @foreach (var level in DiscoveryCatalogs.DutchLevels)
+                                            {
+                                                <option value="@level">@Culture[DiscoveryCatalogs.DutchLabelKey(level)]</option>
+                                            }
+                                        </select>
+                                        <button type="button" class="btn-compact" @onclick="() => Editor.RemoveSpokenLanguage(langCode)">×</button>
+                                    </div>
+                                }
+                                @if (Editor.SpokenLanguages.Count < DiscoveryCatalogs.MaxSpokenLanguages)
+                                {
+                                    <label>
+                                        @Culture["Profile.AddLanguage"]
+                                        <select value="" @onchange="OnAddLanguage">
+                                            <option value="">—</option>
+                                            @foreach (var code in AvailableLanguageCodes())
+                                            {
+                                                <option value="@(code)">@LanguageDisplay(code)</option>
+                                            }
+                                        </select>
+                                    </label>
+                                }
+                            </fieldset>
+                            }
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+    [Parameter] public bool ShowDiscoveryFields { get; set; }
+
+    private IEnumerable<string> AvailableLanguageCodes()
+        => DiscoveryCatalogs.SpokenLanguageCodes
+            .Where(code => !Editor.SpokenLanguages.Any(l =>
+                string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase)));
+
+    private void SetDutchLevel(string level)
+    {
+        Editor.DutchLevel = level;
+        Editor.Notify();
+    }
+
+    private void OnAddLanguage(ChangeEventArgs e)
+    {
+        var code = e.Value?.ToString();
+        if (!string.IsNullOrWhiteSpace(code))
+        {
+            Editor.AddSpokenLanguage(code);
+        }
+    }
+
+    private static string LanguageDisplay(string code)
+    {
+        try
+        {
+            var culture = System.Globalization.CultureInfo.GetCultureInfo(code);
+            var name = culture.NativeName;
+            if (string.IsNullOrWhiteSpace(name) || name.Equals(code, StringComparison.OrdinalIgnoreCase))
+            {
+                name = culture.EnglishName;
+            }
+
+            return string.IsNullOrWhiteSpace(name) ? code.ToUpperInvariant() : char.ToUpper(name[0]) + name[1..];
+        }
+        catch (System.Globalization.CultureNotFoundException)
+        {
+            return code.ToUpperInvariant();
+        }
+    }
+}

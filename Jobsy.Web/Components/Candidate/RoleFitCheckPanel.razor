@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Pages.Candidate
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Localization
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -12,21 +13,21 @@
 <div class="kompas-card--fit">
     <h3 class="visually-hidden">@Culture["Kompas.TabFit"]</h3>
 
-    @if (!string.IsNullOrWhiteSpace(_message))
+    @if (!string.IsNullOrWhiteSpace(_session.Message))
     {
-        <p class="state-message">@_message</p>
+        <p class="state-message">@_session.Message</p>
     }
 
-    @if (_state?.NeedsRecheck == true)
+    @if (_session.NeedsRecheck)
     {
         <p class="state-message" aria-live="polite">@Culture["Fit.NeedsRecheck"]</p>
     }
 
-    @if (_loading)
+    @if (_session.Loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
-    else if (_state is not { IsUnlocked: true })
+    else if (!_session.IsUnlocked)
     {
         <p class="login-lead">@Culture["Fit.Lead"]</p>
         <p class="kompas-status">@Culture["Fit.Locked"]</p>
@@ -49,14 +50,14 @@
                        maxlength="80"
                        autocomplete="off"
                        placeholder="@Culture["Fit.Placeholder"]"
-                       @bind="_jobTitle" />
-                <button class="login-submit fit-hero__submit" type="submit" disabled="@_busy">
-                    @(_activeVacancyId is Guid ? Culture["Fit.CheckMyFit"] : Culture["Fit.Check"])
+                       @bind="_session.JobTitle" />
+                <button class="login-submit fit-hero__submit" type="submit" disabled="@_session.Busy">
+                    @(_session.ActiveVacancyId is Guid ? Culture["Fit.CheckMyFit"] : Culture["Fit.Check"])
                 </button>
             </form>
         </section>
 
-        @if (_state.LastResult is { } result)
+        @if (_session.LastResult is { } result)
         {
             <ol class="role-fit-funnel">
                 <li class="role-fit-funnel__step">
@@ -189,7 +190,7 @@
                                     }
                                 </p>
                                 <p class="muted">@role.Why</p>
-                                <button class="engagement-btn" type="button" disabled="@_busy" @onclick="() => EvaluateSimilarAsync(role.Title)">
+                                <button class="engagement-btn" type="button" disabled="@_session.Busy" @onclick="() => EvaluateSimilarAsync(role.Title)">
                                     @Culture["Fit.CheckSimilar"]
                                 </button>
                             </li>
@@ -235,18 +236,12 @@
     [Parameter] public Guid? VacancyId { get; set; }
     [Parameter] public bool Active { get; set; } = true;
 
-    private bool _loadStarted;
-    private bool _loading = true;
-    private bool _busy;
-    private string? _message;
-    private string _jobTitle = "";
-    private RoleFitCheckState? _state;
-    private Guid? _activeVacancyId;
+    private readonly RoleFitCheckSession _session = new();
     private bool _wasActive;
 
     protected override void OnInitialized()
     {
-        _activeVacancyId = VacancyId;
+        _session.ActiveVacancyId = VacancyId;
         Culture.Changed += OnCultureChanged;
     }
 
@@ -254,14 +249,14 @@
     {
         if (VacancyId is Guid vid)
         {
-            _activeVacancyId = vid;
+            _session.ActiveVacancyId = vid;
         }
 
         var opening = Active && !_wasActive;
         _wasActive = Active;
         if (opening)
         {
-            await LoadAsync();
+            await _session.LoadAsync(Api, VacancyId, Culture["Common.Error"]);
         }
     }
 
@@ -271,70 +266,13 @@
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
 
-    private async Task LoadAsync()
+    private async Task EvaluateAsync()
     {
-        if (_loadStarted && _state is not null)
-        {
-            return;
-        }
-
-        _loadStarted = true;
-        _loading = true;
-        _message = null;
-        try
-        {
-            _state = await Api.GetMyRoleFitAsync();
-            // Prefill vacancy title only — never auto-POST role-fit (AI or scoring).
-            if (VacancyId is Guid && _state?.LastResult is { VacancyId: Guid } lastVacancy
-                && lastVacancy.VacancyId == VacancyId)
-            {
-                _jobTitle = lastVacancy.JobTitle;
-            }
-            else if (_state?.LastResult is { } last && string.IsNullOrWhiteSpace(_jobTitle))
-            {
-                _jobTitle = last.JobTitle;
-            }
-            else if (VacancyId is Guid && string.IsNullOrWhiteSpace(_jobTitle))
-            {
-                // Keep empty title; user taps "Check mijn fit" after seeing the prefilled vacancy context.
-                _activeVacancyId = VacancyId;
-            }
-        }
-        catch
-        {
-            _message = Culture["Common.Error"];
-        }
-        finally
-        {
-            _loading = false;
-        }
+        await _session.EvaluateAsync(Api, Culture["Common.Error"]);
     }
 
-    private Task EvaluateAsync()
-        => RunEvaluateAsync(_jobTitle, _activeVacancyId);
-
-    private Task EvaluateSimilarAsync(string title)
+    private async Task EvaluateSimilarAsync(string title)
     {
-        _jobTitle = title;
-        _activeVacancyId = null;
-        return RunEvaluateAsync(title, vacancyId: null);
-    }
-
-    private async Task RunEvaluateAsync(string title, Guid? vacancyId)
-    {
-        _busy = true;
-        _message = null;
-        try
-        {
-            _state = await Api.EvaluateRoleFitAsync(title, vacancyId);
-        }
-        catch (Exception ex)
-        {
-            _message = string.IsNullOrWhiteSpace(ex.Message) ? Culture["Common.Error"] : ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
+        await _session.EvaluateSimilarAsync(Api, title, Culture["Common.Error"]);
     }
 }

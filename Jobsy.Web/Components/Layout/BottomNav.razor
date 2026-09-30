@@ -1,4 +1,5 @@
 @using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Authorization
@@ -7,6 +8,7 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject BottomNavRefreshService NavRefresh
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 @if (_items.Count > 0)
@@ -15,6 +17,9 @@
         @foreach (var item in _items)
         {
             var title = Culture[item.TitleKey];
+            var shortTitle = !string.IsNullOrWhiteSpace(item.ShortTitleKey)
+                ? Culture[item.ShortTitleKey!]
+                : title;
             var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
             <a class="bottom-nav__item @(active ? "is-active" : null) @(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)"
                href="@item.Href"
@@ -24,7 +29,8 @@
                 <span class="bottom-nav__icon" aria-hidden="true">
                     @((MarkupString)item.Svg)
                 </span>
-                <span class="bottom-nav__label">@title</span>
+                <span class="bottom-nav__label bottom-nav__label--full">@title</span>
+                <span class="bottom-nav__label bottom-nav__label--short">@shortTitle</span>
             </a>
         }
     </nav>
@@ -32,6 +38,7 @@
 
 @code {
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
+    private FeatureFlagSnapshot _flags = FeatureFlagSnapshot.Defaults;
     private bool _hasTakeoverActions;
     private bool _salesOnboardingComplete;
     private bool _ambassadeurOnboardingComplete;
@@ -47,7 +54,20 @@
         Navigation.LocationChanged += OnLocationChanged;
         Culture.Changed += OnCultureChanged;
         NavRefresh.RefreshRequested += OnNavRefreshRequestedAsync;
+        await RefreshFlagsAsync();
         await RefreshItemsAsync(forceRoleApis: true);
+    }
+
+    private async Task RefreshFlagsAsync()
+    {
+        try
+        {
+            _flags = await FeatureFlags.GetAsync();
+        }
+        catch
+        {
+            _flags = FeatureFlagSnapshot.Defaults;
+        }
     }
 
     private void OnCultureChanged()
@@ -55,6 +75,7 @@
 
     private async Task OnNavRefreshRequestedAsync()
     {
+        await RefreshFlagsAsync();
         await RefreshItemsAsync(forceRoleApis: true);
         await InvokeAsync(StateHasChanged);
     }
@@ -64,6 +85,7 @@
         try
         {
             // Active styling is URI-based; avoid re-hitting takeover/sales APIs on every nav.
+            // Feature flags are refreshed on init + NavRefreshRequested only (not every location change).
             await RefreshItemsAsync(forceRoleApis: false);
             await InvokeAsync(StateHasChanged);
         }
@@ -86,7 +108,7 @@
             .Where(c => c.Type is System.Security.Claims.ClaimTypes.Role or "role")
             .Select(c => c.Value)
             .OrderBy(v => v, StringComparer.Ordinal));
-        var catalog = RoleNavCatalog.ForUser(state.User);
+        var catalog = RoleNavCatalog.ForUser(state.User, _flags);
 
         var rolesChanged = !string.Equals(_lastRoleFingerprint, fingerprint, StringComparison.Ordinal);
         _lastRoleFingerprint = fingerprint;

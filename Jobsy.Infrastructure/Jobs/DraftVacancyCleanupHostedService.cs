@@ -17,6 +17,7 @@ namespace Jobsy.Infrastructure.Jobs;
 /// </summary>
 public sealed class DraftVacancyCleanupHostedService : BackgroundService
 {
+    private readonly EmployersJobGate _employersGate;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DraftVacancyCleanupHostedService> _logger;
 
@@ -26,6 +27,7 @@ public sealed class DraftVacancyCleanupHostedService : BackgroundService
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _employersGate = new EmployersJobGate(_logger, nameof(DraftVacancyCleanupHostedService));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -49,6 +51,11 @@ public sealed class DraftVacancyCleanupHostedService : BackgroundService
 
     private async Task RunAsync(CancellationToken cancellationToken)
     {
+        if (!await _employersGate.ShouldRunAsync(_scopeFactory, cancellationToken))
+        {
+            return;
+        }
+
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var email = scope.ServiceProvider.GetRequiredService<IEmailService>();

@@ -7,12 +7,14 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/tokens/logs")]
 [Authorize]
+[RequiresFeature(PlatformFeature.Employers)]
 public class TokenLogsController : ControllerBase
 {
     private readonly JobsyDbContext _db;

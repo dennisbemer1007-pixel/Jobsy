@@ -181,6 +181,17 @@ public static class PageHelpDocs
             "Vacatures rondom je startadres (profiel-thuisadres, 20 min fietsen) met echte reistijd-ringen.",
             "Pas adres en filters in de chipbalk. Fit-% zie je alleen na de cultuur- of waardentest; anders ‘Maak je paspoort af’. Dislikes zetten een baan lager (‘Staat lager: …’) zonder hem te verbergen.",
             "Banen zoeken op de kaart of in de lijstweergave (?weergave=lijst)."),
+        ["/candidate/paspoort"] = new(
+            "Mijn Lobsy-paspoort",
+            "Jouw DNA, tests, schalen en gegevens in één overzicht.",
+            "Bekijk wie je bent onder de schaal, vul lagen aan en open tests of je gegevens.",
+            "Zelfinzicht en profielcompleetheid op één plek."),
+
+        ["/candidate/ontdekkingsreis"] = new(
+            "De ontdekkingsreis",
+            "Stap voor stap ontdekken wie je bent, laag voor laag tot je paspoort.",
+            "Begin bij het strand, doorloop stappen en tests, kies hoe diep je duikt bij ‘Weer een laag eraf’, en bekijk je eerste indruk. Na afronden blijf je hier voor ‘Verder ontdekken’.",
+            "Profiel en zelfinzicht opbouwen zonder haast."),
 
         ["/candidate/profile"] = new(
             "Mijn profiel",

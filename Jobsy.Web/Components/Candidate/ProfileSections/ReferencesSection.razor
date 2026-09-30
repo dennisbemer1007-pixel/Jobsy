@@ -1,0 +1,57 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
+@inject CultureState Culture
+
+                            <fieldset class="profile-employers">
+                                <legend>@Culture["Profile.References"]</legend>
+                                <p class="profile-employers__hint">@Culture["Profile.ReferencesLead"]</p>
+                                @for (var i = 0; i < Editor.References.Count; i++)
+                                {
+                                    var idx = i;
+                                    <div class="profile-employer-card">
+                                        <div class="profile-employer-card__top">
+                                            <label class="profile-employer-card__field profile-employer-card__field--employer">
+                                                <span>@Culture["Profile.ReferenceEmployer"]</span>
+                                                <input @bind="Editor.References[idx].EmployerName" />
+                                            </label>
+                                            <label class="profile-employer-card__field profile-employer-card__field--role">
+                                                <span>@Culture["Profile.ReferenceContact"]</span>
+                                                <input @bind="Editor.References[idx].ContactName" />
+                                            </label>
+                                            <button type="button"
+                                                    class="icon-btn icon-btn--danger"
+                                                    title="@Culture["Profile.RemoveReference"]"
+                                                    aria-label="@Culture["Profile.RemoveReference"]"
+                                                    @onclick="() => Editor.RemoveReference(idx)">
+                                                @((MarkupString)ActionIcons.Trash)
+                                            </button>
+                                        </div>
+                                        <div class="profile-employer-card__dates">
+                                            <label class="profile-employer-card__field">
+                                                <span>@Culture["Profile.ReferenceEmail"]</span>
+                                                <input type="email" @bind="Editor.References[idx].Email" />
+                                            </label>
+                                            <label class="profile-employer-card__field">
+                                                <span>@Culture["Profile.ReferencePhone"]</span>
+                                                <input type="tel" @bind="Editor.References[idx].Phone" />
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                                <button type="button"
+                                        class="icon-btn icon-btn--add"
+                                        title="@Culture["Profile.AddReference"]"
+                                        aria-label="@Culture["Profile.AddReference"]"
+                                        @onclick="Editor.AddReference"
+                                        disabled="@(Editor.References.Count >= CandidateProfileEditor.MaxReferences)">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                                        <path d="M12 5v14" /><path d="M5 12h14" />
+                                    </svg>
+                                </button>
+                            </fieldset>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+}

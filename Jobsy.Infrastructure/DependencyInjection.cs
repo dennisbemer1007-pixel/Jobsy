@@ -316,6 +316,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.NewFeedbackSource>();
         services.AddScoped<IAdminTodoService, Jobsy.Infrastructure.Services.AdminTodo.AdminTodoService>();
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
+        services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Infrastructure.Features.FeatureFlags>();
         services.AddScoped<IPlatformCompanySettingsService, PlatformCompanySettingsService>();
         services.AddScoped<IAboutPageSettingsService, AboutPageSettingsService>();
         services.AddScoped<IMarketingFlyerSettingsService, MarketingFlyerSettingsService>();

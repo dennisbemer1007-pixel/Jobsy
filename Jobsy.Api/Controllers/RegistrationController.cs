@@ -13,11 +13,13 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Jobsy.Api.Admin;
 using Jobsy.Core.Admin;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/registration")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class RegistrationController : ControllerBase
 {
     private readonly ICompanyRegistrationService _registration;

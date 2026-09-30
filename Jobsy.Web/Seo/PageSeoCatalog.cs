@@ -65,6 +65,30 @@ public static partial class PageSeoCatalog
         "/partner"
     ];
 
+    /// <summary>
+    /// Static sitemap paths for the current feature flags.
+    /// When employers are OFF, vacancy/marketing URLs are dropped and home is /ontdek.
+    /// </summary>
+    public static IReadOnlyList<string> StaticIndexablePathsFor(Jobsy.Core.Features.FeatureFlagSnapshot flags)
+    {
+        if (flags.EmployersEnabled)
+        {
+            return StaticIndexablePaths;
+        }
+
+        return
+        [
+            "/ontdek",
+            "/login",
+            "/privacy",
+            "/algemene-voorwaarden",
+            "/gebruiksvoorwaarden",
+            "/wie-zijn-wij",
+            "/dna",
+            "/hoe-werkt-lobsy"
+        ];
+    }
+
     public static string Normalize(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -130,6 +154,8 @@ public static partial class PageSeoCatalog
             ["/candidate/shared"] = Private("Saved.TabShared", "Seo.PrivateDescription"),
             ["/candidate/vacancies"] = Private("Nav.Vacancies", "Seo.PrivateDescription"),
             ["/candidate/applications"] = Private("Nav.MyApplications", "Seo.PrivateDescription"),
+            ["/candidate/paspoort"] = Private("Passport.Title", "Seo.PrivateDescription"),
+            ["/candidate/ontdekkingsreis"] = Private("Discovery.PageTitle", "Seo.PrivateDescription"),
             ["/candidate/profile"] = Private("Profile.Title", "Seo.PrivateDescription"),
             ["/profiel"] = Private("ProfileHub.Title", "Seo.PrivateDescription"),
             ["/carriere"] = Private("CareerDash.Title", "Seo.PrivateDescription"),

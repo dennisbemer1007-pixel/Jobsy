@@ -19,11 +19,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/applications")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class ApplicationsController : ControllerBase
 {
     private readonly JobsyDbContext _db;

@@ -609,6 +609,7 @@ public class AssistantChatServiceTests
             new OpenAiEndpointResolver(
                 new StubIntegrationCredentials(),
                 Options.Create(new OpenAiOptions())),
+            new AlwaysOnFeatureFlags(),
             NullLogger<AssistantChatService>.Instance);
 
     private sealed class StubHttpClientFactory : IHttpClientFactory

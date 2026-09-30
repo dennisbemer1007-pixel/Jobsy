@@ -118,9 +118,14 @@ public class RoleFitCheckTests
         Assert.Contains("Fit.CheckMyFit", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.NeedsRecheck", panel, StringComparison.Ordinal);
         Assert.Contains("Active", panel, StringComparison.Ordinal);
-        Assert.Contains("never auto-POST", panel, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("RoleFitCheckSession", panel, StringComparison.Ordinal);
         Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
+
+        var session = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/RoleFitCheckSession.cs"));
+        Assert.Contains("never auto-POST", session, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("GetMyRoleFitAsync", session, StringComparison.Ordinal);
+        Assert.Contains("EvaluateRoleFitAsync", session, StringComparison.Ordinal);
 
         var controller = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/RoleFitCheckController.cs"));
         Assert.Contains("RequireCandidate", controller, StringComparison.Ordinal);

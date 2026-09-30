@@ -1,5 +1,6 @@
 @namespace Jobsy.Web.Components.Pages.Candidate
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Dna
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Routing
@@ -273,10 +274,10 @@
     [Parameter] public EventCallback<bool> WideViewportChanged { get; set; }
 
     private int EffectiveCompletenessPercent =>
-        _kompas?.ProfileCompletenessPercent
-        ?? SharedDna?.ProfileCompletenessPercent
-        ?? SharedKompas?.ProfileCompletenessPercent
-        ?? _completenessPercent;
+        CandidateDnaViewBuilder.EffectiveCompletenessPercent(
+            _kompas ?? SharedKompas,
+            SharedDna,
+            _completenessPercent);
 
     /// <summary>Top 10 side panel is desktop-only on every tab.</summary>
     private bool ShouldShowSide => _isWideViewport;

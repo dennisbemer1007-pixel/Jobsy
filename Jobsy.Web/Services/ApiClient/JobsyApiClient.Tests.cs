@@ -211,10 +211,7 @@ public sealed partial class JobsyApiClient
                 return null;
             }
 
-            return JsonSerializer.Deserialize<CareerPathPlanApiModel>(body, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            return JsonSerializer.Deserialize<CareerPathPlanApiModel>(body, CaseInsensitiveJson);
         }
         catch (HttpRequestException)
         {
@@ -391,6 +388,26 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    public async Task<List<PassportCourseCard>> GetPassportTrainingOffersAsync(
+        string? skill,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var qs = "api/me/training-offers/passport";
+            if (!string.IsNullOrWhiteSpace(skill))
+            {
+                qs += "?skill=" + Uri.EscapeDataString(skill);
+            }
+
+            return await _http.GetFromJsonAsync<List<PassportCourseCard>>(qs, ct) ?? [];
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
     public async Task<TrainingTrackedLink> TrackTrainingOfferAsync(
         Guid offerId,
         string campaign,
@@ -463,7 +480,7 @@ public sealed partial class JobsyApiClient
 
         return System.Text.Json.JsonSerializer.Deserialize<AssessmentRetakeStartResult>(
                    body,
-                   new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                   CaseInsensitiveJson)
                ?? new AssessmentRetakeStartResult();
     }
 

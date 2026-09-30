@@ -4,6 +4,8 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @using Jobsy.Core.Sales
 @using Jobsy.Web.Sales
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject IJSRuntime Js

@@ -1,0 +1,83 @@
+@namespace Jobsy.Web.Components.Candidate.Discovery
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="journey-overview">
+    <p class="journey-step__eyebrow">@Culture["Discovery.Eyebrow"]</p>
+    <h1 tabindex="-1">@Culture["Discovery.Overview.Title"]</h1>
+    <p class="journey-step__lead">@Culture["Discovery.Overview.Lead"]</p>
+
+    <ul class="journey-overview__list">
+        @foreach (var row in Rows)
+        {
+            <li class="journey-overview__row">
+                <div>
+                    <b>@Culture[row.TitleKey]</b>
+                    <small class="@(row.StatusClass)">@row.StatusText</small>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(row.ActionLabel))
+                {
+                    <button type="button" class="btn-compact" @onclick="() => OnRowAction.InvokeAsync(row)">
+                        @row.ActionLabel
+                    </button>
+                }
+            </li>
+        }
+    </ul>
+
+    <h2 class="journey-q">@Culture["Discovery.Overview.TestsHeading"]</h2>
+    <ul class="journey-overview__list">
+        @foreach (var test in Tests)
+        {
+            <li class="journey-overview__row journey-overview__row--test">
+                <div>
+                    <b>@Culture[test.TitleKey]</b>
+                    <small>@test.DepthText</small>
+                </div>
+                <div class="journey-overview__actions">
+                    @if (test.IsComplete)
+                    {
+                        <span class="status-pill status-pill--success">@Culture["Discovery.Overview.FullyDone"]</span>
+                        <a class="btn-compact" href="@test.ReportHref">@Culture["Discovery.Overview.FullReport"]</a>
+                    }
+                    else
+                    {
+                        @foreach (var level in test.NextLevels)
+                        {
+                            <button type="button" class="btn-compact" @onclick="() => OnDeepen.InvokeAsync((test.Step, level))">
+                                @level.Label
+                            </button>
+                        }
+                    }
+                </div>
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    public sealed record OverviewRow(
+        int Step,
+        string TitleKey,
+        string StatusText,
+        string StatusClass,
+        string? ActionLabel,
+        bool IsConsent = false,
+        bool IsReview = true);
+
+    public sealed record DepthButton(int TargetCount, string Label);
+
+    public sealed record TestRow(
+        int Step,
+        string TitleKey,
+        string DepthText,
+        bool IsComplete,
+        string ReportHref,
+        IReadOnlyList<DepthButton> NextLevels);
+
+    [Parameter] public IReadOnlyList<OverviewRow> Rows { get; set; } = [];
+    [Parameter] public IReadOnlyList<TestRow> Tests { get; set; } = [];
+    [Parameter] public EventCallback<OverviewRow> OnRowAction { get; set; }
+    [Parameter] public EventCallback<(int Step, DepthButton Level)> OnDeepen { get; set; }
+}

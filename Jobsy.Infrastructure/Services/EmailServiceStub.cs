@@ -1,6 +1,8 @@
 using System.Text.Json;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
@@ -11,16 +13,28 @@ namespace Jobsy.Infrastructure.Services;
 public sealed class EmailServiceStub : IEmailService
 {
     private readonly JobsyDbContext _db;
+    private readonly IFeatureFlags? _featureFlags;
     private readonly ILogger<EmailServiceStub> _logger;
 
-    public EmailServiceStub(JobsyDbContext db, ILogger<EmailServiceStub> logger)
+    public EmailServiceStub(JobsyDbContext db, ILogger<EmailServiceStub> logger, IFeatureFlags? featureFlags = null)
     {
         _db = db;
         _logger = logger;
+        _featureFlags = featureFlags;
     }
 
     public async Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
     {
+        if (_featureFlags is not null
+            && !string.IsNullOrWhiteSpace(message.Category)
+            && await ShouldSuppressAsync(message.Category, cancellationToken))
+        {
+            _logger.LogInformation(
+                "Email suppressed: employers disabled (category={Category}).",
+                message.Category);
+            return EmailDeliveryResult.Stub;
+        }
+
         var redactedTo = RedactEmail(message.To);
         _logger.LogInformation(
             "Email stub → {To}: {Subject}",
@@ -46,6 +60,21 @@ public sealed class EmailServiceStub : IEmailService
 
         await _db.SaveChangesAsync(cancellationToken);
         return EmailDeliveryResult.Stub;
+    }
+
+    private async ValueTask<bool> ShouldSuppressAsync(string category, CancellationToken cancellationToken)
+    {
+        var cat = category.Trim();
+        var requires = TransactionalEmails.Templates.Any(t =>
+            t.RequiresEmployers
+            && (string.Equals(t.Category, cat, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(t.Key, cat, StringComparison.OrdinalIgnoreCase)));
+        if (!requires || _featureFlags is null)
+        {
+            return false;
+        }
+
+        return !await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
     }
 
     public static string RedactEmail(string email)

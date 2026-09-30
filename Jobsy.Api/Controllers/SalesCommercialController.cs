@@ -10,11 +10,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Jobsy.Api.Admin;
 using Jobsy.Core.Admin;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/sales-commercial")]
+[RequiresFeature(PlatformFeature.Employers)]
 public partial class SalesCommercialController : ControllerBase
 {
     private static readonly Regex TrackingCodePattern = TrackingCodeRegex();

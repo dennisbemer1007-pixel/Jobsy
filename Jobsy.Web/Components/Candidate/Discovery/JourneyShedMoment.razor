@@ -1,0 +1,121 @@
+@namespace Jobsy.Web.Components.Candidate.Discovery
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="journey-shed" data-reduced-motion="@ReducedMotionClass">
+    <p class="journey-step__eyebrow">
+        @Culture["Discovery.Zone.Deep"] · @Culture.Format("Discovery.Shed.EyebrowDone", Step)
+    </p>
+    <div class="ob-wizard__test-tabs journey-shed__tabs">
+        @foreach (var tab in TestTabs)
+        {
+            var isDone = tab.Step <= Step;
+            var isNext = tab.Step == Step + 1;
+            <span class="@(isNext ? "is-current" : isDone ? "is-done" : null)">
+                @if (isDone && !isNext)
+                {
+                    <span aria-hidden="true">✓ </span>
+                }
+                @Culture[tab.Title]
+            </span>
+        }
+    </div>
+
+    <div class="journey-shed__body">
+        <div class="journey-shed__pic" aria-hidden="true">
+            <div class="journey-shed__fallen @FallClass">
+                @((MarkupString)ShardSvg)
+                <span>@Culture.Format("Discovery.Shed.LayerLabel", Step)</span>
+            </div>
+        </div>
+        <div>
+            <h1 tabindex="-1">@Culture["Discovery.Shed.Title"]</h1>
+            <p class="journey-step__lead">@Culture.Format("Discovery.Shed.Lead", TestName)</p>
+            @if (ImpressionLines.Count > 0)
+            {
+                <ul class="journey-shed__gained">
+                    @foreach (var line in ImpressionLines)
+                    {
+                        <li>
+                            <span aria-hidden="true">✓</span>
+                            @line
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+
+    <div class="journey-body">
+        @if (FullyDone)
+        {
+            <p class="journey-shed__done">@Culture["Discovery.Shed.FullyDone"]</p>
+        }
+        else
+        {
+            <fieldset class="journey-shed__fieldset">
+                <legend class="journey-q">@Culture["Discovery.Shed.DeeperLegend"]</legend>
+                <p class="journey-qs">@Culture["Discovery.Shed.DeeperSub"]</p>
+                <div class="journey-dive" role="radiogroup" aria-label="@Culture["Discovery.Shed.DeeperLegend"]">
+                    @foreach (var opt in Options)
+                    {
+                        var selected = SelectedLevel == opt.Level;
+                        <button type="button"
+                                class="journey-dive__opt @(selected ? "is-on" : null) @(opt.Disabled ? "is-done" : null)"
+                                role="radio"
+                                aria-checked="@selected"
+                                disabled="@opt.Disabled"
+                                @onclick="() => SelectLevel.InvokeAsync(opt.Level)">
+                            <b>
+                                <span class="journey-dive__rd" aria-hidden="true"></span>
+                                @Culture[opt.TitleKey]
+                            </b>
+                            <small>@Culture[opt.SubKey]</small>
+                            <span class="journey-dive__dd" aria-hidden="true">
+                                @for (var i = 0; i < 5; i++)
+                                {
+                                    <i class="@(i < opt.Dots ? "is-on" : null)"></i>
+                                }
+                            </span>
+                        </button>
+                    }
+                </div>
+            </fieldset>
+        }
+    </div>
+
+    <p class="vh" aria-live="polite">@Culture.Format("Discovery.Shed.AriaLive", Step)</p>
+
+    <div class="journey-step__foot">
+        <span class="journey-step__sp"></span>
+        <button type="button" class="journey-later" @onclick="Later">@Culture["Discovery.Later"]</button>
+        <button type="button" class="btn-compact btn-compact--primary" @onclick="Continue">
+            @PrimaryLabel
+        </button>
+    </div>
+</div>
+
+@code {
+    public sealed record TestTab(int Step, string Title);
+    public sealed record DepthOption(int Level, string TitleKey, string SubKey, int Dots, bool Disabled);
+
+    [Parameter] public int Step { get; set; }
+    [Parameter] public string TestName { get; set; } = "";
+    [Parameter] public IReadOnlyList<string> ImpressionLines { get; set; } = [];
+    [Parameter] public IReadOnlyList<TestTab> TestTabs { get; set; } = [];
+    [Parameter] public IReadOnlyList<DepthOption> Options { get; set; } = [];
+    [Parameter] public int SelectedLevel { get; set; } = OnboardingWizardCatalog.MiniLevelCount;
+    [Parameter] public bool FullyDone { get; set; }
+    [Parameter] public bool PreferReducedMotion { get; set; }
+    [Parameter] public string PrimaryLabel { get; set; } = "";
+    [Parameter] public EventCallback<int> SelectLevel { get; set; }
+    [Parameter] public EventCallback Continue { get; set; }
+    [Parameter] public EventCallback Later { get; set; }
+
+    private string FallClass => PreferReducedMotion ? "is-static" : "is-fall";
+    private string ReducedMotionClass => PreferReducedMotion ? "is-reduced-motion" : "";
+
+    private const string ShardSvg =
+        """<svg class="journey-shard" width="120" height="72" viewBox="0 0 70 40" aria-hidden="true"><path d="M5 34C6 16 22 4 38 4 54 4 66 14 66 28L58 24 52 31 44 25 36 32 28 26 20 33 13 28Z"/><path class="journey-shard__rg" d="M14 22C22 14 32 11 40 11 50 11 58 16 61 22M24 16C30 12 36 11 42 12"/></svg>""";
+}

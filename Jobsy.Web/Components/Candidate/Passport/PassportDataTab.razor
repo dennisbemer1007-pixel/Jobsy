@@ -1,0 +1,266 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject CandidateProfileEditor Editor
+@implements IDisposable
+
+<div class="passport-data">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_loadFailed)
+    {
+        <div class="panel-inline-error" role="alert">
+            <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
+            <button type="button" class="btn-compact" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
+        </div>
+    }
+    else
+    {
+        <CascadingValue Value="Editor">
+            <div class="passport-data__switches">
+                <FeatureVisible Feature="PlatformFeature.Employers">
+                    <label class="detail-card passport-data__switch">
+                        <span class="passport-data__switch-copy">
+                            <span class="passport-data__switch-title">@Culture["Profile.OpenForWork"]</span>
+                            <span class="passport-data__switch-sub">@Culture["Passport.Data.OpenForWorkSub"]</span>
+                        </span>
+                        <input class="passport-data__switch-input"
+                               type="checkbox"
+                               role="switch"
+                               checked="@Editor.OpenForWork"
+                               disabled="@(Editor.Saving || Editor.ConsentBusy)"
+                               @onchange="OnOpenForWorkChangedAsync" />
+                    </label>
+
+                    <label class="detail-card passport-data__switch">
+                        <span class="passport-data__switch-copy">
+                            <span class="passport-data__switch-title">@Culture["Passport.Data.TalentPool"]</span>
+                            <span class="passport-data__switch-sub">@Culture["Passport.Data.TalentPoolSub"]</span>
+                        </span>
+                        <input class="passport-data__switch-input"
+                               type="checkbox"
+                               role="switch"
+                               checked="@(Editor.TalentPoolConsentAt is not null)"
+                               disabled="@(Editor.Saving || Editor.ConsentBusy)"
+                               @onchange="OnTalentPoolChangedAsync" />
+                    </label>
+                </FeatureVisible>
+
+                <button type="button"
+                        class="detail-card passport-data__switch passport-data__switch--status"
+                        @onclick='() => ToggleSection("privacy")'>
+                    <span class="passport-data__switch-copy">
+                        <span class="passport-data__switch-title">@Culture["Profile.Consent.TestAiTitle"]</span>
+                        <span class="passport-data__switch-sub">@TestAiSubtext</span>
+                    </span>
+                    <span class="status-pill @(Editor.TestAiConsentAt is null ? "status-pill--pending" : "status-pill--accepted")">
+                        @(Editor.TestAiConsentAt is null
+                            ? Culture["Passport.Data.ConsentOff"]
+                            : Culture["Passport.Data.ConsentOn"])
+                    </span>
+                </button>
+            </div>
+
+            <div class="passport-data__accordions" role="list">
+                @foreach (var section in Sections)
+                {
+                    var open = string.Equals(_openSection, section.Id, StringComparison.Ordinal);
+                    var panelId = $"passport-data-panel-{section.Id}";
+                    var btnId = $"passport-data-btn-{section.Id}";
+                    <div class="detail-card passport-data__item @(section.Danger ? "passport-data__item--danger" : null) @(open ? "is-open" : null)"
+                         role="listitem">
+                        <button type="button"
+                                id="@btnId"
+                                class="passport-data__toggle @(section.Danger ? "passport-data__toggle--danger" : null)"
+                                aria-expanded="@(open ? "true" : "false")"
+                                aria-controls="@panelId"
+                                @onclick="() => ToggleSection(section.Id)">
+                            <span class="passport-data__icon" aria-hidden="true">@((MarkupString)section.Icon)</span>
+                            <span class="passport-data__toggle-text">
+                                <span class="passport-data__title">@Culture[section.TitleKey]</span>
+                                <span class="passport-data__sub">@Culture[section.SubKey]</span>
+                            </span>
+                            <span class="passport-data__chevron" aria-hidden="true"></span>
+                        </button>
+                        @if (open)
+                        {
+                            <div id="@panelId" class="passport-data__body" role="region" aria-labelledby="@btnId">
+                                @if (section.Id == "personal")
+                                {
+                                    <PersonalSection ShowDiscoveryFields="true" />
+                                    <DevicesSection />
+                                }
+                                else if (section.Id == "preferences")
+                                {
+                                    <PreferencesSection ShowDiscoveryFields="true" />
+                                }
+                                else if (section.Id == "joy")
+                                {
+                                    <JoyAndLearningSection />
+                                }
+                                else if (section.Id == "dislikes")
+                                {
+                                    <DislikesSection />
+                                }
+                                else if (section.Id == "availability")
+                                {
+                                    <AvailabilitySection />
+                                }
+                                else if (section.Id == "motivation")
+                                {
+                                    <MotivationSection />
+                                }
+                                else if (section.Id == "privacy")
+                                {
+                                    <ConsentSection />
+                                }
+                                else if (section.Id == "delete")
+                                {
+                                    <DeleteAccountSection />
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_openSection) && _openSection is not "delete")
+            {
+                @if (_openSection == "dislikes")
+                {
+                    <div class="profile-save-bar">
+                        <button type="button"
+                                class="btn-compact btn-compact--primary"
+                                disabled="@(Editor.PrivatePrefsSaving)"
+                                @onclick="Editor.SavePrivatePreferencesAsync">
+                            @(Editor.PrivatePrefsSaving ? Culture["Common.Loading"] : Culture["Common.Save"])
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <ProfileSaveBar />
+                }
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Editor.ConsentMessage))
+            {
+                <p class="state-message" aria-live="polite">@Editor.ConsentMessage</p>
+            }
+            else if (!string.IsNullOrWhiteSpace(Editor.Message))
+            {
+                <p class="state-message" aria-live="polite">@Editor.Message</p>
+            }
+        </CascadingValue>
+    }
+</div>
+
+<UnsubscribeDialog IsOpen="Editor.UnsubscribeOpen"
+                   OnClose="Editor.CloseUnsubscribe"
+                   OnCompleted="Editor.OnUnsubscribeCompleted" />
+
+@code {
+    private sealed record DataSection(string Id, string TitleKey, string SubKey, string Icon, bool Danger);
+
+    private static readonly DataSection[] Sections =
+    [
+        new("personal", "Profile.Section.Personal", "Passport.Data.PersonalSub", NavIcons.Profile, false),
+        new("preferences", "Profile.Section.Preferences", "Passport.Data.PreferencesSub", NavIcons.Transport, false),
+        new("joy", "Profile.Section.JoyAndLearning", "Passport.Data.JoySub", NavIcons.Feedback, false),
+        new("dislikes", "Profile.Section.Dislikes", "Passport.Data.DislikesSub", NavIcons.Shield, false),
+        new("availability", "Profile.Section.Availability", "Passport.Data.AvailabilitySub", NavIcons.Calendar, false),
+        new("motivation", "Passport.Data.Motivation", "Passport.Data.MotivationSub", NavIcons.Feedback, false),
+        new("privacy", "Profile.Consent.Title", "Passport.Data.PrivacySub", NavIcons.Shield, false),
+        new("delete", "Profile.UnsubscribeTitle", "Passport.Data.DeleteSub", ActionIcons.Trash, true)
+    ];
+
+    [Parameter] public bool Active { get; set; }
+
+    private bool _loading = true;
+    private bool _loadFailed;
+    private bool _loaded;
+    private string? _openSection;
+
+    private string TestAiSubtext => Editor.TestAiConsentAt is DateTime at
+        ? Culture.Format("Passport.Data.ConsentSince", at.ToLocalTime().ToString("dd-MM-yyyy"))
+        : Culture["Profile.Consent.TestAiNone"];
+
+    protected override void OnInitialized()
+        => Editor.Changed += OnEditorChanged;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Active && !_loaded)
+        {
+            await LoadAsync();
+        }
+    }
+
+    public void Dispose() => Editor.Changed -= OnEditorChanged;
+
+    private void OnEditorChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private Task RetryLoadAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadFailed = false;
+        try
+        {
+            await Editor.LoadMasterdataAsync();
+            var me = await Api.GetMyProfileAsync();
+            if (me is null)
+            {
+                _loadFailed = true;
+                return;
+            }
+
+            Editor.ApplyFromProfile(me);
+            await Editor.LoadPrivatePreferencesAsync();
+            _loaded = true;
+        }
+        catch
+        {
+            _loadFailed = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleSection(string id)
+        => _openSection = string.Equals(_openSection, id, StringComparison.Ordinal) ? null : id;
+
+    private async Task OnOpenForWorkChangedAsync(ChangeEventArgs e)
+    {
+        Editor.OpenForWork = e.Value is bool b
+            ? b
+            : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        await Editor.SaveOpenForWorkAsync();
+    }
+
+    private async Task OnTalentPoolChangedAsync(ChangeEventArgs e)
+    {
+        var on = e.Value is bool b
+            ? b
+            : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on)
+        {
+            await Editor.AcceptTalentPoolConsentAsync();
+        }
+        else
+        {
+            await Editor.WithdrawTalentPoolConsentAsync();
+        }
+    }
+}

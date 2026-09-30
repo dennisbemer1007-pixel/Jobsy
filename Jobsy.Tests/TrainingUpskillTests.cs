@@ -58,6 +58,7 @@ public class TrainingUpskillTests
             TrainingProviderKind.NationalAffiliate, fields, ["zorg"], fields, "verpleegkundige");
         var nationalNoKey = TrainingMatchRules.Score(
             TrainingProviderKind.NationalAffiliate, fields, ["loi"], fields, "verpleegkundige");
+        Assert.True(regional > national);
         Assert.Equal(0, nationalNoKey);
     }
 
@@ -121,6 +122,120 @@ public class TrainingUpskillTests
     }
 
     [Fact]
+    public async Task EnsureDefaults_in_production_without_seed_switch_adds_nothing()
+    {
+        await using var db = CreateDb();
+        var sut = new TrainingUpskillService(
+            db,
+            Config(seedDemoProviders: false),
+            new FakeHostEnvironment(Environments.Production));
+
+        await sut.EnsureDefaultsAsync();
+
+        Assert.Empty(await db.TrainingProviders.ToListAsync());
+        Assert.Empty(await db.TrainingOffers.ToListAsync());
+    }
+
+    [Fact]
+    public async Task EnsureDefaults_in_development_seeds_demo_providers()
+    {
+        await using var db = CreateDb();
+        var sut = new TrainingUpskillService(db, Config(), new FakeHostEnvironment(Environments.Development));
+
+        await sut.EnsureDefaultsAsync();
+
+        Assert.Equal(6, await db.TrainingProviders.CountAsync());
+        Assert.All(TrainingDemoSeed.DemoProviderIds, id => Assert.True(db.TrainingProviders.Any(p => p.Id == id)));
+    }
+
+    [Fact]
+    public async Task EnsureDefaults_with_seed_switch_on_seeds_in_production()
+    {
+        await using var db = CreateDb();
+        var sut = new TrainingUpskillService(
+            db,
+            Config(seedDemoProviders: true),
+            new FakeHostEnvironment(Environments.Production));
+
+        await sut.EnsureDefaultsAsync();
+
+        Assert.Equal(6, await db.TrainingProviders.CountAsync());
+    }
+
+    [Fact]
+    public async Task EnsureDefaults_in_test_environment_seeds_demo_providers()
+    {
+        await using var db = CreateDb();
+        var sut = new TrainingUpskillService(
+            db,
+            Config(seedDemoProviders: false),
+            new FakeHostEnvironment("Test"));
+
+        await sut.EnsureDefaultsAsync();
+
+        Assert.Equal(6, await db.TrainingProviders.CountAsync());
+    }
+
+    [Fact]
+    public async Task RecommendAsync_with_only_inactive_providers_returns_empty()
+    {
+        await using var db = CreateDb();
+        foreach (var seed in TrainingDemoSeed.Seeds())
+        {
+            seed.IsActive = false;
+            foreach (var offer in seed.Offers)
+            {
+                offer.IsActive = true;
+            }
+
+            db.TrainingProviders.Add(seed);
+        }
+
+        await db.SaveChangesAsync();
+
+        var sut = new TrainingUpskillService(
+            db,
+            Config(seedDemoProviders: false),
+            new FakeHostEnvironment(Environments.Production));
+        var cards = await sut.RecommendAsync(Guid.NewGuid(), "Verpleegkundige", ["zorg"], TrainingTracking.CampaignFit);
+        Assert.Empty(cards);
+    }
+
+    [Fact]
+    public void Deactivate_demo_providers_migration_updates_the_six_seed_ids()
+    {
+        Assert.Equal(6, TrainingDemoSeed.DemoProviderIds.Length);
+        var migration = File.ReadAllText(Path.Combine(
+            RepoRoot.Find(),
+            "Jobsy.Infrastructure/Data/Migrations/20260929130000_DeactivateDemoTrainingProviders.cs"));
+        Assert.Contains("UPDATE \"TrainingProviders\"", migration, StringComparison.Ordinal);
+        Assert.Contains("SET \"IsActive\" = false", migration, StringComparison.Ordinal);
+        Assert.Contains("SET \"IsActive\" = true", migration, StringComparison.Ordinal);
+        foreach (var id in TrainingDemoSeed.DemoProviderIds)
+        {
+            Assert.Contains(id.ToString("D"), migration, StringComparison.OrdinalIgnoreCase);
+        }
+
+        Assert.DoesNotContain("DELETE FROM", migration, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("DropTable", migration, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TrainingOffersBlock_with_empty_list_renders_nothing()
+    {
+        var block = File.ReadAllText(Path.Combine(
+            RepoRoot.Find(),
+            "Jobsy.Web/Components/Candidate/TrainingOffersBlock.razor"));
+        Assert.Contains("_offers.Count == 0 && string.IsNullOrWhiteSpace(_message)", block, StringComparison.Ordinal);
+        Assert.Contains("Offers is not null", block, StringComparison.Ordinal);
+        // Early return before the section markup when there is nothing to show.
+        var earlyReturnIdx = block.IndexOf("_offers.Count == 0", StringComparison.Ordinal);
+        var sectionIdx = block.IndexOf("<section", StringComparison.Ordinal);
+        Assert.True(earlyReturnIdx >= 0 && sectionIdx > earlyReturnIdx);
+        Assert.Contains("return;", block[earlyReturnIdx..sectionIdx], StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Functie_fit_and_compass_surfaces_include_the_cta()
     {
         var snapshot = RoleFitCheckBuilder.Build(
@@ -157,13 +272,19 @@ public class TrainingUpskillTests
         return new JobsyDbContext(options);
     }
 
-    private static IConfiguration Config()
-        => new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Training:TrackingSecret"] = "unit-test-secret"
-            })
-            .Build();
+    private static IConfiguration Config(bool? seedDemoProviders = null)
+    {
+        var values = new Dictionary<string, string?>
+        {
+            ["Training:TrackingSecret"] = "unit-test-secret"
+        };
+        if (seedDemoProviders is bool flag)
+        {
+            values["Training:SeedDemoProviders"] = flag ? "true" : "false";
+        }
+
+        return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+    }
 
     private sealed class FakeHostEnvironment(string environmentName) : IHostEnvironment
     {

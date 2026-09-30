@@ -17,11 +17,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class VacanciesController : ControllerBase
 {
     /// <summary>Vacancy content is authored in Dutch unless a source language is stored later.</summary>
@@ -564,6 +566,32 @@ public class VacanciesController : ControllerBase
                     r => r.Title,
                     r => r.Id)
                 .ToList();
+
+            var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+            if (lookup is not null)
+            {
+                var dislikeJson = await _db.CandidatePrivatePreferences.AsNoTracking()
+                    .Where(p => p.UserId == lookup.Id)
+                    .Select(p => p.DislikesJson)
+                    .FirstOrDefaultAsync(cancellationToken);
+                IReadOnlyList<string> dislikeCodes = [];
+                if (!string.IsNullOrWhiteSpace(dislikeJson))
+                {
+                    try
+                    {
+                        dislikeCodes = System.Text.Json.JsonSerializer.Deserialize<List<string>>(dislikeJson) ?? [];
+                    }
+                    catch (System.Text.Json.JsonException)
+                    {
+                        dislikeCodes = [];
+                    }
+                }
+
+                results = DislikeMatchRules.DownRankNightShifts(
+                    results,
+                    dislikeCodes,
+                    r => r.LegalNightShift23To06 == true).ToList();
+            }
         }
 
         if (take is int cap)

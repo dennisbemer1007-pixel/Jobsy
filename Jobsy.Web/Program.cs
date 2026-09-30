@@ -68,6 +68,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddHttpClient("JobsySessionSecurity");
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
+builder.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Web.Features.WebFeatureFlags>();
 builder.Services.AddScoped<CultureState>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeState>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeBootstrap>();
@@ -122,6 +123,7 @@ builder.Services.AddScoped<Jobsy.Web.Services.CandidateMatchProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Services.MatchVacancyService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CareerPathService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateProfileService>();
+builder.Services.AddScoped<Jobsy.Web.Components.Candidate.ProfileSections.CandidateProfileEditor>();
 builder.Services.AddScoped<Jobsy.Web.Services.GratisDnaStorage>();
 builder.Services.AddScoped<Jobsy.Web.Services.GratisDnaMergeService>();
 builder.Services.AddHttpClient("JobsySeo", client =>

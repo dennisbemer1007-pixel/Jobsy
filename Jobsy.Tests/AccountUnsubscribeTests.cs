@@ -513,6 +513,7 @@ public class AccountUnsubscribeTests
             typeof(CandidateVacancyCultureFit),
             typeof(CandidateValuesProfile),
             typeof(CandidateWhoAmIProfile),
+            typeof(CandidatePrivatePreferences),
             typeof(DeepAnalysisCheckout),
             typeof(DeviceLoginHandoff),
             typeof(LocalAuthCredential),
@@ -625,6 +626,13 @@ public class AccountUnsubscribeTests
         db.CandidateMatchSnapshots.Add(new CandidateMatchSnapshot { Id = Guid.NewGuid(), UserId = userId });
         db.CandidateOnboardings.Add(new CandidateOnboarding { Id = Guid.NewGuid(), UserId = userId });
         db.CandidateWhoAmIProfiles.Add(new CandidateWhoAmIProfile { Id = Guid.NewGuid(), UserId = userId });
+        db.CandidatePrivatePreferences.Add(new CandidatePrivatePreferences
+        {
+            UserId = userId,
+            DislikesJson = """["night-shifts"]""",
+            CustomDislikesJson = "[]",
+            UpdatedAtUtc = DateTime.UtcNow
+        });
         db.UserExternalLogins.Add(new UserExternalLogin
         {
             Id = Guid.NewGuid(),
@@ -666,6 +674,7 @@ public class AccountUnsubscribeTests
         Assert.False(await db.CandidateMatchSnapshots.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.CandidateOnboardings.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.CandidateWhoAmIProfiles.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.CandidatePrivatePreferences.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.UserExternalLogins.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.UserDeviceSessions.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.DeviceLoginHandoffs.AnyAsync(row => row.UserId == userId));
@@ -774,6 +783,13 @@ public class AccountUnsubscribeTests
             UserId = userId,
             StoryText = "Mijn verhaal"
         });
+        db.CandidatePrivatePreferences.Add(new CandidatePrivatePreferences
+        {
+            UserId = userId,
+            DislikesJson = """["night-shifts"]""",
+            CustomDislikesJson = """["drukke winkels"]""",
+            UpdatedAtUtc = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
 
         var export = await CreatePrivacy(db).ExportAsync(CreatePrincipal(email));
@@ -787,6 +803,8 @@ public class AccountUnsubscribeTests
         Assert.Contains("Pushabonnementen", json);
         Assert.Contains("ExterneAanmeldingen", json);
         Assert.Contains("WieBenIkMomentopnamen", json);
+        Assert.Contains("PrivatePreferences", json);
+        Assert.Contains("night-shifts", json);
         Assert.Contains("google", json);
         Assert.Contains("Mijn verhaal", json);
         Assert.DoesNotContain("refresh-secret", json);
