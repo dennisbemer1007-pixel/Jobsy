@@ -351,8 +351,39 @@ public class SalesManagerCommissionTests
         Assert.Equal(partnerId, branch.ReferredByPartnerUserId);
         Assert.Null(branch.ReferredBySalesManagerUserId);
         Assert.Equal(PartnerReferralStatus.Pending, branch.PartnerReferralStatus);
+        Assert.False(branch.WelcomeTokenLedgerCredited);
+
+        // Welcome token is granted on verification (03), not activation.
+        var features = new PlatformFeatureService(
+            db,
+            Options.Create(new JobsyFeatureOptions { ExposeRegistrationActivationLinks = true }),
+            new ConfigurationBuilder().Build());
+        var ledger = new TokenLedgerService(db);
+        var verification = new CompanyVerificationService(
+            db,
+            registration,
+            new VacancyProductService(
+                db,
+                ledger,
+                new SalesCommercialService(db, ledger),
+                new VacancyCategoryService(db),
+                new PushNotificationServiceStub(db, NullLogger<PushNotificationServiceStub>.Instance),
+                new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+                features,
+                new MockRoutingService(),
+                new UserNotificationService(db),
+                new CandidateActionTokenService(db),
+                NullLogger<VacancyProductService>.Instance),
+            discovery: null,
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new UserNotificationService(db),
+            features,
+            NullLogger<CompanyVerificationService>.Instance);
+        await verification.MarkVerifiedAsync(
+            branch.Id, CompanyVerificationMethod.BusinessEmail, activated.UserId, null);
+        await db.Entry(branch).ReloadAsync();
         Assert.True(branch.WelcomeTokenLedgerCredited);
-        Assert.Equal(1m, await new TokenLedgerService(db).GetBalanceAsync(branch.Id));
+        Assert.Equal(1m, await ledger.GetBalanceAsync(branch.Id));
 
         var partners = CreatePartnerAffiliateService(db);
         var mine = await partners.GetMineAsync(partnerId);

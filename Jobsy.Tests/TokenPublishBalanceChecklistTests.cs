@@ -205,7 +205,11 @@ public class TokenPublishBalanceChecklistTests
             KvkNumber = "12345678",
             Address = "Westland",
             Location = new GeoPoint(51.99, 4.22),
-            KvkVerificationStatus = KvkVerificationStatus.Verified
+            KvkVerificationStatus = KvkVerificationStatus.Verified,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         db.Vacancies.Add(new Vacancy
