@@ -89,9 +89,16 @@ public class PublicThemeCssGuardTests
             }
 
             var body = css[(open + 1)..j];
-            // Skip @media wrapper bodies by yielding nested? For @media, selector starts with @.
-            if (selector.TrimStart().StartsWith("@", StringComparison.Ordinal))
+            var trimmed = selector.TrimStart();
+            // @keyframes stops (0%, from, to, …) are not theme selectors — skip the block.
+            if (trimmed.StartsWith("@keyframes", StringComparison.Ordinal)
+                || trimmed.StartsWith("@-webkit-keyframes", StringComparison.Ordinal))
             {
+                // intentionally skip
+            }
+            else if (trimmed.StartsWith("@", StringComparison.Ordinal))
+            {
+                // @media / @supports: yield nested rules so they stay .pub-theme-scoped.
                 foreach (var nested in SplitRules(body))
                 {
                     yield return nested;
