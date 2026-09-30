@@ -26,13 +26,24 @@ public class VacancyCreateRoleRulesTests
         => Assert.Equal(expected, JobsyRoles.CanReactToApplications(role));
 
     [Theory]
-    [InlineData(UserRole.BranchManager, true)]
+    [InlineData(UserRole.BranchManager, false)]
     [InlineData(UserRole.EnterpriseManager, true)]
     [InlineData(UserRole.Intermediary, true)]
     [InlineData(UserRole.Admin, true)]
     [InlineData(UserRole.RegionalManager, false)]
-    public void CanPurchaseTokens_blocks_regional_manager(UserRole role, bool expected)
+    public void CanPurchaseTokens_blocks_branch_and_regional_manager(UserRole role, bool expected)
         => Assert.Equal(expected, JobsyRoles.CanPurchaseTokens(role));
+
+    [Theory]
+    [InlineData(UserRole.BranchManager, false, false)] // no EM → VM may purchase (D5 fallback)
+    [InlineData(UserRole.BranchManager, true, true)]  // has EM → VM blocked
+    [InlineData(UserRole.EnterpriseManager, true, true)]
+    public void CanPurchaseTokens_with_em_flag(UserRole role, bool hasEm, bool expectedWhenEmMeansBlockedForVm)
+    {
+        // hasEnterpriseManager=true → VM cannot buy; false → VM can (orphan org).
+        var expected = role == UserRole.BranchManager ? !hasEm : JobsyRoles.CanPurchaseTokens(role);
+        Assert.Equal(expected, JobsyRoles.CanPurchaseTokens(role, hasEm));
+    }
 
     [Theory]
     [InlineData(UserRole.EnterpriseManager, true)]

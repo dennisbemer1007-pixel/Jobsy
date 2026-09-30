@@ -567,9 +567,9 @@ Account: `enterprise@jobsy.local`. Mobiel: Home · Kaart · Vacatures · Sollici
 | Bedrijfsmanager | User **bewerken**: naam, rol EM/RM/BM, primary + memberships, actief. | Opgeslagen; verkeerde rol (Admin/Candidate) niet kiesbaar. |
 | Bedrijfsmanager | User inactief zetten. | Kan niet meer inloggen / 403 op org-API. |
 | Bedrijfsmanager | User membership andere org geven. | Niet mogelijk / 403. |
-| Bedrijfsmanager | **Uitnodigen** e-mail+naam+rol+vestigingen. | Invite-mail stub; user verschijnt/pending. Extra lidmaatschappen toont geen dubbele org/vestiging met dezelfde naam. |
+| Bedrijfsmanager | **Uitnodigen** via WgInviteDrawer e-mail+rol+bereik (vestiging/regio). | Invite-mail stub; user verschijnt/pending. Rolkaarten + privacyregel; één invite-UI. |
 | Bedrijfsmanager | Invite: ongeldig e-mail / bestaande user / lege naam. | Validatie. |
-| Bedrijfsmanager | Organization hub: klik elke modulekaart (Bedrijf, Vestigingen, Regio’s, Salaristabellen, CSV indien enabled, Overnames). | Juiste pagina + EnterpriseOrgSubnav. |
+| Bedrijfsmanager | Organisatie-nav: Vestigingen & regio's, Team & rechten, Bedrijfsprofiel, Salaristabellen, Koppelingen, Overnames, Wervingsmateriaal. | Juiste `/werkgever/organisatie/…` of Meer-pagina; sidebar actief. |
 | Bedrijfsmanager | Organization op **mobiel** openen via URL. | DesktopPreferredNotice; pagina’s blijven beperkt bruikbaar. |
 | Bedrijfsmanager | Subnav: elk org-item aanklikken. | Active state; inhoud wisselt. |
 | Bedrijfsmanager | Company details: alle velden + contact/billing/CSV-flag (root) + API keys generate/email/deactivate/copy. | Opslaan OK; secrets niet in page-source na reload; IBAN gemaskeerd. |
@@ -980,5 +980,18 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Kandidaat | Apply submit spam-click tijdens OTP verify. | Eén application. |
 | Gast | Register search spam-click. | Eén lookup; busy state. |
 
+## 13. Werkgever redesign (`/werkgever`) — BM / RM / VM
+
+| Rol | Testscenario | Verwacht resultaat |
+|-----|--------------|-------------------|
+| Bedrijfsmanager | Dashboard `/werkgever` openen (1440 + 390). | h1 = Dashboard; KPI’s, Te doen, trechter; geen Engelse jargonlabels. |
+| Bedrijfsmanager | Vacatures: tabs, filters, publicatieaanvraag goedkeuren. | Alleen BM keurt goed; uitlichten/pushbericht/verlengen in plain Dutch. |
+| Bedrijfsmanager | Sollicitaties pipeline: accepteren → uitnodigen → aannemen. | Statuslabels Uitgenodigd / Aangenomen; PII per privacyfase. |
+| Bedrijfsmanager | Organisatie: vestigingen tree + Team & rechten + één invite drawer. | Alleen BM nodigt uit; RM/VM hebben geen invite-UI. |
+| Bedrijfsmanager | Tokens: saldo & kopen, verbruik toewijzen, mutaties, facturen. | Kopen + allocate werken; facturen zichtbaar. |
+| Bedrijfsmanager | Kandidaatinzichten: gratis + unlock (tokens) + CSV. | Locked data niet in network; unlock toont expiry. |
+| Regiomanager | Dashboard + Signalen + vacatures/sollicitaties/tokens/inzichten. | Alleen-lezen hint; acties disabled/403; geen kopen/unlock. |
+| Vestigingsmanager | Dashboard scoped; vacatures/sollicitaties eigen vestiging; tokens aanvragen. | Geen kopen/facturen; publicatieaanvraag bij tekort; inzichten unlock alleen bij per-vestiging scope. |
+| Alle drie | Legacy URL `/employer/vacancies` openen. | 301/redirect naar `/werkgever/vacatures`; geen oude hrefs in nav. |
 
 ---

@@ -81,6 +81,32 @@ public static class RoutesDocGenerator
         }
 
         sb.AppendLine();
+        sb.AppendLine("## Werkgever legacy redirects (D2)");
+        sb.AppendLine();
+        sb.AppendLine("Old `/employer`, `/branch` and `/regional` URLs answer **301** to `/werkgever/…`");
+        sb.AppendLine("for at least one release. Source: `WerkgeverLegacyRoutes.Table`.");
+        sb.AppendLine("// Remove after {release}");
+        sb.AppendLine();
+        sb.AppendLine("| Old | New |");
+        sb.AppendLine("|-----|-----|");
+        foreach (var row in Jobsy.Web.Navigation.WerkgeverLegacyRoutes.Table)
+        {
+            var neu = row.NewPath;
+            if (!string.IsNullOrEmpty(row.Tab))
+            {
+                neu += (neu.Contains('?', StringComparison.Ordinal) ? "&" : "?") + "tab=" + row.Tab;
+            }
+
+            sb.Append("| `").Append(EscapeTicks(row.OldPath)).Append("` | `")
+                .Append(EscapeTicks(neu)).AppendLine("` |");
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("| Special | Behaviour |");
+        sb.AppendLine("|---------|------------|");
+        sb.AppendLine("| `/home` (employer roles only) | 301 → `/werkgever` |");
+        sb.AppendLine("| `/employer/onboarding-checkout`, `/tokens/checkout-return`, `/tokens/checkout-stub` | **unchanged** (payment return URLs) |");
+        sb.AppendLine();
         return sb.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
     }
 

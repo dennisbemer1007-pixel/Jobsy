@@ -175,8 +175,28 @@ public class SettingsController : ControllerBase
             return BadRequest(new { message = "Kosten mogen niet negatief zijn." });
         }
 
+        var before = new { cost.Reason, cost.CostTokens, cost.IsActive };
         cost.CostTokens = request.CostTokens;
         cost.IsActive = request.IsActive;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        // TODO(admin-07): migrate to IAdminAuditLog when admin-redesign 07 lands.
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "AdminSettings",
+            Message = "settings.pricing.update",
+            DetailsJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                actorUserId = User.FindFirst("sub")?.Value
+                              ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+                key = cost.Reason.ToString(),
+                before,
+                after = new { cost.Reason, cost.CostTokens, cost.IsActive }
+            }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
@@ -364,7 +384,10 @@ public class SettingsController : ControllerBase
                     request.FreePublishUntil,
                     request.ClearFreePublishUntil,
                     SupportAccessNotifyAdmins: request.SupportAccessNotifyAdmins,
-                    SupportAccessNotifySubject: request.SupportAccessNotifySubject),
+                    SupportAccessNotifySubject: request.SupportAccessNotifySubject,
+                    CandidateInsightsEnabled: request.CandidateInsightsEnabled,
+                    CandidateInsightsUnlockDays: request.CandidateInsightsUnlockDays,
+                    CandidateInsightsUnlockPerBranch: request.CandidateInsightsUnlockPerBranch),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -425,6 +448,9 @@ public class SettingsController : ControllerBase
         Add("FreePublishUntil", before.FreePublishUntil?.ToString("yyyy-MM-dd"), after.FreePublishUntil?.ToString("yyyy-MM-dd"));
         Add("SupportAccessNotifyAdmins", before.SupportAccessNotifyAdmins.ToString(), after.SupportAccessNotifyAdmins.ToString());
         Add("SupportAccessNotifySubject", before.SupportAccessNotifySubject.ToString(), after.SupportAccessNotifySubject.ToString());
+        Add("CandidateInsightsEnabled", before.CandidateInsightsEnabled.ToString(), after.CandidateInsightsEnabled.ToString());
+        Add("CandidateInsightsUnlockDays", before.CandidateInsightsUnlockDays.ToString(), after.CandidateInsightsUnlockDays.ToString());
+        Add("CandidateInsightsUnlockPerBranch", before.CandidateInsightsUnlockPerBranch.ToString(), after.CandidateInsightsUnlockPerBranch.ToString());
         return list;
     }
 
@@ -645,7 +671,10 @@ public class SettingsController : ControllerBase
             snap.SessionInactivityTimeoutMinutes,
             snap.FreePublishUntil,
             snap.SupportAccessNotifyAdmins,
-            snap.SupportAccessNotifySubject);
+            snap.SupportAccessNotifySubject,
+            snap.CandidateInsightsEnabled,
+            snap.CandidateInsightsUnlockDays,
+            snap.CandidateInsightsUnlockPerBranch);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

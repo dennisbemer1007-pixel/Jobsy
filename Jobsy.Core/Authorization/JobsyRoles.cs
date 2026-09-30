@@ -55,20 +55,28 @@ public static class JobsyRoles
         $"{BranchManager},{EnterpriseManager},{Intermediary},{Admin}";
 
     /// <summary>
-    /// Branch managers may purchase only when the vestiging is not under enterprise token management.
     /// Enterprise managers buy into the organisation pot; intermediaries/admins always may purchase.
+    /// Branch managers cannot buy tokens (D5); they receive allocations or request tokens from the BM.
     /// </summary>
     public static bool CanPurchaseTokens(UserRole role) =>
-        role is UserRole.BranchManager
-            or UserRole.EnterpriseManager
+        role is UserRole.EnterpriseManager
             or UserRole.Intermediary
             or UserRole.Admin;
+
+    /// <summary>
+    /// D5: when a vestiging has no EnterpriseManager in the organisation, allow BranchManager purchase
+    /// so the vestiging is not left without a buyer. Prefer <see cref="CanPurchaseTokens(UserRole)"/> when
+    /// the org always has an EM (registration creates one).
+    /// </summary>
+    public static bool CanPurchaseTokens(UserRole role, bool hasEnterpriseManager) =>
+        CanPurchaseTokens(role)
+        || (role is UserRole.BranchManager && !hasEnterpriseManager);
 
     public static bool CanAllocateTokens(UserRole role) =>
         role is UserRole.EnterpriseManager or UserRole.Admin;
 
     public const string TokenPurchaseRoles =
-        $"{BranchManager},{EnterpriseManager},{Intermediary},{Admin}";
+        $"{EnterpriseManager},{Intermediary},{Admin}";
 
     public const string TokenAllocateRoles =
         $"{EnterpriseManager},{Admin}";

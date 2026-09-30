@@ -1197,7 +1197,10 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         Assert.Contains(RoleNavCatalog.Ambassadeur, n => n.Href == "/ambassadeur/toolkit");
         Assert.Contains(RoleNavCatalog.SalesManager, n => n.Href == "/salesmanager/toolkit");
-        Assert.Contains(RoleNavCatalog.Enterprise, n => n.Href == "/employer/organization" && n.DesktopOnly);
+        Assert.Empty(RoleNavCatalog.Enterprise);
+        var org = WerkgeverNav.For(EmployerRole.Bedrijfsmanager, new WerkgeverNavContext(HasTakeovers: true))
+            .SelectMany(g => g.Items);
+        Assert.Contains(org, n => n.Href == "/werkgever/organisatie/vestigingen");
     }
 
     private static ClaimsPrincipal NavPrincipal(string role)
@@ -2127,8 +2130,8 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             DistanceKm = 2.5,
             CandidateAgeYears = 26,
             SnapshotPhoneNumber = "0611122233",
-                SnapshotWhatsAppAllowed = true,
-                Status = ApplicationStatus.Pending,
+            SnapshotWhatsAppAllowed = true,
+            Status = ApplicationStatus.Pending,
             EmailVerifiedAt = DateTime.UtcNow.AddMinutes(-30),
             WorkPermitConfirmed = true,
             MatchPercent = 80,

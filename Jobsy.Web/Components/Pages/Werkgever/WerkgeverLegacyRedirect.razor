@@ -1,0 +1,56 @@
+@* In-circuit fallback for legacy employer URLs. Keep ≥1 release (D2). // Remove after {release} *@
+@page "/employer/vacancies"
+@page "/branch/vacancies"
+@page "/branch/vacancies/new"
+@page "/branch/applicants"
+@page "/employer/talent"
+@page "/employer/talent-contacts"
+@page "/employer/kandidaatinzichten"
+@page "/employer/branches"
+@page "/regional/branches"
+@page "/employer/regions"
+@page "/employer/organization"
+@page "/employer/users"
+@page "/employer/company"
+@page "/employer/culture"
+@page "/branch/culture"
+@page "/employer/salary-tables"
+@page "/employer/salary-tables/{TableId:guid}"
+@page "/employer/tokens"
+@page "/branch/tokens"
+@page "/regional/tokens"
+@page "/employer/csv-import"
+@page "/employer/takeovers"
+@page "/employer/sales"
+@page "/employer/sales/payout-checkout"
+@page "/branch"
+@page "/regional"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using Jobsy.Web.Navigation
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter] public Guid? TableId { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var rel = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+        var path = rel.Split('?', 2)[0];
+        var query = rel.Contains('?', StringComparison.Ordinal) ? rel[rel.IndexOf('?')..] : "";
+
+        if (TableId is Guid id && path.Contains("salary-tables", StringComparison.OrdinalIgnoreCase))
+        {
+            Navigation.NavigateTo($"/werkgever/organisatie/salaristabellen/{id}{query}", replace: true);
+            return;
+        }
+
+        if (WerkgeverLegacyRoutes.TryMap(path, out var neu, out var tab))
+        {
+            var target = WerkgeverLegacyRoutes.BuildTarget(neu, query, tab);
+            Navigation.NavigateTo(target, replace: true);
+            return;
+        }
+
+        Navigation.NavigateTo("/werkgever", replace: true);
+    }
+}

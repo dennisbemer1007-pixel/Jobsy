@@ -58,31 +58,31 @@ public class MobileSaasUxTests
     [Fact]
     public void Applicants_page_uses_cards_and_never_renders_raw_json()
     {
-        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Branch/Applicants.razor"));
-        Assert.Contains("class=\"applicants-list\"", razor);
-        Assert.Contains("class=\"applicant-card", razor);
-        Assert.Contains("applicant-card__section", razor);
-        Assert.Contains("Employer.FactMotivation", razor);
-        Assert.Contains("Employer.FactAvailability", razor);
-        Assert.Contains("Employer.FactProfile", razor);
-        Assert.Contains("Employer.FactContact", razor);
-        Assert.Contains("HumanText(a.PreferencesSummary)", razor);
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Applicants.razor"));
+        Assert.Contains("wg-app__pipeline", razor);
+        Assert.Contains("class=\"wg-app-card", razor);
+        Assert.Contains("ApplicationCandidateDetail", razor);
+        Assert.Contains("CardFacts", razor);
+        Assert.Contains("ApplicationPreferenceRedaction.ToHumanReadable", razor);
         Assert.DoesNotContain("@a.PreferencesSummary", razor);
         Assert.DoesNotContain("applicants-grid__table", razor);
-        Assert.DoesNotContain("<table", razor);
+        Assert.Contains("EntDataTable", razor);
+
+        var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Werkgever/Applications/ApplicationCandidateDetail.razor"));
+        Assert.Contains("WgApp.Tab.Motivation", detail);
     }
 
     [Fact]
-    public void Token_purchase_uses_a_two_column_pack_grid()
+    public void Token_purchase_uses_pack_grid_on_overview()
     {
-        var tokens = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Tokens.razor"));
-        Assert.Contains("class=\"token-pack-options\"", tokens);
+        var tokens = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Tokens.razor"));
+        Assert.Contains("wg-tok-packs", tokens);
+        Assert.Contains("WgTok.BuyButton", tokens);
         Assert.DoesNotContain("token-pack-options--vertical", tokens);
-        Assert.DoesNotContain("max-width:32rem", tokens);
 
-        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".token-pack-options {\n    display: grid;\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
-        Assert.Contains(".token-buy .login-submit {\n    width: 100%;", css);
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/werkgever.css"));
+        Assert.Contains(".wg-tok-packs", css);
+        Assert.Contains("grid-template-columns: repeat(3, minmax(0, 1fr))", css);
     }
 
     [Fact]
@@ -110,25 +110,26 @@ public class MobileSaasUxTests
     }
 
     [Fact]
-    public void Users_and_team_pages_use_cards_not_tables()
+    public void Users_and_team_pages_use_enterprise_table_and_invite_drawer()
     {
-        var users = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Users.razor"));
-        Assert.Contains("class=\"user-card-list\"", users);
-        Assert.Contains("class=\"user-card\"", users);
-        Assert.Contains("user-card__menu-toggle", users);
-        Assert.Contains("aria-expanded=\"@(menuOpen ? \"true\" : \"false\")\"", users);
-        Assert.Contains("class=\"users-toolbar__filters\"", users);
-        Assert.Contains("membership-grid", users);
-        Assert.Contains("pb-28", users);
-        Assert.Contains("invite-form__row", users);
-        Assert.Contains("Uitnodigen", users);
+        var users = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Users.razor"));
+        Assert.Contains("WgTeamTable", users);
+        Assert.Contains("WgInviteDrawer", users);
+        Assert.Contains("EntFilterBar", users);
+        Assert.Contains("ConfirmDeactivate", users);
+        Assert.Contains("LobsyFriendlyDialog", users);
+        Assert.Contains("WgTeam.Action.Deactivate", users);
+        Assert.Contains("WgInvite.Title", users);
+        Assert.DoesNotContain("user-card-list", users);
+        Assert.DoesNotContain("invite-form__row", users);
         Assert.DoesNotContain("users-table", users);
-        Assert.DoesNotContain("<table", users);
 
         var team = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Intermediary/Team.razor"));
         Assert.Contains("class=\"user-card-list\"", team);
         Assert.Contains("class=\"user-card\"", team);
-        Assert.Contains("login-form invite-form", team);
+        Assert.Contains("WgInviteDrawer", team);
+        Assert.Contains("WgInvite.Title", team);
+        Assert.DoesNotContain("login-form invite-form", team);
         Assert.DoesNotContain("users-table", team);
         Assert.DoesNotContain("<table", team);
 
@@ -139,8 +140,6 @@ public class MobileSaasUxTests
         Assert.Contains(".invite-form__row {\n    display: grid;\n    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);", css);
         Assert.Contains(".app-shell.has-bottom-nav .app-footer,\n    .app-shell:has(.bottom-nav) .app-footer {\n        display: none;", css);
         Assert.DoesNotContain(".app-main {\n        padding-bottom: var(--bottom-nav-clearance);", css);
-        Assert.Contains("RequestDeactivate", users);
-        Assert.Contains("Bevestigen", users);
     }
 
     [Fact]
@@ -304,38 +303,34 @@ public class MobileSaasUxTests
     }
 
     [Fact]
-    public void Employer_vacancies_use_mgmt_cards_with_stat_mini_grid()
+    public void Employer_vacancies_use_ent_data_table_with_density()
     {
-        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Vacancies.razor"));
-        Assert.Contains("vacancy-card-list", razor);
-        Assert.Contains("vacancy-mgmt-card", razor);
-        Assert.Contains("vacancy-mgmt-card__stats", razor);
-        Assert.Contains("vacancy-mgmt-card__status", razor);
-        Assert.DoesNotContain("table-scroll vacancy-grid", razor);
-        Assert.DoesNotContain("<table class=\"data-table\">", razor);
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Vacancies.razor"));
+        Assert.Contains("EntDataTable", razor);
+        Assert.Contains("wg-vac--dense", razor);
+        Assert.Contains("EntBulkBar", razor);
+        Assert.Contains("EntTabs", razor);
+        Assert.DoesNotContain("vacancy-card-list", razor);
+        Assert.DoesNotContain("vacancy-mgmt-card", razor);
 
-        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".vacancy-mgmt-card__stats {\n    display: grid;\n    grid-template-columns: repeat(3, minmax(0, 1fr));", css);
-        Assert.Contains(".bento-cell--category {\n        background: transparent;\n        border: none;", css);
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/werkgever.css"));
+        Assert.Contains(".wg-vac--dense", css);
+        Assert.Contains("height: 44px", css);
     }
 
     [Fact]
     public void Applicants_availability_renders_a_readonly_matrix_not_raw_day_text()
     {
-        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Branch/Applicants.razor"));
-        Assert.Contains("availability-matrix--readonly", razor);
-        Assert.Contains("ParseAvailabilityPayload(a.SnapshotAvailabilityJson)", razor);
-        Assert.Contains("a.PiiRevealed", razor);
-        Assert.Contains("contact-details", razor);
-        Assert.Contains("FormatDisplayPhone", razor);
-        Assert.DoesNotContain("contact-icon", razor);
-        Assert.Contains("Common.Yes", razor);
-        Assert.Contains("EmployerDisplayDayPartCodes", razor);
-        Assert.Contains("DayPartMatrix.NightDayPart", razor);
-        Assert.Contains("availability-matrix__night-note", razor);
-        Assert.Contains("Profile.Slot.Night", razor);
-        Assert.DoesNotContain("DayPartMatrix.DayPartCodes", razor);
-        Assert.DoesNotContain("aria-label=\"@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot): @(on ? \"ja\" : \"nee\")\"", razor);
+        var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Werkgever/Applications/ApplicationCandidateDetail.razor"));
+        Assert.Contains("ParseAvailabilityPayload(item.SnapshotAvailabilityJson)", detail);
+        Assert.Contains("WgApp.See.Title", detail);
+        Assert.Contains("IsPiiStage", detail);
+        Assert.Contains("wg-app-contact", detail);
+        Assert.DoesNotContain("contact-icon", detail);
+
+        var rules = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Werkgever/ApplicationPipelineRules.cs"));
+        Assert.Contains("LobsyCvAccessRules.IsPiiRevealed", rules);
+        Assert.Contains("LobsyCvAccessRules.IsDirectContactRevealed", rules);
 
         var contactModal = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/DirectContactModal.razor"));
         Assert.Contains("direct-contact-modal__details", contactModal);
@@ -346,15 +341,16 @@ public class MobileSaasUxTests
     [Fact]
     public void Token_logs_hide_technical_ids_and_show_explicit_token_amounts()
     {
-        var tokens = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Tokens.razor"));
-        Assert.Contains("token-log-list", tokens);
-        Assert.Contains("TokenLogPresentation.FormatAmount", tokens);
-        Assert.Contains("TokenLogPresentation.FormatWhen", tokens);
-        Assert.Contains("TokenLogPresentation.Describe", tokens);
-        Assert.DoesNotContain("@log.Kind / @log.Reason", tokens);
-        Assert.DoesNotContain("dd-MM HH:mm", tokens);
-        Assert.Contains("pill-scroller token-tabs", tokens);
-        Assert.Contains("pb-28", tokens);
+        var mutaties = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/TokensMutaties.razor"));
+        Assert.Contains("TokenLogPresentation.FormatAmount", mutaties);
+        Assert.Contains("TokenLogPresentation.FormatDateShort", mutaties);
+        Assert.Contains("TokenLogPresentation.Describe", mutaties);
+        Assert.DoesNotContain("@log.Kind / @log.Reason", mutaties);
+
+        var presentation = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Tokens/TokenLogPresentation.cs"));
+        Assert.Contains("AmountToneClass", presentation);
+        Assert.Contains("token-log__amount--in", presentation);
+        Assert.Contains("token-log__amount--out", presentation);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".token-log__amount--in {\n    color: var(--success);", css);
@@ -398,11 +394,12 @@ public class MobileSaasUxTests
         Assert.Contains("panel-header__title-row", home);
         Assert.Contains("DashboardRefreshButton", home);
 
-        var company = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/CompanyDetails.razor"));
+        var company = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Wervingsmateriaal.razor"));
         Assert.Contains("RaamflyerTools", company);
-        Assert.Contains("Wervingsmateriaal", company);
+        Assert.Contains("WgNav.RecruitmentMaterials", company);
+        Assert.Contains("WgMaterials.Raamflyer", company);
 
-        var branches = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Branches.razor"));
+        var branches = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Werkgever/Sections/BranchesSection.razor"));
         Assert.Contains("RaamflyerTools", branches);
 
         var refresh = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Shared/DashboardRefreshButton.razor"));

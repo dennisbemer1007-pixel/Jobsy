@@ -16,7 +16,11 @@ public class FilterSheetFooterNavTests
             ".app-shell:has(.jobsy-discovery.filters-open) .bottom-nav",
             css,
             StringComparison.Ordinal);
-        Assert.Contains("display: none;", css, StringComparison.Ordinal);
+        Assert.Contains(
+            ".app-shell:has(.jobsy-discovery.filters-open) .cookie-consent",
+            css,
+            StringComparison.Ordinal);
+        Assert.Contains("display: none !important;", css, StringComparison.Ordinal);
 
         // Sheet stays viewport-bound with safe-area padding (footer remains reachable).
         Assert.Contains("max-height: min(92dvh, 92vh);", css, StringComparison.Ordinal);

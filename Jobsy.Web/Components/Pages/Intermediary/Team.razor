@@ -1,6 +1,7 @@
 @page "/intermediary/team"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Intermediary")]
+@using Jobsy.Web.Components.Werkgever.Team
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
@@ -13,6 +14,9 @@
             <h1>Team</h1>
             <p class="login-lead">Nodig collega’s uit op hetzelfde intermediair-account. Vacatures en tokensaldo worden gedeeld.</p>
         </div>
+        <button type="button" class="btn-compact btn-compact--primary" @onclick="() => _inviteOpen = true">
+            @Culture["WgInvite.Title"]
+        </button>
     </header>
 
     @if (_loading)
@@ -53,10 +57,6 @@
                                     <span class="user-card__email">@u.Email</span>
                                 </div>
                             </div>
-                            <div class="user-card__meta">
-                                <span class="role-badge role-badge--im">Intermediair</span>
-                                <span class="user-card__inactive">Openstaand</span>
-                            </div>
                         </article>
                     }
                 </div>
@@ -64,7 +64,7 @@
         }
         @if (active.Count == 0)
         {
-            <p class="muted">Nog geen actieve teamleden. Verstuur hieronder de eerste uitnodiging.</p>
+            <p class="muted">Nog geen actieve teamleden. Verstuur de eerste uitnodiging.</p>
         }
         else
         {
@@ -79,31 +79,10 @@
                                 <span class="user-card__email">@u.Email</span>
                             </div>
                         </div>
-                        <div class="user-card__meta">
-                            <span class="role-badge role-badge--im">Intermediair</span>
-                        </div>
                     </article>
                 }
             </div>
         }
-
-        <section class="panel-section">
-            <h2>Collega uitnodigen</h2>
-            <form class="login-form invite-form" @onsubmit="InviteAsync" @onsubmit:preventDefault>
-                <label>
-                    E-mail
-                    <input type="email" @bind="_email" required />
-                </label>
-                <label>
-                    Naam
-                    <input @bind="_fullName" required />
-                </label>
-                <p class="muted">Rol: Intermediair. Teamleden krijgen alleen toegang tot dit intermediair-account.</p>
-                <div class="invite-form__actions">
-                    <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
-                </div>
-            </form>
-        </section>
 
         @if (!string.IsNullOrEmpty(_message))
         {
@@ -112,15 +91,18 @@
     }
 </div>
 
+<WgInviteDrawer Open="_inviteOpen"
+                OpenChanged="v => _inviteOpen = v"
+                Mode="WgInviteDrawer.InviteMode.Intermediary"
+                OnInvited="OnInvited" />
+
 @code {
     private List<CompanyUserItem> _users = [];
     private bool _loading = true;
-    private bool _busy;
     private string? _error;
     private string? _message;
-    private string _email = "";
-    private string _fullName = "";
     private string _search = "";
+    private bool _inviteOpen;
 
     private static string Initials(string name)
     {
@@ -160,29 +142,9 @@
         }
     }
 
-    private async Task InviteAsync()
+    private async Task OnInvited(CompanyUserItem _)
     {
-        _busy = true;
-        _message = null;
-        try
-        {
-            await Api.InviteCompanyUserAsync(new InviteUserForm(
-                _email,
-                _fullName,
-                "Intermediary",
-                PrimaryCompanyId: null));
-            _users = (await Api.GetCompanyUsersAsync()).ToList();
-            _email = "";
-            _fullName = "";
-            _message = "Uitnodiging verstuurd. Na registratie deelt je collega vacatures en saldo.";
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
+        _users = (await Api.GetCompanyUsersAsync()).ToList();
+        _message = Culture["WgInvite.Success"];
     }
 }

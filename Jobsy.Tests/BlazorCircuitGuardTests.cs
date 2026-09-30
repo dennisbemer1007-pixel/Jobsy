@@ -106,7 +106,7 @@ public class BlazorCircuitGuardTests
         var root = FindRepoRoot();
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
         Assert.Contains("CircuitErrorBoundary", layout);
-        var boundary = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Layout/CircuitErrorBoundary.razor"));
+        var boundary = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "CircuitErrorBoundary.razor"));
         Assert.Contains("ErrorBoundary", boundary);
         Assert.Contains("Circuit.ErrorRetry", boundary);
         var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Program.cs"));

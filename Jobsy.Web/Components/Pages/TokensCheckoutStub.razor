@@ -33,7 +33,7 @@
             <button class="login-submit" type="button" disabled="@_busy || string.IsNullOrWhiteSpace(_paymentId)" @onclick="CompleteAsync">
                 @(_busy ? "Bezig…" : $"Betaal met {_methodLabel} (stub)")
             </button>
-            <a class="auth-link" href="/employer/tokens">@Culture["Common.Cancel"]</a>
+            <a class="auth-link" href="/werkgever/tokens">@Culture["Common.Cancel"]</a>
         </div>
 
         @if (!string.IsNullOrEmpty(_message))
@@ -97,18 +97,18 @@
 
             if (result?.PendingAction is { Succeeded: true })
             {
-                Navigation.NavigateTo($"/employer/vacancies?paidAction={Uri.EscapeDataString(result.PendingAction.Action)}");
+                Navigation.NavigateTo($"/werkgever/vacatures?paidAction={Uri.EscapeDataString(result.PendingAction.Action)}");
                 return;
             }
 
             if (result?.PendingAction is { Succeeded: false })
             {
                 Navigation.NavigateTo(
-                    $"/employer/vacancies?paidActionError={Uri.EscapeDataString(result.PendingAction.Message ?? "Actie mislukt")}");
+                    $"/werkgever/vacatures?paidActionError={Uri.EscapeDataString(result.PendingAction.Message ?? "Actie mislukt")}");
                 return;
             }
 
-            Navigation.NavigateTo("/employer/tokens");
+            Navigation.NavigateTo("/werkgever/tokens");
         }
         catch (Exception ex)
         {

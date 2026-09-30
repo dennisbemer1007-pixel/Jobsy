@@ -32,12 +32,15 @@ public class GratisDnaPlaywrightTests
             ViewportSize = new() { Width = 390, Height = 844 },
             IgnoreHTTPSErrors = true
         });
+        await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
 
         if (!await TryGotoAsync(page, baseUrl + "/ontdek"))
         {
             return;
         }
+
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
 
         try
         {
@@ -106,6 +109,7 @@ public class GratisDnaPlaywrightTests
         Directory.CreateDirectory("artifacts/playwright-gratis-dna");
         await page.ScreenshotAsync(new() { Path = "artifacts/playwright-gratis-dna/result-390.png", FullPage = true });
 
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await page.Locator("[data-testid=gd-sticky-cta], a.gd-cta:has-text('Bewaar je DNA')").First.ClickAsync();
         await page.WaitForURLAsync("**/register?van=ontdek**", new() { Timeout = 30_000 });
         await AssertNoHorizontalOverflowAsync(page);

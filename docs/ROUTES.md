@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (152 routes)
+## Table (201 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -103,12 +103,12 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/ambassadeur/ref/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
 | `/ambassadeur/toolkit` | `Pages/Ambassadeur/Toolkit.razor` | Ambassadeur |
 | `/banen` | `Pages/Banen.razor` | anonymous |
-| `/branch` | `Pages/Branch/BranchDashboard.razor` | BranchManager, EnterpriseManager |
-| `/branch/applicants` | `Pages/Branch/Applicants.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
-| `/branch/culture` | `Pages/Employer/CultureScan.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
-| `/branch/tokens` | `Pages/Employer/Tokens.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
-| `/branch/vacancies` | `Pages/Employer/Vacancies.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
-| `/branch/vacancies/new` | `Pages/Branch/CreateVacancy.razor` | BranchManager, EnterpriseManager, Intermediary |
+| `/branch` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/branch/applicants` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/branch/culture` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/branch/tokens` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/branch/vacancies` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/branch/vacancies/new` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/candidate/actions/set-unavailable` | `Pages/Candidate/SetUnavailableAction.razor` | any (no Authorize attribute) |
 | `/candidate/actions/withdraw-others` | `Pages/Candidate/WithdrawOthersAction.razor` | any (no Authorize attribute) |
 | `/candidate/applications` | `Pages/Candidate/Applications.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
@@ -130,24 +130,24 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/values` | `Pages/Candidate/ValuesScan.razor` | Candidate |
 | `/carriere` | `Pages/Candidate/CareerDashboard.razor` | Candidate |
 | `/dna` | `Pages/Public/GratisDna.razor` | anonymous |
-| `/employer/branches` | `Pages/Employer/Branches.razor` | RegionalManager, EnterpriseManager |
-| `/employer/company` | `Pages/Employer/CompanyDetails.razor` | BranchManager, EnterpriseManager, Admin, Intermediary |
-| `/employer/csv-import` | `Pages/Employer/CsvImport.razor` | EnterpriseManager, Admin |
-| `/employer/culture` | `Pages/Employer/CultureScan.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
-| `/employer/kandidaatinzichten` | `Pages/Employer/CandidateInsights.razor` | BranchManager, RegionalManager, EnterpriseManager |
+| `/employer/branches` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/company` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/csv-import` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/culture` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/kandidaatinzichten` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/employer/onboarding-checkout` | `Pages/Employer/OnboardingCheckout.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
-| `/employer/organization` | `Pages/Employer/Organization.razor` | EnterpriseManager |
-| `/employer/regions` | `Pages/Employer/Regions.razor` | EnterpriseManager, Admin |
-| `/employer/salary-tables` | `Pages/Employer/SalaryTables.razor` | EnterpriseManager, Admin |
-| `/employer/salary-tables/{TableId:guid}` | `Pages/Employer/SalaryTables.razor` | EnterpriseManager, Admin |
-| `/employer/sales` | `Pages/Employer/PartnerSales.razor` | EnterpriseManager, Intermediary |
-| `/employer/sales/payout-checkout` | `Pages/Employer/PartnerSalesPayoutCheckoutStub.razor` | EnterpriseManager, Intermediary |
-| `/employer/takeovers` | `Pages/Employer/Takeovers.razor` | BranchManager, EnterpriseManager, Admin |
-| `/employer/talent` | `Pages/Employer/TalentPool.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
-| `/employer/talent-contacts` | `Pages/Employer/TalentContacts.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
-| `/employer/tokens` | `Pages/Employer/Tokens.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
-| `/employer/users` | `Pages/Employer/Users.razor` | EnterpriseManager, Admin |
-| `/employer/vacancies` | `Pages/Employer/Vacancies.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/employer/organization` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/regions` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/salary-tables` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/salary-tables/{TableId:guid}` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/sales` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/sales/payout-checkout` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/takeovers` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/talent` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/talent-contacts` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/tokens` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/users` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/employer/vacancies` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/Error` | `Pages/Error.razor` | anonymous |
 | `/gebruiksvoorwaarden` | `Pages/Legal/Gebruiksvoorwaarden.razor` | anonymous |
 | `/hoe-werkt-lobsy` | `Pages/HowLobsyWorks.razor` | anonymous |
@@ -164,9 +164,9 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/privacy/data` | `Pages/Legal/PrivacyData.razor` | authenticated |
 | `/profiel` | `Pages/Candidate/CandidateProfile.razor` | Candidate |
 | `/profiel/tests/{TestKey}` | `Pages/Candidate/TestDetail.razor` | Candidate |
-| `/regional` | `Pages/Regional/RegionalDashboard.razor` | RegionalManager, EnterpriseManager |
-| `/regional/branches` | `Pages/Employer/Branches.razor` | RegionalManager, EnterpriseManager |
-| `/regional/tokens` | `Pages/Regional/TokenControl.razor` | RegionalManager, EnterpriseManager |
+| `/regional` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/regional/branches` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/regional/tokens` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/register` | `Pages/Register.razor` | anonymous |
 | `/register/activate` | `Pages/RegisterActivate.razor` | anonymous |
 | `/salesmanager` | `Pages/SalesManager/Dashboard.razor` | SalesManager |
@@ -179,8 +179,69 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |
 | `/vestiging/{CompanyId:guid}` | `Pages/VestigingLanding.razor` | anonymous |
+| `/werkgever` | `Pages/Werkgever/WerkgeverDashboard.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/kandidaatinzichten` | `Pages/Werkgever/CandidateInsights.razor` | BranchManager, RegionalManager, EnterpriseManager |
+| `/werkgever/koppelingen` | `Pages/Werkgever/Koppelingen.razor` | EnterpriseManager, Admin |
+| `/werkgever/organisatie/profiel` | `Pages/Werkgever/CompanyProfile.razor` | BranchManager, EnterpriseManager, Admin, Intermediary |
+| `/werkgever/organisatie/salaristabellen` | `Pages/Werkgever/SalaryTables.razor` | BranchManager, EnterpriseManager, Admin |
+| `/werkgever/organisatie/salaristabellen/{TableId:guid}` | `Pages/Werkgever/SalaryTables.razor` | BranchManager, EnterpriseManager, Admin |
+| `/werkgever/organisatie/team` | `Pages/Werkgever/Users.razor` | EnterpriseManager, Admin |
+| `/werkgever/organisatie/vestigingen` | `Pages/Werkgever/BranchesRegions.razor` | RegionalManager, EnterpriseManager, Admin |
+| `/werkgever/overnames` | `Pages/Werkgever/Takeovers.razor` | BranchManager, EnterpriseManager, Admin |
+| `/werkgever/partner` | `Pages/Werkgever/PartnerSales.razor` | EnterpriseManager, Intermediary |
+| `/werkgever/partner/uitbetalen` | `Pages/Werkgever/PartnerSalesPayoutCheckoutStub.razor` | EnterpriseManager, Intermediary |
+| `/werkgever/sollicitaties` | `Pages/Werkgever/Applicants.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties/{ApplicationId:guid}` | `Pages/Werkgever/ApplicationCandidate.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/talentpool` | `Pages/Werkgever/TalentPool.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/te-doen` | `Pages/Werkgever/TeDoen.razor` | BranchManager, RegionalManager, EnterpriseManager |
+| `/werkgever/tokens` | `Pages/Werkgever/Tokens.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/tokens/facturen` | `Pages/Werkgever/TokensFacturen.razor` | EnterpriseManager, Intermediary, Admin |
+| `/werkgever/tokens/mutaties` | `Pages/Werkgever/TokensMutaties.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/tokens/verbruik` | `Pages/Werkgever/TokensVerbruik.razor` | RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/vacatures` | `Pages/Werkgever/Vacancies.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/vacatures/nieuw` | `Pages/Werkgever/CreateVacancy.razor` | BranchManager, EnterpriseManager, Intermediary |
+| `/werkgever/wervingsmateriaal` | `Pages/Werkgever/Wervingsmateriaal.razor` | BranchManager, RegionalManager, EnterpriseManager, Admin |
 | `/werven/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
 | `/westland` | `Pages/WestlandTeaser.razor` | anonymous |
 | `/wie-zijn-wij` | `Pages/Legal/WieZijnWij.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
+
+## Werkgever legacy redirects (D2)
+
+Old `/employer`, `/branch` and `/regional` URLs answer **301** to `/werkgever/…`
+for at least one release. Source: `WerkgeverLegacyRoutes.Table`.
+// Remove after {release}
+
+| Old | New |
+|-----|-----|
+| `/employer/vacancies` | `/werkgever/vacatures` |
+| `/branch/vacancies` | `/werkgever/vacatures` |
+| `/branch/vacancies/new` | `/werkgever/vacatures/nieuw` |
+| `/branch/applicants` | `/werkgever/sollicitaties` |
+| `/employer/talent` | `/werkgever/talentpool` |
+| `/employer/talent-contacts` | `/werkgever/talentpool?tab=contact` |
+| `/employer/kandidaatinzichten` | `/werkgever/kandidaatinzichten` |
+| `/employer/branches` | `/werkgever/organisatie/vestigingen` |
+| `/regional/branches` | `/werkgever/organisatie/vestigingen` |
+| `/employer/regions` | `/werkgever/organisatie/vestigingen?tab=regios` |
+| `/employer/organization` | `/werkgever/organisatie/vestigingen` |
+| `/employer/users` | `/werkgever/organisatie/team` |
+| `/employer/company` | `/werkgever/organisatie/profiel` |
+| `/employer/culture` | `/werkgever/organisatie/profiel?tab=cultuur` |
+| `/branch/culture` | `/werkgever/organisatie/profiel?tab=cultuur` |
+| `/employer/salary-tables` | `/werkgever/organisatie/salaristabellen` |
+| `/employer/tokens` | `/werkgever/tokens` |
+| `/branch/tokens` | `/werkgever/tokens` |
+| `/regional/tokens` | `/werkgever/tokens` |
+| `/employer/csv-import` | `/werkgever/koppelingen?tab=csv` |
+| `/employer/takeovers` | `/werkgever/overnames` |
+| `/employer/sales` | `/werkgever/partner` |
+| `/employer/sales/payout-checkout` | `/werkgever/partner/uitbetalen` |
+| `/branch` | `/werkgever` |
+| `/regional` | `/werkgever` |
+
+| Special | Behaviour |
+|---------|------------|
+| `/home` (employer roles only) | 301 → `/werkgever` |
+| `/employer/onboarding-checkout`, `/tokens/checkout-return`, `/tokens/checkout-stub` | **unchanged** (payment return URLs) |

@@ -13,8 +13,8 @@ public static class TokenLogPresentation
 
     public static string FormatAmount(decimal amount)
     {
-        var formatted = amount.ToString("+0.00;-0.00;0.00", Dutch);
-        return $"{formatted} token";
+        var formatted = amount.ToString("+0.##;-0.##;0", Dutch);
+        return formatted;
     }
 
     public static string AmountToneClass(decimal amount)
@@ -29,6 +29,12 @@ public static class TokenLogPresentation
         return $"{day} om {local:HH:mm}";
     }
 
+    public static string FormatDateShort(DateTime utc)
+    {
+        var local = utc.Kind == DateTimeKind.Utc ? utc.ToLocalTime() : utc;
+        return local.ToString("dd-MM-yyyy", Dutch);
+    }
+
     public static string Describe(TokenLogItem log)
     {
         var headline = Headline(log.Kind, log.Reason);
@@ -41,32 +47,45 @@ public static class TokenLogPresentation
         return $"{headline} · {note}";
     }
 
-    public static string SanitizeNote(string? note)
-        => TokenNoteRedaction.Sanitize(note);
-
-    private static string Headline(string kind, string reason)
+    public static string Headline(string kind, string reason)
     {
         if (string.Equals(kind, "Spend", StringComparison.OrdinalIgnoreCase))
         {
             return reason switch
             {
-                "Publish" => "Vacature publiceren",
-                "Highlight" => "Highlight",
-                "PushBom" => "Pushbom",
-                "Extend" => "Vacature verlengen",
+                "Publish" => "Publiceren",
+                "Highlight" => "Uitlichten",
+                "PushBom" => "Pushbericht",
+                "Extend" => "Verlengen",
+                "ContactUnlock" => "Contact talentpool",
+                "InsightsUnlock" => "Kandidaatinzichten",
                 _ => "Tokenuitgave"
             };
         }
 
         return kind switch
         {
-            "Purchase" => "Tokenaankoop",
+            "Purchase" => "Aankoop",
             "Grant" => "Toekenning",
-            "Allocation" => "Uitgifte aan vestiging",
-            "Goodwill" => "Compensatie",
+            "Allocation" => "Toegewezen",
+            "Goodwill" => "Goodwill",
             _ => string.IsNullOrWhiteSpace(kind) ? "Tokentransactie" : kind
         };
     }
+
+    public static string CostLabel(string reason) => reason switch
+    {
+        "Publish" => "Vacature publiceren",
+        "Extend" => "Verlengen",
+        "Highlight" => "Uitlichten",
+        "PushBom" => "Pushbericht naar kandidaten",
+        "ContactUnlock" => "Contact via talentpool",
+        "InsightsUnlock" => "Kandidaatinzichten ontgrendelen",
+        _ => reason
+    };
+
+    public static string SanitizeNote(string? note)
+        => TokenNoteRedaction.Sanitize(note);
 
     private static bool NoteRepeatsHeadline(string note, string headline)
         => note.Equals(headline, StringComparison.OrdinalIgnoreCase)

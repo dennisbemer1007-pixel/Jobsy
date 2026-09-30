@@ -47,7 +47,7 @@
     /* Room for the sticky bottom-nav (pb-28). */
     --bottom-nav-clearance: 7rem;
     --app-header-height: 4.25rem;
-    /* Spacing / type / z-index tokens (design system; admin denser layout). */
+    /* Spacing / type / z-index tokens (design system; admin + enterprise denser layout). */
     --space-1: 0.25rem;
     --space-2: 0.5rem;
     --space-3: 0.75rem;
@@ -2484,12 +2484,14 @@ html[dir="rtl"] .account-menu__panel {
     background: var(--brand-deep);
 }
 
-/* Mobile: hide fixed bottom-nav while the filter sheet is open so Toepassen/Annuleren
-   are tappable. .app-main (z-index: 1) creates a stacking context that otherwise traps
-   .filter-sheet (z-index 90) below .bottom-nav (z-index 50). */
+/* Mobile: hide fixed bottom-nav + cookie banner while the filter sheet is open so
+   Toepassen/Annuleren are tappable. .app-main (z-index: 1) creates a stacking context
+   that otherwise traps .filter-sheet (z-index 90) below .bottom-nav (z-index 50) and
+   .cookie-consent (z-index 80). */
 @media (max-width: 768px) {
-    .app-shell:has(.jobsy-discovery.filters-open) .bottom-nav {
-        display: none;
+    .app-shell:has(.jobsy-discovery.filters-open) .bottom-nav,
+    .app-shell:has(.jobsy-discovery.filters-open) .cookie-consent {
+        display: none !important;
     }
 }
 

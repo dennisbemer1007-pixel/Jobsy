@@ -1,0 +1,175 @@
+@page "/werkgever/partner"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "EnterpriseManager,Intermediary")]
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject CultureState Culture
+
+<PageTitle>@Culture["WgNav.PartnerProgram"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgNav.PartnerProgram"]" Lead="@Culture["WgTok.Partner.Lead"]">
+    
+    <ChildContent>
+@if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <section class="wg-card">
+            <h2>Trackingcode &amp; flyer</h2>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <span class="stat-card__label">Trackingcode</span>
+                    <strong class="stat-card__value">@TrackingCode</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card__label">Aangedragen</span>
+                    <strong class="stat-card__value">@(_partnerMe?.ReferredCompanyCount ?? 0)</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card__label">Verdiende referraltokens</span>
+                    <strong class="stat-card__value">@((_partnerMe?.ReferralTokensEarned ?? 0m).ToString("0.##"))</strong>
+                </div>
+            </div>
+            <div class="inline-actions wg-tok-partner-actions">
+                @if (!string.IsNullOrWhiteSpace(_toolkit?.FlyerUrl))
+                {
+                    <a class="btn-compact btn-compact--primary" href="@_toolkit.FlyerUrl" target="_blank" rel="noopener">Download flyer</a>
+                }
+                <button class="btn-compact" type="button" @onclick="() => CopyAsync(PartnerUrl)">Kopieer partnerlink</button>
+                <button class="btn-compact" type="button" @onclick="ShareWhatsApp">WhatsApp</button>
+            </div>
+            @if (!string.IsNullOrEmpty(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
+        </section>
+
+        <section class="wg-card">
+            <h2>@Culture["WgTok.Partner.Referrals"]</h2>
+            <p class="muted">Bedrijven die via jouw trackingcode zijn aangemeld. Bonus (0,5 token) wordt automatisch toegekend zodra hun welkomsttoken wordt ingezet.</p>
+            @if (_referrals.Count == 0)
+            {
+                <p class="muted">Nog geen bedrijven via jouw code.</p>
+            }
+            else
+            {
+                <div class="table-scroll">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Bedrijf</th>
+                                <th>Status</th>
+                                <th>Aangedragen</th>
+                                <th>Bonus toegekend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in _referrals)
+                            {
+                                <tr>
+                                    <td>@row.CompanyName</td>
+                                    <td>@row.StatusLabel</td>
+                                    <td>@(row.ReferredAtUtc?.ToLocalTime().ToString("dd-MM-yyyy") ?? "—")</td>
+                                    <td>@(row.RewardedAtUtc?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        @if (_catalog is not null)
+        {
+            <section class="wg-card">
+                <h2>@Culture["Partner.UspsTitle"]</h2>
+                <ul>
+                    <li>@Culture["Partner.Usp1"]</li>
+                    <li>@Culture["Partner.Usp2"]</li>
+                    <li>@Culture["Partner.Usp3"]</li>
+                </ul>
+            </section>
+        }
+    }
+    </ChildContent>
+</WgPageShell>
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private string? _message;
+    private PartnerAffiliateMeModel? _partnerMe;
+    private PartnerAffiliateToolkitModel? _toolkit;
+    private List<PartnerAffiliateReferralRowModel> _referrals = [];
+    private PartnerSalesCatalog? _catalog;
+
+    private string TrackingCode =>
+        !string.IsNullOrWhiteSpace(_toolkit?.TrackingCode) ? _toolkit!.TrackingCode!
+        : !string.IsNullOrWhiteSpace(_partnerMe?.TrackingCode) ? _partnerMe!.TrackingCode!
+        : "—";
+
+    private string PartnerUrl
+    {
+        get
+        {
+            var baseUri = Navigation.BaseUri.TrimEnd('/');
+            return TrackingCode == "—"
+                ? $"{baseUri}/partner"
+                : $"{baseUri}/partner/{Uri.EscapeDataString(TrackingCode)}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _partnerMe = await Api.GetPartnerAffiliateMeAsync();
+            _toolkit = await Api.GetPartnerAffiliateToolkitAsync();
+            _referrals = (await Api.GetPartnerAffiliateReferralsAsync()).ToList();
+            if (_partnerMe?.Referrals is { Count: > 0 } && _referrals.Count == 0)
+            {
+                _referrals = _partnerMe.Referrals;
+            }
+
+            try { _catalog = await Api.GetPartnerSalesCatalogAsync(); }
+            catch { /* optional */ }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CopyAsync(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value == "—") return;
+        try
+        {
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", value);
+            _message = Culture["WgMaterials.Copied"];
+        }
+        catch { _message = value; }
+    }
+
+    private void ShareWhatsApp()
+    {
+        var register = TrackingCode == "—"
+            ? $"{Navigation.BaseUri.TrimEnd('/')}/register"
+            : $"{Navigation.BaseUri.TrimEnd('/')}/register?ref={Uri.EscapeDataString(TrackingCode)}";
+        var text = Uri.EscapeDataString($"Meld je aan bij Lobsy met mijn code {TrackingCode}: {register}");
+        Navigation.NavigateTo($"https://wa.me/?text={text}", forceLoad: true);
+    }
+}

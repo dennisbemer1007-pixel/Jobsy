@@ -152,6 +152,39 @@ public static class PlatformSettingsCatalog
                 ? new PlatformFeatureUpdate(FreePublishUntil: d)
                 : new PlatformFeatureUpdate(ClearFreePublishUntil: true)));
 
+        list.Add(new PlatformSettingDescriptor(
+            Key: "CandidateInsightsEnabled",
+            Group: GroupVacancies,
+            TitleKey: "AdminSettings.CandidateInsights.Enabled.Title",
+            DescriptionKey: "AdminSettings.CandidateInsights.Enabled.Desc",
+            Kind: PlatformSettingKind.Bool,
+            Read: s => s.CandidateInsightsEnabled,
+            Write: v => new PlatformFeatureUpdate(CandidateInsightsEnabled: ToBool(v)),
+            ImpactKey: "AdminSettings.CandidateInsights.Enabled.ImpactOff",
+            ImpactLevel: PlatformSettingImpactLevel.Warn,
+            ShowOnDashboard: true));
+
+        list.Add(new PlatformSettingDescriptor(
+            Key: "CandidateInsightsUnlockDays",
+            Group: GroupVacancies,
+            TitleKey: "AdminSettings.CandidateInsights.UnlockDays.Title",
+            DescriptionKey: "AdminSettings.CandidateInsights.UnlockDays.Desc",
+            Kind: PlatformSettingKind.Int,
+            Read: s => s.CandidateInsightsUnlockDays,
+            Write: v => new PlatformFeatureUpdate(CandidateInsightsUnlockDays: ToInt(v)),
+            Min: CandidateInsightsAccess.MinUnlockDays,
+            Max: CandidateInsightsAccess.MaxUnlockDays,
+            UnitKey: "AdminSettings.Unit.Days"));
+
+        list.Add(new PlatformSettingDescriptor(
+            Key: "CandidateInsightsUnlockPerBranch",
+            Group: GroupVacancies,
+            TitleKey: "AdminSettings.CandidateInsights.PerBranch.Title",
+            DescriptionKey: "AdminSettings.CandidateInsights.PerBranch.Desc",
+            Kind: PlatformSettingKind.Bool,
+            Read: s => s.CandidateInsightsUnlockPerBranch,
+            Write: v => new PlatformFeatureUpdate(CandidateInsightsUnlockPerBranch: ToBool(v))));
+
         // --- Beveiliging ---
         list.Add(new PlatformSettingDescriptor(
             Key: "MfaPolicy",
@@ -270,6 +303,9 @@ public static class PlatformSettingsCatalog
         var clearFree = false;
         bool? notifyAdmins = null;
         bool? notifySubject = null;
+        bool? insightsEnabled = null;
+        int? insightsUnlockDays = null;
+        bool? insightsPerBranch = null;
 
         foreach (var p in parts)
         {
@@ -292,6 +328,9 @@ public static class PlatformSettingsCatalog
 
             if (p.SupportAccessNotifyAdmins is not null) notifyAdmins = p.SupportAccessNotifyAdmins;
             if (p.SupportAccessNotifySubject is not null) notifySubject = p.SupportAccessNotifySubject;
+            if (p.CandidateInsightsEnabled is not null) insightsEnabled = p.CandidateInsightsEnabled;
+            if (p.CandidateInsightsUnlockDays is not null) insightsUnlockDays = p.CandidateInsightsUnlockDays;
+            if (p.CandidateInsightsUnlockPerBranch is not null) insightsPerBranch = p.CandidateInsightsUnlockPerBranch;
         }
 
         return new PlatformFeatureUpdate(
@@ -304,6 +343,9 @@ public static class PlatformSettingsCatalog
             freeUntil,
             clearFree,
             SupportAccessNotifyAdmins: notifyAdmins,
-            SupportAccessNotifySubject: notifySubject);
+            SupportAccessNotifySubject: notifySubject,
+            CandidateInsightsEnabled: insightsEnabled,
+            CandidateInsightsUnlockDays: insightsUnlockDays,
+            CandidateInsightsUnlockPerBranch: insightsPerBranch);
     }
 }

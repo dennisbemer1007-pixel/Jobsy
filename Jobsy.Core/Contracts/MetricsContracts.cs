@@ -108,7 +108,8 @@ public record TokenLogItemDto(
     string? Note,
     Guid? VacancyId,
     Guid? BranchCompanyId,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? ActorName = null);
 
 public record PlatformLogItemDto(
     Guid Id,

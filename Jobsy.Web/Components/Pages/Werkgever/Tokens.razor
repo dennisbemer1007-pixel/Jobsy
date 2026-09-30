@@ -1,0 +1,625 @@
+@page "/werkgever/tokens"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Interfaces
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Components.Werkgever.Tokens
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Tokens
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+@inject Jobsy.Web.Services.TokenBalanceCache TokenBalances
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+@implements IDisposable
+
+<PageTitle>@PageTitleText · Lobsy</PageTitle>
+
+<WgPageShell Title="@PageTitleText" Lead="@LeadText" ReadOnlyHint="@(Role == EmployerRole.Regiomanager)">
+    <Actions>
+        @if (Role != EmployerRole.Vestigingsmanager)
+        {
+            <a class="btn-compact" href="/werkgever/tokens/mutaties">@Culture["WgTok.AllMutations"]</a>
+        }
+        @if (_canPurchase)
+        {
+            <a class="btn-compact btn-compact--primary" href="#wg-tok-buy-title">
+                @Culture["WgTok.BuyTokens"]
+            </a>
+        }
+        else if (Role == EmployerRole.Vestigingsmanager)
+        {
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="OpenRequestDrawer">
+                @Culture["WgTok.RequestTokens"]
+            </button>
+        }
+    </Actions>
+
+    
+    <ChildContent>
+<WgTokensSubNav ActiveKey="overview" />
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+
+    @if (_loading)
+    {
+        <PageContentSkeleton Variant="cards" CardCount="4" LoadingLabel="@Culture["EntUi.Loading"]" />
+    }
+    else
+    {
+        @if (Role == EmployerRole.Bedrijfsmanager || Role == EmployerRole.Intermediair)
+        {
+            <div class="wg-kpi-row">
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Central"]"
+                            Value="@Fmt(_summary?.CentralBalance ?? _central)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.CentralSub"], Fmt(_summary?.Unallocated ?? _central))" />
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Allocated"]"
+                            Value="@Fmt(_summary?.AllocatedToBranches ?? 0)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.AllocatedSub"], _summary?.BranchCountWithAllocation ?? 0)" />
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Used"]"
+                            Value="@Fmt(_summary?.UsedLast30Days ?? 0)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.UsedSub"], Fmt(_summary?.UsedPrevious30Days ?? 0))" />
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Reserved"]"
+                            Value="@Fmt(_summary?.ReservedForRequests ?? 0)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.ReservedSub"], _summary?.OpenPublishRequestCount ?? 0)" />
+            </div>
+
+            <div class="wg-tok-overview-grid">
+                <WgTokenUsageTable Rows="@BranchRows" Take="5" ShowFullLink="true"
+                                   CanAllocate="_canAllocate" OnAllocate="OpenAllocate" />
+                <section class="wg-card wg-tok-buy" aria-labelledby="wg-tok-buy-title">
+                    <div class="wg-card__head">
+                        <h2 id="wg-tok-buy-title">@Culture["WgTok.BuyTitle"]</h2>
+                        <button type="button" class="auth-link" @onclick="() => _costsOpen = !_costsOpen">@Culture["WgTok.WhatCosts"]</button>
+                    </div>
+                    @if (_costsOpen)
+                    {
+                        <WgTokenCostsPanel Costs="_costs" StartOpen="true" />
+                    }
+                    <div class="wg-tok-packs" role="radiogroup" aria-label="@Culture["WgTok.BuyTitle"]">
+                        @foreach (var p in RelevantPacks)
+                        {
+                            <label class="wg-tok-pack @(_packSize == p.PackSize ? "is-selected" : null)">
+                                <input type="radio" name="tok-pack" checked="@(_packSize == p.PackSize)"
+                                       @onchange="() => _packSize = p.PackSize" />
+                                <strong>@p.PackSize tokens</strong>
+                                <span>€ @p.PriceEuro.ToString("0.##")</span>
+                                <small>@string.Format(Culture["WgTok.PerToken"], (p.PriceEuro / Math.Max(1, p.PackSize)).ToString("0.00"))</small>
+                            </label>
+                        }
+                    </div>
+                    <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"
+                                         @bind-RememberPreference="_rememberPaymentMethod"
+                                         ShowRememberPreference="true"
+                                         Disabled="_busy"
+                                         Lead="Kies iDEAL of creditcard. Prepaid — geen automatische incasso." />
+                    <label class="token-agree">
+                        <input type="checkbox" @bind="_purchaseAgreed" />
+                        <span>@Culture["WgTok.PurchaseAgree"]</span>
+                    </label>
+                    <button type="button" class="btn-compact btn-compact--primary wg-tok-buy__cta"
+                            disabled="@(_busy || !_purchaseAgreed || SelectedPack is null || string.IsNullOrWhiteSpace(_paymentMethod))"
+                            @onclick="CheckoutAsync">
+                        @BuyButtonLabel
+                    </button>
+                </section>
+            </div>
+
+            <section class="wg-card" aria-labelledby="wg-tok-inv-title">
+                <div class="wg-card__head">
+                    <h2 id="wg-tok-inv-title">@Culture["WgTok.RecentInvoices"]</h2>
+                    <a class="auth-link" href="/werkgever/tokens/facturen">@Culture["WgTok.AllInvoices"]</a>
+                </div>
+                @if (_invoices.Count == 0)
+                {
+                    <p class="muted">@Culture["WgTok.EmptyInvoices"]</p>
+                }
+                else
+                {
+                    <EntDataTable Empty="false">
+                        <Header>
+                            <th>@Culture["WgTok.Col.Invoice"]</th>
+                            <th>@Culture["WgTok.Col.Description"]</th>
+                            <th class="ent-data-table__num">@Culture["WgTok.Col.AmountIncl"]</th>
+                            <th>@Culture["WgTok.Col.Status"]</th>
+                            <th></th>
+                        </Header>
+                        <Rows>
+                            @foreach (var inv in _invoices.Take(3))
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@inv.InvoiceNumber</strong>
+                                        <div class="muted">@TokenLogPresentation.FormatDateShort(inv.IssuedAt)</div>
+                                    </td>
+                                    <td>@string.Format(Culture["WgTok.InvoicePack"], inv.PackSize)</td>
+                                    <td class="ent-data-table__num">€ @inv.TotalAmountEuro.ToString("0.00")</td>
+                                    <td><span class="status-pill status-pill--success">@inv.Status</span></td>
+                                    <td>
+                                        <button type="button" class="btn-compact" @onclick="() => DownloadInvoiceAsync(inv)">
+                                            @Culture["WgTok.Download"]
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </Rows>
+                    </EntDataTable>
+                }
+            </section>
+
+            @if (_openRequests.Count > 0)
+            {
+                <section class="wg-card" aria-labelledby="wg-tok-req-title">
+                    <div class="wg-card__head">
+                        <h2 id="wg-tok-req-title">@Culture["WgTok.OpenRequests"]</h2>
+                    </div>
+                    <ul class="wg-todo-list">
+                        @foreach (var r in _openRequests)
+                        {
+                            <li class="wg-tok-request-row">
+                                <div>
+                                    <strong>@r.BranchName</strong>
+                                    <span class="muted"> · @r.Amount tokens · @Culture[$"WgTok.Reason.{r.Reason}"]</span>
+                                </div>
+                                <div class="inline-actions">
+                                    <button type="button" class="btn-compact btn-compact--primary" @onclick="() => OpenApprove(r)">@Culture["WgTok.Approve"]</button>
+                                    <button type="button" class="btn-compact" @onclick="() => RejectAsync(r)">@Culture["WgTok.Reject"]</button>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+        }
+        else if (Role == EmployerRole.Vestigingsmanager)
+        {
+            <div class="wg-kpi-row">
+                <EntKpiCard Label="@string.Format(Culture["WgTok.Kpi.BranchBalance"], _branchName)"
+                            Value="@Fmt(_branchBalance)"
+                            Delta="@Culture["WgTok.Kpi.BranchBalanceSub"]" />
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Used"]"
+                            Value="@Fmt(_summary?.UsedLast30Days ?? 0)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.UsedSub"], Fmt(_summary?.UsedPrevious30Days ?? 0))" />
+            </div>
+            <WgTokenCostsPanel Costs="_costs" StartOpen="true" />
+            <section class="wg-card" aria-labelledby="wg-tok-myreq">
+                <div class="wg-card__head">
+                    <h2 id="wg-tok-myreq">@Culture["WgTok.MyRequests"]</h2>
+                    <button type="button" class="btn-compact btn-compact--primary" @onclick="OpenRequestDrawer">@Culture["WgTok.RequestTokens"]</button>
+                </div>
+                @if (_myRequests.Count == 0)
+                {
+                    <p class="muted">@Culture["WgTok.EmptyMutations"]</p>
+                }
+                else
+                {
+                    <ul class="wg-todo-list">
+                        @foreach (var r in _myRequests)
+                        {
+                            <li class="wg-tok-request-row">
+                                <div>
+                                    <strong>@r.Amount tokens</strong>
+                                    <span class="muted"> · @Culture[$"WgTok.Reason.{r.Reason}"] · @Culture[$"WgTok.Status.{r.Status}"]</span>
+                                </div>
+                                @if (r.Status == "Open")
+                                {
+                                    <button type="button" class="btn-compact" @onclick="() => WithdrawAsync(r)">@Culture["WgTok.Withdraw"]</button>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+        }
+        else
+        {
+            <div class="wg-kpi-row">
+                <EntKpiCard Label="@Culture["WgTok.Kpi.RegionUsage"]"
+                            Value="@Fmt(_summary?.UsedLast30Days ?? 0)"
+                            Delta="@string.Format(Culture["WgTok.Kpi.AllocatedSub"], _summary?.BranchCountWithAllocation ?? 0)" />
+                <EntKpiCard Label="@Culture["WgTok.Kpi.Allocated"]"
+                            Value="@Fmt(_summary?.AllocatedToBranches ?? 0)" />
+            </div>
+            <WgTokenUsageTable Rows="@BranchRows" Take="0" CanAllocate="false" />
+        }
+    }
+    </ChildContent>
+</WgPageShell>
+
+<EntDrawer @bind-Open="_allocateOpen" Title="@Culture["WgTok.AllocateTitle"]">
+    <ChildContent>
+@if (_allocateTarget is not null)
+    {
+        <p><strong>@_allocateTarget.Name</strong></p>
+        <label>
+            @Culture["WgTok.AllocateAmount"]
+            <input type="number" min="1" step="1" @bind="_allocateAmount" />
+        </label>
+        <EntImpactNote>
+            @string.Format(Culture["WgTok.AllocateImpact"], Fmt((_summary?.Unallocated ?? _central) - _allocateAmount))
+        </EntImpactNote>
+    }
+    </ChildContent>
+    <Footer>
+        <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="AllocateAsync">
+            @Culture["WgTok.AllocateSubmit"]
+        </button>
+    </Footer>
+</EntDrawer>
+
+<EntDrawer @bind-Open="_requestOpen" Title="@Culture["WgTok.RequestTitle"]">
+    <ChildContent>
+<label>
+        @Culture["WgTok.AllocateAmount"]
+        <input type="number" min="1" max="500" step="1" @bind="_requestAmount" />
+    </label>
+    <label>
+        @Culture["WgTok.RequestReason"]
+        <select @bind="_requestReason">
+            <option value="Publiceren">@Culture["WgTok.Reason.Publiceren"]</option>
+            <option value="Verlengen">@Culture["WgTok.Reason.Verlengen"]</option>
+            <option value="Uitlichten">@Culture["WgTok.Reason.Uitlichten"]</option>
+            <option value="Kandidaatinzichten">@Culture["WgTok.Reason.Kandidaatinzichten"]</option>
+            <option value="Overig">@Culture["WgTok.Reason.Overig"]</option>
+        </select>
+    </label>
+    <label>
+        @Culture["WgTok.RequestNote"]
+        <textarea maxlength="280" @bind="_requestNote" rows="3"></textarea>
+    </label>
+    <EntImpactNote>@Culture["WgTok.RequestImpact"]</EntImpactNote>
+    </ChildContent>
+    <Footer>
+        <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="SubmitRequestAsync">
+            @Culture["WgTok.RequestSubmit"]
+        </button>
+    </Footer>
+</EntDrawer>
+
+<EntDrawer @bind-Open="_approveOpen" Title="@Culture["WgTok.Approve"]">
+    <ChildContent>
+@if (_approveTarget is not null)
+    {
+        <p><strong>@_approveTarget.BranchName</strong> · @_approveTarget.Amount tokens</p>
+        <EntImpactNote>
+            @string.Format(Culture["WgTok.AllocateImpact"], Fmt((_summary?.Unallocated ?? _central) - _approveTarget.Amount))
+        </EntImpactNote>
+    }
+    </ChildContent>
+    <Footer>
+        <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="ApproveAsync">
+            @Culture["WgTok.Approve"]
+        </button>
+    </Footer>
+</EntDrawer>
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private bool _started;
+    private bool _canPurchase;
+    private bool _canAllocate;
+    private bool _purchaseAgreed;
+    private bool _rememberPaymentMethod;
+    private bool _costsOpen;
+    private bool _allocateOpen;
+    private bool _requestOpen;
+    private bool _approveOpen;
+    private string? _error;
+    private string? _message;
+    private string _paymentMethod = "ideal";
+    private string _branchName = "";
+    private string _requestReason = "Publiceren";
+    private string? _requestNote;
+    private int _packSize;
+    private int _requestAmount = 10;
+    private decimal _allocateAmount = 10;
+    private decimal _central;
+    private decimal _branchBalance;
+    private Guid _checkoutCompanyId;
+    private Guid _branchCompanyId;
+    private List<TokenPackItem> _packs = [];
+    private List<TokenSpendCostItem> _costs = [];
+    private List<CompanyBillingHistoryItem> _invoices = [];
+    private List<TokenRequestDto> _openRequests = [];
+    private List<TokenRequestDto> _myRequests = [];
+    private WerkgeverTokenSummaryDto? _summary;
+    private WerkgeverTokenBranchUsageDto? _allocateTarget;
+    private TokenRequestDto? _approveTarget;
+    [Inject] private IJSRuntime Js { get; set; } = default!;
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private string PageTitleText => Role switch
+    {
+        EmployerRole.Regiomanager => Culture["WgNav.TokenUsage"],
+        EmployerRole.Vestigingsmanager => Culture["WgNav.BalanceRequest"],
+        _ => Culture["WgTok.Title"]
+    };
+    private string LeadText => Role switch
+    {
+        EmployerRole.Regiomanager => Culture["WgTok.LeadRm"],
+        EmployerRole.Vestigingsmanager => Culture["WgTok.LeadVm"],
+        _ => Culture["WgTok.Lead"]
+    };
+
+    private IReadOnlyList<WerkgeverTokenBranchUsageDto> BranchRows =>
+        _summary?.BranchUsage ?? [];
+
+    private IReadOnlyList<TokenPackItem> RelevantPacks
+    {
+        get
+        {
+            if (_packs.Count == 0) return [];
+            var ordered = _packs.OrderBy(p => p.PackSize).ToList();
+            if (ordered.Count <= 3) return ordered;
+            // Prefer mid-range packs (e.g. 10/50/100).
+            var mid = ordered.Count / 2;
+            return new[]
+            {
+                ordered[Math.Max(0, mid - 1)],
+                ordered[mid],
+                ordered[Math.Min(ordered.Count - 1, mid + 1)]
+            }.DistinctBy(p => p.PackSize).ToList();
+        }
+    }
+
+    private TokenPackItem? SelectedPack =>
+        RelevantPacks.FirstOrDefault(p => p.PackSize == _packSize) ?? RelevantPacks.FirstOrDefault();
+
+    private string BuyButtonLabel
+    {
+        get
+        {
+            var p = SelectedPack;
+            if (p is null) return Culture["WgTok.BuyTokens"];
+            return string.Format(Culture["WgTok.BuyButton"], p.PackSize, p.PriceEuro.ToString("0.##"));
+        }
+    }
+
+    private static string Fmt(decimal n) => n.ToString("0.##");
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started) return;
+        _started = true;
+        await ScopeBootstrap.EnsureLoadedAsync();
+        await LoadAsync();
+        MaybeOpenFromQuery();
+        StateHasChanged();
+    }
+
+    private void MaybeOpenFromQuery()
+    {
+        var qs = QueryHelpers.ParseQuery(Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+        if (qs.ContainsKey("aanvragen") && Role == EmployerRole.Vestigingsmanager)
+        {
+            _requestOpen = true;
+        }
+
+        if (qs.TryGetValue("request", out var rid)
+            && Guid.TryParse(rid, out var id)
+            && _openRequests.FirstOrDefault(r => r.Id == id) is { } match)
+        {
+            OpenApprove(match);
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var user = state.User;
+            _canAllocate = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
+            _canPurchase = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin") || user.IsInRole("Intermediary");
+
+            var ids = Scope.CompanyIds.ToList();
+            if (ids.Count == 0)
+            {
+                var companies = await Api.GetMyCompaniesAsync();
+                ids = companies.Select(c => c.Id).ToList();
+            }
+
+            _packs = (await Api.GetTokenPacksAsync()).ToList();
+            var mid = RelevantPacks.Skip(RelevantPacks.Count / 2).FirstOrDefault() ?? RelevantPacks.FirstOrDefault();
+            if (mid is not null) _packSize = mid.PackSize;
+
+            _costs = (await Api.GetTokenCostsAsync()).Where(c => c.CostTokens > 0).ToList();
+            _summary = await Api.GetWerkgeverTokenSummaryAsync(ids, 30);
+            _central = _summary?.Unallocated ?? 0;
+
+            var balances = (await Api.GetTokenBalancesAsync()).ToList();
+            TokenBalances.Invalidate();
+            var pot = balances.FirstOrDefault(b => b.ParentCompanyId is null);
+            if (pot is not null)
+            {
+                _checkoutCompanyId = pot.CompanyId;
+                _central = pot.Balance;
+            }
+
+            if (Role == EmployerRole.Vestigingsmanager)
+            {
+                var branch = balances.FirstOrDefault(b => b.ParentCompanyId is not null) ?? balances.FirstOrDefault();
+                if (branch is not null)
+                {
+                    _branchCompanyId = branch.CompanyId;
+                    _branchName = branch.CompanyName;
+                    _branchBalance = branch.Balance;
+                }
+
+                _myRequests = (await Api.GetTokenRequestsAsync()).ToList();
+            }
+            else if (_canAllocate)
+            {
+                _openRequests = (await Api.GetTokenRequestsAsync("Open", ids)).ToList();
+                if (_checkoutCompanyId != Guid.Empty)
+                {
+                    try
+                    {
+                        _invoices = (await Api.GetCompanyBillingHistoryAsync(_checkoutCompanyId)).ToList();
+                    }
+                    catch { _invoices = []; }
+                }
+            }
+
+            try
+            {
+                var companies = await Api.GetMyCompaniesAsync();
+                var company = companies.FirstOrDefault(c => c.Id == _checkoutCompanyId) ?? companies.FirstOrDefault();
+                _paymentMethod = string.Equals(company?.PreferredPaymentMethod, "creditcard", StringComparison.OrdinalIgnoreCase)
+                    ? "creditcard" : "ideal";
+            }
+            catch { _paymentMethod = "ideal"; }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenAllocate(WerkgeverTokenBranchUsageDto row)
+    {
+        _allocateTarget = row;
+        _allocateAmount = 10;
+        _allocateOpen = true;
+    }
+
+    private void OpenRequestDrawer()
+    {
+        _requestAmount = 10;
+        _requestReason = "Publiceren";
+        _requestNote = null;
+        _requestOpen = true;
+    }
+
+    private void OpenApprove(TokenRequestDto r)
+    {
+        _approveTarget = r;
+        _approveOpen = true;
+    }
+
+    private async Task AllocateAsync()
+    {
+        if (_allocateTarget is null || _checkoutCompanyId == Guid.Empty) return;
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.AllocateTokensAsync(_checkoutCompanyId, _allocateTarget.CompanyId, _allocateAmount, "Verdeling");
+            _allocateOpen = false;
+            await LoadAsync();
+            _message = Culture["WgTok.AllocateSubmit"];
+        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task CheckoutAsync()
+    {
+        if (SelectedPack is null || _checkoutCompanyId == Guid.Empty) return;
+        _busy = true;
+        try
+        {
+            if (_rememberPaymentMethod)
+            {
+                await Api.UpdateBillingPreferenceAsync(_checkoutCompanyId, _paymentMethod);
+            }
+
+            var result = await Api.CreateTokenCheckoutAsync(
+                _checkoutCompanyId, SelectedPack.PackSize, null, _paymentMethod);
+            if (result is null)
+            {
+                _message = "Checkout mislukt.";
+                return;
+            }
+
+            Navigation.NavigateTo(result.CheckoutUrl, forceLoad: true);
+        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task DownloadInvoiceAsync(CompanyBillingHistoryItem inv)
+    {
+        try
+        {
+            await Api.DownloadCompanyBillingInvoicePdfAsync(_checkoutCompanyId, inv.InvoiceId, inv.InvoiceNumber, Js);
+        }
+        catch (Exception ex) { _message = ex.Message; }
+    }
+
+    private async Task SubmitRequestAsync()
+    {
+        if (_branchCompanyId == Guid.Empty) return;
+        _busy = true;
+        try
+        {
+            await Api.CreateTokenRequestAsync(_branchCompanyId, _requestAmount, _requestReason, _requestNote);
+            _requestOpen = false;
+            await LoadAsync();
+            _message = Culture["WgTok.RequestSent"];
+        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task ApproveAsync()
+    {
+        if (_approveTarget is null) return;
+        _busy = true;
+        try
+        {
+            await Api.ApproveTokenRequestAsync(_approveTarget.Id);
+            _approveOpen = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task RejectAsync(TokenRequestDto r)
+    {
+        _busy = true;
+        try
+        {
+            await Api.RejectTokenRequestAsync(r.Id);
+            await LoadAsync();
+        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task WithdrawAsync(TokenRequestDto r)
+    {
+        _busy = true;
+        try
+        {
+            await Api.WithdrawTokenRequestAsync(r.Id);
+            await LoadAsync();
+        }
+        catch (Exception ex) { _message = ex.Message; }
+        finally { _busy = false; }
+    }
+}

@@ -38,6 +38,13 @@ internal static class PlatformSettingsSeeder
                     Id = Guid.NewGuid(),
                     Reason = TokenSpendReason.ContactUnlock,
                     CostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens
+                },
+                new TokenSpendCost
+                {
+                    Id = Guid.NewGuid(),
+                    Reason = TokenSpendReason.InsightsUnlock,
+                    CostTokens = CandidateInsightsAccess.DefaultUnlockCostTokens,
+                    IsActive = true
                 });
         }
         else
@@ -57,6 +64,17 @@ internal static class PlatformSettingsSeeder
                     Id = Guid.NewGuid(),
                     Reason = TokenSpendReason.ContactUnlock,
                     CostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens
+                });
+            }
+
+            if (!await db.TokenSpendCosts.AnyAsync(c => c.Reason == TokenSpendReason.InsightsUnlock))
+            {
+                db.TokenSpendCosts.Add(new TokenSpendCost
+                {
+                    Id = Guid.NewGuid(),
+                    Reason = TokenSpendReason.InsightsUnlock,
+                    CostTokens = CandidateInsightsAccess.DefaultUnlockCostTokens,
+                    IsActive = true
                 });
             }
         }

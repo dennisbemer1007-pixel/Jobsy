@@ -23,3 +23,13 @@ Authorization was historically implicit in controllers and Blazor `[Authorize(Ro
 - New mutating employer endpoints must not authorize `RegionalManager`.
 - Scope bugs (cross-tenant) are regressions — fix product code, do not weaken tests.
 - Open questions (Intermediary longevity; Region entity vs memberships) stay in the roles-matrix doc until product decides.
+
+## Werkgever redesign
+
+Shared `/werkgever/…` pages for Bedrijfsmanager (BM), Regiomanager (RM) and Vestigingsmanager (VM):
+
+- **RM is read-only** everywhere (D4): UI hides actions; mutating APIs return 403.
+- **VM cannot purchase tokens** (D5): removed from `TokenPurchaseRoles`; uses tokenaanvraag + allocate from BM; no invoices.
+- **Only BM invites** team members (D6): single `WgInviteDrawer`; `CompanyUsersController` stays EM/Intermediary/Admin.
+- **Scope chip only narrows**: every endpoint re-checks `GetAccessibleCompanyIdsAsync`.
+- Rights table: `Jobsy.Tests/Werkgever/WerkgeverRightsMatrix.cs` → section in [`docs/security/roles-matrix.md`](../security/roles-matrix.md).

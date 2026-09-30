@@ -1,0 +1,982 @@
+@page "/werkgever/sollicitaties"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using System.Globalization
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Applications
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+@inject IJSRuntime Js
+@implements IDisposable
+
+<PageTitle>@Culture["WgNav.Applications"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgNav.Applications"]" Lead="@Culture["WgApp.Lead"]" ReadOnlyHint="@(Role == EmployerRole.Regiomanager)">
+    <ChildContent>
+    <div class="wg-app @(_view == ApplicationPipelineRules.ViewList ? "wg-app--dense" : null)">
+        @if (_loading)
+        {
+            <PageContentSkeleton Variant="cards" CardCount="4" LoadingLabel="@Culture["EntUi.Loading"]" />
+        }
+        else if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        else
+        {
+            <div class="wg-card">
+                <EntFilterBar Query="@_vacancySearch" QueryChanged="OnVacancySearchChanged" Placeholder="@Culture["WgApp.Filter.Vacancy"]">
+                    <label class="ent-filter-bar__select">
+                        <span class="visually-hidden">@Culture["WgApp.Filter.Vacancy"]</span>
+                        <select @bind="_vacancyId" @bind:after="OnVacancyChanged">
+                            <option value="">@Culture["WgApp.Filter.Vacancy"]</option>
+                            @foreach (var v in VacancyOptions)
+                            {
+                                <option value="@v.Id">@v.Title · @v.CompanyName</option>
+                            }
+                        </select>
+                    </label>
+                    @if (Role is EmployerRole.Bedrijfsmanager or EmployerRole.Regiomanager)
+                    {
+                        <label class="ent-filter-bar__select">
+                            <span class="visually-hidden">@Culture["WgApp.Filter.Branch"]</span>
+                            <select @bind="_branchId" @bind:after="OnBranchChanged">
+                                <option value="">@Culture["WgApp.Filter.Branch"]</option>
+                                @foreach (var b in BranchOptions)
+                                {
+                                    <option value="@b.Id">@b.Name</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    <label class="wg-app__overdue">
+                        <input type="checkbox" checked="@_overdueOnly" @onchange="OnOverdueToggle" />
+                        @Culture["WgApp.Filter.Overdue"]
+                    </label>
+                    <div class="wg-app__views" role="group" aria-label="@Culture["WgNav.Applications"]">
+                        <button type="button"
+                                class="@(_view == ApplicationPipelineRules.ViewPipeline ? "is-active" : null)"
+                                @onclick="() => SetViewAsync(ApplicationPipelineRules.ViewPipeline)">
+                            @Culture["WgApp.View.Pipeline"]
+                        </button>
+                        <button type="button"
+                                class="@(_view == ApplicationPipelineRules.ViewList ? "is-active" : null)"
+                                @onclick="() => SetViewAsync(ApplicationPipelineRules.ViewList)">
+                            @Culture["WgApp.View.List"]
+                        </button>
+                    </div>
+                </EntFilterBar>
+
+                @if (Role == EmployerRole.Regiomanager)
+                {
+                    <p class="wg-readonly-hint" role="status">@Culture["WgApp.RmHint"]</p>
+                }
+
+                @if (_view == ApplicationPipelineRules.ViewPipeline)
+                {
+                    @if (!Guid.TryParse(_vacancyId, out _))
+                    {
+                        <p class="state-message">@Culture["WgApp.EmptyVacancy"]</p>
+                    }
+                    else
+                    {
+                        var pipelineItems = PipelineItems.ToList();
+                        <div class="wg-app__pipeline" data-testid="wg-app-pipeline">
+                            @foreach (var col in ApplicationPipelineRules.Columns)
+                            {
+                                var colItems = pipelineItems.Where(col.Matches).OrderByDescending(a => a.CreatedAt).ToList();
+                                <section class="wg-app__col" aria-label="@Culture[col.LabelKey]">
+                                    <header class="wg-app__col-head">
+                                        <h2 class="wg-app__col-title">
+                                            @Culture[col.LabelKey]
+                                            <span class="wg-app__col-count">(@colItems.Count)</span>
+                                        </h2>
+                                        @if (col.HintKey is not null)
+                                        {
+                                            <p class="wg-app__col-hint">@Culture[col.HintKey]</p>
+                                        }
+                                    </header>
+                                    <div class="wg-app__col-body">
+                                        @if (col.Column == ApplicationPipelineRules.PipelineColumn.Afgewezen)
+                                        {
+                                            var (rej, elsew, with) = ApplicationPipelineRules.RejectedSummary(colItems);
+                                            @if (rej + elsew + with > 0)
+                                            {
+                                                <button type="button" class="wg-app-card wg-app-card--summary" @onclick="OpenRejectedList">
+                                                    <span class="wg-app-card__name">@string.Format(Culture["WgApp.RejectedSummary"], rej, elsew, with)</span>
+                                                </button>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            var shown = colItems.Take(ApplicationPipelineRules.PipelineCardCap).ToList();
+                                            var factTake = col.Column == ApplicationPipelineRules.PipelineColumn.Nieuw ? 3 : 2;
+                                            @foreach (var a in shown)
+                                            {
+                                                var overdue = ApplicationPipelineRules.IsOverdue(a, UtcNow);
+                                                var age = ApplicationPipelineRules.AgeDays(a, UtcNow);
+                                                var initials = ApplicationPipelineRules.Initials(a);
+                                                <button type="button"
+                                                        class="wg-app-card @(_selected?.Id == a.Id ? "is-selected" : null)"
+                                                        @onclick="() => OpenCandidate(a.Id)">
+                                                    <div class="wg-app-card__top">
+                                                        <div class="wg-app-card__who">
+                                                            <span class="wg-app-card__avatar" aria-hidden="true">
+                                                                @if (initials is not null)
+                                                                {
+                                                                    @initials
+                                                                }
+                                                                else
+                                                                {
+                                                                    @((MarkupString)NavIcons.User)
+                                                                }
+                                                            </span>
+                                                            <span class="wg-app-card__name">@DisplayName(a)</span>
+                                                        </div>
+                                                        @if (a.MatchPercent is int pct)
+                                                        {
+                                                            <span class="wg-app-card__match">@pct%</span>
+                                                        }
+                                                    </div>
+                                                    <ul class="wg-app-card__facts">
+                                                        @foreach (var fact in CardFacts(a).Take(factTake))
+                                                        {
+                                                            <li>@fact</li>
+                                                        }
+                                                    </ul>
+                                                    @if (col.Column == ApplicationPipelineRules.PipelineColumn.Nieuw)
+                                                    {
+                                                        <span class="wg-app-card__age @(overdue ? "is-late" : null)">
+                                                            @(overdue
+                                                                ? string.Format(Culture["WgApp.Overdue"], Math.Max(age, 2))
+                                                                : string.Format(Culture["WgApp.AgeDays"], age))
+                                                        </span>
+                                                    }
+                                                    else if (col.Column == ApplicationPipelineRules.PipelineColumn.Geaccepteerd)
+                                                    {
+                                                        <span class="wg-app-card__age">@string.Format(Culture["WgApp.Since"], (a.RespondedAt ?? a.CreatedAt).ToLocalTime().ToString("dd-MM"))</span>
+                                                    }
+                                                    else if (col.Column == ApplicationPipelineRules.PipelineColumn.Uitgenodigd)
+                                                    {
+                                                        <span class="wg-app-card__age">@string.Format(Culture["WgApp.InvitedOn"], (a.RespondedAt ?? a.CreatedAt).ToLocalTime().ToString("dd-MM"))</span>
+                                                    }
+                                                    else if (col.Column == ApplicationPipelineRules.PipelineColumn.Aangenomen)
+                                                    {
+                                                        <span class="wg-app-card__age">@Culture["WgApp.ContactVisible"]</span>
+                                                    }
+                                                </button>
+                                            }
+                                            @if (colItems.Count > ApplicationPipelineRules.PipelineCardCap)
+                                            {
+                                                <button type="button" class="wg-app__show-all" @onclick="ShowAllInList">
+                                                    @string.Format(Culture["WgApp.ShowAll"], colItems.Count)
+                                                </button>
+                                            }
+                                        }
+                                    </div>
+                                </section>
+                            }
+                        </div>
+
+                        <div class="wg-app__list-mobile">
+                            @MobileCards(pipelineItems)
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="wg-app__list-desktop">
+                        @if (CanWrite && _selectedIds.Count > 0)
+                        {
+                            <EntBulkBar SelectedCount="_selectedIds.Count" OnClear="ClearSelection">
+                                <button type="button" class="btn-compact" @onclick="() => _bulkRejectOpen = true">
+                                    @Culture["WgApp.Action.BulkReject"]
+                                </button>
+                            </EntBulkBar>
+                        }
+
+                        <EntDataTable Loading="false"
+                                      Empty="@(Paged.Count == 0)"
+                                      EmptyText="@(_items.Count == 0 ? Culture["WgApp.Empty"] : Culture["WgApp.EmptyFilter"])"
+                                      ShowCheckbox="@CanWrite"
+                                      AllSelected="@AllPageSelected"
+                                      AllSelectedChanged="OnToggleAll"
+                                      ShowRowActions="true">
+                            <Header>
+                                <th scope="col"><button type="button" class="wg-app-sort" @onclick='() => ToggleSort("candidate")'>@Culture["WgApp.List.Candidate"]</button></th>
+                                <th scope="col"><button type="button" class="wg-app-sort" @onclick='() => ToggleSort("vacancy")'>@Culture["WgApp.List.Vacancy"]</button></th>
+                                <th scope="col">@Culture["WgApp.List.Branch"]</th>
+                                <th scope="col"><button type="button" class="wg-app-sort" @onclick='() => ToggleSort("status")'>@Culture["WgApp.List.Status"]</button></th>
+                                <th scope="col"><button type="button" class="wg-app-sort" @onclick='() => ToggleSort("match")'>@Culture["WgApp.List.Match"]</button></th>
+                                <th scope="col"><button type="button" class="wg-app-sort" @onclick='() => ToggleSort("created")'>@Culture["WgApp.List.Applied"]</button></th>
+                                <th scope="col"><button type="button" class="wg-app-sort" @onclick='() => ToggleSort("responded")'>@Culture["WgApp.List.FirstResponse"]</button></th>
+                            </Header>
+                            <Rows>
+                                @foreach (var a in Paged)
+                                {
+                                    var selected = _selectedIds.Contains(a.Id);
+                                    <tr>
+                                        @if (CanWrite)
+                                        {
+                                            <td class="ent-data-table__check">
+                                                <input type="checkbox" checked="@selected" @onchange="e => ToggleRow(a.Id, e)" aria-label="@DisplayName(a)" />
+                                            </td>
+                                        }
+                                        <td>
+                                            <button type="button" class="wg-app-sort" @onclick="() => OpenCandidate(a.Id)">@DisplayName(a)</button>
+                                        </td>
+                                        <td>@a.VacancyTitle</td>
+                                        <td>@a.CompanyName</td>
+                                        <td>
+                                            <span class="status-pill wg-app-status--@ApplicationPipelineRules.StatusCss(a.Status)">
+                                                @Culture[ApplicationPipelineRules.StatusLabelKey(a.Status)]
+                                            </span>
+                                        </td>
+                                        <td class="tabular">@(a.MatchPercent is int m ? $"{m}%" : "—")</td>
+                                        <td class="tabular">@a.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")</td>
+                                        <td class="tabular">@(a.RespondedAt?.ToLocalTime().ToString("dd-MM-yyyy") ?? "—")</td>
+                                        <td>
+                                            <button type="button" class="btn-compact" @onclick="() => OpenCandidate(a.Id)">@Culture["Common.Details"]</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </Rows>
+                        </EntDataTable>
+                        <div class="wg-vac__footer">
+                            <span class="muted">@string.Format(Culture["WgApp.Pager"], Paged.Count, ListFiltered.Count)</span>
+                            <EntPager Page="_page" TotalPages="@TotalPages" PageChanged="OnPageChanged" />
+                        </div>
+                    </div>
+                    <div class="wg-app__list-mobile">
+                        @MobileCards(ListFiltered)
+                    </div>
+                }
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message @(_messageIsError ? "error" : null)" role="status">@_message</p>
+        }
+    </div>
+    </ChildContent>
+</WgPageShell>
+
+<EntDrawer Open="_drawerOpen" OpenChanged="OnDrawerOpenChanged" Title="@DrawerTitle" Placement="end">
+    <ChildContent>
+        <ApplicationCandidateDetail Item="_selected" Tab="_drawerTab" TabChanged="OnDrawerTabChanged" />
+    </ChildContent>
+    <Footer>
+        <ApplicationCandidateActions Item="_selected"
+                                     CanWrite="CanWrite"
+                                     Busy="_busyId.HasValue"
+                                     OnPrimary="HandlePrimary"
+                                     OnReject="HandleReject"
+                                     OnDownloadCv="HandleDownloadCv" />
+    </Footer>
+</EntDrawer>
+
+@if (_rejectTarget is not null)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["WgApp.RejectConfirmTitle"]"
+                         TitleId="wg-app-reject"
+                         OnClose="CloseDialogs">
+        <p>@Culture["WgApp.RejectConfirmBody"]</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" @onclick="CloseDialogs">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact btn-compact--danger" disabled="@_busyId.HasValue" @onclick="ConfirmRejectAsync">
+                @Culture["WgApp.Action.Reject"]
+            </button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@if (_hireTarget is not null)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["WgApp.HireConfirmTitle"]"
+                         TitleId="wg-app-hire"
+                         OnClose="CloseDialogs">
+        <p>@string.Format(Culture["WgApp.HireConfirmBody"], DisplayName(_hireTarget), _hireTarget.VacancyTitle)</p>
+        <label class="checkbox-row">
+            <input type="checkbox" @bind="_hireRejectOthers" />
+            <span>@Culture["Employer.MatchRejectOthers"]</span>
+        </label>
+        <label class="checkbox-row">
+            <input type="checkbox" @bind="_hireCloseVacancy" />
+            <span>@Culture["Employer.MatchCloseVacancy"]</span>
+        </label>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" @onclick="CloseDialogs">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact btn-compact--primary" disabled="@_busyId.HasValue" @onclick="ConfirmHireAsync">
+                @Culture["WgApp.Action.Hire"]
+            </button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@if (_bulkRejectOpen)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@string.Format(Culture["WgApp.BulkRejectConfirm"], _selectedIds.Count)"
+                         TitleId="wg-app-bulk-reject"
+                         OnClose="CloseDialogs">
+        <p>@Culture["WgApp.RejectConfirmBody"]</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" @onclick="CloseDialogs">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact btn-compact--danger" disabled="@_busyId.HasValue" @onclick="ConfirmBulkRejectAsync">
+                @Culture["WgApp.Action.BulkReject"]
+            </button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@code {
+    private List<EmployerApplicationItem> _items = [];
+    private List<VacancyListItem> _vacancies = [];
+    private List<CompanySummary> _companies = [];
+    private readonly HashSet<Guid> _selectedIds = [];
+    private bool _loading = true;
+    private string? _error;
+    private string? _message;
+    private bool _messageIsError;
+    private Guid? _busyId;
+    private string _view = ApplicationPipelineRules.ViewPipeline;
+    private string _vacancyId = "";
+    private string _branchId = "";
+    private string _vacancySearch = "";
+    private bool _overdueOnly;
+    private string _listStatusFilter = "all";
+    private string _sortKey = "created";
+    private bool _sortAsc;
+    private int _page = 1;
+    private string _drawerTab = "profiel";
+    private bool _drawerOpen;
+    private EmployerApplicationItem? _selected;
+    private EmployerApplicationItem? _rejectTarget;
+    private EmployerApplicationItem? _hireTarget;
+    private bool _hireRejectOthers = true;
+    private bool _hireCloseVacancy = true;
+    private bool _bulkRejectOpen;
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private bool CanWrite => ApplicationPipelineRules.CanAct(Role);
+    private DateTime UtcNow => DateTime.UtcNow;
+
+    private IEnumerable<(Guid Id, string Title, string CompanyName)> VacancyOptions =>
+        _vacancies
+            .Where(v => string.IsNullOrWhiteSpace(_vacancySearch)
+                        || v.Title.Contains(_vacancySearch, StringComparison.CurrentCultureIgnoreCase)
+                        || (v.CompanyName?.Contains(_vacancySearch, StringComparison.CurrentCultureIgnoreCase) ?? false))
+            .Select(v => (v.Id, v.Title, v.CompanyName ?? ""))
+            .OrderBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase);
+
+    private IEnumerable<(Guid Id, string Name)> BranchOptions =>
+        _companies
+            .Where(c => c.ParentCompanyId is not null || Role == EmployerRole.Vestigingsmanager)
+            .Select(c => (c.Id, c.Name))
+            .OrderBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase);
+
+    private IEnumerable<EmployerApplicationItem> ScopedItems
+    {
+        get
+        {
+            IEnumerable<EmployerApplicationItem> q = _items;
+            if (Guid.TryParse(_branchId, out var branch))
+            {
+                var name = _companies.FirstOrDefault(c => c.Id == branch)?.Name;
+                if (!string.IsNullOrEmpty(name))
+                {
+                    q = q.Where(a => string.Equals(a.CompanyName, name, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+
+            if (_overdueOnly)
+            {
+                q = q.Where(a => ApplicationPipelineRules.IsOverdue(a, UtcNow));
+            }
+
+            return q;
+        }
+    }
+
+    private IEnumerable<EmployerApplicationItem> PipelineItems
+    {
+        get
+        {
+            if (!Guid.TryParse(_vacancyId, out var vid))
+            {
+                return [];
+            }
+
+            return ScopedItems.Where(a => a.VacancyId == vid);
+        }
+    }
+
+    private IReadOnlyList<EmployerApplicationItem> ListFiltered
+    {
+        get
+        {
+            IEnumerable<EmployerApplicationItem> q = ScopedItems;
+            if (Guid.TryParse(_vacancyId, out var vid))
+            {
+                q = q.Where(a => a.VacancyId == vid);
+            }
+
+            q = _listStatusFilter switch
+            {
+                "pending" => q.Where(a => ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Pending),
+                "accepted" => q.Where(a => ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Accepted),
+                "invited" => q.Where(a => ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.EmployerContacting),
+                "hired" => q.Where(a => ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Hired),
+                "rejected" => q.Where(ApplicationPipelineRules.IsRejectedBucket),
+                _ => q
+            };
+
+            q = _sortKey switch
+            {
+                "candidate" => _sortAsc
+                    ? q.OrderBy(DisplayName, StringComparer.CurrentCultureIgnoreCase)
+                    : q.OrderByDescending(DisplayName, StringComparer.CurrentCultureIgnoreCase),
+                "vacancy" => _sortAsc
+                    ? q.OrderBy(a => a.VacancyTitle, StringComparer.CurrentCultureIgnoreCase)
+                    : q.OrderByDescending(a => a.VacancyTitle, StringComparer.CurrentCultureIgnoreCase),
+                "match" => _sortAsc
+                    ? q.OrderBy(a => a.MatchPercent ?? -1)
+                    : q.OrderByDescending(a => a.MatchPercent ?? -1),
+                "status" => _sortAsc ? q.OrderBy(a => a.Status) : q.OrderByDescending(a => a.Status),
+                "responded" => _sortAsc
+                    ? q.OrderBy(a => a.RespondedAt ?? DateTime.MinValue)
+                    : q.OrderByDescending(a => a.RespondedAt ?? DateTime.MinValue),
+                _ => _sortAsc ? q.OrderBy(a => a.CreatedAt) : q.OrderByDescending(a => a.CreatedAt)
+            };
+
+            return q.ToList();
+        }
+    }
+
+    private IReadOnlyList<EmployerApplicationItem> Paged =>
+        ListFiltered.Skip((_page - 1) * ApplicationPipelineRules.ListPageSize)
+            .Take(ApplicationPipelineRules.ListPageSize)
+            .ToList();
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(ListFiltered.Count / (double)ApplicationPipelineRules.ListPageSize));
+    private bool AllPageSelected => Paged.Count > 0 && Paged.All(a => _selectedIds.Contains(a.Id));
+    private string DrawerTitle => _selected is null ? Culture["WgNav.Applications"] : DisplayName(_selected);
+
+    private RenderFragment MobileCards(IReadOnlyList<EmployerApplicationItem> items) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "wg-app-mobile-groups");
+        builder.OpenElement(2, "div");
+        builder.AddAttribute(3, "class", "wg-app-chip-row");
+        builder.AddAttribute(4, "role", "tablist");
+        foreach (var (key, labelKey) in new (string Key, string Label)[]
+                 {
+                     ("all", Culture["Employer.FilterAll"]),
+                     ("pending", Culture["WgApp.Col.New"]),
+                     ("accepted", Culture["WgApp.Col.Accepted"]),
+                     ("invited", Culture["WgApp.Col.Invited"]),
+                     ("hired", Culture["WgApp.Col.Hired"]),
+                     ("rejected", Culture["WgApp.Col.Rejected"])
+                 })
+        {
+            var localKey = key;
+            builder.OpenElement(10, "button");
+            builder.AddAttribute(11, "type", "button");
+            builder.AddAttribute(12, "class", "wg-app-chip" + (_listStatusFilter == localKey ? " is-active" : ""));
+            builder.AddAttribute(13, "onclick", EventCallback.Factory.Create(this, () => _listStatusFilter = localKey));
+            builder.AddContent(14, labelKey);
+            builder.CloseElement();
+        }
+        builder.CloseElement();
+
+        var mobile = (_listStatusFilter switch
+        {
+            "pending" => items.Where(a => ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Pending),
+            "accepted" => items.Where(a => ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Accepted),
+            "invited" => items.Where(a => ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.EmployerContacting),
+            "hired" => items.Where(a => ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Hired),
+            "rejected" => items.Where(ApplicationPipelineRules.IsRejectedBucket),
+            _ => items
+        }).OrderByDescending(a => a.CreatedAt).ToList();
+
+        if (mobile.Count == 0)
+        {
+            builder.OpenElement(20, "p");
+            builder.AddAttribute(21, "class", "state-message");
+            builder.AddContent(22, Culture["WgApp.EmptyFilter"]);
+            builder.CloseElement();
+        }
+        else
+        {
+            foreach (var a in mobile)
+            {
+                builder.OpenElement(30, "a");
+                builder.AddAttribute(31, "class", "wg-app-card");
+                builder.AddAttribute(32, "href", $"/werkgever/sollicitaties/{a.Id:D}");
+                builder.OpenElement(33, "div");
+                builder.AddAttribute(34, "class", "wg-app-card__top");
+                builder.OpenElement(35, "span");
+                builder.AddAttribute(36, "class", "wg-app-card__name");
+                builder.AddContent(37, DisplayName(a));
+                builder.CloseElement();
+                if (a.MatchPercent is int pct)
+                {
+                    builder.OpenElement(38, "span");
+                    builder.AddAttribute(39, "class", "wg-app-card__match");
+                    builder.AddContent(40, $"{pct}%");
+                    builder.CloseElement();
+                }
+                builder.CloseElement();
+                builder.OpenElement(41, "span");
+                builder.AddAttribute(42, "class", $"status-pill wg-app-status--{ApplicationPipelineRules.StatusCss(a.Status)}");
+                builder.AddContent(43, Culture[ApplicationPipelineRules.StatusLabelKey(a.Status)]);
+                builder.CloseElement();
+                builder.OpenElement(44, "span");
+                builder.AddAttribute(45, "class", "wg-app__meta muted");
+                builder.AddContent(46, $"{a.VacancyTitle} · {a.CompanyName}");
+                builder.CloseElement();
+                builder.CloseElement();
+            }
+        }
+
+        builder.CloseElement();
+    };
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await ScopeBootstrap.EnsureLoadedAsync();
+            _companies = (await Api.GetMyCompaniesAsync())?.ToList() ?? [];
+            _vacancies = (await Api.GetManagedVacanciesAsync(Scope.CompanyIds.Count > 0 ? Scope.CompanyIds : null)).ToList();
+            await ReloadAsync();
+            ApplyQuery();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ApplyQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = QueryHelpers.ParseQuery(uri.Query);
+        if (q.TryGetValue("view", out var view) && !string.IsNullOrWhiteSpace(view))
+        {
+            _view = string.Equals(view, ApplicationPipelineRules.ViewList, StringComparison.OrdinalIgnoreCase)
+                ? ApplicationPipelineRules.ViewList
+                : ApplicationPipelineRules.ViewPipeline;
+        }
+
+        if (q.TryGetValue("filter", out var filter)
+            && string.Equals(filter, ApplicationPipelineRules.FilterOverdue, StringComparison.OrdinalIgnoreCase))
+        {
+            _overdueOnly = true;
+        }
+
+        if (q.TryGetValue("vacature", out var vac) && Guid.TryParse(vac, out var vacId))
+        {
+            _vacancyId = vacId.ToString("D");
+        }
+        else if (string.IsNullOrEmpty(_vacancyId))
+        {
+            var def = ApplicationPipelineRules.DefaultVacancyId(ScopedItems, null);
+            if (def is Guid d)
+            {
+                _vacancyId = d.ToString("D");
+            }
+        }
+
+        if (q.TryGetValue("kandidaat", out var kid) && Guid.TryParse(kid, out var appId))
+        {
+            OpenCandidate(appId);
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        Guid[]? branches = Guid.TryParse(_branchId, out var b) ? [b] : null;
+        int? overdue = _overdueOnly ? ApplicationPipelineRules.OverdueHours : null;
+        _items = (await Api.GetApplicationsAsync(overdueHours: overdue, branchIds: branches)).ToList();
+
+        if (string.IsNullOrEmpty(_vacancyId))
+        {
+            var def = ApplicationPipelineRules.DefaultVacancyId(_items, null);
+            if (def is Guid d)
+            {
+                _vacancyId = d.ToString("D");
+            }
+        }
+
+        if (_selected is not null)
+        {
+            _selected = _items.FirstOrDefault(a => a.Id == _selected.Id);
+            if (_selected is null)
+            {
+                _drawerOpen = false;
+            }
+        }
+    }
+
+    private Task OnVacancySearchChanged(string value)
+    {
+        _vacancySearch = value ?? "";
+        return Task.CompletedTask;
+    }
+
+    private Task OnVacancyChanged()
+    {
+        _page = 1;
+        SyncQuery();
+        return Task.CompletedTask;
+    }
+
+    private async Task OnBranchChanged()
+    {
+        _page = 1;
+        _loading = true;
+        try { await ReloadAsync(); }
+        finally { _loading = false; }
+        SyncQuery();
+    }
+
+    private async Task OnOverdueToggle(ChangeEventArgs e)
+    {
+        _overdueOnly = e.Value is bool b && b
+            || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        _page = 1;
+        _loading = true;
+        try { await ReloadAsync(); }
+        finally { _loading = false; }
+        SyncQuery();
+    }
+
+    private Task SetViewAsync(string view)
+    {
+        _view = view;
+        SyncQuery();
+        return Task.CompletedTask;
+    }
+
+    private void ShowAllInList()
+    {
+        _view = ApplicationPipelineRules.ViewList;
+        SyncQuery();
+    }
+
+    private void SyncQuery()
+    {
+        var parts = new List<string>();
+        if (_view == ApplicationPipelineRules.ViewList)
+        {
+            parts.Add("view=lijst");
+        }
+
+        if (_overdueOnly)
+        {
+            parts.Add("filter=overdue");
+        }
+
+        if (Guid.TryParse(_vacancyId, out var vid))
+        {
+            parts.Add($"vacature={vid:D}");
+        }
+
+        if (_selected is not null && _drawerOpen)
+        {
+            parts.Add($"kandidaat={_selected.Id:D}");
+        }
+
+        var url = "/werkgever/sollicitaties" + (parts.Count == 0 ? "" : "?" + string.Join('&', parts));
+        Navigation.NavigateTo(url, replace: true);
+    }
+
+    private void OpenCandidate(Guid id)
+    {
+        var item = _items.FirstOrDefault(a => a.Id == id);
+        if (item is null)
+        {
+            return;
+        }
+
+        _selected = item;
+        _drawerTab = "profiel";
+        _drawerOpen = true;
+        SyncQuery();
+    }
+
+    private Task OnDrawerOpenChanged(bool open)
+    {
+        _drawerOpen = open;
+        if (!open)
+        {
+            _selected = null;
+        }
+
+        SyncQuery();
+        return Task.CompletedTask;
+    }
+
+    private Task OnDrawerTabChanged(string tab)
+    {
+        _drawerTab = tab;
+        return Task.CompletedTask;
+    }
+
+    private void OpenRejectedList()
+    {
+        _listStatusFilter = "rejected";
+        _view = ApplicationPipelineRules.ViewList;
+        SyncQuery();
+    }
+
+    private void ToggleSort(string key)
+    {
+        if (_sortKey == key)
+        {
+            _sortAsc = !_sortAsc;
+        }
+        else
+        {
+            _sortKey = key;
+            _sortAsc = true;
+        }
+    }
+
+    private Task OnPageChanged(int page)
+    {
+        _page = Math.Clamp(page, 1, TotalPages);
+        return Task.CompletedTask;
+    }
+
+    private void OnToggleAll(bool value)
+    {
+        if (value)
+        {
+            foreach (var a in Paged) { _selectedIds.Add(a.Id); }
+        }
+        else
+        {
+            foreach (var a in Paged) { _selectedIds.Remove(a.Id); }
+        }
+    }
+
+    private void ToggleRow(Guid id, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b
+                 || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on) { _selectedIds.Add(id); }
+        else { _selectedIds.Remove(id); }
+    }
+
+    private void ClearSelection() => _selectedIds.Clear();
+
+    private string DisplayName(EmployerApplicationItem item)
+        => ApplicationPipelineRules.DisplayName(item, Culture["WgApp.Anonymous"]);
+
+    private string FormatTravel(EmployerApplicationItem item)
+        => string.Format(Culture["WgApp.TravelFmt"], item.EstimatedTravelMinutes, UiLabels.Transport(Culture, item.PreferredTransport));
+
+    private string FormatAvailability(EmployerApplicationItem item)
+    {
+        var availability = LobsyCvModelFactory.ParseAvailabilityPayload(item.SnapshotAvailabilityJson);
+        if (availability.FlexibleTimes)
+        {
+            return Culture["WgApp.Direct"];
+        }
+
+        return string.IsNullOrWhiteSpace(item.AvailabilitySummary) ? "—" : item.AvailabilitySummary;
+    }
+
+    private IEnumerable<string> CardFacts(EmployerApplicationItem item)
+    {
+        yield return FormatTravel(item);
+        yield return FormatAvailability(item);
+        var prefs = ApplicationPreferenceRedaction.ToHumanReadable(item.PreferencesSummary);
+        if (!string.IsNullOrWhiteSpace(prefs))
+        {
+            yield return prefs;
+        }
+        else if (item.CandidateAgeYears is int age)
+        {
+            yield return age.ToString(CultureInfo.InvariantCulture);
+        }
+    }
+
+    private void OpenReject(EmployerApplicationItem a) => _rejectTarget = a;
+
+    private Task HandlePrimary()
+        => _selected is null ? Task.CompletedTask : PrimaryAsync(_selected);
+
+    private Task HandleReject()
+    {
+        if (_selected is not null)
+        {
+            OpenReject(_selected);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task HandleDownloadCv()
+        => _selected is null ? Task.CompletedTask : DownloadCvAsync(_selected.Id);
+
+    private void CloseDialogs()
+    {
+        _rejectTarget = null;
+        _hireTarget = null;
+        _bulkRejectOpen = false;
+    }
+
+    private async Task PrimaryAsync(EmployerApplicationItem a)
+    {
+        switch (ApplicationPipelineRules.StatusOf(a))
+        {
+            case ApplicationStatus.Pending:
+                await ReactAsync(a.Id, "Accepted");
+                break;
+            case ApplicationStatus.Accepted:
+                await MarkContactAsync(a.Id);
+                break;
+            case ApplicationStatus.EmployerContacting:
+                _hireTarget = a;
+                _hireRejectOthers = true;
+                _hireCloseVacancy = true;
+                break;
+        }
+    }
+
+    private async Task ConfirmRejectAsync()
+    {
+        if (_rejectTarget is null) return;
+        var id = _rejectTarget.Id;
+        CloseDialogs();
+        await ReactAsync(id, "Rejected");
+    }
+
+    private async Task ConfirmHireAsync()
+    {
+        if (_hireTarget is null) return;
+        var vacancyId = _hireTarget.VacancyId;
+        var applicationId = _hireTarget.Id;
+        var rejectOthers = _hireRejectOthers;
+        var closeVacancy = _hireCloseVacancy;
+        CloseDialogs();
+        await FulfillAsync(vacancyId, applicationId, rejectOthers, closeVacancy);
+    }
+
+    private async Task ConfirmBulkRejectAsync()
+    {
+        var ids = _selectedIds.ToList();
+        CloseDialogs();
+        foreach (var id in ids)
+        {
+            var item = _items.FirstOrDefault(a => a.Id == id);
+            if (item is null || !ApplicationPipelineRules.ShowReject(item)) continue;
+            try { await Api.ReactToApplicationAsync(id, "Rejected"); }
+            catch { /* sequential best-effort */ }
+        }
+
+        _selectedIds.Clear();
+        await ReloadAsync();
+        _message = Culture["WgApp.RejectedToast"];
+    }
+
+    private async Task ReactAsync(Guid id, string status)
+    {
+        if (!CanWrite) return;
+        _busyId = id;
+        _message = null;
+        _messageIsError = false;
+        try
+        {
+            await Api.ReactToApplicationAsync(id, status);
+            await ReloadAsync();
+            _message = status == "Accepted" ? Culture["WgApp.AcceptedToast"] : Culture["WgApp.RejectedToast"];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _messageIsError = true;
+        }
+        finally { _busyId = null; }
+    }
+
+    private async Task MarkContactAsync(Guid id)
+    {
+        _busyId = id;
+        _message = null;
+        _messageIsError = false;
+        try
+        {
+            await Api.MarkEmployerContactAsync(id);
+            await ReloadAsync();
+            _message = Culture["WgApp.InvitedToast"];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _messageIsError = true;
+        }
+        finally { _busyId = null; }
+    }
+
+    private async Task FulfillAsync(Guid vacancyId, Guid applicationId, bool rejectOthers, bool closeVacancy)
+    {
+        _busyId = applicationId;
+        _message = null;
+        _messageIsError = false;
+        try
+        {
+            await Api.FulfillVacancyAsync(vacancyId, applicationId, rejectOthers, closeVacancy);
+            await ReloadAsync();
+            _message = Culture["WgApp.HiredToast"];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _messageIsError = true;
+        }
+        finally { _busyId = null; }
+    }
+
+    private async Task DownloadCvAsync(Guid applicationId)
+    {
+        _busyId = applicationId;
+        _message = null;
+        _messageIsError = false;
+        try { await Api.DownloadApplicationLobsyCvPdfAsync(applicationId, Js); }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _messageIsError = true;
+        }
+        finally { _busyId = null; }
+    }
+}

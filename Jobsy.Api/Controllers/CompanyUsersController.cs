@@ -99,7 +99,8 @@ public class CompanyUsersController : ControllerBase
                 u.CompanyId,
                 CompanyName = u.Company != null ? u.Company.Name : null,
                 MembershipCompanyIds = u.CompanyMemberships.Select(m => m.CompanyId).ToList(),
-                u.IsActive
+                u.IsActive,
+                u.LastLoginAtUtc
             })
             .ToListAsync(cancellationToken);
 
@@ -111,7 +112,8 @@ public class CompanyUsersController : ControllerBase
             u.CompanyId,
             u.CompanyName,
             u.MembershipCompanyIds,
-            u.IsActive)));
+            u.IsActive,
+            LastLoginAtUtc: u.LastLoginAtUtc)));
     }
 
     [HttpPost("invite")]
@@ -463,6 +465,18 @@ public class CompanyUsersController : ControllerBase
             return BadRequest(new { message = "Je mag deze gebruiker niet bewerken." });
         }
 
+        var demotingOrDeactivatingBm = user.Role == UserRole.EnterpriseManager
+            && (request.Role != UserRole.EnterpriseManager || !request.IsActive);
+        if (demotingOrDeactivatingBm
+            && await IsLastActiveEnterpriseManagerAsync(user, cancellationToken))
+        {
+            return Conflict(new
+            {
+                message = "De laatste actieve bedrijfsmanager kan niet worden gedeactiveerd of gedegradeerd.",
+                code = "last_enterprise_manager"
+            });
+        }
+
         if (caller.Id == user.Id)
         {
             if (request.Role != user.Role)
@@ -651,6 +665,41 @@ public class CompanyUsersController : ControllerBase
         return new string(chars);
     }
 
+    private async Task<bool> IsLastActiveEnterpriseManagerAsync(User user, CancellationToken cancellationToken)
+    {
+        if (user.Role != UserRole.EnterpriseManager || !user.IsActive)
+        {
+            return false;
+        }
+
+        Guid? rootId = user.CompanyId;
+        if (rootId is Guid companyId)
+        {
+            var parent = await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == companyId)
+                .Select(c => c.ParentCompanyId)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (parent is Guid p)
+            {
+                rootId = p;
+            }
+        }
+
+        if (rootId is null)
+        {
+            return false;
+        }
+
+        var root = rootId.Value;
+        return !await _db.Users.AsNoTracking().AnyAsync(
+            u => u.Id != user.Id
+                 && u.IsActive
+                 && u.Role == UserRole.EnterpriseManager
+                 && (u.CompanyId == root
+                     || u.CompanyMemberships.Any(m => m.CompanyId == root)),
+            cancellationToken);
+    }
+
     private static CompanyUserDto Map(User u, string? temporaryPassword = null, string? loginUrl = null) => new(
         u.Id,
         u.Email,
@@ -661,5 +710,6 @@ public class CompanyUsersController : ControllerBase
         u.CompanyMemberships.Select(m => m.CompanyId).ToList(),
         u.IsActive,
         temporaryPassword,
-        loginUrl);
+        loginUrl,
+        u.LastLoginAtUtc);
 }

@@ -1,0 +1,511 @@
+@page "/werkgever/organisatie/salaristabellen"
+@page "/werkgever/organisatie/salaristabellen/{TableId:guid}"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
+@using Jobsy.Web.Components.Employer
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+@implements IDisposable
+
+<PageTitle>@Culture["WgNav.SalaryTables"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgNav.SalaryTables"]" Lead="@Culture["WgSalary.Lead"]">
+    <Actions>
+        @if (_view == ViewMode.List && CanMutate)
+        {
+            <button class="btn-compact btn-compact--primary" type="button" @onclick="StartCreate">@Culture["WgSalary.New"]</button>
+        }
+        else if (_view != ViewMode.List)
+        {
+            <button class="btn-compact" type="button" @onclick="BackToList">@Culture["Common.Back"]</button>
+        }
+    </Actions>
+    <ChildContent>
+<div class="salary-tables-body">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_view == ViewMode.List)
+    {
+        @if (_tables.Count == 0)
+        {
+            <p class="state-message">Nog geen salaristabellen.</p>
+        }
+        else
+        {
+            <div class="table-list">
+                @foreach (var t in _tables)
+                {
+                    <button type="button" class="table-row table-row--link" @onclick="() => OpenDetailAsync(t.Id)">
+                        <div>
+                            <strong>@t.Name</strong>
+                            <span class="muted">
+                                @t.CompanyName · @(t.IsActive ? "actief" : "inactief")
+                                @if (t.IsSystemWml)
+                                {
+                                    <text> · systeem</text>
+                                }
+                                else if (t.AllowedBranchNames.Count > 0)
+                                {
+                                    <text> · @t.AllowedBranchNames.Count vestiging@(t.AllowedBranchNames.Count == 1 ? "" : "en")</text>
+                                }
+                                · @t.VacancyCount vacature@(t.VacancyCount == 1 ? "" : "s")
+                            </span>
+                        </div>
+                        <span class="auth-link">Bekijken</span>
+                    </button>
+                }
+            </div>
+        }
+    }
+    else if (_view == ViewMode.Detail && _selected is not null)
+    {
+        <section class="panel-section">
+            <div class="salary-detail-head">
+                <div>
+                    <h2>@_selected.Name</h2>
+                    <p class="muted">
+                        @_selected.CompanyName · @(_selected.IsActive ? "actief" : "inactief")
+                        @if (_selected.IsSystemWml)
+                        {
+                            <text> · tarieven volgen het platform (niet handmatig te wijzigen)</text>
+                        }
+                    </p>
+                </div>
+                <aside class="salary-rates-aside" aria-label="Uurlonen">
+                    @foreach (var rate in _selected.Rates.OrderBy(r => r.AgeYears).Take(3))
+                    {
+                        <div><strong>€ @rate.HourlyRate.ToString("0.00")</strong> <span class="muted">@rate.Label</span></div>
+                    }
+                </aside>
+            </div>
+
+            <p>
+                Toegepast op
+                <strong>@_selected.VacancyCount</strong>
+                vacature@(_selected.VacancyCount == 1 ? "" : "s")
+                @if (_selected.VacancyCount > 0)
+                {
+                    <text>
+                        · <a class="auth-link" href="@($"/werkgever/vacatures?salaryTableId={_selected.Id}")">Bekijk vacatures</a>
+                    </text>
+                }
+            </p>
+
+            <h3>Uurlonen per leeftijd</h3>
+            <div class="salary-table-preview">
+                <table>
+                    <thead>
+                        <tr><th>Leeftijd</th><th>Uurloon</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var rate in _selected.Rates.OrderBy(r => r.AgeYears))
+                        {
+                            <tr>
+                                <td>@rate.Label</td>
+                                <td>€ @rate.HourlyRate.ToString("0.00")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+                @if (!_selected.IsSystemWml && CanMutate)
+                {
+                <p class="muted" style="margin-top:1rem">
+                    Vestigingen:
+                    @( _selected.AllowedBranchNames.Count == 0
+                        ? "geen (nog niet toegewezen)"
+                        : string.Join(", ", _selected.AllowedBranchNames) )
+                </p>
+                <button class="login-submit" type="button" @onclick="StartEdit">Wijzigen</button>
+                }
+
+            @if (_vacancies.Count > 0)
+            {
+                <h3 style="margin-top:1.5rem">Vacatures met deze tabel</h3>
+                <div class="admin-sublinks" role="tablist">
+                    <button type="button" class="admin-sublink @(_vacancyTab == "open" ? "admin-sublink--active" : null)" @onclick='() => _vacancyTab = "open"'>Open</button>
+                    <button type="button" class="admin-sublink @(_vacancyTab == "closed" ? "admin-sublink--active" : null)" @onclick='() => _vacancyTab = "closed"'>Gesloten</button>
+                </div>
+                <div class="table-list">
+                    @foreach (var v in VacancyTabItems)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@v.Title</strong>
+                                <span class="muted">@v.CompanyName · @v.Status</span>
+                            </div>
+                            <div class="table-row__actions">
+                                <a class="auth-link" href="@($"/vacancies/{v.Id}")">Bekijk</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (_selected.ChangeLogs is { Count: > 0 })
+            {
+                <h3 style="margin-top:1.5rem">Wijzigingslog</h3>
+                <div class="table-list">
+                    @foreach (var log in _selected.ChangeLogs)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@log.Action</strong>
+                                <span class="muted">
+                                    @log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                                    @if (!string.IsNullOrWhiteSpace(log.ActorEmail))
+                                    {
+                                        <text> · @log.ActorEmail</text>
+                                    }
+                                    · @log.Message
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    }
+    else if ((_view is ViewMode.Create or ViewMode.Edit) && CanMutate)
+    {
+        <section class="panel-section">
+            <h2>@(_view == ViewMode.Create ? "Nieuwe salaristabel" : "Salaristabel wijzigen")</h2>
+            <form class="login-form" style="max-width:560px" @onsubmit="SaveAsync" @onsubmit:preventDefault>
+                <label>
+                    Bedrijf (organisatie)
+                    <select @bind="_companyId" @bind:after="OnOrgChanged" disabled="@(_view == ViewMode.Edit)">
+                        @foreach (var c in _organizations)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Naam
+                    <input @bind="_name" required maxlength="256" />
+                </label>
+                <label class="checkbox-row">
+                    <input type="checkbox" @bind="_isActive" />
+                    Actief
+                </label>
+
+                <h3>Uurlonen per leeftijd (€)</h3>
+                @for (var i = 0; i < _rateAges.Length; i++)
+                {
+                    var idx = i;
+                    var age = _rateAges[idx];
+                    <label>
+                        @(age >= 21 ? "21+" : age.ToString())
+                        <input type="number" step="0.01" min="0.01" @bind="_rateValues[idx]" required />
+                    </label>
+                }
+
+                <h3>Vestigingen die deze tabel mogen gebruiken</h3>
+                @if (_branchesForOrg.Count == 0)
+                {
+                    <p class="muted">Geen vestigingen gevonden. Voeg eerst vestigingen toe.</p>
+                }
+                else
+                {
+                    <div class="branch-checkboxes">
+                        @foreach (var branch in _branchesForOrg)
+                        {
+                            <label class="checkbox-row">
+                                <input type="checkbox"
+                                       checked="@_selectedBranchIds.Contains(branch.Id)"
+                                       @onchange="e => ToggleBranch(branch.Id, e)" />
+                                @branch.Name
+                            </label>
+                        }
+                    </div>
+                }
+
+                <button class="login-submit" type="submit" disabled="@_busy">
+                    @(_busy ? "Opslaan…" : "Opslaan")
+                </button>
+            </form>
+        </section>
+    }
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+</div>
+    </ChildContent>
+</WgPageShell>
+
+@if (_deactivateConfirm && CanMutate)
+{
+    <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="salary-deactivate-title">
+        <button type="button" class="confirm-modal__backdrop" @onclick="() => _deactivateConfirm = false" aria-label="Sluiten"></button>
+        <div class="confirm-modal__dialog">
+            <h2 id="salary-deactivate-title">Salaristabel deactiveren?</h2>
+            <p>
+                Deze tabel hangt aan @_selected?.VacancyCount vacature@(_selected?.VacancyCount == 1 ? "" : "s").
+                Deactiveren kan loonweergave en nieuwe plaatsingen blokkeren.
+            </p>
+            <div class="confirm-modal__actions">
+                <button type="button" class="engagement-btn" @onclick="() => _deactivateConfirm = false">Annuleren</button>
+                <button type="button" class="engagement-btn engagement-btn--danger" disabled="@_busy" @onclick="SaveAsync">
+                    Toch deactiveren
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private enum ViewMode { List, Detail, Create, Edit }
+
+    [Parameter] public Guid? TableId { get; set; }
+
+    private bool CanMutate => Scope.Role != EmployerRole.Vestigingsmanager;
+
+    private static readonly int[] _rateAges = [15, 16, 17, 18, 19, 20, 21];
+
+    private List<SalaryTableItem> _tables = [];
+    private List<CompanySummary> _allCompanies = [];
+    private List<CompanySummary> _organizations = [];
+    private List<CompanySummary> _branchesForOrg = [];
+    private HashSet<Guid> _selectedBranchIds = [];
+    private decimal[] _rateValues = [4.22m, 4.85m, 5.55m, 7.03m, 8.44m, 11.25m, 14.06m];
+
+    private SalaryTableItem? _selected;
+    private List<SalaryTableVacancyItem> _vacancies = [];
+    private ViewMode _view = ViewMode.List;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private Guid _companyId;
+    private Guid? _editingId;
+    private string _name = "";
+    private bool _isActive = true;
+    private string _vacancyTab = "open";
+    private bool _deactivateConfirm;
+
+    private IEnumerable<SalaryTableVacancyItem> VacancyTabItems =>
+        _vacancyTab == "closed"
+            ? _vacancies.Where(v => !string.Equals(v.Status, "Active", StringComparison.OrdinalIgnoreCase))
+            : _vacancies.Where(v => string.Equals(v.Status, "Active", StringComparison.OrdinalIgnoreCase));
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _allCompanies = (await Api.GetMyCompaniesAsync()).ToList();
+            _organizations = _allCompanies
+                .Where(c => c.ParentCompanyId is null)
+                .OrderBy(c => c.Name)
+                .ToList();
+            if (_organizations.Count == 0)
+            {
+                // Fall back when hierarchy isn't populated yet.
+                _organizations = _allCompanies.OrderBy(c => c.Name).ToList();
+            }
+
+            if (_organizations.Count > 0)
+            {
+                _companyId = _organizations[0].Id;
+            }
+
+            await ReloadListAsync();
+
+            if (TableId is Guid tid)
+            {
+                await OpenDetailAsync(tid);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReloadListAsync()
+    {
+        _tables = (await Api.GetSalaryTablesAsync()).ToList();
+    }
+
+    private async Task OpenDetailAsync(Guid id)
+    {
+        _message = null;
+        _loading = true;
+        try
+        {
+            _selected = await Api.GetSalaryTableAsync(id);
+            _vacancies = (await Api.GetSalaryTableVacanciesAsync(id)).ToList();
+            _view = ViewMode.Detail;
+            if (TableId != id)
+            {
+                Navigation.NavigateTo($"/werkgever/organisatie/salaristabellen/{id}", replace: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void BackToList()
+    {
+        _view = ViewMode.List;
+        _selected = null;
+        _vacancies = [];
+        _editingId = null;
+        Navigation.NavigateTo("/werkgever/organisatie/salaristabellen", replace: true);
+    }
+
+    private void StartCreate()
+    {
+        _message = null;
+        _editingId = null;
+        _name = "";
+        _isActive = true;
+        _rateValues = [4.22m, 4.85m, 5.55m, 7.03m, 8.44m, 11.25m, 14.06m];
+        _selectedBranchIds = [];
+        if (_organizations.Count > 0)
+        {
+            _companyId = _organizations[0].Id;
+        }
+        RefreshBranchesForOrg();
+        _view = ViewMode.Create;
+    }
+
+    private void StartEdit()
+    {
+        if (_selected is null || _selected.IsSystemWml)
+        {
+            return;
+        }
+
+        _message = null;
+        _editingId = _selected.Id;
+        _companyId = _selected.CompanyId;
+        _name = _selected.Name;
+        _isActive = _selected.IsActive;
+        _selectedBranchIds = _selected.AllowedBranchIds.ToHashSet();
+        for (var i = 0; i < _rateAges.Length; i++)
+        {
+            var age = _rateAges[i];
+            var match = _selected.Rates
+                .Where(r => age >= 21 ? r.AgeYears >= 21 : r.AgeYears == age)
+                .OrderBy(r => r.AgeYears)
+                .FirstOrDefault();
+            if (match is not null)
+            {
+                _rateValues[i] = match.HourlyRate;
+            }
+        }
+        RefreshBranchesForOrg();
+        _view = ViewMode.Edit;
+    }
+
+    private void OnOrgChanged() => RefreshBranchesForOrg();
+
+    private void RefreshBranchesForOrg()
+    {
+        _branchesForOrg = _allCompanies
+            .Where(c => c.ParentCompanyId == _companyId || c.Id == _companyId)
+            .OrderBy(c => c.Name)
+            .ToList();
+    }
+
+    private void ToggleBranch(Guid branchId, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b
+                 || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(e.Value?.ToString(), "on", StringComparison.OrdinalIgnoreCase);
+        if (on)
+        {
+            _selectedBranchIds.Add(branchId);
+        }
+        else
+        {
+            _selectedBranchIds.Remove(branchId);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_view == ViewMode.Edit
+            && _selected is { VacancyCount: > 0, IsActive: true }
+            && !_isActive
+            && !_deactivateConfirm)
+        {
+            _deactivateConfirm = true;
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            var rates = _rateAges
+                .Select((age, i) => new UpsertSalaryRateForm(
+                    null,
+                    age,
+                    _rateValues[i],
+                    age >= 21 ? "21+" : age.ToString()))
+                .ToList();
+
+            var saved = await Api.UpsertSalaryTableAsync(new UpsertSalaryTableForm(
+                _editingId,
+                _companyId,
+                _name,
+                _isActive,
+                rates,
+                _selectedBranchIds.ToList()));
+
+            await ReloadListAsync();
+            _message = _editingId is null ? "Salaristabel aangemaakt." : "Salaristabel bijgewerkt.";
+            if (saved is not null)
+            {
+                await OpenDetailAsync(saved.Id);
+            }
+            else
+            {
+                BackToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+            _deactivateConfirm = false;
+        }
+    }
+}

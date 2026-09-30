@@ -1,0 +1,74 @@
+@inject CultureState Culture
+
+<div class="test-result-premium" data-testid="insights-premium">
+    <div>
+        <span class="test-result-premium__tag">@Culture["Insights.Premium.Tag"]</span>
+        <h3>@Culture["Insights.Premium.Title"]</h3>
+        <p class="test-result-premium__lead">@string.Format(Culture["Insights.Premium.Lead"], ScopeLabel)</p>
+        <ul class="test-result-premium__checks">
+            <li><span class="ok" aria-hidden="true">✓</span>@Culture["Insights.Premium.Check.Density"]</li>
+            <li><span class="ok" aria-hidden="true">✓</span>@Culture["Insights.Premium.Check.Match"]</li>
+            <li><span class="ok" aria-hidden="true">✓</span>@Culture["Insights.Premium.Check.Fields"]</li>
+            <li><span class="ok" aria-hidden="true">✓</span>@Culture["Insights.Premium.Check.Trends"]</li>
+        </ul>
+    </div>
+    <div class="test-result-premium__cta">
+        @if (IsRegionalManager)
+        {
+            <p class="test-result-premium__fine">@Culture["Insights.Premium.AskBm"]</p>
+        }
+        else if (ShowRequestButton)
+        {
+            <button type="button" class="btn-compact provider-btn" disabled="@RequestBusy || RequestSent" @onclick="OnRequest">
+                @(RequestSent
+                    ? string.Format(Culture["Insights.Premium.RequestedOn"], RequestedOnLabel)
+                    : Culture["Insights.Premium.AskBmButton"])
+            </button>
+            @if (CanUnlockOwn)
+            {
+                <button type="button" class="btn-gold" disabled="@Busy" @onclick="OnUnlock">
+                    <span>@string.Format(Culture["Insights.Premium.UnlockBranch"], ScopeLabel)</span>
+                    <span class="btn-gold__price">@PriceLabel</span>
+                </button>
+            }
+        }
+        else if (CanRenew)
+        {
+            <button type="button" class="btn-gold" disabled="@Busy" @onclick="OnUnlock">
+                <span>@Culture["Insights.Premium.Renew"]</span>
+                <span class="btn-gold__meta">
+                    <span class="btn-gold__price">@PriceLabel</span>
+                    <small>@MetaLabel</small>
+                </span>
+            </button>
+        }
+        else
+        {
+            <button type="button" class="btn-gold" disabled="@Busy || !CanUnlock" @onclick="OnUnlock">
+                <span>@Culture["Insights.Premium.Cta"]</span>
+                <span class="btn-gold__meta">
+                    <span class="btn-gold__price">@PriceLabel</span>
+                    <small>@MetaLabel</small>
+                </span>
+            </button>
+            <p class="test-result-premium__fine">@Culture["Insights.Premium.Fine"]</p>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ScopeLabel { get; set; } = "";
+    [Parameter] public string PriceLabel { get; set; } = "";
+    [Parameter] public string MetaLabel { get; set; } = "";
+    [Parameter] public bool IsRegionalManager { get; set; }
+    [Parameter] public bool ShowRequestButton { get; set; }
+    [Parameter] public bool CanUnlockOwn { get; set; }
+    [Parameter] public bool CanUnlock { get; set; } = true;
+    [Parameter] public bool CanRenew { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool RequestBusy { get; set; }
+    [Parameter] public bool RequestSent { get; set; }
+    [Parameter] public string RequestedOnLabel { get; set; } = "";
+    [Parameter] public EventCallback OnUnlock { get; set; }
+    [Parameter] public EventCallback OnRequest { get; set; }
+}

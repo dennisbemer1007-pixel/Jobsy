@@ -150,6 +150,9 @@ public sealed class PlatformFeatureItem
     public bool ClearFreePublishUntil { get; set; }
     public bool SupportAccessNotifyAdmins { get; set; }
     public bool SupportAccessNotifySubject { get; set; }
+    public bool CandidateInsightsEnabled { get; set; } = true;
+    public int CandidateInsightsUnlockDays { get; set; } = 90;
+    public bool CandidateInsightsUnlockPerBranch { get; set; }
 }
 
 /// <summary>Partial PUT body for platform features (null = keep).</summary>

@@ -22,7 +22,6 @@ public class BlazorPageRoleAttributesTests
     {
         // Balance / logging read; purchase + allocate buttons gated in-page via CanPurchase/CanAllocate.
         "Tokens.razor",
-        "TokenControl.razor",
     };
 
     [Fact]
@@ -92,14 +91,13 @@ public class BlazorPageRoleAttributesTests
             || fileName.Contains("Edit", StringComparison.OrdinalIgnoreCase)
             || fileName.Contains("Checkout", StringComparison.OrdinalIgnoreCase)
             || fileName.Contains("OnboardingCheckout", StringComparison.OrdinalIgnoreCase)
-            || fileName.Equals("Tokens.razor", StringComparison.OrdinalIgnoreCase)
-            || fileName.Equals("TokenControl.razor", StringComparison.OrdinalIgnoreCase))
+            || fileName.Equals("Tokens.razor", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
 
         // Route heuristics
-        return text.Contains("@page \"/branch/vacancies/new\"", StringComparison.Ordinal)
+        return text.Contains("@page \"/werkgever/vacatures/nieuw\"", StringComparison.Ordinal)
                || text.Contains("@page \"/employer/onboarding-checkout\"", StringComparison.Ordinal)
                || text.Contains("vacancies/create", StringComparison.OrdinalIgnoreCase);
     }

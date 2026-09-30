@@ -14,6 +14,7 @@ public static partial class AuthRedirects
     public const string BanenkaartPath = "/";
     public const string AdminLandingPath = "/admin";
     public const string DefaultLandingPath = "/home";
+    public const string EmployerLandingPath = "/werkgever";
 
     /// <summary>Post-login landing for a candidate based on first-login how-to flag.</summary>
     public static string CandidatePostLoginUrl(bool showCandidateHowTo)
@@ -44,6 +45,22 @@ public static partial class AuthRedirects
         }
 
         return safe;
+    }
+
+    /// <summary>Default landing for employer roles (BM/RM/VM/Intermediary).</summary>
+    public static string EmployerPostLoginUrl() => EmployerLandingPath;
+
+    /// <summary>
+    /// Maps a generic landing to <see cref="EmployerLandingPath"/> for employers; keeps explicit deep links.
+    /// </summary>
+    public static string ResolveEmployerReturnUrl(string returnUrl)
+    {
+        if (!IsGenericPostLoginLanding(returnUrl))
+        {
+            return returnUrl;
+        }
+
+        return EmployerPostLoginUrl();
     }
 
     /// <summary>

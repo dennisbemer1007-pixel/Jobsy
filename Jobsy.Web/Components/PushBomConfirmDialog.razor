@@ -30,7 +30,7 @@
             </p>
             @if (_preview.CandidateCount == 0)
             {
-                <p class="state-message error">Geen bereik — PushBom kan niet worden geactiveerd. Geen tokens worden afgeschreven.</p>
+                <p class="state-message error">Geen bereik — pushbericht kan niet worden geactiveerd. Geen tokens worden afgeschreven.</p>
             }
             else if (!_preview.HasPricing)
             {
@@ -39,12 +39,12 @@
             else
             {
                 <p class="pushbom-preview__cost">
-                    Dit kost <strong>@_preview.CostTokens.ToString("0.##")</strong> token(s)
+                    @string.Format(Culture["WgVac.Cost.Push"], _preview.CostTokens.ToString("0.##"))
                 </p>
-                <p class="muted">Huidig saldo: @_preview.TokenBalance.ToString("0.##") token(s)</p>
+                <p class="muted">Huidig saldo: @_preview.TokenBalance.ToString("0.##") tokens</p>
                 @if (!_preview.CanAfford)
                 {
-                    <p class="state-message error">Je tokens zijn op — koop tokens om PushBom te activeren.</p>
+                    <p class="state-message error">Je tokens zijn op — koop tokens om een pushbericht te versturen.</p>
                     <button type="button" class="btn-compact btn-compact--primary" style="margin-top:0.5rem" @onclick="OpenTopUpFromPreview">
                         Tokens kopen
                     </button>
@@ -179,7 +179,7 @@
 
         _topUpInfo = new InsufficientTokensInfo
         {
-            Message = "Je tokens zijn op. Koop tokens om PushBom te activeren.",
+            Message = "Je tokens zijn op. Koop tokens om een pushbericht te versturen.",
             CompanyId = Vacancy.CompanyId,
             VacancyId = Vacancy.Id,
             Action = "PushBom",

@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "84f2e1fe35e0df44b1095e688d65103f986a2feb291e33f75204739203a0d0f8",
-    "v": "20260929-admin"
+    "sha256": "35e619882e064f65b360816536cd4ecd9ff1db312855798316a6e5ef871805bd",
+    "v": "20260930-merge"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -19,21 +19,25 @@
     "sha256": "5f6d5967ef32e2f8a98346aae3d729470b048d1c9310c79f750af1ec49138aa2",
     "v": "20260927-banenkaart-v3b"
   },
+  "css/features/enterprise-ui.css": {
+    "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
+    "v": "20260929-ent-ui"
+  },
   "css/features/gratis-dna.css": {
     "sha256": "3ffb5af664b48f4edb1a38bfae8917a65f2e123844638d9d1d599e04532260a7",
     "v": "20260927-gratis-dna"
   },
   "css/features/kandidaatinzichten.css": {
-    "sha256": "1693816b0b407c89dc96ccf53cf8ab37f4c38794b75c9b411bc986be5e17bd11",
-    "v": "20260928-insights"
+    "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
+    "v": "20260929-insights-7"
   },
   "css/features/match-desktop.css": {
     "sha256": "765bd9ae5c01bb124d2bf13fd9ed4149a242bbdd51a7132eb501ca38a2726ea3",
     "v": "20260928-match-desktop-ci"
   },
   "css/features/mijn-dna.css": {
-    "sha256": "039f2fead93a7aff58df1e7882497e248dad9193ebc37e7ed06de76ba0d97954",
-    "v": "20260927-dna-c"
+    "sha256": "dc4132dd0ecb72d496a433bdb015caf8baf98cd6c1fe576358cd574c1d63fcdf",
+    "v": "20260930-dna-overflow"
   },
   "css/features/nav-feedback.css": {
     "sha256": "bcca67f50643f55b0d169df00fb48e97b6aa468af59443acb8de732fa409fd55",
@@ -50,6 +54,10 @@
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
     "v": "20260929-testresultaten-b2"
+  },
+  "css/features/werkgever.css": {
+    "sha256": "a6d1e1997735bcbe82a8aa21fabbd3bead7df94afa86bb66bdb7985123f19074",
+    "v": "20260929-wg-insights"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",

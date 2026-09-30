@@ -1,0 +1,41 @@
+@inject CultureState Culture
+
+<section class="test-result-card-locked wg-locked-card" role="group" aria-label="@AriaLabel" data-testid="@TestId">
+    <div class="test-result-card-locked__head">
+        <div>
+            <h3>@Title</h3>
+            @if (!string.IsNullOrWhiteSpace(Subtitle))
+            {
+                <small>@Subtitle</small>
+            }
+        </div>
+        <span class="test-result-lock-chip">
+            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+            @Culture["Insights.Locked.Chip"]
+        </span>
+    </div>
+    <div class="test-result-card-locked__body" aria-hidden="true">
+        <div class="insights-bars">
+            @for (var i = 0; i < BarCount; i++)
+            {
+                var width = 35 + (i * 12) % 45;
+                <div class="insights-bar">
+                    <div class="insights-bar__meta"><span>————</span><span>—</span></div>
+                    <div class="insights-bar__track"><span class="insights-bar__fill wg-locked-card__fill" data-w="@width"></span></div>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="test-result-card-locked__fade" aria-hidden="true"></div>
+</section>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? TestId { get; set; }
+    [Parameter] public int BarCount { get; set; } = 4;
+
+    private string AriaLabel => string.IsNullOrWhiteSpace(Title)
+        ? Culture["Insights.Locked.Chip"]
+        : $"{Title}, {Culture["Insights.Locked.Chip"].ToLowerInvariant()}";
+}

@@ -7,10 +7,10 @@ namespace Jobsy.Tests;
 public class TokenLogPresentationTests
 {
     [Theory]
-    [InlineData(-1, "-1,00 token")]
-    [InlineData(0.15, "+0,15 token")]
-    [InlineData(0, "0,00 token")]
-    public void Amount_includes_sign_unit_and_dutch_decimals(decimal amount, string expected)
+    [InlineData(-1, "-1")]
+    [InlineData(0.15, "+0,15")]
+    [InlineData(0, "0")]
+    public void Amount_includes_sign_and_dutch_decimals(decimal amount, string expected)
         => Assert.Equal(expected, TokenLogPresentation.FormatAmount(amount));
 
     [Fact]
@@ -58,7 +58,7 @@ public class TokenLogPresentationTests
             Note = "Mollie tr_hidden"
         };
         var text = TokenLogPresentation.Describe(log);
-        Assert.Equal("Vacature publiceren · Betaling", text);
+        Assert.Equal("Publiceren · Betaling", text);
         Assert.DoesNotContain("Spend", text);
         Assert.DoesNotContain("tr_", text);
     }

@@ -1,0 +1,46 @@
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+
+@if (Kind == WgActionKind.Primary)
+{
+    <button type="button"
+            class="btn-compact btn-compact--primary wg-action @(Locked ? "is-locked" : null)"
+            disabled="@(Locked || Disabled)"
+            title="@(Locked ? Culture["WgShell.ReadOnlyAction"] : Title)"
+            @onclick="OnClick">
+        @ChildContent
+        @if (Locked)
+        {
+            <span class="wg-action__lock" aria-hidden="true">@((MarkupString)NavIcons.Lock)</span>
+        }
+    </button>
+}
+else
+{
+    <button type="button"
+            class="btn-compact wg-action @(Locked ? "is-locked" : null)"
+            disabled="@(Locked || Disabled)"
+            title="@(Locked ? Culture["WgShell.ReadOnlyAction"] : Title)"
+            @onclick="OnClick">
+        @ChildContent
+        @if (Locked)
+        {
+            <span class="wg-action__lock" aria-hidden="true">@((MarkupString)NavIcons.Lock)</span>
+        }
+    </button>
+}
+
+@code {
+    public enum WgActionKind { Primary, Secondary }
+
+    [Parameter] public WgActionKind Kind { get; set; } = WgActionKind.Primary;
+    [Parameter] public bool RequiresWrite { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool Locked => RequiresWrite && Scope.Role == EmployerRole.Regiomanager;
+}

@@ -1,0 +1,606 @@
+@page "/werkgever"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using System.Globalization
+@using System.Text
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Dashboard
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.Components.Authorization
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+@inject WerkgeverCountsState Counts
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@implements IDisposable
+
+<PageTitle>@Culture["WgNav.Dashboard"] · Lobsy</PageTitle>
+
+@if (IsIntermediary)
+{
+    <WgPageShell Title="@Culture["WgNav.Dashboard"]">
+        <EmployerHomePanel Title="@Culture["WgNav.Dashboard"]"
+                           Lead="@Culture["WgDash.Lead.Intermediary"]"
+                           VacanciesHref="/werkgever/vacatures"
+                           TokensHref="/werkgever/tokens"
+                           ApplicationsHref="/werkgever/sollicitaties" />
+    </WgPageShell>
+}
+else
+{
+    <WgPageShell Title="@PageTitleText" Lead="@LeadText" ReadOnlyHint="@(Role == EmployerRole.Regiomanager)">
+        <Actions>
+            <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Common.Period"]">
+                @foreach (var p in PeriodKeys)
+                {
+                    <button type="button"
+                            class="period-tab @(_period == p ? "period-tab--active" : null)"
+                            role="tab"
+                            aria-selected="@(_period == p)"
+                            @onclick="() => SetPeriodAsync(p)">@PeriodLabel(p)</button>
+                }
+            </div>
+            <button type="button" class="btn-compact" @onclick="ExportCsvAsync">
+                <span aria-hidden="true">@((MarkupString)NavIcons.Download)</span>
+                @Culture["WgDash.Export"]
+            </button>
+            <WgAction Kind="WgAction.WgActionKind.Primary" RequiresWrite="true" OnClick="GoNewVacancy">
+                @Culture["WgDash.PostVacancy"]
+            </WgAction>
+        </Actions>
+
+        <ChildContent>
+        <div class="wg-dash">
+            <PanelErrorBoundary Name="wg-kpis">
+                @if (_loadingDash)
+                {
+                    <PageContentSkeleton Variant="cards" CardCount="5" LoadingLabel="@Culture["EntUi.Loading"]" />
+                }
+                else if (_dash is not null)
+                {
+                    <div class="wg-dash__kpis wg-dash__kpis--desktop">
+                        @foreach (var card in DesktopKpis(_dash))
+                        {
+                            @card
+                        }
+                    </div>
+                    <div class="wg-dash__kpis wg-dash__kpis--mobile">
+                        @foreach (var card in MobileKpis(_dash))
+                        {
+                            @card
+                        }
+                    </div>
+                }
+            </PanelErrorBoundary>
+
+            <div class="wg-dash__grid">
+                <div class="wg-dash__col wg-dash__col--main">
+                    <PanelErrorBoundary Name="wg-todo">
+                        <section class="wg-card" aria-labelledby="wg-todo-heading">
+                            <div class="wg-card__head">
+                                <h2 id="wg-todo-heading">
+                                    @if (Role == EmployerRole.Regiomanager)
+                                    {
+                                        <span aria-hidden="true">@((MarkupString)NavIcons.Eye)</span>
+                                        @Culture["WgDash.SignalsTitle"]
+                                        <span class="wg-pill wg-pill--info">@Culture["WgDash.ForInfo"]</span>
+                                    }
+                                    else
+                                    {
+                                        @Culture["WgDash.TodoTitle"]
+                                        @if (_todos.Count > 0)
+                                        {
+                                            <span class="wg-badge">@_todos.Sum(t => t.Count)</span>
+                                        }
+                                    }
+                                </h2>
+                                <a class="wg-card__link" href="/werkgever/te-doen">@Culture["WgDash.ViewAll"]</a>
+                            </div>
+                            @if (_loadingTodo)
+                            {
+                                <PageContentSkeleton Variant="cards" CardCount="3" LoadingLabel="@Culture["EntUi.Loading"]" />
+                            }
+                            else if (_todos.Count == 0)
+                            {
+                                <p class="wg-empty">@Culture["WgDash.TodoEmpty"]</p>
+                            }
+                            else
+                            {
+                                <ul class="wg-todo-list">
+                                    @foreach (var item in _todos.Take(WerkgeverDashboardRules.DashboardTodoPreview))
+                                    {
+                                        <li>
+                                            <WgTodoItem Item="item" ShowAction="@(Role != EmployerRole.Regiomanager || !string.IsNullOrEmpty(item.ActionKind))" MobileTap="true" />
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </section>
+                    </PanelErrorBoundary>
+
+                    <PanelErrorBoundary Name="wg-funnel">
+                        @if (_dash is not null)
+                        {
+                            <section class="wg-card wg-card--funnel wg-hide-mobile" aria-labelledby="wg-funnel-heading">
+                                <div class="wg-card__head">
+                                    <h2 id="wg-funnel-heading">@Culture["WgDash.Funnel"]</h2>
+                                </div>
+                                @{
+                                    var funnel = _dash.Funnel;
+                                    var max = Math.Max(1, funnel.Applications);
+                                }
+                                <ul class="wg-funnel">
+                                    <li>
+                                        <span class="wg-funnel__label">@Culture["WgDash.Funnel.Applications"]</span>
+                                        <progress class="wg-funnel__bar" max="@max" value="@funnel.Applications"
+                                                  aria-label="@FunnelAriaApps(funnel.Applications)"></progress>
+                                        <span class="wg-funnel__n">@funnel.Applications</span>
+                                    </li>
+                                    <li>
+                                        <span class="wg-funnel__label">@Culture["WgDash.Funnel.Accepted"]</span>
+                                        <progress class="wg-funnel__bar" max="@max" value="@funnel.Accepted"
+                                                  aria-label="@FunnelAriaAccepted(funnel.Accepted)"></progress>
+                                        <span class="wg-funnel__n">@funnel.Accepted</span>
+                                    </li>
+                                    <li>
+                                        <span class="wg-funnel__label">@Culture["WgDash.Funnel.Invited"]</span>
+                                        <progress class="wg-funnel__bar" max="@max" value="@funnel.EmployerContacting"
+                                                  aria-label="@FunnelAriaInvited(funnel.EmployerContacting)"></progress>
+                                        <span class="wg-funnel__n">@funnel.EmployerContacting</span>
+                                    </li>
+                                    <li>
+                                        <span class="wg-funnel__label">@Culture["WgDash.Funnel.Hired"]</span>
+                                        <progress class="wg-funnel__bar" max="@max" value="@funnel.Hired"
+                                                  aria-label="@FunnelAriaHired(funnel.Hired)"></progress>
+                                        <span class="wg-funnel__n">@funnel.Hired</span>
+                                    </li>
+                                </ul>
+                            </section>
+                        }
+                    </PanelErrorBoundary>
+                </div>
+
+                <div class="wg-dash__col wg-dash__col--side">
+                    @if (Role != EmployerRole.Vestigingsmanager)
+                    {
+                        <PanelErrorBoundary Name="wg-branches">
+                            <section class="wg-card wg-hide-mobile" aria-labelledby="wg-branches-heading">
+                                <div class="wg-card__head">
+                                    <h2 id="wg-branches-heading">
+                                        @(Role == EmployerRole.Regiomanager
+                                            ? Culture["WgDash.BranchesRegion"]
+                                            : Culture["WgDash.Branches"])
+                                    </h2>
+                                </div>
+                                @if (_loadingDash || _dash is null)
+                                {
+                                    <PageContentSkeleton Variant="cards" CardCount="3" LoadingLabel="@Culture["EntUi.Loading"]" />
+                                }
+                                else
+                                {
+                                    <EntDataTable Loading="false" Empty="_dash.Branches.Count == 0" ShowCheckbox="false">
+                                        <Header>
+                                            <th scope="col">@Culture["WgDash.Col.Branch"]</th>
+                                            <th scope="col">@Culture["WgDash.Col.Live"]</th>
+                                            <th scope="col">@Culture["WgDash.Col.New"]</th>
+                                            <th scope="col">@Culture["WgDash.Col.FirstResponse"]</th>
+                                            <th scope="col">@Culture["WgDash.Col.Status"]</th>
+                                        </Header>
+                                        <Rows>
+                                            @foreach (var row in _dash.Branches)
+                                            {
+                                                <tr class="wg-row-click" @onclick="() => GoBranch(row.CompanyId)" @onclick:preventDefault="true">
+                                                    <td>
+                                                        <span class="wg-branch-name">@row.Name</span>
+                                                        @if (Role == EmployerRole.Bedrijfsmanager && !string.IsNullOrWhiteSpace(row.RegionName))
+                                                        {
+                                                            <span class="wg-branch-region">@row.RegionName</span>
+                                                        }
+                                                    </td>
+                                                    <td class="tabular">@row.LiveVacancies</td>
+                                                    <td class="tabular">@row.NewApplications</td>
+                                                    <td class="tabular">@FormatResponse(row.AvgFirstResponseHours)</td>
+                                                    <td>
+                                                        <span class="wg-dotst wg-dotst--@row.Status.ToLowerInvariant()">
+                                                            <span class="wg-dotst__dot" aria-hidden="true"></span>
+                                                            @StatusLabel(row.Status)
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </Rows>
+                                    </EntDataTable>
+                                    <a class="wg-card__footer-link" href="/werkgever/organisatie/vestigingen">
+                                        @string.Format(Culture["WgDash.AllBranches"], _dash.VestigingCount)
+                                    </a>
+                                }
+                            </section>
+
+                            <section class="wg-card wg-show-mobile" aria-labelledby="wg-behind-heading">
+                                <div class="wg-card__head">
+                                    <h2 id="wg-behind-heading">@Culture["WgDash.BranchesBehind"]</h2>
+                                    @if (_dash is not null)
+                                    {
+                                        <a class="wg-card__link" href="/werkgever/organisatie/vestigingen">
+                                            @string.Format(Culture["WgDash.AllBranchesShort"], _dash.VestigingCount)
+                                        </a>
+                                    }
+                                </div>
+                                @if (_dash is not null)
+                                {
+                                    var behind = _dash.Branches.Where(b => b.Status == "Achterstand").ToList();
+                                    if (behind.Count == 0)
+                                    {
+                                        <p class="wg-empty">@Culture["WgDash.NoBehind"]</p>
+                                    }
+                                    else
+                                    {
+                                        <ul class="wg-behind-list">
+                                            @foreach (var row in behind)
+                                            {
+                                                <li>
+                                                    <a class="wg-behind-row" href="@BranchHref(row.CompanyId)">
+                                                        <span class="wg-dotst__dot wg-dotst__dot--achterstand" aria-hidden="true"></span>
+                                                        <span>
+                                                            <strong>@row.Name</strong>
+                                                            <span class="wg-behind-meta">
+                                                                @row.NewApplications @Culture["WgDash.Col.New"].ToLowerInvariant()
+                                                                · @Culture["WgDash.Col.FirstResponse"] @FormatResponse(row.AvgFirstResponseHours)
+                                                            </span>
+                                                        </span>
+                                                        <span aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+                                                    </a>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                }
+                            </section>
+                        </PanelErrorBoundary>
+                    }
+                </div>
+            </div>
+
+            <a class="wg-card wg-card--link" href="/werkgever/wervingsmateriaal">
+                <strong>@Culture["WgDash.Raamflyer"]</strong>
+                <span>@Culture["WgDash.RaamflyerHint"]</span>
+            </a>
+        </div>
+        </ChildContent>
+    </WgPageShell>
+}
+
+@code {
+    private static readonly string[] PeriodKeys = ["7d", "30d", "90d"];
+
+    private string _period = "30d";
+    private bool _loadingDash = true;
+    private bool _loadingTodo = true;
+    private WerkgeverDashboardDto? _dash;
+    private List<WerkgeverTodoItemDto> _todos = [];
+    private bool _started;
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private bool IsIntermediary => Role == EmployerRole.Intermediair;
+
+    private string PageTitleText => Role == EmployerRole.Regiomanager
+        ? Culture["WgDash.Title.Rm"]
+        : Culture["WgNav.Dashboard"];
+
+    private string LeadText
+    {
+        get
+        {
+            if (_dash is null)
+            {
+                return Scope.Label;
+            }
+
+            var period = PeriodLabel(_period);
+            return Role switch
+            {
+                EmployerRole.Regiomanager => string.Format(
+                    Culture["WgDash.Lead.Rm"], Scope.Label, _dash.VestigingCount, period),
+                EmployerRole.Vestigingsmanager => string.Format(
+                    Culture["WgDash.Lead.Vm"], Scope.Label, period),
+                _ => string.Format(
+                    Culture["WgDash.Lead.Bm"],
+                    Scope.Label,
+                    _dash.VestigingCount,
+                    Math.Max(1, _dash.RegionCount),
+                    period)
+            };
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Scope.Changed += OnScopeChanged;
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("period", out var p))
+        {
+            _period = WerkgeverDashboardRules.NormalizePeriod(p.ToString());
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started)
+        {
+            return;
+        }
+
+        _started = true;
+        await ScopeBootstrap.EnsureLoadedAsync();
+        await LoadAsync();
+    }
+
+    private async void OnScopeChanged() => await InvokeAsync(async () => await LoadAsync());
+
+    private async Task SetPeriodAsync(string period)
+    {
+        _period = WerkgeverDashboardRules.NormalizePeriod(period);
+        var uri = Navigation.GetUriWithQueryParameter("period", _period);
+        Navigation.NavigateTo(uri, replace: true);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (IsIntermediary)
+        {
+            return;
+        }
+
+        if (Scope.CompanyIds.Count == 0)
+        {
+            await ScopeBootstrap.EnsureLoadedAsync();
+        }
+
+        if (Scope.CompanyIds.Count == 0)
+        {
+            _loadingDash = false;
+            _loadingTodo = false;
+            _dash = null;
+            _todos = [];
+            StateHasChanged();
+            return;
+        }
+
+        _loadingDash = true;
+        _loadingTodo = true;
+        StateHasChanged();
+
+        var dashTask = Api.GetWerkgeverDashboardAsync(_period, Scope.CompanyIds);
+        var todoTask = Api.GetWerkgeverTodoAsync(Scope.CompanyIds, take: 20);
+        await Task.WhenAll(dashTask, todoTask);
+        _dash = dashTask.Result;
+        _todos = todoTask.Result.ToList();
+        _loadingDash = false;
+        _loadingTodo = false;
+        await Counts.ForceRefreshAsync();
+        StateHasChanged();
+    }
+
+    private RenderFragment[] DesktopKpis(WerkgeverDashboardDto d)
+    {
+        var k = d.Kpis;
+        var list = new List<RenderFragment>
+        {
+            Kpi(Culture["WgDash.Kpi.ActiveVacancies"], k.ActiveVacancies.ToString(), FormatDelta(k.ActiveVacanciesDelta), Tone(k.ActiveVacanciesDelta), k.ActiveVacanciesSpark.Points),
+            Kpi(Culture["WgDash.Kpi.NewApplications"], k.NewApplications.ToString(), FormatPct(k.NewApplicationsDeltaPercent), Tone(k.NewApplicationsDeltaPercent), k.NewApplicationsSpark.Points),
+            Kpi(Culture["WgDash.Kpi.FirstResponse"], FormatResponse(k.AvgFirstResponseHours), FormatResponseDelta(k.AvgFirstResponseHoursDelta), Tone(k.AvgFirstResponseHoursDelta, invert: true), k.AvgFirstResponseSpark.Points, tip: k.AvgFirstResponseHours is null ? Culture["WgDash.Kpi.FirstResponseTip"] : null),
+            Kpi(Culture["WgDash.Kpi.Hired"], k.Hired.ToString(), FormatDelta(k.HiredDelta), Tone(k.HiredDelta), k.HiredSpark.Points),
+        };
+
+        if (d.ShowTokenUsage)
+        {
+            list.Add(Kpi(
+                Culture["WgDash.Kpi.TokenUsage"],
+                string.Format(Culture["WgDash.Kpi.TokenUsageValue"], k.TokensUsed ?? 0, k.TokensAllocated ?? 0),
+                null,
+                "neutral",
+                k.TokensSpark.Points,
+                href: "/werkgever/tokens"));
+        }
+        else
+        {
+            list.Add(Kpi(
+                Culture["WgDash.Kpi.TokenBalance"],
+                ((int)(k.TokenBalance ?? 0)).ToString(),
+                k.TokenRunwayWeeks is double w
+                    ? string.Format(Culture["WgDash.Kpi.Runway"], Math.Round(w))
+                    : null,
+                "neutral",
+                k.TokensSpark.Points,
+                href: "/werkgever/tokens"));
+        }
+
+        return list.ToArray();
+    }
+
+    private RenderFragment[] MobileKpis(WerkgeverDashboardDto d)
+    {
+        var k = d.Kpis;
+        var tokenLabel = d.ShowTokenUsage ? Culture["WgDash.Kpi.TokenUsageShort"] : Culture["WgDash.Kpi.TokenBalance"];
+        var tokenValue = d.ShowTokenUsage
+            ? string.Format(Culture["WgDash.Kpi.TokenUsageValue"], k.TokensUsed ?? 0, k.TokensAllocated ?? 0)
+            : ((int)(k.TokenBalance ?? 0)).ToString();
+        var tokenDelta = d.ShowTokenUsage
+            ? null
+            : (k.TokenRunwayWeeks is double w ? string.Format(Culture["WgDash.Kpi.RunwayShort"], Math.Round(w)) : null);
+
+        return
+        [
+            Kpi(Culture["WgDash.Kpi.ActiveVacancies"], k.ActiveVacancies.ToString(), FormatDelta(k.ActiveVacanciesDelta), Tone(k.ActiveVacanciesDelta), null),
+            Kpi(Culture["WgDash.Kpi.NewApplications"], k.NewApplications.ToString(), FormatPct(k.NewApplicationsDeltaPercent), Tone(k.NewApplicationsDeltaPercent), null),
+            Kpi(Culture["WgDash.Kpi.FirstResponseShort"], FormatResponse(k.AvgFirstResponseHours), FormatResponseDelta(k.AvgFirstResponseHoursDelta), Tone(k.AvgFirstResponseHoursDelta, invert: true), null),
+            Kpi(tokenLabel, tokenValue, tokenDelta, "neutral", null, href: "/werkgever/tokens"),
+        ];
+    }
+
+    private RenderFragment Kpi(
+        string label,
+        string value,
+        string? delta,
+        string tone,
+        IReadOnlyList<decimal>? spark,
+        string? href = null,
+        string? tip = null) => builder =>
+    {
+        builder.OpenElement(0, href is null ? "div" : "a");
+        if (href is not null)
+        {
+            builder.AddAttribute(1, "href", href);
+            builder.AddAttribute(2, "class", "wg-kpi-link");
+        }
+
+        builder.OpenComponent<EntKpiCard>(3);
+        builder.AddAttribute(4, "Label", label);
+        builder.AddAttribute(5, "Value", value);
+        builder.AddAttribute(6, "Delta", delta);
+        builder.AddAttribute(7, "DeltaTone", tone);
+        if (tip is not null)
+        {
+            builder.AddAttribute(8, "ChildContent", (RenderFragment)(b =>
+            {
+                b.OpenElement(0, "p");
+                b.AddAttribute(1, "class", "wg-kpi-tip");
+                b.AddAttribute(2, "title", tip);
+                b.AddContent(3, tip);
+                b.CloseElement();
+            }));
+        }
+        else if (spark is { Count: > 1 })
+        {
+            builder.AddAttribute(8, "ChildContent", (RenderFragment)(b =>
+            {
+                b.OpenComponent<MetricSparkline>(0);
+                b.AddAttribute(1, "Points", spark);
+                b.CloseComponent();
+            }));
+        }
+
+        builder.CloseComponent();
+        builder.CloseElement();
+    };
+
+    private string FormatResponse(double? hours)
+    {
+        if (hours is null)
+        {
+            return "—";
+        }
+
+        var days = hours.Value / 24d;
+        return string.Format(CultureInfo.GetCultureInfo("nl-NL"), Culture["WgDash.Days"], days);
+    }
+
+    private string? FormatResponseDelta(double? hoursDelta)
+    {
+        if (hoursDelta is null)
+        {
+            return null;
+        }
+
+        var days = Math.Abs(hoursDelta.Value / 24d);
+        return hoursDelta.Value >= 0
+            ? string.Format(Culture["WgDash.Faster"], days.ToString("0.#", CultureInfo.GetCultureInfo("nl-NL")))
+            : string.Format(Culture["WgDash.Slower"], days.ToString("0.#", CultureInfo.GetCultureInfo("nl-NL")));
+    }
+
+    private static string? FormatDelta(int delta)
+        => delta == 0 ? null : (delta > 0 ? $"+{delta}" : delta.ToString());
+
+    private static string? FormatPct(double? pct)
+        => pct is null ? null : (pct >= 0 ? $"+{pct:0.#}%" : $"{pct:0.#}%");
+
+    private static string Tone(double? delta, bool invert = false)
+    {
+        if (delta is null or 0)
+        {
+            return "neutral";
+        }
+
+        var up = delta > 0;
+        if (invert)
+        {
+            up = !up;
+        }
+
+        return up ? "up" : "down";
+    }
+
+    private string StatusLabel(string status)
+        => Culture[WerkgeverStatusLabels.DashboardBranchKey(status)];
+
+    private string PeriodLabel(string key) => key switch
+    {
+        "7d" => Culture["WgDash.Period.7d"],
+        "90d" => Culture["WgDash.Period.90d"],
+        _ => Culture["WgDash.Period.30d"]
+    };
+
+    private void GoNewVacancy() => Navigation.NavigateTo("/werkgever/vacatures/nieuw");
+    private void GoBranch(Guid id) => Navigation.NavigateTo(BranchHref(id));
+    private static string BranchHref(Guid id) => $"/werkgever/vacatures?scope=vestiging:{id:D}";
+    private string FunnelAriaApps(int count) => $"{Culture["WgDash.Funnel.Applications"]}: {count}";
+    private string FunnelAriaAccepted(int count) => $"{Culture["WgDash.Funnel.Accepted"]}: {count}";
+    private string FunnelAriaInvited(int count) => $"{Culture["WgDash.Funnel.Invited"]}: {count}";
+    private string FunnelAriaHired(int count) => $"{Culture["WgDash.Funnel.Hired"]}: {count}";
+
+    private async Task ExportCsvAsync()
+    {
+        if (_dash is null)
+        {
+            return;
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine("metric,value");
+        sb.AppendLine($"active_vacancies,{_dash.Kpis.ActiveVacancies}");
+        sb.AppendLine($"new_applications,{_dash.Kpis.NewApplications}");
+        sb.AppendLine($"avg_first_response_hours,{_dash.Kpis.AvgFirstResponseHours?.ToString(CultureInfo.InvariantCulture) ?? ""}");
+        sb.AppendLine($"hired,{_dash.Kpis.Hired}");
+        sb.AppendLine($"token_balance,{_dash.Kpis.TokenBalance?.ToString(CultureInfo.InvariantCulture) ?? ""}");
+        sb.AppendLine();
+        sb.AppendLine("branch,region,live,new,first_response_hours,status");
+        foreach (var b in _dash.Branches)
+        {
+            sb.AppendLine($"{Escape(b.Name)},{Escape(b.RegionName)},{b.LiveVacancies},{b.NewApplications},{b.AvgFirstResponseHours?.ToString(CultureInfo.InvariantCulture) ?? ""},{b.Status}");
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+        var b64 = Convert.ToBase64String(bytes);
+        var script =
+            "(function(){var a=document.createElement('a');a.href='data:text/csv;base64,"
+            + b64
+            + "';a.download='lobsy-dashboard.csv';a.click();})()";
+        await Js.InvokeVoidAsync("eval", script);
+    }
+
+    private static string Escape(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        if (value.Contains(',') || value.Contains('"'))
+        {
+            return string.Concat("\"", value.Replace("\"", "\"\"", StringComparison.Ordinal), "\"");
+        }
+
+        return value;
+    }
+
+    public void Dispose() => Scope.Changed -= OnScopeChanged;
+}

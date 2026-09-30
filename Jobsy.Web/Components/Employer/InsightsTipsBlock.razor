@@ -29,7 +29,7 @@
     </ul>
     @if (Data?.Vacancies.FirstOrDefault() is { } top)
     {
-        <p><a href="@($"/branch/vacancies/new?edit={top.VacancyId}")">@Culture["Insights.ImproveVacancy"]</a></p>
+        <p><a href="@($"/werkgever/vacatures/nieuw?edit={top.VacancyId}")">@Culture["Insights.ImproveVacancy"]</a></p>
     }
 }
 

@@ -242,6 +242,7 @@ public class TokenLogItem
     public Guid? VacancyId { get; set; }
     public Guid? BranchCompanyId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string? ActorName { get; set; }
 }
 
 public class CheckoutResult
@@ -466,6 +467,7 @@ public class CompanyUserItem
     public bool IsActive { get; set; } = true;
     public string? TemporaryPassword { get; set; }
     public string? LoginUrl { get; set; }
+    public DateTime? LastLoginAtUtc { get; set; }
 }
 
 public record InviteUserForm(

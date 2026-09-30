@@ -1,0 +1,66 @@
+@inherits LayoutComponentBase
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.Components.Authorization
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject EmployerScopeState Scope
+@inject AuthenticationStateProvider AuthState
+@implements IDisposable
+
+<div class="wg-shell @(ShowBottomNav ? "wg-has-bottom-nav" : null)"
+     dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <PageSeoHead />
+    <WgTopBar />
+
+    <div class="wg-shell__body">
+        <div class="wg-shell__sidebar wg-shell__sidebar--desktop">
+            <WgSidebar />
+        </div>
+        <main class="wg-main">
+            <CircuitErrorBoundary BoundaryTag="werkgever">
+                @Body
+            </CircuitErrorBoundary>
+        </main>
+    </div>
+
+    @if (ShowBottomNav)
+    {
+        <WgBottomNav />
+    }
+
+    @if (RendererInfo.IsInteractive)
+    {
+        <PushPermissionBanner />
+        <PwaInstallBanner />
+        <LobsyAssistantChat HasBottomNav="ShowBottomNav" />
+        <FeedbackWidget HasBottomNav="ShowBottomNav" />
+        <ConsentReacceptDialog />
+    }
+    <CookieConsentBanner />
+    <SessionIdleGuard />
+</div>
+
+@code {
+    private bool ShowBottomNav => true; // CSS hides ≥1024
+
+    protected override void OnInitialized()
+    {
+        Culture.Changed += OnCultureChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        Scope.Changed += OnScopeChanged;
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    private void OnScopeChanged() => InvokeAsync(StateHasChanged);
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+        Scope.Changed -= OnScopeChanged;
+    }
+}

@@ -8,7 +8,6 @@ using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components.Admin;
-using Jobsy.Web.Components.Employer;
 using Jobsy.Web.Help;
 using Jobsy.Web.Navigation;
 
@@ -161,7 +160,7 @@ public static class UatScriptRunner
     private static void AssertNavigation(UatScenario scenario, string blob, string? jobsyRole)
     {
         var principal = PrincipalFor(jobsyRole);
-        var items = RoleNavCatalog.ForUser(principal);
+        var items = BottomNavFor(principal);
 
         if (jobsyRole is null)
         {
@@ -205,17 +204,27 @@ public static class UatScriptRunner
             }
             else if (employer)
             {
-                Assert.True(href is "/branch/tokens" or "/employer/tokens");
+                Assert.Equal("/werkgever/tokens", href);
             }
         }
 
         if (string.Equals(jobsyRole, JobsyRoles.EnterpriseManager, StringComparison.Ordinal)
             && Contains(blob, "Organisatie", "desktop-only", "Desktop"))
         {
-            Assert.Contains(items, i => i.Href == "/employer/organization" && i.DesktopOnly);
-            foreach (var module in EnterpriseNavItems.OrganizationModules)
+            Assert.Contains(
+                WerkgeverNav.For(EmployerRole.Bedrijfsmanager, new WerkgeverNavContext()).SelectMany(g => g.Items),
+                i => i.Href == "/werkgever/organisatie/vestigingen");
+            foreach (var href in new[]
+                     {
+                         "/werkgever/organisatie/profiel",
+                         "/werkgever/organisatie/vestigingen",
+                         "/werkgever/organisatie/vestigingen?tab=regios",
+                         "/werkgever/organisatie/salaristabellen",
+                         "/werkgever/koppelingen?tab=csv",
+                         "/werkgever/overnames"
+                     })
             {
-                AssertRouteExistsOrAuthEndpoint(module.Href, $"{scenario.Id}: org module {module.Href}");
+                AssertRouteExistsOrAuthEndpoint(href, $"{scenario.Id}: org module {href}");
             }
         }
 
@@ -231,6 +240,21 @@ public static class UatScriptRunner
 
             Assert.Empty(RoleNavCatalog.Admin);
         }
+    }
+
+    private static IReadOnlyList<NavItem> BottomNavFor(ClaimsPrincipal principal)
+    {
+        var role = WerkgeverNav.ResolveRole(principal);
+        if (role is { } er)
+        {
+            var ctx = new WerkgeverNavContext(CandidateInsightsEnabled: true, HasTakeovers: true);
+            return WerkgeverNav.MobileItems(er, ctx)
+                .Where(i => i.Key != "meer")
+                .Select(i => new NavItem(i.LabelKey, i.Href, i.Svg))
+                .ToList();
+        }
+
+        return RoleNavCatalog.ForUser(principal);
     }
 
     private static void AssertHowTo(UatScenario scenario, string blob, string? jobsyRole)
@@ -364,9 +388,19 @@ public static class UatScriptRunner
     }
 
     private static string Alias(string path)
-        => path.Equals("/employer/partner-sales", StringComparison.OrdinalIgnoreCase)
-            ? "/employer/sales"
-            : path;
+    {
+        if (path.Equals("/employer/partner-sales", StringComparison.OrdinalIgnoreCase))
+        {
+            path = "/employer/sales";
+        }
+
+        if (WerkgeverLegacyRoutes.TryMap(path, out var neu, out _))
+        {
+            return neu;
+        }
+
+        return path;
+    }
 
     private static bool IsPagePath(string raw)
     {
@@ -574,7 +608,7 @@ public static class UatScriptRunner
             Assert.Equal(5, CulturePillarCatalog.MaxSelected);
             Assert.Contains("CultureFitPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Models/VacancyListItemDto.cs")), StringComparison.Ordinal);
             Assert.Contains("CulturePillarsJson", File.ReadAllText(Path.Combine(root, "Jobsy.Core/Entities/Vacancy.cs")), StringComparison.Ordinal);
-            var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Branch/CreateVacancy.razor"));
+            var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Werkgever/CreateVacancy.razor"));
             Assert.Contains("CulturePillarCatalog", create, StringComparison.Ordinal);
             var map = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/jobMap.js"));
             Assert.Contains("cultureFitHtml", map, StringComparison.Ordinal);
@@ -600,12 +634,18 @@ public static class UatScriptRunner
         }
 
         if (string.Equals(jobsyRole, JobsyRoles.EnterpriseManager, StringComparison.Ordinal)
-            && Contains(blob, "e-mail+naam+rol+vestigingen"))
+            && Contains(blob, "WgInviteDrawer", "e-mail+rol+bereik"))
         {
             var root = RepoRoot.Find();
-            var users = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Employer/Users.razor"));
-            Assert.Contains("InviteExtraCompanies", users, StringComparison.Ordinal);
-            Assert.Contains("EmployerInviteCompanyOptions", users, StringComparison.Ordinal);
+            var users = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Werkgever/Users.razor"));
+            Assert.Contains("WgInviteDrawer", users, StringComparison.Ordinal);
+
+            var drawer = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Werkgever/Team/WgInviteDrawer.razor"));
+            Assert.Contains("InviteCompanyUserAsync", drawer, StringComparison.Ordinal);
+            Assert.Contains("TeamRoleCopy.Cards", drawer, StringComparison.Ordinal);
+            Assert.Contains("WgInvite.Privacy", drawer, StringComparison.Ordinal);
+            Assert.Contains("WgInvite.Branch", drawer, StringComparison.Ordinal);
+            Assert.Contains("WgInvite.Region", drawer, StringComparison.Ordinal);
 
             var orgId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
             var branchId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
@@ -614,14 +654,14 @@ public static class UatScriptRunner
                 new(orgId, "Bemer IT Solutions", "Laan 1", ParentCompanyId: null),
                 new(branchId, "Bemer IT Solutions", "Laan 1", orgId, "000012345678")
             ];
-            Assert.Empty(EmployerInviteCompanyOptions.ExtraMembershipChoices(companies, branchId));
-            Assert.Single(EmployerInviteCompanyOptions.ExtraMembershipChoices(companies, orgId));
+            Assert.Equal("Bemer IT Solutions (organisatie)", EmployerInviteCompanyOptions.Label(companies[0], companies));
+            Assert.Equal("Bemer IT Solutions — Laan 1", EmployerInviteCompanyOptions.Label(companies[1], companies));
         }
     }
 
     private static void AssertRouteExistsOrAuthEndpoint(string href, string because)
     {
-        var path = RazorRouteIndex.CanonicalPath(href);
+        var path = RazorRouteIndex.CanonicalPath(href.Split('?', 2)[0]);
         if (path is "#" or "")
         {
             return;

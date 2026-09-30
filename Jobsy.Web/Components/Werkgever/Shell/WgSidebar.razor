@@ -1,0 +1,154 @@
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+@inject WerkgeverCountsState Counts
+@implements IDisposable
+
+<aside class="wg-sidebar" aria-label="@Culture["WgShell.MainNav"]">
+    <nav class="wg-sidebar__nav">
+        @foreach (var group in Groups)
+        {
+            var collapsed = group.Key == "more" && !_meerOpen && !group.Items.Any(IsActive);
+            <div class="wg-sidebar__group">
+                @if (group.Key == "more")
+                {
+                    <button type="button" class="wg-sidebar__group-toggle" aria-expanded="@(!collapsed)"
+                            @onclick="() => _meerOpen = !_meerOpen">
+                        <span class="wg-sidebar__group-label">@Culture[group.LabelKeyFor(Role)]</span>
+                        <span aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+                    </button>
+                }
+                else
+                {
+                    <span class="wg-sidebar__group-label">@Culture[group.LabelKeyFor(Role)]</span>
+                }
+                @if (!collapsed)
+                {
+                    <ul class="wg-sidebar__items">
+                        @foreach (var item in group.Items)
+                        {
+                            var active = IsActive(item);
+                            var count = CountFor(item);
+                            <li>
+                                <a class="wg-sidebar__link @(active ? "is-active" : null)"
+                                   href="@item.Href"
+                                   aria-current="@(active ? "page" : null)">
+                                    <span class="wg-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                                    <span>@Culture[item.LabelKeyFor(Role)]</span>
+                                    @if (item.Key == "insights" && Ctx.InsightsLocked)
+                                    {
+                                        <span class="wg-sidebar__lock" title="@Culture["Insights.Kpi.Premium"]" aria-hidden="true">
+                                            <svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+                                        </span>
+                                    }
+                                    @if (count > 0)
+                                    {
+                                        <span class="wg-sidebar__count">@count</span>
+                                    }
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+    </nav>
+    <div class="wg-sidebar__footer">
+        <a class="wg-sidebar__footer-link" href="/">@Culture["WgShell.JobMap"]</a>
+        @if (Role == EmployerRole.Regiomanager)
+        {
+            <p class="wg-sidebar__rm-note">@Culture["WgShell.RmFooter"]</p>
+        }
+    </div>
+</aside>
+
+@code {
+    private bool _meerOpen;
+    private bool _bootstrapped;
+
+    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private WerkgeverNavContext Ctx => new(
+        HasTakeovers: true,
+        CandidateInsightsEnabled: true,
+        InsightsLocked: Scope.InsightsLocked,
+        Counts: Counts.Counts);
+    private IReadOnlyList<WerkgeverNavGroup> Groups => WerkgeverNav.For(Role, Ctx);
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLoc;
+        Scope.Changed += OnScope;
+        Counts.Changed += OnCounts;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _bootstrapped)
+        {
+            return;
+        }
+
+        _bootstrapped = true;
+        await ScopeBootstrap.EnsureLoadedAsync();
+        await Counts.RefreshIfStaleAsync();
+        StateHasChanged();
+    }
+
+    private void OnLoc(object? s, LocationChangedEventArgs e)
+        => InvokeAsync(async () =>
+        {
+            await Counts.RefreshIfStaleAsync();
+            StateHasChanged();
+        });
+
+    private void OnScope() => InvokeAsync(async () =>
+    {
+        await Counts.ForceRefreshAsync();
+        StateHasChanged();
+    });
+
+    private void OnCounts() => InvokeAsync(StateHasChanged);
+
+    private string CurrentPath()
+        => "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+
+    private bool IsActive(WerkgeverNavItem item)
+    {
+        var path = WerkgeverNav.Normalize(CurrentPath());
+        if (string.Equals(path, WerkgeverNav.Normalize(item.Href), StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        foreach (var alias in item.Aliases)
+        {
+            if (string.Equals(path, WerkgeverNav.Normalize(alias), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        var href = WerkgeverNav.Normalize(item.Href);
+        return href is not "/" && path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private int CountFor(WerkgeverNavItem item)
+    {
+        if (string.IsNullOrEmpty(item.CountKey))
+        {
+            return 0;
+        }
+
+        return Counts.Counts.TryGetValue(item.CountKey, out var n) ? n : 0;
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLoc;
+        Scope.Changed -= OnScope;
+        Counts.Changed -= OnCounts;
+    }
+}

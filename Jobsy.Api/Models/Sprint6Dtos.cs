@@ -248,6 +248,9 @@ public record UpdatePlatformFeatureRequest(
     bool ClearFreePublishUntil = false,
     bool? SupportAccessNotifyAdmins = null,
     bool? SupportAccessNotifySubject = null,
+    bool? CandidateInsightsEnabled = null,
+    int? CandidateInsightsUnlockDays = null,
+    bool? CandidateInsightsUnlockPerBranch = null,
     string? Reason = null);
 
 public record PlatformFeatureDto(
@@ -260,7 +263,10 @@ public record PlatformFeatureDto(
     int SessionInactivityTimeoutMinutes = 30,
     DateOnly? FreePublishUntil = null,
     bool SupportAccessNotifyAdmins = false,
-    bool SupportAccessNotifySubject = false);
+    bool SupportAccessNotifySubject = false,
+    bool CandidateInsightsEnabled = true,
+    int CandidateInsightsUnlockDays = 90,
+    bool CandidateInsightsUnlockPerBranch = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

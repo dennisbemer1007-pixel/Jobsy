@@ -1,0 +1,671 @@
+@page "/werkgever/kandidaatinzichten"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager")]
+@implements IAsyncDisposable
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+@inject IJSRuntime Js
+@inject EmployerScopeState Scope
+@using Jobsy.Core.Authorization
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop
+
+<PageTitle>@Culture["Insights.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page insights-page" tabindex="0" @onkeydown="OnKeyDown">
+    <EmployerTalentTabs Active="insights" />
+
+    @if (_storyMode)
+    {
+        var branchName = BranchLabel();
+        var periodLabel = PeriodLabel();
+        var radiusLabel = string.Format(Culture["Insights.Filter.Km"], _radiusKm);
+        var locked = _data is null || !_data.Scope.IsFullAccess;
+
+        <div class="insights-story-viewer" role="region" aria-roledescription="carousel" aria-label="@Culture["Insights.Tab.Insights"]">
+            <div class="insights-story-viewer__progress" aria-hidden="true">
+                @for (var i = 0; i < 10; i++)
+                {
+                    <span class="insights-story-viewer__seg @(i < _storyIndex ? "is-done" : i == _storyIndex ? "is-active" : null)"></span>
+                }
+            </div>
+            <div class="insights-story-viewer__head">
+                <div class="insights-story-viewer__meta">
+                    <strong>@string.Format(Culture["Insights.Story.Title"], branchName)</strong>
+                    <span>@string.Format(Culture["Insights.Story.Progress"], _storyIndex + 1, radiusLabel, periodLabel)</span>
+                </div>
+                <button type="button" class="insights-story-viewer__close" aria-label="@Culture["Insights.Story.Close"]" @onclick="CloseStory">×</button>
+            </div>
+            <button type="button" class="insights-story-tap insights-story-tap--prev" aria-label="@Culture["Insights.Story.Prev"]" @onclick="PrevStory"></button>
+            <button type="button" class="insights-story-tap insights-story-tap--next" aria-label="@Culture["Insights.Story.Next"]" @onclick="NextStory"></button>
+            <div class="insights-story-viewer__track">
+                <InsightsStoryCard Index="0" Current="_storyIndex" Title="@Culture["Insights.Story.Card1"]" Locked="false">
+                    <MetricTile Label="@Culture["Insights.Kpi.Candidates"]" FormattedValue="@CountText(_data?.Kpis.CandidatesInRadius)" />
+                </InsightsStoryCard>
+                <InsightsStoryCard Index="1" Current="_storyIndex" Title="@Culture["Insights.Story.Card2"]" Locked="false">
+                    <InsightsRankedList Items="@(_data?.DreamJobsTop?.Take(3).ToList() ?? [])" />
+                </InsightsStoryCard>
+                <InsightsStoryCard Index="2" Current="_storyIndex" Title="@Culture["Insights.Story.Card3"]" Locked="false">
+                    <MetricTile Label="@Culture["Insights.Kpi.AvgHours"]" FormattedValue="@CountText(_data?.Kpis.AvgHoursPerWeek)" />
+                    <MetricTile Label="@Culture["Insights.Kpi.Hours32"]" FormattedValue="@CountText(_data?.Kpis.Candidates32PlusHours)" />
+                </InsightsStoryCard>
+                <InsightsStoryCard Index="3" Current="_storyIndex" Title="@Culture["Insights.Story.Card4"]" Locked="false">
+                    <InsightsDistributionBars Dist="_data?.Priorities" PriorityLabels="true" />
+                    <InsightsTipsBlock Data="_data" IsRegional="_isRegional" />
+                </InsightsStoryCard>
+                <InsightsStoryCard Index="4" Current="_storyIndex" Title="@Culture["Insights.Story.Card5"]" Locked="@locked" TokensHref="@_tokensHref">
+                    <InsightsDistributionBars Dist="_data?.WorkKinds" WorkKind="true" />
+                </InsightsStoryCard>
+                <InsightsStoryCard Index="5" Current="_storyIndex" Title="@Culture["Insights.Story.Card6"]" Locked="@locked" TokensHref="@_tokensHref" TestId="insights-story-card-6">
+                    <InsightsVacanciesList Data="_data" />
+                </InsightsStoryCard>
+                <InsightsStoryCard Index="6" Current="_storyIndex" Title="@Culture["Insights.Story.Card7"]" Locked="@locked" TokensHref="@_tokensHref">
+                    <InsightsDistributionBars Dist="_data?.DnaRiasec" />
+                </InsightsStoryCard>
+                <InsightsStoryCard Index="7" Current="_storyIndex" Title="@Culture["Insights.Story.Card8"]" Locked="@locked" TokensHref="@_tokensHref">
+                    <InsightsDistributionBars Dist="_data?.WorkFields" />
+                </InsightsStoryCard>
+                <InsightsStoryCard Index="8" Current="_storyIndex" Title="@Culture["Insights.Story.Card9"]" Locked="@locked" TokensHref="@_tokensHref">
+                    <div class="insights-trend-placeholder">@Culture["Insights.Trend.Placeholder"]</div>
+                </InsightsStoryCard>
+                <InsightsStoryCard Index="9" Current="_storyIndex" Title="@Culture["Insights.Story.Card10"]" Locked="@locked" TokensHref="@_tokensHref" TestId="insights-story-card-10" ShowCta="true">
+                    <p>@Culture["Insights.Story.Card10.Lead"]</p>
+                </InsightsStoryCard>
+            </div>
+            <div class="insights-story-nav">
+                <button type="button" class="btn-compact provider-btn" disabled="@(_storyIndex == 0)" @onclick="PrevStory">@Culture["Insights.Story.Prev"]</button>
+                <button type="button" class="btn-compact login-submit" disabled="@(_storyIndex == 9)" @onclick="NextStory">@Culture["Insights.Story.Next"]</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        var isFull = _data?.Scope.IsFullAccess == true;
+        var isLocked = _data is not null && !isFull;
+        <header class="insights-header">
+            <div class="insights-header__row">
+                <h1>@Culture["Insights.Title"]</h1>
+                @if (isLocked)
+                {
+                    <span class="insights-gratis-pill">@Culture["Insights.FreeBadge"]</span>
+                }
+                else if (isFull && _data?.Coverage.ExpiresAtUtc is DateTime exp)
+                {
+                    <span class="insights-full-pill">@string.Format(Culture["Insights.FullUntil"], exp.ToLocalTime().ToString("d MMM yyyy"))</span>
+                }
+                <div class="insights-header__actions">
+                    <a class="btn-compact provider-btn" href="/werkgever/talentpool">@Culture["Insights.Cta.Talentpool"]</a>
+                    @if (isLocked)
+                    {
+                        <button type="button" class="btn-compact provider-btn" disabled title="@Culture["Insights.Export.Locked"]">
+                            @Culture["Insights.Cta.Export"]
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn-compact provider-btn" disabled="@_exportBusy" @onclick="ExportAsync">@Culture["Insights.Cta.Export"]</button>
+                    }
+                </div>
+            </div>
+            <p class="login-lead">@Culture["Insights.Lead"]</p>
+            @if (isFull && _data?.Coverage.ExpiresAtUtc is DateTime expLine)
+            {
+                <p class="insights-full-line">@string.Format(Culture["Insights.UnlockedLine"], expLine.ToLocalTime().ToString("d MMM yyyy"), ScopeKindLabel())</p>
+                @if (_data.Coverage.CanRenew)
+                {
+                    <button type="button" class="btn-compact login-submit" @onclick="ConfirmUnlockAsync">@string.Format(Culture["Insights.Premium.RenewWithPrice"], _data.Offer.PriceTokens)</button>
+                }
+            }
+            @if (isLocked && _data is { Coverage.CoveredCount: > 0 } && _data.Coverage.CoveredCount < _data.Coverage.TotalCount)
+            {
+                <p class="insights-partial">@string.Format(Culture["Insights.PartialCoverage"], _data.Coverage.CoveredCount, _data.Coverage.TotalCount)</p>
+            }
+            @if (_isRegional)
+            {
+                <p class="profile-address__hint">@Culture["Insights.RegionalReadOnly"]</p>
+            }
+        </header>
+
+        <div class="insights-mobile-meta">
+            @if (isLocked)
+            {
+                <span class="insights-gratis-pill">@Culture["Insights.FreeBadge"]</span>
+            }
+            <span class="status-pill">@BranchLabel() · @string.Format(Culture["Insights.Filter.Km"], _radiusKm) · @PeriodLabel()</span>
+        </div>
+
+        <p class="insights-anonymity">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 1 5 5v1h1a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3h1V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v1h6V7a3 3 0 0 0-3-3Z"/></svg>
+            <span>@Culture["Insights.Anonymity"]</span>
+        </p>
+
+        <div class="insights-filters">
+            <div class="insights-filters__field">
+                <label for="insights-branch">@Culture["Insights.Filter.Branch"]</label>
+                <select id="insights-branch" class="insights-filters__control" disabled="@(_branchLocked || _loading)" value="@BranchSelectValue" @onchange="OnBranchChanged">
+                    @if (_canSelectAll)
+                    {
+                        <option value="">@string.Format(Culture["Insights.Filter.AllBranches"], _branches.Count)</option>
+                    }
+                    @foreach (var b in _branches)
+                    {
+                        <option value="@b.Id.ToString("D")">@b.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="insights-filters__field">
+                <span>@Culture["Insights.Filter.Radius"]</span>
+                <div class="insights-radius" role="group" aria-label="@Culture["Insights.Filter.Radius"]">
+                    @foreach (var km in _radii)
+                    {
+                        <button type="button" class="insights-radius__btn @(_radiusKm == km ? "is-active" : null)" disabled="@_loading" @onclick="() => SetRadiusAsync(km)">
+                            @string.Format(Culture["Insights.Filter.Km"], km)
+                        </button>
+                    }
+                </div>
+            </div>
+            <div class="insights-filters__field">
+                <label for="insights-period">@Culture["Insights.Filter.Period"]</label>
+                <select id="insights-period" class="insights-filters__control" disabled="@_loading" @bind="_periodDays" @bind:after="ReloadAsync">
+                    <option value="30">@Culture["Insights.Filter.Period.30"]</option>
+                    <option value="90">@Culture["Insights.Filter.Period.90"]</option>
+                    <option value="365">@Culture["Insights.Filter.Period.365"]</option>
+                </select>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message">@_error</p>
+        }
+        else if (_loading || _data is null)
+        {
+            <div class="insights-kpis" aria-busy="true">
+                <MetricTileSkeleton /><MetricTileSkeleton /><MetricTileSkeleton /><MetricTileSkeleton />
+            </div>
+        }
+        else
+        {
+            var d = _data;
+            var vacancyCount = d.Vacancies.Count;
+            <div class="insights-grid insights-grid--main">
+                <div class="insights-kpis insights-span-12">
+                    <div>
+                        <MetricTile Label="@Culture["Insights.Kpi.Candidates"]" FormattedValue="@CountText(d.Kpis.CandidatesInRadius)" />
+                        <span class="wg-kpi-free-badge">✓ @Culture["Insights.Kpi.Free"]</span>
+                    </div>
+                    <div>
+                        <MetricTile Label="@Culture["Insights.Kpi.AvgHours"]" FormattedValue="@HoursText(d.Kpis.AvgHoursPerWeek)" />
+                        <span class="wg-kpi-free-badge">✓ @Culture["Insights.Kpi.Free"]</span>
+                    </div>
+                    @if (isLocked)
+                    {
+                        <WgInsightsKpiLocked Title="@Culture["Insights.Kpi.Matching"]" Question="@string.Format(Culture["Insights.Kpi.MatchingQ"], vacancyCount > 0 ? vacancyCount : "…")" TestId="insights-kpi-matching-locked" />
+                        <WgInsightsKpiLocked Title="@Culture["Insights.Kpi.Hours32"]" Question="@Culture["Insights.Kpi.Hours32Q"]" TestId="insights-kpi-32-locked" />
+                    }
+                    else
+                    {
+                        <MetricTile Label="@Culture["Insights.Kpi.Matching"]" FormattedValue="@CountText(d.Kpis.MatchingYourVacancies)" />
+                        <MetricTile Label="@Culture["Insights.Kpi.Hours32"]" FormattedValue="@CountText(d.Kpis.Candidates32PlusHours)" />
+                    }
+                </div>
+
+                <section class="insights-panel insights-span-7 @(isLocked ? "insights-map--locked" : null)">
+                    <div class="insights-header__row" style="margin-block-end:0.5rem">
+                        <h2 class="insights-panel__title" style="margin:0">@Culture["Insights.Section.Map"]</h2>
+                        @if (isLocked)
+                        {
+                            <span class="test-result-lock-chip">
+                                <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+                                @Culture["Insights.Map.DensityChip"]
+                            </span>
+                        }
+                    </div>
+                    <div class="insights-map">
+                        <div id="@_mapElementId" class="insights-map__canvas" role="img" aria-label="@Culture["Insights.Section.Map"]"></div>
+                        @if (isLocked)
+                        {
+                            <div class="insights-map__density-lock">
+                                <span class="test-result-lock-chip">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+                                    @Culture["Insights.Map.DensityChip"]
+                                </span>
+                                <strong>@Culture["Insights.Map.DensityLock"]</strong>
+                                <small>@Culture["Insights.Map.DensitySub"]</small>
+                            </div>
+                        }
+                    </div>
+                    <div class="insights-map__legend">
+                        <span>@Culture["Insights.Map.LegendRadius"]</span>
+                        <span>@Culture["Insights.Map.LegendPrivacy"]</span>
+                    </div>
+                </section>
+
+                @if (isLocked)
+                {
+                    <div class="insights-span-5">
+                        <WgLockedCard Title="@Culture["Insights.Section.WorkFields"]" TestId="insights-locked-workfields" />
+                    </div>
+                    <div class="insights-span-12">
+                        <WgLockedCard Title="@Culture["Insights.Section.Priorities"]" TestId="insights-locked-priorities" />
+                    </div>
+                    <div class="insights-span-6">
+                        <WgLockedCard Title="@Culture["Insights.Section.DreamJobs"]" TestId="insights-locked-dreams" />
+                    </div>
+                    <div class="insights-span-6">
+                        <WgLockedCard Title="@Culture["Insights.Section.Dna"]" TestId="insights-locked-dna" />
+                    </div>
+                }
+                else
+                {
+                    <section class="insights-panel insights-span-5">
+                        <h2 class="insights-panel__title">@Culture["Insights.Section.WorkFields"]</h2>
+                        <InsightsDistributionBars Dist="d.WorkFields" />
+                    </section>
+                    <section class="insights-panel insights-span-7">
+                        <h2 class="insights-panel__title">@Culture["Insights.Section.DreamJobs"]</h2>
+                        <InsightsRankedList Items="d.DreamJobsTop" />
+                    </section>
+                    <section class="insights-panel insights-span-7">
+                        <h2 class="insights-panel__title">@Culture["Insights.Section.Competences"]</h2>
+                        <InsightsDistributionBars Dist="d.Competences" />
+                        <InsightsDistributionBars Dist="d.DnaRiasec" />
+                    </section>
+                    <section class="insights-panel insights-span-5">
+                        <h2 class="insights-panel__title">@Culture["Insights.Section.Priorities"]</h2>
+                        <InsightsDistributionBars Dist="d.Priorities" PriorityLabels="true" />
+                        <h3 class="insights-panel__title" style="margin-block-start:1rem">@Culture["Insights.Section.Tip"]</h3>
+                        <InsightsTipsBlock Data="d" IsRegional="_isRegional" />
+                    </section>
+                    <section class="insights-panel insights-span-4">
+                        <h2 class="insights-panel__title">@Culture["Insights.Section.WorkKinds"]</h2>
+                        <InsightsDistributionBars Dist="d.WorkKinds" WorkKind="true" />
+                    </section>
+                    <section class="insights-panel insights-span-4">
+                        <h2 class="insights-panel__title">@Culture["Insights.Section.Trends"]</h2>
+                        <div class="insights-trend-placeholder">@Culture["Insights.Trend.Placeholder"]</div>
+                    </section>
+                    <section class="insights-panel insights-span-12">
+                        <h2 class="insights-panel__title">@Culture["Insights.Section.Vacancies"]</h2>
+                        <InsightsVacanciesList Data="d" />
+                    </section>
+                }
+
+                @if (isLocked || d.Coverage.CanRenew)
+                {
+                    <div class="insights-span-12">
+                        <WgInsightsPremium ScopeLabel="@ScopeKindLabel()"
+                                           PriceLabel="@($"{d.Offer.PriceTokens:0} tokens")"
+                                           MetaLabel="@($"{d.Offer.DurationDays} {Culture["Insights.Premium.Days"]} · {ScopeKindLabel()}")"
+                                           IsRegionalManager="_isRegional"
+                                           ShowRequestButton="@(_isBranchManager && string.Equals(d.Offer.ScopeKind, "company", StringComparison.OrdinalIgnoreCase))"
+                                           CanUnlockOwn="@(_isBranchManager && string.Equals(d.Offer.ScopeKind, "branch", StringComparison.OrdinalIgnoreCase))"
+                                           CanUnlock="@(d.Offer.CanUnlock || d.Coverage.CanRenew)"
+                                           CanRenew="d.Coverage.CanRenew"
+                                           Busy="_unlockBusy"
+                                           RequestBusy="_requestBusy"
+                                           RequestSent="_requestSent"
+                                           RequestedOnLabel="@_requestedOnLabel"
+                                           OnUnlock="ConfirmUnlockAsync"
+                                           OnRequest="RequestUnlockAsync" />
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@if (_confirmOpen)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["Insights.Confirm.Title"]"
+                         Lead="@_confirmBody"
+                         OnClose="() => _confirmOpen = false">
+        <div class="inline-actions" style="margin-top:0.75rem;gap:0.5rem">
+            <button type="button" class="btn-compact provider-btn" @onclick="() => _confirmOpen = false">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact login-submit" disabled="@_unlockBusy" @onclick="DoUnlockAsync">@Culture["Insights.Confirm.Ok"]</button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@if (!string.IsNullOrEmpty(_toast))
+{
+    <div class="status-pill" role="status" data-testid="insights-toast">@_toast</div>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "weergave")] public string? Weergave { get; set; }
+    [SupplyParameterFromQuery(Name = "request")] public Guid? RequestId { get; set; }
+
+    private static readonly int[] _radii = [10, 20, 30];
+    private bool _loading = true;
+    private bool _storyMode;
+    private bool _branchLocked;
+    private bool _canSelectAll;
+    private bool _isRegional;
+    private bool _isBranchManager;
+    private bool _isEnterprise;
+    private bool _mapMounted;
+    private bool _unlockBusy;
+    private bool _requestBusy;
+    private bool _requestSent;
+    private bool _exportBusy;
+    private bool _confirmOpen;
+    private string? _error;
+    private string? _toast;
+    private string _confirmBody = "";
+    private string _requestedOnLabel = "";
+    private string _tokensHref = "/werkgever/tokens";
+    private readonly string _mapElementId = "insights-map-" + Guid.NewGuid().ToString("N");
+    private Guid? _selectedBranchId;
+    private int _radiusKm = 20;
+    private int _periodDays = 90;
+    private int _storyIndex;
+    private List<CandidateInsightsBranchDto> _branches = [];
+    private CandidateInsightsDto? _data;
+
+    private string BranchSelectValue => _selectedBranchId?.ToString("D") ?? "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var user = state.User;
+        _isRegional = RoleClaimMatching.HasRole(user, JobsyRoles.RegionalManager);
+        _isBranchManager = RoleClaimMatching.HasRole(user, JobsyRoles.BranchManager);
+        _isEnterprise = RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager);
+        _storyMode = string.Equals(Weergave, "story", StringComparison.OrdinalIgnoreCase);
+
+        _branches = (await Api.GetCandidateInsightsBranchesAsync()).ToList();
+        _branchLocked = _branches.Count > 0 && _branches.All(b => b.IsLocked);
+        _canSelectAll = !_branchLocked && _branches.Count >= 2;
+        if (_branchLocked && _branches.Count > 0)
+        {
+            _selectedBranchId = _branches[0].Id;
+        }
+
+        await ReloadAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_data is null || _storyMode || _mapMounted)
+        {
+            return;
+        }
+
+        try
+        {
+            await CandidateInsightsMapInterop.EnsureLoadedAsync(Js);
+            var centerLng = _data.Scope.Branches.FirstOrDefault()?.Lng
+                            ?? _data.Density.FirstOrDefault()?.CenterLng
+                            ?? 5.2;
+            var centerLat = _data.Scope.Branches.FirstOrDefault()?.Lat
+                            ?? _data.Density.FirstOrDefault()?.CenterLat
+                            ?? 52.1;
+            // Free: pins + ring only (no density cells).
+            var density = _data.Scope.IsFullAccess ? _data.Density : [];
+            await CandidateInsightsMapInterop.MountAsync(
+                Js,
+                _mapElementId,
+                new
+                {
+                    center = new[] { centerLng, centerLat },
+                    radiusKm = _radiusKm,
+                    density,
+                    branches = _data.Scope.Branches.Select(b => new { lat = b.Lat, lng = b.Lng, name = b.Name }).ToList()
+                });
+            _mapMounted = true;
+        }
+        catch
+        {
+            // Progressive enhancement — map optional.
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        _mapMounted = false;
+        try
+        {
+            _data = await Api.GetCandidateInsightsAsync(_selectedBranchId, _radiusKm, _periodDays);
+            if (_data is null)
+            {
+                _error = Culture["Insights.Error"];
+            }
+            else
+            {
+                Scope.SetInsightsLocked(!_data.Scope.IsFullAccess);
+            }
+        }
+        catch
+        {
+            _error = Culture["Insights.Error"];
+            _data = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnBranchChanged(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        _selectedBranchId = Guid.TryParse(raw, out var id) ? id : null;
+        await ReloadAsync();
+    }
+
+    private async Task SetRadiusAsync(int km)
+    {
+        if (_radiusKm == km)
+        {
+            return;
+        }
+
+        _radiusKm = km;
+        await ReloadAsync();
+    }
+
+    private void OpenStory()
+    {
+        _storyMode = true;
+        _storyIndex = 0;
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameter("weergave", "story"), replace: true);
+    }
+
+    private void CloseStory()
+    {
+        _storyMode = false;
+        Navigation.NavigateTo("/werkgever/kandidaatinzichten", replace: true);
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (!_storyMode)
+        {
+            return;
+        }
+
+        if (e.Key == "Escape")
+        {
+            CloseStory();
+        }
+        else if (e.Key is "ArrowRight" or "ArrowDown")
+        {
+            NextStory();
+        }
+        else if (e.Key is "ArrowLeft" or "ArrowUp")
+        {
+            PrevStory();
+        }
+    }
+
+    private void NextStory() => _storyIndex = Math.Min(9, _storyIndex + 1);
+    private void PrevStory() => _storyIndex = Math.Max(0, _storyIndex - 1);
+
+    private string BranchLabel()
+    {
+        if (_selectedBranchId is null && _canSelectAll)
+        {
+            return string.Format(Culture["Insights.Filter.AllBranches"], _branches.Count);
+        }
+
+        return _data?.Scope.Branches.FirstOrDefault()?.Name
+               ?? _branches.FirstOrDefault(b => b.Id == _selectedBranchId)?.Name
+               ?? "";
+    }
+
+    private string PeriodLabel() => _periodDays switch
+    {
+        30 => Culture["Insights.Filter.Period.30"],
+        365 => Culture["Insights.Filter.Period.365"],
+        _ => Culture["Insights.Filter.Period.90"]
+    };
+
+    private string ScopeKindLabel()
+    {
+        if (_data is null)
+        {
+            return Culture["Insights.Scope.Organisation"];
+        }
+
+        return string.Equals(_data.Offer.ScopeKind, "branch", StringComparison.OrdinalIgnoreCase)
+            ? BranchLabel()
+            : Culture["Insights.Scope.Organisation"];
+    }
+
+    private string CountText(SuppressedCountModel? count)
+    {
+        if (count is null || count.Status != "ok" || count.Value is null)
+        {
+            return Culture["Insights.Insufficient"];
+        }
+
+        return count.Value.Value.ToString();
+    }
+
+    private string HoursText(SuppressedCountModel? count)
+    {
+        var n = CountText(count);
+        return n == Culture["Insights.Insufficient"] ? n : string.Format(Culture["Insights.Kpi.HoursFmt"], n);
+    }
+
+    private Task ConfirmUnlockAsync()
+    {
+        if (_data is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var price = _data.Offer.PriceTokens;
+        var balance = _data.Offer.WalletBalance ?? 0;
+        var after = balance - price;
+        var until = (_data.Coverage.ExpiresAtUtc is DateTime e && _data.Coverage.CanRenew
+            ? e.AddDays(_data.Offer.DurationDays)
+            : DateTime.UtcNow.AddDays(_data.Offer.DurationDays)).ToLocalTime();
+        _confirmBody = string.Format(
+            Culture["Insights.Confirm.Body"],
+            ScopeKindLabel(),
+            price,
+            after,
+            until.ToString("d MMM yyyy"));
+        _confirmOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task DoUnlockAsync()
+    {
+        if (_data is null || _unlockBusy)
+        {
+            return;
+        }
+
+        _unlockBusy = true;
+        try
+        {
+            var scope = _data.Offer.ScopeKind;
+            var branchId = string.Equals(scope, "branch", StringComparison.OrdinalIgnoreCase)
+                ? (_selectedBranchId ?? _branches.FirstOrDefault()?.Id)
+                : null;
+            var result = await Api.UnlockCandidateInsightsAsync(scope, branchId, RequestId);
+            _confirmOpen = false;
+            if (result is null)
+            {
+                _error = Culture["Insights.Error"];
+                return;
+            }
+
+            _toast = string.Format(Culture["Insights.Toast.Unlocked"], result.ExpiresAtUtc.ToLocalTime().ToString("d MMM yyyy"));
+            await ReloadAsync();
+        }
+        finally
+        {
+            _unlockBusy = false;
+        }
+    }
+
+    private async Task RequestUnlockAsync()
+    {
+        if (_requestBusy || _requestSent)
+        {
+            return;
+        }
+
+        var branchId = _selectedBranchId ?? _branches.FirstOrDefault()?.Id;
+        if (branchId is null)
+        {
+            return;
+        }
+
+        _requestBusy = true;
+        try
+        {
+            var dto = await Api.RequestCandidateInsightsUnlockAsync(branchId.Value);
+            if (dto is not null)
+            {
+                _requestSent = true;
+                _requestedOnLabel = dto.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy");
+                _toast = Culture["Insights.Toast.Requested"];
+            }
+        }
+        finally
+        {
+            _requestBusy = false;
+        }
+    }
+
+    private async Task ExportAsync()
+    {
+        if (_exportBusy || _data?.Scope.IsFullAccess != true)
+        {
+            return;
+        }
+
+        _exportBusy = true;
+        try
+        {
+            await Api.DownloadCandidateInsightsExportAsync(_selectedBranchId, _radiusKm, _periodDays);
+        }
+        finally
+        {
+            _exportBusy = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await CandidateInsightsMapInterop.DestroyAsync(Js, _mapElementId);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+}

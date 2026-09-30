@@ -172,7 +172,8 @@ internal static class LocalizationParityAllowList
         "Lobsy", "OK", "Match", "match", "Admin", "Sales", "Coach", "Bug", "Tip", "Status",
         "Email", "E-mail", "Model", "Tests", "Trends", "Open", "Later", "Nu", "Doel", "Basis", "min",
         "KVK", "SBI", "Arts", "Kok", "Meer", "Eens", "Samen", "Adres", "E-bike", "CV", "PDF",
-        "WhatsApp", "IBAN", "BTW", "ID", "URL", "API", "OTP", "SMS", "GPS", "AI", "2FA"
+        "WhatsApp", "IBAN", "BTW", "ID", "URL", "API", "OTP", "SMS", "GPS", "AI", "2FA",
+        "Filters", "Urgent", "Dashboard", "Team"
     };
 
     public static bool IsExemptIdenticalValue(string value)
@@ -201,6 +202,18 @@ internal static class LocalizationParityAllowList
 
         // Universal distance tokens (nl/en/pl/ro share "km").
         if (Regex.IsMatch(v, @"^\{\d+\}\s*km$", RegexOptions.IgnoreCase))
+        {
+            return true;
+        }
+
+        // Pure format placeholders (e.g. "{0}") are language-neutral.
+        if (Regex.IsMatch(v, @"^\{\d+\}$"))
+        {
+            return true;
+        }
+
+        // Short day abbreviations shared by nl/en/pl (e.g. "7 d", "{0:0.#} d").
+        if (Regex.IsMatch(v, @"^(\d+|\{0:0\.#\})\s*d$", RegexOptions.IgnoreCase))
         {
             return true;
         }

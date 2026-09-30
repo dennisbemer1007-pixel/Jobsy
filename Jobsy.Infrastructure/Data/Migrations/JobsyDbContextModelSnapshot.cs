@@ -1231,6 +1231,101 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateDeepAnalyses", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlock", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DurationDays")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<decimal>("PriceTokens")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<Guid>("ScopeCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ScopeKind")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TokenTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UnlockedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WalletCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("TokenTransactionId");
+
+                    b.HasIndex("ScopeCompanyId", "ExpiresAtUtc");
+
+                    b.HasIndex("WalletCompanyId", "ScopeKind", "ScopeCompanyId");
+
+                    b.ToTable("CandidateInsightsUnlocks", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlockRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BranchCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("HandledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("HandledByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("WalletCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HandledByUserId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("BranchCompanyId", "Status");
+
+                    b.HasIndex("WalletCompanyId", "Status");
+
+                    b.ToTable("CandidateInsightsUnlockRequests", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateMatchSnapshot", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2911,6 +3006,15 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("AuthenticatorEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("CandidateInsightsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("CandidateInsightsUnlockDays")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("CandidateInsightsUnlockPerBranch")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("ExposeRegistrationActivationLinks")
                         .HasColumnType("boolean");
 
@@ -4032,6 +4136,56 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("VatDeclarationId");
 
                     b.ToTable("TokenPurchaseInvoices");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.TokenRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("BranchCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("HandledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("HandledByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(280)
+                        .HasColumnType("character varying(280)");
+
+                    b.Property<Guid>("OrganisationCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Reason")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HandledByUserId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("BranchCompanyId", "Status");
+
+                    b.HasIndex("OrganisationCompanyId", "Status");
+
+                    b.ToTable("TokenRequests", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.TokenSpendCost", b =>
@@ -5552,6 +5706,75 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlock", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "ActorUser")
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "ScopeCompany")
+                        .WithMany()
+                        .HasForeignKey("ScopeCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.TokenTransaction", "TokenTransaction")
+                        .WithMany()
+                        .HasForeignKey("TokenTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "WalletCompany")
+                        .WithMany()
+                        .HasForeignKey("WalletCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ActorUser");
+
+                    b.Navigation("ScopeCompany");
+
+                    b.Navigation("TokenTransaction");
+
+                    b.Navigation("WalletCompany");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlockRequest", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "BranchCompany")
+                        .WithMany()
+                        .HasForeignKey("BranchCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.User", "HandledByUser")
+                        .WithMany()
+                        .HasForeignKey("HandledByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.User", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "WalletCompany")
+                        .WithMany()
+                        .HasForeignKey("WalletCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BranchCompany");
+
+                    b.Navigation("HandledByUser");
+
+                    b.Navigation("RequestedByUser");
+
+                    b.Navigation("WalletCompany");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateMatchSnapshot", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
@@ -6158,6 +6381,40 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("TokenTransaction");
 
                     b.Navigation("VatDeclaration");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.TokenRequest", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "BranchCompany")
+                        .WithMany()
+                        .HasForeignKey("BranchCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.User", "HandledByUser")
+                        .WithMany()
+                        .HasForeignKey("HandledByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "OrganisationCompany")
+                        .WithMany()
+                        .HasForeignKey("OrganisationCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.User", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BranchCompany");
+
+                    b.Navigation("HandledByUser");
+
+                    b.Navigation("OrganisationCompany");
+
+                    b.Navigation("RequestedByUser");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.TokenTransaction", b =>

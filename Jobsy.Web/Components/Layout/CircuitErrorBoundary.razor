@@ -82,25 +82,40 @@
     {
         try
         {
+            // Prefer PathAndQuery for debugging; fall back to base-relative path without query.
             return new Uri(Navigation.Uri).PathAndQuery;
         }
         catch
         {
-            return "/";
+            try
+            {
+                return "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+            }
+            catch
+            {
+                return "/";
+            }
         }
     }
 
     private string ResolveUserId()
     {
-        var user = HttpContextAccessor.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated != true)
+        try
+        {
+            var user = HttpContextAccessor.HttpContext?.User;
+            if (user?.Identity?.IsAuthenticated != true)
+            {
+                return "";
+            }
+
+            return user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                   ?? user.FindFirst("sub")?.Value
+                   ?? "";
+        }
+        catch
         {
             return "";
         }
-
-        return user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-               ?? user.FindFirst("sub")?.Value
-               ?? "";
     }
 
     public void Dispose()

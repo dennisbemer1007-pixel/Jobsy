@@ -58,18 +58,18 @@ public class EmailLayoutTests
             "https://lobsy.nl/candidate/applications",
             EmailLayout.CandidateApplicationsUrl(baseUrl));
         Assert.Equal(
-            "https://lobsy.nl/branch/vacancies/new?edit=11111111-1111-1111-1111-111111111111",
+            "https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111",
             EmailLayout.EditVacancyUrl(baseUrl, id));
         Assert.Equal(
-            "https://lobsy.nl/employer/vacancies?boost=highlight&id=11111111-1111-1111-1111-111111111111",
+            "https://lobsy.nl/werkgever/vacatures?boost=highlight&id=11111111-1111-1111-1111-111111111111",
             EmailLayout.HighlightVacancyUrl(baseUrl, id));
         Assert.Equal(
-            "https://lobsy.nl/employer/vacancies?boost=pushbom&id=11111111-1111-1111-1111-111111111111",
+            "https://lobsy.nl/werkgever/vacatures?boost=pushbom&id=11111111-1111-1111-1111-111111111111",
             EmailLayout.PushBomVacancyUrl(baseUrl, id));
         Assert.Equal("https://lobsy.nl/login", EmailLayout.LoginUrl(baseUrl));
         Assert.Equal("https://lobsy.nl/register/activate", EmailLayout.RegisterActivateUrl(baseUrl));
         Assert.Equal("https://lobsy.nl/privacy/data", EmailLayout.PrivacyDataUrl(baseUrl));
-        Assert.Equal("https://lobsy.nl/employer/takeovers", EmailLayout.TakeoversUrl(baseUrl));
+        Assert.Equal("https://lobsy.nl/werkgever/overnames", EmailLayout.TakeoversUrl(baseUrl));
         Assert.Equal(
             "https://lobsy.nl/candidate/actions/set-unavailable",
             EmailLayout.SetUnavailableUrl(baseUrl));

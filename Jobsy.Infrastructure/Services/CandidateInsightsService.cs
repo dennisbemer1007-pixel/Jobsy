@@ -36,6 +36,9 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
     private readonly ICompanyAuthorizationService _authz;
     private readonly IUserLookupService _users;
     private readonly ITokenLedgerService _tokens;
+    private readonly IPlatformFeatureService _features;
+    private readonly IUserNotificationService _notifications;
+    private readonly TimeProvider _clock;
     private readonly IMemoryCache _cache;
     private readonly ILogger<CandidateInsightsService> _logger;
 
@@ -44,6 +47,9 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         ICompanyAuthorizationService authz,
         IUserLookupService users,
         ITokenLedgerService tokens,
+        IPlatformFeatureService features,
+        IUserNotificationService notifications,
+        TimeProvider clock,
         IMemoryCache cache,
         ILogger<CandidateInsightsService> logger)
     {
@@ -51,14 +57,24 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         _authz = authz;
         _users = users;
         _tokens = tokens;
+        _features = features;
+        _notifications = notifications;
+        _clock = clock;
         _cache = cache;
         _logger = logger;
+    }
+
+    public async Task<bool> IsFeatureEnabledAsync(CancellationToken cancellationToken = default)
+    {
+        var snap = await _features.GetAsync(cancellationToken);
+        return snap.CandidateInsightsEnabled;
     }
 
     public async Task<IReadOnlyList<CandidateInsightsBranchDto>> GetBranchesAsync(
         ClaimsPrincipal principal,
         CancellationToken cancellationToken = default)
     {
+        await EnsureFeatureEnabledAsync(cancellationToken);
         EnsureAllowedRole(principal);
         var scope = await ResolveScopeCompaniesAsync(principal, branchId: null, allowAllUnion: true, cancellationToken);
         var isBranch = RoleClaimMatching.HasRole(principal, JobsyRoles.BranchManager);
@@ -75,6 +91,7 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         int periodDays,
         CancellationToken cancellationToken = default)
     {
+        await EnsureFeatureEnabledAsync(cancellationToken);
         EnsureAllowedRole(principal);
         if (!AllowedRadiiKm.Contains(radiusKm) || !AllowedPeriodsDays.Contains(periodDays))
         {
@@ -83,23 +100,61 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
 
         // AuthZ before cache — never serve a cached DTO to an unauthorized caller.
         var scope = await ResolveScopeCompaniesAsync(principal, branchId, allowAllUnion: true, cancellationToken);
-        var isFullAccess = await CandidateInsightsAccess.IsFullAccessAsync(_tokens, scope.Companies, cancellationToken);
+        var featureSnap = await _features.GetAsync(cancellationToken);
+        var coverage = await LoadCoverageAsync(scope.Companies, cancellationToken);
+        var offer = await BuildOfferAsync(principal, scope.Companies, coverage, featureSnap, cancellationToken);
+        var isFullAccess = coverage.IsFull;
 
-        var cacheKey = BuildCacheKey(scope.Companies.Select(c => c.Id), radiusKm, periodDays, isFullAccess);
+        var coveredIds = string.Join(',', scope.Companies
+            .Where(c => IsCompanyCovered(c, coverage, scope.Companies))
+            .Select(c => c.Id)
+            .OrderBy(id => id)
+            .Select(id => id.ToString("D")));
+        var cacheKey = BuildCacheKey(scope.Companies.Select(c => c.Id), radiusKm, periodDays, isFullAccess, coveredIds);
         if (_cache.TryGetValue(cacheKey, out CandidateInsightsDto? cached) && cached is not null)
         {
-            return cached;
+            // Coverage/offer are request-specific (balance, role) — rebuild envelope.
+            return cached with
+            {
+                Coverage = ToCoverageDto(coverage, featureSnap.CandidateInsightsUnlockPerBranch),
+                Offer = offer
+            };
         }
 
-        var dto = await BuildAsync(scope.Companies, radiusKm, periodDays, isFullAccess, cancellationToken);
-        _cache.Set(cacheKey, dto, CacheTtl);
+        var dto = await BuildAsync(scope.Companies, radiusKm, periodDays, isFullAccess, coverage, featureSnap, offer, cancellationToken);
+        // Cache without live offer/balance — store with coverage snapshot; offer reattached above on hit.
+        _cache.Set(cacheKey, dto with
+        {
+            Offer = offer with { WalletBalance = null, CanUnlock = false, CannotUnlockReason = null }
+        }, CacheTtl);
         return dto;
     }
 
-    internal static string BuildCacheKey(IEnumerable<Guid> branchIds, int radiusKm, int periodDays, bool isFullAccess)
+    internal static string BuildCacheKey(
+        IEnumerable<Guid> branchIds,
+        int radiusKm,
+        int periodDays,
+        bool isFullAccess,
+        string coveredIds = "")
     {
         var sorted = string.Join(',', branchIds.OrderBy(id => id).Select(id => id.ToString("D")));
-        return $"candidate-insights:{sorted}:r{radiusKm}:p{periodDays}:f{(isFullAccess ? 1 : 0)}";
+        return $"candidate-insights:{sorted}:r{radiusKm}:p{periodDays}:f{(isFullAccess ? 1 : 0)}:c{coveredIds}";
+    }
+
+    // Legacy overload kept for existing unit tests that call BuildCacheKey with 4 args.
+    internal static string BuildCacheKey(IEnumerable<Guid> branchIds, int radiusKm, int periodDays, bool isFullAccess)
+        => BuildCacheKey(branchIds, radiusKm, periodDays, isFullAccess, "");
+
+    private static bool IsCompanyCovered(Company company, InsightsCoverage coverage, IReadOnlyList<Company> scope)
+    {
+        // Used only for cache key differentiation on partial coverage.
+        if (coverage.IsFull)
+        {
+            return true;
+        }
+
+        // Partial: we still serve free data for all; covered ids help invalidate when another branch unlocks.
+        return coverage.CoveredCount > 0 && scope.Any(c => c.Id == company.Id);
     }
 
     private async Task<CandidateInsightsDto> BuildAsync(
@@ -107,9 +162,12 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         int radiusKm,
         int periodDays,
         bool isFullAccess,
+        InsightsCoverage coverage,
+        PlatformFeatureSnapshot featureSnap,
+        InsightsOfferDto offer,
         CancellationToken cancellationToken)
     {
-        var now = DateTime.UtcNow;
+        var now = _clock.GetUtcNow().UtcDateTime;
         var periodStart = now.AddDays(-periodDays);
         var active30Start = now.AddDays(-30);
 
@@ -122,9 +180,8 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         var cohortIds = cohortUsers.Select(u => u.Id).ToList();
         var cohortSize = cohortIds.Count;
 
-        var locked = isFullAccess
-            ? Array.Empty<string>()
-            : new[] { LockedDreamJobs4To10, LockedDna, LockedStory5To10 };
+        var locked = isFullAccess ? Array.Empty<string>() : InsightsLockedKeys.All.ToArray();
+        var coverageDto = ToCoverageDto(coverage, featureSnap.CandidateInsightsUnlockPerBranch);
 
         var scope = new InsightsScope(
             companies.Select(c => new InsightsBranchRef(
@@ -139,57 +196,14 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
 
         if (!CandidateInsightsPrivacy.MeetsThreshold(cohortSize))
         {
-            return InsufficientDto(scope, locked);
+            return InsufficientDto(scope, locked, coverageDto, offer);
         }
 
         var prefsByUser = cohortUsers.ToDictionary(
             u => u.Id,
             u => MatchingProfileMapper.DeserializePrefs(u.PreferencesJson));
 
-        var careerPlans = await _db.CandidateCareerPlans.AsNoTracking()
-            .Where(p => cohortIds.Contains(p.UserId))
-            .Select(p => new { p.UserId, p.DreamKey, p.DreamTitle })
-            .ToListAsync(cancellationToken);
-
-        var competencies = await _db.CandidateCompetencies.AsNoTracking()
-            .Where(c => cohortIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
-            .ToListAsync(cancellationToken);
-
-        var careerInterests = await _db.CandidateCareerInterests.AsNoTracking()
-            .Where(c => cohortIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
-            .ToListAsync(cancellationToken);
-
-        var personalities = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
-            .Where(c => cohortIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
-            .ToListAsync(cancellationToken);
-
-        var values = await _db.CandidateValuesProfiles.AsNoTracking()
-            .Where(c => cohortIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
-            .ToListAsync(cancellationToken);
-
-        var snapshots = await _db.CandidateMatchSnapshots.AsNoTracking()
-            .Where(s => cohortIds.Contains(s.UserId))
-            .Select(s => new { s.UserId, s.MatchesJson })
-            .ToListAsync(cancellationToken);
-
-        var companyIds = companies.Select(c => c.Id).ToList();
-        var vacancies = await _db.Vacancies.AsNoTracking()
-            .Where(v => companyIds.Contains(v.CompanyId) && v.Status == VacancyStatus.Active)
-            .Select(v => new
-            {
-                v.Id,
-                v.Title,
-                v.CompanyId,
-                v.HourlyWage,
-                v.SalaryTableId,
-                v.FlexibleTimes,
-                v.CulturePillarsJson
-            })
-            .ToListAsync(cancellationToken);
-
-        var companyNames = companies.ToDictionary(c => c.Id, c => c.Name);
-
-        // KPIs
+        // Free KPIs always computed
         var (candStatus, candValue) = CandidateInsightsPrivacy.SuppressCount(cohortSize);
 
         var hourMidpoints = new List<decimal>();
@@ -217,243 +231,294 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         var avgHoursRaw = hourMidpoints.Count == 0
             ? 0
             : (int)Math.Round((double)hourMidpoints.Average(), MidpointRounding.AwayFromZero);
-        // Avg hours is not a headcount — still suppress when cohort is ok but we report via SuppressCount on rounded avg only when enough hours samples.
         var avgHours = CandidateInsightsPrivacy.MeetsThreshold(hourMidpoints.Count)
             ? new SuppressedCount(CandidateInsightsPrivacy.StatusOk, Math.Max(0, avgHoursRaw))
             : new SuppressedCount(CandidateInsightsPrivacy.StatusInsufficient, null);
 
-        var (p32s, p32v) = CandidateInsightsPrivacy.SuppressCount(plus32);
-        var active30 = cohortUsers.Count(u => u.LastLoginAtUtc is DateTime t && t >= active30Start);
-        var (a30s, a30v) = CandidateInsightsPrivacy.SuppressCount(active30);
+        // Locked sections: do not compute when free (D8 / cheaper + no leak).
+        SuppressedCount? plus32Kpi = null;
+        SuppressedCount? active30Kpi = null;
+        SuppressedCount? matchingKpi = null;
+        IReadOnlyList<RankedItem> dreamGroups = [];
+        InsightsDistribution? workFields = null;
+        InsightsDistribution? dna = null;
+        InsightsDistribution? competences = null;
+        InsightsDistribution? personality = null;
+        InsightsDistribution? priorities = null;
+        InsightsDistribution? workKinds = null;
+        IReadOnlyList<DensityCell> density = [];
+        List<VacancyReach> vacancyReach = [];
+        InsightsTrend? trend = null;
 
-        var vacancyIds = vacancies.Select(v => v.Id).ToHashSet();
-        var matchingCandidateIds = new HashSet<Guid>();
-        var perVacancyMatch = vacancies.ToDictionary(v => v.Id, _ => new HashSet<Guid>());
-        foreach (var snap in snapshots)
+        if (isFullAccess)
         {
-            foreach (var match in ParseMatches(snap.MatchesJson))
+            var (p32s, p32v) = CandidateInsightsPrivacy.SuppressCount(plus32);
+            plus32Kpi = new SuppressedCount(p32s, p32v);
+            var active30 = cohortUsers.Count(u => u.LastLoginAtUtc is DateTime t && t >= active30Start);
+            var (a30s, a30v) = CandidateInsightsPrivacy.SuppressCount(active30);
+            active30Kpi = new SuppressedCount(a30s, a30v);
+
+            var careerPlans = await _db.CandidateCareerPlans.AsNoTracking()
+                .Where(p => cohortIds.Contains(p.UserId))
+                .Select(p => new { p.UserId, p.DreamKey, p.DreamTitle })
+                .ToListAsync(cancellationToken);
+
+            var competencies = await _db.CandidateCompetencies.AsNoTracking()
+                .Where(c => cohortIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
+                .ToListAsync(cancellationToken);
+
+            var careerInterests = await _db.CandidateCareerInterests.AsNoTracking()
+                .Where(c => cohortIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
+                .ToListAsync(cancellationToken);
+
+            var personalities = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
+                .Where(c => cohortIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
+                .ToListAsync(cancellationToken);
+
+            var values = await _db.CandidateValuesProfiles.AsNoTracking()
+                .Where(c => cohortIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
+                .ToListAsync(cancellationToken);
+
+            var snapshots = await _db.CandidateMatchSnapshots.AsNoTracking()
+                .Where(s => cohortIds.Contains(s.UserId))
+                .Select(s => new { s.UserId, s.MatchesJson })
+                .ToListAsync(cancellationToken);
+
+            var companyIds = companies.Select(c => c.Id).ToList();
+            var vacancies = await _db.Vacancies.AsNoTracking()
+                .Where(v => companyIds.Contains(v.CompanyId) && v.Status == VacancyStatus.Active)
+                .Select(v => new
+                {
+                    v.Id,
+                    v.Title,
+                    v.CompanyId,
+                    v.HourlyWage,
+                    v.SalaryTableId,
+                    v.FlexibleTimes,
+                    v.CulturePillarsJson
+                })
+                .ToListAsync(cancellationToken);
+
+            var companyNames = companies.ToDictionary(c => c.Id, c => c.Name);
+
+            var vacancyIds = vacancies.Select(v => v.Id).ToHashSet();
+            var matchingCandidateIds = new HashSet<Guid>();
+            var perVacancyMatch = vacancies.ToDictionary(v => v.Id, _ => new HashSet<Guid>());
+            foreach (var snap in snapshots)
             {
-                if (match.MatchPercent < 70 || !vacancyIds.Contains(match.Id))
+                foreach (var match in ParseMatches(snap.MatchesJson))
+                {
+                    if (match.MatchPercent < 70 || !vacancyIds.Contains(match.Id))
+                    {
+                        continue;
+                    }
+
+                    matchingCandidateIds.Add(snap.UserId);
+                    perVacancyMatch[match.Id].Add(snap.UserId);
+                }
+            }
+
+            var (matchS, matchV) = CandidateInsightsPrivacy.SuppressCount(matchingCandidateIds.Count);
+            matchingKpi = new SuppressedCount(matchS, matchV);
+
+            dreamGroups = careerPlans
+                .Where(p => !string.IsNullOrWhiteSpace(p.DreamKey))
+                .GroupBy(p => p.DreamKey.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Select(g =>
+                {
+                    var label = g
+                        .Select(x => x.DreamTitle?.Trim())
+                        .Where(t => !string.IsNullOrWhiteSpace(t))
+                        .GroupBy(t => t!, StringComparer.OrdinalIgnoreCase)
+                        .OrderByDescending(x => x.Count())
+                        .Select(x => x.Key)
+                        .FirstOrDefault() ?? g.Key;
+                    return (Key: g.Key, Label: label, Count: g.Select(x => x.UserId).Distinct().Count());
+                })
+                .Where(x => CandidateInsightsPrivacy.MeetsThreshold(x.Count))
+                .OrderByDescending(x => x.Count)
+                .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+                .Take(10)
+                .Select(x =>
+                {
+                    var (st, val) = CandidateInsightsPrivacy.SuppressCount(x.Count);
+                    return new RankedItem(x.Label, new SuppressedCount(st, val));
+                })
+                .ToList();
+
+            var roleCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var prefs in prefsByUser.Values)
+            {
+                foreach (var role in prefs.Roles.Where(r => !string.IsNullOrWhiteSpace(r)).Distinct(StringComparer.OrdinalIgnoreCase))
+                {
+                    var key = role.Trim();
+                    roleCounts[key] = roleCounts.GetValueOrDefault(key) + 1;
+                }
+            }
+
+            workFields = BuildDistributionFromCounts(roleCounts, cohortSize, take: 8);
+            dna = BuildRiasecDistribution(careerInterests, cohortSize);
+            competences = BuildCompetencyDistribution(competencies, cohortSize);
+            personality = BuildPersonalityDistribution(personalities, cohortSize);
+
+            var travel = prefsByUser.Values.Count(p => p.MaxTravelMinutes is int m && m <= 20);
+            var flex = prefsByUser.Values.Count(p => p.FlexibleTimes == true);
+            var connection = values.Count(v => v.ConnectionPercent is int c && c >= 60);
+            var stability = values.Count(v => v.StabilityPercent is int s && s >= 60);
+            priorities = new InsightsDistribution(
+                CandidateInsightsPrivacy.StatusOk,
+                new[]
+                {
+                    Bucket("travel", "reistijd", travel, cohortSize),
+                    Bucket("flexibility", "flexibiliteit", flex, cohortSize),
+                    Bucket("culture", "sfeer_cultuur", connection, cohortSize),
+                    Bucket("stability", "zekerheid", stability, cohortSize)
+                });
+
+            var fulltime = 0;
+            var parttime = 0;
+            var sideJob = 0;
+            var internship = 0;
+            var volunteer = 0;
+            foreach (var prefs in prefsByUser.Values)
+            {
+                var presets = prefs.AvailabilityPresets ?? [];
+                var maxH = prefs.MaxHoursPerWeek;
+                var minH = prefs.MinHoursPerWeek;
+                var isFt = presets.Any(p => string.Equals(p, AvailabilityPresetRules.Fulltime, StringComparison.OrdinalIgnoreCase))
+                           || maxH >= 32;
+                var isPt = presets.Any(p => string.Equals(p, AvailabilityPresetRules.Parttime, StringComparison.OrdinalIgnoreCase))
+                           || (maxH is >= 12 and <= 31)
+                           || (minH is >= 12 and <= 31 && maxH is null or < 32);
+                var isSide = presets.Any(p => p is AvailabilityPresetRules.School
+                        or AvailabilityPresetRules.Weekend
+                        or AvailabilityPresetRules.Evening
+                        or AvailabilityPresetRules.Holiday)
+                    || (maxH is not null && maxH < 12);
+
+                if (isFt)
+                {
+                    fulltime++;
+                }
+                else if (isPt)
+                {
+                    parttime++;
+                }
+                else if (isSide)
+                {
+                    sideJob++;
+                }
+
+                foreach (var role in prefs.Roles)
+                {
+                    var kind = VacancyKindLabels.ParseOrDefault(role);
+                    if (kind == VacancyKind.Internship)
+                    {
+                        internship++;
+                        break;
+                    }
+
+                    if (kind == VacancyKind.Volunteer)
+                    {
+                        volunteer++;
+                        break;
+                    }
+                }
+            }
+
+            workKinds = new InsightsDistribution(
+                CandidateInsightsPrivacy.StatusOk,
+                new[]
+                {
+                    Bucket("fulltime", "fulltime", fulltime, cohortSize),
+                    Bucket("parttime", "parttime", parttime, cohortSize),
+                    Bucket("bijbaan", "bijbaan", sideJob, cohortSize),
+                    Bucket("stage", "stage", internship, cohortSize),
+                    Bucket("vrijwilliger", "vrijwilliger", volunteer, cohortSize)
+                });
+
+            var cellCounts = new Dictionary<(int X, int Y), int>();
+            foreach (var user in cohortUsers)
+            {
+                if (user.HomeLocation is null)
                 {
                     continue;
                 }
 
-                matchingCandidateIds.Add(snap.UserId);
-                perVacancyMatch[match.Id].Add(snap.UserId);
+                var cell = CandidateInsightsDensityGrid.ToCell(user.HomeLocation);
+                cellCounts[cell] = cellCounts.GetValueOrDefault(cell) + 1;
             }
+
+            var eligibleCells = cellCounts
+                .Where(kv => CandidateInsightsPrivacy.MeetsThreshold(kv.Value))
+                .OrderByDescending(kv => kv.Value)
+                .ToList();
+            var densityList = new List<DensityCell>();
+            if (eligibleCells.Count > 0)
+            {
+                var valuesSorted = eligibleCells.Select(c => c.Value).OrderBy(v => v).ToList();
+                var t1 = Percentile(valuesSorted, 1.0 / 3.0);
+                var t2 = Percentile(valuesSorted, 2.0 / 3.0);
+                foreach (var (cell, count) in eligibleCells)
+                {
+                    var band = count <= t1 ? 1 : count <= t2 ? 2 : 3;
+                    var (lat, lng) = CandidateInsightsDensityGrid.CellCenter(cell.X, cell.Y);
+                    densityList.Add(new DensityCell(
+                        CandidateInsightsDensityGrid.CellId(cell.X, cell.Y),
+                        lat,
+                        lng,
+                        band));
+                }
+            }
+
+            density = densityList;
+
+            var tipKeys = BuildTipKeys(priorities);
+            vacancyReach = vacancies
+                .Select(v =>
+                {
+                    var matchCount = perVacancyMatch[v.Id].Count;
+                    var (st, val) = CandidateInsightsPrivacy.SuppressCount(matchCount);
+                    var pillars = CulturePillarCatalog.Deserialize(v.CulturePillarsJson);
+                    var checklist = new InsightsVacancyChecklist(
+                        SalaryMentioned: v.HourlyWage > 0 || v.SalaryTableId is not null,
+                        FlexibleHours: v.FlexibleTimes,
+                        AtmosphereAndTeam: CulturePillarCatalog.HasProfile(pillars));
+                    return new
+                    {
+                        Reach = new VacancyReach(
+                            v.Id,
+                            v.Title,
+                            companyNames.GetValueOrDefault(v.CompanyId, ""),
+                            new SuppressedCount(st, val),
+                            new InsightsTips(tipKeys, checklist)),
+                        MatchCount = matchCount
+                    };
+                })
+                .OrderByDescending(x => x.MatchCount)
+                .ThenBy(x => x.Reach.Title, StringComparer.OrdinalIgnoreCase)
+                .Select(x => x.Reach)
+                .ToList();
+
+            if (vacancyReach.Count > 0)
+            {
+                vacancyReach = vacancyReach
+                    .Select((v, i) => i == 0
+                        ? v
+                        : v with { Tips = new InsightsTips(tipKeys, Checklist: null) })
+                    .ToList();
+            }
+
+            trend = new InsightsTrend("insufficient_history", "Insights.Trend.InsufficientHistory");
+            // TODO(D8): reminder e-mail when unlock expires within RenewWindowDays
         }
 
-        var (matchS, matchV) = CandidateInsightsPrivacy.SuppressCount(matchingCandidateIds.Count);
         var kpis = new InsightsKpis(
             new SuppressedCount(candStatus, candValue),
             avgHours,
-            new SuppressedCount(p32s, p32v),
-            new SuppressedCount(a30s, a30v),
-            new SuppressedCount(matchS, matchV));
-
-        // Dream jobs
-        var dreamGroups = careerPlans
-            .Where(p => !string.IsNullOrWhiteSpace(p.DreamKey))
-            .GroupBy(p => p.DreamKey.Trim(), StringComparer.OrdinalIgnoreCase)
-            .Select(g =>
-            {
-                var label = g
-                    .Select(x => x.DreamTitle?.Trim())
-                    .Where(t => !string.IsNullOrWhiteSpace(t))
-                    .GroupBy(t => t!, StringComparer.OrdinalIgnoreCase)
-                    .OrderByDescending(x => x.Count())
-                    .Select(x => x.Key)
-                    .FirstOrDefault() ?? g.Key;
-                return (Key: g.Key, Label: label, Count: g.Select(x => x.UserId).Distinct().Count());
-            })
-            .Where(x => CandidateInsightsPrivacy.MeetsThreshold(x.Count))
-            .OrderByDescending(x => x.Count)
-            .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
-            .Take(isFullAccess ? 10 : 3)
-            .Select(x =>
-            {
-                var (st, val) = CandidateInsightsPrivacy.SuppressCount(x.Count);
-                return new RankedItem(x.Label, new SuppressedCount(st, val));
-            })
-            .ToList();
-
-        // Work fields from preference Roles (top preferred roles; no invented category mapping)
-        var roleCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        foreach (var prefs in prefsByUser.Values)
-        {
-            foreach (var role in prefs.Roles.Where(r => !string.IsNullOrWhiteSpace(r)).Distinct(StringComparer.OrdinalIgnoreCase))
-            {
-                var key = role.Trim();
-                roleCounts[key] = roleCounts.GetValueOrDefault(key) + 1;
-            }
-        }
-
-        var workFields = BuildDistributionFromCounts(roleCounts, cohortSize, take: 8);
-
-        // DNA / competences / personality (locked when !full)
-        InsightsDistribution? dna = null;
-        InsightsDistribution? competences = null;
-        InsightsDistribution? personality = null;
-        if (isFullAccess)
-        {
-            dna = BuildRiasecDistribution(careerInterests, cohortSize);
-            competences = BuildCompetencyDistribution(competencies, cohortSize);
-            personality = BuildPersonalityDistribution(personalities, cohortSize);
-        }
-
-        // Priorities
-        var travel = prefsByUser.Values.Count(p => p.MaxTravelMinutes is int m && m <= 20);
-        var flex = prefsByUser.Values.Count(p => p.FlexibleTimes == true);
-        var connection = values.Count(v => v.ConnectionPercent is int c && c >= 60);
-        var stability = values.Count(v => v.StabilityPercent is int s && s >= 60);
-        var priorities = new InsightsDistribution(
-            CandidateInsightsPrivacy.StatusOk,
-            new[]
-            {
-                Bucket("travel", "reistijd", travel, cohortSize),
-                Bucket("flexibility", "flexibiliteit", flex, cohortSize),
-                Bucket("culture", "sfeer_cultuur", connection, cohortSize),
-                Bucket("stability", "zekerheid", stability, cohortSize)
-            });
-
-        // Work kinds
-        var fulltime = 0;
-        var parttime = 0;
-        var sideJob = 0;
-        var internship = 0;
-        var volunteer = 0;
-        foreach (var prefs in prefsByUser.Values)
-        {
-            var presets = prefs.AvailabilityPresets ?? [];
-            var maxH = prefs.MaxHoursPerWeek;
-            var minH = prefs.MinHoursPerWeek;
-            var isFt = presets.Any(p => string.Equals(p, AvailabilityPresetRules.Fulltime, StringComparison.OrdinalIgnoreCase))
-                       || maxH >= 32;
-            var isPt = presets.Any(p => string.Equals(p, AvailabilityPresetRules.Parttime, StringComparison.OrdinalIgnoreCase))
-                       || (maxH is >= 12 and <= 31)
-                       || (minH is >= 12 and <= 31 && maxH is null or < 32);
-            var isSide = presets.Any(p => p is AvailabilityPresetRules.School
-                    or AvailabilityPresetRules.Weekend
-                    or AvailabilityPresetRules.Evening
-                    or AvailabilityPresetRules.Holiday)
-                || (maxH is not null && maxH < 12);
-
-            if (isFt)
-            {
-                fulltime++;
-            }
-            else if (isPt)
-            {
-                parttime++;
-            }
-            else if (isSide)
-            {
-                sideJob++;
-            }
-
-            foreach (var role in prefs.Roles)
-            {
-                var kind = VacancyKindLabels.ParseOrDefault(role);
-                if (kind == VacancyKind.Internship)
-                {
-                    internship++;
-                    break;
-                }
-
-                if (kind == VacancyKind.Volunteer)
-                {
-                    volunteer++;
-                    break;
-                }
-            }
-        }
-
-        var workKinds = new InsightsDistribution(
-            CandidateInsightsPrivacy.StatusOk,
-            new[]
-            {
-                Bucket("fulltime", "fulltime", fulltime, cohortSize),
-                Bucket("parttime", "parttime", parttime, cohortSize),
-                Bucket("bijbaan", "bijbaan", sideJob, cohortSize),
-                Bucket("stage", "stage", internship, cohortSize),
-                Bucket("vrijwilliger", "vrijwilliger", volunteer, cohortSize)
-            });
-
-        // Density
-        var cellCounts = new Dictionary<(int X, int Y), int>();
-        foreach (var user in cohortUsers)
-        {
-            if (user.HomeLocation is null)
-            {
-                continue;
-            }
-
-            var cell = CandidateInsightsDensityGrid.ToCell(user.HomeLocation);
-            cellCounts[cell] = cellCounts.GetValueOrDefault(cell) + 1;
-        }
-
-        var eligibleCells = cellCounts
-            .Where(kv => CandidateInsightsPrivacy.MeetsThreshold(kv.Value))
-            .OrderByDescending(kv => kv.Value)
-            .ToList();
-        var density = new List<DensityCell>();
-        if (eligibleCells.Count > 0)
-        {
-            var valuesSorted = eligibleCells.Select(c => c.Value).OrderBy(v => v).ToList();
-            var t1 = Percentile(valuesSorted, 1.0 / 3.0);
-            var t2 = Percentile(valuesSorted, 2.0 / 3.0);
-            foreach (var (cell, count) in eligibleCells)
-            {
-                var band = count <= t1 ? 1 : count <= t2 ? 2 : 3;
-                var (lat, lng) = CandidateInsightsDensityGrid.CellCenter(cell.X, cell.Y);
-                density.Add(new DensityCell(
-                    CandidateInsightsDensityGrid.CellId(cell.X, cell.Y),
-                    lat,
-                    lng,
-                    band));
-            }
-        }
-
-        // Vacancy reach + tips
-        var tipKeys = BuildTipKeys(priorities);
-        var vacancyReach = vacancies
-            .Select(v =>
-            {
-                var matchCount = perVacancyMatch[v.Id].Count;
-                var (st, val) = CandidateInsightsPrivacy.SuppressCount(matchCount);
-                var pillars = CulturePillarCatalog.Deserialize(v.CulturePillarsJson);
-                var checklist = new InsightsVacancyChecklist(
-                    SalaryMentioned: v.HourlyWage > 0 || v.SalaryTableId is not null,
-                    FlexibleHours: v.FlexibleTimes,
-                    AtmosphereAndTeam: CulturePillarCatalog.HasProfile(pillars));
-                return new
-                {
-                    Reach = new VacancyReach(
-                        v.Id,
-                        v.Title,
-                        companyNames.GetValueOrDefault(v.CompanyId, ""),
-                        new SuppressedCount(st, val),
-                        new InsightsTips(tipKeys, checklist)),
-                    MatchCount = matchCount
-                };
-            })
-            .OrderByDescending(x => x.MatchCount)
-            .ThenBy(x => x.Reach.Title, StringComparer.OrdinalIgnoreCase)
-            .Select(x => x.Reach)
-            .ToList();
-
-        // Attach checklist only on the top vacancy; others keep tip keys only
-        if (vacancyReach.Count > 0)
-        {
-            var top = vacancyReach[0];
-            vacancyReach = vacancyReach
-                .Select((v, i) => i == 0
-                    ? v
-                    : v with { Tips = new InsightsTips(tipKeys, Checklist: null) })
-                .ToList();
-        }
-
-        var trend = new InsightsTrend("insufficient_history", "Insights.Trend.InsufficientHistory");
+            plus32Kpi,
+            active30Kpi,
+            matchingKpi);
 
         return new CandidateInsightsDto(
             scope,
@@ -468,27 +533,41 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
             density,
             vacancyReach,
             trend,
-            locked);
+            locked,
+            coverageDto,
+            offer);
     }
 
-    private static CandidateInsightsDto InsufficientDto(InsightsScope scope, IReadOnlyList<string> locked)
+    private static CandidateInsightsDto InsufficientDto(
+        InsightsScope scope,
+        IReadOnlyList<string> locked,
+        InsightsCoverageDto coverage,
+        InsightsOfferDto offer)
     {
         var insuff = new SuppressedCount(CandidateInsightsPrivacy.StatusInsufficient, null);
-        var emptyDist = new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []);
         return new CandidateInsightsDto(
             scope,
-            new InsightsKpis(insuff, insuff, insuff, insuff, insuff),
+            new InsightsKpis(
+                insuff,
+                insuff,
+                scope.IsFullAccess ? insuff : null,
+                scope.IsFullAccess ? insuff : null,
+                scope.IsFullAccess ? insuff : null),
             [],
-            emptyDist,
-            scope.IsFullAccess ? emptyDist : null,
-            scope.IsFullAccess ? emptyDist : null,
-            scope.IsFullAccess ? emptyDist : null,
-            emptyDist,
-            emptyDist,
+            scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
+            scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
+            scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
+            scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
+            scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
+            scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
             [],
             [],
-            new InsightsTrend("insufficient_history", "Insights.Trend.InsufficientHistory"),
-            locked);
+            scope.IsFullAccess
+                ? new InsightsTrend("insufficient_history", "Insights.Trend.InsufficientHistory")
+                : null,
+            locked,
+            coverage,
+            offer);
     }
 
     private static InsightsDistributionBucket Bucket(string key, string label, int numerator, int denominator)
@@ -601,7 +680,7 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
             dims.Select(d => Bucket(d.Key, d.Key, counts[d.Key], cohortSize)).ToList());
     }
 
-    private static IReadOnlyList<string> BuildTipKeys(InsightsDistribution priorities)
+    private static List<string> BuildTipKeys(InsightsDistribution priorities)
     {
         var tips = new List<string>();
         foreach (var bucket in priorities.Buckets
@@ -630,7 +709,7 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         return tips;
     }
 
-    private static int Percentile(IReadOnlyList<int> sortedAscending, double p)
+    private static int Percentile(List<int> sortedAscending, double p)
     {
         if (sortedAscending.Count == 0)
         {
@@ -641,7 +720,7 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         return sortedAscending[Math.Clamp(idx, 0, sortedAscending.Count - 1)];
     }
 
-    private static IReadOnlyList<CandidateMatchedVacancyDto> ParseMatches(string? json)
+    private static List<CandidateMatchedVacancyDto> ParseMatches(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -659,7 +738,7 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
     }
 
     private async Task<List<User>> LoadCohortUsersAsync(
-        IReadOnlyList<GeoPoint> origins,
+        List<GeoPoint> origins,
         int radiusKm,
         DateTime periodStart,
         CancellationToken cancellationToken)
@@ -746,6 +825,612 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
                 && CandidateConsentRules.HasCurrentTestAiConsent(u)
                 && CandidateConsentRules.CanUseCandidateFeatures(u))
             .ToList();
+    }
+
+    public async Task<CandidateInsightsUnlockResultDto> UnlockAsync(
+        ClaimsPrincipal principal,
+        string scope,
+        Guid? branchId,
+        string idempotencyKey,
+        Guid? unlockRequestId = null,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureFeatureEnabledAsync(cancellationToken);
+        EnsureAllowedRole(principal);
+
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            throw new CandidateInsightsException("missing_idempotency_key", "Idempotency-Key is verplicht.", 400);
+        }
+
+        var key = idempotencyKey.Trim();
+        if (key.Length > 128)
+        {
+            throw new CandidateInsightsException("invalid_idempotency_key", "Idempotency-Key is te lang.", 400);
+        }
+
+        var existingByKey = await _db.CandidateInsightsUnlocks.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.IdempotencyKey == key, cancellationToken);
+        if (existingByKey is not null)
+        {
+            var bal = await _tokens.GetBalanceAsync(existingByKey.WalletCompanyId, cancellationToken);
+            return new CandidateInsightsUnlockResultDto(
+                existingByKey.Id,
+                existingByKey.ExpiresAtUtc,
+                0m,
+                bal);
+        }
+
+        if (RoleClaimMatching.HasRole(principal, JobsyRoles.RegionalManager))
+        {
+            throw new CandidateInsightsException("read_only", "Regiomanager kan inzichten niet ontgrendelen.", 403);
+        }
+
+        var featureSnap = await _features.GetAsync(cancellationToken);
+        var perBranch = featureSnap.CandidateInsightsUnlockPerBranch;
+        var scopeKind = scope?.Trim().ToLowerInvariant() switch
+        {
+            "company" => CandidateInsightsUnlockScopeKind.Company,
+            "branch" => CandidateInsightsUnlockScopeKind.Branch,
+            _ => throw new CandidateInsightsException("invalid_scope", "Scope moet 'company' of 'branch' zijn.", 400)
+        };
+
+        if (scopeKind == CandidateInsightsUnlockScopeKind.Company && perBranch)
+        {
+            // BM may still buy company-wide even when per-branch is on (covers all).
+            if (!RoleClaimMatching.HasRole(principal, JobsyRoles.EnterpriseManager))
+            {
+                throw new CandidateInsightsException("needs_branch_scope", "Ontgrendel per vestiging.", 403);
+            }
+        }
+
+        if (scopeKind == CandidateInsightsUnlockScopeKind.Branch && branchId is null)
+        {
+            throw new CandidateInsightsException("needs_branch_scope", "branchId is verplicht voor vestiging-ontgrendeling.", 400);
+        }
+
+        var user = await _users.FindByPrincipalAsync(principal, cancellationToken)
+                   ?? throw new ForbiddenCompanyAccessException(branchId ?? Guid.Empty);
+
+        Company targetCompany;
+        Guid walletCompanyId;
+        Guid? spendBranchCompanyId = null;
+
+        if (scopeKind == CandidateInsightsUnlockScopeKind.Branch)
+        {
+            var bid = branchId!.Value;
+            await _authz.EnsureCanAccessCompanyAsync(principal, bid, cancellationToken);
+            targetCompany = await _db.Companies.FirstOrDefaultAsync(c => c.Id == bid, cancellationToken)
+                            ?? throw new CandidateInsightsException("branch_not_found", "Vestiging niet gevonden.", 404);
+
+            if (RoleClaimMatching.HasRole(principal, JobsyRoles.BranchManager))
+            {
+                if (!perBranch)
+                {
+                    throw new CandidateInsightsException("needs_branch_scope", "Ontgrendelen per vestiging staat uit.", 403);
+                }
+
+                if (user.CompanyId != bid)
+                {
+                    throw new CandidateInsightsException("forbidden_branch", "Je mag alleen je eigen vestiging ontgrendelen.", 403);
+                }
+
+                // VM pays from allocated branch wallet.
+                walletCompanyId = bid;
+                spendBranchCompanyId = bid;
+            }
+            else
+            {
+                walletCompanyId = CandidateInsightsAccess.ResolveWalletCompanyId(targetCompany);
+            }
+        }
+        else
+        {
+            if (!RoleClaimMatching.HasRole(principal, JobsyRoles.EnterpriseManager))
+            {
+                throw new CandidateInsightsException("read_only", "Alleen de bedrijfsmanager ontgrendelt organisatie-breed.", 403);
+            }
+
+            var scopeCompanies = await ResolveScopeCompaniesAsync(principal, null, allowAllUnion: true, cancellationToken);
+            targetCompany = scopeCompanies.Companies.FirstOrDefault(c => c.ParentCompanyId is null)
+                            ?? scopeCompanies.Companies[0];
+            // Prefer organisation root: if BM's home is org, use that.
+            if (user.CompanyId is Guid homeId)
+            {
+                var home = await _db.Companies.AsNoTracking().FirstOrDefaultAsync(c => c.Id == homeId, cancellationToken);
+                if (home is not null && home.ParentCompanyId is null)
+                {
+                    targetCompany = home;
+                }
+                else if (home?.ParentCompanyId is Guid parent)
+                {
+                    var org = await _db.Companies.AsNoTracking().FirstOrDefaultAsync(c => c.Id == parent, cancellationToken);
+                    if (org is not null)
+                    {
+                        targetCompany = org;
+                    }
+                }
+            }
+
+            walletCompanyId = CandidateInsightsAccess.ResolveWalletCompanyId(targetCompany);
+        }
+
+        var scopeCompanyId = scopeKind == CandidateInsightsUnlockScopeKind.Company
+            ? walletCompanyId
+            : targetCompany.Id;
+
+        var now = _clock.GetUtcNow().UtcDateTime;
+        var active = await _db.CandidateInsightsUnlocks
+            .Where(u =>
+                u.WalletCompanyId == walletCompanyId
+                && u.ScopeKind == scopeKind
+                && u.ScopeCompanyId == scopeCompanyId
+                && u.ExpiresAtUtc > now)
+            .OrderByDescending(u => u.ExpiresAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (active is not null)
+        {
+            var renewWindowStart = active.ExpiresAtUtc.AddDays(-CandidateInsightsAccess.RenewWindowDays);
+            if (now < renewWindowStart)
+            {
+                var bal = await _tokens.GetBalanceAsync(walletCompanyId, cancellationToken);
+                return new CandidateInsightsUnlockResultDto(active.Id, active.ExpiresAtUtc, 0m, bal);
+            }
+        }
+
+        var durationDays = CandidateInsightsAccess.ClampUnlockDays(featureSnap.CandidateInsightsUnlockDays);
+        var expiresAt = active is not null && now >= active.ExpiresAtUtc.AddDays(-CandidateInsightsAccess.RenewWindowDays)
+            ? active.ExpiresAtUtc.AddDays(durationDays) // stack
+            : now.AddDays(durationDays);
+
+        var cost = await _tokens.GetCostAsync(TokenSpendReason.InsightsUnlock, cancellationToken)
+                   ?? CandidateInsightsAccess.DefaultUnlockCostTokens;
+
+        CandidateInsightsUnlock? created = null;
+        var note = $"Kandidaatinzichten {(scopeKind == CandidateInsightsUnlockScopeKind.Company ? "organisatie" : "vestiging")} t/m {expiresAt:yyyy-MM-dd}";
+
+        var outcome = await _tokens.TrySpendAsync(
+            walletCompanyId,
+            TokenSpendReason.InsightsUnlock,
+            vacancyId: null,
+            actorUserId: user.Id,
+            branchCompanyId: spendBranchCompanyId,
+            note: note,
+            onSuccessBeforeCommit: async ct =>
+            {
+                var txEntry = _db.ChangeTracker.Entries<TokenTransaction>()
+                    .Select(e => e.Entity)
+                    .FirstOrDefault(t =>
+                        t.CompanyId == walletCompanyId
+                        && t.Reason == TokenSpendReason.InsightsUnlock
+                        && t.Kind == TokenTransactionKind.Spend
+                        && t.Id != Guid.Empty);
+                if (txEntry is null)
+                {
+                    throw new InvalidOperationException("Token transaction missing before unlock insert.");
+                }
+
+                created = new CandidateInsightsUnlock
+                {
+                    Id = Guid.NewGuid(),
+                    WalletCompanyId = walletCompanyId,
+                    ScopeKind = scopeKind,
+                    ScopeCompanyId = scopeCompanyId,
+                    UnlockedAtUtc = now,
+                    ExpiresAtUtc = expiresAt,
+                    PriceTokens = cost,
+                    DurationDays = durationDays,
+                    ActorUserId = user.Id,
+                    TokenTransactionId = txEntry.Id,
+                    IdempotencyKey = key
+                };
+                _db.CandidateInsightsUnlocks.Add(created);
+                await Task.CompletedTask;
+            },
+            cancellationToken: cancellationToken);
+
+        if (!outcome.Succeeded || outcome.Transaction is null)
+        {
+            throw new CandidateInsightsException(
+                "insufficient_tokens",
+                outcome.ErrorMessage ?? "Onvoldoende tokens.",
+                402);
+        }
+
+        if (created is null)
+        {
+            created = await _db.CandidateInsightsUnlocks
+                .FirstOrDefaultAsync(u => u.IdempotencyKey == key, cancellationToken)
+                ?? throw new InvalidOperationException("Unlock row missing after spend.");
+        }
+
+        if (unlockRequestId is Guid reqId)
+        {
+            var req = await _db.CandidateInsightsUnlockRequests
+                .FirstOrDefaultAsync(r => r.Id == reqId, cancellationToken);
+            if (req is not null && req.Status == CandidateInsightsUnlockRequestStatus.Open)
+            {
+                req.Status = CandidateInsightsUnlockRequestStatus.Ontgrendeld;
+                req.HandledByUserId = user.Id;
+                req.HandledAtUtc = now;
+                await NotifyUnlockRequestHandledAsync(req, unlocked: true, cancellationToken);
+            }
+        }
+        else if (scopeKind == CandidateInsightsUnlockScopeKind.Branch)
+        {
+            // Auto-close open request for this branch when BM/VM unlocks.
+            var open = await _db.CandidateInsightsUnlockRequests
+                .Where(r => r.BranchCompanyId == scopeCompanyId && r.Status == CandidateInsightsUnlockRequestStatus.Open)
+                .ToListAsync(cancellationToken);
+            foreach (var req in open)
+            {
+                req.Status = CandidateInsightsUnlockRequestStatus.Ontgrendeld;
+                req.HandledByUserId = user.Id;
+                req.HandledAtUtc = now;
+                await NotifyUnlockRequestHandledAsync(req, unlocked: true, cancellationToken);
+            }
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        // TODO(D8): reminder — schedule expiry reminder e-mail hook here.
+
+        return new CandidateInsightsUnlockResultDto(
+            created.Id,
+            created.ExpiresAtUtc,
+            outcome.Transaction.Amount < 0 ? -outcome.Transaction.Amount : cost,
+            outcome.Balance);
+    }
+
+    public async Task<CandidateInsightsUnlockRequestDto> CreateUnlockRequestAsync(
+        ClaimsPrincipal principal,
+        Guid branchId,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureFeatureEnabledAsync(cancellationToken);
+        EnsureAllowedRole(principal);
+
+        if (!RoleClaimMatching.HasRole(principal, JobsyRoles.BranchManager))
+        {
+            throw new CandidateInsightsException("forbidden", "Alleen de vestigingsmanager kan inzichten aanvragen.", 403);
+        }
+
+        var user = await _users.FindByPrincipalAsync(principal, cancellationToken)
+                   ?? throw new ForbiddenCompanyAccessException(branchId);
+        if (user.CompanyId != branchId)
+        {
+            throw new CandidateInsightsException("forbidden_branch", "Je mag alleen voor je eigen vestiging aanvragen.", 403);
+        }
+
+        await _authz.EnsureCanAccessCompanyAsync(principal, branchId, cancellationToken);
+        var branch = await _db.Companies.FirstOrDefaultAsync(c => c.Id == branchId, cancellationToken)
+                     ?? throw new CandidateInsightsException("branch_not_found", "Vestiging niet gevonden.", 404);
+
+        var walletId = CandidateInsightsAccess.ResolveWalletCompanyId(branch);
+        var existingOpen = await _db.CandidateInsightsUnlockRequests
+            .AnyAsync(
+                r => r.BranchCompanyId == branchId && r.Status == CandidateInsightsUnlockRequestStatus.Open,
+                cancellationToken);
+        if (existingOpen)
+        {
+            throw new CandidateInsightsException(
+                "already_open",
+                "Er staat al een openstaande aanvraag voor deze vestiging.",
+                409);
+        }
+
+        var now = _clock.GetUtcNow().UtcDateTime;
+        var row = new CandidateInsightsUnlockRequest
+        {
+            Id = Guid.NewGuid(),
+            WalletCompanyId = walletId,
+            BranchCompanyId = branchId,
+            RequestedByUserId = user.Id,
+            Status = CandidateInsightsUnlockRequestStatus.Open,
+            CreatedAtUtc = now
+        };
+        _db.CandidateInsightsUnlockRequests.Add(row);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        await NotifyBedrijfsmanagersInsightsRequestAsync(row, branch.Name, cancellationToken);
+
+        return new CandidateInsightsUnlockRequestDto(
+            row.Id,
+            row.BranchCompanyId,
+            branch.Name,
+            row.RequestedByUserId,
+            row.Status.ToString(),
+            row.CreatedAtUtc,
+            null);
+    }
+
+    public async Task<CandidateInsightsUnlockRequestDto> RejectUnlockRequestAsync(
+        ClaimsPrincipal principal,
+        Guid requestId,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureFeatureEnabledAsync(cancellationToken);
+        EnsureAllowedRole(principal);
+
+        if (!RoleClaimMatching.HasRole(principal, JobsyRoles.EnterpriseManager))
+        {
+            throw new CandidateInsightsException("forbidden", "Alleen de bedrijfsmanager kan afwijzen.", 403);
+        }
+
+        var user = await _users.FindByPrincipalAsync(principal, cancellationToken)
+                   ?? throw new ForbiddenCompanyAccessException(Guid.Empty);
+        var req = await _db.CandidateInsightsUnlockRequests
+            .Include(r => r.BranchCompany)
+            .FirstOrDefaultAsync(r => r.Id == requestId, cancellationToken)
+            ?? throw new CandidateInsightsException("not_found", "Aanvraag niet gevonden.", 404);
+
+        await _authz.EnsureCanAccessCompanyAsync(principal, req.BranchCompanyId, cancellationToken);
+
+        if (req.Status != CandidateInsightsUnlockRequestStatus.Open)
+        {
+            throw new CandidateInsightsException("not_open", "Aanvraag is niet meer open.", 409);
+        }
+
+        req.Status = CandidateInsightsUnlockRequestStatus.Afgewezen;
+        req.HandledByUserId = user.Id;
+        req.HandledAtUtc = _clock.GetUtcNow().UtcDateTime;
+        await _db.SaveChangesAsync(cancellationToken);
+        await NotifyUnlockRequestHandledAsync(req, unlocked: false, cancellationToken);
+
+        return new CandidateInsightsUnlockRequestDto(
+            req.Id,
+            req.BranchCompanyId,
+            req.BranchCompany.Name,
+            req.RequestedByUserId,
+            req.Status.ToString(),
+            req.CreatedAtUtc,
+            req.HandledAtUtc);
+    }
+
+    public async Task<(string FileName, string Csv)> ExportCsvAsync(
+        ClaimsPrincipal principal,
+        Guid? branchId,
+        int radiusKm,
+        int periodDays,
+        CancellationToken cancellationToken = default)
+    {
+        var dto = await GetInsightsAsync(principal, branchId, radiusKm, periodDays, cancellationToken);
+        if (!dto.Scope.IsFullAccess)
+        {
+            throw new CandidateInsightsException("locked", "Export vereist volledige inzichten.", 403);
+        }
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("section,key,label,value,status");
+        void Row(string section, string key, string label, int? value, string status)
+            => sb.AppendLine($"{Escape(section)},{Escape(key)},{Escape(label)},{value?.ToString() ?? ""},{Escape(status)}");
+
+        Row("kpi", "CandidatesInRadius", "Kandidaten", dto.Kpis.CandidatesInRadius.Value, dto.Kpis.CandidatesInRadius.Status);
+        Row("kpi", "AvgHoursPerWeek", "Uren", dto.Kpis.AvgHoursPerWeek.Value, dto.Kpis.AvgHoursPerWeek.Status);
+        if (dto.Kpis.Candidates32PlusHours is { } h32)
+        {
+            Row("kpi", "Candidates32PlusHours", "32+", h32.Value, h32.Status);
+        }
+
+        if (dto.Kpis.Active30d is { } a30)
+        {
+            Row("kpi", "Active30d", "Actief30d", a30.Value, a30.Status);
+        }
+
+        if (dto.Kpis.MatchingYourVacancies is { } match)
+        {
+            Row("kpi", "MatchingYourVacancies", "Match", match.Value, match.Status);
+        }
+
+        foreach (var item in dto.DreamJobsTop)
+        {
+            Row("dreamJobs", item.Label, item.Label, item.Count.Value, item.Count.Status);
+        }
+
+        void Dist(string section, InsightsDistribution? dist)
+        {
+            if (dist is null)
+            {
+                return;
+            }
+
+            foreach (var b in dist.Buckets)
+            {
+                Row(section, b.Key, b.Label, b.Share.Percent, b.Share.Status);
+            }
+        }
+
+        Dist("workFields", dto.WorkFields);
+        Dist("priorities", dto.Priorities);
+        Dist("workKinds", dto.WorkKinds);
+        Dist("dna", dto.DnaRiasec);
+        Dist("competences", dto.Competences);
+        Dist("personality", dto.Personality);
+
+        foreach (var v in dto.Vacancies)
+        {
+            Row("vacancies", v.VacancyId.ToString("D"), v.Title, v.MatchingCandidates.Value, v.MatchingCandidates.Status);
+        }
+
+        static string Escape(string s)
+        {
+            if (s.Contains(',') || s.Contains('"') || s.Contains('\n'))
+            {
+                return "\"" + s.Replace("\"", "\"\"") + "\"";
+            }
+
+            return s;
+        }
+
+        var fileName = $"kandidaatinzichten-{dto.Scope.RadiusKm}km-{dto.Scope.PeriodDays}d.csv";
+        return (fileName, sb.ToString());
+    }
+
+    private async Task EnsureFeatureEnabledAsync(CancellationToken cancellationToken)
+    {
+        if (!await IsFeatureEnabledAsync(cancellationToken))
+        {
+            throw new CandidateInsightsException("feature_disabled", "Kandidaatinzichten is uitgeschakeld.", 404);
+        }
+    }
+
+    private async Task<InsightsCoverage> LoadCoverageAsync(
+        IReadOnlyList<Company> scopeCompanies,
+        CancellationToken cancellationToken)
+    {
+        var now = _clock.GetUtcNow().UtcDateTime;
+        var walletIds = scopeCompanies.Select(CandidateInsightsAccess.ResolveWalletCompanyId).Distinct().ToList();
+        var scopeIds = scopeCompanies.Select(c => c.Id).ToList();
+        // Also load company-wide unlocks whose ScopeCompanyId is the wallet.
+        var unlocks = await _db.CandidateInsightsUnlocks.AsNoTracking()
+            .Where(u => u.ExpiresAtUtc > now
+                        && walletIds.Contains(u.WalletCompanyId)
+                        && (scopeIds.Contains(u.ScopeCompanyId) || walletIds.Contains(u.ScopeCompanyId)))
+            .ToListAsync(cancellationToken);
+        return CandidateInsightsAccess.GetCoverage(scopeCompanies, unlocks, now);
+    }
+
+    private async Task<InsightsOfferDto> BuildOfferAsync(
+        ClaimsPrincipal principal,
+        IReadOnlyList<Company> scopeCompanies,
+        InsightsCoverage coverage,
+        PlatformFeatureSnapshot featureSnap,
+        CancellationToken cancellationToken)
+    {
+        var perBranch = featureSnap.CandidateInsightsUnlockPerBranch;
+        var scopeKind = perBranch ? "branch" : "company";
+        var price = await _tokens.GetCostAsync(TokenSpendReason.InsightsUnlock, cancellationToken)
+                    ?? CandidateInsightsAccess.DefaultUnlockCostTokens;
+        var days = CandidateInsightsAccess.ClampUnlockDays(featureSnap.CandidateInsightsUnlockDays);
+
+        decimal? balance = null;
+        string? reason = null;
+        var canUnlock = true;
+
+        if (!featureSnap.CandidateInsightsEnabled)
+        {
+            canUnlock = false;
+            reason = "FeatureDisabled";
+        }
+        else if (RoleClaimMatching.HasRole(principal, JobsyRoles.RegionalManager))
+        {
+            canUnlock = false;
+            reason = "ReadOnlyRole";
+        }
+        else if (RoleClaimMatching.HasRole(principal, JobsyRoles.BranchManager))
+        {
+            if (!perBranch)
+            {
+                canUnlock = false;
+                reason = "NeedsBranchScope";
+            }
+            else
+            {
+                var walletId = scopeCompanies.Count > 0
+                    ? scopeCompanies[0].Id
+                    : Guid.Empty;
+                balance = await _tokens.GetBalanceAsync(walletId, cancellationToken);
+                if (balance < price && !coverage.CanRenew && coverage.IsFull)
+                {
+                    // already full — renew may still need balance later
+                }
+                else if (balance < price)
+                {
+                    canUnlock = false;
+                    reason = "InsufficientBalance";
+                }
+            }
+        }
+        else if (RoleClaimMatching.HasRole(principal, JobsyRoles.EnterpriseManager))
+        {
+            var walletId = scopeCompanies.Count > 0
+                ? CandidateInsightsAccess.ResolveWalletCompanyId(scopeCompanies[0])
+                : Guid.Empty;
+            // Prefer organisation wallet
+            foreach (var c in scopeCompanies)
+            {
+                var w = CandidateInsightsAccess.ResolveWalletCompanyId(c);
+                if (c.ParentCompanyId is null)
+                {
+                    walletId = c.Id;
+                    break;
+                }
+
+                walletId = w;
+            }
+
+            balance = await _tokens.GetBalanceAsync(walletId, cancellationToken);
+            if (balance < price && !(coverage.IsFull && !coverage.CanRenew))
+            {
+                canUnlock = false;
+                reason = "InsufficientBalance";
+            }
+        }
+
+        if (coverage.IsFull && !coverage.CanRenew)
+        {
+            canUnlock = false;
+            reason ??= "AlreadyUnlocked";
+        }
+
+        return new InsightsOfferDto(price, days, scopeKind, canUnlock, reason, balance);
+    }
+
+    private static InsightsCoverageDto ToCoverageDto(InsightsCoverage coverage, bool perBranch)
+        => new(
+            coverage.IsFull,
+            coverage.CoveredCount,
+            coverage.TotalCount,
+            coverage.ExpiresAtUtc,
+            coverage.CanRenew,
+            perBranch ? "branch" : "company");
+
+    private async Task NotifyBedrijfsmanagersInsightsRequestAsync(
+        CandidateInsightsUnlockRequest row,
+        string branchName,
+        CancellationToken cancellationToken)
+    {
+        var managers = await (
+            from u in _db.Users.AsNoTracking()
+            where u.IsActive && u.Role == UserRole.EnterpriseManager
+                  && (u.CompanyId == row.WalletCompanyId
+                      || _db.UserCompanies.Any(uc => uc.UserId == u.Id && uc.CompanyId == row.WalletCompanyId))
+            select u.Id
+        ).Distinct().ToListAsync(cancellationToken);
+
+        foreach (var managerId in managers)
+        {
+            await _notifications.CreateAsync(new NotificationCreateRequest(
+                managerId,
+                $"{branchName} vraagt Kandidaatinzichten aan",
+                "Bekijk de aanvraag in Te doen.",
+                "insights_unlock_request",
+                DeepLink: "/werkgever/te-doen",
+                ActionLabel: "Ontgrendelen",
+                ActionUrl: $"/werkgever/kandidaatinzichten?request={row.Id:D}",
+                RelatedEntityType: nameof(CandidateInsightsUnlockRequest),
+                RelatedEntityId: row.Id), cancellationToken);
+        }
+    }
+
+    private async Task NotifyUnlockRequestHandledAsync(
+        CandidateInsightsUnlockRequest req,
+        bool unlocked,
+        CancellationToken cancellationToken)
+    {
+        var title = unlocked ? "Kandidaatinzichten ontgrendeld" : "Aanvraag afgewezen";
+        var body = unlocked
+            ? "Je bedrijfsmanager heeft Kandidaatinzichten ontgrendeld."
+            : "Je aanvraag voor Kandidaatinzichten is afgewezen.";
+        await _notifications.CreateAsync(new NotificationCreateRequest(
+            req.RequestedByUserId,
+            title,
+            body,
+            "insights_unlock_request",
+            DeepLink: "/werkgever/kandidaatinzichten",
+            RelatedEntityType: nameof(CandidateInsightsUnlockRequest),
+            RelatedEntityId: req.Id), cancellationToken);
     }
 
     private async Task<ScopeCompanies> ResolveScopeCompaniesAsync(

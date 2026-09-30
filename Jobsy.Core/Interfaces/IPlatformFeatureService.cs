@@ -21,7 +21,10 @@ public sealed record PlatformFeatureSnapshot(
     DateOnly? FreePublishUntil = null,
     int MinimumSessionVersion = 0,
     bool SupportAccessNotifyAdmins = false,
-    bool SupportAccessNotifySubject = false);
+    bool SupportAccessNotifySubject = false,
+    bool CandidateInsightsEnabled = true,
+    int CandidateInsightsUnlockDays = 90,
+    bool CandidateInsightsUnlockPerBranch = false);
 
 /// <summary>
 /// Partial platform-feature update. Null fields keep the current value (nullable = keep).
@@ -42,4 +45,7 @@ public sealed record PlatformFeatureUpdate(
     bool ClearFreePublishUntil = false,
     int? MinimumSessionVersion = null,
     bool? SupportAccessNotifyAdmins = null,
-    bool? SupportAccessNotifySubject = null);
+    bool? SupportAccessNotifySubject = null,
+    bool? CandidateInsightsEnabled = null,
+    int? CandidateInsightsUnlockDays = null,
+    bool? CandidateInsightsUnlockPerBranch = null);

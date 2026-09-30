@@ -1,0 +1,314 @@
+@namespace Jobsy.Web.Components.Werkgever.Org
+@using Jobsy.Web.Werkgever
+@inject CultureState Culture
+
+<div class="wg-org-layout">
+    <div class="wg-org-tree-panel">
+        <div class="wg-org-tree" role="tree" aria-label="@Culture["WgOrg.TreeLabel"]" tabindex="0"
+             @onkeydown="OnKeyDown">
+            @foreach (var root in Roots)
+            {
+                @RenderNode(root, depth: 0)
+            }
+        </div>
+        @if (CanManage)
+        {
+            <div class="wg-org-tree__footer">
+                @if (ShowAddRegion)
+                {
+                    <button type="button" class="btn-compact" @onclick="() => OnAddRegion.InvokeAsync()">
+                        + @Culture["WgOrg.AddRegion"]
+                    </button>
+                }
+                <button type="button" class="btn-compact" @onclick="() => OnAddBranch.InvokeAsync()">
+                    + @Culture["WgOrg.AddBranchKvk"]
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="wg-org-detail detail-card">
+        @if (Selected is null)
+        {
+            <p class="muted">@Culture["WgOrg.SelectNode"]</p>
+        }
+        else
+        {
+            <header class="wg-org-detail__head">
+                <div>
+                    <h2>@Selected.Name</h2>
+                    <p class="muted">@DetailSubline</p>
+                </div>
+                @if (CanManage && Selected.Kind != OrgTreeNodeKind.Org)
+                {
+                    <button type="button" class="btn-compact" @onclick="() => OnEditSelected.InvokeAsync()">
+                        @Culture["Common.Edit"]
+                    </button>
+                }
+            </header>
+            @DetailContent
+        }
+    </div>
+</div>
+
+<div class="wg-org-flat">
+    @foreach (var node in FlatNodes)
+    {
+        var selected = string.Equals(SelectedKey, node.Key, StringComparison.OrdinalIgnoreCase);
+        <button type="button"
+                class="wg-org-flat__item @(selected ? "is-selected" : null)"
+                @onclick="() => SelectAsync(node.Key)">
+            <strong>@node.Name</strong>
+            @if (node.MissingManager)
+            {
+                <span class="status-pill status-pill--warning">@Culture["WgOrg.NoManager"]</span>
+            }
+            <span class="muted">@FlatMeta(node)</span>
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<OrgTreeNode> Roots { get; set; } = [];
+    [Parameter] public string? SelectedKey { get; set; }
+    [Parameter] public EventCallback<string> SelectedKeyChanged { get; set; }
+    [Parameter] public bool CanManage { get; set; }
+    [Parameter] public bool ShowAddRegion { get; set; }
+    [Parameter] public EventCallback OnAddRegion { get; set; }
+    [Parameter] public EventCallback OnAddBranch { get; set; }
+    [Parameter] public EventCallback OnEditSelected { get; set; }
+    [Parameter] public RenderFragment? DetailContent { get; set; }
+
+    private IReadOnlyList<string> _expanded = [];
+    private IReadOnlyList<OrgTreeNode> FlatNodes => OrgTreeBuilder.Flatten(Roots)
+        .Where(n => n.Kind != OrgTreeNodeKind.Region || n.Id != Guid.Empty || (n.Children?.Count ?? 0) > 0)
+        .ToList();
+
+    private OrgTreeNode? Selected => OrgTreeBuilder.Find(Roots, SelectedKey);
+
+    private string DetailSubline
+    {
+        get
+        {
+            if (Selected is null)
+            {
+                return "";
+            }
+
+            if (Selected.Kind == OrgTreeNodeKind.Vestiging)
+            {
+                return string.Format(Culture["WgOrg.Detail.Vestiging"], Selected.LiveVacancies, Selected.TokenBalance.ToString("0.##"));
+            }
+
+            var vestigingen = Selected.ChildCount ?? Selected.Children?.Count(c => c.Kind == OrgTreeNodeKind.Vestiging)
+                ?? CountVestigingen(Selected);
+            return string.Format(Culture["WgOrg.Detail.Group"], vestigingen, Selected.LiveVacancies);
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_expanded.Count == 0 && Roots.Count > 0)
+        {
+            _expanded = Roots.Select(r => r.Key).ToList();
+        }
+
+        if (string.IsNullOrWhiteSpace(SelectedKey) && Roots.Count > 0)
+        {
+            SelectedKey = Roots[0].Key;
+        }
+    }
+
+    public void ExpandRegions()
+    {
+        var keys = new HashSet<string>(_expanded, StringComparer.OrdinalIgnoreCase);
+        foreach (var root in Roots)
+        {
+            keys.Add(root.Key);
+            if (root.Children is null)
+            {
+                continue;
+            }
+
+            foreach (var child in root.Children.Where(c => c.Kind == OrgTreeNodeKind.Region))
+            {
+                keys.Add(child.Key);
+            }
+        }
+
+        _expanded = keys.ToList();
+    }
+
+    private RenderFragment RenderNode(OrgTreeNode node, int depth) => builder =>
+    {
+        var selected = string.Equals(SelectedKey, node.Key, StringComparison.OrdinalIgnoreCase);
+        var expanded = IsExpanded(node.Key);
+        var hasChildren = node.Children is { Count: > 0 };
+        var seq = 0;
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", $"wg-org-tree__node wg-org-tree__node--depth-{depth}");
+        builder.AddAttribute(seq++, "role", "treeitem");
+        builder.AddAttribute(seq++, "aria-selected", selected);
+        if (hasChildren)
+        {
+            builder.AddAttribute(seq++, "aria-expanded", expanded);
+        }
+
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", $"wg-org-tree__row {(selected ? "is-selected" : null)}");
+
+        if (hasChildren)
+        {
+            builder.OpenElement(seq++, "button");
+            builder.AddAttribute(seq++, "type", "button");
+            builder.AddAttribute(seq++, "class", "wg-org-tree__twist");
+            builder.AddAttribute(seq++, "aria-label", expanded ? Culture["WgOrg.Collapse"] : Culture["WgOrg.Expand"]);
+            builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => ToggleExpand(node.Key)));
+            builder.AddContent(seq++, expanded ? "▾" : "▸");
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.OpenElement(seq++, "span");
+            builder.AddAttribute(seq++, "class", "wg-org-tree__twist-spacer");
+            builder.CloseElement();
+        }
+
+        builder.OpenElement(seq++, "button");
+        builder.AddAttribute(seq++, "type", "button");
+        builder.AddAttribute(seq++, "class", "wg-org-tree__label");
+        builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => SelectAsync(node.Key)));
+        builder.OpenElement(seq++, "span");
+        builder.AddContent(seq++, node.Name);
+        if (node.ChildCount is int count && node.Kind != OrgTreeNodeKind.Vestiging)
+        {
+            builder.AddContent(seq++, $" ({count})");
+        }
+
+        builder.CloseElement();
+        if (node.MissingManager)
+        {
+            builder.OpenElement(seq++, "span");
+            builder.AddAttribute(seq++, "class", "status-pill status-pill--warning");
+            builder.AddContent(seq++, Culture["WgOrg.NoManager"]);
+            builder.CloseElement();
+        }
+
+        builder.CloseElement(); // label button
+        builder.CloseElement(); // row
+
+        if (hasChildren && expanded)
+        {
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "role", "group");
+            builder.AddAttribute(seq++, "class", "wg-org-tree__children");
+            foreach (var child in node.Children!)
+            {
+                builder.AddContent(seq++, RenderNode(child, depth + 1));
+            }
+
+            builder.CloseElement();
+        }
+
+        builder.CloseElement();
+    };
+
+    private async Task SelectAsync(string key)
+    {
+        SelectedKey = key;
+        if (!IsExpanded(key))
+        {
+            // ensure ancestors stay expanded — no-op for leaf
+        }
+
+        await SelectedKeyChanged.InvokeAsync(key);
+    }
+
+    private void ToggleExpand(string key)
+    {
+        var set = new HashSet<string>(_expanded, StringComparer.OrdinalIgnoreCase);
+        if (!set.Add(key))
+        {
+            set.Remove(key);
+        }
+
+        _expanded = set.ToList();
+    }
+
+    private bool IsExpanded(string key)
+        => _expanded.Contains(key, StringComparer.OrdinalIgnoreCase);
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        var flat = FlatNodes;
+        if (flat.Count == 0)
+        {
+            return;
+        }
+
+        var index = flat.ToList().FindIndex(n =>
+            string.Equals(n.Key, SelectedKey, StringComparison.OrdinalIgnoreCase));
+        if (index < 0)
+        {
+            index = 0;
+        }
+
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                await SelectAsync(flat[Math.Min(flat.Count - 1, index + 1)].Key);
+                break;
+            case "ArrowUp":
+                await SelectAsync(flat[Math.Max(0, index - 1)].Key);
+                break;
+            case "ArrowRight":
+                if (!IsExpanded(flat[index].Key))
+                {
+                    ToggleExpand(flat[index].Key);
+                }
+                else if (flat[index].Children is { Count: > 0 })
+                {
+                    await SelectAsync(flat[index].Children![0].Key);
+                }
+
+                break;
+            case "ArrowLeft":
+                if (IsExpanded(flat[index].Key) && flat[index].Children is { Count: > 0 })
+                {
+                    ToggleExpand(flat[index].Key);
+                }
+                else if (flat[index].ParentId is Guid parentId)
+                {
+                    var parent = flat.FirstOrDefault(n => n.Id == parentId && n.Kind != OrgTreeNodeKind.Vestiging)
+                                 ?? flat.FirstOrDefault(n => n.Children?.Any(c => c.Key == flat[index].Key) == true);
+                    if (parent is not null)
+                    {
+                        await SelectAsync(parent.Key);
+                    }
+                }
+
+                break;
+            case "Enter":
+            case " ":
+                await SelectAsync(flat[index].Key);
+                break;
+        }
+    }
+
+    private static int CountVestigingen(OrgTreeNode node)
+    {
+        if (node.Kind == OrgTreeNodeKind.Vestiging)
+        {
+            return 1;
+        }
+
+        return node.Children?.Sum(CountVestigingen) ?? 0;
+    }
+
+    private string FlatMeta(OrgTreeNode node) => node.Kind switch
+    {
+        OrgTreeNodeKind.Org => string.Format(Culture["WgOrg.Detail.Group"], node.ChildCount ?? 0, node.LiveVacancies),
+        OrgTreeNodeKind.Region => string.Format(Culture["WgOrg.Detail.Group"], node.ChildCount ?? 0, node.LiveVacancies),
+        _ => string.Format(Culture["WgOrg.Detail.Vestiging"], node.LiveVacancies, node.TokenBalance.ToString("0.##"))
+    };
+}

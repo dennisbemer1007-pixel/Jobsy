@@ -1,0 +1,39 @@
+@page "/werkgever/talentpool"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Sections
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+<PageTitle>@Culture["WgNav.Talentpool"] · Lobsy</PageTitle>
+
+<WgPageShell>
+    <EntTabs Tabs="_tabs" ActiveKey="@_tab" BasePath="/werkgever/talentpool" />
+    @if (_tab == "contact")
+    {
+        <TalentContactsSection />
+    }
+    else
+    {
+        <TalentPoolSection />
+    }
+</WgPageShell>
+
+@code {
+    private readonly List<EntTabs.Tab> _tabs = [];
+    private string _tab = "zoeken";
+
+    protected override void OnInitialized()
+    {
+        _tabs.Add(new("zoeken", Culture["WgTabs.Search"]));
+        _tabs.Add(new("contact", Culture["WgTabs.Contacts"]));
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("tab", out var tab)
+            && string.Equals(tab.ToString(), "contact", StringComparison.OrdinalIgnoreCase))
+        {
+            _tab = "contact";
+        }
+    }
+}

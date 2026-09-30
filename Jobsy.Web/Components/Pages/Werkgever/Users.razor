@@ -1,0 +1,390 @@
+@page "/werkgever/organisatie/team"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Team
+@using Jobsy.Web.Models
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["WgNav.TeamRights"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgNav.TeamRights"]" Lead="@Culture["WgTeam.Lead"]">
+    <Actions>
+        <button type="button" class="btn-compact btn-compact--primary" @onclick="OpenInvite">
+            @Culture["WgInvite.Title"]
+        </button>
+    </Actions>
+    <ChildContent>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        else
+        {
+            <EntFilterBar Query="_search" QueryChanged="OnSearch" Placeholder="@Culture["WgTeam.Search"]">
+                <Chips>
+                    <label class="ent-filter-bar__select">
+                        <span class="visually-hidden">@Culture["WgTeam.Col.Role"]</span>
+                        <select @bind="_roleFilter" @bind:after="StateHasChanged">
+                            <option value="">@Culture["WgTeam.Filter.AllRoles"]</option>
+                            <option value="EnterpriseManager">@Culture["WgShell.Role.BM"]</option>
+                            <option value="RegionalManager">@Culture["WgShell.Role.RM"]</option>
+                            <option value="BranchManager">@Culture["WgShell.Role.VM"]</option>
+                        </select>
+                    </label>
+                    <label class="ent-filter-bar__select">
+                        <span class="visually-hidden">@Culture["WgTeam.Filter.Branch"]</span>
+                        <select @bind="_branchFilter" @bind:after="StateHasChanged">
+                            <option value="">@Culture["WgShell.AllBranches"]</option>
+                            @foreach (var c in _companies.Where(x => x.ParentCompanyId is not null))
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="ent-filter-bar__select">
+                        <span class="visually-hidden">@Culture["WgTeam.Col.Status"]</span>
+                        <select @bind="_statusFilter" @bind:after="StateHasChanged">
+                            <option value="">@Culture["WgTeam.Filter.AllStatuses"]</option>
+                            <option value="active">@Culture["WgTeam.Status.Active"]</option>
+                            <option value="inactive">@Culture["WgTeam.Status.Inactive"]</option>
+                        </select>
+                    </label>
+                </Chips>
+            </EntFilterBar>
+
+            <WgTeamTable Rows="Filtered"
+                         Companies="_companies"
+                         Regions="_regions"
+                         Loading="_loading"
+                         CanManage="true"
+                         OnEdit="StartEdit"
+                         OnDeactivate="ConfirmDeactivate"
+                         OnActivate="ActivateAsync" />
+
+            <details class="wg-team-roles-help">
+                <summary>@Culture["WgTeam.RolesHelp.Title"]</summary>
+                <ul class="wg-team-roles-help__list">
+                    @foreach (var card in TeamRoleCopy.Cards)
+                    {
+                        <li>
+                            <strong>@Culture[card.TitleKey]</strong>
+                            <span class="muted">@Culture[card.BodyKey]</span>
+                        </li>
+                    }
+                </ul>
+            </details>
+        }
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message @(_messageIsError ? "error" : null)" role="status">@_message</p>
+        }
+    </ChildContent>
+</WgPageShell>
+
+<WgInviteDrawer Open="_inviteOpen"
+                OpenChanged="OnInviteOpenChanged"
+                Companies="_companies"
+                Regions="_regions"
+                PrefillInvite="_invitePrefill"
+                OnInvited="OnInvited" />
+
+@if (_editing is not null)
+{
+    <EntDrawer Open="true" OpenChanged="OnEditOpenChanged" Title="@Culture["WgTeam.Action.EditRoleScope"]">
+        <ChildContent>
+            <label class="wg-invite__field">
+                <span>@Culture["WgInvite.Name"]</span>
+                <input @bind="_editName" />
+            </label>
+            <label class="wg-invite__field">
+                <span>@Culture["WgInvite.Role"]</span>
+                <select @bind="_editRole">
+                    <option value="EnterpriseManager">@Culture["WgShell.Role.BM"]</option>
+                    <option value="RegionalManager">@Culture["WgShell.Role.RM"]</option>
+                    <option value="BranchManager">@Culture["WgShell.Role.VM"]</option>
+                </select>
+            </label>
+            <label class="wg-invite__field">
+                <span>@Culture["WgInvite.Branch"]</span>
+                <select @bind="_editPrimary">
+                    @foreach (var c in EditPrimaryChoices)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+            </label>
+            @if (!string.IsNullOrEmpty(_editError))
+            {
+                <p class="state-message error">@_editError</p>
+            }
+        </ChildContent>
+        <Footer>
+            <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="SaveEditAsync">
+                @Culture["Common.Save"]
+            </button>
+            <button type="button" class="btn-compact" @onclick="CancelEdit">@Culture["Common.Cancel"]</button>
+        </Footer>
+    </EntDrawer>
+}
+
+@if (_confirmUser is not null)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["WgTeam.DeactivateTitle"]"
+                         TitleId="wg-team-deactivate"
+                         OnClose="() => _confirmUser = null">
+        <p>@string.Format(Culture["WgTeam.DeactivateBody"], _confirmUser.FullName)</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact btn-compact--danger" disabled="@_busy"
+                    @onclick="() => DeactivateAsync(_confirmUser)">
+                @Culture["WgTeam.Action.Deactivate"]
+            </button>
+            <button type="button" class="btn-compact" @onclick="() => _confirmUser = null">@Culture["Common.Cancel"]</button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@code {
+    private List<CompanyUserItem> _users = [];
+    private List<CompanySummary> _companies = [];
+    private List<RegionItem> _regions = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private bool _messageIsError;
+    private string _search = "";
+    private string _roleFilter = "";
+    private string _branchFilter = "";
+    private string _statusFilter = "";
+    private bool _inviteOpen;
+    private string? _invitePrefill;
+    private CompanyUserItem? _editing;
+    private string _editName = "";
+    private string _editRole = "";
+    private string _editPrimary = "";
+    private string? _editError;
+    private CompanyUserItem? _confirmUser;
+
+    private IReadOnlyList<CompanyUserItem> Filtered
+    {
+        get
+        {
+            IEnumerable<CompanyUserItem> q = _users;
+            if (!string.IsNullOrWhiteSpace(_search))
+            {
+                q = q.Where(u =>
+                    u.FullName.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                    || u.Email.Contains(_search, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_roleFilter))
+            {
+                q = q.Where(u => string.Equals(u.Role, _roleFilter, StringComparison.Ordinal));
+            }
+
+            if (Guid.TryParse(_branchFilter, out var branchId))
+            {
+                q = q.Where(u => u.CompanyId == branchId || u.MembershipCompanyIds.Contains(branchId));
+            }
+
+            if (_statusFilter == "active")
+            {
+                q = q.Where(u => u.IsActive);
+            }
+            else if (_statusFilter == "inactive")
+            {
+                q = q.Where(u => !u.IsActive);
+            }
+
+            return q.OrderBy(u => u.FullName).ToList();
+        }
+    }
+
+    private IEnumerable<CompanySummary> EditPrimaryChoices
+    {
+        get
+        {
+            if (string.Equals(_editRole, "EnterpriseManager", StringComparison.Ordinal))
+            {
+                return _companies.Where(c => c.ParentCompanyId is null);
+            }
+
+            if (string.Equals(_editRole, "BranchManager", StringComparison.Ordinal))
+            {
+                var branches = _companies.Where(c => c.ParentCompanyId is not null).ToList();
+                return branches.Count > 0 ? branches : _companies;
+            }
+
+            return _companies;
+        }
+    }
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("invite", out var invite))
+        {
+            _invitePrefill = invite.ToString();
+            _inviteOpen = true;
+        }
+
+        try
+        {
+            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            _regions = (await Api.GetRegionsAsync()).ToList();
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Task OnSearch(string value)
+    {
+        _search = value;
+        return Task.CompletedTask;
+    }
+
+    private void OpenInvite()
+    {
+        _invitePrefill = null;
+        _inviteOpen = true;
+    }
+
+    private Task OnInviteOpenChanged(bool open)
+    {
+        _inviteOpen = open;
+        if (!open)
+        {
+            _invitePrefill = null;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task OnInvited(CompanyUserItem user)
+    {
+        _users = (await Api.GetCompanyUsersAsync()).ToList();
+        _message = Culture["WgInvite.Success"];
+        _messageIsError = false;
+    }
+
+    private void StartEdit(CompanyUserItem user)
+    {
+        _editing = user;
+        _editName = user.FullName;
+        _editRole = user.Role;
+        _editPrimary = user.CompanyId?.ToString("D") ?? "";
+        _editError = null;
+    }
+
+    private Task OnEditOpenChanged(bool open)
+    {
+        if (!open)
+        {
+            CancelEdit();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void CancelEdit()
+    {
+        _editing = null;
+        _editError = null;
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (_editing is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _editError = null;
+        try
+        {
+            Guid? primary = Guid.TryParse(_editPrimary, out var pid) ? pid : null;
+            await Api.UpdateCompanyUserAsync(_editing.Id, new UpdateCompanyUserForm(
+                _editName,
+                _editRole,
+                primary,
+                _editing.MembershipCompanyIds.ToArray(),
+                _editing.IsActive));
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+            CancelEdit();
+            _message = Culture["WgTeam.Saved"];
+            _messageIsError = false;
+        }
+        catch (Exception ex)
+        {
+            _editError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ConfirmDeactivate(CompanyUserItem user) => _confirmUser = user;
+
+    private async Task DeactivateAsync(CompanyUserItem? user)
+    {
+        if (user is null)
+        {
+            return;
+        }
+
+        await SetActiveAsync(user, false);
+        _confirmUser = null;
+    }
+
+    private Task ActivateAsync(CompanyUserItem user) => SetActiveAsync(user, true);
+
+    private async Task SetActiveAsync(CompanyUserItem user, bool active)
+    {
+        _busy = true;
+        try
+        {
+            await Api.UpdateCompanyUserAsync(user.Id, new UpdateCompanyUserForm(
+                user.FullName,
+                user.Role,
+                user.CompanyId,
+                user.MembershipCompanyIds.ToArray(),
+                active));
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+            _message = active ? Culture["WgTeam.Activated"] : Culture["WgTeam.Deactivated"];
+            _messageIsError = false;
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _messageIsError = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

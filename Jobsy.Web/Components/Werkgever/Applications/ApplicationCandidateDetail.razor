@@ -1,0 +1,184 @@
+@namespace Jobsy.Web.Components.Werkgever.Applications
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@inject CultureState Culture
+
+@if (Item is not null)
+{
+    var a = Item;
+    var initials = ApplicationPipelineRules.Initials(a);
+    var steps = ApplicationPipelineRules.Stepper(a);
+    var stepKeys = new[] { "WgApp.Step.New", "WgApp.Step.Accepted", "WgApp.Step.Invited", "WgApp.Step.Hired" };
+
+    <div class="wg-app-drawer__head">
+        <span class="wg-app-drawer__avatar" aria-hidden="true">
+            @if (initials is not null)
+            {
+                @initials
+            }
+            else
+            {
+                @((MarkupString)NavIcons.User)
+            }
+        </span>
+        <div>
+            <p class="wg-app-drawer__title">@DisplayName</p>
+            <p class="wg-app-drawer__sub">
+                @a.VacancyTitle · @a.CompanyName · @Culture["WgApp.Timeline.Applied"] @a.CreatedAt.ToLocalTime().ToString("dd-MM")
+            </p>
+        </div>
+    </div>
+
+    <ol class="wg-app-stepper" aria-label="@Culture["WgApp.Tab.Timeline"]">
+        @for (var i = 0; i < steps.Count; i++)
+        {
+            var state = steps[i];
+            var cls = state switch
+            {
+                ApplicationPipelineRules.StepperState.Done => "is-done",
+                ApplicationPipelineRules.StepperState.Current => "is-current",
+                _ => ""
+            };
+            <li class="wg-app-stepper__item @cls"
+                aria-current="@(state == ApplicationPipelineRules.StepperState.Current ? "step" : null)">
+                @Culture[stepKeys[i]]
+            </li>
+        }
+    </ol>
+
+    <div class="wg-app-tabs" role="tablist">
+        <button type="button" class="@(Tab == "profiel" ? "is-active" : null)" role="tab"
+                @onclick='() => SetTab("profiel")'>@Culture["WgApp.Tab.Profile"]</button>
+        <button type="button" class="@(Tab == "motivatie" ? "is-active" : null)" role="tab"
+                @onclick='() => SetTab("motivatie")'>@Culture["WgApp.Tab.Motivation"]</button>
+        <button type="button" class="@(Tab == "tijdlijn" ? "is-active" : null)" role="tab"
+                @onclick='() => SetTab("tijdlijn")'>@Culture["WgApp.Tab.Timeline"]</button>
+    </div>
+
+    @if (Tab == "profiel")
+    {
+        @if (a.MatchPercent is int pct)
+        {
+            <p><strong>@string.Format(Culture["WgApp.Match"], pct)</strong></p>
+        }
+        <dl class="wg-app-facts">
+            <div>
+                <dt>@Culture["WgApp.Fact.Travel"]</dt>
+                <dd>@FormatTravel(a)</dd>
+            </div>
+            <div>
+                <dt>@Culture["WgApp.Fact.Available"]</dt>
+                <dd>@FormatAvailability(a)</dd>
+            </div>
+            @if (ApplicationPipelineRules.IsPiiStage(a) && !string.IsNullOrWhiteSpace(a.SnapshotDrivingLicenses))
+            {
+                <div>
+                    <dt>@Culture["WgApp.Fact.License"]</dt>
+                    <dd>@a.SnapshotDrivingLicenses</dd>
+                </div>
+            }
+            @if (ApplicationPipelineRules.IsPiiStage(a) && !string.IsNullOrWhiteSpace(a.SnapshotEducations))
+            {
+                <div>
+                    <dt>@Culture["WgApp.Fact.Education"]</dt>
+                    <dd>@a.SnapshotEducations</dd>
+                </div>
+            }
+            @if (ApplicationPipelineRules.IsPiiStage(a) && a.CandidateEmployerCount > 0)
+            {
+                <div>
+                    <dt>@Culture["WgApp.Fact.Experience"]</dt>
+                    <dd>@a.CandidateEmployerCount</dd>
+                </div>
+            }
+        </dl>
+        <div class="wg-app-see" data-testid="wg-app-see">
+            <p class="wg-app-see__title">@Culture["WgApp.See.Title"]</p>
+            @foreach (var (labelKey, unlocked) in ApplicationPipelineRules.VisibilityRows(a))
+            {
+                <p class="wg-app-see__row @(unlocked ? "is-ok" : "is-locked")">
+                    <span aria-hidden="true">@((MarkupString)(unlocked ? NavIcons.Check : NavIcons.Lock))</span>
+                    <span>@Culture[labelKey]</span>
+                </p>
+            }
+        </div>
+        @if (ApplicationPipelineRules.ShowContactBlock(a))
+        {
+            <div class="wg-app-contact">
+                @if (!string.IsNullOrWhiteSpace(a.CandidateEmail))
+                {
+                    <a href="@($"mailto:{a.CandidateEmail}")">@a.CandidateEmail</a>
+                }
+                @if (!string.IsNullOrWhiteSpace(a.CandidatePhone))
+                {
+                    <a href="@($"tel:{a.CandidatePhone}")">@a.CandidatePhone</a>
+                }
+                @if (!string.IsNullOrWhiteSpace(a.CandidateCity))
+                {
+                    <span>@a.CandidateCity</span>
+                }
+            </div>
+        }
+    }
+    else if (Tab == "motivatie")
+    {
+        <p>@(string.IsNullOrWhiteSpace(a.Motivation) ? "—" : a.Motivation)</p>
+    }
+    else
+    {
+        <dl class="wg-app-facts">
+            <div>
+                <dt>@Culture["WgApp.Timeline.Applied"]</dt>
+                <dd>@a.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</dd>
+            </div>
+            @if (a.RespondedAt is DateTime responded)
+            {
+                <div>
+                    <dt>@Culture["WgApp.Timeline.Responded"]</dt>
+                    <dd>@responded.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</dd>
+                </div>
+            }
+            <div>
+                <dt>@Culture["WgApp.Timeline.Status"]</dt>
+                <dd>@Culture[ApplicationPipelineRules.StatusLabelKey(a.Status)]</dd>
+            </div>
+        </dl>
+    }
+}
+
+@code {
+    [Parameter] public EmployerApplicationItem? Item { get; set; }
+    [Parameter] public string Tab { get; set; } = "profiel";
+    [Parameter] public EventCallback<string> TabChanged { get; set; }
+
+    private string DisplayName => Item is null
+        ? ""
+        : ApplicationPipelineRules.DisplayName(Item, Culture["WgApp.Anonymous"]);
+
+    private async Task SetTab(string tab)
+    {
+        Tab = tab;
+        await TabChanged.InvokeAsync(tab);
+    }
+
+    private string FormatTravel(EmployerApplicationItem item)
+        => string.Format(
+            Culture["WgApp.TravelFmt"],
+            item.EstimatedTravelMinutes,
+            UiLabels.Transport(Culture, item.PreferredTransport));
+
+    private string FormatAvailability(EmployerApplicationItem item)
+    {
+        var availability = LobsyCvModelFactory.ParseAvailabilityPayload(item.SnapshotAvailabilityJson);
+        if (availability.FlexibleTimes)
+        {
+            return Culture["WgApp.Direct"];
+        }
+
+        return string.IsNullOrWhiteSpace(item.AvailabilitySummary) ? "—" : item.AvailabilitySummary;
+    }
+}
