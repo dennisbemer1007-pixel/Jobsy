@@ -351,6 +351,18 @@ public static class PageHelpDocs
             "Vul verplichte velden (o.a. bedrijfs-/factuurgegevens) in tot onboarding compleet is.",
             "Klaarzetten voor facturatie en uitbetalingen."),
 
+        ["/sales/profiel"] = new(
+            "Profiel & gegevens",
+            "Bedrijfsgegevens, btw/KOR, uitbetaalrekening, self-billing en beveiliging.",
+            "Houd factuurgegevens bij; wijzig IBAN veilig met 2FA.",
+            "Correcte facturen en veilige uitbetalingen."),
+
+        ["/sales/hulp"] = new(
+            "Hulp & afspraken",
+            "FAQ over commissie, self-billing, KOR en privacy.",
+            "Download overeenkomst of self-billing-toestemming; mail support bij vragen.",
+            "Duidelijkheid over hoe Lobsy Partner werkt."),
+
         ["/sales/wallet"] = new(
             "Facturen (sales)",
             "Self-billing / factuuroverzicht voor salesmanagers. Kies zelf het uitbetalingsbedrag; download facturen als PDF.",

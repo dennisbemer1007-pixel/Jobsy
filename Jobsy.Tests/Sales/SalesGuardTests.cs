@@ -52,11 +52,10 @@ public class SalesPortalNoInlineStyleTests
 {
     private static readonly HashSet<string> AllowList = new(StringComparer.OrdinalIgnoreCase)
     {
-        // Legacy moved panels — emptied by 09
+        // Legacy moved panels — emptied by 09 (onboarding redesigned in 06 without inline styles)
         "Jobsy.Web/Components/Home/SalesManagerHomePanel.razor",
         "Jobsy.Web/Components/Pages/SalesManager/SalesToolkit.razor",
         "Jobsy.Web/Components/Pages/SalesManager/Referrals.razor",
-        "Jobsy.Web/Components/Pages/SalesManager/Onboarding.razor",
         "Jobsy.Web/Components/Pages/SalesManager/Invoices.razor",
         "Jobsy.Web/Components/Pages/SalesManager/PayoutCheckoutStub.razor",
         "Jobsy.Web/Components/Pages/Admin/TokenFinanceAdmin.razor",

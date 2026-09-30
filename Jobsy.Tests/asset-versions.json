@@ -15,6 +15,10 @@
     "sha256": "5f6d5967ef32e2f8a98346aae3d729470b048d1c9310c79f750af1ec49138aa2",
     "v": "20260927-banenkaart-v3b"
   },
+  "css/features/enterprise-ui.css": {
+    "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
+    "v": "20260930-sales"
+  },
   "css/features/gratis-dna.css": {
     "sha256": "3ffb5af664b48f4edb1a38bfae8917a65f2e123844638d9d1d599e04532260a7",
     "v": "20260927-gratis-dna"
@@ -42,6 +46,10 @@
   "css/features/questionnaire.css": {
     "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",
     "v": "20260928-q-scroll"
+  },
+  "css/features/sales.css": {
+    "sha256": "b54dd6c01af27ef57090e01e7b797fe4eed7e8fb0a1213028998d5b5caeffc21",
+    "v": "20260930-sales6"
   },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
@@ -118,13 +126,5 @@
   "service-worker.published.js": {
     "sha256": "7fbbfcf8dc3ff118e4432c1ed2f84d2808f00464a350529fc334a2ee92b5b687",
     "v": "20260928-perf"
-  },
-  "css/features/enterprise-ui.css": {
-    "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
-    "v": "20260930-sales"
-  },
-  "css/features/sales.css": {
-    "sha256": "754d04072235f05e0e346aaa09823c6f99baa13227a00aff09023d7b24575317",
-    "v": "20260930-sales5"
   }
 }

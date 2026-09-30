@@ -53,9 +53,9 @@ public static class SalesNav
         new("account", "Sales.Nav.Group.Account",
         [
             new("profile", "Sales.Nav.Profile", "/sales/profiel", NavIcons.Profile,
-                [JobsyRoles.SalesManager], IsAvailable: false),
+                [JobsyRoles.SalesManager], IsAvailable: true),
             new("help", "Sales.Nav.Help", "/sales/hulp", NavIcons.Info,
-                [JobsyRoles.SalesManager], IsAvailable: false),
+                [JobsyRoles.SalesManager], IsAvailable: true),
         ]),
     ];
 

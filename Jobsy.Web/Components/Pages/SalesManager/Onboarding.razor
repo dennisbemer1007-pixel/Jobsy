@@ -3,101 +3,203 @@
 @layout SalesLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "SalesManager")]
+@using Jobsy.Core.Sales
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject NavigationManager Navigation
 
-<PageTitle>@Culture["Sales.Onboarding"] · Lobsy</PageTitle>
+<PageTitle>@Culture["Sales.Start.Title"] · @Culture["Sales.ProductLabel"]</PageTitle>
 
-<div class="panel-page">
-    <header class="panel-header">
-        <div>
-            <h1>@Culture["Sales.Onboarding"]</h1>
-            <p class="login-lead">@Culture["Sales.OnboardingLead"]</p>
+@if (_loading)
+{
+    <p class="state-message">@Culture["EntUi.Loading"]</p>
+}
+else if (_profile?.IsOnboardingComplete == true || _step >= 4)
+{
+    <section class="sp-start sp-start--done">
+        <h1>@Culture.Format("Sales.Start.DoneTitle", _profile?.TrackingCode ?? "—")</h1>
+        <p class="sp-profile__lead">@Culture["Sales.Start.DoneLead"]</p>
+        <div class="sp-start__done-actions">
+            <a class="login-submit" href="/sales/link">@Culture["Sales.Start.ToLink"]</a>
+            <a class="btn-compact" href="/sales">@Culture["Sales.Start.ToDash"]</a>
         </div>
-    </header>
+    </section>
+}
+else
+{
+    <section class="sp-start">
+        <header class="sp-profile__header">
+            <h1>@Culture["Sales.Start.Title"]</h1>
+            <p class="sp-profile__lead">@Culture["Sales.Start.Lead"]</p>
+        </header>
 
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else if (_profile?.IsOnboardingComplete == true)
-    {
-        <p class="state-message">Onboarding afgerond. Jouw trackingcode:</p>
-        <p class="stat-card__value">@_profile.TrackingCode</p>
-        <a class="auth-link" href="/home">Naar dashboard</a>
-    }
-    else
-    {
+        <ol class="sp-start__steps" aria-label="@Culture["Sales.Start.Title"]">
+            <li class="@StepClass(1)">@Culture["Sales.Start.Step1"]</li>
+            <li class="@StepClass(2)">@Culture["Sales.Start.Step2"]</li>
+            <li class="@StepClass(3)">@Culture["Sales.Start.Step3"]</li>
+        </ol>
+
         @if (!string.IsNullOrEmpty(_error))
         {
-            <p class="state-message error">@_error</p>
+            <p class="state-message error" role="alert">@_error</p>
         }
-        @if (!string.IsNullOrEmpty(_message))
+
+        @if (_step == 1)
         {
-            <p class="state-message">@_message</p>
+            <article class="sp-card sp-profile__section">
+                <div class="sp-profile__grid">
+                    <label class="sp-field sp-field--wide">
+                        <span>@Culture["Sales.Profile.CompanyName"]</span>
+                        <input @bind="_companyName" required maxlength="256" />
+                    </label>
+                    <label class="sp-field">
+                        <span>@Culture["Sales.Profile.Kvk"]</span>
+                        <input @bind="_kvk" required maxlength="8" inputmode="numeric" />
+                        <small>@Culture["Sales.Profile.KvkHelp"]</small>
+                    </label>
+                    <label class="sp-field">
+                        <span>@Culture["Sales.Profile.Country"]</span>
+                        <input @bind="_country" maxlength="64" />
+                    </label>
+                    <label class="sp-field sp-field--wide">
+                        <span>@Culture["Sales.Profile.Address"]</span>
+                        <input @bind="_address" required maxlength="512" />
+                    </label>
+                    <label class="sp-field">
+                        <span>@Culture["Sales.Profile.PostalCode"]</span>
+                        <input @bind="_postal" required maxlength="16" />
+                    </label>
+                    <label class="sp-field">
+                        <span>@Culture["Sales.Profile.City"]</span>
+                        <input @bind="_city" required maxlength="128" />
+                    </label>
+                </div>
+
+                <div class="sp-profile__radio-grid" role="radiogroup">
+                    <button type="button" class="sp-radio-card @(_vat == "Standard21" ? "is-selected" : null)"
+                            @onclick='() => _vat = "Standard21"'>
+                        <strong>@Culture["Sales.Profile.VatStandard"]</strong>
+                        <span>@Culture["Sales.Profile.VatStandardHelp"]</span>
+                    </button>
+                    <button type="button" class="sp-radio-card @(_vat == "SmallBusinessScheme" ? "is-selected" : null)"
+                            @onclick='() => _vat = "SmallBusinessScheme"'>
+                        <strong>@Culture["Sales.Profile.VatKor"]</strong>
+                        <span>@Culture["Sales.Profile.VatKorHelp"]</span>
+                    </button>
+                </div>
+                @if (_vat == "Standard21")
+                {
+                    <label class="sp-field">
+                        <span>@Culture["Sales.Profile.VatNumber"]</span>
+                        <input @bind="_vatNumber" required maxlength="32" placeholder="NL123456789B01" />
+                    </label>
+                }
+                else
+                {
+                    <label class="sp-check">
+                        <input type="checkbox" @bind="_korConfirmed" />
+                        <span>@Culture["Sales.Profile.VatKorConfirm"]</span>
+                    </label>
+                }
+
+                <div class="sp-start__nav">
+                    <button type="button" class="login-submit" disabled="@_busy" @onclick="SaveStep1Async">
+                        @Culture["Sales.Start.Next"]
+                    </button>
+                </div>
+            </article>
         }
+        else if (_step == 2)
+        {
+            <article class="sp-card sp-profile__section">
+                <label class="sp-field">
+                    <span>@Culture["Sales.Profile.Iban"]</span>
+                    <input @bind="_iban" required maxlength="34" autocomplete="off" />
+                </label>
+                <label class="sp-field">
+                    <span>@Culture["Sales.Profile.Holder"]</span>
+                    <input @bind="_holder" required maxlength="70" />
+                </label>
+                <div class="sp-start__nav">
+                    <button type="button" class="btn-compact" @onclick="() => _step = 1">@Culture["Sales.Start.Back"]</button>
+                    <button type="button" class="login-submit" disabled="@_busy" @onclick="SaveStep2Async">
+                        @Culture["Sales.Start.Next"]
+                    </button>
+                </div>
+            </article>
+        }
+        else if (_step == 3)
+        {
+            <article class="sp-card sp-profile__section">
+                <h2>@Culture["Sales.Profile.Agreement"]</h2>
+                <div class="sp-start__scroll">
+                    <p>@Culture["Sales.Start.AgreementText"]</p>
+                </div>
+                <label class="sp-check">
+                    <input type="checkbox" @bind="_agreeOk" />
+                    <span>@Culture["Sales.Start.AgreementCheck"]</span>
+                </label>
 
-        <form class="login-form" style="max-width:520px" @onsubmit="SaveProfileAsync" @onsubmit:preventDefault>
-            <label>Bedrijfsnaam <input @bind="_form.CompanyName" required maxlength="256" /></label>
-            <label>KvK-nummer <input @bind="_form.KvkNumber" required maxlength="20" placeholder="12345678" /></label>
-            <label>BTW-nummer <input @bind="_form.VatNumber" required maxlength="32" placeholder="NL123456789B01" /></label>
-            <label>Adres <input @bind="_form.Address" required maxlength="512" /></label>
-            <label>Postcode <input @bind="_form.PostalCode" required maxlength="16" /></label>
-            <label>Plaats <input @bind="_form.City" required maxlength="128" /></label>
-            <label>Land <input @bind="_form.Country" maxlength="64" /></label>
-            <label>
-                IBAN (voor uitbetaling)
-                <input @bind="_form.Iban" maxlength="34"
-                       placeholder="@(string.IsNullOrWhiteSpace(_profile?.Iban) ? "NL.." : _profile.Iban)" />
-            </label>
-            @if (!string.IsNullOrWhiteSpace(_profile?.Iban))
-            {
-                <p class="muted">Huidige rekening: @_profile.Iban (vul alleen in om te wijzigen)</p>
-            }
-            <button class="login-submit" type="submit" disabled="@_busy">Gegevens opslaan</button>
-        </form>
+                <h2>@Culture["Sales.Profile.SelfBilling"]</h2>
+                <div class="sp-start__scroll">
+                    <p>@Culture["Sales.SelfBilling.ConsentText"]</p>
+                </div>
+                <label class="sp-check">
+                    <input type="checkbox" @bind="_consentOk" />
+                    <span>@Culture["Sales.Start.ConsentCheck"]</span>
+                </label>
 
-        <section class="panel-section" style="margin-top:1.5rem;max-width:520px">
-            <h2>Bemiddelingsovereenkomst</h2>
-            <p class="muted">
-                Door te ondertekenen bevestig je dat de opgegeven KvK- en BTW-gegevens juist zijn en ga je akkoord
-                met de Lobsy-bemiddelingsovereenkomst (self-billing, 21% BTW, commissiestructuur).
-            </p>
-            <button class="login-submit" type="button" disabled="@(_busy || !_canSign)" @onclick="SignAsync">
-                Ondertekenen &amp; trackingcode genereren
-            </button>
-        </section>
-    }
-</div>
+                <div class="sp-start__nav">
+                    <button type="button" class="btn-compact" @onclick="() => _step = 2">@Culture["Sales.Start.Back"]</button>
+                    <button type="button" class="login-submit" disabled="@(_busy || !_agreeOk || !_consentOk)" @onclick="FinishAsync">
+                        @Culture["Sales.Start.Finish"]
+                    </button>
+                </div>
+            </article>
+        }
+    </section>
+}
 
 @code {
-    private SalesManagerProfile? _profile;
-    private SalesManagerProfileForm _form = new();
+    private SalesPortalProfileDto? _profile;
     private bool _loading = true;
     private bool _busy;
-    private bool _canSign;
+    private int _step = 1;
     private string? _error;
-    private string? _message;
+
+    private string _companyName = "";
+    private string _kvk = "";
+    private string _country = "NL";
+    private string _address = "";
+    private string _postal = "";
+    private string _city = "";
+    private string _vat = "Standard21";
+    private string _vatNumber = "";
+    private bool _korConfirmed;
+    private string _iban = "";
+    private string _holder = "";
+    private bool _agreeOk;
+    private bool _consentOk;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            _profile = await Api.GetMySalesManagerProfileAsync();
+            _profile = await Api.GetSalesPortalProfileAsync();
             if (_profile is not null)
             {
-                _form = new SalesManagerProfileForm
-                {
-                    CompanyName = _profile.CompanyName ?? "",
-                    KvkNumber = _profile.KvkNumber ?? "",
-                    VatNumber = _profile.VatNumber ?? "",
-                    Address = _profile.Address ?? "",
-                    PostalCode = _profile.PostalCode ?? "",
-                    City = _profile.City ?? "",
-                    Country = _profile.Country ?? "NL",
-                    Iban = null
-                };
-                _canSign = HasBusinessData(_form) && _profile.AgreementSignedAt is null;
+                _companyName = _profile.CompanyName ?? "";
+                _kvk = _profile.KvkNumber ?? "";
+                _country = _profile.Country ?? "NL";
+                _address = _profile.Address ?? "";
+                _postal = _profile.PostalCode ?? "";
+                _city = _profile.City ?? "";
+                _vatNumber = _profile.VatNumber ?? "";
+                _holder = _profile.PayoutAccountHolderName ?? _profile.FullName;
+                _vat = string.Equals(_profile.VatTreatment, "SmallBusinessScheme", StringComparison.OrdinalIgnoreCase)
+                    ? "SmallBusinessScheme"
+                    : "Standard21";
+                _korConfirmed = _vat == "SmallBusinessScheme";
             }
         }
         catch (Exception ex)
@@ -110,58 +212,78 @@
         }
     }
 
-    private async Task SaveProfileAsync()
+    private string StepClass(int n)
+        => n == _step ? "is-active" : n < _step ? "is-done" : null!;
+
+    private async Task SaveStep1Async()
     {
-        _busy = true;
-        _error = null;
-        _message = null;
-        try
+        await RunBusy(async () =>
         {
-            _profile = await Api.UpdateMySalesManagerProfileAsync(_form);
-            _canSign = _profile is not null && !_profile.IsOnboardingComplete && _profile.AgreementSignedAt is null;
-            _message = "Gegevens opgeslagen.";
+            _profile = await Api.UpdateSalesPortalCompanyAsync(new
+            {
+                companyName = _companyName,
+                kvkNumber = _kvk,
+                vatNumber = string.IsNullOrWhiteSpace(_vatNumber) ? null : _vatNumber,
+                address = _address,
+                postalCode = _postal,
+                city = _city,
+                country = _country
+            });
+            _profile = await Api.UpdateSalesPortalVatAsync(new
+            {
+                treatment = _vat,
+                vatNumber = string.IsNullOrWhiteSpace(_vatNumber) ? null : _vatNumber,
+                korConfirmed = _korConfirmed || _vat == "SmallBusinessScheme"
+            });
+            _step = 2;
+        });
+    }
+
+    private async Task SaveStep2Async()
+    {
+        await RunBusy(async () =>
+        {
+            var result = await Api.BeginSalesIbanChangeAsync(_iban, _holder);
+            if (result.Profile is not null)
+            {
+                _profile = result.Profile;
+            }
+            else if (!result.Applied)
+            {
+                // Should not happen for first IBAN; surface message if step-up unexpectedly required.
+                throw new InvalidOperationException(result.Message ?? Culture["Common.Error"]);
+            }
+
+            _profile ??= await Api.GetSalesPortalProfileAsync();
+            _step = 3;
+        });
+    }
+
+    private async Task FinishAsync()
+    {
+        await RunBusy(async () =>
+        {
+            _profile = await Api.GiveSalesSelfBillingConsentAsync();
+            _ = await Api.SignSalesManagerAgreementAsync();
+            _profile = await Api.GetSalesPortalProfileAsync();
             if (_profile?.IsOnboardingComplete == true)
             {
-                _message = $"Onboarding compleet. Code: {_profile.TrackingCode}";
+                _step = 4;
             }
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
+            else
+            {
+                throw new InvalidOperationException(
+                    "Onboarding is nog niet compleet. Controleer of alle stappen zijn afgerond.");
+            }
+        });
     }
 
-    private async Task SignAsync()
+    private async Task RunBusy(Func<Task> action)
     {
         _busy = true;
         _error = null;
-        try
-        {
-            _profile = await Api.SignSalesManagerAgreementAsync();
-            _message = _profile?.IsOnboardingComplete == true
-                ? $"Overeenkomst ondertekend. Trackingcode: {_profile.TrackingCode}"
-                : "Overeenkomst ondertekend.";
-            _canSign = false;
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
+        try { await action(); }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
     }
-
-    private static bool HasBusinessData(SalesManagerProfileForm f) =>
-        !string.IsNullOrWhiteSpace(f.CompanyName)
-        && !string.IsNullOrWhiteSpace(f.KvkNumber)
-        && !string.IsNullOrWhiteSpace(f.VatNumber)
-        && !string.IsNullOrWhiteSpace(f.Address)
-        && !string.IsNullOrWhiteSpace(f.PostalCode)
-        && !string.IsNullOrWhiteSpace(f.City);
 }

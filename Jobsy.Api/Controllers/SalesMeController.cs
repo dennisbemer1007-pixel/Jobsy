@@ -326,10 +326,10 @@ public sealed class SalesMeController : ControllerBase
                 cancellationToken);
             return Ok(dto);
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid();
-        }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });

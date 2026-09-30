@@ -319,5 +319,127 @@ public static class UiStringsSales
 
         nl["SalesAdmin.Settings.BaseTokenHint"] =
             "Wordt niet meer getoond aan werkgevers of salesmanagers; prijzen komen uit de tokenpakketten.";
+
+        // —— Profiel & gegevens ——
+        nl["Sales.Profile.Title"] = "Profiel & gegevens";
+        nl["Sales.Profile.Lead"] = "Deze gegevens staan op je facturen. Houd ze goed bij.";
+        nl["Sales.Profile.Company"] = "Bedrijf";
+        nl["Sales.Profile.CompanyHelp"] = "Staat op elke factuur die Lobsy voor je maakt.";
+        nl["Sales.Profile.CompanyName"] = "Bedrijfsnaam";
+        nl["Sales.Profile.Kvk"] = "KvK-nummer";
+        nl["Sales.Profile.KvkHelp"] = "Lobsy werkt samen met ondernemers. Je hebt een KvK-nummer nodig.";
+        nl["Sales.Profile.Country"] = "Land";
+        nl["Sales.Profile.Address"] = "Adres";
+        nl["Sales.Profile.PostalCode"] = "Postcode";
+        nl["Sales.Profile.City"] = "Plaats";
+        nl["Sales.Profile.Save"] = "Opslaan";
+        nl["Sales.Profile.Saved"] = "Opgeslagen.";
+        nl["Sales.Profile.Vat"] = "Btw";
+        nl["Sales.Profile.VatHelp"] = "Bepaalt of er btw op je factuur komt.";
+        nl["Sales.Profile.VatStandard"] = "Ik ben btw-plichtig";
+        nl["Sales.Profile.VatStandardHelp"] = "21 % btw op de factuur.";
+        nl["Sales.Profile.VatNumber"] = "Btw-nummer";
+        nl["Sales.Profile.VatKor"] = "Ik gebruik de KOR";
+        nl["Sales.Profile.VatKorHelp"] = "Kleineondernemersregeling: geen btw op de factuur.";
+        nl["Sales.Profile.VatKorConfirm"] =
+            "Ik ben aangemeld voor de KOR bij de Belastingdienst.";
+        nl["Sales.Profile.Payout"] = "Uitbetaalrekening";
+        nl["Sales.Profile.PayoutHelp"] = "Hier maakt Lobsy je geld naartoe over.";
+        nl["Sales.Profile.Iban"] = "IBAN";
+        nl["Sales.Profile.Holder"] = "Op naam van";
+        nl["Sales.Profile.Change"] = "Wijzigen";
+        nl["Sales.Profile.IbanSafeTitle"] = "Veilig wijzigen";
+        nl["Sales.Profile.IbanSafeBody"] =
+            "Voor een nieuwe IBAN vragen we je 2FA-code. Je krijgt een mail. De eerste uitbetaling naar een nieuwe rekening wacht {0} dagen.";
+        nl["Sales.Profile.IbanHold"] = "Uitbetalingen naar deze rekening kunnen vanaf {0}.";
+        nl["Sales.Profile.IbanDrawerTitle"] = "Uitbetaalrekening wijzigen";
+        nl["Sales.Profile.IbanConfirmTitle"] = "Bevestig met je authenticator";
+        nl["Sales.Profile.IbanConfirmCode"] = "Authenticatorcode";
+        nl["Sales.Profile.IbanConfirm"] = "Bevestigen";
+        nl["Sales.Profile.IbanEmailSent"] =
+            "We hebben een bevestigingslink naar je e-mail gestuurd. Open die link om de wijziging af te ronden.";
+        nl["Sales.Profile.Agreements"] = "Afspraken";
+        nl["Sales.Profile.AgreementsHelp"] = "Wat je met Lobsy hebt afgesproken.";
+        nl["Sales.Profile.Agreement"] = "Samenwerking";
+        nl["Sales.Profile.AgreementValue"] = "Bemiddelingsovereenkomst · versie {0}";
+        nl["Sales.Profile.AgreementMissing"] = "Nog niet ondertekend";
+        nl["Sales.Profile.Pdf"] = "PDF";
+        nl["Sales.Profile.SelfBilling"] = "Self-billing";
+        nl["Sales.Profile.SelfBillingOk"] = "Akkoord op {0}: Lobsy maakt je facturen";
+        nl["Sales.Profile.SelfBillingGive"] = "Toestemming geven";
+        nl["Sales.Profile.SelfBillingRevoke"] = "Intrekken";
+        nl["Sales.Profile.SelfBillingRevokeConfirm"] =
+            "Weet je zeker dat je self-billing wilt intrekken? Uitbetalingen vragen dan een handmatige factuur.";
+        nl["Sales.Profile.Commission"] = "Commissie";
+        nl["Sales.Profile.CommissionValue"] = "25 % · 10 % · 5 % over 3 jaar per werkgever";
+        nl["Sales.Profile.CommissionReferred"] = "20 % · 10 % · 5 % over 3 jaar (aangewezen salesmanager)";
+        nl["Sales.Profile.Security"] = "Beveiliging";
+        nl["Sales.Profile.SecurityHelp"] =
+            "Je ziet geld en een rekeningnummer. Daarom is 2FA verplicht.";
+        nl["Sales.Profile.Mfa"] = "Tweestapsverificatie";
+        nl["Sales.Profile.MfaOn"] = "Aan · authenticator-app";
+        nl["Sales.Profile.MfaOff"] = "Uit";
+        nl["Sales.Profile.MfaManage"] = "Beheren";
+        nl["Sales.Profile.MailPrefs"] = "Meldingen per mail";
+        nl["Sales.Profile.MailNewEmployer"] = "Nieuwe werkgever";
+        nl["Sales.Profile.MailCommission"] = "Commissie beschikbaar";
+        nl["Sales.Profile.MailPayout"] = "Uitbetaling";
+        nl["Sales.SelfBilling.ConsentText"] =
+            "Lobsy maakt namens jou de facturen voor je commissie (self-billing / \"factuur uitgereikt door afnemer\"). Je gaat akkoord met deze manier van factureren. Je controleert elke factuur en laat Lobsy binnen 14 dagen weten als er iets niet klopt. Je laat Lobsy weten wanneer je btw-situatie verandert. Je kunt deze toestemming op elk moment intrekken; daarna is een handmatige factuur via Lobsy-support nodig voor uitbetalingen.";
+        nl["SalesMail.IbanChanged"] = "Je uitbetaalrekening is gewijzigd";
+        nl["SalesMail.IbanConfirm"] = "Bevestig je nieuwe uitbetaalrekening";
+
+        // —— Onboarding ——
+        nl["Sales.Start.Title"] = "Starten";
+        nl["Sales.Start.Lead"] = "Drie stappen en je hebt je persoonlijke code.";
+        nl["Sales.Start.Step1"] = "Gegevens";
+        nl["Sales.Start.Step2"] = "Uitbetaalrekening";
+        nl["Sales.Start.Step3"] = "Afspraken";
+        nl["Sales.Start.StepDone"] = "Klaar";
+        nl["Sales.Start.Next"] = "Volgende";
+        nl["Sales.Start.Back"] = "Terug";
+        nl["Sales.Start.Finish"] = "Afronden";
+        nl["Sales.Start.AgreementCheck"] = "Ik ga akkoord met de samenwerking";
+        nl["Sales.Start.ConsentCheck"] = "Ik geef toestemming voor self-billing";
+        nl["Sales.Start.AgreementText"] =
+            "Bemiddelingsovereenkomst Lobsy Partner. Commissie 25 % · 10 % · 5 % over 3 jaar per werkgever (of 20 % in jaar 1 bij aanbeveling). Jaar 1 start bij de eerste aankoop.";
+        nl["Sales.Start.DoneTitle"] = "Je code is {0}";
+        nl["Sales.Start.DoneLead"] = "Deel je link met werkgevers.";
+        nl["Sales.Start.ToLink"] = "Naar mijn link";
+        nl["Sales.Start.ToDash"] = "Naar dashboard";
+
+        // —— Hulp ——
+        nl["Sales.Help.Title"] = "Hulp & afspraken";
+        nl["Sales.Help.Lead"] = "Antwoorden op de meest gestelde vragen.";
+        nl["Sales.Help.Faq.Attribution"] = "Hoe tel je een aanmelding voor mij?";
+        nl["Sales.Help.Faq.AttributionBody"] =
+            "Klikt iemand op je link? Dan onthouden we dat 30 dagen (first-click). Of de werkgever vult je code in bij het aanmelden — dat wint van de cookie.";
+        nl["Sales.Help.Faq.Available"] = "Wanneer is mijn commissie beschikbaar?";
+        nl["Sales.Help.Faq.AvailableBody"] =
+            "Nieuwe commissie staat 14 dagen 'In behandeling' (terugbetalingsvenster). Daarna wordt die beschikbaar voor uitbetaling.";
+        nl["Sales.Help.Faq.Payout"] = "Hoe en wanneer krijg ik geld?";
+        nl["Sales.Help.Faq.PayoutBody"] =
+            "Vanaf € 50 beschikbaar vraag je een uitbetaling aan. Lobsy keurt één maandelijkse ronde goed en betaalt per bankoverschrijving.";
+        nl["Sales.Help.Faq.SelfBilling"] = "Wat is self-billing?";
+        nl["Sales.Help.Faq.SelfBillingBody"] =
+            "Lobsy maakt de factuur voor jouw commissie namens jou (\"factuur uitgereikt door afnemer\"). Je geeft daar apart toestemming voor.";
+        nl["Sales.Help.Faq.Kor"] = "Ik gebruik de KOR, wat nu?";
+        nl["Sales.Help.Faq.KorBody"] =
+            "Kies KOR in Profiel & gegevens. Op je factuur komt dan geen btw; de tekst vermeldt de kleineondernemersregeling.";
+        nl["Sales.Help.Faq.Privacy"] = "Wat zie ik van werkgevers (en wat niet)?";
+        nl["Sales.Help.Faq.PrivacyBody"] =
+            "Je ziet bedrijfsnaam, plaats (niet bij eenmanszaak) en je eigen commissie. Geen contactpersonen, KvK, adres, vacatures of kandidaten.";
+        nl["Sales.Help.Faq.Refund"] = "Een klant vraagt geld terug, wat gebeurt er?";
+        nl["Sales.Help.Faq.RefundBody"] =
+            "Bij een refund of chargeback boeken we een negatieve correctie op je commissie, zodat je saldo klopt.";
+        nl["Sales.Help.Faq.Iban"] = "Mijn IBAN wijzigen";
+        nl["Sales.Help.Faq.IbanBody"] =
+            "Wijzig je IBAN via Profiel & gegevens. We vragen je 2FA-code, sturen een mail, en de eerste uitbetaling naar de nieuwe rekening wacht 3 dagen.";
+        nl["Sales.Help.Downloads"] = "Downloads";
+        nl["Sales.Help.Contact"] = "Contact";
+        nl["Sales.Help.ContactBody"] = "Vragen? Mail support@lobsy.nl of gebruik de feedbackknop.";
+        nl["Sales.Help.IbanConfirm.Title"] = "IBAN bevestigen";
+        nl["Sales.Help.IbanConfirm.Ok"] = "Je uitbetaalrekening is gewijzigd.";
+        nl["Sales.Help.IbanConfirm.Fail"] = "Deze link is ongeldig of verlopen.";
     }
 }

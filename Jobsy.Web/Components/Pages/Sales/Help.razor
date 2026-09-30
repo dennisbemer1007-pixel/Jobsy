@@ -1,0 +1,77 @@
+@page "/sales/hulp"
+@layout SalesLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+<PageTitle>@Culture["Sales.Help.Title"] · @Culture["Sales.ProductLabel"]</PageTitle>
+
+<section class="sp-help">
+    <header class="sp-profile__header">
+        <h1>@Culture["Sales.Help.Title"]</h1>
+        <p class="sp-profile__lead">@Culture["Sales.Help.Lead"]</p>
+    </header>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+
+    <div class="sp-help__faq">
+        @foreach (var item in Faqs)
+        {
+            <details class="sp-help__item">
+                <summary>@Culture[item.TitleKey]</summary>
+                <p>@Culture[item.BodyKey]</p>
+            </details>
+        }
+    </div>
+
+    <article class="sp-card sp-profile__section">
+        <h2>@Culture["Sales.Help.Downloads"]</h2>
+        <div class="sp-help__downloads">
+            <button type="button" class="btn-compact" @onclick="DownloadAgreementAsync">
+                @Culture["Sales.Profile.Agreement"] · @Culture["Sales.Profile.Pdf"]
+            </button>
+            <button type="button" class="btn-compact" @onclick="DownloadConsentAsync">
+                @Culture["Sales.Profile.SelfBilling"] · @Culture["Sales.Profile.Pdf"]
+            </button>
+        </div>
+    </article>
+
+    <article class="sp-card sp-profile__section">
+        <h2>@Culture["Sales.Help.Contact"]</h2>
+        <p>@Culture["Sales.Help.ContactBody"]</p>
+        <a class="btn-compact" href="mailto:support@lobsy.nl">support@lobsy.nl</a>
+    </article>
+</section>
+
+@code {
+    private string? _error;
+
+    private static readonly (string TitleKey, string BodyKey)[] Faqs =
+    [
+        ("Sales.Help.Faq.Attribution", "Sales.Help.Faq.AttributionBody"),
+        ("Sales.Help.Faq.Available", "Sales.Help.Faq.AvailableBody"),
+        ("Sales.Help.Faq.Payout", "Sales.Help.Faq.PayoutBody"),
+        ("Sales.Help.Faq.SelfBilling", "Sales.Help.Faq.SelfBillingBody"),
+        ("Sales.Help.Faq.Kor", "Sales.Help.Faq.KorBody"),
+        ("Sales.Help.Faq.Privacy", "Sales.Help.Faq.PrivacyBody"),
+        ("Sales.Help.Faq.Refund", "Sales.Help.Faq.RefundBody"),
+        ("Sales.Help.Faq.Iban", "Sales.Help.Faq.IbanBody"),
+    ];
+
+    private async Task DownloadAgreementAsync()
+    {
+        try { await Api.DownloadSalesAgreementPdfAsync(Js); }
+        catch (Exception ex) { _error = ex.Message; }
+    }
+
+    private async Task DownloadConsentAsync()
+    {
+        try { await Api.DownloadSalesConsentPdfAsync(Js); }
+        catch (Exception ex) { _error = ex.Message; }
+    }
+}

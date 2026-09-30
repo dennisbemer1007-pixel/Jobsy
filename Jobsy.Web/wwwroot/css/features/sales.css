@@ -793,3 +793,182 @@
   .sp-link__mobile-only,
   .sp-link__mobile-hero { display: none !important; }
 }
+
+/* —— Profile / help / onboarding (06) —— */
+.sp-profile__header { margin-bottom: var(--space-4, 1rem); }
+.sp-profile__header h1 { margin: 0; font-size: 1.6rem; font-weight: 700; }
+.sp-profile__lead { margin: 0.35rem 0 0; color: var(--muted); max-width: 40rem; }
+.sp-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
+  margin-bottom: var(--space-4, 1rem);
+}
+.sp-profile__sec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3, 0.75rem);
+  margin-bottom: var(--space-3, 0.75rem);
+}
+.sp-profile__sec-head h2 { margin: 0; font-size: 1.05rem; font-weight: 600; }
+.sp-profile__sec-head p { margin: 0.25rem 0 0; color: var(--muted); font-size: var(--text-sm, 0.875rem); }
+.sp-profile__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3, 0.75rem);
+}
+.sp-field { display: flex; flex-direction: column; gap: 0.35rem; font-size: var(--text-sm, 0.875rem); }
+.sp-field--wide { grid-column: 1 / -1; }
+.sp-field span { font-weight: 600; color: var(--text); }
+.sp-field small { color: var(--muted); }
+.sp-field input {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  background: var(--bg);
+  color: var(--text);
+}
+.sp-profile__actions { margin-top: var(--space-3, 0.75rem); }
+.sp-profile__radio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3, 0.75rem);
+  margin-bottom: var(--space-3, 0.75rem);
+}
+.sp-radio-card {
+  text-align: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: inherit;
+}
+.sp-radio-card.is-selected {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+.sp-radio-card strong { font-size: 0.95rem; }
+.sp-radio-card span { font-size: var(--text-sm, 0.875rem); color: var(--muted); }
+.sp-check, .sp-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: var(--text-sm, 0.875rem);
+  margin: 0.5rem 0;
+}
+.sp-profile__dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3, 0.75rem);
+  margin: 0 0 var(--space-3, 0.75rem);
+}
+.sp-profile__dl dt { font-size: 0.75rem; color: var(--muted); margin: 0 0 0.2rem; }
+.sp-profile__dl dd { margin: 0; font-weight: 600; }
+.sp-note {
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-sm);
+  background: var(--pearl-cool, #e8eef5);
+  font-size: var(--text-sm, 0.875rem);
+}
+.sp-note--warn {
+  background: color-mix(in srgb, var(--warning, #c9a227) 18%, var(--surface));
+}
+.sp-note p { margin: 0.35rem 0 0; }
+.sp-profile__hold { margin: 0.75rem 0 0; font-size: var(--text-sm, 0.875rem); color: var(--brand-deep); font-weight: 600; }
+.sp-profile__rows { list-style: none; margin: 0; padding: 0; }
+.sp-profile__rows > li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.sp-profile__rows > li:last-child { border-bottom: 0; }
+.sp-profile__rows strong { display: block; font-size: 0.95rem; }
+.sp-profile__rows p { margin: 0.25rem 0 0; color: var(--muted); font-size: var(--text-sm, 0.875rem); }
+.sp-profile__row-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.sp-link-quiet {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+.sp-profile__rows--stack { flex-direction: column; align-items: stretch; }
+.sp-profile__switches { display: flex; flex-direction: column; gap: 0.35rem; max-width: 22rem; }
+
+.sp-help__faq { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: var(--space-4, 1rem); }
+.sp-help__item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+}
+.sp-help__item summary { cursor: pointer; font-weight: 600; }
+.sp-help__item p { margin: 0.65rem 0 0; color: var(--muted); font-size: var(--text-sm, 0.875rem); }
+.sp-help__downloads { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.sp-start__steps {
+  list-style: none;
+  margin: 0 0 var(--space-4, 1rem);
+  padding: 0;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.sp-start__steps li {
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: var(--pearl-mid, #efe9e3);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--muted);
+}
+.sp-start__steps li.is-active { background: var(--brand-deep); color: #fff; font-weight: 600; }
+.sp-start__steps li.is-done { background: var(--success-soft); color: var(--success); }
+.sp-start__nav { display: flex; gap: 0.75rem; margin-top: var(--space-4, 1rem); flex-wrap: wrap; }
+.sp-start__scroll {
+  max-height: 10rem;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  font-size: var(--text-sm, 0.875rem);
+  background: var(--bg);
+}
+.sp-start__done-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: var(--space-4, 1rem); }
+
+@media (max-width: 899px) {
+  .sp-profile__grid,
+  .sp-profile__radio-grid,
+  .sp-profile__dl { grid-template-columns: 1fr; }
+  .sp-profile__rows > li { flex-direction: column; align-items: stretch; }
+  .sp-start__steps { flex-direction: column; }
+}
+@media (min-width: 1024px) {
+  .sp-start {
+    display: grid;
+    grid-template-columns: 12rem minmax(0, 1fr);
+    gap: var(--space-5, 1.25rem);
+    align-items: start;
+  }
+  .sp-start > .sp-profile__header { grid-column: 1 / -1; }
+  .sp-start__steps {
+    flex-direction: column;
+    position: sticky;
+    top: 4.5rem;
+  }
+  .sp-start > .state-message,
+  .sp-start > .sp-card { grid-column: 2; }
+}
