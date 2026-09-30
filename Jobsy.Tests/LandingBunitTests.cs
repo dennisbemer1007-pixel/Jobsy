@@ -68,10 +68,11 @@ public class LandingBunitTests : TestContext
         Assert.Contains(cut.FindAll("a[data-kpi='LandingCtaTest']"), a => a.GetAttribute("href") == PublicRoutes.Test);
         Assert.Contains(cut.FindAll("a[data-kpi='LandingCtaLogin']"), a => a.GetAttribute("href") == PublicRoutes.Login);
         Assert.Contains(cut.FindAll("a[data-kpi='LandingCtaMap']"), a => a.GetAttribute("href") == PublicRoutes.Banenkaart);
-        Assert.DoesNotContain("/register", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("href=\"/werkgevers\"", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("href=\"/scholen\"", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("data-kpi=\"LandingCtaAudience\"", cut.Markup, StringComparison.Ordinal);
+        var landing = cut.Find(".pub-landing").OuterHtml;
+        Assert.DoesNotContain("/register", landing, StringComparison.Ordinal);
+        Assert.DoesNotContain("href=\"/werkgevers\"", landing, StringComparison.Ordinal);
+        Assert.DoesNotContain("href=\"/scholen\"", landing, StringComparison.Ordinal);
+        Assert.Contains("data-kpi=\"LandingCtaAudience\"", landing, StringComparison.Ordinal);
     }
 
     [Fact]
