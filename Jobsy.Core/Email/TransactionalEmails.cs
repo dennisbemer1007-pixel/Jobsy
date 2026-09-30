@@ -129,7 +129,7 @@ public static class TransactionalEmails
             "companyverificationrejected" => CompanyVerificationRejected(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.RoleLabel),
             "engagementclaimremoved" => EngagementClaimRemoved(
-                ctx.CompanyName, "duurzaamheid", ctx.RoleLabel),
+                ctx.PublicWebBaseUrl, ctx.CompanyName, "duurzaamheid", ctx.RoleLabel),
             "companyunverifieddeleted" => CompanyUnverifiedDeleted(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName),
             "takeoveremailverification" => TakeoverEmailVerification(
@@ -704,6 +704,7 @@ public static class TransactionalEmails
     }
 
     public static ComposedEmail EngagementClaimRemoved(
+        string? baseUrl,
         string companyName,
         string itemLabel,
         string reason)
@@ -718,8 +719,9 @@ public static class TransactionalEmails
              {EmailLayout.Paragraph(
                  "Je kunt het kenmerk over 30 dagen opnieuw opgeven met nieuw bewijs, " +
                  "of een ander kenmerk kiezen.")}
+             {EmailLayout.PrimaryButton(EmailLayout.LoginUrl(baseUrl), "Naar dashboard")}
              """,
-            null,
+            baseUrl,
             preheader: "Maatschappelijk kenmerk verwijderd");
         return new("EngagementClaimRemoved", "EngagementClaimRemoved",
             "Kenmerk verwijderd — Lobsy", html);

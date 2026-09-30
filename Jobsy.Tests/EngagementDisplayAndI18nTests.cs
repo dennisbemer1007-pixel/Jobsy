@@ -54,6 +54,7 @@ public class EngagementDisplayAndI18nTests
     public void Removal_mail_includes_reason()
     {
         var mail = Jobsy.Core.Email.TransactionalEmails.EngagementClaimRemoved(
+            "https://lobsy.nl",
             "Groen & Zorg", "duurzaamheid", "Bewijs ontbreekt");
         Assert.Contains("Bewijs ontbreekt", mail.Html, StringComparison.Ordinal);
         Assert.Contains("duurzaamheid", mail.Html, StringComparison.Ordinal);

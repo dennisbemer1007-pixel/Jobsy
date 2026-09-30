@@ -395,7 +395,7 @@ internal static class UiStringsWerkgeverAanmelding
         Add("WaEngage.ReportSend", "Meld dit", "Report this", "Zgłoś", "Semnalează", "بلّغ");
         Add("WaEngage.ReportThanks", "Bedankt, we kijken ernaar.", "Thanks, we'll look into it.", "Dzięki, sprawdzimy.", "Mulțumim, verificăm.", "شكراً، سنراجع ذلك.");
         Add("WaEngage.ReportPlaceholder", "Korte toelichting", "Short explanation", "Krótki opis", "Scurtă explicație", "توضيح قصير");
-        Add("WaEngage.More", "+{0}", "+{0}", "+{0}", "+{0}", "+{0}");
+        Add("WaEngage.More", "+{0}", "+{0} more", "+{0} więcej", "+{0} în plus", "+{0} المزيد");
         Add("WaEngage.MatchBonus", "Bonus +{0}: {1} zet zich in voor {2}, en dat vind jij belangrijk.", "Bonus +{0}: {1} stands for {2}, and that matters to you.", "Bonus +{0}: {1} stawia na {2}, a to dla ciebie ważne.", "Bonus +{0}: {1} susține {2}, iar asta contează pentru tine.", "مكافأة +{0}: {1} يلتزم بـ {2}، وهذا يهمّك.");
         Add("WaEngage.OrgSection", "Maatschappelijke betrokkenheid", "Social engagement", "Zaangażowanie społeczne", "Implicare socială", "المشاركة المجتمعية");
         Add("WaEngage.OrgLead", "Optioneel. Eerlijke labels: wat wij niet controleren heet ‘door werkgever opgegeven’.", "Optional. Honest labels: what we don't check is ‘provided by employer’.", "Opcjonalne. Uczciwe etykiety.", "Opțional. Etichete oneste.", "اختياري. تسميات صادقة.");

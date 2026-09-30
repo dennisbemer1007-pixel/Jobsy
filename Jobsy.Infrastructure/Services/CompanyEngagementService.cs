@@ -427,6 +427,7 @@ public sealed class CompanyEngagementService : ICompanyEngagementService
                 }
 
                 var mail = TransactionalEmails.EngagementClaimRemoved(
+                    null,
                     companyName,
                     label,
                     reason);
