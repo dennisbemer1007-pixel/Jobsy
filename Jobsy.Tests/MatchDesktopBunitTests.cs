@@ -1,8 +1,11 @@
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using Bunit;
+using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Web.Components;
 using Jobsy.Web.Components.Match;
+using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
@@ -12,7 +15,6 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
-using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
@@ -104,15 +106,7 @@ public class MatchDesktopBunitTests : TestContext
         var cut = Render(builder =>
         {
             builder.OpenComponent<SwipeCard>(0);
-            builder.AddAttribute(1, "Model", new SwipeViewModel
-            {
-                VacancyId = Guid.NewGuid(),
-                JobTitle = "Test",
-                CompanyName = "Co",
-                MatchPercentage = 70,
-                ShowMatchPercentage = true,
-                WhyYouFit = "Omdat je past."
-            });
+            builder.AddAttribute(1, "Model", FullCard());
             builder.AddAttribute(2, "Variant", SwipeCardVariant.Mobile);
             builder.CloseComponent();
         });
@@ -121,6 +115,108 @@ public class MatchDesktopBunitTests : TestContext
         Assert.Contains("Snel kennismaken", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Waarom jij past", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Meer info", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("ApplicationStatus", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SwipeCard_dialog_shows_four_dna_rows_and_not_done_for_missing()
+    {
+        var model = FullCard();
+        model.FitDimensions = new CandidateFitDimensionsModel
+        {
+            Culture = 80,
+            Values = 70,
+            Competencies = null,
+            Interests = null
+        };
+
+        var cut = Render(builder =>
+        {
+            builder.OpenComponent<SwipeCard>(0);
+            builder.AddAttribute(1, "Model", model);
+            builder.AddAttribute(2, "Variant", SwipeCardVariant.Dialog);
+            builder.CloseComponent();
+        });
+
+        Assert.Equal(4, System.Text.RegularExpressions.Regex.Matches(cut.Markup, "data-dna=").Count);
+        Assert.Contains("Nog niet gedaan", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SwipeCard_mobile_shows_at_most_three_dna_rows_without_not_done_links()
+    {
+        var model = FullCard();
+        var cut = Render(builder =>
+        {
+            builder.OpenComponent<SwipeCard>(0);
+            builder.AddAttribute(1, "Model", model);
+            builder.AddAttribute(2, "Variant", SwipeCardVariant.Mobile);
+            builder.CloseComponent();
+        });
+
+        Assert.Equal(3, System.Text.RegularExpressions.Regex.Matches(cut.Markup, "data-dna=").Count);
+        Assert.DoesNotContain("Nog niet gedaan", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("kb-dna__todo", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SwipeCard_without_dna_or_why_omits_block()
+    {
+        var model = FullCard();
+        model.FitDimensions = null;
+        model.FitWhyKinds = [];
+        model.WhyYouFit = null;
+
+        var cut = Render(builder =>
+        {
+            builder.OpenComponent<SwipeCard>(0);
+            builder.AddAttribute(1, "Model", model);
+            builder.CloseComponent();
+        });
+
+        Assert.DoesNotContain("data-dna=", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("swipe-why", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SwipeCard_hidden_mode_shows_bureau_and_rank_lower_chip()
+    {
+        var model = FullCard();
+        model.IsHiddenMode = true;
+        model.CompanyName = "FlexBureau Westland";
+        model.RankLowerReason = "Kb.Dislike.night-shifts";
+
+        var cut = Render(builder =>
+        {
+            builder.OpenComponent<SwipeCard>(0);
+            builder.AddAttribute(1, "Model", model);
+            builder.CloseComponent();
+        });
+
+        Assert.Contains("via uitzendbureau FlexBureau Westland", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Staat lager", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("nachtdienst", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MatchUnlockPanel_fit_gate_shows_no_percent()
+    {
+        var cut = Render(builder =>
+        {
+            builder.OpenComponent<MatchUnlockPanel>(0);
+            builder.AddAttribute(1, "Gate", new MatchProfileGateViewModel
+            {
+                IsAuthenticated = true,
+                IsProfileComplete = true,
+                CultureCompleted = false,
+                ValuesCompleted = false
+            });
+            builder.AddAttribute(2, "FitGateOnly", true);
+            builder.CloseComponent();
+        });
+
+        Assert.Contains("Maak je paspoort af", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("%", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -133,7 +229,8 @@ public class MatchDesktopBunitTests : TestContext
             JobTitle = $"Job {i}",
             CompanyName = $"Co {i}",
             MatchPercentage = 90 - i,
-            ShowMatchPercentage = true
+            ShowMatchPercentage = true,
+            TravelTimeMinutes = 8 + i
         }));
 
         var closed = false;
@@ -149,11 +246,11 @@ public class MatchDesktopBunitTests : TestContext
         });
 
         Assert.Contains("1 van 12", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("je kunt niets fout doen", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Hierna", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Toetsen:", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(3, System.Text.RegularExpressions.Regex.Matches(cut.Markup, "lobsy-dialog--match__upnext-row").Count);
 
-        // Escape via close button path is covered by CloseAsync; also fire keydown
-        // synchronously (KeyDown, not KeyDownAsync) so bUnit does not wait on JS trap/release.
         cut.Find("button.share-modal__close").Click();
         Assert.True(closed);
 
@@ -171,12 +268,9 @@ public class MatchDesktopBunitTests : TestContext
             builder.CloseComponent();
         });
 
-        // Escape key — sync KeyDown; OnClose must fire even if JS release is a no-op.
         cut.Find("[role=dialog]").KeyDown(new KeyboardEventArgs { Key = "Escape" });
         cut.WaitForAssertion(() => Assert.True(closed), TimeSpan.FromSeconds(1));
 
-        // Arrow / like: drive the public SwipeCard API through the interest/reject buttons
-        // (same callbacks as ←/→) so we avoid awaiting the 280ms animation from KeyDownAsync.
         closed = false;
         _likeHandler.LikePosts = 0;
         deck.ReplaceItems(deck.Items.ToList(), index: 0);
@@ -193,16 +287,18 @@ public class MatchDesktopBunitTests : TestContext
         cut.WaitForAssertion(() => Assert.Equal(1, _likeHandler.LikePosts), TimeSpan.FromSeconds(2));
         Assert.Contains("2 van 12", cut.Markup, StringComparison.Ordinal);
 
+        var skippedId = deck.Current!.VacancyId;
         cut.Find("button.swipe-actions__btn--reject").Click();
-        cut.WaitForAssertion(() => Assert.Equal(3, deck.Position), TimeSpan.FromSeconds(2));
+        cut.WaitForAssertion(() => Assert.Equal(2, deck.Position), TimeSpan.FromSeconds(2));
         Assert.Equal(1, _likeHandler.LikePosts);
+        Assert.Equal(skippedId, deck.Items[^1].VacancyId);
+        Assert.Contains("We laten hem later nog eens zien", cut.Markup, StringComparison.Ordinal);
 
-        // Keyboard arrows still wired (smoke: does not throw / hang when card animating flag is free)
         cut.Find("[role=dialog]").KeyDown(new KeyboardEventArgs { Key = "ArrowRight" });
-        cut.WaitForAssertion(() => Assert.Equal(4, deck.Position), TimeSpan.FromSeconds(2));
+        cut.WaitForAssertion(() => Assert.Equal(3, deck.Position), TimeSpan.FromSeconds(2));
         cut.WaitForAssertion(() => Assert.Equal(2, _likeHandler.LikePosts), TimeSpan.FromSeconds(2));
 
-        for (var i = deck.Index; i < 12; i++)
+        for (var i = deck.Index; i < deck.Count; i++)
         {
             deck.Advance();
         }
@@ -214,15 +310,40 @@ public class MatchDesktopBunitTests : TestContext
             builder.AddAttribute(2, "IsOpen", true);
             builder.CloseComponent();
         });
-        Assert.Contains("Je hebt alle matches gezien", done.Markup, StringComparison.Ordinal);
+        Assert.Contains("Je hebt ze allemaal gezien", done.Markup, StringComparison.Ordinal);
+        Assert.Contains("Bekijk bewaarde banen", done.Markup, StringComparison.Ordinal);
+        Assert.Contains("Terug naar de kaart", done.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MatchDeckDialog_opens_traps_focus_and_close_releases()
+    {
+        var deck = new MatchDeck();
+        deck.ReplaceItems([FullCard()]);
+        var closed = false;
+        var cut = Render(builder =>
+        {
+            builder.OpenComponent<MatchDeckDialog>(0);
+            builder.AddAttribute(1, "Deck", deck);
+            builder.AddAttribute(2, "IsOpen", true);
+            builder.AddAttribute(3, "OnClose", EventCallback.Factory.Create(Receiver.Instance, () => closed = true));
+            builder.CloseComponent();
+        });
+
+        cut.WaitForAssertion(
+            () => Assert.Contains(JSInterop.Invocations, i => i.Identifier == "jobsyDialog.trap"),
+            TimeSpan.FromSeconds(1));
+
+        cut.Find("button.share-modal__close").Click();
+        Assert.True(closed);
+        cut.WaitForAssertion(
+            () => Assert.Contains(JSInterop.Invocations, i => i.Identifier == "jobsyDialog.release"),
+            TimeSpan.FromSeconds(1));
     }
 
     [Fact]
     public void TopMatchLeadingFragment_attributes_before_reference_capture_renders()
     {
-        // Regression for InvalidOperationException: "Attributes may only be added immediately
-        // after frames of type Element or Component" when AddComponentReferenceCapture ran
-        // before AddAttribute (desktop banenkaart circuit crash for complete profiles).
         TopMatchTile? captured = null;
         var model = new SwipeViewModel
         {
@@ -264,7 +385,6 @@ public class MatchDesktopBunitTests : TestContext
     [Fact]
     public void TopMatchLeadingFragment_reference_capture_before_attributes_throws()
     {
-        // Documents the pre-fix crash shape (capture then attributes).
         RenderFragment broken = builder =>
         {
             builder.OpenComponent<TopMatchTile>(0);
@@ -324,7 +444,8 @@ public class MatchDesktopBunitTests : TestContext
             "Match.KeyFacts", "Match.Actions", "Match.Percentage", "Match.CompanyFallback",
             "Match.TopMatch", "Match.TopMatchAria", "Match.DialogTitle", "Match.DialogProgress",
             "Match.UpNext", "Match.DialogFootnote", "Match.DeckDone", "Match.ToastLiked",
-            "Match.ToastSkipped"
+            "Match.ToastSkipped", "Kb.Match.Skipped", "Kb.Match.NoWrongChoice",
+            "Kb.Match.ViewSaved", "Kb.Match.BackToMap", "Kb.Match.SwipeHint"
         ];
 
         foreach (var lang in new[] { "nl", "en", "pl", "ro", "ar" })
@@ -334,9 +455,51 @@ public class MatchDesktopBunitTests : TestContext
                 var text = UiStrings.Get(key, lang);
                 Assert.False(string.IsNullOrWhiteSpace(text), $"{lang}:{key}");
                 Assert.DoesNotContain("Match.", text, StringComparison.Ordinal);
+                Assert.DoesNotContain("Kb.Match.", text, StringComparison.Ordinal);
             }
         }
     }
+
+    [Fact]
+    public void MatchDnaRows_helper_counts()
+    {
+        var dims = new CandidateFitDimensionsModel
+        {
+            Culture = 80,
+            Values = 70,
+            Competencies = null,
+            Interests = 60
+        };
+        Assert.Equal(4, MatchDnaRows.Build(dims, ["culture"], includeMissing: true).Count);
+        Assert.Equal(3, MatchDnaRows.Build(dims, ["culture"], includeMissing: false, maxWithData: 3).Count);
+        Assert.Empty(MatchDnaRows.Build(null, null, includeMissing: false));
+    }
+
+    private static SwipeViewModel FullCard() => new()
+    {
+        VacancyId = Guid.NewGuid(),
+        JobTitle = "Zorgmedewerker thuiszorg",
+        CompanyName = "Groenhof Zorg",
+        MatchPercentage = 82,
+        ShowMatchPercentage = true,
+        FitBand = "Strong",
+        TravelTimeMinutes = 8,
+        TransportMode = "Fiets",
+        HoursMin = 24,
+        HoursMax = 32,
+        HourlyWage = 15.20m,
+        WageVisible = true,
+        Location = "Wateringen",
+        FitWhyKinds = ["culture", "values", "competency", "interest"],
+        FitDimensions = new CandidateFitDimensionsModel
+        {
+            Culture = 82,
+            Values = 78,
+            Competencies = 74,
+            Interests = 80
+        },
+        Tags = ["Leerwerkplek"]
+    };
 
     private sealed class CountingLikeHandler : HttpMessageHandler
     {

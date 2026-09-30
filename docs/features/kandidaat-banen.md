@@ -75,3 +75,10 @@ Shared foundation for the candidate jobs stack (banenkaart, lijst, vacature, sol
 - "Gezien door werkgever" = first `EmployerViewed` (detail open / CV download / react / contact); list does not count; support access never records.
 - **Dep C ABSENT:** `/candidate/liked` redesigned in place (`h1` Bewaard), **no** `CandidateJobListTabs`, **no** nav change.
 - Bewaard cards: `KbSavedJobState` (Open / Sluit over n / Fulfilled / Closed), unsave+undo, apply / view / similar.
+
+## Match (file 08)
+
+- Desktop `MatchDeckDialog` + mobile `MatchPage` / `SwipeCard`: calibrated `KbFitPill`, "Waarom jij past" DNA rows (`MatchDnaRows`), Hierna with fit + travel, keyboard hints (← → Enter Esc).
+- D12: `MatchDeck.Defer` moves a skip to the end of the session once; second skip advances. Toast `Kb.Match.Skipped`. Never hides; map/list/top-match unaffected.
+- Gate closed → `MatchUnlockPanel` (Maak je paspoort af). Deck done → Bewaard + kaart links.
+- Hidden-mode company line via `Kb.Via.Bureau`. "Staat lager" chip when ranked lower.

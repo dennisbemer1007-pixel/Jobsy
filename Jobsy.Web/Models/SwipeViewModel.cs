@@ -1,3 +1,5 @@
+using Jobsy.Core.Rules.KandidaatBanen;
+
 namespace Jobsy.Web.Models;
 
 /// <summary>
@@ -26,6 +28,8 @@ public sealed class SwipeViewModel
     public decimal? SalaryMax { get; set; }
     /// <summary>Display period, e.g. "per maand" or "per uur".</summary>
     public string SalaryPeriod { get; set; } = "per maand";
+    public decimal? HourlyWage { get; set; }
+    public bool WageVisible { get; set; } = true;
 
     public decimal? HoursMin { get; set; }
     public decimal? HoursMax { get; set; }
@@ -34,9 +38,17 @@ public sealed class SwipeViewModel
 
     public int? MatchPercentage { get; set; }
     public bool ShowMatchPercentage { get; set; }
+    public string? FitGate { get; set; }
+    public string? FitBand { get; set; }
+    public List<string> FitWhyKinds { get; set; } = [];
+    public CandidateFitDimensionsModel? FitDimensions { get; set; }
+    /// <summary>Localization key for "Staat lager: …" (candidate-own).</summary>
+    public string? RankLowerReason { get; set; }
+    public bool IsHiddenMode { get; set; }
+    public bool TravelToBureau { get; set; }
 
-    public string LocationPrimary =>
-        string.IsNullOrWhiteSpace(Location) ? "Locatie onbekend" : Location.Trim();
+    public string? LocationPrimary =>
+        string.IsNullOrWhiteSpace(Location) ? null : Location.Trim();
 
     public string? LocationSecondary =>
         DistanceKm is null
@@ -45,13 +57,18 @@ public sealed class SwipeViewModel
                 : $"{TravelTimeMinutes} min{(string.IsNullOrWhiteSpace(TransportMode) ? "" : $" · {TransportMode}")}")
             : $"{FormatDistance(DistanceKm.Value)}{(TravelTimeMinutes is null ? "" : $" · {TravelTimeMinutes} min")}";
 
-    public string SalaryPrimary
+    public string? SalaryPrimary
     {
         get
         {
+            if (HourlyWage is decimal hourly && hourly > 0 && WageVisible)
+            {
+                return $"€ {FormatMoney(hourly)}";
+            }
+
             if (SalaryMin is null && SalaryMax is null)
             {
-                return "In overleg";
+                return null;
             }
 
             if (SalaryMin is not null && SalaryMax is not null && SalaryMin != SalaryMax)
@@ -63,28 +80,30 @@ public sealed class SwipeViewModel
         }
     }
 
-    public string SalarySecondary =>
-        string.IsNullOrWhiteSpace(SalaryPeriod) ? "per maand" : SalaryPeriod.Trim();
+    public string? SalarySecondary =>
+        HourlyWage is > 0 && WageVisible
+            ? null
+            : (string.IsNullOrWhiteSpace(SalaryPeriod) ? null : SalaryPeriod.Trim());
 
-    public string HoursPrimary
+    public string? HoursPrimary
     {
         get
         {
             if (HoursMin is null && HoursMax is null)
             {
-                return "Flexibel";
+                return null;
             }
 
             if (HoursMin is not null && HoursMax is not null && HoursMin != HoursMax)
             {
-                return $"{FormatHours(HoursMin.Value)} - {FormatHours(HoursMax.Value)}";
+                return $"{FormatHours(HoursMin.Value)}–{FormatHours(HoursMax.Value)}";
             }
 
             return FormatHours(HoursMin ?? HoursMax ?? 0);
         }
     }
 
-    public string HoursSecondary => "per week";
+    public string HoursSecondary => "uur";
 
     public static SwipeViewModel FromVacancy(VacancyListItem item, bool showMatchPercentage = true)
     {
@@ -106,7 +125,6 @@ public sealed class SwipeViewModel
             tags.Add(item.CategoryName);
         }
 
-        // Prefer monthly indication when only hourly wage is known (approx. 160h/month).
         decimal? salaryMin = null;
         decimal? salaryMax = null;
         var period = "per maand";
@@ -117,6 +135,9 @@ public sealed class SwipeViewModel
             salaryMax = monthly;
             period = "per maand";
         }
+
+        var gateClosed = string.Equals(item.FitGate, CandidateFitApply.FitGateClosed, StringComparison.OrdinalIgnoreCase);
+        var hidden = item.IntermediaryCompanyId is not null && !item.ShowClientAddressOnMap;
 
         return new SwipeViewModel
         {
@@ -130,17 +151,26 @@ public sealed class SwipeViewModel
             Location = FirstNonEmpty(item.CompanyAddress, item.OfferedByLabel),
             DistanceKm = item.DistanceKm,
             TravelTimeMinutes = item.TravelMinutes,
-            TransportMode = item.RequiredTransport.FirstOrDefault(),
+            TransportMode = item.RequiredTransport.FirstOrDefault() ?? "Fiets",
             SalaryMin = salaryMin,
             SalaryMax = salaryMax,
             SalaryPeriod = period,
+            HourlyWage = item.WageVisible ? item.HourlyWage : null,
+            WageVisible = item.WageVisible,
             HoursMin = item.MinHoursPerWeek,
             HoursMax = item.MaxHoursPerWeek,
             Tags = tags,
             MatchPercentage = item.FitPercent ?? item.MatchPercent,
             ShowMatchPercentage = showMatchPercentage
-                && !string.Equals(item.FitGate, "closed", StringComparison.OrdinalIgnoreCase)
-                && (item.FitPercent is not null || item.MatchPercent is not null)
+                && !gateClosed
+                && (item.FitPercent is not null || item.MatchPercent is not null),
+            FitGate = item.FitGate,
+            FitBand = item.FitBand,
+            FitWhyKinds = item.FitWhyKinds?.ToList() ?? [],
+            FitDimensions = item.FitDimensions,
+            RankLowerReason = item.RankLowerReason,
+            IsHiddenMode = hidden,
+            TravelToBureau = hidden
         };
     }
 
@@ -152,7 +182,7 @@ public sealed class SwipeViewModel
     private static string FormatMoney(decimal value) =>
         value % 1 == 0
             ? value.ToString("0", System.Globalization.CultureInfo.InvariantCulture)
-            : value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            : value.ToString("0.##", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
 
     private static string FormatHours(decimal value) =>
         value % 1 == 0
@@ -171,29 +201,14 @@ public sealed class SwipeViewModel
         return flat.Length <= max ? flat : flat[..(max - 1)].TrimEnd() + "…";
     }
 
-    private static string BuildWhyYouFit(VacancyListItem item)
+    private static string? BuildWhyYouFit(VacancyListItem item)
     {
         if (!string.IsNullOrWhiteSpace(item.MatchRationale))
         {
             return Truncate(item.MatchRationale, 150) ?? item.MatchRationale!;
         }
 
-        if (item.MatchPercent is int pct and >= 85)
-        {
-            return $"Sterke match ({pct}%): jouw profiel en deze rol liggen dicht bij elkaar.";
-        }
-
-        if (item.MatchPercent is int mid and >= 60)
-        {
-            return $"Goede kans ({mid}%): jouw skills en voorkeuren sluiten aan op wat hier gevraagd wordt.";
-        }
-
-        if (item.MatchPercent is int low)
-        {
-            return $"Match {low}% — bekijk of de sfeer en taken jou aanspreken.";
-        }
-
-        return "Deze vacature past bij wat jij zoekt — check of de sfeer en taken jou uitnodigen.";
+        return null;
     }
 
     private static string? FirstNonEmpty(params string?[] values)

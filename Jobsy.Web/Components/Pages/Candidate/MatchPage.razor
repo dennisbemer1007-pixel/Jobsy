@@ -4,6 +4,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using Jobsy.Web.Components.Match
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
 @inject MatchVacancyService MatchVacancies
@@ -14,19 +15,31 @@
 @inject PersistentComponentState Persist
 @implements IDisposable
 
-<PageTitle>@Culture["Nav.Match"] · Lobsy</PageTitle>
+<PageTitle>@Culture["Match.DialogTitle"] · Lobsy</PageTitle>
 
-<div class="match-page match-page--shell @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? null : "match-page--locked")">
+<div class="match-page match-page--shell @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? null : "match-page--locked")"
+     data-testid="match-page">
     <header class="match-page__top">
-        <span class="match-page__title">Match</span>
+        <div class="match-page__brand">
+            <img class="match-page__mascot"
+                 src="/images/brand/mascot-128.png?v=20260828-mascot"
+                 width="40"
+                 height="40"
+                 alt=""
+                 aria-hidden="true" />
+            <div>
+                <h1 class="match-page__title">@Culture["Match.DialogTitle"]</h1>
+                @if (_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen && _deck.Count > 0 && !_deck.IsFinished)
+                {
+                    <p class="match-page__progress-text" aria-live="polite">
+                        @Culture.Format("Match.DialogProgress", _deck.Position, _deck.Count)
+                        <span> · @Culture["Kb.Match.NoWrongChoice"]</span>
+                    </p>
+                }
+            </div>
+        </div>
         <div class="match-page__top-actions">
-            <button type="button" class="match-page__icon-btn" title="Geschiedenis" @onclick="ShowHistoryHint">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="9"/>
-                    <path d="M12 7v5l3 2"/>
-                </svg>
-            </button>
-            <a class="match-page__icon-btn" href="/" title="@Culture["Discovery.BackToSearch"]" aria-label="@Culture["Discovery.BackToSearch"]">
+            <a class="match-page__icon-btn" href="@KbRoutes.Map" title="@Culture["Discovery.BackToSearch"]" aria-label="@Culture["Discovery.BackToSearch"]">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="11" cy="11" r="7"/>
                     <path d="m20 20-3.5-3.5"/>
@@ -35,8 +48,23 @@
         </div>
     </header>
 
+    @if (_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen && _deck.Count > 0 && !_deck.IsFinished)
+    {
+        var progressPct = (int)Math.Round(100.0 * _deck.Position / _deck.Count);
+        <div class="match-page__bar"
+             role="progressbar"
+             aria-valuemin="1"
+             aria-valuemax="@_deck.Count"
+             aria-valuenow="@_deck.Position">
+            <svg class="match-page__bar-svg" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true">
+                <rect class="match-page__bar-track" x="0" y="0" width="100" height="4" rx="2" />
+                <rect class="match-page__bar-fill" x="0" y="0" width="@progressPct" height="4" rx="2" />
+            </svg>
+        </div>
+    }
+
     <section class="match-page__body @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? "match-page__panel--swipe" : "match-page__panel--gate")"
-             aria-label="@(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? "Match swipen" : "Match ontgrendelen")">
+             aria-label="@Culture["Match.DialogTitle"]">
         @if (_loading)
         {
             <PageContentSkeleton Variant="match" />
@@ -49,17 +77,24 @@
         {
             <MatchUnlockPanel Gate="_deck.Gate" FitGateOnly="true" />
         }
+        else if (_deck.IsFinished)
+        {
+            <div class="match-page__empty" data-testid="match-deck-done">
+                <h2>@Culture["Match.DeckDone"]</h2>
+                <div class="match-page__empty-actions">
+                    <a class="match-page__cta" href="@KbRoutes.Saved">@Culture["Kb.Match.ViewSaved"]</a>
+                    <a class="match-page__cta match-page__cta--ghost" href="@KbRoutes.Map">@Culture["Kb.Match.BackToMap"]</a>
+                </div>
+            </div>
+        }
         else if (Current is null)
         {
             <div class="match-page__empty">
-                <h2>Geen passende matches</h2>
-                <p>Er liggen nu geen vacatures die bij jouw opleiding en reistijd passen.</p>
-                <p class="match-gate__hint">
-                    Wil je breder zoeken of andere typen vacatures vinden? Ga dan naar de banenkaart.
-                </p>
+                <h2>@Culture["Kb.Match.EmptyTitle"]</h2>
+                <p>@Culture["Kb.Match.EmptyLead"]</p>
                 <div class="match-page__empty-actions">
-                    <a class="match-page__cta" href="/">@Culture["Discovery.BackToSearch"]</a>
-                    <button type="button" class="match-page__cta match-page__cta--ghost" @onclick="() => ReloadDeckAsync()">Opnieuw laden</button>
+                    <a class="match-page__cta" href="@KbRoutes.Map">@Culture["Discovery.BackToSearch"]</a>
+                    <button type="button" class="match-page__cta match-page__cta--ghost" @onclick="() => ReloadDeckAsync()">@Culture["Kb.Match.Reload"]</button>
                 </div>
             </div>
         }
@@ -81,6 +116,8 @@
                            OnMoreInfo="HandleMoreInfo"
                            OnSwipeComplete="HandleSwipeComplete" />
             </div>
+
+            <p class="match-page__swipe-hint">@Culture["Kb.Match.SwipeHint"]</p>
 
             @if (PeekAfterNext?.ImageUrl is { Length: > 0 } prefetchUrl)
             {
@@ -145,6 +182,7 @@
         CompetencyCompleted = gate.CompetencyCompleted,
         CareerCompleted = gate.CareerCompleted,
         CultureCompleted = gate.CultureCompleted,
+        ValuesCompleted = gate.ValuesCompleted,
         HasProvisionalScores = gate.HasProvisionalScores,
         IsProfileComplete = gate.IsProfileComplete,
         CompletedCount = gate.CompletedCount,
@@ -194,7 +232,7 @@
     }
 
     private void HandleReject(SwipeViewModel model)
-        => _ = ShowToastAsync(Culture["Match.ToastSkipped"]);
+        => _ = ShowToastAsync(Culture["Kb.Match.Skipped"]);
 
     private void HandleInterest(SwipeViewModel model)
     {
@@ -211,10 +249,16 @@
     }
 
     private void HandleSwipeComplete((SwipeViewModel Model, SwipeDirection Direction) result)
-        => _deck.Advance();
-
-    private void ShowHistoryHint()
-        => _ = ShowToastAsync("Geschiedenis volgt binnenkort");
+    {
+        if (result.Direction == SwipeDirection.Left && result.Model.VacancyId is Guid id)
+        {
+            _deck.Defer(id);
+        }
+        else
+        {
+            _deck.Advance();
+        }
+    }
 
     private async Task ShowToastAsync(string message)
     {

@@ -325,3 +325,230 @@
         display: none;
     }
 }
+
+/* === 08 Match refresh: DNA rows, Hierna meta, mobile header === */
+
+.lobsy-dialog--match__done-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    justify-content: center;
+}
+
+.lobsy-dialog--match__done-close {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.875rem;
+    cursor: pointer;
+    min-block-size: 44px;
+    padding: 0.35rem 0.75rem;
+}
+
+.lobsy-dialog--match__done-close:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+}
+
+.lobsy-dialog--match__upnext-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.lobsy-dialog--match__upnext-meta .kb-fit {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.35rem;
+}
+
+.lobsy-dialog--match__upnext-meta .kb-travel {
+    font-size: 0.75rem;
+}
+
+.swipe-card__fit-overlay {
+    position: absolute;
+    inset-block-end: 0.55rem;
+    inset-inline-start: 0.55rem;
+    inset-inline-end: auto;
+    width: auto;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.swipe-card__fit-overlay .kb-fit {
+    box-shadow: var(--shadow);
+}
+
+.swipe-card__company {
+    margin: 0 0 0.45rem;
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.swipe-card__company-name {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.swipe-card__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem 0.85rem;
+    align-items: center;
+    margin: 0 0 0.55rem;
+    font-size: 0.8125rem;
+    color: var(--text);
+}
+
+.swipe-card__fact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.swipe-card__fact-icon {
+    color: var(--brand);
+    display: inline-grid;
+    place-items: center;
+}
+
+.kb-dna--match {
+    margin-block-start: 0.35rem;
+    gap: 0.4rem;
+}
+
+.kb-dna--match .kb-dna__row {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    gap: 0.35rem 0.5rem;
+}
+
+.kb-dna--match .kb-dna__progress {
+    grid-column: 2;
+}
+
+.kb-dna--match .kb-dna__reason,
+.kb-dna--match .kb-dna__todo {
+    grid-column: 2;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.kb-dna--match-mobile .kb-dna__row {
+    grid-template-columns: auto minmax(0, 1fr);
+}
+
+.kb-dna--match-mobile .kb-dna__progress {
+    display: none;
+}
+
+.kb-dna--match-dialog .kb-dna__row {
+    grid-template-columns: 6.5rem minmax(3rem, 1fr) minmax(0, 1.4fr);
+}
+
+.kb-dna--match-dialog .kb-dna__progress {
+    grid-column: 2;
+}
+
+.kb-dna--match-dialog .kb-dna__reason {
+    grid-column: 3;
+}
+
+.kb-dna--match-dialog .kb-dna__todo {
+    grid-column: 2 / -1;
+}
+
+.swipe-actions__btn--more .swipe-actions__circle--ghost {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    color: var(--brand);
+}
+
+.swipe-actions__btn--more .swipe-actions__label {
+    color: var(--brand);
+}
+
+.swipe-actions--dialog {
+    gap: 0.75rem;
+}
+
+.swipe-actions--dialog .swipe-actions__btn--interest .swipe-actions__circle {
+    background: var(--brand);
+    border-color: var(--brand);
+}
+
+.swipe-actions--dialog .swipe-actions__btn--interest .swipe-actions__label {
+    font-weight: 600;
+}
+
+/* Mobile Match page shell (08) */
+.match-page__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.match-page__mascot {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+}
+
+.match-page__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--brand);
+    line-height: 1.2;
+}
+
+.match-page__progress-text {
+    margin: 0.1rem 0 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.match-page__bar {
+    margin: 0 0.85rem 0.55rem;
+    block-size: 4px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.match-page__bar-svg {
+    display: block;
+    width: 100%;
+    height: 4px;
+}
+
+.match-page__bar-track {
+    fill: var(--border);
+}
+
+.match-page__bar-fill {
+    fill: var(--brand);
+}
+
+.match-page__swipe-hint {
+    margin: 0.35rem 0.85rem 0;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+.swipe-card--dialog .swipe-card__stats,
+.swipe-card--mobile .swipe-card__stats {
+    display: none;
+}
+
+.swipe-card--dialog .swipe-card__photo-overlay,
+.swipe-card--mobile .swipe-card__photo-overlay {
+    display: none;
+}
+
+.swipe-card--dialog .swipe-card__logo--on-photo,
+.swipe-card--mobile .swipe-card__logo--on-photo {
+    display: none;
+}

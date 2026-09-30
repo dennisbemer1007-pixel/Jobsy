@@ -1,12 +1,26 @@
-@* Mobile Match & Swipe card — CSS translate/rotate, pointer gestures, no UI library. *@
+@* Match swipe card — CSS translate/rotate, pointer gestures, no UI library. *@
+@using Jobsy.Core.Rules.KandidaatBanen
 @using Jobsy.Web.Models
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Components.KandidaatBanen
 @inject CultureState Culture
 
 @if (_visible && Model is not null)
 {
+    var isDialog = Variant == SwipeCardVariant.Dialog;
+    var fit = BuildFit();
+    var dnaRows = MatchDnaRows.Build(
+        Model.FitDimensions,
+        Model.FitWhyKinds,
+        includeMissing: isDialog,
+        maxWithData: 3);
+    var rankLower = RankLowerLabel();
+    var companyLine = CompanyLine();
+
     <div class="swipe-card-stage @(IsBackdrop ? "swipe-card-stage--backdrop" : null)">
-        <article class="swipe-card @_animClass @(_dragging ? "is-dragging" : null) @(IsBackdrop ? "swipe-card--backdrop" : "swipe-card--enter") @(_lifting ? "is-lifting" : null) @(Variant == SwipeCardVariant.Dialog ? "swipe-card--dialog" : null)"
+        <article class="swipe-card @_animClass @(_dragging ? "is-dragging" : null) @(IsBackdrop ? "swipe-card--backdrop" : "swipe-card--enter") @(_lifting ? "is-lifting" : null) @(isDialog ? "swipe-card--dialog" : "swipe-card--mobile") @(Model.IsHiddenMode ? "swipe-card--hidden-mode" : null)"
                  style="@CardStyle"
+                 data-testid="swipe-card"
                  @ontouchstart="OnPointerDown"
                  @ontouchmove="OnTouchMove"
                  @ontouchend="OnPointerUp"
@@ -16,32 +30,7 @@
                  @onpointerup="OnMouseUp"
                  @onpointercancel="OnPointerCancel"
                  @onpointerleave="OnMouseLeave">
-            @if (Model.ShowMatchPercentage && Model.MatchPercentage is int pct)
-            {
-                <div class="swipe-card__match-hero" title="@Culture["Match.Percentage"]">
-                    <span class="swipe-card__match-hero-label">Match</span>
-                    <span class="swipe-card__match-hero-value">@pct%</span>
-                </div>
-            }
-
             <div class="swipe-card__photo">
-                @if (!string.IsNullOrWhiteSpace(Model.CompanyLogoUrl))
-                {
-                    <img class="swipe-card__logo swipe-card__logo--on-photo"
-                         src="@Model.CompanyLogoUrl"
-                         alt="@Model.CompanyName"
-                         loading="@(IsBackdrop ? "eager" : "lazy")" />
-                }
-                else
-                {
-                    <div class="swipe-card__logo-fallback swipe-card__logo-fallback--on-photo" aria-hidden="true">
-                        <svg viewBox="0 0 48 48" width="22" height="22" fill="none">
-                            <circle cx="24" cy="24" r="22" fill="#2f6b4f"/>
-                            <path d="M16 28c4-10 12-14 18-16-2 8-6 14-12 18-2-4-4-6-6-2z" fill="#8fbf45"/>
-                            <path d="M18 30c2-6 6-10 12-12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                }
                 @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
                 {
                     <img src="@Model.ImageUrl"
@@ -52,7 +41,12 @@
                 {
                     <div class="swipe-card__photo-placeholder" aria-hidden="true"></div>
                 }
-                <span class="swipe-card__photo-overlay">@Model.CompanyName</span>
+                @if (!IsBackdrop && fit is not null)
+                {
+                    <div class="swipe-card__match-hero swipe-card__fit-overlay" title="@Culture["Match.Percentage"]">
+                        <KbFitPill Fit="fit" />
+                    </div>
+                }
                 @if (!IsBackdrop)
                 {
                     <div class="swipe-card__stamp swipe-card__stamp--no @_stampNoClass" aria-hidden="true">@Culture["Match.StampNope"]</div>
@@ -60,103 +54,126 @@
                 }
             </div>
 
-            <div class="swipe-card__stats" role="group" aria-label="@Culture["Match.KeyFacts"]">
-                <div class="swipe-card__stat">
-                    <span class="swipe-card__stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z"/>
-                            <circle cx="12" cy="10" r="2.5"/>
-                        </svg>
+            <h2 class="swipe-card__title">@Model.JobTitle</h2>
+
+            <p class="swipe-card__company">
+                <span class="swipe-card__company-name">@companyLine</span>
+                @if (!string.IsNullOrWhiteSpace(Model.LocationPrimary) && !Model.IsHiddenMode)
+                {
+                    <span class="swipe-card__company-loc"> · @Model.LocationPrimary</span>
+                }
+            </p>
+
+            <div class="swipe-card__facts" role="group" aria-label="@Culture["Match.KeyFacts"]">
+                <KbTravelTime Minutes="Model.TravelTimeMinutes"
+                              Transport="Model.TransportMode"
+                              ToBureau="Model.TravelToBureau" />
+                @if (!string.IsNullOrWhiteSpace(Model.HoursPrimary))
+                {
+                    <span class="swipe-card__fact">
+                        <span class="swipe-card__fact-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="9"/>
+                                <path d="M12 7v5l3 2"/>
+                            </svg>
+                        </span>
+                        <span>@Model.HoursPrimary @Culture["Kb.Match.HoursUnit"]</span>
                     </span>
-                    <strong>@Model.LocationPrimary</strong>
-                    @if (!string.IsNullOrWhiteSpace(Model.LocationSecondary))
-                    {
-                        <span>@Model.LocationSecondary</span>
-                    }
-                </div>
-                <div class="swipe-card__stat">
-                    <span class="swipe-card__stat-icon" aria-hidden="true">€</span>
-                    <strong>@Model.SalaryPrimary</strong>
-                    <span>@Model.SalarySecondary</span>
-                </div>
-                <div class="swipe-card__stat">
-                    <span class="swipe-card__stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="9"/>
-                            <path d="M12 7v5l3 2"/>
-                        </svg>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.SalaryPrimary))
+                {
+                    <span class="swipe-card__fact">
+                        <span class="swipe-card__fact-icon" aria-hidden="true">€</span>
+                        <span>@Model.SalaryPrimary</span>
                     </span>
-                    <strong>@Model.HoursPrimary</strong>
-                    <span>@Model.HoursSecondary</span>
-                </div>
+                }
             </div>
 
-            <h2 class="swipe-card__title">@Model.JobTitle</h2>
+            @if (!string.IsNullOrWhiteSpace(rankLower))
+            {
+                <span class="kb-badges__chip kb-badges__chip--rank-lower" data-testid="kb-rank-lower">@rankLower</span>
+            }
+
+            @if (dnaRows.Count > 0 || !string.IsNullOrWhiteSpace(Model.WhyYouFit))
+            {
+                <div class="swipe-card__copy">
+                    <div class="swipe-card__why" data-testid="swipe-why">
+                        <span class="swipe-card__why-label">@Culture["Match.WhyYouFit"]</span>
+                        @if (dnaRows.Count > 0)
+                        {
+                            <ul class="kb-dna kb-dna--match @(isDialog ? "kb-dna--match-dialog" : "kb-dna--match-mobile")" role="list">
+                                @foreach (var row in dnaRows)
+                                {
+                                    <li class="kb-dna__row" data-dna="@row.Kind">
+                                        <span class="kb-dna__label">@Culture[row.LabelKey]</span>
+                                        @if (row.Percent is int barPct)
+                                        {
+                                            <progress class="kb-dna__progress" value="@barPct" max="100" aria-label="@Culture[row.LabelKey]">@barPct%</progress>
+                                            <span class="kb-dna__reason">@Culture[row.WhyKey]</span>
+                                        }
+                                        else if (isDialog)
+                                        {
+                                            <a class="kb-dna__todo" href="@row.TestHref">@Culture["Kb.Dna.NotDone"]</a>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(Model.WhyYouFit))
+                        {
+                            <p class="swipe-card__why-fallback">@Model.WhyYouFit</p>
+                        }
+                    </div>
+                </div>
+            }
 
             @if (Model.Tags.Count > 0)
             {
                 <ul class="swipe-card__tags">
-                    @foreach (var tag in Model.Tags.Take(6))
+                    @foreach (var tag in Model.Tags.Take(isDialog ? 2 : 1))
                     {
                         <li>@tag</li>
                     }
                 </ul>
             }
-
-            <div class="swipe-card__copy">
-                @if (!string.IsNullOrWhiteSpace(Model.ShortDescription))
-                {
-                    <p class="swipe-card__blurb">@Model.ShortDescription</p>
-                }
-                @if (!string.IsNullOrWhiteSpace(Model.WhyYouFit))
-                {
-                    <p class="swipe-card__why">
-                        <span class="swipe-card__why-label">@Culture["Match.WhyYouFit"]</span>
-                        @Model.WhyYouFit
-                    </p>
-                }
-            </div>
-
-            @if (!IsBackdrop)
-            {
-                <button type="button"
-                        class="swipe-card__more"
-                        disabled="@_animating"
-                        @onclick="RaiseMoreInfoAsync"
-                        @onclick:stopPropagation="true">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M4 6h10M4 12h10M4 18h7"/>
-                        <path d="m14 9 5 3-5 3"/>
-                    </svg>
-                    @Culture["Match.MoreInfo"]
-                </button>
-            }
         </article>
 
         @if (!IsBackdrop)
         {
-            <div class="swipe-actions @(Variant == SwipeCardVariant.Dialog ? "swipe-actions--dialog" : null)" role="group" aria-label="@Culture["Match.Actions"]">
+            <div class="swipe-actions @(isDialog ? "swipe-actions--dialog" : "swipe-actions--mobile")" role="group" aria-label="@Culture["Match.Actions"]">
                 <button type="button"
                         class="swipe-actions__btn swipe-actions__btn--reject @(_pressedReject ? "is-pressed" : null)"
                         disabled="@_animating"
                         @onclick="() => SwipeAsync(SwipeDirection.Left)">
                     <span class="swipe-actions__circle" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round">
+                        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                             <path d="M7 7l10 10M17 7 7 17"/>
                         </svg>
                     </span>
                     <span class="swipe-actions__label">@Culture["Match.Reject"]</span>
                 </button>
                 <button type="button"
+                        class="swipe-actions__btn swipe-actions__btn--more"
+                        disabled="@_animating"
+                        @onclick="RaiseMoreInfoAsync"
+                        @onclick:stopPropagation="true">
+                    <span class="swipe-actions__circle swipe-actions__circle--ghost" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 6h10M4 12h10M4 18h7"/>
+                            <path d="m14 9 5 3-5 3"/>
+                        </svg>
+                    </span>
+                    <span class="swipe-actions__label">@Culture["Match.MoreInfo"]</span>
+                </button>
+                <button type="button"
                         class="swipe-actions__btn swipe-actions__btn--interest @(_pressedInterest ? "is-pressed" : null)"
                         disabled="@_animating"
                         @onclick="() => SwipeAsync(SwipeDirection.Right)">
                     <span class="swipe-actions__circle" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M7 16c1.5-1 3-1.5 5-1.5s3.5.5 5 1.5"/>
                             <path d="M8 10h.01M16 10h.01"/>
                             <path d="M6 8c0-2.5 2.2-4.5 6-4.5s6 2 6 4.5v2.2c0 1.3-.6 2.4-1.6 3.1L12 18l-4.4-4.7C6.6 12.6 6 11.5 6 10.2V8z"/>
-                            <path d="M10 4.5c.4-1.2 1.2-2 2-2s1.6.8 2 2"/>
                         </svg>
                     </span>
                     <span class="swipe-actions__label">@Culture["Match.Interest"]</span>
@@ -201,22 +218,65 @@
     [Parameter] public EventCallback<SwipeViewModel> OnMoreInfo { get; set; }
     [Parameter] public EventCallback<(SwipeViewModel Model, SwipeDirection Direction)> OnSwipeComplete { get; set; }
 
-    private string LogoLabel
-    {
-        get
-        {
-            var name = Model?.CompanyName?.Trim() ?? "";
-            if (name.Length == 0)
-            {
-                return Culture["Match.CompanyFallback"];
-            }
-
-            return name.Length <= 22 ? name : name[..19] + "…";
-        }
-    }
-
     /// <summary>Public entry for keyboard / dialog triggers (same animation as click/drag).</summary>
     public Task SwipeAsync(SwipeDirection direction) => SwipeInternalAsync(direction);
+
+    private KbFitView? BuildFit()
+    {
+        if (Model is null)
+        {
+            return null;
+        }
+
+        if (string.Equals(Model.FitGate, CandidateFitApply.FitGateClosed, StringComparison.OrdinalIgnoreCase))
+        {
+            return new KbFitView(GateOpen: false, Percent: null, Band: null);
+        }
+
+        if (!Model.ShowMatchPercentage || Model.MatchPercentage is not int pct)
+        {
+            return null;
+        }
+
+        var band = Enum.TryParse<Jobsy.Core.Rules.KbFitBand>(Model.FitBand, ignoreCase: true, out var parsed)
+            ? parsed
+            : Jobsy.Core.Rules.KandidaatBanen.CandidateFitDisplay.BandFor(pct);
+        return new KbFitView(GateOpen: true, Percent: pct, Band: band);
+    }
+
+    private string? RankLowerLabel()
+    {
+        if (Model is null || string.IsNullOrWhiteSpace(Model.RankLowerReason))
+        {
+            return null;
+        }
+
+        var reason = Culture[Model.RankLowerReason];
+        if (string.IsNullOrWhiteSpace(reason) || reason == Model.RankLowerReason)
+        {
+            var slash = Model.RankLowerReason.LastIndexOf('.');
+            reason = slash >= 0 ? Model.RankLowerReason[(slash + 1)..] : Model.RankLowerReason;
+        }
+
+        return string.Format(Culture["Kb.Rank.Lower"], reason);
+    }
+
+    private string CompanyLine()
+    {
+        if (Model is null)
+        {
+            return Culture["Match.CompanyFallback"];
+        }
+
+        if (Model.IsHiddenMode)
+        {
+            return string.Format(Culture["Kb.Via.Bureau"], Model.CompanyName);
+        }
+
+        return string.IsNullOrWhiteSpace(Model.CompanyName)
+            ? Culture["Match.CompanyFallback"]
+            : Model.CompanyName;
+    }
 
     private string CardStyle
     {
@@ -230,7 +290,6 @@
 
             if (_dragging || (_pointerActive && !_animating))
             {
-                // Lift physics: stronger rotate (~±12°) and deeper shadow as drag grows.
                 var lift = Math.Clamp(Math.Abs(_dragX) / 140.0, 0, 1);
                 var rotate = Math.Clamp(_dragX / 14.0, -12, 12);
                 var y = _dragY - (lift * 6);
@@ -254,7 +313,6 @@
             return;
         }
 
-        // New card from parent → reset visual state.
         _visible = Model is not null;
         if (!_animating)
         {
@@ -298,7 +356,6 @@
             _pressedReject = true;
             _animClass = "swipe-card--out-left";
             _stampNoClass = "is-on";
-            // Fire-and-forget so parent side-effects never block the animation.
             _ = OnReject.InvokeAsync(model);
         }
         else

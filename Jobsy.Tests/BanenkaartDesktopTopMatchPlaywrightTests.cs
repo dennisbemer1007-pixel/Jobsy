@@ -88,6 +88,64 @@ public class BanenkaartDesktopTopMatchPlaywrightTests
         if (await topMatch.CountAsync() > 0)
         {
             await Assertions.Expect(topMatch.First).ToBeVisibleAsync(new() { Timeout = 5_000 });
+
+            // 08: open dialog, skip (←), deferred job appears at end of Hierna.
+            await topMatch.First.ClickAsync();
+            var dialog = page.Locator("[data-testid='match-deck-dialog'], [role='dialog'].lobsy-dialog--match");
+            await Assertions.Expect(dialog.First).ToBeVisibleAsync(new() { Timeout = 8_000 });
+            var currentTitle = (await dialog.Locator(".swipe-card__title").First.InnerTextAsync()).Trim();
+            await page.Keyboard.PressAsync("ArrowLeft");
+            await page.WaitForTimeoutAsync(900);
+            var upNextTitles = await dialog.Locator(".lobsy-dialog--match__upnext-title").AllInnerTextsAsync();
+            if (!string.IsNullOrWhiteSpace(currentTitle) && upNextTitles.Count > 0)
+            {
+                Assert.Contains(currentTitle, upNextTitles[^1], StringComparison.OrdinalIgnoreCase);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Mobile_390_match_page_swipe_smoke()
+    {
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl) || !await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IgnoreHTTPSErrors = true,
+            IsMobile = true,
+            HasTouch = true
+        });
+
+        var page = await context.NewPageAsync();
+        if (!await TryLoginAsync(page, baseUrl))
+        {
+            Assert.Fail("Candidate login failed for mobile Match smoke.");
+        }
+
+        await page.GotoAsync(baseUrl + "/candidate/match", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.WaitForTimeoutAsync(4_000);
+
+        var shell = page.Locator("[data-testid='match-page'], .match-page");
+        await Assertions.Expect(shell.First).ToBeVisibleAsync(new() { Timeout = 15_000 });
+
+        var card = page.Locator("[data-testid='swipe-card'], .swipe-card").First;
+        if (await card.CountAsync() > 0 && await card.IsVisibleAsync())
+        {
+            await Assertions.Expect(page.GetByText("Waarom jij past").First).ToBeVisibleAsync(new() { Timeout = 5_000 });
+            var reject = page.Locator("button.swipe-actions__btn--reject").First;
+            if (await reject.IsVisibleAsync())
+            {
+                await reject.ClickAsync();
+                await page.WaitForTimeoutAsync(800);
+            }
         }
     }
 

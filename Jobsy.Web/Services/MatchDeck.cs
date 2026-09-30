@@ -8,6 +8,7 @@ namespace Jobsy.Web.Services;
 public sealed class MatchDeck
 {
     private readonly List<SwipeViewModel> _items = [];
+    private readonly HashSet<Guid> _deferredOnce = [];
 
     public MatchProfileGateViewModel Gate { get; private set; } = new();
     public IReadOnlyList<SwipeViewModel> Items => _items;
@@ -33,6 +34,7 @@ public sealed class MatchDeck
         CancellationToken cancellationToken = default)
     {
         _items.Clear();
+        _deferredOnce.Clear();
         Index = 0;
         IsLoaded = false;
         LoadFailed = false;
@@ -87,6 +89,7 @@ public sealed class MatchDeck
     public void ReplaceItems(IEnumerable<SwipeViewModel> items, int index = 0)
     {
         _items.Clear();
+        _deferredOnce.Clear();
         _items.AddRange(items);
         Index = Math.Clamp(index, 0, Math.Max(0, _items.Count));
         IsLoaded = true;
@@ -111,6 +114,40 @@ public sealed class MatchDeck
         {
             Index++;
         }
+    }
+
+    /// <summary>
+    /// D12: move a card to the end of this session once. A second skip advances past it.
+    /// Nothing is stored server-side; map/list/top-match are unaffected.
+    /// </summary>
+    public void Defer(Guid vacancyId)
+    {
+        var idx = _items.FindIndex(v => v.VacancyId == vacancyId);
+        if (idx < 0)
+        {
+            return;
+        }
+
+        if (!_deferredOnce.Add(vacancyId))
+        {
+            if (Index == idx)
+            {
+                Advance();
+            }
+
+            return;
+        }
+
+        var item = _items[idx];
+        _items.RemoveAt(idx);
+        _items.Add(item);
+
+        if (idx < Index)
+        {
+            Index--;
+        }
+        // idx == Index: Index now points at the former next card (same slot).
+        // idx > Index: no change.
     }
 
     public void ResumeAt(Guid vacancyId)

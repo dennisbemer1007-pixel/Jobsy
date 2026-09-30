@@ -388,6 +388,68 @@ public static class UiStringsKandidaatBanen
             "Ongedaan maken", "Undo",
             "Cofnij", "Anulează", "تراجع");
 
+        // Match refresh (08)
+        Add("Kb.Match.Skipped",
+            "We laten hem later nog eens zien",
+            "We'll show it again later",
+            "Pokażemy ją później jeszcze raz",
+            "O mai arătăm mai târziu",
+            "سنعرضها لاحقًا مرة أخرى");
+        Add("Kb.Match.NoWrongChoice",
+            "je kunt niets fout doen",
+            "you can't go wrong",
+            "nic nie zepsujesz",
+            "nu poți greși",
+            "لا يمكنك أن تخطئ");
+        Add("Kb.Match.ViewSaved",
+            "Bekijk bewaarde banen",
+            "View saved jobs",
+            "Zobacz zapisane oferty",
+            "Vezi joburile salvate",
+            "اعرض الوظائف المحفوظة");
+        Add("Kb.Match.BackToMap",
+            "Terug naar de kaart",
+            "Back to the map",
+            "Wróć do mapy",
+            "Înapoi la hartă",
+            "العودة إلى الخريطة");
+        Add("Kb.Match.KeyboardLead",
+            "Toetsen:",
+            "Keys:",
+            "Klawisze:",
+            "Taste:",
+            "المفاتيح:");
+        Add("Kb.Match.SwipeHint",
+            "Veeg naar links of rechts. Laten schieten zet de baan achteraan. Hij verdwijnt niet.",
+            "Swipe left or right. Pass moves the job to the end. It does not disappear.",
+            "Przesuń w lewo lub w prawo. Odrzucenie przenosi ofertę na koniec. Nie znika.",
+            "Glisează stânga sau dreapta. Renunțarea mută jobul la final. Nu dispare.",
+            "اسحب يسارًا أو يمينًا. التخطي ينقل الوظيفة إلى النهاية. لا تختفي.");
+        Add("Kb.Match.EmptyTitle",
+            "Geen passende matches",
+            "No matching jobs",
+            "Brak pasujących ofert",
+            "Nicio potrivire",
+            "لا مطابقات");
+        Add("Kb.Match.EmptyLead",
+            "Er liggen nu geen vacatures die bij jouw opleiding en reistijd passen.",
+            "There are no vacancies that match your education and travel time right now.",
+            "Nie ma teraz ofert pasujących do Twojego wykształcenia i czasu dojazdu.",
+            "Momentan nu există oferte potrivite cu educația și timpul de deplasare.",
+            "لا توجد وظائف تناسب تعليمك ووقت وصولك الآن.");
+        Add("Kb.Match.Reload",
+            "Opnieuw laden",
+            "Reload",
+            "Załaduj ponownie",
+            "Reîncarcă",
+            "إعادة التحميل");
+        Add("Kb.Match.HoursUnit",
+            "uur",
+            "hrs",
+            "godz.",
+            "ore",
+            "ساعة");
+
         // Moved from VacancyDiscovery / VacancyDetail hardcoded Dutch (02.7)
         Add("Kb.Legend.Hide",
             "Legenda verbergen", "Hide legend",
