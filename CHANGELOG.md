@@ -342,3 +342,6 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ## Auth 06
 - Removed `/register/activate` page and activation-link builder; permanent 301 to `/register`. Wizard code step remains.
+
+## Auth 08
+- Playwright E2E classes for auth flows + stack-end report (`docs/auth-stack-report.md`); CspSmoke wired into CI smoke.

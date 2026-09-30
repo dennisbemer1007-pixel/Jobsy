@@ -59,7 +59,7 @@ public class CspSmokePlaywrightTests
             });
             """);
 
-        var paths = new List<string> { "/", E2eRoutes.Banenkaart, "/login", "/hoe-werkt-lobsy" };
+        var paths = new List<string> { "/", E2eRoutes.Banenkaart, "/login", "/wachtwoord-vergeten", "/hoe-werkt-lobsy" };
         try
         {
             await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
