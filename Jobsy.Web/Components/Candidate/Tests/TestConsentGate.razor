@@ -1,0 +1,112 @@
+@namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+@if (_loading)
+{
+    <div class="test-skeleton" aria-busy="true">
+        <span class="skeleton-line skeleton-line--title"></span>
+        <span class="skeleton-line skeleton-line--row"></span>
+    </div>
+}
+else if (_parentalMissing)
+{
+    <div class="test-consent card" data-consent="parental">
+        <h2>@Culture["TestFlow.Consent.ParentalTitle"]</h2>
+        <p>@Culture["TestFlow.Consent.ParentalLead"]</p>
+        <a class="engagement-btn" href="/candidate/profile">@Culture["TestFlow.Consent.ParentalCta"]</a>
+    </div>
+}
+else if (_testConsentMissing)
+{
+    <div class="test-consent card" data-consent="test">
+        <h2>@Culture["TestFlow.Consent.Title"]</h2>
+        <p>@Culture["TestFlow.Consent.Lead"]</p>
+        <button type="button" class="engagement-btn" disabled="@_busy" @onclick="GiveConsentAsync">
+            @Culture["TestFlow.Consent.Cta"]
+        </button>
+        <p><a href="/privacy">@Culture["TestFlow.Consent.Why"]</a></p>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="form-error" role="alert">@_error</p>
+        }
+    </div>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback<bool> GateChanged { get; set; }
+
+    private bool _loading = true;
+    private bool _parentalMissing;
+    private bool _testConsentMissing;
+    private bool _busy;
+    private string? _error;
+
+    public bool IsOpen => !_loading && !_parentalMissing && !_testConsentMissing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+    }
+
+    public async Task RefreshAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var me = await Api.GetMyProfileAsync();
+            if (me is null)
+            {
+                _parentalMissing = false;
+                _testConsentMissing = true;
+            }
+            else
+            {
+                _parentalMissing = !GratisDnaMergeProfileRules.CanUseCandidateFeatures(me);
+                _testConsentMissing = !_parentalMissing && !GratisDnaMergeProfileRules.HasCurrentTestAiConsent(me);
+            }
+        }
+        catch
+        {
+            _testConsentMissing = true;
+        }
+        finally
+        {
+            _loading = false;
+            await GateChanged.InvokeAsync(IsOpen);
+        }
+    }
+
+    private async Task GiveConsentAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var updated = await Api.AcceptTestAiConsentAsync();
+            if (updated is null || !GratisDnaMergeProfileRules.HasCurrentTestAiConsent(updated))
+            {
+                _error = Culture["Common.Error"];
+                return;
+            }
+
+            await RefreshAsync();
+        }
+        catch
+        {
+            _error = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

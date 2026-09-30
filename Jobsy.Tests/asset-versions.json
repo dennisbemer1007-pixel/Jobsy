@@ -83,6 +83,10 @@
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
     "v": "20260929-testresultaten-b2"
   },
+  "css/features/tests.css": {
+    "sha256": "e9c1fbc02e06bca3a6bcf3739a9d6b44426c7d42e03a0705bcb490dfa13a6a45",
+    "v": "20260930-tests-2"
+  },
   "css/features/werkgever-aanmelding.css": {
     "sha256": "61ab5ba72e934f78dde05395a0af29eb0cf55ab4d3d3dfae4c1c19091d799a09",
     "v": "20260930-wa11"
@@ -108,8 +112,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "4213535fca91bb3f364ef05e2dc2373de3a4237dbe6593b8e9dbcfeb2f8925e4",
-    "v": "20260930-kb9"
+    "sha256": "3e6bc8cf51d45978c1e62d0eabf2b0b07dd11a856958bbfe05303c737a89c505",
+    "v": "20260930-tests-2"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",

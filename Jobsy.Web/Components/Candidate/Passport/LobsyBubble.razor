@@ -1,6 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate.Passport
 
-<div class="passport-bubble" role="note">
+<div class="passport-bubble @(Variant == BubbleVariant.Scene ? "passport-bubble--scene" : null)" role="note">
     <img class="passport-bubble__mascot"
          src="/images/brand/mascot-64.webp"
          width="40"
@@ -11,5 +11,12 @@
 </div>
 
 @code {
+    public enum BubbleVariant
+    {
+        Inline = 0,
+        Scene = 1
+    }
+
     [Parameter] public string Text { get; set; } = "";
+    [Parameter] public BubbleVariant Variant { get; set; } = BubbleVariant.Inline;
 }

@@ -47,11 +47,11 @@ public sealed class CandidateValuesController : ControllerBase
         }
         if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+            return TestSaveErrors.ParentalConsent();
         }
         if (!CandidateConsentRules.HasCurrentTestAiConsent(user))
         {
-            return BadRequest(new { message = CandidateConsentRules.TestConsentRequiredMessage });
+            return TestSaveErrors.TestConsent();
         }
 
         var answers = new Dictionary<int, int>();
@@ -61,11 +61,16 @@ public sealed class CandidateValuesController : ControllerBase
             {
                 if (int.TryParse(key, out var id))
                 {
+                    if (value is < 1 or > 5)
+                    {
+                        return TestSaveErrors.InvalidAnswer();
+                    }
+
                     answers[id] = value;
                 }
                 else
                 {
-                    return BadRequest(new { message = "Onbekend vraagnummer in de waardenscan." });
+                    return TestSaveErrors.UnknownQuestion();
                 }
             }
         }
@@ -76,7 +81,7 @@ public sealed class CandidateValuesController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return TestSaveErrors.FromException(ex);
         }
     }
 }

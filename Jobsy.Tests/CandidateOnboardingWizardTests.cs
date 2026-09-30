@@ -223,7 +223,8 @@ public class CandidateOnboardingWizardTests
         Assert.Contains("OnboardingMiniTest", wizard, StringComparison.Ordinal);
         Assert.Contains("PersonalStep", wizard, StringComparison.Ordinal);
         var mini = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Onboarding/OnboardingMiniTest.razor"));
-        Assert.Contains("LikertScaleQuestion", mini, StringComparison.Ordinal);
+        Assert.Contains("TestQuestionFlow", mini, StringComparison.Ordinal);
+        Assert.Contains("Compact", mini, StringComparison.Ordinal);
         Assert.Contains("SaveOnboardingDreamJobAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("CompleteMyOnboardingAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("lobsyPwaInstall", wizard, StringComparison.Ordinal);

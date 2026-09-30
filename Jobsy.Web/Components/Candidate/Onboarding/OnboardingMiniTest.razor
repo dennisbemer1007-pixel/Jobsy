@@ -1,4 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Localization
 @inject CultureState Culture
@@ -25,37 +27,15 @@
 }
 else
 {
-    @if (ShowQuestionCounter)
-    {
-        <p class="journey-qn">
-            @Culture.Format("Discovery.Test.Counter", CurrentQuestion + 1, Questions.Count)
-            <span class="journey-qn__bar" aria-hidden="true">
-                @for (var i = 0; i < Questions.Count; i++)
-                {
-                    <i class="@(i <= CurrentQuestion ? "is-on" : null)"></i>
-                }
-            </span>
-        </p>
-    }
-    @foreach (var question in Questions.Take(CurrentQuestion + 2))
-    {
-        var index = IndexOf(question);
-        var answered = Answers.ContainsKey(question.Id);
-        <LikertScaleQuestion QuestionId="question.Id"
-                             Text="@QuestionText(question)"
-                             Value="@(answered ? Answers[question.Id] : null)"
-                             Collapsed="@(answered && index != CurrentQuestion)"
-                             Dimmed="@(index > CurrentQuestion)"
-                             Interactive="@(index <= CurrentQuestion)"
-                             IsCurrent="@(index == CurrentQuestion)"
-                             Index="@(ShowQuestionCounter ? null : index + 1)"
-                             Total="@(ShowQuestionCounter ? null : Questions.Count)"
-                             InputPrefix="@InputPrefix"
-                             HighLabel="@Culture["Onboarding.Likert.High"]"
-                             LowLabel="@Culture["Onboarding.Likert.Low"]"
-                             ValueChanged="value => Answer.InvokeAsync((question.Id, value))"
-                             Expanded="() => ExpandQuestion.InvokeAsync(index)" />
-    }
+    <TestQuestionFlow Kind="_kind"
+                      Questions="_flowQuestions"
+                      Answers="Answers"
+                      StartAt="CurrentQuestion"
+                      Target="TestDepthLevel.First"
+                      Compact="true"
+                      InputPrefix="@InputPrefix"
+                      OnAnswer="OnFlowAnswer"
+                      OnFinished="OnFlowFinished" />
 }
 @if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint)
 {
@@ -81,19 +61,29 @@ else
     [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
     [Parameter] public Func<MiniQuestion, string>? ResolveQuestionText { get; set; }
 
+    private AssessmentKind _kind = AssessmentKind.Competence;
+    private List<TestQuestionFlow.FlowQuestion> _flowQuestions = [];
+
+    protected override void OnParametersSet()
+    {
+        _kind = Step switch
+        {
+            8 => AssessmentKind.Career,
+            9 => AssessmentKind.Culture,
+            10 => AssessmentKind.Values,
+            _ => AssessmentKind.Competence
+        };
+        _flowQuestions = Questions
+            .Select(q => new TestQuestionFlow.FlowQuestion(q.Id, QuestionText(q)))
+            .ToList();
+    }
+
     private string QuestionText(MiniQuestion question)
         => ResolveQuestionText?.Invoke(question) ?? Culture[question.TextKey];
 
-    private int IndexOf(MiniQuestion question)
-    {
-        for (var i = 0; i < Questions.Count; i++)
-        {
-            if (ReferenceEquals(Questions[i], question) || Questions[i].Id == question.Id)
-            {
-                return i;
-            }
-        }
+    private Task OnFlowAnswer((int Id, int Value) pair)
+        => Answer.InvokeAsync(pair);
 
-        return -1;
-    }
+    private Task OnFlowFinished()
+        => Task.CompletedTask;
 }

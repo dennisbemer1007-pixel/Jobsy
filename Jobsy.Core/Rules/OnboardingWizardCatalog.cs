@@ -223,14 +223,8 @@ public static class OnboardingWizardCatalog
     /// </summary>
     public static readonly int[] ValuesDeeperQuestionIds = [2, 7, 12, 17, 22];
 
-    public static int FullLevelCount(OnboardingTestKind kind) => kind switch
-    {
-        OnboardingTestKind.Culture => CulturePersonalityCatalog.QuestionCount,
-        OnboardingTestKind.Competency => CompetencyTestCatalog.QuestionCount,
-        OnboardingTestKind.Career => CareerTestCatalog.QuestionCount,
-        OnboardingTestKind.Values => SchwartzValuesCatalog.QuestionCount,
-        _ => 25
-    };
+    public static int FullLevelCount(OnboardingTestKind kind)
+        => TestDepthRules.FullCount(TestDepthRules.ToAssessmentKind(kind));
 
     public static int[] MiniIds(OnboardingTestKind kind) => kind switch
     {
@@ -261,14 +255,18 @@ public static class OnboardingWizardCatalog
 
     /// <summary>
     /// Highest completed depth band from answered count: 0, 5, 10, or full (18/25).
+    /// Delegates to <see cref="TestDepthRules"/> (single source for levels/counts).
     /// </summary>
     public static int ReachedLevel(int answeredCount, OnboardingTestKind kind)
     {
-        var full = FullLevelCount(kind);
-        if (answeredCount >= full) return full;
-        if (answeredCount >= DeeperLevelCount) return DeeperLevelCount;
-        if (answeredCount >= MiniLevelCount) return MiniLevelCount;
-        return 0;
+        var reached = TestDepthRules.Reached(TestDepthRules.ToAssessmentKind(kind), answeredCount);
+        return reached switch
+        {
+            TestDepthLevel.Full => FullLevelCount(kind),
+            TestDepthLevel.Deeper => DeeperLevelCount,
+            TestDepthLevel.First => MiniLevelCount,
+            _ => 0
+        };
     }
 
     public static bool IsLevelReached(int answeredCount, int level)
@@ -276,35 +274,10 @@ public static class OnboardingWizardCatalog
 
     /// <summary>
     /// Ordered question ids up to <paramref name="targetCount"/> (5, 10, or full).
-    /// Mini, then deeper, then remaining catalog ids in ascending order.
+    /// Mini, then deeper, then remaining catalog ids — via <see cref="TestDepthRules"/>.
     /// </summary>
     public static int[] QuestionIdsUpTo(OnboardingTestKind kind, int targetCount)
-    {
-        var full = FullLevelCount(kind);
-        var target = Math.Clamp(targetCount, MiniLevelCount, full);
-        if (target <= MiniLevelCount)
-        {
-            return MiniIds(kind).ToArray();
-        }
-
-        var ordered = new List<int>(MiniIds(kind));
-        foreach (var id in DeeperIds(kind))
-        {
-            if (!ordered.Contains(id)) ordered.Add(id);
-        }
-
-        if (target <= DeeperLevelCount)
-        {
-            return ordered.Take(DeeperLevelCount).ToArray();
-        }
-
-        foreach (var id in AllCatalogIds(kind))
-        {
-            if (!ordered.Contains(id)) ordered.Add(id);
-        }
-
-        return ordered.Take(full).ToArray();
-    }
+        => TestDepthRules.QuestionIdsUpTo(TestDepthRules.ToAssessmentKind(kind), targetCount).ToArray();
 
     public static IReadOnlyList<int> AllCatalogIds(OnboardingTestKind kind) => kind switch
     {

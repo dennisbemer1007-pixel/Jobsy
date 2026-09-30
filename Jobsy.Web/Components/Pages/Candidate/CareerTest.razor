@@ -1,166 +1,115 @@
 @page "/candidate/career"
-@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Localization
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
-@inject PersistentComponentState Persist
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
 
-<QuestionnaireShell Title="@Culture["Career.Title"]"
-                    Subtitle="@Subtitle"
-                    BackHref="/candidate/profile"
-                    PrivacyNote="@Culture["Competency.PrivacyNote"]"
-                    PrivacyHref="/privacy"
-                    AnsweredCount="@AnsweredCount"
-                    TotalCount="@CareerTestCatalog.QuestionCount"
-                    SaveStatus="@(_autosave?.Status ?? QuestionnaireSaveStatus.Saved)"
-                    Loading="_loading"
-                    LoadFailed="_loadFailed"
-                    ErrorMessage="@_message"
-                    ReloadHref="/candidate/career"
-                    Message="@_banner"
-                    Completing="_completing"
-                    ScrollToQuestionId="_focus.ScrollToId"
-                    SmoothScroll="_focus.SmoothScroll"
-                    ScrollRequestVersion="_focus.ScrollRequestVersion"
-                    OnComplete="CompleteAsync"
-                    OnNext="GoNextAsync"
-                    OnRetrySave="RetrySaveAsync">
-    <QuestionnairePageBody Categories="@CategoryGroups"
-                           Answers="_answers"
-                           CurrentId="_focus.CurrentId"
-                           DimmedId="_focus.DimmedId"
-                           ExpandedId="_focus.ExpandedId"
-                           InputPrefix="cq"
-                           OnAnswer="OnAnswerAsync"
-                           OnExpand="ExpandQuestion" />
-</QuestionnaireShell>
-
-@if (_matches.Count > 0 && !_loading && !_loadFailed && AnsweredCount >= CareerTestCatalog.QuestionCount)
-{
-    <article class="detail-card questionnaire-matches">
-        <CompetencyMatchPanel Items="_matches" Loading="false" />
-    </article>
-}
+<div class="test-page journey-page">
+    <h1 tabindex="-1">@Culture["Career.Title"]</h1>
+    <p class="test-page__save" aria-live="polite">@_liveSave</p>
+    @if (_loading)
+    {
+        <div class="test-skeleton" aria-busy="true">
+            <span class="skeleton-line skeleton-line--title"></span>
+            <span class="skeleton-line skeleton-line--row"></span>
+        </div>
+    }
+    else if (_loadFailed)
+    {
+        <p>@Culture["Common.Error"]</p>
+        <a href="/candidate/career">@Culture["Common.Retry"]</a>
+    }
+    else
+    {
+        <TestConsentGate GateChanged="OnGateChanged">
+            @if (_gateOpen && _autosave is not null)
+            {
+                <TestQuestionFlow Kind="AssessmentKind.Career"
+                                  Questions="_flowQuestions"
+                                  Answers="_autosave.Answers"
+                                  Target="TestDepthLevel.Full"
+                                  Autosave="_autosave"
+                                  OnFinished="CompleteAsync"
+                                  OnLater="LaterAsync"
+                                  OnChanged="OnFlowChanged" />
+            }
+        </TestConsentGate>
+    }
+    @if (!string.IsNullOrEmpty(_banner))
+    {
+        <p class="form-error" role="alert">@_banner</p>
+        <button type="button" class="engagement-btn" @onclick="RetrySaveAsync">@Culture["TestErr.Retry"]</button>
+    }
+</div>
 
 @code {
-    private const string PersistKey = "candidateCareerTest";
     private bool _loading = true;
     private bool _loadFailed;
-    private bool _completing;
-    private bool _restored;
-    private string? _message;
+    private bool _gateOpen;
     private string? _banner;
-    private readonly Dictionary<int, int> _answers = [];
-    private readonly QuestionnaireFocus _focus = new();
-    private List<CompetencyQuestionItem> _questions = [];
-    private List<CandidateMatchedVacancy> _matches = [];
+    private string? _liveSave;
+    private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
     private QuestionnaireAutosave? _autosave;
-    private PersistingComponentStateSubscription _persistSubscription;
-
-    private int AnsweredCount => _answers.Count;
-
-    private IReadOnlyList<QuestionnaireCategoryGroup> CategoryGroups
-        => BuildCategoryGroups();
-
-    private string? Subtitle
-    {
-        get
-        {
-            if (_focus.CurrentId is null)
-            {
-                return null;
-            }
-
-            var cat = QuestionsFlat().FirstOrDefault(q => q.Id == _focus.CurrentId)?.Category;
-            if (string.IsNullOrEmpty(cat))
-            {
-                return null;
-            }
-
-            var inCat = QuestionsFor(cat);
-            var done = inCat.Count(q => _answers.ContainsKey(q.Id));
-            return Culture.Format("Questionnaire.CategoryProgress", Culture[$"Career.Cat.{cat}"], done, inCat.Count);
-        }
-    }
-
-    protected override void OnInitialized()
-    {
-        _persistSubscription = Persist.RegisterOnPersisting(PersistState);
-        if (Persist.TryTakeFromJson<CandidateCareerInterestState>(PersistKey, out var saved) && saved is not null)
-        {
-            ApplyState(saved);
-            _restored = true;
-            _loading = false;
-        }
-    }
-
-    private Task PersistState()
-    {
-        Persist.PersistAsJson(PersistKey, new CandidateCareerInterestState
-        {
-            Questions = _questions,
-            Answers = _answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
-            TopVacancies = _matches
-        });
-        return Task.CompletedTask;
-    }
-
-    private void ApplyState(CandidateCareerInterestState state)
-    {
-        _questions = state.Questions ?? [];
-        _matches = state.TopVacancies ?? [];
-        _answers.Clear();
-        foreach (var (key, value) in state.Answers ?? [])
-        {
-            if (int.TryParse(key, out var id) && value is >= 1 and <= 5)
-            {
-                _answers[id] = value;
-            }
-        }
-
-        _focus.Initialize(OrderedIds(), _answers);
-    }
+    private List<TestQuestionFlow.FlowQuestion> _flowQuestions = [];
 
     protected override async Task OnInitializedAsync()
     {
         _autosave = new QuestionnaireAutosave(
             persist: async (answers, ct) =>
             {
-                var saved = await Api.SaveMyCareerInterestsAsync(answers, complete: false, ct);
-                _matches = saved.TopVacancies ?? [];
+                try
+                {
+                    await Api.SaveMyCareerInterestsAsync(answers, complete: false, ct);
+                }
+                catch (TestSaveClientException)
+                {
+                    throw;
+                }
             },
-            onChanged: () => InvokeAsync(StateHasChanged));
-
-        if (_restored)
-        {
-            _autosave.ReplaceAll(_answers);
-            return;
-        }
+            onChanged: OnAutosaveChanged,
+            onFailed: err => InvokeAsync(() =>
+            {
+                _banner = MapSaveCode((err.Exception as TestSaveClientException)?.Code) ?? Culture["TestErr.SaveBanner"];
+                AnnounceSave(QuestionnaireSaveStatus.Failed);
+                return Task.CompletedTask;
+            }));
 
         try
         {
             var state = await Api.GetMyCareerInterestsAsync();
-            if (state is not null)
+            var answers = new Dictionary<int, int>();
+            if (state?.Answers is not null)
             {
-                ApplyState(state);
-            }
-            else
-            {
-                _focus.Initialize(OrderedIds(), _answers);
+                foreach (var (key, value) in state.Answers)
+                {
+                    if (int.TryParse(key, out var id) && value is >= 1 and <= 5)
+                    {
+                        answers[id] = value;
+                    }
+                }
             }
 
-            _autosave.ReplaceAll(_answers);
+            _flowQuestions = TestDepthRules.QuestionIdsFor(AssessmentKind.Career, TestDepthLevel.Full)
+                .Select(id =>
+                {
+                    var q = CareerTestCatalog.Questions.First(x => x.Id == id);
+                    return new TestQuestionFlow.FlowQuestion(id, Culture[q.TextKey]);
+                })
+                .ToList();
+            _autosave.ReplaceAll(answers);
         }
-        catch (Exception ex)
+        catch
         {
             _loadFailed = true;
-            _message = Culture["Common.Error"];
         }
         finally
         {
@@ -168,128 +117,86 @@
         }
     }
 
-    private IReadOnlyList<QuestionnaireCategoryGroup> BuildCategoryGroups()
-        => CareerTestCatalog.RiasecCodes
-            .Select(category =>
-            {
-                var questions = QuestionsFor(category);
-                var letterPrefix = CareerTestCatalog.HollandLetter.TryGetValue(category, out var letter)
-                    ? $"{letter} — "
-                    : null;
-                var label = $"{letterPrefix}{Culture[$"Career.Cat.{category}"]}";
-                return new QuestionnaireCategoryGroup
-                {
-                    Key = category,
-                    Label = label,
-                    Questions = questions
-                        .Select(q => new QuestionnaireQuestion
-                        {
-                            Id = q.Id,
-                            Text = $"{q.Id}. {Culture[q.TextKey]}",
-                            CategoryKey = category,
-                            CategoryLabel = label
-                        })
-                        .ToList()
-                };
-            })
-            .ToList();
-
-    private IReadOnlyList<CompetencyQuestionItem> QuestionsFor(string category)
+    private Task OnGateChanged(bool open)
     {
-        var list = _questions.Count > 0
-            ? _questions.Where(q => q.Category == category).OrderBy(q => q.Id).ToList()
-            : CareerTestCatalog.Questions
-                .Where(q => q.Category == category)
-                .Select(q => new CompetencyQuestionItem { Id = q.Id, Category = q.Category, Reverse = q.Reverse, TextKey = q.TextKey })
-                .ToList();
-        return list;
-    }
-
-    private IEnumerable<CompetencyQuestionItem> QuestionsFlat()
-        => CareerTestCatalog.RiasecCodes.SelectMany(QuestionsFor);
-
-    private IReadOnlyList<int> OrderedIds()
-        => QuestionsFlat().Select(q => q.Id).ToList();
-
-    private async Task OnAnswerAsync((int Id, int Value) answer)
-    {
-        var (id, value) = answer;
-        _answers[id] = value;
-        _banner = null;
-        _focus.AfterAnswer(id, OrderedIds(), _answers);
-        try
-        {
-            if (_autosave is not null)
-            {
-                await _autosave.SetAnswerAsync(id, value);
-            }
-        }
-        catch (Exception ex)
-        {
-            _banner = Culture["Common.Error"];
-        }
-    }
-
-    private void ExpandQuestion(int id)
-        => _focus.Expand(id, OrderedIds(), _answers);
-
-    private Task GoNextAsync()
-    {
-        _focus.GoNext(OrderedIds(), _answers);
+        _gateOpen = open;
         return Task.CompletedTask;
+    }
+
+    private Task OnAutosaveChanged()
+    {
+        AnnounceSave(_autosave?.Status ?? QuestionnaireSaveStatus.Idle);
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private Task OnFlowChanged() => InvokeAsync(StateHasChanged);
+
+    private void AnnounceSave(QuestionnaireSaveStatus status)
+    {
+        if (status == QuestionnaireSaveStatus.Saved && _lastAnnounced == QuestionnaireSaveStatus.Failed)
+        {
+            _liveSave = Culture["TestFlow.Saved"];
+        }
+        else if (status == QuestionnaireSaveStatus.Failed)
+        {
+            _liveSave = Culture["TestFlow.SaveFailed"];
+        }
+        else if (status == QuestionnaireSaveStatus.Saved)
+        {
+            _liveSave = Culture["TestFlow.Saved"];
+        }
+
+        _lastAnnounced = status;
     }
 
     private async Task RetrySaveAsync()
     {
-        if (_autosave is null)
-        {
-            return;
-        }
+        if (_autosave is null) return;
+        _banner = null;
+        await _autosave.RetryAsync();
+    }
 
-        try
-        {
-            await _autosave.RetryAsync();
-            _banner = null;
-        }
-        catch (Exception ex)
-        {
-            _banner = Culture["Common.Error"];
-        }
+    private async Task LaterAsync()
+    {
+        if (_autosave is not null) await _autosave.FlushAsync();
+        Navigation.NavigateTo("/profiel/tests/career");
     }
 
     private async Task CompleteAsync()
     {
-        if (_loadFailed || AnsweredCount < CareerTestCatalog.QuestionCount)
-        {
-            return;
-        }
-
-        _completing = true;
         _banner = null;
         try
         {
             if (_autosave is not null)
             {
                 await _autosave.FlushAsync();
+                await Api.SaveMyCareerInterestsAsync(_autosave.Answers, complete: true);
             }
 
-            var saved = await Api.SaveMyCareerInterestsAsync(_answers, complete: true);
-            _matches = saved.TopVacancies ?? [];
-            Navigation.NavigateTo("/candidate/profile");
+            Navigation.NavigateTo("/profiel/tests/career");
         }
-        catch (Exception ex)
+        catch (TestSaveClientException ex)
+        {
+            _banner = MapSaveCode(ex.Code) ?? Culture["Common.Error"];
+        }
+        catch
         {
             _banner = Culture["Common.Error"];
         }
-        finally
-        {
-            _completing = false;
-        }
     }
+
+    private string? MapSaveCode(string? code) => code switch
+    {
+        "unknown_question" => Culture["TestErr.unknown_question"],
+        "invalid_answer" => Culture["TestErr.invalid_answer"],
+        "consent_required" => Culture["TestErr.consent_required"],
+        "parental_consent_required" => Culture["TestErr.parental_consent_required"],
+        "assessment_adjustment_limit" => Culture["TestErr.Limit"],
+        _ => null
+    };
 
     public async ValueTask DisposeAsync()
     {
-        _persistSubscription.Dispose();
         if (_autosave is not null)
         {
             await _autosave.DisposeAsync();

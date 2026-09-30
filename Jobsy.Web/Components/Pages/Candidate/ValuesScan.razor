@@ -1,7 +1,10 @@
 @page "/candidate/values"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Localization
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -10,103 +13,103 @@
 
 <PageTitle>@Culture["ValuesScan.Title"] · Lobsy</PageTitle>
 
-<QuestionnaireShell Title="@Culture["ValuesScan.Title"]"
-                    Subtitle="@Subtitle"
-                    BackHref="/profiel"
-                    PrivacyNote="@Culture["ValuesScan.PrivacyNote"]"
-                    PrivacyHref="/privacy"
-                    AnsweredCount="@AnsweredCount"
-                    TotalCount="@SchwartzValuesCatalog.QuestionCount"
-                    SaveStatus="@(_autosave?.Status ?? QuestionnaireSaveStatus.Saved)"
-                    Loading="_loading"
-                    LoadFailed="_loadFailed"
-                    ErrorMessage="@_message"
-                    ReloadHref="/candidate/values"
-                    Message="@_banner"
-                    Completing="_completing"
-                    ScrollToQuestionId="_focus.ScrollToId"
-                    SmoothScroll="_focus.SmoothScroll"
-                    ScrollRequestVersion="_focus.ScrollRequestVersion"
-                    OnComplete="CompleteAsync"
-                    OnNext="GoNextAsync"
-                    OnRetrySave="RetrySaveAsync">
-    <QuestionnairePageBody Categories="@CategoryGroups"
-                           Answers="_answers"
-                           CurrentId="_focus.CurrentId"
-                           DimmedId="_focus.DimmedId"
-                           ExpandedId="_focus.ExpandedId"
-                           InputPrefix="vq"
-                           OnAnswer="OnAnswerAsync"
-                           OnExpand="ExpandQuestion" />
-</QuestionnaireShell>
+<div class="test-page journey-page">
+    <h1 tabindex="-1">@Culture["ValuesScan.Title"]</h1>
+    <p class="test-page__save" aria-live="polite">@_liveSave</p>
+    @if (_loading)
+    {
+        <div class="test-skeleton" aria-busy="true">
+            <span class="skeleton-line skeleton-line--title"></span>
+            <span class="skeleton-line skeleton-line--row"></span>
+        </div>
+    }
+    else if (_loadFailed)
+    {
+        <p>@Culture["Common.Error"]</p>
+        <a href="/candidate/values">@Culture["Common.Retry"]</a>
+    }
+    else
+    {
+        <TestConsentGate GateChanged="OnGateChanged">
+            @if (_gateOpen && _autosave is not null)
+            {
+                <TestQuestionFlow Kind="AssessmentKind.Values"
+                                  Questions="_flowQuestions"
+                                  Answers="_autosave.Answers"
+                                  Target="TestDepthLevel.Full"
+                                  Autosave="_autosave"
+                                  OnFinished="CompleteAsync"
+                                  OnLater="LaterAsync"
+                                  OnChanged="OnFlowChanged" />
+            }
+        </TestConsentGate>
+    }
+    @if (!string.IsNullOrEmpty(_banner))
+    {
+        <p class="form-error" role="alert">@_banner</p>
+        <button type="button" class="engagement-btn" @onclick="RetrySaveAsync">@Culture["TestErr.Retry"]</button>
+    }
+</div>
 
 @code {
     private bool _loading = true;
     private bool _loadFailed;
-    private bool _completing;
-    private string? _message;
+    private bool _gateOpen;
     private string? _banner;
-    private readonly Dictionary<int, int> _answers = [];
-    private readonly QuestionnaireFocus _focus = new();
+    private string? _liveSave;
+    private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
     private QuestionnaireAutosave? _autosave;
-
-    private int AnsweredCount => _answers.Count;
-
-    private IReadOnlyList<QuestionnaireCategoryGroup> CategoryGroups
-        => BuildCategoryGroups();
-
-    private string? Subtitle
-    {
-        get
-        {
-            if (_focus.CurrentId is null)
-            {
-                return null;
-            }
-
-            var cat = QuestionsFlat().FirstOrDefault(q => q.Id == _focus.CurrentId)?.Category;
-            if (string.IsNullOrEmpty(cat))
-            {
-                return null;
-            }
-
-            var inCat = QuestionsFor(cat);
-            var done = inCat.Count(q => _answers.ContainsKey(q.Id));
-            return Culture.Format("Questionnaire.CategoryProgress", Culture[$"ValuesScan.Cat.{cat}"], done, inCat.Count);
-        }
-    }
+    private List<TestQuestionFlow.FlowQuestion> _flowQuestions = [];
 
     protected override async Task OnInitializedAsync()
     {
         _autosave = new QuestionnaireAutosave(
             persist: async (answers, ct) =>
             {
-                await Api.SaveMyValuesAsync(answers, complete: false, ct);
+                try
+                {
+                    await Api.SaveMyValuesAsync(answers, complete: false, ct);
+                }
+                catch (TestSaveClientException)
+                {
+                    throw;
+                }
             },
-            onChanged: () => InvokeAsync(StateHasChanged));
+            onChanged: OnAutosaveChanged,
+            onFailed: err => InvokeAsync(() =>
+            {
+                _banner = MapSaveCode((err.Exception as TestSaveClientException)?.Code) ?? Culture["TestErr.SaveBanner"];
+                AnnounceSave(QuestionnaireSaveStatus.Failed);
+                return Task.CompletedTask;
+            }));
 
         try
         {
             var state = await Api.GetMyValuesAsync();
-            if (state is not null)
+            var answers = new Dictionary<int, int>();
+            if (state?.Answers is not null)
             {
-                _answers.Clear();
                 foreach (var (key, value) in state.Answers)
                 {
                     if (int.TryParse(key, out var id) && value is >= 1 and <= 5)
                     {
-                        _answers[id] = value;
+                        answers[id] = value;
                     }
                 }
             }
 
-            _autosave.ReplaceAll(_answers);
-            _focus.Initialize(OrderedIds(), _answers);
+            _flowQuestions = TestDepthRules.QuestionIdsFor(AssessmentKind.Values, TestDepthLevel.Full)
+                .Select(id =>
+                {
+                    var q = SchwartzValuesCatalog.Questions.First(x => x.Id == id);
+                    return new TestQuestionFlow.FlowQuestion(id, Culture[q.TextKey]);
+                })
+                .ToList();
+            _autosave.ReplaceAll(answers);
         }
-        catch (Exception ex)
+        catch
         {
             _loadFailed = true;
-            _message = Culture["Common.Error"];
         }
         finally
         {
@@ -114,111 +117,83 @@
         }
     }
 
-    private IReadOnlyList<QuestionnaireCategoryGroup> BuildCategoryGroups()
-        => SchwartzValuesCatalog.CategoryCodes
-            .Select(category =>
-            {
-                var questions = QuestionsFor(category);
-                return new QuestionnaireCategoryGroup
-                {
-                    Key = category,
-                    Label = Culture[$"ValuesScan.Cat.{category}"],
-                    Questions = questions
-                        .Select(q => new QuestionnaireQuestion
-                        {
-                            Id = q.Id,
-                            Text = $"{q.Id}. {Culture[q.TextKey]}",
-                            CategoryKey = category,
-                            CategoryLabel = Culture[$"ValuesScan.Cat.{category}"]
-                        })
-                        .ToList()
-                };
-            })
-            .ToList();
-
-    private static IReadOnlyList<CompetencyQuestion> QuestionsFor(string category)
-        => SchwartzValuesCatalog.QuestionsFor(category);
-
-    private static IEnumerable<CompetencyQuestion> QuestionsFlat()
-        => SchwartzValuesCatalog.CategoryCodes.SelectMany(QuestionsFor);
-
-    private IReadOnlyList<int> OrderedIds()
-        => QuestionsFlat().Select(q => q.Id).ToList();
-
-    private async Task OnAnswerAsync((int Id, int Value) answer)
+    private Task OnGateChanged(bool open)
     {
-        var (id, value) = answer;
-        _answers[id] = value;
-        _banner = null;
-        _focus.AfterAnswer(id, OrderedIds(), _answers);
-        try
-        {
-            if (_autosave is not null)
-            {
-                await _autosave.SetAnswerAsync(id, value);
-            }
-        }
-        catch (Exception ex)
-        {
-            _banner = Culture["Common.Error"];
-        }
+        _gateOpen = open;
+        return Task.CompletedTask;
     }
 
-    private void ExpandQuestion(int id)
-        => _focus.Expand(id, OrderedIds(), _answers);
-
-    private Task GoNextAsync()
+    private Task OnAutosaveChanged()
     {
-        _focus.GoNext(OrderedIds(), _answers);
-        return Task.CompletedTask;
+        AnnounceSave(_autosave?.Status ?? QuestionnaireSaveStatus.Idle);
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private Task OnFlowChanged() => InvokeAsync(StateHasChanged);
+
+    private void AnnounceSave(QuestionnaireSaveStatus status)
+    {
+        if (status == QuestionnaireSaveStatus.Saved && _lastAnnounced == QuestionnaireSaveStatus.Failed)
+        {
+            _liveSave = Culture["TestFlow.Saved"];
+        }
+        else if (status == QuestionnaireSaveStatus.Failed)
+        {
+            _liveSave = Culture["TestFlow.SaveFailed"];
+        }
+        else if (status == QuestionnaireSaveStatus.Saved)
+        {
+            _liveSave = Culture["TestFlow.Saved"];
+        }
+
+        _lastAnnounced = status;
     }
 
     private async Task RetrySaveAsync()
     {
-        if (_autosave is null)
-        {
-            return;
-        }
+        if (_autosave is null) return;
+        _banner = null;
+        await _autosave.RetryAsync();
+    }
 
-        try
-        {
-            await _autosave.RetryAsync();
-            _banner = null;
-        }
-        catch (Exception ex)
-        {
-            _banner = Culture["Common.Error"];
-        }
+    private async Task LaterAsync()
+    {
+        if (_autosave is not null) await _autosave.FlushAsync();
+        Navigation.NavigateTo("/profiel/tests/values");
     }
 
     private async Task CompleteAsync()
     {
-        if (_loadFailed || AnsweredCount < SchwartzValuesCatalog.QuestionCount)
-        {
-            return;
-        }
-
-        _completing = true;
         _banner = null;
         try
         {
             if (_autosave is not null)
             {
                 await _autosave.FlushAsync();
+                await Api.SaveMyValuesAsync(_autosave.Answers, complete: true);
             }
 
-            await Api.SaveMyValuesAsync(_answers, complete: true);
-            Navigation.NavigateTo("/profiel");
+            Navigation.NavigateTo("/profiel/tests/values");
         }
-        catch (Exception ex)
+        catch (TestSaveClientException ex)
+        {
+            _banner = MapSaveCode(ex.Code) ?? Culture["Common.Error"];
+        }
+        catch
         {
             _banner = Culture["Common.Error"];
         }
-        finally
-        {
-            _completing = false;
-        }
     }
+
+    private string? MapSaveCode(string? code) => code switch
+    {
+        "unknown_question" => Culture["TestErr.unknown_question"],
+        "invalid_answer" => Culture["TestErr.invalid_answer"],
+        "consent_required" => Culture["TestErr.consent_required"],
+        "parental_consent_required" => Culture["TestErr.parental_consent_required"],
+        "assessment_adjustment_limit" => Culture["TestErr.Limit"],
+        _ => null
+    };
 
     public async ValueTask DisposeAsync()
     {

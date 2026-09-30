@@ -62,5 +62,42 @@ public static class UiStringsTests
         Add("TestErr.SaveBanner", "Je laatste antwoord is nog niet bewaard. Probeer het opnieuw.", "Your last answer is not saved yet. Please try again.");
         Add("TestErr.Retry", "Opnieuw proberen", "Try again");
         Add("TestErr.Consent", "Je moet eerst toestemming geven voor de tests.", "You must consent to the tests first.");
+        Add("TestErr.unknown_question", "Die vraag kent deze test niet.", "That question is not part of this test.");
+        Add("TestErr.invalid_answer", "Kies een antwoord van 1 tot 5.", "Choose an answer from 1 to 5.");
+        Add("TestErr.consent_required", "Je moet eerst toestemming geven voor de tests.", "You must consent to the tests first.");
+        Add("TestErr.parental_consent_required", "Je ouder of verzorger moet eerst toestemming geven.", "A parent or guardian must consent first.");
+        Add("TestErr.Limit", "Je kunt deze test niet meer aanpassen.", "You cannot change this test any more.");
+
+        Add("TestDepth.First", "Eerste indruk", "First look");
+        Add("TestDepth.Deeper", "Iets dieper", "A bit deeper");
+        Add("TestDepth.Full", "Heel diep", "Very deep");
+        Add("TestDepth.Bottom", "De bodem", "The bottom");
+
+        Add("TestFlow.QuestionOf", "Vraag {0} van {1}", "Question {0} of {1}");
+        Add("TestFlow.LevelDone", "{0} gedaan", "{0} done");
+        Add("TestFlow.LevelNext", "nog {0} tot {1}", "{0} left until {1}");
+        Add("TestFlow.Example", "Voorbeeld uit de praktijk", "Example from practice");
+        Add("TestFlow.Answered", "Beantwoord ({0})", "Answered ({0})");
+        Add("TestFlow.Adjust", "Aanpassen", "Adjust");
+        Add("TestFlow.Back", "Terug", "Back");
+        Add("TestFlow.Later", "Later verder", "Continue later");
+        Add("TestFlow.Next", "Volgende", "Next");
+        Add("TestFlow.Finish", "Afronden", "Finish");
+        Add("TestFlow.Scale.Low", "Past niet", "Does not fit");
+        Add("TestFlow.Scale.High", "Past heel goed", "Fits very well");
+        Add("TestFlow.Scale.Aria.1", "1, past niet", "1, does not fit");
+        Add("TestFlow.Scale.Aria.2", "2", "2");
+        Add("TestFlow.Scale.Aria.3", "3", "3");
+        Add("TestFlow.Scale.Aria.4", "4", "4");
+        Add("TestFlow.Scale.Aria.5", "5, past heel goed", "5, fits very well");
+        Add("TestFlow.Saved", "Bewaard", "Saved");
+        Add("TestFlow.SaveFailed", "Je laatste antwoord is nog niet bewaard", "Your last answer is not saved yet");
+        Add("TestFlow.Consent.Title", "Eerst even toestemming", "Consent first");
+        Add("TestFlow.Consent.Lead", "Voor de tests gebruiken we je antwoorden om te kijken welk werk bij je past. Werkgevers zien je antwoorden niet.", "We use your answers to see which work fits you. Employers do not see your answers.");
+        Add("TestFlow.Consent.Cta", "Toestemming geven", "Give consent");
+        Add("TestFlow.Consent.Why", "Waarom vragen we dit?", "Why do we ask this?");
+        Add("TestFlow.Consent.ParentalTitle", "Toestemming van je ouder", "Parent consent needed");
+        Add("TestFlow.Consent.ParentalLead", "Je ouder of verzorger moet eerst toestemming geven.", "A parent or guardian must consent first.");
+        Add("TestFlow.Consent.ParentalCta", "Naar toestemming", "Go to consent");
     }
 }

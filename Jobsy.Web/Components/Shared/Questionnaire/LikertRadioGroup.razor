@@ -1,0 +1,115 @@
+@namespace Jobsy.Web.Components.Shared.Questionnaire
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+<fieldset class="test-likert"
+          role="radiogroup"
+          id="@GroupId"
+          aria-labelledby="@StatementId"
+          aria-describedby="@ScaleHintId"
+          @onkeydown="OnKeyDownAsync"
+          @ref="_fieldset">
+    @for (var value = 1; value <= 5; value++)
+    {
+        var current = value;
+        var selected = Value == current;
+        var radioId = $"{InputPrefix}-opt-{QuestionId}-{current}";
+        <div class="test-likert__opt @(selected ? "is-on" : null)">
+            <input type="radio"
+                   id="@radioId"
+                   name="@($"{InputPrefix}-q-{QuestionId}")"
+                   value="@current"
+                   checked="@selected"
+                   disabled="@(!Interactive)"
+                   tabindex="@(TabIndexFor(current))"
+                   aria-label="@Culture[$"TestFlow.Scale.Aria.{current}"]"
+                   @onchange="() => OnSelectAsync(current)" />
+            <label for="@radioId">@current</label>
+        </div>
+    }
+</fieldset>
+<p id="@ScaleHintId" class="test-likert__labels">
+    <span>@(LowLabel ?? Culture["TestFlow.Scale.Low"])</span>
+    <span>@(HighLabel ?? Culture["TestFlow.Scale.High"])</span>
+</p>
+
+@code {
+    [Parameter] public int QuestionId { get; set; }
+    [Parameter] public int? Value { get; set; }
+    [Parameter] public bool Interactive { get; set; } = true;
+    [Parameter] public string InputPrefix { get; set; } = "q";
+    [Parameter] public string? LowLabel { get; set; }
+    [Parameter] public string? HighLabel { get; set; }
+    [Parameter] public string StatementId { get; set; } = "";
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+    [Parameter] public bool RequestFocus { get; set; }
+
+    private ElementReference _fieldset;
+    private bool _focusPending;
+
+    private string GroupId => $"{InputPrefix}-rg-{QuestionId}";
+    private string ScaleHintId => $"{InputPrefix}-hint-{QuestionId}";
+
+    private int TabIndexFor(int value)
+    {
+        if (!Interactive) return -1;
+        if (Value is int v) return value == v ? 0 : -1;
+        return value == 1 ? 0 : -1;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (RequestFocus)
+        {
+            _focusPending = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_focusPending) return;
+        _focusPending = false;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyFocusRadioInGroup", GroupId);
+        }
+        catch
+        {
+            // JS interop may be unavailable in prerender / tests without module.
+        }
+    }
+
+    private async Task OnSelectAsync(int value)
+    {
+        if (!Interactive || Value == value) return;
+        await ValueChanged.InvokeAsync(value);
+    }
+
+    private async Task OnKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (!Interactive) return;
+        var current = Value ?? 1;
+        var next = e.Key switch
+        {
+            "ArrowRight" or "ArrowDown" => Math.Min(5, current + 1),
+            "ArrowLeft" or "ArrowUp" => Math.Max(1, current - 1),
+            "Home" => 1,
+            "End" => 5,
+            " " or "Spacebar" or "Enter" => current,
+            _ => (int?)null
+        };
+        if (next is null) return;
+        if (e.Key is " " or "Spacebar" or "Enter")
+        {
+            if (Value is null)
+            {
+                await OnSelectAsync(current);
+            }
+
+            return;
+        }
+
+        await OnSelectAsync(next.Value);
+    }
+}

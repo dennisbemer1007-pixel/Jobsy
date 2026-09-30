@@ -306,6 +306,17 @@ public sealed class DeepPayClientException : Exception
     public string Code { get; }
 }
 
+/// <summary>Thrown when a candidate test save endpoint returns a structured error code.</summary>
+public sealed class TestSaveClientException : Exception
+{
+    public TestSaveClientException(string code, string message) : base(message)
+    {
+        Code = code;
+    }
+
+    public string Code { get; }
+}
+
 public sealed class RoleFitCheckState
 {
     public bool IsUnlocked { get; set; }

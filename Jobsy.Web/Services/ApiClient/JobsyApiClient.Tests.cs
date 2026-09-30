@@ -130,7 +130,9 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Competentietest opslaan mislukt.");
+            throw new TestSaveClientException(
+                ExtractCode(body) ?? "error",
+                ExtractMessage(body) ?? "Competentietest opslaan mislukt.");
         }
 
         return await response.Content.ReadFromJsonAsync<CandidateCompetencyState>(cancellationToken: ct)
@@ -154,7 +156,9 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Cultuurscan opslaan mislukt.");
+            throw new TestSaveClientException(
+                ExtractCode(body) ?? "error",
+                ExtractMessage(body) ?? "Cultuurscan opslaan mislukt.");
         }
 
         return await response.Content.ReadFromJsonAsync<CandidateCultureState>(cancellationToken: ct)
@@ -178,7 +182,9 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Waardenscan opslaan mislukt.");
+            throw new TestSaveClientException(
+                ExtractCode(body) ?? "error",
+                ExtractMessage(body) ?? "Waardenscan opslaan mislukt.");
         }
 
         return await response.Content.ReadFromJsonAsync<CandidateValuesState>(cancellationToken: ct)
@@ -300,7 +306,9 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Beroepentest opslaan mislukt.");
+            throw new TestSaveClientException(
+                ExtractCode(body) ?? "error",
+                ExtractMessage(body) ?? "Beroepentest opslaan mislukt.");
         }
 
         return await response.Content.ReadFromJsonAsync<CandidateCareerInterestState>(cancellationToken: ct)

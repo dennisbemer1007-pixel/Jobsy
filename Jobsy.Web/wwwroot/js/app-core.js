@@ -1007,6 +1007,36 @@ window.jobsyQuestionnaire = {
     }
 };
 
+/** Focus the checked (or first) radio inside a radiogroup by element id. */
+window.jobsyFocusRadioInGroup = function (groupId) {
+    if (!groupId) {
+        return;
+    }
+    var group = document.getElementById(groupId);
+    if (!group) {
+        return;
+    }
+    var radios = group.querySelectorAll('input[type="radio"]');
+    if (!radios.length) {
+        return;
+    }
+    var target = null;
+    for (var i = 0; i < radios.length; i++) {
+        if (radios[i].checked) {
+            target = radios[i];
+            break;
+        }
+    }
+    if (!target) {
+        target = radios[0];
+    }
+    try {
+        target.focus({ preventScroll: false });
+    } catch (e) {
+        try { target.focus(); } catch (e2) { }
+    }
+};
+
 window.jobsyDialog = (function () {
     var active = null;
     var previouslyFocused = null;
