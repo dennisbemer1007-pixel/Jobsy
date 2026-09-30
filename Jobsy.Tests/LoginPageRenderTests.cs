@@ -30,8 +30,8 @@ public class LoginPageRenderTests
         Assert.Contains("name=\"rememberDevice\"", html, StringComparison.Ordinal);
         Assert.DoesNotContain("name=\"rememberDevice\" value=\"true\" checked", html, StringComparison.Ordinal);
         Assert.DoesNotContain("is-disabled", html, StringComparison.Ordinal);
-        Assert.DoesNotContain("Wachtwoord vergeten?", html, StringComparison.Ordinal);
-        Assert.False(AuthFeatures.PasswordResetAvailable);
+        Assert.Contains("Wachtwoord vergeten?", html, StringComparison.Ordinal);
+        Assert.True(AuthFeatures.PasswordResetAvailable);
         Assert.Contains("Bedrijf registreren (KvK)", html, StringComparison.Ordinal);
         Assert.Contains("Maak gratis een account", html, StringComparison.Ordinal);
         Assert.Equal(1, CountOccurrences(html, "<h1"));

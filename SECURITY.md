@@ -57,3 +57,10 @@ De ASP.NET Core pipeline stuurt standaard:
 - Never log passwords, TOTP codes, recovery codes, or challenge tokens.
 - `/register/activate` without a token redirects to `/register`.
 - Admins: Microsoft work/school or password+2FA only (`JobsyAuth:AdminAllowedEntraTenants` optional allow-list). Google and personal Microsoft blocked.
+
+## Wachtwoord vergeten
+
+- `/wachtwoord-vergeten` always shows the same "sent" screen (202 from API). Rate limit: 3 requests per e-mail per hour (process-local HMAC key).
+- Reset link: `OneTimeLinkPurpose.PasswordReset`, 30 minutes, single use; older unused links for the same user are invalidated.
+- On complete: new password hash, lockout + MFA pause cleared, `SessionVersion` bump, all device sessions + trusted devices revoked. 2FA secret/codes stay. Redirect `/login?setup=done`.
+- External-only accounts get `PasswordResetExternalOnly` (no link). Unknown/inactive get no mail.

@@ -203,6 +203,7 @@ public static partial class TransactionalEmails
     {
         var c = culture ?? EmailCulture.Nl;
         var brand = Brand(baseUrl);
+        var links = Links(baseUrl);
         var effectiveDuration = duration ?? LoginLockoutRules.LockoutDuration(failedAttempts);
         var durationLabel = EmailFormat.Duration(effectiveDuration, c);
         var until = lockoutUntilUtc ?? DateTime.UtcNow.Add(effectiveDuration);
@@ -216,7 +217,7 @@ public static partial class TransactionalEmails
                 F([(S(c, "Email.AccountLockout.Fact.Until"), untilLabel)]),
                 P(S(c, "Email.AccountLockout.P2"))
             ],
-            Button(S(c, "Email.AccountLockout.Cta"), $"mailto:{brand.SupportAddress}"),
+            Button(S(c, "Email.AccountLockout.Cta"), links.Absolute("/wachtwoord-vergeten")),
             eyebrow: new EmailEyebrow(S(c, "Email.AccountLockout.Eyebrow"), EmailTone.Peach),
             culture: c), baseUrl);
     }
@@ -333,6 +334,7 @@ public static partial class TransactionalEmails
     {
         var c = culture ?? EmailCulture.Nl;
         var brand = Brand(baseUrl);
+        var links = Links(baseUrl);
         return Finish(Doc("MfaLockout", S(c, "Email.MfaLockout.Subject"),
             S(c, "Email.MfaLockout.Preheader"),
             S(c, "Email.MfaLockout.Heading"),
@@ -340,6 +342,7 @@ public static partial class TransactionalEmails
                 P(S(c, "Email.MfaLockout.P1")),
                 P(T(c, "Email.MfaLockout.P2", EmailArg.Plain(brand.SupportAddress)))
             ],
+            Button(S(c, "Email.MfaLockout.Cta"), links.Absolute("/wachtwoord-vergeten")),
             eyebrow: new EmailEyebrow(S(c, "Email.MfaLockout.Eyebrow"), EmailTone.Peach),
             culture: c), baseUrl);
     }
@@ -373,6 +376,59 @@ public static partial class TransactionalEmails
                 P(T(c, "Email.RecoveryCodesRegenerated.P2", EmailArg.Plain(brand.SupportAddress)))
             ],
             eyebrow: new EmailEyebrow(S(c, "Email.RecoveryCodesRegenerated.Eyebrow"), EmailTone.Peach),
+            culture: c), baseUrl);
+    }
+
+    public static ComposedEmail PasswordReset(string? baseUrl, string token, EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var links = Links(baseUrl);
+        var url = links.Absolute($"/account/wachtwoord-instellen?token={Uri.EscapeDataString(token)}&doel=reset");
+        return Finish(Doc("PasswordReset", S(c, "Email.PasswordReset.Subject"),
+            S(c, "Email.PasswordReset.Preheader"),
+            S(c, "Email.PasswordReset.Heading"),
+            [
+                P(S(c, "Email.PasswordReset.P1")),
+                P(S(c, "Email.PasswordReset.P2"))
+            ],
+            Button(S(c, "Email.PasswordReset.Cta"), url),
+            eyebrow: new EmailEyebrow(S(c, "Email.PasswordReset.Eyebrow"), EmailTone.Peach),
+            culture: c), baseUrl);
+    }
+
+    public static ComposedEmail PasswordResetExternalOnly(
+        string? baseUrl, string providerLabel, EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var links = Links(baseUrl);
+        return Finish(Doc("PasswordResetExternalOnly", S(c, "Email.PasswordResetExternalOnly.Subject"),
+            Sf(c, "Email.PasswordResetExternalOnly.Preheader", providerLabel),
+            S(c, "Email.PasswordResetExternalOnly.Heading"),
+            [
+                P(T(c, "Email.PasswordResetExternalOnly.P1",
+                    EmailArg.Plain(providerLabel, isolate: false))),
+                P(T(c, "Email.PasswordResetExternalOnly.P2",
+                    EmailArg.Plain(providerLabel, isolate: false)))
+            ],
+            Button(S(c, "Email.PasswordResetExternalOnly.Cta"), links.Login),
+            eyebrow: new EmailEyebrow(S(c, "Email.PasswordResetExternalOnly.Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
+    }
+
+    public static ComposedEmail PasswordChanged(
+        string? baseUrl, DateTime changedAtUtc, EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var brand = Brand(baseUrl);
+        var when = EmailFormat.DateTimeWithoutZone(changedAtUtc, c);
+        return Finish(Doc("PasswordChanged", S(c, "Email.PasswordChanged.Subject"),
+            Sf(c, "Email.PasswordChanged.Preheader", when),
+            S(c, "Email.PasswordChanged.Heading"),
+            [
+                P(T(c, "Email.PasswordChanged.P1", EmailArg.Plain(when, isolate: false))),
+                P(T(c, "Email.PasswordChanged.P2", EmailArg.Plain(brand.SupportAddress)))
+            ],
+            eyebrow: new EmailEyebrow(S(c, "Email.PasswordChanged.Eyebrow"), EmailTone.Peach),
             culture: c), baseUrl);
     }
 }

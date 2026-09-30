@@ -167,5 +167,83 @@ public static class UiStringsAuth
             "Zbyt wiele prób z tego urządzenia. Spróbuj ponownie o {0}.",
             "Prea multe încercări de pe acest dispozitiv. Încearcă din nou la {0}.",
             "محاولات كثيرة من هذا الجهاز. حاول مجددًا الساعة {0}.");
+        Add("ForgotPassword.Title",
+            "Wachtwoord vergeten?",
+            "Forgot password?",
+            "Nie pamiętasz hasła?",
+            "Ai uitat parola?",
+            "نسيت كلمة المرور؟");
+        Add("ForgotPassword.Lead",
+            "Vul je e-mailadres in. Dan sturen we je een link om een nieuw wachtwoord te kiezen.",
+            "Enter your e-mail address. We will send you a link to choose a new password.",
+            "Podaj adres e-mail. Wyślemy link do nowego hasła.",
+            "Introdu adresa de e-mail. Îți trimitem un link pentru o parolă nouă.",
+            "أدخل بريدك. سنرسل رابطًا لاختيار كلمة مرور جديدة.");
+        Add("ForgotPassword.Submit",
+            "Stuur de link",
+            "Send the link",
+            "Wyślij link",
+            "Trimite linkul",
+            "أرسل الرابط");
+        Add("ForgotPassword.SentTitle",
+            "Kijk in je mail",
+            "Check your e-mail",
+            "Sprawdź pocztę",
+            "Verifică e-mailul",
+            "تحقق من بريدك");
+        Add("ForgotPassword.SentLead",
+            "Staat dit e-mailadres bij ons? Dan krijg je binnen een paar minuten een mail met een link. De link werkt 30 minuten. Geen mail? Kijk ook bij ongewenste mail.",
+            "If this e-mail address is with us, you will get a mail with a link within a few minutes. The link works for 30 minutes. No mail? Check spam too.",
+            "Jeśli ten adres jest u nas, dostaniesz mail z linkiem w ciągu kilku minut. Link działa 30 minut. Brak maila? Sprawdź spam.",
+            "Dacă adresa e la noi, primești un e-mail cu link în câteva minute. Linkul ține 30 de minute. Niciun mail? Verifică spam.",
+            "إذا كان هذا البريد لدينا، ستصلك رسالة برابط خلال دقائق. الرابط يعمل 30 دقيقة. لا رسالة؟ تحقق من البريد غير المرغوب.");
+        Add("ForgotPassword.Resend",
+            "Opnieuw versturen",
+            "Send again",
+            "Wyślij ponownie",
+            "Trimite din nou",
+            "أرسل مجددًا");
+        Add("ForgotPassword.Back",
+            "Terug naar inloggen",
+            "Back to sign in",
+            "Wróć do logowania",
+            "Înapoi la autentificare",
+            "العودة لتسجيل الدخول");
+        Add("SetPassword.ResetHeading",
+            "Kies een nieuw wachtwoord",
+            "Choose a new password",
+            "Wybierz nowe hasło",
+            "Alege o parolă nouă",
+            "اختر كلمة مرور جديدة");
+        Add("SetPassword.ResetInvalid",
+            "Deze link werkt niet meer. Vraag een nieuwe aan.",
+            "This link no longer works. Request a new one.",
+            "Ten link już nie działa. Poproś o nowy.",
+            "Acest link nu mai funcționează. Cere unul nou.",
+            "هذا الرابط لم يعد يعمل. اطلب رابطًا جديدًا.");
+        Add("SetPassword.RequestNew",
+            "Nieuwe link aanvragen",
+            "Request a new link",
+            "Poproś o nowy link",
+            "Cere un link nou",
+            "اطلب رابطًا جديدًا");
+        Add("SetPassword.RuleMin",
+            "Minstens {0} tekens",
+            "At least {0} characters",
+            "Co najmniej {0} znaków",
+            "Cel puțin {0} caractere",
+            "على الأقل {0} حرفًا");
+        Add("ForgotPassword.Seo.Title",
+            "Wachtwoord vergeten",
+            "Forgot password",
+            "Nie pamiętasz hasła",
+            "Ai uitat parola",
+            "نسيت كلمة المرور");
+        Add("ForgotPassword.Seo.Description",
+            "Vraag een link om een nieuw Lobsy-wachtwoord te kiezen.",
+            "Request a link to choose a new Lobsy password.",
+            "Poproś o link do nowego hasła Lobsy.",
+            "Cere un link pentru o parolă Lobsy nouă.",
+            "اطلب رابطًا لاختيار كلمة مرور Lobsy جديدة.");
     }
 }

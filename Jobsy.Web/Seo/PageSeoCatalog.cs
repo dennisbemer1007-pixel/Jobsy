@@ -126,6 +126,7 @@ public static partial class PageSeoCatalog
             ["/login"] = Public("Login.Title", "Seo.LoginDescription"),
             ["/account-maken"] = Private("Signup.Seo.Title", "Signup.Seo.Description"),
             ["/account-maken/code"] = Private("Signup.Code.Title", "Signup.Seo.Description"),
+            ["/wachtwoord-vergeten"] = Private("ForgotPassword.Seo.Title", "ForgotPassword.Seo.Description"),
             ["/account/wachtwoord-instellen"] = Private("SetPassword.Seo.Title", "SetPassword.Seo.Description"),
             ["/account/mail-instellingen"] = Private("MailSettings.Seo.Title", "MailSettings.Seo.Description"),
             ["/toestemming"] = Private("Consent.Seo.Title", "Consent.Seo.Description"),

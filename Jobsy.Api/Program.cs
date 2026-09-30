@@ -58,6 +58,14 @@ builder.Services.AddSingleton(sp =>
         cfg["JobsyAuth:DevelopmentAuthSecret"]);
     return new UnknownAccountLockoutTracker(key);
 });
+builder.Services.AddSingleton(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>();
+    var key = JobsyLocalSessionToken.ResolveSigningKey(
+        cfg["JobsyAuth:LocalSessionSigningKey"],
+        cfg["JobsyAuth:DevelopmentAuthSecret"]);
+    return new PasswordResetRequestLimiter(key);
+});
 builder.Services.AddScoped<Jobsy.Core.Interfaces.ITotpVerifier, Jobsy.Infrastructure.Security.TotpVerifier>();
 builder.Services.AddSingleton(sp =>
 {

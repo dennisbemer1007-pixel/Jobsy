@@ -40,9 +40,10 @@ public sealed class OneTimeLinkService : IOneTimeLinkService
             throw new ArgumentException("Ongeldig e-mailadres.", nameof(email));
         }
 
-        if (purpose == OneTimeLinkPurpose.SetPassword && userId is null)
+        if (purpose is OneTimeLinkPurpose.SetPassword or OneTimeLinkPurpose.PasswordReset
+            && userId is null)
         {
-            throw new ArgumentException("SetPassword-link vereist een gebruiker.", nameof(userId));
+            throw new ArgumentException("Password link vereist een gebruiker.", nameof(userId));
         }
 
         if (purpose == OneTimeLinkPurpose.ApiKeyReveal && companyId is null)
@@ -117,7 +118,7 @@ public sealed class OneTimeLinkService : IOneTimeLinkService
             LinkId: row.Id,
             UserId: row.UserId,
             CompanyId: row.CompanyId,
-            MaskedEmail: EmailServiceStub.RedactEmail(row.Email),
+            MaskedEmail: EmailMask.Mask(row.Email),
             CompanyName: row.Company?.Name,
             ExpiresAtUtc: row.ExpiresAtUtc);
     }

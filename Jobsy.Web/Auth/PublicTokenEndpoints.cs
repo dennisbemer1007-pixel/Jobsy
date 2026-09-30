@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Jobsy.Web.Localization;
 using Microsoft.AspNetCore.Antiforgery;
 
 namespace Jobsy.Web.Auth;
@@ -45,40 +46,94 @@ public static class PublicTokenEndpoints
         {
             var form = await http.Request.ReadFormAsync();
             var token = form["t"].ToString();
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                token = form["token"].ToString();
+            }
+
             var password = form["password"].ToString();
             var password2 = form["password2"].ToString();
+            var isReset = string.Equals(form["doel"].ToString(), "reset", StringComparison.OrdinalIgnoreCase);
+
+            string RedirectError(string error)
+            {
+                var q = isReset
+                    ? $"token={Uri.EscapeDataString(token)}&doel=reset&error={error}"
+                    : $"t={Uri.EscapeDataString(token)}&error={error}";
+                return $"/account/wachtwoord-instellen?{q}";
+            }
 
             if (!await antiforgery.IsRequestValidAsync(http))
             {
-                return Results.Redirect($"/account/wachtwoord-instellen?t={Uri.EscapeDataString(token)}&error=invalid");
+                return Results.Redirect(RedirectError("invalid"));
             }
 
             if (!string.Equals(password, password2, StringComparison.Ordinal))
             {
-                return Results.Redirect($"/account/wachtwoord-instellen?t={Uri.EscapeDataString(token)}&error=mismatch");
+                return Results.Redirect(RedirectError("mismatch"));
             }
 
-            var apiBase = (configuration["JobsyApi:BaseUrl"] ?? "http://localhost:5200").TrimEnd('/');
-            var client = httpClientFactory.CreateClient();
+            var apiBase = (configuration["JobsyApi:BaseUrl"] ?? configuration["ApiBaseUrl"] ?? "http://localhost:5200").TrimEnd('/');
+            var client = isReset
+                ? http.RequestServices.GetRequiredService<AuthApiClient>().CreateClient()
+                : httpClientFactory.CreateClient();
+            if (!isReset)
+            {
+                client.BaseAddress ??= new Uri(apiBase.EndsWith('/') ? apiBase : apiBase + "/");
+            }
+
+            var path = isReset ? "api/auth/password-reset/complete" : "api/account/setup-password";
             using var content = new StringContent(
                 JsonSerializer.Serialize(new { token, password }),
                 Encoding.UTF8,
                 "application/json");
-            var response = await client.PostAsync($"{apiBase}/api/account/setup-password", content);
+            var response = isReset
+                ? await client.PostAsync(path, content)
+                : await client.PostAsync($"{apiBase}/{path}", content);
             if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
             {
                 var body = await response.Content.ReadAsStringAsync();
                 var error = body.Contains("Wachtwoord", StringComparison.OrdinalIgnoreCase) ? "rules" : "invalid";
-                return Results.Redirect($"/account/wachtwoord-instellen?t={Uri.EscapeDataString(token)}&error={error}");
+                return Results.Redirect(RedirectError(error));
             }
 
             if (!response.IsSuccessStatusCode)
             {
-                return Results.Redirect($"/account/wachtwoord-instellen?t={Uri.EscapeDataString(token)}&error=invalid");
+                return Results.Redirect(RedirectError("invalid"));
             }
 
             return Results.Redirect("/login?setup=done");
         }).AllowAnonymous();
+
+        app.MapPost("/account/wachtwoord-vergeten", async (
+            HttpContext http,
+            IAntiforgery antiforgery) =>
+        {
+            var form = await http.Request.ReadFormAsync();
+            var email = form["email"].ToString().Trim();
+            if (!await antiforgery.IsRequestValidAsync(http))
+            {
+                return Results.Redirect("/wachtwoord-vergeten");
+            }
+
+            var culture = http.Request.Cookies.TryGetValue(CultureState.CookieName, out var lang)
+                ? lang
+                : "nl";
+
+            var authApi = http.RequestServices.GetRequiredService<AuthApiClient>();
+            try
+            {
+                using var _ = await authApi.PostJsonAsync(
+                    "api/auth/password-reset/request",
+                    new { email, culture });
+            }
+            catch
+            {
+                // Still show the uniform sent screen.
+            }
+
+            return Results.Redirect("/wachtwoord-vergeten?sent=1");
+        }).AllowAnonymous().RequireRateLimiting("auth");
 
         app.MapPost("/koppeling/sleutel", async (
             HttpContext http,

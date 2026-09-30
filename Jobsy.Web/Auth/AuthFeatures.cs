@@ -7,5 +7,5 @@ namespace Jobsy.Web.Auth;
 public static class AuthFeatures
 {
     /// <summary>When true, login/pause show "Wachtwoord vergeten?" / "Nieuw wachtwoord kiezen".</summary>
-    public const bool PasswordResetAvailable = false;
+    public const bool PasswordResetAvailable = true;
 }
