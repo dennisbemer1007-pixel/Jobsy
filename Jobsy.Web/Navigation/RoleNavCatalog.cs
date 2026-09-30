@@ -18,7 +18,6 @@ public static class RoleNavCatalog
         new("Nav.Settings", "/admin/settings", NavIcons.Settings,
             ["/admin/integrations", "/admin/users", "/admin/personal-data-access-log", "/admin/logging", "/admin/feedback", "/admin/wages", "/admin/masterdata", "/admin/exclusivity", "/admin/notifications", "/admin/company", "/admin/about", "/admin/marketing-flyer", "/admin/api-keys", "/admin/cnames", "/admin/vacancy-categories", "/admin/training", "/admin/mail-test", "/admin/scholen", "/admin/scholen/rapportage"]),
         new("Nav.Scholen", "/admin/scholen", NavIcons.Companies),
-        new("AdminScholen.Nav.Report", "/admin/scholen/rapportage", NavIcons.Companies),
     ];
 
     public static readonly NavItem[] Candidate =

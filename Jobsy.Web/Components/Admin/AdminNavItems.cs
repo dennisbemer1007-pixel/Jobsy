@@ -25,7 +25,6 @@ public static class AdminNavItems
         new("Nav.Notifications", "/admin/notifications", NavIcons.Notifications),
         new("Nav.Users", "/admin/users", NavIcons.Users),
         new("Nav.Scholen", "/admin/scholen", NavIcons.Companies),
-        new("AdminScholen.Nav.Report", "/admin/scholen/rapportage", NavIcons.Companies),
         new("Nav.PersonalDataAccessLog", "/admin/personal-data-access-log", NavIcons.Logging),
         new("Nav.Logging", "/admin/logging", NavIcons.Logging),
         new("Nav.Feedback", "/admin/feedback", NavIcons.Feedback),
