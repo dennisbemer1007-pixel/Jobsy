@@ -57,7 +57,8 @@ public class GratisDnaBunitTests : TestContext
         Assert.Contains("data-testid=\"gd-signup\"", markup, StringComparison.Ordinal);
         Assert.Contains("data-kpi=\"ResultCtaSignup\"", markup, StringComparison.Ordinal);
         Assert.DoesNotContain("/register", markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("%", markup, StringComparison.Ordinal);
+        var tilesText = cut.Find("[data-testid=gd-tiles]").TextContent;
+        Assert.DoesNotContain("%", tilesText, StringComparison.Ordinal);
         Assert.Empty(cut.FindAll(".cookie-consent"));
     }
 

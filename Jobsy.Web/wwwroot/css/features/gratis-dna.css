@@ -503,7 +503,8 @@ html:not(.cookie-consent-known) .pub-theme .gd-questions--warm{
   font-size:var(--text-xs);
   font-weight:600;
 }
-.pub-theme .gd-lockd__bar b{
+.pub-theme .gd-lockd__bar b,
+.pub-theme .gd-lockd__fill{
   position:relative;
   display:block;
   block-size:10px;
@@ -511,16 +512,19 @@ html:not(.cookie-consent-known) .pub-theme .gd-questions--warm{
   background:var(--pearl-mid);
   overflow:hidden;
 }
-.pub-theme .gd-lockd__bar b::after{
+.pub-theme .gd-lockd__fill::after{
   content:"";
   position:absolute;
   inset-block:0;
   inset-inline-start:0;
-  inline-size:var(--pct,50%);
+  inline-size:calc(attr(data-fill type(<number>), 50) * 1%);
   background:var(--coral);
 }
-.pub-theme .gd-lockd__bar.t2 b::after{background:var(--gold)}
-.pub-theme .gd-lockd__bar.t3 b::after{background:var(--success)}
+.pub-theme .gd-lockd__fill[data-fill="86"]::after{inline-size:86%}
+.pub-theme .gd-lockd__fill[data-fill="74"]::after{inline-size:74%}
+.pub-theme .gd-lockd__fill[data-fill="61"]::after{inline-size:61%}
+.pub-theme .gd-lockd__bar.t2 .gd-lockd__fill::after{background:var(--gold)}
+.pub-theme .gd-lockd__bar.t3 .gd-lockd__fill::after{background:var(--success)}
 .pub-theme .gd-lockd__pill{
   position:absolute;
   inset-inline:50%;

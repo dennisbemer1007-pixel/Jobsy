@@ -350,8 +350,8 @@ public static class UiStringsGratisDna
         ro["GratisDna.Questions.SavedOnDevice"] = en["GratisDna.Questions.SavedOnDevice"];
         ar["GratisDna.Questions.SavedOnDevice"] = en["GratisDna.Questions.SavedOnDevice"];
 
-        nl["GratisDna.Likert.Aria"] = "{0}";
-        en["GratisDna.Likert.Aria"] = "{0}";
+        nl["GratisDna.Likert.Aria"] = "{0} van 5";
+        en["GratisDna.Likert.Aria"] = "{0} of 5";
         pl["GratisDna.Likert.Aria"] = en["GratisDna.Likert.Aria"];
         ro["GratisDna.Likert.Aria"] = en["GratisDna.Likert.Aria"];
         ar["GratisDna.Likert.Aria"] = en["GratisDna.Likert.Aria"];
@@ -645,7 +645,7 @@ public static class UiStringsGratisDna
         ar["GratisDna.Sticky.Cta"] = en["GratisDna.Sticky.Cta"];
 
         nl["GratisDna.Sticky.Dismiss"] = "Later";
-        en["GratisDna.Sticky.Dismiss"] = "Later";
+        en["GratisDna.Sticky.Dismiss"] = "Maybe later";
         pl["GratisDna.Sticky.Dismiss"] = en["GratisDna.Sticky.Dismiss"];
         ro["GratisDna.Sticky.Dismiss"] = en["GratisDna.Sticky.Dismiss"];
         ar["GratisDna.Sticky.Dismiss"] = en["GratisDna.Sticky.Dismiss"];
