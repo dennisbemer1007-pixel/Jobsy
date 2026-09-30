@@ -64,6 +64,7 @@ public class NoPupilNameFieldsTests
         // Pupil login dropdowns — school/class labels only.
         "PupilSchoolOptionDto.SchoolName",
         "PupilClassOptionDto.ClassName",
+        "PupilResultPageDto.SchoolName",
     };
 
     [Fact]

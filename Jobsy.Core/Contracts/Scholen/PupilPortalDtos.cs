@@ -71,4 +71,18 @@ public sealed record PupilChipsResponse(
     string? NextItemId,
     string? NextWorldKey);
 
+public sealed record PupilResultPageDto(
+    string ClassLabel,
+    string CodeDisplay,
+    string SchoolName,
+    PupilStoryViewDto Story,
+    IReadOnlyList<string> Likes,
+    IReadOnlyList<string> Dislikes,
+    DreamJobRouteStubDto? DreamJob,
+    string? DreamJobKey);
+
+public sealed record PupilDreamJobRequest(string? Key);
+
+public sealed record PupilDreamJobResponse(string Key, DreamJobRouteStubDto DreamJob);
+
 public sealed record PupilErrorDto(string Error, string Message);

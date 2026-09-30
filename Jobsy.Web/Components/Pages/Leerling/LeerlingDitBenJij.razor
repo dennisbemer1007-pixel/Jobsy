@@ -1,16 +1,102 @@
 @page "/leerling/dit-ben-jij"
 @layout LeerlingLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Services
 @inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
 
-<PageTitle>@Culture["Leerling.Result.Title"] · Lobsy</PageTitle>
+<PageTitle>@Culture["LeerlingStory.Title"] · Lobsy</PageTitle>
 
-<section class="ll-card">
-    <h1>@Culture["Leerling.Result.Title"]</h1>
-    <p class="muted">@Culture["Leerling.Result.Placeholder"]</p>
-</section>
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_result is null)
+{
+    <section class="ll-card">
+        <h1>@Culture["Leerling.Result.Title"]</h1>
+        <p class="muted">@Culture["Leerling.Session.Lost"]</p>
+        <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Reis.Title"]</a>
+    </section>
+}
+else
+{
+    <div class="ll-reis ll-result" data-testid="leerling-dit-ben-jij">
+        <div class="ll-result__mascot">
+            <LeerlingLobster PlatesShed="10" Size="96" />
+            <p class="ll-bubble">@Culture["LeerlingStory.Lobster"]</p>
+        </div>
+
+        <section class="ll-card">
+            <p class="ll-question__meta">
+                <span class="ll-pill">@Culture["LeerlingStory.DonePill"]</span>
+            </p>
+            <h1>@Culture["LeerlingStory.Title"]</h1>
+            <p class="ll-result__story">@_result.Story.Body</p>
+
+            <div class="ll-tile-grid">
+                @foreach (var tile in _result.Story.Tiles)
+                {
+                    <div class="ll-tile">
+                        <p class="ll-tile__label">@tile.KidLabel</p>
+                        <p class="ll-tile__value">@tile.Explanation</p>
+                    </div>
+                }
+            </div>
+
+            @if (_result.Likes.Count > 0)
+            {
+                <h2 class="ll-result__sub">@Culture["LeerlingStory.LikesTitle"]</h2>
+                <div class="ll-chips__row">
+                    @foreach (var chip in _result.Likes)
+                    {
+                        <span class="ll-chip is-on is-like">@chip</span>
+                    }
+                </div>
+            }
+
+            <h2 class="ll-result__sub">@Culture["LeerlingStory.JobsTitle"]</h2>
+            <div class="ll-chips__row">
+                @foreach (var job in _result.Story.JobIdeas)
+                {
+                    <span class="ll-job-idea">@job</span>
+                }
+            </div>
+
+            <p class="ll-privacy" role="note">@Culture["LeerlingStory.Privacy"]</p>
+        </section>
+
+        <div class="ll-result__actions">
+            <a class="btn-secondary" href="/leerling/pdf">@Culture["LeerlingStory.Pdf"]</a>
+            <a class="btn-primary" href="/leerling/droombaan">@Culture["LeerlingStory.CheckDream"]</a>
+        </div>
+    </div>
+}
 
 @code {
-    protected override async Task OnInitializedAsync() => await Culture.SetLanguageAsync("nl");
+    private bool _loading = true;
+    private PupilResultPageDto? _result;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        try
+        {
+            _result = await Api.GetPupilResultAsync();
+        }
+        catch
+        {
+            _result = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
 }

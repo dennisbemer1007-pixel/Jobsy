@@ -90,11 +90,15 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
         result.CultureScoresJson = JsonSerializer.Serialize(culture, Json);
         result.TopCulture = topCulture;
         result.ScoringVersion = PupilQuestionBank.ScoringVersion.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        // Story keys / fit snapshot filled in file 06.
-        result.StoryTemplateVersion = string.Empty;
-        result.StoryKeysJson = "[]";
-        result.FitSnapshotJson = null;
         result.DreamJobKey = code.Progress.DreamJobKey;
+
+        var likeKeys = ParseChipKeys(code.Progress.LikesJson);
+        var storyKeys = PupilStoryTemplates.SelectKeys(result, likeKeys);
+        result.StoryTemplateVersion = PupilStoryTemplates.Version.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        result.StoryKeysJson = PupilStoryTemplates.Serialize(storyKeys);
+
+        var fit = PupilDreamJobFit.Evaluate(result, code.Progress, code.Progress.DreamJobKey);
+        result.FitSnapshotJson = fit is null ? null : PupilDreamJobFit.SerializeSnapshot(fit.Snapshot);
 
         code.Status = PupilCodeStatus.Completed;
         if (code.Progress.CompletedAtUtc is null)
@@ -150,6 +154,23 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
         catch
         {
             return new Dictionary<string, int>(StringComparer.Ordinal);
+        }
+    }
+
+    private static List<string> ParseChipKeys(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch
+        {
+            return [];
         }
     }
 }

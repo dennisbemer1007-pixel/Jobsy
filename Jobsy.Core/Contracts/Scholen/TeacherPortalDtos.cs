@@ -77,15 +77,17 @@ public sealed record TeacherCodeDetailDto(
     DreamJobRouteStubDto? DreamJob,
     bool PdfAvailable);
 
-/// <summary>Rendered story placeholders (06 replaces the stub renderer).</summary>
+/// <summary>Rendered "Dit ben jij" story (text regenerated from templates).</summary>
 public sealed record PupilStoryViewDto(
     string Title,
     string Body,
-    IReadOnlyList<PupilStoryTileDto> Tiles);
+    IReadOnlyList<PupilStoryTileDto> Tiles,
+    IReadOnlyList<string> JobIdeas,
+    IReadOnlyList<string> LikeChipKeys);
 
 public sealed record PupilStoryTileDto(string ModelKey, string KidLabel, string Explanation);
 
-/// <summary>Droombaan route stub until 06 fills FitSnapshotJson templates.</summary>
+/// <summary>Droombaan fit + school route (fixed templates, no AI/links/vacancies).</summary>
 public sealed record DreamJobRouteStubDto(
     string? JobKey,
     string? JobTitle,
@@ -93,4 +95,6 @@ public sealed record DreamJobRouteStubDto(
     int TotalCount,
     IReadOnlyList<string> HaveItems,
     IReadOnlyList<string> LearnItems,
-    IReadOnlyList<string> RouteSteps);
+    IReadOnlyList<string> RouteSteps,
+    string? Encouragement = null,
+    string? AltRoute = null);

@@ -3389,6 +3389,7 @@ public static class UiStrings
         // D12: Scholen strings are nl-only; other languages fall back via UiStrings.Get.
         UiStringsScholen.MergeNl(nl);
         UiStringsLeerlingVragen.MergeNl(nl);
+        UiStringsLeerlingVerhaal.MergeNl(nl);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

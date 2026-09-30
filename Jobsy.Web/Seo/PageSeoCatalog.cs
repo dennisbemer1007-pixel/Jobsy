@@ -218,7 +218,9 @@ public static partial class PageSeoCatalog
             ["/leerling/reis"] = Private("Leerling.Reis.Title", "Seo.PrivateDescription"),
             ["/leerling/eiland"] = Private("Leerling.Island.Title", "Seo.PrivateDescription"),
             ["/leerling/stop"] = Private("Leerling.Stop.Title", "Seo.PrivateDescription"),
-            ["/leerling/dit-ben-jij"] = Private("Leerling.Result.Title", "Seo.PrivateDescription"),
+            ["/leerling/dit-ben-jij"] = Private("LeerlingStory.Title", "Seo.PrivateDescription"),
+            ["/leerling/droombaan"] = Private("LeerlingDroom.Title", "Seo.PrivateDescription"),
+            ["/leerling/pdf"] = Private("LeerlingStory.Pdf", "Seo.PrivateDescription"),
             ["/branch"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),
         };
 

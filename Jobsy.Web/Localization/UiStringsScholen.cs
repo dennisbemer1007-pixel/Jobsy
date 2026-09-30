@@ -273,6 +273,7 @@ public static class UiStringsScholen
         nl["Leraar.Detail.DreamLead"] = "Ingevuld door leerling";
         nl["Leraar.Detail.DreamProgress"] = "{0} van {1} heb je al";
         nl["Leraar.Detail.DreamStubNote"] = "Route en checklist volgen in een volgende versie. Geen opleidingslinks, werkgevers of vacatures.";
+        nl["Leraar.Detail.NoLinksNote"] = "Geen opleidingslinks, werkgevers of vacatures voor leerlingen.";
 
         nl["Leraar.TestWindow.ParentsMissing"] = "De schoolbeheerder moet eerst bevestigen dat ouders zijn geïnformeerd.";
 
@@ -485,5 +486,6 @@ public static class UiStringsScholen
         || key.StartsWith("LeerlingQ.", StringComparison.OrdinalIgnoreCase)
         || key.StartsWith("LeerlingStory.", StringComparison.OrdinalIgnoreCase)
         || key.StartsWith("LeerlingDroom.", StringComparison.OrdinalIgnoreCase)
+        || key.StartsWith("LeerlingPdf.", StringComparison.OrdinalIgnoreCase)
         || key.StartsWith("AdminScholen.", StringComparison.OrdinalIgnoreCase);
 }

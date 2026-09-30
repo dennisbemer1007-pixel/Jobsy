@@ -74,6 +74,23 @@ public sealed class TeacherClassesController : ControllerBase
         return dto is null ? NotFound() : Ok(dto);
     }
 
+    [HttpGet("{classId:guid}/codes/{codeId:guid}/report.pdf")]
+    public async Task<IActionResult> ReportPdf(
+        Guid classId,
+        Guid codeId,
+        CancellationToken cancellationToken)
+    {
+        var (bytes, fileName, error) = await _portal.BuildPupilReportPdfAsync(
+            User, classId, codeId, cancellationToken);
+        if (error == "not_found" || bytes is null)
+        {
+            return NotFound();
+        }
+
+        Response.Headers.CacheControl = "no-store";
+        return File(bytes, "application/pdf", fileName);
+    }
+
     [HttpPost("{classId:guid}/codes/{codeId:guid}/replace")]
     public async Task<ActionResult<SchoolPortalCodeRowDto>> ReplaceCode(
         Guid classId,

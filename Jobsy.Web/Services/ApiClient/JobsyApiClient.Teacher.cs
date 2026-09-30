@@ -78,4 +78,28 @@ public sealed partial class JobsyApiClient
         await SendBrowserDownloadAsync(
             js, $"codelijst-{classId:N}.csv", Convert.ToBase64String(bytes), "text/csv;charset=utf-8");
     }
+
+    public async Task DownloadTeacherPupilReportPdfAsync(
+        IJSRuntime js,
+        Guid classId,
+        Guid codeId,
+        string className,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync(
+            $"api/teacher/classes/{classId}/codes/{codeId}/report.pdf", ct);
+        response.EnsureSuccessStatusCode();
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var safe = new string((className ?? "klas").Where(c => char.IsLetterOrDigit(c) || c is '-' or '_').ToArray());
+        if (string.IsNullOrWhiteSpace(safe))
+        {
+            safe = "klas";
+        }
+
+        await SendBrowserDownloadAsync(
+            js,
+            $"lobsy-ontdekkingsreis-{safe.ToLowerInvariant()}.pdf",
+            Convert.ToBase64String(bytes),
+            "application/pdf");
+    }
 }

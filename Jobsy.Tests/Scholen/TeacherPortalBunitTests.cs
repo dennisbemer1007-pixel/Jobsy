@@ -2,6 +2,7 @@ using Bunit;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Web.Components.Ui.Enterprise;
 using Jobsy.Web.Localization;
@@ -53,29 +54,31 @@ public class TeacherPortalBunitTests : TestContext
     }
 
     [Fact]
-    public void Stub_detail_story_matches_sc_t2_tile_count()
+    public void Detail_story_matches_sc_t2_tile_count()
     {
-        var renderer = new StubPupilStoryRenderer();
-        var story = renderer.Render(new PupilResult
+        var renderer = new PupilStoryRenderer();
+        var result = new PupilResult
         {
             PupilCodeId = Guid.NewGuid(),
             SchoolClassId = Guid.NewGuid(),
             CompletedAtUtc = DateTime.UtcNow,
             HollandCode = "RIS",
-            TopValue = "Helpen",
-            TopCulture = "Klein team",
-            CompetenceScoresJson = "{}",
-            RiasecScoresJson = "{}",
-            ValuesScoresJson = "{}",
-            CultureScoresJson = "{}",
+            TopValue = SchwartzValuesCatalog.Connection,
+            TopCulture = CulturePersonalityCatalog.PeopleFirst,
+            CompetenceScoresJson = """{"samenwerken":70,"resultaatgerichtheid":70,"stressbestendigheid":70,"innovatie":50,"extraversie":50}""",
+            RiasecScoresJson = """{"realistic":80,"investigative":70,"artistic":30,"social":60,"enterprising":40,"conventional":40}""",
+            ValuesScoresJson = """{"autonomy":40,"connection":80,"achievement":50,"stability":45,"impact":60}""",
+            CultureScoresJson = """{"autonomy":40,"informal":40,"collaboration":50,"flexibility":40,"innovation":40,"peopleFirst":80}""",
             ScoringVersion = "t",
-            StoryTemplateVersion = "t",
+            StoryTemplateVersion = "1",
             StoryKeysJson = "[]"
-        }, null);
+        };
+        result.StoryKeysJson = PupilStoryTemplates.Serialize(PupilStoryTemplates.SelectKeys(result, ["dieren"]));
+        var story = renderer.Render(result, new PupilProgress { LikesJson = """["dieren"]""" });
 
         Assert.Equal(4, story.Tiles.Count);
         Assert.Contains(story.Tiles, t => t.ModelKey == "riasec");
-        Assert.Equal(PupilCodeStatus.NotStarted, PupilCodeStatus.NotStarted); // compile touch enums used in UI
+        Assert.Equal(PupilCodeStatus.NotStarted, PupilCodeStatus.NotStarted);
         _ = typeof(TeacherCodeDetailDto);
     }
 

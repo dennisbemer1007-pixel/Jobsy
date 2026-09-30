@@ -82,9 +82,9 @@ else
             <section class="sch-card">
                 <h2>@Culture["Leraar.Group.Discussion"]</h2>
                 <ul class="sch-prompt-list">
-                    @foreach (var key in _group.DiscussionPromptKeys)
+                    @foreach (var line in _group.DiscussionPromptKeys)
                     {
-                        <li>@Culture[key]</li>
+                        <li>@line</li>
                     }
                 </ul>
             </section>

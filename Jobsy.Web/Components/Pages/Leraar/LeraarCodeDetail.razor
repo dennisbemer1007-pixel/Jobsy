@@ -10,6 +10,7 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IPlatformFeatureService Features
+@inject IJSRuntime Js
 
 <PageTitle>@(_detail?.DisplayCode ?? Culture["Leraar.Detail.Title"]) · Lobsy</PageTitle>
 
@@ -61,7 +62,7 @@ else
             }
         </p>
         <div class="sch-admin-toolbar">
-            <button type="button" class="btn-primary" disabled title="@Culture["Leraar.Detail.PdfLater"]">
+            <button type="button" class="btn-primary" disabled="@_pdfBusy" @onclick="DownloadPdf">
                 @Culture["Leraar.Detail.Pdf"]
             </button>
         </div>
@@ -75,7 +76,7 @@ else
                 <h2>@Culture["Leraar.Detail.StoryTitle"]</h2>
                 @if (_detail.Story is not null)
                 {
-                    <p>@(IsPlaceholder(_detail.Story.Body) ? Culture[_detail.Story.Body] : _detail.Story.Body)</p>
+                    <p>@_detail.Story.Body</p>
                     <div class="sch-tile-grid">
                         @foreach (var tile in _detail.Story.Tiles)
                         {
@@ -116,9 +117,9 @@ else
             <section class="sch-card">
                 <h2>@Culture["Leraar.Detail.Starters"]</h2>
                 <ul class="sch-prompt-list">
-                    @foreach (var key in _detail.ConversationStarterKeys)
+                    @foreach (var line in _detail.ConversationStarterKeys)
                     {
-                        <li>@Culture[key]</li>
+                        <li>@line</li>
                     }
                 </ul>
             </section>
@@ -128,7 +129,8 @@ else
             <section class="sch-card">
                 <h2>@Culture["Leraar.Detail.DreamTitle"]</h2>
                 <p class="muted">@Culture["Leraar.Detail.DreamLead"]</p>
-                @if (_detail.DreamJob is null || string.IsNullOrWhiteSpace(_detail.DreamJob.JobKey))
+                @if (_detail.DreamJob is null || string.IsNullOrWhiteSpace(_detail.DreamJob.JobKey)
+                     || string.Equals(_detail.DreamJob.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
                 {
                     <p>@Culture["Leraar.DreamJobs.Undecided"]</p>
                 }
@@ -138,7 +140,36 @@ else
                     <p class="muted">
                         @string.Format(Culture["Leraar.Detail.DreamProgress"], _detail.DreamJob.HaveCount, _detail.DreamJob.TotalCount)
                     </p>
-                    <p class="muted">@Culture["Leraar.Detail.DreamStubNote"]</p>
+                    @if (_detail.DreamJob.HaveItems.Count > 0)
+                    {
+                        <h3 class="sch-subhead">@Culture["LeerlingDroom.HaveTitle"]</h3>
+                        <ul class="sch-prompt-list">
+                            @foreach (var item in _detail.DreamJob.HaveItems)
+                            {
+                                <li>@item</li>
+                            }
+                        </ul>
+                    }
+                    @if (_detail.DreamJob.LearnItems.Count > 0)
+                    {
+                        <h3 class="sch-subhead">@Culture["LeerlingDroom.NeedTitle"]</h3>
+                        <ul class="sch-prompt-list">
+                            @foreach (var item in _detail.DreamJob.LearnItems)
+                            {
+                                <li>@item</li>
+                            }
+                        </ul>
+                    }
+                    @if (_detail.DreamJob.RouteSteps.Count > 0)
+                    {
+                        <ol class="sch-prompt-list">
+                            @foreach (var step in _detail.DreamJob.RouteSteps)
+                            {
+                                <li>@step</li>
+                            }
+                        </ol>
+                    }
+                    <p class="muted">@Culture["Leraar.Detail.NoLinksNote"]</p>
                 }
             </section>
         </aside>
@@ -151,6 +182,7 @@ else
 
     private bool _disabled;
     private bool _loading = true;
+    private bool _pdfBusy;
     private TeacherCodeDetailDto? _detail;
 
     protected override async Task OnParametersSetAsync()
@@ -169,6 +201,21 @@ else
         finally { _loading = false; }
     }
 
-    private static bool IsPlaceholder(string body)
-        => body.StartsWith("Leraar.", StringComparison.Ordinal);
+    private async Task DownloadPdf()
+    {
+        if (_detail is null || _pdfBusy)
+        {
+            return;
+        }
+
+        _pdfBusy = true;
+        try
+        {
+            await Api.DownloadTeacherPupilReportPdfAsync(Js, ClassId, CodeId, _detail.ClassName);
+        }
+        finally
+        {
+            _pdfBusy = false;
+        }
+    }
 }

@@ -294,11 +294,12 @@ public static class DependencyInjection
         services.AddScoped<ISchoolCodeListPdfService, SchoolCodeListPdfService>();
         services.AddScoped<ISchoolPortalService, SchoolPortalService>();
         services.AddScoped<ITeacherPortalService, TeacherPortalService>();
-        services.AddSingleton<IPupilStoryRenderer, StubPupilStoryRenderer>();
+        services.AddSingleton<IPupilStoryRenderer, PupilStoryRenderer>();
         services.AddSingleton<IPupilQuestionBank, PupilQuestionBank>();
         services.AddScoped<IPupilResultBuilder, PupilResultBuilder>();
         services.AddSingleton<IPupilLoginProtection>(_ => new PupilLoginProtection());
         services.AddScoped<IPupilPortalService, PupilPortalService>();
+        services.AddSingleton<IPupilReportPdfService, PupilReportPdfService>();
         services.AddSingleton<IAuthorizationHandler, PupilSessionAuthorizationHandler>();
         services.AddHostedService<TestWindowAutoCloser>();
         services.AddScoped<IAmbassadeurOnboardingService, AmbassadeurOnboardingService>();

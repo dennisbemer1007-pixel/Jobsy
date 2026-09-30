@@ -5,6 +5,7 @@ using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,19 @@ public interface IPupilPortalService
         PupilChipsRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<(PupilResultPageDto? Ok, PupilErrorDto? Error, int StatusCode)> GetResultAsync(
+        ClaimsPrincipal pupil,
+        CancellationToken cancellationToken = default);
+
+    Task<(PupilDreamJobResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveDreamJobAsync(
+        ClaimsPrincipal pupil,
+        string? key,
+        CancellationToken cancellationToken = default);
+
+    Task<(byte[]? Bytes, string? FileName, PupilErrorDto? Error, int StatusCode)> BuildPdfAsync(
+        ClaimsPrincipal pupil,
+        CancellationToken cancellationToken = default);
+
     Task<(bool Ok, PupilErrorDto? Error, int StatusCode)> ClearLoginPauseAsync(
         ClaimsPrincipal staff,
         Guid classId,
@@ -66,6 +80,8 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly IPupilResultBuilder _results;
     private readonly ISchoolScopeService _scope;
     private readonly IMemoryCache _cache;
+    private readonly IPupilStoryRenderer _story;
+    private readonly IPupilReportPdfService _pdf;
     private readonly TimeProvider _clock;
     private readonly ILogger<PupilPortalService> _logger;
 
@@ -77,6 +93,8 @@ public sealed class PupilPortalService : IPupilPortalService
         IPupilResultBuilder results,
         ISchoolScopeService scope,
         IMemoryCache cache,
+        IPupilStoryRenderer story,
+        IPupilReportPdfService pdf,
         ILogger<PupilPortalService> logger,
         TimeProvider? clock = null)
     {
@@ -87,6 +105,8 @@ public sealed class PupilPortalService : IPupilPortalService
         _results = results;
         _scope = scope;
         _cache = cache;
+        _story = story;
+        _pdf = pdf;
         _logger = logger;
         _clock = clock ?? TimeProvider.System;
     }
@@ -543,6 +563,214 @@ public sealed class PupilPortalService : IPupilPortalService
         return (new PupilChipsResponse(true, nextIndex, next?.Id, next?.WorldKey), null, 200);
     }
 
+    public async Task<(PupilResultPageDto? Ok, PupilErrorDto? Error, int StatusCode)> GetResultAsync(
+        ClaimsPrincipal pupil,
+        CancellationToken cancellationToken = default)
+    {
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var code = ctx.Code!;
+        var schoolClass = ctx.Class!;
+        if (code.Status != PupilCodeStatus.Completed || code.Result is null)
+        {
+            return (null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
+        }
+
+        var story = _story.Render(code.Result, code.Progress);
+        var dream = _story.RenderDreamRoute(code.Result, code.Progress);
+        var likes = ResolveChipLabels(ParseTagList(code.Progress?.LikesJson));
+        var dislikes = ResolveChipLabels(ParseTagList(code.Progress?.DislikesJson));
+        if (!string.IsNullOrWhiteSpace(code.Progress?.LikeOtherWord))
+        {
+            likes = likes.Concat([code.Progress!.LikeOtherWord!]).ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(code.Progress?.DislikeOtherWord))
+        {
+            dislikes = dislikes.Concat([code.Progress!.DislikeOtherWord!]).ToList();
+        }
+
+        var schoolName = await _db.Schools.AsNoTracking()
+            .Where(s => s.Id == schoolClass.SchoolId)
+            .Select(s => s.Name)
+            .FirstOrDefaultAsync(cancellationToken) ?? "";
+
+        return (new PupilResultPageDto(
+            ClassLabel: schoolClass.Name,
+            CodeDisplay: pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "",
+            SchoolName: schoolName,
+            Story: story,
+            Likes: likes,
+            Dislikes: dislikes,
+            DreamJob: dream,
+            DreamJobKey: code.Result.DreamJobKey ?? code.Progress?.DreamJobKey), null, 200);
+    }
+
+    public async Task<(PupilDreamJobResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveDreamJobAsync(
+        ClaimsPrincipal pupil,
+        string? key,
+        CancellationToken cancellationToken = default)
+    {
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var code = ctx.Code!;
+        if (code.Status != PupilCodeStatus.Completed || code.Result is null || code.Progress is null)
+        {
+            return (null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
+        }
+
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return (null, new PupilErrorDto("invalid_key", "Kies een beroep uit de lijst."), 400);
+        }
+
+        var trimmed = key.Trim();
+        if (!PupilDreamJobFit.IsKnownJobKey(trimmed))
+        {
+            return (null, new PupilErrorDto("invalid_key", "Onbekend beroep."), 400);
+        }
+
+        var storeKey = string.Equals(trimmed, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase)
+            ? PupilDreamJobFit.UndecidedKey
+            : DreamJobCatalog.All.First(j =>
+                string.Equals(j.Key, trimmed, StringComparison.OrdinalIgnoreCase)).Key;
+
+        code.Progress.DreamJobKey = storeKey;
+        code.Progress.UpdatedAtUtc = _clock.GetUtcNow().UtcDateTime;
+        code.Result.DreamJobKey = storeKey;
+
+        var fit = PupilDreamJobFit.Evaluate(code.Result, code.Progress, storeKey);
+        code.Result.FitSnapshotJson = fit is null ? null : PupilDreamJobFit.SerializeSnapshot(fit.Snapshot);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var dream = _story.RenderDreamRoute(code.Result, code.Progress);
+        return (new PupilDreamJobResponse(storeKey, dream), null, 200);
+    }
+
+    public async Task<(byte[]? Bytes, string? FileName, PupilErrorDto? Error, int StatusCode)> BuildPdfAsync(
+        ClaimsPrincipal pupil,
+        CancellationToken cancellationToken = default)
+    {
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, null, ctx.Error, ctx.StatusCode);
+        }
+
+        var code = ctx.Code!;
+        var schoolClass = ctx.Class!;
+        if (code.Status != PupilCodeStatus.Completed || code.Result is null)
+        {
+            return (null, null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
+        }
+
+        var schoolName = await _db.Schools.AsNoTracking()
+            .Where(s => s.Id == schoolClass.SchoolId)
+            .Select(s => s.Name)
+            .FirstOrDefaultAsync(cancellationToken) ?? "";
+        var display = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "";
+        var model = BuildPdfModel(code, schoolClass.Name, schoolName, display);
+        var bytes = _pdf.Render(model);
+        var fileName = $"lobsy-ontdekkingsreis-{SanitizeFilePart(schoolClass.Name)}.pdf";
+        return (bytes, fileName, null, 200);
+    }
+
+    private PupilReportPdfModel BuildPdfModel(
+        PupilCode code,
+        string className,
+        string schoolName,
+        string displayCode)
+    {
+        var result = code.Result!;
+        var story = _story.Render(result, code.Progress);
+        var dream = _story.RenderDreamRoute(result, code.Progress);
+        var likes = ResolveChipLabels(ParseTagList(code.Progress?.LikesJson));
+        var dislikes = ResolveChipLabels(ParseTagList(code.Progress?.DislikesJson));
+        if (!string.IsNullOrWhiteSpace(code.Progress?.LikeOtherWord))
+        {
+            likes = likes.Concat([code.Progress!.LikeOtherWord!]).ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(code.Progress?.DislikeOtherWord))
+        {
+            dislikes = dislikes.Concat([code.Progress!.DislikeOtherWord!]).ToList();
+        }
+
+        var date = DateOnly.FromDateTime(result.CompletedAtUtc == default
+            ? _clock.GetUtcNow().UtcDateTime
+            : result.CompletedAtUtc);
+
+        return new PupilReportPdfModel(
+            SchoolName: schoolName,
+            ClassName: className,
+            DisplayCode: displayCode,
+            Date: date,
+            StoryBody: story.Body,
+            Tiles: story.Tiles.Select(t => (t.KidLabel, t.Explanation)).ToList(),
+            Likes: likes,
+            Dislikes: dislikes,
+            JobIdeas: story.JobIdeas,
+            DreamJobTitle: string.IsNullOrWhiteSpace(dream.JobKey)
+                           || string.Equals(dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase)
+                ? null
+                : dream.JobTitle,
+            RouteSteps: dream.RouteSteps,
+            Encouragement: dream.Encouragement);
+    }
+
+    private static List<string> ResolveChipLabels(IReadOnlyList<string> keys)
+        => keys.Select(ChipDutch).ToList();
+
+    private static string ChipDutch(string key) => key switch
+    {
+        "sport" => "Sport",
+        "buiten" => "Buiten zijn",
+        "dieren" => "Dieren",
+        "gamen" => "Gamen",
+        "tekenen" => "Tekenen",
+        "muziek" => "Muziek",
+        "koken" => "Koken of bakken",
+        "fietsen-repareren" => "Fietsen repareren",
+        "bouwen" => "Bouwen & knutselen",
+        "techniek" => "Techniek",
+        "lezen" => "Lezen",
+        "dansen" => "Dansen",
+        "theater" => "Theater",
+        "filmpjes" => "Filmpjes maken",
+        "mode" => "Mode",
+        "kleine-kinderen" => "Kleine kinderen",
+        "natuur" => "Natuur",
+        "autos" => "Auto's & motoren",
+        "computers" => "Computers",
+        "puzzels" => "Puzzels",
+        "rekenen" => "Rekenen",
+        "talen" => "Talen",
+        "reizen" => "Reizen",
+        "programmeren" => "Programmeren",
+        "voor-de-klas" => "Voor de klas praten",
+        "lang-stilzitten" => "Lang stilzitten",
+        "hard-werken-kou" => "Hard werken in de kou",
+        "veel-lezen" => "Veel lezen",
+        "alleen-werken" => "Alleen werken",
+        "druk-lawaai" => "Druk en lawaai",
+        "vies-worden" => "Vies worden",
+        _ => key
+    };
+
+    private static string SanitizeFilePart(string name)
+    {
+        var cleaned = new string(name.Where(c => char.IsLetterOrDigit(c) || c is '-' or '_').ToArray());
+        return string.IsNullOrWhiteSpace(cleaned) ? "klas" : cleaned.ToLowerInvariant();
+    }
+
     private static (List<string> Likes, List<string> Dislikes, string? LikeOther, string? DislikeOther, PupilErrorDto? Error)
         ValidateChips(PupilChipsRequest request)
     {
@@ -674,6 +902,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = await _db.PupilCodes
             .Include(c => c.Progress)
+            .Include(c => c.Result)
             .Include(c => c.SchoolClass)!.ThenInclude(sc => sc!.School)
             .FirstOrDefaultAsync(c => c.Id == codeId, cancellationToken);
 

@@ -44,6 +44,20 @@ public sealed partial class JobsyApiClient
         throw new HttpRequestException(body, null, response.StatusCode);
     }
 
+    public async Task<PupilResultPageDto?> GetPupilResultAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<PupilResultPageDto>("api/pupil/result", ct);
+
+    public async Task<PupilDreamJobResponse?> SavePupilDreamJobAsync(string key, CancellationToken ct = default)
+    {
+        using var response = await _http.PutAsJsonAsync("api/pupil/dreamjob", new PupilDreamJobRequest(key), ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<PupilDreamJobResponse>(cancellationToken: ct);
+    }
+
     public async Task ClearTeacherLoginPauseAsync(Guid classId, CancellationToken ct = default)
     {
         using var response = await _http.PostAsync(

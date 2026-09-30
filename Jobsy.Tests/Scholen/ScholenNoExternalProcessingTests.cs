@@ -29,7 +29,10 @@ public class ScholenNoExternalProcessingTests
                             || t.Name.Contains("PupilPortal", StringComparison.Ordinal)
                             || t.Name.Contains("PupilLogin", StringComparison.Ordinal)
                             || t.Name.Contains("PupilResult", StringComparison.Ordinal)
-                            || t.Name.Contains("PupilQuestion", StringComparison.Ordinal))
+                            || t.Name.Contains("PupilQuestion", StringComparison.Ordinal)
+                            || t.Name.Contains("PupilStory", StringComparison.Ordinal)
+                            || t.Name.Contains("PupilDream", StringComparison.Ordinal)
+                            || t.Name.Contains("PupilReportPdf", StringComparison.Ordinal))
                         && !t.IsAbstract
                         && t.IsClass)
             .ToList();
@@ -56,6 +59,28 @@ public class ScholenNoExternalProcessingTests
     }
 
     [Fact]
+    public void Core_story_and_fit_types_do_not_reference_openai_or_vacancies()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        string[] files =
+        [
+            Path.Combine(root, "Jobsy.Core", "Scholen", "PupilStoryRenderer.cs"),
+            Path.Combine(root, "Jobsy.Core", "Scholen", "PupilDreamJobFit.cs"),
+            Path.Combine(root, "Jobsy.Infrastructure", "Scholen", "PupilReportPdfService.cs"),
+        ];
+        string[] forbidden = ["OpenAi", "HttpClient", "TrainingOffers", "RoleFitCheck", "IVacancy", "Vacancy"];
+        foreach (var file in files)
+        {
+            Assert.True(File.Exists(file), file);
+            var text = File.ReadAllText(file);
+            foreach (var f in forbidden)
+            {
+                Assert.DoesNotContain(f, text, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+    }
+
+    [Fact]
     public void Pupil_razor_pages_do_not_reference_forbidden_components()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
@@ -63,7 +88,8 @@ public class ScholenNoExternalProcessingTests
         Assert.True(Directory.Exists(dir), dir);
         string[] forbidden =
         [
-            "BottomNav", "TrainingOffersBlock", "RoleFitCheck", "VacancyMap", "banenkaart", "Partner"
+            "BottomNav", "TrainingOffersBlock", "RoleFitCheck", "VacancyMap", "banenkaart", "Partner",
+            "href=\"http"
         ];
         foreach (var file in Directory.EnumerateFiles(dir, "*.razor"))
         {

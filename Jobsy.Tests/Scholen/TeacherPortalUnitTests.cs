@@ -1,5 +1,6 @@
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Navigation;
@@ -25,15 +26,23 @@ public class TeacherPortalUnitTests
     }
 
     [Fact]
-    public void Stub_story_renderer_has_four_tiles_and_no_raw_answers()
+    public void Story_renderer_has_four_tiles_and_dream_route()
     {
-        var renderer = new StubPupilStoryRenderer();
-        var result = MakeResult("SAE", "Helpen", "Klein team", "dierenarts");
-        var story = renderer.Render(result, null);
+        var renderer = new PupilStoryRenderer();
+        var result = MakeResult("SAE", SchwartzValuesCatalog.Connection, CulturePersonalityCatalog.PeopleFirst, "dierenarts");
+        result.CompetenceScoresJson = """{"samenwerken":80,"resultaatgerichtheid":70,"stressbestendigheid":65,"innovatie":50,"extraversie":55}""";
+        result.RiasecScoresJson = """{"realistic":70,"investigative":40,"artistic":30,"social":85,"enterprising":50,"conventional":40}""";
+        result.ValuesScoresJson = """{"autonomy":40,"connection":80,"achievement":50,"stability":45,"impact":60}""";
+        result.CultureScoresJson = """{"autonomy":40,"informal":40,"collaboration":50,"flexibility":40,"innovation":40,"peopleFirst":80}""";
+        var keys = PupilStoryTemplates.SelectKeys(result, ["dieren"]);
+        result.StoryKeysJson = PupilStoryTemplates.Serialize(keys);
+        var story = renderer.Render(result, new PupilProgress { LikesJson = """["dieren"]""" });
         Assert.Equal(4, story.Tiles.Count);
-        Assert.Equal(StubPupilStoryRenderer.PlaceholderBodyKey, story.Body);
-        var route = renderer.RenderDreamRoute(result, null);
+        Assert.False(string.IsNullOrWhiteSpace(story.Body));
+        Assert.DoesNotContain("Leraar.Detail.StoryPlaceholder", story.Body, StringComparison.Ordinal);
+        var route = renderer.RenderDreamRoute(result, new PupilProgress { DreamJobKey = "dierenarts", LikesJson = """["dieren"]""" });
         Assert.Equal("dierenarts", route.JobKey);
+        Assert.Equal(5, route.TotalCount);
         Assert.Equal(3, renderer.ConversationStarterKeys(result).Count);
         Assert.Equal(3, renderer.ClassDiscussionPromptKeys().Count);
     }
@@ -86,12 +95,12 @@ public class TeacherPortalUnitTests
         TopValue = topValue,
         TopCulture = culture,
         DreamJobKey = dream,
-        CompetenceScoresJson = """{"a":3}""",
-        RiasecScoresJson = "{}",
-        ValuesScoresJson = "{}",
-        CultureScoresJson = "{}",
+        CompetenceScoresJson = """{"samenwerken":70,"resultaatgerichtheid":70,"stressbestendigheid":70,"innovatie":50,"extraversie":50}""",
+        RiasecScoresJson = """{"realistic":70,"investigative":40,"artistic":30,"social":80,"enterprising":40,"conventional":40}""",
+        ValuesScoresJson = """{"autonomy":40,"connection":80,"achievement":50,"stability":45,"impact":60}""",
+        CultureScoresJson = """{"autonomy":40,"informal":40,"collaboration":50,"flexibility":40,"innovation":40,"peopleFirst":80}""",
         ScoringVersion = "t",
-        StoryTemplateVersion = "t",
+        StoryTemplateVersion = "1",
         StoryKeysJson = "[]"
     };
 }

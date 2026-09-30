@@ -66,6 +66,12 @@ public interface ITeacherPortalService
         ClaimsPrincipal user,
         Guid classId,
         CancellationToken cancellationToken = default);
+
+    Task<(byte[]? Bytes, string? FileName, string? Error)> BuildPupilReportPdfAsync(
+        ClaimsPrincipal user,
+        Guid classId,
+        Guid codeId,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class TeacherPortalService : ITeacherPortalService
@@ -78,6 +84,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
     private readonly IPupilCodeService _codes;
     private readonly ISchoolPortalService _schoolPortal;
     private readonly IPupilStoryRenderer _story;
+    private readonly IPupilReportPdfService _pdf;
     private readonly IPersonalDataAccessLogger _accessLog;
 
     public TeacherPortalService(
@@ -86,6 +93,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
         IPupilCodeService codes,
         ISchoolPortalService schoolPortal,
         IPupilStoryRenderer story,
+        IPupilReportPdfService pdf,
         IPersonalDataAccessLogger accessLog)
     {
         _db = db;
@@ -93,6 +101,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
         _codes = codes;
         _schoolPortal = schoolPortal;
         _story = story;
+        _pdf = pdf;
         _accessLog = accessLog;
     }
 
@@ -335,8 +344,113 @@ public sealed class TeacherPortalService : ITeacherPortalService
             DislikeOtherWord: dislikeOther,
             ConversationStarterKeys: starters,
             DreamJob: dream,
-            PdfAvailable: false);
+            PdfAvailable: true);
     }
+
+    public async Task<(byte[]? Bytes, string? FileName, string? Error)> BuildPupilReportPdfAsync(
+        ClaimsPrincipal user,
+        Guid classId,
+        Guid codeId,
+        CancellationToken cancellationToken = default)
+    {
+        // §R: PDF only for assigned teacher (SchoolAdmin without assignment → 404).
+        if (!await _scope.CanSeePerCodeDetailAsync(user, classId, cancellationToken))
+        {
+            return (null, null, "not_found");
+        }
+
+        var code = await _db.PupilCodes
+            .Include(c => c.Progress)
+            .Include(c => c.Result)
+            .Include(c => c.SchoolClass)!.ThenInclude(c => c!.School)
+            .FirstOrDefaultAsync(c => c.Id == codeId && c.SchoolClassId == classId, cancellationToken);
+        if (code?.SchoolClass?.School is null
+            || code.Status != PupilCodeStatus.Completed
+            || code.Result is null)
+        {
+            return (null, null, "not_found");
+        }
+
+        var display = _codes.Unprotect(code.CodeProtected) is { } raw
+            ? PupilCodeFormat.Display(raw)
+            : "******";
+        var story = _story.Render(code.Result, code.Progress);
+        var dream = _story.RenderDreamRoute(code.Result, code.Progress);
+        var likes = ParseChipList(code.Progress?.LikesJson).Select(ChipDutch).ToList();
+        var dislikes = ParseChipList(code.Progress?.DislikesJson).Select(ChipDutch).ToList();
+        if (!string.IsNullOrWhiteSpace(code.Progress?.LikeOtherWord))
+        {
+            likes.Add(code.Progress!.LikeOtherWord!);
+        }
+
+        if (!string.IsNullOrWhiteSpace(code.Progress?.DislikeOtherWord))
+        {
+            dislikes.Add(code.Progress!.DislikeOtherWord!);
+        }
+
+        var model = new PupilReportPdfModel(
+            SchoolName: code.SchoolClass.School.Name,
+            ClassName: code.SchoolClass.Name,
+            DisplayCode: display,
+            Date: DateOnly.FromDateTime(code.Result.CompletedAtUtc),
+            StoryBody: story.Body,
+            Tiles: story.Tiles.Select(t => (t.KidLabel, t.Explanation)).ToList(),
+            Likes: likes,
+            Dislikes: dislikes,
+            JobIdeas: story.JobIdeas,
+            DreamJobTitle: string.IsNullOrWhiteSpace(dream.JobKey)
+                           || string.Equals(dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase)
+                ? null
+                : dream.JobTitle,
+            RouteSteps: dream.RouteSteps,
+            Encouragement: dream.Encouragement);
+
+        var bytes = _pdf.Render(model);
+        var safeClass = new string(code.SchoolClass.Name.Where(c => char.IsLetterOrDigit(c) || c is '-' or '_').ToArray());
+        if (string.IsNullOrWhiteSpace(safeClass))
+        {
+            safeClass = "klas";
+        }
+
+        await LogPupilCodePdfAsync(user, codeId, cancellationToken);
+        return (bytes, $"lobsy-ontdekkingsreis-{safeClass.ToLowerInvariant()}.pdf", null);
+    }
+
+    private static string ChipDutch(string key) => key switch
+    {
+        "sport" => "Sport",
+        "buiten" => "Buiten zijn",
+        "dieren" => "Dieren",
+        "gamen" => "Gamen",
+        "tekenen" => "Tekenen",
+        "muziek" => "Muziek",
+        "koken" => "Koken of bakken",
+        "fietsen-repareren" => "Fietsen repareren",
+        "bouwen" => "Bouwen & knutselen",
+        "techniek" => "Techniek",
+        "lezen" => "Lezen",
+        "dansen" => "Dansen",
+        "theater" => "Theater",
+        "filmpjes" => "Filmpjes maken",
+        "mode" => "Mode",
+        "kleine-kinderen" => "Kleine kinderen",
+        "natuur" => "Natuur",
+        "autos" => "Auto's & motoren",
+        "computers" => "Computers",
+        "puzzels" => "Puzzels",
+        "rekenen" => "Rekenen",
+        "talen" => "Talen",
+        "reizen" => "Reizen",
+        "programmeren" => "Programmeren",
+        "voor-de-klas" => "Voor de klas praten",
+        "lang-stilzitten" => "Lang stilzitten",
+        "hard-werken-kou" => "Hard werken in de kou",
+        "veel-lezen" => "Veel lezen",
+        "alleen-werken" => "Alleen werken",
+        "druk-lawaai" => "Druk en lawaai",
+        "vies-worden" => "Vies worden",
+        _ => key
+    };
 
     public Task<(SchoolPortalCodeRowDto? Row, string? Error)> ReplaceCodeAsync(
         ClaimsPrincipal user,
@@ -504,7 +618,18 @@ public sealed class TeacherPortalService : ITeacherPortalService
     private TeacherGroupInsightsDto MapGroupInsights(IReadOnlyList<PupilResult> results)
     {
         var agg = ClassResultsAggregator.AggregateTeacherGroup(results);
-        var prompts = agg.Visible ? _story.ClassDiscussionPromptKeys() : Array.Empty<string>();
+        string? l1 = null;
+        string? l2 = null;
+        if (agg.Visible && agg.RiasecBars.Count > 0)
+        {
+            var ordered = agg.RiasecBars.OrderByDescending(b => b.Count).ThenBy(b => b.Key).ToList();
+            l1 = ordered[0].Key;
+            l2 = ordered.Count > 1 ? ordered[1].Key : ordered[0].Key;
+        }
+
+        var prompts = agg.Visible
+            ? _story.ClassDiscussionPromptKeys(l1, l2)
+            : Array.Empty<string>();
         return new TeacherGroupInsightsDto(
             Visible: agg.Visible,
             CompletedCount: agg.CompletedCount,
@@ -582,6 +707,23 @@ public sealed class TeacherPortalService : ITeacherPortalService
             role,
             "school.pupil-code",
             "view",
+            SubjectPupilCodeId: codeId), cancellationToken);
+    }
+
+    private async Task LogPupilCodePdfAsync(
+        ClaimsPrincipal user,
+        Guid codeId,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetUserId(user) ?? Guid.Empty;
+        var role = RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin)
+            ? JobsyRoles.SchoolAdmin
+            : JobsyRoles.Teacher;
+        await _accessLog.LogAsync(new PersonalDataAccessEntry(
+            userId,
+            role,
+            "school.pupil-code",
+            "pdf",
             SubjectPupilCodeId: codeId), cancellationToken);
     }
 

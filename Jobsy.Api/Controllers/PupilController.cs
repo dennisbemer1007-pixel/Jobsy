@@ -99,6 +99,40 @@ public sealed class PupilController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
+    [HttpGet("result")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> Result(CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.GetResultAsync(User, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpPut("dreamjob")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> DreamJob(
+        [FromBody] PupilDreamJobRequest request,
+        CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.SaveDreamJobAsync(User, request.Key, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpGet("~/leerling/pdf")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> Pdf(CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (bytes, fileName, error, status) = await _portal.BuildPdfAsync(User, cancellationToken);
+        if (bytes is null)
+        {
+            return StatusCode(status, error);
+        }
+
+        return File(bytes, "application/pdf", fileName);
+    }
+
     [HttpPost("logout")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
     public async Task<IActionResult> Logout()

@@ -545,9 +545,21 @@ public static class PageHelpDocs
 
         ["/leerling/dit-ben-jij"] = new(
             "Leerling · Dit ben jij",
-            "Jouw resultaat (komt in een volgende stap).",
-            "Bekijk je verhaal wanneer het beschikbaar is.",
-            "Resultaatscherm na afronden."),
+            "Jouw verhaal uit vaste sjablonen — positief en kort.",
+            "Bekijk je tegels, hobby's en beroepen om eens te bekijken. Download de PDF of check je droombaan.",
+            "Resultaat na 60 vragen, zonder AI of vacatures."),
+
+        ["/leerling/droombaan"] = new(
+            "Leerling · Droombaan-checker",
+            "Kies een beroep uit de vaste lijst en zie wat je al hebt.",
+            "Geen AI, geen links naar opleidingen of vacatures — alleen een schoolroute in gewone taal.",
+            "Droombaan checken en bewaren als PDF."),
+
+        ["/leerling/pdf"] = new(
+            "Leerling · PDF",
+            "Download je ontdekkingsreis als PDF.",
+            "Een lege naamregel voor op papier. Lobsy bewaart geen namen.",
+            "PDF voor jou en je leraar."),
 
         ["/admin/company"] = new(
             "Beheer · Bedrijfsgegevens",
