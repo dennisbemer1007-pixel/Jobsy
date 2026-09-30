@@ -1,17 +1,14 @@
 KEY: VacancyEngagementReminder
-SUBJECT: Quick check: Weekendhulp verkoop has been open 14 days
-PREHEADER: Weekendhulp verkoop: 42 search · 18 viewed · 2 applications
+SUBJECT: Your vacancy has been online for 14 days: Weekendhulp verkoop
+PREHEADER: 18 views, 2 applications.
 KIND: Optional
 --- TEXT ---
-Hello,
+Hello Alex,
 
-Quick check - your vacancy has been open 14 days
-================================================
+How is your vacancy doing?
+==========================
 
-Your vacancy Weekendhulp verkoop at Bakkerij De Gouden Korrel has been open
-for 14 days. Time for a short check-in.
-
-Here is what we see so far:
+Weekendhulp verkoop has been online for 14 days.
 
 In search results: 42
 Viewed: 18
@@ -19,35 +16,28 @@ Shared: 3
 Saved: 5
 Applications: 2
 
-Tip from Lobsy: Controleer of titel, taken en rooster nog kloppen. Kleine
-tekstuele updates verbeteren relevantie in matching en zoekfilters.
+Tip for you: Check whether title, tasks and schedule still match. Small
+updates help.
 
-Update the vacancy before the end date. After an update we extend the
-deadline as goodwill by 7 days - so your text gets more room.
+If you edit the vacancy before the end date, we extend it by 7 days.
 
-Highlight and a nearby tip open your vacancy overview, where you can finish
-the action in one click (tokens required). Highlight this vacancy:
-https://lobsy.nl/werkgever/vacatures?boost=highlight&id=11111111-1111-1111-1111-111111111111
-
-Improve vacancy now: https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+Improve vacancy: https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
 
 Team Lobsy
 
-You receive this email because you manage vacancies on Lobsy.
+You get this email because you manage vacancies for Bakkerij De Gouden Korrel on Lobsy.
 Unsubscribe from these emails: https://lobsy.nl/mail/afmelden
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Mail settings: https://lobsy.nl/account/mail-instellingen
 Lobsy
 --- STRUCTURE ---
-h1: Quick check - your vacancy has been open 14 days
+h1: How is your vacancy doing?
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=facts
-marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Highlight this vacancy -> https://lobsy.nl/werkgever/vacatures?boost=highlight&id=11111111-1111-1111-1111-111111111111
-a: Improve vacancy now -> https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+a: Improve vacancy -> https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
 a: Unsubscribe from these emails -> https://lobsy.nl/mail/afmelden
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy

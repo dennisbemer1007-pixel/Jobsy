@@ -1,30 +1,33 @@
 KEY: PendingApproval
-SUBJECT: Publication request: Weekendhulp verkoop
-PREHEADER: A publication request is waiting.
+SUBJECT: Vacancy waiting for your approval: Weekendhulp verkoop
+PREHEADER: Approve the vacancy to publish it.
 KIND: Essential
 --- TEXT ---
-Publication request
-===================
+Hello,
 
-Vacancy Weekendhulp verkoop at Bakkerij De Gouden Korrel is waiting for
-approval (not enough tokens).
+A vacancy is waiting for you
+============================
 
-Sign in to Lobsy to review the request under Vacancies.
+The vacancy Weekendhulp verkoop from Bakkerij De Gouden Korrel wants to go
+online. There are not enough tokens to publish it directly. You can approve
+the request.
 
-Review the request: https://lobsy.nl/werkgever/tokens
+Approve the request to publish the vacancy.
+
+View request: https://lobsy.nl/werkgever/tokens
 
 Team Lobsy
 
-You receive this email because you manage a company on Lobsy.
+You get this email because you manage Bakkerij De Gouden Korrel on Lobsy.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Publication request
+h1: A vacancy is waiting for you
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Review the request -> https://lobsy.nl/werkgever/tokens
+a: View request -> https://lobsy.nl/werkgever/tokens
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

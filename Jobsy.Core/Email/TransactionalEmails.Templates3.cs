@@ -9,34 +9,54 @@ public static partial class TransactionalEmails
 {
     public static ComposedEmail UserInvite(
         string? baseUrl, string fullName, string roleLabel, string email,
-        string? setPasswordUrl, bool promotedFromCandidate, EmailCulture? culture = null)
+        string? setPasswordUrl, bool promotedFromCandidate,
+        string? inviterFirstName = null, string? companyName = null, DateTime? linkExpiresAtUtc = null,
+        EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var ctaUrl = setPasswordUrl ?? links.Login;
         var ctaLabel = setPasswordUrl is null ? S(c, "Email.Common.Cta.Login") : S(c, "Email.Common.Cta.AcceptInvite");
+        var inviter = string.IsNullOrWhiteSpace(inviterFirstName)
+            ? (companyName ?? "Lobsy")
+            : inviterFirstName!;
+        var company = companyName ?? "Lobsy";
+        var facts = new List<(string, string)>
+        {
+            (S(c, "Email.Common.Fact.Role"), roleLabel),
+            (S(c, "Email.Common.Fact.Company"), company),
+            (S(c, "Email.Common.Fact.YourEmail"), email)
+        };
+        if (setPasswordUrl is not null)
+        {
+            var expires = linkExpiresAtUtc ?? DateTime.UtcNow.AddDays(7);
+            facts.Add((S(c, "Email.Common.Fact.LinkValidUntil"), EmailFormat.Date(expires, c)));
+        }
+
         var blocks = new List<EmailBlock>
         {
-            P(T(c, "Email.UserInvite.P1", EmailArg.Bold(roleLabel))),
+            P(T(c, "Email.UserInvite.P1",
+                EmailArg.Plain(inviter), EmailArg.Bold(roleLabel), EmailArg.Bold(company))),
+            F(facts),
             setPasswordUrl is null
-                ? P(T(c, "Email.UserInvite.P2HasPassword", EmailArg.Plain(email)))
-                : P(T(c, "Email.UserInvite.P2SetPassword", EmailArg.Plain(email)))
+                ? P(S(c, "Email.UserInvite.P2HasPassword"))
+                : P(S(c, "Email.UserInvite.P2SetPassword"))
         };
         if (promotedFromCandidate)
         {
             blocks.Add(P(S(c, "Email.UserInvite.P3Promoted")));
         }
 
-        if (setPasswordUrl is not null)
-        {
-            blocks.Add(N(Sf(c, "Email.Common.LinkValidUntil", EmailFormat.Date(DateTime.UtcNow.AddDays(7), c))));
-        }
-
+        var reasonInviter = string.IsNullOrWhiteSpace(inviterFirstName) ? company : inviterFirstName!;
         return Finish(Doc("UserInvite",
-            Sf(c, "Email.UserInvite.Subject", EmailBidi.Isolate(c, roleLabel)),
-            Sf(c, "Email.UserInvite.Preheader", EmailBidi.Isolate(c, roleLabel)),
-            Sf(c, "Email.UserInvite.Heading", EmailBidi.Isolate(c, roleLabel)),
-            blocks, Button(ctaLabel, ctaUrl), greeting: GreetOther(c, fullName), culture: c), baseUrl);
+            Sf(c, "Email.UserInvite.Subject", EmailBidi.Isolate(c, company)),
+            S(c, "Email.UserInvite.Preheader"),
+            S(c, "Email.UserInvite.Heading"),
+            blocks, Button(ctaLabel, ctaUrl),
+            greeting: GreetOther(c, fullName),
+            eyebrow: new EmailEyebrow(S(c, "Email.UserInvite.Eyebrow"), EmailTone.Sky),
+            culture: c,
+            reasonText: Sf(c, "Email.Reason.Invited", EmailBidi.Isolate(c, reasonInviter))), baseUrl);
     }
 
     public static ComposedEmail SalesManagerInvite(
@@ -98,25 +118,26 @@ public static partial class TransactionalEmails
         EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
-        var endpoint = apiBase.TrimEnd('/') + "/api/external/vacancies";
         var swaggerUrl = apiBase.TrimEnd('/') + "/swagger";
         var expiresLabel = EmailFormat.DateTimeWithoutZone(expiresAtUtc, c);
         return Finish(Doc("CompanyApiKeyCredentials",
             Sf(c, "Email.CompanyApiKeyCredentials.Subject", EmailBidi.Isolate(c, companyName)),
-            Sf(c, "Email.CompanyApiKeyCredentials.Preheader", EmailBidi.Isolate(c, companyName)),
+            Sf(c, "Email.CompanyApiKeyCredentials.Preheader", EmailBidi.Isolate(c, expiresLabel)),
             S(c, "Email.CompanyApiKeyCredentials.Heading"),
             [
                 P(T(c, "Email.CompanyApiKeyCredentials.P1", EmailArg.Bold(companyName))),
                 F([
-                    (S(c, "Email.CompanyApiKeyCredentials.Fact.Endpoint"), endpoint),
-                    (S(c, "Email.CompanyApiKeyCredentials.Fact.Header"), S(c, "Email.CompanyApiKeyCredentials.Fact.HeaderVal")),
-                    (S(c, "Email.CompanyApiKeyCredentials.Fact.Swagger"), swaggerUrl),
-                    (S(c, "Email.CompanyApiKeyCredentials.Fact.Expires"), expiresLabel)
+                    (S(c, "Email.Common.Fact.Company"), companyName),
+                    (S(c, "Email.Common.Fact.LinkValidUntil"), expiresLabel),
+                    (S(c, "Email.CompanyApiKeyCredentials.Fact.Docs"), swaggerUrl)
                 ]),
                 P(S(c, "Email.CompanyApiKeyCredentials.P2"))
             ],
             Button(S(c, "Email.CompanyApiKeyCredentials.Cta"), revealUrl),
-            greeting: GreetOther(c, null), culture: c), baseUrl);
+            greeting: GreetOther(c, null),
+            eyebrow: new EmailEyebrow(S(c, "Email.CompanyApiKeyCredentials.Eyebrow"), EmailTone.Sky),
+            culture: c,
+            reasonText: Sf(c, "Email.Reason.ApiKeyRequested", EmailBidi.Isolate(c, companyName))), baseUrl);
     }
 
     public static ComposedEmail ParentalConsent(

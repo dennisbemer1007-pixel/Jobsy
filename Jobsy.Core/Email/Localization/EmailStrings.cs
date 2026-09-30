@@ -76,12 +76,24 @@ public static partial class EmailStrings
     public static string FormatRaw(EmailCulture culture, string key, params object[] args)
         => string.Format(CultureInfo.InvariantCulture, Get(culture, key), args);
 
-    public static string Reason(EmailCulture culture, string reasonKey)
+    public static string Reason(EmailCulture culture, string reasonKey, params object[] args)
     {
         var key = $"Email.Reason.{reasonKey}";
-        return TryGet(culture.Language, key, out var text)
-            ? text
+        var text = TryGet(culture.Language, key, out var raw)
+            ? raw
             : Get(culture, "Email.Reason.Fallback");
+        if (args.Length > 0)
+        {
+            return string.Format(CultureInfo.InvariantCulture, text, args);
+        }
+
+        // Unformatted reasons that still contain {0} (company/inviter) fall back to a safe phrase.
+        if (text.Contains("{0}", StringComparison.Ordinal))
+        {
+            return Get(culture, "Email.Reason.Fallback");
+        }
+
+        return text;
     }
 
     public static IReadOnlyCollection<string> KeysFor(string language)

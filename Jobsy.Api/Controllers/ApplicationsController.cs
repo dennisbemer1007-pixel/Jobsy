@@ -1823,7 +1823,12 @@ public class ApplicationsController : ControllerBase
         var body = $"{vacancy.Company.Name}: nieuwe kandidaat voor {vacancy.Title}";
         var mail = TransactionalEmails.EmployerNewApplication(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            vacancy.Title);
+            vacancy.Title,
+            branchName: vacancy.Company.Name,
+            applicationId: application.Id,
+            receivedAtUtc: application.CreatedAt,
+            matchPercent: application.MatchPercent,
+            companyName: vacancy.Company.Name);
         foreach (var contact in contacts)
         {
             await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
@@ -1867,7 +1872,8 @@ public class ApplicationsController : ControllerBase
         var body = "Een kandidaat heeft de sollicitatie ingetrokken.";
         var mail = TransactionalEmails.CandidateWithdrawn(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            vacancy.Title);
+            vacancy.Title,
+            companyName: vacancy.Company.Name);
         foreach (var contact in contacts)
         {
             await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);

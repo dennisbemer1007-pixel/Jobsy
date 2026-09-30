@@ -19,7 +19,7 @@ Inloggen: https://lobsy.nl/login
 
 Team Lobsy
 
-Je ontvangt deze mail omdat je bent uitgenodigd voor Lobsy.
+Je ontvangt deze mail vanwege een actie op Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

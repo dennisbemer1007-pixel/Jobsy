@@ -1,29 +1,32 @@
 KEY: PendingApproval
-SUBJECT: طلب نشر: ⁨Weekendhulp verkoop⁩
-PREHEADER: هناك طلب نشر بانتظارك.
+SUBJECT: Vacancy waiting for your approval: ⁨Weekendhulp verkoop⁩
+PREHEADER: Approve the vacancy to publish it.
 KIND: Essential
 --- TEXT ---
-طلب نشر
+مرحبًا،
 
-الوظيفة ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden Korrel⁩ بانتظار
-الموافقة (رموز غير كافية).
+A vacancy is waiting for you
 
-سجّل الدخول إلى Lobsy لمراجعة الطلب ضمن الوظائف.
+The vacancy ⁨Weekendhulp verkoop⁩ from ⁨Bakkerij De Gouden Korrel⁩ wants to
+go online. There are not enough tokens to publish it directly. You can
+approve the request.
 
-مراجعة الطلب: https://lobsy.nl/werkgever/tokens
+Approve the request to publish the vacancy.
+
+View request: https://lobsy.nl/werkgever/tokens
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأنك تدير شركة على Lobsy.
+You get this email because you manage ⁨Bakkerij De Gouden Korrel⁩ on Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: طلب نشر
+h1: A vacancy is waiting for you
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: مراجعة الطلب -> https://lobsy.nl/werkgever/tokens
+a: View request -> https://lobsy.nl/werkgever/tokens
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

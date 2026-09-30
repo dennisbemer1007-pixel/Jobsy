@@ -1,31 +1,33 @@
 KEY: UserInvite
-SUBJECT: دعوة إلى Lobsy (⁨Filiaalmanager⁩)
-PREHEADER: دُعيت كـ Filiaalmanager على Lobsy.
+SUBJECT: You are invited to ⁨Bakkerij De Gouden Korrel⁩ on Lobsy
+PREHEADER: Choose a password and get started.
 KIND: Essential
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
 
-دعوة - ⁨Filiaalmanager⁩
+You are invited
 
-دُعيت كـ ⁨Filiaalmanager⁩ على Lobsy.
+⁨Joris⁩ invites you as ⁨Filiaalmanager⁩ at ⁨Bakkerij De Gouden Korrel⁩.
 
-اقبل الدعوة عبر الزر أدناه لاختيار كلمة مرور لـ ⁨tester@example.com⁩. أو
-سجّل الدخول بـ Google أو Microsoft Entra بنفس البريد.
+Filiaalmanager :Role
+Bakkerij De Gouden Korrel :الشركة
+tester@example.com :Your email address
+7 أكتوبر 2026 :الرابط صالح حتى
 
-الرابط صالح حتى 7 أكتوبر 2026. بعد ذلك اطلب دعوة جديدة.
+You can also sign in with Google or Microsoft with this email address.
 
 قبول الدعوة: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأنك دُعيت إلى Lobsy.
+You get this email because ⁨Joris⁩ invited you.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: دعوة - ⁨Filiaalmanager⁩
+h1: You are invited
 marker: table data-lobsy-layout=2
-marker: table data-lobsy-block=note
+marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: قبول الدعوة -> https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld

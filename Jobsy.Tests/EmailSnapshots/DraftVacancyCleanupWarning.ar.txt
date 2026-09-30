@@ -1,37 +1,33 @@
 KEY: DraftVacancyCleanupWarning
-SUBJECT: سيمسح مسودة الوظيفة '⁨Weekendhulp verkoop⁩' خلال 14 يومًا
-PREHEADER: سيمسح المسودة '⁨Weekendhulp verkoop⁩' خلال 14 يومًا
+SUBJECT: Your draft ⁨Weekendhulp verkoop⁩ will be deleted on ⁨7 أكتوبر 2026⁩
+PREHEADER: Publish the draft or let it be deleted.
 KIND: Essential
 --- TEXT ---
 مرحبًا،
 
-ستُنظَّف المسودة قريبًا
+Your draft will be deleted soon
 
-مسودة وظيفتك ⁨Weekendhulp verkoop⁩ لـ ⁨Bakkerij De Gouden Korrel⁩ بقيت مسودة
-منذ 30 يومًا ولم تُنشر أبدًا.
+Your draft ⁨Weekendhulp verkoop⁩ for ⁨Bakkerij De Gouden Korrel⁩ has been
+ready for 30 days and is not published yet.
 
-إذا لم تفعل شيئًا، سيحذف Lobsy هذه المسودة تلقائيًا في ⁨7 أكتوبر 2026⁩ (خلال
-14 يومًا من هذه الرسالة).
+If you do nothing, we delete it on ⁨7 أكتوبر 2026⁩.
 
-الوظائف التي نشرتها تبقى محفوظة دائمًا - حتى بعد الموعد.
+Published vacancies are always kept.
 
-سجّل الدخول إلى Lobsy ← الوظائف لنشر هذه المسودة أو حذفها.
-
-افتح هذه المسودة: https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+View draft: https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأنك تدير وظائف على Lobsy.
+You get this email because you manage vacancies for ⁨Bakkerij De Gouden Korrel⁩ on Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: ستُنظَّف المسودة قريبًا
+h1: Your draft will be deleted soon
 marker: table data-lobsy-layout=2
-marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: افتح هذه المسودة -> https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+a: View draft -> https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

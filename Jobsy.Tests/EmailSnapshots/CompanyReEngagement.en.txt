@@ -1,42 +1,34 @@
 KEY: CompanyReEngagement
-SUBJECT: We miss you at Lobsy
-PREHEADER: Your tools are still ready on Lobsy.
+SUBJECT: Post your next vacancy on Lobsy
+PREHEADER: Your account and your data are still ready.
 KIND: Optional
 --- TEXT ---
-We miss you
-===========
+Ready for your next vacancy?
+============================
 
 Hello team Bakkerij De Gouden Korrel,
 
-It has been quiet on Lobsy for a while - no active vacancies, no sign-in, no
-API call and no CSV upload.
+It has been quiet for you on Lobsy. Your account is still ready. You can
+post a new vacancy in a few minutes.
 
-Good news: your tools are still ready:
+1 Sign in. 2 Create a vacancy. 3 Publish it.
 
-CSV Batch Import: Many vacancies at once as drafts
-External API: Connect your ATS with an API key
-Publishing: Tokens only when publishing in Lobsy
-
-Sign in to Lobsy whenever you want to start again.
-
-Sign in to Lobsy: https://lobsy.nl/werkgever
+Go to your dashboard: https://lobsy.nl/werkgever
 
 Team Lobsy
 
-You receive this email because you manage a company on Lobsy.
+You get this email because you manage Bakkerij De Gouden Korrel on Lobsy.
 Unsubscribe from these emails: https://lobsy.nl/mail/afmelden
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Mail settings: https://lobsy.nl/account/mail-instellingen
 Lobsy
 --- STRUCTURE ---
-h1: We miss you
+h1: Ready for your next vacancy?
 marker: table data-lobsy-layout=2
-marker: table data-lobsy-block=facts
-marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Sign in to Lobsy -> https://lobsy.nl/werkgever
+a: Go to your dashboard -> https://lobsy.nl/werkgever
 a: Unsubscribe from these emails -> https://lobsy.nl/mail/afmelden
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy

@@ -1,16 +1,13 @@
 KEY: VacancyEngagementReminder
-SUBJECT: تحقق سريع: ⁨Weekendhulp verkoop⁩ مفتوحة منذ 14 يومًا
-PREHEADER: ⁨Weekendhulp verkoop⁩: 42 بحث · 18 مشاهدة · 2 طلبات
+SUBJECT: Your vacancy has been online for 14 days: ⁨Weekendhulp verkoop⁩
+PREHEADER: 18 views, 2 applications.
 KIND: Optional
 --- TEXT ---
-مرحبًا،
+مرحبًا ⁨Alex⁩،
 
-تحقق - وظيفتك مفتوحة منذ 14 يومًا
+How is your vacancy doing?
 
-وظيفتك ⁨Weekendhulp verkoop⁩⁨ لدى ⁨Bakkerij De Gouden Korrel⁩⁩ مفتوحة منذ 14
-يومًا. حان وقت مراجعة قصيرة.
-
-هذا ما نراه حتى الآن:
+⁨Weekendhulp verkoop⁩ has been online for 14 days.
 
 42 :في نتائج البحث
 18 :المشاهدات
@@ -18,35 +15,28 @@ KIND: Optional
 5 :المحفوظات
 2 :الطلبات
 
-نصيحة من Lobsy: Controleer of titel, taken en rooster nog kloppen. Kleine
-tekstuele updates verbeteren relevantie in matching en zoekfilters.
+نصيحة: ⁨Check whether title, tasks and schedule still match. Small updates
+help.⁩
 
-حدّث الوظيفة قبل الموعد النهائي. بعد التحديث نمدد الموعد 7 أيام كبادرة حسن
-نية.
+If you edit the vacancy before the end date, we extend it by 7 days.
 
-يفتح Highlight ونصيحة قريبة نظرة الوظائف حيث تُكمل الإجراء بنقرة واحدة
-(تتطلب رموزًا). ميّز هذه الوظيفة:
-https://lobsy.nl/werkgever/vacatures?boost=highlight&id=11111111-1111-1111-1111-111111111111
-
-حسّن الوظيفة الآن: https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+Improve vacancy: https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأنك تدير وظائف على Lobsy.
+You get this email because you manage vacancies for ⁨Bakkerij De Gouden Korrel⁩ on Lobsy.
 إلغاء الاشتراك من هذه الرسائل: https://lobsy.nl/mail/afmelden
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 إعدادات البريد: https://lobsy.nl/account/mail-instellingen
 Lobsy
 --- STRUCTURE ---
-h1: تحقق - وظيفتك مفتوحة منذ 14 يومًا
+h1: How is your vacancy doing?
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=facts
-marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: ميّز هذه الوظيفة -> https://lobsy.nl/werkgever/vacatures?boost=highlight&id=11111111-1111-1111-1111-111111111111
-a: حسّن الوظيفة الآن -> https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
+a: Improve vacancy -> https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
 a: إلغاء الاشتراك من هذه الرسائل -> https://lobsy.nl/mail/afmelden
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy

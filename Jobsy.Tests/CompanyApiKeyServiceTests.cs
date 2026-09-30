@@ -91,7 +91,8 @@ public class CompanyApiKeyServiceTests
         Assert.Contains("/koppeling/sleutel?t=", email.Messages[0].BodyHtml);
         Assert.DoesNotContain(first.PlaintextKey, email.Messages[0].BodyHtml);
         Assert.DoesNotContain(first.KeyPrefix, email.Messages[0].BodyHtml);
-        Assert.Contains("https://api.example.test/api/external/vacancies", email.Messages[0].BodyHtml);
+        Assert.Contains("/swagger", email.Messages[0].BodyHtml);
+        Assert.DoesNotContain("/api/external/vacancies", email.Messages[0].BodyHtml);
         Assert.Equal(1, await db.ApiKeys.CountAsync(k => k.IsActive));
         Assert.Equal(1, await db.ApiKeys.CountAsync());
         Assert.NotNull(await sut.FindActiveByPlaintextAsync(first.PlaintextKey));

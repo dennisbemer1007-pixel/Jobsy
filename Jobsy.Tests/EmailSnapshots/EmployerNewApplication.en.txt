@@ -1,29 +1,37 @@
 KEY: EmployerNewApplication
-SUBJECT: New application: Weekendhulp verkoop
-PREHEADER: There is a new application.
+SUBJECT: New application for Weekendhulp verkoop
+PREHEADER: Review the application and reply soon.
 KIND: Essential
 --- TEXT ---
-New application
+Hello Alex,
+
+Someone applied
 ===============
 
-A new application was received for Weekendhulp verkoop.
+There is a new application for Weekendhulp verkoop.
 
-Sign in to Lobsy to view the candidate and respond.
+Vacancy: Weekendhulp verkoop
+Branch: Bakkerij De Gouden Korrel
+Received on: 30 September 2026, 17:16
+Match score: 86%
 
-View applications: https://lobsy.nl/werkgever/sollicitaties
+Reply soon. Candidates drop off when they hear nothing for a long time.
+
+View the application: https://lobsy.nl/werkgever/sollicitaties?id=22222222-2222-2222-2222-222222222222
 
 Team Lobsy
 
-You receive this email because you manage vacancies on Lobsy.
+You get this email because you manage vacancies for Bakkerij De Gouden Korrel on Lobsy.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: New application
+h1: Someone applied
 marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: View applications -> https://lobsy.nl/werkgever/sollicitaties
+a: View the application -> https://lobsy.nl/werkgever/sollicitaties?id=22222222-2222-2222-2222-222222222222
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -1,9 +1,11 @@
 using System.Net;
 using Jobsy.Core.Email;
+using Jobsy.Core.Email.Model;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -98,28 +100,13 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
                          && a.Status != ApplicationStatus.Withdrawn,
                     cancellationToken);
 
+            var tipKind = VacancyEngagementReminderRules.BuildHeuristicTipKind(
+                impressions, views, shares, saved, applications);
             var tip = VacancyEngagementReminderRules.BuildHeuristicTip(
                 impressions, views, shares, saved, applications);
 
             vacancy.EngagementReminderTip = tip.Length <= 2000 ? tip : tip[..2000];
             vacancy.EngagementReminderSentAtUtc = now;
-
-            var mail = TransactionalEmails.VacancyEngagementReminder(
-                baseUrl,
-                vacancy.Title,
-                vacancy.Id,
-                impressions,
-                views,
-                shares,
-                saved,
-                applications,
-                tip,
-                vacancy.Company.Name);
-            var bodyHtml = mail.Html;
-
-            var notifyTitle = mail.Subject;
-            var notifyBody =
-                $"Zoek: {impressions} · bekeken: {views} · gedeeld: {shares} · bewaard: {saved} · sollicitaties: {applications}. Tip: {tip}";
 
             var contacts = await db.Users.AsNoTracking()
                 .Where(u => u.IsActive
@@ -129,23 +116,41 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
                                 || (vacancy.Company.ParentCompanyId != null
                                     && (u.CompanyId == vacancy.Company.ParentCompanyId
                                         || u.CompanyMemberships.Any(m => m.CompanyId == vacancy.Company.ParentCompanyId.Value)))))
-                .Select(u => new { u.Id, u.Email })
+                .Select(u => new { u.Id, u.Email, u.FullName, u.PreferencesJson })
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
+            var notifyBody =
+                $"Zoek: {impressions} · bekeken: {views} · gedeeld: {shares} · bewaard: {saved} · sollicitaties: {applications}. Tip: {tip}";
+
             foreach (var contact in contacts)
             {
+                var culture = EmailCulture.ForLanguage(
+                    EmailLanguageResolver.ReadLanguage(contact.PreferencesJson));
+                var mail = TransactionalEmails.VacancyEngagementReminder(
+                    baseUrl,
+                    vacancy.Title,
+                    vacancy.Id,
+                    impressions,
+                    views,
+                    shares,
+                    saved,
+                    applications,
+                    tipKind,
+                    vacancy.Company.Name,
+                    contact.FullName,
+                    culture);
                 await mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
 
                 await notifications.CreateAsync(
                     new NotificationCreateRequest(
                         contact.Id,
-                        notifyTitle,
+                        mail.Subject,
                         notifyBody,
                         "VacatureEngagementReminder",
-                        $"/branch/vacancies/new?edit={vacancy.Id}",
-                        "Vacature nu verbeteren",
-                        $"/branch/vacancies/new?edit={vacancy.Id}",
+                        $"/werkgever/vacatures/nieuw?edit={vacancy.Id}",
+                        "Vacature verbeteren",
+                        $"/werkgever/vacatures/nieuw?edit={vacancy.Id}",
                         "Vacancy",
                         vacancy.Id),
                     cancellationToken);

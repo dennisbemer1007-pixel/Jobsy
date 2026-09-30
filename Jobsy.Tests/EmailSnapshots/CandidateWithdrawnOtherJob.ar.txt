@@ -1,30 +1,31 @@
 KEY: CandidateWithdrawnOtherJob
-SUBJECT: تم سحب الطلب: ⁨Weekendhulp verkoop⁩
-PREHEADER: تم سحب طلب.
+SUBJECT: Application withdrawn: ⁨Weekendhulp verkoop⁩
+PREHEADER: The candidate found other work.
 KIND: Essential
 --- TEXT ---
 مرحبًا،
 
-تم سحب الطلب
+An application was withdrawn
 
-من الجيد معرفة: سحب المرشح طلبه على ⁨Weekendhulp verkoop⁩.
+A candidate withdrew the application for ⁨Weekendhulp verkoop⁩ because they
+found other work.
 
-السبب: وجد المرشح وظيفة أخرى.
+You do not need to do anything.
 
-فتح الطلبات: https://lobsy.nl/werkgever/sollicitaties
+View your applications: https://lobsy.nl/werkgever/sollicitaties
 
 فريق Lobsy
 
-تصلك هذه الرسالة لأنك تدير وظائف على Lobsy.
+تصلك هذه الرسالة بسبب إجراء على Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: تم سحب الطلب
+h1: An application was withdrawn
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: فتح الطلبات -> https://lobsy.nl/werkgever/sollicitaties
+a: View your applications -> https://lobsy.nl/werkgever/sollicitaties
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

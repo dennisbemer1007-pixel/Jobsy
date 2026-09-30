@@ -679,7 +679,12 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
             RoleLabel(role),
             user.Email,
             setPasswordUrl,
-            promotedFromCandidate: false);
+            promotedFromCandidate: false,
+            inviterFirstName: null,
+            companyName: await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == (user.CompanyId ?? Guid.Empty))
+                .Select(c => c.Name)
+                .FirstOrDefaultAsync(cancellationToken));
         await _mailer.SendAsync(invite, user.Email, cancellationToken: cancellationToken);
 
         return user;

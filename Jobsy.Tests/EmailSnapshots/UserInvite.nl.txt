@@ -1,33 +1,34 @@
 KEY: UserInvite
-SUBJECT: Uitnodiging voor Lobsy (Filiaalmanager)
-PREHEADER: Je bent uitgenodigd als Filiaalmanager op Lobsy.
+SUBJECT: Je bent uitgenodigd voor Bakkerij De Gouden Korrel op Lobsy
+PREHEADER: Kies een wachtwoord en begin.
 KIND: Essential
 --- TEXT ---
 Hallo Alex,
 
-Uitnodiging - Filiaalmanager
-============================
+Je bent uitgenodigd
+===================
 
-Je bent uitgenodigd als Filiaalmanager op Lobsy.
+Joris nodigt je uit als Filiaalmanager bij Bakkerij De Gouden Korrel.
 
-Accepteer de uitnodiging via de knop hieronder om een wachtwoord te kiezen
-voor tester@example.com. Of log in met Google of Microsoft Entra met
-hetzelfde e-mailadres.
+Rol: Filiaalmanager
+Bedrijf: Bakkerij De Gouden Korrel
+Je e-mailadres: tester@example.com
+Link geldig tot: 7 oktober 2026
 
-De link werkt tot 7 oktober 2026. Daarna vraag je een nieuwe uitnodiging.
+Je kunt ook inloggen met Google of Microsoft met dit e-mailadres.
 
 Uitnodiging accepteren: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
 
 Team Lobsy
 
-Je ontvangt deze mail omdat je bent uitgenodigd voor Lobsy.
+Je krijgt deze mail omdat Joris je heeft uitgenodigd.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Uitnodiging - Filiaalmanager
+h1: Je bent uitgenodigd
 marker: table data-lobsy-layout=2
-marker: table data-lobsy-block=note
+marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: Uitnodiging accepteren -> https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld

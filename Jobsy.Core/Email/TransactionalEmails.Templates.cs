@@ -183,36 +183,89 @@ public static partial class TransactionalEmails
             culture: c), baseUrl);
     }
 
-    public static ComposedEmail EmployerNewApplication(string? baseUrl, string vacancyTitle, EmailCulture? culture = null)
+    public static ComposedEmail EmployerNewApplication(
+        string? baseUrl,
+        string vacancyTitle,
+        string? recipientName = null,
+        string? branchName = null,
+        Guid? applicationId = null,
+        DateTime? receivedAtUtc = null,
+        int? matchPercent = null,
+        string? companyName = null,
+        EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var subject = Sf(c, "Email.EmployerNewApplication.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        var facts = new List<(string, string)>
+        {
+            (S(c, "Email.Common.Fact.Vacancy"), vacancyTitle)
+        };
+        if (!string.IsNullOrWhiteSpace(branchName))
+        {
+            facts.Add((S(c, "Email.Common.Fact.Branch"), branchName!));
+        }
+
+        if (receivedAtUtc is DateTime received)
+        {
+            facts.Add((S(c, "Email.Common.Fact.ReceivedOn"), EmailFormat.DateTimeWithoutZone(received, c)));
+        }
+
+        if (matchPercent is int match)
+        {
+            facts.Add((S(c, "Email.Common.Fact.Match"), Sf(c, "Email.Common.MatchPercent", match)));
+        }
+
+        var reason = string.IsNullOrWhiteSpace(companyName)
+            ? null
+            : Sf(c, "Email.Reason.ManagesVacancies", EmailBidi.Isolate(c, companyName));
         return Finish(Doc("EmployerNewApplication", subject, S(c, "Email.EmployerNewApplication.Preheader"),
             S(c, "Email.EmployerNewApplication.Heading"),
             [
                 P(T(c, "Email.EmployerNewApplication.P1", EmailArg.Bold(vacancyTitle))),
+                F(facts),
                 P(S(c, "Email.EmployerNewApplication.P2"))
             ],
-            Button(S(c, "Email.EmployerNewApplication.Cta"), links.EmployerApplications()), culture: c), baseUrl);
+            Button(S(c, "Email.EmployerNewApplication.Cta"), links.EmployerApplications(applicationId)),
+            greeting: GreetOther(c, recipientName),
+            eyebrow: new EmailEyebrow(S(c, "Email.EmployerNewApplication.Eyebrow"), EmailTone.Sky),
+            culture: c,
+            reasonText: reason), baseUrl);
     }
 
-    public static ComposedEmail CandidateWithdrawn(string? baseUrl, string vacancyTitle, EmailCulture? culture = null)
+    public static ComposedEmail CandidateWithdrawn(
+        string? baseUrl, string vacancyTitle, string? recipientName = null, string? companyName = null,
+        EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var subject = Sf(c, "Email.CandidateWithdrawn.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        var reason = string.IsNullOrWhiteSpace(companyName)
+            ? null
+            : Sf(c, "Email.Reason.ManagesVacancies", EmailBidi.Isolate(c, companyName));
         return Finish(Doc("CandidateWithdrawn", subject, S(c, "Email.CandidateWithdrawn.Preheader"),
             S(c, "Email.CandidateWithdrawn.Heading"),
-            [P(T(c, "Email.CandidateWithdrawn.P1", EmailArg.Bold(vacancyTitle)))],
-            Button(S(c, "Email.CandidateWithdrawn.Cta"), links.EmployerApplications()), culture: c), baseUrl);
+            [
+                P(T(c, "Email.CandidateWithdrawn.P1", EmailArg.Bold(vacancyTitle))),
+                P(S(c, "Email.CandidateWithdrawn.P2"))
+            ],
+            Button(S(c, "Email.CandidateWithdrawn.Cta"), links.EmployerApplications()),
+            greeting: GreetOther(c, recipientName),
+            eyebrow: new EmailEyebrow(S(c, "Email.CandidateWithdrawn.Eyebrow"), EmailTone.Peach),
+            culture: c,
+            reasonText: reason), baseUrl);
     }
 
-    public static ComposedEmail CandidateWithdrawnOtherJob(string? baseUrl, string vacancyTitle, EmailCulture? culture = null)
+    public static ComposedEmail CandidateWithdrawnOtherJob(
+        string? baseUrl, string vacancyTitle, string? recipientName = null, string? companyName = null,
+        EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var subject = Sf(c, "Email.CandidateWithdrawnOtherJob.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        var reason = string.IsNullOrWhiteSpace(companyName)
+            ? null
+            : Sf(c, "Email.Reason.ManagesVacancies", EmailBidi.Isolate(c, companyName));
         return Finish(Doc("CandidateWithdrawnOtherJob", subject, S(c, "Email.CandidateWithdrawnOtherJob.Preheader"),
             S(c, "Email.CandidateWithdrawnOtherJob.Heading"),
             [
@@ -220,7 +273,10 @@ public static partial class TransactionalEmails
                 P(S(c, "Email.CandidateWithdrawnOtherJob.P2"))
             ],
             Button(S(c, "Email.CandidateWithdrawnOtherJob.Cta"), links.EmployerApplications()),
-            greeting: GreetOther(c, null), culture: c), baseUrl);
+            greeting: GreetOther(c, recipientName),
+            eyebrow: new EmailEyebrow(S(c, "Email.CandidateWithdrawnOtherJob.Eyebrow"), EmailTone.Peach),
+            culture: c,
+            reasonText: reason), baseUrl);
     }
 
     public static ComposedEmail PushBom(
@@ -266,7 +322,9 @@ public static partial class TransactionalEmails
             culture: c), baseUrl);
     }
 
-    public static ComposedEmail PendingApproval(string? baseUrl, string vacancyTitle, string companyName, EmailCulture? culture = null)
+    public static ComposedEmail PendingApproval(
+        string? baseUrl, string vacancyTitle, string companyName, string? recipientName = null,
+        EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
@@ -274,32 +332,36 @@ public static partial class TransactionalEmails
         return Finish(Doc("PendingApproval", subject, S(c, "Email.PendingApproval.Preheader"),
             S(c, "Email.PendingApproval.Heading"),
             [
-                P(T(c, "Email.PendingApproval.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyName))),
+                P(T(c, "Email.PendingApproval.P1", EmailArg.Bold(vacancyTitle), EmailArg.Bold(companyName))),
                 P(S(c, "Email.PendingApproval.P2"))
             ],
-            Button(S(c, "Email.PendingApproval.Cta"), links.EmployerTokens), culture: c), baseUrl);
+            Button(S(c, "Email.PendingApproval.Cta"), links.EmployerTokens),
+            greeting: GreetOther(c, recipientName),
+            eyebrow: new EmailEyebrow(S(c, "Email.PendingApproval.Eyebrow"), EmailTone.Sun),
+            culture: c,
+            reasonText: Sf(c, "Email.Reason.ManagesCompany", EmailBidi.Isolate(c, companyName))), baseUrl);
     }
 
     public static ComposedEmail VacancyEngagementReminder(
         string? baseUrl, string vacancyTitle, Guid vacancyId, int impressions, int views, int shares,
-        int saved, int applications, string tip, string? companyName = null, EmailCulture? culture = null)
+        int saved, int applications, EngagementTipKind tipKind, string? companyName = null,
+        string? recipientName = null, EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
+        var tip = S(c, $"Email.VacancyEngagementReminder.Tip.{tipKind}");
         var subject = Sf(c, "Email.VacancyEngagementReminder.Subject",
-            EmailBidi.Isolate(c, vacancyTitle), VacancyEngagementReminderRules.OpenDaysBeforeReminder);
-        var companyBit = string.IsNullOrWhiteSpace(companyName)
-            ? ""
-            : Sf(c, "Email.VacancyEngagementReminder.CompanyBit", EmailBidi.Isolate(c, companyName));
-        var preheader = Sf(c, "Email.VacancyEngagementReminder.Preheader",
-            EmailBidi.Isolate(c, vacancyTitle), impressions, views, applications);
+            VacancyEngagementReminderRules.OpenDaysBeforeReminder, EmailBidi.Isolate(c, vacancyTitle));
+        var preheader = Sf(c, "Email.VacancyEngagementReminder.Preheader", views, applications);
+        var reason = string.IsNullOrWhiteSpace(companyName)
+            ? null
+            : Sf(c, "Email.Reason.ManagesVacancies", EmailBidi.Isolate(c, companyName));
         return Finish(Doc("VacancyEngagementReminder", subject, preheader,
-            Sf(c, "Email.VacancyEngagementReminder.Heading", VacancyEngagementReminderRules.OpenDaysBeforeReminder),
+            S(c, "Email.VacancyEngagementReminder.Heading"),
             [
                 P(T(c, "Email.VacancyEngagementReminder.P1",
-                    EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyBit),
+                    EmailArg.Bold(vacancyTitle),
                     EmailArg.Plain(VacancyEngagementReminderRules.OpenDaysBeforeReminder.ToString(), isolate: false))),
-                P(Bold(S(c, "Email.VacancyEngagementReminder.StatsLead"))),
                 F([
                     (S(c, "Email.VacancyEngagementReminder.Fact.Impressions"), impressions.ToString()),
                     (S(c, "Email.VacancyEngagementReminder.Fact.Views"), views.ToString()),
@@ -307,55 +369,60 @@ public static partial class TransactionalEmails
                     (S(c, "Email.VacancyEngagementReminder.Fact.Saved"), saved.ToString()),
                     (S(c, "Email.VacancyEngagementReminder.Fact.Applications"), applications.ToString())
                 ]),
-                P(EmailText.Join(Bold(S(c, "Email.VacancyEngagementReminder.TipLead")), Plain(tip))),
-                P(Sf(c, "Email.VacancyEngagementReminder.P3", VacancyEngagementReminderRules.GoodwillExtendDays)),
-                N(S(c, "Email.VacancyEngagementReminder.Note"),
-                    new EmailLink(S(c, "Email.VacancyEngagementReminder.NoteLink"), links.EmployerVacancyBoostHighlight(vacancyId)))
+                P(T(c, "Email.VacancyEngagementReminder.Tip", EmailArg.Plain(tip))),
+                P(Sf(c, "Email.VacancyEngagementReminder.P3", VacancyEngagementReminderRules.GoodwillExtendDays))
             ],
             Button(S(c, "Email.VacancyEngagementReminder.Cta"), links.EmployerVacancyEdit(vacancyId)),
-            greeting: GreetOther(c, null), culture: c), baseUrl);
+            greeting: GreetOther(c, recipientName),
+            eyebrow: new EmailEyebrow(S(c, "Email.VacancyEngagementReminder.Eyebrow"), EmailTone.Sun),
+            culture: c,
+            reasonText: reason), baseUrl);
     }
 
     public static ComposedEmail DraftVacancyCleanupWarning(
         string? baseUrl, string vacancyTitle, string companyName, Guid vacancyId, DateTime deleteOnUtc,
-        EmailCulture? culture = null)
+        string? recipientName = null, EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var deleteLabel = EmailFormat.Date(deleteOnUtc, c);
-        var subject = Sf(c, "Email.DraftVacancyCleanupWarning.Subject", EmailBidi.Isolate(c, vacancyTitle), 14);
+        var subject = Sf(c, "Email.DraftVacancyCleanupWarning.Subject",
+            EmailBidi.Isolate(c, vacancyTitle), EmailBidi.Isolate(c, deleteLabel));
         return Finish(Doc("DraftVacancyCleanupWarning", subject,
-            Sf(c, "Email.DraftVacancyCleanupWarning.Preheader", EmailBidi.Isolate(c, vacancyTitle), 14),
+            S(c, "Email.DraftVacancyCleanupWarning.Preheader"),
             S(c, "Email.DraftVacancyCleanupWarning.Heading"),
             [
                 P(T(c, "Email.DraftVacancyCleanupWarning.P1",
                     EmailArg.Bold(vacancyTitle), EmailArg.Bold(companyName),
                     EmailArg.Plain(DraftVacancyCleanupRules.WarningAfterDays.ToString(), isolate: false))),
-                P(T(c, "Email.DraftVacancyCleanupWarning.P2", EmailArg.Bold(deleteLabel), EmailArg.Plain("14", isolate: false))),
-                P(S(c, "Email.DraftVacancyCleanupWarning.P3")),
-                N(S(c, "Email.DraftVacancyCleanupWarning.Note"))
+                P(T(c, "Email.DraftVacancyCleanupWarning.P2",
+                    EmailArg.Bold(deleteLabel),
+                    EmailArg.Plain(DraftVacancyCleanupRules.DeleteAfterWarningDays.ToString(), isolate: false))),
+                P(S(c, "Email.DraftVacancyCleanupWarning.P3"))
             ],
             Button(S(c, "Email.DraftVacancyCleanupWarning.Cta"), links.EmployerVacancyEdit(vacancyId)),
-            greeting: GreetOther(c, null), culture: c), baseUrl);
+            greeting: GreetOther(c, recipientName),
+            eyebrow: new EmailEyebrow(S(c, "Email.DraftVacancyCleanupWarning.Eyebrow"), EmailTone.Peach),
+            culture: c,
+            reasonText: Sf(c, "Email.Reason.ManagesVacancies", EmailBidi.Isolate(c, companyName))), baseUrl);
     }
 
-    public static ComposedEmail CompanyReEngagement(string? baseUrl, string companyName, EmailCulture? culture = null)
+    public static ComposedEmail CompanyReEngagement(
+        string? baseUrl, string companyName, string? recipientName = null, EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         return Finish(Doc("CompanyReEngagement", S(c, "Email.CompanyReEngagement.Subject"),
             S(c, "Email.CompanyReEngagement.Preheader"), S(c, "Email.CompanyReEngagement.Heading"),
             [
-                P(T(c, "Email.CompanyReEngagement.P1", EmailArg.Bold(companyName))),
-                P(S(c, "Email.CompanyReEngagement.P2")),
-                P(S(c, "Email.CompanyReEngagement.P3")),
-                F([
-                    (S(c, "Email.CompanyReEngagement.Fact.Csv"), S(c, "Email.CompanyReEngagement.Fact.CsvVal")),
-                    (S(c, "Email.CompanyReEngagement.Fact.Api"), S(c, "Email.CompanyReEngagement.Fact.ApiVal")),
-                    (S(c, "Email.CompanyReEngagement.Fact.Publish"), S(c, "Email.CompanyReEngagement.Fact.PublishVal"))
-                ]),
-                N(S(c, "Email.CompanyReEngagement.Note"))
+                P(T(c, "Email.CompanyReEngagement.GreetingTeam", EmailArg.Bold(companyName))),
+                P(S(c, "Email.CompanyReEngagement.P1")),
+                P(S(c, "Email.CompanyReEngagement.Steps"))
             ],
-            Button(S(c, "Email.CompanyReEngagement.Cta"), links.EmployerHome), culture: c), baseUrl);
+            Button(S(c, "Email.CompanyReEngagement.Cta"), links.EmployerHome),
+            greeting: null,
+            eyebrow: new EmailEyebrow(S(c, "Email.CompanyReEngagement.Eyebrow"), EmailTone.Sky),
+            culture: c,
+            reasonText: Sf(c, "Email.Reason.ManagesCompany", EmailBidi.Isolate(c, companyName))), baseUrl);
     }
 }

@@ -1,42 +1,34 @@
 KEY: CompanyReEngagement
-SUBJECT: We missen je bij Lobsy
-PREHEADER: Je tools staan nog klaar op Lobsy.
+SUBJECT: Plaats je volgende vacature op Lobsy
+PREHEADER: Je account en je gegevens staan nog klaar.
 KIND: Optional
 --- TEXT ---
-We missen je
-============
+Klaar voor je volgende vacature?
+================================
 
 Hallo team Bakkerij De Gouden Korrel,
 
-Het is al een tijdje stil op Lobsy - geen actieve vacatures, geen inlog,
-geen API-call en geen CSV-upload.
+Het is een tijd stil bij jullie op Lobsy. Je account staat nog klaar. Een
+nieuwe vacature plaats je in een paar minuten.
 
-Goed nieuws: jullie tools staan nog klaar:
+1 Log in. 2 Maak een vacature. 3 Publiceer hem.
 
-CSV Batch Import: Veel vacatures in één keer als concept
-Externe API: Koppel je ATS met een API-key
-Publiceren: Tokens pas bij publicatie in Lobsy
-
-Log in op Lobsy wanneer je weer wilt starten.
-
-Inloggen op Lobsy: https://lobsy.nl/werkgever
+Naar je dashboard: https://lobsy.nl/werkgever
 
 Team Lobsy
 
-Je ontvangt deze mail omdat je een bedrijf beheert op Lobsy.
+Je krijgt deze mail omdat je Bakkerij De Gouden Korrel beheert op Lobsy.
 Afmelden voor deze mails: https://lobsy.nl/mail/afmelden
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Mail-instellingen: https://lobsy.nl/account/mail-instellingen
 Lobsy
 --- STRUCTURE ---
-h1: We missen je
+h1: Klaar voor je volgende vacature?
 marker: table data-lobsy-layout=2
-marker: table data-lobsy-block=facts
-marker: table data-lobsy-block=note
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Inloggen op Lobsy -> https://lobsy.nl/werkgever
+a: Naar je dashboard -> https://lobsy.nl/werkgever
 a: Afmelden voor deze mails -> https://lobsy.nl/mail/afmelden
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy

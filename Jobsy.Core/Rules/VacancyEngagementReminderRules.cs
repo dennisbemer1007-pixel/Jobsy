@@ -1,5 +1,15 @@
 namespace Jobsy.Core.Rules;
 
+public enum EngagementTipKind
+{
+    LowVisibility,
+    ViewsNoApplications,
+    ManyViewsFewApplications,
+    NotShared,
+    LowClickThrough,
+    General
+}
+
 public static class VacancyEngagementReminderRules
 {
     /// <summary>Days a vacancy must be Active before the engagement reminder is sent.</summary>
@@ -30,7 +40,7 @@ public static class VacancyEngagementReminderRules
            && goodwillExtendedAtUtc is null
            && today <= endDate;
 
-    public static string BuildHeuristicTip(
+    public static EngagementTipKind BuildHeuristicTipKind(
         int searchAppearances,
         int views,
         int shares,
@@ -39,29 +49,41 @@ public static class VacancyEngagementReminderRules
     {
         if (applications == 0 && views < 5)
         {
-            return "Je vacature wordt nog weinig gezien. Verrijk de titel met concrete taken of locatie, en overweeg Highlight of PushBom voor meer bereik.";
+            return EngagementTipKind.LowVisibility;
         }
 
         if (applications == 0 && views >= 5)
         {
-            return "Er is interesse (bekeken), maar nog geen sollicitaties. Maak eisen realistischer, verduidelijk het uurloon/rooster, of verkort de reistijd-verwachting in de tekst.";
+            return EngagementTipKind.ViewsNoApplications;
         }
 
         if (applications > 0 && applications < 3 && views > 20)
         {
-            return "Veel bekeken, beperkt gesolliciteerd. Scherp de unieke voordelen aan (werktijden, team, doorgroeikansen) en check of harde eisen te streng zijn.";
+            return EngagementTipKind.ManyViewsFewApplications;
         }
 
         if (shares == 0 && saved == 0)
         {
-            return "Deel de vacature actief (social/WhatsApp) en vraag collega’s om te bewaren — dat vergroot herhaald bezoek.";
+            return EngagementTipKind.NotShared;
         }
 
         if (searchAppearances > 50 && views < 10)
         {
-            return "Je komt vaak in zoekresultaten, maar weinig klikken. Maak titel en eerste zin concreter zodat kandidaten sneller doorklikken.";
+            return EngagementTipKind.LowClickThrough;
         }
 
-        return "Controleer of titel, taken en rooster nog kloppen. Kleine tekstuele updates verbeteren relevantie in matching en zoekfilters.";
+        return EngagementTipKind.General;
+    }
+
+    /// <summary>Dutch tip text (nl catalog). Prefer <see cref="BuildHeuristicTipKind"/> + EmailStrings.</summary>
+    public static string BuildHeuristicTip(
+        int searchAppearances,
+        int views,
+        int shares,
+        int saved,
+        int applications)
+    {
+        var kind = BuildHeuristicTipKind(searchAppearances, views, shares, saved, applications);
+        return Email.Localization.EmailStrings.Get("nl", $"Email.VacancyEngagementReminder.Tip.{kind}");
     }
 }

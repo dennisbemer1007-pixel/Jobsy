@@ -362,20 +362,25 @@ public class CompanyUsersController : ControllerBase
         var loginUrl = EmailLayout.LoginUrl(features.PublicWebBaseUrl);
         var roleLabel = RoleLabel(user.Role);
         var setPasswordUrl = await ResolveInviteSetPasswordUrlAsync(user, email, cancellationToken);
+        var loaded = await _db.Users
+            .AsNoTracking()
+            .Include(u => u.Company)
+            .Include(u => u.CompanyMemberships)
+            .FirstAsync(u => u.Id == user.Id, cancellationToken);
+        var companyName = loaded.Company?.Name
+            ?? (request.PrimaryCompanyId is Guid cid
+                ? await _db.Companies.AsNoTracking().Where(c => c.Id == cid).Select(c => c.Name).FirstOrDefaultAsync(cancellationToken)
+                : null);
         var invite = TransactionalEmails.UserInvite(
             features.PublicWebBaseUrl,
             user.FullName,
             roleLabel,
             user.Email,
             setPasswordUrl,
-            promotedFromCandidate);
+            promotedFromCandidate,
+            inviterFirstName: NameParts.FirstName(caller?.FullName),
+            companyName: companyName);
         await _mailer.SendAsync(invite, user.Email, cancellationToken: cancellationToken);
-
-        var loaded = await _db.Users
-            .AsNoTracking()
-            .Include(u => u.Company)
-            .Include(u => u.CompanyMemberships)
-            .FirstAsync(u => u.Id == user.Id, cancellationToken);
 
         return Ok(Map(loaded, loginUrl: loginUrl));
     }

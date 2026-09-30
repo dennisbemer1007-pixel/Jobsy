@@ -19,7 +19,7 @@ Sign in: https://lobsy.nl/login
 
 Team Lobsy
 
-You receive this email because you were invited to Lobsy.
+You receive this email because of an action on Lobsy.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

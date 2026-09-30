@@ -1,32 +1,32 @@
 KEY: CandidateWithdrawnOtherJob
 SUBJECT: Sollicitatie ingetrokken: Weekendhulp verkoop
-PREHEADER: Een sollicitatie is ingetrokken.
+PREHEADER: De kandidaat heeft ander werk gevonden.
 KIND: Essential
 --- TEXT ---
 Hallo,
 
-Sollicitatie ingetrokken
-========================
+Een sollicitatie is ingetrokken
+===============================
 
-Goed om te weten: de kandidaat heeft de sollicitatie op Weekendhulp verkoop
-ingetrokken.
+Een kandidaat heeft de sollicitatie op Weekendhulp verkoop ingetrokken,
+omdat die ander werk heeft gevonden.
 
-Reden: de kandidaat heeft inmiddels een andere baan gevonden.
+Je hoeft niets te doen.
 
-Open sollicitaties: https://lobsy.nl/werkgever/sollicitaties
+Bekijk je sollicitaties: https://lobsy.nl/werkgever/sollicitaties
 
 Team Lobsy
 
-Je ontvangt deze mail omdat je vacatures beheert op Lobsy.
+Je ontvangt deze mail vanwege een actie op Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Sollicitatie ingetrokken
+h1: Een sollicitatie is ingetrokken
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Open sollicitaties -> https://lobsy.nl/werkgever/sollicitaties
+a: Bekijk je sollicitaties -> https://lobsy.nl/werkgever/sollicitaties
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
