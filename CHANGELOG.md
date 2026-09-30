@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Landing gratis test warm (06):** `/ontdek` restyle under `.pub-theme` (start/question/result), compact PublicLayout header, `GratisDnaSignupCard` + mobile sheet, sticky CTA vs cookie banner (`pub-fixed-bottom`), FeedbackWidget on page; behaviour/scoring/storage unchanged.
 - **Landing page ON (05):** `/` is static SSR landing (`Landing.razor`, `[NoBlazorRuntime]`), warm `landing.css`, one real vacancy count (D7), FAQ + JSON-LD, signed-in + legacy map deep-link redirects, no MapLibre/blazor.web.js on `/`. Map stays at `/banenkaart` only.
 - **Landing banenkaart move (04):** map served at `/banenkaart` (public, indexed; dual `@page "/"` until landing 05), `/banen` → 301 with query preserved, `AuthRedirects.BanenkaartPath` / RoleNav / map deep links / SEO+sitemap retargeted, `LegacyMapQuery` for 05.
 - **Landing candidate account (03):** `/account-maken` + `/account-maken/code` (Google, Microsoft, passwordless e-mail code), `EmailSignInChallenge` migration, GratisDna CTAs → `/account-maken?van=ontdek`, `/register?van=ontdek` → 302, Login “Maak gratis account”, merge via existing `GratisDnaMerge`. TermsAcceptedAt also set on new external sign-ups (was missing).

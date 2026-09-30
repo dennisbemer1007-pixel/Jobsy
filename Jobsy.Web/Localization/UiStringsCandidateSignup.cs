@@ -28,6 +28,8 @@ public static class UiStringsCandidateSignup
             "Kontynuuj z Google", "Continuă cu Google", "المتابعة مع Google");
         Add("Signup.Microsoft", "Doorgaan met Microsoft", "Continue with Microsoft",
             "Kontynuuj z Microsoft", "Continuă cu Microsoft", "المتابعة مع Microsoft");
+        Add("Signup.ContinueEmail", "Doorgaan met e-mail", "Continue with e-mail",
+            "Kontynuuj przez e-mail", "Continuă cu e-mail", "المتابعة بالبريد");
         Add("Signup.Email", "E-mailadres", "E-mail address", "Adres e-mail", "Adresă de e-mail", "البريد الإلكتروني");
         Add("Signup.FirstName", "Hoe mogen we je noemen?", "What may we call you?",
             "Jak możemy się do Ciebie zwracać?", "Cum să te numim?", "بماذا نناديك؟");

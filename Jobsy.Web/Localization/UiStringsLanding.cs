@@ -27,6 +27,7 @@ public static class UiStringsLanding
         Add("PublicNav.Discovery", "Ontdekkingsreis", "Discovery journey", "Podróż odkrywcza", "Călătoria de descoperire", "رحلة الاكتشاف");
         Add("PublicNav.Login", "Inloggen", "Log in", "Zaloguj się", "Autentificare", "تسجيل الدخول");
         Add("PublicNav.TakeFreeTest", "Doe de gratis test", "Take the free test", "Zrób darmowy test", "Fă testul gratuit", "أجرِ الاختبار المجاني");
+        Add("PublicNav.TestChip", "Gratis test", "Free test", "Darmowy test", "Test gratuit", "اختبار مجاني");
         Add("PublicNav.CreateAccount", "Account maken", "Create account", "Utwórz konto", "Creează cont", "إنشاء حساب");
         Add("PublicNav.Menu", "Menu", "Open menu", "Otwórz menu", "Meniu", "القائمة");
         Add("PublicNav.Close", "Sluiten", "Close", "Zamknij", "Închide", "إغلاق");

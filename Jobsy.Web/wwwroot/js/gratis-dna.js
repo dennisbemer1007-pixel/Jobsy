@@ -331,6 +331,156 @@ window.jobsyGratisDna = (function () {
         return Promise.resolve();
     }
 
+    var resultDotNet = null;
+    var stickyObserver = null;
+    var cookieObserver = null;
+    var sheetTrapHandler = null;
+
+    function measureCookieBanner() {
+        var banner = document.querySelector(".cookie-consent");
+        var root = document.documentElement;
+        if (!banner || root.classList.contains("cookie-consent-known")) {
+            root.style.removeProperty("--pub-cookie-banner-height");
+            return;
+        }
+        var h = Math.ceil(banner.getBoundingClientRect().height || 0);
+        if (h > 0) {
+            root.style.setProperty("--pub-cookie-banner-height", h + "px");
+        }
+    }
+
+    function bindCookiePadding() {
+        measureCookieBanner();
+        if (cookieObserver) return;
+        cookieObserver = new MutationObserver(function () {
+            measureCookieBanner();
+        });
+        cookieObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["class"]
+        });
+        window.addEventListener("resize", measureCookieBanner, { passive: true });
+        // Sticky must appear without reload once consent is known (D15).
+        document.addEventListener("click", function (ev) {
+            var btn = ev.target && ev.target.closest ? ev.target.closest("[data-consent], .cookie-consent .btn-compact") : null;
+            if (!btn) return;
+            setTimeout(measureCookieBanner, 50);
+        }, true);
+    }
+
+    function unbindCookiePadding() {
+        if (cookieObserver) {
+            cookieObserver.disconnect();
+            cookieObserver = null;
+        }
+        window.removeEventListener("resize", measureCookieBanner);
+    }
+
+    function bindResultChrome(dotNetRef) {
+        resultDotNet = dotNetRef || null;
+        bindCookiePadding();
+        var card = document.querySelector("[data-gd-signup-inline]");
+        var sticky = document.querySelector("[data-gd-sticky]");
+        if (stickyObserver) {
+            stickyObserver.disconnect();
+            stickyObserver = null;
+        }
+        if (card && sticky && "IntersectionObserver" in window) {
+            stickyObserver = new IntersectionObserver(function (entries) {
+                var entry = entries && entries[0];
+                var visible = !!(entry && entry.isIntersecting && entry.intersectionRatio > 0.35);
+                if (sticky.classList) {
+                    sticky.classList.toggle("is-card-visible", visible);
+                }
+                if (resultDotNet && resultDotNet.invokeMethodAsync) {
+                    try { resultDotNet.invokeMethodAsync("SetStickyHiddenByCard", visible); } catch (e) { /* ignore */ }
+                }
+            }, { threshold: [0, 0.35, 0.6, 1] });
+            stickyObserver.observe(card);
+        }
+    }
+
+    function unbindResultChrome() {
+        if (stickyObserver) {
+            stickyObserver.disconnect();
+            stickyObserver = null;
+        }
+        unbindCookiePadding();
+        resultDotNet = null;
+    }
+
+    function focusTrap(dialog) {
+        var focusables = dialog.querySelectorAll("a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex='-1'])");
+        if (!focusables.length) return;
+        var first = focusables[0];
+        var last = focusables[focusables.length - 1];
+        sheetTrapHandler = function (ev) {
+            if (ev.key === "Escape") {
+                closeSheet();
+                return;
+            }
+            if (ev.key !== "Tab") return;
+            if (ev.shiftKey && document.activeElement === first) {
+                ev.preventDefault();
+                last.focus();
+            } else if (!ev.shiftKey && document.activeElement === last) {
+                ev.preventDefault();
+                first.focus();
+            }
+        };
+        dialog.addEventListener("keydown", sheetTrapHandler);
+        first.focus();
+    }
+
+    function openSheet() {
+        var dialog = document.querySelector("[data-gd-sheet]");
+        if (!dialog) return;
+        if (typeof dialog.showModal === "function") {
+            if (!dialog.open) dialog.showModal();
+        } else {
+            dialog.setAttribute("open", "");
+        }
+        focusTrap(dialog);
+    }
+
+    function closeSheet() {
+        var dialog = document.querySelector("[data-gd-sheet]");
+        if (!dialog) return;
+        if (sheetTrapHandler) {
+            dialog.removeEventListener("keydown", sheetTrapHandler);
+            sheetTrapHandler = null;
+        }
+        if (typeof dialog.close === "function") {
+            dialog.close();
+        } else {
+            dialog.removeAttribute("open");
+        }
+    }
+
+    function bindQuestionChrome() {
+        bindCookiePadding();
+    }
+
+    function unbindQuestionChrome() {
+        unbindCookiePadding();
+    }
+
+    function focusQuestionHeading() {
+        var h = document.getElementById("gd-q-heading");
+        if (h && typeof h.focus === "function") {
+            try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); }
+        }
+    }
+
+    function openLangMenu() {
+        var details = document.getElementById("pub-lang");
+        if (details) {
+            details.open = true;
+            var summary = details.querySelector("summary");
+            if (summary && typeof summary.focus === "function") summary.focus();
+        }
+    }
+
     return {
         load,
         save,
@@ -339,7 +489,16 @@ window.jobsyGratisDna = (function () {
         share,
         createEmpty,
         ensureLoaded,
-        STORAGE_KEY
+        STORAGE_KEY,
+        bindResultChrome,
+        unbindResultChrome,
+        bindQuestionChrome,
+        unbindQuestionChrome,
+        focusQuestionHeading,
+        openSheet,
+        closeSheet,
+        openLangMenu,
+        measureCookieBanner
     };
 })();
 
@@ -355,7 +514,7 @@ window.jobsyEnsureGratisDna = function () {
             return;
         }
         var s = document.createElement("script");
-        s.src = "/js/gratis-dna.js?v=20260927-gratis-dna";
+        s.src = "/js/gratis-dna.js?v=20260930-landing-6";
         s.defer = true;
         s.dataset.gratisDna = "true";
         s.onload = function () { resolve(); };

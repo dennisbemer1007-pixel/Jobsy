@@ -104,11 +104,17 @@ public static class UiStringsGratisDna
         ro["GratisDna.Landing.Title"] = en["GratisDna.Landing.Title"];
         ar["GratisDna.Landing.Title"] = en["GratisDna.Landing.Title"];
 
-        nl["GratisDna.Landing.Lead"] = "20 korte vragen. Daarna zie je meteen hoe jij werkt, wat je leuk vindt, waar je je thuis voelt en wat je belangrijk vindt.";
-        en["GratisDna.Landing.Lead"] = "20 short questions. Then you immediately see how you work, what you enjoy, where you feel at home and what matters to you.";
+        nl["GratisDna.Landing.Lead"] = "20 korte vragen over jou. Er is geen goed of fout: kies gewoon wat je voelt. Na 3 minuutjes zie je: dit ben jij.";
+        en["GratisDna.Landing.Lead"] = "20 short questions about you. There is no right or wrong: just choose what you feel. After about 3 minutes you see: this is you.";
         pl["GratisDna.Landing.Lead"] = en["GratisDna.Landing.Lead"];
         ro["GratisDna.Landing.Lead"] = en["GratisDna.Landing.Lead"];
         ar["GratisDna.Landing.Lead"] = en["GratisDna.Landing.Lead"];
+
+        nl["GratisDna.Landing.OwnLanguage"] = "Liever in je eigen taal? Kies je taal ↗";
+        en["GratisDna.Landing.OwnLanguage"] = "Prefer your own language? Choose your language ↗";
+        pl["GratisDna.Landing.OwnLanguage"] = en["GratisDna.Landing.OwnLanguage"];
+        ro["GratisDna.Landing.OwnLanguage"] = en["GratisDna.Landing.OwnLanguage"];
+        ar["GratisDna.Landing.OwnLanguage"] = en["GratisDna.Landing.OwnLanguage"];
 
         nl["GratisDna.Landing.MetaMinutes"] = "± 3 minuten";
         en["GratisDna.Landing.MetaMinutes"] = "± 3 minutes";
@@ -121,6 +127,60 @@ public static class UiStringsGratisDna
         pl["GratisDna.Landing.MetaQuestions"] = en["GratisDna.Landing.MetaQuestions"];
         ro["GratisDna.Landing.MetaQuestions"] = en["GratisDna.Landing.MetaQuestions"];
         ar["GratisDna.Landing.MetaQuestions"] = en["GratisDna.Landing.MetaQuestions"];
+
+        nl["GratisDna.Landing.MetaDevice"] = "Blijft op dit apparaat";
+        en["GratisDna.Landing.MetaDevice"] = "Stays on this device";
+        pl["GratisDna.Landing.MetaDevice"] = en["GratisDna.Landing.MetaDevice"];
+        ro["GratisDna.Landing.MetaDevice"] = en["GratisDna.Landing.MetaDevice"];
+        ar["GratisDna.Landing.MetaDevice"] = en["GratisDna.Landing.MetaDevice"];
+
+        nl["GratisDna.Landing.Block.Strength"] = "Samenwerken, doorzetten, rust als het druk is · 5 vragen";
+        en["GratisDna.Landing.Block.Strength"] = "Working together, finishing, calm when it is busy · 5 questions";
+        pl["GratisDna.Landing.Block.Strength"] = en["GratisDna.Landing.Block.Strength"];
+        ro["GratisDna.Landing.Block.Strength"] = en["GratisDna.Landing.Block.Strength"];
+        ar["GratisDna.Landing.Block.Strength"] = en["GratisDna.Landing.Block.Strength"];
+
+        nl["GratisDna.Landing.Block.Riasec"] = "Waar je energie van krijgt · 5 vragen";
+        en["GratisDna.Landing.Block.Riasec"] = "What gives you energy · 5 questions";
+        pl["GratisDna.Landing.Block.Riasec"] = en["GratisDna.Landing.Block.Riasec"];
+        ro["GratisDna.Landing.Block.Riasec"] = en["GratisDna.Landing.Block.Riasec"];
+        ar["GratisDna.Landing.Block.Riasec"] = en["GratisDna.Landing.Block.Riasec"];
+
+        nl["GratisDna.Landing.Block.Culture"] = "Wat voor team en plek bij je past · 5 vragen";
+        en["GratisDna.Landing.Block.Culture"] = "What kind of team and place fits you · 5 questions";
+        pl["GratisDna.Landing.Block.Culture"] = en["GratisDna.Landing.Block.Culture"];
+        ro["GratisDna.Landing.Block.Culture"] = en["GratisDna.Landing.Block.Culture"];
+        ar["GratisDna.Landing.Block.Culture"] = en["GratisDna.Landing.Block.Culture"];
+
+        nl["GratisDna.Landing.Block.Value"] = "Wat jou drijft · 5 vragen";
+        en["GratisDna.Landing.Block.Value"] = "What drives you · 5 questions";
+        pl["GratisDna.Landing.Block.Value"] = en["GratisDna.Landing.Block.Value"];
+        ro["GratisDna.Landing.Block.Value"] = en["GratisDna.Landing.Block.Value"];
+        ar["GratisDna.Landing.Block.Value"] = en["GratisDna.Landing.Block.Value"];
+
+        nl["GratisDna.Landing.Bubble"] = "Duik maar diep! 🌊 Je kunt altijd terug.";
+        en["GratisDna.Landing.Bubble"] = "Dive right in! 🌊 You can always go back.";
+        pl["GratisDna.Landing.Bubble"] = en["GratisDna.Landing.Bubble"];
+        ro["GratisDna.Landing.Bubble"] = en["GratisDna.Landing.Bubble"];
+        ar["GratisDna.Landing.Bubble"] = en["GratisDna.Landing.Bubble"];
+
+        nl["GratisDna.Landing.AfterTitle"] = "Wat krijg je na de test?";
+        en["GratisDna.Landing.AfterTitle"] = "What do you get after the test?";
+        pl["GratisDna.Landing.AfterTitle"] = en["GratisDna.Landing.AfterTitle"];
+        ro["GratisDna.Landing.AfterTitle"] = en["GratisDna.Landing.AfterTitle"];
+        ar["GratisDna.Landing.AfterTitle"] = en["GratisDna.Landing.AfterTitle"];
+
+        nl["GratisDna.Landing.AfterLead"] = "Een eerste “Dit ben jij”: hoe je werkt, wat je leuk vindt, waar je je thuis voelt en wat je belangrijk vindt.";
+        en["GratisDna.Landing.AfterLead"] = "A first “This is you”: how you work, what you enjoy, where you feel at home and what matters to you.";
+        pl["GratisDna.Landing.AfterLead"] = en["GratisDna.Landing.AfterLead"];
+        ro["GratisDna.Landing.AfterLead"] = en["GratisDna.Landing.AfterLead"];
+        ar["GratisDna.Landing.AfterLead"] = en["GratisDna.Landing.AfterLead"];
+
+        nl["GratisDna.Landing.PrivacyLink"] = "Meer over privacy";
+        en["GratisDna.Landing.PrivacyLink"] = "More about privacy";
+        pl["GratisDna.Landing.PrivacyLink"] = en["GratisDna.Landing.PrivacyLink"];
+        ro["GratisDna.Landing.PrivacyLink"] = en["GratisDna.Landing.PrivacyLink"];
+        ar["GratisDna.Landing.PrivacyLink"] = en["GratisDna.Landing.PrivacyLink"];
 
         nl["GratisDna.Landing.PreviewTitle"] = "Zo ziet jouw DNA eruit";
         en["GratisDna.Landing.PreviewTitle"] = "This is what your DNA looks like";
@@ -146,26 +206,26 @@ public static class UiStringsGratisDna
         ro["GratisDna.Landing.Step3"] = en["GratisDna.Landing.Step3"];
         ar["GratisDna.Landing.Step3"] = en["GratisDna.Landing.Step3"];
 
-        nl["GratisDna.Landing.Age16"] = "16 jaar of ouder";
-        en["GratisDna.Landing.Age16"] = "16 or older";
+        nl["GratisDna.Landing.Age16"] = "Ik ben 16 jaar of ouder.";
+        en["GratisDna.Landing.Age16"] = "I am 16 or older.";
         pl["GratisDna.Landing.Age16"] = en["GratisDna.Landing.Age16"];
         ro["GratisDna.Landing.Age16"] = en["GratisDna.Landing.Age16"];
         ar["GratisDna.Landing.Age16"] = en["GratisDna.Landing.Age16"];
 
-        nl["GratisDna.Landing.AgeUnder16"] = "Jonger dan 16";
-        en["GratisDna.Landing.AgeUnder16"] = "Younger than 16";
+        nl["GratisDna.Landing.AgeUnder16"] = "Jonger dan 16?";
+        en["GratisDna.Landing.AgeUnder16"] = "Younger than 16?";
         pl["GratisDna.Landing.AgeUnder16"] = en["GratisDna.Landing.AgeUnder16"];
         ro["GratisDna.Landing.AgeUnder16"] = en["GratisDna.Landing.AgeUnder16"];
         ar["GratisDna.Landing.AgeUnder16"] = en["GratisDna.Landing.AgeUnder16"];
 
-        nl["GratisDna.Landing.Consent"] = "Ik geef toestemming dat Lobsy mijn antwoorden gebruikt om mijn werk-DNA te berekenen.";
-        en["GratisDna.Landing.Consent"] = "I consent to Lobsy using my answers to calculate my work DNA.";
+        nl["GratisDna.Landing.Consent"] = "Ik snap dat mijn antwoorden 7 dagen op dit apparaat blijven. Werkgevers zien ze nooit.";
+        en["GratisDna.Landing.Consent"] = "I understand my answers stay on this device for 7 days. Employers never see them.";
         pl["GratisDna.Landing.Consent"] = en["GratisDna.Landing.Consent"];
         ro["GratisDna.Landing.Consent"] = en["GratisDna.Landing.Consent"];
         ar["GratisDna.Landing.Consent"] = en["GratisDna.Landing.Consent"];
 
-        nl["GratisDna.Landing.StartCta"] = "Start de gratis test";
-        en["GratisDna.Landing.StartCta"] = "Start the free test";
+        nl["GratisDna.Landing.StartCta"] = "Start de test";
+        en["GratisDna.Landing.StartCta"] = "Start the test";
         pl["GratisDna.Landing.StartCta"] = en["GratisDna.Landing.StartCta"];
         ro["GratisDna.Landing.StartCta"] = en["GratisDna.Landing.StartCta"];
         ar["GratisDna.Landing.StartCta"] = en["GratisDna.Landing.StartCta"];
@@ -212,11 +272,101 @@ public static class UiStringsGratisDna
         ro["GratisDna.Questions.Progress"] = en["GratisDna.Questions.Progress"];
         ar["GratisDna.Questions.Progress"] = en["GratisDna.Questions.Progress"];
 
+        nl["GratisDna.Questions.ProgressCheer"] = "Vraag {0} van {1} · {2}";
+        en["GratisDna.Questions.ProgressCheer"] = "Question {0} of {1} · {2}";
+        pl["GratisDna.Questions.ProgressCheer"] = en["GratisDna.Questions.ProgressCheer"];
+        ro["GratisDna.Questions.ProgressCheer"] = en["GratisDna.Questions.ProgressCheer"];
+        ar["GratisDna.Questions.ProgressCheer"] = en["GratisDna.Questions.ProgressCheer"];
+
+        nl["GratisDna.Questions.Cheer.0"] = "goed bezig! 💪";
+        en["GratisDna.Questions.Cheer.0"] = "doing great! 💪";
+        pl["GratisDna.Questions.Cheer.0"] = en["GratisDna.Questions.Cheer.0"];
+        ro["GratisDna.Questions.Cheer.0"] = en["GratisDna.Questions.Cheer.0"];
+        ar["GratisDna.Questions.Cheer.0"] = en["GratisDna.Questions.Cheer.0"];
+
+        nl["GratisDna.Questions.Cheer.1"] = "zo door!";
+        en["GratisDna.Questions.Cheer.1"] = "keep going!";
+        pl["GratisDna.Questions.Cheer.1"] = en["GratisDna.Questions.Cheer.1"];
+        ro["GratisDna.Questions.Cheer.1"] = en["GratisDna.Questions.Cheer.1"];
+        ar["GratisDna.Questions.Cheer.1"] = en["GratisDna.Questions.Cheer.1"];
+
+        nl["GratisDna.Questions.Cheer.2"] = "je zit erin!";
+        en["GratisDna.Questions.Cheer.2"] = "you’re in the flow!";
+        pl["GratisDna.Questions.Cheer.2"] = en["GratisDna.Questions.Cheer.2"];
+        ro["GratisDna.Questions.Cheer.2"] = en["GratisDna.Questions.Cheer.2"];
+        ar["GratisDna.Questions.Cheer.2"] = en["GratisDna.Questions.Cheer.2"];
+
+        nl["GratisDna.Questions.Cheer.3"] = "bijna halfway";
+        en["GratisDna.Questions.Cheer.3"] = "almost halfway";
+        pl["GratisDna.Questions.Cheer.3"] = en["GratisDna.Questions.Cheer.3"];
+        ro["GratisDna.Questions.Cheer.3"] = en["GratisDna.Questions.Cheer.3"];
+        ar["GratisDna.Questions.Cheer.3"] = en["GratisDna.Questions.Cheer.3"];
+
+        nl["GratisDna.Questions.Cheer.4"] = "laatste stukken!";
+        en["GratisDna.Questions.Cheer.4"] = "final stretch!";
+        pl["GratisDna.Questions.Cheer.4"] = en["GratisDna.Questions.Cheer.4"];
+        ro["GratisDna.Questions.Cheer.4"] = en["GratisDna.Questions.Cheer.4"];
+        ar["GratisDna.Questions.Cheer.4"] = en["GratisDna.Questions.Cheer.4"];
+
+        nl["GratisDna.Questions.OfBlock"] = "Vraag {0} van {1}";
+        en["GratisDna.Questions.OfBlock"] = "Question {0} of {1}";
+        pl["GratisDna.Questions.OfBlock"] = en["GratisDna.Questions.OfBlock"];
+        ro["GratisDna.Questions.OfBlock"] = en["GratisDna.Questions.OfBlock"];
+        ar["GratisDna.Questions.OfBlock"] = en["GratisDna.Questions.OfBlock"];
+
+        nl["GratisDna.Questions.Previous"] = "Vorige";
+        en["GratisDna.Questions.Previous"] = "Previous";
+        pl["GratisDna.Questions.Previous"] = en["GratisDna.Questions.Previous"];
+        ro["GratisDna.Questions.Previous"] = en["GratisDna.Questions.Previous"];
+        ar["GratisDna.Questions.Previous"] = en["GratisDna.Questions.Previous"];
+
+        nl["GratisDna.Questions.Next"] = "Volgende";
+        en["GratisDna.Questions.Next"] = "Next";
+        pl["GratisDna.Questions.Next"] = en["GratisDna.Questions.Next"];
+        ro["GratisDna.Questions.Next"] = en["GratisDna.Questions.Next"];
+        ar["GratisDna.Questions.Next"] = en["GratisDna.Questions.Next"];
+
+        nl["GratisDna.Questions.Later"] = "Later verder";
+        en["GratisDna.Questions.Later"] = "Continue later";
+        pl["GratisDna.Questions.Later"] = en["GratisDna.Questions.Later"];
+        ro["GratisDna.Questions.Later"] = en["GratisDna.Questions.Later"];
+        ar["GratisDna.Questions.Later"] = en["GratisDna.Questions.Later"];
+
+        nl["GratisDna.Questions.Hint"] = "Twijfel je? Kies wat je het eerst voelt. Je antennes weten het vaak al.";
+        en["GratisDna.Questions.Hint"] = "Not sure? Choose what you feel first. Your antennae often already know.";
+        pl["GratisDna.Questions.Hint"] = en["GratisDna.Questions.Hint"];
+        ro["GratisDna.Questions.Hint"] = en["GratisDna.Questions.Hint"];
+        ar["GratisDna.Questions.Hint"] = en["GratisDna.Questions.Hint"];
+
+        nl["GratisDna.Questions.Privacy"] = "Je antwoorden blijven op dit apparaat. Werkgevers zien ze nooit.";
+        en["GratisDna.Questions.Privacy"] = "Your answers stay on this device. Employers never see them.";
+        pl["GratisDna.Questions.Privacy"] = en["GratisDna.Questions.Privacy"];
+        ro["GratisDna.Questions.Privacy"] = en["GratisDna.Questions.Privacy"];
+        ar["GratisDna.Questions.Privacy"] = en["GratisDna.Questions.Privacy"];
+
         nl["GratisDna.Questions.SavedOnDevice"] = "Opgeslagen op dit apparaat";
         en["GratisDna.Questions.SavedOnDevice"] = "Saved on this device";
         pl["GratisDna.Questions.SavedOnDevice"] = en["GratisDna.Questions.SavedOnDevice"];
         ro["GratisDna.Questions.SavedOnDevice"] = en["GratisDna.Questions.SavedOnDevice"];
         ar["GratisDna.Questions.SavedOnDevice"] = en["GratisDna.Questions.SavedOnDevice"];
+
+        nl["GratisDna.Likert.Aria"] = "{0}";
+        en["GratisDna.Likert.Aria"] = "{0}";
+        pl["GratisDna.Likert.Aria"] = en["GratisDna.Likert.Aria"];
+        ro["GratisDna.Likert.Aria"] = en["GratisDna.Likert.Aria"];
+        ar["GratisDna.Likert.Aria"] = en["GratisDna.Likert.Aria"];
+
+        nl["GratisDna.Likert.AriaLow"] = "{0} – Past niet";
+        en["GratisDna.Likert.AriaLow"] = "{0} – Does not fit";
+        pl["GratisDna.Likert.AriaLow"] = en["GratisDna.Likert.AriaLow"];
+        ro["GratisDna.Likert.AriaLow"] = en["GratisDna.Likert.AriaLow"];
+        ar["GratisDna.Likert.AriaLow"] = en["GratisDna.Likert.AriaLow"];
+
+        nl["GratisDna.Likert.AriaHigh"] = "{0} – Past wel";
+        en["GratisDna.Likert.AriaHigh"] = "{0} – Fits well";
+        pl["GratisDna.Likert.AriaHigh"] = en["GratisDna.Likert.AriaHigh"];
+        ro["GratisDna.Likert.AriaHigh"] = en["GratisDna.Likert.AriaHigh"];
+        ar["GratisDna.Likert.AriaHigh"] = en["GratisDna.Likert.AriaHigh"];
 
         nl["GratisDna.Result.Badge"] = "Eerste indruk · op basis van 20 vragen";
         en["GratisDna.Result.Badge"] = "First impression · based on 20 questions";
@@ -224,11 +374,101 @@ public static class UiStringsGratisDna
         ro["GratisDna.Result.Badge"] = en["GratisDna.Result.Badge"];
         ar["GratisDna.Result.Badge"] = en["GratisDna.Result.Badge"];
 
+        nl["GratisDna.Result.Title"] = "Dit ben jij";
+        en["GratisDna.Result.Title"] = "This is you";
+        pl["GratisDna.Result.Title"] = en["GratisDna.Result.Title"];
+        ro["GratisDna.Result.Title"] = en["GratisDna.Result.Title"];
+        ar["GratisDna.Result.Title"] = en["GratisDna.Result.Title"];
+
+        nl["GratisDna.Result.Lead"] = "Wauw, wat een mooi begin! Dit is een eerste blik op je werk-DNA. Hoe meer je invult, hoe scherper het beeld.";
+        en["GratisDna.Result.Lead"] = "Wow, what a lovely start! This is a first look at your work DNA. The more you fill in, the sharper the picture.";
+        pl["GratisDna.Result.Lead"] = en["GratisDna.Result.Lead"];
+        ro["GratisDna.Result.Lead"] = en["GratisDna.Result.Lead"];
+        ar["GratisDna.Result.Lead"] = en["GratisDna.Result.Lead"];
+
         nl["GratisDna.Result.Disclaimer"] = "Dit is een eerste indruk. Hoe meer vragen je beantwoordt, hoe preciezer het wordt.";
         en["GratisDna.Result.Disclaimer"] = "This is a first impression. The more questions you answer, the more precise it becomes.";
         pl["GratisDna.Result.Disclaimer"] = en["GratisDna.Result.Disclaimer"];
         ro["GratisDna.Result.Disclaimer"] = en["GratisDna.Result.Disclaimer"];
         ar["GratisDna.Result.Disclaimer"] = en["GratisDna.Result.Disclaimer"];
+
+        nl["GratisDna.Passport.TabDna"] = "Mijn DNA";
+        en["GratisDna.Passport.TabDna"] = "My DNA";
+        pl["GratisDna.Passport.TabDna"] = en["GratisDna.Passport.TabDna"];
+        ro["GratisDna.Passport.TabDna"] = en["GratisDna.Passport.TabDna"];
+        ar["GratisDna.Passport.TabDna"] = en["GratisDna.Passport.TabDna"];
+
+        nl["GratisDna.Passport.TabTests"] = "Mijn tests";
+        en["GratisDna.Passport.TabTests"] = "My tests";
+        pl["GratisDna.Passport.TabTests"] = en["GratisDna.Passport.TabTests"];
+        ro["GratisDna.Passport.TabTests"] = en["GratisDna.Passport.TabTests"];
+        ar["GratisDna.Passport.TabTests"] = en["GratisDna.Passport.TabTests"];
+
+        nl["GratisDna.Passport.TabFit"] = "Past deze baan?";
+        en["GratisDna.Passport.TabFit"] = "Does this job fit?";
+        pl["GratisDna.Passport.TabFit"] = en["GratisDna.Passport.TabFit"];
+        ro["GratisDna.Passport.TabFit"] = en["GratisDna.Passport.TabFit"];
+        ar["GratisDna.Passport.TabFit"] = en["GratisDna.Passport.TabFit"];
+
+        nl["GratisDna.Passport.TabCareer"] = "Carrière";
+        en["GratisDna.Passport.TabCareer"] = "Career";
+        pl["GratisDna.Passport.TabCareer"] = en["GratisDna.Passport.TabCareer"];
+        ro["GratisDna.Passport.TabCareer"] = en["GratisDna.Passport.TabCareer"];
+        ar["GratisDna.Passport.TabCareer"] = en["GratisDna.Passport.TabCareer"];
+
+        nl["GratisDna.Passport.TabProof"] = "Bewijzen";
+        en["GratisDna.Passport.TabProof"] = "Proof";
+        pl["GratisDna.Passport.TabProof"] = en["GratisDna.Passport.TabProof"];
+        ro["GratisDna.Passport.TabProof"] = en["GratisDna.Passport.TabProof"];
+        ar["GratisDna.Passport.TabProof"] = en["GratisDna.Passport.TabProof"];
+
+        nl["GratisDna.Passport.Locked"] = "Je volledige paspoort · na gratis account";
+        en["GratisDna.Passport.Locked"] = "Your full passport · after a free account";
+        pl["GratisDna.Passport.Locked"] = en["GratisDna.Passport.Locked"];
+        ro["GratisDna.Passport.Locked"] = en["GratisDna.Passport.Locked"];
+        ar["GratisDna.Passport.Locked"] = en["GratisDna.Passport.Locked"];
+
+        nl["GratisDna.Signup.Title"] = "Bewaar je DNA en zie je hele paspoort";
+        en["GratisDna.Signup.Title"] = "Save your DNA and see your full passport";
+        pl["GratisDna.Signup.Title"] = en["GratisDna.Signup.Title"];
+        ro["GratisDna.Signup.Title"] = en["GratisDna.Signup.Title"];
+        ar["GratisDna.Signup.Title"] = en["GratisDna.Signup.Title"];
+
+        nl["GratisDna.Signup.Sub"] = "Gratis. Je tests in je account zijn dan al klaar.";
+        en["GratisDna.Signup.Sub"] = "Free. Your tests in your account will already be ready.";
+        pl["GratisDna.Signup.Sub"] = en["GratisDna.Signup.Sub"];
+        ro["GratisDna.Signup.Sub"] = en["GratisDna.Signup.Sub"];
+        ar["GratisDna.Signup.Sub"] = en["GratisDna.Signup.Sub"];
+
+        nl["GratisDna.Signup.Unlock.Passport"] = "Je volledige paspoort met Mijn DNA";
+        en["GratisDna.Signup.Unlock.Passport"] = "Your full passport with My DNA";
+        pl["GratisDna.Signup.Unlock.Passport"] = en["GratisDna.Signup.Unlock.Passport"];
+        ro["GratisDna.Signup.Unlock.Passport"] = en["GratisDna.Signup.Unlock.Passport"];
+        ar["GratisDna.Signup.Unlock.Passport"] = en["GratisDna.Signup.Unlock.Passport"];
+
+        nl["GratisDna.Signup.Unlock.Fit"] = "“Past deze baan?” bij elke vacature";
+        en["GratisDna.Signup.Unlock.Fit"] = "“Does this job fit?” on every vacancy";
+        pl["GratisDna.Signup.Unlock.Fit"] = en["GratisDna.Signup.Unlock.Fit"];
+        ro["GratisDna.Signup.Unlock.Fit"] = en["GratisDna.Signup.Unlock.Fit"];
+        ar["GratisDna.Signup.Unlock.Fit"] = en["GratisDna.Signup.Unlock.Fit"];
+
+        nl["GratisDna.Signup.Unlock.Map"] = "Banen op je reistijd-kaart";
+        en["GratisDna.Signup.Unlock.Map"] = "Jobs on your travel-time map";
+        pl["GratisDna.Signup.Unlock.Map"] = en["GratisDna.Signup.Unlock.Map"];
+        ro["GratisDna.Signup.Unlock.Map"] = en["GratisDna.Signup.Unlock.Map"];
+        ar["GratisDna.Signup.Unlock.Map"] = en["GratisDna.Signup.Unlock.Map"];
+
+        nl["GratisDna.Signup.Unlock.Match"] = "Jouw top-match in Match";
+        en["GratisDna.Signup.Unlock.Match"] = "Your top match in Match";
+        pl["GratisDna.Signup.Unlock.Match"] = en["GratisDna.Signup.Unlock.Match"];
+        ro["GratisDna.Signup.Unlock.Match"] = en["GratisDna.Signup.Unlock.Match"];
+        ar["GratisDna.Signup.Unlock.Match"] = en["GratisDna.Signup.Unlock.Match"];
+
+        nl["GratisDna.Signup.Carry"] = "Je 20 antwoorden gaan mee";
+        en["GratisDna.Signup.Carry"] = "Your 20 answers come with you";
+        pl["GratisDna.Signup.Carry"] = en["GratisDna.Signup.Carry"];
+        ro["GratisDna.Signup.Carry"] = en["GratisDna.Signup.Carry"];
+        ar["GratisDna.Signup.Carry"] = en["GratisDna.Signup.Carry"];
 
         nl["GratisDna.Tile.Title.Strength"] = "Zo werk jij";
         en["GratisDna.Tile.Title.Strength"] = "How you work";
@@ -368,14 +608,14 @@ public static class UiStringsGratisDna
         ro["GratisDna.Tag.Paid"] = en["GratisDna.Tag.Paid"];
         ar["GratisDna.Tag.Paid"] = en["GratisDna.Tag.Paid"];
 
-        nl["GratisDna.SharperLink"] = "Nog 5 vragen voor een scherper beeld";
-        en["GratisDna.SharperLink"] = "5 more questions for a sharper picture";
+        nl["GratisDna.SharperLink"] = "Scherper beeld? In je account staan de volgende tests klaar.";
+        en["GratisDna.SharperLink"] = "Want a sharper picture? The next tests are ready in your account.";
         pl["GratisDna.SharperLink"] = en["GratisDna.SharperLink"];
         ro["GratisDna.SharperLink"] = en["GratisDna.SharperLink"];
         ar["GratisDna.SharperLink"] = en["GratisDna.SharperLink"];
 
-        nl["GratisDna.Wipe.Link"] = "Wis mijn antwoorden van dit apparaat";
-        en["GratisDna.Wipe.Link"] = "Delete my answers from this device";
+        nl["GratisDna.Wipe.Link"] = "Wis mijn antwoorden";
+        en["GratisDna.Wipe.Link"] = "Delete my answers";
         pl["GratisDna.Wipe.Link"] = en["GratisDna.Wipe.Link"];
         ro["GratisDna.Wipe.Link"] = en["GratisDna.Wipe.Link"];
         ar["GratisDna.Wipe.Link"] = en["GratisDna.Wipe.Link"];
@@ -398,14 +638,14 @@ public static class UiStringsGratisDna
         ro["GratisDna.Wipe.No"] = en["GratisDna.Wipe.No"];
         ar["GratisDna.Wipe.No"] = en["GratisDna.Wipe.No"];
 
-        nl["GratisDna.Sticky.Cta"] = "Bewaar je DNA – maak gratis account";
-        en["GratisDna.Sticky.Cta"] = "Save your DNA – create a free account";
+        nl["GratisDna.Sticky.Cta"] = "Bewaar je DNA · Maak gratis account";
+        en["GratisDna.Sticky.Cta"] = "Save your DNA · Create a free account";
         pl["GratisDna.Sticky.Cta"] = en["GratisDna.Sticky.Cta"];
         ro["GratisDna.Sticky.Cta"] = en["GratisDna.Sticky.Cta"];
         ar["GratisDna.Sticky.Cta"] = en["GratisDna.Sticky.Cta"];
 
-        nl["GratisDna.Sticky.Dismiss"] = "Niet nu";
-        en["GratisDna.Sticky.Dismiss"] = "Not now";
+        nl["GratisDna.Sticky.Dismiss"] = "Later";
+        en["GratisDna.Sticky.Dismiss"] = "Later";
         pl["GratisDna.Sticky.Dismiss"] = en["GratisDna.Sticky.Dismiss"];
         ro["GratisDna.Sticky.Dismiss"] = en["GratisDna.Sticky.Dismiss"];
         ar["GratisDna.Sticky.Dismiss"] = en["GratisDna.Sticky.Dismiss"];
