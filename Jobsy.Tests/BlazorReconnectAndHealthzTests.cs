@@ -29,7 +29,7 @@ public class BlazorReconnectAndHealthzTests
         Assert.DoesNotContain("Blazor.start(", app, StringComparison.Ordinal);
 
         var bootIdx = app.IndexOf("js/blazor-boot.js", StringComparison.Ordinal);
-        var frameworkIdx = app.IndexOf("blazor.web.js", StringComparison.Ordinal);
+        var frameworkIdx = app.IndexOf("src=\"_framework/blazor.web.js", StringComparison.Ordinal);
         Assert.True(frameworkIdx >= 0 && bootIdx > frameworkIdx, "blazor-boot.js must load after blazor.web.js");
 
         var frameworkTagEnd = app.IndexOf(">", frameworkIdx, StringComparison.Ordinal);
