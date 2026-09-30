@@ -141,5 +141,58 @@ public static class UiStringsTests
         Add("TestFlow.Consent.ParentalTitle", "Toestemming van je ouder", "Parent consent needed");
         Add("TestFlow.Consent.ParentalLead", "Je ouder of verzorger moet eerst toestemming geven.", "A parent or guardian must consent first.");
         Add("TestFlow.Consent.ParentalCta", "Naar toestemming", "Go to consent");
+
+        Add("DeepPay.Upsell",
+            "Ontdek meer over jezelf met de uitgebreide test: {0} vragen en een rapport.",
+            "Discover more about yourself with the extended test: {0} questions and a report.");
+        Add("Deep.UnknownTitle", "Deze test bestaat niet.", "This test does not exist.");
+        Add("Deep.UnknownLead", "Kies een test via Mijn tests.", "Pick a test from My tests.");
+        Add("Deep.Eyebrow.Part", "De bodem · {0} · onderwerp {1} van 5", "The bottom · {0} · topic {1} of 5");
+        Add("Deep.TopicsLabel", "Onderwerpen", "Topics");
+        Add("Deep.Bubble.Question", "Hier beneden is het stil. Neem je tijd, we gaan in stukjes.", "It’s quiet down here. Take your time; we go in pieces.");
+        Add("Deep.Motivation.PartStart", "Onderwerp {0} van 5: {1}.", "Topic {0} of 5: {1}.");
+        Add("Deep.Motivation.Halfway", "Je bent halverwege. Goed bezig.", "You’re halfway. Well done.");
+        Add("Deep.Motivation.LastPart", "Laatste onderwerp. Bijna op de bodem.", "Last topic. Almost at the bottom.");
+        Add("Deep.Motivation.BeforePause", "Na dit onderwerp komt een rustpunt. Stoppen mag: alles is bewaard.", "After this topic comes a pause. Stopping is fine: everything is saved.");
+        Add("Deep.Pause.Title", "Rustpunt", "Pause point");
+        Add("Deep.Pause.Lead", "Onderwerp {0} is klaar. Je hebt {1} van {2} vragen gedaan.", "Topic {0} is done. You’ve answered {1} of {2} questions.");
+        Add("Deep.Pause.Live", "Rustpunt. Onderwerp {0} is klaar.", "Pause point. Topic {0} is done.");
+        Add("Deep.Pause.Continue", "Verder met onderwerp {0}", "Continue with topic {0}");
+        Add("Deep.Pause.Bubble", "Even ademhalen mag. Ik blijf hier.", "A breath is fine. I’ll stay here.");
+        Add("Deep.Done.Eyebrow", "De bodem · {0} van {1}", "The bottom · {0} of {1}");
+        Add("Deep.Done.Lead", "Je bent op de bodem. Je rapport is klaar.", "You’re at the bottom. Your report is ready.");
+        Add("Deep.Done.ViewReport", "Bekijk je rapport", "View your report");
+        Add("Deep.Done.DownloadPdf", "Download als PDF", "Download as PDF");
+        Add("Deep.Done.Bubble", "Voel je dat? Nu ken ik je echt.", "Feel that? Now I really know you.");
+        Add("Deep.Offer.Eyebrow", "De bodem · uitgebreide test", "The bottom · extended test");
+        Add("Deep.Offer.Title", "Duik tot de bodem", "Dive to the bottom");
+        Add("Deep.Offer.Lead", "{0} vragen over {1}. Daarna krijg je een rapport, helemaal over jou.", "{0} questions about {1}. Then you get a report, all about you.");
+        Add("Deep.Offer.WhatTitle", "Wat krijg je?", "What do you get?");
+        Add("Deep.Offer.Sample", "Bekijk eerst een voorbeeld", "View a sample first");
+        Add("Deep.Offer.TileMin", "± {0} minuten", "± {0} minutes");
+        Add("Deep.Offer.TileParts", "In stukjes. Alles wordt bewaard.", "In pieces. Everything is saved.");
+        Add("Deep.Offer.TileFreeKeep", "Je gratis uitslag blijft", "Your free result stays");
+        Add("Deep.Offer.TileFreeKeepLead", "Die {0} vragen blijven altijd van jou.", "Those {0} questions stay yours forever.");
+        Add("Deep.Offer.Bubble", "Daar beneden ligt nog meer van jou. Kijken mag, het hoeft niet.", "There’s more of you down there. Looking is fine; it doesn’t have to.");
+        Add("Deep.Rail.FreeDone", "Heel diep · {0} vragen · gedaan", "Very deep · {0} questions · done");
+        Add("Deep.Rail.BottomZone", "De bodem · uitgebreid", "The bottom · extended");
+        Add("Deep.Rail.PaidReady", "Betaald · klaar om te duiken", "Paid · ready to dive");
+        Add("Deep.Rail.PartProgress", "Vraag {0} van {1}", "Question {0} of {1}");
+        Add("Deep.Rail.Footer", "{0} van {1} vragen · ± {2} min nog", "{0} of {1} questions · ± {2} min left");
+        Add("Deep.Checkout.Bubble.Checking", "Even geduld. We kijken of de betaling gelukt is.", "One moment. We’re checking the payment.");
+        Add("Deep.Checkout.Bubble.Paid", "Gelukt! Zullen we samen naar de bodem duiken?", "Done! Shall we dive to the bottom together?");
+        Add("Deep.Checkout.Bubble.Failed", "Geen zorgen. Er is niets afgeschreven.", "No worries. Nothing was charged.");
+        Add("Deep.Checkout.NoDouble", "Je betaalt nooit twee keer voor dezelfde test.", "You never pay twice for the same test.");
+        Add("Deep.Checkout.PaidLead", "Fijn! De uitgebreide {0}test staat voor je klaar.", "Nice! The extended {0} test is ready for you.");
+        Add("Deep.Checkout.FailedLead",
+            "Er is niets afgeschreven. Dat kan gebeuren, bijvoorbeeld als je het scherm van je bank sloot.",
+            "Nothing was charged. That can happen if you closed your bank screen.");
+        Add("Deep.Checkout.TipRetry", "Je kunt het opnieuw proberen.", "You can try again.");
+        Add("Deep.Checkout.TipKept", "Je eerdere antwoorden blijven bewaard.", "Your earlier answers stay saved.");
+        Add("Deep.Checkout.TipHelp", "Is er toch geld afgeschreven? Tik op Assistent. Dan zoeken we het uit.", "Was money charged anyway? Tap Assistant and we’ll look into it.");
+        Add("Deep.Checkout.TileQs", "{0} vragen · ± {1} min", "{0} questions · ± {1} min");
+        Add("Deep.Checkout.TileParts", "In 5 onderwerpen, met rustpunten.", "In 5 topics, with pause points.");
+        Add("Deep.Checkout.TileStop", "Stoppen mag", "Stopping is fine");
+        Add("Deep.Checkout.TileStopLead", "Je gaat later verder waar je was.", "You’ll continue later where you left off.");
     }
 }

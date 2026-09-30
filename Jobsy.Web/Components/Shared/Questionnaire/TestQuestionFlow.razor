@@ -144,6 +144,10 @@
     [Parameter] public EventCallback OnLater { get; set; }
     [Parameter] public EventCallback OnChanged { get; set; }
     [Parameter] public EventCallback<(int Id, int Value)> OnAnswer { get; set; }
+    /// <summary>When set, advancing past this 0-based index fires <see cref="OnPauseAfter"/> instead of moving on.</summary>
+    [Parameter] public Func<int, bool>? ShouldPauseAfterIndex { get; set; }
+    [Parameter] public EventCallback<int> OnPauseAfter { get; set; }
+    [Parameter] public int? ExternalIndex { get; set; }
 
     private int _index;
     private bool _focusRequest;
@@ -245,6 +249,14 @@
             return;
         }
 
+        if (ShouldPauseAfterIndex?.Invoke(_index) == true)
+        {
+            await OnPauseAfter.InvokeAsync(_index);
+            _focusRequest = true;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
         _advanceCts?.Cancel();
         _advanceCts = new CancellationTokenSource();
         var token = _advanceCts.Token;
@@ -270,6 +282,20 @@
         _index++;
         _focusRequest = true;
         await InvokeAsync(StateHasChanged);
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (ExternalIndex is int ei)
+        {
+            _index = Math.Clamp(ei, 0, Math.Max(0, TargetCount - 1));
+        }
+    }
+
+    /// <summary>Jump to a 0-based index (used after pause "Verder").</summary>
+    public void JumpToIndex(int index)
+    {
+        JumpTo(index);
     }
 
     private async Task FireLevelsAsync()
@@ -307,6 +333,12 @@
         {
             if (Autosave is not null) await Autosave.FlushAsync();
             await OnFinished.InvokeAsync();
+            return;
+        }
+
+        if (ShouldPauseAfterIndex?.Invoke(_index) == true)
+        {
+            await OnPauseAfter.InvokeAsync(_index);
             return;
         }
 

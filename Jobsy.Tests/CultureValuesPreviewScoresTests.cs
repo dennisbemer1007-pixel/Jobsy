@@ -54,7 +54,7 @@ public class CultureValuesPreviewScoresTests
         });
         await db.SaveChangesAsync();
 
-        var sut = new CandidateCulturePersonalityService(db, new StubCommercial(), new StubQueue(), new StubMatchSnapshots());
+        var sut = new CandidateCulturePersonalityService(db, new StubCommercial(), new StubQueue(), new StubMatchSnapshots(), new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
         var dto = await sut.GetAsync(userId);
 
         Assert.Equal(CandidateCompetencyStatuses.Draft, dto.Status);
@@ -77,7 +77,7 @@ public class CultureValuesPreviewScoresTests
         });
         await db.SaveChangesAsync();
 
-        var sut = new CandidateValuesService(db, new StubCommercial(), new StubQueue(), new StubMatchSnapshots());
+        var sut = new CandidateValuesService(db, new StubCommercial(), new StubQueue(), new StubMatchSnapshots(), new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
         var dto = await sut.GetAsync(userId);
 
         Assert.Equal(CandidateCompetencyStatuses.Draft, dto.Status);

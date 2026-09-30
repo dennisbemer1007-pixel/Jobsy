@@ -42,9 +42,16 @@
                 @RailContent
             </aside>
             <div class="test-shell__card">
-                <p class="test-shell__eyebrow">@Culture.Format("TestFlow.Eyebrow.Dive", TestName, LevelName)</p>
+                <p class="test-shell__eyebrow">@(string.IsNullOrWhiteSpace(Eyebrow) ? Culture.Format("TestFlow.Eyebrow.Dive", TestName, LevelName) : Eyebrow)</p>
                 <h1 tabindex="-1">@H1</h1>
-                <p class="test-shell__lead">@Culture["TestFlow.QuestionLead"]</p>
+                @if (!string.IsNullOrWhiteSpace(Lead))
+                {
+                    <p class="test-shell__lead">@Lead</p>
+                }
+                else
+                {
+                    <p class="test-shell__lead">@Culture["TestFlow.QuestionLead"]</p>
+                }
                 @ChildContent
             </div>
             <div class="test-shell__scene">
@@ -66,7 +73,7 @@
                 @RailContent
             </aside>
             <div class="test-shell__card test-done">
-                <p class="test-shell__eyebrow">@Culture.Format("TestDone.Eyebrow", TestName, LevelName)</p>
+                <p class="test-shell__eyebrow">@(string.IsNullOrWhiteSpace(Eyebrow) ? Culture.Format("TestDone.Eyebrow", TestName, LevelName) : Eyebrow)</p>
                 <div class="test-done__shard" aria-hidden="true"></div>
                 <h1 tabindex="-1">@Culture["TestDone.Title"]</h1>
                 <p class="test-shell__lead">@DoneLead</p>
@@ -89,6 +96,36 @@
             </div>
         </div>
     }
+    else if (Mode == ShellMode.Offer || Mode == ShellMode.Pause || Mode == ShellMode.Checkout)
+    {
+        <div class="test-shell__layout">
+            <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
+                @RailContent
+            </aside>
+            <div class="test-shell__card">
+                @if (!string.IsNullOrWhiteSpace(Eyebrow))
+                {
+                    <p class="test-shell__eyebrow">@Eyebrow</p>
+                }
+                <h1 tabindex="-1">@H1</h1>
+                @if (!string.IsNullOrWhiteSpace(Lead))
+                {
+                    <p class="test-shell__lead">@Lead</p>
+                }
+                @ChildContent
+            </div>
+            <div class="test-shell__scene">
+                <TestDiveScene Kind="Kind"
+                               Answered="Answered"
+                               Target="TargetCount"
+                               Deep="Deep"
+                               Mobile="false"
+                               PlatesShed="PlatesShed"
+                               NewShell="NewShell"
+                               BubbleText="@BubbleText" />
+            </div>
+        </div>
+    }
     else
     {
         @ChildContent
@@ -96,13 +133,14 @@
 </div>
 
 @code {
-    public enum ShellMode { Intro, Question, Done, Offer, Other }
+    public enum ShellMode { Intro, Question, Done, Offer, Pause, Checkout, Other }
 
     [Parameter] public AssessmentKind Kind { get; set; }
     [Parameter] public ShellMode Mode { get; set; } = ShellMode.Intro;
     [Parameter] public bool Deep { get; set; }
     [Parameter] public string H1 { get; set; } = "";
     [Parameter] public string Lead { get; set; } = "";
+    [Parameter] public string Eyebrow { get; set; } = "";
     [Parameter] public string TestName { get; set; } = "";
     [Parameter] public string LevelName { get; set; } = "";
     [Parameter] public string DoneLead { get; set; } = "";

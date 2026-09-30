@@ -2,342 +2,293 @@
 @page "/candidate/deep-analysis/{Kind}"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using System.Globalization
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Localization
-@using Jobsy.Web.Components.Pages.Candidate.DeepReport
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @implements IAsyncDisposable
 
-<PageTitle>@Culture[_titleKey] · Lobsy</PageTitle>
+<PageTitle>@(_kindOk ? Culture[_titleKey] : Culture["Deep.UnknownTitle"]) · Lobsy</PageTitle>
 
 @if (_loading)
 {
-    <div class="questionnaire">
-        <p class="state-message">@Culture["Common.Loading"]</p>
+    <div class="test-page journey-page"><div class="test-skeleton" aria-busy="true"><span class="skeleton-line skeleton-line--title"></span></div></div>
+}
+else if (!_kindOk)
+{
+    <div class="test-page journey-page">
+        <div class="test-shell__card">
+            <h1 tabindex="-1">@Culture["Deep.UnknownTitle"]</h1>
+            <p class="test-shell__lead">@Culture["Deep.UnknownLead"]</p>
+            <p><a class="engagement-btn" href="/profiel">@Culture["DeepPay.ToMyTests"]</a></p>
+        </div>
     </div>
 }
 else if (_loadFailed)
 {
-    <div class="questionnaire">
-        <p class="state-message">@_message</p>
-        <a class="questionnaire__close" href="/candidate/profile" aria-label="@Culture["Questionnaire.BackAria"]">×</a>
-    </div>
-}
-else if (_state is { IsUnlocked: false })
-{
-    <div class="questionnaire questionnaire--upsell">
-        <header class="questionnaire__header">
-            <div class="questionnaire__top">
-                <a class="questionnaire__close" href="/candidate/profile" aria-label="@Culture["Questionnaire.BackAria"]">
-                    <span aria-hidden="true">×</span>
-                </a>
-                <div class="questionnaire__titles">
-                    <h1 class="questionnaire__title">@Culture[_titleKey]</h1>
-                </div>
-            </div>
-        </header>
-        <div class="questionnaire__body">
-            <p class="login-lead">@_upsell</p>
-            <button class="login-submit" type="button" disabled="@_saving" @onclick="OpenOrderDialogAsync">
-                @Culture["Competency.DeepUnlock"]
-            </button>
-        </div>
-    </div>
-
-    <DeepTestOrderDialog IsOpen="_orderOpen"
-                         TestName="@Culture[_titleKey]"
-                         QuestionCount="@(_state?.QuestionCount ?? 150)"
-                         PriceEuro="@(_state?.PriceEuro ?? 2.99m)"
-                         PaymentMode="_paymentMode"
-                         Busy="_saving"
-                         ErrorKey="_orderErrorKey"
-                         OnClose="() => _orderOpen = false"
-                         OnPay="ConfirmOrderAsync" />
-}
-else if (_state is { IsCompleted: true } completedState)
-{
-    <div class="questionnaire questionnaire--report">
-        <header class="questionnaire__header">
-            <div class="questionnaire__top">
-                <a class="questionnaire__close" href="/candidate/profile" aria-label="@Culture["Questionnaire.BackAria"]">
-                    <span aria-hidden="true">×</span>
-                </a>
-                <div class="questionnaire__titles">
-                    <h1 class="questionnaire__title">@Culture[_titleKey]</h1>
-                </div>
-            </div>
-        </header>
-        <div class="questionnaire__body">
-            @if (_slug == "competence" && completedState.CompetenceReport is not null)
-            {
-                <CompetenceDeepReportView Report="completedState.CompetenceReport"
-                                          CompletedAtUtc="@completedState.CompletedAtUtc"
-                                          QuestionCount="@completedState.QuestionCount"
-                                          Busy="_saving"
-                                          OnDownloadPdf="DownloadPdfAsync" />
-            }
-            else if (_slug == "career" && completedState.CareerReport is not null)
-            {
-                <CareerDeepReportView Report="completedState.CareerReport" Busy="_saving" OnDownloadPdf="DownloadPdfAsync" />
-            }
-            else if (_slug == "culture" && completedState.CultureReport is not null)
-            {
-                <CultureDeepReportView Report="completedState.CultureReport" Busy="_saving" OnDownloadPdf="DownloadPdfAsync" />
-            }
-            else if (_slug == "values" && completedState.ValuesReport is not null)
-            {
-                <ValuesDeepReportView Report="completedState.ValuesReport" Busy="_saving" OnDownloadPdf="DownloadPdfAsync" />
-            }
-            else
-            {
-                <p class="login-lead">@Culture["Deep.Completed"]</p>
-                <button class="login-submit" type="button" disabled="@_saving" @onclick="DownloadPdfAsync">
-                    @Culture["Deep.DownloadPdf"]
-                </button>
-            }
-        </div>
-    </div>
+    <div class="test-page"><p>@Culture["Common.Error"]</p><a href="@($"/candidate/deep-analysis/{_slug}")">@Culture["Common.Retry"]</a></div>
 }
 else
 {
-    <QuestionnaireShell Title="@Culture[_titleKey]"
-                        Subtitle="@Subtitle"
-                        BackHref="/candidate/profile"
-                        AnsweredCount="@AnsweredCount"
-                        TotalCount="@QuestionCount"
-                        SaveStatus="@(_autosave?.Status ?? QuestionnaireSaveStatus.Saved)"
-                        Loading="false"
-                        LoadFailed="false"
-                        Message="@_banner"
-                        Completing="_completing"
-                        ScrollToQuestionId="_scrollToId"
-                        SmoothScroll="_smoothScroll"
-                        ScrollRequestVersion="_scrollRequestVersion"
-                        CssClass="questionnaire--deep"
-                        OnComplete="CompleteAsync"
-                        OnNext="GoNextAsync"
-                        OnRetrySave="RetrySaveAsync">
-        <HeaderExtra>
-            <div class="deep-analysis-chrome deep-analysis-chrome--compact" aria-label="@Culture["Deep.ChromeLabel"]">
-                <ol class="deep-analysis-topics" aria-label="@Culture["Deep.TopicsLabel"]">
-                    @foreach (var topic in Topics)
-                    {
-                        <li class="deep-analysis-topics__item deep-analysis-topics__item--@topic.Status"
-                            title="@topic.Label">
-                            @if (topic.Status == "done")
-                            {
-                                <span class="deep-analysis-topics__check" aria-hidden="true">✓</span>
-                            }
-                            else if (topic.Status == "current")
-                            {
-                                <span class="deep-analysis-topics__dot" aria-hidden="true"></span>
-                            }
-                            else
-                            {
-                                <span class="deep-analysis-topics__soon" aria-hidden="true">·</span>
-                            }
-                            <span class="deep-analysis-topics__label">@topic.Label</span>
-                            <span class="visually-hidden">
-                                @topic.Label — @Culture[$"Deep.Topic.{topic.Status}"] (@topic.Done/@topic.Total)
-                            </span>
-                        </li>
-                    }
-                </ol>
-            </div>
-        </HeaderExtra>
-
-        <ChildContent>
-        @foreach (var group in QuestionGroups)
+    <TestConsentGate GateChanged="OnGateChanged">
+        @if (_gateOpen)
         {
-            var domainLabel = group.FirstOrDefault()?.DomainLabel;
-            if (string.IsNullOrWhiteSpace(domainLabel))
+            @if (_view == View.Offer)
             {
-                domainLabel = DeepAnalysisQuestionHelp.DomainLabel(group.Key);
+                <TestPageShell Kind="_kind"
+                               Mode="TestPageShell.ShellMode.Offer"
+                               Deep="true"
+                               Eyebrow="@Culture["Deep.Offer.Eyebrow"]"
+                               H1="@Culture["Deep.Offer.Title"]"
+                               Lead="@Culture.Format("Deep.Offer.Lead", _questionCount, Culture[_titleKey])"
+                               TestName="@Culture[_titleKey]"
+                               Answered="0"
+                               TargetCount="_questionCount"
+                               BubbleText="@Culture["Deep.Offer.Bubble"]">
+                    <RailContent>@RenderRail(offer: true)</RailContent>
+                    <ChildContent>
+                        <section class="deep-offer">
+                            <h2 class="visually-hidden">@Culture["Deep.Offer.WhatTitle"]</h2>
+                            <ul class="deep-offer__get">
+                                <li>✓ @Culture["DeepPay.Get.1"]</li>
+                                <li>✓ @Culture["DeepPay.Get.2"]</li>
+                                <li>✓ @Culture["DeepPay.Get.3"]</li>
+                                <li>✓ @Culture["DeepPay.Get.4"]</li>
+                            </ul>
+                            <p>
+                                <button type="button" class="btn-link" disabled="@_saving" @onclick="OpenSampleAsync">
+                                    @Culture["Deep.Offer.Sample"]
+                                </button>
+                            </p>
+                            <div class="deep-offer__tiles">
+                                <div>
+                                    <strong>@Culture.Format("Deep.Offer.TileMin", TestDepthRules.MinutesFor(_kind, TestDepthLevel.Bottom))</strong>
+                                    <span>@Culture["Deep.Offer.TileParts"]</span>
+                                </div>
+                                <div>
+                                    <strong>@Culture["Deep.Offer.TileFreeKeep"]</strong>
+                                    <span>@Culture.Format("Deep.Offer.TileFreeKeepLead", TestDepthRules.FullCount(_kind))</span>
+                                </div>
+                            </div>
+                            <div class="deep-offer__price">
+                                <strong>€ @_priceLabel</strong>
+                                <span>@Culture["DeepPay.PriceOnce"]</span>
+                            </div>
+                            <p class="muted">
+                                @Culture["DeepPay.Methods"]:
+                                @string.Join(" · ", MolliePaymentMethods.PrimaryMethods.Select(MolliePaymentMethods.DisplayName))
+                            </p>
+                            @if (_paymentMode == "mollie")
+                            {
+                                <p class="muted">@Culture["DeepPay.SecureMollie"]</p>
+                            }
+                            else if (_paymentMode == "stub")
+                            {
+                                <p class="muted">@Culture["DeepPay.StubHint"]</p>
+                            }
+                            <label class="deep-pay-waiver">
+                                <input type="checkbox" @bind="_waiverAccepted" />
+                                @Culture["DeepPay.Waiver"]
+                            </label>
+                            @if (!string.IsNullOrWhiteSpace(_orderErrorKey))
+                            {
+                                <p class="state-message error" role="alert">@Culture[_orderErrorKey]</p>
+                            }
+                            <footer class="test-shell__footer">
+                                <a href="@($"/profiel/tests/{_slug}")">@Culture["DeepPay.NotNow"]</a>
+                                <button type="button"
+                                        class="engagement-btn"
+                                        disabled="@(!_waiverAccepted || _saving || _paymentMode == "unavailable")"
+                                        @onclick="ConfirmOrderAsync">
+                                    @Culture.Format("DeepPay.PayCta", _priceLabel)
+                                </button>
+                            </footer>
+                        </section>
+                    </ChildContent>
+                </TestPageShell>
             }
-            <section class="questionnaire-section" id="@($"deep-topic-{Slug(group.Key)}")" aria-labelledby="@($"deep-legend-{Slug(group.Key)}")">
-                <h2 class="questionnaire-section__label" id="@($"deep-legend-{Slug(group.Key)}")">@domainLabel</h2>
-                @foreach (var question in group)
-                {
-                    var answered = _answers.ContainsKey(question.Id);
-                    var q = question;
-                    var screenNumber = ScreenNumber(question.Id);
-                    var isCurrent = _currentId == question.Id;
-                    var isDimmed = _dimmedId == question.Id;
-                    <LikertScaleQuestion QuestionId="question.Id"
-                                         Text="@($"{screenNumber}. {question.PromptNl}")"
-                                         Value="@(answered ? _answers[question.Id] : null)"
-                                         IsAnswered="answered"
-                                         IsCurrent="isCurrent"
-                                         Collapsed="@(answered && !isCurrent && _expandedId != question.Id)"
-                                         Dimmed="isDimmed"
-                                         InputPrefix="@($"d{_slug}")"
-                                         ValueChanged="value => OnAnswerAsync(q.Id, value)"
-                                         Expanded="() => ExpandQuestion(q.Id)">
-                        <Extra>
-                            <button type="button"
-                                    class="q-likert__example"
-                                    aria-label="@Culture.Format("Deep.InfoAria", screenNumber)"
-                                    @onclick="() => OpenExample(q)">
-                                @Culture["Questionnaire.ExampleLink"]
+            else if (_view == View.Done)
+            {
+                <TestPageShell Kind="_kind"
+                               Mode="TestPageShell.ShellMode.Done"
+                               Deep="true"
+                               Eyebrow="@Culture.Format("Deep.Done.Eyebrow", _questionCount, _questionCount)"
+                               H1="@Culture["TestDone.Title"]"
+                               DoneLead="@Culture["Deep.Done.Lead"]"
+                               TestName="@Culture[_titleKey]"
+                               LevelName="@Culture["TestDepth.Bottom"]"
+                               Answered="_questionCount"
+                               TargetCount="_questionCount"
+                               BubbleText="@Culture["Deep.Done.Bubble"]">
+                    <RailContent>@RenderRail()</RailContent>
+                    <ChildContent>
+                        <footer class="test-shell__footer">
+                            <a href="@($"/profiel/tests/{_slug}")">@Culture["Deep.Done.DownloadPdf"]</a>
+                            <a class="engagement-btn" href="@($"/profiel/tests/{_slug}")">@Culture["Deep.Done.ViewReport"]</a>
+                        </footer>
+                    </ChildContent>
+                </TestPageShell>
+            }
+            else if (_view == View.Pause && _pausePart is TestDepthPart pausePart)
+            {
+                var next = _parts.FirstOrDefault(p => p.Index == pausePart.Index + 1);
+                <TestPageShell Kind="_kind"
+                               Mode="TestPageShell.ShellMode.Pause"
+                               Deep="true"
+                               Eyebrow="@Culture.Format("Deep.Eyebrow.Part", Culture[_titleKey], pausePart.Index)"
+                               H1="@Culture["Deep.Pause.Title"]"
+                               Lead="@Culture.Format("Deep.Pause.Lead", pausePart.Index, _answered, _questionCount)"
+                               TestName="@Culture[_titleKey]"
+                               Answered="_answered"
+                               TargetCount="_questionCount"
+                               BubbleText="@Culture["Deep.Pause.Bubble"]">
+                    <RailContent>@RenderRail()</RailContent>
+                    <ChildContent>
+                        <div class="deep-pause" aria-live="polite">
+                            <p>@Culture.Format("Deep.Pause.Live", pausePart.Index)</p>
+                            @if (next is not null)
+                            {
+                                <p class="deep-pause__next">@DeepTestMotivation.PartDisplayName(_kind, next)</p>
+                            }
+                        </div>
+                        <footer class="test-shell__footer">
+                            <a href="@($"/profiel/tests/{_slug}")" @onclick="FlushLaterAsync" @onclick:preventDefault>@Culture["TestFlow.Later"]</a>
+                            <button type="button" class="engagement-btn" @onclick="ContinueAfterPause">
+                                @Culture.Format("Deep.Pause.Continue", pausePart.Index + 1)
                             </button>
-                        </Extra>
-                    </LikertScaleQuestion>
-                }
-            </section>
+                        </footer>
+                    </ChildContent>
+                </TestPageShell>
+            }
+            else if (_view == View.Question && _autosave is not null)
+            {
+                var part = CurrentPart;
+                var partName = part is null ? "" : DeepTestMotivation.PartDisplayName(_kind, part);
+                var motivationKey = part is null
+                    ? null
+                    : DeepTestMotivation.ForProgress(_kind, _answered, _questionCount, part.Index);
+                <TestPageShell Kind="_kind"
+                               Mode="TestPageShell.ShellMode.Question"
+                               Deep="true"
+                               Eyebrow="@Culture.Format("Deep.Eyebrow.Part", Culture[_titleKey], part?.Index ?? 1)"
+                               H1="@partName"
+                               Lead="@Culture["TestFlow.QuestionLead"]"
+                               TestName="@Culture[_titleKey]"
+                               LevelName="@Culture["TestDepth.Bottom"]"
+                               Answered="_answered"
+                               TargetCount="_questionCount"
+                               BubbleText="@Culture["Deep.Bubble.Question"]">
+                    <RailContent>@RenderRail()</RailContent>
+                    <ChildContent>
+                        <ol class="deep-topic-chips" aria-label="@Culture["Deep.TopicsLabel"]">
+                            @foreach (var chip in _parts)
+                            {
+                                var done = PartAnswered(chip);
+                                var status = done >= chip.Size ? "done" : (chip.Index == part?.Index ? "now" : "todo");
+                                <li class="deep-topic-chips__item deep-topic-chips__item--@status">
+                                    <span>@DeepTestMotivation.PartDisplayName(_kind, chip)</span>
+                                    <small>@done/@chip.Size</small>
+                                </li>
+                            }
+                        </ol>
+                        @if (!string.IsNullOrWhiteSpace(motivationKey) && ShouldShowMotivation(motivationKey, part!.Index))
+                        {
+                            <p class="deep-motivation" data-cue="@motivationKey">
+                                @FormatMotivation(motivationKey, part)
+                            </p>
+                        }
+                        <p class="test-page__save" aria-live="polite">@_liveSave</p>
+                        <TestQuestionFlow Kind="_kind"
+                                          Questions="_flowQuestions"
+                                          Answers="_autosave.Answers"
+                                          Target="TestDepthLevel.Bottom"
+                                          Autosave="_autosave"
+                                          Compact="false"
+                                          InputPrefix="@($"d{_slug}")"
+                                          ShouldPauseAfterIndex="ShouldPauseAfter"
+                                          OnPauseAfter="OnPauseAfterAsync"
+                                          OnFinished="OnFinishedAsync"
+                                          OnLater="LaterAsync"
+                                          OnChanged="OnFlowChanged" />
+                    </ChildContent>
+                </TestPageShell>
+            }
         }
-        </ChildContent>
-    </QuestionnaireShell>
-}
-
-@if (_exampleQuestion is not null)
-{
-    <LobsyFriendlyDialog IsOpen="true"
-                         Title="@Culture["Deep.InfoTitle"]"
-                         TitleId="deep-example-title"
-                         Lead="@Culture.Format("Deep.InfoLead", ScreenNumber(_exampleQuestion.Id))"
-                         OnClose="CloseExample">
-        <p>@_exampleQuestion.ExampleNl</p>
-        <button class="login-submit" type="button" @onclick="CloseExample">@Culture["Common.Close"]</button>
-    </LobsyFriendlyDialog>
-}
-
-@if (_boosterMilestone is int boosterAt)
-{
-    <LobsyFriendlyDialog IsOpen="true"
-                         Mood="LobsyDialogMood.Celebrate"
-                         Title="@DeepAnalysisBoosters.TitleFor(boosterAt)"
-                         TitleId="deep-booster-title"
-                         Lead="@DeepAnalysisBoosters.TryMessage(boosterAt, QuestionCount)"
-                         OnClose="CloseBooster">
-        <button class="login-submit" type="button" @onclick="CloseBooster">@Culture["Deep.BoosterContinue"]</button>
-    </LobsyFriendlyDialog>
+    </TestConsentGate>
 }
 
 @code {
+    private enum View { Offer, Question, Pause, Done }
+
     [Parameter] public string? Kind { get; set; }
 
     private bool _loading = true;
+    private bool _loadFailed;
+    private bool _kindOk;
+    private bool _gateOpen;
     private bool _saving;
-    private bool _orderOpen;
+    private bool _waiverAccepted;
     private string? _orderErrorKey;
     private string _paymentMode = "unavailable";
-    private bool _completing;
-    private bool _loadFailed;
-    private bool _smoothScroll;
-    private string? _message;
-    private string? _banner;
-    private string _upsell = "";
     private string _slug = "competence";
     private string _titleKey = "Deep.CompetenceTitle";
+    private AssessmentKind _kind = AssessmentKind.Competence;
+    private View _view = View.Offer;
+    private int _questionCount = 150;
+    private int _answered;
+    private decimal _priceEuro = 2.99m;
+    private string _priceLabel = "2,99";
+    private string? _liveSave;
     private DeepAnalysisState? _state;
-    private readonly Dictionary<int, int> _answers = [];
-    private readonly HashSet<int> _seenBoosters = [];
-    private DeepAnalysisQuestionItem? _exampleQuestion;
-    private int? _boosterMilestone;
-    private int? _currentId;
-    private int? _dimmedId;
-    private int? _expandedId;
-    private int? _scrollToId;
-    private int _scrollRequestVersion;
     private QuestionnaireAutosave? _autosave;
+    private List<TestQuestionFlow.FlowQuestion> _flowQuestions = [];
+    private IReadOnlyList<TestDepthPart> _parts = [];
+    private TestDepthPart? _pausePart;
+    private int _resumeIndex;
+    private readonly HashSet<string> _shownCues = [];
+    private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
 
-    private int AnsweredCount => _answers.Count;
-    private int QuestionCount => _state?.QuestionCount ?? DeepAnalysisCatalog.QuestionCount;
-
-    private IReadOnlyList<int> OrderedScreenIds =>
-        DeepAnalysisScreenOrder.Grouped(_state?.Questions ?? [], q => q.Domain)
-            .Select(q => q.Id)
-            .ToList();
-
-    private int ScreenNumber(int questionId)
-        => DeepAnalysisScreenOrder.NumberOf(OrderedScreenIds, questionId);
-
-    private string? Subtitle
+    private TestDepthPart? CurrentPart
     {
         get
         {
-            if (_currentId is null || _state?.Questions is null)
-            {
-                return null;
-            }
-
-            var current = _state.Questions.FirstOrDefault(q => q.Id == _currentId);
-            if (current is null)
-            {
-                return null;
-            }
-
-            var label = current.DomainLabel;
-            if (string.IsNullOrWhiteSpace(label))
-            {
-                label = DeepAnalysisQuestionHelp.DomainLabel(current.Domain);
-            }
-
-            var inDomain = _state.Questions.Where(q => q.Domain == current.Domain).ToList();
-            var done = inDomain.Count(q => _answers.ContainsKey(q.Id));
-            return Culture.Format("Questionnaire.CategoryProgress", label, done, inDomain.Count);
-        }
-    }
-
-    private IEnumerable<IGrouping<string, DeepAnalysisQuestionItem>> QuestionGroups =>
-        (_state?.Questions ?? []).GroupBy(q => q.Domain);
-
-    private IReadOnlyList<TopicChip> Topics
-    {
-        get
-        {
-            var groups = (_state?.Questions ?? [])
-                .GroupBy(q => q.Domain, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            var chips = new List<TopicChip>(groups.Count);
-            var foundCurrent = false;
-            foreach (var group in groups)
-            {
-                var total = group.Count();
-                var done = group.Count(q => _answers.ContainsKey(q.Id));
-                string status;
-                if (done >= total)
-                {
-                    status = "done";
-                }
-                else if (!foundCurrent)
-                {
-                    status = "current";
-                    foundCurrent = true;
-                }
-                else
-                {
-                    status = "upcoming";
-                }
-
-                var label = group.FirstOrDefault()?.DomainLabel;
-                if (string.IsNullOrWhiteSpace(label))
-                {
-                    label = DeepAnalysisQuestionHelp.DomainLabel(group.Key);
-                }
-
-                chips.Add(new TopicChip(label, status, done, total));
-            }
-
-            return chips;
+            if (_parts.Count == 0) return null;
+            return _parts.FirstOrDefault(p => PartAnswered(p) < p.Size) ?? _parts[^1];
         }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        _slug = AssessmentKindLabels.ToSlug(AssessmentKindLabels.ParseOrDefault(Kind));
+        if (string.IsNullOrWhiteSpace(Kind))
+        {
+            Navigation.NavigateTo("/candidate/deep-analysis/competence", replace: true);
+            return;
+        }
+
+        if (!AssessmentKindLabels.TryParse(Kind, out _kind))
+        {
+            _kindOk = false;
+            _loading = false;
+            return;
+        }
+
+        _kindOk = true;
+        _slug = AssessmentKindLabels.ToSlug(_kind);
         _titleKey = _slug switch
         {
             "career" => "Deep.CareerTitle",
             "values" => "Deep.ValuesTitle",
-            "disc" or "culture" => "Deep.CultureTitle",
+            "culture" => "Deep.CultureTitle",
             _ => "Deep.CompetenceTitle"
         };
+        _parts = TestDepthRules.Parts(_kind);
+        _questionCount = TestDepthRules.Bottom(_kind);
 
         _autosave = new QuestionnaireAutosave(
             persist: async (answers, ct) =>
@@ -348,41 +299,59 @@ else
 
         try
         {
+            _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
             _state = await Api.GetDeepAnalysisAsync(_slug);
-            _upsell = _state?.UpsellCopy ?? "";
-            _answers.Clear();
+            _priceEuro = _state?.PriceEuro > 0 ? _state.PriceEuro : _priceEuro;
+            _priceLabel = _priceEuro.ToString("0.00", CultureInfo.GetCultureInfo("nl-NL"));
+            _questionCount = _state?.QuestionCount > 0 ? _state.QuestionCount : _questionCount;
+
+            var answers = new Dictionary<int, int>();
             if (_state?.Answers is not null)
             {
                 foreach (var (key, value) in _state.Answers)
                 {
                     if (int.TryParse(key, out var id) && value is >= 1 and <= 5)
                     {
-                        _answers[id] = value;
+                        answers[id] = value;
                     }
                 }
             }
 
-            _autosave.ReplaceAll(_answers);
+            _autosave.ReplaceAll(answers);
+            _answered = answers.Count;
 
-            foreach (var milestone in DeepAnalysisBoosters.Milestones)
-            {
-                if (AnsweredCount >= milestone)
+            var ordered = DeepAnalysisScreenOrder.For(_kind);
+            // Prefer Parts order for question ids.
+            var partOrder = _parts.SelectMany(p => p.QuestionIds).ToList();
+            var byId = ordered.ToDictionary(q => q.Id);
+            _flowQuestions = partOrder
+                .Where(byId.ContainsKey)
+                .Select(id =>
                 {
-                    _seenBoosters.Add(milestone);
-                }
-            }
+                    var q = byId[id];
+                    return new TestQuestionFlow.FlowQuestion(
+                        q.Id,
+                        q.PromptNl,
+                        DeepAnalysisQuestionHelp.ExampleFor(q));
+                })
+                .ToList();
 
-            if (_state is { IsUnlocked: true, IsCompleted: false })
+            if (_state is { IsCompleted: true })
             {
-                _currentId = FirstUnanswered() ?? (_state.Questions?.FirstOrDefault()?.Id);
-                _scrollToId = _currentId;
-                _smoothScroll = false;
+                _view = View.Done;
+            }
+            else if (_state is not { IsUnlocked: true })
+            {
+                _view = View.Offer;
+            }
+            else
+            {
+                _view = View.Question;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             _loadFailed = true;
-            _message = Culture["Common.Error"];
         }
         finally
         {
@@ -390,78 +359,154 @@ else
         }
     }
 
-    private int? FirstUnanswered()
-        => DeepAnalysisScreenOrder.FirstUnanswered(OrderedScreenIds, _answers);
+    private void OnGateChanged(bool open) => _gateOpen = open;
 
-    private int? NextUnansweredAfter(int answeredId)
-        => DeepAnalysisScreenOrder.NextUnansweredAfter(OrderedScreenIds, _answers, answeredId);
-
-    private async Task OnAnswerAsync(int id, int value)
+    private int PartAnswered(TestDepthPart part)
     {
-        var before = AnsweredCount;
-        var wasNew = !_answers.ContainsKey(id);
-        _answers[id] = value;
-        _banner = null;
-        _currentId = NextUnansweredAfter(id) ?? id;
-        _scrollToId = _currentId;
-        _smoothScroll = true;
+        if (_autosave is null) return 0;
+        return part.QuestionIds.Count(id => _autosave.Answers.ContainsKey(id));
+    }
 
-        if (wasNew)
+    private bool ShouldPauseAfter(int index)
+    {
+        // Pause after completing the last question of parts 1–4.
+        var answeredAfter = index + 1; // 1-based count if sequential from start
+        // Prefer answer-count based pause when autosave count matches part boundary.
+        if (_autosave is not null && DeepTestMotivation.IsPausePoint(_kind, _autosave.AnsweredCount))
         {
-            var after = AnsweredCount;
-            foreach (var milestone in DeepAnalysisBoosters.Milestones)
+            return true;
+        }
+
+        var running = 0;
+        for (var i = 0; i < _parts.Count - 1; i++)
+        {
+            running += _parts[i].Size;
+            if (index + 1 == running)
             {
-                if (before < milestone && after >= milestone && _seenBoosters.Add(milestone))
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private Task OnPauseAfterAsync(int index)
+    {
+        var partIndex = DeepTestMotivation.PartIndexForGlobalIndex(_kind, index);
+        _pausePart = _parts.FirstOrDefault(p => p.Index == partIndex);
+        _resumeIndex = index + 1;
+        _answered = _autosave?.AnsweredCount ?? _answered;
+        _view = View.Pause;
+        return Task.CompletedTask;
+    }
+
+    private void ContinueAfterPause()
+    {
+        _view = View.Question;
+        _pausePart = null;
+    }
+
+    private async Task OnFinishedAsync()
+    {
+        if (_autosave is null) return;
+        try
+        {
+            await _autosave.FlushAsync();
+            _state = await Api.SaveDeepAnalysisAsync(_slug, _autosave.Answers, complete: true);
+            _answered = _questionCount;
+            _view = View.Done;
+        }
+        catch (Exception)
+        {
+            _liveSave = Culture["Common.Error"];
+        }
+    }
+
+    private async Task LaterAsync()
+    {
+        if (_autosave is not null) await _autosave.FlushAsync();
+        Navigation.NavigateTo($"/profiel/tests/{_slug}");
+    }
+
+    private async Task FlushLaterAsync()
+    {
+        if (_autosave is not null) await _autosave.FlushAsync();
+        Navigation.NavigateTo($"/profiel/tests/{_slug}");
+    }
+
+    private Task OnFlowChanged()
+    {
+        _answered = _autosave?.AnsweredCount ?? _answered;
+        if (_autosave is not null && _autosave.Status != _lastAnnounced)
+        {
+            _lastAnnounced = _autosave.Status;
+            _liveSave = _autosave.Status switch
+            {
+                QuestionnaireSaveStatus.Saved => Culture["TestFlow.Saved"],
+                QuestionnaireSaveStatus.Failed => Culture["TestFlow.SaveFailed"],
+                _ => _liveSave
+            };
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private bool ShouldShowMotivation(string key, int partIndex)
+    {
+        var token = $"{partIndex}:{key}";
+        if (_shownCues.Contains(token)) return true; // keep visible while on this question
+        _shownCues.Add(token);
+        // Only one cue type per part (except Halfway which is global once).
+        if (key != DeepTestMotivation.Halfway)
+        {
+            foreach (var existing in _shownCues.Where(c => c.StartsWith($"{partIndex}:", StringComparison.Ordinal)).ToList())
+            {
+                if (existing != token && !existing.EndsWith(DeepTestMotivation.Halfway, StringComparison.Ordinal))
                 {
-                    _boosterMilestone = milestone;
-                    break;
+                    // keep first cue of part; still show current if it's BeforePause
+                    if (key != DeepTestMotivation.BeforePause && existing.EndsWith(DeepTestMotivation.PartStart, StringComparison.Ordinal))
+                    {
+                        return false;
+                    }
                 }
             }
         }
 
+        return true;
+    }
+
+    private string FormatMotivation(string key, TestDepthPart part)
+    {
+        var name = DeepTestMotivation.PartDisplayName(_kind, part);
+        return key switch
+        {
+            DeepTestMotivation.PartStart => Culture.Format("Deep.Motivation.PartStart", part.Index, name),
+            DeepTestMotivation.Halfway => Culture["Deep.Motivation.Halfway"],
+            DeepTestMotivation.LastPart => Culture["Deep.Motivation.LastPart"],
+            DeepTestMotivation.BeforePause => Culture["Deep.Motivation.BeforePause"],
+            _ => ""
+        };
+    }
+
+    private async Task OpenSampleAsync()
+    {
         try
         {
-            if (_autosave is not null)
-            {
-                await _autosave.SetAnswerAsync(id, value);
-            }
+            await Api.DownloadSampleAssessmentReportAsync(Js, _slug, Culture.Language);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _banner = Culture["Common.Error"];
+            _orderErrorKey = "Common.Error";
         }
     }
 
-    private void OpenExample(DeepAnalysisQuestionItem question) => _exampleQuestion = question;
-
-    private void CloseExample() => _exampleQuestion = null;
-
-    private void CloseBooster() => _boosterMilestone = null;
-
-    private static string Slug(string value)
-        => string.Concat((value ?? "").Where(char.IsLetterOrDigit)).ToLowerInvariant();
-
-    private async Task OpenOrderDialogAsync()
-    {
-        _orderErrorKey = null;
-        _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
-        if (_paymentMode == "unavailable")
-        {
-            _message = Culture["DeepPay.Err.payments_unavailable"];
-            return;
-        }
-
-        _orderOpen = true;
-    }
-
-    private async Task ConfirmOrderAsync(bool waiverAccepted)
+    private async Task ConfirmOrderAsync()
     {
         _saving = true;
         _orderErrorKey = null;
         try
         {
-            var checkout = await Api.StartDeepAnalysisCheckoutAsync(_slug, waiverAccepted, Culture.Language);
-            _orderOpen = false;
+            var checkout = await Api.StartDeepAnalysisCheckoutAsync(_slug, _waiverAccepted, Culture.Language);
             Navigation.NavigateTo(
                 checkout.CheckoutUrl,
                 forceLoad: checkout.CheckoutUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase));
@@ -488,88 +533,36 @@ else
         }
     }
 
-    private async Task DownloadPdfAsync()
+    private RenderFragment RenderRail(bool offer = false) => __builder =>
     {
-        _saving = true;
-        _banner = null;
-        try
-        {
-            await Api.DownloadDeepAnalysisReportAsync(Js, _slug);
-        }
-        catch (Exception ex)
-        {
-            _banner = Culture["Common.Error"];
-        }
-        finally
-        {
-            _saving = false;
-        }
-    }
-
-    private async Task RetrySaveAsync()
-    {
-        if (_autosave is null)
-        {
-            return;
-        }
-
-        try
-        {
-            await _autosave.RetryAsync();
-            _banner = null;
-        }
-        catch (Exception ex)
-        {
-            _banner = Culture["Common.Error"];
-        }
-    }
-
-    private void ExpandQuestion(int id)
-    {
-        _expandedId = id;
-        _currentId = id;
-        _dimmedId = null;
-        _scrollToId = id;
-        _smoothScroll = true;
-    }
-
-    private Task GoNextAsync()
-    {
-        _currentId = FirstUnanswered() ?? _currentId;
-        _scrollToId = _currentId;
-        _smoothScroll = true;
-        _scrollRequestVersion++;
-        return Task.CompletedTask;
-    }
-
-    private async Task CompleteAsync()
-    {
-        if (AnsweredCount < QuestionCount)
-        {
-            return;
-        }
-
-        _completing = true;
-        _banner = null;
-        try
-        {
-            if (_autosave is not null)
+        var freeFull = TestDepthRules.FullCount(_kind);
+        <div class="test-rail">
+            <p class="test-rail__free">
+                @Culture.Format("Deep.Rail.FreeDone", freeFull)
+            </p>
+            <p class="test-rail__zone">@Culture["Deep.Rail.BottomZone"]</p>
+            <ol class="test-rail__parts">
+                @foreach (var p in _parts)
+                {
+                    var done = PartAnswered(p);
+                    var status = offer ? "todo" : done >= p.Size ? "done" : (p.Index == CurrentPart?.Index ? "now" : "todo");
+                    <li class="test-rail__part test-rail__part--@status">
+                        <span>@DeepTestMotivation.PartDisplayName(_kind, p)</span>
+                        @if (status == "now")
+                        {
+                            <small>@Culture.Format("Deep.Rail.PartProgress", done + 1, p.Size)</small>
+                        }
+                    </li>
+                }
+            </ol>
+            @if (!offer)
             {
-                await _autosave.FlushAsync();
+                var left = Math.Max(0, _questionCount - _answered);
+                var mins = Math.Max(1, (int)Math.Ceiling(left * 12 / 60.0));
+                <p class="test-rail__footer">@Culture.Format("Deep.Rail.Footer", _answered, _questionCount, mins)</p>
             }
-
-            _state = await Api.SaveDeepAnalysisAsync(_slug, _answers, complete: true);
-            _banner = Culture["Deep.SavedComplete"];
-        }
-        catch (Exception ex)
-        {
-            _banner = Culture["Common.Error"];
-        }
-        finally
-        {
-            _completing = false;
-        }
-    }
+        </div>
+    };
 
     public async ValueTask DisposeAsync()
     {
@@ -578,6 +571,4 @@ else
             await _autosave.DisposeAsync();
         }
     }
-
-    private sealed record TopicChip(string Label, string Status, int Done, int Total);
 }

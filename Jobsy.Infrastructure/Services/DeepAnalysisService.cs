@@ -65,21 +65,9 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         _saveGuard = saveGuard;
     }
 
+    /// <summary>Localization key for deep upsell copy (Web formats with question count).</summary>
     public static string FormatUpsellCopy(decimal priceEuro, AssessmentKind kind = AssessmentKind.Competence)
-    {
-        var price = priceEuro.ToString("0.00", CultureInfo.GetCultureInfo("nl-NL"));
-        return kind switch
-        {
-            AssessmentKind.Culture =>
-                $"Wil je een grondige diepteanalyse van cultuurfit en werksfeer (150 vragen) inclusief PDF-rapport? Ontgrendel voor € {price}.",
-            AssessmentKind.Career =>
-                $"Wil je een diepgaand carrière-advies en een uitgebreid overzicht van al je opties inclusief PDF-rapport? Ontgrendel de uitgebreide beroepentest van 200 vragen voor € {price}.",
-            AssessmentKind.Values =>
-                $"Wil je een grondige diepteanalyse van je waarden en drijfveren (150 vragen) inclusief PDF-rapport? Ontgrendel voor € {price}.",
-            _ =>
-                $"Ontgrendel je uitgebreide competentie-analyse (150 vragen) inclusief officiële PDF-rapportage voor € {price}."
-        };
-    }
+        => "DeepPay.Upsell";
 
     public async Task<DeepAnalysisStateDto> GetStateAsync(
         Guid userId,

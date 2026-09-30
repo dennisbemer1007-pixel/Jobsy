@@ -2,6 +2,8 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Tests
 @using System.Globalization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -10,59 +12,131 @@
 
 <PageTitle>@Culture["Deep.Checkout"] · Lobsy</PageTitle>
 
-<div class="panel-page">
-    <article class="detail-card">
-        @if (_state == "loading" || _state == "pending")
-        {
-            <div role="status">
-                <h1>@Culture["DeepPay.Checking"]</h1>
-                <p class="login-lead">@(_timedOut ? Culture["DeepPay.CheckingLong"] : Culture["DeepPay.CheckingLead"])</p>
+@{
+    var kind = AssessmentKindLabels.ParseOrDefault(_testSlug);
+    var qCount = TestDepthRules.Bottom(kind);
+    var mins = TestDepthRules.MinutesFor(kind, TestDepthLevel.Bottom);
+}
+
+@if (_state is "loading" or "pending")
+{
+    <TestPageShell Kind="kind"
+                   Mode="TestPageShell.ShellMode.Checkout"
+                   Deep="true"
+                   Eyebrow="@Culture["DeepPay.Title"]"
+                   H1="@Culture["DeepPay.Checking"]"
+                   Lead="@(_timedOut ? Culture["DeepPay.CheckingLong"] : Culture["DeepPay.CheckingLead"])"
+                   TestName="@_testName"
+                   Answered="0"
+                   TargetCount="qCount"
+                   BubbleText="@Culture["Deep.Checkout.Bubble.Checking"]">
+        <RailContent>
+            <p class="test-rail__zone">@Culture["Deep.Rail.BottomZone"]</p>
+        </RailContent>
+        <ChildContent>
+            <div class="deep-checkout deep-checkout--checking" role="status">
+                <div class="deep-checkout__spinner" aria-hidden="true"></div>
+                <p class="muted">@Culture["Deep.Checkout.NoDouble"]</p>
                 @if (_timedOut && !string.IsNullOrWhiteSpace(_testSlug))
                 {
                     <p><a href="@($"/profiel/tests/{_testSlug}")">@Culture["DeepPay.BackToTest"]</a></p>
                 }
-            </div>
-            @if (_isStub && _checkoutId is Guid stubId)
-            {
-                <button type="button" class="engagement-btn" disabled="@_busy" @onclick="() => StubPayAsync(stubId)">
-                    @Culture["DeepPay.StubFinish"]
-                </button>
-            }
-        }
-        else if (_state == "paid")
-        {
-            <h1>@Culture["DeepPay.PaidTitle"]</h1>
-            <dl class="deep-pay-receipt">
-                <div><dt>@Culture["DeepPay.Fact.What"]</dt><dd>@Culture.Format("DeepPay.What", _testName)</dd></div>
-                <div><dt>@Culture["DeepPay.Fact.Amount"]</dt><dd>€ @_amountLabel</dd></div>
-                <div><dt>@Culture["DeepPay.Fact.Date"]</dt><dd>@_paidLocal</dd></div>
-                @if (!string.IsNullOrWhiteSpace(_invoiceNumber))
+                @if (_isStub && _checkoutId is Guid stubId)
                 {
-                    <div><dt>@Culture["DeepPay.Fact.Invoice"]</dt><dd>@_invoiceNumber</dd></div>
+                    <button type="button" class="engagement-btn" disabled="@_busy" @onclick="() => StubPayAsync(stubId)">
+                        @Culture["DeepPay.StubFinish"]
+                    </button>
                 }
-            </dl>
-            <p>@Culture["DeepPay.PaidMail"]</p>
-            <p>
-                <a class="engagement-btn" href="@($"/candidate/deep-analysis/{_testSlug}")">@Culture["DeepPay.StartQ1"]</a>
-            </p>
-            <p><a href="@($"/profiel/tests/{_testSlug}")">@Culture["DeepPay.Later"]</a></p>
-        }
-        else if (_state is "failed" or "cancelled" or "expired")
-        {
-            <h1>@Culture["DeepPay.FailedTitle"]</h1>
-            <p class="login-lead">@Culture["DeepPay.FailedLead"]</p>
-            <p>
-                <a class="engagement-btn" href="@($"/profiel/tests/{_testSlug}?buy=1")">@Culture["DeepPay.RetryPay"]</a>
-            </p>
-            <p><a href="@($"/profiel/tests/{_testSlug}")">@Culture["DeepPay.BackToTest"]</a></p>
-        }
-        else
-        {
+            </div>
+        </ChildContent>
+    </TestPageShell>
+}
+else if (_state == "paid")
+{
+    <TestPageShell Kind="kind"
+                   Mode="TestPageShell.ShellMode.Checkout"
+                   Deep="true"
+                   Eyebrow="@Culture["DeepPay.Title"]"
+                   H1="@Culture["DeepPay.PaidTitle"]"
+                   Lead="@Culture.Format("Deep.Checkout.PaidLead", _testName)"
+                   TestName="@_testName"
+                   Answered="0"
+                   TargetCount="qCount"
+                   BubbleText="@Culture["Deep.Checkout.Bubble.Paid"]">
+        <RailContent>
+            <p class="test-rail__zone">@Culture["Deep.Rail.PaidReady"]</p>
+        </RailContent>
+        <ChildContent>
+            <div class="deep-checkout deep-checkout--paid">
+                <span class="deep-checkout__check" aria-hidden="true">✓</span>
+                <dl class="deep-pay-receipt">
+                    <div><dt>@Culture["DeepPay.Fact.What"]</dt><dd>@Culture.Format("DeepPay.What", _testName)</dd></div>
+                    <div><dt>@Culture["DeepPay.Fact.Amount"]</dt><dd>€ @_amountLabel</dd></div>
+                    <div><dt>@Culture["DeepPay.Fact.Date"]</dt><dd>@_paidLocal</dd></div>
+                    @if (!string.IsNullOrWhiteSpace(_invoiceNumber))
+                    {
+                        <div><dt>@Culture["DeepPay.Fact.Invoice"]</dt><dd>@_invoiceNumber</dd></div>
+                    }
+                </dl>
+                <p>@Culture["DeepPay.PaidMail"]</p>
+                <div class="deep-offer__tiles">
+                    <div>
+                        <strong>@Culture.Format("Deep.Checkout.TileQs", qCount, mins)</strong>
+                        <span>@Culture["Deep.Checkout.TileParts"]</span>
+                    </div>
+                    <div>
+                        <strong>@Culture["Deep.Checkout.TileStop"]</strong>
+                        <span>@Culture["Deep.Checkout.TileStopLead"]</span>
+                    </div>
+                </div>
+                <footer class="test-shell__footer">
+                    <a href="@($"/profiel/tests/{_testSlug}")">@Culture["DeepPay.Later"]</a>
+                    <a class="engagement-btn" href="@($"/candidate/deep-analysis/{_testSlug}")">@Culture["DeepPay.StartQ1"]</a>
+                </footer>
+            </div>
+        </ChildContent>
+    </TestPageShell>
+}
+else if (_state is "failed" or "cancelled" or "expired")
+{
+    <TestPageShell Kind="kind"
+                   Mode="TestPageShell.ShellMode.Checkout"
+                   Deep="true"
+                   Eyebrow="@Culture["DeepPay.Title"]"
+                   H1="@Culture["DeepPay.FailedTitle"]"
+                   Lead="@Culture["Deep.Checkout.FailedLead"]"
+                   TestName="@_testName"
+                   Answered="0"
+                   TargetCount="qCount"
+                   BubbleText="@Culture["Deep.Checkout.Bubble.Failed"]">
+        <RailContent>
+            <p class="test-rail__zone">@Culture["Deep.Rail.BottomZone"]</p>
+        </RailContent>
+        <ChildContent>
+            <div class="deep-checkout deep-checkout--failed">
+                <span class="deep-checkout__warn" aria-hidden="true">!</span>
+                <ul class="deep-checkout__tips">
+                    <li>@Culture["Deep.Checkout.TipRetry"]</li>
+                    <li>@Culture["Deep.Checkout.TipKept"]</li>
+                    <li>@Culture["Deep.Checkout.TipHelp"]</li>
+                </ul>
+                <footer class="test-shell__footer">
+                    <a href="@($"/profiel/tests/{_testSlug}")">@Culture["DeepPay.BackToTest"]</a>
+                    <a class="engagement-btn" href="@($"/candidate/deep-analysis/{_testSlug}")">@Culture["DeepPay.RetryPay"]</a>
+                </footer>
+            </div>
+        </ChildContent>
+    </TestPageShell>
+}
+else
+{
+    <div class="test-page journey-page">
+        <div class="test-shell__card">
             <h1>@Culture["DeepPay.NotFound"]</h1>
             <p><a href="/profiel">@Culture["DeepPay.ToMyTests"]</a></p>
-        }
-    </article>
-</div>
+        </div>
+    </div>
+}
 
 @code {
     [SupplyParameterFromQuery] public Guid? CheckoutId { get; set; }
@@ -115,7 +189,6 @@
         }
         catch (Exception ex)
         {
-            // Never show raw exception text.
             Console.WriteLine(ex);
             _state = "not_found";
         }

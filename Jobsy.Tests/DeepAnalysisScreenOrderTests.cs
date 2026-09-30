@@ -43,14 +43,13 @@ public class DeepAnalysisScreenOrderTests
     }
 
     [Fact]
-    public void DeepAnalysis_page_uses_screen_number_helpers()
+    public void DeepAnalysis_page_uses_parts_order_and_question_flow()
     {
         var root = FindRepoRoot();
         var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DeepAnalysis.razor"));
         Assert.Contains("DeepAnalysisScreenOrder", page, StringComparison.Ordinal);
-        Assert.Contains("ScreenNumber(", page, StringComparison.Ordinal);
-        Assert.Contains("OrderedScreenIds", page, StringComparison.Ordinal);
-        Assert.Contains("ScrollRequestVersion", page, StringComparison.Ordinal);
+        Assert.Contains("TestDepthRules.Parts", page, StringComparison.Ordinal);
+        Assert.Contains("TestQuestionFlow", page, StringComparison.Ordinal);
         Assert.DoesNotContain("Text=\"@($\"{question.Id}.", page, StringComparison.Ordinal);
     }
 

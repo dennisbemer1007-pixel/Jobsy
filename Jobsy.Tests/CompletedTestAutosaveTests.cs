@@ -41,7 +41,7 @@ public class CompletedTestAutosaveTests
         await db.SaveChangesAsync();
 
         var edited = new Dictionary<int, int>(answers) { [1] = answers[1] == 5 ? 4 : 5 };
-        var sut = new CandidateCompetencyService(db, new StubCommercial(), new StubMatchSnapshots(), new StubQueue());
+        var sut = new CandidateCompetencyService(db, new StubCommercial(), new StubMatchSnapshots(), new StubQueue(), new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
         var dto = await sut.SaveAsync(userId, edited, complete: false);
 
         Assert.Equal(CandidateCompetencyStatuses.Completed, dto.Status);
@@ -86,7 +86,7 @@ public class CompletedTestAutosaveTests
         await db.SaveChangesAsync();
 
         var edited = new Dictionary<int, int>(answers) { [3] = 1 };
-        var sut = new CandidateCareerInterestService(db, new StubCommercial(), new StubMatchSnapshots(), new StubQueue());
+        var sut = new CandidateCareerInterestService(db, new StubCommercial(), new StubMatchSnapshots(), new StubQueue(), new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
         await sut.SaveAsync(userId, edited, complete: false);
 
         var row = await db.CandidateCareerInterests.SingleAsync();
@@ -104,7 +104,7 @@ public class CompletedTestAutosaveTests
         var userId = Guid.NewGuid();
         var answers = Enumerable.Range(1, CulturePersonalityCatalog.QuestionCount)
             .ToDictionary(i => i, _ => 4);
-        var sut = new CandidateCulturePersonalityService(db, new StubCommercial(), new StubQueue(), new StubMatchSnapshots());
+        var sut = new CandidateCulturePersonalityService(db, new StubCommercial(), new StubQueue(), new StubMatchSnapshots(), new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
         await sut.SaveAsync(userId, answers, complete: true);
         var before = await db.CandidateCulturePersonalityProfiles.AsNoTracking().SingleAsync();
         Assert.Equal(CandidateCompetencyStatuses.Completed, before.Status);
@@ -126,7 +126,7 @@ public class CompletedTestAutosaveTests
         var userId = Guid.NewGuid();
         var answers = Enumerable.Range(1, SchwartzValuesCatalog.QuestionCount)
             .ToDictionary(i => i, _ => 4);
-        var sut = new CandidateValuesService(db, new StubCommercial(), new StubQueue(), new StubMatchSnapshots());
+        var sut = new CandidateValuesService(db, new StubCommercial(), new StubQueue(), new StubMatchSnapshots(), new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
         await sut.SaveAsync(userId, answers, complete: true);
         var before = await db.CandidateValuesProfiles.AsNoTracking().SingleAsync();
         Assert.Equal(CandidateCompetencyStatuses.Completed, before.Status);
@@ -184,7 +184,7 @@ public class CompletedTestAutosaveTests
         await using var db = CreateDb();
         var userId = Guid.NewGuid();
         var answers = FullCompetencyAnswers();
-        var sut = new CandidateCompetencyService(db, new StubCommercial(), new StubMatchSnapshots(), new StubQueue());
+        var sut = new CandidateCompetencyService(db, new StubCommercial(), new StubMatchSnapshots(), new StubQueue(), new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
         await sut.SaveAsync(userId, answers, complete: true);
         var first = await db.CandidateCompetencies.AsNoTracking().SingleAsync();
 
@@ -224,7 +224,8 @@ public class CompletedTestAutosaveTests
             config,
             new StubCareerCompass(),
             new StubCompetenceDeepReportService(),
-            NullLogger<DeepAnalysisService>.Instance);
+            NullLogger<DeepAnalysisService>.Instance,
+            new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
     }
 
     private static JobsyDbContext CreateDb()

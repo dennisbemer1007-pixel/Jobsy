@@ -196,15 +196,13 @@ public class CompetencyMatchingTests
     }
 
     [Fact]
-    public void Deep_analysis_upsell_copy_is_kind_specific()
+    public void Deep_analysis_upsell_copy_is_key_based()
     {
         var competence = DeepAnalysisService.FormatUpsellCopy(2.99m, AssessmentKind.Competence);
-        Assert.Contains("€ 2,99", competence, StringComparison.Ordinal);
-        Assert.Contains("competentie-analyse", competence, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("DeepPay.Upsell", competence);
 
         var career = DeepAnalysisService.FormatUpsellCopy(2.99m, AssessmentKind.Career);
-        Assert.Contains("€ 2,99", career, StringComparison.Ordinal);
-        Assert.Contains("beroepentest", career, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("DeepPay.Upsell", career);
     }
 
     [Fact]

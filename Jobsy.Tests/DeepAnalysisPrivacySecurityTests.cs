@@ -158,7 +158,8 @@ public class DeepAnalysisPrivacySecurityTests
             config,
             new StubCareerCompass(),
             new StubCompetenceDeepReportService(),
-            NullLogger<DeepAnalysisService>.Instance);
+            NullLogger<DeepAnalysisService>.Instance,
+            new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
     }
 
     private static DeepTestPaymentService CreatePayments(JobsyDbContext db, bool isDevelopment, bool allowStub)
