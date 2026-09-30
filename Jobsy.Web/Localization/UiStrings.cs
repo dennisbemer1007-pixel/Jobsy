@@ -3449,6 +3449,7 @@ public static class UiStrings
         UiStringsKandidaatBanen.MergeAll(nl, en, pl, ro, ar);
         UiStringsFeatureFlags.MergeAll(nl, en, pl, ro, ar);
         UiStringsPassport.MergeAll(nl, en, pl, ro, ar);
+        UiStringsCareer.MergeAll(nl, en, pl, ro, ar);
         UiStringsDiscovery.MergeAll(nl, en, pl, ro, ar);
         UiStringsConsent.MergeAll(nl, en, pl, ro, ar);
         UiStringsSetPassword.MergeAll(nl, en, pl, ro, ar);

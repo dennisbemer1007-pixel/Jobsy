@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Carrière 01 (Web): career API wiring on `/carriere` — fit bands, action kinds, error codes, dream-options/archive client stubs; `UiStringsCareer` for nl/en/pl/ro/ar.
+
 ### Security
 - Auth login redesign (03): `/login` static SSR on PublicLayout (`au-*` theme), honest status/pause cards, configured providers only, Werkgevers-aware "Bedrijf registreren", Account maken links, LoginHint cookie (no e-mail in URL), `AuthFeatures.PasswordResetAvailable=false` until 05.
 

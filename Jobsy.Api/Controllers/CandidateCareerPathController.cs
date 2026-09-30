@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
@@ -42,7 +43,7 @@ public sealed class CandidateCareerPathController : ControllerBase
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
         {
-            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+            return NotFound(new { code = CareerPlanErrorCodes.NoPlan });
         }
 
         var plan = await _plans.GetAsync(user.Id, cancellationToken);
@@ -50,6 +51,57 @@ public sealed class CandidateCareerPathController : ControllerBase
         {
             // Explicit JSON null with 200 so clients do not treat this as 204 NoContent.
             return new JsonResult(null);
+        }
+
+        return Ok(HorizonCareerPathPlanDto.From(plan));
+    }
+
+    [HttpGet("dream-options")]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<CareerDreamOptionsDto>> DreamOptions(
+        [FromQuery] string? q,
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { code = CareerPlanErrorCodes.NoPlan });
+        }
+
+        var options = await _plans.GetDreamOptionsAsync(user.Id, q, cancellationToken);
+        return Ok(CareerDreamOptionsDto.From(options));
+    }
+
+    [HttpGet("archived")]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<IReadOnlyList<ArchivedCareerPlanDto>>> Archived(CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { code = CareerPlanErrorCodes.NoPlan });
+        }
+
+        var archived = await _plans.ListArchivedAsync(user.Id, cancellationToken);
+        return Ok(archived.Select(ArchivedCareerPlanDto.From).ToList());
+    }
+
+    [HttpPost("archived/{planId:guid}/restore")]
+    [EnableRateLimiting("public-write")]
+    public async Task<ActionResult<HorizonCareerPathPlanDto>> RestoreArchived(
+        Guid planId,
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { code = CareerPlanErrorCodes.NoPlan });
+        }
+
+        var plan = await _plans.RestoreArchivedAsync(user.Id, planId, cancellationToken);
+        if (plan is null)
+        {
+            return NotFound(new { code = CareerPlanErrorCodes.NotFound });
         }
 
         return Ok(HorizonCareerPathPlanDto.From(plan));
@@ -64,24 +116,37 @@ public sealed class CandidateCareerPathController : ControllerBase
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
         {
-            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+            return NotFound(new { code = CareerPlanErrorCodes.NoPlan });
         }
 
-        var dream = (request.DreamTitle ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(dream))
+        var catalogKey = string.IsNullOrWhiteSpace(request.CatalogKey) ? null : request.CatalogKey.Trim();
+        string? freeText = null;
+        if (catalogKey is null)
         {
-            return BadRequest(new { message = "Vul een stip op de horizon in." });
+            freeText = CareerDreamText.Sanitize(request.FreeText ?? request.DreamTitle);
+            if (freeText is null)
+            {
+                return BadRequest(new { code = CareerPlanErrorCodes.DreamTextInvalid });
+            }
         }
 
         try
         {
             var snapshot = await BuildSnapshotAsync(user.Id, cancellationToken);
-            var plan = await _plans.GenerateAndSaveAsync(user.Id, dream, snapshot, cancellationToken);
+            var plan = await _plans.GenerateAndSaveAsync(
+                user.Id,
+                freeText,
+                snapshot,
+                catalogKey: catalogKey,
+                dreamSource: catalogKey is not null ? CareerDreamSources.Catalog : CareerDreamSources.FreeText,
+                planLanguage: null,
+                force: request.Force,
+                cancellationToken);
             return Ok(HorizonCareerPathPlanDto.From(plan));
         }
-        catch (InvalidOperationException ex)
+        catch (CareerPlanException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return ProblemFromException(ex);
         }
     }
 
@@ -94,7 +159,7 @@ public sealed class CandidateCareerPathController : ControllerBase
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
         {
-            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+            return NotFound(new { code = CareerPlanErrorCodes.NoPlan });
         }
 
         try
@@ -102,14 +167,14 @@ public sealed class CandidateCareerPathController : ControllerBase
             var plan = await _plans.CompleteStepAsync(user.Id, stepKey, cancellationToken);
             if (plan is null)
             {
-                return NotFound(new { message = "Nog geen stappenplan. Kies eerst je stip op de horizon." });
+                return NotFound(new { code = CareerPlanErrorCodes.NoPlan });
             }
 
             return Ok(HorizonCareerPathPlanDto.From(plan));
         }
-        catch (InvalidOperationException ex)
+        catch (CareerPlanException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return ProblemFromException(ex);
         }
     }
 
@@ -122,7 +187,7 @@ public sealed class CandidateCareerPathController : ControllerBase
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
         {
-            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+            return NotFound(new { code = CareerPlanErrorCodes.NoPlan });
         }
 
         try
@@ -130,43 +195,47 @@ public sealed class CandidateCareerPathController : ControllerBase
             var plan = await _plans.UncompleteStepAsync(user.Id, stepKey, cancellationToken);
             if (plan is null)
             {
-                return NotFound(new { message = "Nog geen stappenplan. Kies eerst je stip op de horizon." });
+                return NotFound(new { code = CareerPlanErrorCodes.NoPlan });
             }
 
             return Ok(HorizonCareerPathPlanDto.From(plan));
         }
-        catch (InvalidOperationException ex)
+        catch (CareerPlanException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return ProblemFromException(ex);
         }
     }
 
+    /// <summary>
+    /// Removed self-claim (D2): candidates prove courses via the passport, not by naming a course here.
+    /// Kept as a 410 stub for one release so old clients get a clear error instead of a 404/500.
+    /// </summary>
+    [Obsolete("Removed in Carrière 01 (D2). Candidates claim courses via the passport. Remove this stub in 06.")]
     [HttpPost("courses/claim")]
     [EnableRateLimiting("public-write")]
-    public async Task<ActionResult<HorizonCareerPathPlanDto>> ClaimCourse(
-        [FromBody] ClaimCareerCourseRequest request,
-        CancellationToken cancellationToken)
+    public ActionResult ClaimCourse()
+        => StatusCode(StatusCodes.Status410Gone, new { code = CareerPlanErrorCodes.UsePassportProof });
+
+    private ActionResult ProblemFromException(CareerPlanException ex)
     {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
+        var status = ex.Code switch
         {
-            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+            CareerPlanErrorCodes.CompletePreviousFirst => StatusCodes.Status409Conflict,
+            CareerPlanErrorCodes.UndoLastFirst => StatusCodes.Status409Conflict,
+            CareerPlanErrorCodes.GenerationInProgress => StatusCodes.Status409Conflict,
+            CareerPlanErrorCodes.GenerationLimit => StatusCodes.Status429TooManyRequests,
+            CareerPlanErrorCodes.DreamTextInvalid => StatusCodes.Status400BadRequest,
+            CareerPlanErrorCodes.StepNotFound => StatusCodes.Status404NotFound,
+            CareerPlanErrorCodes.NotFound => StatusCodes.Status404NotFound,
+            _ => StatusCodes.Status400BadRequest
+        };
+
+        if (ex.RetryAfterUtc is { } retryAfter)
+        {
+            return StatusCode(status, new { code = ex.Code, retryAfterUtc = retryAfter });
         }
 
-        try
-        {
-            var plan = await _plans.ClaimCourseAsync(user.Id, request.CourseName ?? "", cancellationToken);
-            if (plan is null)
-            {
-                return NotFound(new { message = "Nog geen stappenplan. Kies eerst je stip op de horizon." });
-            }
-
-            return Ok(HorizonCareerPathPlanDto.From(plan));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        return StatusCode(status, new { code = ex.Code });
     }
 
     private async Task<HorizonCareerProfileSnapshot> BuildSnapshotAsync(Guid userId, CancellationToken cancellationToken)
@@ -243,23 +312,26 @@ public sealed class CandidateCareerPathController : ControllerBase
     }
 }
 
-public sealed record HorizonCareerPathPlanRequest(string? DreamTitle);
-
-public sealed record ClaimCareerCourseRequest(string? CourseName);
+/// <summary><paramref name="DreamTitle"/> stays for legacy clients; new clients send <see cref="FreeText"/> or <see cref="CatalogKey"/>.</summary>
+public sealed record HorizonCareerPathPlanRequest(string? CatalogKey, string? FreeText, bool Force = false, string? DreamTitle = null);
 
 public sealed record HorizonCareerPathPlanDto(
     string DreamTitle,
-    int MatchPercent,
-    string MatchSummary,
+    bool FromAi,
+    string PlanLanguage,
+    string DreamFitBand,
     bool GoalReached,
+    int CarriedOverCount,
     IReadOnlyList<HorizonCareerPathStepDto> Steps)
 {
     public static HorizonCareerPathPlanDto From(HorizonCareerPathPlanView plan)
         => new(
             plan.DreamTitle,
-            plan.MatchPercent,
-            plan.MatchSummary,
+            plan.FromAi,
+            plan.PlanLanguage,
+            plan.DreamFitBand,
             plan.GoalReached,
+            plan.CarriedOverCount,
             plan.Steps.Select(s => new HorizonCareerPathStepDto(
                 s.Id,
                 s.Order,
@@ -271,32 +343,10 @@ public sealed record HorizonCareerPathPlanDto(
                 s.Courses.Select(c => new HorizonCareerCourseDto(c.Name, c.OnProfile)).ToList(),
                 s.MinRequirements.ToList(),
                 s.YearsExperienceNeeded,
-                s.ActionLabel,
-                s.ActionHref,
-                s.StepMatchPercent,
-                s.MatchedCourseCount)).ToList());
-
-    /// <summary>Legacy mapping for generated-only plans without persistence.</summary>
-    public static HorizonCareerPathPlanDto From(HorizonCareerPathPlan plan)
-        => From(new HorizonCareerPathPlanView(
-            plan.DreamTitle,
-            plan.MatchPercent,
-            plan.MatchSummary,
-            GoalReached: false,
-            plan.Steps.Select(s => new HorizonCareerPathStepView(
-                s.Id,
-                s.Order,
-                s.Title,
-                s.Status.ToString(),
-                s.Summary,
-                s.SkillsGap,
-                s.Courses.Select(c => new HorizonCareerCourseView(c, OnProfile: false)).ToList(),
-                s.MinRequirements,
-                s.YearsExperienceNeeded,
-                s.ActionLabel,
-                s.ActionHref,
-                s.StepMatchPercent,
-                MatchedCourseCount: 0)).ToList()));
+                s.StepFitBand,
+                s.HeldBack,
+                s.MatchedCourseCount,
+                s.ActionKinds.ToList())).ToList());
 }
 
 public sealed record HorizonCareerPathStepDto(
@@ -310,9 +360,37 @@ public sealed record HorizonCareerPathStepDto(
     List<HorizonCareerCourseDto> CourseStatuses,
     List<string> MinRequirements,
     int YearsExperienceNeeded,
-    string ActionLabel,
-    string ActionHref,
-    int StepMatchPercent,
-    int MatchedCourseCount);
+    string StepFitBand,
+    bool HeldBack,
+    int MatchedCourseCount,
+    List<string> ActionKinds);
 
 public sealed record HorizonCareerCourseDto(string Name, bool OnProfile);
+
+public sealed record CareerDreamOptionDto(string? CatalogKey, string Title, string? ReasonKey)
+{
+    public static CareerDreamOptionDto From(CareerDreamOptionView view)
+        => new(view.CatalogKey, view.Title, view.ReasonKey);
+}
+
+public sealed record CareerDreamOptionsDto(
+    IReadOnlyList<CareerDreamOptionDto> Suggestions,
+    IReadOnlyList<CareerDreamOptionDto> Results)
+{
+    public static CareerDreamOptionsDto From(CareerDreamOptionsView view)
+        => new(
+            view.Suggestions.Select(CareerDreamOptionDto.From).ToList(),
+            view.Results.Select(CareerDreamOptionDto.From).ToList());
+}
+
+public sealed record ArchivedCareerPlanDto(
+    Guid PlanId,
+    string DreamTitle,
+    DateTime ArchivedAtUtc,
+    int CompletedSteps,
+    int TotalSteps,
+    DateTime ExpiresAtUtc)
+{
+    public static ArchivedCareerPlanDto From(ArchivedCareerPlanView view)
+        => new(view.PlanId, view.DreamTitle, view.ArchivedAtUtc, view.CompletedSteps, view.TotalSteps, view.ExpiresAtUtc);
+}

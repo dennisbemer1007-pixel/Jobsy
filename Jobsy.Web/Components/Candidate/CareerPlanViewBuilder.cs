@@ -1,5 +1,6 @@
 using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
+using Jobsy.Web.Services.Careers;
 
 namespace Jobsy.Web.Components.Candidate;
 
@@ -48,7 +49,7 @@ public static class CareerPlanViewBuilder
             DreamRoleId = ResolveSuggestionId(plan.DreamTitle, dreamOptions) ?? "custom",
             DreamRoleTitle = plan.DreamTitle,
             MatchPercent = plan.MatchPercent,
-            MatchSummary = plan.MatchSummary,
+            MatchSummary = plan.MatchSummary ?? "",
             GoalReached = plan.GoalReached,
             HasPlan = true,
             DreamOptions = dreamOptions,
@@ -62,20 +63,29 @@ public static class CareerPlanViewBuilder
             ? s.CourseStatuses.Select(c => new CareerPathCourseStatus { Name = c.Name, OnProfile = c.OnProfile }).ToList()
             : (s.Courses ?? []).Select(c => new CareerPathCourseStatus { Name = c, OnProfile = false }).ToList();
 
+#pragma warning disable CS0618
+        var legacyHref = s.ActionHref;
+#pragma warning restore CS0618
+
         return new CareerPathDashboardStep
         {
             Id = s.Id,
             Order = s.Order,
             Title = s.Title,
             Status = Enum.TryParse<CareerStepStatus>(s.Status, true, out var st) ? st : CareerStepStatus.Open,
+            HeldBack = s.HeldBack,
+            StepFitBand = s.StepFitBand ?? "",
             Summary = s.Summary,
             SkillsGap = s.SkillsGap ?? [],
             Courses = courses,
             MinRequirements = s.MinRequirements ?? [],
             YearsExperienceNeeded = s.YearsExperienceNeeded,
+            ActionKinds = s.ActionKinds ?? [],
+#pragma warning disable CS0618
             ActionLabel = s.ActionLabel,
-            ActionHref = s.ActionHref,
+            ActionHref = CareerStepActionLinks.PrimaryHref(s.ActionKinds, s.Title, legacyHref),
             StepMatchPercent = s.StepMatchPercent,
+#pragma warning restore CS0618
             MatchedCourseCount = s.MatchedCourseCount > 0
                 ? s.MatchedCourseCount
                 : courses.Count(c => c.OnProfile)
@@ -129,9 +139,11 @@ public static class CareerPlanViewBuilder
 
         var gaps = BuildGaps(active);
         var courseKeys = BuildCourseKeys(active);
+#pragma warning disable CS0618
         var pct = active?.StepMatchPercent ?? model.MatchPercent;
-        var bandKey = active is null ? null : RoleFitBandRules.LabelKey(pct);
-        var href = string.IsNullOrWhiteSpace(active?.ActionHref) ? "/" : active!.ActionHref;
+#pragma warning restore CS0618
+        var bandKey = StepBandLabelKey(active);
+        var href = VacanciesHref(active);
 
         return new PassportCareerView(
             HasPlan: true,
@@ -144,6 +156,67 @@ public static class CareerPlanViewBuilder
             StepMatchPercent: pct,
             VacanciesHref: href,
             GoalReached: model.GoalReached);
+    }
+
+    public static string? StepBandLabelKey(CareerPathDashboardStep? step)
+    {
+        if (step is null)
+        {
+            return null;
+        }
+
+        var fromBand = FitBandLabelKey(step.StepFitBand);
+        if (fromBand is not null)
+        {
+            return fromBand;
+        }
+
+#pragma warning disable CS0618
+        if (step.StepMatchPercent > 0)
+        {
+            return RoleFitBandRules.LabelKey(step.StepMatchPercent);
+        }
+#pragma warning restore CS0618
+
+        return null;
+    }
+
+    public static string? FitBandLabelKey(string? apiBand)
+    {
+        if (string.IsNullOrWhiteSpace(apiBand))
+        {
+            return null;
+        }
+
+        var band = apiBand.Trim() switch
+        {
+            "Good" => CareerFitBandRules.CareerFitBand.Good,
+            "Fair" => CareerFitBandRules.CareerFitBand.Fair,
+            "NotYet" => CareerFitBandRules.CareerFitBand.NotYet,
+            _ => CareerFitBandRules.CareerFitBand.Unknown
+        };
+
+        return CareerFitBandRules.LabelKey(band);
+    }
+
+    public static string VacanciesHref(CareerPathDashboardStep? active)
+    {
+        if (active is null)
+        {
+            return "/carriere";
+        }
+
+        if (active.ActionKinds.Any(k => string.Equals(k, "Vacancies", StringComparison.OrdinalIgnoreCase)))
+        {
+            return CareerStepActionLinks.VacanciesSearchHref(active.Title);
+        }
+
+        if (!string.IsNullOrWhiteSpace(active.ActionHref))
+        {
+            return active.ActionHref;
+        }
+
+        return "/";
     }
 
     public static IReadOnlyList<GapLine> BuildGaps(CareerPathDashboardStep? step)
