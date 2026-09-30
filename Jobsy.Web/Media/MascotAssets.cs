@@ -61,14 +61,14 @@ public static class MascotAssets
         new(MascotPose.Shell, MascotArtFormat.Fallback, BrandImages.MascotVersion),
     ];
 
-    private static IReadOnlyDictionary<MascotPose, MascotArt>? _override;
+    private static readonly AsyncLocal<IReadOnlyDictionary<MascotPose, MascotArt>?> Override = new();
 
     /// <summary>Production (or overridden) art entries, one per pose.</summary>
     public static IReadOnlyList<MascotArt> Arts
     {
         get
         {
-            if (_override is null)
+            if (Override.Value is null)
             {
                 return DefaultArts;
             }
@@ -79,7 +79,7 @@ public static class MascotAssets
 
     public static MascotArt GetArt(MascotPose pose)
     {
-        if (_override is not null && _override.TryGetValue(pose, out var over))
+        if (Override.Value is not null && Override.Value.TryGetValue(pose, out var over))
         {
             return over;
         }
@@ -174,7 +174,7 @@ public static class MascotAssets
 
         public ArtOverride(MascotArt[] arts)
         {
-            _previous = _override;
+            _previous = Override.Value;
             var map = new Dictionary<MascotPose, MascotArt>();
             foreach (var a in DefaultArts)
             {
@@ -186,9 +186,9 @@ public static class MascotAssets
                 map[a.Pose] = a;
             }
 
-            _override = map;
+            Override.Value = map;
         }
 
-        public void Dispose() => _override = _previous;
+        public void Dispose() => Override.Value = _previous;
     }
 }
