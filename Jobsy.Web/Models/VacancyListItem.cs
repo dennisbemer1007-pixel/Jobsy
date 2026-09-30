@@ -99,6 +99,22 @@ public class VacancyListItem
     public int? BarrierMinExperienceYears { get; set; }
     public int? BarrierMinExperienceHours { get; set; }
     public List<string> BarrierHardChecks { get; set; } = [];
+    public string? FitGate { get; set; }
+    public int? FitPercent { get; set; }
+    public string? FitBand { get; set; }
+    public string? FitWhyLine { get; set; }
+    public List<string> FitWhyKinds { get; set; } = [];
+    public CandidateFitDimensionsModel? FitDimensions { get; set; }
+    /// <summary>Candidate-own-only. Localization key for "Staat lager: …".</summary>
+    public string? RankLowerReason { get; set; }
+}
+
+public sealed class CandidateFitDimensionsModel
+{
+    public int? Culture { get; set; }
+    public int? Values { get; set; }
+    public int? Competencies { get; set; }
+    public int? Interests { get; set; }
 }
 
 public sealed class WageByAgeItem

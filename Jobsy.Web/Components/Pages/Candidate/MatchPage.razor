@@ -16,7 +16,7 @@
 
 <PageTitle>@Culture["Nav.Match"] · Lobsy</PageTitle>
 
-<div class="match-page match-page--shell @(_deck.Gate.IsProfileComplete ? null : "match-page--locked")">
+<div class="match-page match-page--shell @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? null : "match-page--locked")">
     <header class="match-page__top">
         <span class="match-page__title">Match</span>
         <div class="match-page__top-actions">
@@ -35,8 +35,8 @@
         </div>
     </header>
 
-    <section class="match-page__body @(_deck.Gate.IsProfileComplete ? "match-page__panel--swipe" : "match-page__panel--gate")"
-             aria-label="@(_deck.Gate.IsProfileComplete ? "Match swipen" : "Match ontgrendelen")">
+    <section class="match-page__body @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? "match-page__panel--swipe" : "match-page__panel--gate")"
+             aria-label="@(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? "Match swipen" : "Match ontgrendelen")">
         @if (_loading)
         {
             <PageContentSkeleton Variant="match" />
@@ -44,6 +44,10 @@
         else if (!_deck.Gate.IsProfileComplete)
         {
             <MatchUnlockPanel Gate="_deck.Gate" />
+        }
+        else if (!_deck.Gate.FitGateOpen)
+        {
+            <MatchUnlockPanel Gate="_deck.Gate" FitGateOnly="true" />
         }
         else if (Current is null)
         {

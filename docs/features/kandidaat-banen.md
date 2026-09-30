@@ -33,6 +33,14 @@ Shared foundation for the candidate jobs stack (banenkaart, lijst, vacature, sol
 - Card parts: `KbFitPill`, `KbWhyLine`, `KbBadgeRow`, `KbTravelTime`
 - Category colour: `KbCategoryColor.Style(hex)` — only allowed `style=` helper on candidate job surfaces
 
+## Fit & dislikes (file 04)
+
+- Gate (D2): `CandidateFitGate` — culture **or** values test complete; else "Maak je paspoort af" (no %).
+- Display layer: `CandidateFitDisplay` (55–90, strong ≥ 75) — employer `TotalPercent` / `Application.MatchPercent` / snapshot unchanged.
+- Why line + 4 DNA bars from `FitDimensions` (one source).
+- Dislikes (D8): `IKbDislikeSource` + `KbRanking.DislikePenalty` (15). **Dep D ABSENT** → `KbNoDislikeSource` returns none (`// KB-FALLBACK(D)`).
+- **Dep B′** `ICompanyCultureLookup` ABSENT — calibration anchors derived without employer culture lookup; re-run `CandidateFitDistributionReportTests` when werkgever-aanmelding 01 lands.
+
 ## Banenkaart (file 03)
 
 - Map start: `KbMapStart.Resolve` — URL/state → session (`jobsy.kb.origin`) → profile home (Fiets · 20) → stored → location prompt

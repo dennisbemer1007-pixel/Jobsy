@@ -427,7 +427,7 @@
                     <input type="number" min="1" max="50" value="@_radiusKm"
                            @onchange="OnRadiusChanged" />
                 </label>
-                @if (_isCandidate)
+                @if (_isCandidate && ShowFitFilters)
                 {
                     <label>
                         @Culture["Discovery.MinMatch"]
@@ -508,7 +508,7 @@
                     <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.List)</span>
                     <span class="visually-hidden">@Culture["Discovery.Sort"]</span>
                     <select class="results-meta__sort-select" value="@EffectiveSortMode" @onchange="OnSortChanged">
-                        @if (_isCandidate)
+                        @if (_isCandidate && ShowFitFilters)
                         {
                             <option value="match">@Culture["Discovery.SortMatch"]</option>
                         }
@@ -788,7 +788,7 @@
                     </label>
                 </section>
 
-                @if (_isCandidate)
+                @if (_isCandidate && ShowFitFilters)
                 {
                     <section class="filter-section">
                         <h3>@Culture["Discovery.MinMatch"]</h3>
@@ -1054,6 +1054,14 @@
     private bool _sortChosenByUser;
     private int _minMatchPercent;
     private int _snapMinMatchPercent;
+
+    /// <summary>D2: hide min-match chip and "Past het best" when the fit gate is closed.</summary>
+    private bool ShowFitFilters =>
+        _isCandidate && _vacancies.Any(v =>
+            string.Equals(v.FitGate, "open", StringComparison.OrdinalIgnoreCase)
+            || (v.FitPercent is not null)
+            || (v.MatchPercent is not null && !string.Equals(v.FitGate, "closed", StringComparison.OrdinalIgnoreCase)));
+
     private VacancyListItem? _matchExplain;
     private int? _ageYears;
     /// <summary>Age from candidate profile (DOB), used as default / restore target.</summary>
@@ -1066,14 +1074,14 @@
     private bool _matchDialogOpen;
     private TopMatchTile? _topMatchTile;
     private bool ShowTopMatchTile =>
-        TopMatchTileVisibility.ShouldShow(
+        TopMatchTileVisibility.ShouldShowStrong(
             _wideViewport,
             _isCandidate,
             _matchDeck.Gate.IsProfileComplete,
-            _matchDeck.Count)
+            _matchDeck.Gate.FitGateOpen,
+            _matchDeck.Current)
         && _matchDeck.IsLoaded
-        && !_matchDeck.LoadFailed
-        && _matchDeck.Current is not null;
+        && !_matchDeck.LoadFailed;
     private bool _canShowMyVacancies;
     private bool _myVacanciesOnly;
     private bool _myVacanciesLoading;
@@ -1173,7 +1181,7 @@
             IEnumerable<VacancyListItem> query = _vacancies.Where(v => v.IsHighlighted);
             if (_isCandidate && _minMatchPercent > 0)
             {
-                query = query.Where(v => v.MatchPercent is int pct && pct >= _minMatchPercent);
+                query = query.Where(v => (v.FitPercent ?? v.MatchPercent) is int pct && pct >= _minMatchPercent);
             }
 
             // With an address/origin: only featured jobs inside the active travel/radius filter.
@@ -1204,7 +1212,7 @@
             IEnumerable<VacancyListItem> query = _vacancies;
             if (_isCandidate && _minMatchPercent > 0)
             {
-                query = query.Where(v => v.MatchPercent is int pct && pct >= _minMatchPercent);
+                query = query.Where(v => (v.FitPercent ?? v.MatchPercent) is int pct && pct >= _minMatchPercent);
             }
 
             var mode = EffectiveSortMode;
@@ -1212,7 +1220,9 @@
             IEnumerable<VacancyListItem> sorted = mode switch
             {
                 "match" => query
-                    .OrderByDescending(v => v.MatchPercent ?? -1)
+                    .OrderByDescending(v => Jobsy.Core.Rules.KandidaatBanen.KbRanking.SortKey(
+                        v.FitPercent ?? v.MatchPercent,
+                        !string.IsNullOrWhiteSpace(v.RankLowerReason)))
                     .ThenBy(v => v.TravelMinutes ?? int.MaxValue)
                     .ThenBy(v => v.Title, titleComparer),
                 "distance" => query
@@ -1389,7 +1399,9 @@
 
     private string EffectiveSortMode =>
         _sortMode == "distance" && _origin is null
-            ? (_isCandidate && _vacancies.Any(v => v.MatchPercent is not null) ? "match" : "title")
+            ? (_isCandidate && ShowFitFilters ? "match" : "title")
+            : _sortMode == "match" && !ShowFitFilters
+                ? (_origin is not null ? "distance" : "title")
             : _sortMode;
 
     private string MyVacanciesToggleLabel => _myVacanciesLoading
@@ -1536,7 +1548,7 @@
         await catalogTask;
         await viewTaskInteractive;
         await bootPinsTask;
-        if (_isCandidate && !_sortChosenByUser && _vacancies.Any(v => v.MatchPercent is not null))
+        if (_isCandidate && !_sortChosenByUser && ShowFitFilters)
         {
             _sortMode = "match";
         }
@@ -2285,7 +2297,7 @@
             }
 
             _vacancies = items.ToList();
-            if (_isCandidate && !_sortChosenByUser && _vacancies.Any(v => v.MatchPercent is not null))
+            if (_isCandidate && !_sortChosenByUser && ShowFitFilters)
             {
                 _sortMode = "match";
             }

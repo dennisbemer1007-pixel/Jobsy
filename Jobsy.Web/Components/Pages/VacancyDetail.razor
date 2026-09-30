@@ -11,6 +11,8 @@
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Components.KandidaatBanen
 @using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IAsyncDisposable
@@ -103,23 +105,67 @@
             <div class="detail-card__top detail-card__top--before-media">
                 <div>
                     <h1>@_vacancy.Title</h1>
-                    @if (_vacancy.MatchPercent is int matchPct)
+                    @{
+                        var detailFit = KbFitMapping.FromVacancy(_vacancy);
+                        var detailWhy = KbFitMapping.WhyLine(_vacancy, Culture);
+                        var detailRank = KbFitMapping.RankLowerLabel(_vacancy, Culture);
+                    }
+                    @if (detailFit is not null)
                     {
-                        <p class="job-card__match">
-                            <span class="match-score match-score--@(_vacancy.MatchColorBand ?? "orange")">@Culture.Format("Discovery.MatchPercent", matchPct)</span>
-                            @if (!string.IsNullOrWhiteSpace(_vacancy.CultureFitLabel))
+                        <div class="kb-fit-panel" data-fit-gate="@(_vacancy.FitGate ?? "")">
+                            <div class="kb-fit-panel__head">
+                                <KbFitPill Fit="detailFit" />
+                                @if (!string.IsNullOrWhiteSpace(detailRank))
+                                {
+                                    <span class="kb-badges__chip kb-badges__chip--rank-lower">@detailRank</span>
+                                }
+                            </div>
+                            <KbWhyLine Text="detailWhy" />
+                            @if (detailFit.GateOpen)
                             {
-                                <span class="culture-fit culture-fit--@(_vacancy.CultureFitBand ?? "mid")">@_vacancy.CultureFitLabel</span>
+                                <ul class="kb-dna" role="list">
+                                    @foreach (var row in DnaRows(_vacancy))
+                                    {
+                                        <li class="kb-dna__row">
+                                            <span class="kb-dna__label">@row.Label</span>
+                                            @if (row.Percent is int barPct)
+                                            {
+                                                <progress class="kb-dna__progress" value="@barPct" max="100" aria-label="@row.Label">@barPct%</progress>
+                                                <span class="kb-dna__value">@barPct%</span>
+                                            }
+                                            else
+                                            {
+                                                <a class="kb-dna__todo" href="@row.TestHref">@Culture["Kb.Dna.NotDone"]</a>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                                @if (_vacancy.MatchGaps is { Count: > 0 })
+                                {
+                                    <div class="kb-fit-panel__gaps">
+                                        <h2 class="kb-fit-panel__gaps-title">@Culture["Kb.Dna.NewForYou"]</h2>
+                                        <ul>
+                                            @foreach (var gap in _vacancy.MatchGaps.Take(4))
+                                            {
+                                                <li>@gap</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                }
                             }
-                        </p>
-                        @if (!string.IsNullOrWhiteSpace(_vacancy.CultureFitWhy))
-                        {
-                            <p class="job-card__match-why">@_vacancy.CultureFitWhy</p>
-                        }
-                        @if (string.Equals(_vacancy.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
-                        {
-                            <p class="state-message" aria-live="polite">@Culture["Insights.Updating"]</p>
-                        }
+                            else
+                            {
+                                <p class="kb-fit-panel__gate-hint">@Culture["Kb.Fit.GateHint"]</p>
+                                <div class="kb-fit-panel__gate-links">
+                                    <a class="engagement-btn" href="@KbRoutes.CultureTest">@Culture["Kb.Dna.Culture"]</a>
+                                    <a class="engagement-btn" href="@KbRoutes.ValuesTest">@Culture["Kb.Dna.Values"]</a>
+                                </div>
+                            }
+                            @if (string.Equals(_vacancy.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <p class="state-message" aria-live="polite">@Culture["Insights.Updating"]</p>
+                            }
+                        </div>
                     }
                     @if (!string.IsNullOrWhiteSpace(_vacancy.CategoryName)
                          && !VacancyCategoryDefaults.IsSeniorLightCategory(_vacancy.CategoryId))
@@ -779,6 +825,16 @@
     private bool ShowsSuitableFor65Plus =>
         _vacancy is not null
         && VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(_vacancy.CategoryId, _vacancy.SuitableFor65Plus);
+
+    private IEnumerable<(string Label, int? Percent, string TestHref)> DnaRows(VacancyListItem v)
+    {
+        var d = v.FitDimensions;
+        yield return (Culture["Kb.Dna.Culture"], d?.Culture, KbRoutes.CultureTest);
+        yield return (Culture["Kb.Dna.Values"], d?.Values, KbRoutes.ValuesTest);
+        yield return (Culture["Kb.Dna.Competencies"], d?.Competencies, "/candidate/tests");
+        yield return (Culture["Kb.Dna.Interests"], d?.Interests, "/candidate/tests");
+    }
+
     private bool _loading = true;
     private bool _applying;
     private bool _applied;

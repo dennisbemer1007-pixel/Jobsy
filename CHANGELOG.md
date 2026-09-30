@@ -17,6 +17,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - **Render `jobsy-api` deploys:** `WebPushSubscriptions` ontbrak in `JobsyDbContextModelSnapshot`. EF Core 9 behandelt dat als `PendingModelChangesWarning` → harde fout in `MigrateAsync` → API-host stopt (Auto-Deploy Failed sinds PWA-commit). Snapshot + regressietest herstellen de deploy.
 
 ### Added
+- **Kandidaat fit % (honest):** only when culture or values test is done; calibrated display 55–90 (strong ≥ 75); why line; DNA bars; dislike down-rank via `IKbDislikeSource` (KB-FALLBACK(D) returns none). Employer scores unchanged.
 - **PWA (native-like):** `manifest.webmanifest` (standalone), iconen 192/512 (+ maskable), `service-worker.js` / `service-worker.published.js` voor shell/asset-caching + Web Push handlers.
 - **Web Push:** VAPID + `WebPushSubscriptions`, `api/push/*`, systeemmeldingen via `WebPushNotificationService`; vriendelijke toestemmingsbanner en Profiel-toggle.
 - **Calm tech motion:** hardware-accelerated tab-/page-transities, touch active-states, scroll-containment / minder rubber-banding.

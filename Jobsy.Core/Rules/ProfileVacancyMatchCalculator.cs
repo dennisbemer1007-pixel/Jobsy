@@ -32,6 +32,9 @@ public static class ProfileVacancyMatchCalculator
                 input.VacancyTitle,
                 input.VacancyDescription))
             : (double?)null;
+        // Pure competency (pre culture/values blend) for candidate DNA bars (04) — TotalPercent unchanged.
+        var competencyDim01 = competency01;
+        double? cultureDim01 = null;
         if (competency01 is not null
             && input.CandidateCultureScores is { IsComplete: true } cultureScores)
         {
@@ -45,16 +48,29 @@ public static class ProfileVacancyMatchCalculator
                 blend = 0.55 * personality01 + 0.45 * culture01;
             }
 
+            cultureDim01 = blend;
             competency01 = 0.75 * competency01.Value + 0.25 * blend;
         }
+        else if (input.CandidateCultureScores is { IsComplete: true } cultureOnly)
+        {
+            cultureDim01 = CulturePersonalityFitRules.PersonalityFit01(
+                cultureOnly, input.VacancyTitle, input.VacancyDescription);
+            if (input.CompanyCultureScores is { } companyCulture
+                && companyCulture.Autonomy is not null)
+            {
+                var culture01 = CulturePersonalityFitRules.CultureFit01(cultureOnly, companyCulture);
+                cultureDim01 = 0.55 * cultureDim01.Value + 0.45 * culture01;
+            }
+        }
 
+        double? valuesFit01 = null;
         if (input.CandidateValuesScores is { IsComplete: true } valuesScores)
         {
-            var values01 = SchwartzValuesFitRules.Fit01(
+            valuesFit01 = SchwartzValuesFitRules.Fit01(
                 valuesScores, input.VacancyTitle, input.VacancyDescription);
             competency01 = competency01 is not null
-                ? 0.78 * competency01.Value + 0.22 * values01
-                : values01;
+                ? 0.78 * competency01.Value + 0.22 * valuesFit01.Value
+                : valuesFit01;
         }
         var interest01 = input.CandidateRiasecScores is { IsComplete: true } scored
             ? VacancyRiasecProfile.Fit01(
@@ -153,7 +169,10 @@ public static class ProfileVacancyMatchCalculator
             Core = core,
             ExperienceScore01 = experience01,
             CompetencyScore01 = competency01,
+            CompetencyDim01 = competencyDim01,
             InterestScore01 = interest01,
+            CultureDim01 = cultureDim01,
+            ValuesFit01 = valuesFit01,
             CultureFit = culture,
             IsBroadMatch = isBroadMatch,
             MatchRationale = rationale,
@@ -707,7 +726,13 @@ public sealed class ProfileVacancyMatch
     public required MatchScoreBreakdown Core { get; init; }
     public double ExperienceScore01 { get; init; }
     public double? CompetencyScore01 { get; init; }
+    /// <summary>Pure competency 0–1 before culture/values blend (candidate DNA bars).</summary>
+    public double? CompetencyDim01 { get; init; }
     public double? InterestScore01 { get; init; }
+    /// <summary>Culture/personality dimension 0–1 for candidate DNA (does not change TotalPercent).</summary>
+    public double? CultureDim01 { get; init; }
+    /// <summary>Schwartz values fit 0–1 for candidate DNA (does not change TotalPercent).</summary>
+    public double? ValuesFit01 { get; init; }
     public CultureFitResult? CultureFit { get; init; }
     /// <summary>True when the vacancy fits holistically without an exact functietitel hit.</summary>
     public bool IsBroadMatch { get; init; }

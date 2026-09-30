@@ -467,7 +467,7 @@ public class CompetencyMatchingTests
     {
         var src = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Api/Controllers/VacanciesController.cs"));
         Assert.Contains("if (_companyAuth.IsCandidate(User))", src, StringComparison.Ordinal);
-        Assert.Contains("MatchPercent = match.TotalPercent", src, StringComparison.Ordinal);
+        Assert.Contains("MatchPercent = applied.MatchPercent", src, StringComparison.Ordinal);
         Assert.Contains("minMatchPercent", src, StringComparison.Ordinal);
         Assert.Contains("LegalAgeKnown && !match.Core.LegalEligible", src, StringComparison.Ordinal);
     }

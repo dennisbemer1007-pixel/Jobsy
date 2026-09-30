@@ -17,7 +17,7 @@ public sealed class MatchDeck
 
     public int Count => _items.Count;
     public int Position => Count == 0 ? 0 : Math.Min(Index + 1, Count);
-    public bool IsFinished => IsLoaded && !LoadFailed && Gate.IsProfileComplete && Index >= Count;
+    public bool IsFinished => IsLoaded && !LoadFailed && Gate.IsProfileComplete && Gate.FitGateOpen && Index >= Count;
 
     public SwipeViewModel? Current =>
         Index >= 0 && Index < _items.Count ? _items[Index] : null;
@@ -39,14 +39,14 @@ public sealed class MatchDeck
         try
         {
             Gate = await profiles.RefreshAsync(cancellationToken);
-            if (Gate.IsProfileComplete)
+            if (Gate.IsProfileComplete && Gate.FitGateOpen)
             {
                 var raw = await vacancies.GetRelevantSwipeVacanciesAsync(Gate, take, cancellationToken);
                 IEnumerable<VacancyListItem> ordered = raw;
                 if (orderByMatch)
                 {
                     ordered = raw
-                        .OrderByDescending(v => v.MatchPercent ?? int.MinValue)
+                        .OrderByDescending(v => v.FitPercent ?? v.MatchPercent ?? int.MinValue)
                         .ThenBy(v => v.Id);
                 }
 

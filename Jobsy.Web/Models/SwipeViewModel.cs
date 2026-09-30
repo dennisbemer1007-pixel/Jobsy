@@ -126,7 +126,7 @@ public sealed class SwipeViewModel
             ImageUrl = item.ImageUrl,
             JobTitle = string.IsNullOrWhiteSpace(item.Title) ? "Vacature" : item.Title,
             ShortDescription = Truncate(item.Description, 140),
-            WhyYouFit = BuildWhyYouFit(item),
+            WhyYouFit = item.FitWhyLine ?? BuildWhyYouFit(item),
             Location = FirstNonEmpty(item.CompanyAddress, item.OfferedByLabel),
             DistanceKm = item.DistanceKm,
             TravelTimeMinutes = item.TravelMinutes,
@@ -137,8 +137,10 @@ public sealed class SwipeViewModel
             HoursMin = item.MinHoursPerWeek,
             HoursMax = item.MaxHoursPerWeek,
             Tags = tags,
-            MatchPercentage = item.MatchPercent,
-            ShowMatchPercentage = showMatchPercentage && item.MatchPercent is not null
+            MatchPercentage = item.FitPercent ?? item.MatchPercent,
+            ShowMatchPercentage = showMatchPercentage
+                && !string.Equals(item.FitGate, "closed", StringComparison.OrdinalIgnoreCase)
+                && (item.FitPercent is not null || item.MatchPercent is not null)
         };
     }
 

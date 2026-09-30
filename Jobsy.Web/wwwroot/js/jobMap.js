@@ -578,19 +578,34 @@ window.jobMap = (function () {
     }
 
     function matchLineHtml(v) {
+        if (v.fitGate === "closed") {
+            return (
+                "<p class=\"map-popup__match kb-fit kb-fit--gate\">" +
+                    escapeHtml(String(v.fitGateLabel || "Maak je paspoort af")) +
+                "</p>"
+            );
+        }
         if (v.matchPercent == null || v.matchPercent === "") {
             return "";
         }
         const band = String(v.matchColorBand || "orange");
+        const why = v.fitWhyLine
+            ? "<p class=\"map-popup__why kb-why\"><span class=\"kb-why__text\">" +
+                escapeHtml(String(v.fitWhyLine)) +
+              "</span></p>"
+            : "";
+        const rank = v.rankLowerReason
+            ? "<p class=\"map-popup__rank-lower\">" + escapeHtml(String(v.rankLowerReason)) + "</p>"
+            : "";
         return (
             "<p class=\"map-popup__match match-score--" + escapeHtml(band) + "\">" +
                 "<span class=\"match-score match-score--" + escapeHtml(band) + "\">" +
-                    escapeHtml(String(v.matchPercent)) + "% Match" +
+                    escapeHtml(String(v.matchPercent)) + "% past bij jou" +
                 "</span>" +
                 "<button type=\"button\" class=\"map-popup__match-help competency-help\" " +
                     "data-job-id=\"" + escapeAttr(v.id) + "\" " +
-                    "title=\"Waarom deze match?\" aria-label=\"Waarom deze match?\">?</button>" +
-            "</p>"
+                    "title=\"Waarom past dit?\" aria-label=\"Waarom past dit?\">?</button>" +
+            "</p>" + why + rank
         );
     }
 
@@ -1662,6 +1677,9 @@ window.jobMap = (function () {
             travelMinutes: card.travelMinutes != null ? card.travelMinutes : pin.travelMinutes,
             matchPercent: card.matchPercent != null ? card.matchPercent : pin.matchPercent,
             matchColorBand: card.matchColorBand || pin.matchColorBand,
+            fitGate: card.fitGate || pin.fitGate || null,
+            fitWhyLine: card.fitWhyLine || pin.fitWhyLine || null,
+            rankLowerReason: card.rankLowerReason || pin.rankLowerReason || null,
             wage: card.hourlyWage != null && card.wageVisible !== false ? card.hourlyWage : null,
             _detailLoaded: true
         });

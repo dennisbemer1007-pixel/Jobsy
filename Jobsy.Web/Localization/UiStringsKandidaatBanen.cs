@@ -43,6 +43,63 @@ public static class UiStringsKandidaatBanen
             "Fit-indicatie", "Fit indicator",
             "Wskaźnik dopasowania", "Indicator de potrivire", "مؤشر الملاءمة");
 
+        // Why line fragments (04)
+        Add("Kb.Why.culture",
+            "Je past bij de cultuur", "You fit the culture",
+            "Pasujesz do kultury", "Te potrivești culturii", "تناسب الثقافة");
+        Add("Kb.Why.values",
+            "Je waarden sluiten aan", "Your values align",
+            "Twoje wartości pasują", "Valorile tale se potrivesc", "قيمك متوافقة");
+        Add("Kb.Why.competency",
+            "Je competenties passen", "Your competencies fit",
+            "Twoje kompetencje pasują", "Competențele tale se potrivesc", "كفاءاتك مناسبة");
+        Add("Kb.Why.interest",
+            "Dit past bij je interesses", "This matches your interests",
+            "To pasuje do Twoich zainteresowań", "Se potrivește intereselor tale", "هذا يلائم اهتماماتك");
+        Add("Kb.Why.travel",
+            "Goede reistijd", "Good travel time",
+            "Dobry czas dojazdu", "Timp bun de deplasare", "وقت وصول جيد");
+        Add("Kb.Why.hours",
+            "Je uren passen", "Your hours fit",
+            "Twoje godziny pasują", "Orele tale se potrivesc", "ساعاتك مناسبة");
+
+        // Dislike reasons (04; Dep D — keys ready when paspoort 06 lands)
+        Add("Kb.Dislike.night-shifts",
+            "nachtdienst", "night shifts",
+            "nocne zmiany", "ture de noapte", "نوبات ليلية");
+        Add("Kb.Dislike.weekend-work",
+            "weekendwerk", "weekend work",
+            "praca w weekend", "muncă în weekend", "عمل في عطلة نهاية الأسبوع");
+        Add("Kb.Dislike.customer-facing",
+            "klantcontact", "customer-facing work",
+            "kontakt z klientem", "lucru cu clienții", "التعامل مع العملاء");
+
+        // DNA bars (04 detail)
+        Add("Kb.Dna.Culture",
+            "Cultuur", "Culture",
+            "Kultura", "Cultură", "الثقافة");
+        Add("Kb.Dna.Values",
+            "Waarden", "Values",
+            "Wartości", "Valori", "القيم");
+        Add("Kb.Dna.Competencies",
+            "Competenties", "Competencies",
+            "Kompetencje", "Competențe", "الكفاءات");
+        Add("Kb.Dna.Interests",
+            "Interesses", "Interests",
+            "Zainteresowania", "Interese", "الاهتمامات");
+        Add("Kb.Dna.NotDone",
+            "Nog niet gedaan", "Not done yet",
+            "Jeszcze nie zrobione", "Încă nefăcut", "لم يُنجز بعد");
+        Add("Kb.Dna.NewForYou",
+            "Nieuw voor jou", "New for you",
+            "Nowe dla Ciebie", "Nou pentru tine", "جديد لك");
+        Add("Kb.Fit.GateMatch",
+            "Doe de cultuur- of waardentest om Match te gebruiken.",
+            "Take the culture or values test to use Match.",
+            "Zrób test kultury lub wartości, by korzystać z Match.",
+            "Fă testul de cultură sau valori ca să folosești Match.",
+            "أجرِ اختبار الثقافة أو القيم لاستخدام المطابقة.");
+
         // Ranking / dislikes
         Add("Kb.Rank.Lower",
             "Staat lager: {0}", "Ranks lower: {0}",
