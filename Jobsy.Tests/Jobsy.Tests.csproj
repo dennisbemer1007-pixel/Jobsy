@@ -28,4 +28,10 @@
     <ProjectReference Include="..\Jobsy.Web\Jobsy.Web.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Fixtures\kvk\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

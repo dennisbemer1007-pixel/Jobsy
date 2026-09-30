@@ -122,6 +122,7 @@ builder.Services.AddScoped(sp =>
     new JobsyApiClient(
         JobsyApiClientFactory.Create(sp, builder.Configuration),
         sp.GetRequiredService<Jobsy.Web.Services.MeGetCache>()));
+builder.Services.AddScoped<Jobsy.Web.Services.KvkSearchClient>();
 builder.Services.AddScoped<IVacancyMapApiForwarder, VacancyMapApiForwarder>();
 
 builder.Services.AddJobsyWebPerformance();

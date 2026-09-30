@@ -176,6 +176,14 @@
                 @if (IsKvkIntegration)
                 {
                     <p class="muted">Leeg = productie <code>https://api.kvk.nl/api/</code>. Testomgeving: <code>https://api.kvk.nl/test/api/</code>. Na opslaan <strong>Test verbinding</strong> — pas dan is live lookup actief.</p>
+                    @if (!string.IsNullOrWhiteSpace(_kvkUsageLine))
+                    {
+                        <p class="muted">@_kvkUsageLine</p>
+                    }
+                    @if (_kvkBudgetWarning)
+                    {
+                        <p class="state-message error">KVK-profielbudget ≥ 80 % van het maandbudget. Verhoog <code>Kvk:MonthlyProfileBudget</code> of beperk zoeken.</p>
+                    }
                 }
                 @if (IsMailIntegration)
                 {
@@ -271,6 +279,8 @@
     private string _smtpPort = "587";
     private string _fromAddress = "";
     private string _testMailTo = "";
+    private string? _kvkUsageLine;
+    private bool _kvkBudgetWarning;
 
     private IntegrationHelpDocs.Doc? Help => IntegrationHelpDocs.TryGet(Credential.Key);
 
@@ -403,6 +413,31 @@
         {
             SyncDraftsFromCredential();
             _localMessage = null;
+        }
+
+        if (_expanded && IsKvkIntegration)
+        {
+            _ = LoadKvkUsageAsync();
+        }
+    }
+
+    private async Task LoadKvkUsageAsync()
+    {
+        try
+        {
+            var usage = await Api.GetKvkUsageAsync();
+            if (usage is null)
+            {
+                return;
+            }
+
+            _kvkUsageLine = usage.TodaySummary;
+            _kvkBudgetWarning = usage.BudgetWarning;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // Non-blocking admin hint.
         }
     }
 

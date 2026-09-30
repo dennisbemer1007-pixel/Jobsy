@@ -67,6 +67,17 @@ public sealed class IntegrationHealthItem
     public bool? LastPingOk { get; set; }
 }
 
+public sealed class KvkUsageItem
+{
+    public int ZoekenToday { get; set; }
+    public int BasisprofielToday { get; set; }
+    public int VestigingenToday { get; set; }
+    public int ProfileCallsThisMonth { get; set; }
+    public int MonthlyProfileBudget { get; set; }
+    public bool BudgetWarning { get; set; }
+    public string TodaySummary { get; set; } = string.Empty;
+}
+
 public sealed class SendTestMailResultItem
 {
     public bool Ok { get; set; }

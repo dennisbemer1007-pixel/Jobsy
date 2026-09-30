@@ -795,6 +795,9 @@ public sealed partial class JobsyApiClient
     public async Task<IReadOnlyList<IntegrationHealthItem>> GetIntegrationHealthAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<IntegrationHealthItem>>("api/integrations/health", ct) ?? [];
 
+    public async Task<KvkUsageItem?> GetKvkUsageAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<KvkUsageItem>("api/integrations/kvk/usage", ct);
+
     public async Task<IntegrationHealthItem?> TestIntegrationAsync(string key, CancellationToken ct = default)
     {
         var response = await _http.PostAsync(

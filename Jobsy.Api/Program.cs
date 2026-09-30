@@ -91,6 +91,8 @@ builder.Services.AddRateLimiter(options =>
         ?? (isProduction ? 30 : 10_000);
     var publicWriteLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicWritePermitLimit")
         ?? 60;
+    var kvkSearchLimit = builder.Configuration.GetValue<int?>("RateLimiting:KvkSearchPermitLimit")
+        ?? 30;
     var internalClientIpSecret = builder.Configuration[RateLimitPartitioning.ConfigKey];
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -113,6 +115,15 @@ builder.Services.AddRateLimiter(options =>
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = publicWriteLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    options.AddPolicy("kvk-search", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = kvkSearchLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));

@@ -60,6 +60,57 @@ public class RegistrationController : ControllerBase
             lookup.Establishments));
     }
 
+    /// <summary>
+    /// Full KVK profile (websites, legal form, postal/visiting addresses, vestigingen + IsInUse)
+    /// fetched only when a search hit is selected.
+    /// </summary>
+    [HttpGet("kvk/{kvkNumber}/profile")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-write")]
+    public async Task<ActionResult<KvkCompanyProfileResponse>> GetProfile(
+        string kvkNumber,
+        CancellationToken cancellationToken)
+    {
+        var profile = await _kvk.GetProfileAsync(kvkNumber, cancellationToken);
+        return Ok(new KvkCompanyProfileResponse(
+            profile.Status.ToString(),
+            profile.KvkNumber,
+            profile.Name,
+            profile.Address,
+            profile.LegalForm,
+            profile.SbiCodes,
+            profile.Websites,
+            profile.Establishments.Select(e => new KvkEstablishmentProfileDto(
+                e.KvkNumber,
+                e.EstablishmentNumber,
+                e.KvkEstablishmentId,
+                e.Name,
+                e.Address,
+                e.Latitude,
+                e.Longitude,
+                e.IsInUse,
+                e.SbiCodes,
+                e.VisitingAddress is null
+                    ? null
+                    : new KvkAddressLineDto(
+                        e.VisitingAddress.Street,
+                        e.VisitingAddress.HouseNumber,
+                        e.VisitingAddress.HouseLetter,
+                        e.VisitingAddress.Postcode,
+                        e.VisitingAddress.Place,
+                        e.VisitingAddress.FormattedLine),
+                e.PostalAddress is null
+                    ? null
+                    : new KvkAddressLineDto(
+                        e.PostalAddress.Street,
+                        e.PostalAddress.HouseNumber,
+                        e.PostalAddress.HouseLetter,
+                        e.PostalAddress.Postcode,
+                        e.PostalAddress.Place,
+                        e.PostalAddress.FormattedLine))).ToList(),
+            profile.Message));
+    }
+
     [HttpPost]
     [AllowAnonymous]
     [EnableRateLimiting("public-write")]

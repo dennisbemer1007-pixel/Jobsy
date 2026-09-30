@@ -254,7 +254,15 @@ public static class DependencyInjection
 
         // Live KVK when API key is configured (Admin Integraties or Kvk__ApiKey); otherwise demo stub.
         services.AddScoped<KvkServiceStub>();
-        services.AddScoped<IKvkService, KvkHandelsregisterService>();
+        services.AddScoped<IKvkUsageCounter, KvkUsageCounter>();
+        services.AddScoped<IKvkService>(sp => new KvkHandelsregisterService(
+            sp.GetRequiredService<JobsyDbContext>(),
+            sp.GetRequiredService<IIntegrationCredentialService>(),
+            sp.GetRequiredService<IHttpClientFactory>(),
+            sp.GetRequiredService<KvkServiceStub>(),
+            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<KvkHandelsregisterService>>(),
+            sp.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>(),
+            sp.GetRequiredService<IKvkUsageCounter>()));
         services.AddScoped<IKvkVerificationRetryService, KvkVerificationRetryService>();
         services.AddScoped<EmailServiceStub>();
         services.AddScoped<IEmailService, SmtpEmailService>();

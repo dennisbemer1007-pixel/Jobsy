@@ -225,6 +225,35 @@ public sealed partial class JobsyApiClient
         => await _http.GetFromJsonAsync<List<KvkEstablishmentItem>>(
             $"api/kvk/{Uri.EscapeDataString(kvkNumber)}/establishments", ct) ?? [];
 
+    public async Task<KvkSearchResultItem> SearchKvkAsync(
+        string query,
+        string? place = null,
+        int page = 1,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string> { $"q={Uri.EscapeDataString(query)}" };
+        if (!string.IsNullOrWhiteSpace(place))
+        {
+            qs.Add($"plaats={Uri.EscapeDataString(place.Trim())}");
+        }
+
+        if (page > 1)
+        {
+            qs.Add($"pagina={page}");
+        }
+
+        return await _http.GetFromJsonAsync<KvkSearchResultItem>(
+                   $"api/kvk/search?{string.Join("&", qs)}", ct)
+               ?? new KvkSearchResultItem { Status = "NotFound" };
+    }
+
+    public async Task<KvkCompanyProfileItem> GetKvkProfileAsync(
+        string kvkNumber,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<KvkCompanyProfileItem>(
+               $"api/registration/kvk/{Uri.EscapeDataString(kvkNumber)}/profile", ct)
+           ?? new KvkCompanyProfileItem { Status = "NotFound", KvkNumber = kvkNumber };
+
     public async Task<KvkEstablishmentsLookupResult> LookupRegistrationEstablishmentsAsync(
         string kvkNumber,
         CancellationToken ct = default)

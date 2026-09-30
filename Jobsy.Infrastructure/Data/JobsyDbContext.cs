@@ -95,6 +95,7 @@ public class JobsyDbContext : DbContext
     public DbSet<VatBufferTransfer> VatBufferTransfers => Set<VatBufferTransfer>();
     public DbSet<VatDeclaration> VatDeclarations => Set<VatDeclaration>();
     public DbSet<CompanyRegistration> CompanyRegistrations => Set<CompanyRegistration>();
+    public DbSet<KvkUsageDaily> KvkUsageDaily => Set<KvkUsageDaily>();
     public DbSet<EstablishmentTakeoverRequest> EstablishmentTakeoverRequests => Set<EstablishmentTakeoverRequest>();
     public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
     public DbSet<SalesManagerProfile> SalesManagerProfiles => Set<SalesManagerProfile>();
@@ -1404,6 +1405,13 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.CreatedBranchCompanyId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<KvkUsageDaily>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CallType).HasMaxLength(32).IsRequired();
+            entity.HasIndex(e => new { e.Date, e.CallType }).IsUnique();
         });
 
         modelBuilder.Entity<EstablishmentTakeoverRequest>(entity =>

@@ -321,6 +321,62 @@ public class KvkEstablishmentsLookupResult
         Status.Equals("Unavailable", StringComparison.OrdinalIgnoreCase);
 }
 
+public class KvkSearchHitItem
+{
+    public string KvkNumber { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Place { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public int? VestigingCount { get; set; }
+    public bool IsOnLobsy { get; set; }
+}
+
+public class KvkSearchResultItem
+{
+    public string Status { get; set; } = "NotFound";
+    public int Total { get; set; }
+    public List<KvkSearchHitItem> Hits { get; set; } = [];
+    public string? Message { get; set; }
+}
+
+public class KvkAddressLineItem
+{
+    public string Street { get; set; } = string.Empty;
+    public string HouseNumber { get; set; } = string.Empty;
+    public string? HouseLetter { get; set; }
+    public string Postcode { get; set; } = string.Empty;
+    public string Place { get; set; } = string.Empty;
+    public string FormattedLine { get; set; } = string.Empty;
+}
+
+public class KvkEstablishmentProfileItem
+{
+    public string KvkNumber { get; set; } = string.Empty;
+    public string EstablishmentNumber { get; set; } = string.Empty;
+    public string KvkEstablishmentId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public bool IsInUse { get; set; }
+    public List<string> SbiCodes { get; set; } = [];
+    public KvkAddressLineItem? VisitingAddress { get; set; }
+    public KvkAddressLineItem? PostalAddress { get; set; }
+}
+
+public class KvkCompanyProfileItem
+{
+    public string Status { get; set; } = "NotFound";
+    public string KvkNumber { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string? LegalForm { get; set; }
+    public List<string> SbiCodes { get; set; } = [];
+    public List<string> Websites { get; set; } = [];
+    public List<KvkEstablishmentProfileItem> Establishments { get; set; } = [];
+    public string? Message { get; set; }
+}
+
 public class KvkEstablishmentItem
 {
     public string KvkNumber { get; set; } = string.Empty;

@@ -41,24 +41,11 @@
                 <fieldset class="vacancy-intermediary">
                     <legend>Inhuurend bedrijf (verplicht)</legend>
                     <p class="muted vacancy-field-hint">
-                        Zoek op KVK-nummer en selecteer de vestiging van de opdrachtgever.
+                        Zoek op bedrijfsnaam of KVK-nummer en selecteer de vestiging van de opdrachtgever.
                     </p>
-                    <div class="vacancy-intermediary__kvk-row">
-                        <label>
-                            KVK-nummer
-                            <input @bind="_clientKvkNumber"
-                                   @bind:event="oninput"
-                                   maxlength="20"
-                                   inputmode="numeric"
-                                   placeholder="12345678" />
-                        </label>
-                        <button type="button"
-                                class="provider-btn"
-                                disabled="@(_kvkBusy || string.IsNullOrWhiteSpace(_clientKvkNumber))"
-                                @onclick="LookupClientKvkAsync">
-                            @(_kvkBusy ? "Zoeken…" : "Zoek vestigingen")
-                        </button>
-                    </div>
+                    <KvkSearchField Label="Bedrijfsnaam of KVK-nummer"
+                                    SearchButtonLabel="Zoek bedrijven"
+                                    OnSelected="OnClientSearchSelectedAsync" />
                     @if (_clientEstablishments.Count > 0)
                     {
                         <label>
@@ -760,7 +747,6 @@
     private List<int> _minReferenceOptions = [1, 2, 3];
     private string? _align;
     private bool _isIntermediary;
-    private string _clientKvkNumber = "";
     private string _selectedEstablishmentId = "";
     private bool _kvkBusy;
     private bool _hideClientAddressOnMap = true;
@@ -961,22 +947,17 @@
         await LoadSalaryTablesAsync();
     }
 
-    private async Task LookupClientKvkAsync()
+    private async Task OnClientSearchSelectedAsync(KvkSearchHitItem hit)
     {
-        if (string.IsNullOrWhiteSpace(_clientKvkNumber))
-        {
-            return;
-        }
-
         _kvkBusy = true;
         _message = null;
         try
         {
-            _clientEstablishments = (await Api.GetKvkEstablishmentsAsync(_clientKvkNumber.Trim())).ToList();
+            _clientEstablishments = (await Api.GetKvkEstablishmentsAsync(hit.KvkNumber)).ToList();
             _selectedEstablishmentId = "";
             if (_clientEstablishments.Count == 0)
             {
-                _message = "Geen vestigingen gevonden voor dit KVK-nummer.";
+                _message = "Geen vestigingen gevonden voor dit bedrijf.";
             }
         }
         catch (Exception ex)

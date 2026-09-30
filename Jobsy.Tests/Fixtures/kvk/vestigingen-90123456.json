@@ -1,0 +1,32 @@
+{
+  "kvkNummer": "90123456",
+  "vestigingen": [
+    {
+      "vestigingsnummer": "000045678901",
+      "eersteHandelsnaam": "Hoofdvestiging Utrecht",
+      "indHoofdvestiging": "Ja",
+      "volledigAdres": "Vondellaan 12, 3521 GE Utrecht"
+    },
+    {
+      "vestigingsnummer": "000045678912",
+      "eersteHandelsnaam": "Amersfoort",
+      "indHoofdvestiging": "Nee",
+      "volledigAdres": "Stationsplein 4, 3818 LE Amersfoort",
+      "adressen": [
+        {
+          "type": "bezoekadres",
+          "straatnaam": "Stationsplein",
+          "huisnummer": 4,
+          "postcode": "3818LE",
+          "plaats": "Amersfoort"
+        }
+      ]
+    },
+    {
+      "vestigingsnummer": "000045678923",
+      "eersteHandelsnaam": "Zeist",
+      "indHoofdvestiging": "Nee",
+      "volledigAdres": "Slotlaan 88, 3701 GP Zeist"
+    }
+  ]
+}

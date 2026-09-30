@@ -1,12 +1,7 @@
-using Jobsy.Core.Authorization;
-using Jobsy.Core.Contracts;
-using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
-using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
 
@@ -20,6 +15,51 @@ public class KvkController : ControllerBase
     public KvkController(IKvkService kvk)
     {
         _kvk = kvk;
+    }
+
+    /// <summary>
+    /// Public name or KvK-number search. Anonymous, dedicated <c>kvk-search</c> rate limit.
+    /// </summary>
+    [HttpGet("search")]
+    [AllowAnonymous]
+    [EnableRateLimiting("kvk-search")]
+    public async Task<ActionResult<KvkSearchResponse>> Search(
+        [FromQuery] string? q,
+        [FromQuery] string? plaats,
+        [FromQuery] int? pagina,
+        CancellationToken cancellationToken)
+    {
+        var text = (q ?? string.Empty).Trim();
+        var digitOnly = new string(text.Where(char.IsDigit).ToArray());
+        var isNumber = digitOnly.Length == 8
+                       && text.All(c => char.IsDigit(c) || char.IsWhiteSpace(c) || c is '.' or '-');
+        if (!isNumber && text.Length < 3)
+        {
+            return BadRequest(new { message = "Zoekterm moet minimaal 3 tekens zijn." });
+        }
+
+        try
+        {
+            var result = await _kvk.SearchAsync(
+                new KvkSearchQuery(text, plaats, pagina is null or < 1 ? 1 : pagina.Value),
+                cancellationToken);
+
+            return Ok(new KvkSearchResponse(
+                result.Status.ToString(),
+                result.Total,
+                result.Hits.Select(h => new KvkSearchHitDto(
+                    h.KvkNumber,
+                    h.Name,
+                    h.Place,
+                    h.Type,
+                    h.VestigingCount,
+                    h.IsOnLobsy)).ToList(),
+                result.Message));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     /// <summary>
@@ -52,3 +92,17 @@ public class KvkController : ControllerBase
         return Ok(items.Select(i => i with { IsInUse = false }));
     }
 }
+
+public sealed record KvkSearchResponse(
+    string Status,
+    int Total,
+    IReadOnlyList<KvkSearchHitDto> Hits,
+    string? Message = null);
+
+public sealed record KvkSearchHitDto(
+    string KvkNumber,
+    string Name,
+    string Place,
+    string Type,
+    int? VestigingCount,
+    bool IsOnLobsy);
