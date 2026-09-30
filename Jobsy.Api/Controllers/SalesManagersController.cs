@@ -468,64 +468,13 @@ public class SalesManagersController : ControllerBase
 
     [HttpPost("me/payouts/checkout")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerPayoutCheckoutResult>> CreatePayoutCheckout(
-        [FromBody] CreateSalesManagerPayoutCheckoutRequest? request,
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            if (request?.AmountExVat is null or <= 0)
-            {
-                return BadRequest(new { message = "Geef een bedrag excl. BTW op om uit te betalen." });
-            }
-
-            return Ok(await _payouts.CreateCheckoutAsync(user.Id, request.AmountExVat.Value, cancellationToken));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
+    public ActionResult CreatePayoutCheckout()
+        => StatusCode(StatusCodes.Status410Gone, new { message = "Uitbetalen gaat nu via een aanvraag." });
 
     [HttpPost("me/payouts/complete")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerPayoutCompleteResult>> CompletePayoutCheckout(
-        [FromBody] CompleteSalesManagerPayoutRequest request,
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            return Ok(await _payouts.CompleteCheckoutAsync(request.PaymentId, user.Id, cancellationToken));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
+    public ActionResult CompletePayoutCheckout()
+        => StatusCode(StatusCodes.Status410Gone, new { message = "Uitbetalen gaat nu via een aanvraag." });
 
     [HttpPost("{userId:guid}/invoices")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]

@@ -1,20 +1,10 @@
-@page "/sales/wallet/uitbetalen"
 @page "/salesmanager/payout-checkout"
 @layout SalesLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "SalesManager")]
-@inject JobsyApiClient Api
-
-<PageTitle>Uitbetaling stub · Lobsy</PageTitle>
-
-<PayoutCheckoutStubView CancelHref="/sales/wallet"
-                        SuccessNavigateHref="/sales/wallet"
-                        CompleteCheckoutAsync="CompleteAsync" />
+@inject NavigationManager Nav
 
 @code {
-    private async Task<string?> CompleteAsync(string paymentId)
-    {
-        var result = await Api.CompleteMyPayoutCheckoutAsync(paymentId);
-        return result?.InvoiceNumber;
-    }
+    protected override void OnInitialized()
+        => Nav.NavigateTo("/sales/wallet/uitbetalen", replace: true);
 }

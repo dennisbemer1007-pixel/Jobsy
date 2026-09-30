@@ -1,13 +1,18 @@
+using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Sales;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Infrastructure.Services;
 
 public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
 {
+    private static readonly CultureInfo Nl = CultureInfo.GetCultureInfo("nl-NL");
+
     private readonly JobsyDbContext _db;
     private readonly ICommissionLedgerService _ledger;
 
@@ -15,6 +20,147 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
     {
         _db = db;
         _ledger = ledger;
+    }
+
+    public async Task<SelfBillingInvoice> IssueForRequestAsync(
+        SalesPayoutRequest request,
+        SalesSelfBillingConsent consent,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(consent);
+
+        if (request.SelfBillingInvoiceId is Guid existingId)
+        {
+            return await GetAsync(existingId, cancellationToken)
+                   ?? throw new KeyNotFoundException("Factuur niet gevonden.");
+        }
+
+        var billing = await ResolveBillingIdentityAsync(request.BeneficiaryUserId, cancellationToken)
+            ?? throw new InvalidOperationException("Profiel ontbreekt voor self-billing.");
+
+        var lines = await _db.CommissionLedgerEntries
+            .Where(e => e.SalesPayoutRequestId == request.Id && e.SelfBillingInvoiceId == null)
+            .OrderBy(e => e.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        if (lines.Count == 0)
+        {
+            throw new InvalidOperationException("Geen gekoppelde commissieregels voor deze aanvraag.");
+        }
+
+        var companyIds = lines.Where(l => l.CompanyId is not null)
+            .Select(l => l.CompanyId!.Value).Distinct().ToList();
+        var companyNames = companyIds.Count == 0
+            ? new Dictionary<Guid, string>()
+            : await _db.Companies.AsNoTracking()
+                .Where(c => companyIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => c.Name, cancellationToken);
+
+        var isKor = request.VatTreatment == SalesManagerVatTreatment.SmallBusinessScheme;
+        var subtotal = decimal.Round(lines.Sum(l => l.AmountExVat), 2, MidpointRounding.AwayFromZero);
+        var vat = isKor ? 0m : SalesCommissionRules.VatOn(subtotal);
+        var now = DateTime.UtcNow;
+        var invoiceId = Guid.NewGuid();
+
+        SelfBillingInvoice? invoice = null;
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            var invoiceNumber = await NextInvoiceNumberAsync(cancellationToken);
+            invoice = new SelfBillingInvoice
+            {
+                Id = invoiceId,
+                SalesManagerUserId = request.BeneficiaryUserId,
+                InvoiceNumber = invoiceNumber,
+                SalesManagerCompanyName = billing.CompanyName,
+                SalesManagerKvkNumber = billing.KvkNumber,
+                SalesManagerVatNumber = billing.VatNumber ?? "",
+                SalesManagerAddress = billing.FormattedAddress,
+                SubtotalExVat = subtotal,
+                VatAmount = vat,
+                TotalInclVat = subtotal + vat,
+                VatRate = isKor ? 0m : SalesCommissionRules.VatRate,
+                VatTreatment = request.VatTreatment,
+                Status = SelfBillingInvoiceStatus.Issued,
+                CreatedAt = now,
+                IssuedAt = now,
+                SelfBillingConsentId = consent.Id,
+                SalesPayoutRequestId = request.Id
+            };
+
+            foreach (var line in lines)
+            {
+                var employer = line.CompanyId is Guid cid && companyNames.TryGetValue(cid, out var n)
+                    ? n
+                    : "";
+                var month = SalesClock.ToLocal(line.CreatedAt).ToString("MMMM yyyy", Nl);
+                var desc = string.IsNullOrWhiteSpace(employer)
+                    ? $"Commissie · {month}"
+                    : $"Commissie · {employer} · {month}";
+                if (line.AmountExVat < 0)
+                {
+                    desc = string.IsNullOrWhiteSpace(line.Reason)
+                        ? $"Correctie · {employer}".Trim(' ', '·')
+                        : $"Correctie · {employer} · {line.Reason}".Replace(" ·  · ", " · ");
+                }
+
+                invoice.Lines.Add(new SelfBillingInvoiceLine
+                {
+                    Id = Guid.NewGuid(),
+                    Description = desc,
+                    AmountExVat = line.AmountExVat,
+                    SourceLedgerEntryId = line.Id
+                });
+            }
+
+            _db.SelfBillingInvoices.Add(invoice);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+                break;
+            }
+            catch (DbUpdateException) when (attempt < 4)
+            {
+                _db.SelfBillingInvoices.Remove(invoice);
+                invoice = null;
+                invoiceId = Guid.NewGuid();
+            }
+        }
+
+        if (invoice is null)
+        {
+            throw new InvalidOperationException("Kon geen uniek factuurnummer toekennen.");
+        }
+
+        var entryIds = lines.Select(l => l.Id).ToList();
+        try
+        {
+            await _db.CommissionLedgerEntries
+                .Where(e => entryIds.Contains(e.Id) && e.SelfBillingInvoiceId == null)
+                .ExecuteUpdateAsync(
+                    s => s.SetProperty(e => e.SelfBillingInvoiceId, invoice.Id),
+                    cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            foreach (var line in lines)
+            {
+                var tracked = await _db.CommissionLedgerEntries
+                    .FirstAsync(e => e.Id == line.Id, cancellationToken);
+                tracked.SelfBillingInvoiceId = invoice.Id;
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        var trackedRequest = await _db.SalesPayoutRequests
+            .FirstAsync(r => r.Id == request.Id, cancellationToken);
+        trackedRequest.SelfBillingInvoiceId = invoice.Id;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return await _db.SelfBillingInvoices
+            .Include(i => i.Lines)
+            .FirstAsync(i => i.Id == invoice.Id, cancellationToken);
     }
 
     public async Task<SelfBillingInvoice> CreateFromUninvoicedBalanceAsync(
@@ -91,7 +237,9 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
 
         var entryIds = selected.Select(s => s.Entry.Id).ToList();
         var subtotal = decimal.Round(selected.Sum(s => s.AmountExVat), 2, MidpointRounding.AwayFromZero);
-        var vat = SalesCommissionRules.VatOn(subtotal);
+        var treatment = billing.VatTreatment;
+        var isKor = treatment == SalesManagerVatTreatment.SmallBusinessScheme;
+        var vat = isKor ? 0m : SalesCommissionRules.VatOn(subtotal);
         var now = DateTime.UtcNow;
         var invoiceNumber = await NextInvoiceNumberAsync(cancellationToken);
         var invoiceId = Guid.NewGuid();
@@ -108,8 +256,8 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
             SubtotalExVat = subtotal,
             VatAmount = vat,
             TotalInclVat = subtotal + vat,
-            VatRate = SalesCommissionRules.VatRate,
-            VatTreatment = SalesManagerVatTreatment.Standard21,
+            VatRate = isKor ? 0m : SalesCommissionRules.VatRate,
+            VatTreatment = treatment,
             Status = SelfBillingInvoiceStatus.Issued,
             CreatedAt = now,
             IssuedAt = now
@@ -384,7 +532,8 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
                 sm.VatNumber ?? "",
                 FormatAddress(sm.Address, sm.PostalCode, sm.City, sm.Country),
                 sm.IsOnboardingComplete,
-                sm.Iban);
+                sm.Iban,
+                sm.VatTreatment);
         }
 
         var am = await _db.AmbassadeurProfiles
@@ -398,7 +547,8 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
                 am.VatNumber ?? "",
                 FormatAddress(am.Address, am.PostalCode, am.City, am.Country),
                 am.IsOnboardingComplete,
-                am.Iban);
+                am.Iban,
+                am.VatTreatment);
         }
 
         var partner = await _db.PartnerAffiliateProfiles
@@ -429,7 +579,8 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
         string VatNumber,
         string FormattedAddress,
         bool IsOnboardingComplete,
-        string? Iban);
+        string? Iban,
+        SalesManagerVatTreatment VatTreatment = SalesManagerVatTreatment.Standard21);
 
     private sealed record SelectedLedgerAmount(
         CommissionLedgerEntry Entry,

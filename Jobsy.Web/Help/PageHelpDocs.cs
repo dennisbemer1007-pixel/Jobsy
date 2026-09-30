@@ -364,16 +364,16 @@ public static class PageHelpDocs
             "Duidelijkheid over hoe Lobsy Partner werkt."),
 
         ["/sales/wallet"] = new(
-            "Facturen (sales)",
-            "Self-billing / factuuroverzicht voor salesmanagers. Kies zelf het uitbetalingsbedrag; download facturen als PDF.",
-            "Bekijk of download facturen gekoppeld aan uitbetalingen.",
-            "Administratie van commissies of uitbetalingen."),
+            "Wallet & uitbetalingen",
+            "Saldo per status, mutaties, uitbetalingsaanvragen en self-billing facturen.",
+            "Vraag een uitbetaling aan vanaf € 50 beschikbaar; download facturen en jaaroverzicht als PDF.",
+            "Inzicht in commissie en uitbetalingen."),
 
         ["/sales/wallet/uitbetalen"] = new(
-            "Uitbetaling",
-            "Uitbetalingstraject (Mollie-stub) voor salesmanagers.",
-            "Start de checkout-stub; daarna volgt self-billing/documentatie in het platform.",
-            "Verdiensten laten uitbetalen volgens het salesproces."),
+            "Uitbetaling aanvragen",
+            "Aanvraag voor het volledige beschikbare bedrag met factuurvoorbeeld (self-billing).",
+            "Controleer bedrag, btw/KOR en rekening; dien de aanvraag in voor de maandelijkse ronde.",
+            "Commissie laten uitbetalen via Lobsy-goedkeuring."),
 
         ["/tokens/checkout-return"] = new(
             "Betaling afronden",

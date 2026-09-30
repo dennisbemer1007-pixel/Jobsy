@@ -256,9 +256,15 @@ public class SalesRightsMatrixTests
         { "GET api/sales/me/dashboard", JobsyRoles.SalesManager, 200 },
         { "GET api/sales/me/employers", JobsyRoles.SalesManager, 200 },
         { "GET api/sales/me/employers/{id}", JobsyRoles.SalesManager, 200 },
+        { "GET api/sales/me/wallet", JobsyRoles.SalesManager, 200 },
+        { "GET api/sales/me/payouts/preview", JobsyRoles.SalesManager, 200 },
+        { "POST api/sales/me/payouts", JobsyRoles.SalesManager, 200 },
         { "GET api/sales/me/dashboard", JobsyRoles.Candidate, 403 },
         { "GET api/sales/me/employers", JobsyRoles.BranchManager, 403 },
         { "GET api/sales/me/employers/{id}", JobsyRoles.Admin, 403 },
+        { "GET api/sales/me/wallet", JobsyRoles.Candidate, 403 },
+        { "POST api/sales/me/payouts", JobsyRoles.BranchManager, 403 },
+        { "GET api/sales/me/invoices/{id}/pdf", JobsyRoles.Admin, 403 },
     };
 
     [Theory]

@@ -1,6 +1,8 @@
+using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Sales;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Sales;
 using Microsoft.AspNetCore.Authorization;
@@ -21,6 +23,9 @@ public sealed class SalesMeController : ControllerBase
     private readonly ISalesLinkToolkitService _linkToolkit;
     private readonly ISalesMaterialsPdfService _materials;
     private readonly ISalesPayoutProfileService _profile;
+    private readonly ISalesWalletPortalService _wallet;
+    private readonly ISalesPayoutRequestService _payoutRequests;
+    private readonly ISalesManagerPayoutService _legacyPayouts;
 
     public SalesMeController(
         ISalesBeneficiaryService beneficiary,
@@ -28,7 +33,10 @@ public sealed class SalesMeController : ControllerBase
         ISalesEmployerPortalReadService employers,
         ISalesLinkToolkitService linkToolkit,
         ISalesMaterialsPdfService materials,
-        ISalesPayoutProfileService profile)
+        ISalesPayoutProfileService profile,
+        ISalesWalletPortalService wallet,
+        ISalesPayoutRequestService payoutRequests,
+        ISalesManagerPayoutService legacyPayouts)
     {
         _beneficiary = beneficiary;
         _dashboard = dashboard;
@@ -36,6 +44,9 @@ public sealed class SalesMeController : ControllerBase
         _linkToolkit = linkToolkit;
         _materials = materials;
         _profile = profile;
+        _wallet = wallet;
+        _payoutRequests = payoutRequests;
+        _legacyPayouts = legacyPayouts;
     }
 
     [HttpGet("dashboard")]
@@ -356,6 +367,156 @@ public sealed class SalesMeController : ControllerBase
         var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
         var bytes = await _profile.RenderConsentPdfAsync(me.UserId, cancellationToken);
         return File(bytes, "application/pdf", "lobsy-self-billing-toestemming.pdf");
+    }
+
+    [HttpGet("wallet")]
+    public async Task<ActionResult<SalesWalletOverviewDto>> GetWallet(CancellationToken cancellationToken)
+    {
+        var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
+        var overview = await _wallet.GetOverviewAsync(me.UserId, cancellationToken: cancellationToken);
+        if (!PersonalDataAccessLogExtensions.IsMfaSatisfiedInSession(User)
+            && overview.Blockers.All(b => b.Code != "mfa"))
+        {
+            var blockers = overview.Blockers.ToList();
+            blockers.Add(new SalesPayoutBlockerDto("mfa", "Sales.Payout.Block.Mfa", "/account/beveiliging"));
+            overview = new SalesWalletOverviewDto
+            {
+                Available = overview.Available,
+                Pending = overview.Pending,
+                Requested = overview.Requested,
+                PaidThisYear = overview.PaidThisYear,
+                InvoiceCountThisYear = overview.InvoiceCountThisYear,
+                LocalYear = overview.LocalYear,
+                NextRunDate = overview.NextRunDate,
+                PayoutMinimumEuro = overview.PayoutMinimumEuro,
+                CommissionHoldDays = overview.CommissionHoldDays,
+                VatTreatment = overview.VatTreatment,
+                IsKor = overview.IsKor,
+                VatOnAvailable = overview.VatOnAvailable,
+                MaskedIban = overview.MaskedIban,
+                HolderName = overview.HolderName,
+                CanRequestPayout = false,
+                Blockers = blockers,
+                LatestInvoices = overview.LatestInvoices,
+                OpenRequestId = overview.OpenRequestId
+            };
+        }
+
+        return Ok(overview);
+    }
+
+    [HttpGet("wallet/entries")]
+    public async Task<ActionResult<SalesWalletEntriesPageDto>> ListWalletEntries(
+        [FromQuery] int? period,
+        [FromQuery] string? kind,
+        [FromQuery] string? state,
+        [FromQuery] int page = 1,
+        CancellationToken cancellationToken = default)
+    {
+        var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
+        var dto = await _wallet.ListEntriesAsync(
+            me.UserId, period, kind, state, page, cancellationToken: cancellationToken);
+        return Ok(dto);
+    }
+
+    [HttpGet("payouts")]
+    public async Task<ActionResult<IReadOnlyList<SalesPayoutListItemDto>>> ListPayouts(
+        CancellationToken cancellationToken)
+    {
+        var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
+        return Ok(await _wallet.ListPayoutsAsync(me.UserId, cancellationToken));
+    }
+
+    [HttpGet("payouts/preview")]
+    public async Task<ActionResult<SalesPayoutPreviewDto>> PreviewPayout(CancellationToken cancellationToken)
+    {
+        var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
+        var mfa = PersonalDataAccessLogExtensions.IsMfaSatisfiedInSession(User);
+        return Ok(await _payoutRequests.PreviewAsync(me.UserId, mfa, cancellationToken: cancellationToken));
+    }
+
+    [HttpPost("payouts")]
+    public async Task<ActionResult<SalesPayoutRequestDto>> RequestPayout(CancellationToken cancellationToken)
+    {
+        var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
+        var mfa = PersonalDataAccessLogExtensions.IsMfaSatisfiedInSession(User);
+        try
+        {
+            var dto = await _payoutRequests.RequestAsync(me.UserId, mfa, cancellationToken: cancellationToken);
+            return Ok(dto);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("payouts/{id:guid}/cancel")]
+    public async Task<IActionResult> CancelPayout(Guid id, CancellationToken cancellationToken)
+    {
+        var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
+        try
+        {
+            await _payoutRequests.CancelAsync(me.UserId, id, cancellationToken);
+            return Ok(new { cancelled = true });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("invoices")]
+    public async Task<ActionResult<IReadOnlyList<SalesInvoiceListItemDto>>> ListInvoices(
+        CancellationToken cancellationToken)
+    {
+        var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
+        return Ok(await _wallet.ListInvoicesAsync(me.UserId, cancellationToken));
+    }
+
+    [HttpGet("invoices/{id:guid}/pdf")]
+    [EnableRateLimiting("public-pdf")]
+    public async Task<IActionResult> DownloadInvoicePdf(Guid id, CancellationToken cancellationToken)
+    {
+        var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
+        try
+        {
+            var pdf = await _legacyPayouts.RenderInvoicePdfAsync(id, me.UserId, cancellationToken);
+            return File(pdf, "application/pdf", $"factuur-{id:N}.pdf");
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpGet("jaaroverzicht/{year:int}.pdf")]
+    [EnableRateLimiting("public-pdf")]
+    public async Task<IActionResult> DownloadJaaroverzicht(int year, CancellationToken cancellationToken)
+    {
+        var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
+        if (year is < 2020 or > 2100)
+        {
+            return BadRequest(new { message = "Ongeldig jaar." });
+        }
+
+        try
+        {
+            var pdf = await _wallet.RenderJaaroverzichtPdfAsync(me.UserId, year, cancellationToken);
+            return File(pdf, "application/pdf", $"jaaroverzicht-{year}.pdf");
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     private static bool TryParseVatAlias(string? raw, out SalesManagerVatTreatment treatment)

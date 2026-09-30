@@ -1,0 +1,692 @@
+@page "/sales/wallet"
+@page "/sales/wallet/uitbetalen"
+@layout SalesLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@using Jobsy.Core.Sales
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+
+<PageTitle>@Culture["Sales.Wallet.Title"] · @Culture["Sales.ProductLabel"]</PageTitle>
+
+<section class="sp-wallet">
+    <header class="sp-dash__header">
+        <div>
+            <h1 class="sp-wallet__title-desktop">@Culture["Sales.Wallet.Title"]</h1>
+            <h1 class="sp-wallet__title-mobile">@Culture["Sales.Wallet.MobileTitle"]</h1>
+            <p class="sp-dash__lead sp-wallet__lead-desktop">@Culture["Sales.Wallet.Lead"]</p>
+            <p class="sp-dash__lead sp-wallet__lead-mobile">@Culture["Sales.Wallet.MobileLead"]</p>
+        </div>
+        <div class="sp-dash__header-actions sp-wallet__hi-desktop">
+            @if (_overview is not null)
+            {
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="DownloadJaaroverzichtAsync">
+                    @Culture.Format("Sales.Wallet.YearOverview", _overview.LocalYear)
+                </button>
+            }
+        </div>
+    </header>
+
+    @if (_loading && _overview is null)
+    {
+        <p class="state-message">@Culture["EntUi.Loading"]</p>
+    }
+    else if (_overview is not null)
+    {
+        <div class="sp-wallet__hero-mobile">
+            <article class="sp-hero-card">
+                <p class="sp-hero-card__label">@Culture["Sales.Label.State.Available"]</p>
+                <p class="sp-hero-card__value">@SalesMoney.FormatPlain(_overview.Available)</p>
+                <div class="sp-hero-card__stats">
+                    <div>
+                        <span>@Culture["Sales.Label.State.Pending"]</span>
+                        <strong>@SalesMoney.FormatPlain(_overview.Pending)</strong>
+                    </div>
+                    <div>
+                        <span>@Culture.Format("Sales.Wallet.PaidYear", _overview.LocalYear)</span>
+                        <strong>@SalesMoney.FormatPlain(_overview.PaidThisYear)</strong>
+                    </div>
+                </div>
+                @if (_overview.CanRequestPayout)
+                {
+                    <button type="button" class="sp-hero-card__cta" @onclick="OpenDrawer">@Culture["Sales.Wallet.Request"]</button>
+                }
+                else if (_overview.Blockers.Count > 0)
+                {
+                    <p class="sp-hero-card__help">@BlockerText(_overview.Blockers[0])</p>
+                }
+            </article>
+            <aside class="sp-wallet__how-strip">
+                <p class="sp-wallet__how-strip-title">@Culture["Sales.Wallet.HowStrip"]</p>
+                <ol class="sp-wallet__how-strip-steps">
+                    <li>@Culture["Sales.Wallet.Step.Requested"]</li>
+                    <li>@Culture["Sales.Wallet.Step.Approved"]</li>
+                    <li>@Culture["Sales.Wallet.Step.Paid"]</li>
+                </ol>
+                <p class="muted">@Culture.Format("Sales.Wallet.HowStripSub", SalesMoney.FormatPlain(_overview.PayoutMinimumEuro), Last4(_overview.MaskedIban))</p>
+            </aside>
+        </div>
+
+        <div class="sp-dash__kpis sp-wallet__kpis-desktop">
+            <article class="sp-hero-card">
+                <p class="sp-hero-card__label">@Culture["Sales.Label.State.Available"]</p>
+                <p class="sp-hero-card__value">@SalesMoney.FormatPlain(_overview.Available)</p>
+                <p class="sp-hero-card__sub">
+                    @if (_overview.IsKor)
+                    {
+                        @Culture["Sales.Wallet.AvailableKor"]
+                    }
+                    else
+                    {
+                        @Culture.Format("Sales.Wallet.AvailableVat", SalesMoney.FormatPlain(_overview.VatOnAvailable))
+                    }
+                </p>
+                @if (_overview.CanRequestPayout)
+                {
+                    <button type="button" class="sp-hero-card__cta" @onclick="OpenDrawer">@Culture["Sales.Wallet.Request"]</button>
+                }
+                else if (_overview.Blockers.Count > 0)
+                {
+                    var b = _overview.Blockers[0];
+                    <p class="sp-hero-card__help">
+                        @BlockerText(b)
+                        @if (!string.IsNullOrEmpty(b.Href))
+                        {
+                            <a href="@b.Href">@Culture["Sales.Wallet.BlockerLink"]</a>
+                        }
+                    </p>
+                }
+            </article>
+            <EntKpiCard Label="@Culture["Sales.Label.State.Pending"]"
+                        Value="@SalesMoney.FormatPlain(_overview.Pending)"
+                        Delta="@Culture.Format("Sales.Wallet.PendingSub", _overview.CommissionHoldDays)" />
+            <EntKpiCard Label="@Culture["Sales.Label.State.Requested"]"
+                        Value="@SalesMoney.FormatPlain(_overview.Requested)"
+                        Delta="@(_overview.OpenRequestId is null ? Culture["Sales.Wallet.NoOpenRequest"] : Culture["Sales.Wallet.OpenRequest"])" />
+            <EntKpiCard Label="@Culture.Format("Sales.Wallet.PaidYear", _overview.LocalYear)"
+                        Value="@SalesMoney.FormatPlain(_overview.PaidThisYear)"
+                        Delta="@Culture.Format("Sales.Wallet.InvoiceCount", _overview.InvoiceCountThisYear)" />
+        </div>
+
+        <div class="sp-wallet__layout">
+            <div class="sp-wallet__main">
+                <EntTabs Tabs="Tabs" ActiveKey="@_tab" BasePath="/sales/wallet" />
+
+                @if (_tab == "mutaties")
+                {
+                    <div class="ent-filter-bar filter-bar sp-wallet__filters">
+                        <label class="sp-filter">
+                            <span class="visually-hidden">@Culture["Sales.Wallet.Filter.Period"]</span>
+                            <select value="@(_periodYear?.ToString() ?? "")" @onchange="OnPeriodAsync">
+                                <option value="">@Culture["Sales.Wallet.Filter.Period"]: @Culture["Sales.Employers.Filter.All"]</option>
+                                @for (var y = _overview.LocalYear; y >= _overview.LocalYear - 3; y--)
+                                {
+                                    <option value="@y">@y</option>
+                                }
+                            </select>
+                        </label>
+                        <label class="sp-filter">
+                            <span class="visually-hidden">@Culture["Sales.Wallet.Filter.Kind"]</span>
+                            <select value="@_kind" @onchange="OnKindAsync">
+                                <option value="">@Culture["Sales.Wallet.Filter.Kind"]: @Culture["Sales.Employers.Filter.All"]</option>
+                                <option value="TokenCommission">@Culture["Sales.Label.Kind.TokenCommission"]</option>
+                                <option value="FounderBonus">@Culture["Sales.Label.Kind.FounderBonus"]</option>
+                                <option value="Payout">@Culture["Sales.Label.Kind.Payout"]</option>
+                                <option value="Adjustment">@Culture["Sales.Label.Kind.Adjustment"]</option>
+                                <option value="RefundCorrection">@Culture["Sales.Label.Kind.RefundCorrection"]</option>
+                            </select>
+                        </label>
+                        <label class="sp-filter">
+                            <span class="visually-hidden">@Culture["Sales.Wallet.Filter.State"]</span>
+                            <select value="@_state" @onchange="OnStateAsync">
+                                <option value="">@Culture["Sales.Wallet.Filter.State"]: @Culture["Sales.Employers.Filter.All"]</option>
+                                <option value="Pending">@Culture["Sales.Label.State.Pending"]</option>
+                                <option value="Available">@Culture["Sales.Label.State.Available"]</option>
+                                <option value="Requested">@Culture["Sales.Label.State.Requested"]</option>
+                                <option value="Paid">@Culture["Sales.Label.State.Paid"]</option>
+                                <option value="Settled">@Culture["Sales.Label.State.Settled"]</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <EntDataTable Loading="_entriesLoading" Empty="_entries?.Items.Count == 0" EmptyText="@Culture["Sales.Wallet.EmptyEntries"]">
+                        <Header>
+                            <th scope="col">@Culture["Sales.Wallet.Col.Date"]</th>
+                            <th scope="col">@Culture["Sales.Wallet.Col.Description"]</th>
+                            <th scope="col">@Culture["Sales.Wallet.Col.Status"]</th>
+                            <th scope="col" class="is-num">@Culture["Sales.Wallet.Col.Amount"]</th>
+                        </Header>
+                        <Rows>
+                            @if (_entries is not null)
+                            {
+                                @foreach (var row in _entries.Items)
+                                {
+                                    <tr class="sp-wallet__row">
+                                        <td>@row.Date.ToString("dd-MM-yyyy")</td>
+                                        <td>
+                                            <strong>@row.Title</strong>
+                                            @if (!string.IsNullOrEmpty(row.SubLine))
+                                            {
+                                                <div class="muted">@row.SubLine</div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="sp-status sp-status--@row.State.ToLowerInvariant()">@Culture[row.StateLabelKey]</span>
+                                            @if (row.AvailableOn is DateOnly avail)
+                                            {
+                                                <div class="muted">@Culture.Format("Sales.Wallet.FreeOn", avail.ToString("dd-MM"))</div>
+                                            }
+                                        </td>
+                                        <td class="is-num @(row.AmountExVat > 0 ? "is-pos" : null)">@SalesMoney.FormatSigned(row.AmountExVat)</td>
+                                    </tr>
+                                }
+                            }
+                        </Rows>
+                    </EntDataTable>
+                    @if (_entries is not null)
+                    {
+                        <EntPager Page="_entries.Page" TotalPages="_entries.TotalPages" PageChanged="OnPageAsync" />
+                    }
+
+                    <ul class="sp-wallet__mobile-list">
+                        @if (_entries is not null)
+                        {
+                            @foreach (var row in _entries.Items)
+                            {
+                                <li class="sp-wallet__mobile-row">
+                                    <div>
+                                        <strong>@row.Title</strong>
+                                        <div class="muted">@row.Date.ToString("dd-MM-yyyy") · @Culture[row.KindLabelKey]</div>
+                                    </div>
+                                    <div class="sp-wallet__mobile-amt">
+                                        <span class="@(row.AmountExVat > 0 ? "is-pos" : null)">@SalesMoney.FormatSigned(row.AmountExVat)</span>
+                                        <span class="sp-status sp-status--@row.State.ToLowerInvariant()">@Culture[row.StateLabelKey]</span>
+                                    </div>
+                                </li>
+                            }
+                        }
+                    </ul>
+                }
+                else if (_tab == "uitbetalingen")
+                {
+                    @if (_payouts is null || _payouts.Count == 0)
+                    {
+                        <p class="muted">@Culture["Sales.Wallet.EmptyPayouts"]</p>
+                    }
+                    else
+                    {
+                        <ul class="sp-wallet__payouts">
+                            @foreach (var p in _payouts)
+                            {
+                                <li class="sp-card sp-wallet__payout">
+                                    <header>
+                                        <strong>@(p.IsLegacyCheckout ? Culture["Sales.Wallet.LegacyPayout"] : Culture["Sales.Wallet.Request"])</strong>
+                                        <span>@SalesMoney.FormatPlain(p.AmountExVat)</span>
+                                    </header>
+                                    <ol class="sp-wallet__stepper">
+                                        @for (var i = 0; i < p.StepperSteps.Count; i++)
+                                        {
+                                            <li class="@(i <= p.ActiveStepIndex ? "is-done" : null)">@Culture[p.StepperSteps[i]]</li>
+                                        }
+                                    </ol>
+                                    @if (!string.IsNullOrEmpty(p.RejectionReason))
+                                    {
+                                        <p class="state-message error">@p.RejectionReason</p>
+                                    }
+                                    <div class="sp-wallet__payout-actions">
+                                        @if (!string.IsNullOrEmpty(p.InvoiceNumber) && p.InvoiceId is Guid invId)
+                                        {
+                                            <button type="button" class="btn-compact" @onclick="() => DownloadInvoiceAsync(invId, p.InvoiceNumber)">PDF @p.InvoiceNumber</button>
+                                        }
+                                        @if (!p.IsLegacyCheckout && p.Status == "Requested")
+                                        {
+                                            <button type="button" class="btn-compact btn-danger-outline" disabled="@_busy" @onclick="() => CancelPayoutAsync(p.Id)">@Culture["Sales.Wallet.CancelRequest"]</button>
+                                        }
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                }
+                else
+                {
+                    @if (_invoices is null || _invoices.Count == 0)
+                    {
+                        <p class="muted">@Culture["Sales.Wallet.EmptyInvoices"]</p>
+                    }
+                    else
+                    {
+                        <EntDataTable Loading="false" Empty="false">
+                            <Header>
+                                <th scope="col">@Culture["Sales.Wallet.Col.Invoice"]</th>
+                                <th scope="col">@Culture["Sales.Wallet.Col.Date"]</th>
+                                <th scope="col" class="is-num">@Culture["Sales.Wallet.Col.Total"]</th>
+                                <th scope="col">@Culture["Sales.Wallet.Col.Status"]</th>
+                                <th scope="col"></th>
+                            </Header>
+                            <Rows>
+                                @foreach (var inv in _invoices)
+                                {
+                                    <tr>
+                                        <td class="sp-mono">@inv.InvoiceNumber</td>
+                                        <td>@SalesClock.ToLocal(inv.CreatedAtUtc).ToString("dd-MM-yyyy")</td>
+                                        <td class="is-num">@SalesMoney.Format(inv.TotalInclVat, Jobsy.Core.Enums.SalesMoneyKind.InclVat)</td>
+                                        <td><span class="sp-status sp-status--@inv.Status.ToLowerInvariant()">@Culture[inv.StatusLabelKey]</span></td>
+                                        <td><button type="button" class="btn-compact" @onclick="() => DownloadInvoiceAsync(inv.Id, inv.InvoiceNumber)">PDF</button></td>
+                                    </tr>
+                                }
+                            </Rows>
+                        </EntDataTable>
+                    }
+                }
+            </div>
+
+            <aside class="sp-wallet__side sp-wallet__hi-desktop">
+                <article class="sp-card">
+                    <h2>@Culture["Sales.Wallet.HowTitle"]</h2>
+                    <ol class="sp-wallet__how">
+                        <li>
+                            <strong>@Culture["Sales.Wallet.How1Title"]</strong>
+                            <span>@Culture.Format("Sales.Wallet.How1Body", _overview.CommissionHoldDays)</span>
+                        </li>
+                        <li>
+                            <strong>@Culture["Sales.Wallet.How2Title"]</strong>
+                            <span>@Culture.Format("Sales.Wallet.How2Body", SalesMoney.FormatPlain(_overview.PayoutMinimumEuro))</span>
+                        </li>
+                        <li>
+                            <strong>@Culture["Sales.Wallet.How3Title"]</strong>
+                            <span>@Culture["Sales.Wallet.How3Body"]</span>
+                        </li>
+                        <li>
+                            <strong>@Culture["Sales.Wallet.How4Title"]</strong>
+                            <span>@Culture.Format("Sales.Wallet.How4Body", Last4(_overview.MaskedIban))</span>
+                        </li>
+                    </ol>
+                </article>
+
+                <article class="sp-card">
+                    <header class="sp-card__header">
+                        <h2>@Culture["Sales.Wallet.LatestInvoices"]</h2>
+                        <a class="sp-card__link" href="/sales/wallet?tab=facturen">@Culture["Sales.Wallet.AllInvoices"]</a>
+                    </header>
+                    @if (_overview.LatestInvoices.Count == 0)
+                    {
+                        <p class="muted">@Culture["Sales.Wallet.EmptyInvoices"]</p>
+                    }
+                    else
+                    {
+                        <ul class="sp-wallet__invoice-list">
+                            @foreach (var inv in _overview.LatestInvoices)
+                            {
+                                <li>
+                                    <div>
+                                        <strong class="sp-mono">@inv.InvoiceNumber</strong>
+                                        <div class="muted">@SalesClock.ToLocal(inv.CreatedAtUtc).ToString("dd-MM-yyyy") · @SalesMoney.Format(inv.TotalInclVat, Jobsy.Core.Enums.SalesMoneyKind.InclVat)</div>
+                                    </div>
+                                    <span class="sp-status sp-status--@inv.Status.ToLowerInvariant()">@Culture[inv.StatusLabelKey]</span>
+                                    <button type="button" class="btn-compact" @onclick="() => DownloadInvoiceAsync(inv.Id, inv.InvoiceNumber)">PDF</button>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </article>
+
+                <article class="sp-card sp-wallet__account">
+                    <div>
+                        <span>@Culture["Sales.Profile.Payout"]</span>
+                        <strong class="sp-mono">@(_overview.MaskedIban ?? "—")</strong>
+                        <a href="/sales/profiel">@Culture["Sales.Profile.Change"]</a>
+                    </div>
+                    <div>
+                        <span>@Culture["Sales.Profile.Vat"]</span>
+                        <strong>@(_overview.IsKor ? Culture["Sales.Label.Vat.KOR"] : Culture["Sales.Label.Vat.Standard21"])</strong>
+                        <a href="/sales/profiel">@Culture["Sales.Profile.Change"]</a>
+                    </div>
+                </article>
+            </aside>
+        </div>
+    }
+</section>
+
+<EntDrawer Open="_drawerOpen" OpenChanged="OnDrawerOpenChanged" Title="@Culture["Sales.Wallet.Request"]">
+    <ChildContent>
+        <p class="sp-wallet__drawer-lead">@Culture["Sales.Wallet.RequestLead"]</p>
+        @if (_previewLoading)
+        {
+            <p class="state-message">@Culture["EntUi.Loading"]</p>
+        }
+        else if (_preview is not null)
+        {
+            <div class="sp-wallet__amount-box">
+                <label>@Culture["Sales.Wallet.AmountExVat"]</label>
+                <div class="sp-wallet__amount-ro">@SalesMoney.FormatPlain(_preview.AmountExVat)</div>
+                <p class="muted">@Culture.Format("Sales.Wallet.AmountHint", SalesMoney.FormatPlain(_preview.AvailableExVat), SalesMoney.FormatPlain(_preview.PayoutMinimumEuro))</p>
+            </div>
+            <dl class="sp-wallet__totals">
+                <div><dt>@Culture["Sales.Wallet.CommissionEx"]</dt><dd>@SalesMoney.FormatPlain(_preview.AmountExVat)</dd></div>
+                <div>
+                    <dt>@(_preview.IsKor ? Culture["Sales.Wallet.NoVatKor"] : Culture["Sales.Wallet.Vat21"])</dt>
+                    <dd>@SalesMoney.FormatPlain(_preview.VatAmount)</dd>
+                </div>
+                <div class="is-total"><dt>@Culture["Sales.Wallet.YouReceive"]</dt><dd>@SalesMoney.FormatPlain(_preview.TotalInclVat)</dd></div>
+            </dl>
+            <dl class="sp-wallet__meta">
+                <div>
+                    <dt>@Culture["Sales.Wallet.ToAccount"]</dt>
+                    <dd class="sp-mono">@_preview.MaskedIban@(!string.IsNullOrEmpty(_preview.HolderName) ? $" · {_preview.HolderName}" : "")</dd>
+                </div>
+                <div>
+                    <dt>@Culture["Sales.Wallet.PayoutWhen"]</dt>
+                    <dd>
+                        @if (_preview.IbanHoldUntil is DateOnly hold && hold > _preview.ExpectedRunDate)
+                        {
+                            @Culture.Format("Sales.Wallet.PayoutAfterHold", hold.ToString("d MMMM", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")))
+                        }
+                        else
+                        {
+                            @Culture.Format("Sales.Wallet.PayoutTiming", _preview.ExpectedRunDate.ToString("d MMMM", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")))
+                        }
+                    </dd>
+                </div>
+            </dl>
+
+            @if (_preview.InvoicePreview is not null)
+            {
+                var inv = _preview.InvoicePreview;
+                <article class="sp-wallet__inv-preview">
+                    <h3>@Culture["Sales.Wallet.InvoicePreview"]</h3>
+                    <p class="sp-wallet__inv-legal">@Culture["SalesPdf.IssuedByCustomer"]</p>
+                    <p><strong>@inv.SupplierCompanyName</strong></p>
+                    <p class="muted">KvK @inv.SupplierKvk@(string.IsNullOrEmpty(inv.SupplierVat) ? "" : $" · Btw {inv.SupplierVat}")</p>
+                    <p>@Culture["Sales.Wallet.InvoiceTo"] @inv.CustomerName</p>
+                    <p class="muted">@Culture["Sales.Wallet.InvoiceNumberPending"] · @inv.PeriodLabel</p>
+                    <p>@Culture.Format("Sales.Wallet.InvoiceLines", inv.LineCount) · @SalesMoney.FormatPlain(inv.SubtotalExVat)</p>
+                    @if (inv.ConsentDate is DateOnly cd)
+                    {
+                        <p class="muted">@Culture.Format("Sales.Wallet.ConsentRef", cd.ToString("dd-MM-yyyy"), inv.ConsentVersion ?? "")</p>
+                    }
+                </article>
+            }
+
+            <aside class="sp-note">@Culture["Sales.Wallet.VatNote"]</aside>
+        }
+    </ChildContent>
+    <Footer>
+        <button type="button" class="btn-compact" @onclick="CloseDrawer">@Culture["Common.Cancel"]</button>
+        @if (_preview?.CanRequest == true)
+        {
+            <button type="button" class="login-submit" disabled="@_busy" @onclick="SubmitRequestAsync">
+                @Culture.Format("Sales.Wallet.RequestCta", SalesMoney.FormatPlain(_preview.TotalInclVat))
+            </button>
+        }
+        else if (_preview?.Blockers.Count > 0)
+        {
+            var b = _preview.Blockers[0];
+            <p class="sp-wallet__blocker">
+                @BlockerText(b)
+                @if (!string.IsNullOrEmpty(b.Href))
+                {
+                    <a href="@b.Href">@Culture["Sales.Wallet.BlockerLink"]</a>
+                }
+            </p>
+        }
+    </Footer>
+</EntDrawer>
+
+@code {
+    private IReadOnlyList<EntTabs.Tab> Tabs =>
+    [
+        new("mutaties", Culture["Sales.Wallet.Tab.Mutaties"]),
+        new("uitbetalingen", Culture["Sales.Wallet.Tab.Payouts"]),
+        new("facturen", Culture["Sales.Wallet.Tab.Invoices"])
+    ];
+
+    private SalesWalletOverviewDto? _overview;
+    private SalesWalletEntriesPageDto? _entries;
+    private IReadOnlyList<SalesPayoutListItemDto>? _payouts;
+    private IReadOnlyList<SalesInvoiceListItemDto>? _invoices;
+    private SalesPayoutPreviewDto? _preview;
+    private bool _loading = true;
+    private bool _entriesLoading;
+    private bool _previewLoading;
+    private bool _busy;
+    private bool _drawerOpen;
+    private string _tab = "mutaties";
+    private int? _periodYear;
+    private string _kind = "";
+    private string _state = "";
+    private int _page = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ParseUrl();
+        await LoadOverviewAsync();
+        await LoadTabAsync();
+        if (IsUitbetalenPath())
+        {
+            await OpenDrawerAsync();
+        }
+    }
+
+    private bool IsUitbetalenPath()
+        => Navigation.ToAbsoluteUri(Navigation.Uri).AbsolutePath
+            .TrimEnd('/')
+            .EndsWith("/uitbetalen", StringComparison.OrdinalIgnoreCase);
+
+    private void ParseUrl()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (q.TryGetValue("tab", out var tab) && !string.IsNullOrWhiteSpace(tab))
+        {
+            _tab = tab.ToString()!.ToLowerInvariant() switch
+            {
+                "uitbetalingen" => "uitbetalingen",
+                "facturen" => "facturen",
+                _ => "mutaties"
+            };
+        }
+
+        if (q.TryGetValue("period", out var period) && int.TryParse(period, out var y))
+        {
+            _periodYear = y;
+        }
+
+        if (q.TryGetValue("kind", out var kind))
+        {
+            _kind = kind.ToString() ?? "";
+        }
+
+        if (q.TryGetValue("state", out var state))
+        {
+            _state = state.ToString() ?? "";
+        }
+
+        if (q.TryGetValue("page", out var page) && int.TryParse(page, out var p) && p > 0)
+        {
+            _page = p;
+        }
+    }
+
+    private async Task LoadOverviewAsync()
+    {
+        _loading = true;
+        try
+        {
+            _overview = await Api.GetSalesWalletAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadTabAsync()
+    {
+        if (_tab == "mutaties")
+        {
+            _entriesLoading = true;
+            try
+            {
+                _entries = await Api.GetSalesWalletEntriesAsync(_periodYear, _kind, _state, _page);
+            }
+            finally
+            {
+                _entriesLoading = false;
+            }
+        }
+        else if (_tab == "uitbetalingen")
+        {
+            _payouts = await Api.GetSalesPayoutsAsync();
+        }
+        else
+        {
+            _invoices = await Api.GetSalesInvoicesAsync();
+        }
+    }
+
+    private void OpenDrawer() => _ = OpenDrawerAsync();
+
+    private async Task OpenDrawerAsync()
+    {
+        _drawerOpen = true;
+        _previewLoading = true;
+        try
+        {
+            _preview = await Api.GetSalesPayoutPreviewAsync();
+        }
+        finally
+        {
+            _previewLoading = false;
+        }
+    }
+
+    private Task OnDrawerOpenChanged(bool open)
+    {
+        _drawerOpen = open;
+        if (!open && IsUitbetalenPath())
+        {
+            Navigation.NavigateTo("/sales/wallet", replace: true);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void CloseDrawer() => _drawerOpen = false;
+
+    private async Task SubmitRequestAsync()
+    {
+        _busy = true;
+        try
+        {
+            await Api.RequestSalesPayoutAsync();
+            _drawerOpen = false;
+            Navigation.NavigateTo("/sales/wallet?tab=uitbetalingen", forceLoad: false);
+            _tab = "uitbetalingen";
+            await LoadOverviewAsync();
+            await LoadTabAsync();
+        }
+        catch (Exception ex)
+        {
+            // Surface via preview blockers refresh
+            _preview = await Api.GetSalesPayoutPreviewAsync();
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CancelPayoutAsync(Guid id)
+    {
+        _busy = true;
+        try
+        {
+            await Api.CancelSalesPayoutAsync(id);
+            await LoadOverviewAsync();
+            await LoadTabAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadInvoiceAsync(Guid id, string? number)
+    {
+        await Api.DownloadSalesInvoicePdfAsync(Js, id, number ?? id.ToString("N"));
+    }
+
+    private async Task DownloadJaaroverzichtAsync()
+    {
+        if (_overview is null) return;
+        await Api.DownloadSalesJaaroverzichtAsync(Js, _overview.LocalYear);
+    }
+
+    private async Task OnPeriodAsync(ChangeEventArgs e)
+    {
+        _periodYear = int.TryParse(e.Value?.ToString(), out var y) ? y : null;
+        _page = 1;
+        SyncUrl();
+        await LoadTabAsync();
+    }
+
+    private async Task OnKindAsync(ChangeEventArgs e)
+    {
+        _kind = e.Value?.ToString() ?? "";
+        _page = 1;
+        SyncUrl();
+        await LoadTabAsync();
+    }
+
+    private async Task OnStateAsync(ChangeEventArgs e)
+    {
+        _state = e.Value?.ToString() ?? "";
+        _page = 1;
+        SyncUrl();
+        await LoadTabAsync();
+    }
+
+    private async Task OnPageAsync(int page)
+    {
+        _page = page;
+        SyncUrl();
+        await LoadTabAsync();
+    }
+
+    private void SyncUrl()
+    {
+        var qs = new List<string>();
+        if (_tab != "mutaties") qs.Add($"tab={_tab}");
+        if (_periodYear is int y) qs.Add($"period={y}");
+        if (!string.IsNullOrEmpty(_kind)) qs.Add($"kind={Uri.EscapeDataString(_kind)}");
+        if (!string.IsNullOrEmpty(_state)) qs.Add($"state={Uri.EscapeDataString(_state)}");
+        if (_page > 1) qs.Add($"page={_page}");
+        var url = qs.Count == 0 ? "/sales/wallet" : "/sales/wallet?" + string.Join('&', qs);
+        Navigation.NavigateTo(url, replace: true);
+    }
+
+    private string BlockerText(SalesPayoutBlockerDto b)
+    {
+        if (b.Code == "below_minimum")
+        {
+            return Culture.Format(
+                b.MessageKey,
+                SalesMoney.FormatPlain(_overview?.PayoutMinimumEuro ?? 50m),
+                b.MessageArg ?? SalesMoney.FormatPlain(0m));
+        }
+
+        return Culture[b.MessageKey];
+    }
+
+    private static string Last4(string? masked)
+    {
+        if (string.IsNullOrWhiteSpace(masked) || masked == "—") return "····";
+        var digits = new string(masked.Where(char.IsLetterOrDigit).ToArray());
+        return digits.Length >= 4 ? digits[^4..] : digits;
+    }
+}
