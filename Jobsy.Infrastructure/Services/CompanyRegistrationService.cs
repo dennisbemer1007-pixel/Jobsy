@@ -37,6 +37,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     private readonly IRegistrationReferralResolver _referralResolver;
     private readonly IGeocodingService? _geocoder;
     private readonly ILenderRegistrationCheck? _lenderRegistration;
+    private readonly IOneTimeLinkService _links;
     private readonly ILogger<CompanyRegistrationService> _logger;
 
     public CompanyRegistrationService(
@@ -111,6 +112,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             ?? new DefaultRegistrationReferralResolver(db, partnerAffiliates);
         _geocoder = geocoder;
         _lenderRegistration = lenderRegistration;
+        _links = new OneTimeLinkService(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<OneTimeLinkService>.Instance);
         _logger = logger;
     }
 
@@ -550,8 +552,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             return await CompleteClaimAsync(registration, existingCompany, cancellationToken);
         }
 
-        var passwordHash = ResolvePasswordHash(registration, out var temporaryPassword);
-        var usedChosenPassword = temporaryPassword is null;
+        var passwordHash = ResolvePasswordHash(registration, out var needsSetPassword);
+        var usedChosenPassword = !needsSetPassword;
         var (user, orgId, branchId) = await ProvisionCompaniesAndUserAsync(
             registration, passwordHash, cancellationToken);
 
@@ -599,7 +601,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 cancellationToken);
         }
 
-        await SendActivatedCredentialsEmailAsync(registration, temporaryPassword, cancellationToken);
+        await SendActivatedCredentialsEmailAsync(registration, user.Id, needsSetPassword, cancellationToken);
 
         _logger.LogInformation(
             "Activated registration {Id} for {Email}",
@@ -607,7 +609,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             EmailServiceStub.RedactEmail(registration.ContactEmail));
 
         return await BuildActivationResultAsync(
-            registration, temporaryPassword ?? string.Empty, usedChosenPassword, welcomeGranted, cancellationToken);
+            registration, usedChosenPassword, welcomeGranted, cancellationToken);
     }
 
     /// <summary>
@@ -789,7 +791,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         var target = takeover.TargetCompany;
-        var passwordHash = ResolvePasswordHash(registration, out var temporaryPassword);
+        var passwordHash = ResolvePasswordHash(registration, out var needsSetPassword);
 
         Guid? orgId;
         Guid branchId = target.Id;
@@ -949,12 +951,15 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         var features = await _features.GetAsync(cancellationToken);
+        string? setPasswordUrl = needsSetPassword
+            ? await CreateSetPasswordUrlAsync(user.Id, registration.ContactEmail, cancellationToken)
+            : null;
         var approved = TransactionalEmails.TakeoverApproved(
             features.PublicWebBaseUrl,
             registration.ContactName,
             target.Name,
             registration.ContactEmail,
-            temporaryPassword,
+            setPasswordUrl,
             orgId is not null);
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
@@ -1025,7 +1030,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
     private async Task<(User User, Guid? OrgId, Guid BranchId)> ProvisionCompaniesAndUserAsync(
         CompanyRegistration registration,
-        string passwordHash,
+        string? passwordHash,
         CancellationToken cancellationToken)
     {
         Guid? orgId = null;
@@ -1245,7 +1250,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         CompanyRegistration registration,
         UserRole role,
         Guid primaryCompanyId,
-        string passwordHash,
+        string? passwordHash,
         CancellationToken cancellationToken)
     {
         var email = registration.ContactEmail.Trim().ToLowerInvariant();
@@ -1268,13 +1273,16 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         };
         _db.Users.Add(user);
 
-        _db.LocalAuthCredentials.Add(new LocalAuthCredential
+        if (!string.IsNullOrWhiteSpace(passwordHash))
         {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            Email = email,
-            PasswordHash = passwordHash
-        });
+            _db.LocalAuthCredentials.Add(new LocalAuthCredential
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Email = email,
+                PasswordHash = passwordHash
+            });
+        }
 
         return user;
     }
@@ -1368,7 +1376,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
     private async Task<RegistrationActivationResult> BuildActivationResultAsync(
         CompanyRegistration registration,
-        string temporaryPassword,
         bool usedChosenPassword,
         bool welcomeTokenGranted,
         CancellationToken cancellationToken)
@@ -1401,7 +1408,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             user.Role.ToString(),
             user.CompanyId,
             companyIds,
-            temporaryPassword,
             registration.CreatedOrganizationCompanyId,
             registration.CreatedBranchCompanyId,
             usedChosenPassword,
@@ -1464,7 +1470,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             Role: string.Empty,
             CompanyId: null,
             CompanyIds: Array.Empty<Guid>(),
-            TemporaryPassword: string.Empty,
             OrganizationCompanyId: null,
             BranchCompanyId: null,
             UsedChosenPassword: true,
@@ -1516,8 +1521,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         Company existingCompany,
         CancellationToken cancellationToken)
     {
-        var passwordHash = ResolvePasswordHash(registration, out var temporaryPassword);
-        var usedChosenPassword = temporaryPassword is null;
+        var passwordHash = ResolvePasswordHash(registration, out var needsSetPassword);
+        var usedChosenPassword = !needsSetPassword;
         var role = ResolveRegistrationRole(registration);
         var orgId = existingCompany.ParentCompanyId;
         var branchId = existingCompany.Id;
@@ -1583,10 +1588,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 cancellationToken);
         }
 
-        await SendActivatedCredentialsEmailAsync(registration, temporaryPassword, cancellationToken);
+        await SendActivatedCredentialsEmailAsync(registration, user.Id, needsSetPassword, cancellationToken);
 
         return await BuildActivationResultAsync(
-            registration, temporaryPassword ?? string.Empty, usedChosenPassword, welcomeTokenGranted: false, cancellationToken);
+            registration, usedChosenPassword, welcomeTokenGranted: false, cancellationToken);
     }
 
     /// <summary>
@@ -1732,16 +1737,33 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
     private async Task SendActivatedCredentialsEmailAsync(
         CompanyRegistration registration,
-        string? temporaryPassword,
+        Guid userId,
+        bool needsSetPassword,
         CancellationToken cancellationToken)
     {
         var features = await _features.GetAsync(cancellationToken);
+        string? setPasswordUrl = null;
+        if (needsSetPassword)
+        {
+            var created = await _links.CreateAsync(
+                OneTimeLinkPurpose.SetPassword,
+                userId,
+                companyId: null,
+                registration.ContactEmail.Trim().ToLowerInvariant(),
+                OneTimeLinkRules.SetPasswordLifetime,
+                createdByUserId: null,
+                cancellationToken);
+            setPasswordUrl = EmailLayout.Absolute(
+                features.PublicWebBaseUrl,
+                $"/account/wachtwoord-instellen?t={Uri.EscapeDataString(created.Token)}");
+        }
+
         var credentials = TransactionalEmails.RegistrationCredentials(
             features.PublicWebBaseUrl,
             registration.ContactName,
             registration.EstablishmentName,
             registration.ContactEmail,
-            temporaryPassword);
+            setPasswordUrl);
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
             credentials.Subject,
@@ -1749,20 +1771,42 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             credentials.Category), cancellationToken);
     }
 
+    private async Task<string?> CreateSetPasswordUrlAsync(
+        Guid userId,
+        string email,
+        CancellationToken cancellationToken)
+    {
+        var created = await _links.CreateAsync(
+            OneTimeLinkPurpose.SetPassword,
+            userId,
+            companyId: null,
+            email.Trim().ToLowerInvariant(),
+            OneTimeLinkRules.SetPasswordLifetime,
+            createdByUserId: null,
+            cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        return EmailLayout.Absolute(
+            features.PublicWebBaseUrl,
+            $"/account/wachtwoord-instellen?t={Uri.EscapeDataString(created.Token)}");
+    }
+
     /// <summary>
     /// Uses the password hash stored at submit when present; otherwise generates a temporary password
     /// (legacy / takeover edge cases). Returns the hash and optional plaintext for e-mail only.
     /// </summary>
-    private static string ResolvePasswordHash(CompanyRegistration registration, out string? temporaryPassword)
+    /// <summary>
+    /// Returns the password hash chosen at submit, or null when the user must set a password via link.
+    /// </summary>
+    private static string? ResolvePasswordHash(CompanyRegistration registration, out bool needsSetPassword)
     {
         if (!string.IsNullOrWhiteSpace(registration.PasswordHash))
         {
-            temporaryPassword = null;
+            needsSetPassword = false;
             return registration.PasswordHash;
         }
 
-        temporaryPassword = GenerateTemporaryPassword();
-        return JobsyPasswordHasher.Hash(temporaryPassword);
+        needsSetPassword = true;
+        return null;
     }
 
     /// <summary>
@@ -1867,9 +1911,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         await _db.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("Deleted unconfirmed registration {Id}", registrationId);
     }
-
-    private static string GenerateTemporaryPassword()
-        => "J!" + Convert.ToHexString(RandomNumberGenerator.GetBytes(8));
 
     private static string BuildActivationUrl(string token, string publicWebBaseUrl)
         => $"{publicWebBaseUrl.TrimEnd('/')}/register/activate?token={Uri.EscapeDataString(token)}";

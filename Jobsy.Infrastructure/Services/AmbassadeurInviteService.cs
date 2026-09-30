@@ -1,11 +1,10 @@
-using System.Security.Cryptography;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
-using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -15,15 +14,21 @@ public sealed class AmbassadeurInviteService : IAmbassadeurInviteService
 {
     private readonly JobsyDbContext _db;
     private readonly IEmailService _email;
+    private readonly IOneTimeLinkService _links;
+    private readonly IPlatformFeatureService _features;
     private readonly ILogger<AmbassadeurInviteService> _logger;
 
     public AmbassadeurInviteService(
         JobsyDbContext db,
         IEmailService email,
+        IOneTimeLinkService links,
+        IPlatformFeatureService features,
         ILogger<AmbassadeurInviteService> logger)
     {
         _db = db;
         _email = email;
+        _links = links;
+        _features = features;
         _logger = logger;
     }
 
@@ -43,7 +48,6 @@ public sealed class AmbassadeurInviteService : IAmbassadeurInviteService
         var existing = await _db.Users
             .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
 
-        string temporaryPassword;
         User user;
         bool createdNew;
 
@@ -59,34 +63,13 @@ public sealed class AmbassadeurInviteService : IAmbassadeurInviteService
             existing.Role = UserRole.Ambassadeur;
             existing.IsActive = true;
             existing.CompanyId = null;
-            // Role elevation collects commercial NAW/KvK/IBAN — require fresh terms acceptance.
             existing.TermsAcceptedAt = null;
             existing.ConsentVersion = null;
             user = existing;
             createdNew = false;
-
-            temporaryPassword = GenerateTemporaryPassword();
-            var credential = await _db.LocalAuthCredentials
-                .FirstOrDefaultAsync(c => c.UserId == user.Id, cancellationToken);
-            if (credential is null)
-            {
-                _db.LocalAuthCredentials.Add(new LocalAuthCredential
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = user.Id,
-                    Email = normalizedEmail,
-                    PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword)
-                });
-            }
-            else
-            {
-                credential.Email = normalizedEmail;
-                credential.PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword);
-            }
         }
         else
         {
-            temporaryPassword = GenerateTemporaryPassword();
             user = new User
             {
                 Id = Guid.NewGuid(),
@@ -97,13 +80,6 @@ public sealed class AmbassadeurInviteService : IAmbassadeurInviteService
                 IsActive = true
             };
             _db.Users.Add(user);
-            _db.LocalAuthCredentials.Add(new LocalAuthCredential
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                Email = normalizedEmail,
-                PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword)
-            });
             createdNew = true;
         }
 
@@ -137,8 +113,10 @@ public sealed class AmbassadeurInviteService : IAmbassadeurInviteService
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        var setPasswordUrl = await ResolveSetPasswordUrlAsync(user, normalizedEmail, cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
         var invite = TransactionalEmails.AmbassadeurInvite(
-            baseUrl: null, name, normalizedEmail, temporaryPassword);
+            features.PublicWebBaseUrl, name, normalizedEmail, setPasswordUrl);
         await _email.SendAsync(new EmailMessage(
             normalizedEmail,
             invite.Subject,
@@ -154,19 +132,34 @@ public sealed class AmbassadeurInviteService : IAmbassadeurInviteService
             user.Id,
             normalizedEmail,
             name,
-            temporaryPassword,
             createdNew);
     }
 
-    private static string GenerateTemporaryPassword()
+    private async Task<string?> ResolveSetPasswordUrlAsync(
+        User user,
+        string normalizedEmail,
+        CancellationToken cancellationToken)
     {
-        const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#";
-        Span<char> chars = stackalloc char[12];
-        for (var i = 0; i < chars.Length; i++)
+        var hasCredential = await _db.LocalAuthCredentials
+            .AnyAsync(c => c.UserId == user.Id, cancellationToken);
+        var hasExternal = await _db.UserExternalLogins
+            .AnyAsync(l => l.UserId == user.Id, cancellationToken);
+        if (hasCredential || hasExternal)
         {
-            chars[i] = alphabet[RandomNumberGenerator.GetInt32(alphabet.Length)];
+            return null;
         }
 
-        return new string(chars);
+        var created = await _links.CreateAsync(
+            OneTimeLinkPurpose.SetPassword,
+            user.Id,
+            companyId: null,
+            normalizedEmail,
+            OneTimeLinkRules.SetPasswordLifetime,
+            createdByUserId: null,
+            cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        return EmailLayout.Absolute(
+            features.PublicWebBaseUrl,
+            $"/account/wachtwoord-instellen?t={Uri.EscapeDataString(created.Token)}");
     }
 }

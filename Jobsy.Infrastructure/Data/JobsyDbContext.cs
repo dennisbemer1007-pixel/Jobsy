@@ -69,6 +69,7 @@ public class JobsyDbContext : DbContext
     public DbSet<UserDeviceSession> UserDeviceSessions => Set<UserDeviceSession>();
     public DbSet<DeviceLoginHandoff> DeviceLoginHandoffs => Set<DeviceLoginHandoff>();
     public DbSet<CandidateActionToken> CandidateActionTokens => Set<CandidateActionToken>();
+    public DbSet<OneTimeLink> OneTimeLinks => Set<OneTimeLink>();
     public DbSet<MinimumWageRate> MinimumWageRates => Set<MinimumWageRate>();
     public DbSet<VacancyClick> VacancyClicks => Set<VacancyClick>();
     public DbSet<VacancyLike> VacancyLikes => Set<VacancyLike>();
@@ -1124,6 +1125,25 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OneTimeLink>(entity =>
+        {
+            entity.ToTable("OneTimeLinks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Purpose).HasConversion<int>();
+            entity.Property(e => e.TokenHash).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(254).IsRequired();
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => new { e.Purpose, e.UserId, e.UsedAtUtc });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

@@ -225,6 +225,7 @@ public static class DependencyInjection
         services.AddScoped<ISalaryService, SalaryService>();
         services.AddScoped<ICompanyAuthorizationService, CompanyAuthorizationService>();
         services.AddScoped<ICompanyApiKeyService, CompanyApiKeyService>();
+        services.AddScoped<IOneTimeLinkService, OneTimeLinkService>();
         services.AddScoped<IUserLookupService, UserLookupService>();
         services.AddScoped<ITokenLedgerService, TokenLedgerService>();
         services.AddScoped<ITokenPurchaseInvoiceService, TokenPurchaseInvoiceService>();

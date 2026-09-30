@@ -1,3 +1,4 @@
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
@@ -13,17 +14,87 @@ namespace Jobsy.Api.Controllers;
 public sealed class ParentalConsentController : ControllerBase
 {
     private readonly JobsyDbContext _db;
+    private readonly IPlatformFeatureService _features;
 
-    public ParentalConsentController(JobsyDbContext db) => _db = db;
+    public ParentalConsentController(JobsyDbContext db, IPlatformFeatureService features)
+    {
+        _db = db;
+        _features = features;
+    }
 
+    public sealed record ParentalConsentPreviewResponse(
+        bool Valid,
+        string? ChildFirstName = null,
+        DateTime? ExpiresAtUtc = null);
+
+    public sealed record ParentalConsentConfirmRequest(string? Token);
+
+    public sealed record ParentalConsentConfirmResponse(bool Ok, string? ChildFirstName = null);
+
+    [AllowAnonymous]
+    [HttpGet("preview")]
+    [EnableRateLimiting("otp-verify")]
+    public async Task<ActionResult<ParentalConsentPreviewResponse>> Preview(
+        [FromQuery] string? token,
+        CancellationToken cancellationToken)
+    {
+        var user = await FindValidUserAsync(token, cancellationToken);
+        if (user is null)
+        {
+            return Ok(new ParentalConsentPreviewResponse(Valid: false));
+        }
+
+        return Ok(new ParentalConsentPreviewResponse(
+            Valid: true,
+            ChildFirstName: FirstNameOrNull(user.FirstName),
+            ExpiresAtUtc: user.ParentalConsentTokenExpiresAt));
+    }
+
+    [AllowAnonymous]
+    [HttpPost("confirm")]
+    [EnableRateLimiting("otp-verify")]
+    public async Task<ActionResult<ParentalConsentConfirmResponse>> ConfirmPost(
+        [FromBody] ParentalConsentConfirmRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await FindValidUserAsync(request.Token, cancellationToken);
+        if (user is null)
+        {
+            return BadRequest(new { message = "invalid_or_expired" });
+        }
+
+        var now = DateTime.UtcNow;
+        user.ParentalConsentAt = now;
+        user.ParentalConsentTokenHash = null;
+        user.ParentalConsentTokenExpiresAt = null;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(new ParentalConsentConfirmResponse(Ok: true, ChildFirstName: FirstNameOrNull(user.FirstName)));
+    }
+
+    /// <summary>
+    /// Legacy GET links redirect to the website page. Never writes to the database.
+    /// </summary>
     [AllowAnonymous]
     [HttpGet("confirm")]
     [EnableRateLimiting("otp-verify")]
-    public async Task<ContentResult> Confirm([FromQuery] string? token, CancellationToken cancellationToken)
+    public async Task<IActionResult> ConfirmGet(
+        [FromQuery] string? token,
+        CancellationToken cancellationToken)
+    {
+        var features = await _features.GetAsync(cancellationToken);
+        var baseUrl = (features.PublicWebBaseUrl ?? "https://lobsy.nl").TrimEnd('/');
+        var target = string.IsNullOrWhiteSpace(token)
+            ? $"{baseUrl}/toestemming"
+            : $"{baseUrl}/toestemming?t={Uri.EscapeDataString(token.Trim())}";
+        return Redirect(target);
+    }
+
+    private async Task<Core.Entities.User?> FindValidUserAsync(string? token, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(token))
         {
-            return Page("Deze link is ongeldig.");
+            return null;
         }
 
         var now = DateTime.UtcNow;
@@ -35,20 +106,12 @@ public sealed class ParentalConsentController : ControllerBase
             cancellationToken);
         if (user is null || !CandidateConsentRules.RequiresParentalConsent(user))
         {
-            return Page("Deze link is ongeldig of verlopen.");
+            return null;
         }
 
-        user.ParentalConsentAt = now;
-        user.ParentalConsentTokenHash = null;
-        user.ParentalConsentTokenExpiresAt = null;
-        await _db.SaveChangesAsync(cancellationToken);
-        return Page("Dank je. De toestemming is bevestigd. Het kind kan Lobsy nu gebruiken.");
+        return user;
     }
 
-    private static ContentResult Page(string message)
-        => new()
-        {
-            ContentType = "text/html; charset=utf-8",
-            Content = $"<!doctype html><html lang=\"nl\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Lobsy toestemming</title></head><body><main><h1>Toestemming</h1><p>{System.Net.WebUtility.HtmlEncode(message)}</p></main></body></html>"
-        };
+    private static string? FirstNameOrNull(string? firstName)
+        => string.IsNullOrWhiteSpace(firstName) ? null : firstName.Trim();
 }

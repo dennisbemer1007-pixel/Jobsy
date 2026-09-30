@@ -34,7 +34,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (239 routes)
+## Table (225 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -45,6 +45,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/account/mfa` | `Pages/Account/MfaPrompt.razor` | anonymous |
 | `/account/mfa/recovery-codes` | `Pages/Account/MfaRecoveryCodes.razor` | anonymous |
 | `/account/mfa/setup` | `Pages/Account/MfaSetup.razor` | anonymous |
+| `/account/wachtwoord-instellen` | `Pages/Account/SetPassword.razor` | anonymous |
 | `/admin` | `Pages/Admin/AdminDashboard.razor` | Admin |
 | `/admin/about` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/ambassadeurs` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
@@ -90,6 +91,9 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/personal-data-access-log` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/sales` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/sales-managers` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
+| `/admin/scholen` | `Pages/Admin/Scholen/ScholenList.razor` | Admin |
+| `/admin/scholen/rapportage` | `Pages/Admin/Scholen/ScholenRapportage.razor` | Admin |
+| `/admin/scholen/{SchoolId:guid}` | `Pages/Admin/Scholen/ScholenDetail.razor` | Admin |
 | `/admin/settings` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/te-doen` | `Pages/Admin/TodoAdmin.razor` | Admin |
 | `/admin/token-finance` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
@@ -103,9 +107,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/vacatures/categorieen` | `Pages/Admin/CategorieenSalarisPage.razor` | Admin |
 | `/admin/vacatures/moderatie` | `Pages/Admin/VacanciesModerationPage.razor` | Admin |
 | `/admin/wages` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
-| `/admin/scholen` | `Pages/Admin/Scholen/ScholenList.razor` | Admin |
-| `/admin/scholen/rapportage` | `Pages/Admin/Scholen/ScholenRapportage.razor` | Admin |
-| `/admin/scholen/{SchoolId:guid}` | `Pages/Admin/Scholen/ScholenDetail.razor` | Admin |
+| `/admin/werkgeververificatie` | `Pages/Admin/WerkgeverVerificatieAdmin.razor` | Admin |
 | `/algemene-voorwaarden` | `Pages/Legal/AlgemeneVoorwaarden.razor` | anonymous |
 | `/ambassadeur` | `Pages/Ambassadeur/Dashboard.razor` | Ambassadeur |
 | `/ambassadeur/finance` | `Pages/Ambassadeur/Finance.razor` | Ambassadeur |
@@ -168,6 +170,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/home/metrics/{Key}` | `Pages/MetricDrilldownPage.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/intermediary` | `Pages/Intermediary/IntermediaryDashboard.razor` | Intermediary |
 | `/intermediary/team` | `Pages/Intermediary/Team.razor` | Intermediary |
+| `/koppeling/sleutel` | `Pages/Public/ApiKeyReveal.razor` | anonymous |
 | `/lancering` | `Pages/WestlandTeaser.razor` | anonymous |
 | `/leerling` | `Pages/Leerling/LeerlingLogin.razor` | anonymous |
 | `/leerling/dit-ben-jij` | `Pages/Leerling/LeerlingDitBenJij.razor` | authenticated |
@@ -202,21 +205,6 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/register/toegang` | `Pages/RegisterToegang.razor` | anonymous |
 | `/register/verifieren` | `Pages/RegisterVerifieren.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |
 | `/register/verifieren/brief` | `Pages/RegisterVerifierenBrief.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |
-| `/salesmanager` | `Pages/SalesManager/Dashboard.razor` | SalesManager |
-| `/salesmanager/invoices` | `Pages/SalesManager/Invoices.razor` | SalesManager |
-| `/salesmanager/onboarding` | `Pages/SalesManager/Onboarding.razor` | SalesManager |
-| `/salesmanager/payout-checkout` | `Pages/SalesManager/PayoutCheckoutStub.razor` | SalesManager |
-| `/salesmanager/referrals` | `Pages/SalesManager/Referrals.razor` | SalesManager |
-| `/salesmanager/toolkit` | `Pages/SalesManager/SalesToolkit.razor` | SalesManager |
-| `/school` | `Pages/School/SchoolDashboard.razor` | SchoolAdmin |
-| `/school/gegevens` | `Pages/School/SchoolDetails.razor` | SchoolAdmin |
-| `/school/klassen` | `Pages/School/SchoolClasses.razor` | SchoolAdmin |
-| `/school/klassen/{ClassId:guid}` | `Pages/School/SchoolClassDetail.razor` | SchoolAdmin |
-| `/school/leraren` | `Pages/School/SchoolTeachers.razor` | SchoolAdmin |
-| `/school/materiaal` | `Pages/School/SchoolMaterials.razor` | SchoolAdmin |
-| `/school/privacy` | `Pages/School/SchoolPrivacy.razor` | SchoolAdmin |
-| `/school/resultaten` | `Pages/School/SchoolResults.razor` | SchoolAdmin |
-| `/school/te-doen` | `Pages/School/SchoolTodos.razor` | SchoolAdmin |
 | `/sales` | `Pages/Sales/Dashboard.razor` | SalesManager |
 | `/sales/aanbevelen` | `Pages/Sales/Recommend.razor` | SalesManager |
 | `/sales/aanbevelen/bezwaar` | `Pages/Sales/RecommendObject.razor` | anonymous |
@@ -228,6 +216,22 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/sales/wallet` | `Pages/Sales/Wallet.razor` | SalesManager |
 | `/sales/wallet/uitbetalen` | `Pages/Sales/Wallet.razor` | SalesManager |
 | `/sales/werkgevers` | `Pages/Sales/Employers.razor` | SalesManager |
+| `/salesmanager` | `Pages/Sales/LegacySalesmanagerRedirect.razor` | SalesManager |
+| `/salesmanager/invoices` | `Pages/Sales/LegacyInvoicesRedirect.razor` | SalesManager |
+| `/salesmanager/onboarding` | `Pages/Sales/LegacyOnboardingRedirect.razor` | SalesManager |
+| `/salesmanager/payout-checkout` | `Pages/Sales/LegacyPayoutRedirect.razor` | SalesManager |
+| `/salesmanager/referrals` | `Pages/Sales/LegacyReferralsRedirect.razor` | SalesManager |
+| `/salesmanager/toolkit` | `Pages/Sales/LegacyToolkitRedirect.razor` | SalesManager |
+| `/school` | `Pages/School/SchoolDashboard.razor` | SchoolAdmin |
+| `/school/gegevens` | `Pages/School/SchoolDetails.razor` | SchoolAdmin |
+| `/school/klassen` | `Pages/School/SchoolClasses.razor` | SchoolAdmin |
+| `/school/klassen/{ClassId:guid}` | `Pages/School/SchoolClassDetail.razor` | SchoolAdmin |
+| `/school/leraren` | `Pages/School/SchoolTeachers.razor` | SchoolAdmin |
+| `/school/materiaal` | `Pages/School/SchoolMaterials.razor` | SchoolAdmin |
+| `/school/privacy` | `Pages/School/SchoolPrivacy.razor` | SchoolAdmin |
+| `/school/resultaten` | `Pages/School/SchoolResults.razor` | SchoolAdmin |
+| `/school/te-doen` | `Pages/School/SchoolTodos.razor` | SchoolAdmin |
+| `/toestemming` | `Pages/Public/ParentalConsent.razor` | anonymous |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |
@@ -240,7 +244,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werkgever/organisatie/salaristabellen/{TableId:guid}` | `Pages/Werkgever/SalaryTables.razor` | BranchManager, EnterpriseManager, Admin |
 | `/werkgever/organisatie/team` | `Pages/Werkgever/Users.razor` | EnterpriseManager, Admin |
 | `/werkgever/organisatie/vestigingen` | `Pages/Werkgever/BranchesRegions.razor` | RegionalManager, EnterpriseManager, Admin |
-| `/werkgever/overnames` | `Pages/Werkgever/Takeovers.razor` | BranchManager, EnterpriseManager, Admin |
+| `/werkgever/overnames` | `Pages/Werkgever/Takeovers.razor` | BranchManager, RegionalManager, EnterpriseManager, Admin |
 | `/werkgever/partner` | `Pages/Werkgever/PartnerSales.razor` | EnterpriseManager, Intermediary |
 | `/werkgever/partner/uitbetalen` | `Pages/Werkgever/PartnerSalesPayoutCheckoutStub.razor` | EnterpriseManager, Intermediary |
 | `/werkgever/sollicitaties` | `Pages/Werkgever/Applicants.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
@@ -259,6 +263,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/wie-zijn-wij` | `Pages/Legal/WieZijnWij.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
+
 
 ## Werkgever legacy redirects (D2)
 
@@ -318,3 +323,7 @@ Not Blazor `@page` routes — documented here for discoverability (landing stack
 - Employer viewed hook: `POST api/applications/{id}/viewed` (07) records at most one `EmployerViewed` timeline event.
 - Werkgevers gating (paspoort 01): when `PlatformFeature.Employers` lands, candidate job pages/APIs return the feature gate / `404 feature_disabled`. Until then KB-FALLBACK(C) comments mark the intended sites.
 - Map route constant: `KbRoutes.Map` (`/banenkaart`).
+
+## Notes
+
+- **Admin redesign 06.4 must host `PayoutRunsSection` in a tab Rondes** on `/admin/financien/uitbetalingen` and keep mark-paid closing payout requests. Until then the fallback is `/admin/sales-managers?tab=uitbetalingen`.

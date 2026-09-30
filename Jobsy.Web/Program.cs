@@ -274,6 +274,7 @@ app.UseLandingRedirect();
 app.UseMiddleware<Jobsy.Web.Middleware.WerkgeverLegacyRedirectMiddleware>();
 
 app.MapJobsyAuthEndpoints();
+app.MapPublicTokenEndpoints();
 app.MapPupilAuthEndpoints();
 app.MapLanguageEndpoints();
 app.MapCookieConsentEndpoints();

@@ -74,7 +74,7 @@ public class CompanyApiKeyServiceTests
     }
 
     [Fact]
-    public async Task EmailCredentials_sends_before_persisting_and_rotates()
+    public async Task EmailCredentials_sends_reveal_link_without_rotating_yet()
     {
         await using var db = CreateDb();
         var companyId = await SeedCompanyAsync(db);
@@ -87,13 +87,14 @@ public class CompanyApiKeyServiceTests
         Assert.True(result.Sent);
         Assert.Equal("manager@example.com", result.RecipientEmail);
         Assert.Single(email.Messages);
-        Assert.Contains("lobsy_", email.Messages[0].BodyHtml);
-        Assert.Contains("https://api.example.test/api/external/vacancies", email.Messages[0].BodyHtml);
-        Assert.Contains("https://api.example.test/swagger", email.Messages[0].BodyHtml);
+        Assert.Contains("/koppeling/sleutel?t=", email.Messages[0].BodyHtml);
         Assert.DoesNotContain(first.PlaintextKey, email.Messages[0].BodyHtml);
+        Assert.DoesNotContain(first.KeyPrefix, email.Messages[0].BodyHtml);
+        Assert.Contains("https://api.example.test/api/external/vacancies", email.Messages[0].BodyHtml);
         Assert.Equal(1, await db.ApiKeys.CountAsync(k => k.IsActive));
-        Assert.Equal(2, await db.ApiKeys.CountAsync());
-        Assert.Null(await sut.FindActiveByPlaintextAsync(first.PlaintextKey));
+        Assert.Equal(1, await db.ApiKeys.CountAsync());
+        Assert.NotNull(await sut.FindActiveByPlaintextAsync(first.PlaintextKey));
+        Assert.Equal(1, await db.OneTimeLinks.CountAsync(l => l.CompanyId == companyId && l.UsedAtUtc == null));
     }
 
     [Fact]
@@ -177,6 +178,8 @@ public class CompanyApiKeyServiceTests
             db,
             email ?? new RecordingEmailService(),
             new FixedConfig("PublicApiBaseUrl", "https://api.example.test"),
+            new OneTimeLinkService(db, NullLogger<OneTimeLinkService>.Instance),
+            new AlwaysOnFeatures(),
             NullLogger<CompanyApiKeyService>.Instance);
 
     private sealed class FixedConfig : Microsoft.Extensions.Configuration.IConfiguration

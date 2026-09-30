@@ -1,3 +1,4 @@
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -233,11 +234,14 @@ public sealed class SupportAccessService : ISupportAccessService
 
             foreach (var to in otherAdmins)
             {
+                var mail = TransactionalEmails.SupportAccessRequested(
+                    features.PublicWebBaseUrl,
+                    EmailServiceStub.RedactEmail(adminEmail),
+                    grant.Reason,
+                    grant.ExpiresAt,
+                    grant.Scope.ToString());
                 await _email.SendAsync(
-                    new EmailMessage(
-                        to,
-                        "Lobsy: tijdelijke support-toegang aangevraagd",
-                        $"Admin {adminEmail} vroeg support-toegang aan tot {grant.ExpiresAt:u}. Reden: {grant.Reason}"),
+                    new EmailMessage(to, mail.Subject, mail.Html, mail.Category),
                     cancellationToken);
             }
         }

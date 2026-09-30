@@ -309,6 +309,7 @@ public class AccessRequest07Tests
             email,
             new UserNotificationService(db),
             CreateFeatures(db),
+            new OneTimeLinkService(db, NullLogger<OneTimeLinkService>.Instance),
             NullLogger<CompanyAccessRequestService>.Instance);
 
     private static PlatformFeatureService CreateFeatures(JobsyDbContext db)

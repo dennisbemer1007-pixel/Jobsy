@@ -24,6 +24,7 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
     private readonly IEmailService _email;
     private readonly IUserNotificationService _notifications;
     private readonly IPlatformFeatureService _features;
+    private readonly IOneTimeLinkService _links;
     private readonly ILogger<CompanyAccessRequestService> _logger;
 
     public CompanyAccessRequestService(
@@ -31,12 +32,14 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
         IEmailService email,
         IUserNotificationService notifications,
         IPlatformFeatureService features,
+        IOneTimeLinkService links,
         ILogger<CompanyAccessRequestService> logger)
     {
         _db = db;
         _email = email;
         _notifications = notifications;
         _features = features;
+        _links = links;
         _logger = logger;
     }
 
@@ -659,36 +662,33 @@ public sealed class CompanyAccessRequestService : ICompanyAccessRequestService
             }
         }
 
-        var temporaryPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(12))
-            .Replace("+", "A", StringComparison.Ordinal)
-            .Replace("/", "B", StringComparison.Ordinal)[..12] + "!1a";
-        var credential = await _db.LocalAuthCredentials
-            .FirstOrDefaultAsync(c => c.UserId == user.Id, cancellationToken);
-        if (credential is null)
-        {
-            _db.LocalAuthCredentials.Add(new LocalAuthCredential
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                Email = email,
-                PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword)
-            });
-        }
-        else
-        {
-            credential.Email = email;
-            credential.PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword);
-        }
-
         await _db.SaveChangesAsync(cancellationToken);
 
         var features = await _features.GetAsync(cancellationToken);
+        string? setPasswordUrl = null;
+        var hasCredential = await _db.LocalAuthCredentials.AnyAsync(c => c.UserId == user.Id, cancellationToken);
+        var hasExternal = await _db.UserExternalLogins.AnyAsync(l => l.UserId == user.Id, cancellationToken);
+        if (!hasCredential && !hasExternal)
+        {
+            var created = await _links.CreateAsync(
+                OneTimeLinkPurpose.SetPassword,
+                user.Id,
+                companyId: null,
+                email,
+                OneTimeLinkRules.SetPasswordLifetime,
+                createdByUserId: null,
+                cancellationToken);
+            setPasswordUrl = EmailLayout.Absolute(
+                features.PublicWebBaseUrl,
+                $"/account/wachtwoord-instellen?t={Uri.EscapeDataString(created.Token)}");
+        }
+
         var invite = TransactionalEmails.UserInvite(
             features.PublicWebBaseUrl,
             user.FullName,
             RoleLabel(role),
             user.Email,
-            temporaryPassword,
+            setPasswordUrl,
             promotedFromCandidate: false);
         await _email.SendAsync(
             new EmailMessage(user.Email, invite.Subject, invite.Html, invite.Category),

@@ -59,7 +59,6 @@ public sealed record SalesManagerApplicationDto(
     DateTime? ReviewedAtUtc,
     Guid? ProvisionedUserId,
     string? RejectionReason,
-    string? TemporaryPassword,
     DateTime? SubjectNotifiedAtUtc = null,
     DateTime? SubjectObjectedAtUtc = null,
     DateTime? PersonalDataClearedAtUtc = null,

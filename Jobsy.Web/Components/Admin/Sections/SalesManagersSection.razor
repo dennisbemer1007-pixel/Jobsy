@@ -255,9 +255,7 @@
             var result = await Api.ApproveSalesManagerApplicationAsync(applicationId);
             _applicationResult = result is null
                 ? "Goedgekeurd."
-                : string.IsNullOrEmpty(result.TemporaryPassword)
-                    ? $"Goedgekeurd: {result.CandidateEmail}. Account is aangemaakt (wachtwoord via e-mail-stub)."
-                    : $"Goedgekeurd: {result.CandidateEmail}. Tijdelijk wachtwoord (Development): {result.TemporaryPassword}";
+                : $"Uitnodiging gemaild naar {result.CandidateEmail}.";
             await ReloadListAsync();
         }
         catch (Exception ex)
@@ -301,9 +299,7 @@
             var result = await Api.InviteSalesManagerAsync(_inviteEmail.Trim(), _inviteName.Trim());
             _inviteResult = result is null
                 ? "Uitgenodigd."
-                : string.IsNullOrEmpty(result.TemporaryPassword)
-                    ? $"Uitgenodigd: {result.Email}. Tijdelijk wachtwoord is naar de e-mail-stub gestuurd."
-                    : $"Uitgenodigd: {result.Email}. Tijdelijk wachtwoord (alleen Development): {result.TemporaryPassword}";
+                : $"Uitnodiging gemaild naar {result.Email}.";
             _inviteEmail = "";
             _inviteName = "";
             await ReloadListAsync();

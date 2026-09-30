@@ -8,7 +8,6 @@ public sealed class SalesManagerInviteResult
     public Guid UserId { get; set; }
     public string Email { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
-    public string? TemporaryPassword { get; set; }
     public bool CreatedNewUser { get; set; }
 }
 
@@ -48,7 +47,6 @@ public sealed class AmbassadeurInviteResult
     public Guid UserId { get; set; }
     public string Email { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
-    public string TemporaryPassword { get; set; } = string.Empty;
     public bool CreatedNew { get; set; }
 }
 
@@ -157,7 +155,6 @@ public sealed class SalesManagerApplicationItem
     public DateTime? ReviewedAtUtc { get; set; }
     public Guid? ProvisionedUserId { get; set; }
     public string? RejectionReason { get; set; }
-    public string? TemporaryPassword { get; set; }
     public DateTime? SubjectNotifiedAtUtc { get; set; }
     public DateTime? SubjectObjectedAtUtc { get; set; }
     public DateTime? PersonalDataClearedAtUtc { get; set; }

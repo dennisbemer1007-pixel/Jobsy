@@ -212,9 +212,7 @@
             var result = await Api.InviteAmbassadeurAsync(_inviteEmail.Trim(), _inviteName.Trim());
             _message = result is null
                 ? "Uitnodiging verstuurd."
-                : $"Uitgenodigd: {result.Email}" + (string.IsNullOrWhiteSpace(result.TemporaryPassword)
-                    ? ""
-                    : $" (tijdelijk wachtwoord: {result.TemporaryPassword})");
+                : $"Uitnodiging gemaild naar {result.Email}.";
             _inviteEmail = "";
             _inviteName = "";
             await ReloadAsync();

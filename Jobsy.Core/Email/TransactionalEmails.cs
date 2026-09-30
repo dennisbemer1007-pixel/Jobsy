@@ -1,3 +1,4 @@
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Email;
@@ -23,8 +24,8 @@ public sealed record ComposedEmail(
 public static class TransactionalEmails
 {
     public const string SampleOtp = "123456";
-    public const string SamplePassword = "VoorbeeldWachtwoord12";
-    public const string SampleApiKey = "lobsy_test_xxxxxxxxxxxxxxxx";
+    public const string SampleSetPasswordPath = "/account/wachtwoord-instellen?t=voorbeeld";
+    public const string SampleRevealPath = "/koppeling/sleutel?t=voorbeeld";
 
     public static IReadOnlyList<EmailTemplateInfo> Templates { get; } =
     [
@@ -57,10 +58,10 @@ public static class TransactionalEmails
         new("TakeoverSubmitted", "Overnameverzoek ingediend", "Registratie", "Bevestiging aan de aanvrager.", "TakeoverSubmitted"),
         new("TakeoverApproved", "Overname goedgekeurd", "Registratie", "Aanvrager mag inloggen op de overgenomen vestiging.", "TakeoverApproved", RequiresEmployers: true),
         new("TakeoverRejected", "Overname afgewezen", "Registratie", "Aanvrager krijgt te horen dat het verzoek is afgewezen.", "TakeoverRejected", RequiresEmployers: true),
-        new("UserInvite", "Uitnodiging teammate", "Werkgever", "Uitnodiging als manager/intermediair met tijdelijk wachtwoord.", "UserInvite"),
-        new("SalesManagerInvite", "Uitnodiging salesmanager", "Sales", "Uitnodiging + tijdelijk wachtwoord + onboarding.", "SalesManagerInvite"),
-        new("AmbassadeurInvite", "Uitnodiging ambassadeur", "Ambassadeur", "Uitnodiging + tijdelijk wachtwoord + onboarding.", "AmbassadeurInvite"),
-        new("CompanyApiKeyCredentials", "API-credentials", "Werkgever", "Eenmalige API-key (in testmails een voorbeeldkey).", "CompanyApiKeyCredentials"),
+        new("UserInvite", "Uitnodiging teammate", "Werkgever", "Uitnodiging als manager/intermediair met wachtwoord-link.", "UserInvite"),
+        new("SalesManagerInvite", "Uitnodiging salesmanager", "Sales", "Uitnodiging + wachtwoord-link.", "SalesManagerInvite"),
+        new("AmbassadeurInvite", "Uitnodiging ambassadeur", "Ambassadeur", "Uitnodiging + wachtwoord-link.", "AmbassadeurInvite"),
+        new("CompanyApiKeyCredentials", "API-credentials", "Werkgever", "Eenmalige link om de API-sleutel op te halen.", "CompanyApiKeyCredentials"),
         new("AccountUnsubscribeVerification", "Uitschrijfcode", "Account", "OTP om uitschrijving / right-to-be-forgotten te bevestigen.", "AccountUnsubscribeVerification"),
         new("MfaResetByAdmin", "2FA gereset door support", "Account", "Authenticator ontkoppeld door Lobsy-support; opnieuw instellen bij login.", "MfaResetByAdmin"),
         new("EmailSignUpCode", "Code voor account maken", "Kandidaat", "6-cijferige code om een gratis kandidaat-account te maken.", "EmailSignUpCode"),
@@ -123,7 +124,7 @@ public static class TransactionalEmails
             "registrationactivation" => RegistrationActivation(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.EstablishmentName, ctx.RoleLabel, "5610", ctx.OtpCode),
             "registrationcredentials" => RegistrationCredentials(
-                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.EstablishmentName, ctx.ContactEmail, temporaryPassword: null),
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.EstablishmentName, ctx.ContactEmail, setPasswordUrl: ctx.SetPasswordUrl),
             "companyverificationreminder" => CompanyVerificationReminder(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, day: 7, deletionDateLabel: null),
             "companyverified" => CompanyVerified(
@@ -144,17 +145,17 @@ public static class TransactionalEmails
             "takeoversubmitted" => TakeoverSubmitted(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName),
             "takeoverapproved" => TakeoverApproved(
-                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.ContactEmail, temporaryPassword: null, hasOrganization: true),
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.ContactEmail, setPasswordUrl: ctx.SetPasswordUrl, hasOrganization: true),
             "takeoverrejected" => TakeoverRejected(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName),
             "userinvite" => UserInvite(
-                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.RoleLabel, ctx.ContactEmail, ctx.TemporaryPassword, promotedFromCandidate: false),
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.RoleLabel, ctx.ContactEmail, ctx.SetPasswordUrl, promotedFromCandidate: false),
             "salesmanagerinvite" => SalesManagerInvite(
-                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.ContactEmail, ctx.TemporaryPassword),
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.ContactEmail, setPasswordUrl: null),
             "ambassadeurinvite" => AmbassadeurInvite(
-                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.ContactEmail, ctx.TemporaryPassword),
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.ContactEmail, setPasswordUrl: null),
             "companyapikeycredentials" => CompanyApiKeyCredentials(
-                ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.ApiBaseUrl, ctx.SampleApiKey, "lobsy_test"),
+                ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.ApiBaseUrl, ctx.SampleRevealUrl, DateTime.UtcNow.AddHours(72)),
             "accountunsubscribeverification" => AccountUnsubscribeVerification(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.OtpCode, ttlMinutes: 10),
             "mfaresetbyadmin" => MfaResetByAdmin(ctx.PublicWebBaseUrl, ctx.RecipientName),
@@ -563,18 +564,22 @@ public static class TransactionalEmails
     }
 
     public static ComposedEmail RegistrationCredentials(
-        string? baseUrl, string contactName, string establishmentName, string contactEmail, string? temporaryPassword)
+        string? baseUrl, string contactName, string establishmentName, string contactEmail, string? setPasswordUrl)
     {
         var loginUrl = EmailLayout.LoginUrl(baseUrl);
-        var passwordBlock = temporaryPassword is null
+        var expiresNote = setPasswordUrl is null
+            ? ""
+            : EmailLayout.MutedNote(
+                $"De link werkt tot {Jobsy.Core.Time.AmsterdamTime.FormatDate(DateTime.UtcNow.AddDays(7))}. Daarna vraag je een nieuwe uitnodiging.");
+        var ctaUrl = setPasswordUrl ?? loginUrl;
+        var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Kies je wachtwoord";
+        var passwordBlock = setPasswordUrl is null
             ? EmailLayout.Paragraph(
                 "Log in met het wachtwoord dat je bij registratie hebt gekozen, of via " +
                 "<strong>Microsoft Entra</strong> / Google met hetzelfde geverifieerde e-mailadres.")
-            : $"""
-               {EmailLayout.Paragraph("Gebruik dit eenmalige tijdelijke wachtwoord (niet opnieuw zichtbaar in de app):")}
-               <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{EmailLayout.Escape(temporaryPassword)}</code></p>
-               {EmailLayout.MutedNote("Wijzig dit wachtwoord zo snel mogelijk.")}
-               """;
+            : EmailLayout.Paragraph(
+                "Kies een wachtwoord via de knop hieronder. Daarna kun je inloggen met e-mail/wachtwoord " +
+                "of met <strong>Microsoft Entra</strong> / Google.");
         var html = EmailLayout.Wrap(
             $"""
              {EmailLayout.Heading("Account actief")}
@@ -586,10 +591,11 @@ public static class TransactionalEmails
                  "Zodra je bedrijf is geverifieerd, worden klaargezette vacatures gepubliceerd " +
                  "en ontvang je (buiten de gratis-publicatieperiode) je welkomsttoken.")}
              {EmailLayout.Paragraph(
-                 "Je kunt inloggen met e-mail/wachtwoord of met <strong>Microsoft Entra</strong> / " +
+                 $"Je kunt inloggen met e-mail/wachtwoord of met <strong>Microsoft Entra</strong> / " +
                  $"Google op <code>{EmailLayout.Escape(contactEmail)}</code>.")}
              {passwordBlock}
-             {EmailLayout.PrimaryButton(loginUrl, "Inloggen")}
+             {EmailLayout.PrimaryButton(ctaUrl, ctaLabel)}
+             {expiresNote}
              {EmailLayout.MutedNote($"Inloggen via Lobsy ({EmailLayout.Escape(loginUrl)}).")}
              """,
             baseUrl,
@@ -969,21 +975,22 @@ public static class TransactionalEmails
         string contactName,
         string companyName,
         string contactEmail,
-        string? temporaryPassword,
+        string? setPasswordUrl,
         bool hasOrganization)
     {
         var loginUrl = EmailLayout.LoginUrl(baseUrl);
-        var passwordBlock = temporaryPassword is null
+        var ctaUrl = setPasswordUrl ?? loginUrl;
+        var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Kies je wachtwoord";
+        var expiresNote = setPasswordUrl is null
+            ? ""
+            : EmailLayout.MutedNote(
+                $"De link werkt tot {Jobsy.Core.Time.AmsterdamTime.FormatDate(DateTime.UtcNow.AddDays(7))}. Daarna vraag je een nieuwe uitnodiging.");
+        var passwordBlock = setPasswordUrl is null
             ? EmailLayout.Paragraph(
                 "Log in met het wachtwoord dat je bij registratie hebt gekozen, of via " +
                 "<strong>Microsoft Entra</strong> met hetzelfde geverifieerde e-mailadres.")
-            : $"""
-               {EmailLayout.Paragraph(
-                   $"Log in met <code>{EmailLayout.Escape(contactEmail)}</code>. " +
-                   "Je eenmalige tijdelijke wachtwoord (bewaar dit veilig; het wordt niet opnieuw getoond):")}
-               <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{EmailLayout.Escape(temporaryPassword)}</code></p>
-               {EmailLayout.MutedNote("Wijzig dit wachtwoord zo snel mogelijk.")}
-               """;
+            : EmailLayout.Paragraph(
+                $"Kies een wachtwoord voor <code>{EmailLayout.Escape(contactEmail)}</code> via de knop hieronder.");
         var html = EmailLayout.Wrap(
             $"""
              {EmailLayout.Heading("Overname goedgekeurd")}
@@ -994,7 +1001,8 @@ public static class TransactionalEmails
                  "Tokens, vacatures en geschiedenis blijven gekoppeld aan de vestiging" +
                  $"{(hasOrganization ? " onder de organisatie" : "")}.")}
              {passwordBlock}
-             {EmailLayout.PrimaryButton(loginUrl, "Inloggen")}
+             {EmailLayout.PrimaryButton(ctaUrl, ctaLabel)}
+             {expiresNote}
              {EmailLayout.MutedNote($"Inloggen via Lobsy ({EmailLayout.Escape(loginUrl)}).")}
              """,
             baseUrl,
@@ -1022,28 +1030,34 @@ public static class TransactionalEmails
         string fullName,
         string roleLabel,
         string email,
-        string temporaryPassword,
+        string? setPasswordUrl,
         bool promotedFromCandidate)
     {
         var loginUrl = EmailLayout.LoginUrl(baseUrl);
+        var ctaUrl = setPasswordUrl ?? loginUrl;
+        var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Uitnodiging accepteren";
+        var expiresNote = setPasswordUrl is null
+            ? ""
+            : EmailLayout.MutedNote(
+                $"De link werkt tot {Jobsy.Core.Time.AmsterdamTime.FormatDate(DateTime.UtcNow.AddDays(7))}. Daarna vraag je een nieuwe uitnodiging.");
+        var passwordBlock = setPasswordUrl is null
+            ? EmailLayout.Paragraph(
+                $"Log in met <code>{EmailLayout.Escape(email)}</code> via Google, Microsoft Entra of je bestaande wachtwoord.")
+            : EmailLayout.Paragraph(
+                $"Accepteer de uitnodiging via de knop hieronder om een wachtwoord te kiezen voor <code>{EmailLayout.Escape(email)}</code>. " +
+                "Of log in met Google of Microsoft Entra met hetzelfde e-mailadres.");
         var html = EmailLayout.Wrap(
             $"""
              {EmailLayout.Heading($"Uitnodiging — {EmailLayout.Escape(roleLabel)}")}
              {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(fullName)},")}
              {EmailLayout.Paragraph(
                  $"Je bent uitgenodigd als <strong>{EmailLayout.Escape(roleLabel)}</strong> op Lobsy.")}
-             {EmailLayout.Paragraph(
-                 "<strong>Aanbevolen:</strong> log in met <strong>Google</strong> of <strong>Microsoft Entra</strong> " +
-                 $"op <code>{EmailLayout.Escape(email)}</code> — dan krijg je automatisch je managerrol.")}
-             {EmailLayout.Paragraph(
-                 "Alternatief: lokaal inloggen via het inlogscherm van Lobsy met dit eenmalige tijdelijke wachtwoord " +
-                 "(niet opnieuw zichtbaar in de app):")}
-             <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{EmailLayout.Escape(temporaryPassword)}</code></p>
+             {passwordBlock}
              {(promotedFromCandidate
                  ? EmailLayout.Paragraph("Je eerdere sollicitaties blijven zichtbaar (alleen-lezen) in Lobsy.")
                  : "")}
-             {EmailLayout.PrimaryButton(loginUrl, "Inloggen")}
-             {EmailLayout.MutedNote("Wijzig het wachtwoord zo snel mogelijk na je eerste login.")}
+             {EmailLayout.PrimaryButton(ctaUrl, ctaLabel)}
+             {expiresNote}
              """,
             baseUrl,
             preheader: $"Uitnodiging voor Lobsy ({roleLabel})");
@@ -1051,22 +1065,28 @@ public static class TransactionalEmails
     }
 
     public static ComposedEmail SalesManagerInvite(
-        string? baseUrl, string name, string email, string temporaryPassword)
+        string? baseUrl, string name, string email, string? setPasswordUrl)
     {
+        var loginUrl = EmailLayout.LoginUrl(baseUrl);
+        var ctaUrl = setPasswordUrl ?? loginUrl;
+        var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Uitnodiging accepteren";
+        var expiresNote = setPasswordUrl is null
+            ? ""
+            : EmailLayout.MutedNote(
+                $"De link werkt tot {Jobsy.Core.Time.AmsterdamTime.FormatDate(DateTime.UtcNow.AddDays(7))}. Daarna vraag je een nieuwe uitnodiging.");
         var html = EmailLayout.Wrap(
             $"""
              {EmailLayout.Heading("Uitnodiging salesmanager")}
              {EmailLayout.Paragraph($"Hallo {EmailLayout.Escape(name)},")}
              {EmailLayout.Paragraph("Je bent uitgenodigd als salesmanager op Lobsy.")}
              {EmailLayout.Paragraph(
-                 $"Log in met <strong>{EmailLayout.Escape(email)}</strong> " +
-                 "en dit tijdelijke wachtwoord:")}
-             <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{EmailLayout.Escape(temporaryPassword)}</code></p>
+                 setPasswordUrl is null
+                     ? $"Log in met <strong>{EmailLayout.Escape(email)}</strong> om verder te gaan."
+                     : $"Accepteer de uitnodiging voor <strong>{EmailLayout.Escape(email)}</strong> via de knop hieronder.")}
              {EmailLayout.Paragraph(
-                 "Vul daarna je KvK/BTW/NAW-gegevens in en onderteken de bemiddelingsovereenkomst om je trackingcode te ontvangen.")}
-             {EmailLayout.PrimaryButton(EmailLayout.LoginUrl(baseUrl), "Inloggen")}
-             {EmailLayout.SecondaryButton(EmailLayout.SalesOnboardingUrl(baseUrl), "Start onboarding")}
-             {EmailLayout.MutedNote("Wijzig het wachtwoord zo snel mogelijk na je eerste login.")}
+                 "Na je eerste login vul je je KvK/BTW/NAW-gegevens in en onderteken je de bemiddelingsovereenkomst om je trackingcode te ontvangen.")}
+             {EmailLayout.PrimaryButton(ctaUrl, ctaLabel)}
+             {expiresNote}
              """,
             baseUrl,
             preheader: "Uitnodiging Lobsy salesmanager");
@@ -1074,22 +1094,28 @@ public static class TransactionalEmails
     }
 
     public static ComposedEmail AmbassadeurInvite(
-        string? baseUrl, string name, string email, string temporaryPassword)
+        string? baseUrl, string name, string email, string? setPasswordUrl)
     {
+        var loginUrl = EmailLayout.LoginUrl(baseUrl);
+        var ctaUrl = setPasswordUrl ?? loginUrl;
+        var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Uitnodiging accepteren";
+        var expiresNote = setPasswordUrl is null
+            ? ""
+            : EmailLayout.MutedNote(
+                $"De link werkt tot {Jobsy.Core.Time.AmsterdamTime.FormatDate(DateTime.UtcNow.AddDays(7))}. Daarna vraag je een nieuwe uitnodiging.");
         var html = EmailLayout.Wrap(
             $"""
              {EmailLayout.Heading("Uitnodiging ambassadeur")}
              {EmailLayout.Paragraph($"Hallo {EmailLayout.Escape(name)},")}
              {EmailLayout.Paragraph("Je bent uitgenodigd als ambassadeur op Lobsy.")}
              {EmailLayout.Paragraph(
-                 $"Log in met <strong>{EmailLayout.Escape(email)}</strong> " +
-                 "en dit tijdelijke wachtwoord:")}
-             <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{EmailLayout.Escape(temporaryPassword)}</code></p>
+                 setPasswordUrl is null
+                     ? $"Log in met <strong>{EmailLayout.Escape(email)}</strong> om verder te gaan."
+                     : $"Accepteer de uitnodiging voor <strong>{EmailLayout.Escape(email)}</strong> via de knop hieronder.")}
              {EmailLayout.Paragraph(
-                 "Vul daarna je KvK/BTW/NAW-gegevens in en onderteken de bemiddelingsovereenkomst om je trackingcode te ontvangen.")}
-             {EmailLayout.PrimaryButton(EmailLayout.LoginUrl(baseUrl), "Inloggen")}
-             {EmailLayout.SecondaryButton(EmailLayout.AmbassadeurOnboardingUrl(baseUrl), "Start onboarding")}
-             {EmailLayout.MutedNote("Wijzig het wachtwoord zo snel mogelijk na je eerste login.")}
+                 "Na je eerste login vul je je KvK/BTW/NAW-gegevens in en onderteken je de bemiddelingsovereenkomst om je trackingcode te ontvangen.")}
+             {EmailLayout.PrimaryButton(ctaUrl, ctaLabel)}
+             {expiresNote}
              """,
             baseUrl,
             preheader: "Uitnodiging Lobsy ambassadeur");
@@ -1097,32 +1123,95 @@ public static class TransactionalEmails
     }
 
     public static ComposedEmail CompanyApiKeyCredentials(
-        string? baseUrl, string companyName, string apiBase, string plaintextKey, string keyPrefix)
+        string? baseUrl,
+        string companyName,
+        string apiBase,
+        string revealUrl,
+        DateTime expiresAtUtc)
     {
         var endpoint = apiBase.TrimEnd('/') + "/api/external/vacancies";
         var swaggerUrl = apiBase.TrimEnd('/') + "/swagger";
+        var expiresLabel = Jobsy.Core.Time.AmsterdamTime.FormatDateTime(expiresAtUtc);
         var html = EmailLayout.Wrap(
             $"""
              {EmailLayout.Heading("API-credentials")}
              {EmailLayout.Paragraph("Hallo,")}
              {EmailLayout.Paragraph(
-                 $"Hierbij de API-credentials voor <strong>{EmailLayout.Escape(companyName)}</strong>.")}
+                 $"Hierbij een link om de API-sleutel voor <strong>{EmailLayout.Escape(companyName)}</strong> één keer op te halen.")}
              {EmailLayout.FactCard([
                  ("Endpoint", endpoint),
                  ("Header", "X-API-Key: <jouw-api-key>"),
-                 ("API-key", plaintextKey),
-                 ("Prefix", keyPrefix),
-                 ("Swagger", swaggerUrl)
+                 ("Swagger", swaggerUrl),
+                 ("Geldig tot", expiresLabel)
              ])}
              {EmailLayout.Paragraph(
-                 "<strong>Let op:</strong> deze sleutel wordt slechts één keer getoond en " +
-                 "vervangt eventuele eerdere actieve keys. Bewaar hem veilig.")}
-             {EmailLayout.PrimaryButton(swaggerUrl, "Open API-documentatie")}
-             {EmailLayout.SecondaryButton(EmailLayout.EmployerApiKeysUrl(baseUrl), "Bedrijfsgegevens in Lobsy")}
+                 "De link werkt 72 uur en maar één keer. Je huidige sleutel blijft werken tot je de nieuwe ophaalt.")}
+             {EmailLayout.PrimaryButton(revealUrl, "API-sleutel ophalen")}
              """,
             baseUrl,
             preheader: $"API-credentials voor {companyName}");
         return new("CompanyApiKeyCredentials", "CompanyApiKeyCredentials", $"Lobsy API-credentials voor {companyName}", html);
+    }
+
+    public static ComposedEmail ParentalConsent(
+        string? baseUrl,
+        string? childFirstName,
+        string confirmUrl,
+        DateTime expiresAtUtc)
+    {
+        var age = CandidateConsentRules.ParentalConsentAge;
+        var hasName = !string.IsNullOrWhiteSpace(childFirstName);
+        var displayName = hasName ? childFirstName!.Trim() : "Je kind";
+        var subject = hasName
+            ? $"{childFirstName!.Trim()} vraagt je toestemming voor Lobsy"
+            : "Je kind vraagt je toestemming voor Lobsy";
+        var bodyName = hasName ? EmailLayout.Escape(childFirstName!.Trim()) : "je kind";
+        var bodyNameCap = hasName ? EmailLayout.Escape(childFirstName!.Trim()) : "Je kind";
+        var expiresLabel = Jobsy.Core.Time.AmsterdamTime.FormatDate(expiresAtUtc);
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Geef je toestemming?")}
+             {EmailLayout.Paragraph(
+                 $"{bodyNameCap} wil Lobsy gebruiken: tests doen en een analyse met AI krijgen. " +
+                 $"Omdat {bodyName} jonger is dan {age} jaar, hebben we toestemming nodig van een ouder of voogd.")}
+             {EmailLayout.PrimaryButton(confirmUrl, "Toestemming bekijken")}
+             {EmailLayout.MutedNote(
+                 $"Ben je geen ouder of voogd, of weet je hier niets van? Dan hoef je niets te doen. De link werkt tot {expiresLabel}.")}
+             """,
+            baseUrl,
+            preheader: subject);
+        return new("ParentalConsent", "ParentalConsent", subject, html);
+    }
+
+    public static ComposedEmail SupportAccessRequested(
+        string? baseUrl,
+        string adminDisplay,
+        string reason,
+        DateTime expiresAtUtc,
+        string scopeLabel)
+    {
+        var expiresLabel = Jobsy.Core.Time.AmsterdamTime.FormatDateTime(expiresAtUtc);
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Support-toegang aangevraagd")}
+             {EmailLayout.Paragraph(
+                 $"{EmailLayout.Escape(adminDisplay)} vroeg tijdelijk toegang tot persoonsgegevens aan.")}
+             {EmailLayout.FactCard([
+                 ("Reden", reason),
+                 ("Toegang tot", scopeLabel),
+                 ("Geldig tot", $"{expiresLabel} (Nederlandse tijd)")
+             ])}
+             {EmailLayout.PrimaryButton(
+                 EmailLayout.Absolute(baseUrl, "/admin/personal-data-access-log"),
+                 "Bekijk de toegang")}
+             """,
+            baseUrl,
+            preheader: "Support-toegang aangevraagd door een admin");
+        return new(
+            "SupportAccessRequested",
+            "SupportAccessRequested",
+            "Support-toegang aangevraagd door een admin",
+            html);
     }
 
     public static ComposedEmail AccountUnsubscribeVerification(
@@ -1279,8 +1368,8 @@ public sealed record EmailSampleContext(
     int TravelMinutes,
     decimal HourlyWage,
     string OtpCode,
-    string TemporaryPassword,
-    string SampleApiKey,
+    string SetPasswordUrl,
+    string SampleRevealUrl,
     string RoleLabel,
     string EstablishmentName,
     string ContactEmail,
@@ -1288,8 +1377,10 @@ public sealed record EmailSampleContext(
     string ApiBaseUrl)
 {
     public static EmailSampleContext ForPreview(string publicWebBaseUrl, string? contactEmail = null)
-        => new(
-            PublicWebBaseUrl: string.IsNullOrWhiteSpace(publicWebBaseUrl) ? "https://lobsy.nl" : publicWebBaseUrl,
+    {
+        var baseUrl = string.IsNullOrWhiteSpace(publicWebBaseUrl) ? "https://lobsy.nl" : publicWebBaseUrl.TrimEnd('/');
+        return new(
+            PublicWebBaseUrl: baseUrl,
             RecipientName: "Alex de Tester",
             CompanyName: "Bakkerij De Gouden Korrel",
             VacancyTitle: "Weekendhulp verkoop",
@@ -1300,11 +1391,12 @@ public sealed record EmailSampleContext(
             TravelMinutes: 12,
             HourlyWage: 14.50m,
             OtpCode: TransactionalEmails.SampleOtp,
-            TemporaryPassword: TransactionalEmails.SamplePassword,
-            SampleApiKey: TransactionalEmails.SampleApiKey,
+            SetPasswordUrl: baseUrl + TransactionalEmails.SampleSetPasswordPath,
+            SampleRevealUrl: baseUrl + TransactionalEmails.SampleRevealPath,
             RoleLabel: "Filiaalmanager",
             EstablishmentName: "Bakkerij De Gouden Korrel — Delft",
             ContactEmail: string.IsNullOrWhiteSpace(contactEmail) ? "tester@example.com" : contactEmail.Trim(),
             KvkEstablishmentId: "000012345678",
             ApiBaseUrl: "https://api.lobsy.nl");
+    }
 }

@@ -171,6 +171,9 @@ public sealed class DataRetentionHostedService : BackgroundService
                         || (t.UsedAtUtc != null && t.UsedAtUtc < tokenCutoff))
             .ExecuteDeleteAsync(cancellationToken);
 
+        var oneTimeLinks = scope.ServiceProvider.GetRequiredService<IOneTimeLinkService>();
+        var oneTimeLinksRemoved = await oneTimeLinks.PurgeExpiredAsync(cancellationToken);
+
         var staleScreenshotCount = await PurgeStaleFeedbackScreenshotsAsync(db, now, cancellationToken);
 
         var clickCutoff = SalesClock.Today().AddMonths(-PrivacyConstants.SalesLinkClickRetentionMonths);
@@ -182,13 +185,13 @@ public sealed class DataRetentionHostedService : BackgroundService
             db, now, cancellationToken);
 
         if (logsRemoved + accessLogsRemoved + auditRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
-            + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count
+            + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + oneTimeLinksRemoved + dirtyActionUrls.Count
             + withdrawnWithSnapshots.Count + staleScreenshotCount + salesClicksRemoved + salesAppsCleared > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, adminAudit={Audit}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}, salesLinkClicks={SalesClicks}, salesApplications={SalesApps}",
+                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, adminAudit={Audit}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, oneTimeLinks={OneTimeLinks}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}, salesLinkClicks={SalesClicks}, salesApplications={SalesApps}",
                 logsRemoved, accessLogsRemoved, auditRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
-                unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count,
+                unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, oneTimeLinksRemoved, dirtyActionUrls.Count,
                 withdrawnWithSnapshots.Count, staleScreenshotCount, salesClicksRemoved, salesAppsCleared);
         }
 

@@ -17,7 +17,6 @@ public sealed record SalesManagerInviteResult(
     Guid UserId,
     string Email,
     string FullName,
-    string TemporaryPassword,
     bool CreatedNewUser,
     bool CanRecruitSalesManagers,
     Guid? ReferredBySalesManagerUserId);

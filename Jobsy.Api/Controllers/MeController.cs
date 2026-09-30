@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Core.Interfaces;
@@ -1023,19 +1024,24 @@ public class MeController : ControllerBase
         }
 
         var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
+        var expiresAt = DateTime.UtcNow.AddDays(7);
         user.ParentalConsentEmail = email;
         user.ParentalConsentTokenHash = VerificationCodes.Hash(token);
-        user.ParentalConsentTokenExpiresAt = DateTime.UtcNow.AddDays(7);
+        user.ParentalConsentTokenExpiresAt = expiresAt;
         user.ParentalConsentAt = null;
         await _db.SaveChangesAsync(cancellationToken);
 
-        var link = $"{Request.Scheme}://{Request.Host}/api/parental-consent/confirm?token={Uri.EscapeDataString(token)}";
+        var features = await _features.GetAsync(cancellationToken);
+        var confirmUrl = EmailLayout.Absolute(
+            features.PublicWebBaseUrl,
+            $"/toestemming?t={Uri.EscapeDataString(token)}");
+        var mail = TransactionalEmails.ParentalConsent(
+            features.PublicWebBaseUrl,
+            user.FirstName,
+            confirmUrl,
+            expiresAt);
         await _email.SendAsync(
-            new EmailMessage(
-                email,
-                "Toestemming voor Lobsy",
-                $"<p>Een kind heeft gevraagd of je toestemming geeft voor het gebruik van Lobsy-tests en AI-analyse.</p><p>Bevestig alleen als je ouder of voogd bent: <a href=\"{link}\">toestemming bevestigen</a>.</p><p>De link verloopt na 7 dagen.</p>",
-                "ParentalConsent"),
+            new EmailMessage(email, mail.Subject, mail.Html, mail.Category),
             cancellationToken);
 
         return Ok(new { message = "We hebben je ouder of voogd een e-mail met een bevestigingslink gestuurd." });

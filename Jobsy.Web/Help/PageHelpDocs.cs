@@ -87,6 +87,24 @@ public static class PageHelpDocs
             "Vul de code in die we hebben gestuurd. Klopt die, dan ben je meteen ingelogd.",
             "Afronden van account maken of inloggen zonder wachtwoord."),
 
+        ["/toestemming"] = new(
+            "Ouderlijke toestemming",
+            "Bevestig toestemming zodat een minderjarige Lobsy mag gebruiken.",
+            "Lees wat Lobsy doet en bevestig met de knop. Alleen een POST vanaf deze pagina bevestigt.",
+            "Toestemming geven voor tests en AI-analyse voor iemand onder de 16."),
+
+        ["/account/wachtwoord-instellen"] = new(
+            "Wachtwoord instellen",
+            "Kies een wachtwoord via een eenmalige uitnodigingslink.",
+            "Vul twee keer hetzelfde wachtwoord in (12–128 tekens) of log in met Google/Microsoft.",
+            "Eerste wachtwoord zetten na een uitnodiging zonder gemaild wachtwoord."),
+
+        ["/koppeling/sleutel"] = new(
+            "API-sleutel ophalen",
+            "Haal een nieuwe API-sleutel één keer op via een eenmalige link.",
+            "Bevestig met de knop; daarna zie je de sleutel één keer en wordt de oude gedeactiveerd.",
+            "API-koppeling veilig activeren zonder sleutel in de e-mail."),
+
         ["/register"] = new(
             "Bedrijf registreren",
             "Nieuwe werkgever of intermediair aanmelden via KVK-gegevens.",

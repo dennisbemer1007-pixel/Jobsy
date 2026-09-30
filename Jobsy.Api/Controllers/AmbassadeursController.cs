@@ -63,10 +63,7 @@ public class AmbassadeursController : ControllerBase
         try
         {
             var result = await _invite.InviteAsync(request.Email, request.FullName, cancellationToken);
-            return Ok(result with
-            {
-                TemporaryPassword = _environment.IsDevelopment() ? result.TemporaryPassword : string.Empty
-            });
+            return Ok(result);
         }
         catch (ArgumentException ex)
         {

@@ -120,7 +120,6 @@ public record CompanyUserDto(
     string? CompanyName,
     IReadOnlyList<Guid> MembershipCompanyIds,
     bool IsActive = true,
-    string? TemporaryPassword = null,
     string? LoginUrl = null,
     DateTime? LastLoginAtUtc = null);
 

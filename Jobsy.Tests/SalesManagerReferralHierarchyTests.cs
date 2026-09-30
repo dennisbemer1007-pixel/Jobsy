@@ -75,7 +75,11 @@ public class SalesManagerReferralHierarchyTests
         var approved = await apps.ApproveAsync(pending.Id, adminId);
         Assert.Equal(nameof(SalesManagerApplicationStatus.Approved), approved.Status);
         Assert.NotNull(approved.ProvisionedUserId);
-        Assert.False(string.IsNullOrWhiteSpace(approved.TemporaryPassword));
+        Assert.True(await db.OneTimeLinks.AnyAsync(l =>
+            l.UserId == approved.ProvisionedUserId
+            && l.Purpose == Jobsy.Core.Enums.OneTimeLinkPurpose.SetPassword
+            && l.UsedAtUtc == null));
+        Assert.False(await db.LocalAuthCredentials.AnyAsync(c => c.UserId == approved.ProvisionedUserId));
 
         var profile = await db.SalesManagerProfiles.SingleAsync(p => p.UserId == approved.ProvisionedUserId);
         Assert.False(profile.CanRecruitSalesManagers);
@@ -256,6 +260,8 @@ public class SalesManagerReferralHierarchyTests
         new SalesManagerInviteService(
             db,
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new OneTimeLinkService(db, NullLogger<OneTimeLinkService>.Instance),
+            new AlwaysOnFeatures(),
             NullLogger<SalesManagerInviteService>.Instance);
 
     private static ISalesManagerApplicationService CreateApplications(

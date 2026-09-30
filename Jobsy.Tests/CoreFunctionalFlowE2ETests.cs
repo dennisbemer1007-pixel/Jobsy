@@ -586,6 +586,8 @@ public class CoreFunctionalFlowE2ETests
         new SalesManagerInviteService(
             db,
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new OneTimeLinkService(db, NullLogger<OneTimeLinkService>.Instance),
+            new PlatformFeatureService(db, Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()), new ConfigurationBuilder().Build()),
             NullLogger<SalesManagerInviteService>.Instance);
 
     private static CompanyRegistrationService CreateRegistrationService(JobsyDbContext db)

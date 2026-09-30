@@ -76,10 +76,6 @@
             {
                 <p class="muted">@Culture["Register.LoginWithChosenPassword"]</p>
             }
-            else if (!string.IsNullOrWhiteSpace(_result.TemporaryPassword))
-            {
-                <p class="muted">@Culture["Register.TempPasswordDev"] <code>@_result.TemporaryPassword</code></p>
-            }
             else
             {
                 <p class="muted">@Culture["Register.TempPasswordEmail"]</p>

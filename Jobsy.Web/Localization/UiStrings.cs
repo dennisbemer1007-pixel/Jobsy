@@ -3400,6 +3400,8 @@ public static class UiStrings
         UiStringsFeatureFlags.MergeAll(nl, en, pl, ro, ar);
         UiStringsPassport.MergeAll(nl, en, pl, ro, ar);
         UiStringsDiscovery.MergeAll(nl, en, pl, ro, ar);
+        UiStringsConsent.MergeAll(nl, en, pl, ro, ar);
+        UiStringsSetPassword.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

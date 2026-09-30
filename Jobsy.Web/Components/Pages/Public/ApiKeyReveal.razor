@@ -1,0 +1,135 @@
+@page "/koppeling/sleutel"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
+@using System.Net.Http.Json
+@using System.Text.Json.Serialization
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.WebUtilities
+@using Jobsy.Web.Localization
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IHttpClientFactory HttpClientFactory
+@inject IConfiguration Configuration
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["ApiKeyReveal.Title"] · Lobsy</PageTitle>
+
+<section class="pub-section" aria-labelledby="reveal-title">
+    <div class="pub-card">
+        @if (!string.IsNullOrEmpty(_plaintext))
+        {
+            <h1 id="reveal-title">@string.Format(System.Globalization.CultureInfo.CurrentCulture, Culture["ApiKeyReveal.Heading"], _companyName)</h1>
+            <p>@Culture["ApiKeyReveal.Warn"]</p>
+            <label class="api-key-modal__label" for="api-key-value">API-key</label>
+            <input id="api-key-value" class="w-full px-4 py-3" readonly value="@_plaintext" />
+            <p class="muted">@Culture["ApiKeyReveal.Endpoint"]: @_endpoint</p>
+            <p class="muted">@Culture["ApiKeyReveal.Header"]: X-API-Key</p>
+            @if (!string.IsNullOrEmpty(_swagger))
+            {
+                <p><a class="auth-link" href="@_swagger" rel="noopener">@Culture["ApiKeyReveal.Docs"]</a></p>
+            }
+        }
+        else if (!_valid)
+        {
+            <h1 id="reveal-title">@Culture["ApiKeyReveal.Title"]</h1>
+            <p>@Culture["ApiKeyReveal.Invalid"]</p>
+        }
+        else
+        {
+            <h1 id="reveal-title">@string.Format(System.Globalization.CultureInfo.CurrentCulture, Culture["ApiKeyReveal.Heading"], _companyName)</h1>
+            <p>@Culture["ApiKeyReveal.Warn"]</p>
+            <form method="post" action="/koppeling/sleutel" class="login-form" data-enhance="false">
+                <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                <input type="hidden" name="t" value="@_token" />
+                <button type="submit" class="login-submit" disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">
+                    @Culture["ApiKeyReveal.Submit"]
+                </button>
+            </form>
+        }
+    </div>
+</section>
+
+@code {
+    private string _token = "";
+    private bool _valid;
+    private string _companyName = "Lobsy";
+    private string? _plaintext;
+    private string? _endpoint;
+    private string? _swagger;
+    private string _antiforgeryFieldName = "";
+    private string _antiforgeryToken = "";
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContext ?? HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            http.Response.Headers.CacheControl = "no-store";
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryFieldName = tokens.FormFieldName;
+            _antiforgeryToken = tokens.RequestToken ?? "";
+
+            if (http.Request.Cookies.TryGetValue("lobsy_api_reveal", out var flash)
+                && !string.IsNullOrWhiteSpace(flash))
+            {
+                try
+                {
+                    var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(flash));
+                    using var doc = System.Text.Json.JsonDocument.Parse(json);
+                    var root = doc.RootElement;
+                    _plaintext = root.GetProperty("plaintext").GetString();
+                    _companyName = root.TryGetProperty("company", out var c) ? c.GetString() ?? _companyName : _companyName;
+                    _endpoint = root.TryGetProperty("endpoint", out var e) ? e.GetString() : null;
+                    _swagger = root.TryGetProperty("swagger", out var s) ? s.GetString() : null;
+                    _valid = !string.IsNullOrEmpty(_plaintext);
+                    http.Response.Cookies.Delete("lobsy_api_reveal");
+                    return;
+                }
+                catch
+                {
+                    http.Response.Cookies.Delete("lobsy_api_reveal");
+                }
+            }
+        }
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        _token = query.TryGetValue("t", out var t) ? t.FirstOrDefault() ?? "" : "";
+        if (string.IsNullOrWhiteSpace(_token))
+        {
+            _valid = false;
+            return;
+        }
+
+        var apiBase = (Configuration["JobsyApi:BaseUrl"] ?? "http://localhost:5200").TrimEnd('/');
+        var client = HttpClientFactory.CreateClient();
+        try
+        {
+            var preview = await client.GetFromJsonAsync<PreviewDto>(
+                $"{apiBase}/api/company-api-keys/reveal-preview?token={Uri.EscapeDataString(_token)}");
+            _valid = preview?.Valid == true;
+            if (_valid && !string.IsNullOrWhiteSpace(preview!.CompanyName))
+            {
+                _companyName = preview.CompanyName!;
+            }
+        }
+        catch
+        {
+            _valid = false;
+        }
+    }
+
+    private sealed class PreviewDto
+    {
+        [JsonPropertyName("valid")]
+        public bool Valid { get; set; }
+
+        [JsonPropertyName("companyName")]
+        public string? CompanyName { get; set; }
+    }
+}

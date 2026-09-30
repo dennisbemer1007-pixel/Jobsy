@@ -71,7 +71,6 @@ public class SalesManagersController : ControllerBase
                 result.UserId,
                 result.Email,
                 result.FullName,
-                _environment.IsDevelopment() ? result.TemporaryPassword : null,
                 result.CreatedNewUser));
         }
         catch (ArgumentException ex)
@@ -153,11 +152,6 @@ public class SalesManagersController : ControllerBase
         try
         {
             var dto = await _applications.ApproveAsync(applicationId, admin.Id, cancellationToken);
-            if (!_environment.IsDevelopment())
-            {
-                dto = dto with { TemporaryPassword = null };
-            }
-
             return Ok(dto);
         }
         catch (KeyNotFoundException ex)
@@ -303,7 +297,6 @@ public record SalesManagerInviteResponse(
     Guid UserId,
     string Email,
     string FullName,
-    string? TemporaryPassword,
     bool CreatedNewUser);
 
 public record SubmitSalesManagerApplicationRequest(

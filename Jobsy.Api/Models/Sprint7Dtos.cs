@@ -85,7 +85,6 @@ public record RegistrationActivationResponse(
     string Role,
     Guid? CompanyId,
     IReadOnlyList<Guid> CompanyIds,
-    string? TemporaryPassword,
     Guid? OrganizationCompanyId,
     Guid? BranchCompanyId,
     bool UsedChosenPassword = false,

@@ -7,6 +7,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
@@ -43,7 +44,6 @@ public sealed record SchoolStaffInviteResult(
     string Email,
     string FullName,
     string Role,
-    string TemporaryPassword,
     DateTime ExpiresAtUtc,
     bool CreatedNewUser);
 
@@ -53,15 +53,21 @@ public sealed class SchoolStaffInviteService : ISchoolStaffInviteService
 
     private readonly JobsyDbContext _db;
     private readonly IEmailService _email;
+    private readonly IOneTimeLinkService _links;
+    private readonly IPlatformFeatureService _features;
     private readonly ILogger<SchoolStaffInviteService> _logger;
 
     public SchoolStaffInviteService(
         JobsyDbContext db,
         IEmailService email,
+        IOneTimeLinkService links,
+        IPlatformFeatureService features,
         ILogger<SchoolStaffInviteService> logger)
     {
         _db = db;
         _email = email;
+        _links = links;
+        _features = features;
         _logger = logger;
     }
 
@@ -150,7 +156,6 @@ public sealed class SchoolStaffInviteService : ISchoolStaffInviteService
         var existing = await _db.Users
             .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
 
-        string temporaryPassword;
         User user;
         bool createdNew;
         var targetRole = role == JobsyRoles.Teacher ? UserRole.Teacher : UserRole.SchoolAdmin;
@@ -175,12 +180,9 @@ public sealed class SchoolStaffInviteService : ISchoolStaffInviteService
             existing.CompanyId = null;
             user = existing;
             createdNew = false;
-            temporaryPassword = GenerateTemporaryPassword();
-            await UpsertCredentialAsync(user.Id, normalizedEmail, temporaryPassword, cancellationToken);
         }
         else
         {
-            temporaryPassword = GenerateTemporaryPassword();
             user = new User
             {
                 Id = Guid.NewGuid(),
@@ -192,13 +194,6 @@ public sealed class SchoolStaffInviteService : ISchoolStaffInviteService
                 IsActive = true
             };
             _db.Users.Add(user);
-            _db.LocalAuthCredentials.Add(new LocalAuthCredential
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                Email = normalizedEmail,
-                PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword)
-            });
             createdNew = true;
         }
 
@@ -269,15 +264,38 @@ public sealed class SchoolStaffInviteService : ISchoolStaffInviteService
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        var features = await _features.GetAsync(cancellationToken);
+        string? setPasswordUrl = null;
+        var hasCredential = await _db.LocalAuthCredentials.AnyAsync(c => c.UserId == user.Id, cancellationToken);
+        var hasExternal = await _db.UserExternalLogins.AnyAsync(l => l.UserId == user.Id, cancellationToken);
+        if (!hasCredential && !hasExternal)
+        {
+            var created = await _links.CreateAsync(
+                OneTimeLinkPurpose.SetPassword,
+                user.Id,
+                companyId: null,
+                normalizedEmail,
+                OneTimeLinkRules.SetPasswordLifetime,
+                invitedByUserId,
+                cancellationToken);
+            setPasswordUrl = EmailLayout.Absolute(
+                features.PublicWebBaseUrl,
+                $"/account/wachtwoord-instellen?t={Uri.EscapeDataString(created.Token)}");
+        }
+
+        var loginUrl = EmailLayout.LoginUrl(features.PublicWebBaseUrl);
+        var ctaUrl = setPasswordUrl ?? loginUrl;
+        var ctaLabel = setPasswordUrl is null ? "Inloggen" : "Kies je wachtwoord";
         var subject = $"Uitnodiging Lobsy voor scholen — {school.Name}";
-        var html =
-            $"<p>Hallo {System.Net.WebUtility.HtmlEncode(name)},</p>" +
-            $"<p>Je bent uitgenodigd voor Lobsy voor scholen bij {System.Net.WebUtility.HtmlEncode(school.Name)}. " +
+        var body =
+            $"<p>Hallo {EmailLayout.Escape(name)},</p>" +
+            $"<p>Je bent uitgenodigd voor Lobsy voor scholen bij <strong>{EmailLayout.Escape(school.Name)}</strong>. " +
             "Tweestapsverificatie is verplicht.</p>" +
-            $"<p>Log in met <strong>{System.Net.WebUtility.HtmlEncode(normalizedEmail)}</strong> " +
-            $"en tijdelijk wachtwoord <code>{System.Net.WebUtility.HtmlEncode(temporaryPassword)}</code>. " +
-            "Stel daarna een nieuw wachtwoord en 2FA in.</p>";
-        await _email.SendAsync(new EmailMessage(normalizedEmail, subject, html, "Scholen.Invite"), cancellationToken);
+            $"<p>{(setPasswordUrl is null
+                ? $"Log in met <strong>{EmailLayout.Escape(normalizedEmail)}</strong> om verder te gaan."
+                : $"Kies een wachtwoord voor <strong>{EmailLayout.Escape(normalizedEmail)}</strong> via de knop hieronder.")}</p>" +
+            $"<p><a href=\"{EmailLayout.Escape(ctaUrl)}\">{EmailLayout.Escape(ctaLabel)}</a></p>";
+        await _email.SendAsync(new EmailMessage(normalizedEmail, subject, body, "Scholen.Invite"), cancellationToken);
 
         _logger.LogInformation(
             "Invited school staff {Role} {Email} for school {SchoolId}",
@@ -291,34 +309,8 @@ public sealed class SchoolStaffInviteService : ISchoolStaffInviteService
             normalizedEmail,
             name,
             role,
-            temporaryPassword,
             invite.ExpiresAtUtc,
             createdNew);
-    }
-
-    private async Task UpsertCredentialAsync(
-        Guid userId,
-        string email,
-        string temporaryPassword,
-        CancellationToken cancellationToken)
-    {
-        var credential = await _db.LocalAuthCredentials
-            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        if (credential is null)
-        {
-            _db.LocalAuthCredentials.Add(new LocalAuthCredential
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                Email = email,
-                PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword)
-            });
-        }
-        else
-        {
-            credential.Email = email;
-            credential.PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword);
-        }
     }
 
     internal static void EnsureEmailDomainAllowed(School school, string normalizedEmail)
@@ -353,15 +345,4 @@ public sealed class SchoolStaffInviteService : ISchoolStaffInviteService
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
-    private static string GenerateTemporaryPassword()
-    {
-        const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#";
-        Span<char> chars = stackalloc char[12];
-        for (var i = 0; i < chars.Length; i++)
-        {
-            chars[i] = alphabet[RandomNumberGenerator.GetInt32(alphabet.Length)];
-        }
-
-        return new string(chars);
-    }
 }

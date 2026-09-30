@@ -1,9 +1,9 @@
-using System.Net;
 using Jobsy.Core;
-using Jobsy.Core.Authorization;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
@@ -20,17 +20,23 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
     private readonly JobsyDbContext _db;
     private readonly IEmailService _email;
     private readonly IConfiguration _configuration;
+    private readonly IOneTimeLinkService _links;
+    private readonly IPlatformFeatureService _features;
     private readonly ILogger<CompanyApiKeyService> _logger;
 
     public CompanyApiKeyService(
         JobsyDbContext db,
         IEmailService email,
         IConfiguration configuration,
+        IOneTimeLinkService links,
+        IPlatformFeatureService features,
         ILogger<CompanyApiKeyService> logger)
     {
         _db = db;
         _email = email;
         _configuration = configuration;
+        _links = links;
+        _features = features;
         _logger = logger;
     }
 
@@ -192,8 +198,72 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
             throw new ArgumentException("Ongeldig e-mailadres.");
         }
 
-        // Build the new key in memory first; only persist after e-mail succeeds so a mail
-        // failure cannot leave the company without a recoverable active key.
+        var features = await _features.GetAsync(cancellationToken);
+        var created = await _links.CreateAsync(
+            OneTimeLinkPurpose.ApiKeyReveal,
+            userId: null,
+            companyId: company.Id,
+            normalized,
+            OneTimeLinkRules.ApiKeyRevealLifetime,
+            createdByUserId: null,
+            cancellationToken);
+
+        var revealUrl = EmailLayout.Absolute(
+            features.PublicWebBaseUrl,
+            $"/koppeling/sleutel?t={Uri.EscapeDataString(created.Token)}");
+        var expiresAt = DateTime.UtcNow.Add(OneTimeLinkRules.ApiKeyRevealLifetime);
+
+        try
+        {
+            var apiBase = ResolvePublicApiBaseUrl();
+            var keyMail = TransactionalEmails.CompanyApiKeyCredentials(
+                features.PublicWebBaseUrl,
+                company.Name,
+                apiBase,
+                revealUrl,
+                expiresAt);
+            await _email.SendAsync(new EmailMessage(
+                normalized,
+                keyMail.Subject,
+                keyMail.Html,
+                keyMail.Category), cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            var link = await _db.OneTimeLinks.FirstOrDefaultAsync(l => l.Id == created.Id, cancellationToken);
+            if (link is not null)
+            {
+                _db.OneTimeLinks.Remove(link);
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+
+            _logger.LogError(
+                ex,
+                "Failed to e-mail API reveal link for company {CompanyId}; existing key stays active.",
+                companyId);
+            throw new InvalidOperationException(
+                "Versturen van de API-credentials is mislukt. De bestaande key blijft actief.", ex);
+        }
+
+        return new EmailApiKeyResult(created.Id, normalized, Sent: true);
+    }
+
+    public async Task<ApiKeyRevealResult?> RevealFromTokenAsync(
+        string token,
+        CancellationToken cancellationToken = default)
+    {
+        var link = await _links.ConsumeAsync(OneTimeLinkPurpose.ApiKeyReveal, token, cancellationToken);
+        if (link is null || link.CompanyId is not Guid companyId)
+        {
+            return null;
+        }
+
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null || company.ParentCompanyId is not null)
+        {
+            return null;
+        }
+
         var plaintext = ApiKeyHasher.GeneratePlaintext();
         var entity = new ApiKey
         {
@@ -206,36 +276,26 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
             CreatedAt = DateTime.UtcNow
         };
 
-        try
-        {
-            var apiBase = ResolvePublicApiBaseUrl();
-            var keyMail = TransactionalEmails.CompanyApiKeyCredentials(
-                baseUrl: null,
-                company.Name,
-                apiBase,
-                plaintext,
-                entity.KeyPrefix);
-            await _email.SendAsync(new EmailMessage(
-                normalized,
-                keyMail.Subject,
-                keyMail.Html,
-                keyMail.Category), cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(
-                ex,
-                "Failed to e-mail API credentials for company {CompanyId}; key was not activated.",
-                companyId);
-            throw new InvalidOperationException(
-                "Versturen van de API-credentials is mislukt. De bestaande key blijft actief.", ex);
-        }
-
         await DeactivateActiveKeysAsync(companyId, cancellationToken);
         _db.ApiKeys.Add(entity);
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "apikey.revealed",
+            Message = $"apikey.revealed company={companyId:N} key={entity.Id:N} link={link.Id:N}",
+            CreatedAt = DateTime.UtcNow
+        });
         await _db.SaveChangesAsync(cancellationToken);
 
-        return new EmailApiKeyResult(entity.Id, normalized, entity.KeyPrefix, Sent: true);
+        return new ApiKeyRevealResult(
+            entity.Id,
+            company.Id,
+            company.Name,
+            entity.Name,
+            entity.KeyPrefix,
+            plaintext,
+            ResolvePublicApiBaseUrl());
     }
 
     private async Task DeactivateActiveKeysAsync(Guid companyId, CancellationToken cancellationToken)

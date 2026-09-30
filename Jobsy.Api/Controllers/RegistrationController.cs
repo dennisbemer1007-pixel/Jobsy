@@ -500,10 +500,6 @@ public class RegistrationController : ControllerBase
             result.Role,
             result.CompanyId,
             result.CompanyIds,
-            // Never echo credentials outside Development — temp password is e-mailed only.
-            _environment.IsDevelopment() && !result.UsedChosenPassword
-                ? result.TemporaryPassword
-                : null,
             result.OrganizationCompanyId,
             result.BranchCompanyId,
             result.UsedChosenPassword,

@@ -202,6 +202,8 @@
 
         var errorCode = query.TryGetValue("error", out var error) ? error.ToString() : null;
         var sessionExpired = string.Equals(errorCode, "session-expired", StringComparison.OrdinalIgnoreCase);
+        var setupDone = query.TryGetValue("setup", out var setup) &&
+                        string.Equals(setup.ToString(), "done", StringComparison.OrdinalIgnoreCase);
 
         // Do not bounce authenticated users away when session-expired is set — a sticky
         // Jobsy.Auth cookie with a cleared LastActivity used to cause /home↔/login loops.
@@ -211,7 +213,11 @@
             return;
         }
 
-        if (!string.IsNullOrEmpty(errorCode))
+        if (setupDone)
+        {
+            _errorMessage = Culture["SetPassword.Done"];
+        }
+        else if (!string.IsNullOrEmpty(errorCode))
         {
             _sessionExpiredNotice = sessionExpired;
             _errorMessage = errorCode switch

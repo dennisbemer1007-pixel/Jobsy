@@ -168,7 +168,7 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
             entity.Id,
             referrerSalesManagerUserId);
 
-        return await MapAsync(entity, temporaryPassword: null, includeCandidateEmail: false, cancellationToken);
+        return await MapAsync(entity, includeCandidateEmail: false, cancellationToken);
     }
 
     public async Task<SalesRecommendOverviewDto> GetRecommendOverviewAsync(
@@ -228,7 +228,7 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
         var result = new List<SalesManagerApplicationDto>(rows.Count);
         foreach (var row in rows)
         {
-            result.Add(await MapAsync(row, null, includeCandidateEmail: false, cancellationToken));
+            result.Add(await MapAsync(row, includeCandidateEmail: false, cancellationToken));
         }
 
         return result;
@@ -245,7 +245,7 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
         var result = new List<SalesManagerApplicationDto>(rows.Count);
         foreach (var row in rows)
         {
-            result.Add(await MapAsync(row, null, includeCandidateEmail: true, cancellationToken));
+            result.Add(await MapAsync(row, includeCandidateEmail: true, cancellationToken));
         }
 
         return result;
@@ -262,7 +262,7 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
         var result = new List<SalesManagerApplicationDto>(rows.Count);
         foreach (var row in rows)
         {
-            result.Add(await MapAsync(row, null, includeCandidateEmail: true, cancellationToken));
+            result.Add(await MapAsync(row, includeCandidateEmail: true, cancellationToken));
         }
 
         return result;
@@ -312,7 +312,7 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
         });
 
         await _db.SaveChangesAsync(cancellationToken);
-        return await MapAsync(application, invite.TemporaryPassword, includeCandidateEmail: true, cancellationToken);
+        return await MapAsync(application, includeCandidateEmail: true, cancellationToken);
     }
 
     public async Task<SalesManagerApplicationDto> RejectAsync(
@@ -347,7 +347,7 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
         });
 
         await _db.SaveChangesAsync(cancellationToken);
-        return await MapAsync(application, null, includeCandidateEmail: true, cancellationToken);
+        return await MapAsync(application, includeCandidateEmail: true, cancellationToken);
     }
 
     public async Task<bool> ObjectByTokenAsync(string plaintextToken, CancellationToken cancellationToken = default)
@@ -498,7 +498,6 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
 
     private async Task<SalesManagerApplicationDto> MapAsync(
         SalesManagerApplication application,
-        string? temporaryPassword,
         bool includeCandidateEmail,
         CancellationToken cancellationToken)
     {
@@ -527,7 +526,6 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
             application.ReviewedAtUtc,
             application.ProvisionedUserId,
             application.RejectionReason,
-            temporaryPassword,
             application.SubjectNotifiedAtUtc,
             application.SubjectObjectedAtUtc,
             application.PersonalDataClearedAtUtc,

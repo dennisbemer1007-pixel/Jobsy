@@ -77,9 +77,8 @@ public class GeneratedApiKeyItem
 
 public class EmailApiKeyResultItem
 {
-    public Guid Id { get; set; }
+    public Guid LinkId { get; set; }
     public string RecipientEmail { get; set; } = string.Empty;
-    public string KeyPrefix { get; set; } = string.Empty;
     public bool Sent { get; set; }
 }
 
@@ -428,7 +427,6 @@ public class RegistrationActivationResult
     public string Role { get; set; } = string.Empty;
     public Guid? CompanyId { get; set; }
     public List<Guid> CompanyIds { get; set; } = [];
-    public string? TemporaryPassword { get; set; }
     public Guid? OrganizationCompanyId { get; set; }
     public Guid? BranchCompanyId { get; set; }
     public bool UsedChosenPassword { get; set; }
@@ -626,7 +624,6 @@ public class CompanyUserItem
     public string? CompanyName { get; set; }
     public List<Guid> MembershipCompanyIds { get; set; } = [];
     public bool IsActive { get; set; } = true;
-    public string? TemporaryPassword { get; set; }
     public string? LoginUrl { get; set; }
     public DateTime? LastLoginAtUtc { get; set; }
 }

@@ -128,7 +128,7 @@ public class TransactionalEmailCatalogTests
 
         var sales = TransactionalEmails.Compose("SalesManagerInvite", ctx);
         Assert.Contains("/login", sales.Html);
-        Assert.Contains("/salesmanager/onboarding", sales.Html);
+        Assert.DoesNotContain("/salesmanager/onboarding", sales.Html);
     }
 
     [Fact]
@@ -136,11 +136,12 @@ public class TransactionalEmailCatalogTests
     {
         var ctx = EmailSampleContext.ForPreview("https://lobsy.nl");
         var api = TransactionalEmails.Compose("CompanyApiKeyCredentials", ctx);
-        Assert.Contains(TransactionalEmails.SampleApiKey, api.Html);
+        Assert.Contains("/koppeling/sleutel?t=", api.Html);
+        Assert.Contains("API-sleutel ophalen", api.Html);
         Assert.DoesNotContain("sk_live", api.Html, StringComparison.OrdinalIgnoreCase);
 
         var invite = TransactionalEmails.Compose("UserInvite", ctx);
-        Assert.Contains(TransactionalEmails.SamplePassword, invite.Html);
+        Assert.Contains("/account/wachtwoord-instellen?t=", invite.Html);
     }
 
     [Fact]

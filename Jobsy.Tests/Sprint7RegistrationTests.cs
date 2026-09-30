@@ -44,7 +44,6 @@ public class Sprint7RegistrationTests
         Assert.NotNull(activated.BranchCompanyId);
         Assert.Null(activated.OrganizationCompanyId);
         Assert.True(activated.UsedChosenPassword);
-        Assert.Equal(string.Empty, activated.TemporaryPassword);
         Assert.Equal(1, await db.Companies.CountAsync(c => c.KvkEstablishmentId == "99990001_0001"));
         var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
         Assert.Null(branch.ParentCompanyId);

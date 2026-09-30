@@ -53,6 +53,9 @@ public static class PrivacyConstants
     /// <summary>Used or expired candidate action tokens older than this are purged.</summary>
     public const int CandidateActionTokenRetentionDays = 30;
 
+    /// <summary>Used or expired one-time invite / API-key reveal links older than this are purged.</summary>
+    public const int OneTimeLinkRetentionDays = 30;
+
     /// <summary>Screenshots on any feedback are dropped after this many days (AVG minimization).</summary>
     public const int FeedbackScreenshotRetentionDays = 90;
 

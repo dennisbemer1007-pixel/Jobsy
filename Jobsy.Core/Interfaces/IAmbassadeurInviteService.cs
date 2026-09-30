@@ -12,5 +12,4 @@ public sealed record AmbassadeurInviteResult(
     Guid UserId,
     string Email,
     string FullName,
-    string TemporaryPassword,
     bool CreatedNew);

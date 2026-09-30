@@ -536,7 +536,7 @@
                          Class="api-key-modal"
                          OnClose="CancelEmail">
 <p class="share-modal__lead api-key-modal__lead lobsy-dialog__lead">
-                Dit deactiveert de huidige API-key en stuurt een <strong>nieuwe</strong> key naar jouw account-e-mail.
+                Dit stuurt een eenmalige link naar jouw account-e-mail. Met die link haal je de nieuwe sleutel één keer op; de huidige sleutel blijft werken tot je dat doet.
                 De oude key werkt daarna niet meer.
             </p>
 <div class="inline-actions">
@@ -1022,7 +1022,7 @@
                 FeedbackSection.Api,
                 result is null
                     ? "Credentials verzonden."
-                    : $"Nieuwe API-key verzonden naar {result.RecipientEmail} (prefix {result.KeyPrefix}). De vorige key is gedeactiveerd.");
+                    : $"We hebben een link gemaild naar {result.RecipientEmail}. Met die link haal je de nieuwe sleutel één keer op.");
             await LoadKeysForSelectedAsync();
         }
         catch (Exception ex)

@@ -1,5 +1,3 @@
-using System.Net;
-using System.Security.Cryptography;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Email;
@@ -9,9 +7,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Privacy;
 using Jobsy.Infrastructure.Data;
-using Jobsy.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Jobsy.Api.Admin;
@@ -40,7 +36,7 @@ public class CompanyUsersController : ControllerBase
     private readonly IUserLookupService _users;
     private readonly IPlatformFeatureService _features;
     private readonly IPartnerAffiliateService _partnerAffiliates;
-    private readonly IWebHostEnvironment _environment;
+    private readonly IOneTimeLinkService _links;
     private readonly IAdminAuditLog _audit;
     private readonly IAdminAuditContext _auditContext;
 
@@ -51,7 +47,7 @@ public class CompanyUsersController : ControllerBase
         IUserLookupService users,
         IPlatformFeatureService features,
         IPartnerAffiliateService partnerAffiliates,
-        IWebHostEnvironment environment,
+        IOneTimeLinkService links,
         IAdminAuditLog audit,
         IAdminAuditContext auditContext)
     {
@@ -61,7 +57,7 @@ public class CompanyUsersController : ControllerBase
         _users = users;
         _features = features;
         _partnerAffiliates = partnerAffiliates;
-        _environment = environment;
+        _links = links;
         _audit = audit;
         _auditContext = auditContext;
     }
@@ -356,25 +352,6 @@ public class CompanyUsersController : ControllerBase
             }
         }
 
-        var temporaryPassword = GenerateTemporaryPassword();
-        var credential = await _db.LocalAuthCredentials
-            .FirstOrDefaultAsync(c => c.UserId == user.Id, cancellationToken);
-        if (credential is null)
-        {
-            _db.LocalAuthCredentials.Add(new LocalAuthCredential
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                Email = email,
-                PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword)
-            });
-        }
-        else
-        {
-            credential.Email = email;
-            credential.PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword);
-        }
-
         await _db.SaveChangesAsync(cancellationToken);
         if (user.Role is UserRole.EnterpriseManager or UserRole.Intermediary)
         {
@@ -384,12 +361,13 @@ public class CompanyUsersController : ControllerBase
         var features = await _features.GetAsync(cancellationToken);
         var loginUrl = EmailLayout.LoginUrl(features.PublicWebBaseUrl);
         var roleLabel = RoleLabel(user.Role);
+        var setPasswordUrl = await ResolveInviteSetPasswordUrlAsync(user, email, cancellationToken);
         var invite = TransactionalEmails.UserInvite(
             features.PublicWebBaseUrl,
             user.FullName,
             roleLabel,
             user.Email,
-            temporaryPassword,
+            setPasswordUrl,
             promotedFromCandidate);
         await _email.SendAsync(new EmailMessage(
             user.Email,
@@ -403,10 +381,7 @@ public class CompanyUsersController : ControllerBase
             .Include(u => u.CompanyMemberships)
             .FirstAsync(u => u.Id == user.Id, cancellationToken);
 
-        return Ok(Map(
-            loaded,
-            temporaryPassword: _environment.IsDevelopment() ? temporaryPassword : null,
-            loginUrl: loginUrl));
+        return Ok(Map(loaded, loginUrl: loginUrl));
     }
 
     [HttpPut("{id:guid}")]
@@ -655,16 +630,32 @@ public class CompanyUsersController : ControllerBase
         _ => role.ToString()
     };
 
-    private static string GenerateTemporaryPassword()
+    private async Task<string?> ResolveInviteSetPasswordUrlAsync(
+        User user,
+        string email,
+        CancellationToken cancellationToken)
     {
-        const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#";
-        Span<char> chars = stackalloc char[12];
-        for (var i = 0; i < chars.Length; i++)
+        var hasCredential = await _db.LocalAuthCredentials
+            .AnyAsync(c => c.UserId == user.Id, cancellationToken);
+        var hasExternal = await _db.UserExternalLogins
+            .AnyAsync(l => l.UserId == user.Id, cancellationToken);
+        if (hasCredential || hasExternal)
         {
-            chars[i] = alphabet[RandomNumberGenerator.GetInt32(alphabet.Length)];
+            return null;
         }
 
-        return new string(chars);
+        var created = await _links.CreateAsync(
+            Core.Enums.OneTimeLinkPurpose.SetPassword,
+            user.Id,
+            companyId: null,
+            email,
+            Core.Security.OneTimeLinkRules.SetPasswordLifetime,
+            createdByUserId: null,
+            cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        return EmailLayout.Absolute(
+            features.PublicWebBaseUrl,
+            $"/account/wachtwoord-instellen?t={Uri.EscapeDataString(created.Token)}");
     }
 
     private async Task<bool> IsLastActiveEnterpriseManagerAsync(User user, CancellationToken cancellationToken)
@@ -702,7 +693,7 @@ public class CompanyUsersController : ControllerBase
             cancellationToken);
     }
 
-    private static CompanyUserDto Map(User u, string? temporaryPassword = null, string? loginUrl = null) => new(
+    private static CompanyUserDto Map(User u, string? loginUrl = null) => new(
         u.Id,
         u.Email,
         u.FullName,
@@ -711,7 +702,6 @@ public class CompanyUsersController : ControllerBase
         u.Company?.Name,
         u.CompanyMemberships.Select(m => m.CompanyId).ToList(),
         u.IsActive,
-        temporaryPassword,
-        loginUrl,
-        u.LastLoginAtUtc);
+        LoginUrl: loginUrl,
+        LastLoginAtUtc: u.LastLoginAtUtc);
 }
