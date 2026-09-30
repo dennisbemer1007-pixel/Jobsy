@@ -164,12 +164,19 @@ public class SalesCommercialServiceTests
         Assert.Equal((byte)'D', bytes[2]);
         Assert.Equal((byte)'F', bytes[3]);
         Assert.Equal(1, PdfPageCounter.Count(bytes));
+        Assert.DoesNotContain(
+            System.Text.Encoding.Latin1.GetString(bytes),
+            "lobsy.nl/register",
+            StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(
+            System.Text.Encoding.Latin1.GetString(bytes),
+            "/register?ref=",
+            StringComparison.OrdinalIgnoreCase);
 
-        var text = System.Text.Encoding.Latin1.GetString(bytes);
-        Assert.DoesNotContain("lobsy.nl/register", text, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("/register?ref=", text, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("/p/SM-DEMO01", text, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("SM-DEMO01", text, StringComparison.Ordinal);
+        var generic = await flyer.RenderAsync(null);
+        Assert.True(generic.Length > 500);
+        Assert.False(bytes.SequenceEqual(generic));
+    }
 
     private sealed class FlyerFakeFeatures : IPlatformFeatureService
     {

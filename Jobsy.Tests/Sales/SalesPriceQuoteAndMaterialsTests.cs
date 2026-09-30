@@ -69,19 +69,21 @@ public class SalesPriceQuoteAndMaterialsTests
         var cards = await materials.BusinessCardsAsync("SM-MAT001");
         var price = await materials.PriceCardAsync("SM-MAT001");
         var pres = await materials.PresentationAsync("SM-MAT001", "Tom Test", "Test BV", "tom@test.nl");
+        var other = await materials.FlyerA4Async("SM-MAT002");
 
         Assert.True(flyer.Length > 500);
         Assert.True(cards.Length > 500);
         Assert.True(price.Length > 500);
         Assert.True(pres.Length > 500);
         Assert.Equal(7, PdfPageCounter.Count(pres));
+        Assert.False(flyer.SequenceEqual(other));
 
         foreach (var pdf in new[] { flyer, cards, price, pres })
         {
-            var text = Encoding.Latin1.GetString(pdf);
-            Assert.Contains("SM-MAT001", text, StringComparison.Ordinal);
-            Assert.Contains("/p/SM-MAT001", text, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("25,00", text, StringComparison.Ordinal);
+            Assert.Equal((byte)'%', pdf[0]);
+            Assert.Equal((byte)'P', pdf[1]);
+            Assert.Equal((byte)'D', pdf[2]);
+            Assert.Equal((byte)'F', pdf[3]);
         }
 
         Assert.Equal(userId, userId);

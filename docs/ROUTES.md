@@ -143,7 +143,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/register/activate` | `Pages/RegisterActivate.razor` | anonymous |
 | `/sales` | `Pages/Sales/Dashboard.razor` | SalesManager |
 | `/sales/aanbevelen` | `Pages/SalesManager/Referrals.razor` | SalesManager |
-| `/sales/link` | `Pages/SalesManager/SalesToolkit.razor` | SalesManager · Mijn link & materiaal |
+| `/sales/link` | `Pages/SalesManager/SalesToolkit.razor` | SalesManager |
 | `/sales/start` | `Pages/SalesManager/Onboarding.razor` | SalesManager |
 | `/sales/wallet` | `Pages/SalesManager/Invoices.razor` | SalesManager |
 | `/sales/wallet/uitbetalen` | `Pages/SalesManager/PayoutCheckoutStub.razor` | SalesManager |
