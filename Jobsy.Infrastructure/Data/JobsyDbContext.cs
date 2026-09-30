@@ -38,6 +38,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CompanyValuesProfile> CompanyValuesProfiles => Set<CompanyValuesProfile>();
     public DbSet<CompanyEngagementClaim> CompanyEngagementClaims => Set<CompanyEngagementClaim>();
     public DbSet<CompanyEngagementReport> CompanyEngagementReports => Set<CompanyEngagementReport>();
+    public DbSet<LenderRegistration> LenderRegistrations => Set<LenderRegistration>();
     public DbSet<CandidateWhoAmIProfile> CandidateWhoAmIProfiles => Set<CandidateWhoAmIProfile>();
     public DbSet<CandidateCareerPlan> CandidateCareerPlans => Set<CandidateCareerPlan>();
     public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
@@ -664,6 +665,27 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.ClaimId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LenderRegistration>(entity =>
+        {
+            entity.ToTable("LenderRegistrations");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Status).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.Source).HasMaxLength(32);
+            entity.Property(e => e.Reference).HasMaxLength(128);
+            entity.Property(e => e.Note).HasMaxLength(1000);
+            entity.HasIndex(e => e.CompanyId);
+            entity.HasIndex(e => new { e.CompanyId, e.CreatedAtUtc });
+            entity.HasIndex(e => e.Status);
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.DecidedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.DecidedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<CandidateWhoAmIProfile>(entity =>

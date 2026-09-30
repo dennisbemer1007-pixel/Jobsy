@@ -17,6 +17,7 @@
         <button type="button" class="@TabClass("brieven")" @onclick="ShowLettersTab">@Culture["AdminWa.Tab.Letters"]</button>
         <button type="button" class="@TabClass("toegang")" @onclick="ShowAccessTab">@Culture["AdminWa.Tab.Access"]</button>
         <button type="button" class="@TabClass("betrokkenheid")" @onclick="ShowEngageTab">@Culture["AdminWa.Tab.Engagement"]</button>
+        <button type="button" class="@TabClass("waadi")" @onclick="ShowWaadiTab">@Culture["AdminWa.Tab.Waadi"]</button>
         <span class="muted">@(CountLabel())</span>
     </div>
 
@@ -95,6 +96,95 @@
                 <div class="inline-actions">
                     <button class="btn-compact" type="button" @onclick="ConfirmEngageRemoveAsync">@Culture["AdminWa.Engage.Remove"]</button>
                     <button class="btn-compact" type="button" @onclick="() => _engageRemoveTarget = null">@Culture["Common.Cancel"]</button>
+                </div>
+            </div>
+        }
+    }
+    else if (_tab == "waadi")
+    {
+        @if (_waadiItems.Count == 0)
+        {
+            <p class="state-message">@Culture["AdminWa.Waadi.Empty"]</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>@Culture["AdminWa.Waadi.Bureau"]</th>
+                            <th>@Culture["AdminWa.Waadi.Status"]</th>
+                            <th>@Culture["AdminWa.Waadi.Source"]</th>
+                            <th>@Culture["AdminWa.Waadi.Reference"]</th>
+                            <th>@Culture["AdminWa.Waadi.ValidUntil"]</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _waadiItems)
+                        {
+                            <tr>
+                                <td class="data-table__col--wrap">
+                                    <strong>@item.CompanyName</strong>
+                                    <div class="muted">@item.KvkNumber</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.WaadiCheckUrl))
+                                    {
+                                        <div>
+                                            <a href="@item.WaadiCheckUrl" target="_blank" rel="noopener noreferrer">
+                                                @Culture["AdminWa.Waadi.CheckLink"]
+                                            </a>
+                                        </div>
+                                    }
+                                </td>
+                                <td>@item.Status</td>
+                                <td>@(SourceLabel(item.Source))</td>
+                                <td>@(item.Reference ?? "—")</td>
+                                <td>@(item.ValidUntil?.ToString("yyyy-MM-dd") ?? "—")</td>
+                                <td>
+                                    <div class="inline-actions">
+                                        <button class="btn-compact" type="button" @onclick="() => BeginWaadiDecide(item, true)">@Culture["AdminWa.Waadi.Confirm"]</button>
+                                        <button class="btn-compact" type="button" @onclick="() => BeginWaadiDecide(item, false)">@Culture["AdminWa.Waadi.Reject"]</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        @if (_waadiTarget is not null)
+        {
+            <div class="panel admin-wa-reject">
+                <h3>@(_waadiApprove ? Culture["AdminWa.Waadi.Confirm"] : Culture["AdminWa.Waadi.Reject"]) — @_waadiTarget.CompanyName</h3>
+                <label>
+                    @Culture["AdminWa.Waadi.Reference"]
+                    <input @bind="_waadiReference" maxlength="128" />
+                </label>
+                <label>
+                    @Culture["AdminWa.Waadi.Source"]
+                    <select @bind="_waadiSource">
+                        <option value="WaadiKvk">@Culture["AdminWa.Waadi.Source.WaadiKvk"]</option>
+                        <option value="WttaNau">@Culture["AdminWa.Waadi.Source.WttaNau"]</option>
+                        <option value="AdminManual">@Culture["AdminWa.Waadi.Source.AdminManual"]</option>
+                    </select>
+                </label>
+                <label>
+                    @Culture["AdminWa.Waadi.ValidUntil"]
+                    <input type="date" @bind="_waadiValidUntilDate" />
+                </label>
+                <label>
+                    @Culture["AdminWa.Waadi.Note"]
+                    <input @bind="_waadiNote" maxlength="500" />
+                </label>
+                @if (!_waadiApprove)
+                {
+                    <p class="muted">@Culture["AdminWa.Waadi.RejectReason"]</p>
+                }
+                <div class="inline-actions">
+                    <button class="btn-compact" type="button" @onclick="ConfirmWaadiDecideAsync">
+                        @(_waadiApprove ? Culture["AdminWa.Waadi.Confirm"] : Culture["AdminWa.Waadi.Reject"])
+                    </button>
+                    <button class="btn-compact" type="button" @onclick="() => _waadiTarget = null">@Culture["Common.Cancel"]</button>
                 </div>
             </div>
         }
@@ -253,10 +343,17 @@
     private List<AccessRequestAdminItemModel> _access = [];
     private List<OwnershipTransferAdminItemModel> _ownership = [];
     private List<AdminEngagementItem> _engageItems = [];
+    private List<AdminLenderRegistrationItem> _waadiItems = [];
     private string _engageFilter = "queue";
     private string _engageSearch = "";
     private AdminEngagementItem? _engageRemoveTarget;
     private string _engageRemoveReason = "";
+    private AdminLenderRegistrationItem? _waadiTarget;
+    private bool _waadiApprove;
+    private string _waadiReference = "";
+    private string _waadiSource = "WaadiKvk";
+    private string _waadiNote = "";
+    private DateTime? _waadiValidUntilDate;
     private bool _loading = true;
     private string? _error;
     private AdminCompanyVerificationItem? _rejectTarget;
@@ -275,6 +372,7 @@
         {
             "toegang" => (_access.Count + _ownership.Count).ToString(),
             "betrokkenheid" => _engageItems.Count.ToString(),
+            "waadi" => _waadiItems.Count.ToString(),
             _ => _items.Count.ToString()
         };
 
@@ -289,6 +387,7 @@
                 "brieven" or "letters" => "brieven",
                 "gemarkeerd" or "flagged" => "gemarkeerd",
                 "betrokkenheid" or "engagement" => "betrokkenheid",
+                "waadi" or "uitleen" => "waadi",
                 _ => "handmatig"
             };
         }
@@ -304,6 +403,7 @@
     private async Task ShowLettersTab() => await SwitchTab("brieven");
     private async Task ShowAccessTab() => await SwitchTab("toegang");
     private async Task ShowEngageTab() => await SwitchTab("betrokkenheid");
+    private async Task ShowWaadiTab() => await SwitchTab("waadi");
 
     private async Task SetEngageFilter(string filter)
     {
@@ -329,6 +429,7 @@
                 _ownership = (await Api.GetAdminOwnershipTransfersAsync()).ToList();
                 _items = [];
                 _engageItems = [];
+                _waadiItems = [];
             }
             else if (_tab == "betrokkenheid")
             {
@@ -336,6 +437,15 @@
                 _items = [];
                 _access = [];
                 _ownership = [];
+                _waadiItems = [];
+            }
+            else if (_tab == "waadi")
+            {
+                _waadiItems = (await Api.GetAdminLenderRegistrationsAsync()).ToList();
+                _items = [];
+                _access = [];
+                _ownership = [];
+                _engageItems = [];
             }
             else
             {
@@ -343,6 +453,7 @@
                 _access = [];
                 _ownership = [];
                 _engageItems = [];
+                _waadiItems = [];
             }
         }
         catch (Exception ex)
@@ -382,6 +493,47 @@
     private async Task ResetEngageAsync(AdminEngagementItem item)
     {
         await Api.AdminResetEngagementAsync(item.ClaimId);
+        await ReloadAsync();
+    }
+
+    private static string SourceLabel(string? source) => source switch
+    {
+        "WaadiKvk" => "Waadi via KvK",
+        "WttaNau" => "Wtta",
+        "AdminManual" => "Handmatig",
+        _ => source ?? "—"
+    };
+
+    private void BeginWaadiDecide(AdminLenderRegistrationItem item, bool approve)
+    {
+        _waadiTarget = item;
+        _waadiApprove = approve;
+        _waadiReference = item.Reference ?? "";
+        _waadiSource = string.IsNullOrWhiteSpace(item.Source) ? "WaadiKvk" : item.Source!;
+        _waadiNote = item.Note ?? "";
+        _waadiValidUntilDate = item.ValidUntil?.Date;
+    }
+
+    private async Task ConfirmWaadiDecideAsync()
+    {
+        if (_waadiTarget is null)
+        {
+            return;
+        }
+
+        if (!_waadiApprove && string.IsNullOrWhiteSpace(_waadiNote))
+        {
+            return;
+        }
+
+        await Api.AdminDecideLenderRegistrationAsync(
+            _waadiTarget.CompanyId,
+            _waadiApprove,
+            _waadiSource,
+            string.IsNullOrWhiteSpace(_waadiReference) ? null : _waadiReference,
+            _waadiValidUntilDate,
+            string.IsNullOrWhiteSpace(_waadiNote) ? null : _waadiNote);
+        _waadiTarget = null;
         await ReloadAsync();
     }
 

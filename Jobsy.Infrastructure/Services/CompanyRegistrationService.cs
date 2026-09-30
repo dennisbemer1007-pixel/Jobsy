@@ -36,6 +36,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     private readonly IPartnerAffiliateService _partnerAffiliates;
     private readonly IRegistrationReferralResolver _referralResolver;
     private readonly IGeocodingService? _geocoder;
+    private readonly ILenderRegistrationCheck? _lenderRegistration;
     private readonly ILogger<CompanyRegistrationService> _logger;
 
     public CompanyRegistrationService(
@@ -57,6 +58,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 features),
             null,
             null,
+            null,
             logger)
     {
     }
@@ -69,7 +71,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         IPlatformFeatureService features,
         IPartnerAffiliateService partnerAffiliates,
         ILogger<CompanyRegistrationService> logger)
-        : this(db, kvk, email, ledger, features, partnerAffiliates, null, null, logger)
+        : this(db, kvk, email, ledger, features, partnerAffiliates, null, null, null, logger)
     {
     }
 
@@ -83,6 +85,21 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         IRegistrationReferralResolver? referralResolver,
         IGeocodingService? geocoder,
         ILogger<CompanyRegistrationService> logger)
+        : this(db, kvk, email, ledger, features, partnerAffiliates, referralResolver, geocoder, null, logger)
+    {
+    }
+
+    public CompanyRegistrationService(
+        JobsyDbContext db,
+        IKvkService kvk,
+        IEmailService email,
+        ITokenLedgerService ledger,
+        IPlatformFeatureService features,
+        IPartnerAffiliateService partnerAffiliates,
+        IRegistrationReferralResolver? referralResolver,
+        IGeocodingService? geocoder,
+        ILenderRegistrationCheck? lenderRegistration,
+        ILogger<CompanyRegistrationService> logger)
     {
         _db = db;
         _kvk = kvk;
@@ -93,6 +110,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         _referralResolver = referralResolver
             ?? new DefaultRegistrationReferralResolver(db, partnerAffiliates);
         _geocoder = geocoder;
+        _lenderRegistration = lenderRegistration;
         _logger = logger;
     }
 
@@ -186,7 +204,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 : match.EffectiveSbiCodes;
         }
 
-        var isIntermediarySbi = KvkSbiClassification.IsIntermediary(sbiCodes);
+        var isIntermediarySbi = ResolveIsIntermediarySbi(sbiCodes, request.ManualIsIntermediarySbi);
         var primarySbi = KvkSbiClassification.PrimarySbiCode(sbiCodes);
 
         // Soft enumeration: never show a red conflict for known e-mails.
@@ -563,6 +581,15 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         // Welcome token is granted on verification (CompanyVerificationService), not at activation.
         const bool welcomeGranted = false;
 
+        if (registration.IsIntermediarySbi && _lenderRegistration is not null)
+        {
+            var bureauId = branchId;
+            await _lenderRegistration.StartForNewBureauAsync(
+                bureauId,
+                registration.KvkNumber,
+                cancellationToken);
+        }
+
         await SendActivatedCredentialsEmailAsync(registration, temporaryPassword, cancellationToken);
 
         _logger.LogInformation(
@@ -903,6 +930,14 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         await _db.SaveChangesAsync(cancellationToken);
         await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
+
+        if (registration.IsIntermediarySbi && _lenderRegistration is not null)
+        {
+            await _lenderRegistration.StartForNewBureauAsync(
+                branchId,
+                registration.KvkNumber,
+                cancellationToken);
+        }
 
         var features = await _features.GetAsync(cancellationToken);
         var approved = TransactionalEmails.TakeoverApproved(
@@ -1530,6 +1565,15 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         await _db.SaveChangesAsync(cancellationToken);
         await NotifyIntermediariesOfSelfManagedAsync(branchId, existingCompany.Name, cancellationToken);
         await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
+
+        if (registration.IsIntermediarySbi && _lenderRegistration is not null)
+        {
+            await _lenderRegistration.StartForNewBureauAsync(
+                branchId,
+                registration.KvkNumber,
+                cancellationToken);
+        }
+
         await SendActivatedCredentialsEmailAsync(registration, temporaryPassword, cancellationToken);
 
         return await BuildActivationResultAsync(
@@ -2248,6 +2292,31 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             ManualLongitude = geo.Longitude,
             LocationUnknown = false
         };
+    }
+
+    private static bool ResolveIsIntermediarySbi(
+        IReadOnlyList<string> sbiCodes,
+        bool? manualChoice)
+    {
+        var has78 = KvkSbiClassification.IsIntermediary(sbiCodes);
+        if (!has78)
+        {
+            return false;
+        }
+
+        if (!KvkSbiClassification.HasNonIntermediary(sbiCodes))
+        {
+            // Only SBI 78* → always intermediair.
+            return true;
+        }
+
+        // Mixed: honour wizard choice; default to main activity when absent.
+        if (manualChoice is bool chosen)
+        {
+            return chosen;
+        }
+
+        return KvkSbiClassification.IsMainActivityIntermediary(sbiCodes);
     }
 
     private static string? SerializeSelectedIds(IReadOnlyList<string>? ids)

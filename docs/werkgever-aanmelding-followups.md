@@ -8,3 +8,11 @@ Dependency **B** was ABSENT on acceptatie at 05. Implement `IRegistrationReferra
 
 ## SBB erkende leerbedrijven (09.6)
 SBB’s BPV-API (https://www.s-bb.nl/onderwijs/bpv-api) is for mbo schools only (aanvraag + Edukoppeling), not a public open dataset with reuse licence for matching by KvK. No automated `ISbbRecognitionService` was built; admins check `leerbedrijf` claims by hand. Revisit if SBB publishes a documented open dataset.
+
+## Intermediair 04b partly done (werkgever-aanmelding 10)
+Dependency **D** was ABSENT on acceptatie at file 10 (Only-in-spec path). Implemented `ILenderRegistrationCheck`, providers (`WaadiKvkProvider`, `WttaNauProvider` disabled, `AdminManual`), entity `LenderRegistration`, publish gate `409 lender_registration_pending`, and admin Waadi decisions on `/admin/werkgeververificatie` via `RecordDecisionAsync`.
+
+When intermediair 04b runs: skip what already exists; only add the admin tab on `/admin/intermediairs` and move the Waadi decision there.
+
+## Intermediair data model (Dependencies G) — recheck at 10
+**STILL ABSENT** on acceptatie at file 10: no `IntermediaryClient` entity. File 10 follows the Absent path (client companies with intermediary `UserCompany` membership).

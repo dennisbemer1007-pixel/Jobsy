@@ -11,6 +11,7 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>@Culture["Wa.Steps.4.Title"] · Lobsy</PageTitle>
 
@@ -102,7 +103,7 @@
             }
             else if (_stap == "cultuur")
             {
-                <h1>@Culture["WaProfile.Cultuur.Title"]</h1>
+                <h1>@(_isIntermediary ? Culture["Wa.Intermediary.CultuurTitle"] : Culture["WaProfile.Cultuur.Title"])</h1>
                 <p class="wa-lead">@Culture["WaProfile.Cultuur.Lead"]</p>
 
                 <div class="wa-sec">
@@ -281,6 +282,7 @@
     private string _stap = "branche";
     private Guid _companyId;
     private bool _verified;
+    private bool _isIntermediary;
     private HashSet<string> _selectedBranches = new(StringComparer.OrdinalIgnoreCase);
     private List<string> _suggested = [];
     private Dictionary<string, int> _sliders = new(StringComparer.OrdinalIgnoreCase);
@@ -347,6 +349,9 @@
         _error = null;
         try
         {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            _isIntermediary = auth.User.IsInRole("Intermediary");
+
             var companies = await Api.GetMyCompaniesAsync();
             var root = companies.FirstOrDefault(c => c.ParentCompanyId is null)
                        ?? companies.FirstOrDefault();

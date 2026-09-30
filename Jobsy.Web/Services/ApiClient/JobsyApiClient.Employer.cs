@@ -204,6 +204,32 @@ public sealed partial class JobsyApiClient
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task<IReadOnlyList<AdminLenderRegistrationItem>> GetAdminLenderRegistrationsAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AdminLenderRegistrationItem>>(
+               "api/admin/lender-registrations", ct)
+           ?? [];
+
+    public async Task AdminDecideLenderRegistrationAsync(
+        Guid bureauId,
+        bool approve,
+        string? source,
+        string? reference,
+        DateTime? validUntil,
+        string? note,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/lender-registrations/{bureauId}/decision",
+            new { approve, source, reference, validUntil, note },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Beslissing mislukt.");
+        }
+    }
+
     public async Task<IReadOnlyList<MetricCount>> GetMyMetricsSummaryAsync(string period = "week", CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<MetricCount>>($"api/me/metrics/summary?period={Uri.EscapeDataString(period)}", ct) ?? [];
 

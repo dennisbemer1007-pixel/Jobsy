@@ -4,7 +4,7 @@
 
 <section class="wa-step-scope">
     <p class="wa-eyebrow">@Culture["Wa.Scope.Eyebrow"]</p>
-    <h1>@Culture["Wa.Scope.Title"]</h1>
+    <h1>@(State.UsesIntermediaryPath ? Culture["Wa.Intermediary.ScopeTitle"] : Culture["Wa.Scope.Title"])</h1>
 
     <div class="wa-company-box">
         <div>
@@ -42,30 +42,70 @@
     }
     else
     {
-        <h3 class="wa-section-title">@Culture["Wa.Scope.WhatTitle"]</h3>
-        <div class="wa-scope-cards" role="radiogroup" aria-label="@Culture["Wa.Scope.WhatTitle"]">
-            <button type="button"
-                    class="wa-scope-card @(State.Scope == "Organization" ? "is-on" : null)"
-                    role="radio"
-                    aria-checked="@(State.Scope == "Organization")"
-                    @onclick='() => SetScope("Organization")'>
-                <strong>@Culture["Wa.Scope.WholeCompany"]</strong>
-                <p>@Culture["Wa.Scope.WholeCompanyBody"]</p>
-            </button>
-            <button type="button"
-                    class="wa-scope-card @(State.Scope == "BranchOnly" ? "is-on" : null)"
-                    role="radio"
-                    aria-checked="@(State.Scope == "BranchOnly")"
-                    @onclick='() => SetScope("BranchOnly")'>
-                <strong>@Culture["Wa.Scope.SomeBranches"]</strong>
-                <p>@Culture["Wa.Scope.SomeBranchesBody"]</p>
-            </button>
-        </div>
+        @if (State.IsMixedIntermediarySbi)
+        {
+            <h3 class="wa-section-title">@Culture["Wa.Intermediary.HowTitle"]</h3>
+            <div class="wa-scope-cards" role="radiogroup" aria-label="@Culture["Wa.Intermediary.HowTitle"]">
+                <button type="button"
+                        class="wa-scope-card @(State.RegisterAsIntermediary == true ? "is-on" : null)"
+                        role="radio"
+                        aria-checked="@(State.RegisterAsIntermediary == true)"
+                        @onclick="() => SetRoleChoice(true)">
+                    <strong>@Culture["Wa.Intermediary.AsBureau"]</strong>
+                    <p>@Culture["Wa.Intermediary.AsBureauBody"]</p>
+                </button>
+                <button type="button"
+                        class="wa-scope-card @(State.RegisterAsIntermediary == false ? "is-on" : null)"
+                        role="radio"
+                        aria-checked="@(State.RegisterAsIntermediary == false)"
+                        @onclick="() => SetRoleChoice(false)">
+                    <strong>@Culture["Wa.Intermediary.AsEmployer"]</strong>
+                    <p>@Culture["Wa.Intermediary.AsEmployerBody"]</p>
+                </button>
+            </div>
+        }
 
-        <WaVestigingList Establishments="State.Establishments"
-                         SelectedIds="State.SelectedEstablishmentIds"
-                         KvkNumber="State.SelectedKvk"
-                         OnChanged="OnSelectionChanged" />
+        @if (State.UsesIntermediaryPath)
+        {
+            <div class="wa-scope-cards" role="radiogroup" aria-label="@Culture["Wa.Intermediary.CardTitle"]">
+                <div class="wa-scope-card is-on" role="radio" aria-checked="true">
+                    <strong>@Culture["Wa.Intermediary.CardTitle"]</strong>
+                    <p>@Culture["Wa.Intermediary.CardBody"]</p>
+                </div>
+            </div>
+            <p class="wa-hint">@Culture["Wa.Intermediary.PickBranches"]</p>
+            <WaVestigingList Establishments="State.Establishments"
+                             SelectedIds="State.SelectedEstablishmentIds"
+                             KvkNumber="State.SelectedKvk"
+                             OnChanged="OnSelectionChanged" />
+        }
+        else if (!State.IsMixedIntermediarySbi || State.RegisterAsIntermediary == false)
+        {
+            <h3 class="wa-section-title">@Culture["Wa.Scope.WhatTitle"]</h3>
+            <div class="wa-scope-cards" role="radiogroup" aria-label="@Culture["Wa.Scope.WhatTitle"]">
+                <button type="button"
+                        class="wa-scope-card @(State.Scope == "Organization" ? "is-on" : null)"
+                        role="radio"
+                        aria-checked="@(State.Scope == "Organization")"
+                        @onclick='() => SetScope("Organization")'>
+                    <strong>@Culture["Wa.Scope.WholeCompany"]</strong>
+                    <p>@Culture["Wa.Scope.WholeCompanyBody"]</p>
+                </button>
+                <button type="button"
+                        class="wa-scope-card @(State.Scope == "BranchOnly" ? "is-on" : null)"
+                        role="radio"
+                        aria-checked="@(State.Scope == "BranchOnly")"
+                        @onclick='() => SetScope("BranchOnly")'>
+                    <strong>@Culture["Wa.Scope.SomeBranches"]</strong>
+                    <p>@Culture["Wa.Scope.SomeBranchesBody"]</p>
+                </button>
+            </div>
+
+            <WaVestigingList Establishments="State.Establishments"
+                             SelectedIds="State.SelectedEstablishmentIds"
+                             KvkNumber="State.SelectedKvk"
+                             OnChanged="OnSelectionChanged" />
+        }
     }
 </section>
 
@@ -75,6 +115,25 @@
     [Parameter] public EventCallback OnChangeCompany { get; set; }
 
     private bool AllOwned => State.Establishments.Count > 0 && State.Establishments.All(e => e.IsInUse);
+
+    private async Task SetRoleChoice(bool asIntermediary)
+    {
+        State.RegisterAsIntermediary = asIntermediary;
+        if (asIntermediary)
+        {
+            State.Scope = "BranchOnly";
+        }
+        else if (string.IsNullOrWhiteSpace(State.Scope) || State.Scope == "BranchOnly")
+        {
+            State.Scope = "Organization";
+            foreach (var est in State.Establishments.Where(e => !e.IsInUse))
+            {
+                State.SelectedEstablishmentIds.Add(est.KvkEstablishmentId);
+            }
+        }
+
+        await OnChanged.InvokeAsync();
+    }
 
     private async Task SetScope(string scope)
     {

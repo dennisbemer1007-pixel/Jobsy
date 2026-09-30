@@ -135,6 +135,24 @@ internal static class UiStringsWerkgeverAanmelding
         Add("Wa.Scope.Continue", "Verder naar je account →", "Continue to your account →", "Dalej do konta →", "Continuă la cont →", "المتابعة إلى حسابك →");
         Add("Wa.Scope.PickOne", "Kies minstens één beschikbare vestiging.", "Pick at least one available location.", "Wybierz co najmniej jedną dostępną lokalizację.", "Alege cel puțin o locație disponibilă.", "اختر موقعاً متاحاً واحداً على الأقل.");
 
+        // Intermediair (SBI 78) wizard copy (10)
+        Add("Wa.Intermediary.ScopeTitle", "Gevonden! Jullie zijn een uitzendbureau", "Found! You are a staffing agency", "Znaleziono! Jesteście agencją pracy", "Găsit! Sunteți o agenție de muncă", "وجدناها! أنتم مكتب توظيف");
+        Add("Wa.Intermediary.HowTitle", "Hoe gebruik je Lobsy?", "How will you use Lobsy?", "Jak użyjesz Lobsy?", "Cum folosești Lobsy?", "كيف تستخدم Lobsy؟");
+        Add("Wa.Intermediary.AsBureau", "Als intermediair", "As an intermediary", "Jako pośrednik", "Ca intermediar", "كوسيط");
+        Add("Wa.Intermediary.AsBureauBody", "Je beheert opdrachtgevers en publiceert hun vacatures vanaf je bureau.", "You manage clients and publish their vacancies from your bureau.", "Zarządzasz klientami i publikujesz ich oferty z biura.", "Gestionezi clienți și publici ofertele lor din birou.", "تدير العملاء وتنشر وظائفهم من مكتبك.");
+        Add("Wa.Intermediary.AsEmployer", "Als werkgever", "As an employer", "Jako pracodawca", "Ca angajator", "كصاحب عمل");
+        Add("Wa.Intermediary.AsEmployerBody", "Je werft voor je eigen bedrijf, niet als uitzender.", "You recruit for your own company, not as a staffing agency.", "Rekrutujesz do własnej firmy, nie jako agencja.", "Recrutezi pentru propria firmă, nu ca agenție.", "توظّف لشركتك وليس كوكالة.");
+        Add("Wa.Intermediary.CardTitle", "Wij zijn een uitzend- of detacheringsbureau", "We are a staffing or secondment agency", "Jesteśmy agencją pracy lub oddelegowania", "Suntem o agenție de muncă sau detaşare", "نحن مكتب توظيف أو إعارة");
+        Add("Wa.Intermediary.CardBody", "Vink de bureauvestiging(en) aan die jij beheert. De eerste aangevinkte is je primaire vestiging.", "Tick the bureau location(s) you manage. The first ticked one is your primary location.", "Zaznacz lokalizacje biura, którymi zarządzasz. Pierwsza to główna.", "Bifează locațiile biroului pe care le gestionezi. Prima e cea principală.", "حدّد مواقع المكتب التي تديرها. أول موقع هو الرئيسي.");
+        Add("Wa.Intermediary.PickBranches", "Extra bureauvestigingen voeg je later toe onder Organisatie › Vestigingen.", "You can add more bureau locations later under Organisation › Locations.", "Dodatkowe lokalizacje dodasz później w Organizacja › Lokalizacje.", "Poți adăuga locații ulterior la Organizație › Locații.", "يمكنك إضافة مواقع لاحقاً تحت المنظمة › المواقع.");
+        Add("Wa.Intermediary.DoneTitle", "Welkom bij Lobsy — bureau", "Welcome to Lobsy — bureau", "Witamy w Lobsy — biuro", "Bine ai venit la Lobsy — birou", "مرحباً في Lobsy — المكتب");
+        Add("Wa.Intermediary.DoneLead", "Je account staat klaar. Verifieer je bureau om zichtbaar te worden.", "Your account is ready. Verify your bureau to become visible.", "Konto gotowe. Zweryfikuj biuro, by być widocznym.", "Contul e gata. Verifică biroul ca să fii vizibil.", "حسابك جاهز. تحقّق من مكتبك لتظهر.");
+        Add("Wa.Intermediary.VerifyNext", "Verifieer je bureau. Daarna controleren we ook je uitleenregistratie (Waadi).", "Verify your bureau. After that we also check your lender registration (Waadi).", "Zweryfikuj biuro. Potem sprawdzimy też rejestrację (Waadi).", "Verifică biroul. Apoi verificăm și înregistrarea (Waadi).", "تحقّق من مكتبك. بعدها نتحقق أيضاً من تسجيل الإعارة (Waadi).");
+        Add("Wa.Intermediary.WaadiNote", "Na verificatie controleren we ook je uitleenregistratie (Waadi). Tot die tijd kun je opdrachtgevers toevoegen en vacatures als concept opslaan.", "After verification we also check your lender registration (Waadi). Until then you can add clients and save vacancy drafts.", "Po weryfikacji sprawdzimy też rejestrację (Waadi). Do tego czasu możesz dodawać klientów i szkice ofert.", "După verificare verificăm și înregistrarea (Waadi). Până atunci poți adăuga clienți și drafturi.", "بعد التحقق نتحقق أيضاً من تسجيل الإعارة (Waadi). حتى ذلك الحين يمكنك إضافة عملاء وحفظ المسودات.");
+        Add("Wa.Intermediary.VerifyCta", "Bureau verifiëren →", "Verify bureau →", "Zweryfikuj biuro →", "Verifică biroul →", "تحقّق من المكتب ←");
+        Add("Wa.Intermediary.VerifyTitle", "Verifieer je bureau", "Verify your bureau", "Zweryfikuj biuro", "Verifică biroul", "تحقّق من مكتبك");
+        Add("Wa.Intermediary.CultuurTitle", "Zo werken wij als bureau", "How we work as a bureau", "Tak pracujemy jako biuro", "Așa lucrăm ca birou", "هكذا نعمل كمكتب");
+
         // Account
         Add("Wa.Account.Eyebrow", "Stap 3 · Jouw account", "Step 3 · Your account", "Krok 3 · Twoje konto", "Pasul 3 · Contul tău", "الخطوة 3 · حسابك");
         Add("Wa.Account.Title", "Nu even over jou", "Now about you", "Teraz o Tobie", "Acum despre tine", "الآن عنك");
@@ -413,6 +431,22 @@ internal static class UiStringsWerkgeverAanmelding
         Add("AdminWa.Engage.Remove", "Verwijderen", "Remove", "Usuń", "Elimină", "حذف");
         Add("AdminWa.Engage.Reset", "Terug naar opgegeven", "Back to self-declared", "Wróć do podanego", "Înapoi la declarat", "العودة إلى المصرّح");
         Add("AdminWa.Engage.Reason", "Reden (verplicht)", "Reason (required)", "Powód (wymagany)", "Motiv (obligatoriu)", "السبب (مطلوب)");
+
+        Add("AdminWa.Tab.Waadi", "Waadi", "Waadi", "Waadi", "Waadi", "Waadi");
+        Add("AdminWa.Waadi.Bureau", "Bureau", "Bureau", "Biuro", "Birou", "المكتب");
+        Add("AdminWa.Waadi.Status", "Status", "Status", "Status", "Status", "الحالة");
+        Add("AdminWa.Waadi.Source", "Bron", "Source", "Źródło", "Sursă", "المصدر");
+        Add("AdminWa.Waadi.Reference", "Referentie", "Reference", "Numer referencyjny", "Referință", "المرجع");
+        Add("AdminWa.Waadi.ValidUntil", "Geldig tot", "Valid until", "Ważne do", "Valabil până", "صالح حتى");
+        Add("AdminWa.Waadi.Note", "Notitie", "Note", "Notatka", "Notă", "ملاحظة");
+        Add("AdminWa.Waadi.CheckLink", "KvK Waadi-check", "KvK Waadi check", "Kontrola Waadi KvK", "Verificare Waadi KvK", "فحص Waadi في KvK");
+        Add("AdminWa.Waadi.Confirm", "Bevestigen", "Confirm", "Potwierdź", "Confirmă", "تأكيد");
+        Add("AdminWa.Waadi.Reject", "Afwijzen", "Reject", "Odrzuć", "Respinge", "رفض");
+        Add("AdminWa.Waadi.RejectReason", "Notitie (verplicht bij afwijzen)", "Note (required when rejecting)", "Notatka (wymagana przy odrzuceniu)", "Notă (obligatorie la respingere)", "ملاحظة (مطلوبة عند الرفض)");
+        Add("AdminWa.Waadi.Source.WaadiKvk", "Waadi via KvK", "Waadi via KvK", "Waadi przez KvK", "Waadi via KvK", "Waadi عبر KvK");
+        Add("AdminWa.Waadi.Source.WttaNau", "Wtta", "Wtta", "Wtta", "Wtta", "Wtta");
+        Add("AdminWa.Waadi.Source.AdminManual", "Handmatig", "Manual", "Ręcznie", "Manual", "يدوي");
+        Add("AdminWa.Waadi.Empty", "Geen openstaande uitleenregistraties.", "No pending lender registrations.", "Brak oczekujących rejestracji.", "Nicio înregistrare în așteptare.", "لا تسجيلات إعارة معلّقة.");
 
         Add("WaProfile.Vacancy.InheritTitle", "Cultuurprofiel van {0} gebruiken", "Use the culture profile of {0}", "Użyj profilu kultury {0}", "Folosește profilul cultural al {0}", "استخدم ملف ثقافة {0}");
         Add("WaProfile.Vacancy.InheritHint", "Standaard gebruikt elke vacature het cultuurprofiel van het bedrijf. Werkt dit team anders? Pas het dan alleen hier aan.", "By default every vacancy uses the company culture profile. Does this team work differently? Adjust it here only.", "Domyślnie oferta używa profilu firmy. Ten zespół działa inaczej? Zmień tylko tutaj.", "Implicit oferta folosește profilul firmei. Echipa lucrează altfel? Ajustează doar aici.", "افتراضياً تستخدم كل وظيفة ملف الشركة. هل يعمل هذا الفريق بشكل مختلف؟ عدّل هنا فقط.");

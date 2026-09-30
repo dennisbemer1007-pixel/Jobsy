@@ -54,7 +54,8 @@ public sealed record VacancyProductOutcome(
     bool InsufficientTokens = false,
     decimal RequiredTokens = 0m,
     decimal Balance = 0m,
-    Guid? SpendCompanyId = null);
+    Guid? SpendCompanyId = null,
+    string? ErrorCode = null);
 
 public sealed record PushBomPreview(
     int CandidateCount,

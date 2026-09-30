@@ -1231,6 +1231,15 @@ public class VacanciesController : ControllerBase
 
         if (!result.Succeeded)
         {
+            if (string.Equals(result.ErrorCode, LenderRegistrationRules.PendingErrorCode, StringComparison.Ordinal))
+            {
+                return StatusCode(StatusCodes.Status409Conflict, new
+                {
+                    code = result.ErrorCode,
+                    message = result.ErrorMessage
+                });
+            }
+
             return BadRequest(new { message = result.ErrorMessage });
         }
 
@@ -1293,6 +1302,15 @@ public class VacanciesController : ControllerBase
 
         if (!result.Succeeded)
         {
+            if (string.Equals(result.ErrorCode, LenderRegistrationRules.PendingErrorCode, StringComparison.Ordinal))
+            {
+                return StatusCode(StatusCodes.Status409Conflict, new
+                {
+                    code = result.ErrorCode,
+                    message = result.ErrorMessage
+                });
+            }
+
             return BadRequest(new { message = result.ErrorMessage });
         }
 
@@ -1662,6 +1680,15 @@ public class VacanciesController : ControllerBase
 
         if (!result.Succeeded)
         {
+            if (string.Equals(result.ErrorCode, LenderRegistrationRules.PendingErrorCode, StringComparison.Ordinal))
+            {
+                return StatusCode(StatusCodes.Status409Conflict, new
+                {
+                    code = result.ErrorCode,
+                    message = result.ErrorMessage
+                });
+            }
+
             return BadRequest(new { message = result.ErrorMessage });
         }
 

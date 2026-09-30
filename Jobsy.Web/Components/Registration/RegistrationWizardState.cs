@@ -20,6 +20,11 @@ public sealed class RegistrationWizardState
     public List<WizardEstablishment> Establishments { get; set; } = [];
     public HashSet<string> SelectedEstablishmentIds { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public string Scope { get; set; } = "Organization"; // Organization | BranchOnly
+    /// <summary>
+    /// When SBI has both 78 and other codes: null = undecided, true = intermediair, false = werkgever.
+    /// Forced true when only SBI 78; forced false when no 78.
+    /// </summary>
+    public bool? RegisterAsIntermediary { get; set; }
     public bool ManualMode { get; set; }
     public string ManualName { get; set; } = "";
     public string ManualKvk { get; set; } = "";
@@ -50,6 +55,40 @@ public sealed class RegistrationWizardState
             var digits = new string((s ?? "").Where(char.IsDigit).ToArray());
             return digits.StartsWith("78", StringComparison.Ordinal);
         });
+
+    public bool HasNonIntermediarySbi =>
+        SbiCodes.Any(s =>
+        {
+            if (string.IsNullOrWhiteSpace(s))
+            {
+                return false;
+            }
+
+            var digits = new string(s.Where(char.IsDigit).ToArray());
+            return !digits.StartsWith("78", StringComparison.Ordinal);
+        });
+
+    public bool IsMixedIntermediarySbi => IsIntermediarySbi && HasNonIntermediarySbi;
+
+    public bool IsMainActivityIntermediary =>
+        IsIntermediarySbi && (SbiCodes.Count == 0 || !HasNonIntermediarySbi
+            || StartsWith78(SbiCodes.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s))));
+
+    /// <summary>Effective intermediair path after the optional role choice.</summary>
+    public bool UsesIntermediaryPath =>
+        RegisterAsIntermediary == true
+        || (RegisterAsIntermediary is null && IsIntermediarySbi && !HasNonIntermediarySbi);
+
+    private static bool StartsWith78(string? sbi)
+    {
+        if (string.IsNullOrWhiteSpace(sbi))
+        {
+            return false;
+        }
+
+        var digits = new string(sbi.Where(char.IsDigit).ToArray());
+        return digits.StartsWith("78", StringComparison.Ordinal);
+    }
 
     public async Task PersistAsync(ProtectedSessionStorage storage)
     {
@@ -93,6 +132,7 @@ public sealed class RegistrationWizardState
         Establishments = Establishments,
         SelectedEstablishmentIds = SelectedEstablishmentIds.ToList(),
         Scope = Scope,
+        RegisterAsIntermediary = RegisterAsIntermediary,
         ManualMode = ManualMode,
         ManualName = ManualName,
         ManualKvk = ManualKvk,
@@ -134,6 +174,7 @@ public sealed class RegistrationWizardState
             dto.SelectedEstablishmentIds ?? [],
             StringComparer.OrdinalIgnoreCase);
         Scope = dto.Scope ?? "Organization";
+        RegisterAsIntermediary = dto.RegisterAsIntermediary;
         ManualMode = dto.ManualMode;
         ManualName = dto.ManualName ?? "";
         ManualKvk = dto.ManualKvk ?? "";
@@ -173,6 +214,7 @@ public sealed class RegistrationWizardState
         public List<WizardEstablishment>? Establishments { get; set; }
         public List<string>? SelectedEstablishmentIds { get; set; }
         public string? Scope { get; set; }
+        public bool? RegisterAsIntermediary { get; set; }
         public bool ManualMode { get; set; }
         public string? ManualName { get; set; }
         public string? ManualKvk { get; set; }

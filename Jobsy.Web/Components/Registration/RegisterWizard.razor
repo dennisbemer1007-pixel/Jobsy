@@ -150,7 +150,8 @@
 
     private bool CanContinueScope =>
         State.Establishments.Any(e => !e.IsInUse)
-        && State.SelectedEstablishmentIds.Count > 0;
+        && State.SelectedEstablishmentIds.Count > 0
+        && (!State.IsMixedIntermediarySbi || State.RegisterAsIntermediary is not null);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -249,7 +250,21 @@
         State.SelectedEstablishmentIds = new HashSet<string>(
             State.Establishments.Where(e => !e.IsInUse).Select(e => e.KvkEstablishmentId),
             StringComparer.OrdinalIgnoreCase);
-        State.Scope = State.IsIntermediarySbi ? "BranchOnly" : "Organization";
+        if (State.IsMixedIntermediarySbi)
+        {
+            State.RegisterAsIntermediary = State.IsMainActivityIntermediary;
+            State.Scope = State.RegisterAsIntermediary == true ? "BranchOnly" : "Organization";
+        }
+        else if (State.IsIntermediarySbi)
+        {
+            State.RegisterAsIntermediary = true;
+            State.Scope = "BranchOnly";
+        }
+        else
+        {
+            State.RegisterAsIntermediary = false;
+            State.Scope = "Organization";
+        }
         State.Step = 2;
         await Persist();
     }
@@ -399,7 +414,7 @@
             var result = await Api.SubmitRegistrationAsync(
                 State.SelectedKvk,
                 primary.KvkEstablishmentId,
-                State.IsIntermediarySbi ? "BranchOnly" : State.Scope,
+                State.UsesIntermediaryPath ? "BranchOnly" : State.Scope,
                 State.ContactName.Trim(),
                 State.ContactEmail.Trim(),
                 string.IsNullOrWhiteSpace(State.ContactPhone) ? null : State.ContactPhone.Trim(),
@@ -412,6 +427,7 @@
                 manualEstablishmentNumber: State.ManualMode ? primary.EstablishmentNumber : null,
                 manualLatitude: State.ManualMode ? State.ManualLatitude : null,
                 manualLongitude: State.ManualMode ? State.ManualLongitude : null,
+                manualIsIntermediarySbi: State.UsesIntermediaryPath,
                 selectedEstablishmentIds: State.SelectedEstablishmentIds.ToList(),
                 salesManagerUserId: State.SalesManagerUserId,
                 representationConsentAtUtc: DateTime.UtcNow,

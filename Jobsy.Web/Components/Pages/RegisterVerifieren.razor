@@ -8,6 +8,7 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>@Culture["WaVerify.Eyebrow"] · Lobsy</PageTitle>
 
@@ -72,8 +73,12 @@
         else
         {
             <p class="wa-eyebrow">@Culture["WaVerify.Eyebrow"]</p>
-            <h1>@string.Format(Culture["WaVerify.Title"], _companyName)</h1>
+            <h1>@(_isIntermediary ? Culture["Wa.Intermediary.VerifyTitle"] : string.Format(Culture["WaVerify.Title"], _companyName))</h1>
             <p class="wa-lead">@Culture["WaVerify.Lead"]</p>
+            @if (_isIntermediary)
+            {
+                <p class="wa-note">@Culture["Wa.Intermediary.WaadiNote"]</p>
+            }
 
             @if (!string.IsNullOrWhiteSpace(_error))
             {
@@ -194,6 +199,7 @@
     private string _manualReason = "";
     private string _manualMessage = "";
     private string? _error;
+    private bool _isIntermediary;
 
     private string EmailCardClass
         => "wa-verify-card"
@@ -212,6 +218,9 @@
     {
         try
         {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            _isIntermediary = auth.User.IsInRole("Intermediary");
+
             var options = await Api.GetCompanyVerificationOptionsAsync();
             if (options is null)
             {

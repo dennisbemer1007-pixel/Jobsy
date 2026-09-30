@@ -4,15 +4,19 @@
 
 <section class="wa-done">
     <WaMascot Pose="WaMascot.MascotPose.Celebrating" Size="lg" />
-    <h1>@Culture["Wa.Done.Title"]</h1>
-    <p class="wa-lead">@Culture["Wa.Done.Lead"]</p>
+    <h1>@(State.UsesIntermediaryPath ? Culture["Wa.Intermediary.DoneTitle"] : Culture["Wa.Done.Title"])</h1>
+    <p class="wa-lead">@(State.UsesIntermediaryPath ? Culture["Wa.Intermediary.DoneLead"] : Culture["Wa.Done.Lead"])</p>
     @if (State.InstantlyVerified)
     {
         <p class="wa-chip wa-chip--ok">@Culture["Wa.Done.Verified"]</p>
+        @if (State.UsesIntermediaryPath)
+        {
+            <p class="wa-note">@Culture["Wa.Intermediary.WaadiNote"]</p>
+        }
     }
     else
     {
-        <p class="wa-note">@Culture["Wa.Done.VerifyNext"]</p>
+        <p class="wa-note">@(State.UsesIntermediaryPath ? Culture["Wa.Intermediary.VerifyNext"] : Culture["Wa.Done.VerifyNext"])</p>
     }
     <div class="wa-actions">
         @if (State.InstantlyVerified)
@@ -21,7 +25,9 @@
         }
         else
         {
-            <a class="wa-btn wa-btn--primary" href="/register/verifieren">@Culture["WaVerify.Email.Confirm"]</a>
+            <a class="wa-btn wa-btn--primary" href="/register/verifieren">
+                @(State.UsesIntermediaryPath ? Culture["Wa.Intermediary.VerifyCta"] : Culture["WaVerify.Email.Confirm"])
+            </a>
             <a class="wa-link" href="/home">@Culture["Wa.Done.Dashboard"]</a>
         }
         <a class="wa-link" href="/register/bedrijf?stap=branche">@Culture["Wa.Done.Profile"]</a>

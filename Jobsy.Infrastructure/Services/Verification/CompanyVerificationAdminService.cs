@@ -332,6 +332,28 @@ public sealed class CompanyVerificationAdminService : ICompanyVerificationAdminS
             flags.Add("kvk_burst_registrations");
         }
 
+        // Heuristic (10.5 / §A): SBI-78 (intermediair) registration with a free-mail contact.
+        if (company.Type == CompanyType.Intermediary
+            || await _db.CompanyRegistrations.AnyAsync(
+                r => r.KvkNumber == company.KvkNumber && r.IsIntermediarySbi, cancellationToken))
+        {
+            var contactEmails = await _db.CompanyRegistrations
+                .Where(r => r.KvkNumber == company.KvkNumber)
+                .OrderByDescending(r => r.CreatedAt)
+                .Select(r => r.ContactEmail)
+                .Take(5)
+                .ToListAsync(cancellationToken);
+            var managerEmails = await _db.Users
+                .Where(u => u.CompanyId == company.Id && u.IsActive)
+                .Select(u => u.Email)
+                .Take(5)
+                .ToListAsync(cancellationToken);
+            if (contactEmails.Concat(managerEmails).Any(FreeMailDomains.IsFreeMail))
+            {
+                flags.Add("intermediary_freemail");
+            }
+        }
+
         return flags;
     }
 }

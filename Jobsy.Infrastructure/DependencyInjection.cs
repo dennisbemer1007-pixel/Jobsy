@@ -6,6 +6,7 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Infrastructure.Services.LenderRegistration;
 using Jobsy.Infrastructure.Services.OpenAi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -366,6 +367,10 @@ public static class DependencyInjection
         services.AddScoped<ICompanyCultureService, CompanyCultureService>();
         services.AddScoped<ICompanyProfileExtrasService, CompanyProfileExtrasService>();
         services.AddScoped<ICompanyEngagementService, CompanyEngagementService>();
+        services.AddScoped<ILenderRegistrationProvider, WaadiKvkProvider>();
+        services.AddScoped<ILenderRegistrationProvider, WttaNauProvider>();
+        services.AddScoped<ILenderRegistrationProvider, AdminManualLenderProvider>();
+        services.AddScoped<ILenderRegistrationCheck, LenderRegistrationCheckService>();
         services.AddScoped<ICandidateCareerInterestService, CandidateCareerInterestService>();
         services.AddHttpClient(CareerCompassGenerationService.HttpClientName, client =>
         {
