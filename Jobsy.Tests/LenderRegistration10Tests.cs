@@ -74,7 +74,7 @@ public class LenderRegistration10Tests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990079", "99990079_0001", RegistrationScope.Organization,
             "Mixed Boss", "mixed.employer10@jobsy.local",
-            AcceptedTerms: true, Password: "MixedPass1!",
+            AcceptedTerms: true, Password: "MixedPass12!",
             ManualIsIntermediarySbi: false));
 
         var reg = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
@@ -91,7 +91,7 @@ public class LenderRegistration10Tests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990079", "99990079_0001", RegistrationScope.BranchOnly,
             "Mixed Flex", "mixed.flex10@jobsy.local",
-            AcceptedTerms: true, Password: "MixedPass1!",
+            AcceptedTerms: true, Password: "MixedPass12!",
             ManualIsIntermediarySbi: true));
 
         var reg = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
