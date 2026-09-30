@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (128 routes)
+## Table (129 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -115,7 +115,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/employer/salary-tables/{TableId:guid}` | `Pages/Employer/SalaryTables.razor` | EnterpriseManager, Admin |
 | `/employer/sales` | `Pages/Employer/PartnerSales.razor` | EnterpriseManager, Intermediary |
 | `/employer/sales/payout-checkout` | `Pages/Employer/PartnerSalesPayoutCheckoutStub.razor` | EnterpriseManager, Intermediary |
-| `/employer/takeovers` | `Pages/Employer/Takeovers.razor` | BranchManager, EnterpriseManager, Admin |
+| `/employer/takeovers` | `Pages/Employer/Takeovers.razor` | BranchManager, RegionalManager, EnterpriseManager, Admin |
 | `/employer/talent` | `Pages/Employer/TalentPool.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/employer/talent-contacts` | `Pages/Employer/TalentContacts.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/employer/tokens` | `Pages/Employer/Tokens.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |

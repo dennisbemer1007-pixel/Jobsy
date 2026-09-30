@@ -49,9 +49,10 @@ public class KvkServiceStubTests
     public async Task GetEstablishments_marks_in_use_from_database()
     {
         await using var db = CreateDb();
+        var companyId = Guid.NewGuid();
         db.Companies.Add(new Company
         {
-            Id = Guid.NewGuid(),
+            Id = companyId,
             Name = "De Fred Statenkwartier",
             KvkNumber = "11223344",
             KvkEstablishmentId = "11223344_0001",
@@ -63,6 +64,17 @@ public class KvkServiceStubTests
             VerifiedAtUtc = DateTime.UtcNow,
             VerificationUpdatedAtUtc = DateTime.UtcNow
         });
+        var emId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = emId,
+            Email = "fred.em@jobsy.local",
+            FullName = "EM",
+            Role = UserRole.EnterpriseManager,
+            CompanyId = companyId,
+            IsActive = true
+        });
+        db.UserCompanies.Add(new UserCompany { UserId = emId, CompanyId = companyId });
         await db.SaveChangesAsync();
 
         var sut = new KvkServiceStub(db);
