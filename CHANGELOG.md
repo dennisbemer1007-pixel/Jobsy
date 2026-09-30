@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Landing zonder werkgevers (07):** `-zw` variant on `/` (server-rendered via `IEmployersSwitch` / `ForceVariant`), passport hero + OFF “Wat je krijgt” / “Voor wie”, `/banenkaart` + `/banen` gated OFF → `/`, flag-aware sitemap/robots ETag + JSON-LD without SearchAction, GratisDna OFF copy (“Alleen jij”, unlock list, “Past dit beroep?”), mobile passport chips overflow fix. Dependencies A/B still absent → AlwaysOn + follow-up doc (D20 + Passport.Tab.Fit).
 - **Landing gratis test warm (06):** `/ontdek` restyle under `.pub-theme` (start/question/result), compact PublicLayout header, `GratisDnaSignupCard` + mobile sheet, sticky CTA vs cookie banner (`pub-fixed-bottom`), FeedbackWidget on page; behaviour/scoring/storage unchanged.
 - **Landing page ON (05):** `/` is static SSR landing (`Landing.razor`, `[NoBlazorRuntime]`), warm `landing.css`, one real vacancy count (D7), FAQ + JSON-LD, signed-in + legacy map deep-link redirects, no MapLibre/blazor.web.js on `/`. Map stays at `/banenkaart` only.
 - **Landing banenkaart move (04):** map served at `/banenkaart` (public, indexed; dual `@page "/"` until landing 05), `/banen` → 301 with query preserved, `AuthRedirects.BanenkaartPath` / RoleNav / map deep links / SEO+sitemap retargeted, `LegacyMapQuery` for 05.

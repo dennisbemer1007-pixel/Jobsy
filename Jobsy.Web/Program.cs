@@ -216,6 +216,7 @@ app.UseMfaEnforcement();
 app.UseAntiforgery();
 app.UseRegisterOntdekRedirect();
 app.UseBanenRedirect();
+app.UseBanenkaartGate();
 app.UseLandingRedirect();
 
 app.MapJobsyAuthEndpoints();

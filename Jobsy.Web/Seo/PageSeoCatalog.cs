@@ -65,6 +65,28 @@ public static partial class PageSeoCatalog
         "/partner"
     ];
 
+    /// <summary>
+    /// Sitemap static paths. OFF drops employer/map surfaces (§S).
+    /// </summary>
+    public static IReadOnlyList<string> StaticIndexablePathsFor(bool employersEnabled)
+    {
+        if (employersEnabled)
+        {
+            return StaticIndexablePaths;
+        }
+
+        return StaticIndexablePaths
+            .Where(p => !IsEmployersOnlySitemapPath(p))
+            .ToArray();
+    }
+
+    public static bool IsEmployersOnlySitemapPath(string? path)
+    {
+        var p = Normalize(path);
+        return p is "/banenkaart" or "/partner" or "/westland" or "/lancering" or "/werkgevers"
+               || p.StartsWith("/vacancies/", StringComparison.Ordinal);
+    }
+
     public static string Normalize(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))

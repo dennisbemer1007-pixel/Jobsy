@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Jobsy.Web.Features;
 
 namespace Jobsy.Web.Seo;
 
@@ -69,6 +71,13 @@ public static class SitemapXml
         sb.AppendLine("</urlset>");
         return sb.ToString();
     }
+
+    public static string WeakETag(string content, bool employersEnabled)
+    {
+        var payload = Encoding.UTF8.GetBytes(content + "|" + (employersEnabled ? "on" : "zw"));
+        var hash = Convert.ToHexString(SHA256.HashData(payload)).ToLowerInvariant();
+        return $"W/\"{hash[..16]}\"";
+    }
 }
 
 public sealed record SiteCrawlIndex(
@@ -81,58 +90,71 @@ public static class SeoEndpoints
 {
     public static void MapSeoEndpoints(this WebApplication app)
     {
-        app.MapGet("/robots.txt", (IConfiguration config, HttpContext http) =>
+        app.MapGet("/robots.txt", async (
+            IConfiguration config,
+            HttpContext http,
+            IEmployersSwitch? employers) =>
         {
             var origin = PageSeoResolver.Origin(
                 $"{http.Request.Scheme}://{http.Request.Host}{http.Request.Path}",
                 config);
-            http.Response.Headers.CacheControl = "public,max-age=86400";
-            return Results.Text(SitemapXml.RobotsTxt(origin), "text/plain; charset=utf-8");
+            var enabled = employers is null || await employers.IsEnabledAsync(http.RequestAborted);
+            var body = SitemapXml.RobotsTxt(origin);
+            http.Response.Headers.CacheControl = "public, max-age=300";
+            http.Response.Headers.ETag = SitemapXml.WeakETag(body, enabled);
+            return Results.Text(body, "text/plain; charset=utf-8");
         }).AllowAnonymous();
 
         app.MapGet("/sitemap.xml", async (
             IConfiguration config,
             HttpContext http,
             IHttpClientFactory clients,
+            IEmployersSwitch? employers,
             CancellationToken cancellationToken) =>
         {
             var origin = PageSeoResolver.Origin(
                 $"{http.Request.Scheme}://{http.Request.Host}{http.Request.Path}",
                 config);
-            var paths = new List<string>(PageSeoCatalog.StaticIndexablePaths);
+            var enabled = employers is null || await employers.IsEnabledAsync(cancellationToken);
+            var paths = new List<string>(PageSeoCatalog.StaticIndexablePathsFor(enabled));
 
-            try
+            if (enabled)
             {
-                var client = clients.CreateClient("JobsySeo");
-                var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var index = await client.GetFromJsonAsync<SiteCrawlIndex>(
-                    "api/site/crawl-index",
-                    jsonOptions,
-                    cancellationToken);
-                if (index is not null)
+                try
                 {
-                    foreach (var vacancy in index.Vacancies.Take(SitemapXml.MaxDynamicUrls))
+                    var client = clients.CreateClient("JobsySeo");
+                    var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var index = await client.GetFromJsonAsync<SiteCrawlIndex>(
+                        "api/site/crawl-index",
+                        jsonOptions,
+                        cancellationToken);
+                    if (index is not null)
                     {
-                        paths.Add($"/vacancies/{vacancy.Id:D}");
-                    }
-
-                    foreach (var companyPath in index.CompanyPaths)
-                    {
-                        if (!string.IsNullOrWhiteSpace(companyPath)
-                            && PageSeoCatalog.IsPublicCompanyPath(companyPath))
+                        foreach (var vacancy in index.Vacancies.Take(SitemapXml.MaxDynamicUrls))
                         {
-                            paths.Add(companyPath);
+                            paths.Add($"/vacancies/{vacancy.Id:D}");
+                        }
+
+                        foreach (var companyPath in index.CompanyPaths)
+                        {
+                            if (!string.IsNullOrWhiteSpace(companyPath)
+                                && PageSeoCatalog.IsPublicCompanyPath(companyPath))
+                            {
+                                paths.Add(companyPath);
+                            }
                         }
                     }
                 }
-            }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
-            {
-                // Static marketing URLs still help crawlers when the API is briefly unreachable.
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+                {
+                    // Static marketing URLs still help crawlers when the API is briefly unreachable.
+                }
             }
 
-            http.Response.Headers.CacheControl = "public,max-age=3600";
-            return Results.Text(SitemapXml.Build(origin, paths), "application/xml; charset=utf-8");
+            var body = SitemapXml.Build(origin, paths);
+            http.Response.Headers.CacheControl = "public, max-age=300";
+            http.Response.Headers.ETag = SitemapXml.WeakETag(body, enabled);
+            return Results.Text(body, "application/xml; charset=utf-8");
         }).AllowAnonymous();
     }
 }

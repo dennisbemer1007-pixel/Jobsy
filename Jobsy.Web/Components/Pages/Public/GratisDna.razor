@@ -8,6 +8,7 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Feedback
 @using Jobsy.Web.Components.Public
+@using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
@@ -18,6 +19,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
 @inject GratisDnaStorage Storage
+@inject LandingVariantResolver VariantResolver
 @inject IJSRuntime Js
 @implements IAsyncDisposable
 
@@ -114,7 +116,7 @@
                         <label class="gd-consent gd-consent--check">
                             <input type="checkbox" data-testid="gd-consent" @bind="_consentChecked" />
                             <span>
-                                @Culture["GratisDna.Landing.Consent"]
+                                @LandingText.For("GratisDna.Landing.Consent", _variant)
                                 <a href="@PublicRoutes.Privacy">@Culture["GratisDna.Landing.PrivacyLink"]</a>
                             </span>
                         </label>
@@ -233,13 +235,14 @@
 
                 <p class="gd-qfoot">
                     <PubEmoji Glyph="🔒" />
-                    @Culture["GratisDna.Questions.Privacy"]
+                    @LandingText.For("GratisDna.Questions.Privacy", _variant)
                 </p>
             </div>
         }
         else if (_state == FlowState.Result && _payload is not null)
         {
             <GratisDnaResultView RegisterHref="@RegisterHref"
+                                 Variant="_variant"
                                  StrengthSentence="@(_strengthTile is null ? null : TileSentence("Strength", _strengthTile.Code))"
                                  RiasecSentence="@(_riasecTile is null ? null : TileSentence("Riasec", _riasecTile.Code))"
                                  CultureSentence="@(_cultureTile is null ? null : TileSentence("Culture", _cultureTile.Code))"
@@ -294,6 +297,7 @@
     private readonly List<DnaQuestion> _questions = BuildQuestions();
     private readonly int _totalQuestions = OnboardingWizardCatalog.TotalMiniQuestionCount;
 
+    private LandingVariant _variant = LandingVariant.On;
     private FlowState _state = FlowState.Landing;
     private GratisDnaStoragePayload? _payload;
     private bool _hydrating = true;
@@ -348,6 +352,7 @@
     {
         if (firstRender)
         {
+            _variant = await VariantResolver.GetAsync();
             var auth = await AuthState.GetAuthenticationStateAsync();
             var user = auth.User;
             if (user.Identity?.IsAuthenticated == true && user.IsInRole("Candidate"))
