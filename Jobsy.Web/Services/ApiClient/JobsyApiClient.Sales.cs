@@ -442,15 +442,29 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<SalesManagerInviteResult>(cancellationToken: ct);
     }
 
-    public async Task<SalesManagerApplicationItem?> SubmitSalesManagerApplicationAsync(
+    public async Task<Jobsy.Core.Interfaces.SalesRecommendOverviewDto?> GetSalesRecommendOverviewAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/recommend", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Aanbevelingen laden mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Interfaces.SalesRecommendOverviewDto>(cancellationToken: ct);
+    }
+
+    public async Task<SalesManagerApplicationItem?> SubmitSalesRecommendAsync(
         string candidateEmail,
         string candidateFullName,
         string motivation,
+        bool referrerConfirmedPermission,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync(
-            "api/sales-managers/me/applications",
-            new { candidateEmail, candidateFullName, motivation },
+            "api/sales/me/recommend",
+            new { candidateEmail, candidateFullName, motivation, referrerConfirmedPermission },
             ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -461,10 +475,43 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<SalesManagerApplicationItem>(cancellationToken: ct);
     }
 
+    public async Task ObjectSalesRecommendAsync(string token, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/sales/recommend/object",
+            new { token },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Verwijderen mislukt.");
+        }
+    }
+
+    public async Task<SalesManagerApplicationItem?> SubmitSalesManagerApplicationAsync(
+        string candidateEmail,
+        string candidateFullName,
+        string motivation,
+        bool referrerConfirmedPermission = true,
+        CancellationToken ct = default)
+        => await SubmitSalesRecommendAsync(
+            candidateEmail, candidateFullName, motivation, referrerConfirmedPermission, ct);
+
     public async Task<List<SalesManagerApplicationItem>> GetMySalesManagerApplicationsAsync(
         CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<SalesManagerApplicationItem>>(
-               "api/sales-managers/me/applications", ct) ?? [];
+    {
+        var overview = await GetSalesRecommendOverviewAsync(ct);
+        return overview?.Applications.Select(a => new SalesManagerApplicationItem
+        {
+            Id = a.Id,
+            CandidateFullName = a.DisplayName,
+            Status = a.Status,
+            StatusLabelKey = a.StatusLabelKey,
+            CreatedAtUtc = a.CreatedAtUtc,
+            RejectionReason = a.RejectionReason,
+            PersonalDataClearedAtUtc = a.PersonalDataCleared ? DateTime.UtcNow : null
+        }).ToList() ?? [];
+    }
 
     public async Task<List<SalesManagerApplicationItem>> GetSalesManagerApplicationsAsync(
         bool pendingOnly = true,
@@ -511,16 +558,36 @@ public sealed partial class JobsyApiClient
 
     public async Task<SalesManagerDashboard?> GetMySalesManagerDashboardAsync(CancellationToken ct = default)
     {
-        var response = await _http.GetAsync("api/sales-managers/me/dashboard", ct);
-        if (!response.IsSuccessStatusCode)
+        // Legacy callers: compose from portal profile + wallet (old me/dashboard removed in 09).
+        var profile = await GetSalesPortalProfileAsync(ct);
+        if (profile is null)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(
-                ExtractMessage(body)
-                ?? $"Salesmanager-dashboard mislukt ({(int)response.StatusCode}). Is de API (poort 5200) gestart en gemigreerd?");
+            return null;
         }
 
-        return await response.Content.ReadFromJsonAsync<SalesManagerDashboard>(cancellationToken: ct);
+        decimal available = 0m;
+        try
+        {
+            var wallet = await GetSalesWalletAsync(ct);
+            available = wallet.Available;
+        }
+        catch
+        {
+            // ignore — balance optional for shell
+        }
+
+        return new SalesManagerDashboard
+        {
+            UserId = profile.UserId,
+            Email = profile.Email,
+            FullName = profile.FullName,
+            TrackingCode = profile.TrackingCode,
+            IsOnboardingComplete = profile.IsOnboardingComplete,
+            BalanceExVat = available,
+            UninvoicedExVat = available,
+            CanRecruitSalesManagers = profile.CanRecruitSalesManagers,
+            ReferredBySalesManagerUserId = profile.ReferredBySalesManagerUserId
+        };
     }
 
     public async Task<SalesManagerDashboard?> GetSalesManagerDashboardAsync(Guid userId, CancellationToken ct = default)
@@ -537,30 +604,58 @@ public sealed partial class JobsyApiClient
 
     public async Task<SalesManagerProfile?> GetMySalesManagerProfileAsync(CancellationToken ct = default)
     {
-        var response = await _http.GetAsync("api/sales-managers/me/profile", ct);
-        if (!response.IsSuccessStatusCode)
+        var portal = await GetSalesPortalProfileAsync(ct);
+        if (portal is null)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(
-                ExtractMessage(body)
-                ?? $"Salesmanager-profiel mislukt ({(int)response.StatusCode}). Is de API (poort 5200) gestart?");
+            return null;
         }
 
-        return await response.Content.ReadFromJsonAsync<SalesManagerProfile>(cancellationToken: ct);
+        return new SalesManagerProfile
+        {
+            UserId = portal.UserId,
+            Email = portal.Email,
+            FullName = portal.FullName,
+            CompanyName = portal.CompanyName,
+            KvkNumber = portal.KvkNumber,
+            VatNumber = portal.VatNumber,
+            Address = portal.Address,
+            PostalCode = portal.PostalCode,
+            City = portal.City,
+            Country = portal.Country,
+            TrackingCode = portal.TrackingCode,
+            IsOnboardingComplete = portal.IsOnboardingComplete,
+            CanRecruitSalesManagers = portal.CanRecruitSalesManagers,
+            ReferredBySalesManagerUserId = portal.ReferredBySalesManagerUserId,
+            AgreementSignedAt = portal.AgreementSignedAt,
+            AgreementVersion = portal.AgreementVersion,
+            OnboardingCompletedAt = portal.OnboardingCompletedAt,
+            Iban = portal.MaskedIban
+        };
     }
 
     public async Task<SalesManagerProfile?> UpdateMySalesManagerProfileAsync(
         SalesManagerProfileForm form,
         CancellationToken ct = default)
     {
-        var response = await _http.PutAsJsonAsync("api/sales-managers/me/profile", form, ct);
-        if (!response.IsSuccessStatusCode)
+        var portal = await UpdateSalesPortalCompanyAsync(new
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Profiel opslaan mislukt.");
-        }
-
-        return await response.Content.ReadFromJsonAsync<SalesManagerProfile>(cancellationToken: ct);
+            companyName = form.CompanyName,
+            kvkNumber = form.KvkNumber,
+            vatNumber = form.VatNumber,
+            address = form.Address,
+            postalCode = form.PostalCode,
+            city = form.City,
+            country = form.Country
+        }, ct);
+        return await GetMySalesManagerProfileAsync(ct) ?? new SalesManagerProfile
+        {
+            UserId = portal.UserId,
+            Email = portal.Email,
+            FullName = portal.FullName,
+            CompanyName = portal.CompanyName,
+            TrackingCode = portal.TrackingCode,
+            IsOnboardingComplete = portal.IsOnboardingComplete
+        };
     }
 
     public async Task<SalesManagerProfile?> SignSalesManagerAgreementAsync(CancellationToken ct = default)
@@ -576,69 +671,57 @@ public sealed partial class JobsyApiClient
     }
 
     public async Task<List<SelfBillingInvoiceItem>> GetMySelfBillingInvoicesAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<SelfBillingInvoiceItem>>("api/sales-managers/me/invoices", ct) ?? [];
+    {
+        var rows = await GetSalesInvoicesAsync(ct);
+        return rows.Select(i => new SelfBillingInvoiceItem
+        {
+            Id = i.Id,
+            InvoiceNumber = i.InvoiceNumber,
+            SubtotalExVat = i.SubtotalExVat,
+            VatAmount = 0m,
+            TotalInclVat = i.TotalInclVat,
+            Status = i.Status,
+            CreatedAt = i.CreatedAtUtc,
+            IssuedAt = i.CreatedAtUtc,
+            PaidAt = null
+        }).ToList();
+    }
 
     public async Task<SalesManagerPayoutPreview?> GetMyPayoutPreviewAsync(
         decimal? amountExVat = null,
         CancellationToken ct = default)
     {
-        var url = amountExVat is null
-            ? "api/sales-managers/me/payouts/preview"
-            : $"api/sales-managers/me/payouts/preview?amountExVat={amountExVat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
-        return await _http.GetFromJsonAsync<SalesManagerPayoutPreview>(url, ct);
+        var preview = await GetSalesPayoutPreviewAsync(ct);
+        return new SalesManagerPayoutPreview
+        {
+            AvailableExVat = preview.AvailableExVat,
+            AmountExVat = preview.AmountExVat,
+            VatAmount = preview.VatAmount,
+            AmountInclVat = preview.TotalInclVat,
+            MaskedIban = preview.MaskedIban,
+            CanPayout = preview.CanRequest,
+            BlockReason = preview.Blockers.FirstOrDefault()?.MessageKey
+        };
     }
 
-    public async Task<SalesManagerPayoutCheckoutResult?> CreateMyPayoutCheckoutAsync(
+    public Task<SalesManagerPayoutCheckoutResult?> CreateMyPayoutCheckoutAsync(
         decimal amountExVat,
         CancellationToken ct = default)
-    {
-        var response = await _http.PostAsJsonAsync(
-            "api/sales-managers/me/payouts/checkout",
-            new { amountExVat },
-            ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling starten mislukt.");
-        }
+        => throw new InvalidOperationException("Uitbetalen gaat nu via een aanvraag.");
 
-        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCheckoutResult>(cancellationToken: ct);
-    }
-
-    public async Task<SalesManagerPayoutCompleteResult?> CompleteMyPayoutCheckoutAsync(
+    public Task<SalesManagerPayoutCompleteResult?> CompleteMyPayoutCheckoutAsync(
         string paymentId,
         CancellationToken ct = default)
-    {
-        var response = await _http.PostAsJsonAsync(
-            "api/sales-managers/me/payouts/complete",
-            new { paymentId },
-            ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling afronden mislukt.");
-        }
+        => throw new InvalidOperationException("Uitbetalen gaat nu via een aanvraag.");
 
-        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCompleteResult>(cancellationToken: ct);
-    }
-
-    public async Task DownloadMySelfBillingInvoiceAsync(
+    public async Task DownloadMySelfbillingInvoiceAsync(
         Guid invoiceId,
         string invoiceNumber,
         IJSRuntime js,
         CancellationToken ct = default)
     {
-        var response = await _http.GetAsync($"api/sales-managers/me/invoices/{invoiceId}/download", ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Download mislukt.");
-        }
-
-        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var fileName = string.IsNullOrWhiteSpace(invoiceNumber) ? $"{invoiceId:N}.pdf" : $"{invoiceNumber}.pdf";
-        var base64 = Convert.ToBase64String(bytes);
-        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
+        await DownloadSalesInvoicePdfAsync(js, invoiceId, fileName, ct);
     }
 
     public async Task<SelfBillingInvoiceItem?> MarkSelfBillingInvoicePaidAsync(Guid invoiceId, CancellationToken ct = default)

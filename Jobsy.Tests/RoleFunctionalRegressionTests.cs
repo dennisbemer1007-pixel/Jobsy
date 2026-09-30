@@ -1228,7 +1228,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     public async Task Sales_and_ambassadeur_can_load_dashboards()
     {
         var sales = Authed(_factory.SalesEmail);
-        var salesDash = await sales.GetAsync("api/sales-managers/me/dashboard");
+        var salesDash = await sales.GetAsync("api/sales/me/dashboard");
         Assert.Equal(HttpStatusCode.OK, salesDash.StatusCode);
 
         var amb = Authed(_factory.AmbassadeurEmail);
@@ -1299,9 +1299,9 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         // Sales + ambassadeur home + toolkit/finance reads
         var sales = Authed(_factory.SalesEmail);
-        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-managers/me/dashboard")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-managers/me/profile")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-managers/me/invoices")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales/me/dashboard")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales/me/invoices")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-commercial/catalog")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/notifications/unread-count")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await sales.GetAsync("api/admin/users")).StatusCode);

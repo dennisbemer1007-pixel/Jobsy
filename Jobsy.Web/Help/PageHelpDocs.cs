@@ -334,10 +334,16 @@ public static class PageHelpDocs
             "Acquisitie versnellen met consistente Lobsy-boodschap en echte tokenprijzen."),
 
         ["/sales/aanbevelen"] = new(
-            "Sales-aanbevelingen",
-            "Nieuwe salesmanagers aandragen (tier-afhankelijk).",
-            "Deel referral-opties en volg wie via jou is aangemeld.",
-            "Netwerk laten meegroeien binnen de commissiestructuur."),
+            "Salesmanager aanbevelen",
+            "Beveel iemand aan; Lobsy beslist. De persoon krijgt een info-mail en kan bezwaar maken.",
+            "Vul naam, e-mail en motivatie in, bevestig toestemming, en volg status in je lijst.",
+            "Netwerk laten meegroeien binnen de commissiestructuur (één wervingslaag)."),
+
+        ["/sales/aanbevelen/bezwaar"] = new(
+            "Aanbeveling bezwaar",
+            "Verwijder je gegevens na een salesmanager-aanbeveling.",
+            "Open de eenmalige link uit de info-mail om je gegevens te wissen.",
+            "AVG art. 14: geïnformeerd en recht op bezwaar."),
 
         ["/partner"] = new(
             "Partner / tracking",

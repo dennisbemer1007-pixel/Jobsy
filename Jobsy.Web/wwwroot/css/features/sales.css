@@ -1085,3 +1085,16 @@
   }
   .sp-wallet__mobile-amt { display: grid; justify-items: end; gap: 0.25rem; font-variant-numeric: tabular-nums; }
 }
+
+/* —— Aanbevelen (09) —— */
+.sp-recommend { display: grid; gap: var(--space-4, 1rem); }
+.sp-recommend__explainer p { margin: 0.35rem 0 0; max-width: 40rem; }
+.sp-recommend__earned { margin-top: var(--space-3, 0.75rem); font-variant-numeric: tabular-nums; }
+.sp-recommend__form .sp-form { display: grid; gap: var(--space-3, 0.75rem); max-width: 32rem; }
+.sp-recommend__form label { display: grid; gap: 0.35rem; font-size: var(--text-sm, 0.875rem); }
+.sp-recommend .sp-checkbox {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  font-size: var(--text-sm, 0.875rem);
+}
+.sp-recommend .sp-checkbox input { margin-top: 0.2rem; }
+.sp-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }

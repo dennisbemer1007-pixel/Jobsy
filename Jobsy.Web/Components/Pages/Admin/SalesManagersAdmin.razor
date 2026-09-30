@@ -65,12 +65,16 @@
                 <div class="table-list">
                     @foreach (var app in _applications)
                     {
-                        <div class="table-row" style="flex-wrap:wrap;gap:0.75rem">
-                            <div style="flex:1;min-width:14rem">
-                                <strong>@app.CandidateFullName</strong>
+                        <div class="table-row">
+                            <div>
+                                <strong>@(string.IsNullOrWhiteSpace(app.CandidateFullName) ? "Gegevens verwijderd" : app.CandidateFullName)</strong>
                                 <div class="muted">@app.CandidateEmail</div>
                                 <div class="muted">Via @app.ReferrerFullName (@app.ReferrerTrackingCode)</div>
                                 <div>@app.Motivation</div>
+                                @if (app.SubjectNotifiedAtUtc is DateTime notified)
+                                {
+                                    <div class="muted">@Culture.Format("SalesAdmin.Application.Notified", notified.ToLocalTime().ToString("g"))</div>
+                                }
                             </div>
                             <div class="inline-actions">
                                 <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy"

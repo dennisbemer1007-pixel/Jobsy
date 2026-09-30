@@ -14,6 +14,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Sales aanbevelen + AVG + cleanup (09):** redesigned `/sales/aanbevelen` with third-party notice mail + objection link, retention 60/30/30 for applications + documented 7y fiscal / 25m clicks, privacy §6a “Aanmelden via een salesmanager”, ADR 0006, removed old SalesManager page stubs and unused `api/sales-managers/me/*` self-service endpoints (parked ambassadeur code kept), empty inline-style allow-list.
+
+### Added
 - **Sales admin uitbetaalrondes (08):** maandelijkse payout run (job 1e werkdag 06:00 Europe/Amsterdam), admin approve/reject per regel, self-billing bij goedkeuring, SEPA pain.001 + CSV, mark paid (sluit payout request), IBAN-hold/consent flags, correctie + toewijzing UI, bank-transfer provider-seam, geparkeerde ambassadeurs-saldo panel. Fallback-tab Uitbetalingen op `/admin/sales-managers` tot admin redesign 06.4.
 
 ### Added

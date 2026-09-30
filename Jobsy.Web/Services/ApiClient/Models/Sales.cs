@@ -158,6 +158,11 @@ public sealed class SalesManagerApplicationItem
     public Guid? ProvisionedUserId { get; set; }
     public string? RejectionReason { get; set; }
     public string? TemporaryPassword { get; set; }
+    public DateTime? SubjectNotifiedAtUtc { get; set; }
+    public DateTime? SubjectObjectedAtUtc { get; set; }
+    public DateTime? PersonalDataClearedAtUtc { get; set; }
+    public bool ReferrerConfirmedPermission { get; set; }
+    public string StatusLabelKey { get; set; } = string.Empty;
 }
 
 public sealed class ReferredSupplierItem
@@ -244,6 +249,8 @@ public sealed class SalesManagerProfile
     public string? AgreementVersion { get; set; }
     public DateTime? OnboardingCompletedAt { get; set; }
     public bool IsOnboardingComplete { get; set; }
+    public bool CanRecruitSalesManagers { get; set; } = true;
+    public Guid? ReferredBySalesManagerUserId { get; set; }
 }
 
 public sealed class SalesManagerProfileForm

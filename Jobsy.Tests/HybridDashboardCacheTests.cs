@@ -121,7 +121,6 @@ public sealed class HybridDashboardCacheTests
             "Components/Admin/AdminHomePanel.razor",
             "Components/Home/EmployerHomePanel.razor",
             "Components/Pages/Intermediary/IntermediaryDashboard.razor",
-            "Components/Home/SalesManagerHomePanel.razor",
             "Components/Home/AmbassadeurHomePanel.razor"
         ];
 

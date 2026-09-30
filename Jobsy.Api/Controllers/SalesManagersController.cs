@@ -5,7 +5,6 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
-using Jobsy.Core.Sales;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,10 +17,8 @@ public class SalesManagersController : ControllerBase
     private readonly ISalesManagerInviteService _invite;
     private readonly ISalesManagerApplicationService _applications;
     private readonly ISalesManagerOnboardingService _onboarding;
-    private readonly ISalesPayoutProfileService _payoutProfile;
     private readonly ISalesManagerDashboardService _dashboard;
     private readonly ISelfBillingInvoiceService _invoices;
-    private readonly ISalesManagerPayoutService _payouts;
     private readonly IUserLookupService _users;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IHostEnvironment _environment;
@@ -32,10 +29,8 @@ public class SalesManagersController : ControllerBase
         ISalesManagerInviteService invite,
         ISalesManagerApplicationService applications,
         ISalesManagerOnboardingService onboarding,
-        ISalesPayoutProfileService payoutProfile,
         ISalesManagerDashboardService dashboard,
         ISelfBillingInvoiceService invoices,
-        ISalesManagerPayoutService payouts,
         IUserLookupService users,
         ICompanyAuthorizationService companyAuth,
         IHostEnvironment environment,
@@ -45,10 +40,8 @@ public class SalesManagersController : ControllerBase
         _invite = invite;
         _applications = applications;
         _onboarding = onboarding;
-        _payoutProfile = payoutProfile;
         _dashboard = dashboard;
         _invoices = invoices;
-        _payouts = payouts;
         _users = users;
         _companyAuth = companyAuth;
         _environment = environment;
@@ -69,7 +62,6 @@ public class SalesManagersController : ControllerBase
                 request.FullName,
                 referredBySalesManagerUserId: null,
                 cancellationToken);
-            // Temp password only returned in Development (also emailed via stub). Avoid leaking in prod HTTP logs.
             return Ok(new SalesManagerInviteResponse(
                 result.UserId,
                 result.Email,
@@ -126,52 +118,6 @@ public class SalesManagersController : ControllerBase
         }
 
         return Ok(result);
-    }
-
-    [HttpPost("me/applications")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerApplicationDto>> SubmitApplication(
-        [FromBody] SubmitSalesManagerApplicationRequest request,
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            var dto = await _applications.SubmitAsync(
-                user.Id,
-                request.CandidateEmail,
-                request.CandidateFullName,
-                request.Motivation,
-                cancellationToken);
-            return Ok(dto);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    [HttpGet("me/applications")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<IEnumerable<SalesManagerApplicationDto>>> ListMyApplications(
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        return Ok(await _applications.ListMineAsync(user.Id, cancellationToken));
     }
 
     [HttpGet("applications")]
@@ -246,107 +192,6 @@ public class SalesManagersController : ControllerBase
         }
     }
 
-    [HttpGet("me/dashboard")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerDashboardDto>> GetMyDashboard(CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        var dto = await _dashboard.GetDashboardAsync(user.Id, cancellationToken);
-        if (dto is null)
-        {
-            return NotFound(new
-            {
-                message =
-                    "Geen salesmanager-dashboard gevonden. Controleer of je account in de database de rol SalesManager heeft (seed/migratie)."
-            });
-        }
-
-        return Ok(dto);
-    }
-
-    [HttpGet("me/profile")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerProfileDto>> GetMyProfile(CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        var profile = await _onboarding.GetProfileAsync(user.Id, cancellationToken);
-        return profile is null
-            ? NotFound(new { message = "Salesmanager-profiel niet gevonden." })
-            : Ok(profile);
-    }
-
-    [HttpPut("me/profile")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<IActionResult> UpdateMyProfile(
-        [FromBody] UpdateSalesManagerProfileRequest request,
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            var portal = await _payoutProfile.UpdateLegacyProfileAsync(
-                user.Id,
-                new SalesCompanyUpdateRequest(
-                    request.CompanyName,
-                    request.KvkNumber,
-                    request.VatNumber,
-                    request.Address,
-                    request.PostalCode,
-                    request.City,
-                    request.Country),
-                request.Iban,
-                holderName: null,
-                cancellationToken);
-
-            // Keep the legacy shape for older clients, plus explicit IBAN warnings.
-            return Ok(new
-            {
-                portal.UserId,
-                portal.Email,
-                portal.FullName,
-                portal.CompanyName,
-                portal.KvkNumber,
-                portal.VatNumber,
-                portal.Address,
-                portal.PostalCode,
-                portal.City,
-                portal.Country,
-                Iban = portal.MaskedIban,
-                portal.TrackingCode,
-                portal.AgreementSignedAt,
-                portal.AgreementVersion,
-                portal.OnboardingCompletedAt,
-                portal.IsOnboardingComplete,
-                portal.CanRecruitSalesManagers,
-                portal.ReferredBySalesManagerUserId,
-                warnings = portal.Warnings
-            });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
     [HttpPost("me/sign-agreement")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
     public async Task<ActionResult<SalesManagerProfileDto>> SignAgreement(
@@ -387,94 +232,6 @@ public class SalesManagersController : ControllerBase
             ? NotFound(new { message = "Salesmanager niet gevonden." })
             : Ok(dto);
     }
-
-    [HttpGet("me/invoices")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<IEnumerable<SelfBillingInvoiceDto>>> ListMyInvoices(
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        var invoices = await _invoices.ListForSalesManagerAsync(user.Id, cancellationToken);
-        return Ok(invoices.Select(MapInvoice));
-    }
-
-    [HttpPost("me/invoices")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SelfBillingInvoiceDto>> CreateInvoice(CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            var invoice = await _invoices.CreateFromUninvoicedBalanceAsync(user.Id, cancellationToken: cancellationToken);
-            return Ok(MapInvoice(invoice));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    [HttpGet("me/invoices/{invoiceId:guid}/download")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<IActionResult> DownloadMyInvoice(Guid invoiceId, CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            var pdf = await _payouts.RenderInvoicePdfAsync(invoiceId, user.Id, cancellationToken);
-            var invoice = await _invoices.GetAsync(invoiceId, cancellationToken);
-            var fileName = $"{invoice?.InvoiceNumber ?? invoiceId.ToString("N")}.pdf";
-            return File(pdf, "application/pdf", fileName);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-    }
-
-    [HttpGet("me/payouts/preview")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerPayoutPreviewDto>> GetPayoutPreview(
-        [FromQuery] decimal? amountExVat,
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        return Ok(await _payouts.GetPreviewAsync(user.Id, amountExVat, cancellationToken));
-    }
-
-    [HttpPost("me/payouts/checkout")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public ActionResult CreatePayoutCheckout()
-        => StatusCode(StatusCodes.Status410Gone, new { message = "Uitbetalen gaat nu via een aanvraag." });
-
-    [HttpPost("me/payouts/complete")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public ActionResult CompletePayoutCheckout()
-        => StatusCode(StatusCodes.Status410Gone, new { message = "Uitbetalen gaat nu via een aanvraag." });
 
     [HttpPost("{userId:guid}/invoices")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
@@ -542,22 +299,9 @@ public record SalesManagerInviteResponse(
 public record SubmitSalesManagerApplicationRequest(
     string CandidateEmail,
     string CandidateFullName,
-    string Motivation);
+    string Motivation,
+    bool ReferrerConfirmedPermission = false);
 
 public record RejectSalesManagerApplicationRequest(string? Reason = null);
 
-public record UpdateSalesManagerProfileRequest(
-    string CompanyName,
-    string KvkNumber,
-    string VatNumber,
-    string Address,
-    string PostalCode,
-    string City,
-    string? Country = "NL",
-    string? Iban = null);
-
 public record SignSalesManagerAgreementRequest(string? AgreementVersion = null);
-
-public record CompleteSalesManagerPayoutRequest(string PaymentId);
-
-public record CreateSalesManagerPayoutCheckoutRequest(decimal? AmountExVat);

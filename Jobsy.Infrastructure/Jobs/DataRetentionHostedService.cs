@@ -163,15 +163,18 @@ public sealed class DataRetentionHostedService : BackgroundService
             .Where(c => c.Date < clickCutoff)
             .ExecuteDeleteAsync(cancellationToken);
 
+        var salesAppsCleared = await SalesManagerApplicationService.ApplyRetentionAsync(
+            db, now, cancellationToken);
+
         if (logsRemoved + accessLogsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
             + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count
-            + withdrawnWithSnapshots.Count + staleScreenshotCount + salesClicksRemoved > 0)
+            + withdrawnWithSnapshots.Count + staleScreenshotCount + salesClicksRemoved + salesAppsCleared > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}, salesLinkClicks={SalesClicks}",
+                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}, salesLinkClicks={SalesClicks}, salesApplications={SalesApps}",
                 logsRemoved, accessLogsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
                 unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count,
-                withdrawnWithSnapshots.Count, staleScreenshotCount, salesClicksRemoved);
+                withdrawnWithSnapshots.Count, staleScreenshotCount, salesClicksRemoved, salesAppsCleared);
         }
     }
 

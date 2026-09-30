@@ -44,7 +44,7 @@ public class SalesManagerReferralHierarchyTests
         CompleteOnboarding(db, child.UserId, "SM-CHILD1");
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            apps.SubmitAsync(child.UserId, "newbie@jobsy.local", "Newbie", "Motivatie lang genoeg."));
+            apps.SubmitAsync(child.UserId, "newbie@jobsy.local", "Newbie", "Motivatie lang genoeg.", true));
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class SalesManagerReferralHierarchyTests
         CompleteOnboarding(db, parent.UserId, "SM-RECR01");
 
         var pending = await apps.SubmitAsync(
-            parent.UserId, "candidate@jobsy.local", "Candidate SM", "Sterke netwerk in Westland.");
+            parent.UserId, "candidate@jobsy.local", "Candidate SM", "Sterke netwerk in Westland.", true);
         Assert.Equal(nameof(SalesManagerApplicationStatus.Pending), pending.Status);
         Assert.Null(await db.Users.FirstOrDefaultAsync(u => u.Email == "candidate@jobsy.local"));
 
@@ -252,7 +252,12 @@ public class SalesManagerReferralHierarchyTests
 
     private static ISalesManagerApplicationService CreateApplications(
         JobsyDbContext db, ISalesManagerInviteService invite) =>
-        new SalesManagerApplicationService(db, invite, NullLogger<SalesManagerApplicationService>.Instance);
+        new SalesManagerApplicationService(
+            db,
+            invite,
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new AlwaysOnFeatures(),
+            NullLogger<SalesManagerApplicationService>.Instance);
 
     private static JobsyDbContext CreateDb()
     {

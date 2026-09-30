@@ -14,7 +14,7 @@ public class JobsyApiTransientRetryHandlerTests
         var sut = new JobsyApiTransientRetryHandler { InnerHandler = inner };
 
         using var client = new HttpClient(sut);
-        var response = await client.GetAsync("http://retry.test/api/sales-managers/me/dashboard");
+        var response = await client.GetAsync("http://retry.test/api/sales/me/dashboard");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Equal(1, inner.Calls);

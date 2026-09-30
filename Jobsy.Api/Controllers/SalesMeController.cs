@@ -26,6 +26,7 @@ public sealed class SalesMeController : ControllerBase
     private readonly ISalesWalletPortalService _wallet;
     private readonly ISalesPayoutRequestService _payoutRequests;
     private readonly ISalesManagerPayoutService _legacyPayouts;
+    private readonly ISalesManagerApplicationService _applications;
 
     public SalesMeController(
         ISalesBeneficiaryService beneficiary,
@@ -36,7 +37,8 @@ public sealed class SalesMeController : ControllerBase
         ISalesPayoutProfileService profile,
         ISalesWalletPortalService wallet,
         ISalesPayoutRequestService payoutRequests,
-        ISalesManagerPayoutService legacyPayouts)
+        ISalesManagerPayoutService legacyPayouts,
+        ISalesManagerApplicationService applications)
     {
         _beneficiary = beneficiary;
         _dashboard = dashboard;
@@ -47,6 +49,7 @@ public sealed class SalesMeController : ControllerBase
         _wallet = wallet;
         _payoutRequests = payoutRequests;
         _legacyPayouts = legacyPayouts;
+        _applications = applications;
     }
 
     [HttpGet("dashboard")]
@@ -516,6 +519,40 @@ public sealed class SalesMeController : ControllerBase
         catch (KeyNotFoundException)
         {
             return NotFound();
+        }
+    }
+
+    [HttpGet("recommend")]
+    public async Task<ActionResult<SalesRecommendOverviewDto>> GetRecommend(CancellationToken cancellationToken)
+    {
+        var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
+        return Ok(await _applications.GetRecommendOverviewAsync(me.UserId, cancellationToken));
+    }
+
+    [HttpPost("recommend")]
+    public async Task<ActionResult<SalesManagerApplicationDto>> SubmitRecommend(
+        [FromBody] SubmitSalesManagerApplicationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
+        try
+        {
+            var dto = await _applications.SubmitAsync(
+                me.UserId,
+                request.CandidateEmail,
+                request.CandidateFullName,
+                request.Motivation,
+                request.ReferrerConfirmedPermission,
+                cancellationToken);
+            return Ok(dto);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
     }
 

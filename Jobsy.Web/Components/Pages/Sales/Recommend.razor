@@ -1,0 +1,180 @@
+@page "/sales/aanbevelen"
+@layout SalesLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Sales
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Sales.Recommend.Title"] · @Culture["Sales.ProductLabel"]</PageTitle>
+
+<section class="sp-recommend">
+    <header class="sp-dash__header">
+        <div>
+            <h1>@Culture["Sales.Recommend.Title"]</h1>
+            <p class="sp-dash__lead">@Culture["Sales.Recommend.Lead"]</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["EntUi.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_overview is not null && !_overview.IsOnboardingComplete)
+    {
+        <p class="state-message">@Culture["Sales.Recommend.NeedOnboarding"]</p>
+        <a class="login-submit" href="/sales/start">@Culture["Sales.Recommend.StartOnboarding"]</a>
+    }
+    else if (_overview is not null && !_overview.CanRecruit)
+    {
+        <section class="sp-card">
+            <p class="state-message">@Culture["Sales.Recommend.CannotRecruit"]</p>
+            @if (!string.IsNullOrWhiteSpace(_overview.TrackingCode))
+            {
+                <p class="muted">@Culture["Sales.Recommend.YourCode"]: <strong class="sp-mono">@_overview.TrackingCode</strong></p>
+            }
+        </section>
+    }
+    else if (_overview is not null)
+    {
+        <section class="sp-card sp-recommend__explainer" aria-labelledby="recommend-explain">
+            <h2 id="recommend-explain">@Culture["Sales.Recommend.ExplainerTitle"]</h2>
+            <p>@Culture.Format("Sales.Recommend.ExplainerRates", _overview.IndirectRatePercent, _overview.ReferredYear1RatePercent)</p>
+            <p class="sp-recommend__earned">
+                @Culture["Sales.Recommend.EarnedVia"]
+                <strong>@SalesMoney.Format(_overview.IndirectEarnedEuro, SalesMoneyKind.ExVat)</strong>
+            </p>
+        </section>
+
+        <section class="sp-card sp-recommend__form" aria-labelledby="recommend-form">
+            <h2 id="recommend-form">@Culture["Sales.Recommend.FormTitle"]</h2>
+            <form class="sp-form" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
+                <label>
+                    <span>@Culture["Sales.Recommend.Name"]</span>
+                    <input @bind="_name" required maxlength="256" autocomplete="name" />
+                </label>
+                <label>
+                    <span>@Culture["Sales.Recommend.Email"]</span>
+                    <input type="email" @bind="_email" required maxlength="256" autocomplete="email" />
+                </label>
+                <label>
+                    <span>@Culture["Sales.Recommend.Motivation"]</span>
+                    <textarea @bind="_motivation" required minlength="10" maxlength="500" rows="4"
+                              placeholder="@Culture["Sales.Recommend.MotivationPlaceholder"]"></textarea>
+                </label>
+                <label class="sp-checkbox">
+                    <input type="checkbox" @bind="_permissionOk" />
+                    <span>@Culture["Sales.Recommend.Permission"]</span>
+                </label>
+                <button class="login-submit" type="submit" disabled="@(_busy || !_permissionOk)">
+                    @Culture["Sales.Recommend.Submit"]
+                </button>
+            </form>
+            @if (!string.IsNullOrEmpty(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
+        </section>
+
+        <section class="sp-card" aria-labelledby="recommend-list">
+            <h2 id="recommend-list">@Culture["Sales.Recommend.ListTitle"]</h2>
+            @if (_overview.Applications.Count == 0)
+            {
+                <p class="muted">@Culture["Sales.Recommend.ListEmpty"]</p>
+            }
+            else
+            {
+                <div class="table-list">
+                    @foreach (var app in _overview.Applications)
+                    {
+                        var name = app.PersonalDataCleared
+                            ? Culture["Sales.Recommend.DataCleared"]
+                            : (string.IsNullOrWhiteSpace(app.DisplayName) ? Culture["Sales.Recommend.DataCleared"] : app.DisplayName);
+                        <div class="table-row">
+                            <div>
+                                <strong>@name</strong>
+                                <div class="muted">
+                                    @SalesClock.ToLocal(app.CreatedAtUtc).ToString("d MMM yyyy")
+                                    · @Culture[app.StatusLabelKey]
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    }
+</section>
+
+@code {
+    private Jobsy.Core.Interfaces.SalesRecommendOverviewDto? _overview;
+    private string _name = "";
+    private string _email = "";
+    private string _motivation = "";
+    private bool _permissionOk;
+    private string? _error;
+    private string? _message;
+    private bool _loading = true;
+    private bool _busy;
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _overview = await Api.GetSalesRecommendOverviewAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (!_permissionOk)
+        {
+            _error = Culture["Sales.Recommend.PermissionRequired"];
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            await Api.SubmitSalesRecommendAsync(_email.Trim(), _name.Trim(), _motivation.Trim(), _permissionOk);
+            _message = Culture["Sales.Recommend.Submitted"];
+            _name = "";
+            _email = "";
+            _motivation = "";
+            _permissionOk = false;
+            _overview = await Api.GetSalesRecommendOverviewAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

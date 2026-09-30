@@ -42,6 +42,9 @@ public class SalesManagerApplication
 
     /// <summary>SHA-256 of candidate e-mail for 60-day duplicate rule after personal data clear.</summary>
     public string? CandidateEmailSha256 { get; set; }
+
+    /// <summary>Hash of the one-time objection token from the notice mail (D15). Cleared when used or PII cleared.</summary>
+    public string? ObjectionTokenHash { get; set; }
 }
 
 public enum SalesManagerApplicationStatus

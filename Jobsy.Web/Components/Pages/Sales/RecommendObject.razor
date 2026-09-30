@@ -1,0 +1,61 @@
+@page "/sales/aanbevelen/bezwaar"
+@attribute [AllowAnonymous]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["Sales.Recommend.Object.Title"] · Lobsy</PageTitle>
+
+<section class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>@Culture["Sales.Recommend.Object.Title"]</h1>
+            <p class="login-lead">@Culture["Sales.Recommend.Object.Lead"]</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_done)
+    {
+        <p class="state-message">@Culture["Sales.Recommend.Object.Done"]</p>
+    }
+    else
+    {
+        <p class="state-message error">@(_error ?? Culture["Sales.Recommend.Object.Invalid"])</p>
+    }
+</section>
+
+@code {
+    private bool _loading = true;
+    private bool _done;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (!query.TryGetValue("token", out var token) || string.IsNullOrWhiteSpace(token))
+        {
+            _loading = false;
+            _error = Culture["Sales.Recommend.Object.Invalid"];
+            return;
+        }
+
+        try
+        {
+            await Api.ObjectSalesRecommendAsync(token!);
+            _done = true;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

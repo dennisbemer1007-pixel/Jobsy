@@ -25,7 +25,6 @@ public class DashboardLoadGuardTests
     [InlineData("Components/Admin/AdminHomePanel.razor")]
     [InlineData("Components/Home/EmployerHomePanel.razor")]
     [InlineData("Components/Candidate/CandidateHomePanel.razor")]
-    [InlineData("Components/Home/SalesManagerHomePanel.razor")]
     [InlineData("Components/Home/AmbassadeurHomePanel.razor")]
     public void Role_dashboard_retries_load_after_first_interactive_render(string relativePath)
     {

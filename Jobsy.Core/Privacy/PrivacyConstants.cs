@@ -24,6 +24,23 @@ public static class PrivacyConstants
     /// <summary>Sales link click daily counters (no personal data) — §P / D13.</summary>
     public const int SalesLinkClickRetentionMonths = 25;
 
+    /// <summary>Pending "Salesmanager aanbevelen" applications expire and PII is cleared after this many days (D13).</summary>
+    public const int SalesManagerApplicationPendingRetentionDays = 60;
+
+    /// <summary>Rejected applications: PII cleared this many days after <c>ReviewedAtUtc</c> (D13).</summary>
+    public const int SalesManagerApplicationRejectedRetentionDays = 30;
+
+    /// <summary>
+    /// Approved applications: PII cleared this many days after <c>ReviewedAtUtc</c> once provisioned (D13).
+    /// The provisioned account then holds the person's data.
+    /// </summary>
+    public const int SalesManagerApplicationApprovedRetentionDays = 30;
+
+    /// <summary>
+    /// Fiscal bewaarplicht for invoices, ledger and payout records (documented; no auto-delete job).
+    /// </summary>
+    public const int SalesFiscalRetentionYears = 7;
+
     /// <summary>In-app notifications older than this are purged (AVG retention).</summary>
     public const int UserNotificationRetentionDays = 365;
 

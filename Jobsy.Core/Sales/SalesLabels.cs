@@ -75,6 +75,14 @@ public static class SalesLabels
         _ => "Sales.Label.Application.Pending"
     };
 
+    /// <summary>Portal/admin status label; objections use Rejected + SubjectObjectedAtUtc.</summary>
+    public static string ApplicationStatusKey(
+        SalesManagerApplicationStatus status,
+        DateTime? subjectObjectedAtUtc)
+        => subjectObjectedAtUtc is not null
+            ? "Sales.Label.Application.Objection"
+            : Key(status);
+
     public static string Key(CommissionEntryState state) => state switch
     {
         CommissionEntryState.Pending => "Sales.Label.State.Pending",

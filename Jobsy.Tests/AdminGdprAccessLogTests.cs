@@ -197,13 +197,12 @@ public class AdminGdprAccessLogTests : IClassFixture<RoleFunctionalWebAppFactory
 
         var client = _factory.CreateClient();
         JobsyTestAuth.Authorize(client, _factory.SalesId);
-        var preview = await client.GetFromJsonAsync<SalesManagerPayoutPreviewDto>(
-            "api/sales-managers/me/payouts/preview",
+        var preview = await client.GetFromJsonAsync<Jobsy.Core.Sales.SalesPayoutPreviewDto>(
+            "api/sales/me/payouts/preview",
             Json);
         Assert.NotNull(preview);
         // API never returns full IBAN; masked preview must be present when stored.
-        Assert.Null(preview!.Iban);
-        Assert.False(string.IsNullOrWhiteSpace(preview.MaskedIban));
+        Assert.False(string.IsNullOrWhiteSpace(preview!.MaskedIban));
         Assert.DoesNotContain(plain, preview.MaskedIban!, StringComparison.OrdinalIgnoreCase);
 
         using var scope2 = _factory.Services.CreateScope();

@@ -11,7 +11,7 @@ API `[Authorize]` attributes remain authoritative; this document is the human-re
 | Bedrijfsmanager | `EnterpriseManager` | All branches + regions of **own company**; posts vacancies; buys / allocates tokens |
 | Regiomanager | `RegionalManager` | **Read-only**, only branches in its own region |
 | Filiaalmanager | `BranchManager` | Enterprise-like rights, but **own branch only** |
-| Salesmanager | `SalesManager` | Wallet payout, sales toolkit, tracking code + % of referred employers. **2FA verplicht.** |
+| Salesmanager | `SalesManager` | Lobsy Partner portal (`/sales/*`): dashboard, link & materiaal, werkgevers (handelsnaam/plaats/eigen commissie), aanbevelen, wallet. Payouts via aanvraag (≥ € 50) + admin-goedkeuring van maandelijkse ronde. **2FA verplicht.** |
 | Ambassadeur | `Ambassadeur` | **Geparkeerd** (`AmbassadorsEnabled` uit). Geen toegang tot ambassadeur-functies; gegevens blijven bewaard. 2FA blijft verplicht als de rol weer aan gaat. |
 | Decaan | — | Not built |
 | Admin | `Admin` | Everything |

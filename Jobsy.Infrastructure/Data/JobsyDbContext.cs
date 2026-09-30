@@ -1567,11 +1567,13 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Motivation).HasMaxLength(1000).IsRequired();
             entity.Property(e => e.RejectionReason).HasMaxLength(500);
             entity.Property(e => e.CandidateEmailSha256).HasMaxLength(64);
+            entity.Property(e => e.ObjectionTokenHash).HasMaxLength(64);
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => e.CreatedAtUtc);
             entity.HasIndex(e => e.CandidateEmail);
             entity.HasIndex(e => new { e.CandidateEmail, e.Status });
             entity.HasIndex(e => e.CandidateEmailSha256);
+            entity.HasIndex(e => e.ObjectionTokenHash);
             entity.HasOne(e => e.ReferrerSalesManagerUser)
                 .WithMany()
                 .HasForeignKey(e => e.ReferrerSalesManagerUserId)

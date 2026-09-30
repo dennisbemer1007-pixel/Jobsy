@@ -52,15 +52,14 @@ public class SalesPortalNoInlineStyleTests
 {
     private static readonly HashSet<string> AllowList = new(StringComparer.OrdinalIgnoreCase)
     {
-        // Legacy moved panels — emptied by 09 (onboarding redesigned in 06 without inline styles)
-        "Jobsy.Web/Components/Home/SalesManagerHomePanel.razor",
-        "Jobsy.Web/Components/Pages/SalesManager/SalesToolkit.razor",
-        "Jobsy.Web/Components/Pages/SalesManager/Referrals.razor",
-        "Jobsy.Web/Components/Pages/SalesManager/Invoices.razor",
-        "Jobsy.Web/Components/Pages/SalesManager/PayoutCheckoutStub.razor",
-        "Jobsy.Web/Components/Pages/Admin/TokenFinanceAdmin.razor",
-        "Jobsy.Web/Components/Pages/Admin/SettingsAdmin.razor",
+        // Emptied by salesmanager-09 — portal and remaining admin pages must not use style="".
     };
+
+    [Fact]
+    public void Inline_style_allow_list_is_empty()
+    {
+        Assert.Empty(AllowList);
+    }
 
     [Fact]
     public void Sales_portal_shell_has_no_inline_style()

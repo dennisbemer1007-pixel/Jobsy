@@ -96,10 +96,11 @@ public static class UiStringsSales
         nl["Sales.Label.Attribution.LinkCookie"] = "Via link";
         nl["Sales.Label.Attribution.Admin"] = "Door Lobsy";
         nl["Sales.Label.Attribution.Legacy"] = "Eerder";
-        nl["Sales.Label.Application.Pending"] = "In behandeling";
+        nl["Sales.Label.Application.Pending"] = "Wacht op Lobsy";
         nl["Sales.Label.Application.Approved"] = "Goedgekeurd";
         nl["Sales.Label.Application.Rejected"] = "Afgewezen";
         nl["Sales.Label.Application.Expired"] = "Verlopen";
+        nl["Sales.Label.Application.Objection"] = "Bezwaar";
         nl["Sales.Label.Employers"] = "Werkgevers";
         nl["Sales.Label.EmployerStatus.NoPurchase"] = "Nog geen aankoop";
         nl["Sales.Label.EmployerStatus.Active"] = "Actief";
@@ -595,5 +596,38 @@ public static class UiStringsSales
         nl["SalesAdmin.Attribution.None"] = "Geen";
         nl["SalesAdmin.Attribution.InvalidCompany"] = "Ongeldige company id.";
         nl["SalesAdmin.Attribution.InvalidUser"] = "Ongeldige user id.";
+
+        // —— Aanbevelen (09) ——
+        nl["Sales.Recommend.Title"] = "Salesmanager aanbevelen";
+        nl["Sales.Recommend.Lead"] = "Ken je iemand die goed kan verkopen? Beveel hem of haar aan. Lobsy beslist.";
+        nl["Sales.Recommend.NeedOnboarding"] = "Rond eerst je onboarding af om een trackingcode te ontvangen.";
+        nl["Sales.Recommend.StartOnboarding"] = "Start onboarding";
+        nl["Sales.Recommend.CannotRecruit"] =
+            "Jouw account is via een aanbeveling aangemaakt. Je kunt werkgevers werven met je code, maar geen nieuwe salesmanagers aanbevelen.";
+        nl["Sales.Recommend.YourCode"] = "Jouw code";
+        nl["Sales.Recommend.ExplainerTitle"] = "Hoe het werkt";
+        nl["Sales.Recommend.ExplainerRates"] =
+            "Jij krijgt {0} % extra in jaar 1 over de aankopen van hun werkgevers. Zij krijgen {1} % in jaar 1.";
+        nl["Sales.Recommend.EarnedVia"] = "Via je aanbevelingen verdiend:";
+        nl["Sales.Recommend.FormTitle"] = "Nieuwe aanbeveling";
+        nl["Sales.Recommend.Name"] = "Naam";
+        nl["Sales.Recommend.Email"] = "E-mail";
+        nl["Sales.Recommend.Motivation"] = "Waarom past deze persoon?";
+        nl["Sales.Recommend.MotivationPlaceholder"] = "Korte motivatie (max. 500 tekens)";
+        nl["Sales.Recommend.Permission"] =
+            "Deze persoon weet dat ik hem of haar aanmeld en vindt dat goed.";
+        nl["Sales.Recommend.PermissionRequired"] = "Bevestig dat deze persoon op de hoogte is.";
+        nl["Sales.Recommend.Submit"] = "Aanbeveling versturen";
+        nl["Sales.Recommend.Submitted"] =
+            "Aanbeveling verstuurd. We hebben de persoon geïnformeerd. Lobsy beoordeelt daarna.";
+        nl["Sales.Recommend.ListTitle"] = "Jouw aanbevelingen";
+        nl["Sales.Recommend.ListEmpty"] = "Nog geen aanbevelingen.";
+        nl["Sales.Recommend.DataCleared"] = "Gegevens verwijderd";
+        nl["Sales.Recommend.Object.Title"] = "Gegevens verwijderen";
+        nl["Sales.Recommend.Object.Lead"] = "Je hebt bezwaar gemaakt tegen een aanbeveling als salesmanager.";
+        nl["Sales.Recommend.Object.Done"] = "Je gegevens zijn verwijderd. Je hoeft niets meer te doen.";
+        nl["Sales.Recommend.Object.Invalid"] = "Deze link is al gebruikt of niet meer geldig.";
+        nl["SalesMail.RecommendedNotice"] = "Iemand heeft je aanbevolen bij Lobsy";
+        nl["SalesAdmin.Application.Notified"] = "Persoon geïnformeerd op {0}";
     }
 }
