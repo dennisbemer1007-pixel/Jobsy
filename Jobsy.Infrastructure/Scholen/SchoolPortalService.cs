@@ -123,6 +123,11 @@ public interface ISchoolPortalService
     Task<SchoolProfileDto?> GetProfileAsync(ClaimsPrincipal user, CancellationToken cancellationToken = default);
 
     Task<SchoolPrivacyDto?> GetPrivacyAsync(ClaimsPrincipal user, CancellationToken cancellationToken = default);
+
+    Task<(SchoolEarlyDeleteResult? Result, string? Error)> DeleteCurrentSchoolYearDataAsync(
+        ClaimsPrincipal user,
+        string confirmPhrase,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class SchoolPortalService : ISchoolPortalService
@@ -158,6 +163,8 @@ public sealed class SchoolPortalService : ISchoolPortalService
     private readonly ISchoolStaffInviteService _invites;
     private readonly IPlatformFeatureService _features;
     private readonly IPersonalDataAccessLogger _accessLog;
+    private readonly ISchoolAggregateSnapshotter _snapshotter;
+    private readonly ISchoolRetentionService _retention;
 
     public SchoolPortalService(
         JobsyDbContext db,
@@ -166,7 +173,9 @@ public sealed class SchoolPortalService : ISchoolPortalService
         ISchoolCodeListPdfService pdf,
         ISchoolStaffInviteService invites,
         IPlatformFeatureService features,
-        IPersonalDataAccessLogger accessLog)
+        IPersonalDataAccessLogger accessLog,
+        ISchoolAggregateSnapshotter snapshotter,
+        ISchoolRetentionService retention)
     {
         _db = db;
         _scope = scope;
@@ -175,6 +184,8 @@ public sealed class SchoolPortalService : ISchoolPortalService
         _invites = invites;
         _features = features;
         _accessLog = accessLog;
+        _snapshotter = snapshotter;
+        _retention = retention;
     }
 
     public async Task EnsureTestWindowsClosedAsync(Guid schoolId, CancellationToken cancellationToken = default)
@@ -197,6 +208,11 @@ public sealed class SchoolPortalService : ISchoolPortalService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        foreach (var year in open.Select(c => c.SchoolYearStart).Distinct())
+        {
+            await _snapshotter.SnapshotSchoolYearAsync(schoolId, year, cancellationToken);
+        }
     }
 
     public async Task<SchoolDashboardDto> GetDashboardAsync(
@@ -277,7 +293,8 @@ public sealed class SchoolPortalService : ISchoolPortalService
             withoutMfa,
             classRows,
             todos,
-            riasec);
+            riasec,
+            BuildRetentionBanner(today: TodayAmsterdam(), yearStart, snap.SchoolRetentionCutoffMonth, snap.SchoolRetentionCutoffDay));
     }
 
     public async Task<IReadOnlyList<SchoolTodoItemDto>> GetTodosAsync(
@@ -767,6 +784,11 @@ public sealed class SchoolPortalService : ISchoolPortalService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        if (act == "close")
+        {
+            await _snapshotter.SnapshotSchoolYearAsync(entity.SchoolId, entity.SchoolYearStart, cancellationToken);
+        }
+
         return (await MapClassDetailAsync(classId, cancellationToken), null, null);
     }
 
@@ -1101,6 +1123,29 @@ public sealed class SchoolPortalService : ISchoolPortalService
             OuderbriefTemplate.DutchText);
     }
 
+    public async Task<(SchoolEarlyDeleteResult? Result, string? Error)> DeleteCurrentSchoolYearDataAsync(
+        ClaimsPrincipal user,
+        string confirmPhrase,
+        CancellationToken cancellationToken = default)
+    {
+        if (!string.Equals(
+                confirmPhrase?.Trim(),
+                SchoolRetentionService.ConfirmDeleteYearPhrase,
+                StringComparison.Ordinal))
+        {
+            return (null, "Typ VERWIJDER ter bevestiging.");
+        }
+
+        var schoolId = _scope.GetSchoolIdOrThrow(user);
+        var snap = await _features.GetAsync(cancellationToken);
+        var yearStart = SchoolYear.Current(
+            TodayAmsterdam(),
+            snap.SchoolRetentionCutoffMonth,
+            snap.SchoolRetentionCutoffDay);
+        var result = await _retention.DeleteSchoolYearNowAsync(schoolId, yearStart, cancellationToken);
+        return (result, null);
+    }
+
     private async Task<IReadOnlyList<SchoolTodoItemDto>> BuildTodosInternalAsync(
         Guid schoolId,
         List<SchoolClass> classes,
@@ -1335,6 +1380,22 @@ public sealed class SchoolPortalService : ISchoolPortalService
         var raw = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
                   ?? user.FindFirst("sub")?.Value;
         return Guid.TryParse(raw, out var id) ? id : null;
+    }
+
+    internal static string? BuildRetentionBanner(
+        DateOnly today,
+        int schoolYearStart,
+        int cutoffMonth,
+        int cutoffDay)
+    {
+        var cutoff = SchoolYear.EndsOn(schoolYearStart, cutoffMonth, cutoffDay);
+        var days = cutoff.DayNumber - today.DayNumber;
+        if (days is < 0 or > 30)
+        {
+            return null;
+        }
+
+        return $"Op {cutoff:dd MMMM yyyy} worden de leerlinggegevens van {SchoolYear.Label(schoolYearStart)} verwijderd. Download wat je nodig hebt.";
     }
 
     public static DateOnly TodayAmsterdam()

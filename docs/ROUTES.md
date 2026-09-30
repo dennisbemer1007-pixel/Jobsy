@@ -60,6 +60,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/sales` | `Pages/Admin/SalesCommercialPage.razor` | Admin |
 | `/admin/sales-managers` | `Pages/Admin/SalesManagersAdmin.razor` | Admin |
 | `/admin/scholen` | `Pages/Admin/Scholen/ScholenList.razor` | Admin |
+| `/admin/scholen/rapportage` | `Pages/Admin/Scholen/ScholenRapportage.razor` | Admin |
 | `/admin/scholen/{SchoolId:guid}` | `Pages/Admin/Scholen/ScholenDetail.razor` | Admin |
 | `/admin/settings` | `Pages/Admin/SettingsAdmin.razor` | Admin |
 | `/admin/token-finance` | `Pages/Admin/TokenFinanceAdmin.razor` | Admin |

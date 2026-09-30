@@ -1,5 +1,6 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Scholen;
 using Jobsy.Api.Security;
 using Jobsy.Infrastructure.Scholen;
 using Microsoft.AspNetCore.Authorization;
@@ -43,5 +44,22 @@ public sealed class SchoolPortalController : ControllerBase
     {
         var privacy = await _portal.GetPrivacyAsync(User, cancellationToken);
         return privacy is null ? NotFound() : Ok(privacy);
+    }
+
+    [HttpPost("privacy/delete-year")]
+    public async Task<ActionResult<SchoolEarlyDeleteResult>> DeleteYear(
+        [FromBody] DeleteSchoolYearRequest request,
+        CancellationToken cancellationToken)
+    {
+        var (result, error) = await _portal.DeleteCurrentSchoolYearDataAsync(
+            User,
+            request.ConfirmPhrase,
+            cancellationToken);
+        if (error is not null)
+        {
+            return BadRequest(new { message = error });
+        }
+
+        return Ok(result);
     }
 }

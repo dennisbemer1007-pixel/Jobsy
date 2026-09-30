@@ -109,7 +109,8 @@ public sealed record SchoolDashboardDto(
     int TeachersWithoutMfa,
     IReadOnlyList<SchoolDashboardClassRowDto> Classes,
     IReadOnlyList<SchoolTodoItemDto> Todos,
-    IReadOnlyList<NamedCountDto>? SchoolRiasecTop3);
+    IReadOnlyList<NamedCountDto>? SchoolRiasecTop3,
+    string? RetentionBanner = null);
 
 public sealed record SchoolDashboardClassRowDto(
     Guid Id,

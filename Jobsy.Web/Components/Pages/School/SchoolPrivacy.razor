@@ -5,6 +5,7 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Interfaces
 @using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Ui.Enterprise
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
@@ -72,12 +73,35 @@ else if (_privacy is not null)
             <button type="button" class="btn-compact" @onclick="CopyLetter">@Culture["School.Privacy.Copy"]</button>
         </div>
     </section>
+
+    <section class="sch-card">
+        <h2>@Culture["School.Privacy.DeleteYear"]</h2>
+        <EntImpactNote><p>@Culture["School.Privacy.DeleteYearHelp"]</p></EntImpactNote>
+        @if (!string.IsNullOrEmpty(_deleteError))
+        {
+            <p class="state-message error">@_deleteError</p>
+        }
+        @if (!string.IsNullOrEmpty(_deleteDone))
+        {
+            <p class="state-message">@_deleteDone</p>
+        }
+        <label>@Culture["School.Privacy.DeleteYearConfirm"]
+            <input class="input" @bind="_deleteConfirm" />
+        </label>
+        <button type="button" class="btn-compact btn-outline-danger" disabled="@_deleteBusy" @onclick="DeleteYearAsync">
+            @Culture["School.Privacy.DeleteYear"]
+        </button>
+    </section>
 }
 
 @code {
     private bool _disabled;
     private bool _loading = true;
     private SchoolPrivacyDto? _privacy;
+    private string _deleteConfirm = "";
+    private string? _deleteError;
+    private string? _deleteDone;
+    private bool _deleteBusy;
 
     protected override async Task OnInitializedAsync()
     {
@@ -101,6 +125,28 @@ else if (_privacy is not null)
         catch
         {
             // ignore
+        }
+    }
+
+    private async Task DeleteYearAsync()
+    {
+        _deleteBusy = true;
+        _deleteError = null;
+        _deleteDone = null;
+        try
+        {
+            await Api.DeleteSchoolYearDataAsync(_deleteConfirm);
+            _deleteConfirm = "";
+            _deleteDone = Culture["School.Privacy.DeleteYearDone"];
+            _privacy = await Api.GetSchoolPrivacyAsync();
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+        }
+        finally
+        {
+            _deleteBusy = false;
         }
     }
 }

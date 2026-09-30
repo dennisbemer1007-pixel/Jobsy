@@ -6,6 +6,7 @@ using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Scholen;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Scholen;
 using Microsoft.AspNetCore.Authorization;
@@ -25,11 +26,22 @@ public sealed class AdminSchoolsController : ControllerBase
 
     private readonly JobsyDbContext _db;
     private readonly ISchoolStaffInviteService _invites;
+    private readonly ISchoolAggregateSnapshotter _snapshotter;
+    private readonly ISchoolRetentionService _retention;
+    private readonly ISchoolReportingService _reporting;
 
-    public AdminSchoolsController(JobsyDbContext db, ISchoolStaffInviteService invites)
+    public AdminSchoolsController(
+        JobsyDbContext db,
+        ISchoolStaffInviteService invites,
+        ISchoolAggregateSnapshotter snapshotter,
+        ISchoolRetentionService retention,
+        ISchoolReportingService reporting)
     {
         _db = db;
         _invites = invites;
+        _snapshotter = snapshotter;
+        _retention = retention;
+        _reporting = reporting;
     }
 
     [HttpGet]
@@ -60,6 +72,113 @@ public sealed class AdminSchoolsController : ControllerBase
             s.ProcessorAgreementSignedOn,
             classCounts.GetValueOrDefault(s.Id),
             teacherCounts.GetValueOrDefault(s.Id))).ToList());
+    }
+
+    [HttpGet("rapportage")]
+    public async Task<ActionResult<SchoolReportViewDto>> Rapportage(
+        [FromQuery] int? schoolYearStart,
+        [FromQuery] Guid? schoolId,
+        [FromQuery] SchoolLevel? level,
+        [FromQuery] int? year,
+        CancellationToken cancellationToken)
+    {
+        var years = await _reporting.ListSchoolYearsAsync(cancellationToken);
+        var sy = schoolYearStart ?? years.FirstOrDefault();
+        if (sy == 0)
+        {
+            sy = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow));
+        }
+
+        var view = await _reporting.GetReportAsync(
+            new SchoolReportFilterDto(sy, schoolId, level, year),
+            cancellationToken);
+        return Ok(view);
+    }
+
+    [HttpGet("rapportage/years")]
+    public async Task<ActionResult<IReadOnlyList<int>>> RapportageYears(CancellationToken cancellationToken)
+        => Ok(await _reporting.ListSchoolYearsAsync(cancellationToken));
+
+    [HttpGet("rapportage.csv")]
+    public async Task<IActionResult> RapportageCsv(
+        [FromQuery] int? schoolYearStart,
+        [FromQuery] Guid? schoolId,
+        [FromQuery] SchoolLevel? level,
+        [FromQuery] int? year,
+        CancellationToken cancellationToken)
+    {
+        var years = await _reporting.ListSchoolYearsAsync(cancellationToken);
+        var sy = schoolYearStart ?? years.FirstOrDefault();
+        if (sy == 0)
+        {
+            sy = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow));
+        }
+
+        var (bytes, fileName) = await _reporting.ExportCsvAsync(
+            new SchoolReportFilterDto(sy, schoolId, level, year),
+            cancellationToken);
+        Audit("school.rapportage.export", schoolId, new { schoolYearStart = sy, level, year, bytes = bytes.Length });
+        await _db.SaveChangesAsync(cancellationToken);
+        return File(bytes, "text/csv; charset=utf-8", fileName);
+    }
+
+    [HttpGet("retention")]
+    public async Task<ActionResult<SchoolRetentionStatusDto>> RetentionStatus(CancellationToken cancellationToken)
+        => Ok(await _reporting.GetRetentionStatusAsync(cancellationToken));
+
+    [HttpPost("retention/dry-run")]
+    public async Task<ActionResult<SchoolRetentionDryRunDto>> RetentionDryRun(CancellationToken cancellationToken)
+    {
+        var result = await _retention.DryRunAsync(cancellationToken);
+        return Ok(new SchoolRetentionDryRunDto(
+            result.TodayAmsterdam,
+            result.CutoffDate,
+            result.ClassesWouldDelete,
+            result.CodesWouldDelete,
+            result.ResultsWouldDelete,
+            result.Schools.Select(s => new SchoolRetentionDryRunSchoolDto(
+                s.SchoolId, s.SchoolName, s.Classes, s.Codes, s.Results, s.SchoolYearStarts)).ToList()));
+    }
+
+    [HttpGet("retention/impact")]
+    public async Task<ActionResult<SchoolRetentionImpactDto>> RetentionImpact(
+        [FromQuery] int month,
+        [FromQuery] int day,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            SchoolYear.ValidateCutoff(month, day);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+
+        var count = await _retention.CountClassesImpactedByCutoffAsync(month, day, cancellationToken);
+        var note = count == 0
+            ? "Geen klassen worden bij de volgende run verwijderd met deze afkapdatum."
+            : $"Dit verwijdert bij de volgende run de gegevens van {count} klassen.";
+        return Ok(new SchoolRetentionImpactDto(month, day, count, note));
+    }
+
+    [HttpPost("aggregates/refresh")]
+    public async Task<ActionResult<SnapshotTotalsResultDto>> RefreshAggregates(
+        [FromQuery] int? schoolYearStart,
+        CancellationToken cancellationToken)
+    {
+        var years = await _reporting.ListSchoolYearsAsync(cancellationToken);
+        var sy = schoolYearStart
+                 ?? years.FirstOrDefault();
+        if (sy == 0)
+        {
+            sy = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow));
+        }
+
+        var written = await _snapshotter.SnapshotAllSchoolsForYearAsync(sy, cancellationToken);
+        Audit("school.aggregates.refresh", null, new { schoolYearStart = sy, written });
+        await _db.SaveChangesAsync(cancellationToken);
+        return Ok(new SnapshotTotalsResultDto(written));
     }
 
     [HttpGet("{schoolId:guid}")]
@@ -159,6 +278,43 @@ public sealed class AdminSchoolsController : ControllerBase
         Audit("school.deactivate", school.Id, new { school.Name });
         await _db.SaveChangesAsync(cancellationToken);
         return Ok(await ToDetailAsync(school, cancellationToken));
+    }
+
+    [HttpPost("{schoolId:guid}/delete")]
+    public async Task<ActionResult<SchoolEarlyDeleteResult>> DeleteSchool(
+        Guid schoolId,
+        [FromBody] ConfirmSchoolNameRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _retention.DeleteSchoolNowAsync(schoolId, request.ConfirmName, cancellationToken);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "not_found")
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "confirm_name_mismatch")
+        {
+            return BadRequest(new { message = "Typ de schoolnaam ter bevestiging." });
+        }
+    }
+
+    [HttpPost("{schoolId:guid}/aggregates/refresh")]
+    public async Task<ActionResult<SnapshotTotalsResultDto>> RefreshSchoolAggregates(
+        Guid schoolId,
+        CancellationToken cancellationToken)
+    {
+        if (!await _db.Schools.AnyAsync(s => s.Id == schoolId, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var written = await _snapshotter.SnapshotAllYearsForSchoolAsync(schoolId, cancellationToken);
+        Audit("school.aggregates.refresh", schoolId, new { written });
+        await _db.SaveChangesAsync(cancellationToken);
+        return Ok(new SnapshotTotalsResultDto(written));
     }
 
     [HttpPut("{schoolId:guid}/processor-agreement")]
@@ -273,15 +429,14 @@ public sealed class AdminSchoolsController : ControllerBase
             admins);
     }
 
-    private void Audit(string action, Guid schoolId, object details)
+    private void Audit(string action, Guid? schoolId, object details)
     {
-        // Interim PlatformLog until IAdminAuditLog lands (Dependencies B).
         _db.PlatformLogs.Add(new PlatformLog
         {
             Id = Guid.NewGuid(),
             Level = PlatformLogLevel.Info,
             Category = "Scholen.Audit",
-            Message = $"{action} school={schoolId:D}",
+            Message = schoolId is Guid id ? $"{action} school={id:D}" : action,
             DetailsJson = JsonSerializer.Serialize(details),
             CreatedAt = DateTime.UtcNow
         });

@@ -29,7 +29,8 @@ public sealed record TeacherClassOverviewDto(
     bool ParentalInfoConfirmed,
     DateTime? LoginPausedUntilUtc,
     IReadOnlyList<TeacherCodeRowDto> CodesPreview,
-    TeacherGroupInsightsDto GroupInsights);
+    TeacherGroupInsightsDto GroupInsights,
+    string? RetentionBanner = null);
 
 public sealed record TeacherCodeRowDto(
     Guid Id,

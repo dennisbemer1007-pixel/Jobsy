@@ -1129,4 +1129,97 @@ public sealed partial class JobsyApiClient
 
         return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolStaffInviteResultDto>(cancellationToken: ct);
     }
+
+    public async Task<Jobsy.Core.Contracts.Scholen.SchoolReportViewDto?> GetAdminSchoolReportAsync(
+        int? schoolYearStart = null,
+        Guid? schoolId = null,
+        Jobsy.Core.Enums.SchoolLevel? level = null,
+        int? year = null,
+        CancellationToken ct = default)
+    {
+        var q = new List<string>();
+        if (schoolYearStart is int sy) q.Add($"schoolYearStart={sy}");
+        if (schoolId is Guid sid) q.Add($"schoolId={sid:D}");
+        if (level is { } lv) q.Add($"level={lv}");
+        if (year is int y) q.Add($"year={y}");
+        var url = "api/admin/schools/rapportage" + (q.Count == 0 ? "" : "?" + string.Join('&', q));
+        return await _http.GetFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolReportViewDto>(url, ct);
+    }
+
+    public async Task<IReadOnlyList<int>> GetAdminSchoolReportYearsAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<int>>("api/admin/schools/rapportage/years", ct) ?? [];
+
+    public async Task<Jobsy.Core.Contracts.Scholen.SchoolRetentionStatusDto?> GetAdminSchoolRetentionAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolRetentionStatusDto>(
+            "api/admin/schools/retention", ct);
+
+    public async Task<Jobsy.Core.Contracts.Scholen.SchoolRetentionDryRunDto?> DryRunAdminSchoolRetentionAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/admin/schools/retention/dry-run", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolRetentionDryRunDto>(
+            cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Contracts.Scholen.SchoolRetentionImpactDto?> GetAdminSchoolRetentionImpactAsync(
+        int month,
+        int day,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolRetentionImpactDto>(
+            $"api/admin/schools/retention/impact?month={month}&day={day}", ct);
+
+    public async Task<Jobsy.Core.Contracts.Scholen.SnapshotTotalsResultDto?> RefreshAdminSchoolAggregatesAsync(
+        int? schoolYearStart = null,
+        CancellationToken ct = default)
+    {
+        var url = schoolYearStart is int sy
+            ? $"api/admin/schools/aggregates/refresh?schoolYearStart={sy}"
+            : "api/admin/schools/aggregates/refresh";
+        var response = await _http.PostAsync(url, null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Scholen.SnapshotTotalsResultDto>(
+            cancellationToken: ct);
+    }
+
+    public async Task DeleteAdminSchoolAsync(
+        Guid schoolId,
+        string confirmName,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/schools/{schoolId}/delete",
+            new Jobsy.Core.Contracts.Scholen.ConfirmSchoolNameRequest(confirmName),
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+    }
+
+    public string BuildAdminSchoolReportCsvUrl(
+        int? schoolYearStart = null,
+        Guid? schoolId = null,
+        Jobsy.Core.Enums.SchoolLevel? level = null,
+        int? year = null)
+    {
+        var q = new List<string>();
+        if (schoolYearStart is int sy) q.Add($"schoolYearStart={sy}");
+        if (schoolId is Guid sid) q.Add($"schoolId={sid:D}");
+        if (level is { } lv) q.Add($"level={lv}");
+        if (year is int y) q.Add($"year={y}");
+        return "api/admin/schools/rapportage.csv" + (q.Count == 0 ? "" : "?" + string.Join('&', q));
+    }
 }

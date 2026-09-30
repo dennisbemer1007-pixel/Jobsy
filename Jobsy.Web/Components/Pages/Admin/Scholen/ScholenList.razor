@@ -13,6 +13,7 @@
 <AdminPageShell Title="@Culture["AdminScholen.ListTitle"]" Lead="@Culture["AdminScholen.ListLead"]">
     <div class="sch-admin-toolbar">
         <button type="button" class="btn-primary" @onclick="() => _drawerOpen = true">@Culture["AdminScholen.Add"]</button>
+        <a class="btn-compact" href="/admin/scholen/rapportage">@Culture["AdminScholen.Nav.Report"]</a>
     </div>
 
     @if (_loading)

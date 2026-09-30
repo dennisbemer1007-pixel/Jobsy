@@ -1,0 +1,365 @@
+@page "/admin/scholen/rapportage"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Nav
+@inject IJSRuntime Js
+
+<PageTitle>@Culture["AdminScholen.Report.Title"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminScholen.Report.Title"]" Lead="@Culture["AdminScholen.Report.Lead"]">
+    <EntTabs Tabs="_tabs" ActiveKey="@_tab" BasePath="/admin/scholen/rapportage" />
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_tab == "bewaartermijn")
+    {
+        @if (_retention is null)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else
+        {
+            <section class="panel-section">
+                <p>
+                    <strong>@Culture["AdminScholen.Retention.Next"]:</strong>
+                    @_retention.NextCutoffLabel
+                </p>
+                <div class="sch-admin-toolbar">
+                    <button type="button" class="btn-compact" disabled="@_busy" @onclick="DryRunAsync">
+                        @Culture["AdminScholen.Retention.DryRun"]
+                    </button>
+                </div>
+                @if (_dryRun is not null)
+                {
+                    <EntImpactNote>
+                        <p>@string.Format(Culture["AdminScholen.Retention.DryRunResult"], _dryRun.ClassesWouldDelete, _dryRun.CodesWouldDelete, _dryRun.ResultsWouldDelete)</p>
+                    </EntImpactNote>
+                }
+                <h2>@Culture["AdminScholen.Retention.Runs"]</h2>
+                <EntDataTable Empty="@(_retention.RecentRuns.Count == 0)">
+                    <Header>
+                        <th>Datum (UTC)</th>
+                        <th>Afkap</th>
+                        <th>Klassen</th>
+                        <th>Codes</th>
+                        <th>Resultaten</th>
+                        <th>Aggregaten</th>
+                        <th>Uitkomst</th>
+                    </Header>
+                    <Rows>
+                        @foreach (var r in _retention.RecentRuns)
+                        {
+                            <tr>
+                                <td class="tabular">@r.RanAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td class="tabular">@r.CutoffDate.ToString("dd-MM")</td>
+                                <td class="tabular">@r.ClassesDeleted</td>
+                                <td class="tabular">@r.CodesDeleted</td>
+                                <td class="tabular">@r.ResultsDeleted</td>
+                                <td class="tabular">@r.AggregatesWritten</td>
+                                <td>@r.Outcome</td>
+                            </tr>
+                        }
+                    </Rows>
+                </EntDataTable>
+            </section>
+        }
+    }
+    else
+    {
+        <section class="panel-section">
+            <div class="sch-admin-toolbar" style="flex-wrap:wrap;gap:0.75rem">
+                <label>
+                    @Culture["AdminScholen.Report.Filter.Year"]
+                    <select class="input" @bind="_year" @bind:after="ReloadReportAsync">
+                        @foreach (var y in _years)
+                        {
+                            <option value="@y">@y–@(y + 1)</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    @Culture["AdminScholen.Report.Filter.School"]
+                    <select class="input" @bind="_schoolIdText" @bind:after="ReloadReportAsync">
+                        <option value="">@Culture["AdminScholen.Report.Filter.AllSchools"]</option>
+                        @foreach (var s in _schools)
+                        {
+                            <option value="@s.Id.ToString("D")">@s.Name</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    @Culture["AdminScholen.Report.Filter.Level"]
+                    <select class="input" @bind="_levelText" @bind:after="ReloadReportAsync">
+                        <option value="">—</option>
+                        @foreach (SchoolLevel lv in Enum.GetValues<SchoolLevel>())
+                        {
+                            <option value="@lv">@lv</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    @Culture["AdminScholen.Report.Filter.Leerjaar"]
+                    <input class="input" type="number" min="1" max="6" style="width:4rem" @bind="_leerjaarText" @bind:after="ReloadReportAsync" />
+                </label>
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="RefreshAggregatesAsync">@Culture["AdminScholen.Report.Refresh"]</button>
+                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="ExportCsvAsync">@Culture["AdminScholen.Report.Export"]</button>
+            </div>
+            <p class="muted">@Culture["AdminScholen.Report.CsvHelp"]</p>
+        </section>
+
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_report is not null)
+        {
+            <div class="sch-kpi-row">
+                <EntKpiCard Label="@Culture["AdminScholen.Report.Kpi.Schools"]" Value="@Fmt(_report.ActiveSchools)" />
+                <EntKpiCard Label="@Culture["AdminScholen.Report.Kpi.Classes"]" Value="@Fmt(_report.ClassCount)" />
+                <EntKpiCard Label="@Culture["AdminScholen.Report.Kpi.Started"]" Value="@Fmt(_report.StartedCount)" />
+                <EntKpiCard Label="@Culture["AdminScholen.Report.Kpi.Completed"]"
+                            Value="@Fmt(_report.CompletedCount)"
+                            Delta="@(_report.CompletedPercent is double p ? $"{p:0}%" : null)" />
+            </div>
+
+            <div class="sch-dash-grid">
+                <section class="sch-card">
+                    <h2>@Culture["AdminScholen.Report.Riasec"]</h2>
+                    <ul class="sch-todo-list">
+                        @if (_report.RiasecTop3.Count == 0)
+                        {
+                            <li>—</li>
+                        }
+                        else
+                        {
+                            @foreach (var item in _report.RiasecTop3)
+                            {
+                                <li>@item.Display · @FmtCount(item)</li>
+                            }
+                        }
+                    </ul>
+                </section>
+                <section class="sch-card">
+                    <h2>@Culture["AdminScholen.Report.Values"]</h2>
+                    <ul class="sch-todo-list">
+                        @if (_report.TopValues.Count == 0)
+                        {
+                            <li>—</li>
+                        }
+                        else
+                        {
+                            @foreach (var item in _report.TopValues)
+                            {
+                                <li>@item.Display · @FmtCount(item)</li>
+                            }
+                        }
+                    </ul>
+                </section>
+                <section class="sch-card">
+                    <h2>@Culture["AdminScholen.Report.Culture"]</h2>
+                    <ul class="sch-todo-list">
+                        @if (_report.TopCultures.Count == 0)
+                        {
+                            <li>—</li>
+                        }
+                        else
+                        {
+                            @foreach (var item in _report.TopCultures)
+                            {
+                                <li>@item.Display · @FmtCount(item)</li>
+                            }
+                        }
+                    </ul>
+                </section>
+                <section class="sch-card">
+                    <h2>@Culture["AdminScholen.Report.DreamJobs"]</h2>
+                    <ul class="sch-todo-list">
+                        @if (_report.DreamJobsTop10.Count == 0)
+                        {
+                            <li>—</li>
+                        }
+                        else
+                        {
+                            @foreach (var item in _report.DreamJobsTop10)
+                            {
+                                <li>@item.Display · @FmtCount(item)</li>
+                            }
+                        }
+                    </ul>
+                </section>
+            </div>
+
+            <section class="panel-section">
+                <h2>@Culture["AdminScholen.Report.PerLevel"]</h2>
+                <EntDataTable Empty="@(_report.PerLevelYear.Count == 0)">
+                    <Header>
+                        <th>Niveau</th>
+                        <th>Leerjaar</th>
+                        <th>Klassen</th>
+                        <th>Gestart</th>
+                        <th>Afgerond</th>
+                    </Header>
+                    <Rows>
+                        @foreach (var row in _report.PerLevelYear)
+                        {
+                            <tr>
+                                <td>@row.Level</td>
+                                <td class="tabular">@row.Year</td>
+                                <td class="tabular">@(row.Masked ? Culture["AdminScholen.Report.Lt5"] : row.ClassCount?.ToString())</td>
+                                <td class="tabular">@(row.Masked ? Culture["AdminScholen.Report.Lt5"] : row.StartedCount?.ToString())</td>
+                                <td class="tabular">@(row.Masked ? Culture["AdminScholen.Report.Lt5"] : row.CompletedCount?.ToString())</td>
+                            </tr>
+                        }
+                    </Rows>
+                </EntDataTable>
+            </section>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    [SupplyParameterFromQuery(Name = "tab")] public string? TabQuery { get; set; }
+
+    private readonly IReadOnlyList<EntTabs.Tab> _tabs =
+    [
+        new("overzicht", "Overzicht"),
+        new("bewaartermijn", "Bewaartermijn"),
+    ];
+
+    private string _tab = "overzicht";
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private int _year;
+    private string _schoolIdText = "";
+    private string _levelText = "";
+    private string _leerjaarText = "";
+    private IReadOnlyList<int> _years = [];
+    private IReadOnlyList<SchoolListItemDto> _schools = [];
+    private SchoolReportViewDto? _report;
+    private SchoolRetentionStatusDto? _retention;
+    private SchoolRetentionDryRunDto? _dryRun;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _tab = string.IsNullOrWhiteSpace(TabQuery) ? "overzicht" : TabQuery.Trim().ToLowerInvariant();
+        if (_years.Count == 0)
+        {
+            _years = await Api.GetAdminSchoolReportYearsAsync();
+            _year = _years.FirstOrDefault();
+            _schools = await Api.GetAdminSchoolsAsync();
+        }
+
+        if (_tab == "bewaartermijn")
+        {
+            _retention = await Api.GetAdminSchoolRetentionAsync();
+        }
+        else
+        {
+            await ReloadReportAsync();
+        }
+    }
+
+    private async Task ReloadReportAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            Guid? schoolId = Guid.TryParse(_schoolIdText, out var sid) ? sid : null;
+            SchoolLevel? level = Enum.TryParse<SchoolLevel>(_levelText, out var lv) ? lv : null;
+            int? year = int.TryParse(_leerjaarText, out var y) && y is >= 1 and <= 6 ? y : null;
+            _report = await Api.GetAdminSchoolReportAsync(_year == 0 ? null : _year, schoolId, level, year);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshAggregatesAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.RefreshAdminSchoolAggregatesAsync(_year == 0 ? null : _year);
+            _message = $"Totalen bijgewerkt ({result?.AggregatesWritten ?? 0} rijen).";
+            await ReloadReportAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ExportCsvAsync()
+    {
+        _busy = true;
+        try
+        {
+            Guid? schoolId = Guid.TryParse(_schoolIdText, out var sid) ? sid : null;
+            SchoolLevel? level = Enum.TryParse<SchoolLevel>(_levelText, out var lv) ? lv : null;
+            int? year = int.TryParse(_leerjaarText, out var y) && y is >= 1 and <= 6 ? y : null;
+            var url = Api.BuildAdminSchoolReportCsvUrl(_year == 0 ? null : _year, schoolId, level, year);
+            // Absolute API path via navigation (cookie auth on same origin).
+            await Js.InvokeVoidAsync("open", Nav.ToAbsoluteUri(url).ToString(), "_blank");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DryRunAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            _dryRun = await Api.DryRunAdminSchoolRetentionAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string Fmt(int? value)
+        => value is null ? Culture["AdminScholen.Report.Lt5"] : value.Value.ToString();
+
+    private string FmtCount(SchoolReportNamedCountDto item)
+        => item.Masked || item.Count is null
+            ? Culture["AdminScholen.Report.Lt5"]
+            : item.Count.Value.ToString();
+}

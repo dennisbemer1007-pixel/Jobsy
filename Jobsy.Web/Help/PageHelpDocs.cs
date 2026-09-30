@@ -447,6 +447,12 @@ public static class PageHelpDocs
             "Maak een school aan, registreer de verwerkersovereenkomst en nodig de eerste schoolbeheerder uit. Leerlingnamen worden niet opgeslagen.",
             "Scholen veilig onboarding geven zonder leerling-PII."),
 
+        ["/admin/scholen/rapportage"] = new(
+            "Beheer · Scholen-rapportage",
+            "Anonieme totalen (k≥5) en bewaartermijn-runs.",
+            "Bekijk aggregaten per schooljaar, exporteer CSV en bekijk of proefdraai de bewaartermijn. Geen koppeling naar codes.",
+            "Platformrapportage zonder leerling-PII."),
+
         ["/admin/scholen/{schoolId}"] = new(
             "Beheer · School",
             "Schoolgegevens, overeenkomst, schoolbeheerders en totalen.",

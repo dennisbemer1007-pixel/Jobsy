@@ -148,6 +148,56 @@ public static class ClassResultsAggregator
             .ToList();
     }
 
+    /// <summary>
+    /// Raw dimension counts for aggregate snapshots (no k-gate). Dream jobs are not yet collapsed.
+    /// </summary>
+    public static RawResultCounts CountRaw(IReadOnlyList<PupilResult> results)
+    {
+        ArgumentNullException.ThrowIfNull(results);
+        var bag = CountAll(results);
+        return new RawResultCounts(
+            bag.Riasec,
+            bag.Values,
+            bag.Cultures,
+            bag.CompetenceBands,
+            bag.DreamJobs,
+            bag.UndecidedDreamJobs);
+    }
+
+    /// <summary>Top-3 RIASEC letters by count (ties follow R-I-A-S-E-C).</summary>
+    public static IReadOnlyDictionary<string, int> Top3Riasec(IReadOnlyDictionary<string, int> riasec)
+    {
+        return riasec
+            .OrderByDescending(kv => kv.Value)
+            .ThenBy(kv => Array.IndexOf(RiasecOrder, kv.Key.ToUpperInvariant()))
+            .Take(3)
+            .Where(kv => kv.Value > 0)
+            .ToDictionary(kv => kv.Key.ToUpperInvariant(), kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Dream jobs with count &lt; 2 collapse into "Overig".</summary>
+    public static IReadOnlyDictionary<string, int> CollapseSparseDreamJobs(IReadOnlyDictionary<string, int> dreamCounts)
+    {
+        var dict = dreamCounts as Dictionary<string, int>
+                   ?? dreamCounts.ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+        return CollapseDreamJobs(dict).ToDictionary(n => n.Key, n => n.Count, StringComparer.OrdinalIgnoreCase);
+    }
+
+    public static Dictionary<string, int> MergeCounts(
+        IEnumerable<IReadOnlyDictionary<string, int>> sources)
+    {
+        var merged = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var source in sources)
+        {
+            foreach (var kv in source)
+            {
+                merged[kv.Key] = merged.GetValueOrDefault(kv.Key) + kv.Value;
+            }
+        }
+
+        return merged;
+    }
+
     private static CountBag CountAll(IReadOnlyList<PupilResult> results)
     {
         var riasec = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -317,6 +367,15 @@ public static class ClassResultsAggregator
 }
 
 public sealed record NamedCount(string Key, int Count);
+
+/// <summary>Ungated dimension counts used by the aggregate snapshotter (07).</summary>
+public sealed record RawResultCounts(
+    IReadOnlyDictionary<string, int> Riasec,
+    IReadOnlyDictionary<string, int> Values,
+    IReadOnlyDictionary<string, int> Cultures,
+    IReadOnlyDictionary<string, int> CompetenceBands,
+    IReadOnlyDictionary<string, int> DreamJobs,
+    int UndecidedDreamJobs);
 
 public sealed record ClassResultsAggregate(
     int TotalCodes,

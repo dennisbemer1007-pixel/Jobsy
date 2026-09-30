@@ -86,6 +86,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
     private readonly IPupilStoryRenderer _story;
     private readonly IPupilReportPdfService _pdf;
     private readonly IPersonalDataAccessLogger _accessLog;
+    private readonly IPlatformFeatureService _features;
 
     public TeacherPortalService(
         JobsyDbContext db,
@@ -94,7 +95,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
         ISchoolPortalService schoolPortal,
         IPupilStoryRenderer story,
         IPupilReportPdfService pdf,
-        IPersonalDataAccessLogger accessLog)
+        IPersonalDataAccessLogger accessLog,
+        IPlatformFeatureService features)
     {
         _db = db;
         _scope = scope;
@@ -103,6 +105,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
         _story = story;
         _pdf = pdf;
         _accessLog = accessLog;
+        _features = features;
     }
 
     public async Task<IReadOnlyList<TeacherAssignedClassDto>> ListAssignedClassesAsync(
@@ -190,6 +193,12 @@ public sealed class TeacherPortalService : ITeacherPortalService
         var group = MapGroupInsights(results);
 
         var preview = codes.Take(CodesPreviewLimit).Select(MapCodeRow).ToList();
+        var snap = await _features.GetAsync(cancellationToken);
+        var banner = SchoolPortalService.BuildRetentionBanner(
+            SchoolPortalService.TodayAmsterdam(),
+            schoolClass.SchoolYearStart,
+            snap.SchoolRetentionCutoffMonth,
+            snap.SchoolRetentionCutoffDay);
 
         return new TeacherClassOverviewDto(
             ClassId: schoolClass.Id,
@@ -208,7 +217,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
             ParentalInfoConfirmed: schoolClass.ParentalInfoConfirmedAtUtc is not null,
             LoginPausedUntilUtc: schoolClass.LoginPausedUntilUtc,
             CodesPreview: preview,
-            GroupInsights: group);
+            GroupInsights: group,
+            RetentionBanner: banner);
     }
 
     public async Task<IReadOnlyList<TeacherCodeRowDto>?> ListCodesAsync(

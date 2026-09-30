@@ -166,6 +166,11 @@ public static class UiStringsScholen
         nl["School.Privacy.Confirmations"] = "Bevestigingen per klas";
         nl["School.Privacy.Ouderbrief"] = "Ouderbrief";
         nl["School.Privacy.Copy"] = "Tekst kopiëren";
+        nl["School.Privacy.DeleteYear"] = "Alle leerlinggegevens van dit schooljaar nu verwijderen";
+        nl["School.Privacy.DeleteYearHelp"] = "Maakt eerst anonieme totalen (vanaf 5) en verwijdert daarna klassen, codes en resultaten van dit schooljaar. Typ VERWIJDER ter bevestiging.";
+        nl["School.Privacy.DeleteYearConfirm"] = "Bevestiging";
+        nl["School.Privacy.DeleteYearDone"] = "Leerlinggegevens van dit schooljaar zijn verwijderd.";
+        nl["School.Retention.Banner"] = "Op {0} worden de leerlinggegevens van {1} verwijderd. Download wat je nodig hebt.";
 
         nl["School.Material.Title"] = "Lesbrief & materiaal";
         nl["School.Material.Lead"] = "Lesbrief en hoe leerlingen inloggen.";
@@ -476,6 +481,39 @@ public static class UiStringsScholen
         nl["AdminScholen.Settings.RetentionHelp"] = "Op deze dag worden alle leerlinggegevens van het afgelopen schooljaar verwijderd. Anonieme totalen blijven.";
         nl["AdminScholen.Settings.Month"] = "Maand";
         nl["AdminScholen.Settings.Day"] = "Dag";
+        nl["AdminScholen.Settings.Impact"] = "Dit verwijdert bij de volgende run de gegevens van {0} klassen.";
+        nl["AdminScholen.Settings.ImpactConfirm"] = "Weet je zeker dat je de afkapdatum wilt vervroegen?";
+        nl["AdminScholen.Nav.Report"] = "Scholen-rapportage";
+        nl["AdminScholen.Report.Title"] = "Scholen-rapportage";
+        nl["AdminScholen.Report.Lead"] = "Anonieme totalen (k≥5) per schooljaar. Geen koppeling naar codes of leerlingen.";
+        nl["AdminScholen.Report.Tab.Overview"] = "Overzicht";
+        nl["AdminScholen.Report.Tab.Retention"] = "Bewaartermijn";
+        nl["AdminScholen.Report.Filter.Year"] = "Schooljaar";
+        nl["AdminScholen.Report.Filter.School"] = "School";
+        nl["AdminScholen.Report.Filter.AllSchools"] = "Alle scholen";
+        nl["AdminScholen.Report.Filter.Level"] = "Niveau";
+        nl["AdminScholen.Report.Filter.Leerjaar"] = "Leerjaar";
+        nl["AdminScholen.Report.Kpi.Schools"] = "Scholen actief";
+        nl["AdminScholen.Report.Kpi.Classes"] = "Klassen";
+        nl["AdminScholen.Report.Kpi.Started"] = "Leerlingen gestart";
+        nl["AdminScholen.Report.Kpi.Completed"] = "Afgerond";
+        nl["AdminScholen.Report.Lt5"] = "< 5";
+        nl["AdminScholen.Report.Riasec"] = "RIASEC top-3";
+        nl["AdminScholen.Report.Values"] = "Top drijfveren";
+        nl["AdminScholen.Report.Culture"] = "Top sfeer";
+        nl["AdminScholen.Report.DreamJobs"] = "Droombanen top-10";
+        nl["AdminScholen.Report.PerLevel"] = "Per niveau / leerjaar";
+        nl["AdminScholen.Report.Export"] = "CSV exporteren";
+        nl["AdminScholen.Report.Refresh"] = "Totalen nu bijwerken";
+        nl["AdminScholen.Report.CsvHelp"] = "CSV bevat alleen aggregaten. Waarde \"< 5\" wanneer de telling onder de drempel ligt.";
+        nl["AdminScholen.Retention.Next"] = "Volgende afkapdatum";
+        nl["AdminScholen.Retention.Runs"] = "Laatste runs";
+        nl["AdminScholen.Retention.DryRun"] = "Nu uitvoeren (proefdraai)";
+        nl["AdminScholen.Retention.DryRunResult"] = "Proefdraai: {0} klassen, {1} codes, {2} resultaten zouden worden verwijderd.";
+        nl["AdminScholen.Delete.Title"] = "School verwijderen";
+        nl["AdminScholen.Delete.Help"] = "Maakt anonieme totalen, verwijdert alle klassen/codes/resultaten en staff-accounts, en deactiveert de school. Typ de schoolnaam ter bevestiging.";
+        nl["AdminScholen.Delete.Confirm"] = "Schoolnaam";
+        nl["AdminScholen.Delete.Action"] = "School verwijderen";
     }
 
     /// <summary>True when the key belongs to the Dutch-only Scholen modules (D12).</summary>

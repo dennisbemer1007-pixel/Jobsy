@@ -294,6 +294,9 @@ public static class DependencyInjection
         services.AddScoped<ISchoolCodeListPdfService, SchoolCodeListPdfService>();
         services.AddScoped<ISchoolPortalService, SchoolPortalService>();
         services.AddScoped<ITeacherPortalService, TeacherPortalService>();
+        services.AddScoped<ISchoolAggregateSnapshotter, SchoolAggregateSnapshotter>();
+        services.AddScoped<ISchoolRetentionService, SchoolRetentionService>();
+        services.AddScoped<ISchoolReportingService, SchoolReportingService>();
         services.AddSingleton<IPupilStoryRenderer, PupilStoryRenderer>();
         services.AddSingleton<IPupilQuestionBank, PupilQuestionBank>();
         services.AddScoped<IPupilResultBuilder, PupilResultBuilder>();
@@ -302,6 +305,7 @@ public static class DependencyInjection
         services.AddSingleton<IPupilReportPdfService, PupilReportPdfService>();
         services.AddSingleton<IAuthorizationHandler, PupilSessionAuthorizationHandler>();
         services.AddHostedService<TestWindowAutoCloser>();
+        services.AddHostedService<SchoolRetentionHostedService>();
         services.AddScoped<IAmbassadeurOnboardingService, AmbassadeurOnboardingService>();
         services.AddScoped<IAmbassadeurSettingsService, AmbassadeurSettingsService>();
         services.AddScoped<IAmbassadeurAttributionService, AmbassadeurAttributionService>();

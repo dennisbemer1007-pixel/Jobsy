@@ -28,6 +28,10 @@ else if (!string.IsNullOrEmpty(_error))
 }
 else if (_dash is not null)
 {
+    @if (!string.IsNullOrWhiteSpace(_dash.RetentionBanner))
+    {
+        <p class="sch-banner-info">@_dash.RetentionBanner</p>
+    }
     <header class="sch-page-header">
         <h1>@Culture["School.DashboardTitle"]</h1>
         <p class="muted">@Culture["School.DashboardIntro"]</p>

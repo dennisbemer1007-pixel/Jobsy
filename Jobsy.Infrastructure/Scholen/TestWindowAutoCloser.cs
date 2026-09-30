@@ -1,4 +1,5 @@
 using Jobsy.Core.Enums;
+using Jobsy.Core.Scholen;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -69,6 +70,7 @@ public sealed class TestWindowAutoCloser : BackgroundService
     {
         await using var scope = _scopes.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var snapshotter = scope.ServiceProvider.GetRequiredService<ISchoolAggregateSnapshotter>();
         var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Amsterdam));
         var open = await db.SchoolClasses
             .Where(c => c.TestWindow == TestWindowState.Open
@@ -86,6 +88,12 @@ public sealed class TestWindowAutoCloser : BackgroundService
         }
 
         await db.SaveChangesAsync(cancellationToken);
+
+        foreach (var group in open.GroupBy(c => (c.SchoolId, c.SchoolYearStart)))
+        {
+            await snapshotter.SnapshotSchoolYearAsync(group.Key.SchoolId, group.Key.SchoolYearStart, cancellationToken);
+        }
+
         _logger.LogInformation("Closed {Count} expired school test windows", open.Count);
         return open.Count;
     }

@@ -18,6 +18,19 @@ public sealed partial class JobsyApiClient
     public async Task<SchoolPrivacyDto?> GetSchoolPrivacyAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<SchoolPrivacyDto>("api/school/privacy", ct);
 
+    public async Task DeleteSchoolYearDataAsync(string confirmPhrase, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/school/privacy/delete-year",
+            new DeleteSchoolYearRequest(confirmPhrase),
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+    }
+
     public async Task<IReadOnlyList<SchoolPortalClassListItemDto>> GetSchoolClassesAsync(
         int? schoolYearStart = null,
         CancellationToken ct = default)

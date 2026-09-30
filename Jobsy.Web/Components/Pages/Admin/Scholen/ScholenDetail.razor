@@ -53,6 +53,14 @@
                     <button type="button" class="btn-compact btn-outline-danger" disabled="@_busy" @onclick="DeactivateAsync">@Culture["AdminScholen.Deactivate"]</button>
                 }
             </section>
+            <section class="panel-section">
+                <h2>@Culture["AdminScholen.Delete.Title"]</h2>
+                <EntImpactNote><p>@Culture["AdminScholen.Delete.Help"]</p></EntImpactNote>
+                <label>@Culture["AdminScholen.Delete.Confirm"]
+                    <input class="input" @bind="_deleteConfirm" />
+                </label>
+                <button type="button" class="btn-compact btn-outline-danger" disabled="@_busy" @onclick="DeleteSchoolAsync">@Culture["AdminScholen.Delete.Action"]</button>
+            </section>
         }
         else if (_tab == "overeenkomst")
         {
@@ -138,6 +146,7 @@
     private string _agreementVersion = "1.0";
     private string _inviteName = "";
     private string _inviteEmail = "";
+    private string _deleteConfirm = "";
 
     protected override async Task OnParametersSetAsync()
     {
@@ -253,6 +262,25 @@
             _inviteName = "";
             _inviteEmail = "";
             await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeleteSchoolAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.DeleteAdminSchoolAsync(SchoolId, _deleteConfirm);
+            Nav.NavigateTo("/admin/scholen");
         }
         catch (Exception ex)
         {
