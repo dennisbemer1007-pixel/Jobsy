@@ -82,3 +82,97 @@ Shared foundation for the candidate jobs stack (banenkaart, lijst, vacature, sol
 - D12: `MatchDeck.Defer` moves a skip to the end of the session once; second skip advances. Toast `Kb.Match.Skipped`. Never hides; map/list/top-match unaffected.
 - Gate closed → `MatchUnlockPanel` (Maak je paspoort af). Deck done → Bewaard + kaart links.
 - Hidden-mode company line via `Kb.Via.Bureau`. "Staat lager" chip when ranked lower.
+
+## E2E + stack report (file 09)
+
+### How to run Playwright (kandidaat banen)
+
+```bash
+export JOBSY_E2E_BASE_URL=https://localhost:7xxx   # or Acc URL
+export JOBSY_E2E_CANDIDATE_EMAIL=kandidaat@jobsy.local
+export JOBSY_E2E_CANDIDATE_PASSWORD=Jobsy123!
+export JOBSY_E2E_INCOMPLETE_EMAIL=valentine@jobsy.local   # optional; gate closed
+# Optional local-only Werkgevers OFF (never on Acc):
+# export JOBSY_E2E_ALLOW_FEATURE_TOGGLE=1
+
+dotnet test Jobsy.Tests/Jobsy.Tests.csproj --filter "FullyQualifiedName~KandidaatBanenE2ePlaywrightTests"
+```
+
+Without `JOBSY_E2E_BASE_URL` the suite **soft-skips** (returns green). Screenshots land in `artifacts/e2e/kandidaat-banen/` (gitignored).
+
+Shared helper: `Jobsy.Tests/E2e/KbE2e.cs` (login, viewports 1440×900 / 390×844, pageerror/console, circuit check, `E2eRoutes.Banenkaart` → `KbRoutes.Map`).
+
+Scenarios S1–S13 cover banenkaart, anonymous address, Valentine gate, list mode, detail, hidden mode, sollicitaties, bewaard, Match desktop/mobile, Werkgevers OFF (local+Dep C only), and pagehide/h1 focus.
+
+### Fit rules (§F, short)
+
+- Gate open = culture **or** values test done → show calibrated % (55–90, strong ≥ 75) + why line + DNA bars.
+- Gate closed / anonymous → "Maak je paspoort af", no number.
+- Dislikes: sort penalty 15, never hide, "Staat lager: …" (Dep D; currently fallback returns none).
+- Employer `Application.MatchPercent` / snapshot unchanged.
+
+### Timeline rules (07)
+
+- New `ApplicationStatusHistory` rows from now on; no invented backfill (D4).
+- Legacy apps: Verstuurd (`CreatedAt`) + current status (`RespondedAt` when set).
+- "Gezien door werkgever" = first `EmployerViewed` (`POST api/applications/{id}/viewed`).
+
+### Hidden-mode rule (05 / Dep A fallback)
+
+- When `IntermediaryCompanyId` set and `ShowClientAddressOnMap == false`: pin/travel = bureau; label "via uitzendbureau {bureau}"; no Route/Street View; no client coords in DTOs. No reveal until intermediair 03.
+
+### Nav check (Dependencies F) — report only, **nav unchanged**
+
+| Expected (Dennis) | Actual on this branch |
+|---|---|
+| De ontdekkingsreis · Mijn Paspoort · Carrière · Banenkaart · Sollicitaties | **Zoeken · Bewaard · Sollicitaties · Carrière · Profiel** |
+
+Bewaard remains a nav item (paspoort D8 / CandidateJobListTabs ABSENT). Map item is Zoeken → `/`. This stack did not change `RoleNavCatalog`.
+
+### Stack-end table (09.4)
+
+| File | Branch | PR | Status | Notes |
+|---|---|---|---|---|
+| 01 hotfix | `cursor/kandidaat-banen-hotfix` | #443 | green | Isochrone decimals; TopMatchLeadingFragment attribute order; pagehide shim |
+| 02 fundament | `cursor/kandidaat-banen-2` | #444 | green | Dep A–G cases + fallbacks, Kb strings/labels/CSS |
+| 03 banenkaart | `cursor/kandidaat-banen-3` | #445 | green | Home+20 fiets, chips, rings, docked popup |
+| 04 fit/dislikes | `cursor/kandidaat-banen-4` | #446 | green | Gate + calibration; Dep D fallback |
+| 05 werkgever/uitzend | `cursor/kandidaat-banen-5` | #447 | green | Hidden mode fallback A; Dep B blocks hidden |
+| 06 lijst/vacature | `cursor/kandidaat-banen-6` | #448 | green | `?weergave=lijst`, detail fit/travel |
+| 07 sollicitaties | `cursor/kandidaat-banen-7` | #449 | green | Status history + timeline + Bewaard redesign |
+| 08 Match | `cursor/kandidaat-banen-8` | *(expected #450)* | green | DNA why-rows, Hierna, D12 skip-to-end |
+| 09 E2E + report | `cursor/kandidaat-banen-9` | *(parent opens; this agent does not open PR)* | green (soft-skip without E2E URL) | Playwright S1–S13 + docs |
+
+### Dependency cases (final)
+
+| Dep | Outcome | Fallback |
+|---|---|---|
+| A | ABSENT | `KbHiddenIntermediaryMask` (`KB-FALLBACK(A)`) |
+| B / B′ | ABSENT | blocks not rendered; calibration without `ICompanyCultureLookup` |
+| C | ABSENT | `KB-FALLBACK(C)` comments; no tabs; S12 soft-skips |
+| D | ABSENT | `KbNoDislikeSource` (`KB-FALLBACK(D)`) |
+| E | ABSENT | `KbRoutes.Map = "/"` (`KB-FALLBACK(E)`) |
+| F | ABSENT (order differs) | **nav not changed**; report above |
+| G | Hotfix 01 not merged on acceptatie | stack branched from hotfix |
+
+`git grep KB-FALLBACK` hits: Core mask/dislike, Web `KbRoutes`/`Program`, Api Vacancies/Applications, Infrastructure DI/discovery, tests, this doc.
+
+### Fit distribution (04.4)
+
+- After calibration: gate-open scores in **55–90**; strong ≥ 75 share within harness bounds; DNA order ≠ nearest-travel.
+- Before (raw employer %): unchanged for employers; candidate UI no longer shows ungated raw %.
+- Werkgever-aanmelding 01 (`ICompanyCultureLookup`): **ABSENT** when anchors were derived.
+
+### Crash root cause (01)
+
+`TopMatchLeadingFragment` called `AddComponentReferenceCapture` before `AddAttribute` → `InvalidOperationException` → circuit “Even iets misgegaan” for complete-profile desktop candidates after match deck load.
+
+### Out of scope / deferred
+
+- Interview times/places on timeline (mockup only; not stored).
+- Server-side persisted Match skip (D12 session-only).
+- Reveal of opdrachtgever when intermediair 03 absent (none).
+- Dep B kernwaarden/branche/engagement tiles until werkgever-aanmelding 08/09.
+- Nav order add-on (Dependencies F) — separate stack.
+- Landing 04 `/banenkaart`, paspoort feature gate, paspoort 06 dislikes — fallbacks in place.
+- S7 may soft-skip without a seeded hidden-mode vacancy; S12 skips without Dep C + local toggle.

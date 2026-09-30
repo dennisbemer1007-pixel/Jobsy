@@ -14,7 +14,15 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Kandidaat banen E2E + stack report (09):** Playwright S1–S13 (desktop 1440 + mobile 390) for banenkaart, lijst, vacature, sollicitaties, bewaard en Match; soft-skip zonder `JOBSY_E2E_BASE_URL`; docs + stack-eindrapport.
 - **Match refresh (08):** calibrated fit pill, "Waarom jij past" per DNA dimension, Hierna column with fit + travel; "Laten schieten" defers to end of deck (D12, never hides); keyboard hints; mobile header with mascot + progress.
+- **Sollicitaties + Bewaard (07):** statusgeschiedenis met datum, tijdlijn + "Wat nu?", "Niet gekozen" met vergelijkbare banen; Bewaard-kaarten met statuspillen, unsave+undo.
+- **Lijst + vacaturedetail (06):** desktop Kaart/Lijst (`?weergave=lijst`), mobiele Kaart-FAB, fit-panel, reiskaart met vervoerswissel, sticky solliciteer-balk.
+- **Uitzendbureau hidden mode (05):** bureau-pin/reistijd, "via uitzendbureau …", geen Route/Street View; kernwaarden/branche/engagement pas zichtbaar na werkgever-aanmelding 08/09.
+- **Eerlijke fit % (04):** alleen na cultuur- of waardentest; weergave 55–90 (sterk ≥ 75); why-regel; DNA-balken; dislikes zetten lager ("Staat lager"), nooit verbergen. Werkgeverscores ongewijzigd.
+- **Banenkaart start & filters (03):** start op thuisadres · 20 min fietsen; adresveld + PDOK; chips; echte ringen; docked popup.
+- **Kandidaat banen fundament (02):** `Kb.*` strings (5 talen), labels, gedeelde kaartonderdelen, feature-gating-placeholders, UX-fixes.
+- **Banenkaart hotfix (01):** echte isochronen (decimale contouren), desktop top-match crashfix, idempotente pagehide-shim.
 
 ### Fixed
 - **Render `jobsy-api` deploys:** `WebPushSubscriptions` ontbrak in `JobsyDbContextModelSnapshot`. EF Core 9 behandelt dat als `PendingModelChangesWarning` → harde fout in `MigrateAsync` → API-host stopt (Auto-Deploy Failed sinds PWA-commit). Snapshot + regressietest herstellen de deploy.

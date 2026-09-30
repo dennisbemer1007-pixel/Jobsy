@@ -113,21 +113,27 @@ public static class PageHelpDocs
 
         ["/candidate/liked"] = new(
             "Bewaard",
-            "Vacatures die je hebt geliket of bewaard.",
-            "Bekijk de lijst, open details of verwijder items. Anonieme gebruikers zien een beperkte weergave; ingelogde kandidaten hun eigen bewaarde set.",
+            "Vacatures die je hebt bewaard, met status (Open / Sluit over … / Gesloten / Baan is al vergeven).",
+            "Bekijk fit en status per bewaarde vacature, solliciteer of open vergelijkbare banen, of verwijder met undo-toast. Anonieme gebruikers zien een beperkte weergave.",
             "Interessante banen bijhouden zonder meteen te solliciteren."),
 
         ["/candidate/shared"] = new(
             "Gedeeld",
             "Vacatures die met jou zijn gedeeld.",
-            "Open gedeelde items om de vacature te bekijken of verder te bewaren/solliciteren.",
+            "Open gedeelde items om de vacature te bekijken of verder te bewaren/solliciteren. Geen fit-% of ‘Staat lager’ op gedeelde kaarten.",
             "Doorverwijzingen van anderen of eerdere shares terugvinden."),
 
         ["/candidate/applications"] = new(
             "Mijn sollicitaties",
-            "Overzicht van je sollicitaties en statussen.",
-            "Filter op tabbladen, open een sollicitatie of trek in waar dat mag.",
+            "Overzicht van je sollicitaties met een gedateerde status-tijdlijn en ‘Wat nu?’ per status.",
+            "Volg Verstuurd → Gezien door werkgever → Gesprek → Uitslag. Bij ‘Niet gekozen’ krijg je vergelijkbare banen. Bewaard is een apart scherm (of tab wanneer paspoort D8 landt).",
             "Voortgang volgen van openstaande en afgeronde sollicitaties."),
+
+        ["/banenkaart"] = new(
+            "Banenkaart",
+            "Vacatures rondom je startadres (profiel-thuisadres, 20 min fietsen) met echte reistijd-ringen.",
+            "Pas adres en filters in de chipbalk. Fit-% zie je alleen na de cultuur- of waardentest; anders ‘Maak je paspoort af’. Dislikes zetten een baan lager (‘Staat lager: …’) zonder hem te verbergen.",
+            "Banen zoeken op de kaart of in de lijstweergave (?weergave=lijst)."),
 
         ["/candidate/profile"] = new(
             "Mijn profiel",

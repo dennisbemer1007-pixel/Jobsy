@@ -156,3 +156,10 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/wie-zijn-wij` | `Pages/Legal/WieZijnWij.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
+
+## Kandidaat banen notes
+
+- Banenkaart list mode: query `?weergave=lijst` on the map route (`/` today / `/banenkaart` when landing 04). Persisted in `sessionStorage jobsy.kb.weergave`.
+- Employer viewed hook: `POST api/applications/{id}/viewed` (07) records at most one `EmployerViewed` timeline event.
+- Werkgevers gating (paspoort 01): when `PlatformFeature.Employers` lands, candidate job pages/APIs return the feature gate / `404 feature_disabled`. Until then KB-FALLBACK(C) comments mark the intended sites.
+- Map route constant: `KbRoutes.Map` (`/` while landing 04 absent).

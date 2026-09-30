@@ -81,6 +81,13 @@ public static class RoutesDocGenerator
         }
 
         sb.AppendLine();
+        sb.AppendLine("## Kandidaat banen notes");
+        sb.AppendLine();
+        sb.AppendLine("- Banenkaart list mode: query `?weergave=lijst` on the map route (`/` today / `/banenkaart` when landing 04). Persisted in `sessionStorage jobsy.kb.weergave`.");
+        sb.AppendLine("- Employer viewed hook: `POST api/applications/{id}/viewed` (07) records at most one `EmployerViewed` timeline event.");
+        sb.AppendLine("- Werkgevers gating (paspoort 01): when `PlatformFeature.Employers` lands, candidate job pages/APIs return the feature gate / `404 feature_disabled`. Until then KB-FALLBACK(C) comments mark the intended sites.");
+        sb.AppendLine("- Map route constant: `KbRoutes.Map` (`/` while landing 04 absent).");
+        sb.AppendLine();
         return sb.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
     }
 
