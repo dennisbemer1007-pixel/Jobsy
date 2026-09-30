@@ -214,17 +214,20 @@ public class Sprint3CandidateTests
     }
 
     [Fact]
-    public void Resend_resolve_requires_api_key_and_from()
+    public void Resend_resolve_requires_api_key_and_defaults_from()
     {
         Assert.False(SmtpEmailService.TryResolveResend(null, out _));
-        Assert.False(SmtpEmailService.TryResolveResend(
+        // 03: API key alone is enough; From falls through to MailOptions default.
+        Assert.True(SmtpEmailService.TryResolveResend(
             new IntegrationCredentialSecrets("re_test", null, null, null, null, null, null),
-            out _));
+            out var defaulted));
+        Assert.Contains("hallo@mail.lobsy.nl", defaulted.FromAddress, StringComparison.OrdinalIgnoreCase);
         Assert.True(SmtpEmailService.TryResolveResend(
             new IntegrationCredentialSecrets("re_test", null, null, null, null, null, "onboarding@resend.dev"),
             out var settings));
         Assert.Equal("re_test", settings.ApiKey);
-        Assert.Equal("onboarding@resend.dev", settings.FromAddress);
+        Assert.Contains("onboarding@resend.dev", settings.FromAddress, StringComparison.OrdinalIgnoreCase);
+        Assert.StartsWith("Lobsy", settings.FromAddress, StringComparison.Ordinal);
     }
 
     [Fact]
