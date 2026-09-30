@@ -504,7 +504,7 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
             }
 
             var features = await _features.GetAsync(cancellationToken);
-            var culture = EmailCulture.ForLanguage(checkout.Locale is "nl" or "en" ? checkout.Locale : "en");
+            var culture = EmailCulture.ForLanguage(checkout.Locale);
             var pdf = await _invoices.RenderPdfAsync(invoice.Id, culture.Language, cancellationToken);
             var composed = TransactionalEmails.DeepTestReceipt(
                 features.PublicWebBaseUrl,

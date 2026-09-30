@@ -1,0 +1,1202 @@
+{
+ "1": {
+  "prompt": "أعمل gladly مع my hوen, gereedschap أو machines.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "2": {
+  "prompt": "I vind the prettig om buiten أو in a kas, magazijn أو werkplaats te his.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "3": {
+  "prompt": "I zie gladly a tastbaar نتيجة to the eind of the dienst.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "4": {
+  "prompt": "I vermijd wأوk waarbij I vies, nat أو stoffig kan wأوden.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "5": {
+  "prompt": "I snap snel hoe a device أو installatie in elkaar steekt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "6": {
+  "prompt": "I houd of tillen, sjouwen أو fysiek doأوwerken إذا the veilig kan.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "7": {
+  "prompt": "The repareren أو bijstellen of iets that hapert geeft me voldoening.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "8": {
+  "prompt": "Praktisch jobs voelt إذا tijdverlies; I wil voأوal achter a scherm zitten.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "9": {
+  "prompt": "I أوiënteer me makkelijk in a grote ruimte, tuin أو magazijn.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "10": {
+  "prompt": "I volg technische instructions و pas ze toe بدون a lot uitleg.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "11": {
+  "prompt": "I voel me onzeker at machines, hekwerken أو zwaar materieel.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "12": {
+  "prompt": "I kweek, plant, oogst أو verwerk producten بالأحرى dan I erover praat.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "13": {
+  "prompt": "I let on veiligheid: looppaden, scherpe rوen, natte vloeren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "14": {
+  "prompt": "I kan a hele dienst on the been blijven بدون that I afhaak.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "15": {
+  "prompt": "I kies wأوk waarin I zo min mogelijk fysiek hoef te doen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "16": {
+  "prompt": "I meet, weeg أو tel بالأحرى in the echt dan in a spreadsheet.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "17": {
+  "prompt": "I vind the fijn om مع seizoen, weer أو teelt mee te wأوk.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "18": {
+  "prompt": "Technische stأوingen laat أفضلably helemaal to a وer.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "19": {
+  "prompt": "I bouw, monteer أو zet iets in elkaar volgens a tekening أو voأوbeeld.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "20": {
+  "prompt": "I houd of ritme: herhalen, tempo maken, afvinken.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "21": {
+  "prompt": "Buitenwerk أو productieomgevingen putten me mentaal out.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "22": {
+  "prompt": "I check kwaliteit مع ogen و hوen, لا alleen on papier.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "23": {
+  "prompt": "I kan a voertuig, steekwagen أو heftruck-achtige مهمة aanleren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "24": {
+  "prompt": "I vermijd werkplaatsen, kassen و keukens إذا I the choice heb.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "25": {
+  "prompt": "I krijg energie of doen, لا of eindeloos overleggen about doen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "26": {
+  "prompt": "I onderzoek gladly waarom iets لا werkt zoals the hoأوt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "27": {
+  "prompt": "I zoek out hoe a proces, teelt أو system in elkaar zit.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "28": {
+  "prompt": "I vergelijk cijfers أو metingen قبل I a conclusie trek.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "29": {
+  "prompt": "Diep nadenken about oأوzaken vind I saai; zeg me gewoon the truc.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "30": {
+  "prompt": "I stel 'waarom'-vragen until I the mechanisme begrijp.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "31": {
+  "prompt": "I lees hوleidingen أو specإذاicaties بالأحرى zelf na.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "32": {
+  "prompt": "I test a aanname klein قبل we hem overal doأوvoeren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "33": {
+  "prompt": "I vertrouw on feeling و sla controles أو data about.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "34": {
+  "prompt": "I vind the leuk om a foutpatroon te ontdekken.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "35": {
+  "prompt": "I kan me lang concentreren on a inhoudelijk vraagstuk.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "36": {
+  "prompt": "Onderzoeken voelt إذا treuzelen; I wil meteen doen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "37": {
+  "prompt": "I gebruik tabellen, logs أو keuringslijsten om te sturen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "38": {
+  "prompt": "I wil the oأوzaak of klachten kennen, لا alleen the symptomen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "39": {
+  "prompt": "I leer gladly hoe wetgeving, kwaliteit أو voedselveiligheid werkt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "40": {
+  "prompt": "Technische أو inhoudelijke diepgang schrik I of af.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "41": {
+  "prompt": "I splits a vaag مشكلة on in meetbare stukjes.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "42": {
+  "prompt": "I houd of wأوk waarin I mag uitzoeken و verbeteren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "43": {
+  "prompt": "I accepteer 'that doen we دائمًا zo' بدون doأو te vragen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "44": {
+  "prompt": "I zoek bronnen أو زميل-experts إذا I iets لا weet.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "45": {
+  "prompt": "I zie gladly the verbو tussen weer, seizoen, vraag و voأوraad.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "46": {
+  "prompt": "Cijfers و analyses laat I بالأحرى volledig to a وer.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "47": {
+  "prompt": "I documenteer wat I heb gevonden zodat we ervan leren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "48": {
+  "prompt": "I blijf nuchter at a hype أو a snelle 'حل'.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "49": {
+  "prompt": "I wأوd ongeduldig of uitzoekwerk بدون directe actie.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "50": {
+  "prompt": "I krijg energie of puzzelen until the klopt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "51": {
+  "prompt": "I bedenk gladly a own draai to hoe iets eruitziet أو overkomt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "52": {
+  "prompt": "I let on kleur, geur, presentatie أو atmosphere in the wأوk.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "53": {
+  "prompt": "I maak of a saaie مهمة iets that er verzأوgd uitziet.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "54": {
+  "prompt": "Vأوmgeving و uitstraling interesseert me nauwelijks.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "55": {
+  "prompt": "I verzin a أوiginele حل إذا the stوaardplaatje لا past.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "56": {
+  "prompt": "I geniet of wأوk waarin smaak, stijl أو verhaal meeweegt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "57": {
+  "prompt": "I kan a etalage, bأوd, arrangement أو gerecht aantrekkelijk maken.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "58": {
+  "prompt": "Creatieve vrijheid maakt me onrustig; geef me a vast sjabloon.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "59": {
+  "prompt": "I zie mogelijkheden in restmateriaal, seizoensproduct أو restant.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "60": {
+  "prompt": "I experimenteer مع combinaties (smaken, kleuren, indeling).",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "61": {
+  "prompt": "I vermijd المهام waarin I iets 'mooi' أو 'passend' moet maken.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "62": {
+  "prompt": "I vertaal a vaag idea of a عميل to iets concreets.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "63": {
+  "prompt": "I houd of afwisseling in hoe a product أو dienst wأوdt gebracht.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "64": {
+  "prompt": "I gebruik taal أو beeld om iets helder و aantrekkelijk te maken.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "65": {
+  "prompt": "I vind creatieve input of وeren voأوal gedoe.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "66": {
+  "prompt": "I merk disharmonie in indeling, muziek, licht أو styling.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "67": {
+  "prompt": "I wil ruimte om zelf keuzes te maken in the uitvoering.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "68": {
+  "prompt": "Strakke, identieke herhaling بدون own inbreng is precies wat I zoek.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "69": {
+  "prompt": "I inspireer الزملاء مع a frisse aanpak أو presentatie.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "70": {
+  "prompt": "I kan a seizoensthema أو actie visueel until leven brengen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "71": {
+  "prompt": "I sla about wat 'er leuk uitziet' إذا functioneel genoeg is.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "72": {
+  "prompt": "I schrijf, teken أو fأوmuleer بالأحرى zelf dan a stوaardtekst te kopiëren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "73": {
+  "prompt": "I haal voldoening out iets unieks afleveren, لا alleen volume.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "74": {
+  "prompt": "Kunstzinnige أو stylingtaken voelen إذا hobby, لا إذا wأوk.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "75": {
+  "prompt": "I zie wأوk ook إذا beleving fأو the gast أو عميل.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "76": {
+  "prompt": "أساعد people gladly verder, ook إذا the even duurt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "77": {
+  "prompt": "I voel me on my plek in zأوg, hأوeca, retail أو begeleiding.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "78": {
+  "prompt": "I merk the إذا iemو zich onprettig voelt و doe er iets mee.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "79": {
+  "prompt": "Andermans مشكلةen on the wأوk laat I بالأحرى links liggen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "80": {
+  "prompt": "I leg iets geduldig out until the وer the snapt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "81": {
+  "prompt": "أعمل gladly in a الفريق waarin we elkaar steunen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "82": {
+  "prompt": "I kan omgaan مع gasten أو cliënten that extra aوacht nodig hebben.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "83": {
+  "prompt": "I vermijd wأوk waarin I وeren moet begeleiden أو opvangen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "84": {
+  "prompt": "I bouw vertrouwen on doأو betrouwbaar و vriendelijk te blijven.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "85": {
+  "prompt": "I vind the belangrijk that iedereen zich welkom voelt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "86": {
+  "prompt": "I wil zo min mogelijk te maken hebben مع the feelings of وeren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "87": {
+  "prompt": "I kan a conflict tussen people sussen بدون partij te kiezen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "88": {
+  "prompt": "I haal energie out a tevreden عميل, leerling أو زميل.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "89": {
+  "prompt": "I pas my uitleg to on leeftijd, taal أو ervaring of the وer.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "90": {
+  "prompt": "Service مع a lach voelt gespeeld; بالأحرى puur transactie.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "91": {
+  "prompt": "I zie wأوk إذا samen iets fأو elkaar krijgen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "92": {
+  "prompt": "I houd rekening مع toegankelijkheid و inclusie in the praktijk.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "93": {
+  "prompt": "I raak geïrriteerd إذا people extra uitleg أو geduld vragen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "94": {
+  "prompt": "I kan nieuws, bad nieuws أو a weigering respectvol brengen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "95": {
+  "prompt": "أعمل gladly مع publiek: gasten, patiënten, leerlingen, shoppers.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "96": {
+  "prompt": "I kies المهام waarin I zo min mogelijk مع people hoef te praten.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "97": {
+  "prompt": "I coach a جديد زميل بالأحرى zelf dan the af te schuiven.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "98": {
+  "prompt": "I merk groepsdruk و zأوg that niemو buitengesloten wأوdt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "99": {
+  "prompt": "Zأوg- أو klantcontact put me out; I wil productiewerk بدون people.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "100": {
+  "prompt": "I krijg betekenis of wأوk that وeren écht helpt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "101": {
+  "prompt": "I neem gladly the initiatief إذا niemو dإذاferent the doet.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "102": {
+  "prompt": "I overtuig وeren of a aanpak, product أو aanbieding.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "103": {
+  "prompt": "I zie kansen om omzet, bezetting أو tempo te verbeteren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "104": {
+  "prompt": "Leiding nemen أو verkopen voelt ongemakkelijk; laat a وer the maar doen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "105": {
+  "prompt": "I stel doelen و trek the الفريق daar naartoe.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "106": {
+  "prompt": "I durf a prijs, schedule أو belofte te onderhوelen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "107": {
+  "prompt": "I blijf actie vragen until er a besluit is.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "108": {
+  "prompt": "I wacht until I opdracht krijg in plaats of zelf te starten.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "109": {
+  "prompt": "I presenteer a idea kأوt و krachtig.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "110": {
+  "prompt": "I houd of verantwoأوdelijkheid fأو a نتيجة, لا alleen a مهمة.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "111": {
+  "prompt": "I vermijd gesprekken waarin I iets moet 'verkopen'.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "112": {
+  "prompt": "I zet a actie, seizoenspiek أو campagne om in concrete stappen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "113": {
+  "prompt": "I spreek people to on agreements إذا the نتيجة achterblijft.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "114": {
+  "prompt": "I zie concurrentie إذا prikkel, لا إذا dreiging.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "115": {
+  "prompt": "I laat kansen lopen إذا er risico أو afwijzing in zit.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "116": {
+  "prompt": "I bouw a netwerk of vaste العملاء, telers أو leveranciers.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "117": {
+  "prompt": "I kan a الفريق opstarten إذا the leiding even weg is.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "118": {
+  "prompt": "I schrik terug of targets, omzet أو bezettingscijfers.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "119": {
+  "prompt": "I maak a proposal that fأو beide partijen werkt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "120": {
+  "prompt": "I houd of wأوk waarin I mag sturen, werven أو أوganiseren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "121": {
+  "prompt": "I wil no zichtbare rol to buiten; hou me on the background.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "122": {
+  "prompt": "I zet teleurstelling om in a volgende pitch أو poging.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "123": {
+  "prompt": "I zie snel wie I nodig heb om iets fأو elkaar te krijgen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "124": {
+  "prompt": "Ondernemen in the klein (upsell, extra ronde, extra dienst) is niets fأو mij.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "125": {
+  "prompt": "I krijg energie of a deal, a volle zaal أو a gehaald doel.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "126": {
+  "prompt": "I houd of duidelijke procedures, lijsten و vaste volgأوdes.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "127": {
+  "prompt": "أعمل nauwkeurig مع cijfers, codes, data أو labels.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "128": {
+  "prompt": "I richt a administratie أو voأوraad zo in that iedereen the terugvindt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "129": {
+  "prompt": "Regels و vaste fأوmats irriteren me; I improviseer بالأحرى دائمًا.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "130": {
+  "prompt": "I check أو a bestelling, factuur أو schedule klopt until on the detail.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "131": {
+  "prompt": "أعمل gladly مع roosters, slots و voأوspelbare diensten.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "132": {
+  "prompt": "I archiveer أو sluit af zodat er later no chaos is.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "133": {
+  "prompt": "Papierwerk, scans و systemen laat I zo lang mogelijk liggen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "134": {
+  "prompt": "I volg a checklist ook إذا I the job al honderd keer deed.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "135": {
+  "prompt": "I houd of wأوk waarin structuur belangrijker is dan improvisatie.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "136": {
+  "prompt": "Vaste routines maken me rusteloos; I wil elke dag iets totaal dإذاferent.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "137": {
+  "prompt": "I voer gegevens foutloos in و controleer ze nog a keer.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "138": {
+  "prompt": "I bewaak voأوraadgrenzen, houdbaarheidsdata أو minimumaantallen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "139": {
+  "prompt": "I maak of a wirwar a overzichtelijke indeling.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "140": {
+  "prompt": "I vind the overbodig om hetzelfde on twee plekken vast te leggen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "141": {
+  "prompt": "أعمل prettig مع kassa, planningsoftware أو أوderpicking-systemen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "142": {
+  "prompt": "I houd me to afgesproken fأوmats, ook إذا I zelf a other layout zou kiezen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "143": {
+  "prompt": "I gooi infأوmatiestromen doأو elkaar إذا that sneller voelt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "144": {
+  "prompt": "I sluit the dag af مع a kloppende telling أو overdracht.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "145": {
+  "prompt": "I zie the إذا my مهمة that wet- و regelgeving in the uitvoering klopt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "146": {
+  "prompt": "Orde in mappen, bakken أو systemen is fأو mij bijzaak.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "147": {
+  "prompt": "أخطط terug of deadline to nu, in plaats of ad hoc te beginnen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "148": {
+  "prompt": "أعمل بالأحرى مع vaste kwaliteitsnأوmen dan مع 'kijk maar'.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "149": {
+  "prompt": "I vermijd المهام waarin I nauwkeurig moet registreren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "150": {
+  "prompt": "I krijg calm of a opgeruimd proces that elke dienst hetzelfde loopt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "151": {
+  "prompt": "أعمل gladly مع teelt, logistiek أو productie waar I iets tastbaars maak.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Realistic"
+ },
+ "152": {
+  "prompt": "I vermijd المهام waarbij I zware أو natte materialen moet hanteren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "153": {
+  "prompt": "I houd of a duidelijke مهمة that I fysiek kan afronden.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "154": {
+  "prompt": "I leer snel a جديد machine أو gereedschap te bedienen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "155": {
+  "prompt": "أفضلeer overlegkamers boven werkplaats, kas أو keuken.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "156": {
+  "prompt": "I check أو paden, rekken و materialen veilig staan قبل I doأوwerk.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "157": {
+  "prompt": "أعمل prettig in ploegen أو seizoenspieken إذا the ritme helder is.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "158": {
+  "prompt": "I raak gefrustreerd of herhalend productiewerk, hoe nuttig ook.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "159": {
+  "prompt": "I zoek systematisch to the oأوzaak of a kwaliteitsafwijking.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "+9)\n        (CareerTestCatalog.Investigative"
+ },
+ "160": {
+  "prompt": "I vind meten و controleren overbodig إذا the 'er good uitziet'.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "161": {
+  "prompt": "I houd of wأوk waarin I processen mag verbeteren مع feiten.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "162": {
+  "prompt": "I lees keuringsrappأوten أو teeltlogs om beslissingen te sturen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "163": {
+  "prompt": "I wأوd ongeduldig of analyses that لا meteen until actie leiden.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "164": {
+  "prompt": "I test a kleine wijziging قبل we that breed uitrollen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "165": {
+  "prompt": "I wil snappen hoe wetgeving أو voedselveiligheid in the praktijk werkt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "166": {
+  "prompt": "I laat onderzoek بالأحرى helemaal to specialisten بدون mee te denken.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "167": {
+  "prompt": "I leg connections tussen cijfers, seizoen و wat er on the vloer gebeurt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "168": {
+  "prompt": "I geef a product أو dienst gladly a herkenbare, own uitstraling.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Artistic"
+ },
+ "169": {
+  "prompt": "I vind styling و presentatie bijzaak zolang the functioneert.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "170": {
+  "prompt": "I bedenk frisse manieren om seizoensproducten onder the aوacht te brengen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "171": {
+  "prompt": "I let on atmosphere: licht, geur, indeling و hoe gasten that beleven.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "172": {
+  "prompt": "I vermijd المهام waarin I iets visueel أو creatief moet maken.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "173": {
+  "prompt": "I combineer smaken, kleuren أو materialen until iets that opvalt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "174": {
+  "prompt": "I vertaal a vaag idea of a عميل to a concreet نتيجة.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "175": {
+  "prompt": "Creatieve vrijheid maakt me onzeker; I wil precies voأوgeschreven stappen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "176": {
+  "prompt": "أساعد جديد الزملاء on weg until ze zich zeker voelen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Social"
+ },
+ "177": {
+  "prompt": "I vermijd wأوk waarin I gasten أو cliënten moet opvangen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "178": {
+  "prompt": "I merk spanning in a الفريق و help that constructief on te lossen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "179": {
+  "prompt": "I vind the belangrijk that iedereen zich gezien و welkom voelt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "180": {
+  "prompt": "I houd afstو: وermans welzijn is لا my verantwoأوdelijkheid on the wأوk.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "181": {
+  "prompt": "I leg procedures geduldig out to people that ze fأو the eerst doen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "182": {
+  "prompt": "I krijg energie of a tevreden gast, leerling أو زميل.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "183": {
+  "prompt": "I kies wأوk waarin I zo min mogelijk مع people hoef te schakelen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "184": {
+  "prompt": "I zie kansen om iets extra's te verkopen أو te أوganiseren.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "+9)\n        (CareerTestCatalog.Enterprising"
+ },
+ "185": {
+  "prompt": "I vermijd zichtbare rollen to العملاء, leveranciers أو gasten.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "186": {
+  "prompt": "I neem the voأوtouw إذا er snel a beslissing nodig is.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "187": {
+  "prompt": "I bouw gladly relaties that later until samenwerking أو omzet leiden.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "188": {
+  "prompt": "Targets و bezettingscijfers demotiveren me.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "189": {
+  "prompt": "I kan a kأوt proposal pitchen zodat وeren meegaan.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "190": {
+  "prompt": "I أوganiseer people و middelen om a doel binnen the dienst te halen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "191": {
+  "prompt": "I laat initiatief بالأحرى to وeren و volg afwachtend.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "192": {
+  "prompt": "I zet a setback om in a volgende poging أو betere aanpak.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "193": {
+  "prompt": "I houd roosters, أوders و voأوraden strak at zodat niemو zoekt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Conventional"
+ },
+ "194": {
+  "prompt": "I vind vaste fأوmats و checklists voأوal belemmerend.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "195": {
+  "prompt": "I controleer labels, codes و aantallen until ze kloppen.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "196": {
+  "prompt": "I richt mappen, bakken أو systemen zo in that iedereen the snapt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "197": {
+  "prompt": "I sla registratie about إذا I denk that I the toch indeed onthoud.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "198": {
+  "prompt": "أعمل prettig مع vaste kwaliteitsnأوmen و afvinklijsten.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "199": {
+  "prompt": "I sluit the dienst af مع a kloppende overdracht أو telling.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "200": {
+  "prompt": "I raak onrustig of voأوspelbare routines, ook إذا ze efficiënt his.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ }
+}

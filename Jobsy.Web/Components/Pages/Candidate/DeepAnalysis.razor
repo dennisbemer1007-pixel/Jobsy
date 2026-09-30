@@ -329,10 +329,11 @@ else
                 .Select(id =>
                 {
                     var q = byId[id];
+                    var lang = Culture.Language;
                     return new TestQuestionFlow.FlowQuestion(
                         q.Id,
-                        q.PromptNl,
-                        DeepAnalysisQuestionHelp.ExampleFor(q));
+                        q.Prompt(lang),
+                        q.Example(lang));
                 })
                 .ToList();
 

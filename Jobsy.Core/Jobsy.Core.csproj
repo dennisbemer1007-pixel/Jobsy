@@ -1,9 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <EmbeddedResource Include="Data\Norms\big-five-norms.json" />
-    <EmbeddedResource Include="Data\SampleReports\*.json" />
-    <EmbeddedResource Include="Scholen\Resources\dutch-first-names.txt" />
+    <EmbeddedResource Include="Data/Norms/big-five-norms.json" />
+    <EmbeddedResource Include="Data/SampleReports/*.json" />
+    <EmbeddedResource Include="Data/DeepItems/*.json" />
+    <EmbeddedResource Include="Scholen/Resources/dutch-first-names.txt" />
+    <Content Remove="Rules/DeepItems/**" />
+    <None Remove="Rules/DeepItems/**" />
   </ItemGroup>
 
   <ItemGroup>

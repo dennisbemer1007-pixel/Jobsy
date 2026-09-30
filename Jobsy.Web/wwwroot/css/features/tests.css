@@ -448,5 +448,26 @@
 @media (min-width: 480px) {
   .test-detail__choices { grid-template-columns: 1fr; }
 }
-.test-detail__secure { margin-block-start: 0.5rem; }
+/* RTL: logical properties only — no physical left/right. */
+[dir="rtl"] .test-shell__layout {
+  direction: rtl;
+}
+[dir="rtl"] .test-flow__bar > i {
+  /* keep 1→5 reading order; flex direction inherits */
+}
+[dir="rtl"] .deep-pay-receipt > div {
+  grid-template-columns: 1fr 9rem;
+}
+[dir="rtl"] .test-shell__footer {
+  flex-direction: row-reverse;
+}
+[dir="rtl"] .deep-topic-chips {
+  flex-direction: row-reverse;
+}
+@media (min-width: 1024px) {
+  [dir="rtl"] .test-shell__layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 640px) 272px;
+  }
+}
+
 

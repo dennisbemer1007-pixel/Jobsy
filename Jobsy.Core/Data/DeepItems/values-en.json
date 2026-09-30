@@ -1,0 +1,902 @@
+{
+ "1": {
+  "prompt": "I bepaal preferably zelf the volgorde of my tasks on a dienst.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Self-Direction / Stimulation) — 30\n        (Autonomy"
+ },
+ "2": {
+  "prompt": "I zoek gladly uitdagingen that me net buiten my comfortzone trekken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "3": {
+  "prompt": "I work the best if iemand precies zegt wat I stap for stap moet doen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "4": {
+  "prompt": "I probeer new werkwijzen out if the old method traag voelt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "5": {
+  "prompt": "I vind the belangrijk om own keuzes te maken about hoe I a job aanpak.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "6": {
+  "prompt": "Vaste routines geven me more calm dan steeds wisselende werkvormen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "7": {
+  "prompt": "I word gemotiveerd door afwisseling and new verantwoordelijkheden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "8": {
+  "prompt": "I durf af te wijken of the handbook if that veilig and slimmer is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "9": {
+  "prompt": "I voel me ongemakkelijk if I zelf moet beslissen without duidelijke leiding.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "10": {
+  "prompt": "I leer sneller if I a task zelf mag inrichten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "11": {
+  "prompt": "I zoek actief to manieren om my work interessanter te maken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "12": {
+  "prompt": "I vermijd tasks waarbij I a lot moet improviseren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "13": {
+  "prompt": "I stel voorstellen doen about hoe we processen kunnen verbeteren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "14": {
+  "prompt": "I houd of rollen waarin I zelf prioriteiten mag stellen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "15": {
+  "prompt": "Te a lot vrijheid maakt that I the overzicht verlies.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "16": {
+  "prompt": "I raak onrustig if my work te voorspelbaar wordt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "17": {
+  "prompt": "I pak gladly a new product, gereedschap or system zelf out.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "18": {
+  "prompt": "I wacht rather on goedkeuring dan that I zelf a besluit neem.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "19": {
+  "prompt": "I vind the leuk om colleagues te laten zien hoe I iets different aanpak.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "20": {
+  "prompt": "I zoek work waarin I kan groeien to more own regie.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "21": {
+  "prompt": "I vind the prima if my tasks elk jaar hetzelfde blijven.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "22": {
+  "prompt": "I combineer ideas out verschillende jobs until a own aanpak.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "23": {
+  "prompt": "I word energiek of a dag with onverwachte problemen om on te lossen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "24": {
+  "prompt": "I kies rather for bekende tasks dan for iets that I nog never deed.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "25": {
+  "prompt": "I neem little initiatief totdat iemand the expliciet vraagt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "26": {
+  "prompt": "I vind the belangrijk om my vakinhoudelijk te blijven ontwikkelen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "27": {
+  "prompt": "I raak geïrriteerd if the schedule tussendoor verandert.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "28": {
+  "prompt": "I start rather not to iets nieuws totdat iemand the heeft goedgekeurd.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "29": {
+  "prompt": "I voel me thuis in a team that vertrouwen geeft om zelf te handelen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "30": {
+  "prompt": "I volg rather the standaard dan that I tijd besteed to verbeterideeën.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "31": {
+  "prompt": "I help colleagues ook if the not strikt at my own task hoort.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Benevolence) — 30\n        (Connection"
+ },
+ "32": {
+  "prompt": "I let on hoe the with people om me heen gaat, not alleen on the job.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "33": {
+  "prompt": "I houd me rather afzijdig of persoonlijke gesprekken on the work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "34": {
+  "prompt": "I zorg that new colleagues zich snel welkom voelen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "35": {
+  "prompt": "I geef eerlijk compliment if iemand the good doet.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "36": {
+  "prompt": "I vind teamgevoel less belangrijk dan my own result.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "37": {
+  "prompt": "I bied to om a zware dienst about te nemen if a colleague the nodig heeft.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "38": {
+  "prompt": "I luister rustig before I solutions proposal.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "39": {
+  "prompt": "I geef little om the atmosphere zolang the work afkomt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "40": {
+  "prompt": "I los spanningen rather on with a gesprek dan with zwijgen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "41": {
+  "prompt": "I denk mee with customers or gasten alsof the familie is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "42": {
+  "prompt": "I vind the lastig om empathie te tonen if iemand emotioneel is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "43": {
+  "prompt": "I deel kennis gladly zodat the hele team beter wordt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "44": {
+  "prompt": "I check at colleagues or the werkdruk haalbaar is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "45": {
+  "prompt": "I work preferably alleen without a lot contact.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "46": {
+  "prompt": "I verdedig a colleague if iemand onterecht criticism geeft.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "47": {
+  "prompt": "I zie rather not wat er privé at colleagues speelt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "48": {
+  "prompt": "I geef constructieve feedback on a respectvolle manier.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "49": {
+  "prompt": "I vier successen of the team, not alleen my own.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "50": {
+  "prompt": "I vind the overdreven om elke mistake with zachtheid te bespreken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "51": {
+  "prompt": "I merk snel if iemand zich buitengesloten voelt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "52": {
+  "prompt": "I bied hulp to without that iemand the moet vragen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "53": {
+  "prompt": "I vind the lastig om colleagues te troosten if the misgaat.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "54": {
+  "prompt": "Langdurige persoonlijke banden with colleagues zoek I not on the work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "55": {
+  "prompt": "I pas my tempo to if a colleague extra uitleg nodig heeft.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "56": {
+  "prompt": "I kies eerder for efficiëntie dan for a warm gesprek.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "57": {
+  "prompt": "I zorg that overdrachten tussen ploegen persoonlijk and duidelijk his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "58": {
+  "prompt": "I vind respectvol omgaan with elkaar net zo belangrijk if kwaliteit.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "59": {
+  "prompt": "I zie the work vooral if tasks, not if relaties.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "60": {
+  "prompt": "I heb little behoefte om colleagues persoonlijk te steunen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "61": {
+  "prompt": "I wil zien that my inzet meetbaar verschil maakt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "62": {
+  "prompt": "I stel mezelf hoge doelen and work er actief to toe.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "63": {
+  "prompt": "I vind the prima om gemiddeld te presteren zolang the work af is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "64": {
+  "prompt": "I ben trots if I targets or normen overtreff.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "65": {
+  "prompt": "I zoek feedback om sneller beter te worden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "66": {
+  "prompt": "I vermijd verantwoordelijkheid for belangrijke resultaten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "67": {
+  "prompt": "I houd my voortgang at zodat I kan laten zien wat I heb bereikt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "68": {
+  "prompt": "I ga door if the tegenzit until the job echt af is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "69": {
+  "prompt": "I laat promotie or erkenning rather to anderen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "70": {
+  "prompt": "I wil the beste teamlid his on my onderdeel.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "71": {
+  "prompt": "I leer new vaardigheden om competitiever te worden in my field.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "72": {
+  "prompt": "I vind competitie tussen colleagues ongezond.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "73": {
+  "prompt": "I neem extra tasks to if that my groei versnelt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "74": {
+  "prompt": "I analyseer wat good ging na a drukke dag.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "75": {
+  "prompt": "I stel doelen rather laag zodat I zeker slaag.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "76": {
+  "prompt": "I wil that my work zichtbaar bijdraagt to the omzet or kwaliteit.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "77": {
+  "prompt": "I zoek rollen waarin prestaties eerlijk worden beloond.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "78": {
+  "prompt": "I work rather without scoreborden or rankings.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "79": {
+  "prompt": "I plan my week rond concrete resultaten that I wil halen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "80": {
+  "prompt": "I voel me gemotiveerd door a lastig doel that net haalbaar is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "81": {
+  "prompt": "I geef snel on if succes not direct komt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "82": {
+  "prompt": "I vergelijk my prestaties rather not with eerdere maanden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "83": {
+  "prompt": "I neem leiding if that nodig is om the result te redden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "84": {
+  "prompt": "I vind the not belangrijk om the beste te his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "85": {
+  "prompt": "I zoek trainingen that my carrière vooruithelpen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "86": {
+  "prompt": "I vermijd tasks waar my prestatie openlijk wordt beoordeeld.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "87": {
+  "prompt": "I zet door until a problem echt opgelost is, not half.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "88": {
+  "prompt": "I wil that anderen my vakmanschap herkennen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "89": {
+  "prompt": "I kies rather for calm dan for ambitieuze doelen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "90": {
+  "prompt": "Erkenning or promotie motiveert mij nauwelijks.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "91": {
+  "prompt": "I voel me rustig if agreements about uren and tasks helder his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Security / Tradition) — 30\n        (Stability"
+ },
+ "92": {
+  "prompt": "I work gladly volgens vaste procedures that bewezen veilig his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "93": {
+  "prompt": "I vind regels and protocollen vooral belemmerend.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "94": {
+  "prompt": "I zoek a werkgever that langdurige zekerheid biedt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "95": {
+  "prompt": "I houd of a vast team and bekende gezichten on the vloer.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "96": {
+  "prompt": "I raak onrustig if er little verandert in my work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "97": {
+  "prompt": "I controleer rather dubbel dan that I risico neem with onbekende stappen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "98": {
+  "prompt": "I waardeer tradities and vaste routines on the shop floor.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "99": {
+  "prompt": "I vind voorspelbaarheid saai.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "100": {
+  "prompt": "I wil weten wat er of mij verwacht wordt vóór I begin.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "101": {
+  "prompt": "I voel me veilig with duidelijke hierarchy and verantwoordelijkheden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "102": {
+  "prompt": "I spring gladly of rol to rol without vast patroon.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "103": {
+  "prompt": "I plan financieel and praktisch with a vast inkomen in gedachten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "104": {
+  "prompt": "I volg veiligheids- and kwaliteitsregels ook if the busy is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "105": {
+  "prompt": "I neem rather risico dan that I vasthoud to old gewoonten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "106": {
+  "prompt": "I blijf gladly jaren at a betrouwbare werkgever.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "107": {
+  "prompt": "I vind the belangrijk that agreements tussen ploegen hetzelfde blijven.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "108": {
+  "prompt": "I word ongeduldig of lange instructions and checklists.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "109": {
+  "prompt": "I vertrouw on ervaringen out the verleden om mistakes te voorkomen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "110": {
+  "prompt": "I voel me prettig in a organisatie with duidelijke waarden and gewoonten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "111": {
+  "prompt": "I vind change of beleid usually a verbetering.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "112": {
+  "prompt": "I maak me little zorgen about waar I about a jaar sta in my functie.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "113": {
+  "prompt": "I work the best with a vaste weekplanning.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "114": {
+  "prompt": "I accepteer onzekerheid about my rooster makkelijk.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "115": {
+  "prompt": "I houd vast to agreements that the team al jaren good doen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "116": {
+  "prompt": "I vind the prima if my tasks elk seizoen different his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "117": {
+  "prompt": "I meld problemen vroeg zodat the calm on the shop floor bewaard blijft.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "118": {
+  "prompt": "I respecteer the manier waarop senior colleagues the work always hebben gedaan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "119": {
+  "prompt": "I verwerp routines rather dan that I ze volg.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "120": {
+  "prompt": "Vaste contracten and lange planningen boeien mij little.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "121": {
+  "prompt": "I wil that my work iets goeds doet for the samenleving or the milieu.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Universalism) — 30\n        (Impact"
+ },
+ "122": {
+  "prompt": "I kies rather for a bedrijf with eerlijke and duurzame praktijken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "123": {
+  "prompt": "I vind the not belangrijk or my work a groter doel dient.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "124": {
+  "prompt": "I let on verspilling and probeer that te verminderen on the shop floor.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "125": {
+  "prompt": "I spreek colleagues to on onveilig or oneerlijk gedrag.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "126": {
+  "prompt": "I focus alleen on my own tasks, not on maatschappelijke thema's.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "127": {
+  "prompt": "I help gladly customers that kwetsbaar or afhankelijk his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "128": {
+  "prompt": "I vind the zinvol om lokale gemeenschappen te ondersteunen via my work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "129": {
+  "prompt": "I vind idealisme on the work often overdreven.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "130": {
+  "prompt": "I zoek work that bijdraagt to gezondheid, zorg or onderwijs.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "131": {
+  "prompt": "I denk na about the ecologische voetafdruk of our processen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "132": {
+  "prompt": "I koop or verkoop without me busy te maken about herkomst or impact.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "133": {
+  "prompt": "I neem verantwoordelijkheid if ons work negatieve gevolgen heeft.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "134": {
+  "prompt": "I respecteer diversiteit and inclusie in the team.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "135": {
+  "prompt": "I vind ethische discussies on the shop floor tijdverspilling.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "136": {
+  "prompt": "I meld misstanden ook if that ongemakkelijk is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "137": {
+  "prompt": "I wil that our producten or diensten niemand onnodig schaden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "138": {
+  "prompt": "I laat maatschappelijke kwesties rather to management about.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "139": {
+  "prompt": "I kies leveranciers or partners that netjes with person and milieu omgaan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "140": {
+  "prompt": "I vind winst belangrijker dan maatschappelijke bijdrage.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "141": {
+  "prompt": "I leg customers rather not out hoe we veilig and eerlijk work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "142": {
+  "prompt": "I zoek verbeteringen that zowel team if buurt ten goede komen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "143": {
+  "prompt": "I vind the not nodig om na te denken about the lange termijn of ons work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "144": {
+  "prompt": "I behandel iedereen gelijk, ongeacht background.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "145": {
+  "prompt": "I voel me trots if ons bedrijf openheid geeft about impact.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "146": {
+  "prompt": "I negeer rather signalen of unfairness dan that I ingrijp.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "147": {
+  "prompt": "I wil that toekomstige generaties profiteren of hoe wij nu work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "148": {
+  "prompt": "I kies for eerlijk work, ook if that iets less opbrengt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "149": {
+  "prompt": "I zie my baan vooral if inkomen, not if missie.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "150": {
+  "prompt": "Duurzaamheid or maatschappelijk nut beïnvloedt my dagelijkse keuzes nauwelijks.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Impact"
+ }
+}

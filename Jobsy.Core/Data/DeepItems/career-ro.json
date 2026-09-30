@@ -1,0 +1,1202 @@
+{
+ "1": {
+  "prompt": "Lucrez gladly cu my hșien, gereedschap sau machines.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "2": {
+  "prompt": "I vind the prettig om buiten sau in a kas, magazijn sau werkplaats te his.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "3": {
+  "prompt": "I zie gladly a tastbaar rezultat to the eind of the dienst.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "4": {
+  "prompt": "I vermijd wsauk waarbij I vies, nat sau stoffig kan wsauden.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "5": {
+  "prompt": "I snap snel hoe a device sau installatie in elkaar steekt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "6": {
+  "prompt": "I houd of tillen, sjouwen sau fysiek dosauwerken dacă the veilig kan.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "7": {
+  "prompt": "The repareren sau bijstellen of iets that hapert geeft me voldoening.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "8": {
+  "prompt": "Praktisch jobs voelt dacă tijdverlies; I wil vosaual achter a scherm zitten.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "9": {
+  "prompt": "I sauiënteer me makkelijk in a grote ruimte, tuin sau magazijn.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "10": {
+  "prompt": "I volg technische instructions și pas ze toe fără a lot uitleg.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "11": {
+  "prompt": "I voel me onzeker at machines, hekwerken sau zwaar materieel.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "12": {
+  "prompt": "I kweek, plant, oogst sau verwerk producten mai degrabă dan I erover praat.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "13": {
+  "prompt": "I let on veiligheid: looppaden, scherpe rșien, natte vloeren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "14": {
+  "prompt": "I kan a hele dienst on the been blijven fără that I afhaak.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "15": {
+  "prompt": "I kies wsauk waarin I zo min mogelijk fysiek hoef te doen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "16": {
+  "prompt": "I meet, weeg sau tel mai degrabă in the echt dan in a spreadsheet.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "17": {
+  "prompt": "I vind the fijn om cu seizoen, weer sau teelt mee te wsauk.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "18": {
+  "prompt": "Technische stsauingen laat Preferably helemaal to a șier.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "19": {
+  "prompt": "I bouw, monteer sau zet iets in elkaar volgens a tekening sau vosaubeeld.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "20": {
+  "prompt": "I houd of ritme: herhalen, tempo maken, afvinken.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "21": {
+  "prompt": "Buitenwerk sau productieomgevingen putten me mentaal out.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "22": {
+  "prompt": "I check kwaliteit cu ogen și hșien, nu alleen on papier.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "23": {
+  "prompt": "I kan a voertuig, steekwagen sau heftruck-achtige sarcină aanleren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "24": {
+  "prompt": "I vermijd werkplaatsen, kassen și keukens dacă I the choice heb.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "25": {
+  "prompt": "I krijg energie of doen, nu of eindeloos overleggen about doen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "26": {
+  "prompt": "I onderzoek gladly waarom iets nu werkt zoals the hosaut.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "27": {
+  "prompt": "I zoek out hoe a proces, teelt sau system in elkaar zit.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "28": {
+  "prompt": "I vergelijk cijfers sau metingen înainte I a conclusie trek.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "29": {
+  "prompt": "Diep nadenken about osauzaken vind I saai; zeg me gewoon the truc.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "30": {
+  "prompt": "I stel 'waarom'-vragen until I the mechanisme begrijp.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "31": {
+  "prompt": "I lees hșileidingen sau specdacăicaties mai degrabă zelf na.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "32": {
+  "prompt": "I test a aanname klein înainte we hem overal dosauvoeren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "33": {
+  "prompt": "I vertrouw on feeling și sla controles sau data about.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "34": {
+  "prompt": "I vind the leuk om a foutpatroon te ontdekken.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "35": {
+  "prompt": "I kan me lang concentreren on a inhoudelijk vraagstuk.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "36": {
+  "prompt": "Onderzoeken voelt dacă treuzelen; I wil meteen doen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "37": {
+  "prompt": "I gebruik tabellen, logs sau keuringslijsten om te sturen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "38": {
+  "prompt": "I wil the osauzaak of klachten kennen, nu alleen the symptomen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "39": {
+  "prompt": "I leer gladly hoe wetgeving, kwaliteit sau voedselveiligheid werkt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "40": {
+  "prompt": "Technische sau inhoudelijke diepgang schrik I of af.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "41": {
+  "prompt": "I splits a vaag problemă on in meetbare stukjes.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "42": {
+  "prompt": "I houd of wsauk waarin I mag uitzoeken și verbeteren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "43": {
+  "prompt": "I accepteer 'that doen we întotdeauna zo' fără dosau te vragen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "44": {
+  "prompt": "I zoek bronnen sau coleg-experts dacă I iets nu weet.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "45": {
+  "prompt": "I zie gladly the verbși tussen weer, seizoen, vraag și vosauraad.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "46": {
+  "prompt": "Cijfers și analyses laat I mai degrabă volledig to a șier.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "47": {
+  "prompt": "I documenteer wat I heb gevonden zodat we ervan leren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "48": {
+  "prompt": "I blijf nuchter at a hype sau a snelle 'soluție'.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "49": {
+  "prompt": "I wsaud ongeduldig of uitzoekwerk fără directe actie.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "50": {
+  "prompt": "I krijg energie of puzzelen until the klopt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "51": {
+  "prompt": "I bedenk gladly a own draai to hoe iets eruitziet sau overkomt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "52": {
+  "prompt": "I let on kleur, geur, presentatie sau atmosphere in the wsauk.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "53": {
+  "prompt": "I maak of a saaie sarcină iets that er verzsaugd uitziet.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "54": {
+  "prompt": "Vsaumgeving și uitstraling interesseert me nauwelijks.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "55": {
+  "prompt": "I verzin a sauiginele soluție dacă the stșiaardplaatje nu past.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "56": {
+  "prompt": "I geniet of wsauk waarin smaak, stijl sau verhaal meeweegt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "57": {
+  "prompt": "I kan a etalage, bsaud, arrangement sau gerecht aantrekkelijk maken.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "58": {
+  "prompt": "Creatieve vrijheid maakt me onrustig; geef me a vast sjabloon.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "59": {
+  "prompt": "I zie mogelijkheden in restmateriaal, seizoensproduct sau restant.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "60": {
+  "prompt": "I experimenteer cu combinaties (smaken, kleuren, indeling).",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "61": {
+  "prompt": "I vermijd sarcini waarin I iets 'mooi' sau 'passend' moet maken.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "62": {
+  "prompt": "I vertaal a vaag idea of a client to iets concreets.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "63": {
+  "prompt": "I houd of afwisseling in hoe a product sau dienst wsaudt gebracht.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "64": {
+  "prompt": "I gebruik taal sau beeld om iets helder și aantrekkelijk te maken.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "65": {
+  "prompt": "I vind creatieve input of șieren vosaual gedoe.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "66": {
+  "prompt": "I merk disharmonie in indeling, muziek, licht sau styling.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "67": {
+  "prompt": "I wil ruimte om zelf keuzes te maken in the uitvoering.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "68": {
+  "prompt": "Strakke, identieke herhaling fără own inbreng is precies wat I zoek.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "69": {
+  "prompt": "I inspireer colegi cu a frisse aanpak sau presentatie.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "70": {
+  "prompt": "I kan a seizoensthema sau actie visueel until leven brengen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "71": {
+  "prompt": "I sla about wat 'er leuk uitziet' dacă functioneel genoeg is.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "72": {
+  "prompt": "I schrijf, teken sau fsaumuleer mai degrabă zelf dan a stșiaardtekst te kopiëren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "73": {
+  "prompt": "I haal voldoening out iets unieks afleveren, nu alleen volume.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "74": {
+  "prompt": "Kunstzinnige sau stylingtaken voelen dacă hobby, nu dacă wsauk.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "75": {
+  "prompt": "I zie wsauk ook dacă beleving fsau the gast sau client.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "76": {
+  "prompt": "Ajut people gladly verder, ook dacă the even duurt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "77": {
+  "prompt": "I voel me on my plek in zsaug, hsaueca, retail sau begeleiding.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "78": {
+  "prompt": "I merk the dacă iemși zich onprettig voelt și doe er iets mee.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "79": {
+  "prompt": "Andermans problemăen on the wsauk laat I mai degrabă links liggen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "80": {
+  "prompt": "I leg iets geduldig out until the șier the snapt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "81": {
+  "prompt": "Lucrez gladly in a echipă waarin we elkaar steunen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "82": {
+  "prompt": "I kan omgaan cu gasten sau cliënten that extra așiacht nodig hebben.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "83": {
+  "prompt": "I vermijd wsauk waarin I șieren moet begeleiden sau opvangen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "84": {
+  "prompt": "I bouw vertrouwen on dosau betrouwbaar și vriendelijk te blijven.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "85": {
+  "prompt": "I vind the belangrijk that iedereen zich welkom voelt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "86": {
+  "prompt": "I wil zo min mogelijk te maken hebben cu the feelings of șieren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "87": {
+  "prompt": "I kan a conflict tussen people sussen fără partij te kiezen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "88": {
+  "prompt": "I haal energie out a tevreden client, leerling sau coleg.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "89": {
+  "prompt": "I pas my uitleg to on leeftijd, taal sau ervaring of the șier.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "90": {
+  "prompt": "Service cu a lach voelt gespeeld; mai degrabă puur transactie.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "91": {
+  "prompt": "I zie wsauk dacă samen iets fsau elkaar krijgen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "92": {
+  "prompt": "I houd rekening cu toegankelijkheid și inclusie in the praktijk.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "93": {
+  "prompt": "I raak geïrriteerd dacă people extra uitleg sau geduld vragen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "94": {
+  "prompt": "I kan nieuws, bad nieuws sau a weigering respectvol brengen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "95": {
+  "prompt": "Lucrez gladly cu publiek: gasten, patiënten, leerlingen, shoppers.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "96": {
+  "prompt": "I kies sarcini waarin I zo min mogelijk cu people hoef te praten.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "97": {
+  "prompt": "I coach a nou coleg mai degrabă zelf dan the af te schuiven.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "98": {
+  "prompt": "I merk groepsdruk și zsaug that niemși buitengesloten wsaudt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "99": {
+  "prompt": "Zsaug- sau klantcontact put me out; I wil productiewerk fără people.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "100": {
+  "prompt": "I krijg betekenis of wsauk that șieren écht helpt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "101": {
+  "prompt": "I neem gladly the initiatief dacă niemși ddacăferent the doet.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "102": {
+  "prompt": "I overtuig șieren of a aanpak, product sau aanbieding.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "103": {
+  "prompt": "I zie kansen om omzet, bezetting sau tempo te verbeteren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "104": {
+  "prompt": "Leiding nemen sau verkopen voelt ongemakkelijk; laat a șier the maar doen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "105": {
+  "prompt": "I stel doelen și trek the echipă daar naartoe.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "106": {
+  "prompt": "I durf a prijs, schedule sau belofte te onderhșielen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "107": {
+  "prompt": "I blijf actie vragen until er a besluit is.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "108": {
+  "prompt": "I wacht until I opdracht krijg in plaats of zelf te starten.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "109": {
+  "prompt": "I presenteer a idea ksaut și krachtig.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "110": {
+  "prompt": "I houd of verantwosaudelijkheid fsau a rezultat, nu alleen a sarcină.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "111": {
+  "prompt": "I vermijd gesprekken waarin I iets moet 'verkopen'.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "112": {
+  "prompt": "I zet a actie, seizoenspiek sau campagne om in concrete stappen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "113": {
+  "prompt": "I spreek people to on agreements dacă the rezultat achterblijft.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "114": {
+  "prompt": "I zie concurrentie dacă prikkel, nu dacă dreiging.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "115": {
+  "prompt": "I laat kansen lopen dacă er risico sau afwijzing in zit.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "116": {
+  "prompt": "I bouw a netwerk of vaste clienți, telers sau leveranciers.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "117": {
+  "prompt": "I kan a echipă opstarten dacă the leiding even weg is.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "118": {
+  "prompt": "I schrik terug of targets, omzet sau bezettingscijfers.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "119": {
+  "prompt": "I maak a proposal that fsau beide partijen werkt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "120": {
+  "prompt": "I houd of wsauk waarin I mag sturen, werven sau sauganiseren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "121": {
+  "prompt": "I wil no zichtbare rol to buiten; hou me on the background.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "122": {
+  "prompt": "I zet teleurstelling om in a volgende pitch sau poging.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "123": {
+  "prompt": "I zie snel wie I nodig heb om iets fsau elkaar te krijgen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "124": {
+  "prompt": "Ondernemen in the klein (upsell, extra ronde, extra dienst) is niets fsau mij.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "125": {
+  "prompt": "I krijg energie of a deal, a volle zaal sau a gehaald doel.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "126": {
+  "prompt": "I houd of duidelijke procedures, lijsten și vaste volgsaudes.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "127": {
+  "prompt": "Lucrez nauwkeurig cu cijfers, codes, data sau labels.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "128": {
+  "prompt": "I richt a administratie sau vosauraad zo in that iedereen the terugvindt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "129": {
+  "prompt": "Regels și vaste fsaumats irriteren me; I improviseer mai degrabă întotdeauna.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "130": {
+  "prompt": "I check sau a bestelling, factuur sau schedule klopt until on the detail.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "131": {
+  "prompt": "Lucrez gladly cu roosters, slots și vosauspelbare diensten.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "132": {
+  "prompt": "I archiveer sau sluit af zodat er later no chaos is.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "133": {
+  "prompt": "Papierwerk, scans și systemen laat I zo lang mogelijk liggen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "134": {
+  "prompt": "I volg a checklist ook dacă I the job al honderd keer deed.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "135": {
+  "prompt": "I houd of wsauk waarin structuur belangrijker is dan improvisatie.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "136": {
+  "prompt": "Vaste routines maken me rusteloos; I wil elke dag iets totaal ddacăferent.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "137": {
+  "prompt": "I voer gegevens foutloos in și controleer ze nog a keer.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "138": {
+  "prompt": "I bewaak vosauraadgrenzen, houdbaarheidsdata sau minimumaantallen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "139": {
+  "prompt": "I maak of a wirwar a overzichtelijke indeling.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "140": {
+  "prompt": "I vind the overbodig om hetzelfde on twee plekken vast te leggen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "141": {
+  "prompt": "Lucrez prettig cu kassa, planningsoftware sau sauderpicking-systemen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "142": {
+  "prompt": "I houd me to afgesproken fsaumats, ook dacă I zelf a other layout zou kiezen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "143": {
+  "prompt": "I gooi infsaumatiestromen dosau elkaar dacă that sneller voelt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "144": {
+  "prompt": "I sluit the dag af cu a kloppende telling sau overdracht.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "145": {
+  "prompt": "I zie the dacă my sarcină that wet- și regelgeving in the uitvoering klopt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "146": {
+  "prompt": "Orde in mappen, bakken sau systemen is fsau mij bijzaak.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "147": {
+  "prompt": "Plandacăic terug of deadline to nu, in plaats of ad hoc te beginnen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "148": {
+  "prompt": "Lucrez mai degrabă cu vaste kwaliteitsnsaumen dan cu 'kijk maar'.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "149": {
+  "prompt": "I vermijd sarcini waarin I nauwkeurig moet registreren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "150": {
+  "prompt": "I krijg calm of a opgeruimd proces that elke dienst hetzelfde loopt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "151": {
+  "prompt": "Lucrez gladly cu teelt, logistiek sau productie waar I iets tastbaars maak.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Realistic"
+ },
+ "152": {
+  "prompt": "I vermijd sarcini waarbij I zware sau natte materialen moet hanteren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "153": {
+  "prompt": "I houd of a duidelijke sarcină that I fysiek kan afronden.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "154": {
+  "prompt": "I leer snel a nou machine sau gereedschap te bedienen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "155": {
+  "prompt": "Prefereer overlegkamers boven werkplaats, kas sau keuken.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "156": {
+  "prompt": "I check sau paden, rekken și materialen veilig staan înainte I dosauwerk.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "157": {
+  "prompt": "Lucrez prettig in ploegen sau seizoenspieken dacă the ritme helder is.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "158": {
+  "prompt": "I raak gefrustreerd of herhalend productiewerk, hoe nuttig ook.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "159": {
+  "prompt": "I zoek systematisch to the osauzaak of a kwaliteitsafwijking.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "+9)\n        (CareerTestCatalog.Investigative"
+ },
+ "160": {
+  "prompt": "I vind meten și controleren overbodig dacă the 'er good uitziet'.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "161": {
+  "prompt": "I houd of wsauk waarin I processen mag verbeteren cu feiten.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "162": {
+  "prompt": "I lees keuringsrappsauten sau teeltlogs om beslissingen te sturen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "163": {
+  "prompt": "I wsaud ongeduldig of analyses that nu meteen until actie leiden.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "164": {
+  "prompt": "I test a kleine wijziging înainte we that breed uitrollen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "165": {
+  "prompt": "I wil snappen hoe wetgeving sau voedselveiligheid in the praktijk werkt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "166": {
+  "prompt": "I laat onderzoek mai degrabă helemaal to specialisten fără mee te denken.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "167": {
+  "prompt": "I leg connections tussen cijfers, seizoen și wat er on the vloer gebeurt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "168": {
+  "prompt": "I geef a product sau dienst gladly a herkenbare, own uitstraling.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Artistic"
+ },
+ "169": {
+  "prompt": "I vind styling și presentatie bijzaak zolang the functioneert.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "170": {
+  "prompt": "I bedenk frisse manieren om seizoensproducten onder the așiacht te brengen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "171": {
+  "prompt": "I let on atmosphere: licht, geur, indeling și hoe gasten that beleven.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "172": {
+  "prompt": "I vermijd sarcini waarin I iets visueel sau creatief moet maken.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "173": {
+  "prompt": "I combineer smaken, kleuren sau materialen until iets that opvalt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "174": {
+  "prompt": "I vertaal a vaag idea of a client to a concreet rezultat.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "175": {
+  "prompt": "Creatieve vrijheid maakt me onzeker; I wil precies vosaugeschreven stappen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "176": {
+  "prompt": "Ajut nou colegi on weg until ze zich zeker voelen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Social"
+ },
+ "177": {
+  "prompt": "I vermijd wsauk waarin I gasten sau cliënten moet opvangen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "178": {
+  "prompt": "I merk spanning in a echipă și help that constructief on te lossen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "179": {
+  "prompt": "I vind the belangrijk that iedereen zich gezien și welkom voelt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "180": {
+  "prompt": "I houd afstși: șiermans welzijn is nu my verantwosaudelijkheid on the wsauk.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "181": {
+  "prompt": "I leg procedures geduldig out to people that ze fsau the eerst doen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "182": {
+  "prompt": "I krijg energie of a tevreden gast, leerling sau coleg.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "183": {
+  "prompt": "I kies wsauk waarin I zo min mogelijk cu people hoef te schakelen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "184": {
+  "prompt": "I zie kansen om iets extra's te verkopen sau te sauganiseren.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "+9)\n        (CareerTestCatalog.Enterprising"
+ },
+ "185": {
+  "prompt": "I vermijd zichtbare rollen to clienți, leveranciers sau gasten.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "186": {
+  "prompt": "I neem the vosautouw dacă er snel a beslissing nodig is.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "187": {
+  "prompt": "I bouw gladly relaties that later until samenwerking sau omzet leiden.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "188": {
+  "prompt": "Targets și bezettingscijfers demotiveren me.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "189": {
+  "prompt": "I kan a ksaut proposal pitchen zodat șieren meegaan.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "190": {
+  "prompt": "I sauganiseer people și middelen om a doel binnen the dienst te halen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "191": {
+  "prompt": "I laat initiatief mai degrabă to șieren și volg afwachtend.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "192": {
+  "prompt": "I zet a setback om in a volgende poging sau betere aanpak.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "193": {
+  "prompt": "I houd roosters, sauders și vosauraden strak at zodat niemși zoekt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Conventional"
+ },
+ "194": {
+  "prompt": "I vind vaste fsaumats și checklists vosaual belemmerend.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "195": {
+  "prompt": "I controleer labels, codes și aantallen until ze kloppen.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "196": {
+  "prompt": "I richt mappen, bakken sau systemen zo in that iedereen the snapt.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "197": {
+  "prompt": "I sla registratie about dacă I denk that I the toch indeed onthoud.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "198": {
+  "prompt": "Lucrez prettig cu vaste kwaliteitsnsaumen și afvinklijsten.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "199": {
+  "prompt": "I sluit the dienst af cu a kloppende overdracht sau telling.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "200": {
+  "prompt": "I raak onrustig of vosauspelbare routines, ook dacă ze efficiënt his.",
+  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ }
+}

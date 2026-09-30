@@ -1,0 +1,902 @@
+{
+ "1": {
+  "prompt": "I probeer gladly a new way of working if the old vastloopt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "O) — 30 unique\n        (Openheid"
+ },
+ "2": {
+  "prompt": "I lees or kijk out mezelf at about hoe ons field verandert.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "3": {
+  "prompt": "I bedenk meerdere solutions before I a choice maak.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "4": {
+  "prompt": "I blijf preferably at the method that we always al gebruiken.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "5": {
+  "prompt": "I vind the leuk om a unknown system or device out te proberen.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "6": {
+  "prompt": "I zie snel connections tussen losse details on the shop floor.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "7": {
+  "prompt": "I stel vragen if I the background of a task nog not snap.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "8": {
+  "prompt": "New ideas of colleagues wijs I usually meteen af.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "9": {
+  "prompt": "I experimenteer rather klein dan that I wacht on a perfect plan.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "10": {
+  "prompt": "I vermijd tasks waarbij I iets moet leren that I nog never deed.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "11": {
+  "prompt": "I haal inspiratie out hoe other teams hetzelfde work aanpakken.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "12": {
+  "prompt": "Change in the schedule irriteert me more dan that the me scherp maakt.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "13": {
+  "prompt": "I combineer kennis out verschillende jobs until a betere aanpak.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "14": {
+  "prompt": "I durf a proposal te doen that nog not in the handbook staat.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "15": {
+  "prompt": "I vind the prettig if work ook ruimte laat for own invulling.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "16": {
+  "prompt": "I volg instructions letterlijk, ook if a slimmere weg zichtbaar is.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "17": {
+  "prompt": "I raak nieuwsgierig if iets technisch or inhoudelijk different werkt dan verwacht.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "18": {
+  "prompt": "I zoek bewust afwisseling in tasks zodat I alert blijf.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "19": {
+  "prompt": "I kan me inleven in a problem vanuit the perspectief of the customer.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "20": {
+  "prompt": "Abstracte uitleg without concrete stappen vind I tijdverspilling.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "21": {
+  "prompt": "I pas my aanpak to if the seizoensdruk or the piek different is dan vorig jaar.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "22": {
+  "prompt": "I houd not of brainstormen; zeg me gewoon wat I moet doen.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "23": {
+  "prompt": "I merk the snel if a proces onnodig omslachtig is geworden.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "24": {
+  "prompt": "I wantrouw verbeteringen totdat iemand different ze lang heeft gebruikt.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "25": {
+  "prompt": "I leer gladly of mistakes door te kijken wat we volgende keer different doen.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "26": {
+  "prompt": "I vind the leuk om a colleague a slimmere truc te laten zien.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "27": {
+  "prompt": "I blijf nadenken about hoe we kwaliteit and tempo beter kunnen combineren.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "28": {
+  "prompt": "I sluit me af for feedback that my vaste routine ter discussie stelt.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "29": {
+  "prompt": "I zie kansen in new producten, teelten or diensten of the vestiging.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "30": {
+  "prompt": "I voel me ongemakkelijk at tasks without duidelijk voorbeeld.",
+  "example": "Example: a colleague suggests a new way to label orders. You try it on a small scale first. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "31": {
+  "prompt": "I maak af wat I beloof, ook if the dag tegenzit.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "C) — 30 unique\n        (Consciëntieusheid"
+ },
+ "32": {
+  "prompt": "I plan my work zodat deadlines haalbaar blijven.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "33": {
+  "prompt": "I controleer details before I iets if klaar doorgeef.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "34": {
+  "prompt": "I laat rommel or half afgemaakt work makkelijk liggen.",
+  "example": "Example: you check your work once more before you hand it in. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "35": {
+  "prompt": "I kom on tijd and geef the door if I te laat dreig te his.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "36": {
+  "prompt": "I houd at wat er nog openstaat, without that iemand erom hoeft te vragen.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "37": {
+  "prompt": "I work netjes volgens afgesproken hygiëne, veiligheid or kwaliteit.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "38": {
+  "prompt": "I stel lastige jobs out until the not different more kan.",
+  "example": "Example: you check your work once more before you hand it in. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "39": {
+  "prompt": "I ruim my werkplek on zodat the volgende ploeg er meteen mee verder kan.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "40": {
+  "prompt": "Kleine foutjes in cijfers or labels vind I not zo belangrijk.",
+  "example": "Example: you check your work once more before you hand it in. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "41": {
+  "prompt": "I houd me to pauze- and werktijden zoals we that hebben afgesproken.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "42": {
+  "prompt": "If niemand kijkt, sla I controles or stappen about.",
+  "example": "Example: you check your work once more before you hand it in. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "43": {
+  "prompt": "I bereid me for on a dienst, zodat I not hoef te improviseren on basisdingen.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "44": {
+  "prompt": "I geef the eerlijk to if I a mistake heb gemaakt.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "45": {
+  "prompt": "I verdeel grote tasks in stukken that I écht afkrijg.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "46": {
+  "prompt": "I begin to iets nieuws while the vorige nog not af is.",
+  "example": "Example: you check your work once more before you hand it in. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "47": {
+  "prompt": "I bewaar overzicht in bestellingen, orders or takenlijsten.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "48": {
+  "prompt": "I kom terug on a agreement, ook if that a week eerder is gemaakt.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "49": {
+  "prompt": "I work door until the job veilig and volledig is, not until the klok toevallig stopt.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "50": {
+  "prompt": "Administratie or afronden na the job laat I preferably to a ander.",
+  "example": "Example: you check your work once more before you hand it in. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "51": {
+  "prompt": "I houd rekening with piekmomenten and start on tijd with voorbereiden.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "52": {
+  "prompt": "I raak the spoor kwijt if er meerdere openstaande tasks his.",
+  "example": "Example: you check your work once more before you hand it in. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "53": {
+  "prompt": "I volg procedures ook if ze saai his, because ze schade voorkomen.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "54": {
+  "prompt": "I zeg ja tegen extra work while I weet that I the not netjes aankan.",
+  "example": "Example: you check your work once more before you hand it in. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "55": {
+  "prompt": "I check or the customer or colleague écht heeft wat er is beloofd.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "56": {
+  "prompt": "I houd materialen, gereedschap or voorraad on peil.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "57": {
+  "prompt": "I documenteer wat nodig is zodat a vervanger verder kan.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "58": {
+  "prompt": "I vind the overdreven om dubbel te controleren at routinewerk.",
+  "example": "Example: you check your work once more before you hand it in. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "59": {
+  "prompt": "I sluit my dienst af with a korte check: wat is klaar, wat moet about.",
+  "example": "Example: you check your work once more before you hand it in. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "60": {
+  "prompt": "I laat anderen the rommel opruimen that I tijdens the busyness heb veroorzaakt.",
+  "example": "Example: you check your work once more before you hand it in. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "61": {
+  "prompt": "I krijg energie of samenwerken with colleagues on the vloer.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "E) — 30 unique\n        (Extraversie"
+ },
+ "62": {
+  "prompt": "I spreek makkelijk people to, ook if I ze nog not ken.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "63": {
+  "prompt": "I voel me on my gemak in a drukke winkel, kas or horecaruimte.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "64": {
+  "prompt": "I trek me preferably terug if er a lot people om me heen his.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "65": {
+  "prompt": "I neem the woord in a korte briefing or overdracht.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "66": {
+  "prompt": "I help gasten or customers gladly with a open, vriendelijke toon.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "67": {
+  "prompt": "I zoek aansluiting at the team tijdens pauzes.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "68": {
+  "prompt": "I vermijd gesprekken with customers if a colleague the ook kan doen.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "69": {
+  "prompt": "I kan a groep on sleeptouw nemen if the atmosphere stil valt.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "70": {
+  "prompt": "Telefoneren or baliewerk kost me onevenredig a lot moeite.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "71": {
+  "prompt": "I vertel duidelijk wat I nodig heb of anderen om verder te kunnen.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "72": {
+  "prompt": "I work preferably the hele dienst without meeting.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "73": {
+  "prompt": "I stel me for to new colleagues in plaats of te wachten until zij komen.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "74": {
+  "prompt": "I houd the tempo erin door anderen mee te nemen in the actie.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "75": {
+  "prompt": "I durf a grap or luchtige opmerking te maken om the spanning te breken.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "76": {
+  "prompt": "In groepsoverleg blijf I rather stil, ook if I iets relevants weet.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "77": {
+  "prompt": "I merk the if a customer or colleague aandacht nodig heeft and loop ernaartoe.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "78": {
+  "prompt": "I kan schakelen tussen kassa, vloer and meeting without that I dichtklap.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "79": {
+  "prompt": "I vind the prettig om zichtbaar te his in the team.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "80": {
+  "prompt": "Onverwacht aangesproken worden haalt me out my concentratie.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "81": {
+  "prompt": "I bouw snel a werkrelatie on with uitzendkrachten or seizoenscollega's.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "82": {
+  "prompt": "I laat rather a e-mail or appje gaan dan a gesprek of twee minuten.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "83": {
+  "prompt": "I kan a conflict on the vloer benoemen without te verdwijnen.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "84": {
+  "prompt": "Netwerken or kennismaken on a vestiging voelt if a opgave.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "85": {
+  "prompt": "I houd of work waarin contact with people a vast onderdeel is.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "86": {
+  "prompt": "I geef energie to the team if the dienst lang duurt.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "87": {
+  "prompt": "I spreek makkelijk af wie wat doet, in plaats of te wachten.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "88": {
+  "prompt": "I vermijd overdrachten with a lot people erbij.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "89": {
+  "prompt": "I voel me thuis in a omgeving with a lot prikkels and beweging.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "90": {
+  "prompt": "I doe alsof I busy ben om a extra klantgesprek te ontwijken.",
+  "example": "Example: in a busy shop you enjoy talking with customers. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "91": {
+  "prompt": "I help a colleague ook if the not letterlijk my task is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "A) — 30 unique\n        (Vriendelijkheid"
+ },
+ "92": {
+  "prompt": "I luister eerst to the ander before I my mening geef.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "93": {
+  "prompt": "I houd rekening with hoe my toon overkomt at customers or gasten.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "94": {
+  "prompt": "If iemand traag is, laat I merken that I daar little geduld for heb.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "95": {
+  "prompt": "I zoek a solution waar the team verder mee kan, not alleen I.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "96": {
+  "prompt": "I geef complimenten if iemand iets good heeft gedaan.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "97": {
+  "prompt": "I kan me inleven in a boze or gestreste customer without terug te bijten.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "98": {
+  "prompt": "I zet my own belang boven that of the team if the schuurt.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "99": {
+  "prompt": "I deel kennis zodat anderen zelfstandiger worden.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "100": {
+  "prompt": "I maak denigrerende opmerkingen if iemand a mistake maakt.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "101": {
+  "prompt": "I pas my tempo to if a new colleague nog moet inwerken.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "102": {
+  "prompt": "I houd wrok if iemand my work heeft overgenomen or bekritiseerd.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "103": {
+  "prompt": "I zeg the rustig if I the ergens not mee eens ben.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "104": {
+  "prompt": "I respecteer verschillende achtergronden and werkstijlen in the team.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "105": {
+  "prompt": "I bied hulp to before iemand erom hoeft te vragen.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "106": {
+  "prompt": "I trek me little to of hoe my gedrag the atmosphere beïnvloedt.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "107": {
+  "prompt": "I geef ruimte to stillere colleagues in meeting.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "108": {
+  "prompt": "I kan toegeven if the ander a beter punt heeft.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "109": {
+  "prompt": "I behandel uitzendkrachten and vast personeel with dezelfde beleefdheid.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "110": {
+  "prompt": "I gebruik sarcastische opmerkingen om my zin door te drijven.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "111": {
+  "prompt": "I let erop that niemand buiten the groep valt tijdens the dienst.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "112": {
+  "prompt": "I laat a colleague bewust klem lopen if we om dezelfde task concurreren.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "113": {
+  "prompt": "I houd rekening with fysieke or taalbarrières of anderen.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "114": {
+  "prompt": "I vind the zwak if iemand om hulp vraagt at iets that I vanzelfsprekend vind.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "115": {
+  "prompt": "I sluit a conflict af with a duidelijke, respectvolle agreement.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "116": {
+  "prompt": "I bescherm the privacy of colleagues in gesprekken with derden.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "117": {
+  "prompt": "I zeg dankjewel for work that different onzichtbaar blijft.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "118": {
+  "prompt": "I onderbreek anderen often because my punt urgenter voelt.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "119": {
+  "prompt": "I zoek win-win if roosters or tasks botsen.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "120": {
+  "prompt": "I speel people tegen elkaar out if that my work makkelijker maakt.",
+  "example": "Example: a teammate needs help and you step in without being asked. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "121": {
+  "prompt": "I blijf kalm if the opeens busy wordt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "lage neuroticisme) — 30 unique\n        (EmotioneleStabiliteit"
+ },
+ "122": {
+  "prompt": "I herstel snel na a setback or a mistake.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "123": {
+  "prompt": "I kan meerdere dingen tegelijk to without in panic te raken.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "124": {
+  "prompt": "I pieker lang na about criticism, ook if that al is opgelost.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "125": {
+  "prompt": "I houd overzicht if the schedule last-minute wijzigt.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "126": {
+  "prompt": "I blijf beleefd if a customer or colleague scherp out the hoek komt.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "127": {
+  "prompt": "I slaap a incident af and begin the volgende dienst schoon.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "128": {
+  "prompt": "I raak snel of slag if er iets unexpected gebeurt.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "129": {
+  "prompt": "I adem even door before I reageer in a spannend moment.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "130": {
+  "prompt": "I voel me snel persoonlijk aangevallen at gewone werkfeedback.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "131": {
+  "prompt": "I blijf functioneren if er a storing, wachtrij or tekort is.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "132": {
+  "prompt": "I vermijd lastige gesprekken out angst that the out the hand loopt.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "133": {
+  "prompt": "I kan a mistake herstellen without that the rest of the dienst instort.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "134": {
+  "prompt": "I houd my stem and lichaamstaal rustig onder tijdsdruk.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "135": {
+  "prompt": "I vraag om hulp if the busy te hoog wordt, in plaats of vast te lopen.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "136": {
+  "prompt": "I neem spanning of work mee to huis and kom er moeilijk vanaf.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "137": {
+  "prompt": "I blijf beslissen if not alle informatie perfect is.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "138": {
+  "prompt": "I accepteer that piekdagen horen at this work, without te blokkeren.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "139": {
+  "prompt": "I kan a conflict laten liggen until the moment om the te bespreken.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "140": {
+  "prompt": "Kleine tegenvallers voelen at mij al snel if a ramp.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "141": {
+  "prompt": "I blijf veilig work ook if I gehaast ben.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "142": {
+  "prompt": "I word prikkelbaar if I not meteen controle about the situatie heb.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "143": {
+  "prompt": "I zet a setback om in a concrete volgende stap.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "144": {
+  "prompt": "I vermijd verantwoordelijkheid out angst om the schuld te krijgen.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "145": {
+  "prompt": "I houd my aandacht at the task, ook if er om me heen rumoer is.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "146": {
+  "prompt": "I kan ja and nee zeggen without daar uren about te twijfelen.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "147": {
+  "prompt": "I blijf vriendelijk to the kassa or balie if the rij lang is.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "148": {
+  "prompt": "I sluit me af or bevries if the busy oploopt.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "149": {
+  "prompt": "I zie a drukke dienst if a uitdaging that I aankan.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "150": {
+  "prompt": "I heb na a lastige dienst lang last of piekeren or boosheid.",
+  "example": "Example: a sudden change in the schedule happens; you stay calm and act. This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ }
+}

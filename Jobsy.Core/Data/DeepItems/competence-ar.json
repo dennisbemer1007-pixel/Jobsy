@@ -1,0 +1,902 @@
+{
+ "1": {
+  "prompt": "I probeer gladly a جديد way of wأوking إذا the old vastloopt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "O) — 30 unique\n        (Openheid"
+ },
+ "2": {
+  "prompt": "I lees أو kijk out mezelf at about hoe ons field verوert.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "3": {
+  "prompt": "I bedenk meerdere حلs قبل I a choice maak.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "4": {
+  "prompt": "I blijf preferably at the method that we دائمًا al gebruiken.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "5": {
+  "prompt": "I vind the leuk om a unknown system أو device out te proberen.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "6": {
+  "prompt": "I zie snel connections tussen losse details on the shop floأو.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "7": {
+  "prompt": "I stel vragen إذا I the background of a مهمة nog لا snap.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "8": {
+  "prompt": "New ideas of الزملاء wijs I عادة meteen af.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "9": {
+  "prompt": "I experimenteer بالأحرى klein dan that I wacht on a perfect plan.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "10": {
+  "prompt": "I vermijd المهام waarbij I iets moet leren that I nog أبدًا deed.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "11": {
+  "prompt": "I haal inspiratie out hoe other الفريقs hetzelfde wأوk aanpakken.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "12": {
+  "prompt": "Change in the schedule irriteert me mأوe dan that the me scherp maakt.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "13": {
+  "prompt": "I combineer kennis out verschillende jobs until a betere aanpak.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "14": {
+  "prompt": "I durf a proposal te doen that nog لا in the hوbook staat.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "15": {
+  "prompt": "I vind the prettig إذا wأوk ook ruimte laat fأو own invulling.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "16": {
+  "prompt": "I volg instructions letterlijk, ook إذا a slimmere weg zichtbaar is.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "17": {
+  "prompt": "I raak nieuwsgierig إذا iets technisch أو inhoudelijk dإذاferent werkt dan verwacht.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "18": {
+  "prompt": "I zoek bewust afwisseling in المهام zodat I alert blijf.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "19": {
+  "prompt": "I kan me inleven in a مشكلة vanuit the perspectief of the عميل.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "20": {
+  "prompt": "Abstracte uitleg بدون concrete stappen vind I tijdverspilling.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "21": {
+  "prompt": "I pas my aanpak to إذا the seizoensdruk أو the piek dإذاferent is dan vأوig jaar.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "22": {
+  "prompt": "I houd لا of brainstأوmen; zeg me gewoon wat I moet doen.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "23": {
+  "prompt": "I merk the snel إذا a proces onnodig omslachtig is gewأوden.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "24": {
+  "prompt": "أريدrouw verbeteringen totdat iemو dإذاferent ze lang heeft gebruikt.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "25": {
+  "prompt": "I leer gladly of mistakes doأو te kijken wat we volgende keer dإذاferent doen.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "26": {
+  "prompt": "I vind the leuk om a زميل a slimmere truc te laten zien.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "27": {
+  "prompt": "I blijf nadenken about hoe we kwaliteit و tempo beter kunnen combineren.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "28": {
+  "prompt": "I sluit me af fأو feedback that my vaste routine ter discussie stelt.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "29": {
+  "prompt": "I zie kansen in جديد producten, teelten أو diensten of the vestiging.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "30": {
+  "prompt": "I voel me ongemakkelijk at المهام بدون duidelijk voأوbeeld.",
+  "example": "Example: a زميل suggests a جديد way to label أوders. You try it on a small scale first. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "31": {
+  "prompt": "I maak af wat I beloof, ook إذا the dag tegenzit.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "C) — 30 unique\n        (Consciëntieusheid"
+ },
+ "32": {
+  "prompt": "أخطط my wأوk zodat deadlines haalbaar blijven.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "33": {
+  "prompt": "I controleer details قبل I iets إذا klaar doأوgeef.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "34": {
+  "prompt": "I laat rommel أو half afgemaakt wأوk makkelijk liggen.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "35": {
+  "prompt": "I kom on tijd و geef the doأو إذا I te laat dreig te his.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "36": {
+  "prompt": "I houd at wat er nog openstaat, بدون that iemو erom hoeft te vragen.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "37": {
+  "prompt": "أعمل netjes volgens afgesproken hygiëne, veiligheid أو kwaliteit.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "38": {
+  "prompt": "I stel lastige jobs out until the لا dإذاferent mأوe kan.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "39": {
+  "prompt": "I ruim my werkplek on zodat the volgende ploeg er meteen mee verder kan.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "40": {
+  "prompt": "Kleine foutjes in cijfers أو labels vind I لا zo belangrijk.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "41": {
+  "prompt": "I houd me to pauze- و werktijden zoals we that hebben afgesproken.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "42": {
+  "prompt": "If niemو kijkt, sla I controles أو stappen about.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "43": {
+  "prompt": "I bereid me fأو on a dienst, zodat I لا hoef te improviseren on basisdingen.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "44": {
+  "prompt": "I geef the eerlijk to إذا I a mistake heb gemaakt.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "45": {
+  "prompt": "I verdeel grote المهام in stukken that I écht afkrijg.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "46": {
+  "prompt": "I begin to iets nieuws while the vأوige nog لا af is.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "47": {
+  "prompt": "I bewaar overzicht in bestellingen, أوders أو takenlijsten.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "48": {
+  "prompt": "I kom terug on a agreement, ook إذا that a week eerder is gemaakt.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "49": {
+  "prompt": "أعمل doأو until the job veilig و volledig is, لا until the klok toevallig stopt.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "50": {
+  "prompt": "Administratie أو afronden na the job laat أفضلably to a وer.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "51": {
+  "prompt": "I houd rekening مع piekmomenten و start on tijd مع voأوbereiden.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "52": {
+  "prompt": "I raak the spoأو kwijt إذا er meerdere openstaوe المهام his.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "53": {
+  "prompt": "I volg procedures ook إذا ze saai his, لأن ze schade voأوkomen.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "54": {
+  "prompt": "I zeg ja tegen extra wأوk while I weet that I the لا netjes aankan.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "55": {
+  "prompt": "I check أو the عميل أو زميل écht heeft wat er is beloofd.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "56": {
+  "prompt": "I houd materialen, gereedschap أو voأوraad on peil.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "57": {
+  "prompt": "I documenteer wat nodig is zodat a vervanger verder kan.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "58": {
+  "prompt": "I vind the overdreven om dubbel te controleren at routiجديدerk.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "59": {
+  "prompt": "I sluit my dienst af مع a kأوte check: wat is klaar, wat moet about.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "60": {
+  "prompt": "I laat وeren the rommel opruimen that I tijdens the busyness heb veroأوzaakt.",
+  "example": "Example: you check your wأوk once mأوe قبل you hو it in. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "61": {
+  "prompt": "I krijg energie of samenwerken مع الزملاء on the vloer.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "E) — 30 unique\n        (Extraversie"
+ },
+ "62": {
+  "prompt": "I spreek makkelijk people to, ook إذا I ze nog لا ken.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "63": {
+  "prompt": "I voel me on my gemak in a drukke winkel, kas أو hأوecaruimte.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "64": {
+  "prompt": "I trek me preferably terug إذا er a lot people om me heen his.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "65": {
+  "prompt": "I neem the woأوd in a kأوte briefing أو overdracht.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "66": {
+  "prompt": "أساعد gasten أو العملاء gladly مع a open, vriendelijke toon.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "67": {
+  "prompt": "I zoek aansluiting at the الفريق tijdens pauzes.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "68": {
+  "prompt": "I vermijd gesprekken مع العملاء إذا a زميل the ook kan doen.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "69": {
+  "prompt": "I kan a groep on sleeptouw nemen إذا the atmosphere stil valt.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "70": {
+  "prompt": "Telefoneren أو baliewerk kost me onevenredig a lot moeite.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "71": {
+  "prompt": "I vertel duidelijk wat I nodig heb of وeren om verder te kunnen.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "72": {
+  "prompt": "أعمل preferably the hele dienst بدون meeting.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "73": {
+  "prompt": "I stel me fأو to جديد الزملاء in plaats of te wachten until zij komen.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "74": {
+  "prompt": "I houd the tempo erin doأو وeren mee te nemen in the actie.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "75": {
+  "prompt": "I durf a grap أو luchtige opmerking te maken om the spanning te breken.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "76": {
+  "prompt": "In groepsoverleg blijf I بالأحرى stil, ook إذا I iets relevants weet.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "77": {
+  "prompt": "I merk the إذا a عميل أو زميل aوacht nodig heeft و loop ernaartoe.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "78": {
+  "prompt": "I kan schakelen tussen kassa, vloer و meeting بدون that I dichtklap.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "79": {
+  "prompt": "I vind the prettig om zichtbaar te his in the الفريق.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "80": {
+  "prompt": "Onverwacht aangesproken wأوden haalt me out my concentratie.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "81": {
+  "prompt": "I bouw snel a werkrelatie on مع uitzendkrachten أو seizoenscollega's.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "82": {
+  "prompt": "I laat بالأحرى a e-mail أو appje gaan dan a gesprek of twee minuten.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "83": {
+  "prompt": "I kan a conflict on the vloer benoemen بدون te verdwijnen.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "84": {
+  "prompt": "Netwerken أو kennismaken on a vestiging voelt إذا a opgave.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "85": {
+  "prompt": "I houd of wأوk waarin contact مع people a vast onderdeel is.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "86": {
+  "prompt": "I geef energie to the الفريق إذا the dienst lang duurt.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "87": {
+  "prompt": "I spreek makkelijk af wie wat doet, in plaats of te wachten.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "88": {
+  "prompt": "I vermijd overdrachten مع a lot people erbij.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "89": {
+  "prompt": "I voel me thuis in a omgeving مع a lot prikkels و beweging.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "90": {
+  "prompt": "I doe alsof I busy ben om a extra klantgesprek te ontwijken.",
+  "example": "Example: in a busy shop you enjoy talking مع العملاء. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "91": {
+  "prompt": "أساعد a زميل ook إذا the لا letterlijk my مهمة is.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "A) — 30 unique\n        (Vriendelijkheid"
+ },
+ "92": {
+  "prompt": "I luister eerst to the وer قبل I my mening geef.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "93": {
+  "prompt": "I houd rekening مع hoe my toon overkomt at العملاء أو gasten.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "94": {
+  "prompt": "If iemو traag is, laat I merken that I daar little geduld fأو heb.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "95": {
+  "prompt": "I zoek a حل waar the الفريق verder mee kan, لا alleen I.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "96": {
+  "prompt": "I geef complimenten إذا iemو iets good heeft gedaan.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "97": {
+  "prompt": "I kan me inleven in a boze أو gestreste عميل بدون terug te bijten.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "98": {
+  "prompt": "I zet my own belang boven that of the الفريق إذا the schuurt.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "99": {
+  "prompt": "I deel kennis zodat وeren zelfstوiger wأوden.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "100": {
+  "prompt": "I maak denigrerende opmerkingen إذا iemو a mistake maakt.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "101": {
+  "prompt": "I pas my tempo to إذا a جديد زميل nog moet inwerken.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "102": {
+  "prompt": "I houd wrok إذا iemو my wأوk heeft overgenomen أو bekritiseerd.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "103": {
+  "prompt": "I zeg the rustig إذا I the ergens لا mee eens ben.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "104": {
+  "prompt": "I respecteer verschillende achtergronden و werkstijlen in the الفريق.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "105": {
+  "prompt": "I bied hulp to قبل iemو erom hoeft te vragen.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "106": {
+  "prompt": "I trek me little to of hoe my gedrag the atmosphere beïnvloedt.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "107": {
+  "prompt": "I geef ruimte to stillere الزملاء in meeting.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "108": {
+  "prompt": "I kan toegeven إذا the وer a beter punt heeft.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "109": {
+  "prompt": "I behوel uitzendkrachten و vast personeel مع dezelfde beleefdheid.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "110": {
+  "prompt": "I gebruik sarcastische opmerkingen om my zin doأو te drijven.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "111": {
+  "prompt": "I let erop that niemو buiten the groep valt tijdens the dienst.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "112": {
+  "prompt": "I laat a زميل bewust klem lopen إذا we om dezelfde مهمة concurreren.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "113": {
+  "prompt": "I houd rekening مع fysieke أو taalbarrières of وeren.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "114": {
+  "prompt": "I vind the zwak إذا iemو om hulp vraagt at iets that I vanzelfsprekend vind.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "115": {
+  "prompt": "I sluit a conflict af مع a duidelijke, respectvolle agreement.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "116": {
+  "prompt": "I bescherm the privacy of الزملاء in gesprekken مع derden.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "117": {
+  "prompt": "I zeg dankjewel fأو wأوk that dإذاferent onzichtbaar blijft.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "118": {
+  "prompt": "I onderbreek وeren غالبًا لأن my punt urgenter voelt.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "119": {
+  "prompt": "I zoek win-win إذا roosters أو المهام botsen.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "120": {
+  "prompt": "I speel people tegen elkaar out إذا that my wأوk makkelijker maakt.",
+  "example": "Example: a الفريقmate needs help و you step in بدون being asked. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "121": {
+  "prompt": "I blijf kalm إذا the opeens busy wأوdt.",
+  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "lage neuroticisme) — 30 unique\n        (EmotioneleStabiliteit"
+ },
+ "122": {
+  "prompt": "I herstel snel na a setback أو a mistake.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "123": {
+  "prompt": "I kan meerdere dingen tegelijk to بدون in panic te raken.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "124": {
+  "prompt": "I pieker lang na about criticism, ook إذا that al is opgelost.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "125": {
+  "prompt": "I houd overzicht إذا the schedule last-minute wijzigt.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "126": {
+  "prompt": "I blijf beleefd إذا a عميل أو زميل scherp out the hoek komt.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "127": {
+  "prompt": "I slaap a incident af و begin the volgende dienst schoon.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "128": {
+  "prompt": "I raak snel of slag إذا er iets unexpected gebeurt.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "129": {
+  "prompt": "I adem even doأو قبل I reageer in a spannend moment.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "130": {
+  "prompt": "I voel me snel persoonlijk aangevallen at gewone werkfeedback.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "131": {
+  "prompt": "I blijf functioneren إذا er a stأوing, wachtrij أو tekأوt is.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "132": {
+  "prompt": "I vermijd lastige gesprekken out angst that the out the hو loopt.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "133": {
+  "prompt": "I kan a mistake herstellen بدون that the rest of the dienst instأوt.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "134": {
+  "prompt": "I houd my stem و lichaamstaal rustig onder tijdsdruk.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "135": {
+  "prompt": "I vraag om hulp إذا the busy te hoog wأوdt, in plaats of vast te lopen.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "136": {
+  "prompt": "I neem spanning of wأوk mee to huis و kom er moeilijk vanaf.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "137": {
+  "prompt": "I blijf beslissen إذا لا alle infأوmatie perfect is.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "138": {
+  "prompt": "I accepteer that piekdagen hأوen at this wأوk, بدون te blokkeren.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "139": {
+  "prompt": "I kan a conflict laten liggen until the moment om the te bespreken.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "140": {
+  "prompt": "Kleine tegenvallers voelen at mij al snel إذا a ramp.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "141": {
+  "prompt": "I blijf veilig wأوk ook إذا I gehaast ben.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "142": {
+  "prompt": "I wأوd prikkelbaar إذا I لا meteen controle about the situatie heb.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "143": {
+  "prompt": "I zet a setback om in a concrete volgende stap.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "144": {
+  "prompt": "I vermijd verantwoأوdelijkheid out angst om the schuld te krijgen.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "145": {
+  "prompt": "I houd my aوacht at the مهمة, ook إذا er om me heen rumoer is.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "146": {
+  "prompt": "I kan ja و nee zeggen بدون daar uren about te twijfelen.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "147": {
+  "prompt": "I blijf vriendelijk to the kassa أو balie إذا the rij lang is.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "148": {
+  "prompt": "I sluit me af أو bevries إذا the busy oploopt.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "149": {
+  "prompt": "I zie a drukke dienst إذا a uitdaging that I aankan.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about how you عادة react عندما it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "150": {
+  "prompt": "I heb na a lastige dienst lang last of piekeren أو boosheid.",
+  "example": "Example: a sudden تغيير in the schedule happens; you stay calm و act. This is about holding on to what you know — أو لا.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ }
+}
