@@ -12,7 +12,6 @@ public sealed class PupilReportPdfService : IPupilReportPdfService
     private static readonly Color Muted = Color.FromHex("#5a6a7a");
     private static readonly Color Soft = Color.FromHex("#eef2f6");
     private static readonly Color Gold = Color.FromHex("#c9a227");
-    private static readonly Color Accent = Color.FromHex("#d6e4f5");
 
     static PupilReportPdfService()
     {
