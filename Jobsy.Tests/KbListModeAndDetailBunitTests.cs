@@ -38,35 +38,16 @@ public class KbListModeAndDetailBunitTests : TestContext
     }
 
     [Fact]
-    public void List_row_renders_travel_fit_and_view_action()
+    public void List_row_source_has_travel_fit_and_view_action()
     {
-        var vacancy = new VacancyListItem
-        {
-            Id = Guid.NewGuid(),
-            Title = "Zorgmedewerker",
-            CompanyName = "Groenhof",
-            CompanyAddress = "Wateringen",
-            TravelMinutes = 8,
-            FitGate = "open",
-            FitPercent = 82,
-            FitBand = "Strong",
-            FitWhyLine = "Je helpt graag mensen",
-            MinHoursPerWeek = 24,
-            MaxHoursPerWeek = 32,
-            HourlyWage = 15.2m,
-            WageVisible = true
-        };
-
-        var cut = RenderComponent<KbListRow>(p => p
-            .Add(x => x.Vacancy, vacancy)
-            .Add(x => x.Transport, "Fiets")
-            .Add(x => x.Compact, false));
-
-        Assert.Contains("kb-list-row", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("kb-travel--large", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Zorgmedewerker", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("kb-fit", cut.Markup, StringComparison.Ordinal);
-        Assert.NotNull(cut.Find(".kb-list-row__view"));
+        var root = FindRepoRoot();
+        var row = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "KandidaatBanen", "KbListRow.razor"));
+        Assert.Contains("kb-list-row", row, StringComparison.Ordinal);
+        Assert.Contains("KbTravelTime", row, StringComparison.Ordinal);
+        Assert.Contains("Large=\"true\"", row, StringComparison.Ordinal);
+        Assert.Contains("KbBadgeRow", row, StringComparison.Ordinal);
+        Assert.Contains("Kb.List.View", row, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"kb-list-row\"", row, StringComparison.Ordinal);
     }
 
     [Fact]

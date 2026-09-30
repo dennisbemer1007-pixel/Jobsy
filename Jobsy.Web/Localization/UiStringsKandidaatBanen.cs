@@ -496,11 +496,11 @@ public static class UiStringsKandidaatBanen
             "In overleg", "By arrangement",
             "Do uzgodnienia", "De comun acord", "بالاتفاق");
         Add("Kb.Detail.Route",
-            "Route", "Route",
+            "Route", "Directions",
             "Trasa", "Rută", "المسار");
         Add("Kb.Detail.StreetView",
-            "Street View", "Street View",
-            "Street View", "Street View", "تجوّل افتراضي");
+            "Street View", "Street-level view",
+            "Widok ulicy", "Vedere stradală", "تجوّل افتراضي");
         Add("Kb.Detail.TransportAria",
             "Vervoerswijze", "Transport mode",
             "Środek transportu", "Mod de transport", "وسيلة النقل");

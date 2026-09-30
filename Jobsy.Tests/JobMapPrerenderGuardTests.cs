@@ -337,21 +337,27 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("text-transform: uppercase", css[css.IndexOf(".vacancy-location__transport {", StringComparison.Ordinal)..(css.IndexOf(".vacancy-location__transport {", StringComparison.Ordinal) + 400)]);
 
         var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "VacancyDetail.razor"));
-        Assert.Contains("vacancy-media--split", detail);
-        Assert.Contains("HasPhoto && HasLocation", detail);
+        Assert.Contains("kb-detail", detail, StringComparison.Ordinal);
+        Assert.Contains("kb-travel-card", detail, StringComparison.Ordinal);
+        Assert.Contains("vacancy-detail-map", detail, StringComparison.Ordinal);
         Assert.Contains("detail-card--pending", detail);
         Assert.Contains("PersistentComponentState", detail);
         Assert.Contains("panel-page--vacancy", detail);
         Assert.Contains("keepPrerendered", detail);
-        Assert.Contains("vacancy-location__eta", detail);
         Assert.Contains("GetVacancyTravelAsync", detail);
         Assert.Contains("apply-panel--guest", detail);
         Assert.DoesNotContain("Vacancy.ProximityWink", detail);
         Assert.DoesNotContain("± @_vacancy.TravelMinutes", detail);
-        var mediaIdx = detail.IndexOf("class=\"vacancy-media", StringComparison.Ordinal);
-        var titleIdx = detail.IndexOf("detail-card__top", StringComparison.Ordinal);
+        // File 06 layout: photo → title → travel slot → description.
+        var photoIdx = detail.IndexOf("kb-detail__photo", StringComparison.Ordinal);
+        var titleIdx = detail.IndexOf("<h1>@_vacancy.Title</h1>", StringComparison.Ordinal);
+        var travelSlotIdx = detail.IndexOf("@TravelCardFragment", StringComparison.Ordinal);
         var bodyIdx = detail.IndexOf("detail-card__body", StringComparison.Ordinal);
-        Assert.True(mediaIdx > 0 && titleIdx > mediaIdx && bodyIdx > titleIdx, "Photo and map must sit together above the title and description.");
+        Assert.True(photoIdx > 0 && titleIdx > photoIdx && travelSlotIdx > titleIdx && bodyIdx > travelSlotIdx,
+            "Photo, title, travel card and description must follow the kb-detail order.");
+
+        var kbCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "kandidaat-banen.css"));
+        Assert.Contains(".kb-travel-card__map", kbCss, StringComparison.Ordinal);
 
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "vacancyDetailMap.js"));
         Assert.Contains("styleKey: \"liberty\"", js);
