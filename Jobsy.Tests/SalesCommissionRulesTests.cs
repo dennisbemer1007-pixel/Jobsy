@@ -24,6 +24,13 @@ public class SalesCommissionRulesTests
         Assert.Null(SalesCommissionRules.TokenCommissionRate(null, DateTime.UtcNow));
         Assert.Equal(0.12m, SalesCommissionRules.TokenCommissionRate(start, start.AddDays(30), directRate: 0.12m));
         Assert.Null(SalesCommissionRules.TokenCommissionRate(start, start.AddYears(1), durationDays: 365));
+
+        var terms = new SalesCommissionRules.CommissionTerms(0.25m, 0.10m, 0.05m, 0m, 1095, start);
+        Assert.Equal(1, SalesCommissionRules.YearFor(terms, start.AddDays(0)));
+        Assert.Equal(1, SalesCommissionRules.YearFor(terms, start.AddDays(364)));
+        Assert.Equal(2, SalesCommissionRules.YearFor(terms, start.AddDays(365)));
+        Assert.Equal(3, SalesCommissionRules.YearFor(terms, start.AddDays(730)));
+        Assert.Null(SalesCommissionRules.YearFor(terms, start.AddDays(1095)));
     }
 
     [Fact]

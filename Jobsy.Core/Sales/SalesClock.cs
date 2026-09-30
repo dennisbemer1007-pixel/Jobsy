@@ -26,6 +26,17 @@ public static class SalesClock
         return TimeZoneInfo.ConvertTimeToUtc(localEnd, Amsterdam);
     }
 
+    /// <summary>
+    /// Hold end for commission: end of the local calendar day that is
+    /// <paramref name="holdDays"/> after the paid-at local date
+    /// (e.g. paid 29-09 16:00 CEST + 14 → available after 13-10 23:59:59 CEST).
+    /// </summary>
+    public static DateTime HoldAvailableFromUtc(DateTime paidAtUtc, int holdDays)
+    {
+        var localDate = DateOnly.FromDateTime(ToLocal(paidAtUtc).DateTime);
+        return EndOfLocalDayUtc(localDate.AddDays(Math.Max(0, holdDays)));
+    }
+
     public static DateTime AddLocalDays(DateTime utc, int days)
     {
         var local = ToLocal(utc).DateTime.Date.AddDays(days);

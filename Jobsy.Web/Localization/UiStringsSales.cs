@@ -109,6 +109,19 @@ public static class UiStringsSales
         nl["SalesAdmin.ParkedBalancesNote"] =
             "{0} geparkeerde ambassadeurs hebben nog € {1} tegoed. Het programma staat uit; betaal of verreken dit met de hand.";
         nl["SalesAdmin.SalesSection"] = "Sales";
+        nl["SalesAdmin.Settings.HoldDays"] = "Wachttijd commissie (dagen)";
+        nl["SalesAdmin.Settings.HoldDaysHelp"] =
+            "Zo lang staat nieuwe commissie op 'In behandeling'. Dan kan een klant nog geld terugvragen.";
+        nl["SalesAdmin.Settings.PayoutMinimum"] = "Minimum uitbetaling (€ excl. btw)";
+        nl["SalesAdmin.Settings.PayoutMinimumHelp"] =
+            "Vanaf dit beschikbare saldo mag een salesmanager een uitbetaling aanvragen.";
+        nl["SalesAdmin.Settings.IbanHoldDays"] = "IBAN-wachtperiode (dagen)";
+        nl["SalesAdmin.Settings.IbanHoldDaysHelp"] =
+            "Na een IBAN-wijziging wachten uitbetalingen naar het nieuwe rekeningnummer zo lang.";
+        nl["SalesAdmin.Settings.AttributionCookieDays"] = "Attributie-cookie (dagen)";
+        nl["SalesAdmin.Settings.AttributionCookieDaysHelp"] =
+            "Hoe lang een first-click partnerlink blijft gelden.";
+        nl["SalesAdmin.Settings.PayoutSection"] = "Uitbetaling & hold";
 
         // —— Auth / parked sign-in ——
         nl["Sales.Ambassadors.ParkedLogin"] =

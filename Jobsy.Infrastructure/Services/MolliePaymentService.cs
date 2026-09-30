@@ -215,20 +215,20 @@ public sealed class MolliePaymentService : IPaymentService
             return new PaymentStatusResult(paymentId, "not_found", IsPaid: false);
         }
 
-        if (session.Status is TokenPurchaseCheckoutStatus.Paid or TokenPurchaseCheckoutStatus.Credited)
-        {
-            return new PaymentStatusResult(
-                paymentId,
-                session.Status.ToString().ToLowerInvariant(),
-                IsPaid: true);
-        }
+        var sessionAmount = session.AmountEuro > 0
+            ? session.AmountEuro
+            : TokenVatPricing.FromCents(session.TotalAmountCents);
 
         if (!await TryGetApiKeyAsync(cancellationToken))
         {
+            var localPaid = session.Status is TokenPurchaseCheckoutStatus.Paid
+                or TokenPurchaseCheckoutStatus.Credited;
             return new PaymentStatusResult(
                 paymentId,
                 session.Status.ToString().ToLowerInvariant(),
-                IsPaid: false);
+                IsPaid: localPaid,
+                Method: session.PaymentMethod,
+                AmountEuro: sessionAmount);
         }
 
         MolliePaymentResponse payment;
@@ -243,12 +243,18 @@ public sealed class MolliePaymentService : IPaymentService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Mollie get payment failed for {PaymentId}", paymentId);
-            return new PaymentStatusResult(paymentId, "provider_error", IsPaid: false);
+            return new PaymentStatusResult(paymentId, "provider_error", IsPaid: false, AmountEuro: sessionAmount);
         }
 
         var status = string.IsNullOrWhiteSpace(payment.Status) ? "unknown" : payment.Status.Trim().ToLowerInvariant();
-        var isPaid = status is "paid";
+        var isPaid = status is "paid"
+                     || session.Status is TokenPurchaseCheckoutStatus.Paid or TokenPurchaseCheckoutStatus.Credited;
         var method = MolliePaymentMethods.NormalizeOrNull(payment.Method);
+        var amountEuro = ParseMollieAmount(payment.Amount) is decimal liveAmount && liveAmount > 0
+            ? liveAmount
+            : sessionAmount;
+        var amountRefunded = ParseMollieAmount(payment.AmountRefunded) ?? 0m;
+        var amountChargedBack = ParseMollieAmount(payment.AmountChargedBack) ?? 0m;
         var dirty = false;
 
         if (method is not null && !string.Equals(session.PaymentMethod, method, StringComparison.Ordinal))
@@ -257,7 +263,7 @@ public sealed class MolliePaymentService : IPaymentService
             dirty = true;
         }
 
-        if (isPaid && session.Status == TokenPurchaseCheckoutStatus.Pending)
+        if (status is "paid" && session.Status == TokenPurchaseCheckoutStatus.Pending)
         {
             session.Status = TokenPurchaseCheckoutStatus.Paid;
             dirty = true;
@@ -278,7 +284,26 @@ public sealed class MolliePaymentService : IPaymentService
             paymentId,
             status,
             IsPaid: isPaid,
-            Method: method ?? session.PaymentMethod);
+            Method: method ?? session.PaymentMethod,
+            AmountEuro: amountEuro,
+            AmountRefundedEuro: amountRefunded,
+            AmountChargedBackEuro: amountChargedBack);
+    }
+
+    private static decimal? ParseMollieAmount(MollieAmountDto? amount)
+    {
+        if (amount?.Value is null)
+        {
+            return null;
+        }
+
+        return decimal.TryParse(
+            amount.Value,
+            NumberStyles.Number,
+            CultureInfo.InvariantCulture,
+            out var parsed)
+            ? parsed
+            : null;
     }
 
     private static string? ResolvePaymentMethod(string? requested, string? companyPreferred)
@@ -433,9 +458,18 @@ public sealed class MolliePaymentService : IPaymentService
         public string? Id { get; set; }
         public string? Status { get; set; }
         public string? Method { get; set; }
+        public MollieAmountDto? Amount { get; set; }
+        public MollieAmountDto? AmountRefunded { get; set; }
+        public MollieAmountDto? AmountChargedBack { get; set; }
 
         [JsonPropertyName("_links")]
         public MollieLinks? Links { get; set; }
+    }
+
+    private sealed class MollieAmountDto
+    {
+        public string? Currency { get; set; }
+        public string? Value { get; set; }
     }
 
     private sealed class MollieLinks

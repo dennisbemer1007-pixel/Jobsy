@@ -32,11 +32,6 @@ public interface ISalesBeneficiaryService
         CancellationToken cancellationToken = default);
 }
 
-public interface ISalesWalletReadService
-{
-    Task<decimal> GetAvailableAsync(Guid beneficiaryUserId, CancellationToken cancellationToken = default);
-}
-
 public sealed record SalesParkedBalanceItem(
     Guid UserId,
     string MaskedDisplayName,

@@ -318,6 +318,10 @@ public sealed class SalesCommercialAdminModel
     public decimal Year2DirectCommissionRate { get; set; } = 0.10m;
     public decimal Year3DirectCommissionRate { get; set; } = 0.05m;
     public decimal ReferredYear1DirectCommissionRate { get; set; } = 0.20m;
+    public int CommissionHoldDays { get; set; } = 14;
+    public decimal PayoutMinimumEuro { get; set; } = 50m;
+    public int IbanChangeHoldDays { get; set; } = 3;
+    public int AttributionCookieDays { get; set; } = 30;
 }
 
 public sealed class PartnerAffiliateMeModel

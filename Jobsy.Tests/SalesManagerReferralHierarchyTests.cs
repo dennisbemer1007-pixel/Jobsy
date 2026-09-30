@@ -185,7 +185,14 @@ public class SalesManagerReferralHierarchyTests
             Address = "A",
             Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4),
             ReferredBySalesManagerUserId = smId,
-            FirstYearStartedAt = started
+            FirstYearStartedAt = started,
+            CommissionStartsAtUtc = started,
+            CommissionDirectRateSnapshot = 0.25m,
+            CommissionIndirectRateSnapshot = 0m,
+            CommissionYear2RateSnapshot = 0.10m,
+            CommissionYear3RateSnapshot = 0.05m,
+            CommissionDurationDaysSnapshot = 1095,
+            CommissionTermsSnapshottedAtUtc = started
         });
         await db.SaveChangesAsync();
 

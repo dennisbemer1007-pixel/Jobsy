@@ -282,8 +282,11 @@ public class MollieWebhookCommissionSettlementTests
             CommissionIndirectSalesManagerUserId = parentSmId,
             CommissionDirectRateSnapshot = SalesCommissionRules.DefaultDirectCommissionRate,
             CommissionIndirectRateSnapshot = SalesCommissionRules.DefaultIndirectCommissionRate,
+            CommissionYear2RateSnapshot = SalesCommissionRules.DefaultYear2DirectCommissionRate,
+            CommissionYear3RateSnapshot = SalesCommissionRules.DefaultYear3DirectCommissionRate,
             CommissionDurationDaysSnapshot = SalesCommissionRules.DefaultCommissionDurationDays,
             CommissionTermsSnapshottedAtUtc = firstYearStartedAt,
+            CommissionStartsAtUtc = firstYearStartedAt,
             FirstYearStartedAt = firstYearStartedAt
         });
     }

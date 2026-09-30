@@ -14,7 +14,11 @@ public record UpdateSalesCommercialSettingsRequest(
     decimal? PartnerCommissionRate = null,
     decimal? Year2DirectCommissionRate = null,
     decimal? Year3DirectCommissionRate = null,
-    decimal? ReferredYear1DirectCommissionRate = null);
+    decimal? ReferredYear1DirectCommissionRate = null,
+    int? CommissionHoldDays = null,
+    decimal? PayoutMinimumEuro = null,
+    int? IbanChangeHoldDays = null,
+    int? AttributionCookieDays = null);
 
 public record UpdateVacancyTypeCostRequest(
     VacancyKind Kind,

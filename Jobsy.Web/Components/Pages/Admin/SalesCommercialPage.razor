@@ -101,6 +101,43 @@
         </section>
 
         <section class="panel-section">
+            <h2>@Culture["SalesAdmin.Settings.PayoutSection"]</h2>
+            <article class="company-card platform-features-card">
+                <div class="commission-staffel">
+                    <label>
+                        @Culture["SalesAdmin.Settings.HoldDays"]
+                        <input type="number" min="0" max="60" step="1"
+                               @bind="_admin.CommissionHoldDays" style="width:5.5rem" />
+                        <span class="muted">@Culture["SalesAdmin.Settings.HoldDaysHelp"]</span>
+                    </label>
+                    <label>
+                        @Culture["SalesAdmin.Settings.PayoutMinimum"]
+                        <input type="number" min="0" max="1000" step="1"
+                               @bind="_admin.PayoutMinimumEuro" style="width:5.5rem" />
+                        <span class="muted">@Culture["SalesAdmin.Settings.PayoutMinimumHelp"]</span>
+                    </label>
+                    <label>
+                        @Culture["SalesAdmin.Settings.IbanHoldDays"]
+                        <input type="number" min="0" max="14" step="1"
+                               @bind="_admin.IbanChangeHoldDays" style="width:5.5rem" />
+                        <span class="muted">@Culture["SalesAdmin.Settings.IbanHoldDaysHelp"]</span>
+                    </label>
+                    <label>
+                        @Culture["SalesAdmin.Settings.AttributionCookieDays"]
+                        <input type="number" min="1" max="90" step="1"
+                               @bind="_admin.AttributionCookieDays" style="width:5.5rem" />
+                        <span class="muted">@Culture["SalesAdmin.Settings.AttributionCookieDaysHelp"]</span>
+                    </label>
+                </div>
+                <div class="inline-actions" style="margin-top:0.75rem">
+                    <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="SaveSettingsAsync">
+                        @Culture["Common.Save"]
+                    </button>
+                </div>
+            </article>
+        </section>
+
+        <section class="panel-section">
             <h2>Token-kosten per vacature-type</h2>
             <p class="muted">Regulier, Stageplek en Vrijwilligerswerk — inclusief gereduceerde of nul-tarieven voor maatschappelijke doelen.</p>
             <div class="table-list">
@@ -229,7 +266,11 @@
                 _admin.PartnerCommissionRate,
                 Math.Round(_year2Pct / 100m, 4),
                 Math.Round(_year3Pct / 100m, 4),
-                Math.Round(_referredYear1Pct / 100m, 4));
+                Math.Round(_referredYear1Pct / 100m, 4),
+                _admin.CommissionHoldDays,
+                _admin.PayoutMinimumEuro,
+                _admin.IbanChangeHoldDays,
+                _admin.AttributionCookieDays);
             _message = "Instellingen opgeslagen.";
             await ReloadAsync();
         }

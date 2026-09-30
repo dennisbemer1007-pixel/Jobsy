@@ -76,6 +76,10 @@ public partial class SalesCommercialController : ControllerBase
                 request.Year2DirectCommissionRate,
                 request.Year3DirectCommissionRate,
                 request.ReferredYear1DirectCommissionRate,
+                request.CommissionHoldDays,
+                request.PayoutMinimumEuro,
+                request.IbanChangeHoldDays,
+                request.AttributionCookieDays,
                 cancellationToken);
             return Ok(new
             {
@@ -92,6 +96,10 @@ public partial class SalesCommercialController : ControllerBase
                 settings.Year2DirectCommissionRate,
                 settings.Year3DirectCommissionRate,
                 settings.ReferredYear1DirectCommissionRate,
+                settings.CommissionHoldDays,
+                settings.PayoutMinimumEuro,
+                settings.IbanChangeHoldDays,
+                settings.AttributionCookieDays,
                 settings.UpdatedAtUtc
             });
         }

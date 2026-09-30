@@ -18,6 +18,7 @@ public interface ICommissionLedgerService
         Guid companyId,
         string paymentId,
         int? firstYearSlot,
+        DateTime? availableFromUtc = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -34,6 +35,7 @@ public interface ICommissionLedgerService
         int? durationDays = null,
         decimal? year2Rate = null,
         decimal? year3Rate = null,
+        DateTime? availableFromUtc = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -48,6 +50,7 @@ public interface ICommissionLedgerService
         DateTime? firstYearStartedAt,
         decimal? indirectRate = null,
         int? durationDays = null,
+        DateTime? availableFromUtc = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -62,6 +65,7 @@ public interface ICommissionLedgerService
         DateTime? firstYearStartedAt,
         decimal rate,
         int? durationDays = null,
+        DateTime? availableFromUtc = null,
         CancellationToken cancellationToken = default);
 
     Task AttachEntriesToInvoiceAsync(

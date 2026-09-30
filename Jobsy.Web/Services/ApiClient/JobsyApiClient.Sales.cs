@@ -29,6 +29,10 @@ public sealed partial class JobsyApiClient
         decimal? year2DirectCommissionRate = null,
         decimal? year3DirectCommissionRate = null,
         decimal? referredYear1DirectCommissionRate = null,
+        int? commissionHoldDays = null,
+        decimal? payoutMinimumEuro = null,
+        int? ibanChangeHoldDays = null,
+        int? attributionCookieDays = null,
         CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync(
@@ -46,7 +50,11 @@ public sealed partial class JobsyApiClient
                 partnerCommissionRate,
                 year2DirectCommissionRate,
                 year3DirectCommissionRate,
-                referredYear1DirectCommissionRate
+                referredYear1DirectCommissionRate,
+                commissionHoldDays,
+                payoutMinimumEuro,
+                ibanChangeHoldDays,
+                attributionCookieDays
             },
             ct);
         response.EnsureSuccessStatusCode();

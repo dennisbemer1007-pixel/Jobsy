@@ -120,7 +120,11 @@ public sealed class SalesCommercialService : ISalesCommercialService
             settings.PartnerCommissionRate,
             settings.Year2DirectCommissionRate,
             settings.Year3DirectCommissionRate,
-            settings.ReferredYear1DirectCommissionRate);
+            settings.ReferredYear1DirectCommissionRate,
+            settings.CommissionHoldDays,
+            settings.PayoutMinimumEuro,
+            settings.IbanChangeHoldDays,
+            settings.AttributionCookieDays);
     }
 
     public async Task<SalesCommercialSettings> UpdateSettingsAsync(
@@ -136,6 +140,10 @@ public sealed class SalesCommercialService : ISalesCommercialService
         decimal? year2DirectCommissionRate = null,
         decimal? year3DirectCommissionRate = null,
         decimal? referredYear1DirectCommissionRate = null,
+        int? commissionHoldDays = null,
+        decimal? payoutMinimumEuro = null,
+        int? ibanChangeHoldDays = null,
+        int? attributionCookieDays = null,
         CancellationToken cancellationToken = default)
     {
         if (baseTokenValueEuro < 0
@@ -186,6 +194,26 @@ public sealed class SalesCommercialService : ISalesCommercialService
             throw new ArgumentException("Aangedragen jaar-1 commissie moet tussen 0 en 100% liggen.");
         }
 
+        if (commissionHoldDays is < 0 or > 60)
+        {
+            throw new ArgumentException("Wachttijd commissie moet tussen 0 en 60 dagen liggen.");
+        }
+
+        if (payoutMinimumEuro is < 0 or > 1000)
+        {
+            throw new ArgumentException("Minimum uitbetaling moet tussen 0 en 1000 euro liggen.");
+        }
+
+        if (ibanChangeHoldDays is < 0 or > 14)
+        {
+            throw new ArgumentException("IBAN-wachtperiode moet tussen 0 en 14 dagen liggen.");
+        }
+
+        if (attributionCookieDays is < 1 or > 90)
+        {
+            throw new ArgumentException("Attributie-cookieduur moet tussen 1 en 90 dagen liggen.");
+        }
+
         if (directCommissionRate is decimal d
             && indirectCommissionRate is decimal i
             && d + i + SalesCommissionRules.AmbassadorShareRate > 1m)
@@ -233,6 +261,26 @@ public sealed class SalesCommercialService : ISalesCommercialService
         if (referredYear1DirectCommissionRate is not null)
         {
             settings.ReferredYear1DirectCommissionRate = referredYear1DirectCommissionRate.Value;
+        }
+
+        if (commissionHoldDays is not null)
+        {
+            settings.CommissionHoldDays = commissionHoldDays.Value;
+        }
+
+        if (payoutMinimumEuro is not null)
+        {
+            settings.PayoutMinimumEuro = payoutMinimumEuro.Value;
+        }
+
+        if (ibanChangeHoldDays is not null)
+        {
+            settings.IbanChangeHoldDays = ibanChangeHoldDays.Value;
+        }
+
+        if (attributionCookieDays is not null)
+        {
+            settings.AttributionCookieDays = attributionCookieDays.Value;
         }
 
         settings.UpdatedAtUtc = DateTime.UtcNow;

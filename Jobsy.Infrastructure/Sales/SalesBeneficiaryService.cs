@@ -130,19 +130,6 @@ public sealed class SalesBeneficiaryService : ISalesBeneficiaryService
                 cancellationToken);
 }
 
-public sealed class SalesWalletReadService : ISalesWalletReadService
-{
-    private readonly ICommissionLedgerService _ledger;
-
-    public SalesWalletReadService(ICommissionLedgerService ledger) => _ledger = ledger;
-
-    public Task<decimal> GetAvailableAsync(
-        Guid beneficiaryUserId,
-        CancellationToken cancellationToken = default)
-        // 01: today's balance; 02 switches to derived Available state.
-        => _ledger.GetBalanceExVatAsync(beneficiaryUserId, cancellationToken);
-}
-
 public sealed class SalesParkedBalanceService : ISalesParkedBalanceService
 {
     private readonly JobsyDbContext _db;

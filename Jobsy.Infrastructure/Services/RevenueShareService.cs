@@ -2,6 +2,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,32 +60,54 @@ public sealed class RevenueShareService : IRevenueShareService
             return;
         }
 
-        var terms = await ResolveCommissionTermsAsync(
-            companyId, salesManagerUserId.Value, cancellationToken);
+        var paidAt = DateTime.UtcNow;
+        var checkoutPaidAt = await _db.TokenPurchaseCheckouts.AsNoTracking()
+            .Where(c => c.Id == tokenCheckoutId)
+            .Select(c => c.CreditedAt ?? c.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (checkoutPaidAt != default)
+        {
+            paidAt = checkoutPaidAt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(checkoutPaidAt, DateTimeKind.Utc)
+                : checkoutPaidAt.ToUniversalTime();
+        }
 
-        var asOf = DateTime.UtcNow;
-        var appliedDirectRate = SalesCommissionRules.TokenCommissionRate(
-            firstYearStartedAt,
-            asOf,
-            terms.DirectRate,
-            terms.DurationDays,
-            terms.Year2Rate,
-            terms.Year3Rate) ?? 0m;
-        var appliedIndirectRate = SalesCommissionRules.IndirectCommissionRate(
-            firstYearStartedAt,
-            asOf,
-            terms.IndirectRate,
-            terms.DurationDays) ?? 0m;
-        var referringSmId = appliedIndirectRate > 0 ? terms.ReferringSmId : null;
+        var rootId = await ResolveRootCompanyIdAsync(companyId, cancellationToken);
+        await EnsureActivatedAsync(rootId, salesManagerUserId.Value, paidAt, cancellationToken);
 
-        var ambassadorTokens = SalesCommissionRules.AmbassadorTokens(packSize);
-        var ambassadorEuro = SalesCommissionRules.ShareEuro(
-            purchaseAmountExVatEuro, SalesCommissionRules.AmbassadorShareRate);
+        var terms = await ResolveCommissionTermsAsync(rootId, salesManagerUserId.Value, cancellationToken);
+        if (terms is null)
+        {
+            return;
+        }
+
+        var year = SalesCommissionRules.YearFor(terms, paidAt);
+        var appliedDirectRate = SalesCommissionRules.DirectRate(terms, year) ?? 0m;
+        var appliedIndirectRate = SalesCommissionRules.IndirectRate(terms, year) ?? 0m;
+        var referringSmId = appliedIndirectRate > 0
+            ? await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == rootId)
+                .Select(c => c.CommissionIndirectSalesManagerUserId)
+                .FirstOrDefaultAsync(cancellationToken)
+            : null;
+
+        var grantBonusTokens = SalesCommissionRules.BonusTokensAllowed(terms, paidAt);
+        var ambassadorTokens = grantBonusTokens
+            ? SalesCommissionRules.AmbassadorTokens(packSize)
+            : 0m;
+        var ambassadorEuro = grantBonusTokens
+            ? SalesCommissionRules.ShareEuro(purchaseAmountExVatEuro, SalesCommissionRules.AmbassadorShareRate)
+            : 0m;
         var smEuro = SalesCommissionRules.ShareEuro(purchaseAmountExVatEuro, appliedDirectRate);
         var indirectEuro = SalesCommissionRules.ShareEuro(purchaseAmountExVatEuro, appliedIndirectRate);
         var platformRate = SalesCommissionRules.PlatformShareRate(appliedDirectRate, appliedIndirectRate);
         var platformEuro = SalesCommissionRules.ShareEuro(purchaseAmountExVatEuro, platformRate);
         var now = DateTime.UtcNow;
+        var settings = await _commercial.GetSettingsAsync(cancellationToken);
+        var holdDays = settings.CommissionHoldDays is >= 0 and <= 60
+            ? settings.CommissionHoldDays
+            : 14;
+        var availableFromUtc = SalesClock.HoldAvailableFromUtc(paidAt, holdDays);
 
         var claimed = existingKinds.Contains(RevenueShareRecipientKind.Platform);
         if (!claimed)
@@ -161,11 +184,12 @@ public sealed class RevenueShareService : IRevenueShareService
                 companyId,
                 tokenCheckoutId,
                 purchaseAmountExVatEuro,
-                firstYearStartedAt,
-                terms.DirectRate,
+                terms.StartsAtUtc,
+                terms.DirectYear1Rate,
                 terms.DurationDays,
                 terms.Year2Rate,
                 terms.Year3Rate,
+                availableFromUtc,
                 cancellationToken);
         }
 
@@ -176,9 +200,10 @@ public sealed class RevenueShareService : IRevenueShareService
                 companyId,
                 tokenCheckoutId,
                 purchaseAmountExVatEuro,
-                firstYearStartedAt,
+                terms.StartsAtUtc,
                 appliedIndirectRate,
                 terms.DurationDays,
+                availableFromUtc,
                 cancellationToken);
         }
 
@@ -255,71 +280,159 @@ public sealed class RevenueShareService : IRevenueShareService
             .ToListAsync(cancellationToken);
     }
 
-    private async Task<(
-            decimal DirectRate,
-            decimal IndirectRate,
-            int DurationDays,
-            Guid? ReferringSmId,
-            decimal Year2Rate,
-            decimal Year3Rate)>
-        ResolveCommissionTermsAsync(
-            Guid companyId,
-            Guid salesManagerUserId,
-            CancellationToken cancellationToken)
+    private async Task EnsureActivatedAsync(
+        Guid rootCompanyId,
+        Guid salesManagerUserId,
+        DateTime paidAtUtc,
+        CancellationToken cancellationToken)
     {
-        var company = await _db.Companies.AsNoTracking()
-            .Where(c => c.Id == companyId)
+        var root = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == rootCompanyId)
             .Select(c => new
             {
+                c.CommissionStartsAtUtc,
+                c.CommissionDirectRateSnapshot,
+                c.CommissionIndirectRateSnapshot,
+                c.CommissionDurationDaysSnapshot,
+                c.CommissionYear2RateSnapshot,
+                c.CommissionYear3RateSnapshot,
+                c.CommissionIndirectSalesManagerUserId,
+                c.CommissionTermsSnapshottedAtUtc
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (root is null)
+        {
+            return;
+        }
+
+        if (root.CommissionStartsAtUtc is not null
+            && root.CommissionYear2RateSnapshot is not null
+            && root.CommissionYear3RateSnapshot is not null
+            && root.CommissionDirectRateSnapshot is not null)
+        {
+            return;
+        }
+
+        var settings = await _commercial.GetSettingsAsync(cancellationToken);
+        Guid? referringSmId = root.CommissionIndirectSalesManagerUserId;
+        var directRate = root.CommissionDirectRateSnapshot;
+        var indirectRate = root.CommissionIndirectRateSnapshot;
+        var durationDays = root.CommissionDurationDaysSnapshot;
+        var year2 = root.CommissionYear2RateSnapshot ?? settings.Year2DirectCommissionRate;
+        var year3 = root.CommissionYear3RateSnapshot ?? settings.Year3DirectCommissionRate;
+
+        if (directRate is null || root.CommissionTermsSnapshottedAtUtc is null)
+        {
+            referringSmId = await _db.SalesManagerProfiles.AsNoTracking()
+                .Where(p => p.UserId == salesManagerUserId)
+                .Select(p => p.ReferredBySalesManagerUserId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            directRate = SalesCommissionRules.Year1RateForSalesManager(
+                referringSmId is not null,
+                settings.DirectCommissionRate,
+                settings.ReferredYear1DirectCommissionRate);
+            indirectRate = referringSmId is not null ? settings.IndirectCommissionRate : 0m;
+            durationDays = settings.CommissionDurationDays > 0
+                ? settings.CommissionDurationDays
+                : SalesCommissionRules.DefaultCommissionDurationDays;
+        }
+        else
+        {
+            durationDays = durationDays is > 0
+                ? durationDays.Value
+                : SalesCommissionRules.DefaultCommissionDurationDays;
+            indirectRate ??= 0m;
+        }
+
+        // Conditional activation: only the first writer wins CommissionStartsAtUtc.
+        var startsAt = paidAtUtc;
+        var rows = await _db.Companies
+            .Where(c => c.Id == rootCompanyId && c.CommissionStartsAtUtc == null)
+            .ExecuteUpdateAsync(
+                s => s
+                    .SetProperty(c => c.CommissionStartsAtUtc, startsAt)
+                    .SetProperty(c => c.CommissionDirectRateSnapshot, Math.Max(0m, directRate!.Value))
+                    .SetProperty(c => c.CommissionIndirectRateSnapshot, Math.Max(0m, indirectRate!.Value))
+                    .SetProperty(c => c.CommissionDurationDaysSnapshot, durationDays)
+                    .SetProperty(c => c.CommissionYear2RateSnapshot, year2)
+                    .SetProperty(c => c.CommissionYear3RateSnapshot, year3)
+                    .SetProperty(c => c.CommissionIndirectSalesManagerUserId, referringSmId)
+                    .SetProperty(c => c.CommissionTermsSnapshottedAtUtc, DateTime.UtcNow),
+                cancellationToken);
+
+        if (rows == 0)
+        {
+            // Already activated (or race lost) — fill missing year-2/3 snapshots only.
+            await _db.Companies
+                .Where(c => c.Id == rootCompanyId
+                            && (c.CommissionYear2RateSnapshot == null || c.CommissionYear3RateSnapshot == null))
+                .ExecuteUpdateAsync(
+                    s => s
+                        .SetProperty(
+                            c => c.CommissionYear2RateSnapshot,
+                            c => c.CommissionYear2RateSnapshot ?? year2)
+                        .SetProperty(
+                            c => c.CommissionYear3RateSnapshot,
+                            c => c.CommissionYear3RateSnapshot ?? year3),
+                    cancellationToken);
+        }
+    }
+
+    private async Task<SalesCommissionRules.CommissionTerms?> ResolveCommissionTermsAsync(
+        Guid rootCompanyId,
+        Guid salesManagerUserId,
+        CancellationToken cancellationToken)
+    {
+        var company = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == rootCompanyId)
+            .Select(c => new
+            {
+                c.CommissionStartsAtUtc,
                 c.CommissionIndirectSalesManagerUserId,
                 c.CommissionDirectRateSnapshot,
                 c.CommissionIndirectRateSnapshot,
                 c.CommissionDurationDaysSnapshot,
+                c.CommissionYear2RateSnapshot,
+                c.CommissionYear3RateSnapshot,
                 c.CommissionTermsSnapshottedAtUtc
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        var settings = await _commercial.GetSettingsAsync(cancellationToken);
-        var year2 = settings.Year2DirectCommissionRate;
-        var year3 = settings.Year3DirectCommissionRate;
-
-        if (company?.CommissionTermsSnapshottedAtUtc is not null
-            && company.CommissionDirectRateSnapshot is not null)
+        if (company?.CommissionStartsAtUtc is null
+            || company.CommissionDirectRateSnapshot is null
+            || company.CommissionYear2RateSnapshot is null
+            || company.CommissionYear3RateSnapshot is null)
         {
-            return (
-                company.CommissionDirectRateSnapshot.Value,
-                company.CommissionIndirectRateSnapshot ?? 0m,
-                company.CommissionDurationDaysSnapshot is > 0
-                    ? company.CommissionDurationDaysSnapshot.Value
-                    : SalesCommissionRules.DefaultCommissionDurationDays,
-                company.CommissionIndirectSalesManagerUserId,
-                year2,
-                year3);
+            // Activation should have filled these; avoid live settings reads (D1).
+            return null;
         }
 
-        var referringSmId = await _db.SalesManagerProfiles.AsNoTracking()
-            .Where(p => p.UserId == salesManagerUserId)
-            .Select(p => p.ReferredBySalesManagerUserId)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var directRate = SalesCommissionRules.Year1RateForSalesManager(
-            referringSmId is not null,
-            settings.DirectCommissionRate,
-            settings.ReferredYear1DirectCommissionRate);
-        var indirectRate = referringSmId is not null ? settings.IndirectCommissionRate : 0m;
-        var durationDays = settings.CommissionDurationDays > 0
-            ? settings.CommissionDurationDays
+        var duration = company.CommissionDurationDaysSnapshot is > 0
+            ? company.CommissionDurationDaysSnapshot.Value
             : SalesCommissionRules.DefaultCommissionDurationDays;
 
-        await FreezeLegacyCommissionTermsAsync(
-            companyId,
-            referringSmId,
-            directRate,
-            indirectRate,
-            durationDays,
-            cancellationToken);
+        return new SalesCommissionRules.CommissionTerms(
+            company.CommissionDirectRateSnapshot.Value,
+            company.CommissionYear2RateSnapshot.Value,
+            company.CommissionYear3RateSnapshot.Value,
+            company.CommissionIndirectRateSnapshot ?? 0m,
+            duration,
+            company.CommissionStartsAtUtc.Value);
+    }
 
-        return (directRate, indirectRate, durationDays, referringSmId, year2, year3);
+    private async Task<Guid> ResolveRootCompanyIdAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        var company = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => new { c.Id, c.ParentCompanyId })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (company is null)
+        {
+            return companyId;
+        }
+
+        return SalesCommercialUnit.RootIdOf(company.Id, company.ParentCompanyId);
     }
 
     private async Task EnsureAmbassadorGrantFromLogsAsync(
@@ -361,27 +474,5 @@ public sealed class RevenueShareService : IRevenueShareService
             actorUserId: null,
             note: $"Revenue-share ambassadeur 15% ({legacyNoteFragment})",
             cancellationToken);
-    }
-
-    private async Task FreezeLegacyCommissionTermsAsync(
-        Guid companyId,
-        Guid? indirectSalesManagerUserId,
-        decimal directRate,
-        decimal indirectRate,
-        int durationDays,
-        CancellationToken cancellationToken)
-    {
-        var tracked = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
-        if (tracked is null || tracked.CommissionTermsSnapshottedAtUtc is not null)
-        {
-            return;
-        }
-
-        tracked.CommissionIndirectSalesManagerUserId = indirectSalesManagerUserId;
-        tracked.CommissionDirectRateSnapshot = Math.Max(0m, directRate);
-        tracked.CommissionIndirectRateSnapshot = Math.Max(0m, indirectRate);
-        tracked.CommissionDurationDaysSnapshot = durationDays;
-        tracked.CommissionTermsSnapshottedAtUtc = DateTime.UtcNow;
-        await _db.SaveChangesAsync(cancellationToken);
     }
 }

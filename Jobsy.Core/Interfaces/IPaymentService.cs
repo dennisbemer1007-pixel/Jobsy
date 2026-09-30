@@ -30,4 +30,7 @@ public record PaymentStatusResult(
     string PaymentId,
     string Status,
     bool IsPaid,
-    string? Method = null);
+    string? Method = null,
+    decimal AmountEuro = 0m,
+    decimal AmountRefundedEuro = 0m,
+    decimal AmountChargedBackEuro = 0m);

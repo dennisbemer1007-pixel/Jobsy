@@ -75,6 +75,16 @@ public static class SalesLabels
         _ => "Sales.Label.Application.Pending"
     };
 
+    public static string Key(CommissionEntryState state) => state switch
+    {
+        CommissionEntryState.Pending => "Sales.Label.State.Pending",
+        CommissionEntryState.Available => "Sales.Label.State.Available",
+        CommissionEntryState.Requested => "Sales.Label.State.Requested",
+        CommissionEntryState.Paid => "Sales.Label.State.Paid",
+        CommissionEntryState.Settled => "Sales.Label.State.Settled",
+        _ => "Sales.Label.State.Pending"
+    };
+
     public static string CommissionStateKey(string state) => state switch
     {
         "Pending" => "Sales.Label.State.Pending",
@@ -88,6 +98,7 @@ public static class SalesLabels
     public static IEnumerable<Type> LabeledEnumTypes() =>
     [
         typeof(CommissionEntryKind),
+        typeof(CommissionEntryState),
         typeof(SalesPayoutRequestStatus),
         typeof(SalesPayoutRunStatus),
         typeof(SelfBillingInvoiceStatus),

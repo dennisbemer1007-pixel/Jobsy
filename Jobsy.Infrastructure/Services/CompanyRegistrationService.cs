@@ -1551,10 +1551,11 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         branch.ReferredBySalesManagerUserId = profile.UserId;
-        branch.FirstYearStartedAt = DateTime.UtcNow;
-        // Only the publishing vestiging gets the one-time start-highlight (not the org pot).
+        // FirstYearStartedAt is no longer the commission window start (D1 → CommissionStartsAtUtc on first purchase).
+        // Founder-slot / start-highlight still use FirstYearStartedAt when set (onboarding payment or legacy).
         branch.PendingStartHighlightBonus = true;
-        await SnapshotCommissionTermsAsync(branch, profile.UserId, cancellationToken);
+        branch.SalesAttributedAtUtc ??= DateTime.UtcNow;
+        branch.SalesAttributionSource ??= SalesAttributionSource.TypedCode;
 
         if (orgId is Guid oid)
         {
@@ -1563,8 +1564,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             if (org is not null)
             {
                 org.ReferredBySalesManagerUserId = profile.UserId;
-                org.FirstYearStartedAt ??= DateTime.UtcNow;
-                await SnapshotCommissionTermsAsync(org, profile.UserId, cancellationToken);
+                org.SalesAttributedAtUtc ??= DateTime.UtcNow;
+                org.SalesAttributionSource ??= SalesAttributionSource.TypedCode;
             }
         }
 
@@ -1683,48 +1684,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 await _partnerAffiliates.ApplyReferralAsync(org, registration.PartnerTrackingCode, cancellationToken);
             }
         }
-    }
-
-    private async Task SnapshotCommissionTermsAsync(
-        Company company,
-        Guid directSalesManagerUserId,
-        CancellationToken cancellationToken)
-    {
-        if (company.CommissionTermsSnapshottedAtUtc is not null)
-        {
-            return;
-        }
-
-        var settings = await _db.SalesCommercialSettings
-            .AsNoTracking()
-            .OrderBy(s => s.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var standardYear1 = settings?.DirectCommissionRate
-                            ?? SalesCommissionRules.DefaultDirectCommissionRate;
-        var referredYear1 = settings?.ReferredYear1DirectCommissionRate
-                            ?? SalesCommissionRules.DefaultReferredYear1DirectCommissionRate;
-        var indirectRate = settings?.IndirectCommissionRate
-                           ?? SalesCommissionRules.DefaultIndirectCommissionRate;
-        var durationDays = settings?.CommissionDurationDays > 0
-            ? settings.CommissionDurationDays
-            : SalesCommissionRules.DefaultCommissionDurationDays;
-
-        var upline = await _db.SalesManagerProfiles.AsNoTracking()
-            .Where(p => p.UserId == directSalesManagerUserId)
-            .Select(p => p.ReferredBySalesManagerUserId)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var directRate = SalesCommissionRules.Year1RateForSalesManager(
-            wasReferred: upline is not null,
-            standardYear1,
-            referredYear1);
-
-        company.CommissionIndirectSalesManagerUserId = upline;
-        company.CommissionDirectRateSnapshot = Math.Max(0m, directRate);
-        company.CommissionIndirectRateSnapshot = upline is not null ? Math.Max(0m, indirectRate) : 0m;
-        company.CommissionDurationDaysSnapshot = durationDays;
-        company.CommissionTermsSnapshottedAtUtc = DateTime.UtcNow;
     }
 
     private static void ApplyKvkVerificationState(Company company, CompanyRegistration registration)

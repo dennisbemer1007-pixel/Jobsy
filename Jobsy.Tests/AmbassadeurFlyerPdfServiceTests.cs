@@ -127,6 +127,10 @@ public class AmbassadeurFlyerPdfServiceTests
             decimal? year2DirectCommissionRate = null,
             decimal? year3DirectCommissionRate = null,
             decimal? referredYear1DirectCommissionRate = null,
+            int? commissionHoldDays = null,
+            decimal? payoutMinimumEuro = null,
+            int? ibanChangeHoldDays = null,
+            int? attributionCookieDays = null,
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 

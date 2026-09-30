@@ -377,6 +377,8 @@ public static class DependencyInjection
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
         services.AddScoped<ISalesBeneficiaryService, SalesBeneficiaryService>();
         services.AddScoped<ISalesWalletReadService, SalesWalletReadService>();
+        services.AddScoped<ISalesEmployerReadService, SalesEmployerReadService>();
+        services.AddScoped<ISalesCorrectionService, SalesCorrectionService>();
         services.AddScoped<ISalesParkedBalanceService, SalesParkedBalanceService>();
         services.AddScoped<IRevenueShareService, RevenueShareService>();
         services.AddScoped<ISupplierOnboardingPaymentService, SupplierOnboardingPaymentService>();
@@ -424,6 +426,7 @@ public static class DependencyInjection
         services.AddHostedService<FeedbackAutomationPollHostedService>();
         services.AddHostedService<DataRetentionHostedService>();
         services.AddHostedService<IbanEncryptionMigrationHostedService>();
+        services.AddHostedService<SalesCommissionBackfillHostedService>();
         services.AddHostedService<TalentContactRefundHostedService>();
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
