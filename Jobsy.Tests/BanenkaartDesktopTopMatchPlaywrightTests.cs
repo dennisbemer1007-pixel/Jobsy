@@ -42,19 +42,32 @@ public class BanenkaartDesktopTopMatchPlaywrightTests
             Assert.Fail("Candidate login failed for desktop top-match smoke.");
         }
 
-        var mapPath = await ResolveMapPathAsync(page, baseUrl);
-        await page.GotoAsync(baseUrl + mapPath, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        // Prefer home map ( /banenkaart may 404 until landing 04 lands).
+        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
 
-        try
+        // Wait for cards or the circuit ErrorBoundary (complete-profile crash path).
+        var deadline = DateTime.UtcNow.AddSeconds(20);
+        while (DateTime.UtcNow < deadline)
         {
-            await page.Locator(".job-card").First.WaitForAsync(new() { Timeout = 60_000 });
-        }
-        catch (TimeoutException)
-        {
-            // Acc may still paint the map without cards; wait for map then the top-match path.
-            await page.Locator("#job-map").WaitForAsync(new() { Timeout = 30_000 });
+            var snap = await page.EvaluateAsync<string>("""
+                () => JSON.stringify({
+                  circuit: (document.body?.innerText || '').includes('Even iets misgegaan')
+                    || !!document.querySelector('.circuit-error'),
+                  cards: document.querySelectorAll('.job-card').length,
+                  top: document.querySelectorAll('.highlight-carousel__card--top-match').length
+                })
+                """);
+            if (snap.Contains("\"circuit\":true", StringComparison.Ordinal)
+                || snap.Contains("\"cards\":", StringComparison.Ordinal) && !snap.Contains("\"cards\":0", StringComparison.Ordinal)
+                || snap.Contains("\"top\":1", StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            await page.WaitForTimeoutAsync(500);
         }
 
+        // Extra settle for EnsureDesktopMatchDeckAsync (~4s on Acc).
         await page.WaitForTimeoutAsync(8_000);
 
         var circuit = await page.EvaluateAsync<bool>("""
@@ -64,7 +77,7 @@ public class BanenkaartDesktopTopMatchPlaywrightTests
                 || !!document.querySelector('.circuit-error');
             }
             """);
-        Assert.False(circuit, $"circuit error at {width}x{height}");
+        Assert.False(circuit, $"circuit error at {width}x{height} (TopMatchLeadingFragment / match deck)");
 
         var fatalPageErrors = pageErrors
             .Where(e => !e.Contains("Maximum call stack size exceeded", StringComparison.OrdinalIgnoreCase))
@@ -76,23 +89,6 @@ public class BanenkaartDesktopTopMatchPlaywrightTests
         {
             await Assertions.Expect(topMatch.First).ToBeVisibleAsync(new() { Timeout = 5_000 });
         }
-    }
-
-    private static async Task<string> ResolveMapPathAsync(IPage page, string baseUrl)
-    {
-        try
-        {
-            var resp = await page.Context.APIRequest.GetAsync(baseUrl + "/banenkaart");
-            if (resp.Ok || resp.Status is >= 200 and < 400)
-            {
-                return "/banenkaart";
-            }
-        }
-        catch
-        {
-        }
-
-        return "/";
     }
 
     private static async Task<bool> TryLoginAsync(IPage page, string baseUrl)
