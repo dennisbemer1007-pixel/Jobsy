@@ -239,7 +239,7 @@ public class SalesManagerCommissionTests
             "99990001_0001",
             RegistrationScope.BranchOnly,
             "Nova",
-            "nova.sm@jobsy.local",
+            "nova.sm@employer.test",
             null,
             AcceptedTerms: true,
             SalesManagerTrackingCode: "SM-TEST01",

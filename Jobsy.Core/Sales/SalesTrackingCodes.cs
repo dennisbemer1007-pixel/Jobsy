@@ -48,6 +48,6 @@ public static partial class SalesTrackingCodes
         };
     }
 
-    [GeneratedRegex(@"^(SM|BM|IM|AM)-[A-Z0-9]{6}$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^(SM|BM|IM|AM)-[A-Z0-9]{4,12}$", RegexOptions.CultureInvariant)]
     private static partial Regex WellFormedRegex();
 }

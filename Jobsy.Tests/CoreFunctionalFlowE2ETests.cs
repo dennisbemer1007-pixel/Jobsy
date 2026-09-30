@@ -64,7 +64,7 @@ public class CoreFunctionalFlowE2ETests
             "88880001_0001",
             RegistrationScope.BranchOnly,
             "E2E Manager",
-            "manager.e2e@jobsy.local",
+            "manager.e2e@employer.test",
             null,
             AcceptedTerms: true,
             SalesManagerTrackingCode: "SM-DIRECT1",

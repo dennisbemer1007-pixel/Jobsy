@@ -132,7 +132,6 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/ontdek` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/partner` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/partner/{TrackingCode?}` | `Pages/Partner/PartnerSales.razor` | anonymous |
-| `/p/{code}` | short link → 302 `/partner/{code}` (sales referral cookie + click count) | anonymous |
 | `/privacy` | `Pages/Legal/Privacy.razor` | anonymous |
 | `/privacy/data` | `Pages/Legal/PrivacyData.razor` | authenticated |
 | `/profiel` | `Pages/Candidate/CandidateProfile.razor` | Candidate |
